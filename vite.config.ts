@@ -2,6 +2,8 @@
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
 import { analyzer } from "vite-bundle-analyzer";
 import { VitePWA } from "vite-plugin-pwa";
 import { patternPlugin } from "./script/lib/vite-plugin-patterns";
@@ -38,12 +40,39 @@ function withTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
 
+// Baked into the client bundle so a build reports its own version/commit even
+// when a stale copy is being served — the value travels inside the JS chunk
+// rather than being fetched at request time.
+const appVersion = JSON.parse(
+  readFileSync(
+    path.resolve(__dirname, "packages/seed-bible/package.json"),
+    "utf-8"
+  )
+).version as string;
+
+// CI sets DEPLOY_BUILD_ID to the full commit SHA before `pnpm build` runs (see
+// cd.yml); falling back to `git rev-parse` covers local dev/build.
+function resolveGitCommit(): string {
+  if (deployBuildId) return deployBuildId;
+  try {
+    return execSync("git rev-parse HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
+const gitCommit = resolveGitCommit();
+
 export default defineConfig(({ isSsrBuild }) => ({
   // SSR builds must not treat index.html as an input; only the client build
   // is an HTML/SPA build.
   appType: "custom",
   publicDir: false,
   base: assetBaseUrl,
+
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __GIT_COMMIT__: JSON.stringify(gitCommit),
+  },
 
   plugins: [
     preact(),

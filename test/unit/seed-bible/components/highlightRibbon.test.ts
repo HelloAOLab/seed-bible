@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
+  adjacentInlineRect,
   buildRibbonPath,
   type RibbonRect,
 } from "@packages/seed-bible/seed-bible/app/highlightRibbon";
@@ -165,7 +166,154 @@ describe("buildRibbonPath", () => {
     const d = buildRibbonPath(overlapping, 8, 4, PITCH);
     expect((d.match(/M /g) ?? []).length).toBe(1); // one continuous body
   });
+});
 
+// A minimal fake DOM node whose measured rects and computed style we control, so
+// we can exercise adjacentInlineRect's sibling walk without a real layout engine.
+type FakeNode = {
+  nodeType: number;
+  textContent?: string;
+  previousSibling: FakeNode | null;
+  nextSibling: FakeNode | null;
+  __rects: Array<{
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    width: number;
+    height: number;
+  }>;
+  __style: { display: string; position: string };
+};
+
+function rect(left: number, top: number, right: number, bottom: number) {
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function fakeNode(over: Partial<FakeNode> = {}): FakeNode {
+  return {
+    nodeType: 1,
+    previousSibling: null,
+    nextSibling: null,
+    __rects: [],
+    __style: { display: "inline", position: "static" },
+    ...over,
+  };
+}
+
+// Wire an ordered list of siblings together via previous/next pointers.
+function chain(nodes: FakeNode[]) {
+  for (let i = 0; i < nodes.length; i++) {
+    nodes[i]!.previousSibling = nodes[i - 1] ?? null;
+    nodes[i]!.nextSibling = nodes[i + 1] ?? null;
+  }
+}
+
+describe("adjacentInlineRect", () => {
+  const realCreateRange = document.createRange;
+  const realGetComputedStyle = globalThis.getComputedStyle;
+
+  afterEach(() => {
+    document.createRange = realCreateRange;
+    globalThis.getComputedStyle = realGetComputedStyle;
+  });
+
+  // Stub createRange/getComputedStyle so the function measures our fake nodes.
+  function install() {
+    let selected: FakeNode | null = null;
+    document.createRange = (() => ({
+      getClientRects: () => (selected?.__rects ?? []) as unknown as DOMRectList,
+      selectNodeContents: (n: unknown) => {
+        selected = n as FakeNode;
+      },
+    })) as unknown as typeof document.createRange;
+    globalThis.getComputedStyle = ((n: unknown) =>
+      (n as FakeNode)
+        .__style as unknown as CSSStyleDeclaration) as typeof getComputedStyle;
+  }
+
+  it("returns the previous inline text's last line, relative to the origin", () => {
+    // prev has two lines; the one nearest the run (its last) is what we face.
+    const prev = fakeNode({
+      __rects: [rect(10, 0, 90, 20), rect(10, 25, 60, 45)],
+    });
+    const run = fakeNode();
+    chain([prev, run]);
+    install();
+
+    const r = adjacentInlineRect(run as unknown as Element, "before", 10, 5);
+    // Nearest rect (10,25,60,45) shifted by origin (10,5).
+    expect(r).toEqual({ left: 0, right: 50, top: 20, bottom: 40 });
+  });
+
+  it("returns the next inline text's first line", () => {
+    const run = fakeNode();
+    const next = fakeNode({
+      __rects: [rect(200, 25, 260, 45), rect(80, 50, 140, 70)],
+    });
+    chain([run, next]);
+    install();
+
+    const r = adjacentInlineRect(run as unknown as Element, "after", 0, 0);
+    expect(r).toEqual({ left: 200, right: 260, top: 25, bottom: 45 });
+  });
+
+  it("stops at a block-level boundary (a line break) with null", () => {
+    const lineBreak = fakeNode({
+      __style: { display: "block", position: "static" },
+      __rects: [rect(0, 0, 300, 5)],
+    });
+    const run = fakeNode();
+    chain([lineBreak, run]);
+    install();
+
+    expect(
+      adjacentInlineRect(run as unknown as Element, "before", 0, 0)
+    ).toBeNull();
+  });
+
+  it("stops at the out-of-flow ribbon layer (position: absolute) with null", () => {
+    const layer = fakeNode({
+      __style: { display: "inline", position: "absolute" },
+      __rects: [rect(0, 0, 300, 400)],
+    });
+    const run = fakeNode();
+    chain([layer, run]);
+    install();
+
+    expect(
+      adjacentInlineRect(run as unknown as Element, "before", 0, 0)
+    ).toBeNull();
+  });
+
+  it("skips whitespace-only text nodes to reach the real neighbour", () => {
+    const prev = fakeNode({ __rects: [rect(10, 0, 90, 20)] });
+    const space = fakeNode({ nodeType: 3, textContent: "  " });
+    const run = fakeNode();
+    chain([prev, space, run]);
+    install();
+
+    const r = adjacentInlineRect(run as unknown as Element, "before", 0, 0);
+    expect(r).toEqual({ left: 10, right: 90, top: 0, bottom: 20 });
+  });
+
+  it("returns null when there is no sibling on that side", () => {
+    const run = fakeNode();
+    install();
+    expect(
+      adjacentInlineRect(run as unknown as Element, "before", 0, 0)
+    ).toBeNull();
+  });
+});
+
+describe("buildRibbonPath (slot adjacency)", () => {
   it("makes two vertically-adjacent runs meet at the shared slot boundary", () => {
     // Two single-line runs on consecutive lines (pitch 65): run A on the first
     // slot, run B on the next. Their touching edges should land on the same y.

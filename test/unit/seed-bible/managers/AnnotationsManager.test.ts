@@ -50,6 +50,8 @@ describe("AnnotationsManager", () => {
       cachedProfile: signal(null),
       localConfig: signal({}),
       profilePromise: null,
+      isProfileLoading: signal(false),
+      isSavingProfile: signal(false),
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       updateProfile: vi.fn().mockResolvedValue(undefined),

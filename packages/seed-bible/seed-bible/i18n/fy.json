@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigaasje",
   "session-settings-section-sharing": "Dielen",
   "session-settings-section-participants": "Dielnimmers",
-
   "shared": "Dield",
   "host": "Gasthear",
   "co-host": "Mei-host",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Sesje einigje",
   "dont-show-again": "Dit net wer sjen litte",
   "discover": "Ûntdekke",
-
   "playlists": "Ofspiellisten",
   "annotations": "Annotaasjes",
   "cross-references": "Krúsferwizings",
@@ -364,19 +362,17 @@
   "edit-playlist": "Playlist bewurkje",
   "remove-playlist-item": "Item fuortsmite",
   "edit-playlist-item": "Item bewurkje",
+  "drag-to-reorder-playlist-item": "Sleep om te werskikken",
   "playlist-add-item": "Item tafoegje",
   "playlist-edit-item": "Item bewurkje",
   "playlist-save-item": "Bewarje wizigingen",
-
   "playlist-add-scripture-placeholder": "bygelyks Johannes 3 of Johannes 3:16",
-
   "playlist-add-link-placeholder": "https://foarbyld.com",
   "playlist-add-button": "Item tafoegje",
   "playlist-add-scripture-error": "Koe dy referinsje net fine",
   "playlist-add-link-error": "Fier in jildige URL yn",
   "playlist-add-link-embed": "Dizze keppeling ynbêde",
   "play-playlist": "Ofspiellist ôfspylje",
-
   "stop": "Ophâlde",
   "queue": "Wachtrige",
   "previous": "Foarige",
@@ -388,7 +384,6 @@
   "editor-align-center": "Sintrum rjochtsje",
   "editor-align-right": "Rjochts útrjochtsje",
   "editor-align-justify": "Rjochtfeardigje",
-
   "share-playlist": "Diel de playlist",
   "playlist-url-copied": "URL fan 'e playlist kopiearre nei klamboerd",
   "current-playlist": "Hjoeddeiske ôfspiellist",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" wiskje? Dit kin net ûngedien makke wurde.",
   "delete-playlist-failed": "Koe de playlist net wiskje.",
   "collapsed-tab-shared-label": "{{title}} — dielde sesje, {{count}} oanwêzich",
-  "playlist-add-mode-label": "Itemtype"
+  "playlist-add-mode-label": "Itemtype",
+  "saving": "Dwaande mei bewarjen…",
+  "unsaved-item-confirm-title": "Net-bewarre item",
+  "unsaved-item-confirm-message": "Jo binne begûn mei it tafoegjen fan in item dat noch net oan de ôfspyllist tafoege is. Wat wolle jo dwaan?",
+  "discard-and-save": "Fuortsmite en bewarje",
+  "add-and-save": "Taheakje en bewarje",
+  "loading-profile": "Dyn profyl oan it laden…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Ferpleats nei blêdwizerkategory",
+  "move-bookmark": "Ferpleatse nei map",
+  "move-to-new": "Ferhúzje nei nij"
 }

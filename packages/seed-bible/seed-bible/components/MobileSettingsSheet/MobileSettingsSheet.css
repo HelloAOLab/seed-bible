@@ -18,11 +18,12 @@
   border-top-right-radius: 1rem;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
   padding: 1rem;
-  /* Cap to the viewport and scroll internally so a tall sheet (or one opened
+  /* Cap to the viewport; the header stays pinned and .sb-mobile-settings-sheet-body
+     (below) is the part that actually scrolls, so a tall sheet (or one opened
      with the keyboard up) can always reach its bottom content. */
   max-height: 85dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   font-family: var(--sb-reader-font-family);
   animation: sb-mobile-settings-slide-up 0.25s ease-out;
@@ -43,6 +44,17 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Scrollable middle region of the sheet, between the pinned header and
+ * whatever a given sheet pins at the bottom (if anything). Any sheet using
+ * the .sb-mobile-settings-sheet shell wraps its scrollable content in this. */
+.sb-mobile-settings-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sb-mobile-settings-sheet-title {
@@ -125,6 +137,7 @@
 
 .sb-mobile-settings-sheet-divider {
   height: 1px;
+  flex-shrink: 0;
   background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
   margin: 0.5rem 0 1rem 0;
 }

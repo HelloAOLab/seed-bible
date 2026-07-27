@@ -142,6 +142,50 @@ describe("BibleSelector", () => {
     expect(container.querySelector(".sb-selector-overlay.open")).not.toBeNull();
   });
 
+  it("auto-expands the current book and highlights the current chapter on open", async () => {
+    const { selectorState, bibleDataManager, state, slot } =
+      await createSelectorFixture({ open: false });
+
+    await slot.tab!.readingState.selectChapter("EXO", 2);
+    await selectorState.setOpen(true, slot);
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => selectorState.bookData.value?.id === "EXO");
+    await waitFor(() =>
+      Boolean(container.querySelector("#booktab-EXO.sidebar-selected-itm"))
+    );
+    await waitFor(() =>
+      Boolean(container.querySelector("#chapter-btn-2.chapter-btn-current"))
+    );
+
+    expect(selectorState.expandedBookId.value).toBe("EXO");
+    expect(
+      container
+        .querySelector("#booktab-EXO")
+        ?.classList.contains("sidebar-selected-itm")
+    ).toBe(true);
+    expect(
+      container
+        .querySelector("#chapter-btn-2")
+        ?.classList.contains("chapter-btn-current")
+    ).toBe(true);
+    expect(
+      container.querySelector("#chapter-btn-2 .sidebar-chapter-itm.highlight")
+    ).not.toBeNull();
+  });
+
   it("sets dir to match selected translation text direction", async () => {
     const { selectorState, bibleDataManager, state } =
       await createSelectorFixture();
@@ -225,17 +269,23 @@ describe("BibleSelector", () => {
       );
     });
 
+    // Current reading position (GEN) is auto-expanded on open — only click
+    // the book row when chapters are not already visible.
     await waitFor(() => Boolean(container.querySelector("#booktab-GEN")));
 
-    const genesisButton = Array.from(
-      container.querySelectorAll("#booktab-GEN")
-    )[0] as HTMLDivElement | undefined;
+    if (selectorState.bookData.value?.id !== "GEN") {
+      const genesisButton = Array.from(
+        container.querySelectorAll("#booktab-GEN")
+      )[0] as HTMLDivElement | undefined;
 
-    expect(genesisButton).toBeDefined();
+      expect(genesisButton).toBeDefined();
 
-    act(() => {
-      genesisButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+      act(() => {
+        genesisButton?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+    }
 
     await waitFor(() =>
       Array.from(container.querySelectorAll(".chapter-btn")).some(

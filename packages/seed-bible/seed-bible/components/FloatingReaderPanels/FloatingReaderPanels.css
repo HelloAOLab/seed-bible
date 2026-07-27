@@ -424,7 +424,7 @@
   border-radius: 62.4375rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   background: var(--sb-primary-color);
-  color: #fff;
+  color: var(--sb-tertiary-color);
   box-shadow: 0 10px 24px
     color-mix(in srgb, var(--sb-primary-color), transparent 78%);
 }

@@ -59,6 +59,24 @@ export interface LoginManager {
   profilePromise: Promise<UserProfile> | null;
 
   /**
+   * Whether the user's profile is currently being fetched from storage. True
+   * from the moment a load begins until it resolves or fails; false when logged
+   * out and once a load settles. The account page reads this to show a loading
+   * state instead of an empty, editable form while the fetch is still in flight
+   * (which on a poor connection can take a while).
+   */
+  isProfileLoading: Signal<boolean>;
+
+  /**
+   * Whether a profile write started by `updateProfile` is currently being
+   * persisted to storage. True while at least one write is in flight, false
+   * once they all settle. The account page's "Save changes" button reads this
+   * to show a "Saving…" indicator — important on a poor connection, where the
+   * write (which happens optimistically in the UI) can take a while to land.
+   */
+  isSavingProfile: Signal<boolean>;
+
+  /**
    * Whether the user is currently in the process of logging in, which can be used to show or hide the login modal. This will be true from the moment a login attempt is initiated until it either succeeds or fails, and will be false at all other times (including while logged in). The login modal should subscribe to this signal to know when to show or hide itself, and should call `cancelLogin` if it is closed while a login attempt is in progress to abort the login flow.
    */
   isLoginOpen: Signal<boolean>;
@@ -259,6 +277,12 @@ export function createLoginManager({
   const profile = signal<UserProfile | null>(null);
   const cachedProfile = signal<UserProfile | null>(null);
   const localConfig = signal<Record<string, unknown>>(readLocalConfig());
+  const isProfileLoading = signal(false);
+  const isSavingProfile = signal(false);
+  // Counts profile writes currently in flight so overlapping writes (e.g. a
+  // manual save while a background config write is still persisting) don't let
+  // the first one to finish clear the "Saving…" state out from under the other.
+  let pendingProfileWrites = 0;
   let profilePromise: Promise<UserProfile> | null = null;
   // Tracks which account `profile.value` currently belongs to, so an account
   // switch can never leave the previous account's profile in place (which a
@@ -531,6 +555,7 @@ export function createLoginManager({
     batch(() => {
       sessionKey.value = null;
       connectionKey.value = null;
+      userInfo.value = null;
     });
   };
 
@@ -542,6 +567,7 @@ export function createLoginManager({
       // back to `localConfig`/anonymous defaults, never a stale account's data.
       cachedProfile.value = null;
       cachedProfileUserId = null;
+      isProfileLoading.value = false;
       return;
     }
 
@@ -578,6 +604,7 @@ export function createLoginManager({
       cachedProfileUserId = loadingForUserId;
     }
 
+    isProfileLoading.value = true;
     const loadPromise = getUserProfile(loadingForUserId)
       .then((p) => {
         // Guard against a stale load resolving after the user switched
@@ -613,6 +640,14 @@ export function createLoginManager({
           return profile.value;
         }
         throw err;
+      })
+      .finally(() => {
+        // Only clear the flag for the load that is still current. A stale load
+        // settling after an account switch must not turn off the spinner that
+        // belongs to the newer account's in-flight load.
+        if (userId.value === loadingForUserId) {
+          isProfileLoading.value = false;
+        }
       });
 
     // Attach a passive rejection handler so a load failure that nobody awaits
@@ -665,7 +700,22 @@ export function createLoginManager({
     cachedProfile.value = nextProfile;
     writeCachedProfile(userId.value, nextProfile);
 
-    updateUserProfile(userId.value, nextProfile);
+    // The signal update above is optimistic; the write below is what actually
+    // persists it. Track it so the UI can show a "Saving…" indicator, and
+    // catch failures here so this fire-and-forget call can't surface as an
+    // unhandled rejection (callers like the config sync don't await it).
+    pendingProfileWrites += 1;
+    isSavingProfile.value = true;
+    updateUserProfile(userId.value, nextProfile)
+      .catch((err) => {
+        console.error("[LoginManager] Failed to persist profile", err);
+      })
+      .finally(() => {
+        pendingProfileWrites -= 1;
+        if (pendingProfileWrites === 0) {
+          isSavingProfile.value = false;
+        }
+      });
   };
 
   const uploadProfilePicture = async (file: File): Promise<void> => {
@@ -725,6 +775,8 @@ export function createLoginManager({
     get profilePromise() {
       return profilePromise;
     },
+    isProfileLoading,
+    isSavingProfile,
 
     isLoginOpen,
 

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "نیویګیشن",
   "session-settings-section-sharing": "شریکول",
   "session-settings-section-participants": "ګډونوال",
-
   "shared": "شریک شوی",
   "host": "کوربه",
   "co-host": "ګډ کوربه",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "غونډه پای ته ورسوئ",
   "dont-show-again": "دا بیا مه ښکاره کوه",
   "discover": "کشف کړئ",
-
   "playlists": "پلې لیستونه",
   "annotations": "یادښتونه",
   "cross-references": "متقابل حوالې",
@@ -364,19 +362,17 @@
   "edit-playlist": "د غږیز لیست سمول",
   "remove-playlist-item": "توکي لرې کړئ",
   "edit-playlist-item": "توکي سم کړئ",
+  "drag-to-reorder-playlist-item": "د ترتیب بدلولو لپاره کش کړئ",
   "playlist-add-item": "توکي اضافه کړئ",
   "playlist-edit-item": "توکي سم کړئ",
   "playlist-save-item": "بدلونونه خوندي کړئ",
-
   "playlist-add-scripture-placeholder": "د مثال په توګه یوحنا ۳ یا یوحنا ۳:۱۶",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "توکي اضافه کړئ",
   "playlist-add-scripture-error": "دا حواله ونه موندل شوه",
   "playlist-add-link-error": "یو باوري URL دننه کړئ",
   "playlist-add-link-embed": "دا لینک دننه کړئ",
   "play-playlist": "د غږیز لیست غږول",
-
   "stop": "ودروئ",
   "queue": "کتار",
   "previous": "مخکینی",
@@ -388,7 +384,6 @@
   "editor-align-center": "په مرکز کې برابر کړئ",
   "editor-align-right": "ښي خوا ته برابر کړئ",
   "editor-align-justify": "توجیه کول",
-
   "share-playlist": "د پلې لیست شریکول",
   "playlist-url-copied": "د پلې لیست URL کلپ بورډ ته کاپي شو",
   "current-playlist": "اوسنی پلی لیست",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ړنګ کړئ؟ دا بیرته نه شي راوستلی.",
   "delete-playlist-failed": "پلې لیست ړنګ نشو.",
   "collapsed-tab-shared-label": "{{title}} — شریکه غونډه، {{count}} حاضر",
-  "playlist-add-mode-label": "د توکي ډول"
+  "playlist-add-mode-label": "د توکي ډول",
+  "saving": "خوندي کول…",
+  "unsaved-item-confirm-title": "ناخوندي شوی توکی",
+  "unsaved-item-confirm-message": "تاسو د یو داسې توکي زیاتولو پیل کړی چې لا تر اوسه پلی لست ته نه دی زیات شوی. تاسو څه غواړئ وکړئ؟",
+  "discard-and-save": "لغوه کول او خوندي کول",
+  "add-and-save": "زیاتول او خوندي کول",
+  "loading-profile": "ستاسو پروفایل پورته کیږي…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "د بک مارک کټګورۍ ته لاړ شئ",
+  "move-bookmark": "فولډر ته ولېږئ",
+  "move-to-new": "نوي ته لاړ شئ"
 }

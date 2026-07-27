@@ -13,13 +13,6 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SpinnerIcon",
-  () => ({
-    SpinnerIcon: vi.fn(() => <div data-testid="spinner" />),
-  })
-);
-
-vi.mock(
   "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon",
   () => ({
     SeedBibleIcon: vi.fn(() => <div data-testid="seed-bible-icon" />),
@@ -37,8 +30,6 @@ interface Options {
   selectorText?: string;
   startButtonText?: string;
   startButtonIcon?: string;
-  footerTitle?: string;
-  footerContent?: string;
   seedBibleIconStyle?: Record<string, string>;
   openBookSelector?: () => void;
   handleStartButtonClick?: () => void;
@@ -61,8 +52,6 @@ function makeResult(options: Options = {}): Result {
     startButtonText: options.startButtonText ?? "Read the first chapter",
     startButtonIcon: options.startButtonIcon ?? "arrow_forward",
     handleStartButtonClick: options.handleStartButtonClick ?? vi.fn(),
-    footerTitle: options.footerTitle ?? "Everything begins small.",
-    footerContent: options.footerContent ?? "Take your time.",
     seedBibleIconStyle: options.seedBibleIconStyle ?? { width: "32px" },
   } as unknown as Result;
 }
@@ -143,22 +132,6 @@ describe("Welcome", () => {
       const result = setup();
       act(() => btn(".welcome-screen-start-button")!.click());
       expect(result.handleStartButtonClick).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("footer", () => {
-    it("renders the spinner, footer title and footer content", () => {
-      setup({
-        footerTitle: "Everything begins small.",
-        footerContent: "Take your time.",
-      });
-      expect(q("[data-testid='spinner']")).not.toBeNull();
-      expect(q(".welcome-screen-footer-title")!.textContent).toBe(
-        "Everything begins small."
-      );
-      expect(q(".welcome-screen-footer-content")!.textContent).toBe(
-        "Take your time."
-      );
     });
   });
 });

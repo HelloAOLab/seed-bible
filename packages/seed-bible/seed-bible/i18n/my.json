@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "လမ်းညွှန်",
   "session-settings-section-sharing": "မျှဝေခြင်း",
   "session-settings-section-participants": "ပါဝင်သူများ",
-
   "shared": "မျှဝေထားသည်",
   "host": "အိမ်ရှင်",
   "co-host": "တွဲဖက်အိမ်ရှင်",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "အစည်းအဝေးကို အဆုံးသတ်ပါ",
   "dont-show-again": "ဒါကို ထပ်မပြပါနဲ့",
   "discover": "ရှာဖွေတွေ့ရှိပါ",
-
   "playlists": "သီချင်းစာရင်းများ",
   "annotations": "မှတ်ချက်များ",
   "cross-references": "အပြန်အလှန်ကိုးကားချက်များ",
@@ -364,19 +362,17 @@
   "edit-playlist": "သီချင်းစာရင်းကို တည်းဖြတ်ပါ",
   "remove-playlist-item": "ပစ္စည်းကို ဖယ်ရှားပါ",
   "edit-playlist-item": "အကြောင်းအရာကို တည်းဖြတ်ပါ",
+  "drag-to-reorder-playlist-item": "အစီအစဉ်ပြန်လုပ်ရန် ဖိဆွဲပါ",
   "playlist-add-item": "ပစ္စည်းထည့်ပါ",
   "playlist-edit-item": "အကြောင်းအရာကို တည်းဖြတ်ပါ",
   "playlist-save-item": "ပြောင်းလဲမှုများကို သိမ်းဆည်းပါ",
-
   "playlist-add-scripture-placeholder": "ဥပမာ ယောဟန် ၃ သို့မဟုတ် ယောဟန် ၃:၁၆",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ပစ္စည်းထည့်ပါ",
   "playlist-add-scripture-error": "ထိုကိုးကားချက်ကို ရှာမတွေ့ပါ",
   "playlist-add-link-error": "မှန်ကန်သော URL တစ်ခုထည့်ပါ",
   "playlist-add-link-embed": "ဒီလင့်ခ်ကို ထည့်သွင်းပါ",
   "play-playlist": "သီချင်းစာရင်းကို ဖွင့်ပါ",
-
   "stop": "ရပ်",
   "queue": "တန်းစီခြင်း",
   "previous": "ယခင်",
@@ -388,7 +384,6 @@
   "editor-align-center": "အလယ်ဗဟိုသို့ ညှိပါ",
   "editor-align-right": "ညာဘက်သို့ ညှိပါ",
   "editor-align-justify": "တရားမျှတအောင်ပြုလုပ်ပါ",
-
   "share-playlist": "သီချင်းစာရင်းကို မျှဝေပါ",
   "playlist-url-copied": "သီချင်းစာရင်း URL ကို ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
   "current-playlist": "လက်ရှိ သီချင်းစာရင်း",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ကို ဖျက်မလား။ ၎င်းကို ပြန်ပြင်၍မရပါ။",
   "delete-playlist-failed": "သီချင်းစာရင်းကို ဖျက်၍မရပါ။",
   "collapsed-tab-shared-label": "{{title}} — မျှဝေထားသော အစည်းအဝေး၊ {{count}} ရှိနေသည်",
-  "playlist-add-mode-label": "ပစ္စည်းအမျိုးအစား"
+  "playlist-add-mode-label": "ပစ္စည်းအမျိုးအစား",
+  "saving": "သိမ်းဆည်းနေသည်…",
+  "unsaved-item-confirm-title": "မသိမ်းရသေးသော အရာ",
+  "unsaved-item-confirm-message": "ပလေးလစ်တွင် မထည့်ရသေးသော အရာတစ်ခုကို ထည့်နေပါသည်။ သင်ဘာလုပ်လိုပါသလဲ?",
+  "discard-and-save": "စွန့်ပယ်ပြီး သိမ်းမည်",
+  "add-and-save": "ထည့်ပြီး သိမ်းမည်",
+  "loading-profile": "သင့်ပရိုဖိုင်ကို တင်နေသည်…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "bookmark အမျိုးအစားသို့ ရွှေ့ပါ",
+  "move-bookmark": "ဖိုလ်ဒါသို့ ရွှေ့ရန်",
+  "move-to-new": "အသစ်သို့ ရွှေ့ပါ"
 }

@@ -38,6 +38,8 @@ describe("HighlightsManager", () => {
       cachedProfile: signal(null),
       localConfig: signal({}),
       profilePromise: null,
+      isProfileLoading: signal(false),
+      isSavingProfile: signal(false),
       updateProfile: vi.fn().mockResolvedValue(undefined),
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),

@@ -56,4 +56,23 @@ export type CommunityReading<T extends string> = {
   [K in T]: FilteredReading;
 };
 
-export type UserLastReading = { bookId: string; chapter: number } | undefined;
+/** A concrete resume position: the last book/chapter a user was reading. */
+export type LastReading = { bookId: string; chapter: number };
+
+/** The result of a last-reading lookup — a position, or `undefined` if none. */
+export type UserLastReading = LastReading | undefined;
+
+/**
+ * The Today screen's reading-history gate as a three-state status, replacing
+ * the old `LastReading | undefined` that conflated "still loading" with "no
+ * history". `loading` and `ready` both render the personalized layout
+ * (`loading` shows placeholders); only `empty` renders the Welcome page.
+ *
+ * - `loading` — a userId is known and the history fetch is in flight.
+ * - `empty`   — no userId (new/anonymous), or the fetch confirmed no history.
+ * - `ready`   — the fetch found a resume position.
+ */
+export type ReadingHistoryState =
+  | { status: "loading" }
+  | { status: "empty" }
+  | { status: "ready"; lastReading: LastReading };

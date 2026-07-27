@@ -198,7 +198,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
         result.chapterNumber,
         result.verseNumber,
         {
-          className: "sb-verse-decoration-search-result",
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
           removeAfterMs: 3000,
         }
       );
