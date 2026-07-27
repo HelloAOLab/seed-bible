@@ -6,7 +6,7 @@ import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
-import type { ChatMessage, ChatsManager } from "../../managers/ChatsManager";
+import type { ChatsManager } from "../../managers/ChatsManager";
 import { translateTitle } from "../../app/utils";
 import { v4 as uuid } from "uuid";
 import { MaterialIcon } from "../icons";
