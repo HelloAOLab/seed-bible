@@ -269,4 +269,89 @@ describe("FreeUseBibleAPI", () => {
       "https://example.com/api/available_translations.json"
     );
   });
+
+  it("rejects with an AbortError when the caller's signal is aborted", async () => {
+    fetchMock.mockImplementation(
+      (_url: string, options?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("The operation was aborted.", "AbortError")
+            );
+          });
+        })
+    );
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    const controller = new AbortController();
+
+    const result = api.getAvailableTranslations(undefined, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    await expect(result).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("does not reject an unrelated caller's cache-hit request when that caller aborts its own signal", async () => {
+    let resolveFetch: (() => void) | undefined;
+    fetchMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = () =>
+            resolve(createResponse({ translations: [{ id: "eng_kjv" }] }));
+        })
+    );
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    // The first caller creates the cache entry (no signal of its own).
+    const creator = api.getAvailableTranslations();
+    // A second, unrelated caller reuses the cached in-flight promise and
+    // later aborts its own signal — this must not affect the shared
+    // request the first caller (or anyone else) is relying on.
+    const controller = new AbortController();
+    const joiner = api.getAvailableTranslations(undefined, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    resolveFetch!();
+
+    await expect(creator).resolves.toEqual({
+      translations: [{ id: "eng_kjv" }],
+    });
+    await expect(joiner).resolves.toEqual({
+      translations: [{ id: "eng_kjv" }],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("evicts the cache entry when an aborted request created it, allowing a fresh retry", async () => {
+    fetchMock.mockImplementationOnce(
+      (_url: string, options?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("The operation was aborted.", "AbortError")
+            );
+          });
+        })
+    );
+    fetchMock.mockResolvedValueOnce(createResponse({ translations: [] }));
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    const controller = new AbortController();
+
+    const first = api.getAvailableTranslations(undefined, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    await expect(first).rejects.toMatchObject({ name: "AbortError" });
+
+    const retry = await api.getAvailableTranslations();
+
+    expect(retry).toEqual({ translations: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });

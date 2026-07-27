@@ -1013,6 +1013,16 @@ export function getDefaultAPIEndpoint(url: URL): string {
     : PRIVATE_API_ENDPOINT;
 }
 
+/**
+ * Options accepted by every `FreeUseBibleAPI` request method. `signal` lets a
+ * caller cancel its own in-flight request (e.g. when the user navigates
+ * again before a previous request resolved). See `_getJson` for how this
+ * interacts with the shared response cache.
+ */
+export interface ApiRequestOptions {
+  signal?: AbortSignal;
+}
+
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
@@ -1022,22 +1032,26 @@ export class FreeUseBibleAPI {
   }
 
   async getAvailableTranslations(
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<AvailableTranslations> {
     return this._getJson<AvailableTranslations>(
       "api/available_translations.json",
-      endpoint
+      endpoint,
+      options
     );
   }
 
   async getTranslationBooks(
     translation: string,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBooks> {
     const encodedTranslation = encodeURIComponent(translation);
     return this._getJson<TranslationBooks>(
       `api/${encodedTranslation}/books.json`,
-      endpoint
+      endpoint,
+      options
     );
   }
 
@@ -1045,51 +1059,66 @@ export class FreeUseBibleAPI {
     translation: string,
     book: string,
     chapter: number | string,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter> {
     const encodedTranslation = encodeURIComponent(translation);
     const encodedBook = encodeURIComponent(book);
     const encodedChapter = encodeURIComponent(String(chapter));
     return this._getJson<TranslationBookChapter>(
       `api/${encodedTranslation}/${encodedBook}/${encodedChapter}.json`,
-      endpoint
+      endpoint,
+      options
     );
   }
 
   async getNextChapter(
     chapter: TranslationBookChapter,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter | null> {
     if (!chapter.nextChapterApiLink) {
       return null;
     }
     return this._getJson<TranslationBookChapter>(
       chapter.nextChapterApiLink,
-      endpoint
+      endpoint,
+      options
     );
   }
 
   async getPreviousChapter(
     chapter: TranslationBookChapter,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter | null> {
     if (!chapter.previousChapterApiLink) {
       return null;
     }
     return this._getJson<TranslationBookChapter>(
       chapter.previousChapterApiLink,
-      endpoint
+      endpoint,
+      options
     );
   }
 
-  private _getJson<T>(path: string, endpoint?: string): Promise<T> {
+  private _getJson<T>(
+    path: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<T> {
     const url = this._buildUrl(path, endpoint);
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
+      // Deliberately never re-wire a different caller's signal onto a
+      // promise other callers may already be sharing — aborting one
+      // caller's request must not reject an unrelated caller's identical
+      // in-flight request.
       return existing;
     }
 
-    const request: Promise<T> = fetch(url)
+    const signal = options?.signal;
+    const request: Promise<T> = (signal ? fetch(url, { signal }) : fetch(url))
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
           throw new Error(

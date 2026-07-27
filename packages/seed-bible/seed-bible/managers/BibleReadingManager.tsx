@@ -1241,7 +1241,13 @@ export function createBibleReadingState(
 
   const syncStateFromChapter = async (
     chapter: TranslationBookChapter,
-    options?: SelectTranslationAndChapterOptions
+    options?: SelectTranslationAndChapterOptions,
+    // Not part of the public `SelectTranslationAndChapterOptions` type —
+    // an internal staleness guard so a navigation call that's been
+    // superseded (a newer one started before this one finished) can't win a
+    // race against this function's own internal `await` below. Callers with
+    // no staleness concept (e.g. `loadInitialData`) simply omit it.
+    isStillCurrent?: () => boolean
   ) => {
     const nextTranslationId = chapter.translation.id;
     const nextBookId = chapter.book.id;
@@ -1286,8 +1292,15 @@ export function createBibleReadingState(
       clearSelectedVerses();
     });
 
+    if (isStillCurrent && !isStillCurrent()) {
+      return;
+    }
+
     if (translationBooks.value?.translation.id !== nextTranslationId) {
       const books = await dataManager.getTranslationBooks(nextTranslationId);
+      if (isStillCurrent && !isStillCurrent()) {
+        return;
+      }
       translationBooks.value = books;
       availableTranslations.value = toAvailableTranslations(
         dataManager.availableTranslations.value
@@ -1435,48 +1448,160 @@ export function createBibleReadingState(
   };
 
   // Chapter/book navigation must never block on an in-flight text request
-  // (issue #1414): callers can invoke these repeatedly (e.g. tapping "next"
-  // in quick succession) without waiting for a prior request to resolve.
-  // Instead of racing, each navigation is queued behind the previous one so
-  // they run in call order, always reading fresh state (translationId,
-  // bookId, chapterData) once it's their turn — no stale response can ever
-  // clobber a newer one, and `loading` stays true for the whole queue rather
-  // than flickering between queued navigations.
-  let navigationQueue: Promise<void> = Promise.resolve();
-  let pendingNavigationCount = 0;
+  // (issue #1414), and pressing "next" (or any other navigation action)
+  // again must not wait for a previous one to finish (a follow-up to #1414):
+  // repeated taps should advance multiple chapters, computed purely from the
+  // current translation's book metadata rather than by chasing the
+  // previously-loaded chapter's next/previous link (which is what forced
+  // serialization before).
+  //
+  // `positionChain` tracks "where the reader is conceptually heading," kept
+  // separate from the committed `bookId`/`chapterNumber` signals (which only
+  // update once a fetch actually resolves). Every navigation method computes
+  // its target via `chainPosition`, whose reassignment of `positionChain`
+  // happens synchronously at call time — so two calls issued back-to-back,
+  // even with zero `await` between them, are guaranteed to run their target
+  // computations in call order: the second one's `compute` receives the
+  // first one's already-computed target as `base`, never a stale read of the
+  // committed signals. That's what makes "press next twice" land two
+  // chapters ahead instead of re-computing the same next chapter twice.
+  interface LogicalPosition {
+    translationId: string;
+    bookId: string;
+    chapterNumber: number;
+  }
 
-  const queueNavigation = <T,>(task: () => Promise<T>): Promise<T> => {
-    pendingNavigationCount++;
-    loading.value = true;
+  let positionChain: Promise<LogicalPosition | null> = Promise.resolve(null);
 
-    const previousNavigation = navigationQueue;
-    const run = (async () => {
-      await previousNavigation;
-      try {
-        return await task();
-      } finally {
-        pendingNavigationCount--;
-        if (pendingNavigationCount === 0) {
-          loading.value = false;
-        }
-      }
-    })();
-
-    navigationQueue = run.then(
-      () => undefined,
-      () => undefined
+  const chainPosition = (
+    compute: (base: LogicalPosition | null) => Promise<LogicalPosition | null>
+  ): Promise<LogicalPosition | null> => {
+    const basePromise = positionChain;
+    const result = basePromise.then(compute);
+    positionChain = Promise.all([basePromise, result.catch(() => null)]).then(
+      ([base, target]) => target ?? base
     );
-
-    return run;
+    return result;
   };
 
-  const loadPreviousChapter = () =>
-    queueNavigation(async () => {
-      if (!chapterData.value) {
-        return;
-      }
+  const getAdjacentBook = (
+    books: TranslationBooks,
+    currentBookId: string,
+    direction: 1 | -1
+  ): TranslationBook | null => {
+    // `order` is the canonical sequence — `books.books`'s array order isn't
+    // guaranteed to match it.
+    const sorted = sortBy(books.books, [(book: TranslationBook) => book.order]);
+    const index = sorted.findIndex((book) => book.id === currentBookId);
+    if (index === -1) {
+      return null;
+    }
+    return sorted[index + direction] ?? null;
+  };
 
-      const outcome = await runNavigationHooks("previous");
+  const computeAdjacentPosition = (
+    books: TranslationBooks,
+    position: LogicalPosition,
+    direction: "next" | "previous"
+  ): LogicalPosition | null => {
+    const book = books.books.find((entry) => entry.id === position.bookId);
+    if (!book) {
+      return null;
+    }
+    const firstChapterNumber = book.firstChapterNumber ?? 1;
+    const lastChapterNumber = firstChapterNumber + book.numberOfChapters - 1;
+
+    if (direction === "next") {
+      if (position.chapterNumber < lastChapterNumber) {
+        return { ...position, chapterNumber: position.chapterNumber + 1 };
+      }
+      const nextBook = getAdjacentBook(books, position.bookId, 1);
+      if (!nextBook) {
+        return null; // last book, last chapter — mirrors nextChapterApiLink === null
+      }
+      return {
+        ...position,
+        bookId: nextBook.id,
+        chapterNumber: nextBook.firstChapterNumber ?? 1, // not assumed to be 1
+      };
+    }
+
+    if (position.chapterNumber > firstChapterNumber) {
+      return { ...position, chapterNumber: position.chapterNumber - 1 };
+    }
+    const previousBook = getAdjacentBook(books, position.bookId, -1);
+    if (!previousBook) {
+      return null; // first book, first chapter — mirrors previousChapterApiLink === null
+    }
+    const previousLastChapterNumber =
+      (previousBook.firstChapterNumber ?? 1) +
+      previousBook.numberOfChapters -
+      1;
+    return {
+      ...position,
+      bookId: previousBook.id,
+      chapterNumber: previousLastChapterNumber,
+    };
+  };
+
+  // Satisfies "if the metadata isn't available yet, wait for it to load
+  // before navigating": reads the reading-state-local cache first (fast
+  // path, matches the current translation instantly in steady state), else
+  // awaits `dataManager.getTranslationBooks`, which is itself cached and
+  // shared across concurrent callers.
+  const getBooksForPosition = (
+    translationId: string
+  ): Promise<TranslationBooks> => {
+    if (translationBooks.value?.translation.id === translationId) {
+      return Promise.resolve(translationBooks.value);
+    }
+    return dataManager.getTranslationBooks(translationId);
+  };
+
+  // Generation counter + AbortController: the cancellation mechanism. Abort
+  // is a best-effort optimization (it can't retroactively un-settle an
+  // already-resolved fetch, and `syncStateFromChapter` has its own internal
+  // await where a newer call can slip in) — `isCurrentNavigationTurn` is the
+  // authoritative guard against a superseded call ever committing state.
+  let navigationGeneration = 0;
+  let activeNavigationController: AbortController | null = null;
+
+  const beginNavigationTurn = (): {
+    generation: number;
+    signal: AbortSignal;
+  } => {
+    activeNavigationController?.abort();
+    const controller = new AbortController();
+    activeNavigationController = controller;
+    navigationGeneration += 1;
+    return { generation: navigationGeneration, signal: controller.signal };
+  };
+
+  const isCurrentNavigationTurn = (generation: number): boolean =>
+    generation === navigationGeneration;
+
+  const isAbortError = (err: unknown): boolean =>
+    err instanceof DOMException && err.name === "AbortError";
+
+  // Kept independent of the cancellation machinery above so the loading
+  // indicator still flips on instantly for every call, matching prior
+  // behavior, regardless of how many navigation "turns" end up super-ceded.
+  let pendingNavigationCalls = 0;
+  const beginLoadingIndicator = () => {
+    pendingNavigationCalls++;
+    loading.value = true;
+  };
+  const endLoadingIndicator = () => {
+    pendingNavigationCalls--;
+    if (pendingNavigationCalls === 0) {
+      loading.value = false;
+    }
+  };
+
+  const navigateAdjacent = async (direction: "next" | "previous") => {
+    beginLoadingIndicator();
+    try {
+      const outcome = await runNavigationHooks(direction);
       if (outcome.type === "handled") {
         emitNavigate({ replace: false });
         return;
@@ -1486,198 +1611,329 @@ export function createBibleReadingState(
 
       error.value = null;
 
+      let target: LogicalPosition | null;
+      let fetchChapter: (
+        signal: AbortSignal
+      ) => Promise<TranslationBookChapter | null>;
+
+      if (outcome.type === "navigate") {
+        const navigateChapter = outcome.chapter;
+        target = await chainPosition(async () => ({
+          translationId: navigateChapter.translation.id,
+          bookId: navigateChapter.book.id,
+          chapterNumber: navigateChapter.chapter.number,
+        }));
+        fetchChapter = async () => navigateChapter;
+      } else {
+        target = await chainPosition(async (base) => {
+          if (!base) {
+            return null; // before initial load — matches the old `!chapterData.value` guard
+          }
+          const books = await getBooksForPosition(base.translationId);
+          return computeAdjacentPosition(books, base, direction);
+        });
+        if (!target) {
+          return; // boundary no-op, or nothing to advance from yet
+        }
+        const resolvedTarget = target;
+        fetchChapter = (signal) =>
+          dataManager.getTranslationBookChapter(
+            resolvedTarget.translationId,
+            resolvedTarget.bookId,
+            resolvedTarget.chapterNumber,
+            { signal }
+          );
+      }
+      if (!target) {
+        return;
+      }
+
+      const { generation, signal } = beginNavigationTurn();
       try {
-        const chapter =
-          outcome.type === "navigate"
-            ? outcome.chapter
-            : await dataManager.getPreviousChapter(chapterData.value);
-        if (!chapter) {
+        const chapter = await fetchChapter(signal);
+        if (!chapter || !isCurrentNavigationTurn(generation)) {
           return;
         }
-        await syncStateFromChapter(chapter);
-
+        await syncStateFromChapter(chapter, undefined, () =>
+          isCurrentNavigationTurn(generation)
+        );
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
         emitNavigate({ replace: false });
       } catch (err) {
+        if (isAbortError(err) || !isCurrentNavigationTurn(generation)) {
+          return;
+        }
         error.value =
           err instanceof Error
             ? err.message
-            : "Failed to load previous chapter.";
+            : `Failed to load ${direction} chapter.`;
       }
-    });
+    } finally {
+      endLoadingIndicator();
+    }
+  };
 
-  const selectTranslation = (translation: string) =>
-    queueNavigation(async () => {
+  const loadPreviousChapter = () => navigateAdjacent("previous");
+
+  const selectTranslation = async (translation: string) => {
+    beginLoadingIndicator();
+    try {
       error.value = null;
 
+      let target: LogicalPosition | null;
       try {
-        const nextTranslationId = await resolveTranslationInput(translation);
+        target = await chainPosition(async () => {
+          const nextTranslationId = await resolveTranslationInput(translation);
+          const books =
+            await dataManager.getTranslationBooks(nextTranslationId);
+          const firstBook = books.books[0];
+          if (!firstBook) {
+            throw new Error("No books available for selected translation.");
+          }
+          return {
+            translationId: nextTranslationId,
+            bookId: firstBook.id,
+            chapterNumber: firstBook.firstChapterNumber ?? 1,
+          };
+        });
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to select translation.";
+        return;
+      }
+      if (!target) {
+        return;
+      }
+      const resolvedTarget = target;
 
-        const books = await dataManager.getTranslationBooks(nextTranslationId);
-        const firstBook = books.books[0];
-        if (!firstBook) {
-          throw new Error("No books available for selected translation.");
-        }
-
-        const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
+      const { generation, signal } = beginNavigationTurn();
+      try {
         const chapter = await dataManager.getTranslationBookChapter(
-          nextTranslationId,
-          firstBook.id,
-          firstChapterNumber
+          resolvedTarget.translationId,
+          resolvedTarget.bookId,
+          resolvedTarget.chapterNumber,
+          { signal }
         );
-
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
         await batch(async () => {
           availableTranslations.value = toAvailableTranslations(
             dataManager.availableTranslations.value
           );
-          await syncStateFromChapter(chapter);
+          await syncStateFromChapter(chapter, undefined, () =>
+            isCurrentNavigationTurn(generation)
+          );
         });
-
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
         emitNavigate({ replace: false });
       } catch (err) {
+        if (isAbortError(err) || !isCurrentNavigationTurn(generation)) {
+          return;
+        }
         error.value =
           err instanceof Error ? err.message : "Failed to select translation.";
       }
-    });
+    } finally {
+      endLoadingIndicator();
+    }
+  };
 
-  const selectBook = (book: string) =>
-    queueNavigation(async () => {
-      if (!translationBooks.value) {
-        return;
-      }
-
-      const selectedBook = translationBooks.value.books.find(
-        (entry) => entry.id === book
-      );
-      if (!selectedBook) {
-        return;
-      }
-
+  const selectBook = async (book: string) => {
+    beginLoadingIndicator();
+    try {
       error.value = null;
 
-      try {
-        const nextChapterNumber = selectedBook.firstChapterNumber ?? 1;
-        const chapter = await dataManager.getTranslationBookChapter(
-          translationId.value,
-          book,
-          nextChapterNumber
+      const target = await chainPosition(async (base) => {
+        if (!translationBooks.value) {
+          return null;
+        }
+        const selectedBook = translationBooks.value.books.find(
+          (entry) => entry.id === book
         );
+        if (!selectedBook) {
+          return null;
+        }
+        return {
+          translationId: base?.translationId ?? translationId.value,
+          bookId: book,
+          chapterNumber: selectedBook.firstChapterNumber ?? 1,
+        };
+      });
+      if (!target) {
+        return;
+      }
 
-        await syncStateFromChapter(chapter);
-
+      const { generation, signal } = beginNavigationTurn();
+      try {
+        const chapter = await dataManager.getTranslationBookChapter(
+          target.translationId,
+          target.bookId,
+          target.chapterNumber,
+          { signal }
+        );
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
+        await syncStateFromChapter(chapter, undefined, () =>
+          isCurrentNavigationTurn(generation)
+        );
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
         emitNavigate({ replace: false });
       } catch (err) {
+        if (isAbortError(err) || !isCurrentNavigationTurn(generation)) {
+          return;
+        }
         error.value =
           err instanceof Error ? err.message : "Failed to select book.";
       }
-    });
+    } finally {
+      endLoadingIndicator();
+    }
+  };
 
-  const selectTranslationAndChapter = (
+  const selectTranslationAndChapter = async (
     nextTranslationIdOrUrl: string,
     nextBookId: string,
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
-  ) =>
-    queueNavigation(async () => {
+  ) => {
+    beginLoadingIndicator();
+    try {
       error.value = null;
 
+      let target: LogicalPosition | null;
       try {
-        const nextTranslationId = await resolveTranslationInput(
-          nextTranslationIdOrUrl
-        );
-
-        const books = await dataManager.getTranslationBooks(nextTranslationId);
-        const selectedBook = books.books.find((book) => book.id === nextBookId);
-        if (!selectedBook) {
-          throw new Error(
-            `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
+        target = await chainPosition(async () => {
+          const nextTranslationId = await resolveTranslationInput(
+            nextTranslationIdOrUrl
           );
-        }
-
-        const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
-        const maxChapterNumber =
-          firstChapterNumber + selectedBook.numberOfChapters - 1;
-        const clampedChapterNumber =
-          nextChapterNumber >= firstChapterNumber &&
-          nextChapterNumber <= maxChapterNumber
-            ? nextChapterNumber
-            : firstChapterNumber;
-
-        const chapter = await dataManager.getTranslationBookChapter(
-          nextTranslationId,
-          selectedBook.id,
-          clampedChapterNumber
-        );
-
-        await batch(async () => {
-          availableTranslations.value = toAvailableTranslations(
-            dataManager.availableTranslations.value
+          const books =
+            await dataManager.getTranslationBooks(nextTranslationId);
+          const selectedBook = books.books.find(
+            (book) => book.id === nextBookId
           );
-          await syncStateFromChapter(chapter, options);
+          if (!selectedBook) {
+            throw new Error(
+              `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
+            );
+          }
+          const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
+          const maxChapterNumber =
+            firstChapterNumber + selectedBook.numberOfChapters - 1;
+          const clampedChapterNumber =
+            nextChapterNumber >= firstChapterNumber &&
+            nextChapterNumber <= maxChapterNumber
+              ? nextChapterNumber
+              : firstChapterNumber;
+          return {
+            translationId: nextTranslationId,
+            bookId: selectedBook.id,
+            chapterNumber: clampedChapterNumber,
+          };
         });
-
-        if (options?.updateUrl !== false) {
-          emitNavigate({ replace: false });
-        }
       } catch (err) {
         error.value =
           err instanceof Error
             ? err.message
             : "Failed to select translation and chapter.";
+        return;
       }
-    });
+      if (!target) {
+        return;
+      }
+      const resolvedTarget = target;
 
-  const selectChapter = (book: string, chapter: number) =>
-    queueNavigation(async () => {
+      const { generation, signal } = beginNavigationTurn();
+      try {
+        const chapter = await dataManager.getTranslationBookChapter(
+          resolvedTarget.translationId,
+          resolvedTarget.bookId,
+          resolvedTarget.chapterNumber,
+          { signal }
+        );
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
+        await batch(async () => {
+          availableTranslations.value = toAvailableTranslations(
+            dataManager.availableTranslations.value
+          );
+          await syncStateFromChapter(chapter, options, () =>
+            isCurrentNavigationTurn(generation)
+          );
+        });
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
+        if (options?.updateUrl !== false) {
+          emitNavigate({ replace: false });
+        }
+      } catch (err) {
+        if (isAbortError(err) || !isCurrentNavigationTurn(generation)) {
+          return;
+        }
+        error.value =
+          err instanceof Error
+            ? err.message
+            : "Failed to select translation and chapter.";
+      }
+    } finally {
+      endLoadingIndicator();
+    }
+  };
+
+  const selectChapter = async (book: string, chapter: number) => {
+    beginLoadingIndicator();
+    try {
       error.value = null;
 
+      const target = await chainPosition(async (base) => ({
+        translationId: base?.translationId ?? translationId.value,
+        bookId: book,
+        chapterNumber: chapter,
+      }));
+      if (!target) {
+        return;
+      }
+
+      const { generation, signal } = beginNavigationTurn();
       try {
         const nextChapterData = await dataManager.getTranslationBookChapter(
-          translationId.value,
-          book,
-          chapter
+          target.translationId,
+          target.bookId,
+          target.chapterNumber,
+          { signal }
         );
-
-        await syncStateFromChapter(nextChapterData);
-
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
+        await syncStateFromChapter(nextChapterData, undefined, () =>
+          isCurrentNavigationTurn(generation)
+        );
+        if (!isCurrentNavigationTurn(generation)) {
+          return;
+        }
         emitNavigate({ replace: false });
       } catch (err) {
+        if (isAbortError(err) || !isCurrentNavigationTurn(generation)) {
+          return;
+        }
         error.value =
           err instanceof Error ? err.message : "Failed to select chapter.";
       }
-    });
+    } finally {
+      endLoadingIndicator();
+    }
+  };
 
-  const loadNextChapter = () =>
-    queueNavigation(async () => {
-      if (!chapterData.value) {
-        return;
-      }
-
-      const outcome = await runNavigationHooks("next");
-      if (outcome.type === "handled") {
-        emitNavigate({ replace: false });
-        return;
-      } else if (outcome.type === "prevent") {
-        return;
-      }
-
-      error.value = null;
-
-      try {
-        const chapter =
-          outcome.type === "navigate"
-            ? outcome.chapter
-            : await dataManager.getNextChapter(chapterData.value);
-        if (!chapter) {
-          return;
-        }
-        await syncStateFromChapter(chapter);
-
-        emitNavigate({ replace: false });
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load next chapter.";
-      }
-    });
+  const loadNextChapter = () => navigateAdjacent("next");
 
   const loadInitialData = async () => {
     loading.value = true;
@@ -1745,6 +2001,14 @@ export function createBibleReadingState(
 
       await syncStateFromChapter(chapter, {
         scrollToVerse: options.scrollToVerse,
+      });
+
+      // Seed the position chain now that a real chapter is loaded — every
+      // navigation method's `chainPosition` call builds on this baseline.
+      positionChain = Promise.resolve({
+        translationId: nextTranslationId,
+        bookId: nextBookId,
+        chapterNumber: nextChapterNumber,
       });
     } catch (err) {
       console.error("Error loading initial Bible data:", err);
