@@ -44,7 +44,7 @@
 .reading-history-timeline-label {
   font-family: system-ui;
   font-size: 12px;
-  color: var(--text1);
+  color: var(--sb-font-color);
 }
 
 .reading-history-timeline-label-month {

@@ -454,11 +454,13 @@ export function generateThemeCssVariables(variables: BibleTheme): string {
 }
 
 export function generateThemeCssClasses(theme: BibleTheme): string {
+  // Highlighted text keeps a readable font color; the highlight *background* is
+  // drawn behind the text by the ribbon layer (from `--sb-highlight-<id>-color`),
+  // not as a `background-color` here.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
-        `background-color: var(--sb-highlight-${colorId}-color);`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
         `&.sb-words-of-jesus { `,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
@@ -511,8 +513,8 @@ const LIGHT_THEME: BibleTheme = {
     verseFontColor: "#333",
     verseCursor: "pointer",
 
-    selectedVerseBorderBottom: "2px dashed currentColor",
-    selectedVerseTextDecoration: "none",
+    selectedVerseBorderBottom: "none",
+    selectedVerseTextDecoration: "underline dotted",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
@@ -653,8 +655,8 @@ const DARK_THEME: BibleTheme = {
     verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 
-    selectedVerseBorderBottom: "2px dashed currentColor",
-    selectedVerseTextDecoration: "none",
+    selectedVerseBorderBottom: "none",
+    selectedVerseTextDecoration: "underline dotted",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
@@ -719,36 +721,45 @@ const DARK_THEME: BibleTheme = {
     selectedTabBackground: "var(--sb-secondary-color)",
     selectedTabFontColor: "var(--sb-primary-color)",
   },
+  // Dark-theme highlights are solid, saturated-but-dark versions of each hue
+  // rather than the bright pastels used in light mode. They read as clearly
+  // colorful and distinct from one another, yet stay dark enough that white
+  // text stays legible on top. The font color is an explicit white (`#ffffff`)
+  // rather than `inherit` — inherit resolved to a non-white color in practice,
+  // so it is pinned here to guarantee the highlighted verse text stays white.
+  // (Translucent tints were tried first but blending low-opacity colors into
+  // the near-black background dragged every hue toward gray — they came out
+  // muddy and washed out, so solid colors are used.)
   highlightColors: {
     yellow: {
-      color: "#fff59d",
-      fontColor: "#333",
-      wordsOfJesusFontColor: "#5c5c5c",
+      color: "#756a0a",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
     },
     green: {
-      color: "#a5d6a7",
-      fontColor: "#333",
-      wordsOfJesusFontColor: "#5c5c5c",
+      color: "#2f6d3a",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
     },
     blue: {
-      color: "#90caf9",
-      fontColor: "#333",
-      wordsOfJesusFontColor: "#5c5c5c",
+      color: "#2f5f9e",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
     },
     pink: {
-      color: "#f48fb1",
-      fontColor: "#333",
-      wordsOfJesusFontColor: "#5c5c5c",
+      color: "#93395c",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
     },
     purple: {
-      color: "#ce93d8",
-      fontColor: "#333",
-      wordsOfJesusFontColor: "#5c5c5c",
+      color: "#5b4489",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
     },
     orange: {
-      color: "#ffcc80",
-      fontColor: "#333",
-      wordsOfJesusFontColor: "#5c5c5c",
+      color: "#98551c",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
     },
   },
 };

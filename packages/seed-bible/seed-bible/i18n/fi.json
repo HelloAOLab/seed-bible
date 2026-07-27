@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigointi",
   "session-settings-section-sharing": "Jakaminen",
   "session-settings-section-participants": "Osallistujat",
-
   "shared": "Jaettu",
   "host": "Isäntä",
   "co-host": "Yhteisisäntä",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Lopeta istunto",
   "dont-show-again": "Älä näytä tätä uudelleen",
   "discover": "Tutustu",
-
   "playlists": "Soittolistat",
   "annotations": "Merkinnät",
   "cross-references": "Ristiviittaukset",
@@ -364,19 +362,17 @@
   "edit-playlist": "Muokkaa soittolistaa",
   "remove-playlist-item": "Poista kohde",
   "edit-playlist-item": "Muokkaa kohdetta",
+  "drag-to-reorder-playlist-item": "Järjestä vetämällä",
   "playlist-add-item": "Lisää kohde",
   "playlist-edit-item": "Muokkaa kohdetta",
   "playlist-save-item": "Tallenna muutokset",
-
   "playlist-add-scripture-placeholder": "esim. Joh. 3 tai Joh. 3:16",
-
   "playlist-add-link-placeholder": "https://esimerkki.com",
   "playlist-add-button": "Lisää kohde",
   "playlist-add-scripture-error": "En löytänyt kyseistä viitettä",
   "playlist-add-link-error": "Anna kelvollinen URL-osoite",
   "playlist-add-link-embed": "Upota tämä linkki",
   "play-playlist": "Toista soittolista",
-
   "stop": "Stop",
   "queue": "Jonottaa",
   "previous": "Edellinen",
@@ -388,7 +384,6 @@
   "editor-align-center": "Tasaa keskelle",
   "editor-align-right": "Tasaa oikealle",
   "editor-align-justify": "Perustella",
-
   "share-playlist": "Jaa soittolista",
   "playlist-url-copied": "Soittolistan URL-osoite kopioitu leikepöydälle",
   "current-playlist": "Nykyinen soittolista",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Poistetaanko \" {{title}} \"? Tätä ei voi perua.",
   "delete-playlist-failed": "Soittolistan poistaminen epäonnistui.",
   "collapsed-tab-shared-label": "{{title}} — jaettu istunto, läsnä {{count}}",
-  "playlist-add-mode-label": "Tuotetyyppi"
+  "playlist-add-mode-label": "Tuotetyyppi",
+  "saving": "Tallennetaan…",
+  "unsaved-item-confirm-title": "Tallentamaton kohde",
+  "unsaved-item-confirm-message": "Olet aloittanut kohteen lisäämisen, jota ei ole vielä lisätty soittolistaan. Mitä haluat tehdä?",
+  "discard-and-save": "Hylkää ja tallenna",
+  "add-and-save": "Lisää ja tallenna",
+  "loading-profile": "Profiiliasi ladataan…",
+  "app-version": "versio {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Siirry kirjanmerkkiluokkaan",
+  "move-bookmark": "Siirrä kansioon",
+  "move-to-new": "Siirry uuteen"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigasi",
   "session-settings-section-sharing": "Perkongsian",
   "session-settings-section-participants": "Peserta",
-
   "shared": "Dikongsi",
   "host": "Hos",
   "co-host": "Pengacara bersama",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Tamat sesi",
   "dont-show-again": "Jangan tunjukkan ini lagi",
   "discover": "Temui",
-
   "playlists": "Senarai main",
   "annotations": "Anotasi",
   "cross-references": "Rujukan silang",
@@ -364,19 +362,17 @@
   "edit-playlist": "Edit senarai main",
   "remove-playlist-item": "Alih keluar item",
   "edit-playlist-item": "Edit item",
+  "drag-to-reorder-playlist-item": "Seret untuk menyusun semula",
   "playlist-add-item": "Tambah item",
   "playlist-edit-item": "Edit item",
   "playlist-save-item": "Simpan perubahan",
-
   "playlist-add-scripture-placeholder": "contohnya Yohanes 3 atau Yohanes 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Tambah item",
   "playlist-add-scripture-error": "Tidak dapat menemui rujukan itu",
   "playlist-add-link-error": "Masukkan URL yang sah",
   "playlist-add-link-embed": "Benamkan pautan ini",
   "play-playlist": "Mainkan senarai main",
-
   "stop": "Berhenti",
   "queue": "Baris",
   "previous": "Sebelumnya",
@@ -388,7 +384,6 @@
   "editor-align-center": "Jajarkan tengah",
   "editor-align-right": "Jajarkan ke kanan",
   "editor-align-justify": "Justifikasikan",
-
   "share-playlist": "Kongsi senarai main",
   "playlist-url-copied": "URL senarai main disalin ke papan keratan",
   "current-playlist": "Senarai main semasa",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Padam \" {{title}} \"? Ini tidak boleh dibuat asal.",
   "delete-playlist-failed": "Tidak dapat memadam senarai main.",
   "collapsed-tab-shared-label": "{{title}} — sesi kongsi, {{count}} hadir",
-  "playlist-add-mode-label": "Jenis barang"
+  "playlist-add-mode-label": "Jenis barang",
+  "saving": "Menyimpan…",
+  "unsaved-item-confirm-title": "Item belum disimpan",
+  "unsaved-item-confirm-message": "Anda telah mula menambah item yang belum ditambah ke senarai main. Apakah yang anda ingin lakukan?",
+  "discard-and-save": "Buang dan simpan",
+  "add-and-save": "Tambah dan simpan",
+  "loading-profile": "Memuatkan profil anda…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Beralih ke kategori penanda buku",
+  "move-bookmark": "Alihkan ke folder",
+  "move-to-new": "Beralih ke yang baharu"
 }

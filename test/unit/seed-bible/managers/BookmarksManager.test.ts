@@ -50,6 +50,8 @@ describe("BookmarksManager", () => {
       connectionId: "conn-1",
       profile: signal(null),
       profilePromise: null,
+      isProfileLoading: signal(false),
+      isSavingProfile: signal(false),
       updateProfile: vi.fn().mockResolvedValue(undefined),
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
@@ -306,6 +308,39 @@ describe("BookmarksManager", () => {
       { name: "Favorites" },
     ]);
     expect(manager.bookmarks.value).toEqual([]);
+  });
+
+  it("moves a bookmark into another category and creates the category when needed", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [
+          createBookmark({ id: "move-1", category: DEFAULT_BOOKMARK_CATEGORY }),
+        ],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "Favorites" },
+        ],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.moveBookmark("move-1", "Favorites");
+    expect(manager.bookmarks.value[0]?.category).toBe("Favorites");
+    expect(manager.expandedCategories.value.has("Favorites")).toBe(true);
+
+    await manager.moveBookmark("move-1", "Favorites");
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+    await manager.moveBookmark("missing", "Favorites");
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+    await manager.moveBookmark("move-1", "  Later  ");
+    expect(manager.bookmarks.value[0]?.category).toBe("Later");
+    expect(manager.categories.value.some((c) => c.name === "Later")).toBe(true);
+    expect(manager.expandedCategories.value.has("Later")).toBe(true);
   });
 
   it("toggles filter and category expansion", () => {

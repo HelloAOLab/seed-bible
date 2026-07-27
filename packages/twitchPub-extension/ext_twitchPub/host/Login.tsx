@@ -1,48 +1,11 @@
-import { TwitchIcon } from "./icons";
 import { type TwitchPubState } from "./interface";
 import { useI18n } from "seed-bible/i18n";
 
 const Login = (props: { state: TwitchPubState }) => {
-  const { twitchConfig, getDeviceAuthUrl, loading, interfaceEnabled } =
-    props.state;
+  const { twitchConfig, getDeviceAuthUrl, loading } = props.state;
   const { t } = useI18n();
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "fit-content",
-        width: "100%",
-      }}
-    >
-      <div className="twitchPub-header">
-        <span
-          style={{
-            margin: 0,
-            fontSize: "16px",
-            fontWeight: "bold",
-            display: "flex",
-            alignItems: "center",
-            gap: "2px",
-          }}
-        >
-          <TwitchIcon style={{ width: "24px", height: "24px" }} />
-          {t("twitchHost", {
-            ns: "ext_twitchPub",
-            defaultValue: "Twitch Host",
-          })}
-        </span>
-        <button
-          className="icon-btn"
-          onClick={() => {
-            interfaceEnabled.value = false;
-          }}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </div>
+    <div className="twitchPub-page">
       <div className="twitchPub-content">
         <div
           onMouseDown={(e) => e.stopPropagation()}

@@ -330,6 +330,8 @@
   position: absolute;
   left: 0;
   padding: 0px 0.625rem;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .testament-title {
@@ -345,9 +347,43 @@
 
 .books-item {
   width: 100%;
-  height: fit-content;
   scrollbar-width: none;
   overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.books-item.grid-column-wrap-around {
+  display: grid;
+  align-content: start;
+  gap: 0.625rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.books-item.grid-column-wrap-around > .sidebar-itm,
+.books-item.grid-column-wrap-around > .sidebar-ghost-itm {
+  width: 100%;
+  min-width: 0;
+}
+
+.books-item.grid-column-wrap-around > .show-sidebar-chapter {
+  grid-column: 1 / -1;
+}
+
+.books-item.books-item-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  overflow-y: auto;
+}
+
+.books-container .testament-container {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .separator {
@@ -699,6 +735,7 @@
 .sidebar-itm {
   height: 2.75rem;
   width: 12.5rem;
+  max-width: 100%;
   border-radius: 0.5rem;
   cursor: pointer;
   transition:
@@ -744,10 +781,33 @@
   color: var(--sb-primary-color);
   border-radius: 0.5rem;
   border-bottom-color: transparent;
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 88%
+  );
 }
 
 .sidebar-selected-itm .material-symbols-outlined {
   color: var(--sb-primary-color);
+}
+
+.chapter-btn-current,
+.chapter-btn.chapter-btn-current {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-weight: 600;
+}
+
+.chapter-btn-current:hover,
+.chapter-btn.chapter-btn-current:hover {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
+}
+
+.sidebar-chapter-itm.highlight {
+  color: inherit;
+  font-weight: 600;
 }
 
 .open-sideBar {
@@ -1180,11 +1240,9 @@
 }
 
 /* BibleSelector's testament columns stack full-width on mobile. Migrated from
-   the former global legacy.css. The bare selector also matches scripture-map's
-   .testament-container, but harmlessly: scripture-map sets its own width via a
-   higher-specificity rule and colors its text on child elements. */
+   the former global legacy.css. */
 @media only screen and (max-width: 480px) {
-  .testament-container {
+  .books-container .testament-container {
     width: 100%;
     color: var(--sb-font-color);
   }

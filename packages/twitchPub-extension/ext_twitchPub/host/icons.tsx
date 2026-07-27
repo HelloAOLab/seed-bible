@@ -1,4 +1,25 @@
 import type { IconProps } from "./interface";
+
+export const AppIcon = (props: IconProps) => {
+  return (
+    <svg
+      width="16"
+      height="18"
+      viewBox="0 0 16 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M7 7.78125V4.65625M10.9062 7.78125V4.65625M14.8125 0.75H0.75V13.25H4.65625V16.375L7.78125 13.25H11.6875L14.8125 10.125V0.75Z"
+        stroke="var(--sb-font-color)"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+};
 export const TwitchIcon = (props: IconProps) => {
   return (
     <svg

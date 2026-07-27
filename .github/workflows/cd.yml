@@ -232,50 +232,31 @@ jobs:
   # Covers the case where a branch was already deployed (via `push`) before
   # its PR was opened: the deploy job's comment step only finds PRs that
   # exist *at the time it runs*, so a later-opened PR gets no comment. This
-  # job doesn't build or deploy anything — it just checks whether the
-  # branch's pointer file already exists in S3 and, if so, posts/updates the
-  # same deployment-link comment on the PR that just opened.
+  # job doesn't build or deploy anything, and — unlike the deploy job — never
+  # touches AWS: it posts/updates the deployment-link comment with a bare
+  # `/b/<branch>` link (no build id), which the host resolves + redirects to
+  # the latest build on its own. That also means the link is posted
+  # unconditionally, even if the branch hasn't deployed yet — it simply
+  # starts resolving once a deploy lands.
   comment-existing-deployment:
     if: |
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    env:
-      S3_BUCKET: ${{ secrets.DEPLOY_BUCKET }}
-      AWS_REGION: ${{ vars.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Look up existing deployment pointer for this branch
-        id: pointer
-        run: |
-          BRANCH=$(echo "${{ github.head_ref }}" | sed 's/\//_/g')
-          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-          if aws s3 cp "s3://$S3_BUCKET/branches/$BRANCH/current.json" current.json; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "build_id=$(jq -r .buildId current.json)" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Comment on pull request with deployment link
-        if: steps.pointer.outputs.found == 'true'
         continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
             const commentDeployment = require("./.github/scripts/comment-deployment.cjs");
+            const branch = "${{ github.head_ref }}".replace(/\//g, "_");
             await commentDeployment({
               github,
               context,
               core,
-              branch: "${{ steps.pointer.outputs.branch }}",
-              buildId: "${{ steps.pointer.outputs.build_id }}",
+              branch,
               prNumbers: [context.issue.number],
             });

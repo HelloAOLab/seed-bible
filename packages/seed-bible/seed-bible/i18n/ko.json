@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "항해",
   "session-settings-section-sharing": "공유하기",
   "session-settings-section-participants": "참가자들",
-
   "shared": "공유됨",
   "host": "주인",
   "co-host": "공동 진행자",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "세션 종료",
   "dont-show-again": "이 메시지를 다시 표시하지 마세요",
   "discover": "발견하다",
-
   "playlists": "플레이리스트",
   "annotations": "주석",
   "cross-references": "상호 참조",
@@ -364,19 +362,17 @@
   "edit-playlist": "재생 목록 편집",
   "remove-playlist-item": "제거 항목",
   "edit-playlist-item": "항목 편집",
+  "drag-to-reorder-playlist-item": "드래그하여 순서 변경",
   "playlist-add-item": "항목 추가",
   "playlist-edit-item": "항목 편집",
   "playlist-save-item": "변경 사항 저장",
-
   "playlist-add-scripture-placeholder": "예: 요한복음 3장 또는 요한복음 3장 16절",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "항목 추가",
   "playlist-add-scripture-error": "해당 자료를 찾을 수 없었습니다.",
   "playlist-add-link-error": "유효한 URL을 입력하세요",
   "playlist-add-link-embed": "이 링크를 삽입하세요",
   "play-playlist": "재생 목록",
-
   "stop": "멈추다",
   "queue": "대기줄",
   "previous": "이전의",
@@ -388,7 +384,6 @@
   "editor-align-center": "중앙 정렬",
   "editor-align-right": "오른쪽 정렬",
   "editor-align-justify": "신이 옳다고 하다",
-
   "share-playlist": "재생 목록 공유",
   "playlist-url-copied": "재생목록 URL이 클립보드에 복사되었습니다.",
   "current-playlist": "현재 재생 목록",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \"을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "delete-playlist-failed": "재생목록을 삭제할 수 없었습니다.",
   "collapsed-tab-shared-label": "{{title}} — 공유 세션, {{count}} 명 참여",
-  "playlist-add-mode-label": "품목 유형"
+  "playlist-add-mode-label": "품목 유형",
+  "saving": "저장 중…",
+  "unsaved-item-confirm-title": "저장되지 않은 항목",
+  "unsaved-item-confirm-message": "아직 재생목록에 추가되지 않은 항목을 입력하기 시작했습니다. 어떻게 하시겠습니까?",
+  "discard-and-save": "삭제하고 저장",
+  "add-and-save": "추가하고 저장",
+  "loading-profile": "프로필 불러오는 중…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "즐겨찾기 카테고리로 이동",
+  "move-bookmark": "폴더로 이동",
+  "move-to-new": "새로운 곳으로 이동"
 }

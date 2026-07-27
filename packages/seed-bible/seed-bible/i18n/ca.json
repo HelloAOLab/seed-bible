@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navegació",
   "session-settings-section-sharing": "Compartir",
   "session-settings-section-participants": "Participants",
-
   "shared": "Compartit",
   "host": "Amfitrió",
   "co-host": "Coamfitrió",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Finalitza la sessió",
   "dont-show-again": "No ho tornis a mostrar",
   "discover": "Descobreix",
-
   "playlists": "Llistes de reproducció",
   "annotations": "Anotacions",
   "cross-references": "Referències creuades",
@@ -364,19 +362,17 @@
   "edit-playlist": "Edita la llista de reproducció",
   "remove-playlist-item": "Elimina l'element",
   "edit-playlist-item": "Edita l'element",
+  "drag-to-reorder-playlist-item": "Arrossega per reordenar",
   "playlist-add-item": "Afegeix un element",
   "playlist-edit-item": "Edita l'element",
   "playlist-save-item": "Desa els canvis",
-
   "playlist-add-scripture-placeholder": "p. ex. Joan 3 o Joan 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Afegeix un element",
   "playlist-add-scripture-error": "No s'ha pogut trobar aquesta referència",
   "playlist-add-link-error": "Introduïu una URL vàlida",
   "playlist-add-link-embed": "Incrusta aquest enllaç",
   "play-playlist": "Reprodueix la llista de reproducció",
-
   "stop": "Atura",
   "queue": "Cua",
   "previous": "Anterior",
@@ -388,7 +384,6 @@
   "editor-align-center": "Alinea al centre",
   "editor-align-right": "Alinea a la dreta",
   "editor-align-justify": "Justificar",
-
   "share-playlist": "Comparteix la llista de reproducció",
   "playlist-url-copied": "L'URL de la llista de reproducció s'ha copiat al porta-retalls",
   "current-playlist": "Llista de reproducció actual",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Voleu suprimir \" {{title}} \"? Això no es pot desfer.",
   "delete-playlist-failed": "No s'ha pogut suprimir la llista de reproducció.",
   "collapsed-tab-shared-label": "{{title}} — sessió compartida, {{count}} presents",
-  "playlist-add-mode-label": "Tipus d'element"
+  "playlist-add-mode-label": "Tipus d'element",
+  "saving": "Desant…",
+  "unsaved-item-confirm-title": "Element no desat",
+  "unsaved-item-confirm-message": "Has començat a afegir un element que encara no s'ha afegit a la llista de reproducció. Què vols fer?",
+  "discard-and-save": "Descarta i desa",
+  "add-and-save": "Afegeix i desa",
+  "loading-profile": "S'està carregant el teu perfil…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Mou a la categoria de marcadors",
+  "move-bookmark": "Mou a la carpeta",
+  "move-to-new": "Moure a nou"
 }

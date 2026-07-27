@@ -1,5 +1,6 @@
 import { type Signal } from "@preact/signals";
 import { type SeedBibleState } from "seed-bible";
+import type { Pane } from "seed-bible/managers";
 interface IconProps {
   width?: number | string;
   height?: number | string;
@@ -18,6 +19,7 @@ interface TwitchPubState {
   }>;
   toast: (message: string) => void;
   currentPage: Signal<"login" | "authorization" | "interface" | "settings">;
+  currentPane: Signal<Pane | null>;
   deviceCode: Signal<string | null>;
   loading: Signal<boolean>;
   settings: Signal<{
@@ -29,6 +31,7 @@ interface TwitchPubState {
   uiHidden: Signal<boolean>;
   qrValue: Signal<string>;
   navigatingRef: Signal<string | null>;
+  seedBibleState: SeedBibleState;
   getDeviceAuthUrl: (state: TwitchPubState) => void;
   setCurrentPage: (page: TwitchPubState["currentPage"]["value"]) => void;
   hideUI: () => void;
