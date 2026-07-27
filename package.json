@@ -19,6 +19,8 @@
     "check:patterns": "tsc --project ./patterns/tsconfig.json",
     "pattern": "tsx script/pattern.ts",
     "notify": "tsx script/notify.ts",
+    "release:prepare": "tsx script/release.ts prepare",
+    "changelog:extract": "tsx script/changelog.ts extract",
     "build-size-report": "tsx script/build-size-report.ts",
     "i18n": "tsx script/i18n.ts",
     "list-bible-translations": "tsx script/list-bible-translations.ts",

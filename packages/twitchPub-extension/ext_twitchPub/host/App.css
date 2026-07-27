@@ -3,12 +3,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: fit-content;
-  width: 420px;
-  background: var(--sb-background);
+  height: 100%;
+  width: 100%;
   padding: 10px 15px 15px 15px;
-  border-radius: 10px;
-  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   color: var(--sb-font-color);
 }
@@ -46,15 +43,53 @@
   margin-bottom: 20px;
 }
 
-.icon-btn {
+.twitchPub-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 auto;
+}
+
+.twitchPub-header-tools {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Page wrapper shared by the login, authorization, interface, and settings
+   screens. */
+.twitchPub-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+/* Fades an element out (used with uiHidden) while keeping it in the layout so
+   the surrounding content doesn't shift. Pair with a base class that defines
+   `transition: opacity 0.3s ease` so the fade animates in both directions. */
+.twitchPub-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.twitch-icon-btn {
   background: transparent;
-  height: 24px;
-  width: 24px;
+  height: fit-content;
+  width: fit-content;
   display: flex;
   justify-content: center;
   align-items: center;
   border: none;
   cursor: pointer;
+  color: var(--sb-font-color);
 }
 
 .twitchPub-content {
@@ -284,4 +319,91 @@
 .twitch-custom-timer-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.twitch-custom-timer-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.twitch-custom-timer-suffix {
+  position: absolute;
+  right: 10px;
+  font-size: 14px;
+  color: #888;
+  pointer-events: none;
+}
+
+/* Primary heading shown on the QR-share screen. */
+.twitchPub-qr-title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+/* Secondary/instructional text (QR-share and authorization screens). */
+.twitchPub-subtitle {
+  font-size: 14px;
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+.twitchPub-auth-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* Label + tooltip cluster on the left of each settings row. */
+.twitchPub-settings-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  width: 80%;
+}
+
+/* Wraps the announcement-timer select and its optional custom input. */
+.twitchPub-timer-control {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.twitchPub-logout-btn {
+  padding: 6px 14px;
+  font-size: 14px;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* When the QR interface auto-hides (pointer left the QR), dissolve the floating
+   pane's frame so only the QR floats over the reader. Keyed off `uiHidden`,
+   which stamps `twitchPub-chrome-hidden` onto `.twitchPub-page`. `:has()` reaches
+   up from the extension's DOM into the host pane it doesn't otherwise own; only
+   the Twitch pane contains `.twitchPub-page`, so nothing else is affected. The
+   selector scores higher specificity than the base pane rules, so no
+   `!important` is needed. */
+.sb-pane-shell:has(.twitchPub-page.twitchPub-chrome-hidden),
+.sb-pane-shell:has(.twitchPub-page.twitchPub-chrome-hidden)
+  .sb-pane-detached-body {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Fade out the header (gear + close + drag strip) and the resize handle too,
+   and make them non-interactive so the hidden overlay can't be dragged,
+   resized, clicked, or text-selected. */
+.sb-pane-shell:has(.twitchPub-page.twitchPub-chrome-hidden) .sb-pane-header,
+.sb-pane-shell:has(.twitchPub-page.twitchPub-chrome-hidden)
+  .sb-pane-detached-resize-handle {
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
 }

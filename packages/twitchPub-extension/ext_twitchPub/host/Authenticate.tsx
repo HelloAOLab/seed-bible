@@ -1,62 +1,19 @@
-import { Loading, TwitchIcon } from "./icons";
+import { Loading } from "./icons";
 import { useI18n } from "seed-bible/i18n";
-import { type TwitchPubState } from "./interface";
 
-const Authorization = (props: { state: TwitchPubState }) => {
+const Authorization = () => {
   const { t } = useI18n();
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "fit-content",
-        width: "100%",
-      }}
-    >
-      <div className="twitchPub-header">
-        <span
-          style={{
-            margin: 0,
-            fontSize: "16px",
-            fontWeight: "bold",
-            display: "flex",
-            alignItems: "center",
-            gap: "2px",
-          }}
-        >
-          <TwitchIcon style={{ width: "24px", height: "24px" }} />
-          {t("authorization", {
-            ns: "ext_twitchPub",
-            defaultValue: "Authenticating with Twitch",
-          })}
-        </span>
-        <button
-          className="icon-btn"
-          onClick={() => {
-            props.state.setCurrentPage("login");
-          }}
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-      </div>
+    <div className="twitchPub-page">
       <div className="twitchPub-content">
         <Loading />
-        <span
-          style={{
-            fontSize: "20px",
-            fontWeight: "bold",
-            marginTop: "16px",
-            textAlign: "center",
-          }}
-        >
+        <span className="twitchPub-auth-title">
           {t("waitingForAuthorization", {
             ns: "ext_twitchPub",
             defaultValue: "Waiting for Authorization",
           })}
         </span>
-        <span style={{ fontSize: "14px", textAlign: "center" }}>
+        <span className="twitchPub-subtitle">
           {t("authorizationInstructions", {
             ns: "ext_twitchPub",
             defaultValue:

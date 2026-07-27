@@ -47,6 +47,12 @@ export default function initTranscriptUI() {
                   defaultValue: "AI Transcript",
                 });
               },
+              onClose: () => {
+                if (currentPane) {
+                  context.panes.closePane(currentPane.id);
+                  currentPane = null;
+                }
+              },
             });
 
             const { login } = context;

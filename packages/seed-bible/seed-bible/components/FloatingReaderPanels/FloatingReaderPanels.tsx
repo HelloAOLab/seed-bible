@@ -349,7 +349,8 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
         result.chapterNumber,
         result.verseNumber,
         {
-          className: "sb-verse-decoration-search-result",
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
           removeAfterMs: 3000,
         }
       );
@@ -734,6 +735,11 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       if (!target) return;
       if (target.closest(".sb-floating-chat-panel")) return;
       if (target.closest(".sb-reader-toolbar")) return;
+      // Context menus (e.g. the "new chat" provider list) are portaled to
+      // <body>, so they live outside `.sb-floating-chat-panel` in the DOM even
+      // though they're part of this panel's UI. Ignore taps inside them so
+      // picking a provider doesn't close the panel out from under the click.
+      if (target.closest(".sb-context-menu")) return;
       sidebar.closeChatPanel();
     };
 

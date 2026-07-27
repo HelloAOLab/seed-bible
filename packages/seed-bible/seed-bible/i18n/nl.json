@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigatie",
   "session-settings-section-sharing": "Delen",
   "session-settings-section-participants": "Deelnemers",
-
   "shared": "Gedeeld",
   "host": "Gastheer",
   "co-host": "Mede-presentator",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Sessie beëindigen",
   "dont-show-again": "Niet meer laten zien",
   "discover": "Ontdekken",
-
   "playlists": "Afspeellijsten",
   "annotations": "Annotaties",
   "cross-references": "Kruisverwijzingen",
@@ -364,19 +362,17 @@
   "edit-playlist": "Bewerk afspeellijst",
   "remove-playlist-item": "Verwijder item",
   "edit-playlist-item": "Item bewerken",
+  "drag-to-reorder-playlist-item": "Sleep om opnieuw te ordenen",
   "playlist-add-item": "Voeg item toe",
   "playlist-edit-item": "Item bewerken",
   "playlist-save-item": "Wijzigingen opslaan",
-
   "playlist-add-scripture-placeholder": "bijvoorbeeld Johannes 3 of Johannes 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Voeg item toe",
   "playlist-add-scripture-error": "Ik kon die referentie niet vinden.",
   "playlist-add-link-error": "Voer een geldige URL in.",
   "playlist-add-link-embed": "Sluit deze link in",
   "play-playlist": "Speel afspeellijst af",
-
   "stop": "Stop",
   "queue": "Wachtrij",
   "previous": "Vorig",
@@ -388,7 +384,6 @@
   "editor-align-center": "Centreren",
   "editor-align-right": "Rechts uitlijnen",
   "editor-align-justify": "Verantwoorden",
-
   "share-playlist": "Deel afspeellijst",
   "playlist-url-copied": "De URL van de afspeellijst is naar het klembord gekopieerd.",
   "current-playlist": "Huidige afspeellijst",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" verwijderen? Dit kan niet ongedaan gemaakt worden.",
   "delete-playlist-failed": "Ik kon de afspeellijst niet verwijderen.",
   "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} aanwezig",
-  "playlist-add-mode-label": "Artikeltype"
+  "playlist-add-mode-label": "Artikeltype",
+  "saving": "Bezig met opslaan…",
+  "unsaved-item-confirm-title": "Niet-opgeslagen item",
+  "unsaved-item-confirm-message": "Je bent begonnen met het toevoegen van een item dat nog niet aan de afspeellijst is toegevoegd. Wat wil je doen?",
+  "discard-and-save": "Negeren en opslaan",
+  "add-and-save": "Toevoegen en opslaan",
+  "loading-profile": "Je profiel wordt geladen...",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Verplaatsen naar bladwijzercategorie",
+  "move-bookmark": "Verplaatsen naar map",
+  "move-to-new": "Verhuizen naar nieuw"
 }

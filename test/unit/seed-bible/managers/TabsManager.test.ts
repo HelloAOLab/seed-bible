@@ -163,6 +163,36 @@ function createTabsManager({
   return { navigation, dataManager, highlightsManager, i18nManager, tabs };
 }
 
+function createMockSharedSession(
+  id: string,
+  readingState: BibleReadingState
+): BibleReadingSession {
+  return {
+    id,
+    readingState,
+    document: {} as SharedDocument,
+    options: signal({
+      allowedNavigators: null,
+      allowedDecorators: null,
+      hostUserId: null,
+      highlightDurationSeconds: 16,
+      endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
+    }),
+    updateOptions: vi.fn(),
+    removeSharedDecoration: vi.fn(),
+    dispose: vi.fn(),
+    allUsers: signal([]),
+    connectedUsers: signal([]),
+    localSessionId: signal(id),
+    userCanDecorate: vi.fn().mockReturnValue(true),
+    userCanNavigate: vi.fn().mockReturnValue(true),
+    currentUser: signal(null),
+    isHost: vi.fn().mockReturnValue(false),
+  } as BibleReadingSession;
+}
+
 describe("createTabs", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -197,36 +227,62 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    const sharedSession = {
-      id: "session-123",
-      readingState: manager.tabs.value[0]!.readingState,
-      document: {} as SharedDocument,
-      options: signal({
-        allowedNavigators: null,
-        allowedDecorators: null,
-        hostUserId: null,
-        highlightDurationSeconds: 16,
-        endedAt: null,
-        shareTranslation: false,
-        coHostUserIds: [],
-      }),
-      updateOptions: vi.fn(),
-      removeSharedDecoration: vi.fn(),
-      dispose: vi.fn(),
-      allUsers: signal([]),
-      connectedUsers: signal([]),
-      localSessionId: signal("session-123"),
-      userCanDecorate: vi.fn().mockReturnValue(true),
-      userCanNavigate: vi.fn().mockReturnValue(true),
-      currentUser: signal(null),
-      isHost: vi.fn().mockReturnValue(false),
-    } as BibleReadingSession;
+    const sharedSession = createMockSharedSession(
+      "session-123",
+      manager.tabs.value[0]!.readingState
+    );
 
     const nextTab = manager.addTab(sharedSession);
 
     expect(nextTab.readingState).toBe(sharedSession.readingState);
     expect(nextTab.sharedSession).toBe(sharedSession);
     expect(manager.selectedTabId.value).toBe(nextTab.id);
+  });
+
+  it("addTab() with a shared session writes its id to the URL as sessionId", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const sharedSession = createMockSharedSession(
+      "session-456",
+      manager.tabs.value[0]!.readingState
+    );
+
+    manager.addTab(sharedSession);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") !== null
+    );
+
+    expect(navigation.currentUrl.value.searchParams.get("sessionId")).toBe(
+      "session-456"
+    );
+  });
+
+  it("selectTab() away from a shared-session tab removes sessionId from the URL", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const plainTab = manager.tabs.value[0]!;
+    const sharedSession = createMockSharedSession(
+      "session-789",
+      plainTab.readingState
+    );
+    const sharedTab = manager.addTab(sharedSession);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") !== null
+    );
+
+    manager.selectTab(plainTab.id);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") === null
+    );
+
+    expect(
+      navigation.currentUrl.value.searchParams.get("sessionId")
+    ).toBeNull();
+    expect(sharedTab.sharedSession).toBe(sharedSession);
   });
 
   it("addTab() accepts a reading state for the new tab", async () => {
@@ -545,7 +601,8 @@ describe("createTabs", () => {
 
       expect(decorateVersesSpy).not.toBeNull();
       expect(decorateVersesSpy).toHaveBeenCalledWith("GEN", 1, [3, 5, 6], {
-        className: "sb-verse-decoration-initial-verse-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 5000,
       });
     } finally {

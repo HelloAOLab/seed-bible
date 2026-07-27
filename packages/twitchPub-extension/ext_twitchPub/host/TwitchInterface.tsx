@@ -1,110 +1,45 @@
-import { effect } from "@preact/signals";
 import QRCodeComponent from "./QRCode";
-import { TwitchIcon, SettingsIcon } from "./icons";
 import { type TwitchPubState } from "./interface";
 import { useI18n } from "seed-bible/i18n";
 import { fmtRef } from "@seed-bible/ai-transcript-extension/highlight";
+import { useEffect, useRef } from "preact/hooks";
 
 const TwitchInterface = (props: { state: TwitchPubState }) => {
-  const {
-    uiHidden,
-    qrValue,
-    navigatingRef,
-    setCurrentPage,
-    hideUI,
-    showUI,
-    interfaceEnabled,
-    toast,
-  } = props.state;
+  const { uiHidden, qrValue, navigatingRef, hideUI, showUI, toast } =
+    props.state;
 
-  effect(() => {
-    const draggableElement = document.getElementById("draggable-container");
-    if (!draggableElement) return;
+  const qrContainer = useRef<HTMLDivElement>(null);
 
-    draggableElement.addEventListener("mousedown", showUI);
-    draggableElement.addEventListener("mouseleave", hideUI);
+  useEffect(() => {
+    const shell = qrContainer.current?.closest(".sb-pane-shell");
+    if (!shell) return undefined;
+
+    const handleMouseDown = () => showUI();
+    const handleMouseLeave = () => hideUI();
+
+    shell.addEventListener("mousedown", handleMouseDown);
+    shell.addEventListener("mouseleave", handleMouseLeave);
     hideUI();
     return () => {
-      draggableElement.removeEventListener("mousedown", showUI);
-      draggableElement.removeEventListener("mouseleave", hideUI);
+      shell.removeEventListener("mousedown", handleMouseDown);
+      shell.removeEventListener("mouseleave", handleMouseLeave);
     };
-  });
+  }, []);
 
   const { t } = useI18n();
 
   return (
     <>
-      {uiHidden.value && (
-        <style>{`
-        .twitchPub-container {
-          background: transparent;
-          box-shadow: none;
-        }
-      `}</style>
-      )}
       <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "fit-content",
-          width: "100%",
-        }}
+        className={`twitchPub-page${
+          uiHidden.value ? " twitchPub-chrome-hidden" : ""
+        }`}
       >
-        <div
-          className="twitchPub-header"
-          style={
-            uiHidden.value
-              ? {
-                  opacity: 0,
-                  pointerEvents: "none",
-                  transition: "opacity 0.3s ease",
-                }
-              : { transition: "opacity 0.3s ease" }
-          }
-        >
-          <span
-            style={{
-              margin: 0,
-              fontSize: "16px",
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              gap: "2px",
-            }}
-          >
-            <TwitchIcon style={{ width: "24px", height: "24px" }} />
-            {t("twitch", { ns: "ext_twitchPub", defaultValue: "Twitch" })}
-          </span>
-          <div
-            style={{
-              display: "flex",
-              gap: "5px",
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
-            }}
-          >
-            <button
-              className="icon-btn"
-              style={{ width: "fit-content", height: "fit-content" }}
-              onClick={() => setCurrentPage("settings")}
-            >
-              <SettingsIcon width={18} height={18} />
-            </button>
-            <button
-              className="icon-btn"
-              onClick={() => {
-                interfaceEnabled.value = false;
-              }}
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-        </div>
         <div className="twitchPub-content">
-          <div className={uiHidden.value ? "" : "qr-container"}>
+          <div
+            ref={qrContainer}
+            className={uiHidden.value ? "" : "qr-container"}
+          >
             <QRCodeComponent
               value={qrValue.value}
               size={150}
@@ -113,6 +48,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
                 navigator.clipboard.writeText(qrValue.value);
                 toast("Link copied to clipboard!");
               }}
+              state={props.state}
             />
           </div>
           {navigatingRef.value && (
@@ -126,20 +62,9 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
           )}
 
           <span
-            style={
-              uiHidden.value
-                ? {
-                    opacity: 0,
-                    pointerEvents: "none",
-                    transition: "opacity 0.3s ease",
-                  }
-                : {
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                    textAlign: "center",
-                    transition: "opacity 0.3s ease",
-                  }
-            }
+            className={`twitchPub-qr-title ${
+              uiHidden.value ? "twitchPub-hidden" : ""
+            }`}
           >
             {t("twitchInterface.shareQRCode", {
               ns: "ext_twitchPub",
@@ -147,19 +72,9 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             })}
           </span>
           <span
-            style={
-              uiHidden.value
-                ? {
-                    opacity: 0,
-                    pointerEvents: "none",
-                    transition: "opacity 0.3s ease",
-                  }
-                : {
-                    fontSize: "14px",
-                    textAlign: "center",
-                    transition: "opacity 0.3s ease",
-                  }
-            }
+            className={`twitchPub-subtitle ${
+              uiHidden.value ? "twitchPub-hidden" : ""
+            }`}
           >
             {t("twitchInterface.qrCodeInstructions", {
               ns: "ext_twitchPub",

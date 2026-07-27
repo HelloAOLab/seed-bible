@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Nawigacja",
   "session-settings-section-sharing": "Partycypujący",
   "session-settings-section-participants": "Uczestnicy",
-
   "shared": "Wspólny",
   "host": "Gospodarz",
   "co-host": "Współgospodarz",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Zakończ sesję",
   "dont-show-again": "Nie pokazuj tego ponownie",
   "discover": "Odkryć",
-
   "playlists": "Listy odtwarzania",
   "annotations": "Adnotacje",
   "cross-references": "Odnośniki krzyżowe",
@@ -364,19 +362,17 @@
   "edit-playlist": "Edytuj playlistę",
   "remove-playlist-item": "Usuń element",
   "edit-playlist-item": "Edytuj element",
+  "drag-to-reorder-playlist-item": "Przeciągnij, aby zmienić kolejność",
   "playlist-add-item": "Dodaj element",
   "playlist-edit-item": "Edytuj element",
   "playlist-save-item": "Zapisz zmiany",
-
   "playlist-add-scripture-placeholder": "np. Jana 3 lub Jana 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Dodaj element",
   "playlist-add-scripture-error": "Nie udało się znaleźć tego odniesienia",
   "playlist-add-link-error": "Wprowadź prawidłowy adres URL",
   "playlist-add-link-embed": "Osadź ten link",
   "play-playlist": "Odtwórz playlistę",
-
   "stop": "Zatrzymywać się",
   "queue": "Kolejka",
   "previous": "Poprzedni",
@@ -388,7 +384,6 @@
   "editor-align-center": "Wyrównaj do środka",
   "editor-align-right": "Wyrównaj do prawej",
   "editor-align-justify": "Uzasadniać",
-
   "share-playlist": "Udostępnij playlistę",
   "playlist-url-copied": "Adres URL listy odtwarzania skopiowany do schowka",
   "current-playlist": "Aktualna lista odtwarzania",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Usunąć „ {{title}} ”? Tego nie da się cofnąć.",
   "delete-playlist-failed": "Nie udało się usunąć listy odtwarzania.",
   "collapsed-tab-shared-label": "{{title}} — sesja współdzielona, ​​obecnych jest {{count}}",
-  "playlist-add-mode-label": "Typ przedmiotu"
+  "playlist-add-mode-label": "Typ przedmiotu",
+  "saving": "Zapisywanie…",
+  "unsaved-item-confirm-title": "Niezapisany element",
+  "unsaved-item-confirm-message": "Zacząłeś dodawać element, który nie został jeszcze dodany do playlisty. Co chcesz zrobić?",
+  "discard-and-save": "Odrzuć i zapisz",
+  "add-and-save": "Dodaj i zapisz",
+  "loading-profile": "Ładowanie Twojego profilu…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Przejdź do kategorii zakładek",
+  "move-bookmark": "Przenieś do folderu",
+  "move-to-new": "Przenieś się do nowego"
 }

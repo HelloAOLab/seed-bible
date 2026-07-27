@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dalijimasis",
   "session-settings-section-participants": "Dalyviai",
-
   "shared": "Bendrinama",
   "host": "Šeimininkas",
   "co-host": "Bendrabučio šeimininkas",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Baigti sesiją",
   "dont-show-again": "Daugiau to nerodyti",
   "discover": "Atraskite",
-
   "playlists": "Grojaraščiai",
   "annotations": "Anotacijos",
   "cross-references": "Kryžminės nuorodos",
@@ -364,19 +362,17 @@
   "edit-playlist": "Redaguoti grojaraštį",
   "remove-playlist-item": "Pašalinti elementą",
   "edit-playlist-item": "Redaguoti elementą",
+  "drag-to-reorder-playlist-item": "Vilkite, kad pertvarkytumėte",
   "playlist-add-item": "Pridėti elementą",
   "playlist-edit-item": "Redaguoti elementą",
   "playlist-save-item": "Išsaugoti pakeitimus",
-
   "playlist-add-scripture-placeholder": "pvz., Jono 3 arba Jono 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Pridėti elementą",
   "playlist-add-scripture-error": "Nepavyko rasti tos nuorodos",
   "playlist-add-link-error": "Įveskite galiojantį URL",
   "playlist-add-link-embed": "Įterpti šią nuorodą",
   "play-playlist": "Leisti grojaraštį",
-
   "stop": "Stop",
   "queue": "Eilė",
   "previous": "Ankstesnis",
@@ -388,7 +384,6 @@
   "editor-align-center": "Sulygiuoti centrą",
   "editor-align-right": "Lygiuoti dešinėje",
   "editor-align-justify": "Lygiuoti",
-
   "share-playlist": "Bendrinti grojaraštį",
   "playlist-url-copied": "Grojaraščio URL nukopijuotas į iškarpinę",
   "current-playlist": "Dabartinis grojaraštis",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Ištrinti „ {{title}} “? Šio veiksmo negalima atšaukti.",
   "delete-playlist-failed": "Nepavyko ištrinti grojaraščio.",
   "collapsed-tab-shared-label": "{{title}} — bendras seansas, dalyvauja {{count}}",
-  "playlist-add-mode-label": "Prekės tipas"
+  "playlist-add-mode-label": "Prekės tipas",
+  "saving": "Įrašoma…",
+  "unsaved-item-confirm-title": "Neišsaugotas elementas",
+  "unsaved-item-confirm-message": "Pradėjote pridėti elementą, kuris dar nepridėtas į grojaraštį. Ką norite daryti?",
+  "discard-and-save": "Atmesti ir įrašyti",
+  "add-and-save": "Pridėti ir įrašyti",
+  "loading-profile": "Įkeliamas jūsų profilis…",
+  "app-version": "prieš {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Perkelti į žymių kategoriją",
+  "move-bookmark": "Perkelti į aplanką",
+  "move-to-new": "Perkelti į naują"
 }

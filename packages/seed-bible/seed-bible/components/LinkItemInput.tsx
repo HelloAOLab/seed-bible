@@ -1,4 +1,5 @@
-import { useState } from "preact/hooks";
+import { useImperativeHandle, useState } from "preact/hooks";
+import { forwardRef } from "preact/compat";
 import { useI18n } from "../i18n/I18nManager";
 import type { PlaylistItemData } from "../managers/PlaylistManager";
 
@@ -10,11 +11,23 @@ interface LinkItemInputProps {
   submitLabel?: string;
 }
 
+/** Imperative handle so a parent can check for / commit an in-progress draft. */
+export interface LinkItemInputHandle {
+  /** Whether the user has typed a URL or title that hasn't been added yet. */
+  isDirty: () => boolean;
+  /** Submits the current input, same as clicking "Add". Returns whether it
+   * actually added an item (false if empty or the URL didn't validate). */
+  commit: () => boolean;
+}
+
 /**
  * Adds a URL (link item) to the playlist. Tracks the in-progress URL text and
  * any validation error.
  */
-export function LinkItemInput(props: LinkItemInputProps) {
+export const LinkItemInput = forwardRef<
+  LinkItemInputHandle,
+  LinkItemInputProps
+>(function LinkItemInput(props, ref) {
   const { onAdd, initialItem, submitLabel } = props;
   const { t } = useI18n();
   const [value, setValue] = useState(initialItem?.url ?? "");
@@ -22,10 +35,11 @@ export function LinkItemInput(props: LinkItemInputProps) {
   const [embed, setEmbed] = useState(initialItem?.embed ?? false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAdd = () => {
+  /** Submits the current input. Returns whether it actually added an item. */
+  const handleAdd = (): boolean => {
     const trimmed = value.trim();
     if (!trimmed) {
-      return;
+      return false;
     }
     let url: string;
     try {
@@ -34,7 +48,7 @@ export function LinkItemInput(props: LinkItemInputProps) {
       setError(
         t("playlist-add-link-error", { defaultValue: "Enter a valid URL" })
       );
-      return;
+      return false;
     }
     const trimmedTitle = title.trim();
     onAdd({
@@ -47,7 +61,17 @@ export function LinkItemInput(props: LinkItemInputProps) {
     setTitle("");
     setEmbed(false);
     setError(null);
+    return true;
   };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      isDirty: () => value.trim() !== "" || title.trim() !== "",
+      commit: handleAdd,
+    }),
+    [value, title, embed]
+  );
 
   return (
     <>
@@ -118,4 +142,4 @@ export function LinkItemInput(props: LinkItemInputProps) {
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
     </>
   );
-}
+});

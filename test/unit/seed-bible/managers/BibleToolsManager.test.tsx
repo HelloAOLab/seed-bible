@@ -25,6 +25,8 @@ function createContext(): BibleToolContext {
       clearSelectedVerses: vi.fn(),
       loadPreviousChapter: vi.fn(),
       loadNextChapter: vi.fn(),
+      hasNext: signal(false),
+      hasPrevious: signal(false),
     } as any,
     sharedSession: null,
     selectorState: {
@@ -60,6 +62,7 @@ function createShareUrlReadingState(overrides?: Partial<BibleReadingState>) {
   return {
     translation: signal({ id: "NIV" }),
     bookId: signal("GEN"),
+    chapterNumber: signal(1),
     selectedVerses: signal([]),
     ...overrides,
   };
@@ -72,7 +75,7 @@ describe("getShareUrl", () => {
     });
   });
 
-  it("builds a share URL with the current translation, book, and selected verses", () => {
+  it("builds a share URL with the current translation, book, chapter, and selected verses", () => {
     const readingState = createShareUrlReadingState({
       selectedVerses: signal([
         {
@@ -95,8 +98,8 @@ describe("getShareUrl", () => {
         },
         {
           bookId: "GEN",
-          chapterNumber: 1,
-          translationId: "AAB",
+          chapterNumber: 2,
+          translationId: "NIV",
           verse: { number: 8 },
         },
       ] as any),
@@ -105,7 +108,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&verse=1,3"
+      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1%2C3"
     );
   });
 
@@ -138,8 +141,8 @@ describe("getShareUrl", () => {
         },
         {
           bookId: "GEN",
-          chapterNumber: 1,
-          translationId: "AAB",
+          chapterNumber: 2,
+          translationId: "NIV",
           verse: { number: 8 },
         },
       ] as any),
@@ -148,11 +151,11 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&verse=1-3"
+      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1-3"
     );
   });
 
-  it("omits the verse query when no selected verses match the current translation and book", () => {
+  it("omits the verse query when no selected verses match the current book and chapter", () => {
     const readingState = createShareUrlReadingState({
       translation: signal(null),
       bookId: signal(null),
@@ -170,7 +173,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=AAB&book=GEN"
+      "https://example.test/reader?translation=AAB&book=GEN&chapter=1"
     );
   });
 });
@@ -472,6 +475,11 @@ describe("createBibleToolsManager", () => {
     ): BibleToolContext {
       return {
         ...createContext(),
+        modals: {
+          openModal: vi.fn().mockReturnValue("modal-1"),
+          closeModal: vi.fn(),
+        } as any,
+        app: {} as any,
         readingState: {
           chapterData: signal({
             book: { id: "PSA", name: "Psalms" },
@@ -479,6 +487,7 @@ describe("createBibleToolsManager", () => {
           loading: signal(false),
           translation: signal({ id: "NIV" }),
           bookId: signal("PSA"),
+          chapterNumber: signal(2),
           selectedVerses: signal([
             {
               bookId: "PSA",
@@ -542,6 +551,57 @@ describe("createBibleToolsManager", () => {
       );
     });
 
+    it("copy-verse collapses whitespace around non-text parts and poem FormattedText", async () => {
+      const manager = createBibleToolsManager();
+      const context = createVerseContext({
+        chapterData: signal({
+          book: { id: "GEN", name: "Genesis" },
+        } as BibleReadingState["chapterData"]["value"]),
+        selectedVerses: signal([
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            translationId: "BSB",
+            verse: {
+              type: "verse",
+              number: 1,
+              content: [
+                "In the beginning ",
+                { text: "I am the light", wordsOfJesus: true },
+                { lineBreak: true },
+                { noteId: 7 },
+                "God created.",
+              ],
+            },
+          },
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            translationId: "BSB",
+            verse: {
+              type: "verse",
+              number: 2,
+              content: [
+                { text: "Poetry A", poem: 2 },
+                { lineBreak: true },
+                { text: "Poetry B", poem: 1 },
+              ],
+            },
+          },
+        ]),
+      });
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((t) => t.id === "copy-verse");
+
+      await tool?.onSelect();
+
+      expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "In the beginning I am the light God created. (Genesis 1:1)\n\nPoetry A Poetry B (Genesis 1:2)"
+      );
+    });
+
     it("share-verse uses the full book name instead of the book ID", () => {
       const manager = createBibleToolsManager();
       const context = createVerseContext();
@@ -551,6 +611,12 @@ describe("createBibleToolsManager", () => {
         .find((t) => t.id === "share-verse");
 
       tool?.onSelect();
+
+      const openModal = (context.modals as any).openModal;
+      expect(openModal).toHaveBeenCalledTimes(1);
+
+      const shareModal = openModal.mock.calls[0][0].content();
+      shareModal.props.onShareVia();
 
       expect(window.navigator.share).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -622,6 +688,8 @@ describe("createBibleToolsManager", () => {
         previousChapterApiLink: "/api/AAB/GEN/1.json",
         nextChapterApiLink: "/api/AAB/GEN/3.json",
       });
+      context.readingState.hasNext.value = true;
+      context.readingState.hasPrevious.value = true;
       context.readingState.loading.value = true;
       return context;
     }

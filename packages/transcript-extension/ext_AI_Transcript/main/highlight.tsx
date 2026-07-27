@@ -42,7 +42,7 @@ export async function highlightVerse(
         Number(chapter),
         Number(verse),
         {
-          className: "sb-verse-decoration-initial-verse-highlight",
+          className: "sb-verse-decoration-highlight",
           removeAfterMs: interval,
         }
       );

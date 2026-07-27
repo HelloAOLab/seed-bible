@@ -36,6 +36,8 @@ describe("HighlightsManager", () => {
       connectionId: "conn-1",
       profile: signal(null),
       profilePromise: null,
+      isProfileLoading: signal(false),
+      isSavingProfile: signal(false),
       updateProfile: vi.fn().mockResolvedValue(undefined),
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),

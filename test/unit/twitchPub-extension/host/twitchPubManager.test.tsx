@@ -122,6 +122,7 @@ describe("CreateTwitchPubState", () => {
       // seedBibleState is enough to keep initializeAITranscription happy.
       seedBibleState: {
         login: { userId: { value: null }, login: vi.fn() },
+        app: { isMobile: { value: false } },
       },
       transcriptionManager: undefined,
     };
