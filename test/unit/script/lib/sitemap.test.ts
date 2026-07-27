@@ -135,7 +135,12 @@ describe("buildTranslationParam", () => {
     ).toBe("https://bible.helloao.org/api/BSB/books.json");
   });
 
-  it("encodes reserved characters in the id for a non-default endpoint", () => {
+  it("keeps a slash in the id as a path segment (not percent-encoded), mirroring buildTranslationId", () => {
+    // `new URL("api/eng/esv/books.json", base)` treats the "/" as a path
+    // separator, so it is NOT percent-encoded here — matching the app's
+    // BibleDataManager.buildTranslationId. (Contrast buildChapterUrl, which
+    // puts the id in a query param via URLSearchParams and so encodes "/" to
+    // "%2F".)
     expect(
       buildTranslationParam("eng/esv", "https://bible.helloao.org/", DEFAULT)
     ).toBe("https://bible.helloao.org/api/eng/esv/books.json");
