@@ -688,8 +688,8 @@ describe("createBibleToolsManager", () => {
         previousChapterApiLink: "/api/AAB/GEN/1.json",
         nextChapterApiLink: "/api/AAB/GEN/3.json",
       });
-      context.readingState.hasNext.value = true;
-      context.readingState.hasPrevious.value = true;
+      (context.readingState as any).hasNext = signal(true);
+      (context.readingState as any).hasPrevious = signal(true);
       context.readingState.loading.value = true;
       return context;
     }
