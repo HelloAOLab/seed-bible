@@ -6,7 +6,7 @@ import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
-import type { ChatsManager } from "../../managers/ChatsManager";
+import type { ChatMessage, ChatsManager } from "../../managers/ChatsManager";
 import { translateTitle } from "../../app/utils";
 import { v4 as uuid } from "uuid";
 import { MaterialIcon } from "../icons";
@@ -107,21 +107,30 @@ export function DiscoverPaneTitle(props: {
     // chat while a playlist is being edited, so replying here lets the AI
     // add/update/remove items and edit the title/description.
     const startAiChat = (providerId: string | null) => {
-      const chat = chats.createLocalSession({
-        messages: [
-          {
-            id: uuid(),
-            authors: [],
-            timeMs: Date.now(),
-            targets: [],
-            type: "text",
-            text: t("ai-playlist-chat-prompt", {
-              defaultValue: "What do you want to add/change?",
-            }),
-          },
-        ],
-        providerIds: [],
-      });
+      let chat = chats.chats.value.find(
+        (c) =>
+          c.participants.value.every((p) => !p.isRemote) &&
+          c.participants.value.some(
+            (p) => p.isAI && p.providerId === providerId
+          )
+      );
+      if (!chat) {
+        chat = chats.createLocalSession({
+          messages: [
+            {
+              id: uuid(),
+              authors: [],
+              timeMs: Date.now(),
+              targets: [],
+              type: "text",
+              text: t("ai-playlist-chat-prompt", {
+                defaultValue: "What do you want to add/change?",
+              }),
+            },
+          ],
+          providerIds: [],
+        });
+      }
       if (providerId) {
         chat.addParticipant(providerId);
       }
