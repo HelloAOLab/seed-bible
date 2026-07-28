@@ -34,10 +34,10 @@ function withEnv<T>(
 // flags-updated push from PostHog.
 function makeFakePostHog(initialFlags: Record<string, boolean | undefined>) {
   const flags = { ...initialFlags };
-  let listener: (() => void) | null = null;
+  let listener: ((flags: string[]) => void) | null = null;
   const posthog: PostHog = {
     isFeatureEnabled: (key: string) => flags[key] ?? false,
-    onFeatureFlags: (callback: () => void) => {
+    onFeatureFlags: (callback: (flags: string[]) => void) => {
       listener = callback;
     },
   };
@@ -47,7 +47,7 @@ function makeFakePostHog(initialFlags: Record<string, boolean | undefined>) {
       flags[key] = value;
     },
     pushFlagsUpdate() {
-      listener?.();
+      listener?.(Object.keys(flags));
     },
   };
 }

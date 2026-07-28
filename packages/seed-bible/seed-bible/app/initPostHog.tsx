@@ -30,7 +30,9 @@ if (
       // @ts-ignore
       ((window.posthog = e),
       (e._i = []),
+      // @ts-ignore
       (e.init = function (i, s, a) {
+        // @ts-ignore
         function g(t, e) {
           var o = e.split(".");
           (2 == o.length && ((t = t[o[0]]), (e = o[1])),
@@ -54,6 +56,7 @@ if (
         for (
           void 0 !== a ? (u = e[a] = []) : (a = "posthog"),
             u.people = u.people || [],
+            // @ts-ignore
             u.toString = function (t) {
               var e = "posthog";
               return (
