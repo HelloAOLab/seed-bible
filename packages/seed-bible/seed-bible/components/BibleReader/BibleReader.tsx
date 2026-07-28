@@ -975,6 +975,7 @@ const RIBBON_FADE_MS = 250;
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
+  initialChapterLoadSettled: ReadonlySignal<boolean>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
@@ -993,6 +994,7 @@ function ChapterContent(props: ChapterContentProps) {
   const {
     chapterData,
     chapterDataPromise,
+    initialChapterLoadSettled,
     selectedVerses,
     highlights,
     decorations,
@@ -1226,7 +1228,13 @@ function ChapterContent(props: ChapterContentProps) {
   }, []);
 
   if (chapterData.value === null) {
-    throw chapterDataPromise;
+    if (!initialChapterLoadSettled.value) {
+      throw chapterDataPromise;
+    }
+    // The load finished and produced nothing. Rendering the error branch above
+    // is the caller's job; throwing the (now-resolved) promise again would just
+    // suspend and resume forever.
+    return null;
   }
 
   const containerClasses = decorations.value
@@ -1314,7 +1322,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  if (!chapterData.value && import.meta.env.SSR) {
+  if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
   }
 
@@ -1467,6 +1475,7 @@ export function BibleReader(props: BibleReaderProps) {
           <ChapterContent
             chapterData={chapterData}
             chapterDataPromise={readingState.chapterDataPromise}
+            initialChapterLoadSettled={readingState.initialChapterLoadSettled}
             selectedVerses={selectedVerses}
             selectVersesFromTextSelection={selectVersesFromTextSelection}
             justConvertedSelectionRef={justConvertedSelectionRef}

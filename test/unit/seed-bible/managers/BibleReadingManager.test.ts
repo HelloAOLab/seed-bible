@@ -1497,6 +1497,54 @@ describe("createBibleReadingState", () => {
     expect(state.loading.value).toBe(false);
   });
 
+  describe("chapterDataPromise", () => {
+    it("resolves once the initial chapter arrives", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+
+      expect(state.initialChapterLoadSettled.value).toBe(false);
+
+      await expect(state.chapterDataPromise).resolves.toBeUndefined();
+
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+      expect(state.chapterData.value).not.toBeNull();
+    });
+
+    it("resolves when the initial chapter load fails, instead of hanging", async () => {
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/AAB/GEN/1.json")] = createResponse(
+        { error: true },
+        500,
+        "Server Error"
+      );
+      setWebResponses(responses);
+
+      const state = createBibleReadingState(createDataManager());
+
+      // Anything suspended on this promise — including the server render —
+      // would otherwise wait forever for content that is never coming.
+      await expect(state.chapterDataPromise).resolves.toBeUndefined();
+
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+      expect(state.chapterData.value).toBeNull();
+      expect(state.error.value).toContain("Status: 500");
+      expect(state.loading.value).toBe(false);
+    });
+
+    it("stays settled across later navigations", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+
+      // The latch describes the *first* load only, so a later navigation must
+      // not put consumers back into a suspended state.
+      await state.selectChapter("GEN", 5);
+
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+    });
+  });
+
   describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {
     function createDiscoverManagerMock(
       responses: DiscoverProviderResults[][] = []

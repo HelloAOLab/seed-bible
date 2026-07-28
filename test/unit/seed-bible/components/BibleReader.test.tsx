@@ -167,6 +167,7 @@ function createFixture(): ReaderFixture {
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
+    initialChapterLoadSettled: signal(true),
     defaultTranslation: { id: "BSB", language: "en" },
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),

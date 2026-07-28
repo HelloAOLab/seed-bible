@@ -209,10 +209,23 @@ export interface BibleReadingState {
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
   /**
-   * Resolves once chapterData becomes non-null for the first time.
-   * Throw this in a component to suspend rendering until initial chapter data is available.
+   * Resolves once the first chapter load reaches a terminal outcome: content
+   * arrived, the load failed, or (during SSR only) it exceeded a deadline.
+   * Throw this in a component to suspend rendering until then.
+   *
+   * Never rejects — a rejected promise thrown during `renderToStringAsync`
+   * becomes a render exception and loses the whole document.
+   *
+   * Always pair a throw with `initialChapterLoadSettled`, or a load that
+   * finishes without content will suspend, resume, and suspend again in a loop.
    */
   chapterDataPromise: Promise<void>;
+  /**
+   * True once the first chapter load has finished, whether or not it produced
+   * content. Distinguishes "still loading" from "finished with nothing", which
+   * `chapterData === null` on its own cannot.
+   */
+  initialChapterLoadSettled: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -1035,14 +1048,14 @@ export function createBibleReadingState(
     () => dataManager.translationBooks.value.get(translationId.value) ?? null
   );
   const chapterData = signal<TranslationBookChapter | null>(null);
-  const chapterDataPromise = new Promise<void>((resolve) => {
-    const cleanup = effect(() => {
-      if (chapterData.value !== null) {
-        cleanup();
-        resolve();
-      }
-    });
-  });
+  /**
+   * Latches true once the first attempt to load chapter content reaches a
+   * terminal outcome — content arrived, the load failed, or (during SSR) it took
+   * too long. Consumers that suspend on `chapterDataPromise` use this to know
+   * the difference between "still coming" and "not coming", so they suspend once
+   * rather than repeatedly.
+   */
+  const initialChapterLoadSettled = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
@@ -1081,6 +1094,47 @@ export function createBibleReadingState(
 
   // Disposers for internal effects, released by `dispose()`.
   const effectDisposers: Array<() => void> = [];
+
+  let resolveChapterDataPromise: () => void = () => {};
+  const chapterDataPromise = new Promise<void>((resolve) => {
+    resolveChapterDataPromise = resolve;
+  });
+
+  /**
+   * During SSR the render blocks on `chapterDataPromise`, so an upstream that
+   * never answers would hold the request open indefinitely. Past this deadline
+   * we give up waiting and serve the shell instead.
+   *
+   * Not armed on the client: there the promise only gates a Suspense boundary,
+   * and a genuinely slow connection deserves to keep waiting rather than have
+   * the reading area emptied out from under it.
+   */
+  const SSR_INITIAL_CHAPTER_TIMEOUT_MS = 5000;
+  const initialChapterLoadTimer = import.meta.env.SSR
+    ? setTimeout(() => {
+        initialChapterLoadSettled.value = true;
+      }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
+    : null;
+  const clearInitialChapterLoadTimer = () => {
+    if (initialChapterLoadTimer !== null) {
+      clearTimeout(initialChapterLoadTimer);
+    }
+  };
+  effectDisposers.push(clearInitialChapterLoadTimer);
+
+  // Resolves — never rejects. A rejected promise thrown during
+  // `renderToStringAsync` surfaces as a render exception and takes down the
+  // whole document; resolving lets the already-rendered error branch explain
+  // what went wrong instead. Depends only on the latch, so it settles once.
+  effectDisposers.push(
+    effect(() => {
+      if (!initialChapterLoadSettled.value) {
+        return;
+      }
+      clearInitialChapterLoadTimer();
+      resolveChapterDataPromise();
+    })
+  );
 
   // Forward reference to the object returned by this factory. It is assigned
   // just before `return`, so it is always set by the time any public method
@@ -1533,6 +1587,7 @@ export function createBibleReadingState(
   const applyChapterContent = (chapter: TranslationBookChapter) => {
     batch(() => {
       chapterData.value = chapter;
+      initialChapterLoadSettled.value = true;
 
       const target = pendingScrollTarget;
       const targetMatchesChapter =
@@ -1994,6 +2049,10 @@ export function createBibleReadingState(
         err instanceof Error ? err.message : "Failed to load Bible data.";
     } finally {
       loading.value = false;
+      // Terminal either way. Without this a failed first load leaves anything
+      // suspended on `chapterDataPromise` waiting forever — which on the server
+      // means the HTTP request never completes.
+      initialChapterLoadSettled.value = true;
     }
   };
 
@@ -2307,6 +2366,7 @@ export function createBibleReadingState(
     translationBooks,
     chapterData,
     chapterDataPromise,
+    initialChapterLoadSettled,
     highlights,
     decorations,
     selectedVerses,
