@@ -408,6 +408,10 @@
 
   padding-bottom: 8.125rem;
 
+  /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
+     Short enough to read as immediate rather than as an animation. */
+  transition: opacity 0.1s ease;
+
   /* Positioning context + own stacking context so the highlight ribbon layer
      can sit behind the scripture text (z-index: -1) without slipping behind the
      page background. */
@@ -576,6 +580,20 @@
 
 .sb-reader-error {
   color: red;
+}
+
+/* The chapter the reader has navigated away from, still on screen while the one
+   they chose downloads. Dimmed rather than replaced, because on a fast
+   connection the new text lands before the placeholder below is ever shown, and
+   dimming neither moves anything nor flickers.
+
+   Not interactive: a verse tapped here belongs to a chapter the reader has
+   already left. Pointer events fall through to the swipe viewport above, so
+   mobile swipe gestures keep working. (The opacity transition that softens this
+   both ways lives on `.sb-chapter-content` itself, further up.) */
+.sb-chapter-content-stale {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 /* ─── Chapter loading placeholder ────────────────────────────────────────── */

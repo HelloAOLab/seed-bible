@@ -436,7 +436,7 @@ describe("BibleReader", () => {
     );
   });
 
-  it("shows the loading placeholder instead of the previous chapter's verses while content is stale", () => {
+  it("dims the previous chapter's verses when navigation starts, without flashing the placeholder", () => {
     const { slot, selectorState, readingState, contentStale } = createFixture();
     contentStale.value = true;
 
@@ -451,12 +451,65 @@ describe("BibleReader", () => {
       );
     });
 
+    // Most navigations resolve well inside the placeholder delay, so this is
+    // what a reader normally sees: the old text, dimmed, and nothing moving.
+    expect(container.querySelector(".sb-chapter-content-stale")).not.toBeNull();
+    expect(container.querySelector(".sb-verse")).not.toBeNull();
+    expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+  });
+
+  it("replaces the dimmed verses with the placeholder once the wait gets long", () => {
+    vi.useFakeTimers();
+    try {
+      const { slot, selectorState, readingState, contentStale } =
+        createFixture();
+      contentStale.value = true;
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(600);
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).not.toBeNull();
+      // Chapter data is still loaded, just for the position the reader left —
+      // those verses must not be on screen under the new chapter's title.
+      expect(readingState.chapterData.value).not.toBeNull();
+      expect(container.querySelector(".sb-verse")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows the placeholder immediately on a cold start, with no text to dim", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    chapterData.value = null;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Waiting out the delay here would leave the reader looking at an empty
+    // pane, since there is no previous chapter to dim.
     expect(container.querySelector(".sb-chapter-skeleton")).not.toBeNull();
-    // Chapter data is still loaded, just for the position the reader left, so
-    // this is the assertion that matters: those verses must not be on screen
-    // under the new chapter's title.
-    expect(readingState.chapterData.value).not.toBeNull();
-    expect(container.querySelector(".sb-verse")).toBeNull();
   });
 
   it("shows the verses, not the placeholder, once content matches the position", () => {

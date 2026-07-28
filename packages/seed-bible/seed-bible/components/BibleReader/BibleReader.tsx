@@ -4,7 +4,13 @@ import {
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useState,
+} from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
   adjacentInlineRect,
@@ -974,6 +980,20 @@ interface Ribbon {
 const RIBBON_FADE_MS = 250;
 
 /**
+ * How long the chapter the reader has left stays on screen, dimmed, before the
+ * placeholder takes over.
+ *
+ * Swapping to the placeholder the instant you navigate reads as a flicker on a
+ * fast connection, where the new text lands in well under this. Dimming costs
+ * nothing and moves nothing, so it carries the common case; the placeholder is
+ * only for waits long enough that dimmed text starts to look stuck.
+ *
+ * Does not apply on a cold start — with no chapter on screen there is nothing
+ * to dim, so the placeholder shows straight away.
+ */
+const CHAPTER_SKELETON_DELAY_MS = 500;
+
+/**
  * Bar widths for the chapter loading placeholder, one array per paragraph.
  *
  * Hand-picked rather than random so the placeholder is identical on every
@@ -1014,6 +1034,11 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  /**
+   * True while this is the chapter the reader has *left* — shown dimmed until
+   * the chapter they navigated to arrives.
+   */
+  isStale?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1276,7 +1301,9 @@ function ChapterContent(props: ChapterContentProps) {
   return (
     <div
       ref={contentRef}
-      className={`sb-chapter-content ${containerClasses}`}
+      className={`sb-chapter-content${
+        props.isStale ? " sb-chapter-content-stale" : ""
+      } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
@@ -1374,6 +1401,33 @@ export function BibleReader(props: BibleReaderProps) {
   const readerFontSizeClass = `sb-font-size-${(
     state?.config?.config.value.fontSize ?? "M"
   ).toLowerCase()}`;
+
+  // Hard-gated off under SSR, which is what keeps both the dimming and the
+  // placeholder out of the served HTML. Rendering the placeholder server-side
+  // would strip the scripture out of the document — for a Bible reader that is
+  // an SEO regression, not a cosmetic one. The reader suspends on
+  // `chapterDataPromise` there instead, so by render time there is either
+  // content or a settled failure.
+  const isContentStale = !import.meta.env.SSR && isChapterContentStale.value;
+  // Held back by `CHAPTER_SKELETON_DELAY_MS` so a fast navigation shows only
+  // dimmed text, never a flash of placeholder. Skipped when there is no chapter
+  // on screen to dim — a cold start would otherwise sit blank for the delay.
+  const [isWaitLong, setIsWaitLong] = useState(false);
+  useEffect(() => {
+    if (!isContentStale) {
+      setIsWaitLong(false);
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setIsWaitLong(true),
+      CHAPTER_SKELETON_DELAY_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [isContentStale]);
+
+  const showChapterSkeleton =
+    isContentStale && (chapterData.value === null || isWaitLong);
+  const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
@@ -1512,11 +1566,7 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {!error.value &&
-        // Never server-side: the placeholder would replace the verses in the
-        // served HTML, which for a Bible reader is an SEO regression. Under SSR
-        // the reader suspends on `chapterDataPromise` instead, so by the time
-        // this renders there is either content or a settled failure.
-        (!import.meta.env.SSR && isChapterContentStale.value ? (
+        (showChapterSkeleton ? (
           renderChapterSkeleton()
         ) : (
           <Suspense
@@ -1529,6 +1579,7 @@ export function BibleReader(props: BibleReaderProps) {
             }
           >
             <ChapterContent
+              isStale={dimStaleChapter}
               chapterData={chapterData}
               chapterDataPromise={readingState.chapterDataPromise}
               initialChapterLoadSettled={readingState.initialChapterLoadSettled}
