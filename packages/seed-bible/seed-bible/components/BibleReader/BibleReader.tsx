@@ -3,7 +3,7 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import type { JSX } from "preact";
+import type { ComponentChildren, JSX } from "preact";
 import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
@@ -940,6 +940,12 @@ export interface BibleReaderMobileChromeProps {
   swipeViewportRefCallback: (el: HTMLDivElement | null) => void;
   swipeTrackRefCallback: (el: HTMLDivElement | null) => void;
   currentScrollerRefCallback: (el: HTMLDivElement | null) => void;
+  /**
+   * Rendered inside the scrolling chapter panel, after the passage. On mobile
+   * the panel is the scroll container, so anything placed here is reached by
+   * scrolling to the end of the chapter rather than sitting over the text.
+   */
+  belowContent?: ComponentChildren;
 }
 
 function renderStaticChapterContent(
@@ -1505,6 +1511,10 @@ export function BibleReader(props: BibleReaderProps) {
           )}
         </>
       )}
+
+      {/* Undefined on desktop, where the caller renders this itself below the
+          reader — the desktop pane is its own scroll container. */}
+      {mobileChrome?.belowContent}
     </>
   );
 

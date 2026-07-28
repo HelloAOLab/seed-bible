@@ -204,6 +204,74 @@
   gap: 10px;
 }
 
+/* Layout for a text/link reading: the card itself opens the content, so the
+   check moves out into its own small toggle beside it. Scripture readings keep
+   the single-button card below and don't use this row. */
+.sb-rpd-reading-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sb-rpd-reading-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sb-rpd-reading-toggle:hover {
+  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
+}
+
+.sb-rpd-reading-row .sb-rpd-reading-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-rpd-reading-card-open:hover {
+  border-color: var(--rp-accent);
+}
+
+.sb-rpd-reading-card-open:hover .sb-rpd-reading-title {
+  text-decoration: underline;
+}
+
+/* Leading type icon for a text/link reading, in the same soft tile idiom the
+   plan cards use. */
+.sb-rpd-reading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
+  color: var(--rp-accent);
+}
+
+.sb-rpd-reading-icon .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* One-line summary of what the reading holds: an excerpt of a text snippet, or
+   a link's host. Already truncated in code, but clipped here too so a long
+   unbroken string can't stretch the card. */
+.sb-rpd-reading-preview {
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sb-rpd-reading-card {
   display: flex;
   align-items: center;

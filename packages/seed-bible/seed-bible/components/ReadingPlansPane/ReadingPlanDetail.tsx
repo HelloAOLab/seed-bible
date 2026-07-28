@@ -7,33 +7,29 @@ import {
   estimateReadingMinutes,
   summarizeCalendar,
   type CalendarReadingDay,
-  type PlanReading,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { formatRefLabel } from "../ScriptureItemInput/scriptureSuggestions";
+import type { ModalManager } from "../../managers/ModalManager";
+import {
+  canPreviewPlaylistItem,
+  openPlaylistItemPreview,
+} from "../playlistItemPreview";
+import { readingLabel } from "./readingLabel";
+import {
+  PLAN_READING_PREVIEW_MODAL_ID,
+  readingItemIcon,
+  readingPreviewText,
+} from "./readingPreview";
 
 interface ReadingPlanDetailProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for resolving reading labels. */
   books: TranslationBook[];
+  /** Modals host for opening a text/link reading. Optional — without it the
+   * open action is simply not offered. */
+  modals?: ModalManager;
   onBack: () => void;
-}
-
-/** A short human label for a single reading (verse ref, or a title/url). */
-function readingLabel(
-  item: PlanReading["item"],
-  resolveBookName: (bookId: string) => string
-): string {
-  if (item.type === "bible-verse") {
-    return `${resolveBookName(item.ref.bookId)} ${formatRefLabel(
-      item.ref
-    )}`.trim();
-  }
-  if (item.type === "html") {
-    return item.title ?? "Reading";
-  }
-  return item.title ?? item.url;
 }
 
 function formatShortDate(ms: number): string {
@@ -50,7 +46,7 @@ function formatShortDate(ms: number): string {
  * short celebration when a day is completed.
  */
 export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
-  const { readingPlans, books, onBack } = props;
+  const { readingPlans, books, modals, onBack } = props;
   const { t } = useI18n();
 
   const [starting, setStarting] = useState(false);
@@ -377,43 +373,113 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                   {activeDayReadings.map(({ session, reading }) => {
                     const done = isReadingDone(session.id, reading.id);
                     const minutes = estimateReadingMinutes([reading]);
-                    return (
-                      <li key={reading.id}>
-                        <button
-                          type="button"
-                          className={`sb-rpd-reading-card${
-                            done ? " sb-rpd-reading-card-done" : ""
-                          }`}
-                          onClick={() =>
-                            void toggleReading(session, reading.id, done)
-                          }
-                          aria-pressed={done}
-                        >
+                    // Scripture is read in the reader, so its card stays a
+                    // single big "mark complete" target. A text or link reading
+                    // has nowhere else to go — the card opens it, and the check
+                    // beside it becomes the toggle.
+                    const canOpen =
+                      !!modals && canPreviewPlaylistItem(reading.item);
+                    const toggle = () =>
+                      void toggleReading(session, reading.id, done);
+                    const preview = readingPreviewText(reading.item, t);
+
+                    // Leading type icon (only where it adds something — every
+                    // scripture reading would carry the same book icon), then
+                    // the title, its one-line summary, and the time/read meta.
+                    const body = (
+                      <>
+                        {canOpen ? (
                           <span
-                            className={`sb-rpd-reading-check${
-                              done ? " sb-rpd-reading-check-done" : ""
-                            }`}
+                            className="sb-rpd-reading-icon"
                             aria-hidden="true"
                           >
                             <MaterialIcon>
-                              {done ? "check_circle" : "radio_button_unchecked"}
+                              {readingItemIcon(reading.item)}
                             </MaterialIcon>
                           </span>
-                          <span className="sb-rpd-reading-text">
-                            <span className="sb-rpd-reading-title">
-                              {readingLabel(reading.item, resolveBookName)}
-                            </span>
-                            <span className="sb-rpd-reading-meta">
-                              {done
-                                ? t("reading-plan-reading-read", {
-                                    defaultValue: "Read",
-                                  })
-                                : t("reading-plan-reading-mins", {
-                                    defaultValue: "~{{count}} min",
-                                    count: minutes,
-                                  })}
-                            </span>
+                        ) : null}
+                        <span className="sb-rpd-reading-text">
+                          <span className="sb-rpd-reading-title">
+                            {readingLabel(reading.item, resolveBookName)}
                           </span>
+                          {preview ? (
+                            <span className="sb-rpd-reading-preview" dir="auto">
+                              {preview}
+                            </span>
+                          ) : null}
+                          <span className="sb-rpd-reading-meta">
+                            {done
+                              ? t("reading-plan-reading-read", {
+                                  defaultValue: "Read",
+                                })
+                              : t("reading-plan-reading-mins", {
+                                  defaultValue: "~{{count}} min",
+                                  count: minutes,
+                                })}
+                          </span>
+                        </span>
+                      </>
+                    );
+
+                    const check = (
+                      <span
+                        className={`sb-rpd-reading-check${
+                          done ? " sb-rpd-reading-check-done" : ""
+                        }`}
+                        aria-hidden="true"
+                      >
+                        <MaterialIcon>
+                          {done ? "check_circle" : "radio_button_unchecked"}
+                        </MaterialIcon>
+                      </span>
+                    );
+
+                    if (!canOpen) {
+                      return (
+                        <li key={reading.id}>
+                          <button
+                            type="button"
+                            className={`sb-rpd-reading-card${
+                              done ? " sb-rpd-reading-card-done" : ""
+                            }`}
+                            onClick={toggle}
+                            aria-pressed={done}
+                          >
+                            {check}
+                            {body}
+                          </button>
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li key={reading.id} className="sb-rpd-reading-row">
+                        <button
+                          type="button"
+                          className="sb-rpd-reading-toggle"
+                          onClick={toggle}
+                          aria-pressed={done}
+                          aria-label={t("reading-plan-mark-reading-complete", {
+                            defaultValue: "Mark reading complete",
+                          })}
+                        >
+                          {check}
+                        </button>
+                        <button
+                          type="button"
+                          className={`sb-rpd-reading-card sb-rpd-reading-card-open${
+                            done ? " sb-rpd-reading-card-done" : ""
+                          }`}
+                          onClick={() =>
+                            openPlaylistItemPreview(
+                              modals,
+                              reading.item,
+                              PLAN_READING_PREVIEW_MODAL_ID,
+                              t
+                            )
+                          }
+                        >
+                          {body}
                         </button>
                       </li>
                     );

@@ -178,6 +178,24 @@
   box-shadow: none;
 }
 
+/* The tile + body of a completed card: opens the plan, while the Restart
+   button beside it starts a fresh run. Inherits the card's own row layout so
+   the two look like one card. */
+.sb-rp-card-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
 .sb-rp-card-lg {
   flex-direction: column;
   align-items: stretch;

@@ -1,40 +1,41 @@
 import "./CreateReadingPlanWizard.css";
-import { useMemo, useState } from "preact/hooks";
-import { v4 as uuid } from "uuid";
+import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
-import type {
-  PlanReading,
-  ReadingPlansManager,
-  ReadingPlanSession,
-  ReadingPlanType,
+import {
+  draftReadingCount,
+  type PlanReading,
+  type ReadingPlanDraft,
+  type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import type {
-  PlaylistItemData,
-  VerseRef,
-} from "../../managers/PlaylistManager";
-import { ScriptureItemInput } from "../ScriptureItemInput/ScriptureItemInput";
-import { formatRefLabel } from "../ScriptureItemInput/scriptureSuggestions";
+import type { PlaylistItemData } from "../../managers/PlaylistManager";
+import type { ModalManager } from "../../managers/ModalManager";
+import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
+import {
+  canPreviewPlaylistItem,
+  openPlaylistItemPreview,
+} from "../playlistItemPreview";
+import { readingLabel } from "./readingLabel";
+import {
+  PLAN_READING_PREVIEW_MODAL_ID,
+  readingItemIcon,
+  readingPreviewText,
+} from "./readingPreview";
 
 interface CreateReadingPlanWizardProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
+  /** Modals host for previewing a text/link reading. Optional — without it the
+   * preview action is simply not offered. */
+  modals?: ModalManager;
   /** Called when the user backs out of the first step (or cancels). */
   onCancel: () => void;
   /** Called after a plan is successfully created. */
   onCreated: () => void;
 }
 
-/** A single scripture reading held in the wizard's draft. */
-interface DraftReading {
-  /** Human label shown back to the user (e.g. "Genesis 1:1-3"). */
-  display: string;
-  ref: VerseRef;
-}
-
 const MS_PER_DAY = 86_400_000;
-const DEFAULT_DURATION_DAYS = 30;
 
 /** The ordered steps of the wizard. */
 const STEP_IDS = ["name", "type", "schedule", "scripture"] as const;
@@ -57,55 +58,54 @@ function fromDateInputValue(value: string): number | null {
   return Number.isNaN(ms) ? null : ms;
 }
 
-/** Local midnight (epoch ms) of the given instant — today's date by default. */
-function todayMidnightMs(): number {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-}
-
 /**
  * The full create-a-reading-plan flow. Collects a name, a plan type, a schedule
- * (duration + optional start date), and per-day scripture readings, then builds
- * the plan and its sessions through the existing `ReadingPlansManager`.
+ * (duration + optional start date), and per-day readings, then saves the plan
+ * through the existing `ReadingPlansManager`.
+ *
+ * The draft itself lives on the manager (`editingReadingPlan`), not in this
+ * component — so closing the plans pane to go read doesn't lose it, and the
+ * reader's "Add to plan" verse action can add straight into the day the wizard
+ * is showing.
  *
  * The component is fluid-width, so it fills the desktop side pane and the
  * mobile fullscreen pane without any breakpoint of its own.
  */
 export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
-  const { readingPlans, books, onCancel, onCreated } = props;
+  const { readingPlans, books, modals, onCancel, onCreated } = props;
   const { t } = useI18n();
 
-  const [stepIndex, setStepIndex] = useState(0);
-  const [name, setName] = useState("");
-  const [planType, setPlanType] = useState<ReadingPlanType>("flexible");
-  const [durationDays, setDurationDays] = useState(DEFAULT_DURATION_DAYS);
-  const [startDateMs, setStartDateMs] = useState<number>(todayMidnightMs());
-  const [readingsByDay, setReadingsByDay] = useState<
-    Record<number, DraftReading[]>
-  >({});
-  const [selectedDay, setSelectedDay] = useState(0);
+  // Resume on the readings step when the draft already has some — the user got
+  // that far, left to add a passage from the reader, and is coming back to it.
+  const [stepIndex, setStepIndex] = useState(() => {
+    const inFlight = readingPlans.editingReadingPlan.peek();
+    return inFlight && draftReadingCount(inFlight) > 0
+      ? STEP_IDS.length - 1
+      : 0;
+  });
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+
+  // Reading `.value` during render subscribes the component to draft edits,
+  // including ones made from the reader's verse toolbar.
+  const draft = readingPlans.editingReadingPlan.value;
 
   const step: StepId = STEP_IDS[stepIndex]!;
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === STEP_IDS.length - 1;
 
-  const endDateMs = useMemo(
-    () => startDateMs + Math.max(0, durationDays - 1) * MS_PER_DAY,
-    [startDateMs, durationDays]
-  );
+  if (!draft) {
+    return null;
+  }
 
-  const totalReadings = useMemo(
-    () =>
-      Object.values(readingsByDay).reduce((sum, list) => sum + list.length, 0),
-    [readingsByDay]
-  );
+  const endDateMs =
+    draft.startDateMs + Math.max(0, draft.durationDays - 1) * MS_PER_DAY;
+  const totalReadings = draftReadingCount(draft);
 
   // Whether the current step is complete enough to advance / submit.
   const canAdvance = (() => {
     if (step === "name") {
-      return name.trim().length > 0;
+      return draft.title.trim().length > 0;
     }
     if (step === "scripture") {
       return totalReadings > 0;
@@ -122,6 +122,22 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
     setStepIndex((i) => i - 1);
   };
 
+  const handleCreate = async () => {
+    if (saving || totalReadings === 0) {
+      return;
+    }
+    setSaving(true);
+    setSubmitError(false);
+    try {
+      await readingPlans.saveEditingReadingPlan();
+      onCreated();
+    } catch (error) {
+      console.error("Failed to create reading plan:", error);
+      setSubmitError(true);
+      setSaving(false);
+    }
+  };
+
   const goNext = () => {
     if (!canAdvance) {
       return;
@@ -133,61 +149,6 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
     setStepIndex((i) => i + 1);
   };
 
-  const addReadingToDay = (day: number, reading: DraftReading) => {
-    setReadingsByDay((prev) => ({
-      ...prev,
-      [day]: [...(prev[day] ?? []), reading],
-    }));
-  };
-
-  const removeReading = (day: number, index: number) => {
-    setReadingsByDay((prev) => ({
-      ...prev,
-      [day]: (prev[day] ?? []).filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleCreate = async () => {
-    if (saving || totalReadings === 0) {
-      return;
-    }
-    setSaving(true);
-    setSubmitError(false);
-    try {
-      let plan = await readingPlans.createNewReadingPlan({
-        title: name.trim() || null,
-        planType,
-        durationDays,
-        suggestedStartDateMs: planType === "scheduled" ? startDateMs : null,
-      });
-
-      // One session per day, in day order, skipping days with no readings.
-      for (let day = 0; day < durationDays; day++) {
-        const readings = readingsByDay[day] ?? [];
-        if (readings.length === 0) {
-          continue;
-        }
-        const session: ReadingPlanSession = {
-          id: uuid(),
-          title: null,
-          readings: readings.map(
-            (r): PlanReading => ({
-              id: uuid(),
-              item: { type: "bible-verse", ref: r.ref },
-            })
-          ),
-        };
-        plan = await readingPlans.addSessionToReadingPlan(plan, session);
-      }
-
-      onCreated();
-    } catch (error) {
-      console.error("Failed to create reading plan:", error);
-      setSubmitError(true);
-      setSaving(false);
-    }
-  };
-
   const stepTitle = {
     name: t("reading-plan-step-name-title", { defaultValue: "Name your plan" }),
     type: t("reading-plan-step-type-title", {
@@ -197,7 +158,7 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
       defaultValue: "Select duration, start & date",
     }),
     scripture: t("reading-plan-step-scripture-title", {
-      defaultValue: "Select scripture",
+      defaultValue: "Select readings",
     }),
   }[step];
 
@@ -256,10 +217,12 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
             <input
               className="sb-rp-text-input"
               type="text"
-              value={name}
+              value={draft.title}
               autoFocus
               onInput={(event: Event) =>
-                setName((event.currentTarget as HTMLInputElement).value)
+                readingPlans.updateEditingReadingPlan({
+                  title: (event.currentTarget as HTMLInputElement).value,
+                })
               }
               placeholder={t("reading-plan-name-placeholder", {
                 defaultValue: "e.g. My Psalms Journey",
@@ -271,24 +234,28 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
         {step === "type" && (
           <div className="sb-rp-choices">
             <PlanTypeChoice
-              selected={planType === "flexible"}
+              selected={draft.planType === "flexible"}
               title={t("reading-plan-type-flexible", {
                 defaultValue: "Flexible Plan",
               })}
               description={t("reading-plan-type-flexible-description", {
                 defaultValue: "Start reading anytime at your own pace",
               })}
-              onSelect={() => setPlanType("flexible")}
+              onSelect={() =>
+                readingPlans.updateEditingReadingPlan({ planType: "flexible" })
+              }
             />
             <PlanTypeChoice
-              selected={planType === "scheduled"}
+              selected={draft.planType === "scheduled"}
               title={t("reading-plan-type-scheduled", {
                 defaultValue: "Scheduled Plan",
               })}
               description={t("reading-plan-type-scheduled-description", {
                 defaultValue: "Follow a plan starting on a specific date",
               })}
-              onSelect={() => setPlanType("scheduled")}
+              onSelect={() =>
+                readingPlans.updateEditingReadingPlan({ planType: "scheduled" })
+              }
             />
           </div>
         )}
@@ -305,13 +272,15 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
                   className="sb-rp-text-input"
                   type="number"
                   min={1}
-                  value={durationDays}
+                  value={draft.durationDays}
                   onInput={(event: Event) => {
                     const raw = parseInt(
                       (event.currentTarget as HTMLInputElement).value,
                       10
                     );
-                    setDurationDays(Number.isNaN(raw) || raw < 1 ? 1 : raw);
+                    readingPlans.setEditingPlanDuration(
+                      Number.isNaN(raw) || raw < 1 ? 1 : raw
+                    );
                   }}
                 />
                 <span className="sb-rp-duration-unit">
@@ -320,7 +289,7 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
               </div>
             </div>
 
-            {planType === "scheduled" && (
+            {draft.planType === "scheduled" && (
               <div className="sb-rp-date-row">
                 <div className="sb-rp-field">
                   <label className="sb-rp-label" htmlFor="sb-rp-start-date">
@@ -332,13 +301,15 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
                     id="sb-rp-start-date"
                     className="sb-rp-text-input"
                     type="date"
-                    value={toDateInputValue(startDateMs)}
+                    value={toDateInputValue(draft.startDateMs)}
                     onInput={(event: Event) => {
                       const ms = fromDateInputValue(
                         (event.currentTarget as HTMLInputElement).value
                       );
                       if (ms !== null) {
-                        setStartDateMs(ms);
+                        readingPlans.updateEditingReadingPlan({
+                          startDateMs: ms,
+                        });
                       }
                     }}
                   />
@@ -361,14 +332,20 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
         )}
 
         {step === "scripture" && (
-          <ScriptureStep
+          <ReadingsStep
             books={books}
-            durationDays={durationDays}
-            selectedDay={selectedDay}
-            onSelectDay={setSelectedDay}
-            readings={readingsByDay[selectedDay] ?? []}
-            onAddReading={(reading) => addReadingToDay(selectedDay, reading)}
-            onRemoveReading={(index) => removeReading(selectedDay, index)}
+            modals={modals}
+            draft={draft}
+            onSelectDay={(day) =>
+              readingPlans.updateEditingReadingPlan({ selectedDay: day })
+            }
+            onAddReading={(item) => readingPlans.addReadingToEditingPlan(item)}
+            onRemoveReading={(readingId) =>
+              readingPlans.removeReadingFromEditingPlan(
+                draft.selectedDay,
+                readingId
+              )
+            }
           />
         )}
       </div>
@@ -441,27 +418,27 @@ function PlanTypeChoice(props: PlanTypeChoiceProps) {
   );
 }
 
-interface ScriptureStepProps {
+interface ReadingsStepProps {
   books: TranslationBook[];
-  durationDays: number;
-  selectedDay: number;
+  modals?: ModalManager;
+  draft: ReadingPlanDraft;
   onSelectDay: (day: number) => void;
-  readings: DraftReading[];
-  onAddReading: (reading: DraftReading) => void;
-  onRemoveReading: (index: number) => void;
+  onAddReading: (item: PlaylistItemData) => void;
+  onRemoveReading: (readingId: string) => void;
 }
 
-function ScriptureStep(props: ScriptureStepProps) {
-  const {
-    books,
-    durationDays,
-    selectedDay,
-    onSelectDay,
-    readings,
-    onAddReading,
-    onRemoveReading,
-  } = props;
+/**
+ * Per-day readings: a day tab strip, the same add-item control the playlist
+ * editor uses (scripture, text, or link), and the list of what's on the day —
+ * each text or link reading previewable, so the author can check it renders
+ * the way they meant before saving the plan.
+ */
+function ReadingsStep(props: ReadingsStepProps) {
+  const { books, modals, draft, onSelectDay, onAddReading, onRemoveReading } =
+    props;
   const { t } = useI18n();
+
+  const readings: PlanReading[] = draft.readingsByDay[draft.selectedDay] ?? [];
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -469,33 +446,28 @@ function ScriptureStep(props: ScriptureStepProps) {
     return book?.name ?? book?.commonName ?? bookId;
   };
 
-  const handleAdd = (item: PlaylistItemData) => {
-    if (item.type !== "bible-verse") {
-      return;
-    }
-    const display = `${resolveBookName(item.ref.bookId)} ${formatRefLabel(
-      item.ref
-    )}`.trim();
-    onAddReading({ display, ref: item.ref });
-  };
+  const untitledReading = t("reading-plan-untitled-reading", {
+    defaultValue: "Reading",
+  });
 
   return (
     <div className="sb-rp-scripture">
       <p className="sb-rp-hint">
         {t("reading-plan-scripture-hint", {
-          defaultValue: "Add the passages to read each day",
+          defaultValue:
+            "Add the readings for each day — scripture, text, or a link",
         })}
       </p>
 
       <div className="sb-rp-day-tabs" role="tablist">
-        {Array.from({ length: durationDays }, (_, day) => (
+        {Array.from({ length: draft.durationDays }, (_, day) => (
           <button
             key={day}
             type="button"
             role="tab"
-            aria-selected={day === selectedDay}
+            aria-selected={day === draft.selectedDay}
             className={`sb-rp-day-tab${
-              day === selectedDay ? " sb-rp-day-tab-selected" : ""
+              day === draft.selectedDay ? " sb-rp-day-tab-selected" : ""
             }`}
             onClick={() => onSelectDay(day)}
           >
@@ -507,11 +479,7 @@ function ScriptureStep(props: ScriptureStepProps) {
         ))}
       </div>
 
-      <ScriptureItemInput
-        books={books}
-        onAdd={handleAdd}
-        submitLabel={t("reading-plan-add-reading", { defaultValue: "Add" })}
-      />
+      <PlaylistItemInput books={books} onAdd={onAddReading} />
 
       {readings.length === 0 ? (
         <p className="sb-rp-empty-day">
@@ -521,21 +489,76 @@ function ScriptureStep(props: ScriptureStepProps) {
         </p>
       ) : (
         <ul className="sb-rp-reading-list">
-          {readings.map((reading, index) => (
-            <li key={index} className="sb-rp-reading-item">
-              <span className="sb-rp-reading-label">{reading.display}</span>
-              <button
-                type="button"
-                className="sb-rp-icon-button sb-rp-reading-remove"
-                onClick={() => onRemoveReading(index)}
-                aria-label={t("reading-plan-scripture-remove", {
-                  defaultValue: "Remove reading",
-                })}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </li>
-          ))}
+          {readings.map((reading) => {
+            const label = readingLabel(
+              reading.item,
+              resolveBookName,
+              untitledReading
+            );
+            const preview = readingPreviewText(reading.item, t);
+            // A text or link reading is the button — tapping it opens the same
+            // preview the reader will see. Scripture has nothing to preview, so
+            // it stays plain text.
+            const canPreview = modals && canPreviewPlaylistItem(reading.item);
+
+            // Leading type icon, then the label with its one-line summary.
+            const body = (
+              <>
+                <span className="sb-rp-reading-icon" aria-hidden="true">
+                  <span className="material-symbols-outlined">
+                    {readingItemIcon(reading.item)}
+                  </span>
+                </span>
+                <span className="sb-rp-reading-text">
+                  <span className="sb-rp-reading-label" dir="auto">
+                    {label}
+                  </span>
+                  {preview ? (
+                    <span className="sb-rp-reading-preview" dir="auto">
+                      {preview}
+                    </span>
+                  ) : null}
+                </span>
+              </>
+            );
+
+            return (
+              <li key={reading.id} className="sb-rp-reading-item">
+                {canPreview ? (
+                  <button
+                    type="button"
+                    className="sb-rp-reading-open"
+                    onClick={() =>
+                      openPlaylistItemPreview(
+                        modals,
+                        reading.item,
+                        PLAN_READING_PREVIEW_MODAL_ID,
+                        t
+                      )
+                    }
+                    aria-label={t("reading-plan-preview-reading", {
+                      defaultValue: "Preview {{reading}}",
+                      reading: label,
+                    })}
+                  >
+                    {body}
+                  </button>
+                ) : (
+                  <span className="sb-rp-reading-body">{body}</span>
+                )}
+                <button
+                  type="button"
+                  className="sb-rp-icon-button sb-rp-reading-remove"
+                  onClick={() => onRemoveReading(reading.id)}
+                  aria-label={t("reading-plan-scripture-remove", {
+                    defaultValue: "Remove reading",
+                  })}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

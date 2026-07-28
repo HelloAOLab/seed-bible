@@ -28,7 +28,6 @@ import {
 } from "./FeaturesManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
-import { v4 as uuid } from "uuid";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -708,6 +707,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
             <ReadingPlansPane
               readingPlans={readingPlans}
               books={readingState.translationBooks.value?.books ?? []}
+              modals={context.modals}
             />
           ),
         });
@@ -813,90 +813,59 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       priority: 150,
       title: { key: "add-to-reading-plan", defaultValue: "Add to plan" },
       icon: () => <MaterialIcon>library_add</MaterialIcon>,
+      // Only offered while a plan is actually being authored — it adds to that
+      // draft, so with no draft there is nowhere for the passage to go. Mirrors
+      // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
-        !!context.readingPlans &&
+        !!context.readingPlans?.editingReadingPlan.value &&
         context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
         context.readingState.selectedVerses.value.length > 0,
-      getItems: (context) => {
+      onSelect: async (context) => {
         const readingPlans = context.readingPlans;
-        if (!readingPlans) {
-          return [];
+        const draft = readingPlans?.editingReadingPlan.value;
+        if (!readingPlans || !draft) {
+          return;
         }
-        const plans = readingPlans.userReadingPlans.value;
-        if (plans.length === 0) {
-          return [
-            {
-              id: "add-to-reading-plan-empty",
-              title: {
-                key: "reading-plan-none-yet",
-                defaultValue: "No plans yet",
-              },
-              icon: () => <MaterialIcon>info</MaterialIcon>,
-              isDisabled: () => true,
-            },
-          ];
+        const verses = context.readingState.selectedVerses.value;
+        if (verses.length === 0) {
+          return;
         }
-        return plans.map((plan) => {
-          const planName =
-            plan.title ??
-            i18n.t("untitled-reading-plan", { defaultValue: "Untitled plan" });
-          return {
-            id: `add-to-reading-plan-${plan.recordName}-${plan.address}`,
-            title: planName,
-            icon: () => <MaterialIcon>menu_book</MaterialIcon>,
-            onSelect: async (ctx) => {
-              const verses = ctx.readingState.selectedVerses.value;
-              if (verses.length === 0) {
-                return;
-              }
-              // Collapse the (single-chapter) selection into one reading that
-              // spans the lowest→highest selected verse.
-              const first = verses[0]!;
-              const verseNumbers = verses
-                .map((v) => v.verse.number)
-                .sort((a, b) => a - b);
-              const lowVerse = verseNumbers[0]!;
-              const highVerse = verseNumbers[verseNumbers.length - 1]!;
-              const session = {
-                id: uuid(),
-                title: null,
-                readings: [
-                  {
-                    id: uuid(),
-                    item: {
-                      type: "bible-verse" as const,
-                      ref: {
-                        bookId: first.bookId,
-                        chapter: first.chapterNumber,
-                        verse: lowVerse,
-                        ...(highVerse !== lowVerse
-                          ? { endVerse: highVerse }
-                          : {}),
-                      },
-                    },
-                  },
-                ],
-              };
-              try {
-                await readingPlans.addSessionToPlanByMetadata(plan, session);
-                ctx.toast(
-                  i18n.t("added-to-reading-plan", {
-                    defaultValue: "Added to {{plan}}",
-                    plan: planName,
-                  })
-                );
-                ctx.readingState.clearSelectedVerses();
-              } catch (error) {
-                console.error("Failed to add to reading plan:", error);
-                ctx.toast(
-                  i18n.t("reading-plan-add-failed", {
-                    defaultValue: "Couldn't add to plan",
-                  })
-                );
-              }
-            },
-          };
+        // Collapse the selection into one reading spanning its first → last
+        // verse. A selection can cross a chapter boundary, so order by
+        // (chapter, verse) rather than verse number alone and record the span
+        // with endChapter/endVerse.
+        const first = verses[0]!;
+        const ordered = verses
+          .filter((v) => v.bookId === first.bookId)
+          .sort(
+            (a, b) =>
+              a.chapterNumber - b.chapterNumber ||
+              a.verse.number - b.verse.number
+          );
+        const start = ordered[0]!;
+        const end = ordered[ordered.length - 1]!;
+        const spansChapters = end.chapterNumber !== start.chapterNumber;
+
+        readingPlans.addReadingToEditingPlan({
+          type: "bible-verse",
+          ref: {
+            bookId: start.bookId,
+            chapter: start.chapterNumber,
+            verse: start.verse.number,
+            ...(spansChapters
+              ? { endChapter: end.chapterNumber, endVerse: end.verse.number }
+              : end.verse.number !== start.verse.number
+                ? { endVerse: end.verse.number }
+                : {}),
+          },
         });
+        context.toast(
+          i18n.t("added-to-reading-plan-day", {
+            defaultValue: "Added to Day {{day}}",
+            day: draft.selectedDay + 1,
+          })
+        );
+        context.readingState.clearSelectedVerses();
       },
     },
     {

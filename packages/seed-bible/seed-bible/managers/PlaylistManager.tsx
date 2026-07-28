@@ -14,8 +14,7 @@ import { range } from "es-toolkit";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
-import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent/PlaylistHtmlContent";
-import { PlaylistLinkContent } from "../components/PlaylistLinkContent/PlaylistLinkContent";
+import { openPlaylistItemPreview } from "../components/playlistItemPreview";
 import type { I18nManager } from "../i18n";
 import type {
   BibleReadingExtensionManager,
@@ -511,22 +510,7 @@ export function createPlaylistManager(
       return;
     }
 
-    const { t } = i18n;
-
-    modals.openModal({
-      id: PLAYLIST_ITEM_MODAL_ID,
-      title: item.title?.trim() || t("content", { defaultValue: "Content" }),
-      content: () =>
-        item.type === "html" ? (
-          <PlaylistHtmlContent html={item.html} />
-        ) : (
-          <PlaylistLinkContent
-            url={item.url}
-            title={item.title}
-            embed={item.embed}
-          />
-        ),
-    });
+    openPlaylistItemPreview(modals, item, PLAYLIST_ITEM_MODAL_ID, i18n.t);
   };
 
   const savePlaylist = async (playlist: Playlist) => {

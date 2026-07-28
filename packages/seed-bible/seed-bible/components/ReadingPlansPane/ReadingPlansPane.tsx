@@ -16,7 +16,8 @@ import {
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { formatRefLabel } from "../ScriptureItemInput/scriptureSuggestions";
+import type { ModalManager } from "../../managers/ModalManager";
+import { readingLabel } from "./readingLabel";
 import { CreateReadingPlanWizard } from "./CreateReadingPlanWizard";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
 
@@ -24,6 +25,8 @@ interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
+  /** Modals host, for previewing/opening a text or link reading. */
+  modals?: ModalManager;
 }
 
 type ReadingPlansView = "list" | "create" | "detail";
@@ -45,8 +48,14 @@ function latestProgress(
  * the create-plan wizard, and a single-plan detail view.
  */
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
-  const { readingPlans, books } = props;
-  const [view, setView] = useState<ReadingPlansView>("list");
+  const { readingPlans, books, modals } = props;
+  // Reopen straight into the wizard when a draft is still in flight — the user
+  // closed the pane to go read and add a passage, and would otherwise come back
+  // to the list with their half-built plan nowhere in sight. `peek` reads it
+  // without subscribing; this only decides the initial view.
+  const [view, setView] = useState<ReadingPlansView>(
+    readingPlans.editingReadingPlan.peek() ? "create" : "list"
+  );
 
   const openDetail = async (plan: ReadingPlanMetadata) => {
     await readingPlans.selectReadingPlan(plan);
@@ -59,9 +68,41 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     setView("detail");
   };
 
+  /**
+   * Restarts a finished plan: creates a fresh progress (so the calendar starts
+   * over from today) and opens the detail view on it. `openDetail` picks the
+   * most recently started progress, which is the one just created.
+   */
+  const restartPlan = async (plan: ReadingPlanMetadata) => {
+    try {
+      await readingPlans.startReadingPlan(plan);
+    } catch (error) {
+      console.error("Failed to restart reading plan:", error);
+      return;
+    }
+    await openDetail(plan);
+  };
+
   const backToList = () => {
     void readingPlans.selectReadingPlan(null);
     void readingPlans.selectReadingPlanProgress(null);
+    setView("list");
+  };
+
+  // Opening the wizard starts a draft on the manager; leaving it either way
+  // clears it. The draft outliving this component is deliberate — see
+  // `editingReadingPlan` — but it must not outlive the wizard itself, or the
+  // reader would keep offering "Add to plan" for a plan nobody is authoring.
+  const openCreate = () => {
+    // Resume an in-flight draft rather than throwing the user's work away.
+    if (!readingPlans.editingReadingPlan.peek()) {
+      readingPlans.startEditingReadingPlan();
+    }
+    setView("create");
+  };
+
+  const closeCreate = () => {
+    readingPlans.cancelEditingReadingPlan();
     setView("list");
   };
 
@@ -70,8 +111,9 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       <CreateReadingPlanWizard
         readingPlans={readingPlans}
         books={books}
-        onCancel={() => setView("list")}
-        onCreated={() => setView("list")}
+        modals={modals}
+        onCancel={closeCreate}
+        onCreated={closeCreate}
       />
     );
   }
@@ -81,6 +123,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       <ReadingPlanDetail
         readingPlans={readingPlans}
         books={books}
+        modals={modals}
         onBack={backToList}
       />
     );
@@ -90,8 +133,9 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     <ReadingPlansList
       readingPlans={readingPlans}
       books={books}
-      onCreate={() => setView("create")}
+      onCreate={openCreate}
       onOpen={(plan) => void openDetail(plan)}
+      onRestart={(plan) => void restartPlan(plan)}
     />
   );
 }
@@ -110,10 +154,12 @@ interface ReadingPlansListProps {
   books: TranslationBook[];
   onCreate: () => void;
   onOpen: (plan: ReadingPlanMetadata) => void;
+  /** Starts a completed plan over on a fresh progress, then opens it. */
+  onRestart: (plan: ReadingPlanMetadata) => void;
 }
 
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, books, onCreate, onOpen } = props;
+  const { readingPlans, books, onCreate, onOpen, onRestart } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
@@ -129,11 +175,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const dayReadingsLabel = (day: CalendarReadingDay): string =>
     day.sessions
       .flatMap((cs) => cs.session.readings)
-      .map((r) =>
-        r.item.type === "bible-verse"
-          ? `${resolveBookName(r.item.ref.bookId)} ${formatRefLabel(r.item.ref)}`.trim()
-          : (r.item.title ?? "")
-      )
+      .map((r) => readingLabel(r.item, resolveBookName, ""))
       .filter(Boolean)
       .slice(0, 3)
       .join(", ");
@@ -294,34 +336,40 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                     key={row.planId}
                     className="sb-rp-card sb-rp-card-static"
                   >
-                    <span
-                      className="sb-rp-card-tile sb-rp-card-tile-done"
-                      aria-hidden="true"
+                    <button
+                      type="button"
+                      className="sb-rp-card-open"
+                      onClick={() => onOpen(row.meta)}
                     >
-                      <MaterialIcon>check</MaterialIcon>
-                    </span>
-                    <span className="sb-rp-card-body">
-                      <span className="sb-rp-card-title" dir="auto">
-                        {planTitle(row.meta)}
+                      <span
+                        className="sb-rp-card-tile sb-rp-card-tile-done"
+                        aria-hidden="true"
+                      >
+                        <MaterialIcon>check</MaterialIcon>
                       </span>
-                      <span className="sb-rp-card-sub">
-                        {finishedMs != null
-                          ? `${t("reading-plan-finished", {
-                              defaultValue: "Finished {{date}}",
-                              date: DateTime.fromMillis(
-                                finishedMs
-                              ).toLocaleString({
-                                month: "short",
-                                day: "numeric",
-                              }),
-                            })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
-                          : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
+                      <span className="sb-rp-card-body">
+                        <span className="sb-rp-card-title" dir="auto">
+                          {planTitle(row.meta)}
+                        </span>
+                        <span className="sb-rp-card-sub">
+                          {finishedMs != null
+                            ? `${t("reading-plan-finished", {
+                                defaultValue: "Finished {{date}}",
+                                date: DateTime.fromMillis(
+                                  finishedMs
+                                ).toLocaleString({
+                                  month: "short",
+                                  day: "numeric",
+                                }),
+                              })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
+                            : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
+                        </span>
                       </span>
-                    </span>
+                    </button>
                     <button
                       type="button"
                       className="sb-rp-restart"
-                      onClick={() => onOpen(row.meta)}
+                      onClick={() => onRestart(row.meta)}
                     >
                       {t("reading-plan-restart", { defaultValue: "Restart" })}
                     </button>

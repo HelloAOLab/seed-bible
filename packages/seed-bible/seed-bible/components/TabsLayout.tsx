@@ -487,8 +487,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }, 50);
   };
 
+  // On mobile the reader's chapter panel is the scroll container, so the card
+  // goes inside it (via `belowContent`) and is reached by scrolling to the end
+  // of the passage. On desktop the pane itself scrolls, so it stays a sibling
+  // rendered after the reader.
+  const belongsCard = (
+    <ReadingPlanBelongsCard state={state} readingState={readingState} />
+  );
+
   const mobileChrome = isMobile
     ? {
+        belowContent: belongsCard,
         isScrolled,
         prevChapterPreview,
         nextChapterPreview,
@@ -522,7 +531,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         mobileChrome={mobileChrome}
         sharedSession={tab.sharedSession}
       />
-      <ReadingPlanBelongsCard state={state} readingState={readingState} />
+      {!isMobile && belongsCard}
       {!isMobile && (
         <BelowReaderToolbar
           toolsManager={state.tools}

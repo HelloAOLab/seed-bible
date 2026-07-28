@@ -307,9 +307,75 @@
   border-radius: 10px;
 }
 
+/* The item body: a leading type icon and the label with its summary. For a text
+   or link reading the whole thing is the button that opens the preview; for
+   scripture there's nothing to open, so it's a plain span. Both share the same
+   layout so the list stays visually uniform. */
+.sb-rp-reading-body,
+.sb-rp-reading-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.sb-rp-reading-open {
+  cursor: pointer;
+}
+
+.sb-rp-reading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
+  color: var(--rp-accent);
+}
+
+.sb-rp-reading-icon .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-rp-reading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
 .sb-rp-reading-label {
   font-size: 0.875rem;
   font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-rp-reading-open:hover .sb-rp-reading-label {
+  text-decoration: underline;
+}
+
+/* One-line summary of what the reading holds: an excerpt of a text snippet, or
+   a link's host. Already truncated in code, but clipped here too so a long
+   unbroken string can't stretch the row. */
+.sb-rp-reading-preview {
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sb-rp-reading-remove {

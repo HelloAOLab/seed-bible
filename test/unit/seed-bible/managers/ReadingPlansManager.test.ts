@@ -1,9 +1,15 @@
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers";
 import {
   CadenceSchema,
+  DEFAULT_DRAFT_DURATION_DAYS,
+  PlanReadingSchema,
   ReadingPlanSchema,
+  ReadingPlanSessionSchema,
   ReadingPlanProgressSchema,
   effectiveCadence,
+  estimateReadingMinutes,
+  sessionMatchesPassage,
+  summarizeCalendar,
   slotsForCadence,
   dateForSession,
   sessionsForDate,
@@ -16,8 +22,13 @@ import {
   markDayCompleteInProgress,
   createReadingPlanProgress,
   createReadingPlan,
+  createReadingPlanDraft,
   createReadingPlansManager,
+  draftReadingCount,
+  sessionsFromDraft,
+  withDraftDuration,
   type Cadence,
+  type ReadingPlanDraft,
   type ReadingPlan,
   type ReadingPlanProgress,
   type ReadingCalendarEntry,
@@ -499,6 +510,396 @@ describe("getReadingCalendar", () => {
   });
 });
 
+describe("reading plan drafts", () => {
+  const verseItem = (chapter: number) => ({
+    type: "bible-verse" as const,
+    ref: { bookId: "GEN", chapter },
+  });
+  const draftReading = (id: string, chapter: number) => ({
+    id,
+    item: verseItem(chapter),
+  });
+
+  it("starts empty, flexible, and on the default duration", () => {
+    const draft = createReadingPlanDraft(START_MS);
+
+    expect(draft).toMatchObject({
+      title: "",
+      planType: "flexible",
+      durationDays: DEFAULT_DRAFT_DURATION_DAYS,
+      startDateMs: START_MS,
+      readingsByDay: {},
+      selectedDay: 0,
+    });
+    expect(draftReadingCount(draft)).toBe(0);
+  });
+
+  it("counts only readings on in-range days", () => {
+    const draft: ReadingPlanDraft = {
+      ...createReadingPlanDraft(START_MS),
+      durationDays: 3,
+      readingsByDay: {
+        0: [draftReading("r1", 1), draftReading("r2", 2)],
+        2: [draftReading("r3", 3)],
+        // Out of range for a 3-day plan — must not be counted.
+        7: [draftReading("r4", 4)],
+      },
+    };
+
+    expect(draftReadingCount(draft)).toBe(3);
+  });
+
+  it("shortening the duration drops out-of-range readings and clamps the day", () => {
+    const draft: ReadingPlanDraft = {
+      ...createReadingPlanDraft(START_MS),
+      durationDays: 30,
+      selectedDay: 20,
+      readingsByDay: {
+        0: [draftReading("r1", 1)],
+        20: [draftReading("r2", 2)],
+      },
+    };
+
+    const shortened = withDraftDuration(draft, 5);
+
+    expect(shortened.durationDays).toBe(5);
+    expect(shortened.selectedDay).toBe(4); // clamped to the last day
+    expect(Object.keys(shortened.readingsByDay)).toEqual(["0"]);
+    // The gate and the write agree: nothing counted that wouldn't be saved.
+    expect(draftReadingCount(shortened)).toBe(1);
+    expect(
+      sessionsFromDraft(shortened, () => "s").flatMap((s) => s.readings)
+    ).toHaveLength(1);
+    expect(draft.readingsByDay[20]).toHaveLength(1); // input not mutated
+  });
+
+  it("never lets the duration fall below one day", () => {
+    const draft = withDraftDuration(createReadingPlanDraft(START_MS), 0);
+
+    expect(draft.durationDays).toBe(1);
+    expect(draft.selectedDay).toBe(0);
+  });
+
+  it("builds one session per in-range day with readings, in day order", () => {
+    let n = 0;
+    const draft: ReadingPlanDraft = {
+      ...createReadingPlanDraft(START_MS),
+      durationDays: 4,
+      readingsByDay: {
+        2: [draftReading("r3", 3)],
+        0: [draftReading("r1", 1), draftReading("r2", 2)],
+        1: [], // an emptied day produces no session
+        9: [draftReading("r4", 4)], // out of range
+      },
+    };
+
+    const sessions = sessionsFromDraft(draft, () => `s${++n}`);
+
+    expect(sessions).toEqual([
+      {
+        id: "s1",
+        title: null,
+        readings: [draftReading("r1", 1), draftReading("r2", 2)],
+      },
+      { id: "s2", title: null, readings: [draftReading("r3", 3)] },
+    ]);
+  });
+});
+
+describe("summarizeCalendar", () => {
+  const ZONED_START = DateTime.fromISO("2026-06-17T00:00:00", { zone: ZONE });
+
+  /**
+   * A daily calendar of `total` reading days starting at `ZONED_START`, with
+   * the day offsets in `done` marked complete. `nowOffset` selects which day
+   * counts as "today". Built directly (rather than through
+   * `getReadingCalendar`) so each case states exactly the shape under test.
+   */
+  const calendar = (
+    total: number,
+    done: number[],
+    nowOffset: number
+  ): ReadingCalendarEntry[] =>
+    Array.from({ length: total }, (_, dayOffset): CalendarReadingDay => {
+      const isDone = done.includes(dayOffset);
+      const date = ZONED_START.plus({ days: dayOffset });
+      return {
+        type: "reading",
+        date,
+        dayOffset,
+        sessions: [],
+        startSessionIndex: dayOffset,
+        endSessionIndex: dayOffset,
+        completedAtMs: isDone ? date.plus({ hours: 8 }).toMillis() : null,
+        containsNow: dayOffset === nowOffset,
+      };
+    });
+
+  const nowAt = (dayOffset: number, hours = 9) =>
+    ZONED_START.plus({ days: dayOffset, hours }).toMillis();
+
+  const cases: {
+    name: string;
+    total: number;
+    done: number[];
+    nowOffset: number;
+    streak: number;
+    behind: number;
+  }[] = [
+    {
+      name: "today still pending doesn't break the streak behind it",
+      total: 5,
+      done: [0, 1],
+      nowOffset: 2,
+      streak: 2,
+      behind: 0,
+    },
+    {
+      name: "today complete counts toward the streak",
+      total: 5,
+      done: [0, 1, 2],
+      nowOffset: 2,
+      streak: 3,
+      behind: 0,
+    },
+    {
+      name: "a gap in past days stops the streak and counts as behind",
+      total: 5,
+      done: [0, 2, 3],
+      nowOffset: 3,
+      streak: 2,
+      behind: 1,
+    },
+    {
+      name: "a missed day before today breaks the streak entirely",
+      total: 5,
+      done: [0, 1],
+      nowOffset: 3,
+      streak: 0,
+      behind: 1,
+    },
+    {
+      name: "nothing done yet on day one",
+      total: 5,
+      done: [],
+      nowOffset: 0,
+      streak: 0,
+      behind: 0,
+    },
+    {
+      name: "all days complete on the last day",
+      total: 3,
+      done: [0, 1, 2],
+      nowOffset: 2,
+      streak: 3,
+      behind: 0,
+    },
+    {
+      name: "future days are neither behind nor streak-breaking",
+      total: 10,
+      done: [0, 1],
+      nowOffset: 1,
+      streak: 2,
+      behind: 0,
+    },
+  ];
+
+  it.each(cases)("$name", ({ total, done, nowOffset, streak, behind }) => {
+    const summary = summarizeCalendar(
+      calendar(total, done, nowOffset),
+      nowAt(nowOffset)
+    );
+    expect(summary.streak).toBe(streak);
+    expect(summary.behind).toBe(behind);
+    expect(summary.totalDays).toBe(total);
+    expect(summary.doneDays).toBe(done.length);
+  });
+
+  it("reports today, the next unread day, and the last day", () => {
+    const summary = summarizeCalendar(calendar(5, [0, 1], 2), nowAt(2));
+
+    expect(summary.today?.dayOffset).toBe(2);
+    expect(summary.next?.dayOffset).toBe(2);
+    expect(summary.nextDayNumber).toBe(3); // 1-based ordinal
+    expect(summary.lastDay?.dayOffset).toBe(4);
+  });
+
+  it("has no next day once every day is complete", () => {
+    const summary = summarizeCalendar(calendar(3, [0, 1, 2], 2), nowAt(2));
+
+    expect(summary.next).toBeNull();
+    expect(summary.nextDayNumber).toBeNull();
+    expect(summary.doneDays).toBe(3);
+  });
+
+  it("drops skip ranges and returns zeroed stats for an empty calendar", () => {
+    const skip: CalendarSkipRange = {
+      type: "skip",
+      startDate: ZONED_START,
+      endDate: ZONED_START.plus({ days: 1 }),
+      startDayOffset: 0,
+      days: 2,
+      containsNow: false,
+    };
+    const mixed = [skip, ...calendar(1, [0], 0)];
+
+    expect(summarizeCalendar(mixed, nowAt(0)).readingDays).toHaveLength(1);
+    expect(summarizeCalendar([], nowAt(0))).toMatchObject({
+      totalDays: 0,
+      doneDays: 0,
+      streak: 0,
+      behind: 0,
+      today: null,
+      next: null,
+      nextDayNumber: null,
+      lastDay: null,
+    });
+  });
+
+  it("resolves 'today' in the calendar's zone, not the device's", () => {
+    // A plan anchored to Tokyo, read by a device in Los Angeles. At this
+    // instant it is still the 17th in LA but already the 18th in Tokyo, so
+    // day 0 (the 17th, incomplete) is strictly past and counts as behind.
+    const tokyoStart = DateTime.fromISO("2026-06-17T00:00:00", {
+      zone: "Asia/Tokyo",
+    });
+    const days: ReadingCalendarEntry[] = [0, 1].map(
+      (dayOffset): CalendarReadingDay => ({
+        type: "reading",
+        date: tokyoStart.plus({ days: dayOffset }),
+        dayOffset,
+        sessions: [],
+        startSessionIndex: dayOffset,
+        endSessionIndex: dayOffset,
+        completedAtMs: null,
+        containsNow: dayOffset === 1,
+      })
+    );
+    const nowMs = tokyoStart.plus({ days: 1, hours: 9 }).toMillis();
+
+    expect(
+      DateTime.fromMillis(nowMs, { zone: "America/Los_Angeles" }).day
+    ).toBe(17);
+    expect(summarizeCalendar(days, nowMs).behind).toBe(1);
+  });
+});
+
+describe("sessionMatchesPassage", () => {
+  const verseReading = (id: string, ref: Record<string, unknown>) => ({
+    id,
+    item: { type: "bible-verse" as const, ref },
+  });
+  const sessionWith = (...readings: ReturnType<typeof verseReading>[]) =>
+    ReadingPlanSessionSchema.parse({ id: "s1", readings });
+
+  it("matches a single-chapter reading only on its own chapter", () => {
+    const session = sessionWith(
+      verseReading("r1", { bookId: "GEN", chapter: 3, verse: 1 })
+    );
+
+    expect(sessionMatchesPassage(session, "GEN", 3)).toBe(true);
+    expect(sessionMatchesPassage(session, "GEN", 2)).toBe(false);
+    expect(sessionMatchesPassage(session, "GEN", 4)).toBe(false);
+  });
+
+  it("matches any chapter inside a multi-chapter reading, inclusive", () => {
+    const session = sessionWith(
+      verseReading("r1", { bookId: "GEN", chapter: 2, endChapter: 4 })
+    );
+
+    expect(
+      [1, 2, 3, 4, 5].map((c) => sessionMatchesPassage(session, "GEN", c))
+    ).toEqual([false, true, true, true, false]);
+  });
+
+  it("requires the book to match", () => {
+    const session = sessionWith(
+      verseReading("r1", { bookId: "GEN", chapter: 1, endChapter: 50 })
+    );
+
+    expect(sessionMatchesPassage(session, "EXO", 1)).toBe(false);
+  });
+
+  it("matches when any one of several readings covers the passage", () => {
+    const session = sessionWith(
+      verseReading("r1", { bookId: "GEN", chapter: 1 }),
+      verseReading("r2", { bookId: "PSA", chapter: 23 })
+    );
+
+    expect(sessionMatchesPassage(session, "PSA", 23)).toBe(true);
+    expect(sessionMatchesPassage(session, "PSA", 24)).toBe(false);
+  });
+
+  it("ignores non-scripture readings", () => {
+    const session = ReadingPlanSessionSchema.parse({
+      id: "s1",
+      readings: [
+        { id: "r1", item: { type: "html", title: "Intro", html: "<p>Hi</p>" } },
+      ],
+    });
+
+    expect(sessionMatchesPassage(session, "GEN", 1)).toBe(false);
+  });
+});
+
+describe("estimateReadingMinutes", () => {
+  const verseReading = (id: string, ref: Record<string, unknown>) =>
+    PlanReadingSchema.parse({
+      id,
+      item: { type: "bible-verse", ref },
+    });
+
+  it("counts a single chapter (or a verse within one) as one chapter", () => {
+    expect(
+      estimateReadingMinutes([
+        verseReading("r1", { bookId: "GEN", chapter: 1 }),
+      ])
+    ).toBe(3);
+    expect(
+      estimateReadingMinutes([
+        verseReading("r1", {
+          bookId: "GEN",
+          chapter: 1,
+          verse: 1,
+          endVerse: 5,
+        }),
+      ])
+    ).toBe(3);
+  });
+
+  it("counts a chapter range inclusively", () => {
+    expect(
+      estimateReadingMinutes([
+        verseReading("r1", { bookId: "GEN", chapter: 1, endChapter: 3 }),
+      ])
+    ).toBe(9);
+  });
+
+  it("sums across readings", () => {
+    expect(
+      estimateReadingMinutes([
+        verseReading("r1", { bookId: "GEN", chapter: 1, endChapter: 2 }),
+        verseReading("r2", { bookId: "PSA", chapter: 23 }),
+      ])
+    ).toBe(9);
+  });
+
+  it("counts a non-scripture reading as one chapter", () => {
+    expect(
+      estimateReadingMinutes([
+        PlanReadingSchema.parse({
+          id: "r1",
+          item: { type: "html", title: "Intro", html: "<p>Hi</p>" },
+        }),
+      ])
+    ).toBe(3);
+  });
+
+  it("never returns less than a minute, even for no readings", () => {
+    expect(estimateReadingMinutes([])).toBe(1);
+  });
+});
+
 describe("createReadingPlansManager", () => {
   type LoginArg = Parameters<typeof createReadingPlansManager>[1];
 
@@ -901,11 +1302,13 @@ describe("createReadingPlansManager", () => {
 
     const plans = manager.userReadingPlans.value;
     expect(plans).toHaveLength(1);
-    const plan = plans[0]! as ReadingPlan;
+    const plan = plans[0]!;
     expect(plan.authorUserId).toBe("user-1");
     expect(plan.recordName).toBe("user-1");
     expect(plan.address).toMatch(/^plan_/);
-    expect(plan.sessions).toEqual([]);
+    // The list holds metadata only — `sessions` live on the full-plan cache.
+    expect(plan).not.toHaveProperty("sessions");
+    expect(manager.fullReadingPlans.value[0]!.sessions).toEqual([]);
 
     // saveReadingPlan persists the full plan and the metadata separately
     const markers = recordDataMock.mock.calls.map((c) => c[3]?.marker);
@@ -941,7 +1344,219 @@ describe("createReadingPlansManager", () => {
     expect(plan.description).toBe("One year daily plan");
     expect(plan.locale).toBe("es-MX");
     expect(plan.sessions).toEqual([]);
-    expect(manager.userReadingPlans.value).toContainEqual(plan);
+    expect(manager.userReadingPlans.value).toContainEqual(metadataOf(plan));
+    expect(manager.fullReadingPlans.value).toContainEqual(plan);
+  });
+
+  it("createNewReadingPlan writes a plan and all its sessions in one save", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    recordDataMock.mockClear();
+    getDataMock.mockClear();
+
+    const sessions = [
+      { id: "s1", readings: [reading("r1")] },
+      { id: "s2", readings: [reading("r2"), reading("r3")] },
+    ];
+    const plan = await manager.createNewReadingPlan({
+      title: "Three readings",
+      durationDays: 30,
+      sessions,
+    });
+    await flush();
+
+    expect(plan.sessions).toEqual(sessions);
+
+    // One saveReadingPlan == 2 records (full + metadata), regardless of how
+    // many sessions the plan has. A per-session save would multiply this.
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    const saved = recordDataMock.mock.calls.find(
+      (c) => c[3]?.marker === "publicRead:readingPlan"
+    )!;
+    expect((saved[2] as ReadingPlan).sessions).toEqual(sessions);
+
+    // The full-plan cache is seeded from what was just saved, so the sync
+    // effect has nothing to fetch.
+    expect(manager.fullReadingPlans.value).toEqual([plan]);
+    expect(getDataMock).not.toHaveBeenCalled();
+  });
+
+  it("appending a session doesn't refetch the user's other plans", async () => {
+    const planA = makePlan({ address: "plan-a" });
+    const planB = makePlan({ address: "plan-b" });
+    const byAddress: Record<string, ReadingPlan> = {
+      "plan-a": planA,
+      "plan-b": planB,
+    };
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [
+          { address: "plan-a_metadata", data: metadataOf(planA) },
+          { address: "plan-b_metadata", data: metadataOf(planB) },
+        ],
+      ],
+    });
+    getDataMock.mockImplementation(async (_record: string, address: string) => {
+      const found = byAddress[address];
+      return found ? { success: true, data: found } : { success: false };
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    // The initial sync loads both listed plans.
+    expect(manager.fullReadingPlans.value).toHaveLength(2);
+    expect(getDataMock).toHaveBeenCalledTimes(2);
+    getDataMock.mockClear();
+
+    const updated = await manager.addSessionToReadingPlan(planA, {
+      id: "s-new",
+      readings: [reading("r-new")],
+    });
+    await flush();
+
+    // The appended-to plan is updated in the cache in place, and the untouched
+    // plan is reused from cache — neither is re-read over the network.
+    expect(getDataMock).not.toHaveBeenCalled();
+    expect(manager.fullReadingPlans.value).toEqual([updated, planB]);
+  });
+
+  it("the draft survives so the reader can add to the plan being authored", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    // Nothing being authored → the verse toolbar has nowhere to put a passage.
+    expect(manager.editingReadingPlan.value).toBeNull();
+
+    manager.startEditingReadingPlan();
+    expect(manager.editingReadingPlan.value).not.toBeNull();
+
+    manager.updateEditingReadingPlan({ title: "Psalms", selectedDay: 2 });
+    manager.addReadingToEditingPlan({
+      type: "bible-verse",
+      ref: { bookId: "PSA", chapter: 23 },
+    });
+    // A text item — plans take any playlist item type, not just scripture.
+    manager.addReadingToEditingPlan({
+      type: "html",
+      title: "Intro",
+      html: "<p>Hi</p>",
+    });
+
+    const draft = manager.editingReadingPlan.value!;
+    expect(draft.title).toBe("Psalms");
+    expect(draft.readingsByDay[2]).toHaveLength(2);
+    expect(draft.readingsByDay[2]!.map((r) => r.item.type)).toEqual([
+      "bible-verse",
+      "html",
+    ]);
+    expect(draftReadingCount(draft)).toBe(2);
+
+    manager.cancelEditingReadingPlan();
+    expect(manager.editingReadingPlan.value).toBeNull();
+  });
+
+  it("addReadingToEditingPlan clamps the target day into range", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    manager.setEditingPlanDuration(3);
+
+    manager.addReadingToEditingPlan(
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } },
+      99
+    );
+
+    // Clamped to the last in-range day rather than stranded out of range.
+    expect(
+      Object.keys(manager.editingReadingPlan.value!.readingsByDay)
+    ).toEqual(["2"]);
+  });
+
+  it("removeReadingFromEditingPlan drops the reading and empties the day", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    manager.addReadingToEditingPlan({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+    });
+    const readingId =
+      manager.editingReadingPlan.value!.readingsByDay[0]![0]!.id;
+
+    manager.removeReadingFromEditingPlan(0, readingId);
+
+    expect(manager.editingReadingPlan.value!.readingsByDay).toEqual({});
+  });
+
+  it("saveEditingReadingPlan writes the draft once and clears it", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    recordDataMock.mockClear();
+
+    manager.startEditingReadingPlan();
+    manager.updateEditingReadingPlan({
+      title: "  Psalms Journey  ",
+      planType: "scheduled",
+      startDateMs: START_MS,
+    });
+    manager.setEditingPlanDuration(3);
+    manager.addReadingToEditingPlan(
+      { type: "bible-verse", ref: { bookId: "PSA", chapter: 1 } },
+      0
+    );
+    manager.addReadingToEditingPlan(
+      { type: "link", title: "Commentary", url: "https://example.com/psalms" },
+      2
+    );
+
+    const plan = await manager.saveEditingReadingPlan();
+
+    expect(plan).not.toBeNull();
+    expect(plan!.title).toBe("Psalms Journey"); // trimmed
+    expect(plan!.planType).toBe("scheduled");
+    expect(plan!.durationDays).toBe(3);
+    expect(plan!.suggestedStartDateMs).toBe(START_MS);
+    // One session per day that has readings, in day order.
+    expect(plan!.sessions).toHaveLength(2);
+    expect(plan!.sessions.map((s) => s.readings[0]!.item.type)).toEqual([
+      "bible-verse",
+      "link",
+    ]);
+    // A single save (full plan + metadata), not one write per day.
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    expect(manager.editingReadingPlan.value).toBeNull();
+  });
+
+  it("saveEditingReadingPlan is a no-op without a draft or readings", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    recordDataMock.mockClear();
+
+    expect(await manager.saveEditingReadingPlan()).toBeNull();
+
+    manager.startEditingReadingPlan();
+    expect(await manager.saveEditingReadingPlan()).toBeNull();
+
+    expect(recordDataMock).not.toHaveBeenCalled();
+    expect(manager.editingReadingPlan.value).not.toBeNull(); // draft kept
+  });
+
+  it("a suggested start date is only kept for a scheduled plan", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    manager.updateEditingReadingPlan({
+      planType: "flexible",
+      startDateMs: START_MS,
+    });
+    manager.addReadingToEditingPlan({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+    });
+
+    const plan = await manager.saveEditingReadingPlan();
+
+    expect(plan!.suggestedStartDateMs).toBeNull();
   });
 
   it("createNewReadingPlan throws when signed out", async () => {
