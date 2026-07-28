@@ -1080,8 +1080,7 @@ export const bootstrapExtension = () => {
     draggingServicePort: scripturePieceDraggingService,
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
-    draggingEventMapperPort: relocationEventMapper,
-    dropEventMapperPort: relocationEventMapper,
+    relocationEventMapper: relocationEventMapper,
   });
   const sectionInteractionController = new SectionInteractionController({
     sectionInteractionServicePort: sectionInteractionService,
@@ -1090,8 +1089,7 @@ export const bootstrapExtension = () => {
     draggingServicePort: scripturePieceDraggingService,
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
-    draggingEventMapperPort: relocationEventMapper,
-    dropEventMapperPort: relocationEventMapper,
+    relocationEventMapperPort: relocationEventMapper,
   });
   const bookInteractionController = new BookInteractionController({
     bookInteractionServicePort: bookInteractionService,
