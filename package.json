@@ -23,6 +23,7 @@
     "release:prepare": "tsx script/release.ts prepare",
     "changelog:extract": "tsx script/changelog.ts extract",
     "build-size-report": "tsx script/build-size-report.ts",
+    "coverage-summary": "tsx script/coverage-summary.ts",
     "i18n": "tsx script/i18n.ts",
     "list-bible-translations": "tsx script/list-bible-translations.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",

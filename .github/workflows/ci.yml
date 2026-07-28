@@ -50,7 +50,13 @@ jobs:
           pnpm check:ts
       - name: Test
         run: |
-          pnpm test
+          pnpm test:coverage
+      - name: Coverage summary
+        if: always()
+        continue-on-error: true
+        run: |
+          pnpm coverage-summary --summary coverage/coverage-summary.json --out coverage-summary.md
+          cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Build
         run: |
           pnpm build
