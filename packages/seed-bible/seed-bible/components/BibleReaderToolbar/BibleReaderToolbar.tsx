@@ -833,6 +833,41 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
   }, [hasVerseSelection.value]);
 
+  // Tapping anywhere outside the mobile More menu closes it. Deliberately done
+  // with a document listener rather than a backdrop element so the tap still
+  // reaches whatever was tapped — selecting a verse or hitting a top quick
+  // toolbar button works normally while the menu is open, it just also
+  // dismisses the menu. Capture phase so we still see the tap even if the
+  // target stops propagation.
+  useEffect(() => {
+    if (!isMoreMenuOpen.value) return;
+
+    const handleDocumentPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      // The anchor wraps both the More button and the popover, so this covers
+      // taps on either. The button's own click handler does the toggling.
+      if (target?.closest(".sb-reader-toolbar-more-anchor")) return;
+      isMoreMenuOpen.value = false;
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        isMoreMenuOpen.value = false;
+      }
+    };
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown, true);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handleDocumentPointerDown,
+        true
+      );
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMoreMenuOpen.value]);
+
   const { t } = useI18n();
 
   // Opens the Today screen. If the `today-screen` extension isn't installed
