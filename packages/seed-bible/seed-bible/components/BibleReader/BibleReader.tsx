@@ -977,14 +977,25 @@ const RIBBON_FADE_MS = 250;
  * Bar widths for the chapter loading placeholder, one array per paragraph.
  *
  * Hand-picked rather than random so the placeholder is identical on every
- * render (a fresh set each time would shimmer *and* reflow) and reads as
- * ragged prose rather than a block. Enough paragraphs to fill a typical
- * reading pane without leaving obvious empty space below.
+ * render — a fresh set each time would shimmer *and* reflow — and so it reads
+ * as ragged prose rather than a block.
+ *
+ * Deliberately more paragraphs than the tallest reading pane needs. The two
+ * failure modes are not symmetric: falling short leaves visible dead space
+ * below the bars, while overshooting spills below the fold where nobody sees
+ * it (the pane scrolls internally, and scroll position resets on every chapter
+ * change). Tuning the fill is editing this one array — no measurement, and no
+ * reflow on a placeholder that remounts on every navigation.
  */
 const CHAPTER_SKELETON_PARAGRAPHS = [
   ["97%", "92%", "99%", "88%", "71%"],
   ["94%", "99%", "90%", "96%", "58%"],
   ["99%", "89%", "95%", "93%", "77%"],
+  ["91%", "98%", "87%", "96%", "64%"],
+  ["96%", "93%", "99%", "85%", "80%"],
+  ["98%", "90%", "94%", "97%", "52%"],
+  ["93%", "99%", "91%", "88%", "74%"],
+  ["95%", "96%", "98%", "89%", "68%"],
 ] as const;
 
 interface ChapterContentProps {

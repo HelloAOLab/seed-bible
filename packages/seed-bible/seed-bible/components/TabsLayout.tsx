@@ -72,9 +72,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }
 
     const cleanup = effect(() => {
-      if (readingState.chapterData.value) {
-        element.scrollTop = readingState.scrollPosition.peek();
-      }
+      // Tracked on purpose: the reader's *position*, not just the loaded
+      // chapter, so the scroller moves the moment navigation happens.
+      // `applyPosition` has already reset `scrollPosition` to 0 for a chapter
+      // change, so this is what puts the reader back at the chapter heading
+      // while the placeholder shows. Waiting for `chapterData` left a reader
+      // who was halfway down a chapter stranded mid-page, looking at
+      // placeholder bars with the new book and chapter title off-screen above.
+      void readingState.translationId.value;
+      void readingState.bookId.value;
+      void readingState.chapterNumber.value;
+      element.scrollTop = readingState.scrollPosition.peek();
 
       const verseToScroll = readingState.scrollToVerse.value;
       if (readingState.chapterData.value && verseToScroll !== null) {
