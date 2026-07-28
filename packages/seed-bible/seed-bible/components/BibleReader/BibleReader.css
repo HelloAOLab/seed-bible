@@ -552,7 +552,7 @@
   vertical-align: middle;
   /* Phase 2 (UI-scaling): gutters in em so they track the reader glyph knob.
      Color/opacity adopted from develop. */
-  margin-inline-start: 0.625em;
+  /* margin-inline-start: 0.625em; */
   margin-inline-end: 0.3125em;
   color: inherit;
   opacity: 0.7;
