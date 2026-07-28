@@ -70,7 +70,7 @@ jobs:
         id: ids
         run: |
           RAW="${{ github.head_ref || github.ref_name }}"
-          BRANCH=$(echo "$RAW" | sed 's/\//_/g')
+          BRANCH=$(echo "$RAW" | sed 's/[^a-zA-Z0-9]/_/g')
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "build_id=${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
@@ -252,7 +252,7 @@ jobs:
         with:
           script: |
             const commentDeployment = require("./.github/scripts/comment-deployment.cjs");
-            const branch = "${{ github.head_ref }}".replace(/\//g, "_");
+            const branch = "${{ github.head_ref }}".replace(/[^a-zA-Z0-9]/g, "_");
             await commentDeployment({
               github,
               context,
