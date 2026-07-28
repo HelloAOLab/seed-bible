@@ -47,7 +47,13 @@ function makeFakePostHog(initialFlags: Record<string, boolean | undefined>) {
       flags[key] = value;
     },
     pushFlagsUpdate() {
-      listener?.(Object.keys(flags));
+      let f = [];
+      for (const [key, value] of Object.entries(flags)) {
+        if (value) {
+          f.push(key);
+        }
+      }
+      listener?.(f);
     },
   };
 }
@@ -98,10 +104,13 @@ describe("FeaturesManager", () => {
 
   it("reads the flag value from posthog outside of dev mode and SSR", () => {
     withEnv({ DEV: false, SSR: false }, () => {
-      const { posthog } = makeFakePostHog({
+      const { posthog, pushFlagsUpdate } = makeFakePostHog({
         [FEATURE_KEY_READING_PLANS]: true,
       });
       const manager = createFeaturesManager(posthog);
+
+      pushFlagsUpdate(); // Simulate PostHog pushing the initial flags
+
       expect(manager.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value).toBe(
         true
       );
@@ -137,8 +146,10 @@ describe("FeaturesManager", () => {
 
       const flagA = manager.isFeatureEnabled("flag-a");
       const flagB = manager.isFeatureEnabled("flag-b");
+
+      // Flags aren't evaluated until the first push from PostHog
       expect(flagA.value).toBe(false);
-      expect(flagB.value).toBe(true);
+      expect(flagB.value).toBe(false);
 
       setFlag("flag-a", true);
       setFlag("flag-b", false);

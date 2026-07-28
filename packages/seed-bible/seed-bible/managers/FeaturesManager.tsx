@@ -8,6 +8,7 @@ export interface PostHog {
 export const FEATURE_KEY_READING_PLANS = "reading-plans";
 
 export function createFeaturesManager(posthog: PostHog | null) {
+  const flags = signal<string[]>([]);
   const signals = new Map<string, Signal<boolean>>();
 
   const getFeatureSignal = (featureKey: string): Signal<boolean> => {
@@ -24,15 +25,18 @@ export function createFeaturesManager(posthog: PostHog | null) {
       s.value = true;
     } else if (import.meta.env.SSR || !posthog) {
       s.value = false;
+    } else {
+      s.value = flags.peek().includes(featureKey);
     }
 
     return s;
   };
 
   if (posthog) {
-    posthog.onFeatureFlags((flags) => {
+    posthog.onFeatureFlags((f) => {
+      flags.value = f;
       for (const [featureKey, s] of signals.entries()) {
-        const featureEnabled = flags.includes(featureKey);
+        const featureEnabled = flags.peek().includes(featureKey);
         s.value = featureEnabled ?? false;
       }
     });
