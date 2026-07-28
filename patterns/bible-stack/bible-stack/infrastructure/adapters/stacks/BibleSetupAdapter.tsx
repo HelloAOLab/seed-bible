@@ -260,6 +260,8 @@ if(!thisBot.masks.lastPositionUpdateTime || os.localTime > (thisBot.masks.lastPo
           initialScaleZ: testamentScales.z,
           desiredScaleZ: testamentScales.z,
           desiredPositionZ: 0,
+          hoveredFormOpacity: 1,
+          unhoveredFormOpacity: 1,
         },
       });
       testamentPiecesMap.set(testamentData.id, testamentPiece);

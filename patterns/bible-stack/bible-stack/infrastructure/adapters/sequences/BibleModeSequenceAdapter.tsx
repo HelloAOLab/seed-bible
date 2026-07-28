@@ -6,7 +6,6 @@ import type { PiecesConfigProvider } from "../../config/pieces.tsx/PiecesConfigP
 import type { SequenceConfigProvider } from "../../config/sequences/SequenceConfigProvider";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
 import type { ColorLerper } from "../environment/ColorLerper";
-import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
 
 interface AdapterParams {
   sequenceConfigProvider: SequenceConfigProvider;
@@ -39,14 +38,10 @@ export class BibleModeSequenceAdapter implements BibleModeSequenceAdapterPort {
   }: {
     crossVerticalLine: StackCrossLine;
     crossHorizontalLine: StackCrossLine;
-  }): Promise<boolean> {
-    const firstAnimationDuration =
+  }): Promise<void[]> {
+    const emphasizeAnimationDuration =
       this.#sequenceConfigProvider.getToggleBibleModeAnimationConfig(
-        "firstAnimationDuration"
-      );
-    const secondAnimationDuration =
-      this.#sequenceConfigProvider.getToggleBibleModeAnimationConfig(
-        "secondAnimationDuration"
+        "emphasizeAnimationDuration"
       );
     const endingColor =
       this.#sequenceConfigProvider.getToggleBibleModeAnimationConfig(
@@ -72,39 +67,97 @@ export class BibleModeSequenceAdapter implements BibleModeSequenceAdapterPort {
                 .color!,
           }),
           end: [...endingColor] as RGB,
-          durationSec: firstAnimationDuration,
+          durationSec: emphasizeAnimationDuration,
           bot: crossLineBot,
           tag: "color",
         });
       })
-    )
-      .then(() => {
-        crossLines.forEach((crossLine) => {
-          const crossLineBot =
-            this.#crossLineMapper.toInfrastructure(crossLine);
+    );
+  }
 
-          if (!crossLineBot) {
-            throw new Error(
-              "BibleModeSequenceAdapter: crossVerticalLineBot not found at showToggleAttemptFeedback."
-            );
-          }
+  finishToggleAttemptFeedback({
+    crossVerticalLine,
+    crossHorizontalLine,
+  }: {
+    crossVerticalLine: StackCrossLine;
+    crossHorizontalLine: StackCrossLine;
+  }) {
+    const crossLines = [crossVerticalLine, crossHorizontalLine];
 
-          this.#colorLerper.lerp({
-            start: [...endingColor] as RGB,
-            end: HexToRgb({
-              hexColor:
-                this.#piecesConfigProvider.getInitialConfig("StackCrossLine")
-                  .color!,
-            }),
-            durationSec: secondAnimationDuration,
-            bot: crossLineBot,
-            tag: "color",
-          });
-        });
-        return true;
-      })
-      .catch(() => {
-        return false;
+    const deemphasizeAnimationDuration =
+      this.#sequenceConfigProvider.getToggleBibleModeAnimationConfig(
+        "deemphasizeAnimationDuration"
+      );
+
+    const start: RGB = [
+      ...this.#sequenceConfigProvider.getToggleBibleModeAnimationConfig(
+        "endingColor"
+      ),
+    ];
+
+    crossLines.forEach((crossLine) => {
+      const crossLineBot = this.#crossLineMapper.toInfrastructure(crossLine);
+
+      if (!crossLineBot) {
+        throw new Error(
+          "BibleModeSequenceAdapter: crossVerticalLineBot not found at showToggleAttemptFeedback."
+        );
+      }
+
+      const end = HexToRgb({
+        hexColor:
+          this.#piecesConfigProvider.getInitialConfig("StackCrossLine").color!,
       });
+
+      this.#colorLerper.lerp({
+        start,
+        end,
+        durationSec: deemphasizeAnimationDuration,
+        bot: crossLineBot,
+        tag: "color",
+      });
+    });
+  }
+
+  async showAttemptStopFeedback({
+    crossVerticalLine,
+    crossHorizontalLine,
+  }: {
+    crossVerticalLine: StackCrossLine;
+    crossHorizontalLine: StackCrossLine;
+  }): Promise<void> {
+    const deemphasizeAnimationDuration =
+      this.#sequenceConfigProvider.getToggleBibleModeAnimationConfig(
+        "deemphasizeAnimationDuration"
+      );
+    const crossLines = [crossVerticalLine, crossHorizontalLine];
+    await Promise.all(
+      crossLines.map((crossLine) => {
+        const crossLineBot = this.#crossLineMapper.toInfrastructure(crossLine);
+        if (!crossLineBot) {
+          throw new Error(
+            "BibleModeSequenceAdapter: crossLine not found at showAttemptStopFeedback"
+          );
+        }
+
+        return this.#colorLerper.lerp({
+          start: HexToRgb({
+            hexColor:
+              crossLineBot.tags.color ??
+              this.#piecesConfigProvider.getInitialConfig("StackCrossLine")
+                .color ??
+              "#FFFFFF",
+          }),
+          end: HexToRgb({
+            hexColor:
+              this.#piecesConfigProvider.getInitialConfig("StackCrossLine")
+                .color ?? "#FFFFFF",
+          }),
+          durationSec: deemphasizeAnimationDuration,
+          bot: crossLineBot,
+          tag: "color",
+        });
+      })
+    );
   }
 }

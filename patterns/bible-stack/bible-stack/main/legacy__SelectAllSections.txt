@@ -1,5 +1,5 @@
-import { ExplodeStackActions } from "bibleVizUtils.models.canvas";
-import { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+import { ExplodeStackActions } from "../domain/models/canvas";
+import { StackBibleData } from "../domain/entities/StackBibleData";
 
 /**
  * Selects and highlights all sections and books within a StackBibleData's structure.

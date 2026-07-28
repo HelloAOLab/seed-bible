@@ -191,6 +191,8 @@ import { BookChapterManagementAdapter } from "../adapters/stacks/BookChaptersMan
 import { TestamentSelectionConfigProvider } from "../config/testamentSelection/TestamentSelectionConfigProvider";
 import { VersesBundleSelectionAdapter } from "../adapters/stacks/VersesBundleSelectionAdapter";
 import { VersesBundleConfigProvider } from "../config/versesBundleSelection/VersesBundleConfigProvider";
+import { BibleModeService } from "../../application/services/BibleModeService";
+import { BibleModeSequenceAdapter } from "../adapters/sequences/BibleModeSequenceAdapter";
 
 let initialized = false;
 
@@ -548,7 +550,7 @@ export const bootstrapExtension = () => {
   const bibleSequenceAdapter = new BibleSequenceAdapter({
     configProviderPort: sequenceConfigProvider,
     dimensionProviderPort: {
-      getCurrentDimension: () => os.getCurrentDimension(),
+      getDimension: () => os.getCurrentDimension(),
     },
     visualStateRegistryPort: visualStateRegistry,
     coverMapperPort: stackCoverMapper,
@@ -562,6 +564,9 @@ export const bootstrapExtension = () => {
     pieceMapperPort: pieceMapper,
     pieceAdapterPort: pieceAdapter,
     sectionInfoMapperPort: sectionInfoMapper,
+    layoutConfigProviderPort: layoutConfigProvider,
+    piecesConigProvider: piecesConfigProvider,
+    bookInfoMapperPort: bookInfoMapper,
   });
   const audioAdapter = new AudioAdapter({
     audioConfigProvider: audioConfigProvider,
@@ -623,6 +628,12 @@ export const bootstrapExtension = () => {
     versesBundleMapper,
     verseMapper,
     visualStateRegistry,
+  });
+  const bibleModeSequenceAdapter = new BibleModeSequenceAdapter({
+    sequenceConfigProvider: sequenceConfigProvider,
+    crossLineMapper: stackCrossLineMapper,
+    colorLerper: colorLerper,
+    piecesConfigProvider: piecesConfigProvider,
   });
 
   // 4. Instantiating services
@@ -709,6 +720,7 @@ export const bootstrapExtension = () => {
   const sequenceStateService = new SequenceStateService({
     sequenceEventPort: bibleStackEventManager,
   });
+
   const pieceInteractabilityService = new PieceInteractabilityService({
     bibleDataRepositoryPort: bibleDataRepository,
     pieceDataRepositoryPort: pieceDataRepository,
@@ -781,7 +793,6 @@ export const bootstrapExtension = () => {
     pieceAdapterPort: pieceAdapter,
     stackStructureEventPort: bibleStackEventManager,
     pieceLifecycleServicePort: pieceLifecycleService,
-    // TODO (manual, cyclic): pieceLifecycleServicePort (<-> PieceLifecycleService).
   });
   const pieceHighlightService = new PieceHighlightService({
     pieceHighlightAdapterPort: pieceHighlightAdapter,
@@ -1035,6 +1046,15 @@ export const bootstrapExtension = () => {
     activityIndicatorsAdapterPort: activityIndicatorsAdapter,
     activityNotificationAdapterPort: activityNotificationAdapter,
   });
+  const bibleModeService = new BibleModeService({
+    sequenceStateServicePort: sequenceStateService,
+    sequenceAdapterPort: bibleModeSequenceAdapter,
+    bibleStackUpdaterPort: bibleStackUpdaterService,
+    explodedViewServicePort: explodedViewService,
+    pieceDataRepository: pieceDataRepository,
+    sectionSelectionServicePort: sectionSelectionService,
+    testamentSelectionServicePort: testamentSelectionService,
+  });
 
   // 5. Instantiating controllers
 
@@ -1080,8 +1100,7 @@ export const bootstrapExtension = () => {
     draggingServicePort: scripturePieceDraggingService,
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
-    draggingEventMapperPort: relocationEventMapper,
-    dropEventMapperPort: relocationEventMapper,
+    relocationEventMapper: relocationEventMapper,
   });
   const chapterInteractionController = new ChapterInteractionController({
     chapterInteractionServicePort: chapterInteractionService,
@@ -1091,7 +1110,6 @@ export const bootstrapExtension = () => {
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
     relocationEventMapper: relocationEventMapper,
-    dropEventMapperPort: relocationEventMapper,
   });
   const verseInteractionController = new VerseInteractionController({
     versesInteractionServicePort: versesInteractionService,
@@ -1126,7 +1144,9 @@ export const bootstrapExtension = () => {
   });
 
   const crossLineInteractionController = new CrossLineInteractionController({
-    pieceMapperPort: pieceMapper,
+    crossLineMapperPort: stackCrossLineMapper,
+    bibleModeServicePort: bibleModeService,
+    bibleDataRepositoryPort: bibleDataRepository,
   });
 
   // 6. Event wiring

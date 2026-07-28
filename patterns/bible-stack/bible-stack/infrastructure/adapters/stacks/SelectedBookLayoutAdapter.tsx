@@ -1,14 +1,12 @@
 import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
-import type {
-  SectionBookVisualStateRegistryPort,
-  StackConfigProviderPort,
-} from "../../../application/ports/out/SelectedBookLayout";
 import type { SelectedBookLayout } from "../../../application/ports/out/StackBookUpdater";
+import type { VisualStateRegistry } from "./VisualStateRegistry";
+import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
 
 interface AdapterParams {
-  sectionBookVisualStateRegistryPort: SectionBookVisualStateRegistryPort;
-  stackConfigProviderPort: StackConfigProviderPort;
+  sectionBookVisualStateRegistryPort: VisualStateRegistry;
+  stackConfigProviderPort: LayoutConfigProvider;
 }
 
 /**
@@ -43,16 +41,16 @@ export class SelectedBookLayoutAdapter {
       case "StackBook": {
         scaleX =
           this.#stackConfigProviderPort.getStackPieceMeasurement(
-            "SingleBooksScaleX"
-          );
+            "BookScales"
+          ).x;
         chaptersCount = data.pieceInfo.numberOfChapters;
         break;
       }
       case "StackSectionBook": {
-        scaleX =
-          this.#sectionBookVisualStateRegistryPort.getSectionBookInitialScaleX(
-            data.piece
-          );
+        scaleX = this.#sectionBookVisualStateRegistryPort.getStateProperty({
+          piece: data.piece,
+          property: "initialScaleX",
+        });
         chaptersCount = data.pieceBookInfo.numberOfChapters;
         break;
       }
