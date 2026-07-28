@@ -321,7 +321,9 @@ describe("createTabs", () => {
     await waitForInitialLoad(secondTab.readingState);
     manager.selectTab(secondTab.id);
 
-    navigation.push("/matthew/1?translation=NIV");
+    // 3-segment form: translation/book/chapter, language omitted (implies
+    // the default, "en").
+    navigation.push("/NIV/matthew/1");
 
     const selectedTab = manager.tabs.value.find(
       (tab) => tab.id === manager.selectedTabId.value
@@ -337,6 +339,43 @@ describe("createTabs", () => {
     expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
   });
 
+  // Regression for #1443, moved here from I18nManager.test.ts: the language
+  // segment is part of the same coordinated reading path as
+  // translation/book/chapter now, so an external URL change with an explicit
+  // `{lang}` segment must reload the actual i18next translations, not just
+  // update a signal.
+  it("reloads i18n when an external URL navigation specifies a different language", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation, i18nManager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    expect(i18nManager.language.value).toBe("en");
+
+    try {
+      // 4-segment form: explicit language segment.
+      navigation.push("/de/AAB/matthew/1");
+
+      await waitFor(() => i18nManager.language.value === "de");
+      expect(i18nManager.i18n.language).toBe("de");
+    } finally {
+      // i18next is a shared singleton across tests in this file — reset it
+      // so a later test doesn't inherit "de".
+      await i18nManager.changeLanguage("en");
+    }
+  });
+
+  // Note: the "re-commit the URL when the language changes outside of a
+  // navigation" behavior (the effect added alongside `commitSelectedTabToUrl`
+  // for exactly this case) isn't covered by its own direct test here.
+  // `i18n` is a real, module-level i18next singleton shared across every test
+  // in this file, and `createTabsManager()` never tears down the TabsManager
+  // instances created by earlier tests — so a second test directly calling
+  // `changeLanguage` fans out to every still-subscribed effect left over
+  // from prior tests (each reacting to the same global language change) and
+  // races to rewrite the shared jsdom URL. The test above already exercises
+  // the same effect indirectly (its `changeLanguage` call is what makes that
+  // test's own commit land), so the mechanism has real coverage without the
+  // added flakiness of a second, order-dependent case.
+
   it("clears stale book/chapter from a legacy query-param URL when writing the path, even for an unrecognized book", async () => {
     window.history.replaceState(null, "", "/?book=NOTABOOK&chapter=1");
     setWebResponses(createExampleManagerResponseMap());
@@ -344,8 +383,10 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
+    // Fully-default state (English UI, AAB translation) -> 3-segment form,
+    // language omitted.
     const url = new URL(window.location.href);
-    expect(url.pathname).toBe("/notabook/1");
+    expect(url.pathname).toBe("/AAB/notabook/1");
     expect(url.searchParams.has("book")).toBe(false);
     expect(url.searchParams.has("chapter")).toBe(false);
   });
@@ -360,21 +401,24 @@ describe("createTabs", () => {
     await waitFor(() => readingState.bookId.value === "EXO");
 
     const url = new URL(window.location.href);
-    expect(url.pathname).toBe("/exodus/2");
+    expect(url.pathname).toBe("/AAB/exodus/2");
     expect(url.searchParams.has("book")).toBe(false);
     expect(url.searchParams.has("chapter")).toBe(false);
   });
 
-  it("reuses the translationId URL param instead of writing the translation param", async () => {
+  it("folds a legacy translationId query param into the path instead of writing it as a query param", async () => {
     window.history.replaceState(null, "", "?translationId=NIV&book=MAT");
     setWebResponses(createExampleManagerResponseMap());
 
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
+    // NIV isn't the default (AAB), so the language segment is shown
+    // explicitly even though it's "en".
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("translationId")).toBe("NIV");
-    expect(url.searchParams.get("translation")).toBeNull();
+    expect(url.pathname).toBe("/en/NIV/matthew/1");
+    expect(url.searchParams.has("translationId")).toBe(false);
+    expect(url.searchParams.has("translation")).toBe(false);
   });
 
   it("prioritizes the translationId URL param over the translation param for the initial tab", async () => {
@@ -391,7 +435,7 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
-  it("saves a full custom-endpoint URL to the translation URL param", async () => {
+  it("encodes a full custom-endpoint translation URL as a single path segment", async () => {
     window.history.replaceState(
       null,
       "",
@@ -408,14 +452,15 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager({ dataManager });
     await waitForTabsToLoad(manager.tabs.value);
 
+    // Not the fully-default translation, so the language segment is shown
+    // explicitly even though it's "en".
+    const expectedPathname = `/en/${encodeURIComponent(customTranslationUrl)}/matthew/1`;
     await waitFor(
-      () =>
-        new URL(window.location.href).searchParams.get("translation") ===
-        customTranslationUrl
+      () => new URL(window.location.href).pathname === expectedPathname
     );
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("translationId")).toBeNull();
-    expect(url.searchParams.get("translation")).toBe(customTranslationUrl);
+    expect(url.searchParams.has("translationId")).toBe(false);
+    expect(url.searchParams.has("translation")).toBe(false);
     expect(buildTranslationIdSpy).toHaveBeenCalledWith("NIV");
   });
 
@@ -553,7 +598,7 @@ describe("createTabs", () => {
 
     manager.selectTab(manager.tabs.value[0]!.id);
     await waitFor(
-      () => new URL(window.location.href).pathname === "/genesis/1"
+      () => new URL(window.location.href).pathname === "/AAB/genesis/1"
     );
 
     expect(pushSpy).not.toHaveBeenCalled();

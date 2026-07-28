@@ -2,11 +2,15 @@ import { createBibleSelectorState } from "../managers/BibleSelectorManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import {
   createBibleDataManager,
-  getBookSlug,
   type BibleDataManager,
   type BookId,
   type VerseRef,
 } from "../managers/BibleDataManager";
+import { getDefaultTranslationForLanguage } from "../managers/BibleReadingManager";
+import {
+  DEFAULT_UI_LANGUAGE,
+  buildReadingPath,
+} from "../managers/ReadingUrlPath";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import { createConfig } from "../managers/ConfigManager";
@@ -885,13 +889,15 @@ export function createSeedBibleState(
       return `${canonicalUrl.pathname}${canonicalUrl.search}`;
     }
 
-    canonicalUrl.pathname = `${navigation.basePath}/${getBookSlug(
-      chapter.book.id as BookId
-    )}/${chapter.chapter.number}`;
-    canonicalUrl.searchParams.set(
-      "translation",
-      data.buildTranslationId(chapter.translation.id)
-    );
+    const readingPath = buildReadingPath({
+      language: i18n.language.value,
+      translationId: data.buildTranslationId(chapter.translation.id),
+      bookId: chapter.book.id as BookId,
+      chapter: chapter.chapter.number,
+      defaultTranslationId:
+        getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+    });
+    canonicalUrl.pathname = `${navigation.basePath}${readingPath}`;
 
     return `${canonicalUrl.pathname}${canonicalUrl.search}`;
   });

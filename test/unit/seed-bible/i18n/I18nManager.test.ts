@@ -202,30 +202,14 @@ describe("I18nManager URL <-> language sync", () => {
     });
   });
 
-  // Regression for #1443: the `?lang=` query param is the source of truth for
-  // the UI language. When it changes on its own (deep link, browser
-  // back/forward), the actual i18next translations must reload — not just the
-  // `language` signal — otherwise `t()` keeps returning the old language.
-  it("reloads i18n when ?lang= changes in the URL", async () => {
-    const nav = createNavigationManager({ initialHref: window.location.href });
-    const manager = createI18nManager(nav, ["en"]);
-    await manager.ready;
-    expect(manager.i18n.language).toBe("en");
-
-    window.history.pushState({}, "", "/?lang=de");
-
-    const start = Date.now();
-    while (manager.i18n.language !== "de" && Date.now() - start < 1000) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
-
-    expect(manager.i18n.language).toBe("de");
-    expect(manager.language.value).toBe("de");
-  });
-
-  // Selecting a UI language writes `?lang=` to the URL (primary), and the
-  // signal reflects the new language.
-  it("writes ?lang= when the UI language is changed", async () => {
+  // URL <-> language sync (both directions) moved to TabsManager: the
+  // language segment is part of the same coordinated reading path as
+  // translation/book/chapter (e.g. "/es/spa_onbv/john/3"), so a single
+  // writer owns the whole path instead of this manager independently
+  // touching the URL. The equivalent coverage of the old regression (#1443:
+  // an external `lang` change must reload i18next, not just the signal) now
+  // lives in TabsManager.test.ts, alongside the write-side test.
+  it("does not write to the URL directly when the UI language changes", async () => {
     const nav = createNavigationManager({ initialHref: window.location.href });
     const manager = createI18nManager(nav, ["en"]);
     await manager.ready;
@@ -234,6 +218,7 @@ describe("I18nManager URL <-> language sync", () => {
     await manager.requestLanguageChange("fr");
 
     expect(manager.language.value).toBe("fr");
-    expect(nav.currentUrl.value.searchParams.get("lang")).toBe("fr");
+    expect(nav.currentUrl.value.search).toBe("");
+    expect(nav.currentUrl.value.pathname).toBe("/");
   });
 });

@@ -5,8 +5,12 @@ import {
   untracked,
   type Signal,
 } from "@preact/signals";
-import { getBookId, getBookSlug } from "./BibleDataManager";
 import type { BibleDataManager, BookId } from "./BibleDataManager";
+import {
+  DEFAULT_UI_LANGUAGE,
+  buildReadingPath,
+  parseReadingPath,
+} from "./ReadingUrlPath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -90,42 +94,19 @@ export interface ReaderTab {
   slotOnly?: boolean;
 }
 
-/**
- * Parses the book/chapter path segments (e.g. "/genesis/1") out of a URL,
- * ignoring the deployment prefix. Returns nulls when the path doesn't match
- * a known book — callers fall back to the legacy `book`/`chapter` query
- * params in that case.
- */
-function parseBookChapterFromPath(
-  url: URL,
-  basePath: string
-): { bookId: string | null; chapter: number | null } {
-  const pathname =
-    basePath.length > 0 && url.pathname.startsWith(basePath)
-      ? url.pathname.slice(basePath.length)
-      : url.pathname;
-  const segments = pathname.split("/").filter(Boolean);
-  const bookId = segments[0] ? getBookId(segments[0]) : null;
-  if (!bookId) {
-    return { bookId: null, chapter: null };
-  }
-
-  const chapterValue = segments[1] ? Number(segments[1]) : NaN;
-  const chapter =
-    Number.isFinite(chapterValue) && chapterValue > 0
-      ? Math.floor(chapterValue)
-      : null;
-
-  return { bookId, chapter };
-}
-
 function getInitialFirstTabBookId(url: URL, basePath: string): string {
-  const { bookId } = parseBookChapterFromPath(url, basePath);
-  return bookId ?? url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
+  const parsed = parseReadingPath(url.pathname, basePath);
+  return parsed?.bookId ?? url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
-function getInitialTranslationId(url: URL, language: string): string {
+function getInitialTranslationId(
+  url: URL,
+  basePath: string,
+  language: string
+): string {
+  const parsed = parseReadingPath(url.pathname, basePath);
   return (
+    parsed?.translationId ??
     url.searchParams.get("translationId") ??
     url.searchParams.get("translation") ??
     getDefaultTranslationForLanguage(language).id
@@ -133,15 +114,29 @@ function getInitialTranslationId(url: URL, language: string): string {
 }
 
 function getInitialFirstTabChapter(url: URL, basePath: string): number {
-  const { chapter } = parseBookChapterFromPath(url, basePath);
-  if (chapter) {
-    return chapter;
+  const parsed = parseReadingPath(url.pathname, basePath);
+  if (parsed) {
+    return parsed.chapter;
   }
 
   const value = Number(url.searchParams.get("chapter"));
   return Number.isFinite(value) && value > 0
     ? Math.floor(value)
     : DEFAULT_CHAPTER_NUMBER;
+}
+
+/**
+ * Resolves the UI language that a reading position URL implies: an explicit
+ * path segment, the legacy `?lang=` query param, or (if neither is present)
+ * null so the caller can decide whether to leave the current language
+ * untouched.
+ */
+function getUrlReadingLanguage(url: URL, basePath: string): string | null {
+  const parsed = parseReadingPath(url.pathname, basePath);
+  if (parsed) {
+    return parsed.language ?? DEFAULT_UI_LANGUAGE;
+  }
+  return url.searchParams.get("lang");
 }
 
 function getInitialHighlightedVerses(url: URL): number[] {
@@ -298,6 +293,7 @@ export function createTabs(
   );
   const initialTranslationId = getInitialTranslationId(
     navigation.currentUrl.value,
+    navigation.basePath,
     i18nManager.defaultLanguage
   );
   const initialBookId = getInitialFirstTabBookId(
@@ -347,6 +343,7 @@ export function createTabs(
 
     const requestedTranslation = getInitialTranslationId(
       navigation.currentUrl.value,
+      navigation.basePath,
       i18nManager.defaultLanguage
     );
     const requestedBookId = getInitialFirstTabBookId(
@@ -357,6 +354,22 @@ export function createTabs(
       navigation.currentUrl.value,
       navigation.basePath
     );
+    const requestedLanguage = getUrlReadingLanguage(
+      navigation.currentUrl.value,
+      navigation.basePath
+    );
+    if (
+      requestedLanguage &&
+      requestedLanguage !== i18nManager.language.peek()
+    ) {
+      // Mirrors the old `syncSignalsToUrl` setter this replaces: route
+      // through `changeLanguage` (not `requestLanguageChange`) so the
+      // translations reload, but nothing is persisted and
+      // `applyBibleTranslationForUiLanguage` is not invoked — the
+      // translation is already explicit in the URL, so there's nothing to
+      // infer from the language change alone.
+      void i18nManager.changeLanguage(requestedLanguage);
+    }
     const readingState = selectedTab.readingState;
 
     const books = readingState.translationBooks.value?.books ?? [];
@@ -451,20 +464,37 @@ export function createTabs(
         queryUpdate[key] = null;
       }
 
-      // Book/chapter move into the path (e.g. "/genesis/1") rather than
-      // staying as query params; everything else `getUrlQueryParams` returns
-      // (translation, verse, extension params) stays a query param. Setting
+      // Book/chapter/translation/language all move into the path (e.g.
+      // "/es/spa_onbv/john/3") rather than staying as query params. Setting
       // them to null (rather than just omitting the keys) also strips any
-      // stale `book`/`chapter` left over from a legacy query-param URL that
-      // hasn't been redirected yet.
+      // stale values left over from a legacy query-param URL that hasn't
+      // been redirected yet. Translation is read directly off the reading
+      // state below (not `queryUpdate.translation`/`.translationId`)
+      // because `getUrlQueryParams` deliberately omits it when it equals
+      // the default — wrong for the path, where translation is always
+      // present (see the URL scheme's four examples).
       const bookId = queryUpdate.book;
       const chapter = queryUpdate.chapter;
       queryUpdate.book = null;
       queryUpdate.chapter = null;
+      queryUpdate.translation = null;
+      queryUpdate.translationId = null;
 
-      if (bookId && chapter) {
-        const slug = getBookSlug(bookId as BookId);
-        writeUrl(queryUpdate, options.replace, `/${slug}/${chapter}`);
+      const rawTranslationId = readingState?.translationId.value;
+      const translationId = rawTranslationId
+        ? dataManager.buildTranslationId(rawTranslationId)
+        : null;
+
+      if (bookId && chapter && translationId) {
+        const pathname = buildReadingPath({
+          language: i18nManager.language.peek(),
+          translationId,
+          bookId: bookId as BookId,
+          chapter: Number(chapter),
+          defaultTranslationId:
+            getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+        });
+        writeUrl(queryUpdate, options.replace, pathname);
       } else {
         writeUrl(queryUpdate, options.replace);
       }
@@ -488,6 +518,16 @@ export function createTabs(
     );
     commitSelectedTabToUrl({ replace: true });
     return dispose;
+  });
+
+  // A UI-language change doesn't always fire `onNavigate` above (e.g. the
+  // nearest-translation lookup can resolve to the translation already
+  // selected), which would otherwise leave the URL's language segment
+  // stale. Re-commit on every language change regardless; it's a no-op if
+  // nothing in the path/query actually changed.
+  effect(() => {
+    void i18nManager.language.value;
+    commitSelectedTabToUrl({ replace: true });
   });
 
   effect(() => {

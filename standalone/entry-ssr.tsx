@@ -4,8 +4,14 @@ import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig"
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   getBookId,
-  getBookSlug,
+  type BookId,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import { getDefaultTranslationForLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import {
+  DEFAULT_UI_LANGUAGE,
+  buildReadingPath,
+  parseReadingPath,
+} from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -41,49 +47,91 @@ export interface RenderOptions {
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
 
 /**
- * Detects a legacy `?book=GEN&chapter=1` request at the app root and
- * computes the equivalent clean path (e.g. "/genesis/1") to 301 to, dropping
- * `book`/`chapter` and preserving every other query param. Returns null when
- * the request isn't a legacy URL (no redirect needed) or the book isn't
- * recognized (falls through to the normal render, which shows the app's own
- * default/not-found handling).
+ * Detects an obsolete URL shape and computes the equivalent canonical
+ * `[/{lang}]/{translationId}/{bookSlug}/{chapter}` path to 301 to. Two
+ * shapes are recognized: a bare root with legacy `?book=`/`?chapter=` (and
+ * optionally `?translation=`/`?translationId=`/`?lang=`) query params, and
+ * the prior `/{book}/{chapter}` path format (no translation/language).
+ * Returns null when the request is already a canonical reading path (per
+ * `parseReadingPath`) or doesn't match either legacy shape — falling
+ * through to a normal render, which shows the app's own default/not-found
+ * handling for an unrecognized book.
  */
-function legacyQueryParamRedirect(
+function legacyReadingUrlRedirect(
   path: string,
   basePath: string
 ): string | null {
   const url = new URL(path, "http://ssr.local");
-  const pathname =
+
+  if (parseReadingPath(url.pathname, basePath)) {
+    return null;
+  }
+
+  const strippedPathname =
     basePath.length > 0 && url.pathname.startsWith(basePath)
       ? url.pathname.slice(basePath.length)
       : url.pathname;
+  const segments = strippedPathname
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => decodeURIComponent(segment));
 
-  if (pathname !== "" && pathname !== "/") {
-    return null;
+  let bookId: BookId | null = null;
+  let chapter = 1;
+
+  if (segments.length === 2) {
+    // The immediately-prior /{book}/{chapter} format.
+    const candidateBookId = getBookId(segments[0]!);
+    const chapterValue = Number(segments[1]);
+    if (candidateBookId && Number.isFinite(chapterValue) && chapterValue > 0) {
+      bookId = candidateBookId;
+      chapter = Math.floor(chapterValue);
+    }
+  } else if (segments.length === 0) {
+    // Bare root — only a legacy redirect target if `?book=` says so.
+    const bookParam = url.searchParams.get("book");
+    if (bookParam) {
+      bookId = getBookId(bookParam);
+      const chapterValue = Number(url.searchParams.get("chapter"));
+      chapter =
+        Number.isFinite(chapterValue) && chapterValue > 0
+          ? Math.floor(chapterValue)
+          : 1;
+    }
   }
 
-  const bookParam = url.searchParams.get("book");
-  if (!bookParam) {
-    return null;
-  }
-
-  const bookId = getBookId(bookParam);
   if (!bookId) {
     return null;
   }
 
-  const chapterParam = Number(url.searchParams.get("chapter"));
-  const chapter =
-    Number.isFinite(chapterParam) && chapterParam > 0
-      ? Math.floor(chapterParam)
-      : 1;
+  const language = url.searchParams.get("lang") ?? DEFAULT_UI_LANGUAGE;
+  const translationId =
+    url.searchParams.get("translationId") ??
+    url.searchParams.get("translation") ??
+    getDefaultTranslationForLanguage(language).id;
+
+  const readingPath = buildReadingPath({
+    language,
+    translationId,
+    bookId,
+    chapter,
+    defaultTranslationId:
+      getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+  });
 
   const remainingParams = new URLSearchParams(url.search);
-  remainingParams.delete("book");
-  remainingParams.delete("chapter");
+  for (const key of [
+    "book",
+    "chapter",
+    "translation",
+    "translationId",
+    "lang",
+  ]) {
+    remainingParams.delete(key);
+  }
   const query = remainingParams.toString();
 
-  return `${basePath}/${getBookSlug(bookId)}/${chapter}${query ? `?${query}` : ""}`;
+  return `${basePath}${readingPath}${query ? `?${query}` : ""}`;
 }
 
 /**
@@ -98,7 +146,7 @@ export async function render(
 ): Promise<{ html: string } | { redirectTo: string }> {
   const { config } = options;
 
-  const redirectTo = legacyQueryParamRedirect(options.path, config.basePath);
+  const redirectTo = legacyReadingUrlRedirect(options.path, config.basePath);
   if (redirectTo) {
     return { redirectTo };
   }
