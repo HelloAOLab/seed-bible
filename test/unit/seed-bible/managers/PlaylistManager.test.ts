@@ -8,7 +8,6 @@ import {
   createBibleReadingExtensionManager,
   type ReadingExtensionRuntime,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
-import { createAIManager } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import {
   PlaylistItem,
   PlaylistSchema,
@@ -77,7 +76,7 @@ describe("Playlist schemas", () => {
 
 type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
-type ChatsArg = Parameters<typeof createPlaylistManager>[9];
+type ChatsArg = Parameters<typeof createPlaylistManager>[8];
 type TabArg = Parameters<typeof createPlayingState>[1];
 
 /** A minimal `ChatsManager` fake exposing just the context registration surface. */
@@ -287,7 +286,6 @@ describe("createPlaylistManager", () => {
       modals,
       i18n,
       readingExtensionManager,
-      createAIManager(),
       chats
     );
   };
@@ -692,7 +690,8 @@ describe("createPlaylistManager", () => {
       expect(context.id).toBe("playlist-editor");
       expect(context.tools.map((t: { name: string }) => t.name).sort()).toEqual(
         [
-          "addPlaylistItem",
+          "insertPlaylistItem",
+          "movePlaylistItem",
           "deletePlaylistItem",
           "updatePlaylistItem",
           "updatePlaylistMetadata",
@@ -737,7 +736,8 @@ describe("createPlaylistManager", () => {
       await flush();
       await manager.createNewPlaylist();
 
-      await getTool("addPlaylistItem").function({
+      await getTool("insertPlaylistItem").function({
+        index: 0,
         type: "link",
         bibleVerse: null,
         link: { title: null, url: "https://example.com" },

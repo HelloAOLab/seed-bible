@@ -176,12 +176,16 @@ function createMockProvider(id: string, name = id): ChatProvider {
 }
 
 /** A fake `ChatsManager` exposing just the surface `DiscoverPaneTitle`'s AI button uses. */
-function createMockChats(providers: ChatProvider[] = []): MockChatsResult {
+function createMockChats(
+  providers: ChatProvider[] = [],
+  existingChats: import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatSession[] = []
+): MockChatsResult {
   const selectChat = vi.fn();
   const addParticipant = vi.fn();
   const createLocalSession = vi.fn(() => ({ id: "chat-1", addParticipant }));
   const providersSignal = signal(providers);
   const chats = {
+    chats: signal(existingChats),
     createLocalSession,
     selectChat,
     providers: providersSignal,

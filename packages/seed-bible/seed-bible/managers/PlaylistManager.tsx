@@ -27,7 +27,6 @@ import {
   convertToAiPlaylistItem,
   convertToPlaylistItem,
   generateFunctionTool,
-  type AIManager,
   type GeneratedPlaylist,
 } from "./AIManager";
 
@@ -459,7 +458,6 @@ export function createPlaylistManager(
   modals: ModalManager,
   i18n: I18nManager,
   readingExtensionManager: BibleReadingExtensionManager,
-  ai: AIManager,
   chats: ChatsManager
 ) {
   const initialPlaylistLocator = signal(
@@ -1207,46 +1205,10 @@ export function createPlaylistManager(
     });
   });
 
-  /**
-   * Attempts to update the given playlist from the given prompt using one of the
-   * available AI providers. Hands the provider the AI tool set (shared tools plus
-   * the playlist-editing tools) so it can populate the playlist as it streams.
-   */
-  const aiUpdatePlaylist = async function* (
-    providerId: string,
-    prompt: string,
-    playlist: Playlist
-  ): AsyncGenerator<string, void, void> {
-    const provider = ai.getProviderById(providerId);
-    if (!provider) {
-      throw new Error(`Provider with ID ${providerId} not found.`);
-    }
-
-    if (!provider.updatePlaylist) {
-      throw new Error(
-        `Provider with ID ${providerId} does not support playlist generation.`
-      );
-    }
-
-    const cancelController = new AbortController();
-
-    const aiPlaylist: GeneratedPlaylist = {
-      title: playlist.title ?? null,
-      description: playlist.description ?? null,
-      items: playlist.items.map((i) => convertToAiPlaylistItem(i)),
-    };
-
-    yield* provider.updatePlaylist(aiPlaylist, prompt, {
-      tools: [...ai.tools.value, ...getEditPlaylistTools()],
-      cancelToken: cancelController.signal,
-    });
-  };
-
   return {
     savePlaylist,
     deletePlaylist,
     createNewPlaylist,
-    generatePlaylist: aiUpdatePlaylist,
     editPlaylist,
     saveEditingPlaylist,
     addEditingPlaylistItem,

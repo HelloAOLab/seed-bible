@@ -264,7 +264,6 @@ export interface AppState {
  */
 export interface SeedBibleState {
   os: CasualOSManager;
-  ai: AIManager;
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
@@ -375,7 +374,6 @@ import {
   DiscoverPaneHeader,
   DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
-import { createAIManager, type AIManager } from "./AIManager";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -587,7 +585,6 @@ export function createSeedBibleState(
   // on mobile every pane is displayed fullscreen, so opening one closes the
   // rest.
   const panes = createPanes(isMobile);
-  const ai = createAIManager();
   const playlists = createPlaylistManager(
     os,
     login,
@@ -597,7 +594,6 @@ export function createSeedBibleState(
     modals,
     i18n,
     readingExtensions,
-    ai,
     chats
   );
   // Close any fullscreen pane when the book/chapter/verse params change, so
@@ -1450,7 +1446,6 @@ export function createSeedBibleState(
     openCodeOfConduct,
     closeCodeOfConduct,
     features,
-    ai,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
