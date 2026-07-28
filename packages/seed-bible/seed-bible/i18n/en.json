@@ -216,8 +216,7 @@
   "hide-bookmarks": "Hide bookmarks",
   "show-bookmarks": "Show bookmarks",
   "add-new-tab": "Add new tab",
-  "add-to-bookmark-category": "Add to bookmark category",
-  "move-to-bookmark-category": "Move to bookmark category",
+
   "move-bookmark": "Move to folder",
   "folder-name-taken": "A folder with that name already exists.",
   "add-to-new": "Add to new",
