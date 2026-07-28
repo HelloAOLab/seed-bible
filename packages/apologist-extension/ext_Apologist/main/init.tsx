@@ -17,6 +17,31 @@ const completionsSchema = z.object({
   ),
 });
 
+const chatCompletionToolCallSchema = z.object({
+  id: z.string(),
+  function: z
+    .object({
+      name: z.string(),
+      arguments: z.string(),
+    })
+    .optional(),
+});
+
+const chatCompletionMessageSchema = z.object({
+  role: z.literal("assistant"),
+  content: z.string().nullable().optional(),
+  tool_calls: z.array(chatCompletionToolCallSchema).optional(),
+});
+
+const chatCompletionResponseSchema = z.object({
+  choices: z.array(
+    z.object({
+      message: chatCompletionMessageSchema.optional(),
+      stop_reason: z.string().optional(),
+    })
+  ),
+});
+
 const shareSchema = z.object({
   messages: z.array(
     z.object({
@@ -34,7 +59,11 @@ const shareSchema = z.object({
 type ChatMessage =
   | {
       role: "user" | "assistant" | "developer";
-      content: string;
+      content?: string | null;
+      tool_calls?: {
+        id: string;
+        function?: { name: string; arguments: string };
+      }[];
     }
   | {
       role: "tool";
@@ -158,9 +187,16 @@ export default function initApologistExtension() {
               }
             );
 
-            const responseData = await response.json();
+            const responseData = chatCompletionResponseSchema.parse(
+              await response.json()
+            );
 
             const choice = responseData.choices[0];
+            if (!choice) {
+              throw new Error(
+                "No choices returned from chat completions response."
+              );
+            }
             const message = choice.message;
 
             if (message) {
@@ -169,21 +205,22 @@ export default function initApologistExtension() {
               if (message.tool_calls) {
                 // Resolve tool calls
                 for (const call of message.tool_calls) {
-                  if (call.function) {
+                  const fn = call.function;
+                  if (fn) {
                     const tool = chatContext.tools?.find(
-                      (t) => t.name === call.function.name
+                      (t) => t.name === fn.name
                     );
                     if (!tool) {
-                      throw new Error(`Tool not found: ${call.function.name}`);
+                      throw new Error(`Tool not found: ${fn.name}`);
                     }
 
-                    const args = JSON.parse(call.function.arguments);
+                    const args = JSON.parse(fn.arguments);
                     const result = await tool.function(args);
 
                     messages.push({
                       role: "tool",
                       tool_call_id: call.id,
-                      name: call.function.name,
+                      name: fn.name,
                       content: JSON.stringify(result),
                     });
                   }
