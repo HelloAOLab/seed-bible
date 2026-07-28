@@ -40,6 +40,7 @@ import {
 import { pathToFileURL } from "node:url";
 import { Readable } from "node:stream";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
+import { createGzip } from "node:zlib";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
@@ -98,6 +99,51 @@ function clientConfigFromHeaders(headers: IncomingHttpHeaders): ClientConfig {
     ? parseAcceptLanguages(headers["accept-language"])
     : [];
   return { renderedAsMobile, acceptedLanguages };
+}
+
+// ─── Gzip compression ────────────────────────────────────────────────────────
+
+/** Below this size, gzip's overhead isn't worth the CPU cost. */
+const GZIP_THRESHOLD_BYTES = 1024;
+
+/** Content-Type prefixes worth gzipping; binary/already-compressed formats are excluded. */
+const COMPRESSIBLE_CONTENT_TYPE_RE =
+  /^(text\/|application\/(json|javascript|manifest\+json)|image\/svg)/i;
+
+function acceptsGzip(headers: IncomingHttpHeaders): boolean {
+  const acceptEncoding = headers["accept-encoding"];
+  return typeof acceptEncoding === "string" && /\bgzip\b/i.test(acceptEncoding);
+}
+
+/**
+ * Writes an HTML response, gzip-compressing it when the client supports it
+ * and the body is large enough for compression to be worthwhile. Compression
+ * is streamed through a Transform rather than buffered in full, so only one
+ * chunk's worth of compressed output is held at a time.
+ */
+function sendHtml(
+  req: IncomingMessage,
+  res: ServerResponse,
+  statusCode: number,
+  html: string,
+  extraHeaders: Record<string, string> = {}
+): void {
+  const body = Buffer.from(html, "utf8");
+  const headers: Record<string, string> = {
+    ...extraHeaders,
+    "content-type": "text/html; charset=utf-8",
+    vary: "accept-encoding",
+  };
+
+  if (body.length >= GZIP_THRESHOLD_BYTES && acceptsGzip(req.headers)) {
+    headers["content-encoding"] = "gzip";
+    res.writeHead(statusCode, headers);
+    Readable.from(body).pipe(createGzip()).pipe(res);
+    return;
+  }
+
+  res.writeHead(statusCode, headers);
+  res.end(body);
 }
 
 // ─── Production: multi-branch host ───────────────────────────────────────────
@@ -268,13 +314,11 @@ async function renderAndRespond(
     html = preRenderedHtml;
   }
 
-  res.writeHead(200, {
-    "content-type": "text/html; charset=utf-8",
-    // The HTML is per-build and cheap to regenerate; let the CDN cache it
-    // briefly but always revalidate so a pointer flip is picked up fast.
+  // The HTML is per-build and cheap to regenerate; let the CDN cache it
+  // briefly but always revalidate so a pointer flip is picked up fast.
+  sendHtml(req, res, 200, html, {
     "cache-control": "public, max-age=0, must-revalidate",
   });
-  res.end(html);
 }
 
 /**
@@ -339,9 +383,26 @@ async function proxyAsset(
     }
   });
 
+  // Only gzip a full 200 response — a 206 (range) or 304 (not modified) has no
+  // body worth compressing, and re-encoding a byte range would corrupt it.
+  const shouldGzip =
+    upstream.status === 200 &&
+    !!upstream.body &&
+    COMPRESSIBLE_CONTENT_TYPE_RE.test(headers["content-type"] ?? "") &&
+    acceptsGzip(req.headers);
+  if (shouldGzip) headers["content-encoding"] = "gzip";
+  headers["vary"] = "accept-encoding";
+
   res.writeHead(upstream.status, headers);
   if (upstream.body) {
-    Readable.fromWeb(upstream.body as NodeReadableStream<Uint8Array>).pipe(res);
+    const upstreamBody = Readable.fromWeb(
+      upstream.body as NodeReadableStream<Uint8Array>
+    );
+    if (shouldGzip) {
+      upstreamBody.pipe(createGzip()).pipe(res);
+    } else {
+      upstreamBody.pipe(res);
+    }
   } else {
     res.end();
   }
@@ -412,8 +473,10 @@ async function handle(
       ? { buildId: route.patternVersion }
       : await resolvePointer(route.branch);
     if (!pointer) {
-      res.writeHead(404, { "content-type": "text/html" });
-      res.end(
+      sendHtml(
+        req,
+        res,
+        404,
         `<!doctype html><meta charset=utf-8><h1>404</h1><p>No deployment for branch <code>${route.branch}</code>.</p>`
       );
       return;
@@ -463,15 +526,15 @@ async function handle(
     }
 
     // No SSR for this branch — serve the pre-rendered HTML verbatim.
-    res.writeHead(200, {
-      "content-type": "text/html; charset=utf-8",
+    sendHtml(req, res, 200, preRenderedHtml, {
       "cache-control": "public, max-age=0, must-revalidate",
     });
-    res.end(preRenderedHtml);
   } catch (err) {
     console.error(`Render failed for ${route.branch} (${url}):`, err);
-    res.writeHead(500, { "content-type": "text/html" });
-    res.end(
+    sendHtml(
+      req,
+      res,
+      500,
       "<!doctype html><meta charset=utf-8><h1>500</h1><p>Render error.</p>"
     );
   }
@@ -574,7 +637,7 @@ async function startDevServer(): Promise<void> {
       });
 
       // 5. Send the rendered HTML back.
-      res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      sendHtml(req, res, 200, html);
     } catch (e) {
       if (e instanceof Error) {
         // Let Vite fix the stack trace so it maps back to the actual source.
@@ -585,7 +648,7 @@ async function startDevServer(): Promise<void> {
         e
       );
       // Serve the unrendered index.html rather than failing the request.
-      res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      sendHtml(req, res, 200, template);
     }
   });
 
