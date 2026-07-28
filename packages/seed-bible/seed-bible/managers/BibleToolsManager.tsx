@@ -1012,28 +1012,62 @@ function openShareModal(
  * @param readingState The reading state containing the selected verses to format.
  * @returns A string representing the formatted selected verses.
  */
+function formatVerseRanges(verseNumbers: number[]): string {
+  if (verseNumbers.length === 0) return "";
+
+  const sorted = [...new Set(verseNumbers)].sort((a, b) => a - b);
+
+  const ranges: string[] = [];
+  let start = sorted[0]!;
+  let end = start;
+
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === end + 1) {
+      end = sorted[i]!;
+    } else {
+      ranges.push(start === end ? `${start}` : `${start}-${end}`);
+      start = end = sorted[i]!;
+    }
+  }
+
+  ranges.push(start === end ? `${start}` : `${start}-${end}`);
+
+  return ranges.join(",");
+}
 function formatSelectedVerses(readingState: BibleReadingState) {
-  // When you copy the verse book is always open
   const bookName = readingState.chapterData.value?.book.name;
-  return readingState.selectedVerses.value
-    .map((verse) => {
-      const verseReference = `${bookName ?? verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
-      // Join raw parts, then collapse whitespace so empty non-text parts
-      // (line breaks, footnotes, headings) don't leave double spaces.
-      const text = verse.verse.content
+  console.log(readingState, "reading state");
+  const translation = readingState.chapterData.value?.translation.id ?? "";
+
+  const verses = readingState.selectedVerses.value;
+
+  if (verses.length === 0) return "";
+
+  const text = verses
+    .map((verse) =>
+      verse.verse.content
         .map((part) => {
           if (typeof part === "string") return part;
-          if (part && typeof part === "object" && "text" in part)
+          if (part && typeof part === "object" && "text" in part) {
             return (part as { text: string }).text;
+          }
           return "";
         })
         .join(" ")
         .replace(/\s+/g, " ")
         .replace(/\s+([,.;:!?’”)\]])/g, "$1")
-        .trim();
-      return `${text} (${verseReference})`;
-    })
-    .join("\n\n");
+        .trim()
+    )
+    .join(" ");
+
+  // Build the reference
+  const chapter = verses[0]!.chapterNumber;
+
+  const verseRange = formatVerseRanges(verses.map((v) => v.verse.number));
+
+  const reference = `${bookName} ${chapter}:${verseRange} ${translation}`;
+
+  return `${text} (${reference})`;
 }
 
 /**
