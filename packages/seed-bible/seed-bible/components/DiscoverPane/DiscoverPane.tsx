@@ -119,7 +119,7 @@ export function DiscoverPaneTitle(props: {
           messages: [
             {
               id: uuid(),
-              authors: [],
+              authors: providerId ? [providerId] : [],
               timeMs: Date.now(),
               targets: [],
               type: "text",
