@@ -37,4 +37,7 @@ program
     await writeFile(options.out, markdown, "utf-8");
   });
 
-program.parse();
+program.parseAsync().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
