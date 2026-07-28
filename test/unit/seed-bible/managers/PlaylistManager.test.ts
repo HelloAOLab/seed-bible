@@ -758,6 +758,133 @@ describe("createPlaylistManager", () => {
       expect(manager.editingPlaylist.value!.items).toEqual([]);
     });
 
+    it("insertPlaylistItem inserts each AI item type at the given index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "bible-verse",
+        bibleVerse: {
+          ref: {
+            bookId: "JHN",
+            chapter: 3,
+            verse: 16,
+            endChapter: null,
+            endVerse: null,
+          },
+        },
+        link: null,
+        html: null,
+      });
+      await insertPlaylistItem.function({
+        index: 1,
+        type: "html",
+        bibleVerse: null,
+        link: null,
+        html: { title: "Note", html: "<p>hi</p>" },
+      });
+      // Inserting at 0 again pushes both earlier items back.
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+        { type: "bible-verse", ref: { bookId: "JHN", chapter: 3, verse: 16 } },
+        { type: "html", title: "Note", html: "<p>hi</p>" },
+      ]);
+    });
+
+    it("insertPlaylistItem reports an error for an out-of-range index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 5,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: { title: null, html: "<p>hi</p>" },
+        })
+      ).resolves.toBe("error: index out of range (0-0)");
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("insertPlaylistItem reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 0,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: { title: null, html: "<p>hi</p>" },
+        })
+      ).resolves.toBe("error: no editing playlist");
+    });
+
+    it("movePlaylistItem reorders items in the currently-edited playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>a</p>" });
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>b</p>" });
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>c</p>" });
+      const movePlaylistItem = getTool("movePlaylistItem");
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 2 })
+      ).resolves.toBe("success");
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "html", html: "<p>b</p>" },
+        { type: "html", html: "<p>c</p>" },
+        { type: "html", html: "<p>a</p>" },
+      ]);
+    });
+
+    it("movePlaylistItem reports an error for an out-of-range index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>a</p>" });
+      const movePlaylistItem = getTool("movePlaylistItem");
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 5 })
+      ).resolves.toBe("error: target index out of range (0-0) or equal");
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "html", html: "<p>a</p>" },
+      ]);
+    });
+
+    it("movePlaylistItem reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const movePlaylistItem = getTool("movePlaylistItem");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 1 })
+      ).resolves.toBe("error: no editing playlist");
+    });
+
     it("updatePlaylistMetadata reports an error when nothing is being edited", async () => {
       const manager = makeManager("user-1");
       await flush();
