@@ -1448,29 +1448,44 @@ export function createBibleReadingState(
     );
   };
 
-  const syncStateFromChapter = async (
-    chapter: TranslationBookChapter,
-    options?: SelectTranslationAndChapterOptions
-  ) => {
-    const nextTranslationId = chapter.translation.id;
-    const nextBookId = chapter.book.id;
-    const nextChapterNumber = chapter.chapter.number;
-    const nextScrollToVerse = options?.scrollToVerse ?? null;
+  /**
+   * A verse to scroll to once content for a specific position arrives.
+   *
+   * Held here rather than published straight to `scrollToVerse` because the
+   * request is made when navigation *starts* but is only meaningful once the
+   * matching chapter has rendered. Publishing it early would scroll into
+   * whichever chapter is currently on screen and consume the target before the
+   * intended one appears.
+   */
+  let pendingScrollTarget: (ReadingPosition & { verse: number }) | null = null;
 
+  /**
+   * Commits where the reader is: the position signals plus everything keyed to
+   * a position (scroll reset, decorations, selection, highlights).
+   *
+   * Deliberately synchronous and free of any content dependency, so it can run
+   * the moment navigation is requested rather than after a chapter downloads.
+   */
+  const applyPosition = (
+    next: ReadingPosition,
+    options?: { scrollToVerse?: number | null }
+  ) => {
     batch(() => {
       const didChapterChange =
-        bookId.value !== nextBookId ||
-        chapterNumber.value !== nextChapterNumber;
+        bookId.value !== next.bookId ||
+        chapterNumber.value !== next.chapterNumber;
       if (didChapterChange) {
         scrollPosition.value = 0;
       }
 
-      translationId.value = nextTranslationId;
-      bookId.value = nextBookId;
-      chapterNumber.value = nextChapterNumber;
-      chapterData.value = chapter;
-      scrollToVerse.value = nextScrollToVerse;
+      translationId.value = next.translationId;
+      bookId.value = next.bookId;
+      chapterNumber.value = next.chapterNumber;
       selectedFootnoteId.value = null;
+
+      // Pruning reads the position signals through `decorationMatchesState`, so
+      // it has to come after the writes above to be judged against the new
+      // position.
       const removedDecorationIds = decorations.value
         .filter(
           (decoration) =>
@@ -1493,6 +1508,64 @@ export function createBibleReadingState(
         }
       }
       clearSelectedVerses();
+
+      const scrollToVerseRequest = options?.scrollToVerse ?? null;
+      pendingScrollTarget =
+        scrollToVerseRequest === null
+          ? null
+          : { ...next, verse: scrollToVerseRequest };
+
+      activeChapterHighlights.value = highlightsManager.getChapterHighlights(
+        next.translationId,
+        next.bookId,
+        next.chapterNumber
+      );
+    });
+  };
+
+  /**
+   * Commits the chapter text for a position that has already been applied.
+   *
+   * `scrollToVerse` is published here, in the same batch as `chapterData`, so a
+   * consumer never observes a scroll target against the wrong chapter — and
+   * only when the arriving chapter is the one the target was requested for.
+   */
+  const applyChapterContent = (chapter: TranslationBookChapter) => {
+    batch(() => {
+      chapterData.value = chapter;
+
+      const target = pendingScrollTarget;
+      const targetMatchesChapter =
+        !!target &&
+        target.translationId === chapter.translation.id &&
+        target.bookId === chapter.book.id &&
+        target.chapterNumber === chapter.chapter.number;
+      scrollToVerse.value = targetMatchesChapter ? target.verse : null;
+      pendingScrollTarget = null;
+    });
+  };
+
+  const syncStateFromChapter = async (
+    chapter: TranslationBookChapter,
+    options?: SelectTranslationAndChapterOptions
+  ) => {
+    const nextTranslationId = chapter.translation.id;
+    const nextBookId = chapter.book.id;
+    const nextChapterNumber = chapter.chapter.number;
+
+    // Position and content still land together for now — the outer batch keeps
+    // subscribers seeing a single update, exactly as before the split. They
+    // separate in time once navigation stops waiting on the fetch.
+    batch(() => {
+      applyPosition(
+        {
+          translationId: nextTranslationId,
+          bookId: nextBookId,
+          chapterNumber: nextChapterNumber,
+        },
+        { scrollToVerse: options?.scrollToVerse ?? null }
+      );
+      applyChapterContent(chapter);
     });
 
     if (translationBooks.value?.translation.id !== nextTranslationId) {
@@ -1503,12 +1576,6 @@ export function createBibleReadingState(
         dataManager.availableTranslations.value
       );
     }
-
-    activeChapterHighlights.value = highlightsManager.getChapterHighlights(
-      nextTranslationId,
-      nextBookId,
-      nextChapterNumber
-    );
   };
 
   const highlightSelectedVerses = async (
@@ -1699,12 +1766,13 @@ export function createBibleReadingState(
         firstChapterNumber
       );
 
-      await batch(async () => {
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
-        );
-        await syncStateFromChapter(chapter);
-      });
+      // Not wrapped in `batch()`: it does not await its callback, so only the
+      // synchronous prefix was ever batched — the grouping it implied never
+      // existed. `syncStateFromChapter` does its own batching.
+      availableTranslations.value = toAvailableTranslations(
+        dataManager.availableTranslations.value
+      );
+      await syncStateFromChapter(chapter);
 
       emitNavigate({ replace: false });
     } catch (err) {
@@ -1782,12 +1850,12 @@ export function createBibleReadingState(
         clampedChapterNumber
       );
 
-      await batch(async () => {
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
-        );
-        await syncStateFromChapter(chapter, options);
-      });
+      // See the note in `selectTranslation`: `batch()` never awaited this, so
+      // dropping it changes nothing but the misleading appearance of grouping.
+      availableTranslations.value = toAvailableTranslations(
+        dataManager.availableTranslations.value
+      );
+      await syncStateFromChapter(chapter, options);
 
       if (options?.updateUrl !== false) {
         emitNavigate({ replace: false });
