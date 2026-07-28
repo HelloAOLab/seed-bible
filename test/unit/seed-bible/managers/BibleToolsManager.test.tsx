@@ -53,7 +53,7 @@ function createContext(): BibleToolContext {
       providers: signal([]),
     } as any,
     features: {
-      isFeatureEnabled: vi.fn().mockReturnValue(true),
+      isFeatureEnabled: vi.fn(() => signal(true)),
     },
   };
 }
