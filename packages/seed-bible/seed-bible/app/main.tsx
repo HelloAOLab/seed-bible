@@ -29,6 +29,7 @@ import {
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
 import "./styles/base.css";
+import "./fonts/satoshi/satoshi.css";
 import "./styles/utilities.css";
 import {
   OnboardingModals,
@@ -54,10 +55,10 @@ export function ExternalResourceDependencies({
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
         rel="stylesheet"
       />
-      <link
+      {/* <link
         href="https://api.fontshare.com/v2/css?f[]=satoshi@100,200,300,400,500,600,700,800,900&display=swap"
         rel="stylesheet"
-      />
+      /> */}
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
