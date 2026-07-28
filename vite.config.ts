@@ -288,6 +288,17 @@ export default defineConfig(({ isSsrBuild }) => ({
     // Suites that bootstrap the full SeedBibleState pay a one-time ~6s
     // dynamic import of the entire app graph in their first test.
     testTimeout: 20000,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      include: ["packages/**/*.{ts,tsx}"],
+      exclude: [
+        "**/*.test.{ts,tsx}",
+        "**/*.d.ts",
+        "**/obsolete/**",
+        "patterns/**",
+      ],
+    },
   },
 
   server: {
