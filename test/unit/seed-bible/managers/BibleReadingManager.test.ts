@@ -18,6 +18,7 @@ import {
   ALT_API_ENDPOINT,
   altTranslations,
   bsbBooks,
+  createControlledFetch,
   createReadingManagerResponseMap,
   createResponse,
   makeChapter,
@@ -1495,6 +1496,163 @@ describe("createBibleReadingState", () => {
       "Failed request to https://example.test/api/AAB/GEN/3.json. Status: 500 Server Error"
     );
     expect(state.loading.value).toBe(false);
+  });
+
+  describe("navigation is not blocked by in-flight chapter text (#1414)", () => {
+    /** Holds every Genesis chapter except the first, which the initial load needs. */
+    const holdLaterGenesisChapters = (url: string) =>
+      /\/api\/AAB\/GEN\/(?!1\.json)\d+\.json$/.test(url);
+
+    function chapterUrl(chapter: number): string {
+      return makeExampleUrl(`/api/AAB/GEN/${chapter}.json`);
+    }
+
+    function responsesThroughChapter(last: number): WebResponseMap {
+      const responses = createReadingManagerResponseMap();
+      for (let chapter = 2; chapter <= last; chapter++) {
+        responses[chapterUrl(chapter)] = createResponse(
+          makeChapter(aabBooks, "GEN", chapter)
+        );
+      }
+      return responses;
+    }
+
+    async function createStateWithHeldChapters(last = 6) {
+      const controlled = createControlledFetch(
+        responsesThroughChapter(last),
+        holdLaterGenesisChapters
+      );
+      fetchMock.mockImplementation(controlled.fetch);
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      return { state, controlled };
+    }
+
+    it("advances one chapter per press while the text is still downloading", async () => {
+      const { state } = await createStateWithHeldChapters();
+      expect(state.chapterNumber.value).toBe(1);
+
+      // Three presses back to back, nothing awaited in between — the same thing
+      // a reader does by tapping quickly.
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+
+      // Position has moved three chapters, synchronously, before any request
+      // has come back.
+      expect(state.chapterNumber.value).toBe(4);
+      expect(state.title.value).toBe("Genesis 4");
+      expect(state.shortTitle.value).toBe("GEN 4");
+
+      // ...and the text on screen is still chapter 1, which is what the
+      // skeleton placeholder keys off.
+      expect(state.chapterData.value?.chapter.number).toBe(1);
+      expect(state.isChapterContentStale.value).toBe(true);
+    });
+
+    it("commits only the newest chapter, even when requests settle out of order", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      const committed: number[] = [];
+      const stop = effect(() => {
+        const chapter = state.chapterData.value;
+        if (chapter) {
+          committed.push(chapter.chapter.number);
+        }
+      });
+
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(4);
+
+      // The chapter the reader actually landed on comes back first, then the
+      // ones they skimmed past arrive late and in the wrong order.
+      controlled.settle(chapterUrl(4));
+      await waitFor(() => state.chapterData.value?.chapter.number === 4);
+      controlled.settle(chapterUrl(3));
+      controlled.settle(chapterUrl(2));
+      await waitFor(() => controlled.pending().length === 0);
+
+      expect(state.chapterNumber.value).toBe(4);
+      expect(state.chapterData.value?.chapter.number).toBe(4);
+      expect(state.isChapterContentStale.value).toBe(false);
+
+      stop();
+      // Never shows a chapter the reader skimmed past: only the first chapter
+      // and the one they stopped on were ever committed.
+      expect(committed).toEqual([1, 4]);
+    });
+
+    it("resolves a superseded navigation instead of leaving the caller hanging", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      const first = state.loadNextChapter();
+      void state.loadNextChapter();
+
+      // The first call's chapter is never going to be displayed, but callers
+      // await these methods and must not be stranded.
+      await expect(first).resolves.toBeUndefined();
+
+      controlled.settleAll();
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+    });
+
+    it("reverses direction mid-flight without waiting", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadPreviousChapter();
+
+      expect(state.chapterNumber.value).toBe(3);
+
+      controlled.settleAll();
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+      expect(state.isChapterContentStale.value).toBe(false);
+    });
+
+    it("does not move past the end of the canon", async () => {
+      setWebResponses({
+        ...createReadingManagerResponseMap(),
+        [makeExampleUrl("/api/AAB/MAT/28.json")]: createResponse(
+          makeChapter(aabBooks, "MAT", 28)
+        ),
+      });
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      await state.selectChapter("MAT", 28);
+
+      const callsBefore = fetchMock.mock.calls.length;
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+
+      expect(state.bookId.value).toBe("MAT");
+      expect(state.chapterNumber.value).toBe(28);
+      expect(fetchMock.mock.calls.length).toBe(callsBefore);
+    });
+
+    it("keeps a pending scroll target from landing on the wrong chapter", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      // Ask for a verse in chapter 2. The position lands but the text is held,
+      // so the scroll target is still pending.
+      void state.selectTranslationAndChapter("AAB", "GEN", 2, {
+        scrollToVerse: 2,
+      });
+      await waitFor(() => state.chapterNumber.value === 2);
+      expect(state.scrollToVerse.value).toBeNull();
+
+      // Moving on before that text arrives must drop the request rather than
+      // applying it to whichever chapter shows up next.
+      void state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(3);
+
+      controlled.settleAll();
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+      expect(state.scrollToVerse.value).toBeNull();
+    });
   });
 
   describe("chapterDataPromise", () => {

@@ -433,14 +433,12 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
-      const chapterData = readingState.chapterData.value;
-      if (!chapterData || readingState.loading.value) {
-        return;
-      }
-
       // Visual direction: the next chapter sits to the right in LTR and to the
-      // left in RTL, matching the toolbar chevrons and swipe gesture.
-      const isRtl = chapterData.translation.textDirection === "rtl";
+      // left in RTL, matching the toolbar chevrons and swipe gesture. Read from
+      // the translation rather than the loaded chapter so the arrow keys keep
+      // working while the text for a new position is still on its way — and
+      // deliberately not gated on `loading`, so repeated presses advance.
+      const isRtl = readingState.translation.value?.textDirection === "rtl";
       const loadNext = event.key === (isRtl ? "ArrowLeft" : "ArrowRight");
       const canNavigate = loadNext
         ? readingState.hasNext.value

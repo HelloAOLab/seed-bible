@@ -265,6 +265,82 @@ export function createResponse<T>(
   };
 }
 
+export interface ControlledFetch {
+  /** Drop-in `fetch` implementation. */
+  fetch: (url: string) => Promise<WebResponse>;
+  /** URLs currently held open, in the order they were requested. */
+  pending: () => string[];
+  /** Releases a held URL with its mapped response. */
+  settle: (url: string) => void;
+  /** Releases every currently held URL, oldest first. */
+  settleAll: () => void;
+  /** Fails a held URL. */
+  reject: (url: string, error?: Error) => void;
+}
+
+/**
+ * A `fetch` stand-in that can hold chosen requests open indefinitely.
+ *
+ * The plain `setWebResponses` helper resolves everything immediately, which
+ * makes "the reader navigated away before this request came back" impossible to
+ * express. Pass a predicate for the URLs that should hang, then release them by
+ * hand — in whatever order the test needs, including out of order.
+ */
+export function createControlledFetch(
+  responses: WebResponseMap,
+  shouldHold: (url: string) => boolean = () => false
+): ControlledFetch {
+  const held = new Map<
+    string,
+    { resolve: (response: WebResponse) => void; reject: (error: Error) => void }
+  >();
+  const order: string[] = [];
+
+  const responseFor = (url: string): WebResponse => {
+    const response = responses[url];
+    if (!response) {
+      throw new Error(`No mocked response for ${url}`);
+    }
+    return response;
+  };
+
+  const release = (url: string) => {
+    const entry = held.get(url);
+    if (!entry) {
+      throw new Error(
+        `No held request for ${url}. Held: ${order.join(", ") || "(none)"}`
+      );
+    }
+    held.delete(url);
+    order.splice(order.indexOf(url), 1);
+    return entry;
+  };
+
+  return {
+    fetch: (url: string) => {
+      if (!shouldHold(url)) {
+        return Promise.resolve(responseFor(url));
+      }
+      return new Promise<WebResponse>((resolve, reject) => {
+        order.push(url);
+        held.set(url, { resolve, reject });
+      });
+    },
+    pending: () => [...order],
+    settle: (url: string) => {
+      release(url).resolve(responseFor(url));
+    },
+    settleAll: () => {
+      for (const url of [...order]) {
+        release(url).resolve(responseFor(url));
+      }
+    },
+    reject: (url: string, error = new Error(`Request failed: ${url}`)) => {
+      release(url).reject(error);
+    },
+  };
+}
+
 export function makeUrl(
   path: string,
   endpoint: string = FREE_USE_BIBLE_API_ENDPOINT.slice(0, -1)
