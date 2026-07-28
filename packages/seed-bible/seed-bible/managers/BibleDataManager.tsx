@@ -6,13 +6,39 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
+import {
+  createOfflineTranslationsManager,
+  type OfflineTranslationsManager,
+} from "../managers/OfflineTranslationsManager";
+import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 
 export interface BibleDataManager {
   endpoints: Signal<string[]>;
   availableTranslations: Signal<Translation[]>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
-  getTranslations: (endpoint?: string) => Promise<Translation[]>;
+
+  /**
+   * Translations the user has downloaded to their device for offline reading.
+   *
+   * Every read below checks this first, so a downloaded translation is served
+   * from the device rather than the network.
+   */
+  offline: OfflineTranslationsManager;
+
+  /**
+   * Loads an endpoint's translation list and merges it into
+   * `availableTranslations`.
+   *
+   * @param endpoint The endpoint to read. Defaults to the API's own endpoint.
+   * @param options Pass `refresh: true` to bypass the API's response cache. Only
+   * needed when the caller depends on values that change over time, such as each
+   * translation's content hash.
+   */
+  getTranslations: (
+    endpoint?: string,
+    options?: { refresh?: boolean }
+  ) => Promise<Translation[]>;
   getTranslationBooks: (translationId: string) => Promise<TranslationBooks>;
   getTranslationBookChapter: (
     translationId: string,
@@ -487,7 +513,18 @@ export function getBookId(book: string): BookId | null {
   return null;
 }
 
-export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
+export interface CreateBibleDataManagerOptions {
+  /**
+   * Where downloaded translations are stored. Defaults to IndexedDB; tests pass
+   * an in-memory store, and null disables offline downloads entirely.
+   */
+  offlineStore?: OfflineTranslationStore | null;
+}
+
+export function createBibleDataManager(
+  api: FreeUseBibleAPI,
+  options: CreateBibleDataManagerOptions = {}
+): BibleDataManager {
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
@@ -535,14 +572,35 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     translationEndpoints.value = nextTranslationEndpoints;
   };
 
-  const getTranslations = async (endpoint?: string): Promise<Translation[]> => {
+  const getTranslations = async (
+    endpoint?: string,
+    options?: { refresh?: boolean }
+  ): Promise<Translation[]> => {
     const normalizedEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
     ensureEndpointTracked(normalizedEndpoint);
 
-    const result = await api.getAvailableTranslations(normalizedEndpoint);
+    const result = await api.getAvailableTranslations(
+      normalizedEndpoint,
+      options
+    );
     mergeTranslations(normalizedEndpoint, result.translations);
     return result.translations;
   };
+
+  // Created here (rather than by the caller) so it can share this manager's
+  // endpoint resolution and translation list. It must come after
+  // `getTranslations` because the update check calls it.
+  const offline = createOfflineTranslationsManager({
+    api,
+    store: options.offlineStore,
+    availableTranslations,
+    getEndpointForTranslation,
+    // `refresh` matters here: the update check exists to notice a changed
+    // content hash, which the API's response cache would otherwise hide.
+    refreshTranslations: (endpoint) =>
+      getTranslations(endpoint, { refresh: true }),
+    mergeTranslations,
+  });
 
   const getTranslationBooks = async (
     translationId: string
@@ -552,14 +610,22 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
       return existing;
     }
 
+    const cacheBooks = (endpoint: string, books: TranslationBooks) => {
+      const nextBooksMap = new Map(translationBooks.value);
+      nextBooksMap.set(translationId, books);
+      translationBooks.value = nextBooksMap;
+      mergeTranslations(endpoint, [books.translation]);
+    };
+
+    const downloadedBooks = await offline.getTranslationBooks(translationId);
+    if (downloadedBooks) {
+      cacheBooks(getEndpointForTranslation(translationId), downloadedBooks);
+      return downloadedBooks;
+    }
+
     const endpoint = getEndpointForTranslation(translationId);
     const books = await api.getTranslationBooks(translationId, endpoint);
-
-    const nextBooksMap = new Map(translationBooks.value);
-    nextBooksMap.set(translationId, books);
-    translationBooks.value = nextBooksMap;
-
-    mergeTranslations(endpoint, [books.translation]);
+    cacheBooks(endpoint, books);
     return books;
   };
 
@@ -568,6 +634,18 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     book: string,
     chapter: number | string
   ): Promise<TranslationBookChapter> => {
+    const chapterNumber = Number(chapter);
+    if (Number.isFinite(chapterNumber)) {
+      const downloaded = await offline.getTranslationBookChapter(
+        translationId,
+        book,
+        chapterNumber
+      );
+      if (downloaded) {
+        return downloaded;
+      }
+    }
+
     const endpoint = getEndpointForTranslation(translationId);
     return await api.getTranslationBookChapter(
       translationId,
@@ -578,11 +656,21 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
   };
 
   const getNextChapter = async (chapter: TranslationBookChapter) => {
+    const downloaded = await offline.getAdjacentChapter(chapter, "next");
+    if (downloaded) {
+      return downloaded;
+    }
+
     const endpoint = getEndpointForTranslation(chapter.translation.id);
     return await api.getNextChapter(chapter, endpoint);
   };
 
   const getPreviousChapter = async (chapter: TranslationBookChapter) => {
+    const downloaded = await offline.getAdjacentChapter(chapter, "previous");
+    if (downloaded) {
+      return downloaded;
+    }
+
     const endpoint = getEndpointForTranslation(chapter.translation.id);
     return await api.getPreviousChapter(chapter, endpoint);
   };
@@ -639,6 +727,7 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     availableTranslations,
     translationBooks,
     api,
+    offline,
     getTranslations,
     getTranslationBooks,
     getTranslationBookChapter,

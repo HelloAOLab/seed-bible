@@ -5,6 +5,7 @@ import {
   type BibleDataManager,
   type VerseRef,
 } from "../managers/BibleDataManager";
+import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import { createConfig } from "../managers/ConfigManager";
@@ -387,6 +388,11 @@ export interface CreateSeedBibleStateOptions {
   config?: AppConfig;
   /** Full initial URL — supplied during SSR where `window` is unavailable. */
   initialHref?: string;
+  /**
+   * Where translations downloaded for offline reading are stored. Defaults to
+   * IndexedDB; tests pass an in-memory store, and null disables the feature.
+   */
+  offlineStore?: OfflineTranslationStore | null;
 }
 
 export function createSeedBibleState(
@@ -407,7 +413,9 @@ export function createSeedBibleState(
     navigation,
     options.config?.acceptedLanguages ?? []
   );
-  const data = createBibleDataManager(api);
+  const data = createBibleDataManager(api, {
+    offlineStore: options.offlineStore,
+  });
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);

@@ -19,6 +19,7 @@ import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { JSX } from "preact";
 import type { BibleDataManager } from "../../managers/BibleDataManager";
+import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import {
   useEffect,
@@ -1032,6 +1033,257 @@ const LoadMoreButton = (props: { onLoadMore: () => void }) => {
   );
 };
 
+/** Renders a byte count as a short, human-readable size like "7.1 MB". */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  const kilobytes = bytes / 1024;
+  if (kilobytes < 1024) {
+    return `${Math.round(kilobytes)} KB`;
+  }
+  return `${(kilobytes / 1024).toFixed(1)} MB`;
+}
+
+/**
+ * The per-translation offline download controls shown in the translation list.
+ *
+ * Renders at most two buttons:
+ *
+ * - an **update** button, only while the API reports a newer version than the
+ *   copy on this device; and
+ * - a **download / remove** button, which downloads the translation, shows live
+ *   progress (tap to cancel) while it downloads, and offers to remove it once
+ *   it's stored.
+ *
+ * Renders nothing at all when the device can't store downloads (server-side
+ * rendering, or a browser with IndexedDB blocked).
+ */
+const OfflineTranslationControls = (props: {
+  translation: Translation;
+  offline: OfflineTranslationsManager;
+  bibleSelectorState: BibleSelectorState;
+  app: AppState;
+}) => {
+  const { translation, offline, bibleSelectorState, app } = props;
+  const { pendingOfflineDelete } = bibleSelectorState;
+  const { t } = useI18n();
+
+  if (!offline.supported) {
+    return null;
+  }
+
+  const progress = offline.downloads.value.get(translation.id) ?? null;
+  const summary = offline.downloaded.value.get(translation.id) ?? null;
+  const error = offline.errors.value.get(translation.id) ?? null;
+
+  const startDownload = async () => {
+    const succeeded = await offline.downloadTranslation(translation.id);
+    if (succeeded) {
+      app.toast(
+        t("translation-downloaded", {
+          name: translation.shortName,
+          defaultValue: "{{name}} is now available offline",
+        })
+      );
+      return;
+    }
+
+    const failure = offline.errors.value.get(translation.id);
+    if (failure) {
+      app.toast(
+        t("translation-download-failed", {
+          name: translation.shortName,
+          defaultValue: "Couldn't download {{name}}.",
+        })
+      );
+    }
+  };
+
+  if (progress) {
+    // The download phase usually has no percentage to show: the API doesn't send
+    // `Access-Control-Expose-Headers: Content-Length`, so a cross-origin page
+    // can't read the total size. Rather than fake a percentage, that case spins
+    // an indeterminate ring and reports the bytes received so far in the
+    // tooltip. The saving phase always knows its total (a chapter count), so it
+    // fills the ring properly.
+    const percent =
+      progress.ratio === null ? null : Math.round(progress.ratio * 100);
+    const label =
+      progress.phase === "saving"
+        ? t("saving-translation-to-device", {
+            percent: percent ?? 0,
+            defaultValue: "Saving to this device… {{percent}}%",
+          })
+        : percent === null
+          ? t("cancel-translation-download-unknown-size", {
+              size: formatBytes(progress.receivedBytes),
+              defaultValue: "Downloading {{size}} so far — tap to cancel",
+            })
+          : t("cancel-translation-download", {
+              percent,
+              defaultValue: "Downloading {{percent}}% — tap to cancel",
+            });
+
+    return (
+      <button
+        type="button"
+        class="sb-offline-btn downloading flex-center"
+        title={label}
+        aria-label={label}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          offline.cancelDownload(translation.id);
+        }}
+      >
+        <span
+          class={`sb-offline-progress${percent === null ? " indeterminate" : ""}`}
+          style={{ "--sb-offline-progress": `${percent ?? 0}%` }}
+        >
+          {percent !== null && (
+            <span class="sb-offline-progress-label">{percent}</span>
+          )}
+        </span>
+      </button>
+    );
+  }
+
+  const downloadTitle = error
+    ? t("retry-translation-download", {
+        error,
+        defaultValue: "Download failed ({{error}}) — tap to retry",
+      })
+    : t("download-translation-offline", {
+        defaultValue: "Download for offline use",
+      });
+
+  return (
+    <>
+      {summary?.updateAvailable && (
+        <button
+          type="button"
+          class="sb-offline-btn update flex-center"
+          title={t("update-offline-translation", {
+            defaultValue: "A newer version is available — tap to update",
+          })}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            void startDownload();
+          }}
+        >
+          <span class="material-symbols-outlined">sync</span>
+        </button>
+      )}
+      {summary ? (
+        <button
+          type="button"
+          class="sb-offline-btn downloaded flex-center"
+          title={t("translation-available-offline", {
+            size: formatBytes(summary.sizeBytes),
+            defaultValue: "Available offline ({{size}}) — tap to remove",
+          })}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            pendingOfflineDelete.value = translation;
+          }}
+        >
+          <span class="material-symbols-outlined">offline_pin</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
+          title={downloadTitle}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            void startDownload();
+          }}
+        >
+          <span class="material-symbols-outlined">download</span>
+        </button>
+      )}
+    </>
+  );
+};
+
+/**
+ * Confirmation shown before removing a downloaded translation from the device.
+ *
+ * Rendered as a sibling of the translation modal (like the info and filter
+ * popovers) so it layers above the list without being clipped by it.
+ */
+const ConfirmOfflineDelete = (props: {
+  bibleSelectorState: BibleSelectorState;
+  offline: OfflineTranslationsManager;
+  app: AppState;
+  translation: Translation;
+}) => {
+  const { bibleSelectorState, offline, app, translation } = props;
+  const { pendingOfflineDelete } = bibleSelectorState;
+  const { t } = useI18n();
+
+  const close = () => {
+    pendingOfflineDelete.value = null;
+  };
+
+  const confirm = async () => {
+    close();
+    try {
+      await offline.deleteTranslation(translation.id);
+      app.toast(
+        t("translation-removed-from-device", {
+          name: translation.shortName,
+          defaultValue: "{{name}} was removed from this device",
+        })
+      );
+    } catch {
+      app.toast(
+        t("remove-offline-translation-failed", {
+          defaultValue: "Couldn't remove the download.",
+        })
+      );
+    }
+  };
+
+  return (
+    <div
+      className="modal translationDeleteModal"
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+      }}
+    >
+      <p className="sb-offline-delete-title">
+        {t("remove-offline-translation-title", {
+          defaultValue: "Remove download?",
+        })}
+      </p>
+      <p className="sb-offline-delete-message">
+        {t("remove-offline-translation-message", {
+          name: `${translation.name} (${translation.shortName})`,
+          defaultValue:
+            'Remove "{{name}}" from this device? You\'ll need a connection to read it again.',
+        })}
+      </p>
+      <div className="sb-offline-delete-actions">
+        <button
+          type="button"
+          className="sb-offline-delete-cancel"
+          onClick={close}
+        >
+          {t("cancel")}
+        </button>
+        <button
+          type="button"
+          className="sb-offline-delete-confirm"
+          onClick={() => void confirm()}
+        >
+          {t("remove", { defaultValue: "Remove" })}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const TranslationModal = (props: {
   app: AppState;
   bibleSelectorState: BibleSelectorState;
@@ -1048,11 +1300,19 @@ const TranslationModal = (props: {
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
+    pendingOfflineDelete,
     filteredApiTranslations,
     setOpen,
   } = bibleSelectorState;
 
   const { t } = useI18n();
+
+  // Opening the list is the moment a stale download matters, so this is where we
+  // re-read the API's hashes. It's a no-op when nothing is downloaded or the
+  // device is offline.
+  useEffect(() => {
+    void bibleDataManager.offline.checkForUpdates();
+  }, []);
 
   // Helper function to check if should show expand button
   const shouldShowExpandButton = (
@@ -1137,6 +1397,7 @@ const TranslationModal = (props: {
           selectingTranslation.value = false;
           showTranslationSettings.value = false;
           showTranslationInfo.value = null;
+          pendingOfflineDelete.value = null;
         }}
       >
         <div
@@ -1145,6 +1406,7 @@ const TranslationModal = (props: {
             e.stopPropagation();
             showTranslationSettings.value = false;
             showTranslationInfo.value = null;
+            pendingOfflineDelete.value = null;
           }}
         >
           <div
@@ -1248,6 +1510,14 @@ const TranslationModal = (props: {
           translation={showTranslationInfo.value.translation}
           position={showTranslationInfo.value.position}
           isMobile={isMobile.value}
+        />
+      )}
+      {pendingOfflineDelete.value && (
+        <ConfirmOfflineDelete
+          bibleSelectorState={bibleSelectorState}
+          offline={bibleDataManager.offline}
+          app={app}
+          translation={pendingOfflineDelete.value}
         />
       )}
     </>
@@ -1438,15 +1708,23 @@ const LanguageComponent = (props: {
                       </span>
                     )}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      shareTranslatation({ translation: value });
-                    }}
-                    class="share-btn flex-center"
-                  >
-                    <ShareIcon height={18} width={22} />
-                  </button>
+                  <span class="sb-translation-actions inline-flex-start-center-gap-sm">
+                    <OfflineTranslationControls
+                      translation={value}
+                      offline={bibleDataManager.offline}
+                      bibleSelectorState={bibleSelectorState}
+                      app={app}
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        shareTranslatation({ translation: value });
+                      }}
+                      class="share-btn flex-center"
+                    >
+                      <ShareIcon height={18} width={22} />
+                    </button>
+                  </span>
                 </div>
               );
             })}
