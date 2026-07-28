@@ -339,12 +339,6 @@ export function createTabs(
       navigation.currentUrl.value
     );
 
-    console.log("Creating TabsManager with initial URL parameters:", {
-      initialTranslationId,
-      initialBookId,
-      initialChapter,
-    });
-
     initialTabs = createInitialTabs(
       dataManager,
       highlightsManager,
@@ -370,12 +364,6 @@ export function createTabs(
       query,
       defaultTranslation.id
     );
-
-    console.log("Restoring TabsManager from stored state:", {
-      tabCount: descriptors.length,
-      selectedTabId,
-      querySpecified: query.specified,
-    });
 
     initialTabs = descriptors.map((descriptor, index) =>
       buildRestoredTab(descriptor, index, selectedTabId)

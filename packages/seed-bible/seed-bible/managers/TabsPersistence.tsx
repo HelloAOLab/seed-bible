@@ -229,6 +229,12 @@ export function reconcileStoredTabs(
     return { tabs, selectedTabId: state.selectedTabId };
   }
 
+  // A link that names no translation targets the *default* translation, not the
+  // translation of whichever tab was last selected. So `?book=JHN&chapter=3`
+  // lands on (and retargets) the first tab already on the default translation,
+  // which may not be the tab the user was reading. That is intentional — it is
+  // what step 2.2 of the tab-restore spec asks for — so please don't "fix" it
+  // to prefer the selected tab without changing the spec first.
   const targetTranslation = query.translationId ?? defaultTranslationId;
   const targetBook = query.bookId ?? DEFAULT_BOOK_ID;
   const targetChapter = query.chapter ?? DEFAULT_CHAPTER_NUMBER;

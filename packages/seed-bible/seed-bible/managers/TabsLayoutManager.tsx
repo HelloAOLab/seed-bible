@@ -208,10 +208,14 @@ export interface TabsLayoutManager {
  * Creates the tabs layout manager.
  *
  * Behavior:
- * - Initializes with one slot bound to the selected tab.
+ * - Initializes with one slot bound to the selected tab, or rebuilds the slot
+ *   arrangement persisted by the previous visit when one is stored.
  * - Synchronizes slot tab references as the tabs list changes.
  * - Disposes slot-only tab clones once no slot references them.
- * - Forces `layout` to `"single"` whenever `panelsEnabled` is false.
+ * - Forces `layout` to `"single"` whenever `panelsEnabled` is false — but only
+ *   for layouts chosen through `setLayout`/`openTabInNewSlot`/`closeSlot`. A
+ *   *restored* layout is kept intact regardless, and clamped for rendering
+ *   only; see the note on `canRestoreLayout` below.
  */
 export function createTabsLayout(
   tabsManager: TabsManager,
@@ -258,9 +262,19 @@ export function createTabsLayout(
   };
 
   const storedState = normalizeStoredTabsState(readStoredTabsState());
+  // Deliberately NOT gated on `panelsEnabled`. A stored split is restored into
+  // the manager even when panels are disabled, and the *rendered* view is
+  // clamped to a single slot by `effectiveSlots`/`effectiveSlotLayout` in
+  // SeedBibleStateManager — the same split-preserving treatment a mobile
+  // viewport already gets, and what the layout menu in `Sidebar` already
+  // assumes. Gating here instead would collapse the layout AND let the
+  // persistence effect write the collapsed version straight back, so a split
+  // built with panels on would be lost for good the first time the app opened
+  // with them off. It would also race the config: this runs synchronously at
+  // construction, while `panelsEnabled` derives from the profile config, which
+  // resolves later — so an early read can be the wrong answer.
   const canRestoreLayout =
     !!storedState &&
-    panelsEnabled.value &&
     storedState.slotTabIds.length > 0 &&
     getLayoutSlotCount(storedState.layout) === storedState.slotTabIds.length;
 
