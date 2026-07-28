@@ -2185,6 +2185,49 @@ describe("createChatsManager", () => {
     );
   });
 
+  it("activeContexts reflects added/replaced/removed contexts with their id, label, and tools intact", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const playlistTool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.activeContexts.value).toEqual([]);
+
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Current playlist: {}",
+      tools: [playlistTool],
+    });
+
+    // The raw context is exposed as-is, unlike the merged `context` signal.
+    expect(chats.activeContexts.value).toEqual([
+      {
+        id: "playlist",
+        label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+        instructions: "Current playlist: {}",
+        tools: [playlistTool],
+      },
+    ]);
+
+    // Adding a context with the same id replaces the existing entry.
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Updated playlist: {}",
+      tools: [playlistTool],
+    });
+    expect(chats.activeContexts.value).toHaveLength(1);
+    expect(chats.activeContexts.value[0]?.instructions).toEqual(
+      "Updated playlist: {}"
+    );
+
+    chats.removeContext("playlist");
+    expect(chats.activeContexts.value).toEqual([]);
+  });
+
   it("sendMessage() defaults to first local AI target when no targets are resolved", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";

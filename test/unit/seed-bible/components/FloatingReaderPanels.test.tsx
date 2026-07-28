@@ -8,9 +8,11 @@ import {
 } from "@packages/seed-bible/seed-bible/components/FloatingReaderPanels/FloatingReaderPanels";
 import type {
   ChatSession,
+  IdentifiedLocalChatContext,
   TextChatMessage,
   UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 import type { Mock } from "vitest";
@@ -22,8 +24,17 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
+      t: (
+        key: string,
+        options?: { defaultValue?: string } & Record<string, unknown>
+      ) => {
+        const template = options?.defaultValue ?? key;
+        return options
+          ? template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
+              String(options[name] ?? "")
+            )
+          : template;
+      },
       language: "en",
     }),
   };
@@ -506,6 +517,7 @@ function createMockFloatingChatPanelState(
     isChatPanelOpen?: boolean;
     selectedChat?: ChatSession | null;
     chats?: ChatSession[];
+    activeContexts?: IdentifiedLocalChatContext[];
   } = {}
 ): MockFloatingChatPanelResult {
   const closeChatPanel = vi.fn();
@@ -520,9 +532,20 @@ function createMockFloatingChatPanelState(
       chats: signal(opts.chats ?? []),
       selectChat,
       providers: signal([]),
+      activeContexts: signal(opts.activeContexts ?? []),
     },
   } as unknown as SeedBibleState;
   return { state, closeChatPanel, selectChat };
+}
+
+function makeTool(name: string): AIProviderFunctionTool {
+  return {
+    name,
+    type: "function",
+    description: `${name} tool`,
+    parameters: {} as AIProviderFunctionTool["parameters"],
+    function: async () => "ok",
+  };
 }
 
 describe("FloatingChatPanel", () => {
@@ -694,5 +717,85 @@ describe("FloatingChatPanel", () => {
     expect(
       container.querySelector(".sb-floating-chat-header-members-button")
     ).not.toBeNull();
+  });
+
+  it("shows no AI context button when there are no active contexts", () => {
+    const { state } = createMockFloatingChatPanelState({ activeContexts: [] });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-floating-chat-header-ai-context-button")
+    ).toBeNull();
+  });
+
+  it("shows the AI context button with no count badge for a single active context", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const button = container.querySelector(
+      ".sb-floating-chat-header-ai-context-button"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).not.toMatch(/\d/);
+  });
+
+  it("shows a count badge on the AI context button when more than one context is active", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+        {
+          id: "other",
+          label: "Other Context",
+          tools: [],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const button = container.querySelector(
+      ".sb-floating-chat-header-ai-context-button"
+    );
+    expect(button?.textContent).toContain("2");
+  });
+
+  it("lists each active context's label and tool count in the AI context menu", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist"), makeTool("insertPlaylistItem")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const item = container.querySelector(".sb-floating-chat-ai-context-item");
+    expect(item?.textContent).toContain("Playlist Editor");
+    expect(item?.textContent).toContain("2 tools");
   });
 });

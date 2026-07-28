@@ -1184,9 +1184,8 @@ export function createPlaylistManager(
   // remove items and edit the title/description as the user asks. Withdrawn
   // as soon as the user leaves the editor (save or cancel), so the tools
   // aren't offered outside of an actual editing session.
-  const isEditingAPlaylist = computed(() => editingPlaylist.value !== null);
   effect(() => {
-    if (!isEditingAPlaylist.value) {
+    if (!editingPlaylist.value || !isDiscoverOpen.value) {
       chats.removeContext(PLAYLIST_EDITOR_CHAT_CONTEXT_ID);
       return;
     }

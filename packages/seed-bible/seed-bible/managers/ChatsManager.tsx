@@ -402,6 +402,13 @@ export interface ChatsManager {
   context: ReadonlySignal<LocalChatContext>;
 
   /**
+   * The identified contexts currently added via {@link addContext}, in the
+   * order they were added. Unlike {@link context}, this preserves each
+   * context's `id`/`label`/`tools` individually instead of merging them.
+   */
+  activeContexts: ReadonlySignal<IdentifiedLocalChatContext[]>;
+
+  /**
    * Merges the given fields into the default custom context. Applies to every
    * chat session managed by this manager.
    * @param context The context fields to merge in.
@@ -2223,6 +2230,7 @@ export function createChatsManager(
       selectedChatId.value = chatId;
     },
     context,
+    activeContexts: additionalContexts,
     setContext,
     addContext,
     removeContext,

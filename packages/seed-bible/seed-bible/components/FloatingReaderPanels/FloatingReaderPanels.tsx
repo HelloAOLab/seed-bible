@@ -28,7 +28,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { DateTime } from "luxon";
-import { ChatParticipantsIcon } from "../icons";
+import { AiIcon, ChatParticipantsIcon, MaterialIcon } from "../icons";
 
 interface SearchResult {
   id: string;
@@ -880,6 +880,51 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 })}
               </>
             )}
+          </ContextMenuWithButton>
+        ) : null}
+
+        {state.chats.activeContexts.value.length > 0 ? (
+          <ContextMenuWithButton
+            anchorClassName="sb-floating-chat-header-ai-context-anchor"
+            buttonClassName="sb-floating-chat-header-ai-context-button"
+            menuClassName="sb-floating-chat-ai-context-menu"
+            icon={
+              <span className="sb-floating-chat-header-ai-context-button-icon">
+                <MaterialIcon>auto_awesome</MaterialIcon>
+                {state.chats.activeContexts.value.length > 1 && (
+                  <span>{state.chats.activeContexts.value.length}</span>
+                )}
+              </span>
+            }
+            aria-label={t("ai-context-button-label", {
+              defaultValue: "Active AI context",
+            })}
+            title={t("ai-context-button-label", {
+              defaultValue: "Active AI context",
+            })}
+            onClick={() => {
+              closeContextMenus();
+            }}
+          >
+            {state.chats.activeContexts.value.map((ctx) => (
+              <ContextMenuItem
+                key={ctx.id}
+                className="sb-floating-chat-ai-context-item"
+                onClick={(event) => {
+                  event.preventDefault();
+                }}
+              >
+                <span className="sb-floating-chat-ai-context-item-label">
+                  {translateTitle(t, ctx.label)}
+                </span>
+                <span className="sb-floating-chat-ai-context-item-tools">
+                  {t("ai-context-tool-count", {
+                    defaultValue: "{{count}} tools",
+                    count: ctx.tools?.length ?? 0,
+                  })}
+                </span>
+              </ContextMenuItem>
+            ))}
           </ContextMenuWithButton>
         ) : null}
 
