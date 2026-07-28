@@ -135,7 +135,8 @@ describe("createBibleDataManager", () => {
     expect(second).toBe(first);
     expect(manager.translationBooks.value.get("NIV")).toEqual(altNivBooks);
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/books.json")
+      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/books.json"),
+      expect.anything()
     );
     expect(
       webGetMock.mock.calls.filter((call) =>
@@ -174,7 +175,8 @@ describe("createBibleDataManager", () => {
     expect(result.chapter.number).toBe(1);
     expect(result.translation.id).toBe("NIV");
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.json")
+      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.json"),
+      expect.anything()
     );
   });
 
@@ -220,10 +222,12 @@ describe("createBibleDataManager", () => {
     expect(next?.chapter.number).toBe(2);
     expect(previous?.chapter.number).toBe(1);
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/2.json")
+      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/2.json"),
+      expect.anything()
     );
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.json")
+      makeEndpointUrl(ALT_ENDPOINT, "api/NIV/MAT/1.json"),
+      expect.anything()
     );
   });
 

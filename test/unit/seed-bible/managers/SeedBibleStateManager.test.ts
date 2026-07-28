@@ -315,6 +315,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -374,6 +375,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -730,7 +732,10 @@ describe("createSeedBibleState", () => {
     beforeEach(() => {
       vi.useFakeTimers();
       mockPosthogCapture = vi.fn();
-      (globalThis as any).posthog = { capture: mockPosthogCapture };
+      (globalThis as any).posthog = {
+        capture: mockPosthogCapture,
+        onFeatureFlags: vi.fn(),
+      };
     });
 
     afterEach(() => {
