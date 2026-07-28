@@ -95,6 +95,7 @@ function createBibleReadingState(
   options: { initialTranslationId?: string | null } & {
     initialBookId?: string | null;
     initialChapterNumber?: number | null;
+    scrollToVerse?: number;
   } = {}
 ) {
   const i18nManager = createI18nManager(createNavigationManager(), ["en"]);
@@ -822,6 +823,25 @@ describe("createBibleReadingState", () => {
 
     expect(chapterFiveScrollSnapshots).toEqual([3]);
     expect(state.chapterData.value?.book.id).toBe("GEN");
+    expect(state.chapterData.value?.chapter.number).toBe(5);
+    expect(state.scrollToVerse.value).toBe(3);
+  });
+
+  it("publishes a deep-linked verse on the initial load", async () => {
+    // A `?verse=` deep link asks for the scroll before anything is fetched. The
+    // chapter request needs one round trip while the initial load needs two
+    // (translations, then the book catalog), so the text reliably arrives first
+    // — the scroll target has to already be recorded by then or it is dropped
+    // and never republished, since the position never changes again.
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager(), {
+      initialTranslationId: "AAB",
+      initialBookId: "GEN",
+      initialChapterNumber: 5,
+      scrollToVerse: 3,
+    });
+    await waitForInitialLoad(state);
+
     expect(state.chapterData.value?.chapter.number).toBe(5);
     expect(state.scrollToVerse.value).toBe(3);
   });

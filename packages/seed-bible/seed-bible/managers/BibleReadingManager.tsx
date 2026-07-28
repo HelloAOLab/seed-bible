@@ -1568,8 +1568,31 @@ export function createBibleReadingState(
    * matching chapter has rendered. Publishing it early would scroll into
    * whichever chapter is currently on screen and consume the target before the
    * intended one appears.
+   *
+   * Seeded from `options.scrollToVerse` so a `?verse=` deep link is recorded
+   * before anything can arrive. The content loader starts on the initial
+   * position immediately — one round trip — while `loadInitialData` needs two
+   * (translations, then the book catalog) before it can record the target
+   * itself, so the text reliably lands first. Waiting for that would drop the
+   * scroll, and since the position doesn't change afterwards nothing would ever
+   * publish it. `loadInitialData` still re-records it against the position it
+   * settles on, which is what covers a corrected translation or chapter.
    */
-  let pendingScrollTarget: (ReadingPosition & { verse: number }) | null = null;
+  let pendingScrollTarget: (ReadingPosition & { verse: number }) | null = (():
+    | (ReadingPosition & { verse: number })
+    | null => {
+    const initialBookId = bookId.peek();
+    const verse = options.scrollToVerse;
+    if (!initialBookId || verse === undefined) {
+      return null;
+    }
+    return {
+      translationId: translationId.peek(),
+      bookId: initialBookId,
+      chapterNumber: chapterNumber.peek(),
+      verse,
+    };
+  })();
 
   /**
    * Bumped for every content request. Only the newest generation is allowed to
