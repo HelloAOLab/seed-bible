@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- The Seed Bible now opens with no internet connection. The reader and the files it needs to start are stored on your device the first time you visit, so a later visit offline still opens the app instead of the browser's "no connection" page. Extra languages and extensions are kept as you use them, so they are there offline too. On a connection that is present but not working, the app waits three seconds for the network before falling back to its stored copy rather than hanging.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
