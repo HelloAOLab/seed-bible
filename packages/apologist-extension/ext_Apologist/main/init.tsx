@@ -74,6 +74,10 @@ type ChatMessage =
 
 const PROVIDER_ID = "apologist-chat-provider";
 
+// Bounds the tool-call resolution loop below so a model that never emits
+// final content (or keeps calling tools) can't hang generateResponse forever.
+const MAX_COMPLETION_TURNS = 25;
+
 export default function initApologistExtension() {
   registerExtension({
     id: "ext_Apologist",
@@ -164,7 +168,7 @@ export default function initApologistExtension() {
             }
           }
 
-          while (true) {
+          for (let turn = 0; turn < MAX_COMPLETION_TURNS; turn++) {
             const response = await fetch(
               `https://${apologistDomain}/api/v1/chat/completions`,
               {
@@ -227,7 +231,7 @@ export default function initApologistExtension() {
                 }
               }
 
-              if (message.content) {
+              if (message.content && !message.tool_calls?.length) {
                 return {
                   type: "text",
                   text: message.content,
