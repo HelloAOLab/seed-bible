@@ -1320,6 +1320,57 @@ describe("createBibleReadingState", () => {
     expect(state.loading.value).toBe(false);
   });
 
+  it("retryLoad() repeats the chapter selection that failed", async () => {
+    const responses = createReadingManagerResponseMap();
+    const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+    const chapterResponse = responses[chapterUrl]!;
+    responses[chapterUrl] = createResponse(
+      { error: true },
+      500,
+      "Server Error"
+    );
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectChapter("GEN", 2);
+    expect(state.error.value).not.toBeNull();
+    expect(state.chapterNumber.value).toBe(1);
+
+    // Network recovers, then the user presses Reload.
+    responses[chapterUrl] = chapterResponse;
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.chapterNumber.value).toBe(2);
+    expect(state.chapterData.value?.chapter.number).toBe(2);
+  });
+
+  it("retryLoad() repeats the initial load when that is what failed", async () => {
+    const responses = createReadingManagerResponseMap();
+    const translationsUrl = makeExampleUrl("/api/available_translations.json");
+    const translationsResponse = responses[translationsUrl]!;
+    responses[translationsUrl] = createResponse(
+      { error: true },
+      500,
+      "Server Error"
+    );
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.error.value).not.toBeNull();
+    expect(state.chapterData.value).toBeNull();
+
+    responses[translationsUrl] = translationsResponse;
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.chapterData.value?.chapter.number).toBe(1);
+  });
+
   describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {
     function createDiscoverManagerMock(
       responses: DiscoverProviderResults[][] = []

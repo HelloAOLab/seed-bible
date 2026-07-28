@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- When a chapter fails to load, the reader now shows a "Chapter unavailable" message with an offline icon and a **Reload** button that retries the load, instead of a raw red error message like "Failed to fetch".
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

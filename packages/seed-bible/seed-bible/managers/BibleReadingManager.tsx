@@ -205,6 +205,13 @@ export interface BibleReadingState {
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
   /**
+   * Re-runs the most recent load operation — initial load, translation/book/
+   * chapter selection, or next/previous navigation — so a failed load can be
+   * retried without the user losing their place. Falls back to reloading the
+   * initial data when no load has been attempted yet.
+   */
+  retryLoad: () => Promise<void>;
+  /**
    * Resolves once chapterData becomes non-null for the first time.
    * Throw this in a component to suspend rendering until initial chapter data is available.
    */
@@ -1455,6 +1462,11 @@ export function createBibleReadingState(
       .filter((decoration) => decoration.id !== decorationId);
   };
 
+  // The load that is currently in flight (or was the last one to run), kept so
+  // `retryLoad()` can repeat exactly what failed. Every operation that fetches
+  // chapter data records itself here alongside clearing `error`.
+  let lastLoadAttempt: (() => Promise<void>) | null = null;
+
   const loadPreviousChapter = async () => {
     if (!chapterData.value) {
       return;
@@ -1468,6 +1480,7 @@ export function createBibleReadingState(
       return;
     }
 
+    lastLoadAttempt = loadPreviousChapter;
     loading.value = true;
     error.value = null;
 
@@ -1491,6 +1504,7 @@ export function createBibleReadingState(
   };
 
   const selectTranslation = async (translation: string) => {
+    lastLoadAttempt = () => selectTranslation(translation);
     loading.value = true;
     error.value = null;
 
@@ -1538,6 +1552,7 @@ export function createBibleReadingState(
       return;
     }
 
+    lastLoadAttempt = () => selectBook(book);
     loading.value = true;
     error.value = null;
 
@@ -1566,6 +1581,13 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
+    lastLoadAttempt = () =>
+      selectTranslationAndChapter(
+        nextTranslationIdOrUrl,
+        nextBookId,
+        nextChapterNumber,
+        options
+      );
     loading.value = true;
     error.value = null;
 
@@ -1618,6 +1640,7 @@ export function createBibleReadingState(
   };
 
   const selectChapter = async (book: string, chapter: number) => {
+    lastLoadAttempt = () => selectChapter(book, chapter);
     loading.value = true;
     error.value = null;
 
@@ -1652,6 +1675,7 @@ export function createBibleReadingState(
       return;
     }
 
+    lastLoadAttempt = loadNextChapter;
     loading.value = true;
     error.value = null;
 
@@ -1675,6 +1699,7 @@ export function createBibleReadingState(
   };
 
   const loadInitialData = async () => {
+    lastLoadAttempt = loadInitialData;
     loading.value = true;
     error.value = null;
 
@@ -1748,6 +1773,10 @@ export function createBibleReadingState(
     } finally {
       loading.value = false;
     }
+  };
+
+  const retryLoad = async () => {
+    await (lastLoadAttempt ?? loadInitialData)();
   };
 
   const selectFootnote = (noteId: number | null) => {
@@ -2027,6 +2056,7 @@ export function createBibleReadingState(
     selectedFootnote,
     loading,
     error,
+    retryLoad,
     scrollPosition,
     scrollToVerse,
     selectVerse,

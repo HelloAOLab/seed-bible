@@ -574,8 +574,93 @@
   font-style: var(--sb-verse-words-of-jesus-font-style);
 }
 
+/* Chapter-load failure state: centred in the reader body, in the reader's own
+   ink rather than an alarming red. Sized in rem so it tracks the UI scale, not
+   the reader glyph knob. */
 .sb-reader-error {
-  color: red;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  /* Fixed rather than a percentage: the reader body is auto-height on desktop,
+     so a percentage min-height would collapse to nothing there. */
+  min-height: 15rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--sb-font-color);
+}
+
+.sb-reader-error-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
+.sb-reader-error-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.sb-reader-error-message {
+  margin: 0;
+  max-width: 26rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-reader-error-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.625rem 1.5rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    background-color 0.2s ease;
+}
+
+.sb-reader-error-retry:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
+}
+
+.sb-reader-error-retry:active {
+  transform: translateY(1px);
+}
+
+.sb-reader-error-retry:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sb-reader-error-retry-spinner {
+  font-size: 1.125rem;
+  line-height: 1;
+  animation: sb-reader-error-retry-spin 0.9s linear infinite;
+}
+
+@keyframes sb-reader-error-retry-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-reader-error-retry-spinner {
+    animation: none;
+  }
 }
 
 .sb-footnote-modal-overlay {
