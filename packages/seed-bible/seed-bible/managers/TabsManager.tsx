@@ -96,7 +96,13 @@ export interface ReaderTab {
 
 function getInitialFirstTabBookId(url: URL, basePath: string): string {
   const parsed = parseReadingPath(url.pathname, basePath);
-  return parsed?.bookId ?? url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
+  if (parsed) {
+    // An unresolved book flows through as the raw segment (not a fallback
+    // default) so the reading state can detect it wasn't found rather than
+    // silently loading a default book.
+    return parsed.bookId ?? parsed.rawBookSegment;
+  }
+  return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
 function getInitialTranslationId(
@@ -137,6 +143,34 @@ function getUrlReadingLanguage(url: URL, basePath: string): string | null {
     return parsed.language ?? DEFAULT_UI_LANGUAGE;
   }
   return url.searchParams.get("lang");
+}
+
+/**
+ * If the current URL's book segment only resolved via a fuzzy typo match,
+ * corrects the address bar to the canonical path — mirrors the SSR
+ * redirect (`entry-ssr.tsx`) for client-side navigation that never made a
+ * fresh server request (so never had a chance to 301). A no-op for an
+ * exact match, an unresolved book (nothing confident to correct to), or a
+ * legacy/non-reading-path URL.
+ */
+function selfHealFuzzyBookMatch(
+  navigation: NavigationManager,
+  defaultTranslationId: string
+): void {
+  const url = navigation.currentUrl.peek();
+  const parsed = parseReadingPath(url.pathname, navigation.basePath);
+  if (!parsed || parsed.bookMatch !== "fuzzy" || !parsed.bookId) {
+    return;
+  }
+
+  const correctedPath = buildReadingPath({
+    language: parsed.language ?? DEFAULT_UI_LANGUAGE,
+    translationId: parsed.translationId,
+    bookId: parsed.bookId,
+    chapter: parsed.chapter,
+    defaultTranslationId,
+  });
+  navigation.updatePathAndQueryParams(correctedPath, {}, true);
 }
 
 function getInitialHighlightedVerses(url: URL): number[] {
@@ -291,6 +325,11 @@ export function createTabs(
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
   );
+  // The site-wide default translation (fixed "en", not the session's
+  // detected default language) — what `buildReadingPath` compares against
+  // to decide whether the `{lang}` segment can be omitted.
+  const defaultTranslationIdForDefaultLanguage =
+    getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id;
   const initialTranslationId = getInitialTranslationId(
     navigation.currentUrl.value,
     navigation.basePath,
@@ -304,6 +343,7 @@ export function createTabs(
     navigation.currentUrl.value,
     navigation.basePath
   );
+  selfHealFuzzyBookMatch(navigation, defaultTranslationIdForDefaultLanguage);
 
   console.log("Creating TabsManager with initial URL parameters:", {
     initialTranslationId,
@@ -340,6 +380,8 @@ export function createTabs(
     if (!selectedTab) {
       return;
     }
+
+    selfHealFuzzyBookMatch(navigation, defaultTranslationIdForDefaultLanguage);
 
     const requestedTranslation = getInitialTranslationId(
       navigation.currentUrl.value,
@@ -491,8 +533,7 @@ export function createTabs(
           translationId,
           bookId: bookId as BookId,
           chapter: Number(chapter),
-          defaultTranslationId:
-            getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+          defaultTranslationId: defaultTranslationIdForDefaultLanguage,
         });
         writeUrl(queryUpdate, options.replace, pathname);
       } else {

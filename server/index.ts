@@ -88,7 +88,7 @@ type RenderFn = (opts: {
     acceptedLanguages: string[];
   };
   html: string;
-}) => Promise<{ html: string } | { redirectTo: string }>;
+}) => Promise<{ html: string; notFound?: true } | { redirectTo: string }>;
 
 /** Derives per-client render config (mobile, languages) from request headers. */
 function clientConfigFromHeaders(headers: IncomingHttpHeaders): ClientConfig {
@@ -260,7 +260,7 @@ async function renderAndRespond(
     return;
   }
 
-  res.writeHead(200, {
+  res.writeHead(result.notFound ? 404 : 200, {
     "content-type": "text/html; charset=utf-8",
     // The HTML is per-build and cheap to regenerate; let the CDN cache it
     // briefly but always revalidate so a pointer flip is picked up fast.
@@ -555,12 +555,16 @@ async function startDevServer(): Promise<void> {
       });
 
       // 5. Send the rendered HTML back (or redirect, for legacy query-param
-      // URLs being migrated to path-based routes).
+      // URLs being migrated to path-based routes, or a 404 for an
+      // unrecognized book that couldn't be corrected).
       if ("redirectTo" in result) {
         res.redirect(301, result.redirectTo);
         return;
       }
-      res.status(200).set({ "Content-Type": "text/html" }).end(result.html);
+      res
+        .status(result.notFound ? 404 : 200)
+        .set({ "Content-Type": "text/html" })
+        .end(result.html);
     } catch (e) {
       console.error(e);
       if (e instanceof Error) {

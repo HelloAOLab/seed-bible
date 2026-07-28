@@ -1,5 +1,6 @@
 import {
   createBibleDataManager,
+  findClosestBookId,
   getBookId,
   getBookSlug,
   parseVerseReference,
@@ -546,5 +547,37 @@ describe("getBookSlug()", () => {
     // value that isn't a real book) pass an unvalidated string through as if
     // it were a BookId; this must never surface "undefined" in a URL path.
     expect(getBookSlug("NOTABOOK" as BookId)).toBe("notabook");
+  });
+});
+
+describe("findClosestBookId()", () => {
+  it("accepts a close typo of a book slug", () => {
+    // Doesn't share getBookId's "gen"/"genesis" alias prefixes, so this only
+    // resolves through the fuzzy fallback.
+    expect(findClosestBookId("senesis")).toBe("GEN");
+  });
+
+  it("accepts a close typo of a multi-word slug", () => {
+    expect(findClosestBookId("song-of-solomen")).toBe("SNG");
+  });
+
+  it("is case-insensitive and ignores whitespace/hyphens like getBookId", () => {
+    expect(findClosestBookId("Senesis")).toBe("GEN");
+  });
+
+  it("rejects a string too dissimilar from any book", () => {
+    expect(findClosestBookId("notabook")).toBeNull();
+    expect(findClosestBookId("xyzabc123")).toBeNull();
+  });
+
+  it("rejects strings too short to judge confidently", () => {
+    expect(findClosestBookId("ab")).toBeNull();
+  });
+
+  it("returns null instead of getBookId already having a real exact/prefix match", () => {
+    // findClosestBookId is only ever consulted as a fallback after getBookId
+    // fails, but it should still behave sanely (return the real match) if
+    // called directly on an exact name.
+    expect(findClosestBookId("genesis")).toBe("GEN");
   });
 });

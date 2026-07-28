@@ -1,4 +1,9 @@
-import { getBookId, getBookSlug, type BookId } from "./BibleDataManager";
+import {
+  findClosestBookId,
+  getBookId,
+  getBookSlug,
+  type BookId,
+} from "./BibleDataManager";
 
 /**
  * Fixed anchor for the URL scheme's "fully default" state. Deliberately not
@@ -8,6 +13,9 @@ import { getBookId, getBookSlug, type BookId } from "./BibleDataManager";
  */
 export const DEFAULT_UI_LANGUAGE = "en";
 
+/** How the book segment was resolved to a `BookId`. */
+export type BookMatchKind = "exact" | "fuzzy" | "unresolved";
+
 export interface ParsedReadingPath {
   /**
    * Explicit language segment, or null when the path omitted it (3-segment
@@ -15,16 +23,28 @@ export interface ParsedReadingPath {
    */
   language: string | null;
   translationId: string;
-  bookId: BookId;
+  /** Null only when `bookMatch` is "unresolved". */
+  bookId: BookId | null;
+  /** The decoded book segment as given in the URL, always present. */
+  rawBookSegment: string;
   chapter: number;
+  bookMatch: BookMatchKind;
 }
 
 /**
  * Parses `[/{lang}]/{translationId}/{bookSlug}/{chapter}` out of a URL path,
  * ignoring the deployment prefix. Requires exactly 3 or 4 segments with a
- * resolvable book and a positive integer chapter; returns null for anything
- * else (the old 2-segment `/{book}/{chapter}` shape, a bare root, or
- * garbage) so callers can fall back to legacy query params.
+ * positive integer chapter; returns null for anything else (the old
+ * 2-segment `/{book}/{chapter}` shape, a bare root, or garbage) so callers
+ * can fall back to legacy query params.
+ *
+ * Unlike the URL "shape" (segment count), the book segment is allowed to
+ * fail resolution and still produce a result: it's tried as an exact match
+ * first, then a close-typo fuzzy match, and only becomes `bookMatch:
+ * "unresolved"` (with `bookId: null`) when neither succeeds — callers that
+ * only need language/translation/chapter (which don't depend on book
+ * resolution) can safely ignore `bookMatch`; callers building a redirect or
+ * deciding "not found" need to check it.
  */
 export function parseReadingPath(
   pathname: string,
@@ -53,18 +73,33 @@ export function parseReadingPath(
     return null;
   }
 
-  const bookId = bookSeg ? getBookId(bookSeg) : null;
   const chapterValue = chapterSeg ? Number(chapterSeg) : NaN;
   const chapter =
     Number.isFinite(chapterValue) && chapterValue > 0
       ? Math.floor(chapterValue)
       : null;
 
-  if (!bookId || !chapter || !translationId) {
+  if (!chapter || !translationId || !bookSeg) {
     return null;
   }
 
-  return { language: language ?? null, translationId, bookId, chapter };
+  const exactBookId = getBookId(bookSeg);
+  const fuzzyBookId = exactBookId ? null : findClosestBookId(bookSeg);
+  const bookId = exactBookId ?? fuzzyBookId;
+  const bookMatch: BookMatchKind = exactBookId
+    ? "exact"
+    : fuzzyBookId
+      ? "fuzzy"
+      : "unresolved";
+
+  return {
+    language: language ?? null,
+    translationId,
+    bookId,
+    rawBookSegment: bookSeg,
+    chapter,
+    bookMatch,
+  };
 }
 
 /**

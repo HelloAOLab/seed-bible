@@ -391,6 +391,51 @@ describe("createTabs", () => {
     expect(url.searchParams.has("chapter")).toBe(false);
   });
 
+  it("leaves bookId as the raw unresolved segment (not a default) so the reading state can detect it wasn't found", async () => {
+    window.history.replaceState(null, "", "/AAB/notabook/1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.bookId.value).toBe("notabook");
+    expect(readingState.chapterNumber.value).toBe(1);
+    expect(readingState.translationBooks.value).not.toBeNull();
+    expect(readingState.error.value).toBeNull();
+  });
+
+  it("self-heals a fuzzy-matched book typo to the canonical URL on mount", async () => {
+    // "senesis" doesn't share getBookId's "gen"/"genesis" alias prefixes, so
+    // it only resolves through the fuzzy fallback (see ReadingUrlPath.test.ts).
+    window.history.replaceState(null, "", "/AAB/senesis/1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.bookId.value).toBe("GEN");
+
+    const url = new URL(window.location.href);
+    expect(url.pathname).toBe("/AAB/genesis/1");
+  });
+
+  it("self-heals a fuzzy-matched book typo on external navigation", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    navigation.push("/AAB/senesis/1");
+
+    await waitFor(
+      () => new URL(window.location.href).pathname === "/AAB/genesis/1"
+    );
+    await waitFor(
+      () => manager.tabs.value[0]!.readingState.bookId.value === "GEN"
+    );
+  });
+
   it("writes book/chapter navigation to the URL path instead of query params", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();

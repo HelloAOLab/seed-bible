@@ -1306,6 +1306,18 @@ export function BibleReader(props: BibleReaderProps) {
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
   );
+  // The requested book wasn't found in this translation's book list — a
+  // genuinely unrecognized book/name, or one absent from this specific
+  // translation. `loadInitialData` deliberately stops rather than silently
+  // substituting a different book's content once loading settles.
+  const bookNotFound = computed(
+    () =>
+      !loading.value &&
+      !error.value &&
+      translationBooks.value !== null &&
+      bookId.value !== null &&
+      currentBook.value === null
+  );
   const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
@@ -1433,11 +1445,53 @@ export function BibleReader(props: BibleReaderProps) {
           chapterNumber.value ?? ""
         )}
 
+      {bookNotFound.value && (
+        <div className="sb-reader-not-found">
+          <span
+            className="material-symbols-outlined sb-reader-not-found-icon"
+            aria-hidden="true"
+          >
+            search_off
+          </span>
+          <p className="sb-reader-not-found-title">
+            {t("book-not-found-title", { defaultValue: "Book not found" })}
+          </p>
+          <p className="sb-reader-not-found-body">
+            {t("book-not-found-message", {
+              defaultValue:
+                "We couldn't find that book in {{translationName}}.",
+              translationName:
+                translation.value?.name ?? translationId.value ?? "",
+            })}
+          </p>
+          {translationBooks.value?.books[0] && (
+            <button
+              type="button"
+              className="sb-reader-not-found-action"
+              onClick={() => {
+                const firstBook = translationBooks.value!.books[0]!;
+                void readingState.selectChapter(
+                  firstBook.id,
+                  firstBook.firstChapterNumber ?? 1
+                );
+              }}
+            >
+              {t("book-not-found-action", {
+                defaultValue: "Go to {{bookName}} {{chapterNumber}}",
+                bookName: translationBooks.value.books[0].name,
+                chapterNumber:
+                  translationBooks.value.books[0].firstChapterNumber ?? 1,
+              })}
+            </button>
+          )}
+        </div>
+      )}
+
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
       )}
 
-      {!error.value && (
+      {!error.value && !bookNotFound.value && (
         <Suspense
           fallback={
             <p>

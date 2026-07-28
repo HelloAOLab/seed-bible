@@ -323,6 +323,49 @@ describe("BibleReader", () => {
     expect(setOpen).toHaveBeenCalledWith(true, slot);
   });
 
+  it("shows a not-found state and lets the user jump to the translation's first book when the requested book isn't in the book list", () => {
+    const { slot, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // The fixture's book (GEN) matches its own translationBooks list, so no
+    // not-found state initially.
+    expect(container.querySelector(".sb-reader-not-found")).toBeNull();
+
+    act(() => {
+      readingState.bookId.value = "NOTABOOK";
+    });
+
+    expect(container.querySelector(".sb-reader-not-found")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-reader-not-found-icon")?.textContent
+    ).toBe("search_off");
+    // The chapter content Suspense/ChapterContent shouldn't render alongside
+    // the not-found state.
+    expect(container.querySelector(".sb-chapter-content")).toBeNull();
+
+    const action = container.querySelector(
+      ".sb-reader-not-found-action"
+    ) as HTMLButtonElement | null;
+    expect(action).not.toBeNull();
+
+    act(() => {
+      action?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // The fixture's translationBooks list has one book (GEN, chapter 1).
+    expect(readingState.selectChapter).toHaveBeenCalledWith("GEN", 1);
+  });
+
   it("updates the displayed book name when the current book changes", () => {
     const { slot, selectorState, readingState } = createFixture();
 

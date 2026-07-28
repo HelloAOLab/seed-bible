@@ -608,6 +608,73 @@ export function getBookSlug(bookId: BookId): string {
   return BOOK_SLUGS[bookId] ?? String(bookId).toLowerCase();
 }
 
+/** Classic Levenshtein (single-character insert/delete/substitute) edit distance. */
+function levenshteinDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  let previousRow = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const currentRow = [i];
+    for (let j = 1; j <= b.length; j++) {
+      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+      currentRow.push(
+        Math.min(
+          currentRow[j - 1]! + 1, // insertion
+          previousRow[j]! + 1, // deletion
+          previousRow[j - 1]! + substitutionCost // substitution
+        )
+      );
+    }
+    previousRow = currentRow;
+  }
+
+  return previousRow[b.length]!;
+}
+
+/**
+ * Finds the book whose alias/abbreviation or URL slug is closest to `input`
+ * by edit distance, for correcting a close typo (e.g. "genesys" -> "GEN").
+ * Returns null when there's no confident, unambiguous match — a wrong
+ * redirect is worse than falling through to a "book not found" response, so
+ * this is deliberately conservative: `input` must be long enough to judge,
+ * the best match's distance must be small relative to the candidate's
+ * length, and it must not tie with a different book at the same distance.
+ */
+export function findClosestBookId(input: string): BookId | null {
+  const normalized = input.toLowerCase().replaceAll(/[\s-]+/g, "");
+  if (normalized.length < 3) {
+    return null;
+  }
+
+  const candidates = new Map<string, BookId>(BOOK_ID_MAP);
+  for (const bookId of Object.keys(BOOK_SLUGS) as BookId[]) {
+    candidates.set(BOOK_SLUGS[bookId].replaceAll("-", ""), bookId);
+  }
+
+  let bestDistance = Infinity;
+  let bestId: BookId | null = null;
+  let bestIsAmbiguous = false;
+
+  for (const [candidate, id] of candidates) {
+    const distance = levenshteinDistance(normalized, candidate);
+    const maxAllowedDistance = Math.min(2, Math.ceil(candidate.length * 0.3));
+    if (distance > maxAllowedDistance) {
+      continue;
+    }
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestId = id;
+      bestIsAmbiguous = false;
+    } else if (distance === bestDistance && id !== bestId) {
+      bestIsAmbiguous = true;
+    }
+  }
+
+  return bestIsAmbiguous ? null : bestId;
+}
+
 export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);

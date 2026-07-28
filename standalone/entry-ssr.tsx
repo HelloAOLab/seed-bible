@@ -3,6 +3,7 @@ import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
+  findClosestBookId,
   getBookId,
   type BookId,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
@@ -47,15 +48,17 @@ export interface RenderOptions {
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
 
 /**
- * Detects an obsolete URL shape and computes the equivalent canonical
- * `[/{lang}]/{translationId}/{bookSlug}/{chapter}` path to 301 to. Two
- * shapes are recognized: a bare root with legacy `?book=`/`?chapter=` (and
- * optionally `?translation=`/`?translationId=`/`?lang=`) query params, and
- * the prior `/{book}/{chapter}` path format (no translation/language).
- * Returns null when the request is already a canonical reading path (per
- * `parseReadingPath`) or doesn't match either legacy shape — falling
- * through to a normal render, which shows the app's own default/not-found
- * handling for an unrecognized book.
+ * Detects an obsolete URL shape, or a canonical-shaped one whose book
+ * segment is only a close typo away from a real book, and computes the
+ * equivalent canonical `[/{lang}]/{translationId}/{bookSlug}/{chapter}`
+ * path to 301 to. Three cases are recognized: an already-canonical (3/4
+ * segment) path whose book only fuzzy-matches; a bare root with legacy
+ * `?book=`/`?chapter=` (and optionally `?translation=`/`?translationId=`/
+ * `?lang=`) query params; and the prior `/{book}/{chapter}` path format (no
+ * translation/language) — both of the latter two also fuzzy-correct the
+ * book. Returns null when the book resolves exactly already, or doesn't
+ * resolve even via a fuzzy match — falling through to a normal render (see
+ * `render()`'s `notFound` handling for the latter).
  */
 function legacyReadingUrlRedirect(
   path: string,
@@ -63,8 +66,24 @@ function legacyReadingUrlRedirect(
 ): string | null {
   const url = new URL(path, "http://ssr.local");
 
-  if (parseReadingPath(url.pathname, basePath)) {
-    return null;
+  const parsed = parseReadingPath(url.pathname, basePath);
+  if (parsed) {
+    // Already the canonical shape — only a fuzzy book match needs a
+    // redirect; an exact match needs none, and an unresolved one has no
+    // confident target to redirect to (falls through to notFound instead).
+    if (parsed.bookMatch !== "fuzzy" || !parsed.bookId) {
+      return null;
+    }
+
+    const readingPath = buildReadingPath({
+      language: parsed.language ?? DEFAULT_UI_LANGUAGE,
+      translationId: parsed.translationId,
+      bookId: parsed.bookId,
+      chapter: parsed.chapter,
+      defaultTranslationId:
+        getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+    });
+    return `${basePath}${readingPath}${url.search}`;
   }
 
   const strippedPathname =
@@ -81,7 +100,9 @@ function legacyReadingUrlRedirect(
 
   if (segments.length === 2) {
     // The immediately-prior /{book}/{chapter} format.
-    const candidateBookId = getBookId(segments[0]!);
+    const bookSegment = segments[0]!;
+    const candidateBookId =
+      getBookId(bookSegment) ?? findClosestBookId(bookSegment);
     const chapterValue = Number(segments[1]);
     if (candidateBookId && Number.isFinite(chapterValue) && chapterValue > 0) {
       bookId = candidateBookId;
@@ -91,7 +112,7 @@ function legacyReadingUrlRedirect(
     // Bare root — only a legacy redirect target if `?book=` says so.
     const bookParam = url.searchParams.get("book");
     if (bookParam) {
-      bookId = getBookId(bookParam);
+      bookId = getBookId(bookParam) ?? findClosestBookId(bookParam);
       const chapterValue = Number(url.searchParams.get("chapter"));
       chapter =
         Number.isFinite(chapterValue) && chapterValue > 0
@@ -143,13 +164,26 @@ function legacyReadingUrlRedirect(
  */
 export async function render(
   options: RenderOptions
-): Promise<{ html: string } | { redirectTo: string }> {
+): Promise<{ html: string; notFound?: true } | { redirectTo: string }> {
   const { config } = options;
 
   const redirectTo = legacyReadingUrlRedirect(options.path, config.basePath);
   if (redirectTo) {
     return { redirectTo };
   }
+
+  // A pure URL-level check (no network involved): a canonical-shaped path
+  // whose book segment doesn't resolve even via a fuzzy match has nothing
+  // confident to redirect to, so the app still renders (its own "book not
+  // found" state), but the response should be a real 404, not 200 — see the
+  // SEO discussion this came out of: a 200 with substitute content is a
+  // "soft 404" that search engines penalize and can index as duplicate
+  // content.
+  const parsedForNotFound = parseReadingPath(
+    new URL(options.path, "http://ssr.local").pathname,
+    config.basePath
+  );
+  const notFound = parsedForNotFound?.bookMatch === "unresolved";
 
   const href = `http://ssr.local${options.path}`;
   const state = createSeedBibleState({
@@ -199,5 +233,6 @@ export async function render(
       .replace("<!-- META -->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
       .replace("<!-- CONFIG_JSON -->", configJson)
       .replace("<!-- APP_HTML -->", appHtml),
+    ...(notFound ? { notFound: true as const } : {}),
   };
 }

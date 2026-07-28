@@ -826,14 +826,6 @@ export function createBibleReadingState(
   const availableTranslations = signal<AvailableTranslations | null>(null);
   const translationBooks = signal<TranslationBooks | null>(null);
   const chapterData = signal<TranslationBookChapter | null>(null);
-  const chapterDataPromise = new Promise<void>((resolve) => {
-    const cleanup = effect(() => {
-      if (chapterData.value !== null) {
-        cleanup();
-        resolve();
-      }
-    });
-  });
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
@@ -851,6 +843,20 @@ export function createBibleReadingState(
   >();
   const loading = signal<boolean>(true);
   const error = signal<string | null>(null);
+  // Resolves once the initial load has concluded one way or another —
+  // chapter data loaded, an error occurred, or the requested book wasn't
+  // found. SSR blocks on this (see BibleReader.tsx's Suspense throw) before
+  // rendering, so it must settle even when `loadInitialData` stops early
+  // without ever calling `syncStateFromChapter` — resolving only on
+  // `chapterData.value !== null` would otherwise leave SSR waiting forever.
+  const chapterDataPromise = new Promise<void>((resolve) => {
+    const cleanup = effect(() => {
+      if (chapterData.value !== null || !loading.value) {
+        cleanup();
+        resolve();
+      }
+    });
+  });
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
 
@@ -1694,8 +1700,19 @@ export function createBibleReadingState(
 
       const requestedBookId = bookId.value;
       const selectedBook = requestedBookId
-        ? (books.books.find((book) => book.id === requestedBookId) ?? firstBook)
+        ? books.books.find((book) => book.id === requestedBookId)
         : firstBook;
+
+      if (!selectedBook) {
+        // The requested book isn't in this translation's book list — either
+        // a genuinely unrecognized book/name, or a book simply absent from
+        // this specific translation. Don't silently substitute a different
+        // book's content at this URL: leave bookId/chapterNumber exactly as
+        // requested so the UI can detect "book not found" (BibleReader's
+        // `currentBook` lookup naturally comes back null) and offer to load
+        // the translation's first book instead.
+        return;
+      }
 
       const nextBookId = selectedBook.id;
       const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;

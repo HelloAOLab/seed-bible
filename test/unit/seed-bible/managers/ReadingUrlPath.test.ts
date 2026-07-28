@@ -10,7 +10,9 @@ describe("parseReadingPath", () => {
       language: null,
       translationId: "AAB",
       bookId: "JHN",
+      rawBookSegment: "john",
       chapter: 3,
+      bookMatch: "exact",
     });
   });
 
@@ -19,7 +21,9 @@ describe("parseReadingPath", () => {
       language: "es",
       translationId: "spa_onbv",
       bookId: "JHN",
+      rawBookSegment: "john",
       chapter: 3,
+      bookMatch: "exact",
     });
   });
 
@@ -30,7 +34,9 @@ describe("parseReadingPath", () => {
       language: null,
       translationId: "AAB",
       bookId: "JHN",
+      rawBookSegment: "john",
       chapter: 3,
+      bookMatch: "exact",
     });
   });
 
@@ -41,7 +47,9 @@ describe("parseReadingPath", () => {
       language: "en",
       translationId: customUrl,
       bookId: "JHN",
+      rawBookSegment: "john",
       chapter: 3,
+      bookMatch: "exact",
     });
   });
 
@@ -53,13 +61,43 @@ describe("parseReadingPath", () => {
     expect(parseReadingPath("/", "")).toBeNull();
   });
 
-  it("returns null when the book segment isn't recognized", () => {
-    expect(parseReadingPath("/AAB/notabook/3", "")).toBeNull();
-  });
-
   it("returns null when the chapter segment isn't a positive integer", () => {
     expect(parseReadingPath("/AAB/john/0", "")).toBeNull();
     expect(parseReadingPath("/AAB/john/abc", "")).toBeNull();
+  });
+
+  it("fuzzy-matches a close typo of the book segment", () => {
+    // "senesis" doesn't share getBookId's alias prefixes ("gen", "genesis"),
+    // so this only resolves via the fuzzy fallback, not the exact/prefix path.
+    const result = parseReadingPath("/AAB/senesis/1", "");
+    expect(result).toEqual({
+      language: null,
+      translationId: "AAB",
+      bookId: "GEN",
+      rawBookSegment: "senesis",
+      chapter: 1,
+      bookMatch: "fuzzy",
+    });
+  });
+
+  it("marks a truly unrecognized book as unresolved rather than returning null", () => {
+    const result = parseReadingPath("/AAB/notabook/3", "");
+    expect(result).toEqual({
+      language: null,
+      translationId: "AAB",
+      bookId: null,
+      rawBookSegment: "notabook",
+      chapter: 3,
+      bookMatch: "unresolved",
+    });
+  });
+
+  it("still resolves language/translation/chapter correctly for an unresolved book", () => {
+    const result = parseReadingPath("/es/spa_onbv/notabook/3", "");
+    expect(result?.bookMatch).toBe("unresolved");
+    expect(result?.language).toBe("es");
+    expect(result?.translationId).toBe("spa_onbv");
+    expect(result?.chapter).toBe(3);
   });
 });
 
