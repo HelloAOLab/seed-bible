@@ -1336,6 +1336,31 @@ export function createSeedBibleState(
     }, 3500);
   };
 
+  // Tell the user when we signed them out for them. `login.sessionEnded` only fires
+  // when a forced sign-out actually happened, so this can't toast for a request that
+  // merely failed, nor for a sign-out the user asked for. Without a message they
+  // would just watch their highlights and bookmarks vanish with no explanation.
+  effect(() => {
+    const ended = login.sessionEnded.value;
+    if (!ended || typeof window === "undefined") {
+      return;
+    }
+
+    // Destructured rather than called as `i18n.t(...)`: the translation lint rules
+    // only recognise calls to a bare `t`, and `translation-unused-keys` is
+    // auto-fixable, so `i18n.t("...")` would get these keys deleted from en.json.
+    const { t } = i18n;
+    toast(
+      ended.reason === "account_suspended"
+        ? t("account-suspended-message", {
+            defaultValue: "Your account has been suspended.",
+          })
+        : t("session-expired-message", {
+            defaultValue: "Your session has expired. Please sign in again.",
+          })
+    );
+  });
+
   // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
     if (!playlists.view.peek()) {

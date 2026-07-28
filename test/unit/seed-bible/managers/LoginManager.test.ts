@@ -431,7 +431,8 @@ describe("createLoginManager", () => {
       expect(os.sessionKey.value).toBe(sessionKey);
       expect(os.client.sessionKey).toBe(sessionKey);
       expect(warnSpy).toHaveBeenCalledWith(
-        "[LoginManager] Failed to refresh session, clearing session key:",
+        "[LoginManager] Failed to refresh session; keeping the existing session key:",
+        "unacceptable_session_key",
         "nope"
       );
     });
@@ -479,6 +480,178 @@ describe("createLoginManager", () => {
       // Advancing to the scheduled time triggers the refresh.
       await vi.advanceTimersByTimeAsync(ONE_WEEK);
       expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("automatic sign-out when the session is dead", () => {
+    /**
+     * Drives a forced sign-out through `getUserInfo`, which the manager calls on init
+     * whenever a session key is already stored.
+     */
+    async function signOutViaGetUserInfo(errorCode: string) {
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode,
+        errorMessage: `${errorCode} happened`,
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.sessionEnded.value !== null);
+      return manager;
+    }
+
+    it("clears the session when a call reports session_expired", async () => {
+      const manager = await signOutViaGetUserInfo("session_expired");
+
+      expect(manager.userId.value).toBe(null);
+      expect(manager.userInfo.value).toBe(null);
+      expect(os.sessionKey.value).toBe(null);
+      expect(os.connectionKey.value).toBe(null);
+      expect(localStorage.getItem("sessionKey")).toBe(null);
+      expect(localStorage.getItem("connectionKey")).toBe(null);
+    });
+
+    it("does not call revokeSession when signing out for a dead session", async () => {
+      // The session is already gone server side, so the round trip could only fail.
+      await signOutViaGetUserInfo("session_expired");
+
+      expect(revokeSessionMock).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["session_expired", "session_expired"],
+      ["invalid_key", "session_expired"],
+      ["user_is_banned", "account_suspended"],
+    ])("reports %s to the UI as '%s'", async (errorCode, reason) => {
+      const manager = await signOutViaGetUserInfo(errorCode);
+
+      expect(manager.sessionEnded.value?.reason).toBe(reason);
+    });
+
+    it.each(["server_error", "not_authorized", "rate_limit_exceeded"])(
+      "keeps the session when a call fails with %s",
+      async (errorCode) => {
+        getUserInfoMock.mockResolvedValue({
+          success: false,
+          errorCode,
+          errorMessage: "transient",
+        });
+
+        const manager = createAuthenticatedManager();
+        await flush();
+
+        expect(manager.userId.value).toBe(USER_ID);
+        expect(os.sessionKey.value).toBe(SESSION_KEY);
+        expect(manager.sessionEnded.value).toBe(null);
+      }
+    );
+
+    it("keeps the session when a call rejects outright", async () => {
+      // Offline is not the same as signed out.
+      getUserInfoMock.mockRejectedValue(new Error("offline"));
+
+      const manager = createAuthenticatedManager();
+      await flush();
+
+      expect(manager.userId.value).toBe(USER_ID);
+      expect(os.sessionKey.value).toBe(SESSION_KEY);
+      expect(manager.sessionEnded.value).toBe(null);
+    });
+
+    it("signs out once when several calls fail at the same time", async () => {
+      // A key expiring within the week makes init both refresh and load user info,
+      // so two independent requests report the dead session together.
+      const deadKey = sessionKeyExpiringIn(1000 * 60 * 60);
+      localStorage.setItem("sessionKey", deadKey);
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => manager.sessionEnded.value !== null);
+      await flush();
+
+      // The incrementing id is the count of forced sign-outs, so it proves the burst
+      // collapsed into exactly one.
+      expect(manager.sessionEnded.value?.id).toBe(1);
+    });
+
+    it("signs out when the session refresh reports the key is dead", async () => {
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => manager.sessionEnded.value !== null);
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.sessionEnded.value?.reason).toBe("session_expired");
+    });
+
+    it("does not resurrect the session when a refresh succeeds after a forced sign-out", async () => {
+      // The guard reports the dead session before `refreshSession` resumes after its
+      // await, so without a mid-flight check the success branch would install a new
+      // key for a session we just deliberately dropped.
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => manager.sessionEnded.value !== null);
+      await flush();
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.userInfo.value).toBe(null);
+    });
+  });
+
+  describe("deliberate sign-out", () => {
+    it("does not report a session end when revokeSession says the key expired", async () => {
+      // Revoking an already-expired key fails by design. Someone who just pressed
+      // "Sign out" must not be told their session expired.
+      revokeSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "already gone",
+      });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      await manager.logout();
+      await flush();
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.sessionEnded.value).toBe(null);
+    });
+
+    it("signs out locally even when revokeSession rejects", async () => {
+      // Previously the rejection threw past the local clear, leaving the app looking
+      // signed in — and the sign-out button calls `logout()` with `void`, so nothing
+      // surfaced the error either.
+      revokeSessionMock.mockRejectedValue(new Error("offline"));
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      await expect(manager.logout()).resolves.toBeUndefined();
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.userId.value).toBe(null);
+      expect(localStorage.getItem("sessionKey")).toBe(null);
+      expect(manager.sessionEnded.value).toBe(null);
     });
   });
 

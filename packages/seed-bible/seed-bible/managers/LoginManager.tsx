@@ -1,11 +1,31 @@
 import { batch, computed, effect, signal, type Signal } from "@preact/signals";
 import * as z from "zod/v4";
 import type { CasualOSManager, UserInfo } from "./OsManager";
+import type { FatalSessionErrorCode } from "./SessionGuard";
 import type {
   CompleteLoginResult,
   LoginRequestResult,
   LoginRequestSuccess,
 } from "@casual-simulation/aux-records/AuthController";
+
+/**
+ * Why a session ended without the user asking it to.
+ *
+ * The three server error codes collapse to two cases the UI has to explain, so the
+ * mapping happens here rather than in the view — a view only ever needs two messages,
+ * and widening the set of fatal codes later changes no view code.
+ */
+export type SessionEndedReason = "session_expired" | "account_suspended";
+
+export interface SessionEndedEvent {
+  reason: SessionEndedReason;
+
+  /**
+   * Monotonically increasing id, so two events with the same reason still notify
+   * subscribers (signals skip notification when the new value is `===` the old one).
+   */
+  id: number;
+}
 
 export interface LoginManager {
   /**
@@ -27,6 +47,16 @@ export interface LoginManager {
    * The current auth bot. Null if not authenticated or if background auth has not completed yet.
    */
   authBot: Signal<UserInfo | null>;
+
+  /**
+   * Fires when the user was signed out without asking — because the server reported
+   * their session key dead, or their account suspended. Null until that happens.
+   *
+   * Only set when a forced sign-out actually took place, so a sign-out the user asked
+   * for and a request that merely failed never produce an event. The UI reads `reason`
+   * to pick which message to show.
+   */
+  sessionEnded: Signal<SessionEndedEvent | null>;
 
   /**
    * The user's profile information. Null if the user is not logged in or if the profile has not loaded yet.
@@ -134,6 +164,70 @@ export function createLoginManager({
   const userId = computed(() => parsedSessionKey.value?.userId ?? null);
   const userInfo = signal<UserInfo | null>(null);
   const currentLoginRequest = signal<LoginRequestSuccess | null>(null);
+  const sessionEnded = signal<SessionEndedEvent | null>(null);
+  let sessionEndedCount = 0;
+
+  // True while a deliberate `logout()` is tearing the session down. The sign-out
+  // request itself often comes back `session_expired`, and any other request in
+  // flight at that moment can too. Neither should be reported to someone who just
+  // pressed "Sign out".
+  let isSigningOut = false;
+
+  /**
+   * Drops every trace of the current session from memory. That is the whole teardown:
+   * the persistence effect below mirrors the nulled signals into `localStorage`,
+   * `OsManager`'s effect clears `client.sessionKey`, and the profile effect clears the
+   * profile because `userId` becomes null.
+   */
+  const clearSession = () => {
+    batch(() => {
+      sessionKey.value = null;
+      connectionKey.value = null;
+      userInfo.value = null;
+    });
+  };
+
+  /**
+   * Signs the user out because the server said the session is dead — not because they
+   * asked.
+   *
+   * Deliberately does NOT call `revokeSession`. The session is already gone server
+   * side (expired, replaced, or the account is banned), so the call could only fail;
+   * it costs a round trip on a path that is often taken while connectivity is poor;
+   * and for `user_is_banned` it can never succeed.
+   */
+  const forceLogout = (errorCode: FatalSessionErrorCode) => {
+    if (isSigningOut) {
+      // A sign-out the user asked for is already tearing the session down.
+      return;
+    }
+
+    if (!sessionKey.peek()) {
+      // Already signed out. Makes this safe to call repeatedly, which is what keeps
+      // a screenful of simultaneously-failing reads from stacking up.
+      return;
+    }
+
+    console.warn(
+      `[LoginManager] Signing out: the server reported '${errorCode}'.`
+    );
+    clearSession();
+    sessionEnded.value = {
+      reason:
+        errorCode === "user_is_banned"
+          ? "account_suspended"
+          : "session_expired",
+      id: ++sessionEndedCount,
+    };
+  };
+
+  effect(() => {
+    const event = os.sessionInvalidated.value;
+    if (!event) {
+      return;
+    }
+    forceLogout(event.errorCode);
+  });
 
   if (typeof localStorage !== "undefined") {
     const storedSessionKey = localStorage.getItem("sessionKey");
@@ -231,12 +325,20 @@ export function createLoginManager({
   };
 
   async function refreshSession() {
-    if (!sessionKey.value) {
+    const sessionKeyAtRequest = sessionKey.peek();
+    if (!sessionKeyAtRequest) {
       return;
     }
 
     console.log("[LoginManager] Refreshing session with existing session key");
     const result = await client.replaceSession();
+
+    if (sessionKey.peek() !== sessionKeyAtRequest) {
+      // The session ended while the refresh was in flight — the user signed out, or
+      // this very call reported the key dead and the session guard already signed
+      // them out. Assigning a key now would resurrect a session we just dropped.
+      return;
+    }
 
     if (result.success) {
       console.log("[LoginManager] Session refreshed successfully");
@@ -245,8 +347,14 @@ export function createLoginManager({
       client.sessionKey = result.sessionKey;
       await loadUserInfo();
     } else {
+      // Nothing is cleared here, on purpose. A refresh fails for transient reasons
+      // far more often than real ones (a mobile dead spot, a 500, a rate limit), and
+      // the key is usually still good for another week. The three codes that really
+      // do mean the session is gone are handled centrally by the session guard,
+      // which has already signed the user out by the time we reach this branch.
       console.warn(
-        "[LoginManager] Failed to refresh session, clearing session key:",
+        "[LoginManager] Failed to refresh session; keeping the existing session key:",
+        result.errorCode,
         result.errorMessage
       );
     }
@@ -302,11 +410,20 @@ export function createLoginManager({
   }
 
   async function loadUserInfo(): Promise<UserInfo | null> {
-    if (!sessionKey.value || !userId.value) {
+    const sessionKeyAtRequest = sessionKey.peek();
+    if (!sessionKeyAtRequest || !userId.value) {
       return null;
     }
 
     const result = await client.getUserInfo({ userId: userId.value });
+
+    if (sessionKey.peek() !== sessionKeyAtRequest || !userId.value) {
+      // Signed out while the request was in flight — quite possibly by this very
+      // request failing. Publishing user info for a session that no longer exists
+      // would leave the app looking signed in.
+      return null;
+    }
+
     if (result.success) {
       userInfo.value = {
         id: userId.value,
@@ -381,20 +498,38 @@ export function createLoginManager({
   });
 
   if (sessionKey.value) {
-    loadUserInfo();
+    // Nobody awaits this, so it needs its own handler: a network failure here would
+    // otherwise surface as an unhandled rejection on every offline page load. A
+    // failure is survivable — the session stays as it is, and the session guard has
+    // already signed the user out if the server said the key was dead.
+    loadUserInfo().catch((err) => {
+      console.warn("[LoginManager] Failed to load user info on startup", err);
+    });
   }
 
   const logout = async (): Promise<void> => {
-    if (sessionKey.value) {
-      await client.revokeSession({
-        sessionKey: sessionKey.value!,
-      });
+    isSigningOut = true;
+    try {
+      if (sessionKey.value) {
+        try {
+          await client.revokeSession({
+            sessionKey: sessionKey.value,
+          });
+        } catch (err) {
+          // Never let a failed round trip keep us signed in locally: the user asked
+          // to sign out, so sign out. Before this, a rejection here threw past the
+          // clear below and left the app looking logged in — and the sign-out button
+          // calls this with `void`, so the rejection went unhandled too.
+          console.warn(
+            "[LoginManager] Failed to revoke the session remotely; signing out locally anyway",
+            err
+          );
+        }
+      }
+      clearSession();
+    } finally {
+      isSigningOut = false;
     }
-    batch(() => {
-      sessionKey.value = null;
-      connectionKey.value = null;
-      userInfo.value = null;
-    });
   };
 
   effect(() => {
@@ -578,6 +713,7 @@ export function createLoginManager({
     connectionId: os.connectionId,
     userInfo,
     authBot: userInfo,
+    sessionEnded,
     profile,
     // Exposed as a getter so external readers see the promise assigned by the
     // profile-loading effect below. A plain property would capture the value
