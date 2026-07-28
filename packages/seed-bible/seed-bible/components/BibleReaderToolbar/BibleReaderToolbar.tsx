@@ -717,6 +717,69 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     verseToolbarDrag.current = null;
   };
 
+  // Drag-the-handle support for the mobile verse sheet: pulling the grab handle
+  // up expands the sheet (same state the "More" toggle flips), pulling it back
+  // down collapses it. The gesture is reversible mid-drag — the expanded state
+  // always reflects the current distance from where the drag started, so
+  // dragging up past the threshold and back down again returns to the start
+  // state. A tap that never travels far enough to count as a drag toggles.
+  const VERSE_SHEET_DRAG_THRESHOLD = 24;
+  const VERSE_SHEET_TAP_SLOP = 6;
+  const verseSheetDrag = useRef<{
+    pointerId: number;
+    startY: number;
+    startExpanded: boolean;
+    maxTravel: number;
+  } | null>(null);
+
+  const handleVerseSheetHandlePointerDown = (event: PointerEvent) => {
+    const handle = event.currentTarget as HTMLElement;
+    handle.setPointerCapture?.(event.pointerId);
+    verseSheetDrag.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startExpanded: isVerseSheetExpanded.value,
+      maxTravel: 0,
+    };
+    // Keep the drag from also scrolling the chapter behind the sheet.
+    event.preventDefault();
+  };
+
+  const handleVerseSheetHandlePointerMove = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const dy = event.clientY - drag.startY;
+    drag.maxTravel = Math.max(drag.maxTravel, Math.abs(dy));
+    if (dy <= -VERSE_SHEET_DRAG_THRESHOLD) {
+      isVerseSheetExpanded.value = true;
+    } else if (dy >= VERSE_SHEET_DRAG_THRESHOLD) {
+      isVerseSheetExpanded.value = false;
+    } else {
+      isVerseSheetExpanded.value = drag.startExpanded;
+    }
+  };
+
+  const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const handle = event.currentTarget as HTMLElement;
+    handle.releasePointerCapture?.(event.pointerId);
+    verseSheetDrag.current = null;
+    if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) {
+      isVerseSheetExpanded.value = !drag.startExpanded;
+    }
+  };
+
+  const handleVerseSheetHandlePointerCancel = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const handle = event.currentTarget as HTMLElement;
+    handle.releasePointerCapture?.(event.pointerId);
+    verseSheetDrag.current = null;
+    // An interrupted gesture shouldn't leave the sheet half-committed.
+    isVerseSheetExpanded.value = drag.startExpanded;
+  };
+
   // Verse toolbar highlight picker state
   const isHighlightPickerOpen = useSignal(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
@@ -1447,7 +1510,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value && (
             <>
-              <div className="sb-verse-toolbar-handle" aria-hidden="true" />
+              {/* The pill itself is only a few pixels tall, so the drag
+                  gesture lives on a taller wrapper that's comfortable to grab
+                  with a thumb. Hidden from assistive tech because the
+                  "More"/"Less" card already exposes the same toggle. */}
+              <div
+                className="sb-verse-toolbar-handle-area"
+                aria-hidden="true"
+                onPointerDown={handleVerseSheetHandlePointerDown}
+                onPointerMove={handleVerseSheetHandlePointerMove}
+                onPointerUp={handleVerseSheetHandlePointerUp}
+                onPointerCancel={handleVerseSheetHandlePointerCancel}
+              >
+                <div className="sb-verse-toolbar-handle" />
+              </div>
               <button
                 type="button"
                 className="sb-verse-toolbar-close"

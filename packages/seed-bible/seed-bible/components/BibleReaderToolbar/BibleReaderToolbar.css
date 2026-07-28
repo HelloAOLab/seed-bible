@@ -1017,13 +1017,32 @@
   box-shadow: 0 -8px 24px var(--sb-shadow-color);
 }
 
-/* Grab-handle pill at the top of the mobile verse sheet (visual affordance). */
+/* Drag target around the grab handle. The pill is only 4px tall, so the
+   pointer gesture lives on this taller strip. `touch-action: none` stops the
+   browser turning an upward drag into a page scroll before our handler sees
+   it. */
+.sb-verse-toolbar-handle-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5rem;
+  margin: -0.25rem 0 0.25rem;
+  flex: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.sb-verse-toolbar-handle-area:active {
+  cursor: grabbing;
+}
+
+/* Grab-handle pill at the top of the mobile verse sheet. */
 .sb-verse-toolbar-handle {
   width: 2.25rem;
   height: 0.25rem;
   border-radius: 62.4375rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  margin: 0.125rem auto 0.5rem;
+  margin: 0 auto;
   flex: none;
 }
 
