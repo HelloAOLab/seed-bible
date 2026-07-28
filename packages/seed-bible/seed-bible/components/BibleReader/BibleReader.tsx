@@ -33,6 +33,7 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
+import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
   SelfAvatarVisual,
   getSelfDisplayName,
@@ -972,6 +973,20 @@ interface Ribbon {
 }
 const RIBBON_FADE_MS = 250;
 
+/**
+ * Bar widths for the chapter loading placeholder, one array per paragraph.
+ *
+ * Hand-picked rather than random so the placeholder is identical on every
+ * render (a fresh set each time would shimmer *and* reflow) and reads as
+ * ragged prose rather than a block. Enough paragraphs to fill a typical
+ * reading pane without leaving obvious empty space below.
+ */
+const CHAPTER_SKELETON_PARAGRAPHS = [
+  ["97%", "92%", "99%", "88%", "71%"],
+  ["94%", "99%", "90%", "96%", "58%"],
+  ["99%", "89%", "95%", "93%", "77%"],
+] as const;
+
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
@@ -1315,6 +1330,7 @@ export function BibleReader(props: BibleReaderProps) {
     highlights,
     decorations,
     loading,
+    isChapterContentStale,
     error,
     selectVerse,
     clearSelectedVerses,
@@ -1450,6 +1466,28 @@ export function BibleReader(props: BibleReaderProps) {
     </h2>
   );
 
+  /**
+   * Placeholder shown in place of the verses while the chapter the reader has
+   * navigated to is still downloading. Without it, a fast skim shows the *old*
+   * chapter's text under the new chapter's title, which reads as though the
+   * navigation silently failed.
+   */
+  const renderChapterSkeleton = () => (
+    <SkeletonContainer
+      label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
+      className="sb-chapter-content sb-chapter-skeleton"
+    >
+      <Skeleton shape="block" width="42%" />
+      {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
+        <div className="sb-chapter-skeleton-paragraph" key={paragraph}>
+          {widths.map((width, line) => (
+            <Skeleton shape="line" key={line} width={width} />
+          ))}
+        </div>
+      ))}
+    </SkeletonContainer>
+  );
+
   const renderMainContent = () => (
     <>
       {isMobile &&
@@ -1462,31 +1500,38 @@ export function BibleReader(props: BibleReaderProps) {
         <p className="sb-reader-error">{error.value}</p>
       )}
 
-      {!error.value && (
-        <Suspense
-          fallback={
-            <p>
-              {t("no-chapter-content-found", {
-                defaultValue: "No chapter content found.",
-              })}
-            </p>
-          }
-        >
-          <ChapterContent
-            chapterData={chapterData}
-            chapterDataPromise={readingState.chapterDataPromise}
-            initialChapterLoadSettled={readingState.initialChapterLoadSettled}
-            selectedVerses={selectedVerses}
-            selectVersesFromTextSelection={selectVersesFromTextSelection}
-            justConvertedSelectionRef={justConvertedSelectionRef}
-            highlights={highlights}
-            decorations={decorations}
-            selectVerse={selectVerse}
-            selectFootnote={selectFootnote}
-            scriptureElements={scriptureElements}
-          />
-        </Suspense>
-      )}
+      {!error.value &&
+        // Never server-side: the placeholder would replace the verses in the
+        // served HTML, which for a Bible reader is an SEO regression. Under SSR
+        // the reader suspends on `chapterDataPromise` instead, so by the time
+        // this renders there is either content or a settled failure.
+        (!import.meta.env.SSR && isChapterContentStale.value ? (
+          renderChapterSkeleton()
+        ) : (
+          <Suspense
+            fallback={
+              <p>
+                {t("no-chapter-content-found", {
+                  defaultValue: "No chapter content found.",
+                })}
+              </p>
+            }
+          >
+            <ChapterContent
+              chapterData={chapterData}
+              chapterDataPromise={readingState.chapterDataPromise}
+              initialChapterLoadSettled={readingState.initialChapterLoadSettled}
+              selectedVerses={selectedVerses}
+              selectVersesFromTextSelection={selectVersesFromTextSelection}
+              justConvertedSelectionRef={justConvertedSelectionRef}
+              highlights={highlights}
+              decorations={decorations}
+              selectVerse={selectVerse}
+              selectFootnote={selectFootnote}
+              scriptureElements={scriptureElements}
+            />
+          </Suspense>
+        ))}
 
       {!availableTranslations.value && !error.value && (
         <p>

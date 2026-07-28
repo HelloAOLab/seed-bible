@@ -1331,14 +1331,22 @@ export function createBibleReadingState(
     () => translationBooks.value?.translation ?? null
   );
 
-  // Resolves the current book's display record from the loaded chapter when
-  // available, otherwise the books catalog by id.
+  // Resolves the current book's display record from the books catalog by id,
+  // falling back to the loaded chapter while that catalog is missing.
+  //
+  // Catalog-first, not content-first: the catalog is keyed on `bookId`, which
+  // moves the instant the reader navigates, whereas `chapterData` still
+  // describes the chapter they left until its replacement downloads. Reading
+  // the chapter first left every title a chapter behind the header for the
+  // whole of a fast skim.
   const resolveCurrentBook = () => {
-    const chapterBook = chapterData.value?.book;
-    if (chapterBook) {
-      return chapterBook;
+    const catalogBook = translationBooks.value?.books.find(
+      (b) => b.id === bookId.value
+    );
+    if (catalogBook) {
+      return catalogBook;
     }
-    return translationBooks.value?.books.find((b) => b.id === bookId.value);
+    return chapterData.value?.book;
   };
 
   // Default title ("Genesis 1"), using the app-wide `name ?? commonName ?? id`
@@ -1362,22 +1370,19 @@ export function createBibleReadingState(
     return `${id} ${chapterNumber.value}`;
   });
 
-  // Default subtitle: the name of the current chapter's translation. Empty
-  // while it is not yet resolvable.
+  // Default subtitle: the name of the current translation. Catalog first, for
+  // the same reason as `resolveCurrentBook` — it tracks `translationId`, while
+  // the loaded chapter names whichever translation was on screen last.
   const baseSubTitle = computed<string>(() => {
-    return (
-      chapterData.value?.translation.name ??
-      translationBooks.value?.translation.name ??
-      ""
-    );
+    return translation.value?.name ?? chapterData.value?.translation.name ?? "";
   });
 
   // Default compact subtitle: the current translation's short name (e.g.
   // "AAB"). Empty while it is not yet resolvable.
   const baseShortSubTitle = computed<string>(() => {
     return (
+      translation.value?.shortName ??
       chapterData.value?.translation.shortName ??
-      translationBooks.value?.translation.shortName ??
       ""
     );
   });

@@ -34,6 +34,13 @@ type ReaderFixture = {
   selectorState: BibleSelectorState;
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
+  /**
+   * Forces `isChapterContentStale` on or off. Set it to `true` to express
+   * "the reader has moved on but the new chapter's text hasn't arrived" —
+   * chapter data is still loaded, just for the wrong position, which is not
+   * something `chapterData` alone can say.
+   */
+  contentStale: Signal<boolean | null>;
   highlights: Signal<BibleReadingState["highlights"]["value"]>;
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
@@ -129,6 +136,7 @@ function createFixture(): ReaderFixture {
   const currentTranslation = computed(
     () => chapterData.value?.translation ?? null
   );
+  const contentStale = signal<boolean | null>(null);
 
   const readingState = {
     translationId: signal("BSB"),
@@ -168,7 +176,9 @@ function createFixture(): ReaderFixture {
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
-    isChapterContentStale: computed(() => chapterData.value === null),
+    isChapterContentStale: computed(
+      () => contentStale.value ?? chapterData.value === null
+    ),
     defaultTranslation: { id: "BSB", language: "en" },
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
@@ -201,6 +211,7 @@ function createFixture(): ReaderFixture {
     selectorState,
     readingState,
     chapterData,
+    contentStale,
     highlights,
     decorations,
     selectedVerses,
@@ -423,6 +434,74 @@ describe("BibleReader", () => {
     expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
       "Exodus"
     );
+  });
+
+  it("shows the loading placeholder instead of the previous chapter's verses while content is stale", () => {
+    const { slot, selectorState, readingState, contentStale } = createFixture();
+    contentStale.value = true;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-chapter-skeleton")).not.toBeNull();
+    // Chapter data is still loaded, just for the position the reader left, so
+    // this is the assertion that matters: those verses must not be on screen
+    // under the new chapter's title.
+    expect(readingState.chapterData.value).not.toBeNull();
+    expect(container.querySelector(".sb-verse")).toBeNull();
+  });
+
+  it("shows the verses, not the placeholder, once content matches the position", () => {
+    const { slot, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+    expect(container.querySelector(".sb-verse")).not.toBeNull();
+  });
+
+  it("never renders the loading placeholder server-side", () => {
+    // The placeholder would replace the verses in the served HTML, costing a
+    // Bible reader its indexable scripture text.
+    const { slot, selectorState, readingState, contentStale } = createFixture();
+    contentStale.value = true;
+
+    try {
+      import.meta.env.SSR = true;
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+      expect(container.querySelector(".sb-verse")).not.toBeNull();
+    } finally {
+      delete import.meta.env.SSR;
+    }
   });
 
   it("clicking a verse selects it with event coordinates", () => {

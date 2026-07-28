@@ -2686,6 +2686,65 @@ describe("createBibleReadingState", () => {
       expect(state.shortSubTitle.value).toBe("AAB");
     });
 
+    it("names the book from the catalog, not the chapter still on screen", async () => {
+      // Titles are resolved from the books catalog, which tracks `bookId`
+      // synchronously, rather than from `chapterData`, which still describes
+      // the chapter the reader left. Crossing a book boundary is where the two
+      // disagree: content-first would title this "Genesis 1" until the text of
+      // Exodus arrived.
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/AAB/EXO/1.json")] = createResponse(
+        makeChapter(aabBooks, "EXO", 1)
+      );
+      const controlled = createControlledFetch(responses, (url) =>
+        /\/api\/AAB\/EXO\/1\.json$/.test(url)
+      );
+      fetchMock.mockImplementation(controlled.fetch);
+
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      expect(state.title.value).toBe("Genesis 1");
+
+      void state.selectBook("EXO");
+
+      expect(state.title.value).toBe("Exodus 1");
+      expect(state.chapterData.value?.book.id).toBe("GEN");
+      expect(state.isChapterContentStale.value).toBe(true);
+
+      controlled.settle(makeExampleUrl("/api/AAB/EXO/1.json"));
+      await waitFor(() => !state.isChapterContentStale.value);
+      expect(state.title.value).toBe("Exodus 1");
+    });
+
+    it("names the translation from the catalog while a new one's text is in flight", async () => {
+      // Same rule for the subtitle: it follows `translationId` rather than the
+      // translation named by whichever chapter is still rendered.
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/NIV/books.json")] =
+        createResponse(nivBooks);
+      responses[makeExampleUrl("/api/NIV/MAT/1.json")] = createResponse({
+        ...makeChapter(nivBooks, "MAT", 1),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+      });
+      const controlled = createControlledFetch(responses, (url) =>
+        /\/api\/NIV\/MAT\/1\.json$/.test(url)
+      );
+      fetchMock.mockImplementation(controlled.fetch);
+
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+
+      void state.selectTranslation("NIV");
+      await waitFor(() => controlled.pending().length > 0);
+
+      expect(state.shortSubTitle.value).toBe("NIV");
+      expect(state.subTitle.value).toBe(nivTranslation.name);
+      // The chapter still on screen is the old translation's.
+      expect(state.chapterData.value?.translation.id).toBe("AAB");
+    });
+
     it("lets an enabled extension override each title, restoring the defaults on disable", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const manager = createBibleReadingExtensionManager();

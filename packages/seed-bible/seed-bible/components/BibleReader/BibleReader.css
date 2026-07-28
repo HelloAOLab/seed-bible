@@ -578,6 +578,43 @@
   color: red;
 }
 
+/* ─── Chapter loading placeholder ────────────────────────────────────────── */
+/* Stands in for the verses while the chapter the reader has navigated to is
+   still downloading (see `isChapterContentStale`). It also carries
+   `.sb-chapter-content`, so it sits in the same box as the real text — same
+   padding, same bottom spacing — and swapping the verses in doesn't shift the
+   page.
+
+   Heights are in `em`, not `rem`: these blocks stand in for scripture, so they
+   should track the reader's own font-size setting rather than the UI scale.
+   That is why no inline `height` is passed to `Skeleton` — an inline style
+   would win over these rules. Widths *are* passed inline, per block, to give
+   the stack a ragged prose edge instead of a uniform grid. */
+.sb-chapter-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-chapter-skeleton .sb-skeleton--line {
+  height: 0.85em;
+}
+
+/* Stands in for a section heading, so it is taller and sits clear of the
+   first paragraph. */
+.sb-chapter-skeleton .sb-skeleton--block {
+  height: 1.15em;
+  margin-bottom: 1.5em;
+}
+
+.sb-chapter-skeleton-paragraph {
+  display: flex;
+  flex-direction: column;
+  /* Leave the same air between bars as the reader leaves between lines of
+     verse text: the line box minus the bar itself. */
+  gap: calc(var(--text-verse-line-height, 1.7) * 1em - 0.85em);
+  margin-bottom: 1.5em;
+}
+
 .sb-footnote-modal-overlay {
   position: fixed;
   inset: 0;
