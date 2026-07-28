@@ -1355,8 +1355,8 @@ export function createSeedBibleState(
         ? t("account-suspended-message", {
             defaultValue: "Your account has been suspended.",
           })
-        : t("session-expired-message", {
-            defaultValue: "Your session has expired. Please sign in again.",
+        : t("signed-out-message", {
+            defaultValue: "You've been signed out. Please sign in again.",
           })
     );
   });

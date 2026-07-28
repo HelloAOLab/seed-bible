@@ -979,13 +979,13 @@ describe("createSeedBibleState", () => {
       expect(state.app.currentToast.value).toBe(null);
     });
 
-    it("explains an expired session", async () => {
+    it("explains a session that ended on its own", async () => {
       const state = await createState();
 
-      state.login.sessionEnded.value = { reason: "session_expired", id: 1 };
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
 
       expect(state.app.currentToast.value?.message).toBe(
-        "Your session has expired. Please sign in again."
+        "You've been signed out. Please sign in again."
       );
     });
 
@@ -1005,10 +1005,10 @@ describe("createSeedBibleState", () => {
       // never re-run and the message would be silently swallowed.
       const state = await createState();
 
-      state.login.sessionEnded.value = { reason: "session_expired", id: 1 };
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
       const firstToastId = state.app.currentToast.value?.id;
 
-      state.login.sessionEnded.value = { reason: "session_expired", id: 2 };
+      state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
 
       expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
     });

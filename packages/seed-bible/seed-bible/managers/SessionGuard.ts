@@ -10,6 +10,24 @@
  * `LoginManager.getUserProfile` and into `twitchPub-extension`'s session check,
  * which reports "still valid" on a network error precisely so a blip can't log
  * anyone out.
+ *
+ * Two codes look like they belong here and deliberately don't. Both were checked
+ * against the SDK's implementation rather than its types, because this repo's patch
+ * widens `ValidateSessionKeyFailure['errorCode']` to `KnownErrorCodes` and so makes the
+ * types admit every code in the SDK:
+ *
+ * - `session_not_found` (HTTP 404) is returned from one place only, `revokeSession`,
+ *   and only *after* `validateSessionKey` has already succeeded — so seeing it proves
+ *   our key is alive. It means "the {userId, sessionId} you asked about doesn't exist".
+ *   Adding it would sign a user out for querying a stale session id, which an extension
+ *   can do through `os.client`. When our *own* session row is missing the server
+ *   returns `invalid_key`, which is in the list above.
+ *
+ * - `unacceptable_session_key` (HTTP 400) is an argument-shape complaint raised before
+ *   any lookup: the key isn't a non-empty string, or it failed to parse. For our
+ *   ambient key it's unreachable — the guard below skips requests with no key, and
+ *   `LoginManager` discards an unparseable stored key at startup rather than sending
+ *   it. Its remaining cases are a malformed `sessionKey` passed explicitly by a caller.
  */
 export const FATAL_SESSION_ERROR_CODES = [
   "session_expired",

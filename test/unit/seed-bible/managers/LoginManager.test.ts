@@ -519,8 +519,8 @@ describe("createLoginManager", () => {
     });
 
     it.each([
-      ["session_expired", "session_expired"],
-      ["invalid_key", "session_expired"],
+      ["session_expired", "signed_out"],
+      ["invalid_key", "signed_out"],
       ["user_is_banned", "account_suspended"],
     ])("reports %s to the UI as '%s'", async (errorCode, reason) => {
       const manager = await signOutViaGetUserInfo(errorCode);
@@ -595,7 +595,7 @@ describe("createLoginManager", () => {
 
       await waitFor(() => manager.sessionEnded.value !== null);
       expect(os.sessionKey.value).toBe(null);
-      expect(manager.sessionEnded.value?.reason).toBe("session_expired");
+      expect(manager.sessionEnded.value?.reason).toBe("signed_out");
     });
 
     it("does not resurrect the session when a refresh succeeds after a forced sign-out", async () => {
@@ -616,6 +616,71 @@ describe("createLoginManager", () => {
 
       expect(os.sessionKey.value).toBe(null);
       expect(manager.userInfo.value).toBe(null);
+    });
+  });
+
+  describe("an unparseable stored session key", () => {
+    // Anything not shaped `vSK1.<base64>...` fails to parse. Reading the expiry off
+    // that null parse used to throw during construction, and nothing catches it, so a
+    // single corrupted character in localStorage meant a blank page the user could not
+    // sign out of.
+    const CORRUPT_KEY = "total-garbage";
+
+    it("does not throw while constructing the manager", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      expect(() => createLoginManager({ os })).not.toThrow();
+    });
+
+    it("discards the bad key instead of keeping it", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+      localStorage.setItem("connectionKey", "connection-key-1");
+
+      createLoginManager({ os });
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(os.connectionKey.value).toBe(null);
+      expect(localStorage.getItem("sessionKey")).toBe(null);
+      expect(localStorage.getItem("connectionKey")).toBe(null);
+    });
+
+    it("does not try to refresh a key it cannot parse", async () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      createLoginManager({ os });
+      await flush();
+
+      expect(replaceSessionMock).not.toHaveBeenCalled();
+      expect(getUserInfoMock).not.toHaveBeenCalled();
+    });
+
+    it("reports the discarded key to the UI as a plain sign-out", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      const manager = createLoginManager({ os });
+
+      // Nothing expired here, so the message must not say so.
+      expect(manager.sessionEnded.value?.reason).toBe("signed_out");
+    });
+
+    it("leaves the user signed out rather than half-authenticated", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.userId.value).toBe(null);
+      expect(manager.userInfo.value).toBe(null);
+    });
+
+    it("still accepts a well-formed key", async () => {
+      // Guards against the parse check being too eager and rejecting good keys.
+      localStorage.setItem("sessionKey", SESSION_KEY);
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.sessionEnded.value).toBe(null);
+      expect(os.sessionKey.value).toBe(SESSION_KEY);
     });
   });
 

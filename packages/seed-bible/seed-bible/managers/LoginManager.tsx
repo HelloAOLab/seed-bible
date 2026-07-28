@@ -11,11 +11,16 @@ import type {
 /**
  * Why a session ended without the user asking it to.
  *
- * The three server error codes collapse to two cases the UI has to explain, so the
- * mapping happens here rather than in the view — a view only ever needs two messages,
- * and widening the set of fatal codes later changes no view code.
+ * Every cause collapses to two things the UI has to explain, so the mapping happens
+ * here rather than in the view — a view only ever needs two messages, and adding
+ * another cause changes no view code.
+ *
+ * `signed_out` deliberately avoids saying "expired". Only one of the causes actually
+ * is an expiry: `invalid_key` means the session was revoked or is unrecognised, and an
+ * unparseable stored key never expired either. The remedy is the same in every case,
+ * so one accurate message beats a specific but often wrong one.
  */
-export type SessionEndedReason = "session_expired" | "account_suspended";
+export type SessionEndedReason = "signed_out" | "account_suspended";
 
 export interface SessionEndedEvent {
   reason: SessionEndedReason;
@@ -188,15 +193,20 @@ export function createLoginManager({
   };
 
   /**
-   * Signs the user out because the server said the session is dead — not because they
-   * asked.
+   * Signs the user out for a reason that isn't their choice, and records why so the UI
+   * can explain it.
    *
-   * Deliberately does NOT call `revokeSession`. The session is already gone server
-   * side (expired, replaced, or the account is banned), so the call could only fail;
-   * it costs a round trip on a path that is often taken while connectivity is poor;
-   * and for `user_is_banned` it can never succeed.
+   * Deliberately does NOT call `revokeSession`. Every caller gets here because the
+   * session is already unusable — expired, revoked, banned, or a key we can't even
+   * parse — so the call could only fail; it costs a round trip on a path often taken
+   * while connectivity is poor; and for a banned account it can never succeed.
+   *
+   * `sessionEnded` is left set rather than reset, which is what lets a sign-out during
+   * construction still reach the toast: `SeedBibleStateManager` wires that effect much
+   * later, and an effect reads its dependencies eagerly on its first run. Don't
+   * "tidy" this into a reset-after-read.
    */
-  const forceLogout = (errorCode: FatalSessionErrorCode) => {
+  const forceSignOut = (reason: SessionEndedReason) => {
     if (isSigningOut) {
       // A sign-out the user asked for is already tearing the session down.
       return;
@@ -208,17 +218,21 @@ export function createLoginManager({
       return;
     }
 
+    clearSession();
+    sessionEnded.value = {
+      reason,
+      id: ++sessionEndedCount,
+    };
+  };
+
+  /** Signs the user out because the server reported the session key dead. */
+  const forceLogout = (errorCode: FatalSessionErrorCode) => {
     console.warn(
       `[LoginManager] Signing out: the server reported '${errorCode}'.`
     );
-    clearSession();
-    sessionEnded.value = {
-      reason:
-        errorCode === "user_is_banned"
-          ? "account_suspended"
-          : "session_expired",
-      id: ++sessionEndedCount,
-    };
+    forceSignOut(
+      errorCode === "user_is_banned" ? "account_suspended" : "signed_out"
+    );
   };
 
   effect(() => {
@@ -236,24 +250,45 @@ export function createLoginManager({
     if (storedSessionKey) {
       sessionKey.value = storedSessionKey;
       client.sessionKey = storedSessionKey;
-
-      const expireTime = parsedSessionKey.value!.expireTimeMs;
-      const timeUntilExpire = expireTime - Date.now();
-      // Refresh the session 1 week before it expires
-      const refreshTime = timeUntilExpire - 7 * 24 * 60 * 60 * 1000;
-
-      if (refreshTime > 0) {
-        setTimeout(() => {
-          refreshSession();
-        }, refreshTime);
-      } else {
-        console.log("[LoginManager] Session is expiring soon, refreshing now");
-        refreshSession();
-      }
     }
 
     if (storedConnectionKey) {
       connectionKey.value = storedConnectionKey;
+    }
+
+    // Validate only after both keys are restored, so discarding a bad session key takes
+    // the connection key with it. Checking earlier would clear a connection key that the
+    // block above then puts straight back.
+    if (storedSessionKey) {
+      const parsed = parsedSessionKey.value;
+
+      if (!parsed) {
+        // The stored key isn't parseable, so there's no expiry to schedule against and
+        // nothing useful we could do with it. Reading `.expireTimeMs` off the null
+        // parse used to throw here, and nothing catches it — this runs inside
+        // `createSeedBibleState`, which `app/init.tsx` calls bare — so one bad
+        // character in localStorage meant a blank page with no way to sign out of it.
+        // Discarding the key lets the app start normally, signed out.
+        console.warn(
+          "[LoginManager] Discarding an unparseable stored session key."
+        );
+        forceSignOut("signed_out");
+      } else {
+        const timeUntilExpire = parsed.expireTimeMs - Date.now();
+        // Refresh the session 1 week before it expires
+        const refreshTime = timeUntilExpire - 7 * 24 * 60 * 60 * 1000;
+
+        if (refreshTime > 0) {
+          setTimeout(() => {
+            refreshSession();
+          }, refreshTime);
+        } else {
+          console.log(
+            "[LoginManager] Session is expiring soon, refreshing now"
+          );
+          refreshSession();
+        }
+      }
     }
   }
 
