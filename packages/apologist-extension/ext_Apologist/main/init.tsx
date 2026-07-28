@@ -33,18 +33,14 @@ const shareSchema = z.object({
 
 type ChatMessage =
   | {
-      role: "user" | "developer";
+      role: "user" | "assistant" | "developer";
       content: string;
     }
   | {
       role: "tool";
       tool_call_id: string;
+      name: string;
       content: string;
-    }
-  | {
-      type: "function_call_output";
-      call_id: string;
-      output: string;
     };
 
 const PROVIDER_ID = "apologist-chat-provider";
@@ -77,7 +73,6 @@ export default function initApologistExtension() {
         return;
       }
 
-      // TODO: Add logo for apologist
       yield context.chats.registerProvider({
         id: PROVIDER_ID,
         name: apologistName ?? {
@@ -91,14 +86,13 @@ export default function initApologistExtension() {
           const lastMessage =
             chatContext.messages[chatContext.messages.length - 1];
           console.log("Generating response for message:", lastMessage);
-
           console.log("Chat context:", chatContext);
 
           const instructions =
             chatContext.instructions ??
             `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`;
 
-          const contextMessage = {
+          const contextMessage: ChatMessage = {
             role: "developer",
             content: instructions,
           };
@@ -117,7 +111,7 @@ export default function initApologistExtension() {
             },
           }));
 
-          let messages = [contextMessage];
+          const messages: ChatMessage[] = [contextMessage];
 
           for (const m of chatContext.messages) {
             const authors = resolveMessageAuthors(chatContext.participants, m);
@@ -166,8 +160,6 @@ export default function initApologistExtension() {
 
             const responseData = await response.json();
 
-            console.log("[Apologist] Chat completion response:", responseData);
-
             const choice = responseData.choices[0];
             const message = choice.message;
 
@@ -178,8 +170,6 @@ export default function initApologistExtension() {
                 // Resolve tool calls
                 for (const call of message.tool_calls) {
                   if (call.function) {
-                    console.log("[Apologist] Tool call:", call);
-
                     const tool = chatContext.tools?.find(
                       (t) => t.name === call.function.name
                     );
@@ -388,116 +378,6 @@ export default function initApologistExtension() {
 
         initConversation();
       }
-
-      yield context.ai.registerProvider({
-        id: "apologist",
-        updatePlaylist: async function* (playlist, prompt, options) {
-          const messages: ChatMessage[] = [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ];
-          const tools = options.tools.map((t) => ({
-            type: t.type,
-            name: t.name,
-            description: t.description,
-            parameters: t.parameters,
-            strict: true,
-          }));
-
-          const instructions = `
-              You are an AI agent that is integrated into a Christian Bible App called the Seed Bible.
-              You are being asked to edit a playlist in the Seed Bible app based on the user's input.
-              The playlist has already been created for you, you only have to add/update/delete items and optionally update metadata.
-              Always use the provided tools to generate the playlist so that it is integrated with the Seed Bible.
-
-              Current playlist:
-              \`\`\`json
-              ${JSON.stringify(playlist)}
-              \`\`\`
-            `
-            .trim()
-            .replace(/\n\s+/g, " ");
-
-          while (true) {
-            const response = await fetch(
-              `https://openai.seedbible.io/v1/responses`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  model: "gpt-5.6-terra",
-                  reasoning: {
-                    effort: "high",
-                    summary: "auto",
-                  },
-                  stream: false,
-                  metadata: {
-                    bible: "bsb",
-                    language: i18n.language,
-                  },
-                  instructions,
-                  input: messages,
-                  tools: tools,
-                }),
-              }
-            );
-
-            const data = await response.json();
-            console.log("[Apologist] Generate playlist response:", data);
-
-            let hasToolCall = false;
-            for (const output of data.output) {
-              messages.push(output);
-
-              if (output.type === "message") {
-                for (const content of output.content) {
-                  if (content.type === "output_text") {
-                    yield content.text;
-                  }
-                }
-              } else if (output.type === "function_call") {
-                hasToolCall = true;
-                const call = output;
-                console.log("[Apologist] Tool call:", call);
-
-                const tool = options.tools.find((t) => t.name === call.name);
-                if (!tool) {
-                  throw new Error(`Tool not found: ${call.name}`);
-                }
-
-                const args = JSON.parse(call.arguments);
-                const result = await tool.function(args);
-
-                messages.push({
-                  type: "function_call_output",
-                  call_id: call.call_id,
-                  output: JSON.stringify(result),
-                });
-              }
-            }
-
-            if (!hasToolCall) {
-              console.log("[Apologist] Stopping");
-              break;
-            } else if (messages.length > 100) {
-              console.warn("[Apologist] Too many messages, stopping loop");
-              break;
-            } else {
-              console.log("[Apologist] Continuing conversation");
-            }
-            // if (firstChoice.finish_reason === "stop") {
-            //   break;
-            // } else if (messages.length > 100) {
-            //   console.warn("[Apologist] Too many messages, stopping loop");
-            //   break;
-            // }
-          }
-        },
-      });
 
       return {};
     },
