@@ -1275,6 +1275,123 @@ describe("BibleReader", () => {
     expect(container.querySelector(".sb-verse-number")).toBeNull();
   });
 
+  it("separates adjacent verses with a space when verse numbers are hidden", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse."] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: false,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const content = container.querySelector(".sb-chapter-content");
+    expect(content?.textContent).toContain("First verse. Second verse.");
+    // The space sits between the verse spans, so each verse still covers only
+    // its own text (highlight ribbons and selection stop at the last glyph).
+    const verses = container.querySelectorAll(".sb-verse");
+    expect(verses[0]?.textContent).toBe("First verse.");
+    expect(verses[1]?.textContent).toBe("Second verse.");
+  });
+
+  it("does not add a separating space when verse numbers are shown", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse."] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // The verse number's trailing margin already provides the gap.
+    const content = container.querySelector(".sb-chapter-content");
+    expect(content?.textContent).toContain("First verse.2Second verse.");
+  });
+
+  it("separates verses inside one highlight run when verse numbers are hidden", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse."] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "yellow" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: false,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const wrapper = container.querySelector(
+      ".sb-highlight-yellow"
+    ) as HTMLElement | null;
+    expect(wrapper?.textContent).toBe("First verse. Second verse.");
+  });
+
   it("hides inline footnote buttons and the footnote modal when scriptureElements.showFootnotes is false", () => {
     const { slot, selectorState, readingState, selectedFootnote, chapterData } =
       createFixture();

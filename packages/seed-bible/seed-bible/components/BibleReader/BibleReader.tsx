@@ -784,7 +784,17 @@ function renderChapterContent(
     Array.isArray((entry as ChapterVerse).content);
 
   const entries = chapterData.chapter.content;
-  const nodes: (JSX.Element | null)[] = [];
+  const nodes: (JSX.Element | string | null)[] = [];
+
+  // Verse text carries no leading/trailing spaces of its own — with numbers on,
+  // the superscript's trailing margin is what keeps one verse off the back of
+  // the previous one. Hide the numbers and adjacent verses collide
+  // ("...had your fill.Do not work..."), so emit a real space between them.
+  // It sits between the verse spans rather than inside one, so highlight
+  // ribbons and verse selection still stop at a verse's own glyphs, and it
+  // collapses away at a line break like any other space.
+  const needsVerseSpacing = !scriptureElements.showVerseNumbers;
+  let previousWasVerse = false;
 
   for (let i = 0; i < entries.length; ) {
     const entry = entries[i];
@@ -809,12 +819,14 @@ function renderChapterContent(
           {heading}
         </h3>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (entry.type === "line_break") {
       nodes.push(<div key={`break-${i}`} className="sb-line-break" />);
+      previousWasVerse = false;
       i += 1;
       continue;
     }
@@ -834,6 +846,7 @@ function renderChapterContent(
           )}
         </p>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
@@ -843,6 +856,11 @@ function renderChapterContent(
         ? getVerseHighlight(entry.number)
         : null;
       const colorKey = getHighlightColorKey(highlight);
+
+      if (needsVerseSpacing && previousWasVerse) {
+        nodes.push(" ");
+      }
+      previousWasVerse = true;
 
       if (colorKey === null) {
         nodes.push(renderVerseNode(entry, i));
@@ -901,9 +919,17 @@ function renderChapterContent(
           data-highlight-fill={presentation.fill ?? undefined}
           data-highlight-key={runKey}
         >
-          {runIndices.map((idx) =>
-            renderVerseNode(entries[idx] as ChapterVerse, idx)
-          )}
+          {runIndices.flatMap((idx, runIndex) => {
+            const verseNode = renderVerseNode(
+              entries[idx] as ChapterVerse,
+              idx
+            );
+            // Same separator as between top-level verses; inside a run it falls
+            // within the ribbon, which is correct — the whole run is one fill.
+            return needsVerseSpacing && runIndex > 0
+              ? [" ", verseNode]
+              : [verseNode];
+          })}
         </span>
       );
       i = j;

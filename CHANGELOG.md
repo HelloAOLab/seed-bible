@@ -8,6 +8,8 @@
 
 ### 🐛 Fixed
 
+- Put a space between verses when verse numbers are turned off, so one verse no longer runs straight into the end of the previous one ("...had your fill.Do not work..." now reads "...had your fill. Do not work...").
+
 ### 🗑️ Removed
 
 ## v1.2.1 — 2026-07-23
