@@ -1077,7 +1077,7 @@ function formatSelectedVerses(readingState: BibleReadingState) {
   const verses = readingState.selectedVerses.value;
   const bookName =
     readingState.chapterData.value?.book.name ?? verses[0]!.bookId;
-  console.log(readingState, "reading state");
+ 
   const translation = readingState.translation?.value?.shortName ?? "";
 
   if (verses.length === 0) return "";
