@@ -2,7 +2,7 @@ import { signal, type ReadonlySignal, type Signal } from "@preact/signals";
 
 export interface PostHog {
   isFeatureEnabled: (featureKey: string) => boolean;
-  onFeatureFlags: (callback: () => void) => void;
+  onFeatureFlags: (callback: (flags: string[]) => void) => void;
 }
 
 export const FEATURE_KEY_READING_PLANS = "reading-plans";
@@ -24,17 +24,16 @@ export function createFeaturesManager(posthog: PostHog | null) {
       s.value = true;
     } else if (import.meta.env.SSR || !posthog) {
       s.value = false;
-    } else {
-      s.value = posthog.isFeatureEnabled(featureKey) ?? false;
     }
 
     return s;
   };
 
   if (posthog) {
-    posthog.onFeatureFlags(() => {
+    posthog.onFeatureFlags((flags) => {
       for (const [featureKey, s] of signals.entries()) {
-        s.value = posthog.isFeatureEnabled(featureKey) ?? false;
+        const featureEnabled = flags.includes(featureKey);
+        s.value = featureEnabled ?? false;
       }
     });
   }
