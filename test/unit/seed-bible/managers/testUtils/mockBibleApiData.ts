@@ -174,6 +174,70 @@ export const nivBooks: TranslationBooks = {
   ],
 };
 
+const EDGE_TRANSLATION: Translation = {
+  ...AAB_TRANSLATION,
+  id: "EDGE",
+  name: "Edge Case Bible",
+  englishName: "Edge Case Bible",
+  shortName: "EDGE",
+  listOfBooksApiLink: "/api/EDGE/books.json",
+};
+
+/**
+ * A catalog built for navigation edge cases rather than realism:
+ *
+ * - `order` is non-contiguous (1, 19, 100) and the array is deliberately *not*
+ *   in `order` sequence, so any logic that walks the array by index instead of
+ *   by `order` gets the wrong answer.
+ * - `PSA` starts at chapter 3, so a book's first chapter is not always 1.
+ * - `TOB` is apocryphal and sits at the end of the canon.
+ */
+export const edgeCaseBooks: TranslationBooks = {
+  translation: EDGE_TRANSLATION,
+  books: [
+    {
+      id: "TOB",
+      name: "Tobit",
+      commonName: "Tobit",
+      title: null,
+      order: 100,
+      numberOfChapters: 3,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/EDGE/TOB/1.json",
+      lastChapterNumber: 3,
+      lastChapterApiLink: "/api/EDGE/TOB/3.json",
+      totalNumberOfVerses: 30,
+      isApocryphal: true,
+    },
+    {
+      id: "GEN",
+      name: "Genesis",
+      commonName: "Genesis",
+      title: null,
+      order: 1,
+      numberOfChapters: 2,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/EDGE/GEN/1.json",
+      lastChapterNumber: 2,
+      lastChapterApiLink: "/api/EDGE/GEN/2.json",
+      totalNumberOfVerses: 20,
+    },
+    {
+      id: "PSA",
+      name: "Psalms",
+      commonName: "Psalms",
+      title: null,
+      order: 19,
+      numberOfChapters: 5,
+      firstChapterNumber: 3,
+      firstChapterApiLink: "/api/EDGE/PSA/3.json",
+      lastChapterNumber: 7,
+      lastChapterApiLink: "/api/EDGE/PSA/7.json",
+      totalNumberOfVerses: 50,
+    },
+  ],
+};
+
 export const altTranslations: AvailableTranslations = {
   translations: [
     {

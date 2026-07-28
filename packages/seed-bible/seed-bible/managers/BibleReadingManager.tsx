@@ -188,8 +188,12 @@ export interface BibleReadingState {
   chapterNumber: Signal<number>;
   /** Available translations from the current endpoint. */
   availableTranslations: Signal<AvailableTranslations | null>;
-  /** Books metadata for the currently selected translation. */
-  translationBooks: Signal<TranslationBooks | null>;
+  /**
+   * Books metadata for the currently selected translation, or null when that
+   * translation's catalog has not been downloaded yet. Derived from the data
+   * manager's cache, so it always agrees with `translationId`.
+   */
+  translationBooks: ReadonlySignal<TranslationBooks | null>;
   /** Loaded chapter payload for the current translation/book/chapter. */
   chapterData: Signal<TranslationBookChapter | null>;
   /** Highlights scoped to the active chapter. */
@@ -796,6 +800,183 @@ function parseTranslationInput(value?: string | null): ParsedTranslationInput {
   }
 }
 
+/**
+ * Where the reader is, independent of whether that chapter's text has been
+ * downloaded yet. Kept deliberately separate from `TranslationBookChapter` so
+ * navigation can be answered from book metadata alone, with no network call.
+ */
+export interface ReadingPosition {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+}
+
+/** Stable string form of a position, for use as a Map key. */
+export function positionKey(position: ReadingPosition): string {
+  return `${position.translationId}/${position.bookId}/${position.chapterNumber}`;
+}
+
+export function positionsEqual(
+  a: ReadingPosition | null,
+  b: ReadingPosition | null
+): boolean {
+  if (!a || !b) {
+    return a === b;
+  }
+  return (
+    a.translationId === b.translationId &&
+    a.bookId === b.bookId &&
+    a.chapterNumber === b.chapterNumber
+  );
+}
+
+/**
+ * The book's first chapter number, which is not always 1. Defaults defensively,
+ * matching how the existing navigation code has always read this field.
+ */
+function firstChapterOf(book: TranslationBook): number {
+  return book.firstChapterNumber ?? 1;
+}
+
+/**
+ * The book's last chapter number, derived from `firstChapterNumber` plus
+ * `numberOfChapters` rather than read from `lastChapterNumber`.
+ *
+ * Both fields describe the same thing, but the app has always clamped using the
+ * arithmetic form, so deriving it keeps `resolveChapterInBook` and
+ * `nextPosition` in agreement even if a catalog reports the two inconsistently.
+ * `lastChapterNumber` is only used as a fallback when the chapter count is
+ * missing or nonsensical.
+ */
+function lastChapterOf(book: TranslationBook): number {
+  const first = firstChapterOf(book);
+  const count = book.numberOfChapters;
+  if (Number.isFinite(count) && count > 0) {
+    return first + count - 1;
+  }
+  const last = book.lastChapterNumber;
+  return Number.isFinite(last) && last >= first ? last : first;
+}
+
+/**
+ * Resolves a requested chapter number against a book: the request is honoured
+ * when it falls inside the book, and otherwise falls back to the book's first
+ * chapter.
+ *
+ * Note this is a fallback rather than a true clamp — asking for chapter 99999
+ * of Genesis lands on Genesis 1, not Genesis 50. That is the app's existing
+ * behaviour, previously duplicated in `selectTranslationAndChapter` and
+ * `loadInitialData`; this is the single home for it.
+ */
+export function resolveChapterInBook(
+  book: TranslationBook,
+  chapterNumber: number
+): number {
+  const first = firstChapterOf(book);
+  const last = lastChapterOf(book);
+  return chapterNumber >= first && chapterNumber <= last
+    ? chapterNumber
+    : first;
+}
+
+/**
+ * The book immediately before or after `currentBookId` in canonical order.
+ *
+ * `order` is the canonical sequence, and it is neither contiguous (a translation
+ * that omits books leaves gaps — the test catalog jumps 1, 2, 40) nor guaranteed
+ * to match the array's own ordering. So this picks the nearest `order` in the
+ * requested direction rather than indexing into the array.
+ */
+function adjacentBook(
+  books: TranslationBooks,
+  currentBookId: string,
+  direction: 1 | -1
+): TranslationBook | null {
+  const current = books.books.find((book) => book.id === currentBookId);
+  if (!current) {
+    return null;
+  }
+
+  let nearest: TranslationBook | null = null;
+  for (const book of books.books) {
+    if (book.id === current.id) {
+      continue;
+    }
+    const isAhead =
+      direction === 1 ? book.order > current.order : book.order < current.order;
+    if (!isAhead) {
+      continue;
+    }
+    const isNearer =
+      !nearest ||
+      (direction === 1
+        ? book.order < nearest.order
+        : book.order > nearest.order);
+    if (isNearer) {
+      nearest = book;
+    }
+  }
+  return nearest;
+}
+
+/**
+ * The chapter after `position`, or null when there is none (the last chapter of
+ * the last book). Crossing a book boundary lands on the next book's first
+ * chapter. Returns null when the book is not in this translation's catalog.
+ */
+export function nextPosition(
+  books: TranslationBooks,
+  position: ReadingPosition
+): ReadingPosition | null {
+  const book = books.books.find((entry) => entry.id === position.bookId);
+  if (!book) {
+    return null;
+  }
+
+  if (position.chapterNumber < lastChapterOf(book)) {
+    return { ...position, chapterNumber: position.chapterNumber + 1 };
+  }
+
+  const next = adjacentBook(books, position.bookId, 1);
+  if (!next) {
+    return null;
+  }
+  return {
+    ...position,
+    bookId: next.id,
+    chapterNumber: firstChapterOf(next),
+  };
+}
+
+/**
+ * The chapter before `position`, or null when there is none (the first chapter
+ * of the first book). Crossing a book boundary lands on the previous book's
+ * last chapter.
+ */
+export function previousPosition(
+  books: TranslationBooks,
+  position: ReadingPosition
+): ReadingPosition | null {
+  const book = books.books.find((entry) => entry.id === position.bookId);
+  if (!book) {
+    return null;
+  }
+
+  if (position.chapterNumber > firstChapterOf(book)) {
+    return { ...position, chapterNumber: position.chapterNumber - 1 };
+  }
+
+  const previous = adjacentBook(books, position.bookId, -1);
+  if (!previous) {
+    return null;
+  }
+  return {
+    ...position,
+    bookId: previous.id,
+    chapterNumber: lastChapterOf(previous),
+  };
+}
+
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
@@ -845,7 +1026,14 @@ export function createBibleReadingState(
   const bookId = signal<string | null>(options.initialBookId ?? null);
   const chapterNumber = signal<number>(normalizedInitialChapterNumber);
   const availableTranslations = signal<AvailableTranslations | null>(null);
-  const translationBooks = signal<TranslationBooks | null>(null);
+  // Derived from the data manager's cache rather than stored locally, so the
+  // catalog always matches `translationId` — including the instant it changes.
+  // A locally stored copy was only refreshed after a chapter finished loading,
+  // which left it describing the *previous* translation in between (wrong
+  // chapter counts, and a stale text direction for RTL translations).
+  const translationBooks = computed<TranslationBooks | null>(
+    () => dataManager.translationBooks.value.get(translationId.value) ?? null
+  );
   const chapterData = signal<TranslationBookChapter | null>(null);
   const chapterDataPromise = new Promise<void>((resolve) => {
     const cleanup = effect(() => {
@@ -1308,8 +1496,9 @@ export function createBibleReadingState(
     });
 
     if (translationBooks.value?.translation.id !== nextTranslationId) {
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
-      translationBooks.value = books;
+      // Populates the data manager's cache, which `translationBooks` derives
+      // from — no local assignment needed.
+      await dataManager.getTranslationBooks(nextTranslationId);
       availableTranslations.value = toAvailableTranslations(
         dataManager.availableTranslations.value
       );
@@ -1582,14 +1771,10 @@ export function createBibleReadingState(
         );
       }
 
-      const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const maxChapterNumber =
-        firstChapterNumber + selectedBook.numberOfChapters - 1;
-      const clampedChapterNumber =
-        nextChapterNumber >= firstChapterNumber &&
-        nextChapterNumber <= maxChapterNumber
-          ? nextChapterNumber
-          : firstChapterNumber;
+      const clampedChapterNumber = resolveChapterInBook(
+        selectedBook,
+        nextChapterNumber
+      );
 
       const chapter = await dataManager.getTranslationBookChapter(
         nextTranslationId,
@@ -1707,7 +1892,6 @@ export function createBibleReadingState(
       useFirstAvailableTranslation.value = false;
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
-      translationBooks.value = books;
       const firstBook = books.books[0];
       if (!firstBook) {
         throw new Error("No books available for selected translation.");
@@ -1719,15 +1903,10 @@ export function createBibleReadingState(
         : firstBook;
 
       const nextBookId = selectedBook.id;
-      const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const maxChapterNumber =
-        firstChapterNumber + selectedBook.numberOfChapters - 1;
-      const requestedChapterNumber = chapterNumber.value;
-      const nextChapterNumber =
-        requestedChapterNumber >= firstChapterNumber &&
-        requestedChapterNumber <= maxChapterNumber
-          ? requestedChapterNumber
-          : firstChapterNumber;
+      const nextChapterNumber = resolveChapterInBook(
+        selectedBook,
+        chapterNumber.value
+      );
 
       bookId.value = nextBookId;
       chapterNumber.value = nextChapterNumber;
@@ -1988,26 +2167,65 @@ export function createBibleReadingState(
     return query;
   };
 
-  // Availability surfaced to consumers: the highest-priority enabled
-  // extension's hasNext/hasPrevious override, falling back to whether the
-  // current chapter has a next/previous chapter link.
-  const hasNext = computed<boolean>(() => {
+  /**
+   * Availability surfaced to consumers: the highest-priority enabled
+   * extension's override wins, then the book catalog, and only then the loaded
+   * chapter's next/previous link.
+   *
+   * The catalog answers this for wherever the reader currently *is*, rather
+   * than for whichever chapter happens to be loaded — so the chevrons stay
+   * correct while a chapter is still downloading. The link fallback covers the
+   * window before a translation's catalog has arrived, so they don't flash
+   * disabled on first paint or mid-translation-switch.
+   */
+  const resolveAvailability = (
+    pick: (
+      instance: ReadingExtensionInstance
+    ) => ReadonlySignal<boolean> | undefined,
+    step: (
+      books: TranslationBooks,
+      position: ReadingPosition
+    ) => ReadingPosition | null,
+    chapterLink: (chapter: TranslationBookChapter) => string | null | undefined
+  ): boolean => {
     for (const runtime of orderedEnabledRuntimes.value) {
-      if (runtime.instance.hasNext) {
-        return runtime.instance.hasNext.value;
+      const override = pick(runtime.instance);
+      if (override) {
+        return override.value;
       }
     }
-    return !!chapterData.value?.nextChapterApiLink;
-  });
 
-  const hasPrevious = computed<boolean>(() => {
-    for (const runtime of orderedEnabledRuntimes.value) {
-      if (runtime.instance.hasPrevious) {
-        return runtime.instance.hasPrevious.value;
-      }
+    const books = translationBooks.value;
+    const currentBookId = bookId.value;
+    if (books && currentBookId) {
+      return (
+        step(books, {
+          translationId: translationId.value,
+          bookId: currentBookId,
+          chapterNumber: chapterNumber.value,
+        }) !== null
+      );
     }
-    return !!chapterData.value?.previousChapterApiLink;
-  });
+
+    const chapter = chapterData.value;
+    return !!(chapter && chapterLink(chapter));
+  };
+
+  const hasNext = computed<boolean>(() =>
+    resolveAvailability(
+      (instance) => instance.hasNext,
+      nextPosition,
+      (chapter) => chapter.nextChapterApiLink
+    )
+  );
+
+  const hasPrevious = computed<boolean>(() =>
+    resolveAvailability(
+      (instance) => instance.hasPrevious,
+      previousPosition,
+      (chapter) => chapter.previousChapterApiLink
+    )
+  );
 
   loadInitialData();
 

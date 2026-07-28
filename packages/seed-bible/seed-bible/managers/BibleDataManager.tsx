@@ -14,6 +14,17 @@ export interface BibleDataManager {
   api: FreeUseBibleAPI;
   getTranslations: (endpoint?: string) => Promise<Translation[]>;
   getTranslationBooks: (translationId: string) => Promise<TranslationBooks>;
+
+  /**
+   * Returns the already-downloaded book catalog for a translation, or null when
+   * it has not been fetched yet. Never hits the network, so callers can answer
+   * questions like "which chapter comes next" synchronously.
+   *
+   * Reads the cache **untracked**, so calling this from inside an `effect()` or
+   * `computed()` does not subscribe that reaction to the catalog. Reactive
+   * consumers should read the `translationBooks` signal directly instead.
+   */
+  getCachedTranslationBooks: (translationId: string) => TranslationBooks | null;
   getTranslationBookChapter: (
     translationId: string,
     book: string,
@@ -563,6 +574,12 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     return books;
   };
 
+  const getCachedTranslationBooks = (
+    translationId: string
+  ): TranslationBooks | null => {
+    return translationBooks.peek().get(translationId) ?? null;
+  };
+
   const getTranslationBookChapter = async (
     translationId: string,
     book: string,
@@ -641,6 +658,7 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     api,
     getTranslations,
     getTranslationBooks,
+    getCachedTranslationBooks,
     getTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,

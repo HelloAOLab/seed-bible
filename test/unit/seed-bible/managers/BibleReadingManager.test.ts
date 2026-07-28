@@ -1,5 +1,10 @@
 import {
   createBibleReadingState as createRawBibleReadingState,
+  nextPosition,
+  positionKey,
+  positionsEqual,
+  previousPosition,
+  resolveChapterInBook,
   type BibleReadingState,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -22,6 +27,7 @@ import {
   translations,
   type WebResponseMap,
   aabBooks,
+  edgeCaseBooks,
 } from "./testUtils/mockBibleApiData";
 import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
@@ -123,6 +129,118 @@ async function waitFor(
 async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
   await waitFor(() => state.loading.value === false);
 }
+
+describe("reading position helpers", () => {
+  const at = (bookId: string, chapterNumber: number) => ({
+    translationId: "EDGE",
+    bookId,
+    chapterNumber,
+  });
+
+  describe("nextPosition", () => {
+    it("advances within a book", () => {
+      expect(nextPosition(edgeCaseBooks, at("PSA", 5))).toEqual(at("PSA", 6));
+    });
+
+    it("crosses a gap in book order, ignoring the array's own ordering", () => {
+      // GEN is order 1 and PSA is order 19, with nothing in between, and the
+      // fixture lists them as [TOB, GEN, PSA] — so indexing the array would
+      // land on TOB instead.
+      expect(nextPosition(edgeCaseBooks, at("GEN", 2))).toEqual(at("PSA", 3));
+    });
+
+    it("lands on the next book's first chapter even when that is not 1", () => {
+      expect(nextPosition(edgeCaseBooks, at("GEN", 2))?.chapterNumber).toBe(3);
+    });
+
+    it("advances into apocryphal books", () => {
+      expect(nextPosition(edgeCaseBooks, at("PSA", 7))).toEqual(at("TOB", 1));
+    });
+
+    it("returns null at the last chapter of the last book", () => {
+      expect(nextPosition(edgeCaseBooks, at("TOB", 3))).toBeNull();
+    });
+
+    it("returns null for a book that is not in the catalog", () => {
+      expect(nextPosition(edgeCaseBooks, at("ZZZ", 1))).toBeNull();
+    });
+
+    it("crosses the book gap in the standard fixture", () => {
+      const position = {
+        translationId: "AAB",
+        bookId: "EXO",
+        chapterNumber: 40,
+      };
+      expect(nextPosition(aabBooks, position)).toEqual({
+        translationId: "AAB",
+        bookId: "MAT",
+        chapterNumber: 1,
+      });
+    });
+  });
+
+  describe("previousPosition", () => {
+    it("steps back within a book", () => {
+      expect(previousPosition(edgeCaseBooks, at("PSA", 6))).toEqual(
+        at("PSA", 5)
+      );
+    });
+
+    it("crosses back to the previous book's last chapter", () => {
+      expect(previousPosition(edgeCaseBooks, at("TOB", 1))).toEqual(
+        at("PSA", 7)
+      );
+    });
+
+    it("stops at a book's own first chapter rather than assuming 1", () => {
+      expect(previousPosition(edgeCaseBooks, at("PSA", 3))).toEqual(
+        at("GEN", 2)
+      );
+    });
+
+    it("returns null at the first chapter of the first book", () => {
+      expect(previousPosition(edgeCaseBooks, at("GEN", 1))).toBeNull();
+    });
+  });
+
+  describe("resolveChapterInBook", () => {
+    const psalms = edgeCaseBooks.books.find((book) => book.id === "PSA")!;
+
+    it("keeps a chapter that falls inside the book", () => {
+      expect(resolveChapterInBook(psalms, 5)).toBe(5);
+    });
+
+    it("accepts the book's own boundaries", () => {
+      expect(resolveChapterInBook(psalms, 3)).toBe(3);
+      expect(resolveChapterInBook(psalms, 7)).toBe(7);
+    });
+
+    it("falls back to the book's first chapter when out of range", () => {
+      // Not a clamp: an over-large request goes to the *first* chapter, which
+      // is the behaviour this replaced.
+      expect(resolveChapterInBook(psalms, 2)).toBe(3);
+      expect(resolveChapterInBook(psalms, 99999)).toBe(3);
+    });
+  });
+
+  describe("positionKey / positionsEqual", () => {
+    it("treats identical positions as equal", () => {
+      expect(positionsEqual(at("GEN", 1), at("GEN", 1))).toBe(true);
+      expect(positionKey(at("GEN", 1))).toBe(positionKey(at("GEN", 1)));
+    });
+
+    it("distinguishes positions that differ in any field", () => {
+      expect(positionsEqual(at("GEN", 1), at("GEN", 2))).toBe(false);
+      expect(positionsEqual(at("GEN", 1), at("PSA", 1))).toBe(false);
+      expect(positionKey(at("GEN", 1))).not.toBe(positionKey(at("GEN", 2)));
+    });
+
+    it("handles nulls", () => {
+      expect(positionsEqual(null, null)).toBe(true);
+      expect(positionsEqual(at("GEN", 1), null)).toBe(false);
+    });
+  });
+});
 
 describe("createBibleReadingState", () => {
   let logSpy: Mock;
@@ -573,6 +691,65 @@ describe("createBibleReadingState", () => {
       makeExampleUrl("/api/AAB/books.json")
     );
     expect(state.translationBooks.value).toEqual(aabBooks);
+  });
+
+  it("derives hasNext/hasPrevious from the book catalog, not the loaded chapter", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/AAB/MAT/28.json")]: createResponse(
+        makeChapter(aabBooks, "MAT", 28)
+      ),
+    });
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.hasPrevious.value).toBe(false);
+    expect(state.hasNext.value).toBe(true);
+
+    await state.selectChapter("MAT", 28);
+
+    // Matthew is the last book in this catalog, so there is nothing after
+    // chapter 28 — even though the chapter payload still carries a
+    // `nextChapterApiLink`, which is what used to be consulted here.
+    expect(state.chapterData.value?.nextChapterApiLink).toBeTruthy();
+    expect(state.hasNext.value).toBe(false);
+    expect(state.hasPrevious.value).toBe(true);
+  });
+
+  it("falls back to the chapter's links while a translation's catalog is missing", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    expect(state.hasNext.value).toBe(true);
+
+    // Point at a translation whose catalog has not been downloaded. There is
+    // nothing to derive adjacency from, so the loaded chapter's links stand in
+    // rather than reporting "no next chapter" and disabling the controls.
+    state.translationId.value = "NIV";
+
+    expect(state.translationBooks.value).toBeNull();
+    expect(state.chapterData.value?.nextChapterApiLink).toBeTruthy();
+    expect(state.hasNext.value).toBe(true);
+  });
+
+  it("tracks the catalog of whichever translation is selected", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/NIV/books.json")]: createResponse(nivBooks),
+    });
+    const dataManager = createDataManager();
+    const state = createBibleReadingState(dataManager);
+    await waitForInitialLoad(state);
+    expect(state.translationBooks.value).toEqual(aabBooks);
+
+    await dataManager.getTranslationBooks("NIV");
+    state.translationId.value = "NIV";
+
+    // The catalog is derived rather than stored, so it swaps with the
+    // translation id instead of lagging behind it until a chapter loads.
+    expect(state.translationBooks.value).toEqual(nivBooks);
   });
 
   it("selectBook() loads the selected book", async () => {
