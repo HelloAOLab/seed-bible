@@ -5,6 +5,7 @@ import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
   type BibleReadingState,
+  type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
@@ -1012,6 +1013,28 @@ function openShareModal(
  * @param readingState The reading state containing the selected verses to format.
  * @returns A string representing the formatted selected verses.
  */
+function groupConsecutiveVerses(verses: BibleSelectedVerse[]) {
+  const groups: BibleSelectedVerse[][] = [];
+  let current: BibleSelectedVerse[] = [];
+
+  for (const verse of verses) {
+    if (
+      current.length === 0 ||
+      verse.verse.number === current[current.length - 1]!.verse.number + 1
+    ) {
+      current.push(verse);
+    } else {
+      groups.push(current);
+      current = [verse];
+    }
+  }
+
+  if (current.length) {
+    groups.push(current);
+  }
+
+  return groups;
+}
 function formatVerseRanges(verseNumbers: number[]): string {
   if (verseNumbers.length === 0) return "";
 
@@ -1034,40 +1057,50 @@ function formatVerseRanges(verseNumbers: number[]): string {
 
   return ranges.join(",");
 }
-function formatSelectedVerses(readingState: BibleReadingState) {
-  const bookName = readingState.chapterData.value?.book.name;
-  console.log(readingState, "reading state");
-  const translation = readingState.chapterData.value?.translation.id ?? "";
+function extractVerseText(verse: BibleSelectedVerse): string {
+  return verse.verse.content
+    .map((part) => {
+      if (typeof part === "string") return part;
 
+      if (part && typeof part === "object" && "text" in part) {
+        return (part as { text: string }).text;
+      }
+
+      return "";
+    })
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?’”)\]])/g, "$1")
+    .trim();
+}
+function formatSelectedVerses(readingState: BibleReadingState) {
   const verses = readingState.selectedVerses.value;
+  const bookName =
+    readingState.chapterData.value?.book.name ?? verses[0]!.bookId;
+  console.log(readingState, "reading state");
+  const translation = readingState.translation?.value?.shortName ?? "";
 
   if (verses.length === 0) return "";
 
-  const text = verses
-    .map((verse) =>
-      verse.verse.content
-        .map((part) => {
-          if (typeof part === "string") return part;
-          if (part && typeof part === "object" && "text" in part) {
-            return (part as { text: string }).text;
-          }
-          return "";
-        })
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .replace(/\s+([,.;:!?’”)\]])/g, "$1")
-        .trim()
-    )
-    .join(" ");
+  const groups = groupConsecutiveVerses(readingState.selectedVerses.value);
 
-  // Build the reference
-  const chapter = verses[0]!.chapterNumber;
+  return groups
+    .map((group) => {
+      const text = group.map((verse) => extractVerseText(verse)).join(" ");
 
-  const verseRange = formatVerseRanges(verses.map((v) => v.verse.number));
+      const range = formatVerseRanges(group.map((v) => v.verse.number));
 
-  const reference = `${bookName} ${chapter}:${verseRange} ${translation}`;
+      const reference = [
+        bookName ?? group[0]!.bookId,
+        `${group[0]!.chapterNumber}:${range}`,
+        translation,
+      ]
+        .filter(Boolean)
+        .join(" ");
 
-  return `${text} (${reference})`;
+      return `${text} (${reference})`;
+    })
+    .join("\n\n");
 }
 
 /**

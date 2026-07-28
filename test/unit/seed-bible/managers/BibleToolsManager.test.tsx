@@ -598,7 +598,7 @@ describe("createBibleToolsManager", () => {
       await tool?.onSelect();
 
       expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(
-        "In the beginning I am the light God created. (Genesis 1:1)\n\nPoetry A Poetry B (Genesis 1:2)"
+        "In the beginning I am the light God created. Poetry A Poetry B (Genesis 1:1-2)"
       );
     });
 
