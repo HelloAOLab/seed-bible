@@ -12,8 +12,17 @@ function metric(covered: number, total: number) {
   };
 }
 
+function fileEntry(covered: number, total: number) {
+  return {
+    lines: metric(covered, total),
+    statements: metric(covered, total),
+    functions: metric(covered, total),
+    branches: metric(covered, total),
+  };
+}
+
 function summary(
-  files: Record<string, number> = {},
+  files: Record<string, { covered: number; total: number }> = {},
   totalOverrides: Partial<CoverageSummaryJson["total"]> = {}
 ): CoverageSummaryJson {
   const total = {
@@ -24,13 +33,10 @@ function summary(
     ...totalOverrides,
   };
   const result: CoverageSummaryJson = { total };
-  for (const [filePath, pct] of Object.entries(files)) {
-    result[filePath] = {
-      lines: metric(pct, 100),
-      statements: metric(pct, 100),
-      functions: metric(pct, 100),
-      branches: metric(pct, 100),
-    };
+  for (const [filePath, { covered, total: fileTotal }] of Object.entries(
+    files
+  )) {
+    result[filePath] = fileEntry(covered, fileTotal);
   }
   return result;
 }
@@ -45,66 +51,70 @@ describe("renderCoverageSummary", () => {
     expect(markdown).toContain("| Lines | 92.0% | 92 / 100 |");
   });
 
-  it("omits the low-coverage section when nothing is below the threshold", () => {
-    const markdown = renderCoverageSummary(summary({ "src/foo.ts": 80 }));
-    expect(markdown).not.toContain("Files Below");
-  });
-
-  it("lists files below the low-coverage threshold, worst first", () => {
+  it("groups files under their packages/<name> directory", () => {
     const markdown = renderCoverageSummary(
-      summary({ "src/bad.ts": 10, "src/worse.ts": 5, "src/fine.ts": 90 })
+      summary({
+        "packages/seed-bible/foo.ts": { covered: 10, total: 100 },
+        "packages/seed-bible/bar.ts": { covered: 20, total: 100 },
+        "packages/scripture-map/baz.ts": { covered: 90, total: 100 },
+      })
     );
-    expect(markdown).toContain("#### Files Below 50% Line Coverage");
-    const worseIndex = markdown.indexOf("src/worse.ts");
-    const badIndex = markdown.indexOf("src/bad.ts");
-    expect(worseIndex).toBeGreaterThan(-1);
-    expect(worseIndex).toBeLessThan(badIndex);
-    expect(markdown).not.toContain("src/fine.ts");
+    expect(markdown).toContain("#### Coverage by Package");
+    expect(markdown).toContain(
+      "| `packages/seed-bible` | 15.0% | 15.0% | 15.0% | 15.0% |"
+    );
+    expect(markdown).toContain(
+      "| `packages/scripture-map` | 90.0% | 90.0% | 90.0% | 90.0% |"
+    );
   });
 
-  it("respects a custom low-coverage threshold", () => {
-    const markdown = renderCoverageSummary(summary({ "src/mid.ts": 60 }), {
-      lowCoverageThreshold: 70,
-    });
-    expect(markdown).toContain("#### Files Below 70% Line Coverage");
-    expect(markdown).toContain("src/mid.ts");
+  it("sorts packages worst line coverage first", () => {
+    const markdown = renderCoverageSummary(
+      summary({
+        "packages/good/a.ts": { covered: 95, total: 100 },
+        "packages/bad/a.ts": { covered: 5, total: 100 },
+        "packages/mid/a.ts": { covered: 50, total: 100 },
+      })
+    );
+    const badIndex = markdown.indexOf("packages/bad");
+    const midIndex = markdown.indexOf("packages/mid");
+    const goodIndex = markdown.indexOf("packages/good");
+    expect(badIndex).toBeLessThan(midIndex);
+    expect(midIndex).toBeLessThan(goodIndex);
   });
 
-  it("caps the low-coverage list and notes how many were hidden", () => {
-    const files: Record<string, number> = {};
-    for (let i = 0; i < 20; i++) {
-      files[`src/file${i}.ts`] = 1;
-    }
-    const markdown = renderCoverageSummary(summary(files));
-    expect(markdown).toContain("+5 more file(s) not shown.");
+  it("falls back to the top-level directory for paths outside packages/", () => {
+    const markdown = renderCoverageSummary(
+      summary({
+        "script/lib/foo.ts": { covered: 10, total: 100 },
+      })
+    );
+    expect(markdown).toContain("`script`");
   });
 
-  it("strips a `root` prefix from absolute file paths", () => {
+  it("strips a `root` prefix from absolute file paths before grouping", () => {
     const withAbsolutePaths: CoverageSummaryJson = {
       total: summary().total,
-      "/repo/src/deep/bad.ts": {
-        lines: metric(10, 100),
-        statements: metric(10, 100),
-        functions: metric(10, 100),
-        branches: metric(10, 100),
-      },
+      "/repo/packages/scripture-map/deep/bad.ts": fileEntry(10, 100),
     };
     const markdown = renderCoverageSummary(withAbsolutePaths, {
       root: "/repo",
     });
-    expect(markdown).toContain("`src/deep/bad.ts`");
-    expect(markdown).not.toContain("/repo/src/deep/bad.ts");
+    expect(markdown).toContain("`packages/scripture-map`");
+    expect(markdown).not.toContain("/repo/packages");
   });
 
-  it("renders n/a for files with no coverable lines", () => {
-    const markdown = renderCoverageSummary(
-      summary(
-        {},
-        {
-          lines: metric(0, 0),
-        }
-      )
-    );
-    expect(markdown).toContain("| Lines | n/a | 0 / 0 |");
+  it("renders n/a for a package with no coverable lines", () => {
+    const withEmptyFile: CoverageSummaryJson = {
+      total: summary().total,
+      "packages/empty/a.ts": fileEntry(0, 0),
+    };
+    const markdown = renderCoverageSummary(withEmptyFile);
+    expect(markdown).toContain("| `packages/empty` | n/a | n/a | n/a | n/a |");
+  });
+
+  it("omits the by-package section when there are no per-file entries", () => {
+    const markdown = renderCoverageSummary(summary());
+    expect(markdown).not.toContain("Coverage by Package");
   });
 });

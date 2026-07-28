@@ -16,11 +16,6 @@ program
     "Path to the coverage-summary.json produced by vitest's json-summary reporter."
   )
   .requiredOption("--out <file>", "Path to write the markdown summary to.")
-  .option(
-    "--low-coverage-threshold <n>",
-    "Call out files with line coverage below this percentage.",
-    "50"
-  )
   .action(async (options) => {
     // The coverage step may not have produced a report at all (e.g. the test
     // run crashed before vitest could write it) — note that instead of
@@ -37,7 +32,6 @@ program
       await readFile(options.summary, "utf-8")
     );
     const markdown = renderCoverageSummary(summary, {
-      lowCoverageThreshold: Number(options.lowCoverageThreshold),
       root: process.cwd(),
     });
     await writeFile(options.out, markdown, "utf-8");
