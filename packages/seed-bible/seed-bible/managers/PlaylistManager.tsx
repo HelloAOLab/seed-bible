@@ -1200,6 +1200,10 @@ export function createPlaylistManager(
     };
     chats.addContext({
       id: PLAYLIST_EDITOR_CHAT_CONTEXT_ID,
+      label: {
+        key: "playlist-editor",
+        defaultValue: "Playlist Editor",
+      },
       instructions: `The user is currently creating or editing a Bible reading playlist. Use the provided tools to add, update, or remove playlist items, and to update the playlist's title and description, as the user asks. Playlist: ${JSON.stringify(generatedPlaylist)}`,
       tools: getEditPlaylistTools(),
     });

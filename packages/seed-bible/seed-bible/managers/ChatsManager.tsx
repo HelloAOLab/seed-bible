@@ -143,6 +143,11 @@ export interface IdentifiedLocalChatContext extends LocalChatContext {
    * with an `id` that is already present replaces the existing one.
    */
   id: string;
+
+  /**
+   * The label for the context, which can be used to display a description of the context to the user.
+   */
+  label: TranslatableTitle;
 }
 
 export interface ChatContext {
