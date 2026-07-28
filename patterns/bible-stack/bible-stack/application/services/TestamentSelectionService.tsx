@@ -4,6 +4,7 @@ import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type {
   TestamentSelectionAdapterPort,
   TestamentSelectionEventPort,
+  TestamentSelectionPieceHighlighterPort,
 } from "../ports/out/TestamentSelection";
 import type { SectionSpawnerPort } from "../ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
@@ -13,6 +14,7 @@ import type { StackUpdatePacing } from "../../domain/models/stacks";
 interface ServiceParams {
   testamentSelectionAdapterPort: TestamentSelectionAdapterPort;
   testamentSelectionEventPort: TestamentSelectionEventPort;
+  pieceHighlighterPort: TestamentSelectionPieceHighlighterPort;
   sectionSpawnerPort: SectionSpawnerPort;
   stackUpdateServicePort: StackUpdateServicePort;
   // pieceLifecycleServicePort: PieceLifecycleServicePort;
@@ -21,6 +23,7 @@ interface ServiceParams {
 export class TestamentSelectionService implements TestamentSelectionPort {
   #testamentSelectionAdapterPort: ServiceParams["testamentSelectionAdapterPort"];
   #testamentSelectionEventPort: ServiceParams["testamentSelectionEventPort"];
+  #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
   #sectionSpawnerPort: ServiceParams["sectionSpawnerPort"];
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
   // #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
@@ -28,12 +31,14 @@ export class TestamentSelectionService implements TestamentSelectionPort {
   constructor({
     testamentSelectionAdapterPort,
     testamentSelectionEventPort,
+    pieceHighlighterPort,
     sectionSpawnerPort,
     stackUpdateServicePort,
     // pieceLifecycleServicePort,
   }: ServiceParams) {
     this.#testamentSelectionAdapterPort = testamentSelectionAdapterPort;
     this.#testamentSelectionEventPort = testamentSelectionEventPort;
+    this.#pieceHighlighterPort = pieceHighlighterPort;
     this.#sectionSpawnerPort = sectionSpawnerPort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
     // this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
@@ -43,8 +48,16 @@ export class TestamentSelectionService implements TestamentSelectionPort {
    * Splits the testament into sections and spawns + attaches each one so the
    * adapter can lay them out. Mirrors SectionSelectionService.#prepareSelection.
    */
-  #prepareSelection(data: StackTestamentData): void {
+  async #prepareSelection(data: StackTestamentData): Promise<void> {
     this.#testamentSelectionEventPort.emit("OnTestamentBeginSelect", { data });
+
+    // Unhighlight anything still highlighted in this bible before the testament
+    // splits into sections (runs as a transition, so it isn't blocked by the
+    // ongoing selection sequence). Label removal is owned by the unhighlight.
+    const bibleId = data.getParentId("stackBibleId");
+    if (data.isInsideBible && bibleId) {
+      await this.#pieceHighlighterPort.unhighlightBiblePieces(bibleId);
+    }
 
     const selecting = data.changeSelectionState("RequestSelect");
 
@@ -80,7 +93,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     pacing?: StackUpdatePacing;
     source: PieceSelectionSource;
   }): Promise<void> {
-    this.#prepareSelection(data);
+    await this.#prepareSelection(data);
 
     await this.#testamentSelectionAdapterPort.select(data);
 

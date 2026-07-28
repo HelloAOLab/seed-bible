@@ -1,24 +1,24 @@
-import type { SectionStackUpdaterPort } from "@packages/Bible Stack/bibleStack/application/ports/out/StackSectionUpdater";
+import type { SectionStackUpdaterPort } from "../../../application/ports/out/StackSectionUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "@packages/Bible Stack/bibleStack/application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
-import type { StackUpdatePacing } from "@packages/Bible Stack/bibleStack/domain/models/stacks";
-import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
+import type { StackSectionData } from "../../../domain/entities/StackSectionData";
+import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { StackConfigProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider";
+import type { LayoutConfigProvider as StackConfigProvider } from "../../config/layout/LayoutConfigProvider";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { BookStackUpdaterAdapter } from "./BookStackUpdaterAdapter";
-import type { SectionBot } from "@packages/Bible Stack/bibleStack/models/stack";
-import type { PieceBot } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/casualos";
-import type { Scales } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/layout";
-import type { Piece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+import type { SectionBot } from "../../models/stack";
+import type { PieceBot } from "../../models/casualos";
+import type { Scales } from "../../functions/layout";
+import type { Piece } from "../../../domain/models/canvas";
 import type {
   SetStrictTag,
   ApplyStrictMod,
   AnimateStrictTag,
-} from "bibleVizUtils.infrastructure.functions.casualos";
+} from "../../functions/casualos";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -618,7 +618,7 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
     // Identity tags are idempotent; re-applying keeps the highlight colour fresh.
     this.#applyStrictMod(shadowBot, {
       transformer: sectionBot.tags.transformer,
-      color: data.highlightColor ?? data.pieceInfo.color,
+      color: data.paintColor ?? data.pieceInfo.color,
       sectionName: data.pieceInfo.name,
       sectionDataId: data.id,
     });

@@ -1,7 +1,6 @@
 import type { PortalCameraType } from "@casual-simulation/aux-common";
-import type { ExperienceConfigProviderPort as ExperienceAdapterConfigProviderPort } from "bibleStack.infrastructure.ports.experience";
-import type { ExperienceConfigProviderPort as ExperienceServiceConfigProviderPort } from "@packages/Bible Stack/bibleStack/application/ports/experience";
-import type { WorldPosition } from "bibleStack.domain.models.spatial";
+import type { ExperienceConfigProviderPort } from "../../../application/ports/experience";
+import type { WorldPosition } from "../../../domain/models/spatial";
 
 const TARGET_DIMENSION = "stack";
 const TARGET_PORTAL_CAMERA_TYPE: PortalCameraType = "orthographic";
@@ -13,11 +12,7 @@ const APP_TYPE = "canvas";
 const ININITAL_BIBLE_CREATION_DELAY = 500;
 const BIBLE_CREATION_POSITION = { x: 0, y: 0, z: 0 };
 
-export class ExperienceConfigProvider
-  implements
-    ExperienceAdapterConfigProviderPort,
-    ExperienceServiceConfigProviderPort
-{
+export class ExperienceConfigProvider implements ExperienceConfigProviderPort {
   getTargetDimension(): string {
     return TARGET_DIMENSION;
   }

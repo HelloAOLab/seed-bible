@@ -407,6 +407,33 @@ export class PieceHighlightService implements PieceHighlighterPort {
     void this.#pieceLabelServicePort.changeIntensity(piece, intensity, pacing);
   }
 
+  async unhighlightBiblePieces(
+    bibleId: string,
+    pacing: HighlightPacing = "Regular"
+  ): Promise<void> {
+    const piecesToUnhighlight = [...this.#highlightedPiecesIds.values()].filter(
+      (piece) => {
+        const data = this.#pieceDataRepositoryPort.getPieceData(piece);
+        return (
+          !!data &&
+          data.getParentId("stackBibleId") === bibleId &&
+          !data.isOnTheGround &&
+          data.highlightState !== HighlightStates.Unhighlighting
+        );
+      }
+    );
+
+    await Promise.all(
+      piecesToUnhighlight.map((piece) =>
+        this.tryUnhighlightPiece({
+          piece,
+          source: UnhighlightRequestSources.Transition,
+          pacing,
+        })
+      )
+    );
+  }
+
   clearHighlightedPieces(): void {
     for (const piece of this.#highlightedPiecesIds.values()) {
       const data = this.#pieceDataRepositoryPort.getPieceData(piece);

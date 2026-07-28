@@ -1,6 +1,7 @@
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackChapterData } from "../../domain/entities/StackChapterData";
+import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { PieceSelectionSources } from "../../domain/models/canvas";
 import type { UserReadingInstance } from "../../domain/models/reading";
 import type { ScripturePort } from "../ports/in/Scripture";
@@ -15,7 +16,6 @@ import type {
   PieceAdapterPort,
   SequenceStateServicePort,
   AwaiterPort,
-  TestamentSelectionServicePort,
 } from "../ports/userPresence";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
@@ -29,6 +29,7 @@ import type {
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
+import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;
@@ -45,7 +46,7 @@ interface ServiceParams {
   bibleSequenceServicePort: BibleSequenceServicePort;
   bookSelectionServicePort: BookSelectionServicePort;
   awaiterPort: AwaiterPort;
-  testamentSelectionServicePort: TestamentSelectionServicePort;
+  testamentSelectionServicePort: TestamentSelectionPort;
   sectionSelectionServicePort: SectionSelectionServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
   arrangementServicePort: ArrangementServicePort;
@@ -108,6 +109,21 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#explodedViewServicePort = explodedViewServicePort;
     this.#arrangementServicePort = arrangementServicePort;
+  }
+
+  handleSectionExploded(payload: { sectionData: StackSectionData }): void {
+    const activeTab = this.#presenceProviderPort.getActiveTab();
+    if (activeTab) {
+      const activeBook = payload.sectionData.childrenData
+        .flat()
+        .find((bookData) => {
+          return (
+            bookData.getPieceInfoProperty("bookId") === activeTab.bookId &&
+            bookData.isActivelySelected()
+          );
+        });
+      if (activeBook) this.update();
+    }
   }
 
   async update(): Promise<void> {
@@ -308,9 +324,9 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
 
     // Step 2: Select the testament that contains the target chapter
     if (testamentData && !testamentData.isSplitIntoSections) {
-      await this.#testamentSelectionServicePort.selectTestament({
+      await this.#testamentSelectionServicePort.select({
         data: testamentData,
-        pacing,
+        pacing: pacing === "Regular" ? "Regular" : "Fast",
         source: PieceSelectionSources.StackPresenceNavigation,
       });
     } else {
@@ -348,7 +364,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     if (sectionData && !sectionData.isInExplodedView) {
       await this.#explodedViewServicePort.explodeSection({
         data: sectionData,
-        pacing,
+        pacing: pacing === "Regular" ? "Regular" : "Fast",
       });
     } else {
       await this.#awaiterPort.sleep(1);

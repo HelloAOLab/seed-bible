@@ -18,8 +18,7 @@ export interface InteractionRegistryServicePort {
 }
 
 export interface ExperienceAdapterPort {
-  closeExperience(id: string): void;
-  displayExperience(): string;
+  displayExperience(): void;
 }
 
 export interface ExperienceConfigProviderPort {

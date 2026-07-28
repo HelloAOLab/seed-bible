@@ -1,4 +1,4 @@
-import type { PieceUnhighlightSchedulerAdapterPort } from "bibleStack.application.ports.pieces";
+import type { PieceUnhighlightSchedulerAdapterPort } from "../../../application/ports/pieces";
 
 export class PieceUnhighlightSchedulerAdapter implements PieceUnhighlightSchedulerAdapterPort {
   schedule(delay: number, callback: () => Promise<void>): string {

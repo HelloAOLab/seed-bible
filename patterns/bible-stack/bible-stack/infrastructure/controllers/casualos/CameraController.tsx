@@ -1,5 +1,5 @@
-import type { ViewportPort } from "@packages/Bible Stack/bibleStack/application/ports/in/ViewportPort";
-import type { RenderOrderAdapter } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/casualos/renderOrderAdapter";
+import type { ViewportPort } from "../../../application/ports/in/ViewportPort";
+import type { RenderOrderAdapter } from "../../adapters/environment/RenderOrderAdapter";
 
 interface ControllerParams {
   viewportPort: ViewportPort;

@@ -2,6 +2,7 @@ import {
   AnimateStrictTag,
   ApplyStrictMod,
   GetBotScales,
+  SetStrictTag,
 } from "../../functions/casualos";
 import type { TestamentSelectionAdapterPort } from "../../../application/ports/out/TestamentSelection";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
@@ -13,6 +14,21 @@ import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { SectionBot, BookBot } from "../../models/stack";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { TestamentSelectionConfigProvider } from "../../config/testamentSelection/TestamentSelectionConfigProvider";
+import { GetDarkerColor } from "../../../domain/functions/colors";
+import type { SectionInfoMapper } from "../../mappers/SectionInfoMapper";
+import type { BookInfoMapper } from "../../mappers/BookInfoMapper";
+import type { PieceBotTags } from "../../models/casualos";
+import type { Piece } from "../../../domain/models/canvas";
+import { StackSectionData } from "../../../domain/entities/StackSectionData";
+import type { StackBibleData } from "../../../domain/entities/StackBibleData";
+import type {
+  CameraAdapterPort,
+  RenderOrderAdapterPort,
+} from "../../../application/ports/bibleLifecycle";
+import type { BibleDataRepository } from "./BibleDataRepository";
+import type { PieceDataRepository } from "./PieceDataRepository";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { PieceAdapter } from "./PieceAdapter";
 
 interface AdapterParams {
   getDimension(): string;
@@ -22,6 +38,14 @@ interface AdapterParams {
   configProvider: LayoutConfigProvider;
   visualStateRegistry: VisualStateRegistry;
   selectionConfigProvider: TestamentSelectionConfigProvider;
+  sectionInfoMapper: SectionInfoMapper;
+  bookInfoMapper: BookInfoMapper;
+  cameraAdapterPort: CameraAdapterPort;
+  renderOrderAdapterPort: RenderOrderAdapterPort;
+  bibleDataRepository: BibleDataRepository;
+  pieceDataRepository: PieceDataRepository;
+  pieceMapper: PieceMapper;
+  pieceAdapter: PieceAdapter;
 }
 
 /** A spawned section's target depth/position, resolved before the testament grows. */
@@ -39,6 +63,14 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
   #configProvider: AdapterParams["configProvider"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
   #selectionConfigProvider: AdapterParams["selectionConfigProvider"];
+  #sectionInfoMapper: AdapterParams["sectionInfoMapper"];
+  #bookInfoMapper: AdapterParams["bookInfoMapper"];
+  #cameraAdapterPort: AdapterParams["cameraAdapterPort"];
+  #renderOrderAdapterPort: AdapterParams["renderOrderAdapterPort"];
+  #bibleDataRepository: AdapterParams["bibleDataRepository"];
+  #pieceDataRepository: AdapterParams["pieceDataRepository"];
+  #pieceMapper: AdapterParams["pieceMapper"];
+  #pieceAdapter: AdapterParams["pieceAdapter"];
 
   constructor({
     getDimension,
@@ -48,6 +80,14 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
     configProvider,
     visualStateRegistry,
     selectionConfigProvider,
+    sectionInfoMapper,
+    bookInfoMapper,
+    cameraAdapterPort,
+    renderOrderAdapterPort,
+    bibleDataRepository,
+    pieceDataRepository,
+    pieceMapper,
+    pieceAdapter,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#testamentMapper = testamentMapper;
@@ -56,6 +96,14 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
     this.#configProvider = configProvider;
     this.#visualStateRegistry = visualStateRegistry;
     this.#selectionConfigProvider = selectionConfigProvider;
+    this.#sectionInfoMapper = sectionInfoMapper;
+    this.#bookInfoMapper = bookInfoMapper;
+    this.#cameraAdapterPort = cameraAdapterPort;
+    this.#renderOrderAdapterPort = renderOrderAdapterPort;
+    this.#bibleDataRepository = bibleDataRepository;
+    this.#pieceDataRepository = pieceDataRepository;
+    this.#pieceMapper = pieceMapper;
+    this.#pieceAdapter = pieceAdapter;
   }
 
   /**
@@ -142,9 +190,12 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
 
         ApplyStrictMod(sectionBot, mod);
 
-        // TODO: was desiredScaleZ * (customExplodedViewScaleFactor ?? 2); the
-        // factor is not on the new SectionInfo yet.
-        const explodedViewScaleZ = desiredScaleZ * 2;
+        const sectionInfoConfig = this.#sectionInfoMapper.toInfrastructure(
+          sectionData.pieceInfo
+        );
+        const explodedViewScaleZ =
+          desiredScaleZ *
+          (sectionInfoConfig.customExplodedViewScaleFactor ?? 2);
         this.#visualStateRegistry.registerState({
           piece,
           state: {
@@ -157,8 +208,9 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
             unhoveredFormOpacity: 0.7,
             orginalColor: sectionData.getPieceInfoProperty("color"),
             initialColor: sectionData.getPieceInfoProperty("color"),
-            // TODO: labelTextColor should be the darker variant of the color.
-            labelTextColor: sectionData.getPieceInfoProperty("color"),
+            labelTextColor: GetDarkerColor(
+              sectionData.getPieceInfoProperty("color")
+            ),
             desiredScaleZ,
             desiredPositionZ: sectionDesiredPositionZ,
             initialExplodedViewScaleZ: explodedViewScaleZ,
@@ -177,8 +229,42 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
         const sectionBot = this.#sectionBookMapper.toInfrastructure(piece);
         if (!sectionBot) continue;
 
-        applyMod(sectionBot, mod);
-        // TODO: register the section-book's visual state (BookVisualState shape).
+        ApplyStrictMod(sectionBot, mod);
+
+        const infraBookInfo = this.#bookInfoMapper.toInfrastructure(
+          sectionData.pieceBookInfo
+        );
+        const explodedViewPosition = infraBookInfo.explodedViewPosition ?? {
+          x: 0,
+          y: 0,
+          z: 0,
+        };
+        const bookScales =
+          this.#configProvider.getStackPieceMeasurement("BookScales");
+        this.#visualStateRegistry.registerState({
+          piece,
+          state: {
+            initialScaleX: sectionScales.x,
+            initialScaleY: sectionScales.y,
+            initialScaleZ: desiredScaleZ,
+            hoveredScaleX: sectionScales.x + additionalScaleOnHover,
+            hoveredScaleY: sectionScales.y + additionalScaleOnHover,
+            hoveredFormOpacity: 1,
+            unhoveredFormOpacity: 1,
+            orginalColor: sectionData.getPieceInfoProperty("color"),
+            initialColor: sectionData.getPieceInfoProperty("color"),
+            labelTextColor: GetDarkerColor(
+              sectionData.getPieceInfoProperty("color")
+            ),
+            desiredScaleZ,
+            desiredPositionZ: sectionDesiredPositionZ,
+            chapterColumns: 0,
+            chapterRows: 0,
+            explodedViewSelectedScaleZ: 0,
+            explodedViewPosition,
+            singleBooksScales: { x: bookScales.x, y: bookScales.y },
+          },
+        });
 
         layouts.set(piece.id, {
           bot: sectionBot,
@@ -190,29 +276,92 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
       sectionDesiredPositionZ += betweenSections + desiredScaleZ;
     }
 
-    // 2. Grow the testament so it spans all of its sections.
+    // 2. Grow the testament so it spans all of its sections — concurrently
+    // with focusing the camera on it and lifting every piece above it.
     let totalSectionsScaleZ = 0;
     for (const layout of layouts.values()) {
       totalSectionsScaleZ += layout.desiredScaleZ;
     }
     const testamentDesiredScaleZ =
       totalSectionsScaleZ + (data.childrenData.length + 1) * betweenSections;
+    const deltaScaleZ = testamentDesiredScaleZ - testamentScales.z;
 
-    await AnimateStrictTag(testamentBot, "scaleZ", {
-      fromValue: testamentScales.z,
-      toValue: testamentDesiredScaleZ,
-      duration: animationsDuration,
-      easing: animationsEasing,
-    });
+    const firstAnimations: Array<Promise<void>> = [
+      AnimateStrictTag(testamentBot, "scaleZ", {
+        fromValue: testamentScales.z,
+        toValue: testamentDesiredScaleZ,
+        duration: animationsDuration,
+        easing: animationsEasing,
+      }),
+    ];
+
+    const focusPosition = {
+      x: testamentPosition.x,
+      y: testamentPosition.y,
+      z: testamentPosition.z + testamentDesiredScaleZ / 2,
+    };
+    const bibleId = data.getParentId("stackBibleId");
+    if (bibleId) {
+      const transformerId = testamentBot.tags.transformer;
+      if (transformerId) {
+        const transformerBot = getBot(byID(transformerId));
+        if (transformerBot) {
+          const transformerPosition = getBotPosition(transformerBot, dimension);
+          focusPosition.x += transformerPosition.x;
+          focusPosition.y += transformerPosition.y;
+          focusPosition.z += transformerPosition.z;
+        }
+      }
+    }
+    this.#cameraAdapterPort.focusOn(focusPosition, "testamentSelection");
+
+    // Reposition everything sitting above the testament by the delta it grew.
+    const bibleData = bibleId
+      ? this.#bibleDataRepository.getBibleDataById(bibleId)
+      : undefined;
+    if (bibleData) {
+      const piecesAbove = this.#getPiecesAboveTestament(
+        bibleData,
+        data.getTestamentIndex(),
+        testamentPosition.z,
+        dimension
+      );
+      for (const pieceAbove of piecesAbove) {
+        const bot = this.#pieceMapper.toInfrastructure(pieceAbove);
+        if (!bot) {
+          throw new Error(
+            "TestamentSelectionAdapter: bot not found at select."
+          );
+        }
+        const pieceDesiredPositionZ =
+          getBotPosition(bot, dimension).z + deltaScaleZ;
+        this.#tryRegisterDesiredPositionZ(pieceAbove, pieceDesiredPositionZ);
+        firstAnimations.push(
+          AnimateStrictTag(bot, (dimension + "Z") as keyof PieceBotTags, {
+            toValue: pieceDesiredPositionZ,
+            duration: animationsDuration,
+            easing: animationsEasing,
+          })
+        );
+      }
+    }
+
+    await Promise.allSettled(firstAnimations);
 
     // 3. Reveal each section at its final depth/position now the testament grew.
     for (const layout of layouts.values()) {
-      setTagMask(layout.bot, "scaleZ", layout.desiredScaleZ);
-      setTagMask(layout.bot, dimension + "Z", layout.desiredPositionZ);
-      setTagMask(layout.bot, "highlightable", true);
+      SetStrictTag(layout.bot, "scaleZ", layout.desiredScaleZ);
+      SetStrictTag(
+        layout.bot,
+        (dimension + "Z") as keyof PieceBotTags,
+        layout.desiredPositionZ
+      );
     }
 
-    // 4. Fade the testament out; the sections now own the surface.
+    // 4. Refresh the render order of the active bible pieces now depths changed.
+    this.#renderOrderAdapterPort.setSortedRenderOrder(this.#getActivePieces());
+
+    // 5. Fade the testament out; the sections now own the surface.
     await AnimateStrictTag(testamentBot, {
       fromValue: {
         scale: testamentBot.tags.scale,
@@ -225,50 +374,108 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
       duration: animationsDuration,
       easing: animationsEasing,
     });
-    setTagMask(testamentBot, "color", "clear");
-    setTagMask(testamentBot, "pointable", false);
-
-    /*
-     * TODO — port the remaining legacy_SelectTestament infrastructure once the
-     * supporting ports exist (a bibleData/static-piece source, an activity
-     * notification port, the info-label transformer, camera focus and render
-     * order). Kept here (adapted names) so nothing is lost:
-     *
-     *   // Hide the testament's activity notification.
-     *   tryHideNotification(testamentBot);
-     *
-     *   // Unhighlight the pieces still highlighted in this bible.
-     *   // (now owned by PieceHighlightService — wire pieceHighlighterPort)
-     *
-     *   // Reposition everything sitting above the testament by the delta it grew.
-     *   const deltaScaleZ = testamentDesiredScaleZ - testamentScales.z;
-     *   const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
-     *   const horizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
-     *   const sectionShadows = ...; // section shadows above testamentPosition.z
-     *   const piecesAboveTestament = [bibleData.getStaticPiece("upperCover")]
-     *     .concat(sectionShadows, crossLines, GetPiecesAboveTestament());
-     *   piecesAboveTestament.forEach((piece) => {
-     *     const pieceDesiredPositionZ = getBotPosition(piece, dimension).z + deltaScaleZ;
-     *     setTag(piece, "desiredPositionZ", pieceDesiredPositionZ);
-     *     animateTag(piece, dimension + "Z", { toValue: pieceDesiredPositionZ, ... });
-     *   });
-     *
-     *   // Camera focus on the grown testament.
-     *   const focusOnRotation = { x: 1.01229, y: 0.5 };
-     *   os.focusOn({ x, y }, { duration, easing, rotation: focusOnRotation, zoom: 8 });
-     *
-     *   // Hide + release the current info-label transformer.
-     *   currentInfoLabelTransformer.Hide(...).then(() => releaseTransformer());
-     *
-     *   // History-mode coloring per section (GetHistoryColor).
-     *
-     *   // Render order for the active stack pieces.
-     *   TrySetPiecesRenderOrder(activeBiblePieces);
-     */
+    SetStrictTag(testamentBot, "color", "clear");
+    SetStrictTag(testamentBot, "pointable", false);
   }
 
-  async deselect(_data: StackTestamentData): Promise<void> {
-    // TODO: port the un-split (deselect) visual sequence from its legacy file.
-    return Promise.resolve();
+  #getPiecesAboveTestament(
+    bibleData: StackBibleData,
+    testamentIndex: number,
+    testamentPositionZ: number,
+    dimension: string
+  ): Piece[] {
+    const pieces: Piece[] = [];
+
+    const upperCover = bibleData.getStaticPiece("upperCover");
+    if (upperCover) pieces.push(upperCover);
+
+    const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
+    const horizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+    for (const crossLine of [verticalLine, horizontalLine]) {
+      if (
+        crossLine &&
+        this.#isPieceAbove(crossLine, testamentPositionZ, dimension)
+      ) {
+        pieces.push(crossLine);
+      }
+    }
+
+    for (const sectionData of bibleData.getAllSectionsData()) {
+      if (!(sectionData instanceof StackSectionData)) continue;
+      const shadow = sectionData.shadow;
+      if (shadow && this.#isPieceAbove(shadow, testamentPositionZ, dimension)) {
+        pieces.push(shadow);
+      }
+    }
+
+    const testaments = bibleData.childrenData;
+    for (let i = testamentIndex + 1; i < testaments.length; i++) {
+      const testamentData = testaments[i];
+      if (!testamentData) continue;
+      if (testamentData.isSplitIntoSections) {
+        for (const sectionData of testamentData.childrenData) {
+          if (
+            sectionData instanceof StackSectionData &&
+            sectionData.isSplitIntoBooks
+          ) {
+            for (const bookData of sectionData.childrenData.flat()) {
+              if (bookData.isActive && bookData.piece) {
+                pieces.push(bookData.piece);
+              }
+            }
+          } else if (sectionData.isActive && sectionData.piece) {
+            pieces.push(sectionData.piece);
+          }
+        }
+      } else if (testamentData.isActive && testamentData.piece) {
+        pieces.push(testamentData.piece);
+      }
+    }
+
+    return pieces;
+  }
+
+  #tryRegisterDesiredPositionZ(piece: Piece, desiredPositionZ: number): void {
+    if (
+      piece.type === "StackTestament" ||
+      piece.type === "StackSection" ||
+      piece.type === "StackSectionBook" ||
+      piece.type === "StackBook"
+    ) {
+      this.#visualStateRegistry.registerStateProperty({
+        piece: piece as Piece<
+          "StackTestament" | "StackSection" | "StackSectionBook" | "StackBook"
+        >,
+        property: "desiredPositionZ",
+        value: desiredPositionZ,
+      });
+    }
+  }
+
+  #isPieceAbove(
+    piece: Piece,
+    testamentPositionZ: number,
+    dimension: string
+  ): boolean {
+    const bot = this.#pieceMapper.toInfrastructure(piece);
+    if (!bot) return false;
+    return getBotPosition(bot, dimension).z > testamentPositionZ;
+  }
+
+  #getActivePieces(): Piece[] {
+    return [
+      ...this.#pieceDataRepository.getAllTestaments(),
+      ...this.#pieceDataRepository.getAllSections(),
+      ...this.#pieceDataRepository.getAllSectionBooks(),
+      ...this.#pieceDataRepository.getAllBooks(),
+      ...this.#pieceDataRepository.getAllChapters(),
+    ]
+      .filter((pieceData) => pieceData.isPieceAvailable())
+      .flatMap((pieceData) =>
+        pieceData.piece !== undefined &&
+        this.#pieceAdapter.isPieceBeingUsed(pieceData.piece)
+          ? [pieceData.piece]
+          : []
+      );
   }
 }

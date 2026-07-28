@@ -1,21 +1,22 @@
-import { ApplyStrictMod } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
-import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
+import { ApplyStrictMod } from "../../functions/casualos";
+import type { StackBookData } from "../../../domain/entities/StackBookData";
+import type { StackSectionData } from "../../../domain/entities/StackSectionData";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { BookInfoMapper } from "../../mappers/BookInfoMapper";
 import type { BookStackLayoutAdapter } from "./BookStackLayoutAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
-import type { StackConfigProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider";
-import type { LoggerPort } from "@packages/Bible Stack/bibleStack/application/ports/in/Logger";
+import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
+
+import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { BookSetupConfigProvider } from "../../config/bookSetup/BookSetupConfigProvider";
 import type { LayoutConfigurations } from "../../config/bookSetup/layouts";
-import type { HexString } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/commonTypes";
+import type { HexString } from "../../../domain/models/commonTypes";
 import {
   GetChildrenLevelColors,
   GetDarkerColor,
   HexToRgb,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/colors";
+} from "../../../domain/functions/colors";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -24,7 +25,7 @@ interface AdapterParams {
   bookInfoMapper: BookInfoMapper;
   bookStackLayoutAdapter: BookStackLayoutAdapter;
   visualStateRegistry: VisualStateRegistry;
-  stackConfigProvider: StackConfigProvider;
+  layoutConfigProvider: LayoutConfigProvider;
   bookSetupConfigProvider: BookSetupConfigProvider;
   loggerPort: LoggerPort;
 }
@@ -46,7 +47,7 @@ export class BookSetupAdapter {
   #bookInfoMapper: AdapterParams["bookInfoMapper"];
   #bookStackLayoutAdapter: AdapterParams["bookStackLayoutAdapter"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
-  #stackConfigProvider: AdapterParams["stackConfigProvider"];
+  #stackConfigProvider: AdapterParams["layoutConfigProvider"];
   #bookSetupConfigProvider: AdapterParams["bookSetupConfigProvider"];
   #loggerPort: AdapterParams["loggerPort"];
 
@@ -57,7 +58,7 @@ export class BookSetupAdapter {
     bookInfoMapper,
     bookStackLayoutAdapter,
     visualStateRegistry,
-    stackConfigProvider,
+    layoutConfigProvider: stackConfigProvider,
     bookSetupConfigProvider,
     loggerPort,
   }: AdapterParams) {

@@ -1,10 +1,6 @@
-import {
-  delaysMap,
-  type SectionInteractionDelay,
-} from "bibleStack.infrastructure.config.sectionInteraction.delays";
-import type { SectionInteractionConfigProviderPort } from "bibleStack.infrastructure.ports.sectionInteraction";
+import { delaysMap, type SectionInteractionDelay } from "./delays";
 
-export class SectionInteractionConfigProvider implements SectionInteractionConfigProviderPort {
+export class SectionInteractionConfigProvider {
   getDelay<K extends SectionInteractionDelay>(delay: K): (typeof delaysMap)[K] {
     return delaysMap[delay];
   }

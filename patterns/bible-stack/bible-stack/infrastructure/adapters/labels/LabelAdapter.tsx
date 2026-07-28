@@ -284,14 +284,14 @@ export class LabelAdapter implements LabelAdapterPort {
     }
     setTagMask(piecesToSetOpacity, "labelOpacity", 0);
 
+    const infoLabelTransformerDomain =
+      this.#pieceMapperPort.toDomain(infoLabelTransformer);
+
     this.locateLabel({
       positioning: labelPositioning,
       piece,
-      infoLabelTransformer,
+      infoLabelTransformer: infoLabelTransformerDomain,
     });
-
-    const infoLabelTransformerDomain =
-      this.#pieceMapperPort.toDomain(infoLabelTransformer);
 
     return {
       transformer: infoLabelTransformerDomain,

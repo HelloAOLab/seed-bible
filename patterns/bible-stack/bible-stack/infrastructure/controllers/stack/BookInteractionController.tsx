@@ -1,38 +1,32 @@
-import type { BookBot } from "bibleStack.models.stack";
-import { CanvasInteractions } from "bibleVizUtils.infrastructure.models.canvas";
+import type { BookBot } from "../../models/stack";
 import type {
-  DraggingEventMapperPort,
-  DraggingServicePort,
-  DropEventMapperPort,
-  PieceMapperPort,
   SelectionReleaseServicePort,
-} from "bibleStack.application.ports.books";
-import type { BookInteractionServicePort } from "bibleStack.application.ports.in.BookInteraction";
-import type { BookDragServicePort } from "bibleStack.application.ports.in.ScripturePieceDrag";
-import type { BookDropServicePort } from "bibleStack.application.ports.in.ScripturePieceDrop";
-import type {
-  DraggingEvent,
-  DropEvent,
-} from "bibleVizUtils.infrastructure.models.casualos";
+  DraggingServicePort,
+} from "../../../application/ports/books";
+import type { BookInteractionServicePort } from "../../../application/ports/in/BookInteraction";
+import type { BookDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
+import type { BookDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
+import type { DraggingEvent, DropEvent } from "../../models/casualos";
+import type { BotListenerParametersMap } from "../../models/casualos";
+import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
+import type { PieceMapper } from "../../mappers/PieceMapper";
 
 interface ControllerParams {
   bookInteractionServicePort: BookInteractionServicePort;
   dragServicePort: BookDragServicePort;
   draggingServicePort: DraggingServicePort;
-  draggingEventMapperPort: DraggingEventMapperPort;
+  relocationEventMapper: RelocationEventMapper;
   selectionReleaseServicePort: SelectionReleaseServicePort;
-  dropEventMapperPort: DropEventMapperPort;
   dropServicePort: BookDropServicePort;
-  pieceMapperPort: PieceMapperPort;
+  pieceMapperPort: PieceMapper;
 }
 
 export class BookInteractionController {
   #bookInteractionServicePort: ControllerParams["bookInteractionServicePort"];
   #dragServicePort: ControllerParams["dragServicePort"];
   #draggingServicePort: ControllerParams["draggingServicePort"];
-  #draggingEventMapperPort: ControllerParams["draggingEventMapperPort"];
   #selectionReleaseServicePort: ControllerParams["selectionReleaseServicePort"];
-  #dropEventMapperPort: ControllerParams["dropEventMapperPort"];
+  #relocationEventMapper: ControllerParams["relocationEventMapper"];
   #dropServicePort: ControllerParams["dropServicePort"];
   #pieceMapperPort: ControllerParams["pieceMapperPort"];
 
@@ -40,18 +34,16 @@ export class BookInteractionController {
     bookInteractionServicePort,
     dragServicePort,
     draggingServicePort,
-    draggingEventMapperPort,
+    relocationEventMapper,
     selectionReleaseServicePort,
-    dropEventMapperPort,
     dropServicePort,
     pieceMapperPort,
   }: ControllerParams) {
     this.#bookInteractionServicePort = bookInteractionServicePort;
     this.#dragServicePort = dragServicePort;
     this.#draggingServicePort = draggingServicePort;
-    this.#draggingEventMapperPort = draggingEventMapperPort;
+    this.#relocationEventMapper = relocationEventMapper;
     this.#selectionReleaseServicePort = selectionReleaseServicePort;
-    this.#dropEventMapperPort = dropEventMapperPort;
     this.#dropServicePort = dropServicePort;
     this.#pieceMapperPort = pieceMapperPort;
   }
@@ -61,9 +53,7 @@ export class BookInteractionController {
     interaction,
   }: {
     book: BookBot;
-    interaction:
-      | (typeof CanvasInteractions)["Tap"]
-      | (typeof CanvasInteractions)["Click"];
+    interaction: BotListenerParametersMap<BookBot>["onClick"]["modality"];
   }) {
     const piece = this.#pieceMapperPort.toDomain(book);
     this.#bookInteractionServicePort.handleBookSelection({
@@ -86,7 +76,7 @@ export class BookInteractionController {
   }) {
     const piece = this.#pieceMapperPort.toDomain(book);
     const domainDraggingEvent =
-      this.#draggingEventMapperPort.toDomain(draggingEvent);
+      this.#relocationEventMapper.toDomain(draggingEvent);
     this.#draggingServicePort.handlePieceDragging(piece, domainDraggingEvent);
   }
 
@@ -107,7 +97,7 @@ export class BookInteractionController {
 
   handleBookDrop({ book, dropEvent }: { book: BookBot; dropEvent: DropEvent }) {
     const piece = this.#pieceMapperPort.toDomain(book);
-    const domainDropEvent = this.#dropEventMapperPort.toDomain(dropEvent);
+    const domainDropEvent = this.#relocationEventMapper.toDomain(dropEvent);
     this.#dropServicePort.handlePieceDrop(piece, domainDropEvent);
   }
 }

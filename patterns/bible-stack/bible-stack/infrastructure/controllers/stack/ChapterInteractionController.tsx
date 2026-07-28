@@ -1,28 +1,24 @@
-import { CanvasInteractions } from "bibleVizUtils.infrastructure.models.canvas";
-import type { ChapterBot } from "bibleStack.models.stack";
+import type { ChapterBot } from "../../models/stack";
+import type { ChapterInteractionServicePort } from "../../../application/ports/in/ChapterInteraction";
+import type { ChapterDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
+import type { ChapterDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
+import type { ChapterDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
+import type { ChapterSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 import type {
-  DraggingEventMapperPort,
-  DropEventMapperPort,
-  PieceMapperPort,
-} from "bibleStack.application.ports.chapters";
-import type { ChapterInteractionServicePort } from "bibleStack.application.ports.in.ChapterInteraction";
-import type { ChapterDragServicePort } from "bibleStack.application.ports.in.ScripturePieceDrag";
-import type { ChapterDraggingServicePort } from "bibleStack.application.ports.in.ScripturePieceDragging";
-import type { ChapterDropServicePort } from "bibleStack.application.ports.in.ScripturePieceDrop";
-import type { ChapterSelectionReleaseServicePort } from "bibleStack.application.ports.in.ScripturePieceSelectionRelease";
-import type {
+  BotListenerParametersMap,
   DraggingEvent,
   DropEvent,
-} from "bibleVizUtils.infrastructure.models.casualos";
+} from "../../models/casualos";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
 
 interface ControllerParams {
   chapterInteractionServicePort: ChapterInteractionServicePort;
-  pieceMapperPort: PieceMapperPort;
+  pieceMapperPort: PieceMapper;
   dragServicePort: ChapterDragServicePort;
   draggingServicePort: ChapterDraggingServicePort;
-  draggingEventMapperPort: DraggingEventMapperPort;
+  relocationEventMapper: RelocationEventMapper;
   selectionReleaseServicePort: ChapterSelectionReleaseServicePort;
-  dropEventMapperPort: DropEventMapperPort;
   dropServicePort: ChapterDropServicePort;
 }
 
@@ -31,9 +27,8 @@ export class ChapterInteractionController {
   #pieceMapperPort: ControllerParams["pieceMapperPort"];
   #dragServicePort: ControllerParams["dragServicePort"];
   #draggingServicePort: ControllerParams["draggingServicePort"];
-  #draggingEventMapperPort: ControllerParams["draggingEventMapperPort"];
+  #relocationEventMapper: ControllerParams["relocationEventMapper"];
   #selectionReleaseServicePort: ControllerParams["selectionReleaseServicePort"];
-  #dropEventMapperPort: ControllerParams["dropEventMapperPort"];
   #dropServicePort: ControllerParams["dropServicePort"];
 
   constructor({
@@ -41,18 +36,16 @@ export class ChapterInteractionController {
     pieceMapperPort,
     dragServicePort,
     draggingServicePort,
-    draggingEventMapperPort,
+    relocationEventMapper,
     selectionReleaseServicePort,
-    dropEventMapperPort,
     dropServicePort,
   }: ControllerParams) {
     this.#chapterInteractionServicePort = chapterInteractionServicePort;
     this.#pieceMapperPort = pieceMapperPort;
     this.#dragServicePort = dragServicePort;
     this.#draggingServicePort = draggingServicePort;
-    this.#draggingEventMapperPort = draggingEventMapperPort;
+    this.#relocationEventMapper = relocationEventMapper;
     this.#selectionReleaseServicePort = selectionReleaseServicePort;
-    this.#dropEventMapperPort = dropEventMapperPort;
     this.#dropServicePort = dropServicePort;
   }
 
@@ -61,9 +54,7 @@ export class ChapterInteractionController {
     interaction,
   }: {
     chapter: ChapterBot;
-    interaction:
-      | (typeof CanvasInteractions)["Tap"]
-      | (typeof CanvasInteractions)["Click"];
+    interaction: BotListenerParametersMap<ChapterBot>["onClick"]["modality"];
   }) {
     const piece = this.#pieceMapperPort.toDomain(chapter);
     this.#chapterInteractionServicePort.handleChapterSelection({
@@ -86,7 +77,7 @@ export class ChapterInteractionController {
   }) {
     const piece = this.#pieceMapperPort.toDomain(chapter);
     const domainDraggingEvent =
-      this.#draggingEventMapperPort.toDomain(draggingEvent);
+      this.#relocationEventMapper.toDomain(draggingEvent);
     this.#draggingServicePort.handlePieceDragging(piece, domainDraggingEvent);
   }
 
@@ -113,7 +104,7 @@ export class ChapterInteractionController {
     dropEvent: DropEvent;
   }) {
     const piece = this.#pieceMapperPort.toDomain(chapter);
-    const domainDropEvent = this.#dropEventMapperPort.toDomain(dropEvent);
+    const domainDropEvent = this.#relocationEventMapper.toDomain(dropEvent);
     this.#dropServicePort.handlePieceDrop(piece, domainDropEvent);
   }
 }

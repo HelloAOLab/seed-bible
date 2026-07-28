@@ -1,4 +1,4 @@
-import type { SpatialNavigationPort } from "@packages/Bible Stack/bibleStack/application/ports/in/SpatialNavigation";
+import type { SpatialNavigationPort } from "../../../application/ports/in/SpatialNavigation";
 
 interface ControllerParams {
   spatialNavigationPort: SpatialNavigationPort;

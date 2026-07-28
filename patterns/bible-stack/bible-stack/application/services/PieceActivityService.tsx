@@ -22,11 +22,7 @@ import type {
 } from "../ports/out/PieceActivity";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { LoggerPort } from "../ports/in/Logger";
-import type {
-  IndicatorsDeleterPort,
-  NotificationDeleterPort,
-  IndicatorsUpdaterPort,
-} from "../ports/in/PieceActivity";
+import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { PieceTypeMap } from "../../domain/models/pieces";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
 
@@ -204,12 +200,7 @@ const indicatorsStrategiesMap: {
   [BiblePieces.StackChapter]: pieceIndicatorsStrategy,
 };
 
-export class PieceActivityService
-  implements
-    IndicatorsUpdaterPort,
-    IndicatorsDeleterPort,
-    NotificationDeleterPort
-{
+export class PieceActivityService implements PieceActivityServicePort {
   #dataRegistryPort: DataRegistryPort;
   #arrangementServicePort: ArrangementServicePort;
   #labelDataStorePort: LabelDataStorePort;

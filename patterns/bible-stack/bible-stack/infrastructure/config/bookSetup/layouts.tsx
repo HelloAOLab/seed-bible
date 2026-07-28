@@ -1,4 +1,4 @@
-import type { BookLayout } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+import type { BookLayout } from "../../../domain/models/canvas";
 
 type TupleOf<
   T,

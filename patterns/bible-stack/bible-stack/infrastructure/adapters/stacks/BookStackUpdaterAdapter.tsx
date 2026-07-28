@@ -2,9 +2,9 @@ import type {
   BookStackUpdaterPort,
   UpdateCommand,
   BookVisualUpdateResult,
-} from "@packages/Bible Stack/bibleStack/application/ports/out/StackBookUpdater";
+} from "../../../application/ports/out/StackBookUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "@packages/Bible Stack/bibleStack/application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
@@ -12,21 +12,19 @@ import type { BookStackLayoutAdapter } from "./BookStackLayoutAdapter";
 import type { BookShapeAdapter } from "./BookShapeAdapter";
 import type { SelectedBookLayoutAdapter } from "./SelectedBookLayoutAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
-import type { StackConfigProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider";
-import type { StackUpdatePacing } from "@packages/Bible Stack/bibleStack/domain/models/stacks";
-import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
-import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
+import type { LayoutConfigProvider as StackConfigProvider } from "../../config/layout/LayoutConfigProvider";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
+import type { StackSectionData } from "../../../domain/entities/StackSectionData";
+import type { StackBookData } from "../../../domain/entities/StackBookData";
+import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { BookBot } from "@packages/Bible Stack/bibleStack/models/stack";
-import type { BookLayout } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/canvas";
-import { BookShapes } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
-import { SelectionStates } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/selection";
-import { FindPreviousValidGroupBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/scripture";
-import type {
-  SetStrictTag,
-  AnimateStrictTag,
-} from "bibleVizUtils.infrastructure.functions.casualos";
+import type { BookBot } from "../../models/stack";
+import type { BookLayout } from "../../../domain/models/canvas";
+import { BookShapes } from "../../../domain/models/canvas";
+import { SelectionStates } from "../../../domain/models/selection";
+// import { FindPreviousValidGroupBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/scripture";
+import type { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
+import { FindPreviousValidGroupBookData } from "../../functions/arrangement";
 
 type BookEntity = StackBookData | StackSectionBookData;
 

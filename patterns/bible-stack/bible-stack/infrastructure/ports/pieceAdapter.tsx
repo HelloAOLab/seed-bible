@@ -1,5 +1,5 @@
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import type { PieceBot } from "bibleVizUtils.infrastructure.models.casualos";
+import type { Piece } from "../../domain/models/canvas";
+import type { PieceBot } from "../models/casualos";
 
 export interface PieceMapperPort {
   toInfrastructure: (piece: Piece) => PieceBot | undefined;

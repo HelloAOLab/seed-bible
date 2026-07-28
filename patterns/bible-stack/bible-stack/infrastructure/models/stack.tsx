@@ -102,6 +102,7 @@ export type VersesBundleBot = TypedBot<VersesBundleTags>;
 export interface VerseBotTags extends PieceBotTags<"Verse"> {
   scaleZ: number;
   labelPosition: "top";
+  label: string;
 }
 
 export type VerseBot = TypedBot<VerseBotTags>;

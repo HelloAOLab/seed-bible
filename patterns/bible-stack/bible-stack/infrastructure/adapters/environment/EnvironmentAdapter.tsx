@@ -1,12 +1,7 @@
 import type { PortalCameraType } from "@casual-simulation/aux-common";
-import type { EnvironmentAdapterPort as ExperienceServiceEnvironmentAdapterPort } from "bibleStack.application.ports.experience";
-import type { EnvironmentAdapterPort as ExperienceAdapterEnvironmentAdapterPort } from "bibleStack.infrastructure.ports.experience";
+import type { EnvironmentAdapterPort } from "../../../application/ports/experience";
 
-export class EnvironmentAdapter
-  implements
-    ExperienceServiceEnvironmentAdapterPort,
-    ExperienceAdapterEnvironmentAdapterPort
-{
+export class EnvironmentAdapter implements EnvironmentAdapterPort {
   resetZoomMin() {
     gridPortalBot.tags.portalZoomableMin = null;
   }

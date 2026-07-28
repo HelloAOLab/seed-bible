@@ -1,23 +1,19 @@
-import { BiblePieces, type Piece } from "bibleVizUtils.domain.models.canvas";
-import type { HighlightPacing } from "bibleStack.domain.models.pieces";
-import type { PieceHighlightAdapterPort } from "bibleStack.application.ports.pieces";
+import { BiblePieces, type Piece } from "../../../domain/models/canvas";
+import type { HighlightPacing } from "../../../domain/models/pieces";
+import type { PieceHighlightAdapterPort } from "../../../application/ports/pieces";
 import type {
   PieceHighlightAdapterParams,
   HighlightVisualStatePort,
   HighlightAnimationConfigProviderPort,
-} from "bibleStack.infrastructure.ports.highlight";
-import type { PieceHighlightPieceDataRepositoryPort } from "bibleStack.application.ports.pieces";
+} from "../../ports/highlight";
+import type { PieceHighlightPieceDataRepositoryPort } from "../../../application/ports/pieces";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackChapterMapper } from "../../mappers/StackChapterMapper";
-import type {
-  TestamentBot,
-  SectionBot,
-  BookBot,
-} from "bibleStack.models.stack";
-import { GetBotScales } from "bibleVizUtils.infrastructure.functions.casualos";
+import type { TestamentBot, SectionBot, BookBot } from "../../models/stack";
+import { GetBotScales } from "../../functions/casualos";
 
 type StackPieceUnion =
   | Piece<"StackTestament">
@@ -114,7 +110,10 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
       const chapterData = this.#pieceDataRepositoryPort.getPieceData(piece);
       if (!chapterData) return;
 
-      if (!chapterData.isSelecting && !chapterData.isDeselecting) {
+      if (
+        chapterData.selectionState !== "Selecting" &&
+        chapterData.selectionState !== "Deselecting"
+      ) {
         if (!chapterData.isSelected || chapterData.isOnTheGround) {
           const color = this.#visualStatePort.getStateProperty({
             piece,
@@ -276,7 +275,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
         property: "hoveredScaleY",
       }),
     };
-    if (!bookData.isSelected) {
+    if (bookData.selectionState !== "Selected") {
       fromValue.formOpacity = bookBot.tags.formOpacity;
       toValue.formOpacity = this.#visualStatePort.getStateProperty({
         piece,
@@ -300,7 +299,10 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
       const chapterData = this.#pieceDataRepositoryPort.getPieceData(piece);
       if (!chapterData) return;
 
-      if (!chapterData.isSelecting && !chapterData.isDeselecting) {
+      if (
+        chapterData.selectionState !== "Selecting" &&
+        chapterData.selectionState !== "Deselecting"
+      ) {
         if (!chapterData.isSelected || chapterData.isOnTheGround) {
           const color = this.#visualStatePort.getStateProperty({
             piece,

@@ -10,18 +10,12 @@ import type {
   LabelManagerPort,
   VersesBundleLifecycleAdapterPort,
 } from "../ports/out/ChapterSelection";
-import type {
-  IndicatorsDeleterPort,
-  IndicatorsUpdaterPort,
-  NotificationDeleterPort,
-} from "../ports/in/PieceActivity";
+import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
   chapterSelectionAdapterPort: ChapterSelectionAdapterPort;
-  indicatorsDeleterPort: IndicatorsDeleterPort;
-  indicatorsUpdaterPort: IndicatorsUpdaterPort;
-  notificationDeleterPort: NotificationDeleterPort;
+  pieceActivityServicePort: PieceActivityServicePort;
   labelManagerPort: LabelManagerPort;
   versesBundleLifecycleAdapterPort: VersesBundleLifecycleAdapterPort;
 }
@@ -36,36 +30,30 @@ interface ServiceParams {
 export class ChapterSelectionService implements ChapterSelectionPort {
   #loggerPort: ServiceParams["loggerPort"];
   #chapterSelectionAdapterPort: ServiceParams["chapterSelectionAdapterPort"];
-  #indicatorsDeleterPort: ServiceParams["indicatorsDeleterPort"];
-  #indicatorsUpdaterPort: ServiceParams["indicatorsUpdaterPort"];
-  #notificationDeleterPort: ServiceParams["notificationDeleterPort"];
+  #pieceActivityServicePort: ServiceParams["pieceActivityServicePort"];
   #labelManagerPort: ServiceParams["labelManagerPort"];
   #versesBundleLifecycleAdapterPort: ServiceParams["versesBundleLifecycleAdapterPort"];
 
   constructor({
     loggerPort,
     chapterSelectionAdapterPort,
-    indicatorsDeleterPort,
-    indicatorsUpdaterPort,
-    notificationDeleterPort,
+    pieceActivityServicePort,
     labelManagerPort,
     versesBundleLifecycleAdapterPort,
   }: ServiceParams) {
     this.#loggerPort = loggerPort;
     this.#chapterSelectionAdapterPort = chapterSelectionAdapterPort;
-    this.#indicatorsDeleterPort = indicatorsDeleterPort;
-    this.#indicatorsUpdaterPort = indicatorsUpdaterPort;
-    this.#notificationDeleterPort = notificationDeleterPort;
+    this.#pieceActivityServicePort = pieceActivityServicePort;
     this.#labelManagerPort = labelManagerPort;
     this.#versesBundleLifecycleAdapterPort = versesBundleLifecycleAdapterPort;
   }
 
   #prepareDeselection(data: StackChapterData) {
-    this.#indicatorsDeleterPort.tryHideIndicators(data);
+    this.#pieceActivityServicePort.tryHideIndicators(data);
   }
 
   #finalizeDeselection(data: StackChapterData) {
-    this.#indicatorsUpdaterPort.updateIndicators(data);
+    this.#pieceActivityServicePort.updateIndicators(data);
 
     for (const bundleData of data.childrenData) {
       const piece = bundleData.clearPiece();
@@ -104,7 +92,7 @@ export class ChapterSelectionService implements ChapterSelectionPort {
 
   async #prepareSelection(data: StackChapterData) {
     if (data.isOnTheGround) {
-      this.#notificationDeleterPort.tryHideNotification(data);
+      this.#pieceActivityServicePort.tryHideNotification(data);
       for (const bundleData of data.childrenData) {
         const bundle =
           this.#versesBundleLifecycleAdapterPort.spawnVersesBundleDomain();

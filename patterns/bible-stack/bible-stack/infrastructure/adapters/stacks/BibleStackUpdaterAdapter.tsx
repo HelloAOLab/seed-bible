@@ -2,21 +2,18 @@ import type {
   BibleStackUpdaterAdapterPort,
   UpdateCommand,
   UpdateReturnValue,
-} from "@packages/Bible Stack/bibleStack/application/ports/out/BibleStackUpdater";
+} from "../../../application/ports/out/BibleStackUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
 import type { StackLowerCoverMapper } from "../../mappers/StackLowerCoverMapper";
 import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
-import { GetBotScales } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
-import type { StackConfigProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider";
-import { CrossPositions } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
-import type { LoggerPort } from "@packages/Bible Stack/bibleStack/application/ports/in/Logger";
+import { GetBotScales } from "../../functions/casualos";
+import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
+import { CrossPositions } from "../../../domain/models/canvas";
+import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { TestamentStackUpdaterAdapter } from "./TestamentStackUpdaterAdapter";
-import type {
-  SetStrictTag,
-  AnimateStrictTag,
-} from "bibleVizUtils.infrastructure.functions.casualos";
-import type { CrossLineTags } from "@packages/Bible Stack/bibleStack/models/stack";
+import type { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
+import type { CrossLineTags } from "../../models/stack";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -24,7 +21,7 @@ interface AdapterParams {
   lowerCoverMapper: StackLowerCoverMapper;
   defaultCoverMapper: StackCoverMapper;
   crossLineMapper: StackCrossLineMapper;
-  stackConfigProvider: StackConfigProvider;
+  layoutConfigProvider: LayoutConfigProvider;
   loggerPort: LoggerPort;
   testamentStackUpdaterAdapter: TestamentStackUpdaterAdapter;
   setStrictTag: typeof SetStrictTag;
@@ -37,7 +34,7 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
   #lowerCoverMapper: AdapterParams["lowerCoverMapper"];
   #defaultCoverMapper: AdapterParams["defaultCoverMapper"];
   #crossLineMapper: AdapterParams["crossLineMapper"];
-  #stackConfigProvider: AdapterParams["stackConfigProvider"];
+  #stackConfigProvider: AdapterParams["layoutConfigProvider"];
   #loggerPort: AdapterParams["loggerPort"];
   #testamentStackUpdaterAdapter: AdapterParams["testamentStackUpdaterAdapter"];
   #setStrictTag: AdapterParams["setStrictTag"];
@@ -49,7 +46,7 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
     lowerCoverMapper,
     defaultCoverMapper,
     crossLineMapper,
-    stackConfigProvider,
+    layoutConfigProvider: stackConfigProvider,
     loggerPort,
     testamentStackUpdaterAdapter,
     setStrictTag,

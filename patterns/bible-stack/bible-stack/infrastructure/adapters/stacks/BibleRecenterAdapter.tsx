@@ -1,13 +1,13 @@
-import { GetCamRotationFocusPoint } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/math";
+import { GetCamRotationFocusPoint } from "../../functions/casualos";
 import {
   MakePortalFree,
   MakePortalRestrict,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
-import type { BibleRecenterAdapterPort } from "@packages/Bible Stack/bibleStack/application/ports/out/SpatialNavigation";
-import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData";
+} from "../../../infrastructure/functions/casualos";
+import type { BibleRecenterAdapterPort } from "../../../application/ports/out/SpatialNavigation";
+import type { StackBibleData } from "../../../domain/entities/StackBibleData";
 import type { StackTransformerMapper } from "../../mappers/StackTransformerMapper";
 import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
-import { DirectionToPolar } from "@packages/Bible Stack/bibleStack/domain/functions/Geometry";
+import { DirectionToPolar } from "../../../domain/functions/Geometry";
 
 interface AdapterParams {
   getDimension(): string;

@@ -4,7 +4,6 @@ import type {
   StackManagementService,
   InteractionRegistryServicePort,
   ExperienceAdapterPort,
-  ScripturePiecesStateServicePort,
   ExperienceConfigProviderPort,
   SequenceStateServicePort,
   AwaiterPort,
@@ -16,6 +15,8 @@ import type {
   BibleSequenceServicePort,
 } from "../ports/bibleLifecycle";
 import { BibleTypes } from "../../domain/models/canvas";
+import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
+import type { ExperienceServicePort } from "../ports/in/Experience";
 
 interface ExperienceServiceParams {
   environmentAdapterPort: EnvironmentAdapterPort;
@@ -33,7 +34,7 @@ interface ExperienceServiceParams {
   awaiterPort: AwaiterPort;
 }
 
-export class ExperienceService {
+export class ExperienceService implements ExperienceServicePort {
   #environmentAdapterPort: ExperienceServiceParams["environmentAdapterPort"];
   #stackManagementServicePort: ExperienceServiceParams["stackManagementServicePort"];
   #pieceHighlightServicePort: ExperienceServiceParams["pieceHighlightServicePort"];

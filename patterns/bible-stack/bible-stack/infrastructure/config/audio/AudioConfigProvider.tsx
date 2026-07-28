@@ -1,11 +1,6 @@
-import {
-  soundsMap,
-  type Sound,
-  Sounds,
-} from "bibleStack.infrastructure.config.audio.sounds";
-import type { AudioConfigProviderPort } from "bibleStack.infrastructure.ports.audio";
+import { soundsMap, type Sound, Sounds } from "./sounds";
 
-export class AudioConfigProvider implements AudioConfigProviderPort {
+export class AudioConfigProvider {
   getSound<K extends Sound>(sound: K): (typeof soundsMap)[K] {
     return soundsMap[sound];
   }

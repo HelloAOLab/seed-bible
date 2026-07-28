@@ -1,10 +1,6 @@
-import {
-  delaysMap,
-  type BookInteractionDelay,
-} from "bibleStack.infrastructure.config.bookInteraction.delays";
-import type { BookInteractionConfigProviderPort } from "bibleStack.infrastructure.ports.bookInteraction";
+import { delaysMap, type BookInteractionDelay } from "./delays";
 
-export class BookInteractionConfigProvider implements BookInteractionConfigProviderPort {
+export class BookInteractionConfigProvider {
   getDelay<K extends BookInteractionDelay>(delay: K): (typeof delaysMap)[K] {
     return delaysMap[delay];
   }

@@ -1,6 +1,6 @@
-import type { VersesBundleData } from "bibleVizUtils.domain.entities.VersesBunbleData";
-import type { VersesBundleDataRepositoryPort as PieceLifecycleRepositoryPort } from "bibleStack.application.ports.pieceLifecycle";
-import type { VersesBundleDataRepositoryPort as VersesBundleInteractionRepositoryPort } from "bibleStack.application.ports.versesBundle";
+import type { VersesBundleData } from "../../../domain/entities/VersesBundleData";
+import type { VersesBundleDataRepositoryPort as PieceLifecycleRepositoryPort } from "../../../application/ports/pieceLifecycle";
+import type { VersesBundleDataRepositoryPort as VersesBundleInteractionRepositoryPort } from "../../../application/ports/versesBundle";
 
 export class VersesBundleRepository
   implements PieceLifecycleRepositoryPort, VersesBundleInteractionRepositoryPort

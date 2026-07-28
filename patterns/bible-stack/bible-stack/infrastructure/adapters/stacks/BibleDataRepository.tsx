@@ -1,17 +1,18 @@
-import type { BibleDataRepositoryPort as StacksDataRepositoryPort } from "bibleStack.application.ports.stacks";
-import type { BibleDataRepositoryPort as BibleLifecycleDataRepositoryPort } from "bibleStack.application.ports.bibleLifecycle";
-import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
-import type { BibleDataRepositoryPort as BibleStackUpdaterDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/BibleStackUpdater";
-import type { BibleDataRepositoryPort as ViewportBibleDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/ViewportService";
-import type { BibleDataRepositoryPort as SpatialNavigationBibleDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/SpatialNavigation";
+// import type { BibleDataRepositoryPort as StacksDataRepositoryPort } from "bibleStack.application.ports.stacks";
+import type { BibleDataRepositoryPort as StacksDataRepositoryPort } from "../../../application/ports/stacks";
+import type { BibleDataRepositoryPort as BibleLifecycleDataRepositoryPort } from "../../../application/ports/bibleLifecycle";
+import type { StackBibleData } from "../../../domain/entities/StackBibleData";
+import type { BibleDataRepositoryPort as ViewportBibleDataRepositoryPort } from "../../../application/ports/out/ViewportService";
+import type { BibleDataRepositoryPort as SpatialNavigationBibleDataRepositoryPort } from "../../../application/ports/out/SpatialNavigation";
+import type { BibleDataRepositoryPort as PieceInteractabilityBibleDataRepositoryPort } from "../../../application/ports/out/PieceInteractability";
 
 export class BibleDataRepository
   implements
     StacksDataRepositoryPort,
     BibleLifecycleDataRepositoryPort,
-    BibleStackUpdaterDataRepositoryPort,
     ViewportBibleDataRepositoryPort,
-    SpatialNavigationBibleDataRepositoryPort
+    SpatialNavigationBibleDataRepositoryPort,
+    PieceInteractabilityBibleDataRepositoryPort
 {
   #biblesData: Set<StackBibleData> = new Set();
 

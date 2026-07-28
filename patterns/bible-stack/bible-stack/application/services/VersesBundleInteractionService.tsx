@@ -1,12 +1,10 @@
 import type { Piece } from "../../domain/models/canvas";
-import type {
-  SequenceStateServicePort,
-  VersesBundleDataRepositoryPort,
-} from "../ports/versesBundle";
+import type { VersesBundleDataRepositoryPort } from "../ports/versesBundle";
 import type { VersesBundleAdapterPort } from "../ports/versesBundle";
 import type { VersesBundleInteractionServicePort } from "../ports/in/VersesBundleInteraction";
 import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
 import type { PaintPort } from "../ports/in/Paint";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -53,7 +51,9 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
       this.#paintPort.paint(bundle);
     } else {
       if (!bundleData.isSelected) {
-        this.#versesBundleSelectionServicePort.selectBundle(bundleData);
+        this.#sequenceStateServicePort.executeAsSequence(() =>
+          this.#versesBundleSelectionServicePort.selectBundle(bundleData)
+        );
       }
     }
   }

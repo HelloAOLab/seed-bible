@@ -1,21 +1,15 @@
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "@packages/Bible Stack/bibleStack/application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
-import type { StackUpdatePacing } from "@packages/Bible Stack/bibleStack/domain/models/stacks";
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
-import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
-import type { BookBot } from "@packages/Bible Stack/bibleStack/models/stack";
-import type { PieceBot } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/casualos";
-import type { Scales } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/layout";
-import {
-  BookShapes,
-  type BookShape,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
-import { SelectionStates } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/selection";
-import type {
-  SetStrictTag,
-  AnimateStrictTag,
-} from "bibleVizUtils.infrastructure.functions.casualos";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
+import type { StackBookData } from "../../../domain/entities/StackBookData";
+import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
+import type { BookBot } from "../../models/stack";
+import type { PieceBot } from "../../models/casualos";
+import type { Scales } from "../../functions/layout";
+import { BookShapes, type BookShape } from "../../../domain/models/canvas";
+import { SelectionStates } from "../../../domain/models/selection";
+import type { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 
 type BookEntity = StackBookData | StackSectionBookData;
 
@@ -118,7 +112,7 @@ export class BookShapeAdapter {
     });
 
     // TODO(history-mode): the legacy chose the colour via history-mode/GetHistoryColor.
-    const baseColor = data.highlightColor ?? initialColor;
+    const baseColor = data.paintColor ?? initialColor;
 
     // explodedViewCustomScale multiplies the parent section's initial scale.
     const customScale = this.#visualStateRegistry.getStateProperty({

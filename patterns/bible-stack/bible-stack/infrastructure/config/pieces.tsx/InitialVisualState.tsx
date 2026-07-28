@@ -6,7 +6,10 @@ export const INITIAL_VISUAL_STATE_MAP: {
   [K in keyof VisualStateMap]: Partial<VisualStateMap[K]>; ///Partial<BotTypeMap[K]["tags"]>;
 } = {
   [BiblePieces.StackTestament]: {},
-  [BiblePieces.StackSection]: {},
+  [BiblePieces.StackSection]: {
+    hoveredFormOpacity: 1,
+    unhoveredFormOpacity: 0.5,
+  },
   [BiblePieces.StackBook]: {},
   [BiblePieces.StackSectionBook]: {},
   [BiblePieces.StackChapter]: {

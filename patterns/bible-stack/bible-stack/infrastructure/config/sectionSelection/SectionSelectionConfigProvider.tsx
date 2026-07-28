@@ -1,6 +1,4 @@
-import type { Scales } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/layout";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { HexString } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/commonTypes";
 
 export class SectionSelectionConfigProvider {
   getDesiredScale(): number {

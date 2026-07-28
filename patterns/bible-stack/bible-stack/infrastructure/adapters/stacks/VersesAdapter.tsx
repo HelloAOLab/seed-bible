@@ -1,11 +1,8 @@
-import type { Piece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+import type { Piece } from "../../../domain/models/canvas";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { VerseMapper } from "../../mappers/VerseMapper";
-import {
-  AnimateStrictTag,
-  SetStrictTag,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
-import type { VerseBotTags } from "@packages/Bible Stack/bibleStack/models/stack";
+import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
+import type { VerseBotTags } from "../../models/stack";
 
 interface AdapterParams {
   mapper: VerseMapper;

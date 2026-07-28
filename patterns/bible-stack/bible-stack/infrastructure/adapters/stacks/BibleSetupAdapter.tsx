@@ -1,5 +1,5 @@
-import type { BibleSetupAdapterPort } from "bibleStack.application.ports.bibleLifecycle";
-import type { BibleSetupAdapterParams } from "bibleStack.infrastructure.ports.bibleSetup";
+import type { BibleSetupAdapterPort } from "../../../application/ports/bibleLifecycle";
+import type { BibleSetupAdapterParams } from "../../ports/bibleSetup";
 import type {
   BibleTransformerBot,
   BibleShadowBot,
@@ -12,15 +12,15 @@ import type {
   TestamentTags,
   LowerCoverTags,
   LowerCoverBot,
-} from "bibleStack.models.stack";
-import { ApplyStrictMod } from "bibleVizUtils.infrastructure.functions.casualos";
-import { GetDarkerColor } from "bibleVizUtils.domain.functions.colors";
-import { BibleTypes } from "bibleVizUtils.domain.models.canvas";
+} from "../../models/stack";
+import { ApplyStrictMod } from "../../functions/casualos";
+import { GetDarkerColor } from "../../../domain/functions/colors";
+import { BibleTypes } from "../../../domain/models/canvas";
 // import { GetIsInHistoryMode } from "bibleVizUtils.services.HistoryMode";
-import type { WorldPosition } from "bibleStack.domain.models.spatial";
-import type { BibleType, Piece } from "bibleVizUtils.domain.models.canvas";
-import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
-import type { StackTestamentData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackTestamentData";
+import type { WorldPosition } from "../../../domain/models/spatial";
+import type { BibleType, Piece } from "../../../domain/models/canvas";
+import type { StackBibleData } from "../../../domain/entities/StackBibleData";
+import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
 
 export class BibleSetupAdapter implements BibleSetupAdapterPort {
   #configProviderPort: BibleSetupAdapterParams["configProviderPort"];
@@ -224,7 +224,7 @@ if(!thisBot.masks.lastPositionUpdateTime || os.localTime > (thisBot.masks.lastPo
     for (const testamentData of bibleData.childrenData) {
       const testament = this.#stackPieceLifecycleAdapterPort.spawnTestament();
       const fixedColor =
-        testamentData.highlightColor ??
+        testamentData.paintColor ??
         testamentData.getPieceInfoProperty("color") ??
         "#FFFFFF";
       const testamentMod: Partial<TestamentTags> = {

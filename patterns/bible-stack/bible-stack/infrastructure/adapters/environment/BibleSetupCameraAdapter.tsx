@@ -1,13 +1,13 @@
-import type { GenericCameraAdapterPort } from "bibleStack.infrastructure.ports.camera";
-import type { CameraAdapterPort } from "bibleStack.application.ports.bibleLifecycle";
-import type { WorldPosition } from "bibleStack.domain.models.spatial";
+import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
+import type { WorldPosition } from "../../../domain/models/spatial";
+import type { CameraAdapter } from "./CameraAdapter";
 
 interface BibleSetupCameraAdapterParams {
-  cameraAdapterPort: GenericCameraAdapterPort;
+  cameraAdapterPort: CameraAdapter;
 }
 
 export class BibleSetupCameraAdapter implements CameraAdapterPort {
-  #cameraAdapterPort: GenericCameraAdapterPort;
+  #cameraAdapterPort: CameraAdapter;
 
   constructor({ cameraAdapterPort }: BibleSetupCameraAdapterParams) {
     this.#cameraAdapterPort = cameraAdapterPort;

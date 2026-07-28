@@ -1,23 +1,20 @@
 import type {
   TestamentStackUpdaterPort,
   UpdateCommand,
-} from "@packages/Bible Stack/bibleStack/application/ports/out/StackTestamentUpdater";
+} from "../../../application/ports/out/StackTestamentUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "@packages/Bible Stack/bibleStack/application/ports/in/Logger";
+import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
-import type { StackUpdatePacing } from "@packages/Bible Stack/bibleStack/domain/models/stacks";
-import type { StackTestamentData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackTestamentData";
-import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
+import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
+import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { StackConfigProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider";
+import type { LayoutConfigProvider as StackConfigProvider } from "../../config/layout/LayoutConfigProvider";
 import type { SectionStackUpdaterAdapter } from "./SectionStackUpdaterAdapter";
 import type { BookStackUpdaterAdapter } from "./BookStackUpdaterAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
-import type {
-  SetStrictTag,
-  AnimateStrictTag,
-} from "bibleVizUtils.infrastructure.functions.casualos";
+import type { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 
 interface AdapterParams {
   getDimension: () => string;

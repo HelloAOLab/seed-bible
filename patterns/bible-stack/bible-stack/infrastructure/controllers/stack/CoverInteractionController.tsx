@@ -1,4 +1,4 @@
-import type { ExperienceServicePort } from "bibleStack.infrastructure.ports.coverInteraction";
+import type { ExperienceServicePort } from "../../../application/ports/in/Experience";
 
 interface ControllerParams {
   experienceServicePort: ExperienceServicePort;

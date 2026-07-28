@@ -1,14 +1,15 @@
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import type { PieceAdapterPort as BooksPieceAdapterPort } from "bibleStack.application.ports.books";
-import type { PieceAdapterPort as DragPieceAdapterPort } from "bibleStack.application.ports.scripturePieceDrag";
-import type { PieceAdapterPort as DraggingPieceAdapterPort } from "bibleStack.application.ports.scripturePieceDragging";
-import type { PieceAdapterPort as SelectionReleasePieceAdapterPort } from "bibleStack.application.ports.scripturePieceSelectionRelease";
-import type { PieceAdapterPort as StructurePieceAdapterPort } from "bibleStack.application.ports.stackStructure";
-import type { PieceAdapterParams } from "bibleStack.infrastructure.ports.pieceAdapter";
-import type { PieceAdapterPort as DropPieceAdapterPort } from "bibleStack.application.ports.scripturePieceDrop";
-import type { PieceAdapterPort as NavigationPieceAdapterPort } from "bibleStack.application.ports.userPresence";
-import type { PieceBot } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/casualos";
-import { SetStrictTag } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
+import type { Piece } from "../../../domain/models/canvas";
+import type { PieceAdapterPort as BooksPieceAdapterPort } from "../../../application/ports/books";
+import type { PieceAdapterPort as DragPieceAdapterPort } from "../../../application/ports/scripturePieceDrag";
+import type { PieceAdapterPort as DraggingPieceAdapterPort } from "../../../application/ports/scripturePieceDragging";
+import type { PieceAdapterPort as SelectionReleasePieceAdapterPort } from "../../../application/ports/scripturePieceSelectionRelease";
+import type { PieceAdapterPort as StructurePieceAdapterPort } from "../../../application/ports/stackStructure";
+import type { PieceAdapterParams } from "../../ports/pieceAdapter";
+import type { PieceAdapterPort as DropPieceAdapterPort } from "../../../application/ports/scripturePieceDrop";
+import type { PieceAdapterPort as NavigationPieceAdapterPort } from "../../../application/ports/userPresence";
+import type { PieceAdapterPort as InteractabilityPieceAdapterPort } from "../../../application/ports/out/PieceInteractability";
+import type { PieceBot, PieceBotTags } from "../../models/casualos";
+import { SetStrictTag } from "../../functions/casualos";
 
 export class PieceAdapter
   implements
@@ -18,7 +19,8 @@ export class PieceAdapter
     SelectionReleasePieceAdapterPort,
     StructurePieceAdapterPort,
     DropPieceAdapterPort,
-    NavigationPieceAdapterPort
+    NavigationPieceAdapterPort,
+    InteractabilityPieceAdapterPort
 {
   #pieceMapperPort: PieceAdapterParams["pieceMapperPort"];
   #dimensionProviderPort: PieceAdapterParams["dimensionProviderPort"];
@@ -32,6 +34,20 @@ export class PieceAdapter
     const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
     return !!pieceBot?.tags.draggable;
   };
+  anchorPiece(piece: Piece) {
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    if (!pieceBot) {
+      throw new Error("PieceAdapter: pieceBot not found at anchorPiece");
+    }
+    SetStrictTag(pieceBot, "draggable", false);
+  }
+  unanchorPiece(piece: Piece) {
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    if (!pieceBot) {
+      throw new Error("PieceAdapter: pieceBot not found at anchorPiece");
+    }
+    SetStrictTag(pieceBot, "draggable", true);
+  }
   makePieceErasable: (piece: Piece) => void = (piece) => {
     const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
     if (!pieceBot) {
@@ -66,7 +82,10 @@ export class PieceAdapter
     const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
     if (!pieceBot) return false;
     const dimension = this.#dimensionProviderPort.getDimension();
-    return !!pieceBot.tags.isInUse && pieceBot.tags[dimension] === true;
+    return (
+      !!pieceBot.tags.isInUse &&
+      pieceBot.tags[dimension as keyof PieceBotTags] === true
+    );
   }
 
   hasTransformer(piece: Piece): boolean {

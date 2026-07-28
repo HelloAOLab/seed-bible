@@ -1,5 +1,5 @@
-import { StackPresenceNavigationPacings } from "bibleStack.domain.models.userPresence";
-import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
+import { StackPresenceNavigationPacings } from "../../../domain/models/userPresence";
+import type { StackPresenceNavigationPacing } from "../../../domain/models/userPresence";
 
 export const CloseBibleAnimationDurations: Record<
   StackPresenceNavigationPacing,

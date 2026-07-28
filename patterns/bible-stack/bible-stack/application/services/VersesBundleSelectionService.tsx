@@ -1,27 +1,63 @@
 import type { VersesBundleData } from "../../domain/entities/VersesBundleData";
-import type { SequenceStateServicePort } from "../ports/versesBundle";
 import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
+import type {
+  PaintAdapterPort,
+  PieceLifecycleAdapterPort,
+  VersesBundleSelectionAdapterPort,
+} from "../ports/out/VersesBundleSelection";
 
 interface ServiceParams {
-  sequenceStateServicePort: SequenceStateServicePort;
+  pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
+  paintAdapter: PaintAdapterPort;
+  selectionAdapterPort: VersesBundleSelectionAdapterPort;
 }
 
 export class VersesBundleSelectionService implements VersesBundleSelectionServicePort {
-  #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
+  #pieceLifecycleAdapterPort: ServiceParams["pieceLifecycleAdapterPort"];
+  #paintAdapter: ServiceParams["paintAdapter"];
+  #selectionAdapterPort: ServiceParams["selectionAdapterPort"];
 
-  constructor({ sequenceStateServicePort }: ServiceParams) {
-    this.#sequenceStateServicePort = sequenceStateServicePort;
+  constructor({
+    pieceLifecycleAdapterPort,
+    paintAdapter,
+    selectionAdapterPort,
+  }: ServiceParams) {
+    this.#pieceLifecycleAdapterPort = pieceLifecycleAdapterPort;
+    this.#paintAdapter = paintAdapter;
+    this.#selectionAdapterPort = selectionAdapterPort;
   }
 
-  selectBundle(data: VersesBundleData): void {
+  async selectBundle(data: VersesBundleData): Promise<void> {
+    const bundlePiece = data.piece;
+    if (!bundlePiece) {
+      throw new Error(
+        "VersesBundleSelectionService: data.piece not defined at selectBundle"
+      );
+    }
+
     data.select();
-    this.#sequenceStateServicePort.startSequence();
-    // TODO: await chunkOfVerses.Select(); // Probably call VersesBundleAdapter.select()?
-    this.#sequenceStateServicePort.endSequence();
-  }
+    const verseStart = data.getCreationParam("start");
+    for (const verseData of data.verses) {
+      verseData.setPiece(this.#pieceLifecycleAdapterPort.spawnVerseDomain());
+    }
 
-  deselectBundle(data: VersesBundleData): void {
-    data.deselect();
-    // TODO: perform deselect sequence on an adapter
+    await this.#selectionAdapterPort.select({
+      bundle: bundlePiece,
+      verseStart,
+      verses: data.verses.map((verseData) => {
+        if (!verseData.piece) {
+          throw new Error(
+            "VersesBundleSelectionService: verseData.piece not defined at selectBundle"
+          );
+        }
+        return verseData.piece;
+      }),
+    });
+
+    data.verses.forEach((verseData) => {
+      if (verseData.paintColor) {
+        this.#paintAdapter.paint(verseData.piece!, verseData.paintColor);
+      }
+    });
   }
 }

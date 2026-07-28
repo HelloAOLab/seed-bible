@@ -1,9 +1,8 @@
 import type {
   HighlightConfigProviderPort,
   HighlightDelay,
-} from "bibleStack.application.ports.pieces";
-import type { HighlightAnimationConfigProviderPort } from "bibleStack.infrastructure.ports.highlight";
-import type { HighlightPacing } from "bibleStack.domain.models.pieces";
+} from "../../../application/ports/pieces";
+import type { HighlightPacing } from "../../../domain/models/pieces";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 
 const delaysMap: Record<HighlightDelay, number> = {
@@ -20,9 +19,7 @@ const animationDurationsMap: Record<HighlightPacing, number> = {
 
 const highlightEasing: Easing = { type: "sinusoidal", mode: "inout" };
 
-export class HighlightConfigProvider
-  implements HighlightConfigProviderPort, HighlightAnimationConfigProviderPort
-{
+export class HighlightConfigProvider implements HighlightConfigProviderPort {
   getDelay(delay: HighlightDelay): number {
     return delaysMap[delay];
   }

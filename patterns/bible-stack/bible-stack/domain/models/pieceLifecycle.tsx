@@ -1,4 +1,4 @@
-import { BiblePieces } from "bibleVizUtils.domain.models.canvas";
+import { BiblePieces } from "./canvas";
 export type StackLabelableBiblePiece = keyof Pick<
   typeof BiblePieces,
   | "StackTestament"

@@ -18,6 +18,10 @@ import {
 } from "./openBibleAnimation";
 import type { BibleType } from "../../../domain/models/canvas";
 import type { BibleSequenceServiceConfigProviderPort } from "../../../application/ports/bibleLifecycle";
+import {
+  ToggleBibleAnimationConfigs,
+  type ToggleBibleAnimationConfigType,
+} from "./toggleBibleModeAnimation";
 
 export class SequenceConfigProvider implements BibleSequenceServiceConfigProviderPort {
   getFocusOnAnimationConfig(key: FocusOnAnimationKey) {
@@ -56,5 +60,11 @@ export class SequenceConfigProvider implements BibleSequenceServiceConfigProvide
     K extends keyof CrackOpenBibleHighlightConfigType,
   >(key: K): CrackOpenBibleHighlightConfigType[K] {
     return CrackOpenBibleHighlightConfig[key];
+  }
+
+  getToggleBibleModeAnimationConfig<
+    K extends keyof ToggleBibleAnimationConfigType,
+  >(key: K): ToggleBibleAnimationConfigType[K] {
+    return ToggleBibleAnimationConfigs[key];
   }
 }

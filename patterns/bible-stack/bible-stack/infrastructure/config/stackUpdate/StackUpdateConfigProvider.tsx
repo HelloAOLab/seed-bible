@@ -1,4 +1,4 @@
-import type { StackUpdatePacing } from "@packages/Bible Stack/bibleStack/domain/models/stacks";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 
 const pacingMap: Record<StackUpdatePacing, number> = {

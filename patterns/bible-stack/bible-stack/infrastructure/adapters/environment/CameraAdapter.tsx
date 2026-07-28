@@ -20,7 +20,10 @@ export class CameraAdapter implements CameraAdapterPort {
       this.#sequenceConfigProviderPort.getFocusOnAnimationConfig(animationKey);
     const easing = { type: config.easingType, mode: config.easingMode };
     const rotation = { x: config.rotationX, y: config.rotationY };
-    const fixedPosition = new Vector3(position.x, position.y, config.positionZ);
+    // A config may fix the focus height (`positionZ`) or defer to the caller's
+    // position when the target depth is dynamic (e.g. a growing testament).
+    const positionZ = "positionZ" in config ? config.positionZ : position.z;
+    const fixedPosition = new Vector3(position.x, position.y, positionZ);
     const desiredFocusOnPosition = GetCamRotationFocusPoint({
       theta: rotation.y,
       phi: rotation.x,

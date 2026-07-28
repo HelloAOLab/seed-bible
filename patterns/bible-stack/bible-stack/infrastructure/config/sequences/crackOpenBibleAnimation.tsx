@@ -1,5 +1,5 @@
-import { BibleTypes } from "bibleVizUtils.domain.models.canvas";
-import type { BibleType } from "bibleVizUtils.domain.models.canvas";
+import { BibleTypes } from "../../../domain/models/canvas";
+import type { BibleType } from "../../../domain/models/canvas";
 
 export const CrackOpenBibleAnimationDurations: Record<BibleType, number> = {
   [BibleTypes.Default]: 2,

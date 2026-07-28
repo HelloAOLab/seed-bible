@@ -1,10 +1,10 @@
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
+import type { Piece } from "./canvas";
+import type { StackBibleData } from "../entities/StackBibleData";
 import type { AnyStackData } from "../../application/ports/pieces";
 import type { StackTestamentData } from "../entities/StackTestamentData";
-import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
-import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
+import type { StackSectionBookData } from "../entities/StackSectionBookData";
+import type { StackBookData } from "../entities/StackBookData";
+import type { StackSectionData } from "../entities/StackSectionData";
 
 export interface BibleStackEvents {
   OnStackSequenceStart: void;
@@ -31,6 +31,7 @@ export interface BibleStackEvents {
   OnBookEndDeselect: { data: StackBookData | StackSectionBookData };
   OnSectionBeginSelect: { data: StackSectionData };
   OnSectionEndSelect: { data: StackSectionData };
+  OnStackSectionExploded: { sectionData: StackSectionData };
   OnTestamentBeginSelect: { data: StackTestamentData };
   OnTestamentEndSelect: { data: StackTestamentData };
   OnCameraRotationChanged: void;

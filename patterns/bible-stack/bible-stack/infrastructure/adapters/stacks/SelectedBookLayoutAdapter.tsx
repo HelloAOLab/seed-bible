@@ -1,10 +1,10 @@
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
-import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
+import type { StackBookData } from "../../../domain/entities/StackBookData";
+import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type {
   SectionBookVisualStateRegistryPort,
   StackConfigProviderPort,
-} from "@packages/Bible Stack/bibleStack/application/ports/out/SelectedBookLayout";
-import type { SelectedBookLayout } from "@packages/Bible Stack/bibleStack/application/ports/out/StackBookUpdater";
+} from "../../../application/ports/out/SelectedBookLayout";
+import type { SelectedBookLayout } from "../../../application/ports/out/StackBookUpdater";
 
 interface AdapterParams {
   sectionBookVisualStateRegistryPort: SectionBookVisualStateRegistryPort;

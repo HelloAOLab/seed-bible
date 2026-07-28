@@ -1,15 +1,15 @@
-import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
-import type { BibleSequenceAdapterPort } from "bibleStack.application.ports.bibleLifecycle";
-import type {
-  BibleSequenceAdapterConfigProviderPort,
-  PieceMapperPort,
-  PieceAdapterPort,
-  SectionInfoMapperPort,
-} from "bibleStack.infrastructure.ports.bibleSequence";
-import type {
-  DimensionProviderPort,
-  VisualStateRegistryPort,
-} from "bibleStack.infrastructure.ports.bibleSetup";
+import type { StackBibleData } from "../../../domain/entities/StackBibleData";
+import type { BibleSequenceAdapterPort } from "../../../application/ports/bibleLifecycle";
+// import type {
+//   BibleSequenceAdapterConfigProviderPort,
+//   PieceMapperPort,
+//   PieceAdapterPort,
+//   SectionInfoMapperPort,
+// } from "bibleStack.infrastructure.ports.bibleSequence";
+// import type {
+//   DimensionProviderPort,
+//   VisualStateRegistryPort,
+// } from "bibleStack.infrastructure.ports.bibleSetup";
 import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import type { StackLowerCoverMapper } from "../../mappers/StackLowerCoverMapper";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
@@ -18,28 +18,32 @@ import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
-import { BibleTypes, type Piece } from "bibleVizUtils.domain.models.canvas";
-import {
-  ApplyStrictMod,
-  GetBotScales,
-} from "bibleVizUtils.infrastructure.functions.casualos";
-import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
-import type {
-  StackCover,
-  StackCrossLine,
-} from "bibleStack.domain.models.pieces";
+import { BibleTypes, type Piece } from "../../../domain/models/canvas";
+import { ApplyStrictMod, GetBotScales } from "../../functions/casualos";
+import type { StackPresenceNavigationPacing } from "../../../domain/models/userPresence";
+import type { StackCover, StackCrossLine } from "../../../domain/models/pieces";
 import type {
   BookBot,
   BookTags,
   SectionBot,
   SectionTags,
-} from "bibleStack.models.stack";
-import { GetDarkerColor } from "bibleVizUtils.domain.functions.colors";
+} from "../../models/stack";
+import { GetDarkerColor } from "../../../domain/functions/colors";
+import type { SequenceConfigProvider } from "../../config/sequences/SequenceConfigProvider";
+import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { PieceAdapter } from "../stacks/PieceAdapter";
+import type { SectionInfoMapper } from "../../mappers/SectionInfoMapper";
+import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
+import type { PiecesConfigProvider } from "../../config/pieces.tsx/PiecesConfigProvider";
+import type { BookInfoMapper } from "../../mappers/BookInfoMapper";
 
 interface BibleSequenceAdapterParams {
-  configProviderPort: BibleSequenceAdapterConfigProviderPort;
-  dimensionProviderPort: DimensionProviderPort;
-  visualStateRegistryPort: VisualStateRegistryPort;
+  configProviderPort: SequenceConfigProvider;
+  dimensionProviderPort: {
+    getDimension: () => string;
+  };
+  visualStateRegistryPort: VisualStateRegistry;
   coverMapperPort: StackCoverMapper;
   lowerCoverMapperPort: StackLowerCoverMapper;
   crossLineMapperPort: StackCrossLineMapper;
@@ -48,9 +52,12 @@ interface BibleSequenceAdapterParams {
   sectionBookMapperPort: StackSectionBookMapper;
   bookMapperPort: StackBookMapper;
   sectionShadowMapperPort: StackSectionShadowMapper;
-  pieceMapperPort: PieceMapperPort;
-  pieceAdapterPort: PieceAdapterPort;
-  sectionInfoMapperPort: SectionInfoMapperPort;
+  pieceMapperPort: PieceMapper;
+  pieceAdapterPort: PieceAdapter;
+  sectionInfoMapperPort: SectionInfoMapper;
+  layoutConfigProviderPort: LayoutConfigProvider;
+  piecesConigProvider: PiecesConfigProvider;
+  bookInfoMapperPort: BookInfoMapper;
 }
 
 export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
@@ -63,11 +70,12 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
   #testamentMapperPort: BibleSequenceAdapterParams["testamentMapperPort"];
   #sectionMapperPort: BibleSequenceAdapterParams["sectionMapperPort"];
   #sectionBookMapperPort: BibleSequenceAdapterParams["sectionBookMapperPort"];
-  // #bookMapperPort: BibleSequenceAdapterParams["bookMapperPort"];
-  // #sectionShadowMapperPort: BibleSequenceAdapterParams["sectionShadowMapperPort"];
   #pieceMapperPort: BibleSequenceAdapterParams["pieceMapperPort"];
   #pieceAdapterPort: BibleSequenceAdapterParams["pieceAdapterPort"];
   #sectionInfoMapperPort: BibleSequenceAdapterParams["sectionInfoMapperPort"];
+  #layoutConfigProviderPort: BibleSequenceAdapterParams["layoutConfigProviderPort"];
+  #piecesConigProvider: BibleSequenceAdapterParams["piecesConigProvider"];
+  #bookInfoMapperPort: BibleSequenceAdapterParams["bookInfoMapperPort"];
 
   constructor({
     configProviderPort,
@@ -79,11 +87,12 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     testamentMapperPort,
     sectionMapperPort,
     sectionBookMapperPort,
-    // bookMapperPort,
-    // sectionShadowMapperPort,
     pieceMapperPort,
     pieceAdapterPort,
     sectionInfoMapperPort,
+    layoutConfigProviderPort,
+    piecesConigProvider,
+    bookInfoMapperPort,
   }: BibleSequenceAdapterParams) {
     this.#configProviderPort = configProviderPort;
     this.#dimensionProviderPort = dimensionProviderPort;
@@ -94,18 +103,19 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     this.#testamentMapperPort = testamentMapperPort;
     this.#sectionMapperPort = sectionMapperPort;
     this.#sectionBookMapperPort = sectionBookMapperPort;
-    // this.#bookMapperPort = bookMapperPort;
-    // this.#sectionShadowMapperPort = sectionShadowMapperPort;
     this.#pieceMapperPort = pieceMapperPort;
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#sectionInfoMapperPort = sectionInfoMapperPort;
+    this.#layoutConfigProviderPort = layoutConfigProviderPort;
+    this.#piecesConigProvider = piecesConigProvider;
+    this.#bookInfoMapperPort = bookInfoMapperPort;
   }
 
   async displayCrackOpenBibleSequence(
     bibleData: StackBibleData,
     arePiecesDraggable: boolean
   ) {
-    const dimension = this.#dimensionProviderPort.getCurrentDimension();
+    const dimension = this.#dimensionProviderPort.getDimension();
     const animationDuration =
       this.#configProviderPort.getCrackOpenBibleAnimationDuration(
         bibleData.bibleType
@@ -212,7 +222,7 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
       const positionZ =
         lowerCoverPosition.z +
         lowerCoverScales.z +
-        this.#configProviderPort.getStackSpacing("BetweenArrangements") *
+        this.#layoutConfigProviderPort.getStackSpacing("BetweenArrangements") *
           (testamentIndex + 1) +
         scales.z * testamentIndex;
       testamentsScales.push(scales);
@@ -235,12 +245,12 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     const upperCoverPositionZ =
       lastTestamentPositionZ +
       lastTestamentScales.z +
-      this.#configProviderPort.getStackSpacing("BetweenArrangements");
+      this.#layoutConfigProviderPort.getStackSpacing("BetweenArrangements");
     const upperCoverScales = GetBotScales(upperCoverBot);
     const crossPositionZ =
       upperCoverPositionZ +
       upperCoverScales.z +
-      this.#configProviderPort.getStackSpacing("CoverToCross");
+      this.#layoutConfigProviderPort.getStackSpacing("CoverToCross");
 
     const animations: Promise<unknown>[] = [];
 
@@ -356,7 +366,7 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
       | Piece<"StackSectionShadow">
     )[];
   }) {
-    const dimension = this.#dimensionProviderPort.getCurrentDimension();
+    const dimension = this.#dimensionProviderPort.getDimension();
 
     const lowerCoverBot =
       this.#lowerCoverMapperPort.toInfrastructure(lowerCover);
@@ -448,7 +458,7 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     bibleData: StackBibleData;
     arePiecesDraggable: boolean;
   }) {
-    const dimension = this.#dimensionProviderPort.getCurrentDimension();
+    const dimension = this.#dimensionProviderPort.getDimension();
 
     const lowerCoverBot =
       this.#lowerCoverMapperPort.toInfrastructure(lowerCover);
@@ -489,15 +499,15 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
 
     const initialPositionZ =
       lowerCoverPosition.z +
-      this.#configProviderPort.getStackPieceMeasurement("CoverScales").z;
+      this.#layoutConfigProviderPort.getStackPieceMeasurement("CoverScales").z;
     let nextPositionZ =
       initialPositionZ +
-      this.#configProviderPort.getStackSpacing("BetweenArrangements");
+      this.#layoutConfigProviderPort.getStackSpacing("BetweenArrangements");
     const resizeAnimations = [];
 
     for (const testamentData of bibleData.childrenData) {
       nextPositionZ +=
-        this.#configProviderPort.getStackSpacing("BetweenSections");
+        this.#layoutConfigProviderPort.getStackSpacing("BetweenSections");
       for (const sectionData of testamentData.childrenData) {
         if (!sectionData.piece) {
           throw new Error(
@@ -506,7 +516,7 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
         }
         const desiredScaleZ =
           sectionData.getCreationParam("amountOfChaptersInSection") *
-          this.#configProviderPort.getStackPieceMeasurement(
+          this.#layoutConfigProviderPort.getStackPieceMeasurement(
             "SectionDesiredScaleZRatio"
           );
         let sectionBot: SectionBot | BookBot | undefined = undefined;
@@ -518,15 +528,16 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
           [dimension + "Z"]: initialPositionZ,
           [dimension + "RotationZ"]: 0,
           scaleX:
-            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
-              .x,
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
+              "SectionScales"
+            ).x,
           scaleY:
-            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
-              .y,
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
+              "SectionScales"
+            ).y,
           scaleZ: sectionInitialScaleZ,
           color:
-            sectionData.highlightColor ??
-            sectionData.getPieceInfoProperty("color"),
+            sectionData.paintColor ?? sectionData.getPieceInfoProperty("color"),
           strokeColor: "clear",
           labelOpacity: 0,
           formOpacity: 0.7,
@@ -535,22 +546,26 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
         };
         const baseVisualState = {
           initialScaleX:
-            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
-              .x,
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
+              "SectionScales"
+            ).x,
           initialScaleY:
-            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
-              .y,
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
+              "SectionScales"
+            ).y,
           initialScaleZ: desiredScaleZ,
           hoveredScaleX:
-            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
-              .x +
-            this.#configProviderPort.getStackPieceMeasurement(
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
+              "SectionScales"
+            ).x +
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
               "SectionAditionalScaleOnHover"
             ),
           hoveredScaleY:
-            this.#configProviderPort.getStackPieceMeasurement("SectionScales")
-              .y +
-            this.#configProviderPort.getStackPieceMeasurement(
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
+              "SectionScales"
+            ).y +
+            this.#layoutConfigProviderPort.getStackPieceMeasurement(
               "SectionAditionalScaleOnHover"
             ),
           orginalColor: sectionData.getPieceInfoProperty("color"),
@@ -579,6 +594,10 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
                 this.#sectionInfoMapperPort.toInfrastructure(
                   sectionData.pieceInfo
                 );
+              const initialVisualState =
+                this.#piecesConigProvider.getInitialVisualState(
+                  sectionData.type
+                );
               this.#visualStateRegistryPort.registerState({
                 piece: sectionData.piece,
                 state: {
@@ -590,6 +609,10 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
                     desiredScaleZ *
                     (infraSectionInfo.customExplodedViewScaleFactor ?? 2),
                   customColorRange: infraSectionInfo.customColorRange,
+                  hoveredFormOpacity:
+                    initialVisualState.hoveredFormOpacity ?? 1,
+                  unhoveredFormOpacity:
+                    initialVisualState.unhoveredFormOpacity ?? 1,
                 },
               });
               ApplyStrictMod(sectionBot, sectionMod);
@@ -608,10 +631,29 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
               const sectionMod: Partial<BookTags> = {
                 ...baseTags,
               };
+              const infraInfo = this.#bookInfoMapperPort.toInfrastructure(
+                sectionData.pieceBookInfo
+              );
+              const explodedViewPosition = infraInfo.explodedViewPosition ?? {
+                x: 0,
+                y: 0,
+                z: 0,
+              };
+              const bookScales =
+                this.#layoutConfigProviderPort.getStackPieceMeasurement(
+                  "BookScales"
+                );
               this.#visualStateRegistryPort.registerState({
                 piece: sectionData.piece,
                 state: {
                   ...baseVisualState,
+                  hoveredFormOpacity: 1,
+                  unhoveredFormOpacity: 1,
+                  chapterColumns: 0,
+                  chapterRows: 0,
+                  explodedViewSelectedScaleZ: 0,
+                  explodedViewPosition,
+                  singleBooksScales: { x: bookScales.x, y: bookScales.y },
                 },
               });
               ApplyStrictMod(sectionBot, sectionMod);
@@ -634,19 +676,12 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
               easing,
             })
           );
-          if (BibleVizUtils.Data.masks.isInHistoryMode)
-            // TODO: Refactor this logic
-            setTagMask(
-              sectionBot,
-              "color",
-              BibleVizUtils.Functions.GetHistoryColor({ piece: sectionBot })
-            );
         }
         nextPositionZ +=
           desiredScaleZ +
-          this.#configProviderPort.getStackSpacing("BetweenSections");
+          this.#layoutConfigProviderPort.getStackSpacing("BetweenSections");
       }
-      nextPositionZ += this.#configProviderPort.getStackSpacing(
+      nextPositionZ += this.#layoutConfigProviderPort.getStackSpacing(
         "BetweenArrangements"
       );
     }
@@ -681,8 +716,9 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
         piece: firstSectionPiece,
         property: "desiredPositionZ",
       }) -
-      this.#configProviderPort.getStackSpacing("BetweenArrangements") / 2 -
-      this.#configProviderPort.getStackSpacing("BetweenSections") -
+      this.#layoutConfigProviderPort.getStackSpacing("BetweenArrangements") /
+        2 -
+      this.#layoutConfigProviderPort.getStackSpacing("BetweenSections") -
       crossVerticalLineScales.z / 2;
     resizeAnimations.push(
       animateTag(upperCoverBot, dimension + "Z", {
