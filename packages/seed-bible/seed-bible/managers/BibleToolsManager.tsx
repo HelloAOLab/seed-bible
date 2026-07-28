@@ -599,9 +599,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronLeftIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.hasPrevious.value ||
-        context.readingState.loading.value,
+      // Navigation is never blocked by an in-flight text request (#1414) —
+      // repeated taps queue behind each other instead of racing.
+      isDisabled: (context) => !context.readingState.hasPrevious.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
@@ -644,7 +644,6 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 100,
       title: { key: "books", defaultValue: "Books" },
       icon: OpenSelectorIcon,
-      isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
         const currentSlot =
           context.tabsLayoutManager.slots.value.find(
@@ -740,9 +739,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronRightIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.hasNext.value ||
-        context.readingState.loading.value,
+      // Navigation is never blocked by an in-flight text request (#1414) —
+      // repeated taps queue behind each other instead of racing.
+      isDisabled: (context) => !context.readingState.hasNext.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadNextChapter();
