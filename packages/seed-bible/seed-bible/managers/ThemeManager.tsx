@@ -499,7 +499,7 @@ const LIGHT_THEME: BibleTheme = {
     bookSelectorFontFamily: "inherit",
     bookSelectorFontColor: "#333",
 
-    fontFamily: "Satoshi, system-ui, sans-serif",
+    fontFamily: "system-ui, sans-serif",
     fontColor: "#333",
 
     bookTitleFontFamily: "Newsreader, serif",
@@ -568,7 +568,7 @@ const LIGHT_THEME: BibleTheme = {
     toolbarIconInvert: "0",
 
     readerToolbarFontColor: "#333",
-    readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
+    readerToolbarFontFamily: "system-ui, sans-serif",
 
     dividerColor: "rgba(0, 0, 0, 0.12)",
     shadowColor: "rgba(0, 0, 0, 0.14)",
@@ -641,7 +641,7 @@ const DARK_THEME: BibleTheme = {
     bookSelectorFontFamily: "inherit",
     bookSelectorFontColor: "#e6e6e6",
 
-    fontFamily: "Satoshi, system-ui, sans-serif",
+    fontFamily: "system-ui, sans-serif",
     fontColor: "#e6e6e6",
 
     bookTitleFontFamily: "Newsreader, serif",
@@ -708,7 +708,7 @@ const DARK_THEME: BibleTheme = {
     toolbarIconInvert: "1",
 
     readerToolbarFontColor: "#e6e6e6",
-    readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
+    readerToolbarFontFamily: "system-ui, sans-serif",
 
     dividerColor: "rgba(255, 255, 255, 0.1)",
     shadowColor: "rgba(0, 0, 0, 0.6)",

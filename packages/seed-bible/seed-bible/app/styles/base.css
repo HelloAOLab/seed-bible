@@ -82,7 +82,7 @@
   --text-verse-line-height: 1.7;
 
   --sb-background: #f1f1f2;
-  --sb-font-family: "Satoshi", system-ui, sans-serif;
+  --sb-font-family: system-ui, sans-serif;
   --sb-font-color: #333;
 
   --sb-primary-color: #e07b4c;
@@ -136,7 +136,7 @@
     0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
   --sb-reader-toolbar-z-index: 99;
   --sb-reader-toolbar-height: auto;
-  --sb-reader-toolbar-font-family: "Satoshi", system-ui, sans-serif;
+  --sb-reader-toolbar-font-family: system-ui, sans-serif;
   --sb-reader-toolbar-font-color: #333;
 
   --sb-reader-toolbar-button-height: 3.25rem;
