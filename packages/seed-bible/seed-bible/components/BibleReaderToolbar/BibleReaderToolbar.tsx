@@ -1246,9 +1246,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     <button
                       type="button"
                       onClick={() => {
-                        // Opening the More menu should dismiss the
-                        // tabs/bookmarks drawer if it's open.
+                        // Opening the More menu should dismiss whatever else is
+                        // covering the reader — the search bar, the chat panel,
+                        // the settings view, or the tabs/bookmarks drawer — the
+                        // same way the other bottom tabs do. Extension panes are
+                        // left alone, since those are opened *from* this menu.
                         if (!isMoreMenuOpen.value) {
+                          sidebar.closeSearchPanel();
+                          sidebar.closeChatPanel();
+                          sidebar.closeSettings();
                           sidebar.closeSidebar();
                         }
                         isMoreMenuOpen.value = !isMoreMenuOpen.value;
