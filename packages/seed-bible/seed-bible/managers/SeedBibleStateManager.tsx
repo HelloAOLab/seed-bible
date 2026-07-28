@@ -595,21 +595,27 @@ export function createSeedBibleState(
     i18n,
     readingExtensions
   );
-  // Close any fullscreen pane when the book/chapter/verse params change, so
+  // Close any fullscreen pane when the book/chapter params change, so
   // navigating reveals the reader (every navigation path writes these params).
   // The first location only sets a baseline, so load-time init doesn't close a
   // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  //
+  // `?verse` is deliberately NOT part of the location: TabsManager mirrors the
+  // verse *selection* into that param, so counting it here made selecting (or
+  // clearing) a verse look like a navigation — which closed the very pane the
+  // user had just opened from the verse toolbar. Verse-level navigation that
+  // really should reveal the reader (a verse reference link, a search result)
+  // calls `closeFullscreenPanes` explicitly on its own path.
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
     const book = url.searchParams.get("book");
     const chapter = url.searchParams.get("chapter");
-    const verse = url.searchParams.get("verse");
     if (!book || !chapter) {
       return;
     }
 
-    const location = `${book}|${chapter}|${verse ?? ""}`;
+    const location = `${book}|${chapter}`;
     const previous = lastReadingLocation;
     lastReadingLocation = location;
 

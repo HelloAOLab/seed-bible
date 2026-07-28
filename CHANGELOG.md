@@ -8,6 +8,10 @@
 
 ### 🐛 Fixed
 
+- Hide the verse toolbar while a pane covers the reader (e.g. the Locations map) instead of letting it sit on top and hide most of the pane. The verse selection is kept, so the toolbar comes back unchanged when the pane is closed.
+- Stop selecting or clearing a verse from closing an open fullscreen pane. Selecting a verse is mirrored into the `?verse` URL parameter, which was being read as a navigation.
+- Reserve the mobile bottom bar's height on a fullscreen pane, so the bottom of the pane's own content is no longer hidden behind the bar.
+
 ### 🗑️ Removed
 
 ## v1.2.1 — 2026-07-23
