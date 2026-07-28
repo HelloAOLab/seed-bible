@@ -3,11 +3,11 @@ import type {
   ArrangementInfoConfig,
 } from "../models/arrangement";
 import type { BookInfo } from "../../domain/models/arrangement";
-import type { BooksStaticInfoRepositoryPort } from "../ports/bookInfo";
+import type { BooksStaticInfoRepository } from "../adapters/arrangement/BooksStaticInfoRepository";
 
 interface MapperParams {
   getArrangement: () => ArrangementInfoConfig | undefined;
-  booksStaticInfoRepository: BooksStaticInfoRepositoryPort;
+  booksStaticInfoRepository: BooksStaticInfoRepository;
 }
 
 export class BookInfoMapper {

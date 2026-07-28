@@ -56,6 +56,7 @@ export interface ChapterVisualState extends Pick<
   highlightedScaleZ: number;
   selectedColor: HexString;
   selectedScaleY: number;
+  highlightedColor: string;
 }
 
 export interface VersesBundleVisualState {

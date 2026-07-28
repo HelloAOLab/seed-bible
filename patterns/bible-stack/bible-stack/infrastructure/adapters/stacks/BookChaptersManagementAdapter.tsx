@@ -145,6 +145,9 @@ export class BookChapterManagementAdapter implements BookChaptersManagementAdapt
         initialColor:
           chapterBot.tags.color ??
           this.#piecesConfigProvider.getInitialConfig("StackChapter").color!,
+        highlightedColor:
+          this.#piecesConfigProvider.getInitialVisualState("StackChapter")
+            .highlightedColor ?? "#ffffff",
       },
     });
 

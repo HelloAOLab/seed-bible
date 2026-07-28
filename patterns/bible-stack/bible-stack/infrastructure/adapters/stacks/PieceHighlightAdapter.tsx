@@ -1,11 +1,6 @@
 import { BiblePieces, type Piece } from "../../../domain/models/canvas";
 import type { HighlightPacing } from "../../../domain/models/pieces";
 import type { PieceHighlightAdapterPort } from "../../../application/ports/pieces";
-import type {
-  PieceHighlightAdapterParams,
-  HighlightVisualStatePort,
-  HighlightAnimationConfigProviderPort,
-} from "../../ports/highlight";
 import type { PieceHighlightPieceDataRepositoryPort } from "../../../application/ports/pieces";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
@@ -14,6 +9,8 @@ import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackChapterMapper } from "../../mappers/StackChapterMapper";
 import type { TestamentBot, SectionBot, BookBot } from "../../models/stack";
 import { GetBotScales } from "../../functions/casualos";
+import type { HighlightConfigProvider } from "../../config/highlight/HighlightConfigProvider";
+import type { VisualStateRegistry } from "./VisualStateRegistry";
 
 type StackPieceUnion =
   | Piece<"StackTestament">
@@ -22,14 +19,25 @@ type StackPieceUnion =
   | Piece<"StackBook">
   | Piece<"StackChapter">;
 
+export interface AdapterParams {
+  testamentMapperPort: StackTestamentMapper;
+  sectionMapperPort: StackSectionMapper;
+  sectionBookMapperPort: StackSectionBookMapper;
+  bookMapperPort: StackBookMapper;
+  chapterMapperPort: StackChapterMapper;
+  visualStatePort: VisualStateRegistry;
+  animationConfigProviderPort: HighlightConfigProvider;
+  pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
+}
+
 export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   #testamentMapperPort: StackTestamentMapper;
   #sectionMapperPort: StackSectionMapper;
   #sectionBookMapperPort: StackSectionBookMapper;
   #bookMapperPort: StackBookMapper;
   #chapterMapperPort: StackChapterMapper;
-  #visualStatePort: HighlightVisualStatePort;
-  #animationConfigProviderPort: HighlightAnimationConfigProviderPort;
+  #visualStatePort: VisualStateRegistry;
+  #animationConfigProviderPort: HighlightConfigProvider;
   #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;
 
   constructor({
@@ -41,7 +49,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     visualStatePort,
     animationConfigProviderPort,
     pieceDataRepositoryPort,
-  }: PieceHighlightAdapterParams) {
+  }: AdapterParams) {
     this.#testamentMapperPort = testamentMapperPort;
     this.#sectionMapperPort = sectionMapperPort;
     this.#sectionBookMapperPort = sectionBookMapperPort;

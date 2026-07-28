@@ -1,10 +1,4 @@
-export const BookInteractionDelays = {
-  UnhighlightOtherSectionBooks: "UnhighlightOtherSectionBooks",
-  UnhighlightBook: "UnhighlightBook",
-} as const;
-
-export type BookInteractionDelay =
-  (typeof BookInteractionDelays)[keyof typeof BookInteractionDelays];
+import type { BookInteractionDelay } from "../../../application/ports/out/BookInteraction";
 
 export const delaysMap: Record<BookInteractionDelay, number> = {
   UnhighlightOtherSectionBooks: 7500,

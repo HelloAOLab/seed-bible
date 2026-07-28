@@ -14,6 +14,7 @@ export const INITIAL_VISUAL_STATE_MAP: {
   [BiblePieces.StackSectionBook]: {},
   [BiblePieces.StackChapter]: {
     selectedColor: "#f8c471",
+    highlightedColor: "#ffffff",
   },
   [BiblePieces.StackSectionShadow]: {},
   [BiblePieces.VersesBundle]: {

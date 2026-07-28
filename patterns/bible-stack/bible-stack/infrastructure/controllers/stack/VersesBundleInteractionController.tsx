@@ -1,10 +1,10 @@
-import type { VersesBundleInteractionServicePort } from "bibleStack.application.ports.in.VersesBundleInteraction";
-import type { PieceMapperPort } from "bibleStack.infrastructure.ports.versesBundleInteraction";
-import type { VersesBundleBot } from "bibleStack.models.stack";
+import type { VersesBundleInteractionServicePort } from "../../../application/ports/in/VersesBundleInteraction";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { VersesBundleBot } from "../../models/stack";
 
 interface ControllerParams {
   versesBundleInteractionServicePort: VersesBundleInteractionServicePort;
-  pieceMapperPort: PieceMapperPort;
+  pieceMapperPort: PieceMapper;
 }
 
 export class VersesBundleInteractionController {

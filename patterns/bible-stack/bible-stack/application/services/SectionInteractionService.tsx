@@ -11,13 +11,13 @@ import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { PieceDataRepositoryPort } from "../ports/pieces";
-import type { SectionInteractionConfigProviderPort } from "../../infrastructure/ports/sectionInteraction";
+import type { SectionInteractionConfigProviderPort } from "../ports/out/SectionInteraction";
 import {
   HighlightRequestSources,
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import { SectionInteractionDelays } from "../../infrastructure/config/sectionInteraction/delays";
+import { SectionInteractionDelays } from "../ports/out/SectionInteraction";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";

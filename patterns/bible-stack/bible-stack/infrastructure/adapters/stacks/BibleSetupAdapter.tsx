@@ -1,5 +1,4 @@
 import type { BibleSetupAdapterPort } from "../../../application/ports/bibleLifecycle";
-import type { BibleSetupAdapterParams } from "../../ports/bibleSetup";
 import type {
   BibleTransformerBot,
   BibleShadowBot,
@@ -21,6 +20,24 @@ import type { WorldPosition } from "../../../domain/models/spatial";
 import type { BibleType, Piece } from "../../../domain/models/canvas";
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
+import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
+import type { VisualStateRegistry } from "./VisualStateRegistry";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { StackPieceLifecycleAdapter } from "./StackPieceLifecycleAdapter";
+import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
+
+export interface DimensionProviderPort {
+  getCurrentDimension(): string;
+}
+
+export interface BibleSetupAdapterParams {
+  dimensionProviderPort: DimensionProviderPort;
+  configProviderPort: LayoutConfigProvider;
+  visualStateRegistryPort: VisualStateRegistry;
+  pieceMapperPort: PieceMapper;
+  stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapter;
+  testamentMapperPort: StackTestamentMapper;
+}
 
 export class BibleSetupAdapter implements BibleSetupAdapterPort {
   #configProviderPort: BibleSetupAdapterParams["configProviderPort"];

@@ -1,4 +1,3 @@
-import type { BooksStaticInfoRepositoryPort } from "../../ports/bookInfo";
 import type { BookStaticInfoConfig } from "../../models/arrangement";
 
 /**
@@ -7,7 +6,7 @@ import type { BookStaticInfoConfig } from "../../models/arrangement";
  * `configBot.tags.booksStaticInfo` and parsed at the composition root, so this
  * adapter stays decoupled from `configBot`.
  */
-export class BooksStaticInfoRepository implements BooksStaticInfoRepositoryPort {
+export class BooksStaticInfoRepository {
   #booksStaticInfo: Record<string, BookStaticInfoConfig>;
 
   constructor(booksStaticInfo: Record<string, BookStaticInfoConfig>) {

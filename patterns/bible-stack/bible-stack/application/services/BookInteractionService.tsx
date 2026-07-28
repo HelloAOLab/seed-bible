@@ -27,8 +27,8 @@ import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { LabelTranslucencyModes } from "../../domain/models/label";
-import type { BookInteractionConfigProviderPort } from "../../infrastructure/ports/bookInteraction";
-import { BookInteractionDelays } from "../../infrastructure/config/bookInteraction/delays";
+import type { BookInteractionConfigProviderPort } from "../ports/out/BookInteraction";
+import { BookInteractionDelays } from "../ports/out/BookInteraction";
 import type { PaintPort } from "../ports/in/Paint";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 

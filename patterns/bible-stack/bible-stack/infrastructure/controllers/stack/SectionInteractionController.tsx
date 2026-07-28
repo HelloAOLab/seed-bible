@@ -1,29 +1,24 @@
-import { CanvasInteractions } from "bibleVizUtils.infrastructure.models.canvas";
-import type { SectionBot } from "bibleStack.models.stack";
+import type { SectionBot } from "../../models/stack";
+import type { SectionInteractionServicePort } from "../../../application/ports/in/SectionInteraction";
+import type { SectionDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
+import type { SectionDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
+import type { SectionSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 import type {
-  DragServicePort,
-  DraggingEventMapperPort,
-  DropEventMapperPort,
-  PieceMapperPort,
-} from "bibleStack.application.ports.sections";
-import type { SectionInteractionServicePort } from "bibleStack.application.ports.in.SectionInteraction";
-import type { SectionDraggingServicePort } from "bibleStack.application.ports.in.ScripturePieceDragging";
-import type { SectionDropServicePort } from "bibleStack.application.ports.in.ScripturePieceDrop";
-import type { SectionSelectionReleaseServicePort } from "bibleStack.application.ports.in.ScripturePieceSelectionRelease";
-
-import type {
+  BotListenerParametersMap,
   DraggingEvent,
   DropEvent,
-} from "bibleVizUtils.infrastructure.models.casualos";
+} from "../../models/casualos";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { DragServicePort } from "../../../application/ports/sections";
+import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
 
 interface ControllerParams {
   sectionInteractionServicePort: SectionInteractionServicePort;
-  pieceMapperPort: PieceMapperPort;
+  pieceMapperPort: PieceMapper;
   dragServicePort: DragServicePort;
   draggingServicePort: SectionDraggingServicePort;
-  draggingEventMapperPort: DraggingEventMapperPort;
+  relocationEventMapperPort: RelocationEventMapper;
   selectionReleaseServicePort: SectionSelectionReleaseServicePort;
-  dropEventMapperPort: DropEventMapperPort;
   dropServicePort: SectionDropServicePort;
 }
 
@@ -32,9 +27,8 @@ export class SectionInteractionController {
   #pieceMapperPort: ControllerParams["pieceMapperPort"];
   #dragServicePort: ControllerParams["dragServicePort"];
   #draggingServicePort: ControllerParams["draggingServicePort"];
-  #draggingEventMapperPort: ControllerParams["draggingEventMapperPort"];
+  #relocationEventMapperPort: ControllerParams["relocationEventMapperPort"];
   #selectionReleaseServicePort: ControllerParams["selectionReleaseServicePort"];
-  #dropEventMapperPort: ControllerParams["dropEventMapperPort"];
   #dropServicePort: ControllerParams["dropServicePort"];
 
   constructor({
@@ -42,18 +36,16 @@ export class SectionInteractionController {
     pieceMapperPort,
     dragServicePort,
     draggingServicePort,
-    draggingEventMapperPort,
+    relocationEventMapperPort,
     selectionReleaseServicePort,
-    dropEventMapperPort,
     dropServicePort,
   }: ControllerParams) {
     this.#sectionInteractionServicePort = sectionInteractionServicePort;
     this.#pieceMapperPort = pieceMapperPort;
     this.#dragServicePort = dragServicePort;
     this.#draggingServicePort = draggingServicePort;
-    this.#draggingEventMapperPort = draggingEventMapperPort;
+    this.#relocationEventMapperPort = relocationEventMapperPort;
     this.#selectionReleaseServicePort = selectionReleaseServicePort;
-    this.#dropEventMapperPort = dropEventMapperPort;
     this.#dropServicePort = dropServicePort;
   }
 
@@ -62,9 +54,7 @@ export class SectionInteractionController {
     typeOfInteraction,
   }: {
     section: SectionBot;
-    typeOfInteraction:
-      | (typeof CanvasInteractions)["Tap"]
-      | (typeof CanvasInteractions)["Click"];
+    typeOfInteraction: BotListenerParametersMap<SectionBot>["onClick"]["modality"];
   }) {
     const piece = this.#pieceMapperPort.toDomain(section);
     this.#sectionInteractionServicePort.handleSectionSelection({
@@ -87,7 +77,7 @@ export class SectionInteractionController {
   }) {
     const piece = this.#pieceMapperPort.toDomain(section);
     const domainDraggingEvent =
-      this.#draggingEventMapperPort.toDomain(draggingEvent);
+      this.#relocationEventMapperPort.toDomain(draggingEvent);
     this.#draggingServicePort.handlePieceDragging(piece, domainDraggingEvent);
   }
 
@@ -114,7 +104,7 @@ export class SectionInteractionController {
     dropEvent: DropEvent;
   }) {
     const piece = this.#pieceMapperPort.toDomain(section);
-    const domainDropEvent = this.#dropEventMapperPort.toDomain(dropEvent);
+    const domainDropEvent = this.#relocationEventMapperPort.toDomain(dropEvent);
     this.#dropServicePort.handlePieceDrop(piece, domainDropEvent);
   }
 }

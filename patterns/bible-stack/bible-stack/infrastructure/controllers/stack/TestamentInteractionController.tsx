@@ -10,11 +10,6 @@
  */
 
 import type { TestamentBot } from "../../models/stack";
-import type {
-  DraggingEventMapperPort,
-  DropEventMapperPort,
-  PieceMapperPort,
-} from "../../../application/ports/testaments";
 import type { TestamentInteractionServicePort } from "../../../application/ports/in/TestamentInteraction";
 import type { TestamentDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
 import type { TestamentDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
@@ -24,15 +19,16 @@ import type {
   BaseRelocationEvent,
   BotListenerParametersMap,
 } from "../../models/casualos";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
 
 interface ControllerParams {
   testamentInteractionServicePort: TestamentInteractionServicePort;
-  pieceMapperPort: PieceMapperPort;
+  pieceMapperPort: PieceMapper;
   dragServicePort: TestamentDragServicePort;
   draggingServicePort: TestamentDraggingServicePort;
-  draggingEventMapperPort: DraggingEventMapperPort;
+  relocationEventMapper: RelocationEventMapper;
   selectionReleaseServicePort: TestamentSelectionReleaseServicePort;
-  dropEventMapperPort: DropEventMapperPort;
   dropServicePort: TestamentDropServicePort;
 }
 
@@ -41,9 +37,8 @@ export class TestamentInteractionController {
   #pieceMapperPort: ControllerParams["pieceMapperPort"];
   #dragServicePort: ControllerParams["dragServicePort"];
   #draggingServicePort: ControllerParams["draggingServicePort"];
-  #draggingEventMapperPort: ControllerParams["draggingEventMapperPort"];
+  #relocationEventMapper: ControllerParams["relocationEventMapper"];
   #selectionReleaseServicePort: ControllerParams["selectionReleaseServicePort"];
-  #dropEventMapperPort: ControllerParams["dropEventMapperPort"];
   #dropServicePort: ControllerParams["dropServicePort"];
 
   constructor({
@@ -51,18 +46,16 @@ export class TestamentInteractionController {
     pieceMapperPort,
     dragServicePort,
     draggingServicePort,
-    draggingEventMapperPort,
+    relocationEventMapper,
     selectionReleaseServicePort,
-    dropEventMapperPort,
     dropServicePort,
   }: ControllerParams) {
     this.#testamentInteractionServicePort = testamentInteractionServicePort;
     this.#pieceMapperPort = pieceMapperPort;
     this.#dragServicePort = dragServicePort;
     this.#draggingServicePort = draggingServicePort;
-    this.#draggingEventMapperPort = draggingEventMapperPort;
+    this.#relocationEventMapper = relocationEventMapper;
     this.#selectionReleaseServicePort = selectionReleaseServicePort;
-    this.#dropEventMapperPort = dropEventMapperPort;
     this.#dropServicePort = dropServicePort;
   }
 
@@ -99,7 +92,7 @@ export class TestamentInteractionController {
   }) {
     const piece = this.#pieceMapperPort.toDomain(testament);
     const domainDraggingEvent =
-      this.#draggingEventMapperPort.toDomain(draggingEvent);
+      this.#relocationEventMapper.toDomain(draggingEvent);
     this.#draggingServicePort.handlePieceDragging(piece, domainDraggingEvent);
   }
 
@@ -116,7 +109,7 @@ export class TestamentInteractionController {
     dropEvent: BaseRelocationEvent;
   }) {
     const piece = this.#pieceMapperPort.toDomain(testament);
-    const domainDropEvent = this.#dropEventMapperPort.toDomain(dropEvent);
+    const domainDropEvent = this.#relocationEventMapper.toDomain(dropEvent);
     this.#dropServicePort.handlePieceDrop(piece, domainDropEvent);
   }
 }

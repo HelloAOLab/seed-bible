@@ -4,12 +4,19 @@ import type { PieceAdapterPort as DragPieceAdapterPort } from "../../../applicat
 import type { PieceAdapterPort as DraggingPieceAdapterPort } from "../../../application/ports/scripturePieceDragging";
 import type { PieceAdapterPort as SelectionReleasePieceAdapterPort } from "../../../application/ports/scripturePieceSelectionRelease";
 import type { PieceAdapterPort as StructurePieceAdapterPort } from "../../../application/ports/stackStructure";
-import type { PieceAdapterParams } from "../../ports/pieceAdapter";
 import type { PieceAdapterPort as DropPieceAdapterPort } from "../../../application/ports/scripturePieceDrop";
 import type { PieceAdapterPort as NavigationPieceAdapterPort } from "../../../application/ports/userPresence";
 import type { PieceAdapterPort as InteractabilityPieceAdapterPort } from "../../../application/ports/out/PieceInteractability";
 import type { PieceBot, PieceBotTags } from "../../models/casualos";
 import { SetStrictTag } from "../../functions/casualos";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+
+export interface PieceAdapterParams {
+  pieceMapperPort: PieceMapper;
+  dimensionProviderPort: {
+    getDimension: () => string;
+  };
+}
 
 export class PieceAdapter
   implements
