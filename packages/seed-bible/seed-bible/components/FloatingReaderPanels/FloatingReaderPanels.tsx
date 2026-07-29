@@ -28,7 +28,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { DateTime } from "luxon";
-import { AiIcon, ChatParticipantsIcon, MaterialIcon } from "../icons";
+import { ChatParticipantsIcon, MaterialIcon } from "../icons";
 
 interface SearchResult {
   id: string;
