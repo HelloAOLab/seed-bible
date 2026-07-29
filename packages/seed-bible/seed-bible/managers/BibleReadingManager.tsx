@@ -692,6 +692,17 @@ export function getNearestBibleTranslationForUiLanguage(
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
+/**
+ * How close together two position changes have to be to count as one gesture
+ * for the purposes of the Back button.
+ *
+ * Long enough to absorb a rapid skim — presses, held arrow keys, repeated
+ * swipes — so ten chapters cost one Back press rather than ten. Short enough
+ * that reading a chapter and then deliberately moving on gives you a history
+ * entry you can go back to.
+ */
+export const NAVIGATION_COALESCE_MS = 400;
+
 export interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
@@ -1304,6 +1315,39 @@ export function createBibleReadingState(
     }
   };
 
+  /**
+   * When the last position change was published to the URL, on a monotonic
+   * clock. Null until the first one.
+   *
+   * `performance.now()` rather than `Date.now()` because this measures an
+   * elapsed interval: a wall-clock adjustment mid-skim would otherwise decide
+   * how many history entries the reader gets.
+   */
+  let lastNavigateAt: number | null = null;
+
+  /**
+   * Publishes a position change for the URL, collapsing a burst into a single
+   * history entry.
+   *
+   * Navigation is instant now, so skimming ten chapters is ten position changes
+   * in about a second — and ten Back presses to undo. Anything following
+   * closely enough on the last one is treated as a continuation of the same
+   * gesture and replaces its history entry instead of adding one, so a skim
+   * costs one Back press and lands the reader where the skim started. A
+   * deliberate, paced navigation is still its own entry.
+   *
+   * Callers that already know they are correcting rather than navigating (a
+   * clamped chapter, an extension toggle) pass `replace` explicitly and are not
+   * subject to the timing rule.
+   */
+  const emitPositionNavigate = (explicitReplace?: boolean) => {
+    const now = performance.now();
+    const isContinuationOfGesture =
+      lastNavigateAt !== null && now - lastNavigateAt < NAVIGATION_COALESCE_MS;
+    lastNavigateAt = now;
+    emitNavigate({ replace: explicitReplace ?? isContinuationOfGesture });
+  };
+
   const disposeReadingState = () => {
     // Stops the content loader from committing anything that resolves after
     // teardown, and releases anyone still awaiting a navigation.
@@ -1772,7 +1816,7 @@ export function createBibleReadingState(
     }
 
     if (options?.updateUrl !== false) {
-      emitNavigate({ replace: options?.replace ?? false });
+      emitPositionNavigate(options?.replace);
     }
   };
 
@@ -2320,12 +2364,23 @@ export function createBibleReadingState(
         chapterNumber: resolveChapterInBook(selectedBook, chapterNumber.peek()),
       };
 
-      // The loader picks this up and fetches the text. `updateUrl: false`
-      // because the app is already at this address — pushing it again would
-      // add a redundant history entry on first paint.
+      // Whether the position we settled on differs from the one asked for.
+      // Only meaningful when something *was* asked for — with no starting book
+      // there is nothing in the URL to correct.
+      const requested = currentPosition();
+      const wasCorrected = !!requested && !positionsEqual(requested, target);
+
+      // The loader picks this up and fetches the text. Normally no URL write:
+      // the app is already at this address, and pushing it again would add a
+      // redundant history entry on first paint. But a corrected position does
+      // need writing — `?chapter=99999` would otherwise leave the URL
+      // advertising a chapter the reader is not on, so Back would take them
+      // straight back to the bad address and bounce. `replace`, so the
+      // correction itself costs no history entry.
       applyPosition(target, {
         scrollToVerse: options.scrollToVerse ?? null,
-        updateUrl: false,
+        updateUrl: wasCorrected,
+        replace: true,
       });
       await whenContentSettled(target);
     } catch (err) {

@@ -5,6 +5,7 @@ import {
   positionsEqual,
   previousPosition,
   resolveChapterInBook,
+  NAVIGATION_COALESCE_MS,
   type BibleReadingState,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -2977,7 +2978,10 @@ describe("createBibleReadingState", () => {
       expect(listener).toHaveBeenCalledWith({ replace: false });
     });
 
-    it("fires once with { replace: false } when loading the next and previous chapter", async () => {
+    it("replaces rather than pushes for navigations that continue the same gesture", async () => {
+      // A skim is one gesture, so it should cost one Back press. Only the first
+      // press of a burst gets a history entry; the rest overwrite it, leaving
+      // the reader back where the skim started.
       setWebResponses(createReadingManagerResponseMap());
       const state = createBibleReadingState(createDataManager());
       await waitForInitialLoad(state);
@@ -2986,12 +2990,85 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await state.loadNextChapter();
-      expect(listener).toHaveBeenCalledTimes(1);
       expect(listener).toHaveBeenLastCalledWith({ replace: false });
 
       await state.loadPreviousChapter();
+      await state.loadNextChapter();
+      await state.loadNextChapter();
+
+      expect(listener).toHaveBeenCalledTimes(4);
+      expect(
+        listener.mock.calls.filter((call) => call[0].replace === false).length
+      ).toBe(1);
+    });
+
+    it("pushes again once the reader pauses between navigations", async () => {
+      // The flip side: reading a chapter and then deliberately moving on is two
+      // destinations, and Back has to return you to the first.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadNextChapter();
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+
+      // Real elapsed time rather than a stubbed clock: `performance.now()` is
+      // read by test infrastructure too, so mocking it globally would be a
+      // sharper tool than this needs.
+      await new Promise((resolve) =>
+        setTimeout(resolve, NAVIGATION_COALESCE_MS + 100)
+      );
+
+      await state.loadNextChapter();
       expect(listener).toHaveBeenCalledTimes(2);
       expect(listener).toHaveBeenLastCalledWith({ replace: false });
+    });
+
+    it("corrects an out-of-range chapter from the URL with a replace, not a push", async () => {
+      // `?chapter=99999` renders as intent first — the position signals move
+      // before any catalog is available to judge them — and is corrected once
+      // the catalog lands. That correction has to reach the URL, or Back sends
+      // the reader to the bad address and bounces them straight back.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager(), {
+        initialTranslationId: "AAB",
+        initialBookId: "GEN",
+        initialChapterNumber: 99999,
+      });
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await waitForInitialLoad(state);
+
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: true });
+    });
+
+    it("falls back to a real book when the URL names one the translation lacks", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager(), {
+        initialTranslationId: "AAB",
+        initialBookId: "ZZZ",
+        initialChapterNumber: 1,
+      });
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await waitForInitialLoad(state);
+      await waitFor(() => !state.isChapterContentStale.value);
+
+      expect(state.bookId.value).toBe("GEN");
+      expect(state.chapterNumber.value).toBe(1);
+      // The bogus book's request fails, but the corrected position's content
+      // clears it, so the reader is not left looking at an error.
+      expect(state.error.value).toBeNull();
+      expect(listener).toHaveBeenCalledWith({ replace: true });
     });
 
     it("does not fire when the navigation is driven from the URL (updateUrl: false)", async () => {
