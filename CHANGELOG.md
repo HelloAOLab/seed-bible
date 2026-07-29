@@ -4,9 +4,21 @@
 
 ### ✨ Added
 
+- Show a loading placeholder in place of the verses while the chapter you moved to is still downloading, after briefly dimming the chapter you left, instead of leaving the previous chapter's text under the new chapter's title.
+
 ### 🔧 Changed
 
+- Cancel the requests for chapters you skim past so the chapter you land on gets the bandwidth, instead of queueing behind downloads you no longer need.
+- Collapse a fast skim into a single browser history entry, so one Back press returns you to where the skim started instead of stepping back through every chapter you passed.
+- Resolve the reader's book and chapter labels from the book catalog instead of the loaded chapter, so the titles, the tab strip and the mobile navigation pill update the moment you move.
+- Work out the next and previous chapter from the book catalog instead of following links on the loaded chapter, which includes apocryphal books wherever a translation lists them.
+
 ### 🐛 Fixed
+
+- Changing chapter or book no longer waits on an in-flight text request. The position updates the moment you press, and repeated presses advance a chapter each, instead of the chevrons and arrow keys switching off until the download finished.
+- Fix shared sessions freezing and eventually crashing the tab with an out-of-memory error when another participant moved through chapters quickly.
+- Fix an out-of-range chapter in the address, such as `?chapter=99999`, leaving the address pointing at a chapter you are not on, so pressing Back returned you to it and bounced straight forward again.
+- Fix a fractional chapter in the address, such as `?chapter=0.5&verse=3`, losing the highlight that points out the linked verse.
 
 ### 🗑️ Removed
 

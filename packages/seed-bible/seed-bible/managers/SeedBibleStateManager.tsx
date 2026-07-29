@@ -935,6 +935,21 @@ export function createSeedBibleState(
     });
   });
 
+  /**
+   * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
+   * along with `description` and `canonicalUrl`.
+   *
+   * These three stay derived from the *loaded chapter*, unlike the reader's own
+   * titles, which are derived from the book catalog so they can move the instant
+   * navigation happens. Two reasons: a server render has no navigation to lag
+   * behind, and it suspends until the first chapter settles, so content is there
+   * whenever it could be. And when it genuinely isn't — a failed load — falling
+   * back to a generic title and a bare canonical URL is better than advertising
+   * a chapter the server could not actually serve.
+   *
+   * `title` is the exception and is position-derived: it also drives
+   * `document.title` on the client, where the lag would be visible.
+   */
   const socialTitle = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
