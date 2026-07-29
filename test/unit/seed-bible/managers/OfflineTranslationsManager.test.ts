@@ -259,7 +259,8 @@ describe("reading a downloaded translation", () => {
     await manager.getTranslationBookChapter("NIV", "GEN", 1);
 
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl("api/NIV/GEN/1.json")
+      makeEndpointUrl("api/NIV/GEN/1.json"),
+      expect.any(Object)
     );
   });
 
@@ -279,7 +280,8 @@ describe("reading a downloaded translation", () => {
 
     expect(chapter.chapter.number).toBe(40);
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl("api/AAB/GEN/40.json")
+      makeEndpointUrl("api/AAB/GEN/40.json"),
+      expect.any(Object)
     );
   });
 });
@@ -375,7 +377,8 @@ describe("deleting a download", () => {
 
     await manager.getTranslationBookChapter("AAB", "GEN", 1);
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl("api/AAB/GEN/1.json")
+      makeEndpointUrl("api/AAB/GEN/1.json"),
+      expect.any(Object)
     );
   });
 
@@ -425,7 +428,8 @@ describe("devices that cannot store downloads", () => {
 
     await manager.getTranslationBooks("AAB");
     expect(webGetMock).toHaveBeenCalledWith(
-      makeEndpointUrl("api/AAB/books.json")
+      makeEndpointUrl("api/AAB/books.json"),
+      expect.any(Object)
     );
   });
 });
