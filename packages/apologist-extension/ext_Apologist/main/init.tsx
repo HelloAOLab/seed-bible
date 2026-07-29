@@ -3,7 +3,10 @@ import { i18n } from "seed-bible/i18n";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import { DateTime } from "luxon";
-import { resolveMessageAuthors } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import {
+  resolveMessageAuthors,
+  type ChatProviderMessageOptions,
+} from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -115,7 +118,9 @@ export default function initApologistExtension() {
         },
         iconUrl: apologistIconUrl,
         supportsSharedChats: true,
-        generateResponse: async (chatContext) => {
+        generateResponse: async function* (
+          chatContext
+        ): AsyncGenerator<ChatProviderMessageOptions> {
           const lastMessage =
             chatContext.messages[chatContext.messages.length - 1];
           console.log("Generating response for message:", lastMessage);
@@ -230,15 +235,21 @@ export default function initApologistExtension() {
                       name: fn.name,
                       content: JSON.stringify(result),
                     });
+
+                    yield {
+                      type: "tool_call",
+                      name: fn.name,
+                    };
                   }
                 }
               }
 
               if (message.content && !message.tool_calls?.length) {
-                return {
+                yield {
                   type: "text",
                   text: message.content,
                 };
+                return;
               }
             }
 
@@ -246,8 +257,6 @@ export default function initApologistExtension() {
               break;
             }
           }
-
-          return null;
         },
       });
 
