@@ -1890,6 +1890,118 @@ describe("createBibleReadingState", () => {
       expect(state.chapterNumber.value).toBe(3);
     });
 
+    it("retryLoad() does not run the navigation hooks a second time", async () => {
+      const responses = createReadingManagerResponseMap();
+      const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+      const chapterResponse = responses[chapterUrl]!;
+      responses[chapterUrl] = createResponse({ error: true }, 500, "Error");
+      setWebResponses(responses);
+
+      const manager = createBibleReadingExtensionManager();
+      const navigateNext = vi.fn().mockResolvedValue({ type: "default" });
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({ navigateNext }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      await state.loadNextChapter();
+      expect(navigateNext).toHaveBeenCalledTimes(1);
+      expect(state.error.value).not.toBeNull();
+
+      responses[chapterUrl] = chapterResponse;
+      await state.retryLoad();
+
+      // A hook may act on the reader rather than just answer a question, so a
+      // retry has to resume from the fetch, not from the top of the navigation.
+      expect(navigateNext).toHaveBeenCalledTimes(1);
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.error.value).toBeNull();
+    });
+
+    it("retryLoad() still loads when a hook would now block the navigation", async () => {
+      const responses = createReadingManagerResponseMap();
+      const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+      const chapterResponse = responses[chapterUrl]!;
+      responses[chapterUrl] = createResponse({ error: true }, 500, "Error");
+      setWebResponses(responses);
+
+      const manager = createBibleReadingExtensionManager();
+      let calls = 0;
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => {
+            calls += 1;
+            // Lets the first navigation through, then blocks — an extension's
+            // answer can depend on state that changed in the meantime.
+            return calls === 1 ? { type: "default" } : { type: "prevent" };
+          },
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      await state.loadNextChapter();
+      expect(state.error.value).not.toBeNull();
+
+      responses[chapterUrl] = chapterResponse;
+      await state.retryLoad();
+
+      // Re-asking the hooks would have returned "prevent" here, which bails out
+      // before clearing the error and would leave the failure panel up with
+      // nothing having happened.
+      expect(state.error.value).toBeNull();
+      expect(state.chapterNumber.value).toBe(2);
+    });
+
+    it("retryLoad() replays the chapter a playlist-style hook loaded, without advancing it", async () => {
+      const responses = createReadingManagerResponseMap();
+      const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+      const chapterResponse = responses[chapterUrl]!;
+      responses[chapterUrl] = createResponse({ error: true }, 500, "Error");
+      setWebResponses(responses);
+
+      const manager = createBibleReadingExtensionManager();
+      let step = 0;
+      let stateRef: BibleReadingState | null = null;
+      manager.registerReadingExtension({
+        id: "playlist",
+        activate: (): ReadingExtensionInstance => ({
+          // The shape PlaylistManager uses: advance the step, drive the load
+          // itself, then report the navigation as blocked.
+          navigateNext: async () => {
+            step += 1;
+            await stateRef!.selectTranslationAndChapter("AAB", "GEN", 1 + step);
+            return { type: "prevent" };
+          },
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      stateRef = state;
+      await waitForInitialLoad(state);
+      state.enableExtension("playlist");
+
+      await state.loadNextChapter();
+      expect(step).toBe(1);
+      expect(state.error.value).not.toBeNull();
+
+      responses[chapterUrl] = chapterResponse;
+      await state.retryLoad();
+
+      // Reload retries the chapter the playlist moved to; it must not advance
+      // the playlist to the step after it.
+      expect(step).toBe(1);
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.error.value).toBeNull();
+    });
+
     it("resolves navigation hooks by priority (higher first wins)", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const chapterThree = makeChapter(aabBooks, "GEN", 3);

@@ -1467,6 +1467,53 @@ export function createBibleReadingState(
   // chapter data records itself here alongside clearing `error`.
   let lastLoadAttempt: (() => Promise<void>) | null = null;
 
+  /**
+   * Loads the chapter either side of the current one, starting from an outcome
+   * the navigation hooks have already produced.
+   *
+   * This is split out from {@link loadNextChapter} / {@link loadPreviousChapter}
+   * so that retrying a failed navigation resumes from here rather than from the
+   * top. A navigation hook is allowed to *act* rather than just answer — the
+   * playlist extension advances to its next step — so running the hooks a second
+   * time would repeat that side effect instead of retrying the load that failed.
+   */
+  const loadChapterForOutcome = async (
+    direction: "next" | "previous",
+    outcome: ReadingNavigationOutcome
+  ) => {
+    const currentChapter = chapterData.value;
+    if (!currentChapter) {
+      return;
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const chapter =
+        outcome.type === "navigate"
+          ? outcome.chapter
+          : direction === "next"
+            ? await dataManager.getNextChapter(currentChapter)
+            : await dataManager.getPreviousChapter(currentChapter);
+      if (!chapter) {
+        return;
+      }
+      await syncStateFromChapter(chapter);
+
+      emitNavigate({ replace: false });
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : direction === "next"
+            ? "Failed to load next chapter."
+            : "Failed to load previous chapter.";
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const loadPreviousChapter = async () => {
     if (!chapterData.value) {
       return;
@@ -1480,27 +1527,15 @@ export function createBibleReadingState(
       return;
     }
 
-    lastLoadAttempt = loadPreviousChapter;
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const chapter =
-        outcome.type === "navigate"
-          ? outcome.chapter
-          : await dataManager.getPreviousChapter(chapterData.value);
-      if (!chapter) {
-        return;
-      }
-      await syncStateFromChapter(chapter);
-
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to load previous chapter.";
-    } finally {
-      loading.value = false;
-    }
+    // Recorded after the hooks, deliberately. A hook that performs the
+    // navigation itself returns above without touching `lastLoadAttempt`, which
+    // leaves it pointing at whatever load *the hook* started — and that is the
+    // load the user wants retried. The playlist extension works exactly this
+    // way: it advances its step, calls `selectTranslationAndChapter`, and
+    // returns "prevent", so Reload replays that chapter rather than advancing
+    // the playlist again.
+    lastLoadAttempt = () => loadChapterForOutcome("previous", outcome);
+    await lastLoadAttempt();
   };
 
   const selectTranslation = async (translation: string) => {
@@ -1675,27 +1710,9 @@ export function createBibleReadingState(
       return;
     }
 
-    lastLoadAttempt = loadNextChapter;
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const chapter =
-        outcome.type === "navigate"
-          ? outcome.chapter
-          : await dataManager.getNextChapter(chapterData.value);
-      if (!chapter) {
-        return;
-      }
-      await syncStateFromChapter(chapter);
-
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to load next chapter.";
-    } finally {
-      loading.value = false;
-    }
+    // See the note in `loadPreviousChapter` about why this comes after the hooks.
+    lastLoadAttempt = () => loadChapterForOutcome("next", outcome);
+    await lastLoadAttempt();
   };
 
   const loadInitialData = async () => {
