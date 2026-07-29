@@ -44,7 +44,8 @@ describe("FreeUseBibleAPI", () => {
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://bible.helloao.org/api/available_translations.json"
+      "https://bible.helloao.org/api/available_translations.json",
+      expect.anything()
     );
   });
 
@@ -59,7 +60,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://override.example/api/available_translations.json"
+      "https://override.example/api/available_translations.json",
+      expect.anything()
     );
   });
 
@@ -72,7 +74,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://example.com/api/eng%20usfm%2Fesv/books.json"
+      "https://example.com/api/eng%20usfm%2Fesv/books.json",
+      expect.anything()
     );
   });
 
@@ -88,7 +91,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://override.example/api/NIV/books.json"
+      "https://override.example/api/NIV/books.json",
+      expect.anything()
     );
   });
 
@@ -109,7 +113,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://example.com/api/eng%2Fesv/1%20John/1%3A2.json"
+      "https://example.com/api/eng%2Fesv/1%20John/1%3A2.json",
+      expect.anything()
     );
   });
 
@@ -131,7 +136,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://override.example/api/BSB/GEN/2.json"
+      "https://override.example/api/BSB/GEN/2.json",
+      expect.anything()
     );
   });
 
@@ -165,7 +171,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://override.example/api/BSB/GEN/3.json"
+      "https://override.example/api/BSB/GEN/3.json",
+      expect.anything()
     );
   });
 
@@ -199,7 +206,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://override.example/api/BSB/GEN/1.json"
+      "https://override.example/api/BSB/GEN/1.json",
+      expect.anything()
     );
   });
 
@@ -224,7 +232,8 @@ describe("FreeUseBibleAPI", () => {
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://override.example/abc/def/api/BSB/GEN/1.json"
+      "https://override.example/abc/def/api/BSB/GEN/1.json",
+      expect.anything()
     );
   });
 
@@ -262,11 +271,139 @@ describe("FreeUseBibleAPI", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "https://example.com/api/available_translations.json"
+      "https://example.com/api/available_translations.json",
+      expect.anything()
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      "https://example.com/api/available_translations.json"
+      "https://example.com/api/available_translations.json",
+      expect.anything()
     );
+  });
+
+  it("rejects with an AbortError when the caller's signal is aborted", async () => {
+    fetchMock.mockImplementation(
+      (_url: string, options?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("The operation was aborted.", "AbortError")
+            );
+          });
+        })
+    );
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    const controller = new AbortController();
+
+    const result = api.getAvailableTranslations(undefined, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    await expect(result).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("aborting one caller's own signal only rejects that caller, leaving other subscribers to the same shared request unaffected", async () => {
+    let resolveFetch: (() => void) | undefined;
+    fetchMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = () =>
+            resolve(createResponse({ translations: [{ id: "eng_kjv" }] }));
+        })
+    );
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    // The creator has no signal of its own — it can never voluntarily walk
+    // away, so it must always eventually see the shared result.
+    const creator = api.getAvailableTranslations();
+    // A second, unrelated caller reuses the cached in-flight promise and
+    // aborts its own signal. That must reject its own promise, but the
+    // creator (or any other subscriber) must be completely unaffected.
+    const controller = new AbortController();
+    const joiner = api.getAvailableTranslations(undefined, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    resolveFetch!();
+
+    await expect(joiner).rejects.toMatchObject({ name: "AbortError" });
+    await expect(creator).resolves.toEqual({
+      translations: [{ id: "eng_kjv" }],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("only cancels the underlying request once every subscriber has aborted, not when the first one does", async () => {
+    let capturedSignal: AbortSignal | undefined;
+    fetchMock.mockImplementation(
+      (_url: string, options?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          capturedSignal = options?.signal;
+          options?.signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("The operation was aborted.", "AbortError")
+            );
+          });
+        })
+    );
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    const controllerA = new AbortController();
+    const controllerB = new AbortController();
+
+    // callerA creates the shared request; callerB joins via the cache hit.
+    const callerA = api.getAvailableTranslations(undefined, {
+      signal: controllerA.signal,
+    });
+    const callerB = api.getAvailableTranslations(undefined, {
+      signal: controllerB.signal,
+    });
+
+    controllerA.abort();
+
+    // callerA's own request is cancelled...
+    await expect(callerA).rejects.toMatchObject({ name: "AbortError" });
+    // ...but the real underlying request is still alive for callerB, who
+    // never asked to cancel anything.
+    expect(capturedSignal?.aborted).toBe(false);
+
+    controllerB.abort();
+
+    // Now that every subscriber has walked away, the real request is
+    // actually cancelled too.
+    expect(capturedSignal?.aborted).toBe(true);
+    await expect(callerB).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("evicts the cache entry when an aborted request created it, allowing a fresh retry", async () => {
+    fetchMock.mockImplementationOnce(
+      (_url: string, options?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("The operation was aborted.", "AbortError")
+            );
+          });
+        })
+    );
+    fetchMock.mockResolvedValueOnce(createResponse({ translations: [] }));
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    const controller = new AbortController();
+
+    const first = api.getAvailableTranslations(undefined, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    await expect(first).rejects.toMatchObject({ name: "AbortError" });
+
+    const retry = await api.getAvailableTranslations();
+
+    expect(retry).toEqual({ translations: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

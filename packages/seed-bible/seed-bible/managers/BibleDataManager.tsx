@@ -2,6 +2,7 @@ import { signal, effect, type Signal } from "@preact/signals";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
+  type ApiRequestOptions,
   type Translation,
   type TranslationBookChapter,
   type TranslationBooks,
@@ -13,7 +14,10 @@ export interface BibleDataManager {
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
   getTranslations: (endpoint?: string) => Promise<Translation[]>;
-  getTranslationBooks: (translationId: string) => Promise<TranslationBooks>;
+  getTranslationBooks: (
+    translationId: string,
+    options?: ApiRequestOptions
+  ) => Promise<TranslationBooks>;
 
   /**
    * Returns the already-downloaded book catalog for a translation, or null when
@@ -28,13 +32,16 @@ export interface BibleDataManager {
   getTranslationBookChapter: (
     translationId: string,
     book: string,
-    chapter: number | string
+    chapter: number | string,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter>;
   getNextChapter: (
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
   getPreviousChapter: (
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
 
   /**
@@ -556,7 +563,8 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
   };
 
   const getTranslationBooks = async (
-    translationId: string
+    translationId: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBooks> => {
     const existing = translationBooks.value.get(translationId);
     if (existing) {
@@ -564,7 +572,11 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     }
 
     const endpoint = getEndpointForTranslation(translationId);
-    const books = await api.getTranslationBooks(translationId, endpoint);
+    const books = await api.getTranslationBooks(
+      translationId,
+      endpoint,
+      options
+    );
 
     const nextBooksMap = new Map(translationBooks.value);
     nextBooksMap.set(translationId, books);
@@ -583,25 +595,33 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
   const getTranslationBookChapter = async (
     translationId: string,
     book: string,
-    chapter: number | string
+    chapter: number | string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter> => {
     const endpoint = getEndpointForTranslation(translationId);
     return await api.getTranslationBookChapter(
       translationId,
       book,
       chapter,
-      endpoint
+      endpoint,
+      options
     );
   };
 
-  const getNextChapter = async (chapter: TranslationBookChapter) => {
+  const getNextChapter = async (
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
+  ) => {
     const endpoint = getEndpointForTranslation(chapter.translation.id);
-    return await api.getNextChapter(chapter, endpoint);
+    return await api.getNextChapter(chapter, endpoint, options);
   };
 
-  const getPreviousChapter = async (chapter: TranslationBookChapter) => {
+  const getPreviousChapter = async (
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
+  ) => {
     const endpoint = getEndpointForTranslation(chapter.translation.id);
-    return await api.getPreviousChapter(chapter, endpoint);
+    return await api.getPreviousChapter(chapter, endpoint, options);
   };
 
   const buildTranslationId = (translationId: string) => {

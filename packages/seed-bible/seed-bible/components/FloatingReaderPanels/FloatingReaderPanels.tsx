@@ -786,7 +786,16 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           </button>
         ) : null}
 
-        {selectedChat && <ChatListAvatarCluster chat={selectedChat} />}
+        {selectedChat ? (
+          <ChatListAvatarCluster chat={selectedChat} />
+        ) : (
+          <span
+            className="material-symbols-outlined sb-floating-chat-header-icon"
+            aria-hidden="true"
+          >
+            chat_bubble_outline
+          </span>
+        )}
         <p className="sb-floating-chat-header-title">
           {selectedChat
             ? getChatTitle(selectedChat, t)
@@ -873,6 +882,20 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             )}
           </ContextMenuWithButton>
         ) : null}
+
+        <button
+          type="button"
+          className="sb-floating-chat-header-close"
+          onClick={() => {
+            sidebar.closeChatPanel();
+          }}
+          aria-label={t("close", { defaultValue: "Close" })}
+          title={t("close", { defaultValue: "Close" })}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            close
+          </span>
+        </button>
       </header>
 
       {selectedChat ? (

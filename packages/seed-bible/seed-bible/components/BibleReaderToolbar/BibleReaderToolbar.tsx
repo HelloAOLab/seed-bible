@@ -446,7 +446,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
-      openChat: sidebar.openChatPanel,
+      openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
       modals: props.state.modals,

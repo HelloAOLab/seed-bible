@@ -689,7 +689,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>menu_book</MaterialIcon>,
       isVisible: (context) =>
         !!context.readingPlans &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS),
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
         const readingPlans = context.readingPlans;
         if (!readingPlans) {

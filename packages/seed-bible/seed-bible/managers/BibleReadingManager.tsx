@@ -2016,6 +2016,61 @@ export function createBibleReadingState(
    * from the book catalog rather than the loaded chapter's next/previous link,
    * which is what used to tie navigation to the download.
    */
+  /**
+   * Degraded-path navigation for when this translation's book catalog hasn't
+   * downloaded: follows the loaded chapter's own next/previous link instead of
+   * computing the target from metadata.
+   *
+   * Slower by design — the position can only be written once the request lands,
+   * because nothing on hand says where "next" is. But `hasNext`/`hasPrevious`
+   * fall back to these same links in exactly this case, so without this the
+   * chevron would be enabled and do nothing at all. Reachable whenever content
+   * is committed without the loader warming the catalog (an extension handing
+   * over a chapter for a translation we have never opened), or when a catalog
+   * request failed while the chapter's succeeded.
+   */
+  const navigateByChapterLink = async (
+    direction: "next" | "previous",
+    from: ReadingPosition
+  ) => {
+    const chapter = chapterData.peek();
+    // Links from a chapter the reader has already left would send them
+    // somewhere they never asked for.
+    if (!chapterMatchesPosition(chapter, from) || !chapter) {
+      return;
+    }
+
+    beginRequest();
+    // Captured, not bumped: superseding here would strand the request already
+    // fetching the current position if this one fails.
+    const generation = loadGeneration;
+    try {
+      const adjacent =
+        direction === "next"
+          ? await dataManager.getNextChapter(chapter)
+          : await dataManager.getPreviousChapter(chapter);
+      if (disposed || generation !== loadGeneration || !adjacent) {
+        return;
+      }
+      applyPosition(
+        {
+          translationId: adjacent.translation.id,
+          bookId: adjacent.book.id,
+          chapterNumber: adjacent.chapter.number,
+        },
+        { content: adjacent }
+      );
+    } catch (err) {
+      if (disposed || generation !== loadGeneration) {
+        return;
+      }
+      error.value =
+        err instanceof Error ? err.message : "Failed to load chapter.";
+    } finally {
+      endRequest();
+    }
+  };
+
   const navigateAdjacent = async (direction: "next" | "previous") => {
     const hookOutcome = runNavigationHooks(direction);
     const outcome =
@@ -2048,6 +2103,7 @@ export function createBibleReadingState(
     }
     const books = dataManager.getCachedTranslationBooks(from.translationId);
     if (!books) {
+      await navigateByChapterLink(direction, from);
       return;
     }
 
