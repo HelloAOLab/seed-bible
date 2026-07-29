@@ -17,38 +17,42 @@
   font-family: "DM Sans", var(--sb-font-family, sans-serif);
 }
 
-.sb-reading-plans-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.sb-reading-plans-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
+/* The new-plan button and the back button both live in the pane's header (see
+   ReadingPlansPaneActions / ReadingPlansPaneLeading), so they're sized to sit
+   in that 42px-tall row rather than in the pane body. */
 .sb-reading-plans-create {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border: none;
-  border-radius: 12px;
-  background: var(--rp-accent);
-  color: var(--rp-accent-contrast);
+  border-radius: 9px;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color, #fff);
   cursor: pointer;
 }
 
 .sb-reading-plans-create:hover {
   opacity: 0.9;
+}
+
+.sb-rp-pane-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-rp-pane-back:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
 .sb-reading-plans-empty {
@@ -325,4 +329,9 @@
 
 .sb-rp-restart:hover {
   text-decoration: underline;
+}
+
+/* Second tap on "Discard" — the one that actually erases the draft. */
+.sb-rp-restart-danger {
+  color: #dc2626;
 }

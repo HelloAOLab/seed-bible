@@ -200,6 +200,7 @@ export function PaneLayout(props: PaneLayoutProps) {
           <PaneHeader
             title={pane.title}
             icon={pane.icon}
+            leading={pane.leading}
             header={pane.header}
             onClose={() => panesManager.closePane(pane.id, "user")}
             onPointerDown={(event: PointerEvent) => startMove(pane, event)}
@@ -258,6 +259,7 @@ export function FullscreenPane(props: FullscreenPaneProps) {
       <PaneHeader
         title={pane.title}
         icon={pane.icon}
+        leading={pane.leading}
         header={pane.header}
         onClose={() => panesManager.closePane(pane.id, "user")}
       />
@@ -298,6 +300,7 @@ export function SidePane(props: SidePaneProps) {
       <PaneHeader
         title={pane.title}
         icon={pane.icon}
+        leading={pane.leading}
         header={pane.header}
         onClose={() => panesManager.closePane(pane.id, "user")}
       />

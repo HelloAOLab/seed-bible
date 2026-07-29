@@ -19,7 +19,13 @@ import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
 import type { AppState } from "./SeedBibleStateManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
-import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
+import {
+  ReadingPlansPane,
+  ReadingPlansPaneActions,
+  ReadingPlansPaneIcon,
+  ReadingPlansPaneLeading,
+  ReadingPlansPaneTitle,
+} from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
 import { i18n, useI18n } from "../i18n";
 import {
@@ -700,8 +706,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           id: "reading-plans-pane",
           placement: "side",
 
-          // TODO: Translate this title
-          title: "Reading Plans",
+          // The pane's own header carries the plans chrome: a back button when
+          // the user has drilled into a plan or the create wizard, the plan's
+          // name as the title, and the new-plan button.
+          title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
+          icon: () => <ReadingPlansPaneIcon />,
+          leading: () => (
+            <ReadingPlansPaneLeading readingPlans={readingPlans} />
+          ),
+          header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
           component: () => (
             <ReadingPlansPane
               readingPlans={readingPlans}
@@ -859,9 +872,9 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
           },
         });
         context.toast(
-          i18n.t("added-to-reading-plan-day", {
-            defaultValue: "Added to Day {{day}}",
-            day: draft.selectedDay + 1,
+          i18n.t("added-to-reading-plan-session", {
+            defaultValue: "Added to session {{session}}",
+            session: draft.selectedSessionIndex + 1,
           })
         );
         context.readingState.clearSelectedVerses();

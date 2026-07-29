@@ -1,10 +1,14 @@
 import "./CreateReadingPlanWizard.css";
 import { useState } from "preact/hooks";
+import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
+  cadenceDurationDays,
+  DEFAULT_CADENCE_OPTIONS,
   draftReadingCount,
-  type PlanReading,
+  type CadenceOption,
   type ReadingPlanDraft,
+  type ReadingPlanSession,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
@@ -15,6 +19,7 @@ import {
   canPreviewPlaylistItem,
   openPlaylistItemPreview,
 } from "../playlistItemPreview";
+import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
 import {
   PLAN_READING_PREVIEW_MODAL_ID,
@@ -35,38 +40,24 @@ interface CreateReadingPlanWizardProps {
   onCreated: () => void;
 }
 
-const MS_PER_DAY = 86_400_000;
-
 /** The ordered steps of the wizard. */
-const STEP_IDS = ["name", "type", "schedule", "scripture"] as const;
+const STEP_IDS = ["name", "cadences", "sessions"] as const;
 type StepId = (typeof STEP_IDS)[number];
 
-/** Formats an epoch-ms instant as a local `YYYY-MM-DD` for a date input. */
-function toDateInputValue(ms: number): string {
-  const d = new Date(ms);
-  const month = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${d.getFullYear()}-${month}-${day}`;
-}
-
-/** Parses a `YYYY-MM-DD` date input value to epoch ms at local midnight. */
-function fromDateInputValue(value: string): number | null {
-  if (!value) {
-    return null;
-  }
-  const ms = new Date(`${value}T00:00:00`).getTime();
-  return Number.isNaN(ms) ? null : ms;
-}
-
 /**
- * The full create-a-reading-plan flow. Collects a name, a plan type, a schedule
- * (duration + optional start date), and per-day readings, then saves the plan
- * through the existing `ReadingPlansManager`.
+ * The full create-a-reading-plan flow: a name, the cadences the plan offers,
+ * and its list of reading sessions.
  *
- * The draft itself lives on the manager (`editingReadingPlan`), not in this
- * component — so closing the plans pane to go read doesn't lose it, and the
- * reader's "Add to plan" verse action can add straight into the day the wizard
- * is showing.
+ * A plan is deliberately just content plus suggested paces — it has no duration
+ * of its own and no start date. How long it takes follows from whichever
+ * cadence a reader picks when they start it, which is what lets the same plan
+ * be offered as, say, "the Bible in a year" and "the Bible in two years".
+ *
+ * The draft lives on the manager (`editingReadingPlan`), not in this component
+ * — so closing the plans pane to go read doesn't lose it, and the reader's
+ * "Add to plan" verse action can add straight into the session the wizard is
+ * showing. Every change is saved to the user's account as a `"draft"` plan, so
+ * leaving mid-flow (or losing the tab) costs nothing.
  *
  * The component is fluid-width, so it fills the desktop side pane and the
  * mobile fullscreen pane without any breakpoint of its own.
@@ -75,8 +66,9 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
   const { readingPlans, books, modals, onCancel, onCreated } = props;
   const { t } = useI18n();
 
-  // Resume on the readings step when the draft already has some — the user got
-  // that far, left to add a passage from the reader, and is coming back to it.
+  // Resume on the sessions step when the draft already has readings — either
+  // the user got that far and left to add a passage from the reader, or they
+  // are picking a saved draft back up.
   const [stepIndex, setStepIndex] = useState(() => {
     const inFlight = readingPlans.editingReadingPlan.peek();
     return inFlight && draftReadingCount(inFlight) > 0
@@ -89,6 +81,8 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
   // Reading `.value` during render subscribes the component to draft edits,
   // including ones made from the reader's verse toolbar.
   const draft = readingPlans.editingReadingPlan.value;
+  const autosaving = readingPlans.editingReadingPlanSaving.value;
+  const autosaveFailed = readingPlans.editingReadingPlanSaveError.value;
 
   const step: StepId = STEP_IDS[stepIndex]!;
   const isFirstStep = stepIndex === 0;
@@ -98,19 +92,18 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
     return null;
   }
 
-  const endDateMs =
-    draft.startDateMs + Math.max(0, draft.durationDays - 1) * MS_PER_DAY;
   const totalReadings = draftReadingCount(draft);
+  const selectedCadenceIds = draft.plan.cadenceOptions.map((o) => o.id);
 
   // Whether the current step is complete enough to advance / submit.
   const canAdvance = (() => {
     if (step === "name") {
-      return draft.title.trim().length > 0;
+      return (draft.plan.title ?? "").trim().length > 0;
     }
-    if (step === "scripture") {
-      return totalReadings > 0;
+    if (step === "cadences") {
+      return selectedCadenceIds.length > 0;
     }
-    return true;
+    return totalReadings > 0;
   })();
 
   const goBack = () => {
@@ -129,7 +122,7 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
     setSaving(true);
     setSubmitError(false);
     try {
-      await readingPlans.saveEditingReadingPlan();
+      await readingPlans.finishEditingReadingPlan();
       onCreated();
     } catch (error) {
       console.error("Failed to create reading plan:", error);
@@ -151,43 +144,36 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
 
   const stepTitle = {
     name: t("reading-plan-step-name-title", { defaultValue: "Name your plan" }),
-    type: t("reading-plan-step-type-title", {
-      defaultValue: "Choose reading plan type",
+    cadences: t("reading-plan-step-cadences-title", {
+      defaultValue: "Reading cadences",
     }),
-    schedule: t("reading-plan-step-schedule-title", {
-      defaultValue: "Select duration, start & date",
-    }),
-    scripture: t("reading-plan-step-scripture-title", {
+    sessions: t("reading-plan-step-scripture-title", {
       defaultValue: "Select readings",
     }),
   }[step];
 
   return (
     <div className="sb-rp-wizard">
-      <header className="sb-rp-wizard-header">
-        <button
-          type="button"
-          className="sb-rp-icon-button"
-          onClick={goBack}
-          aria-label={t("back", { defaultValue: "Back" })}
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <div className="sb-rp-wizard-heading">
-          <span className="sb-rp-wizard-eyebrow">
-            {t("create-reading-plan-wizard", {
-              defaultValue: "Create new plan",
-            })}
-          </span>
-          <span className="sb-rp-wizard-step-count">
-            {t("reading-plan-step-indicator", {
-              defaultValue: "Step {{current}} of {{total}}",
-              current: stepIndex + 1,
-              total: STEP_IDS.length,
-            })}
-          </span>
-        </div>
-      </header>
+      <div className="sb-rp-wizard-steps">
+        <span className="sb-rp-wizard-step-count">
+          {t("reading-plan-step-indicator", {
+            defaultValue: "Step {{current}} of {{total}}",
+            current: stepIndex + 1,
+            total: STEP_IDS.length,
+          })}
+        </span>
+        <span className="sb-rp-wizard-save-state" aria-live="polite">
+          {autosaveFailed
+            ? t("reading-plan-draft-save-failed", {
+                defaultValue: "Couldn't save draft",
+              })
+            : autosaving
+              ? t("reading-plan-draft-saving", { defaultValue: "Saving…" })
+              : draft.persisted
+                ? t("reading-plan-draft-saved", { defaultValue: "Draft saved" })
+                : ""}
+        </span>
+      </div>
 
       <div
         className="sb-rp-progress"
@@ -211,13 +197,13 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
           <div className="sb-rp-field">
             <p className="sb-rp-hint">
               {t("reading-plan-step-name-hint", {
-                defaultValue: "Choose how you want to structure your plan",
+                defaultValue: "Give your plan a name people will recognise",
               })}
             </p>
             <input
               className="sb-rp-text-input"
               type="text"
-              value={draft.title}
+              value={draft.plan.title ?? ""}
               autoFocus
               onInput={(event: Event) =>
                 readingPlans.updateEditingReadingPlan({
@@ -231,120 +217,40 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
           </div>
         )}
 
-        {step === "type" && (
-          <div className="sb-rp-choices">
-            <PlanTypeChoice
-              selected={draft.planType === "flexible"}
-              title={t("reading-plan-type-flexible", {
-                defaultValue: "Flexible Plan",
-              })}
-              description={t("reading-plan-type-flexible-description", {
-                defaultValue: "Start reading anytime at your own pace",
-              })}
-              onSelect={() =>
-                readingPlans.updateEditingReadingPlan({ planType: "flexible" })
-              }
-            />
-            <PlanTypeChoice
-              selected={draft.planType === "scheduled"}
-              title={t("reading-plan-type-scheduled", {
-                defaultValue: "Scheduled Plan",
-              })}
-              description={t("reading-plan-type-scheduled-description", {
-                defaultValue: "Follow a plan starting on a specific date",
-              })}
-              onSelect={() =>
-                readingPlans.updateEditingReadingPlan({ planType: "scheduled" })
-              }
-            />
-          </div>
+        {step === "cadences" && (
+          <CadencesStep
+            selectedIds={selectedCadenceIds}
+            // Only sessions that hold something take a day to read, so an empty
+            // one the author has added but not filled must not lengthen the
+            // estimate — or a brand-new plan would claim to finish in a day.
+            sessionCount={
+              draft.plan.sessions.filter((s) => s.readings.length > 0).length
+            }
+            onToggle={(id) =>
+              readingPlans.setEditingPlanCadenceOptions(
+                selectedCadenceIds.includes(id)
+                  ? selectedCadenceIds.filter((existing) => existing !== id)
+                  : [...selectedCadenceIds, id]
+              )
+            }
+          />
         )}
 
-        {step === "schedule" && (
-          <div className="sb-rp-field-group">
-            <div className="sb-rp-field">
-              <label className="sb-rp-label" htmlFor="sb-rp-duration">
-                {t("reading-plan-duration", { defaultValue: "Duration" })}
-              </label>
-              <div className="sb-rp-duration-input">
-                <input
-                  id="sb-rp-duration"
-                  className="sb-rp-text-input"
-                  type="number"
-                  min={1}
-                  value={draft.durationDays}
-                  onInput={(event: Event) => {
-                    const raw = parseInt(
-                      (event.currentTarget as HTMLInputElement).value,
-                      10
-                    );
-                    readingPlans.setEditingPlanDuration(
-                      Number.isNaN(raw) || raw < 1 ? 1 : raw
-                    );
-                  }}
-                />
-                <span className="sb-rp-duration-unit">
-                  {t("reading-plan-duration-unit", { defaultValue: "days" })}
-                </span>
-              </div>
-            </div>
-
-            {draft.planType === "scheduled" && (
-              <div className="sb-rp-date-row">
-                <div className="sb-rp-field">
-                  <label className="sb-rp-label" htmlFor="sb-rp-start-date">
-                    {t("reading-plan-start-date", {
-                      defaultValue: "Start date",
-                    })}
-                  </label>
-                  <input
-                    id="sb-rp-start-date"
-                    className="sb-rp-text-input"
-                    type="date"
-                    value={toDateInputValue(draft.startDateMs)}
-                    onInput={(event: Event) => {
-                      const ms = fromDateInputValue(
-                        (event.currentTarget as HTMLInputElement).value
-                      );
-                      if (ms !== null) {
-                        readingPlans.updateEditingReadingPlan({
-                          startDateMs: ms,
-                        });
-                      }
-                    }}
-                  />
-                </div>
-                <div className="sb-rp-field">
-                  <label className="sb-rp-label" htmlFor="sb-rp-end-date">
-                    {t("reading-plan-end-date", { defaultValue: "End date" })}
-                  </label>
-                  <input
-                    id="sb-rp-end-date"
-                    className="sb-rp-text-input"
-                    type="date"
-                    value={toDateInputValue(endDateMs)}
-                    disabled
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {step === "scripture" && (
-          <ReadingsStep
+        {step === "sessions" && (
+          <SessionsStep
             books={books}
             modals={modals}
             draft={draft}
-            onSelectDay={(day) =>
-              readingPlans.updateEditingReadingPlan({ selectedDay: day })
+            onSelectSession={(index) =>
+              readingPlans.selectEditingPlanSession(index)
+            }
+            onAddSession={() => readingPlans.addSessionToEditingPlan()}
+            onRemoveSession={(index) =>
+              readingPlans.removeSessionFromEditingPlan(index)
             }
             onAddReading={(item) => readingPlans.addReadingToEditingPlan(item)}
-            onRemoveReading={(readingId) =>
-              readingPlans.removeReadingFromEditingPlan(
-                draft.selectedDay,
-                readingId
-              )
+            onRemoveReading={(sessionIndex, readingId) =>
+              readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
             }
           />
         )}
@@ -359,7 +265,7 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
             })}
           </p>
         )}
-        {step === "scripture" && totalReadings === 0 && (
+        {step === "sessions" && totalReadings === 0 && (
           <p className="sb-rp-footer-note">
             {t("reading-plan-no-readings", {
               defaultValue: "Add at least one reading to create the plan",
@@ -391,54 +297,106 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
   );
 }
 
-interface PlanTypeChoiceProps {
-  selected: boolean;
-  title: string;
-  description: string;
-  onSelect: () => void;
-}
-
-function PlanTypeChoice(props: PlanTypeChoiceProps) {
-  const { selected, title, description, onSelect } = props;
-  return (
-    <button
-      type="button"
-      className={`sb-rp-choice${selected ? " sb-rp-choice-selected" : ""}`}
-      onClick={onSelect}
-      aria-pressed={selected}
-    >
-      <span className="sb-rp-choice-radio" aria-hidden="true">
-        {selected && <span className="material-symbols-outlined">check</span>}
-      </span>
-      <span className="sb-rp-choice-text">
-        <span className="sb-rp-choice-title">{title}</span>
-        <span className="sb-rp-choice-description">{description}</span>
-      </span>
-    </button>
-  );
-}
-
-interface ReadingsStepProps {
-  books: TranslationBook[];
-  modals?: ModalManager;
-  draft: ReadingPlanDraft;
-  onSelectDay: (day: number) => void;
-  onAddReading: (item: PlaylistItemData) => void;
-  onRemoveReading: (readingId: string) => void;
+interface CadencesStepProps {
+  selectedIds: string[];
+  sessionCount: number;
+  onToggle: (id: string) => void;
 }
 
 /**
- * Per-day readings: a day tab strip, the same add-item control the playlist
- * editor uses (scripture, text, or link), and the list of what's on the day —
- * each text or link reading previewable, so the author can check it renders
- * the way they meant before saving the plan.
+ * The paces the plan offers its readers. A reader picks one of these when they
+ * start the plan (or opts out and reads at their own pace), which is what
+ * decides how long the plan takes them — so the same content can be offered at
+ * several speeds instead of being locked to one duration.
  */
-function ReadingsStep(props: ReadingsStepProps) {
-  const { books, modals, draft, onSelectDay, onAddReading, onRemoveReading } =
-    props;
+function CadencesStep(props: CadencesStepProps) {
+  const { selectedIds, sessionCount, onToggle } = props;
   const { t } = useI18n();
 
-  const readings: PlanReading[] = draft.readingsByDay[draft.selectedDay] ?? [];
+  const lastSelected = selectedIds.length === 1;
+
+  return (
+    <div className="sb-rp-choices">
+      <p className="sb-rp-hint">
+        {t("reading-plan-step-cadences-hint", {
+          defaultValue:
+            "Pick the paces readers can choose from. They can also read at their own pace.",
+        })}
+      </p>
+      {DEFAULT_CADENCE_OPTIONS.map((option: CadenceOption) => {
+        const selected = selectedIds.includes(option.id);
+        // How long the plan takes at this pace, once there's content to
+        // measure. Before that there is nothing meaningful to say.
+        const days =
+          sessionCount > 0
+            ? cadenceDurationDays(option.cadence, sessionCount)
+            : 0;
+        return (
+          <label
+            key={option.id}
+            className={`sb-rp-choice${selected ? " sb-rp-choice-selected" : ""}`}
+          >
+            <input
+              type="checkbox"
+              className="sb-rp-choice-checkbox"
+              checked={selected}
+              // A plan has to offer at least one cadence, so the last one
+              // standing can't be unchecked.
+              disabled={selected && lastSelected}
+              onChange={() => onToggle(option.id)}
+            />
+            <span className="sb-rp-choice-box" aria-hidden="true">
+              {selected && <MaterialIcon>check</MaterialIcon>}
+            </span>
+            <span className="sb-rp-choice-text">
+              <span className="sb-rp-choice-title">
+                {cadenceOptionLabel(option, t)}
+              </span>
+              {days > 0 ? (
+                <span className="sb-rp-choice-description">
+                  {t("reading-plan-cadence-length", {
+                    defaultValue: "Finishes in {{count}} days",
+                    count: days,
+                  })}
+                </span>
+              ) : null}
+            </span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+interface SessionsStepProps {
+  books: TranslationBook[];
+  modals?: ModalManager;
+  draft: ReadingPlanDraft;
+  onSelectSession: (index: number) => void;
+  onAddSession: () => void;
+  onRemoveSession: (index: number) => void;
+  onAddReading: (item: PlaylistItemData) => void;
+  onRemoveReading: (sessionIndex: number, readingId: string) => void;
+}
+
+/**
+ * The plan's content: a vertical list of reading sessions, each holding one
+ * sitting's worth of reading. Selecting a session opens the same add-item
+ * control the playlist editor uses (scripture, text, or link) inside it, and is
+ * also where the reader's "Add to plan" verse action puts a passage.
+ */
+function SessionsStep(props: SessionsStepProps) {
+  const {
+    books,
+    modals,
+    draft,
+    onSelectSession,
+    onAddSession,
+    onRemoveSession,
+    onAddReading,
+    onRemoveReading,
+  } = props;
+  const { t } = useI18n();
 
   // Resolve a book's display name from the active translation's book list.
   const resolveBookName = (bookId: string): string => {
@@ -451,116 +409,158 @@ function ReadingsStep(props: ReadingsStepProps) {
   });
 
   return (
-    <div className="sb-rp-scripture">
+    <div className="sb-rp-sessions">
       <p className="sb-rp-hint">
-        {t("reading-plan-scripture-hint", {
+        {t("reading-plan-sessions-hint", {
           defaultValue:
-            "Add the readings for each day — scripture, text, or a link",
+            "Add the readings for each session — scripture, text, or a link",
         })}
       </p>
 
-      <div className="sb-rp-day-tabs" role="tablist">
-        {Array.from({ length: draft.durationDays }, (_, day) => (
-          <button
-            key={day}
-            type="button"
-            role="tab"
-            aria-selected={day === draft.selectedDay}
-            className={`sb-rp-day-tab${
-              day === draft.selectedDay ? " sb-rp-day-tab-selected" : ""
-            }`}
-            onClick={() => onSelectDay(day)}
-          >
-            {t("reading-plan-scripture-day", {
-              defaultValue: "Day {{day}}",
-              day: day + 1,
-            })}
-          </button>
-        ))}
-      </div>
-
-      <PlaylistItemInput books={books} onAdd={onAddReading} />
-
-      {readings.length === 0 ? (
-        <p className="sb-rp-empty-day">
-          {t("reading-plan-scripture-empty-day", {
-            defaultValue: "No readings yet for this day",
-          })}
-        </p>
-      ) : (
-        <ul className="sb-rp-reading-list">
-          {readings.map((reading) => {
-            const label = readingLabel(
-              reading.item,
-              resolveBookName,
-              untitledReading
-            );
-            const preview = readingPreviewText(reading.item, t);
-            // A text or link reading is the button — tapping it opens the same
-            // preview the reader will see. Scripture has nothing to preview, so
-            // it stays plain text.
-            const canPreview = modals && canPreviewPlaylistItem(reading.item);
-
-            // Leading type icon, then the label with its one-line summary.
-            const body = (
-              <>
-                <span className="sb-rp-reading-icon" aria-hidden="true">
-                  <span className="material-symbols-outlined">
-                    {readingItemIcon(reading.item)}
-                  </span>
-                </span>
-                <span className="sb-rp-reading-text">
-                  <span className="sb-rp-reading-label" dir="auto">
-                    {label}
-                  </span>
-                  {preview ? (
-                    <span className="sb-rp-reading-preview" dir="auto">
-                      {preview}
-                    </span>
-                  ) : null}
-                </span>
-              </>
-            );
-
-            return (
-              <li key={reading.id} className="sb-rp-reading-item">
-                {canPreview ? (
-                  <button
-                    type="button"
-                    className="sb-rp-reading-open"
-                    onClick={() =>
-                      openPlaylistItemPreview(
-                        modals,
-                        reading.item,
-                        PLAN_READING_PREVIEW_MODAL_ID,
-                        t
-                      )
-                    }
-                    aria-label={t("reading-plan-preview-reading", {
-                      defaultValue: "Preview {{reading}}",
-                      reading: label,
-                    })}
-                  >
-                    {body}
-                  </button>
-                ) : (
-                  <span className="sb-rp-reading-body">{body}</span>
-                )}
+      <ul className="sb-rp-session-list">
+        {draft.plan.sessions.map((session: ReadingPlanSession, index) => {
+          const isSelected = index === draft.selectedSessionIndex;
+          return (
+            <li
+              key={session.id}
+              className={`sb-rp-session${
+                isSelected ? " sb-rp-session-selected" : ""
+              }`}
+            >
+              <div className="sb-rp-session-head">
                 <button
                   type="button"
-                  className="sb-rp-icon-button sb-rp-reading-remove"
-                  onClick={() => onRemoveReading(reading.id)}
-                  aria-label={t("reading-plan-scripture-remove", {
-                    defaultValue: "Remove reading",
+                  className="sb-rp-session-select"
+                  aria-pressed={isSelected}
+                  onClick={() => onSelectSession(index)}
+                >
+                  <span className="sb-rp-session-number">{index + 1}</span>
+                  <span className="sb-rp-session-name">
+                    {t("reading-plan-session-label", {
+                      defaultValue: "Session {{number}}",
+                      number: index + 1,
+                    })}
+                  </span>
+                  <span className="sb-rp-session-count">
+                    {t("reading-plan-session-reading-count", {
+                      defaultValue: "{{count}} readings",
+                      count: session.readings.length,
+                    })}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="sb-rp-icon-button sb-rp-session-remove"
+                  onClick={() => onRemoveSession(index)}
+                  aria-label={t("reading-plan-remove-session", {
+                    defaultValue: "Remove session",
                   })}
                 >
-                  <span className="material-symbols-outlined">close</span>
+                  <MaterialIcon>delete</MaterialIcon>
                 </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              </div>
+
+              {session.readings.length > 0 ? (
+                <ul className="sb-rp-reading-list">
+                  {session.readings.map((reading) => {
+                    const label = readingLabel(
+                      reading.item,
+                      resolveBookName,
+                      untitledReading
+                    );
+                    const preview = readingPreviewText(reading.item, t);
+                    // A text or link reading is the button — tapping it opens
+                    // the same preview the reader will see. Scripture has
+                    // nothing to preview, so it stays plain text.
+                    const canPreview =
+                      modals && canPreviewPlaylistItem(reading.item);
+
+                    // Leading type icon, then the label with its one-line summary.
+                    const body = (
+                      <>
+                        <span className="sb-rp-reading-icon" aria-hidden="true">
+                          <MaterialIcon>
+                            {readingItemIcon(reading.item)}
+                          </MaterialIcon>
+                        </span>
+                        <span className="sb-rp-reading-text">
+                          <span className="sb-rp-reading-label" dir="auto">
+                            {label}
+                          </span>
+                          {preview ? (
+                            <span className="sb-rp-reading-preview" dir="auto">
+                              {preview}
+                            </span>
+                          ) : null}
+                        </span>
+                      </>
+                    );
+
+                    return (
+                      <li key={reading.id} className="sb-rp-reading-item">
+                        {canPreview ? (
+                          <button
+                            type="button"
+                            className="sb-rp-reading-open"
+                            onClick={() =>
+                              openPlaylistItemPreview(
+                                modals,
+                                reading.item,
+                                PLAN_READING_PREVIEW_MODAL_ID,
+                                t
+                              )
+                            }
+                            aria-label={t("reading-plan-preview-reading", {
+                              defaultValue: "Preview {{reading}}",
+                              reading: label,
+                            })}
+                          >
+                            {body}
+                          </button>
+                        ) : (
+                          <span className="sb-rp-reading-body">{body}</span>
+                        )}
+                        <button
+                          type="button"
+                          className="sb-rp-icon-button sb-rp-reading-remove"
+                          onClick={() => onRemoveReading(index, reading.id)}
+                          aria-label={t("reading-plan-scripture-remove", {
+                            defaultValue: "Remove reading",
+                          })}
+                        >
+                          <MaterialIcon>close</MaterialIcon>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="sb-rp-empty-day">
+                  {t("reading-plan-session-empty", {
+                    defaultValue: "No readings yet in this session",
+                  })}
+                </p>
+              )}
+
+              {/* Only the selected session takes new readings — including the
+                  ones sent over from the reader's "Add to plan" action, which
+                  has no way to name a session. */}
+              {isSelected ? (
+                <PlaylistItemInput books={books} onAdd={onAddReading} />
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+
+      <button
+        type="button"
+        className="sb-rp-add-session"
+        onClick={onAddSession}
+      >
+        <MaterialIcon>add</MaterialIcon>
+        {t("reading-plan-add-session", { defaultValue: "Add session" })}
+      </button>
     </div>
   );
 }

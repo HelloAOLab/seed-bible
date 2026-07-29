@@ -17,62 +17,32 @@
   font-family: "DM Sans", var(--sb-font-family, sans-serif);
 }
 
-/* Peach cover header */
+/* Peach progress header. The plan's name, its icon and the back button live in
+   the pane's own header (see ReadingPlansPane), so this starts at the summary
+   line rather than repeating the title underneath it. */
 .sb-rpd-hero-header {
   position: relative;
   padding: 12px 16px 16px;
   background: var(--rp-peach);
 }
 
-.sb-rpd-back {
-  margin-bottom: 8px;
-}
-
-.sb-rpd-hero-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.sb-rpd-cover {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  background: linear-gradient(160deg, var(--rp-accent), #7ba0b8);
-  color: #fff;
-}
-
-.sb-rpd-cover .material-symbols-outlined {
-  font-size: 28px;
-}
-
-.sb-rpd-hero-heading {
-  min-width: 0;
-}
-
-.sb-rpd-title {
-  margin: 0;
-  font-family: var(--sb-book-title-font-family, "Newsreader", serif);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.15;
-}
-
 .sb-rpd-subtitle {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 0.8125rem;
   color: var(--rp-muted);
+}
+
+.sb-rpd-section-title {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .sb-rpd-hero-progress {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .sb-rpd-progress-bar {
@@ -349,9 +319,11 @@
   line-height: 1.5;
 }
 
-/* Footer */
+/* Footer. `--rp-toolbar-clearance` keeps the button out from under the floating
+   reader toolbar — see the note in CreateReadingPlanWizard.css, which defines
+   it for both footers. */
 .sb-rpd-footer {
-  padding: 12px 16px 16px;
+  padding: 12px 16px calc(16px + var(--rp-toolbar-clearance, 0px));
   border-top: 1px solid var(--rp-border);
 }
 
@@ -368,7 +340,6 @@
 
 .sb-rpd-hero-summary {
   margin: 0;
-  text-align: center;
   font-size: 0.875rem;
   color: var(--rp-muted);
 }

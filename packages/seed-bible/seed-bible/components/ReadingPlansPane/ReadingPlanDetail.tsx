@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
+  cadenceDurationDays,
   estimateReadingMinutes,
   summarizeCalendar,
   type CalendarReadingDay,
@@ -15,6 +16,7 @@ import {
   canPreviewPlaylistItem,
   openPlaylistItemPreview,
 } from "../playlistItemPreview";
+import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
 import {
   PLAN_READING_PREVIEW_MODAL_ID,
@@ -29,7 +31,6 @@ interface ReadingPlanDetailProps {
   /** Modals host for opening a text/link reading. Optional — without it the
    * open action is simply not offered. */
   modals?: ModalManager;
-  onBack: () => void;
 }
 
 function formatShortDate(ms: number): string {
@@ -39,19 +40,26 @@ function formatShortDate(ms: number): string {
   });
 }
 
+/** Marks the reader chose "at my own pace" rather than one of the cadences. */
+const SELF_PACED_CHOICE = "__self_paced__";
+
 /**
- * Detail view for a single reading plan: a cover header with progress, streak
- * and time-per-day, a day-by-day tab strip, and per-reading completion for the
- * selected day. Offers to start the plan when there's no progress, and shows a
+ * Detail view for a single reading plan: progress, streak and time-per-day, a
+ * day-by-day tab strip, and per-reading completion for the selected day. Offers
+ * a choice of how to read the plan when there's no progress yet, and shows a
  * short celebration when a day is completed.
+ *
+ * The plan's name, its icon and the back button live in the pane's own header
+ * (see `ReadingPlansPane`), so this view starts at the progress summary.
  */
 export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
-  const { readingPlans, books, modals, onBack } = props;
+  const { readingPlans, books, modals } = props;
   const { t } = useI18n();
 
   const [starting, setStarting] = useState(false);
   const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [pace, setPace] = useState<string | null>(null);
 
   const resolveBookName = (bookId: string): string => {
     const book = books.find((b) => b.id === bookId);
@@ -67,68 +75,88 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     return null;
   }
 
-  const title =
-    plan.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
-
-  const cover = (
-    <span className="sb-rpd-cover" aria-hidden="true">
-      <MaterialIcon>auto_stories</MaterialIcon>
-    </span>
-  );
-
-  const handleStart = async () => {
-    if (starting) {
-      return;
-    }
-    setStarting(true);
-    try {
-      const created = await readingPlans.startReadingPlan(plan);
-      await readingPlans.selectReadingPlanProgress(created);
-    } catch (error) {
-      console.error("Failed to start reading plan:", error);
-    } finally {
-      setStarting(false);
-    }
-  };
-
-  const backButton = (
-    <button
-      type="button"
-      className="sb-rp-icon-button sb-rpd-back"
-      onClick={onBack}
-      aria-label={t("back", { defaultValue: "Back" })}
-    >
-      <MaterialIcon>arrow_back</MaterialIcon>
-    </button>
-  );
-
-  // Not started yet: hero + start CTA.
+  // Not started yet: pick how to read it, then start.
   if (!progress) {
+    // Default to the plan's own suggested cadence until the reader picks.
+    const chosen =
+      pace ?? plan.defaultCadenceId ?? plan.cadenceOptions[0]?.id ?? null;
+    const selfPaced = chosen === SELF_PACED_CHOICE;
+
+    const handleStart = async () => {
+      if (starting) {
+        return;
+      }
+      setStarting(true);
+      try {
+        const created = await readingPlans.startReadingPlan(
+          plan,
+          selfPaced ? { selfPaced: true } : { cadenceId: chosen }
+        );
+        await readingPlans.selectReadingPlanProgress(created);
+      } catch (error) {
+        console.error("Failed to start reading plan:", error);
+      } finally {
+        setStarting(false);
+      }
+    };
+
     return (
       <div className="sb-rpd">
-        <header className="sb-rpd-hero-header">
-          {backButton}
-          <div className="sb-rpd-hero-top">
-            {cover}
-            <div className="sb-rpd-hero-heading">
-              <h2 className="sb-rpd-title" dir="auto">
-                {title}
-              </h2>
-              {plan.description ? (
-                <p className="sb-rpd-subtitle" dir="auto">
-                  {plan.description}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </header>
         <div className="sb-rpd-body">
+          {plan.description ? (
+            <p className="sb-rpd-subtitle" dir="auto">
+              {plan.description}
+            </p>
+          ) : null}
           <p className="sb-rpd-hero-summary">
-            {t("reading-plan-session-count", {
-              defaultValue: "{{count}} readings",
+            {t("reading-plan-session-count-sessions", {
+              defaultValue: "{{count}} sessions",
               count: plan.sessions.length,
             })}
           </p>
+
+          {/* How the reader wants to take the plan. A plan has no duration of
+              its own — each cadence implies its own, and "at my own pace" has
+              none at all. */}
+          <h3 className="sb-rpd-section-title">
+            {t("reading-plan-choose-pace", {
+              defaultValue: "How do you want to read it?",
+            })}
+          </h3>
+          <div className="sb-rp-choices">
+            {plan.cadenceOptions.map((option) => {
+              const days = cadenceDurationDays(
+                option.cadence,
+                plan.sessions.length
+              );
+              return (
+                <PaceChoice
+                  key={option.id}
+                  selected={chosen === option.id}
+                  title={cadenceOptionLabel(option, t)}
+                  description={
+                    days > 0
+                      ? t("reading-plan-cadence-length", {
+                          defaultValue: "Finishes in {{count}} days",
+                          count: days,
+                        })
+                      : ""
+                  }
+                  onSelect={() => setPace(option.id)}
+                />
+              );
+            })}
+            <PaceChoice
+              selected={selfPaced}
+              title={t("reading-plan-pace-self", {
+                defaultValue: "At my own pace",
+              })}
+              description={t("reading-plan-pace-self-description", {
+                defaultValue: "Read one session at a time, with no schedule",
+              })}
+              onSelect={() => setPace(SELF_PACED_CHOICE)}
+            />
+          </div>
         </div>
         <footer className="sb-rpd-footer">
           <button
@@ -147,6 +175,9 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   const summary = summarizeCalendar(calendar, Date.now());
   const { readingDays, totalDays, doneDays, streak } = summary;
   const planComplete = totalDays > 0 && doneDays === totalDays;
+  // A self-paced read has an order but no schedule, so it's counted in sessions
+  // rather than days and never shows dates, streaks or "behind".
+  const selfPaced = progress.selfPaced === true;
 
   // Average minutes per reading day, for the "~N min/day" chip.
   const avgMinutes =
@@ -206,7 +237,6 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   if (celebrationDay != null) {
     return (
       <div className="sb-rpd">
-        <header className="sb-rpd-hero-header">{backButton}</header>
         <div className="sb-rpd-celebration">
           <div className="sb-rpd-celebration-badge" aria-hidden="true">
             <MaterialIcon>check</MaterialIcon>
@@ -216,10 +246,15 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
               ? t("reading-plan-complete-title", {
                   defaultValue: "Plan complete!",
                 })
-              : t("reading-plan-celebration-title", {
-                  defaultValue: "Day {{day}} complete!",
-                  day: celebrationDay,
-                })}
+              : selfPaced
+                ? t("reading-plan-celebration-session-title", {
+                    defaultValue: "Session {{day}} complete!",
+                    day: celebrationDay,
+                  })
+                : t("reading-plan-celebration-title", {
+                    defaultValue: "Day {{day}} complete!",
+                    day: celebrationDay,
+                  })}
           </h3>
           <p className="sb-rpd-celebration-subtitle">
             {t("reading-plan-celebration-subtitle", {
@@ -261,32 +296,28 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   return (
     <div className="sb-rpd">
       <header className="sb-rpd-hero-header">
-        {backButton}
-        <div className="sb-rpd-hero-top">
-          {cover}
-          <div className="sb-rpd-hero-heading">
-            <h2 className="sb-rpd-title" dir="auto">
-              {title}
-            </h2>
-            <p className="sb-rpd-subtitle">
-              {t("reading-plan-duration-days", {
+        <p className="sb-rpd-subtitle">
+          {selfPaced
+            ? t("reading-plan-session-count-sessions", {
+                defaultValue: "{{count}} sessions",
+                count: totalDays,
+              })
+            : t("reading-plan-duration-days", {
                 defaultValue: "{{count}} days",
                 count: totalDays,
               })}
-              {" · "}
-              {t("reading-plan-started-on", {
-                defaultValue: "started {{date}}",
-                date: formatShortDate(progress.startedAtMs),
-              })}
-              {endsMs != null
-                ? ` · ${t("reading-plan-ends-on", {
-                    defaultValue: "ends {{date}}",
-                    date: formatShortDate(endsMs),
-                  })}`
-                : ""}
-            </p>
-          </div>
-        </div>
+          {" · "}
+          {t("reading-plan-started-on", {
+            defaultValue: "started {{date}}",
+            date: formatShortDate(progress.startedAtMs),
+          })}
+          {!selfPaced && endsMs != null
+            ? ` · ${t("reading-plan-ends-on", {
+                defaultValue: "ends {{date}}",
+                date: formatShortDate(endsMs),
+              })}`
+            : ""}
+        </p>
 
         <div className="sb-rpd-hero-progress">
           <div className="sb-rpd-progress-bar sb-rpd-progress-bar-onhero">
@@ -296,16 +327,24 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
             />
           </div>
           <span className="sb-rpd-progress-count">
-            {t("reading-plan-progress-days", {
-              defaultValue: "{{done}}/{{total}} days",
-              done: doneDays,
-              total: totalDays,
-            })}
+            {selfPaced
+              ? t("reading-plan-progress-sessions", {
+                  defaultValue: "{{done}}/{{total}} sessions",
+                  done: doneDays,
+                  total: totalDays,
+                })
+              : t("reading-plan-progress-days", {
+                  defaultValue: "{{done}}/{{total}} days",
+                  done: doneDays,
+                  total: totalDays,
+                })}
           </span>
         </div>
 
         <div className="sb-rpd-chips">
-          {streak > 0 ? (
+          {/* A streak counts consecutive days you kept to the schedule, so it
+              means nothing when there is no schedule to keep to. */}
+          {!selfPaced && streak > 0 ? (
             <span className="sb-rpd-chip">
               🔥{" "}
               {t("reading-plan-streak", {
@@ -316,10 +355,15 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
           ) : null}
           {avgMinutes > 0 ? (
             <span className="sb-rpd-chip">
-              {t("reading-plan-min-per-day", {
-                defaultValue: "~{{count}} min/day",
-                count: avgMinutes,
-              })}
+              {selfPaced
+                ? t("reading-plan-min-per-session", {
+                    defaultValue: "~{{count}} min/session",
+                    count: avgMinutes,
+                  })
+                : t("reading-plan-min-per-day", {
+                    defaultValue: "~{{count}} min/day",
+                    count: avgMinutes,
+                  })}
             </span>
           ) : null}
         </div>
@@ -338,6 +382,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
               {readingDays.map((day, index) => {
                 const isDone = day.completedAtMs != null;
                 const isActive = index === activeIndex;
+                const isToday = !selfPaced && day.containsNow;
                 return (
                   <button
                     key={day.dayOffset}
@@ -346,20 +391,24 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                     aria-selected={isActive}
                     className={`sb-rpd-day-tab${
                       isActive ? " sb-rpd-day-tab-active" : ""
-                    }${day.containsNow ? " sb-rpd-day-tab-today" : ""}`}
+                    }${isToday ? " sb-rpd-day-tab-today" : ""}`}
                     onClick={() => setSelectedDay(index)}
                   >
                     <span className="sb-rpd-day-tab-label">
-                      {t("reading-plan-day-short", {
-                        defaultValue: "Day",
-                      })}
+                      {selfPaced
+                        ? t("reading-plan-session-short", {
+                            defaultValue: "Session",
+                          })
+                        : t("reading-plan-day-short", {
+                            defaultValue: "Day",
+                          })}
                     </span>
                     <span className="sb-rpd-day-tab-num">{index + 1}</span>
                     {isDone ? (
                       <MaterialIcon className="sb-rpd-day-tab-check">
                         check
                       </MaterialIcon>
-                    ) : day.containsNow ? (
+                    ) : isToday ? (
                       <span className="sb-rpd-day-tab-dot" aria-hidden="true" />
                     ) : null}
                   </button>
@@ -509,10 +558,15 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
             disabled={!activeDayAllDone}
             onClick={() => void completeDay(activeDay, activeIndex + 1)}
           >
-            {t("reading-plan-mark-day-complete", {
-              defaultValue: "Mark Day {{day}} complete",
-              day: activeIndex + 1,
-            })}
+            {selfPaced
+              ? t("reading-plan-mark-session-complete", {
+                  defaultValue: "Mark session {{day}} complete",
+                  day: activeIndex + 1,
+                })
+              : t("reading-plan-mark-day-complete", {
+                  defaultValue: "Mark Day {{day}} complete",
+                  day: activeIndex + 1,
+                })}
           </button>
           {!activeDayAllDone ? (
             <p className="sb-rpd-footer-note">
@@ -524,5 +578,34 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
         </footer>
       ) : null}
     </div>
+  );
+}
+
+interface PaceChoiceProps {
+  selected: boolean;
+  title: string;
+  description: string;
+  onSelect: () => void;
+}
+
+function PaceChoice(props: PaceChoiceProps) {
+  const { selected, title, description, onSelect } = props;
+  return (
+    <button
+      type="button"
+      className={`sb-rp-choice${selected ? " sb-rp-choice-selected" : ""}`}
+      onClick={onSelect}
+      aria-pressed={selected}
+    >
+      <span className="sb-rp-choice-radio" aria-hidden="true">
+        {selected && <MaterialIcon>check</MaterialIcon>}
+      </span>
+      <span className="sb-rp-choice-text">
+        <span className="sb-rp-choice-title">{title}</span>
+        {description ? (
+          <span className="sb-rp-choice-description">{description}</span>
+        ) : null}
+      </span>
+    </button>
   );
 }

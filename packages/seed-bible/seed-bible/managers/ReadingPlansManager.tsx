@@ -73,16 +73,21 @@ export const ReadingPlanSessionSchema = z.object({
   title: z.string().nullable().optional(),
   // Optional author reflection/prompt shown on the day (the "Reflect" card).
   note: z.string().nullable().optional(),
-  readings: z.array(PlanReadingSchema).min(1),
+  // May be empty: a session exists in the authoring wizard from the moment it
+  // is added, before the author has put anything in it. Empty sessions are
+  // pruned when the plan is finished (see `finishEditingReadingPlan`).
+  readings: z.array(PlanReadingSchema),
 });
 export type ReadingPlanSession = z.infer<typeof ReadingPlanSessionSchema>;
 
-// How a plan is meant to be followed. "flexible" plans are read at the user's
-// own pace with no fixed calendar; "scheduled" plans suggest a start date the
-// user is meant to begin on. Both still resolve their day-by-day rhythm from
-// the cadence — this only records the author's intent for display/onboarding.
-export const ReadingPlanTypeSchema = z.enum(["flexible", "scheduled"]);
-export type ReadingPlanType = z.infer<typeof ReadingPlanTypeSchema>;
+// Where a plan is in its authoring lifecycle. A "draft" is still being built in
+// the create wizard — it is saved to the user's account after every change so
+// nothing is lost if they leave, but it is kept out of the normal plan lists
+// until they finish, at which point it becomes "complete". Defaulted (rather
+// than required) so plans written before this field existed still parse, and
+// read as finished plans.
+export const ReadingPlanStatusSchema = z.enum(["draft", "complete"]);
+export type ReadingPlanStatus = z.infer<typeof ReadingPlanStatusSchema>;
 
 export const ReadingPlanMetadataSchema = z.object({
   address: z.string(),
@@ -91,14 +96,12 @@ export const ReadingPlanMetadataSchema = z.object({
   locale: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
+  // Every pace the author offers for reading this plan. A plan has no single
+  // duration — how long it takes follows from whichever cadence the reader
+  // picks (see `cadenceDurationDays`).
   cadenceOptions: z.array(CadenceOptionSchema).min(1),
   defaultCadenceId: z.string().nullable().optional(),
-  // Optional so older records (written before these fields existed) still parse.
-  planType: ReadingPlanTypeSchema.nullable().optional(),
-  // Author's suggested start date for a "scheduled" plan (epoch ms).
-  suggestedStartDateMs: z.number().positive().nullable().optional(),
-  // Intended length of the plan in days, used to derive an end date for display.
-  durationDays: z.number().int().positive().nullable().optional(),
+  status: ReadingPlanStatusSchema.default("complete"),
   schemaVersion: z.number().int().default(1),
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
@@ -131,6 +134,11 @@ export const ReadingPlanProgressSchema = z.object({
   userId: z.string(),
   selectedCadenceId: z.string().nullable().optional(),
   customCadence: CadenceSchema.nullable().optional(),
+  // The reader chose "at my own pace" instead of one of the plan's cadences.
+  // Sessions are still ordered one per day internally (so completion and the
+  // calendar keep working), but nothing is presented as due on a date and the
+  // reader is never shown as behind. Defaulted for records written before it.
+  selfPaced: z.boolean().default(false),
   startedAtMs: z.number().positive(),
   timeZone: z.string().nullable().optional(),
   // Sparse — only sessions that have some progress recorded.
@@ -167,19 +175,30 @@ export function createReadingPlanProgress(
     cadenceId?: string | null;
     customCadence?: Cadence | null;
     timeZone?: string | null;
+    /** Read at the reader's own pace, ignoring the plan's cadences. */
+    selfPaced?: boolean;
   } = {}
 ): ReadingPlanProgress {
+  // Reading at your own pace still needs an ordering for the sessions, so it
+  // pins a one-session-a-day cadence of its own rather than inheriting whatever
+  // rhythm the author happened to list first. `selfPaced` then tells the UI not
+  // to present any of it as a schedule.
+  const selfPaced = options.selfPaced ?? false;
   return ReadingPlanProgressSchema.parse({
     id,
     planId: formatReadingPlanId(plan.recordName, plan.address),
     recordName: userId,
     userId,
-    selectedCadenceId:
-      options.cadenceId ??
-      plan.defaultCadenceId ??
-      plan.cadenceOptions[0]?.id ??
-      null,
-    customCadence: options.customCadence ?? null,
+    selectedCadenceId: selfPaced
+      ? null
+      : (options.cadenceId ??
+        plan.defaultCadenceId ??
+        plan.cadenceOptions[0]?.id ??
+        null),
+    customCadence: selfPaced
+      ? SELF_PACED_CADENCE
+      : (options.customCadence ?? null),
+    selfPaced,
     startedAtMs: nowMs,
     timeZone: options.timeZone ?? null,
     sessions: [],
@@ -188,21 +207,64 @@ export function createReadingPlanProgress(
   });
 }
 
-/** Default cadence offered by a brand-new plan: read once every day. */
-const DEFAULT_CADENCE_OPTIONS: CadenceOption[] = [
+/** Ids of the built-in cadences a plan author can offer (see `DEFAULT_CADENCE_OPTIONS`). */
+export const CADENCE_ONCE_DAILY = "once-daily";
+export const CADENCE_TWICE_DAILY = "twice-daily";
+export const CADENCE_THREE_TIMES_DAILY = "three-times-daily";
+export const CADENCE_EVERY_OTHER_DAY = "every-other-day";
+
+/**
+ * The cadences the create wizard offers out of the box. An author checks the
+ * ones their plan should support; a reader picks one (or opts out entirely and
+ * reads at their own pace) when they start the plan. The `label` here is the
+ * English fallback stored on the record — the UI translates by id where it can
+ * (see `cadenceOptionLabel`), so a plan shared across languages still reads
+ * correctly.
+ */
+export const DEFAULT_CADENCE_OPTIONS: CadenceOption[] = [
   {
-    id: "daily",
-    label: "Daily",
-    cadence: { segments: [{ type: "read", days: 1 }] },
+    id: CADENCE_ONCE_DAILY,
+    label: "One session a day",
+    cadence: { segments: [{ type: "read", days: 1, sessionsPerDay: 1 }] },
+  },
+  {
+    id: CADENCE_TWICE_DAILY,
+    label: "Two sessions a day",
+    cadence: { segments: [{ type: "read", days: 1, sessionsPerDay: 2 }] },
+  },
+  {
+    id: CADENCE_THREE_TIMES_DAILY,
+    label: "Three sessions a day",
+    cadence: { segments: [{ type: "read", days: 1, sessionsPerDay: 3 }] },
+  },
+  {
+    id: CADENCE_EVERY_OTHER_DAY,
+    label: "One session every other day",
+    cadence: {
+      segments: [
+        { type: "read", days: 1, sessionsPerDay: 1 },
+        { type: "skip", days: 1 },
+      ],
+    },
   },
 ];
+
+/** The ordering used for a self-paced read: one session at a time, in order. */
+const SELF_PACED_CADENCE: Cadence = {
+  segments: [{ type: "read", days: 1, sessionsPerDay: 1 }],
+};
+
+/** The built-in cadence option with the given id, if there is one. */
+export function findDefaultCadenceOption(id: string): CadenceOption | null {
+  return DEFAULT_CADENCE_OPTIONS.find((option) => option.id === id) ?? null;
+}
 
 /**
  * Creates a new reading plan — empty unless `options.sessions` supplies its
  * content up front. `address` and `nowMs` are passed in so this stays
- * deterministic. Defaults to a single daily cadence option (a plan must offer
- * at least one) and an "en" locale; all of these can be overridden via
- * `options`.
+ * deterministic. Defaults to the one-session-a-day cadence (a plan must offer
+ * at least one), an "en" locale, and a finished (`"complete"`) status; all of
+ * these can be overridden via `options`.
  */
 export function createReadingPlan(
   recordName: string,
@@ -215,16 +277,14 @@ export function createReadingPlan(
     description?: string | null;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
-    planType?: ReadingPlanType | null;
-    suggestedStartDateMs?: number | null;
-    durationDays?: number | null;
+    status?: ReadingPlanStatus;
     /** Initial sessions, in reading order. Defaults to an empty plan. */
     sessions?: ReadingPlanSession[];
   } = {}
 ): ReadingPlan {
   const cadenceOptions = options.cadenceOptions?.length
     ? options.cadenceOptions
-    : DEFAULT_CADENCE_OPTIONS;
+    : [DEFAULT_CADENCE_OPTIONS[0]!];
   return ReadingPlanSchema.parse({
     address,
     recordName,
@@ -234,9 +294,7 @@ export function createReadingPlan(
     description: options.description ?? null,
     cadenceOptions,
     defaultCadenceId: options.defaultCadenceId ?? cadenceOptions[0]?.id ?? null,
-    planType: options.planType ?? null,
-    suggestedStartDateMs: options.suggestedStartDateMs ?? null,
-    durationDays: options.durationDays ?? null,
+    status: options.status ?? "complete",
     sessions: options.sessions ?? [],
     createdAtMs: nowMs,
     updatedAtMs: nowMs,
@@ -246,107 +304,47 @@ export function createReadingPlan(
 // ---------------------------------------------------------------------------
 // Draft (authoring)
 //
-// A plan being built in the create wizard. The draft lives on the manager
-// rather than inside the wizard component so it survives the plans pane being
-// closed — that is what lets the reader's verse toolbar add the current
-// selection to the plan the user is in the middle of authoring.
+// A plan being built in the create wizard. The draft is a real `ReadingPlan`
+// carrying `status: "draft"`, saved to the author's account after every change
+// so nothing is lost if they close the pane, navigate away, or lose the tab —
+// they can pick it back up from the plans list. It lives on the manager rather
+// than inside the wizard component so it survives the plans pane being closed,
+// which is what lets the reader's verse toolbar add the current selection to
+// the plan the user is in the middle of authoring.
 // ---------------------------------------------------------------------------
 
-/** Default length of a new plan, in days. */
-export const DEFAULT_DRAFT_DURATION_DAYS = 30;
-
-/** A reading plan being authored, before it is saved. */
+/** A reading plan being authored, plus the wizard state that goes with it. */
 export interface ReadingPlanDraft {
-  title: string;
-  planType: ReadingPlanType;
-  durationDays: number;
-  /** Local-midnight epoch ms a "scheduled" plan is suggested to start on. */
-  startDateMs: number;
-  /** Readings keyed by 0-based day index. Days with no readings are absent. */
-  readingsByDay: Record<number, PlanReading[]>;
-  /** The day the wizard is showing — where a new reading is added. */
-  selectedDay: number;
+  /** The plan itself, always with `status: "draft"`. */
+  plan: ReadingPlan;
+  /** Index of the session a new reading is added to. */
+  selectedSessionIndex: number;
+  /** True once this draft has been written to the author's account. */
+  persisted: boolean;
 }
 
-/** A fresh, empty draft starting on `startDateMs` (local midnight). */
-export function createReadingPlanDraft(
-  startDateMs: number,
-  options: { durationDays?: number } = {}
-): ReadingPlanDraft {
-  return {
-    title: "",
-    planType: "flexible",
-    durationDays: options.durationDays ?? DEFAULT_DRAFT_DURATION_DAYS,
-    startDateMs,
-    readingsByDay: {},
-    selectedDay: 0,
-  };
+/** An empty session, ready for the author to fill in. */
+export function createDraftSession(id: string): ReadingPlanSession {
+  return { id, title: null, readings: [] };
 }
 
-/**
- * Applies a new duration, dropping readings that fall outside it and clamping
- * the selected day. Shortening a plan must not leave readings stranded on days
- * the user can no longer see or edit — they would be silently discarded on save.
- */
-export function withDraftDuration(
-  draft: ReadingPlanDraft,
-  durationDays: number
-): ReadingPlanDraft {
-  const days = Math.max(1, Math.floor(durationDays));
-  const readingsByDay: Record<number, PlanReading[]> = {};
-  for (const [key, readings] of Object.entries(draft.readingsByDay)) {
-    if (Number(key) < days && readings.length > 0) {
-      readingsByDay[Number(key)] = readings;
-    }
-  }
-  return {
-    ...draft,
-    durationDays: days,
-    readingsByDay,
-    selectedDay: Math.min(draft.selectedDay, days - 1),
-  };
-}
-
-/** The in-range days that will become sessions, in day order. */
-function draftDays(
-  draft: ReadingPlanDraft
-): { day: number; readings: PlanReading[] }[] {
-  const days: { day: number; readings: PlanReading[] }[] = [];
-  for (let day = 0; day < draft.durationDays; day++) {
-    const readings = draft.readingsByDay[day] ?? [];
-    if (readings.length > 0) {
-      days.push({ day, readings });
-    }
-  }
-  return days;
-}
-
-/**
- * How many readings the draft would actually save. Counts only in-range days,
- * so a "can save" gate built on this can never promise readings that
- * `sessionsFromDraft` would drop.
- */
+/** Total number of readings across every session of the draft. */
 export function draftReadingCount(draft: ReadingPlanDraft): number {
-  return draftDays(draft).reduce(
-    (sum, entry) => sum + entry.readings.length,
+  return draft.plan.sessions.reduce(
+    (sum, session) => sum + session.readings.length,
     0
   );
 }
 
 /**
- * Turns a draft into the plan's sessions: one session per in-range day that has
- * readings, in day order, skipping empty days. `newSessionId` is passed in so
- * this stays deterministic.
+ * The sessions a draft would actually save: empty ones are dropped, because a
+ * session the author added but never filled is nothing to read. Returns them in
+ * authoring order.
  */
 export function sessionsFromDraft(
-  draft: ReadingPlanDraft,
-  newSessionId: () => string
+  draft: ReadingPlanDraft
 ): ReadingPlanSession[] {
-  return draftDays(draft).map((entry) => ({
-    id: newSessionId(),
-    title: null,
-    readings: entry.readings,
-  }));
+  return draft.plan.sessions.filter((session) => session.readings.length > 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -413,6 +411,50 @@ function patternDays(cadence: Cadence): number[] {
 /** Number of sessions in one full pattern cycle. */
 function sessionsPerCycle(pattern: number[]): number {
   return pattern.reduce((a, b) => a + b, 0);
+}
+
+/**
+ * How many calendar days it takes to read `sessionCount` sessions at this
+ * cadence — this is where a plan's length comes from. A plan has no duration of
+ * its own: the same content read one session a day takes twice as long as read
+ * two a day, which is exactly the point of offering several cadences.
+ *
+ * Counts up to and including the day the last session falls on, so trailing
+ * skip days don't inflate it. Returns 0 when there is nothing to read or the
+ * cadence never reads.
+ */
+export function cadenceDurationDays(
+  cadence: Cadence,
+  sessionCount: number
+): number {
+  if (sessionCount <= 0) {
+    return 0;
+  }
+  const pattern = patternDays(cadence);
+  const period = sessionsPerCycle(pattern);
+  if (period === 0) {
+    return 0;
+  }
+  const fullCycles = Math.floor(sessionCount / period);
+  let remaining = sessionCount % period;
+  let days = fullCycles * pattern.length;
+  if (remaining === 0) {
+    // The last full cycle ended on its final reading day; any skip days after
+    // it are trailing and don't count toward the plan's length.
+    let trailingSkips = 0;
+    for (let i = pattern.length - 1; i >= 0 && pattern[i] === 0; i--) {
+      trailingSkips++;
+    }
+    return days - trailingSkips;
+  }
+  for (const sessions of pattern) {
+    days++;
+    if (remaining <= sessions) {
+      break;
+    }
+    remaining -= sessions;
+  }
+  return days;
 }
 
 /**
@@ -1339,6 +1381,7 @@ export function createReadingPlansManager(
       cadenceId?: string | null;
       customCadence?: Cadence | null;
       timeZone?: string | null;
+      selfPaced?: boolean;
     }
   ): Promise<ReadingPlanProgress> => {
     const userId = login.userId.value;
@@ -1372,9 +1415,7 @@ export function createReadingPlansManager(
     locale?: string;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
-    planType?: ReadingPlanType | null;
-    suggestedStartDateMs?: number | null;
-    durationDays?: number | null;
+    status?: ReadingPlanStatus;
     sessions?: ReadingPlanSession[];
   }): Promise<ReadingPlan> => {
     if (!login.userId.value) {
@@ -1442,102 +1483,356 @@ export function createReadingPlansManager(
   // -------------------------------------------------------------------------
 
   const editingReadingPlan = signal<ReadingPlanDraft | null>(null);
+  // Set while a draft save is in flight or scheduled, so the wizard can show
+  // that the user's work is being kept without them having to press anything.
+  const editingReadingPlanSaving = signal(false);
+  const editingReadingPlanSaveError = signal(false);
 
-  /** Opens a fresh draft, suggested to start today. */
-  const startEditingReadingPlan = () => {
-    const now = new Date();
-    const todayMidnight = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    ).getTime();
-    editingReadingPlan.value = createReadingPlanDraft(todayMidnight);
+  /** How long to wait after the last edit before writing the draft. */
+  const DRAFT_SAVE_DEBOUNCE_MS = 700;
+  let draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  // Serializes draft writes so two saves can't race and land out of order.
+  let draftSaveChain: Promise<void> = Promise.resolve();
+
+  const writeDraft = async (draft: ReadingPlanDraft) => {
+    try {
+      await saveReadingPlan(draft.plan);
+      const current = editingReadingPlan.peek();
+      // Only mark the draft persisted if it's still the one being edited —
+      // the user may have finished or discarded it while the write was in
+      // flight, in which case there is nothing left to flag.
+      if (current && current.plan.address === draft.plan.address) {
+        editingReadingPlan.value = { ...current, persisted: true };
+      }
+      // The plan's own record is the draft's home, but the list reads metadata,
+      // so keep both caches current or the draft won't show up to resume.
+      const metadata = omit(draft.plan, ["sessions"]);
+      const isDraft = (p: { recordName: string; address: string }) =>
+        p.recordName === draft.plan.recordName &&
+        p.address === draft.plan.address;
+      batch(() => {
+        fullReadingPlans.value = fullReadingPlans.value.some(isDraft)
+          ? fullReadingPlans.value.map((p) => (isDraft(p) ? draft.plan : p))
+          : [...fullReadingPlans.value, draft.plan];
+        userReadingPlans.value = userReadingPlans.value.some(isDraft)
+          ? userReadingPlans.value.map((p) => (isDraft(p) ? metadata : p))
+          : [...userReadingPlans.value, metadata];
+      });
+      editingReadingPlanSaveError.value = false;
+    } catch (error) {
+      console.error("Failed to save reading plan draft:", error);
+      editingReadingPlanSaveError.value = true;
+    }
   };
 
-  /** Discards the draft. */
-  const cancelEditingReadingPlan = () => {
-    editingReadingPlan.value = null;
+  /** Queues a debounced save of the current draft. */
+  const scheduleDraftSave = () => {
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+    }
+    editingReadingPlanSaving.value = true;
+    draftSaveTimer = setTimeout(() => {
+      draftSaveTimer = null;
+      void flushDraftSave();
+    }, DRAFT_SAVE_DEBOUNCE_MS);
   };
 
-  /** Merges a partial change into the draft. No-op when nothing is being edited. */
-  const updateEditingReadingPlan = (patch: Partial<ReadingPlanDraft>) => {
-    const current = editingReadingPlan.value;
+  /** Writes any pending draft change immediately. Resolves once it has landed. */
+  const flushDraftSave = async (): Promise<void> => {
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    const draft = editingReadingPlan.peek();
+    if (!draft) {
+      editingReadingPlanSaving.value = false;
+      return;
+    }
+    // `writeDraft` swallows its own failures, so the chain always settles —
+    // one failed autosave must not reject every save queued behind it.
+    draftSaveChain = draftSaveChain.then(() => writeDraft(draft));
+    await draftSaveChain;
+    // Another edit may have queued a fresh save while this one was writing;
+    // leave the indicator on for it rather than flicking it off and back.
+    if (draftSaveTimer === null) {
+      editingReadingPlanSaving.value = false;
+    }
+  };
+
+  /** Replaces the draft's plan and queues a save of the change. */
+  const mutateDraft = (
+    update: (plan: ReadingPlan) => ReadingPlan,
+    patch: Partial<Omit<ReadingPlanDraft, "plan">> = {}
+  ) => {
+    const current = editingReadingPlan.peek();
     if (!current) {
       return;
     }
-    editingReadingPlan.value = { ...current, ...patch };
-  };
-
-  /** Sets the draft's duration, pruning readings that fall outside it. */
-  const setEditingPlanDuration = (durationDays: number) => {
-    const current = editingReadingPlan.value;
-    if (!current) {
-      return;
-    }
-    editingReadingPlan.value = withDraftDuration(current, durationDays);
+    editingReadingPlan.value = {
+      ...current,
+      ...patch,
+      plan: { ...update(current.plan), updatedAtMs: Date.now() },
+    };
+    scheduleDraftSave();
   };
 
   /**
-   * Appends a reading to the draft's selected day (or `day`, when given). Any
-   * playlist item type is accepted — scripture, text, or a link. Used both by
-   * the wizard's item input and by the reader's "Add to plan" verse action.
+   * Opens a fresh draft with one empty session and the everyday cadence
+   * pre-selected. Nothing is written yet — the first actual edit persists it,
+   * so opening the wizard and immediately backing out leaves no empty plan
+   * behind in the user's account.
    */
-  const addReadingToEditingPlan = (item: PlaylistItemData, day?: number) => {
-    const current = editingReadingPlan.value;
+  const startEditingReadingPlan = () => {
+    const userId = login.userId.value ?? "";
+    const now = Date.now();
+    editingReadingPlan.value = {
+      plan: createReadingPlan(userId, userId, `plan_${uuid()}`, now, {
+        status: "draft",
+        cadenceOptions: [DEFAULT_CADENCE_OPTIONS[0]!],
+        sessions: [createDraftSession(uuid())],
+      }),
+      selectedSessionIndex: 0,
+      persisted: false,
+    };
+    editingReadingPlanSaveError.value = false;
+  };
+
+  /** Reopens a saved draft so the author can carry on where they left off. */
+  const resumeEditingReadingPlan = (plan: ReadingPlan) => {
+    editingReadingPlan.value = {
+      plan:
+        plan.sessions.length > 0
+          ? plan
+          : { ...plan, sessions: [createDraftSession(uuid())] },
+      selectedSessionIndex: Math.max(0, plan.sessions.length - 1),
+      persisted: true,
+    };
+    editingReadingPlanSaveError.value = false;
+  };
+
+  /**
+   * Steps out of the wizard, flushing any pending change first. The draft
+   * itself is kept — that is the whole point of drafts — and stays in the
+   * plans list to be resumed or discarded.
+   */
+  const cancelEditingReadingPlan = () => {
+    const draft = editingReadingPlan.peek();
+    if (draft && (draft.persisted || draftSaveTimer !== null)) {
+      void flushDraftSave().then(() => {
+        editingReadingPlan.value = null;
+      });
+      return;
+    }
+    editingReadingPlan.value = null;
+  };
+
+  /** Merges a title/description change into the draft. */
+  const updateEditingReadingPlan = (
+    patch: Partial<Pick<ReadingPlan, "title" | "description">>
+  ) => {
+    mutateDraft((plan) => ({ ...plan, ...patch }));
+  };
+
+  /** Points new readings at a session of the draft. */
+  const selectEditingPlanSession = (index: number) => {
+    const current = editingReadingPlan.peek();
+    if (!current) {
+      return;
+    }
+    editingReadingPlan.value = {
+      ...current,
+      selectedSessionIndex: Math.min(
+        Math.max(0, index),
+        Math.max(0, current.plan.sessions.length - 1)
+      ),
+    };
+  };
+
+  /**
+   * Sets which cadences the plan offers its readers. Order follows
+   * `DEFAULT_CADENCE_OPTIONS` so the list reads the same however it was built.
+   * A plan must offer at least one cadence, so an empty selection is ignored.
+   */
+  const setEditingPlanCadenceOptions = (optionIds: string[]) => {
+    const options = DEFAULT_CADENCE_OPTIONS.filter((option) =>
+      optionIds.includes(option.id)
+    );
+    if (options.length === 0) {
+      return;
+    }
+    mutateDraft((plan) => ({
+      ...plan,
+      cadenceOptions: options,
+      defaultCadenceId: options[0]!.id,
+    }));
+  };
+
+  /** Adds an empty session to the end of the draft and selects it. */
+  const addSessionToEditingPlan = () => {
+    const current = editingReadingPlan.peek();
+    if (!current) {
+      return;
+    }
+    mutateDraft(
+      (plan) => ({
+        ...plan,
+        sessions: [...plan.sessions, createDraftSession(uuid())],
+      }),
+      { selectedSessionIndex: current.plan.sessions.length }
+    );
+  };
+
+  /**
+   * Removes a session (and everything in it) from the draft. The last session
+   * is emptied rather than removed, so the wizard always has somewhere to put
+   * the next reading.
+   */
+  const removeSessionFromEditingPlan = (index: number) => {
+    const current = editingReadingPlan.peek();
+    if (!current || index < 0 || index >= current.plan.sessions.length) {
+      return;
+    }
+    const sessions =
+      current.plan.sessions.length === 1
+        ? [createDraftSession(uuid())]
+        : current.plan.sessions.filter((_, i) => i !== index);
+    mutateDraft((plan) => ({ ...plan, sessions }), {
+      selectedSessionIndex: Math.min(
+        current.selectedSessionIndex,
+        sessions.length - 1
+      ),
+    });
+  };
+
+  /**
+   * Appends a reading to the draft's selected session (or `sessionIndex`, when
+   * given). Any playlist item type is accepted — scripture, text, or a link.
+   * Used both by the wizard's item input and by the reader's "Add to plan"
+   * verse action.
+   */
+  const addReadingToEditingPlan = (
+    item: PlaylistItemData,
+    sessionIndex?: number
+  ) => {
+    const current = editingReadingPlan.peek();
     if (!current) {
       return;
     }
     const target = Math.min(
-      Math.max(0, day ?? current.selectedDay),
-      current.durationDays - 1
+      Math.max(0, sessionIndex ?? current.selectedSessionIndex),
+      current.plan.sessions.length - 1
     );
     const reading: PlanReading = { id: uuid(), item };
-    editingReadingPlan.value = {
-      ...current,
-      readingsByDay: {
-        ...current.readingsByDay,
-        [target]: [...(current.readingsByDay[target] ?? []), reading],
-      },
-    };
+    mutateDraft((plan) => ({
+      ...plan,
+      sessions: plan.sessions.map((session, i) =>
+        i === target
+          ? { ...session, readings: [...session.readings, reading] }
+          : session
+      ),
+    }));
   };
 
-  /** Removes a reading from a day of the draft. */
-  const removeReadingFromEditingPlan = (day: number, readingId: string) => {
-    const current = editingReadingPlan.value;
-    if (!current) {
-      return;
-    }
-    const remaining = (current.readingsByDay[day] ?? []).filter(
-      (r) => r.id !== readingId
-    );
-    const readingsByDay = { ...current.readingsByDay };
-    if (remaining.length > 0) {
-      readingsByDay[day] = remaining;
-    } else {
-      delete readingsByDay[day];
-    }
-    editingReadingPlan.value = { ...current, readingsByDay };
+  /** Removes a reading from a session of the draft. */
+  const removeReadingFromEditingPlan = (
+    sessionIndex: number,
+    readingId: string
+  ) => {
+    mutateDraft((plan) => ({
+      ...plan,
+      sessions: plan.sessions.map((session, i) =>
+        i === sessionIndex
+          ? {
+              ...session,
+              readings: session.readings.filter((r) => r.id !== readingId),
+            }
+          : session
+      ),
+    }));
   };
 
   /**
-   * Saves the draft as a new plan in a single write, then clears it. Returns
-   * null when there is no draft or it has no readings to save.
+   * Finishes the draft: drops sessions the author never filled, flips it to
+   * `"complete"`, writes it, and closes the wizard. Returns null when there is
+   * no draft or it has no readings.
    */
-  const saveEditingReadingPlan = async (): Promise<ReadingPlan | null> => {
-    const draft = editingReadingPlan.value;
+  const finishEditingReadingPlan = async (): Promise<ReadingPlan | null> => {
+    const draft = editingReadingPlan.peek();
     if (!draft || draftReadingCount(draft) === 0) {
       return null;
     }
-    const plan = await createNewReadingPlan({
-      title: draft.title.trim() || null,
-      planType: draft.planType,
-      durationDays: draft.durationDays,
-      suggestedStartDateMs:
-        draft.planType === "scheduled" ? draft.startDateMs : null,
-      sessions: sessionsFromDraft(draft, () => uuid()),
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    const plan: ReadingPlan = {
+      ...draft.plan,
+      title: draft.plan.title?.trim() || null,
+      status: "complete",
+      sessions: sessionsFromDraft(draft),
+      updatedAtMs: Date.now(),
+    };
+    // Write through the shared chain so it can't land before an earlier
+    // in-flight draft save and get overwritten by it. A failure here is the
+    // user's to see (the wizard reports it and stays open), so it propagates —
+    // but the chain is reset first, or every later save would inherit the
+    // rejection and never run.
+    const write = draftSaveChain.then(() => saveReadingPlan(plan));
+    draftSaveChain = write.catch(() => undefined);
+    await write;
+    const isPlan = (p: { recordName: string; address: string }) =>
+      p.recordName === plan.recordName && p.address === plan.address;
+    const metadata = omit(plan, ["sessions"]);
+    batch(() => {
+      fullReadingPlans.value = fullReadingPlans.value.some(isPlan)
+        ? fullReadingPlans.value.map((p) => (isPlan(p) ? plan : p))
+        : [...fullReadingPlans.value, plan];
+      userReadingPlans.value = userReadingPlans.value.some(isPlan)
+        ? userReadingPlans.value.map((p) => (isPlan(p) ? metadata : p))
+        : [...userReadingPlans.value, metadata];
     });
     editingReadingPlan.value = null;
+    editingReadingPlanSaving.value = false;
     return plan;
+  };
+
+  /**
+   * Deletes a plan (both its content and metadata records) and drops it from
+   * the in-memory caches. Used to throw away a draft the author doesn't want.
+   */
+  const deleteReadingPlan = async (plan: {
+    recordName: string;
+    address: string;
+  }) => {
+    await Promise.all([
+      os.eraseData(plan.recordName, plan.address),
+      os.eraseData(plan.recordName, `${plan.address}_metadata`),
+    ]);
+    const isPlan = (p: { recordName: string; address: string }) =>
+      p.recordName === plan.recordName && p.address === plan.address;
+    batch(() => {
+      fullReadingPlans.value = fullReadingPlans.value.filter((p) => !isPlan(p));
+      userReadingPlans.value = userReadingPlans.value.filter((p) => !isPlan(p));
+    });
+  };
+
+  /** Throws the current draft away, deleting it if it was already saved. */
+  const discardEditingReadingPlan = async () => {
+    const draft = editingReadingPlan.peek();
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    editingReadingPlan.value = null;
+    editingReadingPlanSaving.value = false;
+    if (!draft?.persisted) {
+      return;
+    }
+    try {
+      await deleteReadingPlan(draft.plan);
+    } catch (error) {
+      console.error("Failed to discard reading plan draft:", error);
+    }
   };
 
   effect(() => {
@@ -1568,15 +1863,23 @@ export function createReadingPlansManager(
     markDayComplete,
     createNewReadingPlan,
     addSessionToReadingPlan,
+    deleteReadingPlan,
     canEditSelectedPlan,
     editingReadingPlan,
+    editingReadingPlanSaving,
+    editingReadingPlanSaveError,
     startEditingReadingPlan,
+    resumeEditingReadingPlan,
     cancelEditingReadingPlan,
+    discardEditingReadingPlan,
     updateEditingReadingPlan,
-    setEditingPlanDuration,
+    selectEditingPlanSession,
+    setEditingPlanCadenceOptions,
+    addSessionToEditingPlan,
+    removeSessionFromEditingPlan,
     addReadingToEditingPlan,
     removeReadingFromEditingPlan,
-    saveEditingReadingPlan,
+    finishEditingReadingPlan,
   };
 }
 
