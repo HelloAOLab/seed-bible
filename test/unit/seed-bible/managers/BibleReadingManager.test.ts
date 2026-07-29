@@ -1864,9 +1864,10 @@ describe("createBibleReadingState", () => {
         holdLaterGenesisChapters
       );
       fetchMock.mockImplementation(controlled.fetch);
-      const state = createBibleReadingState(createDataManager());
+      const dataManager = createDataManager();
+      const state = createBibleReadingState(dataManager);
       await waitForInitialLoad(state);
-      return { state, controlled };
+      return { state, controlled, dataManager };
     }
 
     it("advances one chapter per press while the text is still downloading", async () => {
@@ -1891,7 +1892,7 @@ describe("createBibleReadingState", () => {
       expect(state.isChapterContentStale.value).toBe(true);
     });
 
-    it("commits only the newest chapter, even when requests settle out of order", async () => {
+    it("cancels the chapters skimmed past and commits only the one landed on", async () => {
       const { state, controlled } = await createStateWithHeldChapters();
 
       const committed: number[] = [];
@@ -1907,22 +1908,103 @@ describe("createBibleReadingState", () => {
       void state.loadNextChapter();
       expect(state.chapterNumber.value).toBe(4);
 
-      // The chapter the reader actually landed on comes back first, then the
-      // ones they skimmed past arrive late and in the wrong order.
+      // Each press supersedes the request before it, so the reader is never
+      // waiting behind downloads for chapters they have already passed — the
+      // whole point on a slow connection. Only chapter 4 is still in flight.
+      expect(controlled.aborted()).toEqual([chapterUrl(2), chapterUrl(3)]);
+      expect(controlled.pending()).toEqual([chapterUrl(4)]);
+
       controlled.settle(chapterUrl(4));
       await waitFor(() => state.chapterData.value?.chapter.number === 4);
-      controlled.settle(chapterUrl(3));
-      controlled.settle(chapterUrl(2));
-      await waitFor(() => controlled.pending().length === 0);
 
       expect(state.chapterNumber.value).toBe(4);
-      expect(state.chapterData.value?.chapter.number).toBe(4);
       expect(state.isChapterContentStale.value).toBe(false);
+      // Cancelling is not what keeps the skimmed chapters off screen — the
+      // generation guard does that, and it still has to hold on its own. Proven
+      // separately below, where a second caller keeps a superseded request
+      // alive so it can land late.
+      expect(state.error.value).toBeNull();
 
       stop();
-      // Never shows a chapter the reader skimmed past: only the first chapter
-      // and the one they stopped on were ever committed.
       expect(committed).toEqual([1, 4]);
+    });
+
+    it("serves an already-downloaded chapter from cache after an unrelated cancellation", async () => {
+      // The response cache doubles as the in-flight de-duplicator, so it would
+      // be easy for cancellation to evict a *completed* chapter along with the
+      // cancelled one. If that happened, pressing back to a chapter you have
+      // already read would re-download it — the opposite of the point.
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      // Download chapter 2 fully, then move on to 3 so that chapter 2 is no
+      // longer what's on screen — otherwise coming back to it needs no request
+      // at all and the cache is never consulted.
+      void state.loadNextChapter();
+      controlled.settle(chapterUrl(2));
+      await waitFor(() => state.chapterData.value?.chapter.number === 2);
+      void state.loadNextChapter();
+      controlled.settle(chapterUrl(3));
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+
+      // Skim forward and abandon chapter 4 mid-flight.
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(5);
+      expect(controlled.aborted()).toContain(chapterUrl(4));
+
+      const requestsBefore = fetchMock.mock.calls.length;
+
+      // Back to chapter 2, which is already downloaded.
+      void state.loadPreviousChapter();
+      void state.loadPreviousChapter();
+      void state.loadPreviousChapter();
+      await waitFor(() => state.chapterData.value?.chapter.number === 2);
+
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.isChapterContentStale.value).toBe(false);
+      // Served from cache: chapter 2 was never requested a second time, even
+      // though an unrelated request was cancelled in between.
+      expect(
+        fetchMock.mock.calls
+          .slice(requestsBefore)
+          .map((call) => call[0] as string)
+      ).not.toContain(chapterUrl(2));
+    });
+
+    it("still refuses a superseded chapter that cancellation could not stop", async () => {
+      // A request shared with another caller — the mobile adjacent-chapter
+      // prefetch does exactly this — cannot be cancelled out from under them,
+      // so it really can arrive after the reader has moved on. The generation
+      // guard, not cancellation, is what keeps it off screen.
+      const { state, controlled, dataManager } =
+        await createStateWithHeldChapters();
+
+      const committed: number[] = [];
+      const stop = effect(() => {
+        const chapter = state.chapterData.value;
+        if (chapter) {
+          committed.push(chapter.chapter.number);
+        }
+      });
+
+      void state.loadNextChapter();
+      // A second, uncancellable subscriber to chapter 2's request.
+      const prefetch = dataManager.getTranslationBookChapter("AAB", "GEN", 2);
+      void state.loadNextChapter();
+
+      // Chapter 2 survived the supersede because the other caller still wants
+      // it, so it is genuinely able to land late.
+      expect(controlled.aborted()).toEqual([]);
+      expect(state.chapterNumber.value).toBe(3);
+
+      controlled.settle(chapterUrl(3));
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+      controlled.settle(chapterUrl(2));
+      await expect(prefetch).resolves.toBeDefined();
+
+      stop();
+      expect(state.chapterNumber.value).toBe(3);
+      expect(committed).toEqual([1, 3]);
     });
 
     it("resolves a superseded navigation instead of leaving the caller hanging", async () => {

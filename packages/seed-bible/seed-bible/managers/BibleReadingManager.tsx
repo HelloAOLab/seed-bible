@@ -1308,6 +1308,9 @@ export function createBibleReadingState(
     // Stops the content loader from committing anything that resolves after
     // teardown, and releases anyone still awaiting a navigation.
     disposed = true;
+    // Nothing will read the result, so stop paying for it. Matters most when a
+    // tab is closed mid-load on a slow connection.
+    abortOpenContentRequest();
     for (const key of Array.from(contentWaiters.keys())) {
       settleContentWaiters(key);
     }
@@ -1798,6 +1801,24 @@ export function createBibleReadingState(
   };
 
   /**
+   * Cancels the chapter request this reading state currently has open, if any.
+   *
+   * The generation counter already stops a superseded response being displayed;
+   * this is what stops it being *downloaded*. On a slow connection, skimming
+   * ten chapters otherwise leaves nine unwanted downloads queued ahead of the
+   * one the reader is actually waiting for.
+   */
+  let contentRequestController: AbortController | null = null;
+  const abortOpenContentRequest = () => {
+    contentRequestController?.abort();
+    contentRequestController = null;
+  };
+
+  /** True for the rejection a caller gets back from its own cancellation. */
+  const isAbortError = (err: unknown): boolean =>
+    err instanceof Error && err.name === "AbortError";
+
+  /**
    * Fetches the chapter for a position and commits it — but only if it is still
    * the newest request when it lands.
    */
@@ -1811,15 +1832,24 @@ export function createBibleReadingState(
     // catalog supplies the book name and next/previous availability; a position
     // reached by a direct signal write (shared sessions, deep links) may be the
     // first time we have seen this translation at all.
+    //
+    // Deliberately not cancellable: it is one small request per translation,
+    // every position needs it, and letting it finish is what makes the *next*
+    // press instant.
     void dataManager.getTranslationBooks(position.translationId).catch(() => {
       // The chapter request below surfaces the failure; nothing to add here.
     });
+
+    abortOpenContentRequest();
+    const controller = new AbortController();
+    contentRequestController = controller;
 
     try {
       const chapter = await dataManager.getTranslationBookChapter(
         position.translationId,
         position.bookId,
-        position.chapterNumber
+        position.chapterNumber,
+        { signal: controller.signal }
       );
       if (disposed || generation !== loadGeneration) {
         return;
@@ -1829,9 +1859,18 @@ export function createBibleReadingState(
       if (disposed || generation !== loadGeneration) {
         return;
       }
+      // Our own cancellation, which only ever happens because a newer request
+      // replaced this one. Surfacing it would put an error on screen for a
+      // chapter the reader has already moved off.
+      if (isAbortError(err)) {
+        return;
+      }
       error.value =
         err instanceof Error ? err.message : "Failed to load chapter.";
     } finally {
+      if (contentRequestController === controller) {
+        contentRequestController = null;
+      }
       endRequest();
       settleContentWaiters(positionKey(position));
     }

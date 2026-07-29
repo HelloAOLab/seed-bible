@@ -204,10 +204,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }
 
     let cancelled = false;
+    // Without this the prefetch holds a permanent claim on exactly the
+    // adjacent-chapter URLs a fast skim is trying to cancel — a request is only
+    // dropped once every caller that can walk away has — so cancellation would
+    // be inert on mobile, which is where it matters most.
+    const controller = new AbortController();
+    const prefetchOptions = { signal: controller.signal };
 
     if (readingState.hasPrevious.value) {
       state.bibleData
-        .getPreviousChapter(chapterData)
+        .getPreviousChapter(chapterData, prefetchOptions)
         .then((result) => {
           if (!cancelled) {
             setPrevChapterPreview(result ?? null);
@@ -224,7 +230,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
     if (readingState.hasNext.value) {
       state.bibleData
-        .getNextChapter(chapterData)
+        .getNextChapter(chapterData, prefetchOptions)
         .then((result) => {
           if (!cancelled) {
             setNextChapterPreview(result ?? null);
@@ -241,6 +247,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [
     isMobile,

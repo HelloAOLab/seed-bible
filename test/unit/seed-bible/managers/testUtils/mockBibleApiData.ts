@@ -266,15 +266,17 @@ export function createResponse<T>(
 }
 
 export interface ControlledFetch {
-  /** Drop-in `fetch` implementation. */
-  fetch: (url: string) => Promise<WebResponse>;
+  /** Drop-in `fetch` implementation, including `AbortSignal` support. */
+  fetch: (url: string, init?: { signal?: AbortSignal }) => Promise<WebResponse>;
   /** URLs currently held open, in the order they were requested. */
   pending: () => string[];
-  /** Releases a held URL with its mapped response. */
+  /** URLs whose held request was cancelled, in the order they were cancelled. */
+  aborted: () => string[];
+  /** Releases the oldest held request for a URL with its mapped response. */
   settle: (url: string) => void;
-  /** Releases every currently held URL, oldest first. */
+  /** Releases every currently held request, oldest first. */
   settleAll: () => void;
-  /** Fails a held URL. */
+  /** Fails the oldest held request for a URL. */
   reject: (url: string, error?: Error) => void;
 }
 
@@ -285,16 +287,27 @@ export interface ControlledFetch {
  * makes "the reader navigated away before this request came back" impossible to
  * express. Pass a predicate for the URLs that should hang, then release them by
  * hand — in whatever order the test needs, including out of order.
+ *
+ * Honours `init.signal` the way a real `fetch` does: an aborted request rejects
+ * with an `AbortError` and stops being held. Without that, cancellation would
+ * look like a request that simply never returns, and `aborted()` — which is how
+ * tests assert the low-bandwidth win — could not exist.
+ *
+ * Requests are queued per URL rather than keyed by it, because cancelling a
+ * request drops it from the response cache, so the same URL genuinely can be
+ * in flight more than once across a test.
  */
 export function createControlledFetch(
   responses: WebResponseMap,
   shouldHold: (url: string) => boolean = () => false
 ): ControlledFetch {
-  const held = new Map<
-    string,
-    { resolve: (response: WebResponse) => void; reject: (error: Error) => void }
-  >();
-  const order: string[] = [];
+  interface HeldRequest {
+    url: string;
+    resolve: (response: WebResponse) => void;
+    reject: (error: Error) => void;
+  }
+  const held: HeldRequest[] = [];
+  const abortedUrls: string[] = [];
 
   const responseFor = (url: string): WebResponse => {
     const response = responses[url];
@@ -304,35 +317,60 @@ export function createControlledFetch(
     return response;
   };
 
-  const release = (url: string) => {
-    const entry = held.get(url);
+  const drop = (entry: HeldRequest) => {
+    const index = held.indexOf(entry);
+    if (index >= 0) {
+      held.splice(index, 1);
+    }
+  };
+
+  const release = (url: string): HeldRequest => {
+    const entry = held.find((candidate) => candidate.url === url);
     if (!entry) {
       throw new Error(
-        `No held request for ${url}. Held: ${order.join(", ") || "(none)"}`
+        `No held request for ${url}. Held: ${
+          held.map((h) => h.url).join(", ") || "(none)"
+        }`
       );
     }
-    held.delete(url);
-    order.splice(order.indexOf(url), 1);
+    drop(entry);
     return entry;
   };
 
   return {
-    fetch: (url: string) => {
+    fetch: (url: string, init?: { signal?: AbortSignal }) => {
       if (!shouldHold(url)) {
         return Promise.resolve(responseFor(url));
       }
       return new Promise<WebResponse>((resolve, reject) => {
-        order.push(url);
-        held.set(url, { resolve, reject });
+        const entry: HeldRequest = { url, resolve, reject };
+        held.push(entry);
+
+        const signal = init?.signal;
+        if (!signal) {
+          return;
+        }
+        const onAbort = () => {
+          drop(entry);
+          abortedUrls.push(url);
+          reject(new DOMException("The operation was aborted.", "AbortError"));
+        };
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener("abort", onAbort, { once: true });
       });
     },
-    pending: () => [...order],
+    pending: () => held.map((entry) => entry.url),
+    aborted: () => [...abortedUrls],
     settle: (url: string) => {
       release(url).resolve(responseFor(url));
     },
     settleAll: () => {
-      for (const url of [...order]) {
-        release(url).resolve(responseFor(url));
+      for (const entry of [...held]) {
+        drop(entry);
+        entry.resolve(responseFor(entry.url));
       }
     },
     reject: (url: string, error = new Error(`Request failed: ${url}`)) => {
