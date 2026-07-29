@@ -1,5 +1,11 @@
 import {
   createBibleReadingState as createRawBibleReadingState,
+  nextPosition,
+  positionKey,
+  positionsEqual,
+  previousPosition,
+  resolveChapterInBook,
+  NAVIGATION_COALESCE_MS,
   type BibleReadingState,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -14,6 +20,7 @@ import {
   ALT_API_ENDPOINT,
   altTranslations,
   bsbBooks,
+  createControlledFetch,
   createReadingManagerResponseMap,
   createResponse,
   makeChapter,
@@ -23,6 +30,7 @@ import {
   translations,
   type WebResponseMap,
   aabBooks,
+  edgeCaseBooks,
 } from "./testUtils/mockBibleApiData";
 import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
@@ -89,6 +97,7 @@ function createBibleReadingState(
   options: { initialTranslationId?: string | null } & {
     initialBookId?: string | null;
     initialChapterNumber?: number | null;
+    scrollToVerse?: number;
   } = {}
 ) {
   const i18nManager = createI18nManager(createNavigationManager(), ["en"]);
@@ -124,6 +133,118 @@ async function waitFor(
 async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
   await waitFor(() => state.loading.value === false);
 }
+
+describe("reading position helpers", () => {
+  const at = (bookId: string, chapterNumber: number) => ({
+    translationId: "EDGE",
+    bookId,
+    chapterNumber,
+  });
+
+  describe("nextPosition", () => {
+    it("advances within a book", () => {
+      expect(nextPosition(edgeCaseBooks, at("PSA", 5))).toEqual(at("PSA", 6));
+    });
+
+    it("crosses a gap in book order, ignoring the array's own ordering", () => {
+      // GEN is order 1 and PSA is order 19, with nothing in between, and the
+      // fixture lists them as [TOB, GEN, PSA] — so indexing the array would
+      // land on TOB instead.
+      expect(nextPosition(edgeCaseBooks, at("GEN", 2))).toEqual(at("PSA", 3));
+    });
+
+    it("lands on the next book's first chapter even when that is not 1", () => {
+      expect(nextPosition(edgeCaseBooks, at("GEN", 2))?.chapterNumber).toBe(3);
+    });
+
+    it("advances into apocryphal books", () => {
+      expect(nextPosition(edgeCaseBooks, at("PSA", 7))).toEqual(at("TOB", 1));
+    });
+
+    it("returns null at the last chapter of the last book", () => {
+      expect(nextPosition(edgeCaseBooks, at("TOB", 3))).toBeNull();
+    });
+
+    it("returns null for a book that is not in the catalog", () => {
+      expect(nextPosition(edgeCaseBooks, at("ZZZ", 1))).toBeNull();
+    });
+
+    it("crosses the book gap in the standard fixture", () => {
+      const position = {
+        translationId: "AAB",
+        bookId: "EXO",
+        chapterNumber: 40,
+      };
+      expect(nextPosition(aabBooks, position)).toEqual({
+        translationId: "AAB",
+        bookId: "MAT",
+        chapterNumber: 1,
+      });
+    });
+  });
+
+  describe("previousPosition", () => {
+    it("steps back within a book", () => {
+      expect(previousPosition(edgeCaseBooks, at("PSA", 6))).toEqual(
+        at("PSA", 5)
+      );
+    });
+
+    it("crosses back to the previous book's last chapter", () => {
+      expect(previousPosition(edgeCaseBooks, at("TOB", 1))).toEqual(
+        at("PSA", 7)
+      );
+    });
+
+    it("stops at a book's own first chapter rather than assuming 1", () => {
+      expect(previousPosition(edgeCaseBooks, at("PSA", 3))).toEqual(
+        at("GEN", 2)
+      );
+    });
+
+    it("returns null at the first chapter of the first book", () => {
+      expect(previousPosition(edgeCaseBooks, at("GEN", 1))).toBeNull();
+    });
+  });
+
+  describe("resolveChapterInBook", () => {
+    const psalms = edgeCaseBooks.books.find((book) => book.id === "PSA")!;
+
+    it("keeps a chapter that falls inside the book", () => {
+      expect(resolveChapterInBook(psalms, 5)).toBe(5);
+    });
+
+    it("accepts the book's own boundaries", () => {
+      expect(resolveChapterInBook(psalms, 3)).toBe(3);
+      expect(resolveChapterInBook(psalms, 7)).toBe(7);
+    });
+
+    it("falls back to the book's first chapter when out of range", () => {
+      // Not a clamp: an over-large request goes to the *first* chapter, which
+      // is the behaviour this replaced.
+      expect(resolveChapterInBook(psalms, 2)).toBe(3);
+      expect(resolveChapterInBook(psalms, 99999)).toBe(3);
+    });
+  });
+
+  describe("positionKey / positionsEqual", () => {
+    it("treats identical positions as equal", () => {
+      expect(positionsEqual(at("GEN", 1), at("GEN", 1))).toBe(true);
+      expect(positionKey(at("GEN", 1))).toBe(positionKey(at("GEN", 1)));
+    });
+
+    it("distinguishes positions that differ in any field", () => {
+      expect(positionsEqual(at("GEN", 1), at("GEN", 2))).toBe(false);
+      expect(positionsEqual(at("GEN", 1), at("PSA", 1))).toBe(false);
+      expect(positionKey(at("GEN", 1))).not.toBe(positionKey(at("GEN", 2)));
+    });
+
+    it("handles nulls", () => {
+      expect(positionsEqual(null, null)).toBe(true);
+      expect(positionsEqual(at("GEN", 1), null)).toBe(false);
+    });
+  });
+});
 
 describe("createBibleReadingState", () => {
   let logSpy: Mock;
@@ -577,6 +698,65 @@ describe("createBibleReadingState", () => {
     expect(state.translationBooks.value).toEqual(aabBooks);
   });
 
+  it("derives hasNext/hasPrevious from the book catalog, not the loaded chapter", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/AAB/MAT/28.json")]: createResponse(
+        makeChapter(aabBooks, "MAT", 28)
+      ),
+    });
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.hasPrevious.value).toBe(false);
+    expect(state.hasNext.value).toBe(true);
+
+    await state.selectChapter("MAT", 28);
+
+    // Matthew is the last book in this catalog, so there is nothing after
+    // chapter 28 — even though the chapter payload still carries a
+    // `nextChapterApiLink`, which is what used to be consulted here.
+    expect(state.chapterData.value?.nextChapterApiLink).toBeTruthy();
+    expect(state.hasNext.value).toBe(false);
+    expect(state.hasPrevious.value).toBe(true);
+  });
+
+  it("falls back to the chapter's links while a translation's catalog is missing", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    expect(state.hasNext.value).toBe(true);
+
+    // Point at a translation whose catalog has not been downloaded. There is
+    // nothing to derive adjacency from, so the loaded chapter's links stand in
+    // rather than reporting "no next chapter" and disabling the controls.
+    state.translationId.value = "NIV";
+
+    expect(state.translationBooks.value).toBeNull();
+    expect(state.chapterData.value?.nextChapterApiLink).toBeTruthy();
+    expect(state.hasNext.value).toBe(true);
+  });
+
+  it("tracks the catalog of whichever translation is selected", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/NIV/books.json")]: createResponse(nivBooks),
+    });
+    const dataManager = createDataManager();
+    const state = createBibleReadingState(dataManager);
+    await waitForInitialLoad(state);
+    expect(state.translationBooks.value).toEqual(aabBooks);
+
+    await dataManager.getTranslationBooks("NIV");
+    state.translationId.value = "NIV";
+
+    // The catalog is derived rather than stored, so it swaps with the
+    // translation id instead of lagging behind it until a chapter loads.
+    expect(state.translationBooks.value).toEqual(nivBooks);
+  });
+
   it("selectBook() loads the selected book", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
@@ -649,6 +829,25 @@ describe("createBibleReadingState", () => {
 
     expect(chapterFiveScrollSnapshots).toEqual([3]);
     expect(state.chapterData.value?.book.id).toBe("GEN");
+    expect(state.chapterData.value?.chapter.number).toBe(5);
+    expect(state.scrollToVerse.value).toBe(3);
+  });
+
+  it("publishes a deep-linked verse on the initial load", async () => {
+    // A `?verse=` deep link asks for the scroll before anything is fetched. The
+    // chapter request needs one round trip while the initial load needs two
+    // (translations, then the book catalog), so the text reliably arrives first
+    // — the scroll target has to already be recorded by then or it is dropped
+    // and never republished, since the position never changes again.
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager(), {
+      initialTranslationId: "AAB",
+      initialBookId: "GEN",
+      initialChapterNumber: 5,
+      scrollToVerse: 3,
+    });
+    await waitForInitialLoad(state);
+
     expect(state.chapterData.value?.chapter.number).toBe(5);
     expect(state.scrollToVerse.value).toBe(3);
   });
@@ -849,7 +1048,7 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.chapter.number).toBe(2);
   });
 
-  it("waits for book metadata to finish loading before computing loadNextChapter() targets, chaining correctly across taps issued while it's still pending", async () => {
+  it("lets a pending translation switch win over taps issued while its catalog is still loading", async () => {
     const responses = createReadingManagerResponseMap();
     responses[makeExampleUrl("/api/NIV/books.json")] = createResponse(nivBooks);
     responses[makeExampleUrl("/api/NIV/MAT/1.json")] = createResponse({
@@ -889,18 +1088,26 @@ describe("createBibleReadingState", () => {
     const next1 = state.loadNextChapter();
     const next2 = state.loadNextChapter();
 
-    // The two next() taps must be genuinely waiting on the delayed books
-    // fetch, not silently no-op'ing or racing off absent metadata.
     await waitFor(() => resolveBooks !== undefined);
     resolveBooks!();
 
     await Promise.all([translationCall, next1, next2]);
 
-    // selectTranslation lands on NIV MAT 1; the two next() taps, chained
-    // after it, land on MAT 2 then MAT 3 — not both re-computing MAT 2.
+    // The two taps act on the translation still on screen (they advance AAB
+    // Genesis immediately, which is the whole point of not waiting on a
+    // request), and the translation switch then lands on top of them. So the
+    // reader ends where they asked to go last: NIV's first book and chapter.
+    //
+    // Deliberately not chained behind the pending switch. Chaining is how the
+    // earlier attempt at #1414 got MAT 3 here, but it costs the instant
+    // position write that this whole change exists to deliver, and picking a
+    // translation from a menu is not the rapid-fire path. What matters is that
+    // the end state is coherent rather than a mixture of the two.
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
-    expect(state.chapterNumber.value).toBe(3);
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.isChapterContentStale.value).toBe(false);
+    expect(state.error.value).toBeNull();
   });
 
   it("crosses a book boundary using the next book's own firstChapterNumber, not a hardcoded 1", async () => {
@@ -1633,6 +1840,447 @@ describe("createBibleReadingState", () => {
     expect(state.loading.value).toBe(false);
   });
 
+  describe("navigation is not blocked by in-flight chapter text (#1414)", () => {
+    /** Holds every Genesis chapter except the first, which the initial load needs. */
+    const holdLaterGenesisChapters = (url: string) =>
+      /\/api\/AAB\/GEN\/(?!1\.json)\d+\.json$/.test(url);
+
+    function chapterUrl(chapter: number): string {
+      return makeExampleUrl(`/api/AAB/GEN/${chapter}.json`);
+    }
+
+    function responsesThroughChapter(last: number): WebResponseMap {
+      const responses = createReadingManagerResponseMap();
+      for (let chapter = 2; chapter <= last; chapter++) {
+        responses[chapterUrl(chapter)] = createResponse(
+          makeChapter(aabBooks, "GEN", chapter)
+        );
+      }
+      return responses;
+    }
+
+    async function createStateWithHeldChapters(last = 6) {
+      const controlled = createControlledFetch(
+        responsesThroughChapter(last),
+        holdLaterGenesisChapters
+      );
+      fetchMock.mockImplementation(controlled.fetch);
+      const dataManager = createDataManager();
+      const state = createBibleReadingState(dataManager);
+      await waitForInitialLoad(state);
+      return { state, controlled, dataManager };
+    }
+
+    it("advances one chapter per press while the text is still downloading", async () => {
+      const { state } = await createStateWithHeldChapters();
+      expect(state.chapterNumber.value).toBe(1);
+
+      // Three presses back to back, nothing awaited in between — the same thing
+      // a reader does by tapping quickly.
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+
+      // Position has moved three chapters, synchronously, before any request
+      // has come back.
+      expect(state.chapterNumber.value).toBe(4);
+      expect(state.title.value).toBe("Genesis 4");
+      expect(state.shortTitle.value).toBe("GEN 4");
+
+      // ...and the text on screen is still chapter 1, which is what the
+      // skeleton placeholder keys off.
+      expect(state.chapterData.value?.chapter.number).toBe(1);
+      expect(state.isChapterContentStale.value).toBe(true);
+    });
+
+    it("cancels the chapters skimmed past and commits only the one landed on", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      const committed: number[] = [];
+      const stop = effect(() => {
+        const chapter = state.chapterData.value;
+        if (chapter) {
+          committed.push(chapter.chapter.number);
+        }
+      });
+
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(4);
+
+      // Each press supersedes the request before it, so the reader is never
+      // waiting behind downloads for chapters they have already passed — the
+      // whole point on a slow connection. Only chapter 4 is still in flight.
+      expect(controlled.aborted()).toEqual([chapterUrl(2), chapterUrl(3)]);
+      expect(controlled.pending()).toEqual([chapterUrl(4)]);
+
+      controlled.settle(chapterUrl(4));
+      await waitFor(() => state.chapterData.value?.chapter.number === 4);
+
+      expect(state.chapterNumber.value).toBe(4);
+      expect(state.isChapterContentStale.value).toBe(false);
+      // Cancelling is not what keeps the skimmed chapters off screen — the
+      // generation guard does that, and it still has to hold on its own. Proven
+      // separately below, where a second caller keeps a superseded request
+      // alive so it can land late.
+      expect(state.error.value).toBeNull();
+
+      stop();
+      expect(committed).toEqual([1, 4]);
+    });
+
+    it("serves an already-downloaded chapter from cache after an unrelated cancellation", async () => {
+      // The response cache doubles as the in-flight de-duplicator, so it would
+      // be easy for cancellation to evict a *completed* chapter along with the
+      // cancelled one. If that happened, pressing back to a chapter you have
+      // already read would re-download it — the opposite of the point.
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      // Download chapter 2 fully, then move on to 3 so that chapter 2 is no
+      // longer what's on screen — otherwise coming back to it needs no request
+      // at all and the cache is never consulted.
+      void state.loadNextChapter();
+      controlled.settle(chapterUrl(2));
+      await waitFor(() => state.chapterData.value?.chapter.number === 2);
+      void state.loadNextChapter();
+      controlled.settle(chapterUrl(3));
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+
+      // Skim forward and abandon chapter 4 mid-flight.
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(5);
+      expect(controlled.aborted()).toContain(chapterUrl(4));
+
+      const requestsBefore = fetchMock.mock.calls.length;
+
+      // Back to chapter 2, which is already downloaded.
+      void state.loadPreviousChapter();
+      void state.loadPreviousChapter();
+      void state.loadPreviousChapter();
+      await waitFor(() => state.chapterData.value?.chapter.number === 2);
+
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.isChapterContentStale.value).toBe(false);
+      // Served from cache: chapter 2 was never requested a second time, even
+      // though an unrelated request was cancelled in between.
+      expect(
+        fetchMock.mock.calls
+          .slice(requestsBefore)
+          .map((call) => call[0] as string)
+      ).not.toContain(chapterUrl(2));
+    });
+
+    it("still refuses a superseded chapter that cancellation could not stop", async () => {
+      // A request shared with another caller — the mobile adjacent-chapter
+      // prefetch does exactly this — cannot be cancelled out from under them,
+      // so it really can arrive after the reader has moved on. The generation
+      // guard, not cancellation, is what keeps it off screen.
+      const { state, controlled, dataManager } =
+        await createStateWithHeldChapters();
+
+      const committed: number[] = [];
+      const stop = effect(() => {
+        const chapter = state.chapterData.value;
+        if (chapter) {
+          committed.push(chapter.chapter.number);
+        }
+      });
+
+      void state.loadNextChapter();
+      // A second, uncancellable subscriber to chapter 2's request.
+      const prefetch = dataManager.getTranslationBookChapter("AAB", "GEN", 2);
+      void state.loadNextChapter();
+
+      // Chapter 2 survived the supersede because the other caller still wants
+      // it, so it is genuinely able to land late.
+      expect(controlled.aborted()).toEqual([]);
+      expect(state.chapterNumber.value).toBe(3);
+
+      controlled.settle(chapterUrl(3));
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+      controlled.settle(chapterUrl(2));
+      await expect(prefetch).resolves.toBeDefined();
+
+      stop();
+      expect(state.chapterNumber.value).toBe(3);
+      expect(committed).toEqual([1, 3]);
+    });
+
+    it("resolves a superseded navigation instead of leaving the caller hanging", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      const first = state.loadNextChapter();
+      void state.loadNextChapter();
+
+      // The first call's chapter is never going to be displayed, but callers
+      // await these methods and must not be stranded.
+      await expect(first).resolves.toBeUndefined();
+
+      controlled.settleAll();
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+    });
+
+    it("reverses direction mid-flight without waiting", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+      void state.loadPreviousChapter();
+
+      expect(state.chapterNumber.value).toBe(3);
+
+      controlled.settleAll();
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+      expect(state.isChapterContentStale.value).toBe(false);
+    });
+
+    it("does not move past the end of the canon", async () => {
+      setWebResponses({
+        ...createReadingManagerResponseMap(),
+        [makeExampleUrl("/api/AAB/MAT/28.json")]: createResponse(
+          makeChapter(aabBooks, "MAT", 28)
+        ),
+      });
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      await state.selectChapter("MAT", 28);
+
+      const callsBefore = fetchMock.mock.calls.length;
+      void state.loadNextChapter();
+      void state.loadNextChapter();
+
+      expect(state.bookId.value).toBe("MAT");
+      expect(state.chapterNumber.value).toBe(28);
+      expect(fetchMock.mock.calls.length).toBe(callsBefore);
+    });
+
+    it("keeps a pending scroll target from landing on the wrong chapter", async () => {
+      const { state, controlled } = await createStateWithHeldChapters();
+
+      // Ask for a verse in chapter 2. The position lands but the text is held,
+      // so the scroll target is still pending.
+      void state.selectTranslationAndChapter("AAB", "GEN", 2, {
+        scrollToVerse: 2,
+      });
+      await waitFor(() => state.chapterNumber.value === 2);
+      expect(state.scrollToVerse.value).toBeNull();
+
+      // Moving on before that text arrives must drop the request rather than
+      // applying it to whichever chapter shows up next.
+      void state.loadNextChapter();
+      expect(state.chapterNumber.value).toBe(3);
+
+      controlled.settleAll();
+      await waitFor(() => state.chapterData.value?.chapter.number === 3);
+      expect(state.scrollToVerse.value).toBeNull();
+    });
+
+    describe("recovering from a failed chapter load", () => {
+      /**
+       * Resolves to "hung" instead of waiting forever, so a navigation promise
+       * that never settles fails the test rather than timing the suite out.
+       */
+      async function outcomeOf(
+        promise: Promise<unknown>,
+        timeoutMs = 500
+      ): Promise<"settled" | "hung"> {
+        return Promise.race([
+          promise.then(() => "settled" as const),
+          new Promise<"hung">((resolve) =>
+            setTimeout(() => resolve("hung"), timeoutMs)
+          ),
+        ]);
+      }
+
+      function failingChapterResponses(chapter: number): WebResponseMap {
+        const responses = responsesThroughChapter(3);
+        responses[chapterUrl(chapter)] = createResponse(
+          { error: true },
+          500,
+          "Server Error"
+        );
+        return responses;
+      }
+
+      it("re-requests a position that is already current when its last load failed", async () => {
+        // Picking the same chapter again is the reader's only way to retry, and
+        // it writes no new position — so without an explicit nudge the loader
+        // never hears about it. A shared session hits the same path when a peer
+        // re-broadcasts the position that just failed locally.
+        const responses = failingChapterResponses(3);
+        setWebResponses(responses);
+        const state = createBibleReadingState(createDataManager());
+        await waitForInitialLoad(state);
+
+        await state.selectChapter("GEN", 3);
+        expect(state.error.value).toContain("Status: 500");
+        expect(state.chapterData.value?.chapter.number).toBe(1);
+        expect(state.chapterNumber.value).toBe(3);
+
+        // The endpoint recovers.
+        responses[chapterUrl(3)] = createResponse(
+          makeChapter(aabBooks, "GEN", 3)
+        );
+        const requestsBefore = fetchMock.mock.calls.length;
+
+        expect(await outcomeOf(state.selectChapter("GEN", 3))).toBe("settled");
+
+        expect(
+          fetchMock.mock.calls
+            .slice(requestsBefore)
+            .map((call) => call[0] as string)
+        ).toContain(chapterUrl(3));
+        expect(state.chapterData.value?.chapter.number).toBe(3);
+        expect(state.error.value).toBeNull();
+      });
+
+      it("does not restart the download when the same position is re-picked mid-flight", async () => {
+        // The retry nudge must not fire for a request that is simply still on
+        // its way, or waiting on a slow chapter and tapping it again would throw
+        // away the bytes already downloaded.
+        const { state, controlled } = await createStateWithHeldChapters();
+
+        void state.selectChapter("GEN", 2);
+        await waitFor(() => controlled.pending().includes(chapterUrl(2)));
+        const requestsBefore = fetchMock.mock.calls.length;
+
+        void state.selectChapter("GEN", 2);
+
+        expect(fetchMock.mock.calls.length).toBe(requestsBefore);
+        expect(controlled.aborted()).not.toContain(chapterUrl(2));
+        expect(controlled.pending()).toEqual([chapterUrl(2)]);
+
+        controlled.settle(chapterUrl(2));
+        await waitFor(() => state.chapterData.value?.chapter.number === 2);
+      });
+
+      it("shows a chapter it already holds after a failed load, rather than the failure", async () => {
+        // Reported from the browser: offline on Genesis 3, pressing previous
+        // back to Genesis 2 looked like it failed too — even though Genesis 2 was
+        // still sitting in `chapterData`, behind the banner. Genesis 1 then
+        // loaded fine, because it needed a request (served from the response
+        // cache) and so passed through the place the error was cleared.
+        const responses = responsesThroughChapter(3);
+        let offline = false;
+        fetchMock.mockImplementation((url: string) => {
+          if (offline) {
+            return Promise.reject(new TypeError("Failed to fetch"));
+          }
+          const response = responses[url];
+          if (!response) {
+            throw new Error(`No mocked response for ${url}`);
+          }
+          return Promise.resolve(response);
+        });
+
+        const state = createBibleReadingState(createDataManager());
+        await waitForInitialLoad(state);
+        await state.loadNextChapter();
+        expect(state.chapterData.value?.chapter.number).toBe(2);
+
+        offline = true;
+
+        await state.loadNextChapter();
+        expect(state.chapterNumber.value).toBe(3);
+        expect(state.error.value).not.toBeNull();
+
+        // Back to the chapter we never stopped holding. No request is issued,
+        // so this is the path the error clear used to miss entirely.
+        await state.loadPreviousChapter();
+
+        expect(state.chapterNumber.value).toBe(2);
+        expect(state.chapterData.value?.chapter.number).toBe(2);
+        expect(state.isChapterContentStale.value).toBe(false);
+        expect(state.error.value).toBeNull();
+
+        // And one further back still works offline, from the response cache —
+        // the half of the report that already behaved.
+        await state.loadPreviousChapter();
+
+        expect(state.chapterNumber.value).toBe(1);
+        expect(state.chapterData.value?.chapter.number).toBe(1);
+        expect(state.error.value).toBeNull();
+      });
+
+      it("clears the error as the recovery navigation starts, not when it lands", async () => {
+        // `BibleReader` renders the error banner in place of any content, so an
+        // error left standing means the whole of the next chapter's download
+        // shows neither dimmed text nor the loading placeholder.
+        const responses = failingChapterResponses(3);
+        const controlled = createControlledFetch(
+          responses,
+          (url) => url === chapterUrl(2)
+        );
+        fetchMock.mockImplementation(controlled.fetch);
+        const state = createBibleReadingState(createDataManager());
+        await waitForInitialLoad(state);
+
+        await state.selectChapter("GEN", 3);
+        expect(state.error.value).toContain("Status: 500");
+
+        void state.selectChapter("GEN", 2);
+
+        expect(state.error.value).toBeNull();
+        expect(state.isChapterContentStale.value).toBe(true);
+
+        controlled.settle(chapterUrl(2));
+        await waitFor(() => state.chapterData.value?.chapter.number === 2);
+        expect(state.error.value).toBeNull();
+      });
+    });
+  });
+
+  describe("chapterDataPromise", () => {
+    it("resolves once the initial chapter arrives", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+
+      expect(state.initialChapterLoadSettled.value).toBe(false);
+
+      await expect(state.chapterDataPromise).resolves.toBeUndefined();
+
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+      expect(state.chapterData.value).not.toBeNull();
+    });
+
+    it("resolves when the initial chapter load fails, instead of hanging", async () => {
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/AAB/GEN/1.json")] = createResponse(
+        { error: true },
+        500,
+        "Server Error"
+      );
+      setWebResponses(responses);
+
+      const state = createBibleReadingState(createDataManager());
+
+      // Anything suspended on this promise — including the server render —
+      // would otherwise wait forever for content that is never coming.
+      await expect(state.chapterDataPromise).resolves.toBeUndefined();
+
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+      expect(state.chapterData.value).toBeNull();
+      expect(state.error.value).toContain("Status: 500");
+      expect(state.loading.value).toBe(false);
+    });
+
+    it("stays settled across later navigations", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+
+      // The latch describes the *first* load only, so a later navigation must
+      // not put consumers back into a suspended state.
+      await state.selectChapter("GEN", 5);
+
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+    });
+  });
+
   describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {
     function createDiscoverManagerMock(
       responses: DiscoverProviderResults[][] = []
@@ -2152,16 +2800,31 @@ describe("createBibleReadingState", () => {
       expect(state.chapterNumber.value).toBe(3);
     });
 
-    it("sets state.error instead of leaving an unhandled rejection when book metadata fails while computing a next/previous target", async () => {
+    it("still navigates, and reports failure, when the book catalog is missing", async () => {
+      // An extension can commit content for a translation the loader has never
+      // fetched a catalog for. Adjacency is normally computed from that catalog,
+      // so this is the one case where it isn't available — and `hasNext` stays
+      // true off the loaded chapter's link, so the chevron is enabled. Pressing
+      // it has to actually do something rather than silently no-op.
       const responses = createReadingManagerResponseMap();
       responses[makeExampleUrl("/api/NIV/books.json")] = createResponse(
         { error: true },
         500,
         "Server Error"
       );
+      responses[makeExampleUrl("/api/NIV/MAT/2.json")] = createResponse({
+        ...makeChapter(nivBooks, "MAT", 2),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+      });
       setWebResponses(responses);
 
-      const navigateChapter = makeChapter(nivBooks, "MAT", 1);
+      const navigateChapter = {
+        ...makeChapter(nivBooks, "MAT", 1),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+        nextChapterApiLink: "/api/NIV/MAT/2.json",
+      };
       const manager = createBibleReadingExtensionManager();
       manager.registerReadingExtension({
         id: "x",
@@ -2174,25 +2837,69 @@ describe("createBibleReadingState", () => {
       await waitForInitialLoad(state);
       state.enableExtension("x");
 
-      // First tap: the extension supplies the target chapter directly (no
-      // book metadata needed to compute it), so this moves the reading
-      // position to NIV — but syncing NIV's own book metadata afterward
-      // fails, leaving `translationBooks` stale (still AAB's).
+      // The extension hands over NIV MAT 1 directly. NIV's own catalog request
+      // fails, so `translationBooks` is left without it.
       await state.loadNextChapter();
       expect(state.translationId.value).toBe("NIV");
       expect(state.bookId.value).toBe("MAT");
+      expect(state.translationBooks.value?.translation.id).not.toBe("NIV");
 
       state.disableExtension("x");
       state.error.value = null;
 
-      // Second tap: no extension override this time, so the target must be
-      // computed from NIV's book metadata — not cached (the previous fetch
-      // failed), so this fetch is attempted fresh and fails again. This
-      // must surface as state.error, not escape as an unhandled rejection.
+      // No catalog and no extension: the target comes from the loaded
+      // chapter's own next link instead.
+      await state.loadNextChapter();
+
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.chapterData.value?.chapter.number).toBe(2);
+      expect(state.error.value).toBeNull();
+      expect(state.loading.value).toBe(false);
+    });
+
+    it("reports a failed link-based navigation instead of leaving an unhandled rejection", async () => {
+      // Same degraded path as above, but the linked chapter request fails. It
+      // must surface through `state.error` rather than escaping as an unhandled
+      // rejection, and must not leave `loading` stuck on.
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/NIV/books.json")] = createResponse(
+        { error: true },
+        500,
+        "Server Error"
+      );
+      responses[makeExampleUrl("/api/NIV/MAT/2.json")] = createResponse(
+        { error: true },
+        500,
+        "Server Error"
+      );
+      setWebResponses(responses);
+
+      const navigateChapter = {
+        ...makeChapter(nivBooks, "MAT", 1),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+        nextChapterApiLink: "/api/NIV/MAT/2.json",
+      };
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "navigate", chapter: navigateChapter }),
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+      await state.loadNextChapter();
+
+      state.disableExtension("x");
+      state.error.value = null;
+
       await expect(state.loadNextChapter()).resolves.toBeUndefined();
 
       expect(state.error.value).toBe(
-        "Failed request to https://example.test/api/NIV/books.json. Status: 500 Server Error"
+        "Failed request to https://example.test/api/NIV/MAT/2.json. Status: 500 Server Error"
       );
       expect(state.loading.value).toBe(false);
     });
@@ -2425,7 +3132,10 @@ describe("createBibleReadingState", () => {
       expect(listener).toHaveBeenCalledWith({ replace: false });
     });
 
-    it("fires once with { replace: false } when loading the next and previous chapter", async () => {
+    it("replaces rather than pushes for navigations that continue the same gesture", async () => {
+      // A skim is one gesture, so it should cost one Back press. Only the first
+      // press of a burst gets a history entry; the rest overwrite it, leaving
+      // the reader back where the skim started.
       setWebResponses(createReadingManagerResponseMap());
       const state = createBibleReadingState(createDataManager());
       await waitForInitialLoad(state);
@@ -2434,12 +3144,139 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await state.loadNextChapter();
-      expect(listener).toHaveBeenCalledTimes(1);
       expect(listener).toHaveBeenLastCalledWith({ replace: false });
 
       await state.loadPreviousChapter();
+      await state.loadNextChapter();
+      await state.loadNextChapter();
+
+      expect(listener).toHaveBeenCalledTimes(4);
+      expect(
+        listener.mock.calls.filter((call) => call[0].replace === false).length
+      ).toBe(1);
+    });
+
+    it("pushes again once the reader pauses between navigations", async () => {
+      // The flip side: reading a chapter and then deliberately moving on is two
+      // destinations, and Back has to return you to the first.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadNextChapter();
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+
+      // Real elapsed time rather than a stubbed clock: `performance.now()` is
+      // read by test infrastructure too, so mocking it globally would be a
+      // sharper tool than this needs.
+      await new Promise((resolve) =>
+        setTimeout(resolve, NAVIGATION_COALESCE_MS + 100)
+      );
+
+      await state.loadNextChapter();
       expect(listener).toHaveBeenCalledTimes(2);
       expect(listener).toHaveBeenLastCalledWith({ replace: false });
+    });
+
+    it("replaces rather than pushes when the position does not actually change", async () => {
+      // Re-picking the chapter you are already on is not a destination, so it
+      // must not cost a Back press. The URL is still rewritten, because it can
+      // be out of step with the position for reasons other than a move.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 1);
+
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: true });
+    });
+
+    it("still pushes when only the verse changes within the current chapter", async () => {
+      // Jumping to another verse in the chapter you are reading — a playlist
+      // step, a deep link — is somewhere new, and Back has to return you.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+        scrollToVerse: 4,
+      });
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("does not let a no-op apply drag the next real navigation into its history entry", async () => {
+      // A redundant apply is not a gesture, so it must not start the coalescing
+      // window — otherwise re-picking the current chapter and then pressing next
+      // would overwrite the entry instead of adding one.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 1);
+      await state.loadNextChapter();
+
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+    });
+
+    it("corrects an out-of-range chapter from the URL with a replace, not a push", async () => {
+      // `?chapter=99999` renders as intent first — the position signals move
+      // before any catalog is available to judge them — and is corrected once
+      // the catalog lands. That correction has to reach the URL, or Back sends
+      // the reader to the bad address and bounces them straight back.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager(), {
+        initialTranslationId: "AAB",
+        initialBookId: "GEN",
+        initialChapterNumber: 99999,
+      });
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await waitForInitialLoad(state);
+
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: true });
+    });
+
+    it("falls back to a real book when the URL names one the translation lacks", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager(), {
+        initialTranslationId: "AAB",
+        initialBookId: "ZZZ",
+        initialChapterNumber: 1,
+      });
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await waitForInitialLoad(state);
+      await waitFor(() => !state.isChapterContentStale.value);
+
+      expect(state.bookId.value).toBe("GEN");
+      expect(state.chapterNumber.value).toBe(1);
+      // The bogus book's request fails, but the corrected position's content
+      // clears it, so the reader is not left looking at an error.
+      expect(state.error.value).toBeNull();
+      expect(listener).toHaveBeenCalledWith({ replace: true });
     });
 
     it("does not fire when the navigation is driven from the URL (updateUrl: false)", async () => {
@@ -2659,6 +3496,65 @@ describe("createBibleReadingState", () => {
       await waitForInitialLoad(state);
 
       expect(state.shortSubTitle.value).toBe("AAB");
+    });
+
+    it("names the book from the catalog, not the chapter still on screen", async () => {
+      // Titles are resolved from the books catalog, which tracks `bookId`
+      // synchronously, rather than from `chapterData`, which still describes
+      // the chapter the reader left. Crossing a book boundary is where the two
+      // disagree: content-first would title this "Genesis 1" until the text of
+      // Exodus arrived.
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/AAB/EXO/1.json")] = createResponse(
+        makeChapter(aabBooks, "EXO", 1)
+      );
+      const controlled = createControlledFetch(responses, (url) =>
+        /\/api\/AAB\/EXO\/1\.json$/.test(url)
+      );
+      fetchMock.mockImplementation(controlled.fetch);
+
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      expect(state.title.value).toBe("Genesis 1");
+
+      void state.selectBook("EXO");
+
+      expect(state.title.value).toBe("Exodus 1");
+      expect(state.chapterData.value?.book.id).toBe("GEN");
+      expect(state.isChapterContentStale.value).toBe(true);
+
+      controlled.settle(makeExampleUrl("/api/AAB/EXO/1.json"));
+      await waitFor(() => !state.isChapterContentStale.value);
+      expect(state.title.value).toBe("Exodus 1");
+    });
+
+    it("names the translation from the catalog while a new one's text is in flight", async () => {
+      // Same rule for the subtitle: it follows `translationId` rather than the
+      // translation named by whichever chapter is still rendered.
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/NIV/books.json")] =
+        createResponse(nivBooks);
+      responses[makeExampleUrl("/api/NIV/MAT/1.json")] = createResponse({
+        ...makeChapter(nivBooks, "MAT", 1),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+      });
+      const controlled = createControlledFetch(responses, (url) =>
+        /\/api\/NIV\/MAT\/1\.json$/.test(url)
+      );
+      fetchMock.mockImplementation(controlled.fetch);
+
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+
+      void state.selectTranslation("NIV");
+      await waitFor(() => controlled.pending().length > 0);
+
+      expect(state.shortSubTitle.value).toBe("NIV");
+      expect(state.subTitle.value).toBe(nivTranslation.name);
+      // The chapter still on screen is the old translation's.
+      expect(state.chapterData.value?.translation.id).toBe("AAB");
     });
 
     it("lets an enabled extension override each title, restoring the defaults on disable", async () => {

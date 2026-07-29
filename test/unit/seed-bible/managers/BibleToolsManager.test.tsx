@@ -690,7 +690,9 @@ describe("createBibleToolsManager", () => {
       });
       (context.readingState as any).hasNext = signal(true);
       (context.readingState as any).hasPrevious = signal(true);
-      context.readingState.loading.value = true;
+      // Replaced rather than assigned to: `loading` is a `ReadonlySignal`
+      // derived from the in-flight request count, so it has no setter.
+      (context.readingState as any).loading = signal(true);
       return context;
     }
 
