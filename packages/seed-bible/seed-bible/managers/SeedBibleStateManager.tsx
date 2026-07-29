@@ -603,9 +603,15 @@ export function createSeedBibleState(
   // `?verse` is deliberately NOT part of the location: TabsManager mirrors the
   // verse *selection* into that param, so counting it here made selecting (or
   // clearing) a verse look like a navigation — which closed the very pane the
-  // user had just opened from the verse toolbar. Verse-level navigation that
-  // really should reveal the reader (a verse reference link, a search result)
-  // calls `closeFullscreenPanes` explicitly on its own path.
+  // user had just opened from the verse toolbar.
+  //
+  // The flip side is that this effect can't see a move *within* a chapter, so any
+  // path that jumps to a verse and must reveal the reader has to call
+  // `closeFullscreenPanes` itself rather than rely on this: verse reference links
+  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
+  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleSelectTab`) closes them too, which covers most of the remaining
+  // paths incidentally.
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
