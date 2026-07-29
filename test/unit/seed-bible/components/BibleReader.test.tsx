@@ -1458,6 +1458,80 @@ describe("BibleReader", () => {
     expect(selectFootnote).toHaveBeenCalledWith(null);
   });
 
+  it("makes scripture references in footnote text clickable", () => {
+    const {
+      slot,
+      selectorState,
+      readingState,
+      selectedFootnote,
+      selectFootnote,
+      chapterData,
+    } = createFixture();
+    const openVerseReference = vi.fn(async () => undefined);
+    const state = {
+      app: {
+        isMobile: signal(false),
+        openVerseReference,
+      },
+      tools: createBibleToolsManager(),
+      playlists: {
+        playing: signal(null),
+      },
+      features: {
+        isFeatureEnabled: vi.fn(() => true),
+      },
+      bookmarks: {
+        isLocationBookmarked: vi.fn(() => false),
+      },
+    } as any as SeedBibleState;
+
+    selectedFootnote.value = {
+      chapter: chapterData.value!,
+      verse: {
+        type: "verse",
+        number: 1,
+        content: ["Text"],
+      },
+      note: {
+        noteId: 7,
+        text: "See also John 3:16 and Hab.3.8-15.",
+        caller: "+",
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const links = Array.from(
+      container.querySelectorAll(".sb-verse-reference-link")
+    ) as HTMLAnchorElement[];
+    expect(links).toHaveLength(2);
+    expect(links[0]?.textContent).toBe("John 3:16");
+    expect(links[1]?.textContent).toBe("Hab.3.8-15");
+
+    act(() => {
+      links[0]?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+    });
+
+    expect(selectFootnote).toHaveBeenCalledWith(null);
+    expect(openVerseReference).toHaveBeenCalledWith({
+      book: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
+  });
+
   it("shows translation license notice and website when licenseNotice is present", () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
 
