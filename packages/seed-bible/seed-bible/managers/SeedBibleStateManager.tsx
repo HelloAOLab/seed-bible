@@ -976,6 +976,18 @@ export function createSeedBibleState(
       canonicalUrl.searchParams.set("chapter", String(chapter.chapter.number));
     }
 
+    // Preserve an explicit `?lang=` so the canonical is self-referential for
+    // the language-specific URLs the sitemap emits (otherwise search engines
+    // collapse every `?lang=` variant onto the lang-less URL and none of them
+    // index distinctly). Echo only the explicit URL param — deriving it from
+    // the active i18n language would make the canonical vary by
+    // Accept-Language, which must not happen. Set last to match the sitemap's
+    // `translation,book,chapter,lang` ordering.
+    const lang = currentUrl.searchParams.get("lang");
+    if (lang) {
+      canonicalUrl.searchParams.set("lang", lang);
+    }
+
     return `${canonicalUrl.pathname}${canonicalUrl.search}`;
   });
 
@@ -1343,6 +1355,31 @@ export function createSeedBibleState(
       toastTimer = null;
     }, 3500);
   };
+
+  // Tell the user when we signed them out for them. `login.sessionEnded` only fires
+  // when a forced sign-out actually happened, so this can't toast for a request that
+  // merely failed, nor for a sign-out the user asked for. Without a message they
+  // would just watch their highlights and bookmarks vanish with no explanation.
+  effect(() => {
+    const ended = login.sessionEnded.value;
+    if (!ended || typeof window === "undefined") {
+      return;
+    }
+
+    // Destructured rather than called as `i18n.t(...)`: the translation lint rules
+    // only recognise calls to a bare `t`, and `translation-unused-keys` is
+    // auto-fixable, so `i18n.t("...")` would get these keys deleted from en.json.
+    const { t } = i18n;
+    toast(
+      ended.reason === "account_suspended"
+        ? t("account-suspended-message", {
+            defaultValue: "Your account has been suspended.",
+          })
+        : t("signed-out-message", {
+            defaultValue: "You've been signed out. Please sign in again.",
+          })
+    );
+  });
 
   // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {

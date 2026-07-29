@@ -2,6 +2,7 @@ import { signal, effect, type Signal } from "@preact/signals";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
+  type ApiRequestOptions,
   type Translation,
   type TranslationBookChapter,
   type TranslationBooks,
@@ -43,13 +44,16 @@ export interface BibleDataManager {
   getTranslationBookChapter: (
     translationId: string,
     book: string,
-    chapter: number | string
+    chapter: number | string,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter>;
   getNextChapter: (
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
   getPreviousChapter: (
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
 
   /**
@@ -603,7 +607,8 @@ export function createBibleDataManager(
   });
 
   const getTranslationBooks = async (
-    translationId: string
+    translationId: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBooks> => {
     const existing = translationBooks.value.get(translationId);
     if (existing) {
@@ -624,7 +629,11 @@ export function createBibleDataManager(
     }
 
     const endpoint = getEndpointForTranslation(translationId);
-    const books = await api.getTranslationBooks(translationId, endpoint);
+    const books = await api.getTranslationBooks(
+      translationId,
+      endpoint,
+      options
+    );
     cacheBooks(endpoint, books);
     return books;
   };
@@ -632,7 +641,8 @@ export function createBibleDataManager(
   const getTranslationBookChapter = async (
     translationId: string,
     book: string,
-    chapter: number | string
+    chapter: number | string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter> => {
     const chapterNumber = Number(chapter);
     if (Number.isFinite(chapterNumber)) {
@@ -651,28 +661,35 @@ export function createBibleDataManager(
       translationId,
       book,
       chapter,
-      endpoint
+      endpoint,
+      options
     );
   };
 
-  const getNextChapter = async (chapter: TranslationBookChapter) => {
+  const getNextChapter = async (
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
+  ) => {
     const downloaded = await offline.getAdjacentChapter(chapter, "next");
     if (downloaded) {
       return downloaded;
     }
 
     const endpoint = getEndpointForTranslation(chapter.translation.id);
-    return await api.getNextChapter(chapter, endpoint);
+    return await api.getNextChapter(chapter, endpoint, options);
   };
 
-  const getPreviousChapter = async (chapter: TranslationBookChapter) => {
+  const getPreviousChapter = async (
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
+  ) => {
     const downloaded = await offline.getAdjacentChapter(chapter, "previous");
     if (downloaded) {
       return downloaded;
     }
 
     const endpoint = getEndpointForTranslation(chapter.translation.id);
-    return await api.getPreviousChapter(chapter, endpoint);
+    return await api.getPreviousChapter(chapter, endpoint, options);
   };
 
   const buildTranslationId = (translationId: string) => {

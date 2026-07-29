@@ -230,8 +230,6 @@
   "hide-bookmarks": "Hide bookmarks",
   "show-bookmarks": "Show bookmarks",
   "add-new-tab": "Add new tab",
-  "add-to-bookmark-category": "Add to bookmark category",
-  "move-to-bookmark-category": "Move to bookmark category",
   "move-bookmark": "Move to folder",
   "folder-name-taken": "A folder with that name already exists.",
   "add-to-new": "Add to new",
@@ -277,7 +275,6 @@
   "reading-plan-title_placeholder": "e.g. Bible in a Year",
   "reading-plan-description_placeholder": "What is this plan about?",
   "discover": "Discover",
-
   "playlists": "Playlists",
   "annotations": "Annotations",
   "cross-references": "Cross references",
@@ -310,16 +307,13 @@
   "playlist-add-item": "Add item",
   "playlist-edit-item": "Edit item",
   "playlist-save-item": "Save changes",
-
   "playlist-add-scripture-placeholder": "e.g. John 3 or John 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Add item",
   "playlist-add-scripture-error": "Couldn't find that reference",
   "playlist-add-link-error": "Enter a valid URL",
   "playlist-add-link-embed": "Embed this link",
   "play-playlist": "Play playlist",
-
   "stop": "Stop",
   "queue": "Queue",
   "previous": "Previous",
@@ -410,7 +404,6 @@
   "appoint-co-host-instructions": "Choose someone to keep the session running:",
   "end-session-for-everyone": "End session",
   "dont-show-again": "Don't show this again",
-
   "share-playlist": "Share playlist",
   "playlist-url-copied": "Playlist URL copied to clipboard",
   "current-playlist": "Current playlist",
@@ -420,7 +413,6 @@
   "languageUnavailable.yesContinue": "Yes, Continue",
   "languageUnavailable.noGoBack": "No, Go back",
   "ui-size": "UI size",
-  "saving": "Saving…",
   "unsaved-item-confirm-title": "Unsaved item",
   "unsaved-item-confirm-message": "You've started adding an item that hasn't been added to the playlist yet. What would you like to do?",
   "discard-and-save": "Discard and save",
@@ -434,5 +426,7 @@
   "start-share-session": "Start and share session",
   "start-share-session-subtitle": "Invite others to read along live",
   "share-current-session": "Share current session",
-  "share-current-session-subtitle": "Copy a link to invite others to read along live"
+  "share-current-session-subtitle": "Copy a link to invite others to read along live",
+  "signed-out-message": "You've been signed out. Please sign in again.",
+  "account-suspended-message": "Your account has been suspended."
 }

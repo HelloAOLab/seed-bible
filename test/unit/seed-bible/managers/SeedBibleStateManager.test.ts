@@ -206,6 +206,23 @@ describe("createSeedBibleState", () => {
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
+  it("echoes an explicit ?lang= in the canonical URL so language-specific sitemap URLs stay self-canonical", async () => {
+    const state = await createState();
+
+    // A crawler lands on a language-specific sitemap URL.
+    window.history.replaceState(null, "", "/?lang=es");
+
+    expect(state.app.canonicalUrl.value).toContain("lang=es");
+  });
+
+  it("omits lang from the canonical URL when the page URL has none", async () => {
+    const state = await createState();
+
+    window.history.replaceState(null, "", "/?foo=bar");
+
+    expect(state.app.canonicalUrl.value).not.toContain("lang=");
+  });
+
   it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {
     const state = await createStateWithTwoTabs();
 
@@ -315,6 +332,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -374,6 +392,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -730,7 +749,10 @@ describe("createSeedBibleState", () => {
     beforeEach(() => {
       vi.useFakeTimers();
       mockPosthogCapture = vi.fn();
-      (globalThis as any).posthog = { capture: mockPosthogCapture };
+      (globalThis as any).posthog = {
+        capture: mockPosthogCapture,
+        onFeatureFlags: vi.fn(),
+      };
     });
 
     afterEach(() => {
@@ -964,6 +986,48 @@ describe("createSeedBibleState", () => {
         initialChapterNumber: 1,
         scrollToVerse: 1,
       });
+    });
+  });
+
+  describe("automatic sign-out toast", () => {
+    it("shows nothing while the session is intact", async () => {
+      const state = await createState();
+
+      expect(state.app.currentToast.value).toBe(null);
+    });
+
+    it("explains a session that ended on its own", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You've been signed out. Please sign in again."
+      );
+    });
+
+    it("explains a suspended account", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "account_suspended", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "Your account has been suspended."
+      );
+    });
+
+    it("shows a fresh toast for a second sign-out with the same reason", async () => {
+      // The event carries a monotonic id precisely so this case still notifies: a
+      // bare reason string would be `===` the previous value, so the effect would
+      // never re-run and the message would be silently swallowed.
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+      const firstToastId = state.app.currentToast.value?.id;
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
+
+      expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
     });
   });
 

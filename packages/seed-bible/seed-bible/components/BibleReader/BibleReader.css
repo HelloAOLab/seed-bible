@@ -639,6 +639,17 @@
   overflow: auto;
 }
 
+.sb-footnote-modal-content .sb-verse-reference-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.sb-footnote-modal-content .sb-verse-reference-link:hover {
+  color: color-mix(in srgb, var(--sb-primary-color), var(--sb-font-color) 20%);
+}
+
 .sb-footnote-modal-reference {
   margin: 0 0 0.625rem 0;
   font-family: var(--sb-font-family);

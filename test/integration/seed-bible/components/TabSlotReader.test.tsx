@@ -227,7 +227,7 @@ function createMobileState(): SeedBibleState {
       playing: signal(null),
     },
     features: {
-      isFeatureEnabled: vi.fn(() => true),
+      isFeatureEnabled: vi.fn(() => signal(true)),
     },
   } as any as SeedBibleState;
 }
@@ -257,7 +257,7 @@ function createDesktopState(): SeedBibleState {
       playing: signal(null),
     },
     features: {
-      isFeatureEnabled: vi.fn(() => true),
+      isFeatureEnabled: vi.fn(() => signal(true)),
     },
   } as any as SeedBibleState;
 }
