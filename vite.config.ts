@@ -7,6 +7,12 @@ import { readFileSync } from "fs";
 import { analyzer } from "vite-bundle-analyzer";
 import { VitePWA } from "vite-plugin-pwa";
 import { patternPlugin } from "./script/lib/vite-plugin-patterns";
+import {
+  selectAndRelocateCoreAssets,
+  selectCoreAssetFiles,
+  type PrecacheManifestEntry,
+  type ViteManifestChunk,
+} from "./script/lib/precacheManifest";
 import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
@@ -42,46 +48,9 @@ function withTrailingSlash(url: string): string {
 
 const clientOutDir = "standalone/dist/client";
 
-/** The subset of Vite's client manifest shape this config reads. */
-interface ViteManifestChunk {
-  file: string;
-  isEntry?: boolean;
-  /** Statically imported chunks — needed before the app can run. */
-  imports?: string[];
-  css?: string[];
-  assets?: string[];
-}
-
 /**
- * One entry in the precache manifest Workbox builds by globbing the client
- * output. Declared here rather than imported: `workbox-build` is a transitive
- * dependency of vite-plugin-pwa and isn't resolvable from the project root, and
- * the plugin doesn't re-export its types.
- */
-interface PrecacheManifestEntry {
-  url: string;
-  revision?: string | null;
-  integrity?: string;
-  size?: number;
-}
-
-/** Files that count as core regardless of how the bundler reached them. */
-const IMAGE_OR_FONT_RE =
-  /\.(png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|eot)$/i;
-
-/**
- * The emitted files the app needs in order to *boot*: every entry chunk,
- * everything it statically imports (transitively), and the stylesheets and
- * static assets those chunks reference. Read out of the client build's own Vite
- * manifest, which is written before the service worker is compiled.
- *
- * Selecting these by filename glob instead (`index-*.js`, `vendor-*.js`) looks
- * equivalent but isn't: the bundler splits out chunks of its own accord — right
- * now the rolldown runtime, the i18n bootstrap and the bundled `en` locale —
- * and a shell missing even one static import doesn't start offline at all.
- *
- * Anything reached through a dynamic `import()` is deliberately absent: the
- * other 23 locales, every extension. Those are runtime-cached on first use.
+ * Reads this build's Vite client manifest, which is written before the service
+ * worker is compiled, and works out which emitted files the app needs to boot.
  */
 function readCoreAssetFiles(): Set<string> {
   const manifestPath = path.resolve(
@@ -93,61 +62,28 @@ function readCoreAssetFiles(): Set<string> {
     string,
     ViteManifestChunk
   >;
-
-  const core = new Set<string>();
-  const visited = new Set<string>();
-
-  function visit(key: string): void {
-    if (visited.has(key)) return;
-    visited.add(key);
-
-    const chunk = manifest[key];
-    if (!chunk) return;
-
-    core.add(chunk.file);
-    for (const file of chunk.css ?? []) core.add(file);
-    for (const file of chunk.assets ?? []) core.add(file);
-    for (const imported of chunk.imports ?? []) visit(imported);
-  }
-
-  for (const [key, chunk] of Object.entries(manifest)) {
-    if (chunk.isEntry) visit(key);
-  }
-
-  return core;
+  return selectCoreAssetFiles(manifest);
 }
 
 /**
- * Narrows the globbed build output down to the core assets, and points each one
- * at the absolute URL it is actually served from.
+ * The `manifestTransforms` hook Workbox calls with the globbed build output.
  *
- * The rewrite is not cosmetic. Workbox produces paths relative to the service
- * worker's own location — `assets/index-abc.js`, which resolves to
- * `<site root>/assets/index-abc.js`. Nothing is served from there: this build's
- * chunks live under `<assetRoot>branches/<branch>/<buildId>/assets/`. Left
- * unrewritten every precache request would 404 during install, and one failed
- * request aborts the whole install — the worker would never register.
- *
- * Entries outside `assets/` (the web manifest, which vite-plugin-pwa appends on
- * its own) really are at the site root and are passed through untouched.
+ * The selection and URL rewriting live in `script/lib/precacheManifest.ts` so
+ * they can be unit tested; this only supplies the two build-time inputs and
+ * reports anything the transform flagged.
  */
-function selectAndRelocateCoreAssets(entries: PrecacheManifestEntry[]): {
-  manifest: PrecacheManifestEntry[];
-  warnings: string[];
-} {
-  const core = readCoreAssetFiles();
-
-  const manifest: PrecacheManifestEntry[] = [];
-  for (const entry of entries) {
-    if (!entry.url.startsWith("assets/")) {
-      manifest.push(entry);
-      continue;
-    }
-    if (!core.has(entry.url) && !IMAGE_OR_FONT_RE.test(entry.url)) continue;
-    manifest.push({ ...entry, url: `${assetBaseUrl}${entry.url}` });
+function transformPrecacheManifest(entries: PrecacheManifestEntry[]) {
+  const result = selectAndRelocateCoreAssets(entries, {
+    coreFiles: readCoreAssetFiles(),
+    assetBaseUrl,
+  });
+  // Returned as `warnings` because that is the hook's contract, and logged here
+  // as well: whether the plugin surfaces them is not something to rely on, and a
+  // missing core asset breaks offline boot with no other symptom.
+  for (const warning of result.warnings) {
+    console.warn(`[sw precache] ${warning}`);
   }
-
-  return { manifest, warnings: [] };
+  return result;
 }
 
 // Baked into the client bundle so a build reports its own version/commit even
@@ -226,7 +162,7 @@ export default defineConfig(({ isSsrBuild }) => ({
                 "assets/*.{js,css}",
                 "assets/*.{png,jpg,jpeg,gif,svg,webp,avif,ico,woff,woff2,ttf,otf,eot}",
               ],
-              manifestTransforms: [selectAndRelocateCoreAssets],
+              manifestTransforms: [transformPrecacheManifest],
               // Workbox drops files over 2 MiB from the precache by default,
               // which would silently leave the vendor chunk — the single most
               // important thing to have offline — unprecached.

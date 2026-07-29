@@ -44,6 +44,7 @@ import {
   NetworkFirst,
   StaleWhileRevalidate,
 } from "workbox-strategies";
+import { isAppShellNavigation, isCacheableStaticAsset } from "./swRouting";
 
 // `declare let` (rather than `const`) so this shadows the `self: WorkerGlobalScope`
 // that lib.webworker declares, instead of colliding with it.
@@ -68,15 +69,6 @@ const FONT_FILE_CACHE = "seed-bible-font-files";
 
 /** Absolute form of `__ASSET_BASE_URL__`, so it can be compared against request URLs. */
 const ASSET_BASE_HREF = new URL(__ASSET_BASE_URL__, self.location.href).href;
-
-/**
- * Extensions that identify a request for a *file* rather than an app route.
- * Mirrors `ASSET_PATH_RE` in `server/index.ts` (which decides what the host
- * reverse-proxies to the asset host) minus `.map`, since there is no reason to
- * spend cache space on source maps.
- */
-const STATIC_FILE_RE =
-  /\.(js|mjs|cjs|css|wasm|json|webmanifest|woff2?|ttf|otf|eot|png|jpe?g|gif|svg|webp|avif|ico|txt|xml)$/i;
 
 /**
  * Origins the fonts come from. The stylesheet hosts are fetched as CSS; the
@@ -112,35 +104,27 @@ cleanupOutdatedCaches();
  * That is safe here because the served HTML is a shell: the client entry
  * (`app/init.tsx`) calls Preact's `render`, not `hydrate`, and reads the book
  * and chapter from `window.location` — so whatever markup the shell arrived
- * with is thrown away and re-rendered for the URL actually being visited. The
- * one thing the shell carries that *is* URL-specific is the server-injected
- * config (`basePath`), and that is identical for every path this route
+ * with is thrown away and re-rendered for the URL actually being visited.
+ *
+ * The shell does carry server-injected config (see `renderAndRespond` in
+ * `server/index.ts`), and some of it is request-specific: `acceptedLanguages`
+ * and `renderedAsMobile` come from request headers. Those only steer SSR, and
+ * the client re-derives both — language from the URL then `navigator.languages`
+ * (`I18nManager`), layout from `window.innerWidth` (`SeedBibleStateManager`) —
+ * so whatever a cached shell was rendered for is discarded. The one piece that
+ * would matter is `basePath`, and it is identical across every path this route
  * handles, because `/b/...` — the only prefix with a non-empty `basePath` — is
  * excluded below.
+ *
+ * The upshot for anyone extending the injected config: every cached navigation
+ * shares this one copy, so nothing request-specific may be added unless the
+ * client re-derives it too.
  */
 const APP_SHELL_CACHE_KEY = new URL("/index.html", self.location.origin).href;
 
 const useAppShellCacheKey: WorkboxPlugin = {
   cacheKeyWillBeUsed: async () => APP_SHELL_CACHE_KEY,
 };
-
-/**
- * True for navigations this worker should answer with the app shell: anything
- * on this origin that isn't a branch preview and isn't a file request.
- *
- * `/b/<branch>/<buildId>` deployments are deliberately excluded. They are a
- * different build of the app with their own assets, and this worker only knows
- * about the root build — answering them from the root shell would boot the
- * wrong version.
- */
-function isAppShellNavigation(url: URL, request: Request): boolean {
-  if (request.mode !== "navigate") return false;
-  if (url.origin !== self.location.origin) return false;
-  if (url.pathname.startsWith("/b/")) return false;
-  // Anything that looks like a file is somebody else's route (see below).
-  if (STATIC_FILE_RE.test(url.pathname)) return false;
-  return true;
-}
 
 /**
  * Fetches the shell once while installing, so the app survives being closed
@@ -160,7 +144,9 @@ function isAppShellNavigation(url: URL, request: Request): boolean {
 async function warmAppShellCache(): Promise<void> {
   try {
     const response = await fetch("/", { cache: "no-cache" });
-    if (!response.ok) return;
+    // Same acceptance rule as the route's `CacheableResponsePlugin` below, so
+    // this can't seed the cache with something the route would have rejected.
+    if (response.status !== 200) return;
     const cache = await caches.open(HTML_CACHE);
     await cache.put(APP_SHELL_CACHE_KEY, response);
   } catch {
@@ -173,7 +159,12 @@ self.addEventListener("install", (event) => {
 });
 
 registerRoute(
-  ({ url, request }) => isAppShellNavigation(url, request),
+  ({ url, request }) =>
+    isAppShellNavigation({
+      url,
+      requestMode: request.mode,
+      origin: self.location.origin,
+    }),
   new NetworkFirst({
     cacheName: HTML_CACHE,
     // Offline, `fetch` rejects immediately and we fall back to the cache right
@@ -192,31 +183,13 @@ registerRoute(
 
 // ─── Static assets ───────────────────────────────────────────────────────────
 
-/**
- * True for a file request this worker is allowed to cache.
- *
- * The rule that matters: only files belonging to *this* deployment. Every build
- * publishes its assets under its own `branches/<branch>/<buildId>/` prefix, so
- * requiring the URL to start with this build's own prefix is what keeps another
- * branch's assets out of the cache — a branch preview opened at
- * `/b/<branch>/<buildId>` loads its chunks from a different prefix and simply
- * doesn't match here, so those requests go straight to the network.
- *
- * The second clause covers the handful of files that live at the site root
- * rather than under a build prefix (`manifest.webmanifest`, `registerSW.js`),
- * and any same-origin asset in a local build with no asset host configured.
- */
-function isCacheableStaticAsset(url: URL): boolean {
-  if (!STATIC_FILE_RE.test(url.pathname)) return false;
-  if (url.href.startsWith(ASSET_BASE_HREF)) return true;
-  if (url.origin !== self.location.origin) return false;
-  return (
-    !url.pathname.startsWith("/b/") && !url.pathname.startsWith("/branches/")
-  );
-}
-
 registerRoute(
-  ({ url }) => isCacheableStaticAsset(url),
+  ({ url }) =>
+    isCacheableStaticAsset({
+      url,
+      origin: self.location.origin,
+      assetBaseHref: ASSET_BASE_HREF,
+    }),
   new CacheFirst({
     cacheName: ASSET_CACHE,
     plugins: [
