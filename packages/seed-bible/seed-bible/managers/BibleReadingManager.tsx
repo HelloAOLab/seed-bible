@@ -1915,12 +1915,6 @@ export function createBibleReadingState(
     position: ReadingPosition,
     generation: number
   ) => {
-    // Navigation itself no longer clears this. Without clearing it as the
-    // request opens, a failed load would keep its banner on screen for the
-    // whole of the *next* chapter's download — `BibleReader` renders the banner
-    // in place of any content, so there would be no dimmed text and no
-    // placeholder, just the old error and then a chapter appearing.
-    error.value = null;
     beginRequest();
 
     // Warm this translation's catalog without blocking the text on it. The
@@ -2001,6 +1995,17 @@ export function createBibleReadingState(
           bookId: nextBookId,
           chapterNumber: nextChapterNumber,
         };
+
+        // The reader is moving somewhere (or explicitly retrying), so whatever
+        // failed before is not what they are looking at any more. Navigation
+        // itself no longer clears this, and `BibleReader` renders the banner in
+        // place of *any* content — so a stale error hides both the loading
+        // placeholder and, on the branch below, a chapter already in hand.
+        // Cleared here rather than in `requestContent` precisely because that
+        // branch issues no request: offline on a chapter that failed, pressing
+        // back to the one still on screen otherwise looked like it failed too.
+        error.value = null;
+
         if (chapterMatchesPosition(chapterData.peek(), position)) {
           // Already showing this chapter — nothing to fetch, but anyone
           // awaiting this position is done.

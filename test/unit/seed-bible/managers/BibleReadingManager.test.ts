@@ -2157,6 +2157,54 @@ describe("createBibleReadingState", () => {
         await waitFor(() => state.chapterData.value?.chapter.number === 2);
       });
 
+      it("shows a chapter it already holds after a failed load, rather than the failure", async () => {
+        // Reported from the browser: offline on Genesis 3, pressing previous
+        // back to Genesis 2 looked like it failed too — even though Genesis 2 was
+        // still sitting in `chapterData`, behind the banner. Genesis 1 then
+        // loaded fine, because it needed a request (served from the response
+        // cache) and so passed through the place the error was cleared.
+        const responses = responsesThroughChapter(3);
+        let offline = false;
+        fetchMock.mockImplementation((url: string) => {
+          if (offline) {
+            return Promise.reject(new TypeError("Failed to fetch"));
+          }
+          const response = responses[url];
+          if (!response) {
+            throw new Error(`No mocked response for ${url}`);
+          }
+          return Promise.resolve(response);
+        });
+
+        const state = createBibleReadingState(createDataManager());
+        await waitForInitialLoad(state);
+        await state.loadNextChapter();
+        expect(state.chapterData.value?.chapter.number).toBe(2);
+
+        offline = true;
+
+        await state.loadNextChapter();
+        expect(state.chapterNumber.value).toBe(3);
+        expect(state.error.value).not.toBeNull();
+
+        // Back to the chapter we never stopped holding. No request is issued,
+        // so this is the path the error clear used to miss entirely.
+        await state.loadPreviousChapter();
+
+        expect(state.chapterNumber.value).toBe(2);
+        expect(state.chapterData.value?.chapter.number).toBe(2);
+        expect(state.isChapterContentStale.value).toBe(false);
+        expect(state.error.value).toBeNull();
+
+        // And one further back still works offline, from the response cache —
+        // the half of the report that already behaved.
+        await state.loadPreviousChapter();
+
+        expect(state.chapterNumber.value).toBe(1);
+        expect(state.chapterData.value?.chapter.number).toBe(1);
+        expect(state.error.value).toBeNull();
+      });
+
       it("clears the error as the recovery navigation starts, not when it lands", async () => {
         // `BibleReader` renders the error banner in place of any content, so an
         // error left standing means the whole of the next chapter's download
