@@ -1,4 +1,4 @@
-export const BibleSetupAnimationConfig = {
+export const BibleSetupAnimationConfigs = {
   duration: 1,
   zoom: 8,
   positionZ: 2,
@@ -8,4 +8,4 @@ export const BibleSetupAnimationConfig = {
   easingMode: "inout",
 } as const;
 
-export type BibleSetupAnimationConfig = typeof BibleSetupAnimationConfig;
+export type BibleSetupAnimationConfigsType = typeof BibleSetupAnimationConfigs;

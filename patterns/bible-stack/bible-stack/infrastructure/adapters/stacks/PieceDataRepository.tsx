@@ -12,13 +12,8 @@ import type { PieceDataRepositoryPort as StackManagementPieceDataRepositoryPort 
 import type { PieceDataRepositoryPort as StackUpdatePieceDataRepositoryPort } from "../../../application/ports/out/StackUpdate";
 import type { PieceDataRepositoryPort as ViewportPieceDataRepositoryPort } from "../../../application/ports/out/ViewportService";
 
-export class PieceDataRepository
-  implements
-    PieceDataRepositoryPort,
-    StackManagementPieceDataRepositoryPort,
-    StackUpdatePieceDataRepositoryPort,
-    ViewportPieceDataRepositoryPort
-{
+// prettier-ignore
+export class PieceDataRepository implements PieceDataRepositoryPort, StackManagementPieceDataRepositoryPort, StackUpdatePieceDataRepositoryPort, ViewportPieceDataRepositoryPort {
   #testamentsData: Set<StackTestamentData> = new Set();
   #sectionsData: Set<StackSectionData> = new Set();
   #sectionBooksData: Set<StackSectionBookData> = new Set();

@@ -19,12 +19,8 @@ interface ServiceParams {
   pieceHierarchyServicePort: PieceHierarchyServicePort;
 }
 
-export class ScripturePieceSelectionReleaseService
-  implements
-    TestamentSelectionReleaseServicePort,
-    SectionSelectionReleaseServicePort,
-    ChapterSelectionReleaseServicePort
-{
+// prettier-ignore
+export class ScripturePieceSelectionReleaseService implements TestamentSelectionReleaseServicePort, SectionSelectionReleaseServicePort, ChapterSelectionReleaseServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

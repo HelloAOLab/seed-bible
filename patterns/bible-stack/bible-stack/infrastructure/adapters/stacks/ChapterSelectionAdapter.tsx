@@ -20,7 +20,7 @@ import type { VersesBundleMapper } from "../../mappers/VersesBundleMapper";
 import type { VersesBundleTags, ChapterBot } from "../../models/stack";
 import type { VersesBundleAdapter } from "./VersesBundleAdapter";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
-import type { PiecesConfigProvider } from "../../config/pieces.tsx/PiecesConfigProvider";
+import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
 import type { VersesBundleVisualState } from "../../models/visualState";
 
 interface AdapterParams {

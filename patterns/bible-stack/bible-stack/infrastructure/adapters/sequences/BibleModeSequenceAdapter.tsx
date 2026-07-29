@@ -2,7 +2,7 @@ import type { BibleModeSequenceAdapterPort } from "../../../application/ports/ou
 import { HexToRgb } from "../../../domain/functions/colors";
 import type { RGB } from "../../../domain/models/commonTypes";
 import type { StackCrossLine } from "../../../domain/models/pieces";
-import type { PiecesConfigProvider } from "../../config/pieces.tsx/PiecesConfigProvider";
+import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
 import type { SequenceConfigProvider } from "../../config/sequences/SequenceConfigProvider";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
 import type { ColorLerper } from "../environment/ColorLerper";

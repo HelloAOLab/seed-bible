@@ -24,39 +24,22 @@ export const bootstrapExtension = () => {
     id: "bible-stack",
     dependencies,
     init: function* (context: SeedBibleState, dependenciesMap) {
-      const {
-        arrangementService,
-        arrangementConfigProvider,
-        customArrangementStore,
-        dataRepository,
-        bookNames,
-      } = dependenciesMap[
+      const { bookNames } = dependenciesMap[
         seedBibleUtilsId
       ] as DependenciesMap[typeof seedBibleUtilsId];
 
       context.tools.registerBelowReaderTool({
         onSelect: () => {
-          // The arrangement is frozen at open time (snapshot). Resolve the raw
-          // config of the currently-selected arrangement (static or custom) by
-          // the service's current index, and pass it — plus the static book
-          // info — into the pattern via configBot tags.
-          const rawArrangements = [
-            ...arrangementConfigProvider.getRawStaticArrangements(),
-            ...customArrangementStore.getRawArrangements(),
-          ];
-          const currentArrangement =
-            rawArrangements[arrangementService.getCurrentArrangementIndex()];
-
+          // The arrangement and per-book static info are bundled inside the
+          // pattern itself (they're large and overflowed the iframe URL). Only
+          // the book names — which are language-dependent — travel through the
+          // pattern's configBot tags.
           context.panes.openPane({
             type: "detached",
             gridPortal: "grid",
             pattern: bibleStackPattern,
             inst: uuid(),
             query: {
-              arrangement: JSON.stringify(currentArrangement),
-              booksStaticInfo: JSON.stringify(
-                dataRepository.getBooksStaticInfo()
-              ),
               bookNames: JSON.stringify(Object.fromEntries(bookNames.value)),
               language: context.i18n.language.value,
             },

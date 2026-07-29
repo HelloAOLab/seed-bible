@@ -18,17 +18,8 @@ export interface PieceAdapterParams {
   };
 }
 
-export class PieceAdapter
-  implements
-    BooksPieceAdapterPort,
-    DragPieceAdapterPort,
-    DraggingPieceAdapterPort,
-    SelectionReleasePieceAdapterPort,
-    StructurePieceAdapterPort,
-    DropPieceAdapterPort,
-    NavigationPieceAdapterPort,
-    InteractabilityPieceAdapterPort
-{
+// prettier-ignore
+export class PieceAdapter implements BooksPieceAdapterPort, DragPieceAdapterPort, DraggingPieceAdapterPort, SelectionReleasePieceAdapterPort, StructurePieceAdapterPort, DropPieceAdapterPort, NavigationPieceAdapterPort, InteractabilityPieceAdapterPort {
   #pieceMapperPort: PieceAdapterParams["pieceMapperPort"];
   #dimensionProviderPort: PieceAdapterParams["dimensionProviderPort"];
 

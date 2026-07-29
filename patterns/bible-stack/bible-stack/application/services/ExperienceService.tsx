@@ -40,7 +40,6 @@ export class ExperienceService implements ExperienceServicePort {
   #pieceHighlightServicePort: ExperienceServiceParams["pieceHighlightServicePort"];
   #interactionRegistryServicePort: ExperienceServiceParams["interactionRegistryServicePort"];
 
-  #experienceId: string | undefined = undefined;
   #experienceAdapterPort: ExperienceServiceParams["experienceAdapterPort"];
   #scripturePiecesStateServicePort: ExperienceServiceParams["scripturePiecesStateServicePort"];
   #experienceConfigProviderPort: ExperienceServiceParams["experienceConfigProviderPort"];
@@ -92,40 +91,22 @@ export class ExperienceService implements ExperienceServicePort {
   }
 
   async displayExperience() {
-    if (!this.#experienceId) {
-      const id = this.#experienceAdapterPort.displayExperience();
-      this.#experienceId = id;
+    this.#experienceAdapterPort.displayExperience();
 
-      await this.#awaiterPort.sleep(
-        this.#experienceConfigProviderPort.getInitialBibleCreationDelay()
-      );
+    await this.#awaiterPort.sleep(
+      this.#experienceConfigProviderPort.getInitialBibleCreationDelay()
+    );
 
-      if (this.#experienceId && this.#experienceId === id) {
-        this.#sequenceStateServicePort.executeAsSequence(async () => {
-          const position =
-            this.#experienceConfigProviderPort.getBibleCreationPosition();
-          const { bibleData } = this.#bibleLifecycleServicePort.createBible({
-            position,
-            type: BibleTypes.Default,
-          });
-          this.#cameraAdapterPort.focusOn(position, "bibleSetup");
-          await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
-          await this.#stackPresenceNavigationServicePort.update();
-        });
-      }
-    }
-  }
-
-  closeExperience() {
-    if (this.#experienceId) {
-      this.#experienceAdapterPort.closeExperience(this.#experienceId);
-    }
-  }
-
-  handleSomeExperienceClosed(id: string) {
-    if (this.#experienceId && this.#experienceId === id) {
-      this.#experienceId = undefined;
-      this.clearExperience();
-    }
+    this.#sequenceStateServicePort.executeAsSequence(async () => {
+      const position =
+        this.#experienceConfigProviderPort.getBibleCreationPosition();
+      const { bibleData } = this.#bibleLifecycleServicePort.createBible({
+        position,
+        type: BibleTypes.Default,
+      });
+      this.#cameraAdapterPort.focusOn(position, "bibleSetup");
+      await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
+      await this.#stackPresenceNavigationServicePort.update();
+    });
   }
 }

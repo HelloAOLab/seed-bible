@@ -50,12 +50,8 @@ const pieceConditionStrategy: Partial<
   [BiblePieces.StackBook]: bookConditionGetter,
 };
 
-export class ScripturePieceDragService
-  implements
-    BookDragServicePort,
-    TestamentDragServicePort,
-    ChapterDragServicePort
-{
+// prettier-ignore
+export class ScripturePieceDragService implements BookDragServicePort, TestamentDragServicePort, ChapterDragServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #scripturePieceDataRepositoryPort: ServiceParams["scripturePieceDataRepositoryPort"];

@@ -101,10 +101,8 @@ import { BookInfoMapper } from "../mappers/BookInfoMapper";
 import { SectionInfoMapper } from "../mappers/SectionInfoMapper";
 import { BooksStaticInfoRepository } from "../adapters/arrangement/BooksStaticInfoRepository";
 import { BookNamesProvider } from "../adapters/arrangement/BookNamesProvider";
-import type {
-  ArrangementInfoConfig,
-  BookStaticInfoConfig,
-} from "../models/arrangement";
+import { ScriptureConfigProvider } from "../config/scripture/ScriptureConfigProvider";
+import { ArrangementConfigProvider } from "../config/arrangement/ArrangementConfigProvider";
 import {
   SetStrictTag,
   AnimateStrictTag,
@@ -162,7 +160,7 @@ import { PieceLabelService } from "../../application/services/PieceLabelService"
 import { LabelAdapter } from "../adapters/labels/LabelAdapter";
 import { LabelsConfigProvider } from "../config/labels/LabelsConfigProvider";
 import { LabelDateService } from "../../application/services/LabelDateService";
-import { PiecesConfigProvider } from "../config/pieces.tsx/PiecesConfigProvider";
+import { PiecesConfigProvider } from "../config/pieces/PiecesConfigProvider";
 import { TranslationsConfigProvider } from "../config/translation/TranslationsConfigProvider";
 import { ScriptureService } from "../../application/services/ScriptureService";
 import type { ArrangementInfo } from "../../domain/models/arrangement";
@@ -197,6 +195,9 @@ import { BibleModeSequenceAdapter } from "../adapters/sequences/BibleModeSequenc
 let initialized = false;
 
 export const bootstrapExtension = () => {
+  console.log(`[Debug] bible-stack pattern bootstrap bootstrapExtension`, {
+    initialized,
+  });
   if (initialized) return;
 
   initialized = true;
@@ -264,9 +265,9 @@ export const bootstrapExtension = () => {
 
   const listenTagEventBus = new ListenTagEventManager();
 
-  const makeListeners = <K extends BiblePiece>(
+  function makeListeners<K extends BiblePiece>(
     tags: (keyof BotListenerParametersMap<BotTypeMap[K]>)[]
-  ): PieceListeners<BotTypeMap[K]> => {
+  ): PieceListeners<BotTypeMap[K]> {
     const listeners = {} as PieceListeners<BotTypeMap[K]>;
 
     for (const tag of tags) {
@@ -275,21 +276,23 @@ export const bootstrapExtension = () => {
     }
 
     return listeners;
-  };
+  }
 
-  const makePoolData = <K extends keyof BotTypeMap>(
+  function makePoolData<K extends keyof BotTypeMap>(
     key: K,
     prefab: BotTypeMap[K],
     size: number
-  ): PoolData<K, BotTypeMap[K]> => ({
-    key,
-    prefab,
-    customTags: piecesConfigProvider.getInitialConfig(key),
-    listeners: makeListeners(
-      objectPoolerConfigProvider.getListenTags(key) ?? []
-    ),
-    size,
-  });
+  ): PoolData<K, BotTypeMap[K]> {
+    return {
+      key,
+      prefab,
+      customTags: piecesConfigProvider.getInitialConfig(key),
+      listeners: makeListeners(
+        objectPoolerConfigProvider.getListenTags(key) ?? []
+      ),
+      size,
+    };
+  }
 
   const objectPooler = new ObjectPooler<BibleStackObjectPoolerMap>(
     [
@@ -317,24 +320,16 @@ export const bootstrapExtension = () => {
   const visualStateRegistry = new VisualStateRegistry();
   const interactionRegistry = new InteractionRegistry();
 
-  // Arrangement config comes from the core app via configBot tags (snapshot at
-  // open): a single selected arrangement plus the book static info / names.
-  const arrangementConfig = configBot.tags.arrangement
-    ? (JSON.parse(
-        configBot.tags.arrangement as string
-      ) as ArrangementInfoConfig)
-    : undefined;
-  if (!arrangementConfig) {
-    throw new Error(
-      "bootstrap: arrangementConfig not found at bootstrapExtension"
-    );
-  }
+  // The scripture arrangement and per-book static info are bundled inside the
+  // pattern (via config providers) instead of being sent through configBot
+  // tags: together they overflowed the iframe URL's size limit. Only the book
+  // names stay dynamic (still passed via configBot tags).
+  const arrangementConfigProvider = new ArrangementConfigProvider();
+  const arrangementConfig = arrangementConfigProvider.getDefaultArrangement();
   const getArrangement = () => arrangementConfig;
-  const booksStaticInfo = JSON.parse(
-    (configBot.tags.booksStaticInfo as string | undefined) ?? "{}"
-  ) as Record<string, BookStaticInfoConfig>;
+  const scriptureConfigProvider = new ScriptureConfigProvider();
   const booksStaticInfoRepository = new BooksStaticInfoRepository(
-    booksStaticInfo
+    scriptureConfigProvider.getBooksStaticInfo()
   );
   const bookInfoMapper = new BookInfoMapper({
     getArrangement,

@@ -33,7 +33,3 @@ export interface SequenceStateServicePort {
 export interface AwaiterPort {
   sleep(ms: number): Promise<void>;
 }
-
-export interface AwaiterPort {
-  sleep(ms: number): Promise<void>;
-}

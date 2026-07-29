@@ -31,13 +31,8 @@ interface ServiceParams {
   pieceDropEventPort: PieceDropEventPort;
 }
 
-export class ScripturePieceDropService
-  implements
-    BookDropServicePort,
-    TestamentDropServicePort,
-    SectionDropServicePort,
-    ChapterDropServicePort
-{
+// prettier-ignore
+export class ScripturePieceDropService implements BookDropServicePort, TestamentDropServicePort, SectionDropServicePort, ChapterDropServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

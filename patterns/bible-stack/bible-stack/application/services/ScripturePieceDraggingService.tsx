@@ -23,12 +23,8 @@ interface ServiceParams {
   pieceHierarchyServicePort: PieceHierarchyServicePort;
 }
 
-export class ScripturePieceDraggingService
-  implements
-    TestamentDraggingServicePort,
-    SectionDraggingServicePort,
-    ChapterDraggingServicePort
-{
+// prettier-ignore
+export class ScripturePieceDraggingService implements TestamentDraggingServicePort, SectionDraggingServicePort, ChapterDraggingServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

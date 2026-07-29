@@ -50,12 +50,8 @@ export interface StackPieceLifecycleAdapterParams {
   stackShadowMapperPort: StackShadowMapper;
 }
 
-export class StackPieceLifecycleAdapter
-  implements
-    PieceLifecycleAdapterPort,
-    BibleLifecycleAdapterPort,
-    BibleLifecyclePieceLifecycleAdapterPort
-{
+// prettier-ignore
+export class StackPieceLifecycleAdapter implements PieceLifecycleAdapterPort, BibleLifecycleAdapterPort, BibleLifecyclePieceLifecycleAdapterPort {
   #objectPoolerPort: StackPieceLifecycleAdapterParams["objectPoolerPort"];
   #testamentMapperPort: StackPieceLifecycleAdapterParams["testamentMapperPort"];
   #sectionMapperPort: StackPieceLifecycleAdapterParams["sectionMapperPort"];

@@ -1,9 +1,9 @@
-import { BibleSetupAnimationConfig } from "./bibleSetupAnimation";
-import { TestamentSelectionAnimationConfig } from "./testamentSelectionAnimation";
+import { BibleSetupAnimationConfigs } from "./bibleSetupAnimation";
+import { TestamentSelectionAnimationConfigs } from "./testamentSelectionAnimation";
 
 export const FocusOnAnimations = {
-  bibleSetup: BibleSetupAnimationConfig,
-  testamentSelection: TestamentSelectionAnimationConfig,
+  bibleSetup: BibleSetupAnimationConfigs,
+  testamentSelection: TestamentSelectionAnimationConfigs,
 } as const;
 
 export type FocusOnAnimationKey = keyof typeof FocusOnAnimations;

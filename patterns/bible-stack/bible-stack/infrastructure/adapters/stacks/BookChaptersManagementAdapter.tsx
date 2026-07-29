@@ -3,7 +3,7 @@ import type { BookInfo, ChapterInfo } from "../../../domain/models/arrangement";
 import type { Piece } from "../../../domain/models/canvas";
 import type { StackTransformer } from "../../../domain/models/pieces";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
-import type { PiecesConfigProvider } from "../../config/pieces.tsx/PiecesConfigProvider";
+import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
 import {
   ApplyStrictMod,
   GetBotScales,

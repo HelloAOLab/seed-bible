@@ -240,12 +240,8 @@ interface AdapterParams {
   dimensionProviderPort: DimensionProviderPort;
 }
 
-export class ActivityIndicatorsAdapter
-  implements
-    PieceActivityIndicatorsAdapterPort,
-    IndicatorsRepositoryPort,
-    LabelActivityIndicatorsAdapterPort
-{
+// prettier-ignore
+export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapterPort, IndicatorsRepositoryPort, LabelActivityIndicatorsAdapterPort {
   #objectPooler: AdapterParams["objectPooler"];
   #configProviderPort: AdapterParams["configProviderPort"];
   #botsRepositoryPort: AdapterParams["botsRepositoryPort"];

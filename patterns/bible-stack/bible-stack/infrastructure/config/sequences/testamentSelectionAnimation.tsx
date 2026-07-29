@@ -1,4 +1,4 @@
-export const TestamentSelectionAnimationConfig = {
+export const TestamentSelectionAnimationConfigs = {
   duration: 1,
   zoom: 8,
   rotationX: 1.01229,
@@ -7,5 +7,5 @@ export const TestamentSelectionAnimationConfig = {
   easingMode: "inout",
 } as const;
 
-export type TestamentSelectionAnimationConfig =
-  typeof TestamentSelectionAnimationConfig;
+export type TestamentSelectionAnimationConfigsType =
+  typeof TestamentSelectionAnimationConfigs;

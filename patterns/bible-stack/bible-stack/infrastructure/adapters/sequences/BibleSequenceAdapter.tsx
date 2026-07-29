@@ -35,7 +35,7 @@ import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { PieceAdapter } from "../stacks/PieceAdapter";
 import type { SectionInfoMapper } from "../../mappers/SectionInfoMapper";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
-import type { PiecesConfigProvider } from "../../config/pieces.tsx/PiecesConfigProvider";
+import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
 import type { BookInfoMapper } from "../../mappers/BookInfoMapper";
 
 interface BibleSequenceAdapterParams {

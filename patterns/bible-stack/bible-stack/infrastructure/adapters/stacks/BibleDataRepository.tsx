@@ -6,14 +6,8 @@ import type { BibleDataRepositoryPort as ViewportBibleDataRepositoryPort } from 
 import type { BibleDataRepositoryPort as SpatialNavigationBibleDataRepositoryPort } from "../../../application/ports/out/SpatialNavigation";
 import type { BibleDataRepositoryPort as PieceInteractabilityBibleDataRepositoryPort } from "../../../application/ports/out/PieceInteractability";
 
-export class BibleDataRepository
-  implements
-    StacksDataRepositoryPort,
-    BibleLifecycleDataRepositoryPort,
-    ViewportBibleDataRepositoryPort,
-    SpatialNavigationBibleDataRepositoryPort,
-    PieceInteractabilityBibleDataRepositoryPort
-{
+// prettier-ignore
+export class BibleDataRepository implements StacksDataRepositoryPort, BibleLifecycleDataRepositoryPort, ViewportBibleDataRepositoryPort, SpatialNavigationBibleDataRepositoryPort, PieceInteractabilityBibleDataRepositoryPort {
   #biblesData: Set<StackBibleData> = new Set();
 
   addBibleData(data: StackBibleData) {

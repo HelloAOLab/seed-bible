@@ -19,24 +19,30 @@ interface StrategyFactoryDeps {
  * Two stages: the shared deps (map + service) are captured once; the returned
  * builder takes the piece's mapper and infers the bot type `B` from it.
  */
-export const createBotStateChangeStrategyFactory =
-  ({ pieceStateMap, pieceStateService }: StrategyFactoryDeps) =>
-  <B extends PieceBot>(mapper: { toDomain: (bot: B) => Piece }) =>
-  (bot: B, changedTags: Array<keyof B["tags"]>) => {
-    if (!bot.tags.isInUse) return;
+export function createBotStateChangeStrategyFactory({
+  pieceStateMap,
+  pieceStateService,
+}: StrategyFactoryDeps) {
+  return function <B extends PieceBot>(mapper: {
+    toDomain: (bot: B) => Piece;
+  }) {
+    return (bot: B, changedTags: Array<keyof B["tags"]>) => {
+      if (!bot.tags.isInUse) return;
 
-    const changedProperties: Array<keyof PieceState> = [];
-    for (const tag of changedTags) {
-      const property = pieceStateMap[tag as string];
-      if (property) {
-        changedProperties.push(property);
+      const changedProperties: Array<keyof PieceState> = [];
+      for (const tag of changedTags) {
+        const property = pieceStateMap[tag as string];
+        if (property) {
+          changedProperties.push(property);
+        }
       }
-    }
 
-    if (changedProperties.length > 0) {
-      pieceStateService.handlePieceStateChanged({
-        piece: mapper.toDomain(bot),
-        changedProperties,
-      });
-    }
+      if (changedProperties.length > 0) {
+        pieceStateService.handlePieceStateChanged({
+          piece: mapper.toDomain(bot),
+          changedProperties,
+        });
+      }
+    };
   };
+}

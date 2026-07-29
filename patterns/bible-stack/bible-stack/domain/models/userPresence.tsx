@@ -1,5 +1,5 @@
 import type { HexString } from "./commonTypes";
-import * as z from "zod/v4";
+import { z } from "zod";
 
 export const StackPresenceNavigationPacings = {
   Regular: "Regular",

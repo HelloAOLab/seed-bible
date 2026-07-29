@@ -42,10 +42,10 @@ export class ListenTagEventManager extends BaseEventManager<ListenTagEventMap> {
  * that emits the native event onto the bus. Written once here instead of inline
  * per piece at the composition root.
  */
-export const makeListeners = <B extends PieceBot>(
+export function makeListeners<B extends PieceBot>(
   tags: (keyof BotListenerParametersMap<B>)[],
   bus: ListenTagEventManager
-): PieceListeners<B> => {
+): PieceListeners<B> {
   const listeners = {} as PieceListeners<B>;
 
   for (const tag of tags) {
@@ -53,4 +53,4 @@ export const makeListeners = <B extends PieceBot>(
   }
 
   return listeners;
-};
+}
