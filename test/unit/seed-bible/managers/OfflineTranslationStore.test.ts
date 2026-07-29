@@ -94,6 +94,41 @@ describe("createInMemoryTranslationStore()", () => {
     expect(await store.getChapter("AAB", "GEN", 2)).toBeNull();
   });
 
+  it("rejects and stores nothing when the save is cancelled", async () => {
+    const store = createInMemoryTranslationStore();
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      store.save(makeRecord("AAB"), [makeChapterEntry("GEN", 1)], {
+        signal: controller.signal,
+      })
+    ).rejects.toMatchObject({ name: "AbortError" });
+
+    expect(await store.get("AAB")).toBeNull();
+    expect(await store.getChapter("AAB", "GEN", 1)).toBeNull();
+  });
+
+  it("leaves nothing behind when a save that replaces a copy is cancelled", async () => {
+    const store = createInMemoryTranslationStore();
+    await store.save(makeRecord("AAB"), [makeChapterEntry("GEN", 1)]);
+
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      store.save(
+        makeRecord("AAB", { sha256: "newer" }),
+        [makeChapterEntry("GEN", 1)],
+        { signal: controller.signal }
+      )
+    ).rejects.toMatchObject({ name: "AbortError" });
+
+    // A save always clears the old copy before writing the new one, so
+    // cancelling an update costs the user the copy they had. That's the price of
+    // never leaving a half-updated translation readable.
+    expect(await store.get("AAB")).toBeNull();
+  });
+
   it("deletes only the requested translation's chapters", async () => {
     const store = createInMemoryTranslationStore();
     await store.save(makeRecord("AAB"), [makeChapterEntry("GEN", 1)]);

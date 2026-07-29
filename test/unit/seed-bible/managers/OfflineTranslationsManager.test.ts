@@ -140,6 +140,67 @@ describe("downloading a translation", () => {
     expect(manager.offline.downloads.value.size).toBe(0);
   });
 
+  it("stores nothing when cancelled while it is saving to the device", async () => {
+    const store = createInMemoryTranslationStore();
+    let onSaveStart = () => {};
+    const cancellableStore: OfflineTranslationStore = {
+      ...store,
+      async save(record, entries, options) {
+        // Stands in for the user tapping cancel during the saving phase, which
+        // is short enough on a real device to be awkward to hit deliberately.
+        onSaveStart();
+        return await store.save(record, entries, options);
+      },
+    };
+    const { manager } = await createHarness(defaultResponses(), {
+      store: cancellableStore,
+    });
+    onSaveStart = () => manager.offline.cancelDownload("AAB");
+    await manager.getTranslations();
+
+    const succeeded = await manager.offline.downloadTranslation("AAB");
+
+    expect(succeeded).toBe(false);
+    expect(manager.offline.isDownloaded("AAB")).toBe(false);
+    expect(await store.get("AAB")).toBeNull();
+    expect(await store.getChapter("AAB", "GEN", 1)).toBeNull();
+    // Cancelling is a choice, not a failure, so it leaves no error to report.
+    expect(manager.offline.errors.value.get("AAB")).toBeUndefined();
+    expect(manager.offline.downloads.value.size).toBe(0);
+  });
+
+  it("stops claiming a translation is downloaded when replacing it fails", async () => {
+    const store = createInMemoryTranslationStore();
+    let failNextSave = false;
+    const flakyStore: OfflineTranslationStore = {
+      ...store,
+      async save(record, entries, options) {
+        if (failNextSave) {
+          // Saving replaces the previous copy, so it clears it first — which is
+          // why a failure here leaves the device with nothing.
+          await store.delete(record.translationId);
+          throw new Error("The device ran out of space.");
+        }
+        return await store.save(record, entries, options);
+      },
+    };
+    const { manager } = await createHarness(defaultResponses({}, "hash-one"), {
+      store: flakyStore,
+    });
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+    expect(manager.offline.isDownloaded("AAB")).toBe(true);
+
+    failNextSave = true;
+    setWebResponses(defaultResponses({}, "hash-two"));
+    const succeeded = await manager.offline.downloadTranslation("AAB");
+
+    expect(succeeded).toBe(false);
+    // The UI must not offer to read a translation the device no longer holds.
+    expect(manager.offline.isDownloaded("AAB")).toBe(false);
+    expect(manager.offline.errors.value.get("AAB")).toContain("out of space");
+  });
+
   it("makes a downloaded translation visible in the translation list without the API", async () => {
     const store = createInMemoryTranslationStore();
     const first = await createHarness(defaultResponses(), { store });
@@ -222,6 +283,23 @@ describe("reading a downloaded translation", () => {
     expect(await manager.getPreviousChapter(genesis1)).toBeNull();
     const matthew2 = await manager.getTranslationBookChapter("AAB", "MAT", 2);
     expect(await manager.getNextChapter(matthew2)).toBeNull();
+  });
+
+  it("answers the ends of the Bible without touching the network", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    const genesis1 = await manager.getTranslationBookChapter("AAB", "GEN", 1);
+    const matthew2 = await manager.getTranslationBookChapter("AAB", "MAT", 2);
+    const callsBefore = webGetMock.mock.calls.length;
+
+    // A chapter read from the download carries no previous/next link at the
+    // edges of the Bible, so "there is no such chapter" is answered locally —
+    // it doesn't degrade into a request that would fail with no connection.
+    expect(await manager.getPreviousChapter(genesis1)).toBeNull();
+    expect(await manager.getNextChapter(matthew2)).toBeNull();
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
   });
 
   it("exposes neighbour audio links alongside the navigation links", async () => {
@@ -321,6 +399,73 @@ describe("checking downloads for updates", () => {
     );
   });
 
+  it("keeps the flag raised after the downloaded translation is read", async () => {
+    const { manager } = await createHarness(defaultResponses({}, "hash-one"));
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    setWebResponses(defaultResponses({}, "hash-two"));
+    await manager.offline.checkForUpdates();
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+
+    // Opening the translation loads its books from the device, and the metadata
+    // saved alongside them still carries the download-time hash. Folding that
+    // back into the translation list must not overwrite the newer hash the check
+    // just found, or the update button would vanish.
+    await manager.getTranslationBooks("AAB");
+
+    expect(
+      manager.availableTranslations.value.find((t) => t.id === "AAB")?.sha256
+    ).toBe("hash-two");
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+  });
+
+  it("keeps the flag raised when the stored copy loads after the API list", async () => {
+    const store = createInMemoryTranslationStore();
+    const first = await createHarness(defaultResponses({}, "hash-one"), {
+      store,
+    });
+    await first.manager.getTranslations();
+    await first.manager.offline.downloadTranslation("AAB");
+    first.manager.offline.dispose();
+
+    // A new page load, by which time the API publishes a newer version. The
+    // stored copy is deliberately made to load last, since on a real device the
+    // storage read and the API request race each other.
+    localStorage.clear();
+    setWebResponses(defaultResponses({}, "hash-two"));
+    let releaseStoredRead = () => {};
+    const slowStore: OfflineTranslationStore = {
+      ...store,
+      async list() {
+        await new Promise<void>((resolve) => {
+          releaseStoredRead = resolve;
+        });
+        return store.list();
+      },
+    };
+    const manager = createBibleDataManager(
+      new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+      { offlineStore: slowStore }
+    );
+
+    await manager.getTranslations();
+    releaseStoredRead();
+    await manager.offline.ready;
+
+    expect(
+      manager.availableTranslations.value.find((t) => t.id === "AAB")?.sha256
+    ).toBe("hash-two");
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+    manager.offline.dispose();
+  });
+
   it("does not check anything while the device reports no connection", async () => {
     const { manager } = await createHarness(defaultResponses());
     await manager.getTranslations();
@@ -406,6 +551,48 @@ describe("deleting a download", () => {
     expect(manager.offline.isDownloaded("NIV")).toBe(true);
     expect(await store.getChapter("NIV", "GEN", 1)).not.toBeNull();
     expect(await store.getChapter("AAB", "GEN", 1)).toBeNull();
+  });
+});
+
+describe("disposing the manager", () => {
+  it("stops listening for connection changes", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+
+    const onLineSpy = vi.spyOn(navigator, "onLine", "get");
+    onLineSpy.mockReturnValue(false);
+    window.dispatchEvent(new Event("offline"));
+    expect(manager.offline.isOnline.value).toBe(false);
+
+    manager.offline.dispose();
+
+    onLineSpy.mockReturnValue(true);
+    window.dispatchEvent(new Event("online"));
+
+    // Still false: the listener that would have flipped it is gone, so a
+    // discarded manager can't keep reacting to the page around it.
+    expect(manager.offline.isOnline.value).toBe(false);
+    onLineSpy.mockRestore();
+  });
+
+  it("cancels a download that is still running", async () => {
+    const store = createInMemoryTranslationStore();
+    let onSaveStart = () => {};
+    const cancellableStore: OfflineTranslationStore = {
+      ...store,
+      async save(record, entries, options) {
+        onSaveStart();
+        return await store.save(record, entries, options);
+      },
+    };
+    const { manager } = await createHarness(defaultResponses(), {
+      store: cancellableStore,
+    });
+    onSaveStart = () => manager.offline.dispose();
+    await manager.getTranslations();
+
+    expect(await manager.offline.downloadTranslation("AAB")).toBe(false);
+    expect(await store.get("AAB")).toBeNull();
   });
 });
 

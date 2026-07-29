@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Download a whole translation to your device from the Bible selector and read it with no connection, with live progress, a cancel option, a size readout, and a prompt to re-download when a newer version is published. ([#1533](https://github.com/HelloAOLab/seed-bible/pull/1533))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed

@@ -12,6 +12,20 @@ import {
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 
+/** How a set of translations should be folded into the known-translations list. */
+export interface MergeTranslationsOptions {
+  /**
+   * When true, translations that are already known are left untouched instead of
+   * being replaced.
+   *
+   * Use this for metadata that may be older than what the app already has — most
+   * importantly a downloaded translation's saved copy, whose `sha256` is from
+   * download time. Overwriting a freshly fetched hash with that older one would
+   * make an available update look like it had already been applied.
+   */
+  fillOnly?: boolean;
+}
+
 export interface BibleDataManager {
   endpoints: Signal<string[]>;
   availableTranslations: Signal<Translation[]>;
@@ -553,7 +567,8 @@ export function createBibleDataManager(
 
   const mergeTranslations = (
     endpoint: string,
-    nextTranslations: Translation[]
+    nextTranslations: Translation[],
+    options?: MergeTranslationsOptions
   ) => {
     const merged = new Map(
       availableTranslations.value.map((translation) => [
@@ -564,6 +579,15 @@ export function createBibleDataManager(
 
     const nextTranslationEndpoints = new Map(translationEndpoints.value);
     for (const translation of nextTranslations) {
+      if (options?.fillOnly && merged.has(translation.id)) {
+        // Something already knows about this translation, and what it knows may
+        // be newer than what we were handed — leave it alone. The endpoint is
+        // still filled in below if it's missing, since that never goes stale.
+        if (!nextTranslationEndpoints.has(translation.id)) {
+          nextTranslationEndpoints.set(translation.id, endpoint);
+        }
+        continue;
+      }
       merged.set(translation.id, translation);
       nextTranslationEndpoints.set(translation.id, endpoint);
     }
@@ -610,16 +634,25 @@ export function createBibleDataManager(
       return existing;
     }
 
-    const cacheBooks = (endpoint: string, books: TranslationBooks) => {
+    const cacheBooks = (
+      endpoint: string,
+      books: TranslationBooks,
+      options?: MergeTranslationsOptions
+    ) => {
       const nextBooksMap = new Map(translationBooks.value);
       nextBooksMap.set(translationId, books);
       translationBooks.value = nextBooksMap;
-      mergeTranslations(endpoint, [books.translation]);
+      mergeTranslations(endpoint, [books.translation], options);
     };
 
     const downloadedBooks = await offline.getTranslationBooks(translationId);
     if (downloadedBooks) {
-      cacheBooks(getEndpointForTranslation(translationId), downloadedBooks);
+      // `fillOnly` because these books come from storage: the translation
+      // metadata saved with them is from download time, so it must not overwrite
+      // whatever the app has since learned from the API.
+      cacheBooks(getEndpointForTranslation(translationId), downloadedBooks, {
+        fillOnly: true,
+      });
       return downloadedBooks;
     }
 
@@ -661,6 +694,11 @@ export function createBibleDataManager(
       return downloaded;
     }
 
+    // Reaching here for a downloaded translation means the chapter genuinely
+    // isn't stored, so the network is the right next stop. It costs nothing at
+    // the end of the Bible: a chapter read from a download has no
+    // `nextChapterApiLink` there, and `api.getNextChapter` answers null without
+    // making a request.
     const endpoint = getEndpointForTranslation(chapter.translation.id);
     return await api.getNextChapter(chapter, endpoint);
   };
@@ -671,6 +709,8 @@ export function createBibleDataManager(
       return downloaded;
     }
 
+    // As above — at Genesis 1 there is no previous link to follow, so this
+    // resolves to null locally.
     const endpoint = getEndpointForTranslation(chapter.translation.id);
     return await api.getPreviousChapter(chapter, endpoint);
   };

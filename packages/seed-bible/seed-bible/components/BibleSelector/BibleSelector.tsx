@@ -1113,7 +1113,7 @@ const OfflineTranslationControls = (props: {
       progress.phase === "saving"
         ? t("saving-translation-to-device", {
             percent: percent ?? 0,
-            defaultValue: "Saving to this device… {{percent}}%",
+            defaultValue: "Saving to this device… {{percent}}% — tap to cancel",
           })
         : percent === null
           ? t("cancel-translation-download-unknown-size", {
@@ -1157,49 +1157,67 @@ const OfflineTranslationControls = (props: {
         defaultValue: "Download for offline use",
       });
 
+  const updateLabel = t("update-offline-translation", {
+    defaultValue: "A newer version is available — tap to update",
+  });
+  const downloadedLabel = summary
+    ? t("translation-available-offline", {
+        size: formatBytes(summary.sizeBytes),
+        defaultValue: "Available offline ({{size}}) — tap to remove",
+      })
+    : "";
+
+  // Every button carries its label as both `title` and `aria-label`: `title`
+  // alone gives a mouse tooltip but isn't reliably announced by screen readers,
+  // and these buttons have no visible text of their own. The icon glyphs are
+  // hidden from assistive tech so they can't be read out as stray words.
   return (
     <>
       {summary?.updateAvailable && (
         <button
           type="button"
           class="sb-offline-btn update flex-center"
-          title={t("update-offline-translation", {
-            defaultValue: "A newer version is available — tap to update",
-          })}
+          title={updateLabel}
+          aria-label={updateLabel}
           onClick={(e: MouseEvent) => {
             e.stopPropagation();
             void startDownload();
           }}
         >
-          <span class="material-symbols-outlined">sync</span>
+          <span class="material-symbols-outlined" aria-hidden="true">
+            sync
+          </span>
         </button>
       )}
       {summary ? (
         <button
           type="button"
           class="sb-offline-btn downloaded flex-center"
-          title={t("translation-available-offline", {
-            size: formatBytes(summary.sizeBytes),
-            defaultValue: "Available offline ({{size}}) — tap to remove",
-          })}
+          title={downloadedLabel}
+          aria-label={downloadedLabel}
           onClick={(e: MouseEvent) => {
             e.stopPropagation();
             pendingOfflineDelete.value = translation;
           }}
         >
-          <span class="material-symbols-outlined">offline_pin</span>
+          <span class="material-symbols-outlined" aria-hidden="true">
+            offline_pin
+          </span>
         </button>
       ) : (
         <button
           type="button"
           class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
           title={downloadTitle}
+          aria-label={downloadTitle}
           onClick={(e: MouseEvent) => {
             e.stopPropagation();
             void startDownload();
           }}
         >
-          <span class="material-symbols-outlined">download</span>
+          <span class="material-symbols-outlined" aria-hidden="true">
+            download
+          </span>
         </button>
       )}
     </>
