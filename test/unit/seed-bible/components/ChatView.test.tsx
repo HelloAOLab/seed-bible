@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { ChatView } from "@packages/seed-bible/seed-bible/components/ChatView/ChatView";
 import type {
+  ChatMessage,
   ChatSession,
   ParsedChatTextMessage,
   UserChatParticipant,
@@ -64,6 +65,20 @@ function createMockMessage(
     type: "text",
     text: "Hello world",
     parts: ["Hello world"],
+    ...overrides,
+  };
+}
+
+function createMockToolCallMessage(
+  overrides: Partial<ChatMessage & { type: "tool_call" }> = {}
+): ChatMessage {
+  return {
+    id: "tool-msg-1",
+    authors: ["participant-1"],
+    timeMs: 0,
+    targets: [],
+    type: "tool_call",
+    name: "search",
     ...overrides,
   };
 }
@@ -941,5 +956,157 @@ describe("ChatView", () => {
     });
 
     expect(container.querySelector(".sb-chat-view-event")).toBeNull();
+  });
+
+  // ─── Tool-call events ────────────────────────────────────────────────────────
+
+  it("renders a tool-use notification for a single tool call", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const toolCall = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const chat = createMockChatSession({
+      messages: signal([toolCall]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const event = container.querySelector(".sb-chat-view-event");
+    expect(event).not.toBeNull();
+    expect(event?.textContent).toContain("Author used a tool");
+  });
+
+  it("collapses consecutive tool calls from the same author into one notification", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const toolCall1 = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const toolCall2 = createMockToolCallMessage({
+      id: "tool-2",
+      authors: ["author"],
+      timeMs: 2_000,
+    });
+    const toolCall3 = createMockToolCallMessage({
+      id: "tool-3",
+      authors: ["author"],
+      timeMs: 3_000,
+    });
+    const chat = createMockChatSession({
+      messages: signal([toolCall1, toolCall2, toolCall3]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const events = container.querySelectorAll(".sb-chat-view-event");
+    expect(events).toHaveLength(1);
+    expect(events[0]?.textContent).toContain("Author used 3 tools");
+  });
+
+  it("starts a new tool-use notification when the author changes", () => {
+    const alice = createMockParticipant({ id: "alice", name: "Alice" });
+    const bob = createMockParticipant({ id: "bob", name: "Bob" });
+    const toolCall1 = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["alice"],
+      timeMs: 1_000,
+    });
+    const toolCall2 = createMockToolCallMessage({
+      id: "tool-2",
+      authors: ["bob"],
+      timeMs: 2_000,
+    });
+    const getMessageAuthors = vi.fn((message: ChatMessage) =>
+      message.authors.includes("alice") ? [alice] : [bob]
+    );
+    const chat = createMockChatSession({
+      messages: signal([toolCall1, toolCall2]),
+      getMessageAuthors,
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const events = container.querySelectorAll(".sb-chat-view-event");
+    expect(events).toHaveLength(2);
+    expect(events[0]?.textContent).toContain("Alice used a tool");
+    expect(events[1]?.textContent).toContain("Bob used a tool");
+  });
+
+  it("breaks an author message group when a tool call happens between messages", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const msg1 = createMockMessage({
+      id: "msg-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const msg2 = createMockMessage({
+      id: "msg-2",
+      authors: ["author"],
+      timeMs: 3_000,
+    });
+    const toolCall = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["author"],
+      timeMs: 2_000,
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([msg1, msg2]),
+      messages: signal([msg1, toolCall, msg2]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const groups = container.querySelectorAll(".sb-chat-view-message-group");
+    expect(groups).toHaveLength(2);
+    expect(container.querySelectorAll(".sb-chat-view-event")).toHaveLength(1);
+  });
+
+  it("renders the empty state when there are no messages or tool calls", () => {
+    const chat = createMockChatSession({
+      parsedMessages: signal([]),
+      messages: signal([]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-chat-view-empty")).not.toBeNull();
+  });
+
+  it("does not render the empty state when there are only tool calls", () => {
+    const toolCall = createMockToolCallMessage({ id: "tool-1", timeMs: 1_000 });
+    const chat = createMockChatSession({
+      parsedMessages: signal([]),
+      messages: signal([toolCall]),
+      getMessageAuthors: vi.fn().mockReturnValue([]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+    expect(container.querySelector(".sb-chat-view-event")).not.toBeNull();
   });
 });
