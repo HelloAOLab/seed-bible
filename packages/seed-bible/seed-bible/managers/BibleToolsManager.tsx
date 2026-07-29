@@ -1073,16 +1073,17 @@ function extractVerseText(verse: BibleSelectedVerse): string {
     .replace(/\s+([,.;:!?’”)\]])/g, "$1")
     .trim();
 }
-function formatSelectedVerses(readingState: BibleReadingState) {
+export function formatSelectedVerses(readingState: BibleReadingState) {
   const verses = readingState.selectedVerses.value;
-  const bookName =
-    readingState.chapterData.value?.book.name ?? verses[0]!.bookId;
- 
-  const translation = readingState.translation?.value?.shortName ?? "";
 
   if (verses.length === 0) return "";
 
-  const groups = groupConsecutiveVerses(readingState.selectedVerses.value);
+  const bookName =
+    readingState.chapterData.value?.book.name ?? verses[0]!.bookId;
+
+  const translation = readingState.translation?.value?.shortName ?? "";
+
+  const groups = groupConsecutiveVerses(verses);
 
   return groups
     .map((group) => {
@@ -1091,7 +1092,7 @@ function formatSelectedVerses(readingState: BibleReadingState) {
       const range = formatVerseRanges(group.map((v) => v.verse.number));
 
       const reference = [
-        bookName ?? group[0]!.bookId,
+        bookName,
         `${group[0]!.chapterNumber}:${range}`,
         translation,
       ]
@@ -1102,7 +1103,6 @@ function formatSelectedVerses(readingState: BibleReadingState) {
     })
     .join("\n\n");
 }
-
 /**
  * Creates the tools manager with default tool sets and registration APIs.
  *
