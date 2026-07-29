@@ -85,10 +85,10 @@ export const PlaylistSchema = z.object({
 });
 
 function getPlaylistLocator(playlist: {
-  recordName: string;
+  recordName?: string;
   id: string;
 }): string {
-  return `${playlist.recordName}.${playlist.id}`;
+  return `${playlist.recordName ?? ""}.${playlist.id}`;
 }
 
 function parsePlaylistLocator(
@@ -108,6 +108,10 @@ function parsePlaylistLocator(
 }
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
+export type SimplePlaylist = Pick<
+  Playlist,
+  "id" | "items" | "title" | "description"
+>;
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
 
@@ -124,7 +128,7 @@ export type PlayingState = ReturnType<typeof createPlayingState>;
  * have items added/removed without mutating `playlists`; both are synced.
  */
 export interface PlaylistReadingData {
-  playlists: Playlist[];
+  playlists: SimplePlaylist[];
   queue: PlaylistItemData[];
   step: number;
 }
@@ -217,10 +221,10 @@ function expandCrossChapterItem(item: PlaylistItemData): PlaylistItemData[] {
  * navigation keeps targeting it even if the user later switches tabs.
  */
 export function createPlayingState(
-  sourcePlaylists: Playlist[],
+  sourcePlaylists: SimplePlaylist[],
   tab: ReaderTab | null = null
 ) {
-  const playlists = signal<Playlist[]>(sourcePlaylists);
+  const playlists = signal<SimplePlaylist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
     sourcePlaylists.flatMap((playlist) =>
       playlist.items.flatMap(expandCrossChapterItem)
@@ -802,7 +806,7 @@ export function createPlaylistManager(
    * Returns the live playing state, or null when there is no tab to play on.
    */
   const startPlaying = (
-    playlist: Playlist | Playlist[],
+    playlist: SimplePlaylist | SimplePlaylist[],
     initialStep = 0
   ): PlayingState | null => {
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
