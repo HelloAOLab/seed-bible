@@ -460,7 +460,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
                 aria-busy={isSaving.value}
               >
                 {!isProfileLoaded.value ? (
-                  t("profile-loading", {
+                  t("loading-profile", {
                     defaultValue: "Loading your profile…",
                   })
                 ) : isSaving.value ? (
