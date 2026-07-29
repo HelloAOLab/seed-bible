@@ -989,6 +989,48 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("automatic sign-out toast", () => {
+    it("shows nothing while the session is intact", async () => {
+      const state = await createState();
+
+      expect(state.app.currentToast.value).toBe(null);
+    });
+
+    it("explains a session that ended on its own", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You've been signed out. Please sign in again."
+      );
+    });
+
+    it("explains a suspended account", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "account_suspended", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "Your account has been suspended."
+      );
+    });
+
+    it("shows a fresh toast for a second sign-out with the same reason", async () => {
+      // The event carries a monotonic id precisely so this case still notifies: a
+      // bare reason string would be `===` the previous value, so the effect would
+      // never re-run and the message would be silently swallowed.
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+      const firstToastId = state.app.currentToast.value?.id;
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
+
+      expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
+    });
+  });
+
   describe("pageTitle tag", () => {
     function setSelectedTabChapter(
       state: SeedBibleState,

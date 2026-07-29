@@ -18,8 +18,16 @@ import {
 } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
 import { first, firstValueFrom } from "rxjs";
+import { guardRecordsClient } from "./SessionGuard";
+import type { SessionInvalidatedEvent } from "./SessionGuard";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
+
+export type {
+  FatalSessionErrorCode,
+  SessionInvalidatedEvent,
+} from "./SessionGuard";
+export { FATAL_SESSION_ERROR_CODES } from "./SessionGuard";
 
 export interface UserInfo {
   id: string;
@@ -57,7 +65,7 @@ const UNSAFE_HEADERS = new Set([
 ]);
 
 export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
-  const client = createRecordsClient(endpoint);
+  const rawClient = createRecordsClient(endpoint);
   const connectionId = uuid();
   let currentWakeLock: WakeLockSentinel | null = null;
 
@@ -96,6 +104,25 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     } else {
       return null;
     }
+  });
+
+  /**
+   * Fires when the records/auth API reports that our session key is dead — expired,
+   * unrecognised, or the account is banned. `LoginManager` watches this and clears
+   * the local session; `OsManager` makes no decision about the UI.
+   */
+  const sessionInvalidated = signal<SessionInvalidatedEvent | null>(null);
+  let sessionInvalidatedCount = 0;
+
+  const client = guardRecordsClient(rawClient, {
+    getSessionKey: () => sessionKey.peek(),
+    onSessionInvalidated: (errorCode) => {
+      console.warn(`[OsManager] The session is no longer valid: ${errorCode}`);
+      sessionInvalidated.value = {
+        errorCode,
+        id: ++sessionInvalidatedCount,
+      };
+    },
   });
 
   function getInstClient(): InstRecordsClient {
@@ -236,6 +263,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     sessionKey,
     parsedSessionKey,
     connectionKey,
+    sessionInvalidated,
 
     getData: async (recordName: string, address: string) => {
       const result = await client.getData({

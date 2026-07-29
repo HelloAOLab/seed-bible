@@ -419,5 +419,7 @@
   "start-share-session": "Start and share session",
   "start-share-session-subtitle": "Invite others to read along live",
   "share-current-session": "Share current session",
-  "share-current-session-subtitle": "Copy a link to invite others to read along live"
+  "share-current-session-subtitle": "Copy a link to invite others to read along live",
+  "signed-out-message": "You've been signed out. Please sign in again.",
+  "account-suspended-message": "Your account has been suspended."
 }
