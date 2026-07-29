@@ -7,6 +7,10 @@ import {
   resolveMessageAuthors,
   type ChatProviderMessageOptions,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type {
+  DiscoverContentResult,
+  DiscoverResult,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -411,6 +415,69 @@ export default function initApologistExtension() {
             messages.push({ role: "assistant", content: assembledContent });
             return;
           }
+        },
+      });
+
+      yield context.discover.registerDiscoverProvider({
+        id: "apologist",
+        title: "Apologist",
+        description: "Discover content from Apologist AI.",
+        discover: async (ctx) => {
+          const response = await fetch(
+            `https://${apologistDomain}/api/v1/search`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                query: `${ctx.book} ${ctx.chapter}`,
+                filters: {
+                  model: "source",
+                  types: [
+                    "article",
+                    "book",
+                    "url",
+                    "media",
+                    "youtube",
+                    "episode",
+                  ],
+                },
+              }),
+              headers: apologistApiKey
+                ? {
+                    Authorization: `Bearer ${apologistApiKey}`,
+                  }
+                : {},
+            }
+          );
+
+          const data = await response.json();
+          console.log("[Apologist] Discover results:", data);
+
+          return data.results.map(
+            (r: {
+              title: string | undefined;
+              image_url: string | undefined;
+              author_names: string[];
+            }) => {
+              return {
+                type: "content",
+                title: r.title,
+                description: "",
+                reference: ctx,
+                content: (
+                  <div>
+                    {r.image_url && (
+                      <img
+                        src={r.image_url}
+                        alt={r.title}
+                        style={{ maxWidth: "100%" }}
+                      />
+                    )}
+                    {r.author_names && <p>{r.author_names.join(", ")}</p>}
+                  </div>
+                ),
+              } as DiscoverResult;
+            }
+          );
         },
       });
 
