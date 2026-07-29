@@ -1,4 +1,10 @@
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
@@ -379,23 +385,30 @@ function applySessionDataToReadingState(
   >,
   sessionData: SessionData
 ) {
-  if (readingState.translationId.value !== sessionData.translationId) {
-    readingState.translationId.value =
-      sessionData.translationId ?? readingState.translationId.peek();
-  }
-  if (readingState.bookId.value !== sessionData.bookId) {
-    readingState.bookId.value =
-      sessionData.bookId ?? readingState.bookId.peek();
-  }
-  if (
-    sessionData.chapterNumber !== null &&
-    readingState.chapterNumber.value !== sessionData.chapterNumber
-  ) {
-    readingState.chapterNumber.value = sessionData.chapterNumber;
-  }
-  if (readingState.scrollToVerse.value !== sessionData.scrollToVerse) {
-    readingState.scrollToVerse.value = sessionData.scrollToVerse;
-  }
+  // Batched because the reading state's content loader watches all three
+  // position signals. Written one at a time, an incomplete remote update runs
+  // the loader up to three times for a single change — briefly asking for
+  // combinations like the new translation with the old book and chapter, and
+  // starting and cancelling a request for each.
+  batch(() => {
+    if (readingState.translationId.value !== sessionData.translationId) {
+      readingState.translationId.value =
+        sessionData.translationId ?? readingState.translationId.peek();
+    }
+    if (readingState.bookId.value !== sessionData.bookId) {
+      readingState.bookId.value =
+        sessionData.bookId ?? readingState.bookId.peek();
+    }
+    if (
+      sessionData.chapterNumber !== null &&
+      readingState.chapterNumber.value !== sessionData.chapterNumber
+    ) {
+      readingState.chapterNumber.value = sessionData.chapterNumber;
+    }
+    if (readingState.scrollToVerse.value !== sessionData.scrollToVerse) {
+      readingState.scrollToVerse.value = sessionData.scrollToVerse;
+    }
+  });
 }
 
 function canLoadSessionData(sessionData: SessionData): sessionData is {

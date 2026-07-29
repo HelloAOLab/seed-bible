@@ -4,21 +4,22 @@
 
 ### ✨ Added
 
-- Show a loading placeholder in place of the verses while the chapter you moved to is still downloading, after briefly dimming the chapter you left, instead of leaving the previous chapter's text under the new chapter's title.
+- Show a loading placeholder in place of the verses while the chapter you moved to is still downloading, after briefly dimming the chapter you left, instead of leaving the previous chapter's text under the new chapter's title. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 
 ### 🔧 Changed
 
-- Cancel the requests for chapters you skim past so the chapter you land on gets the bandwidth, instead of queueing behind downloads you no longer need.
-- Collapse a fast skim into a single browser history entry, so one Back press returns you to where the skim started instead of stepping back through every chapter you passed.
-- Resolve the reader's book and chapter labels from the book catalog instead of the loaded chapter, so the titles, the tab strip and the mobile navigation pill update the moment you move.
-- Work out the next and previous chapter from the book catalog instead of following links on the loaded chapter, which includes apocryphal books wherever a translation lists them.
+- Cancel the requests for chapters you skim past so the chapter you land on gets the bandwidth, instead of queueing behind downloads you no longer need. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- Collapse a fast skim into a single browser history entry, so one Back press returns you to where the skim started instead of stepping back through every chapter you passed. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- Resolve the reader's book and chapter labels from the book catalog instead of the loaded chapter, so the titles, the tab strip and the mobile navigation pill update the moment you move. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- Work out the next and previous chapter from the book catalog instead of following links on the loaded chapter, which includes apocryphal books wherever a translation lists them. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 
 ### 🐛 Fixed
 
-- Changing chapter or book no longer waits on an in-flight text request. The position updates the moment you press, and repeated presses advance a chapter each, instead of the chevrons and arrow keys switching off until the download finished.
-- Fix shared sessions freezing and eventually crashing the tab with an out-of-memory error when another participant moved through chapters quickly.
-- Fix an out-of-range chapter in the address, such as `?chapter=99999`, leaving the address pointing at a chapter you are not on, so pressing Back returned you to it and bounced straight forward again.
-- Fix a fractional chapter in the address, such as `?chapter=0.5&verse=3`, losing the highlight that points out the linked verse.
+- Changing chapter or book no longer waits on an in-flight text request. The position updates the moment you press, and repeated presses advance a chapter each, instead of the chevrons and arrow keys switching off until the download finished. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- Fix shared sessions freezing and eventually crashing the tab with an out-of-memory error when another participant moved through chapters quickly. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- Fix an out-of-range chapter in the address, such as `?chapter=99999`, leaving the address pointing at a chapter you are not on, so pressing Back returned you to it and bounced straight forward again. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- Fix a fractional chapter in the address, such as `?chapter=0.5&verse=3`, losing the highlight that points out the linked verse. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- Fix picking the chapter you are already reading costing a browser history entry, so Back still returns you to where you came from instead of leaving you where you are. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 
 ### 🗑️ Removed
 

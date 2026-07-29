@@ -2077,6 +2077,112 @@ describe("createBibleReadingState", () => {
       await waitFor(() => state.chapterData.value?.chapter.number === 3);
       expect(state.scrollToVerse.value).toBeNull();
     });
+
+    describe("recovering from a failed chapter load", () => {
+      /**
+       * Resolves to "hung" instead of waiting forever, so a navigation promise
+       * that never settles fails the test rather than timing the suite out.
+       */
+      async function outcomeOf(
+        promise: Promise<unknown>,
+        timeoutMs = 500
+      ): Promise<"settled" | "hung"> {
+        return Promise.race([
+          promise.then(() => "settled" as const),
+          new Promise<"hung">((resolve) =>
+            setTimeout(() => resolve("hung"), timeoutMs)
+          ),
+        ]);
+      }
+
+      function failingChapterResponses(chapter: number): WebResponseMap {
+        const responses = responsesThroughChapter(3);
+        responses[chapterUrl(chapter)] = createResponse(
+          { error: true },
+          500,
+          "Server Error"
+        );
+        return responses;
+      }
+
+      it("re-requests a position that is already current when its last load failed", async () => {
+        // Picking the same chapter again is the reader's only way to retry, and
+        // it writes no new position — so without an explicit nudge the loader
+        // never hears about it. A shared session hits the same path when a peer
+        // re-broadcasts the position that just failed locally.
+        const responses = failingChapterResponses(3);
+        setWebResponses(responses);
+        const state = createBibleReadingState(createDataManager());
+        await waitForInitialLoad(state);
+
+        await state.selectChapter("GEN", 3);
+        expect(state.error.value).toContain("Status: 500");
+        expect(state.chapterData.value?.chapter.number).toBe(1);
+        expect(state.chapterNumber.value).toBe(3);
+
+        // The endpoint recovers.
+        responses[chapterUrl(3)] = createResponse(
+          makeChapter(aabBooks, "GEN", 3)
+        );
+        const requestsBefore = fetchMock.mock.calls.length;
+
+        expect(await outcomeOf(state.selectChapter("GEN", 3))).toBe("settled");
+
+        expect(
+          fetchMock.mock.calls
+            .slice(requestsBefore)
+            .map((call) => call[0] as string)
+        ).toContain(chapterUrl(3));
+        expect(state.chapterData.value?.chapter.number).toBe(3);
+        expect(state.error.value).toBeNull();
+      });
+
+      it("does not restart the download when the same position is re-picked mid-flight", async () => {
+        // The retry nudge must not fire for a request that is simply still on
+        // its way, or waiting on a slow chapter and tapping it again would throw
+        // away the bytes already downloaded.
+        const { state, controlled } = await createStateWithHeldChapters();
+
+        void state.selectChapter("GEN", 2);
+        await waitFor(() => controlled.pending().includes(chapterUrl(2)));
+        const requestsBefore = fetchMock.mock.calls.length;
+
+        void state.selectChapter("GEN", 2);
+
+        expect(fetchMock.mock.calls.length).toBe(requestsBefore);
+        expect(controlled.aborted()).not.toContain(chapterUrl(2));
+        expect(controlled.pending()).toEqual([chapterUrl(2)]);
+
+        controlled.settle(chapterUrl(2));
+        await waitFor(() => state.chapterData.value?.chapter.number === 2);
+      });
+
+      it("clears the error as the recovery navigation starts, not when it lands", async () => {
+        // `BibleReader` renders the error banner in place of any content, so an
+        // error left standing means the whole of the next chapter's download
+        // shows neither dimmed text nor the loading placeholder.
+        const responses = failingChapterResponses(3);
+        const controlled = createControlledFetch(
+          responses,
+          (url) => url === chapterUrl(2)
+        );
+        fetchMock.mockImplementation(controlled.fetch);
+        const state = createBibleReadingState(createDataManager());
+        await waitForInitialLoad(state);
+
+        await state.selectChapter("GEN", 3);
+        expect(state.error.value).toContain("Status: 500");
+
+        void state.selectChapter("GEN", 2);
+
+        expect(state.error.value).toBeNull();
+        expect(state.isChapterContentStale.value).toBe(true);
+
+        controlled.settle(chapterUrl(2));
+        await waitFor(() => state.chapterData.value?.chapter.number === 2);
+        expect(state.error.value).toBeNull();
+      });
+    });
   });
 
   describe("chapterDataPromise", () => {
@@ -3023,6 +3129,60 @@ describe("createBibleReadingState", () => {
       );
 
       await state.loadNextChapter();
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+    });
+
+    it("replaces rather than pushes when the position does not actually change", async () => {
+      // Re-picking the chapter you are already on is not a destination, so it
+      // must not cost a Back press. The URL is still rewritten, because it can
+      // be out of step with the position for reasons other than a move.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 1);
+
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: true });
+    });
+
+    it("still pushes when only the verse changes within the current chapter", async () => {
+      // Jumping to another verse in the chapter you are reading — a playlist
+      // step, a deep link — is somewhere new, and Back has to return you.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+        scrollToVerse: 4,
+      });
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("does not let a no-op apply drag the next real navigation into its history entry", async () => {
+      // A redundant apply is not a gesture, so it must not start the coalescing
+      // window — otherwise re-picking the current chapter and then pressing next
+      // would overwrite the entry instead of adding one.
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 1);
+      await state.loadNextChapter();
+
       expect(listener).toHaveBeenCalledTimes(2);
       expect(listener).toHaveBeenLastCalledWith({ replace: false });
     });

@@ -1,4 +1,4 @@
-import { batch, signal } from "@preact/signals";
+import { batch, effect, signal } from "@preact/signals";
 import {
   createSessionsManager,
   getUserAnimalVisual,
@@ -1178,6 +1178,57 @@ describe("SessionsManager", () => {
     await flushPublishDebounce();
 
     expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 42);
+  });
+
+  it("applies a partial remote position in one batch", async () => {
+    // The reading state's content loader watches all three position signals.
+    // Written one at a time they are three separate changes, so the loader runs
+    // three times for one remote update — starting and cancelling a request
+    // each time, and in between asking for the new translation against the old
+    // book and chapter, a position no peer ever navigated to.
+    mockOptionsMap.set("shareTranslation", true);
+
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = (await manager.joinSession(
+      "group-abc"
+    )) as BibleReadingSession;
+
+    // Stands in for the real content loader: the same three tracked reads.
+    let loaderRuns = 0;
+    const stopLoader = effect(() => {
+      void session.readingState.translationId.value;
+      void session.readingState.bookId.value;
+      void session.readingState.chapterNumber.value;
+      loaderRuns++;
+    });
+    loaderRuns = 0;
+
+    // A translation and a chapter but no book, so canLoadSessionData() is false
+    // and the position is applied field by field rather than through a chapter
+    // load. Two of the three signals genuinely change.
+    mockMap.get.mockImplementation((key: string) => {
+      if (key === "translationId") {
+        return "ESV";
+      }
+      if (key === "chapterNumber") {
+        return 5;
+      }
+      return null;
+    });
+    mockMap.emitChange();
+
+    await waitFor(() => session.readingState.chapterNumber.value === 5);
+
+    expect(session.readingState.translationId.value).toBe("ESV");
+    expect(loaderRuns).toBe(1);
+
+    stopLoader();
   });
 
   it("keeps local selection when user changes chapter during remote sync", async () => {

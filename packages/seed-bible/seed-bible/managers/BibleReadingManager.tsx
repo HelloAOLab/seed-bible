@@ -1649,6 +1649,17 @@ export function createBibleReadingState(
   let loadGeneration = 0;
   let disposed = false;
 
+  /**
+   * Bumped to make the loader effect re-run for a position that has *not*
+   * changed.
+   *
+   * Re-applying the same position writes no new signal value, so on its own the
+   * effect would never notice. That makes a failed load unretryable: picking the
+   * same chapter again would issue no request, and anyone awaiting the
+   * navigation would be waiting on content nothing was fetching.
+   */
+  const contentRetryNonce = signal(0);
+
   /** Callers waiting for content to arrive, keyed by `positionKey`. */
   const contentWaiters = new Map<string, Array<() => void>>();
 
@@ -1747,6 +1758,12 @@ export function createBibleReadingState(
       content?: TranslationBookChapter;
     }
   ) => {
+    const didPositionChange =
+      translationId.peek() !== next.translationId ||
+      bookId.peek() !== next.bookId ||
+      chapterNumber.peek() !== next.chapterNumber;
+    const scrollToVerseRequest = options?.scrollToVerse ?? null;
+
     batch(() => {
       const didChapterChange =
         bookId.value !== next.bookId ||
@@ -1786,7 +1803,6 @@ export function createBibleReadingState(
       }
       clearSelectedVerses();
 
-      const scrollToVerseRequest = options?.scrollToVerse ?? null;
       pendingScrollTarget =
         scrollToVerseRequest === null
           ? null
@@ -1803,6 +1819,17 @@ export function createBibleReadingState(
         // slower fetch can't land on top of the content we were handed.
         loadGeneration += 1;
         applyChapterContent(options.content);
+      } else if (
+        !didPositionChange &&
+        !chapterMatchesPosition(chapterData.peek(), next) &&
+        !positionsEqual(openContentRequestPosition, next)
+      ) {
+        // The position is where it already was, but its text is missing — the
+        // last attempt failed, and nothing is trying again. The signals hold no
+        // news for the loader effect, so say so explicitly. Skipped while a
+        // request for this position is already open, so re-picking the chapter
+        // you are waiting on doesn't restart the download from scratch.
+        contentRetryNonce.value = contentRetryNonce.peek() + 1;
       }
     });
 
@@ -1815,9 +1842,21 @@ export function createBibleReadingState(
       }
     }
 
-    if (options?.updateUrl !== false) {
-      emitPositionNavigate(options?.replace);
+    if (options?.updateUrl === false) {
+      return;
     }
+    if (!didPositionChange && scrollToVerseRequest === null) {
+      // Nothing moved, so this must not cost a Back entry. The URL is still
+      // rewritten rather than skipped, because it can be out of step with the
+      // position for reasons other than a move — a `verse` param to drop, an
+      // extension's params to re-derive. And because this is not part of a
+      // gesture, it goes straight to `emitNavigate`: letting it stamp the
+      // coalescing clock would make the reader's *next* real navigation look
+      // like a continuation of a press that never happened.
+      emitNavigate({ replace: true });
+      return;
+    }
+    emitPositionNavigate(options?.replace);
   };
 
   /**
@@ -1853,9 +1892,15 @@ export function createBibleReadingState(
    * one the reader is actually waiting for.
    */
   let contentRequestController: AbortController | null = null;
+  /**
+   * The position the open request is for, so a re-apply of that same position
+   * can tell "nothing is fetching this" from "this is already on its way".
+   */
+  let openContentRequestPosition: ReadingPosition | null = null;
   const abortOpenContentRequest = () => {
     contentRequestController?.abort();
     contentRequestController = null;
+    openContentRequestPosition = null;
   };
 
   /** True for the rejection a caller gets back from its own cancellation. */
@@ -1870,6 +1915,12 @@ export function createBibleReadingState(
     position: ReadingPosition,
     generation: number
   ) => {
+    // Navigation itself no longer clears this. Without clearing it as the
+    // request opens, a failed load would keep its banner on screen for the
+    // whole of the *next* chapter's download — `BibleReader` renders the banner
+    // in place of any content, so there would be no dimmed text and no
+    // placeholder, just the old error and then a chapter appearing.
+    error.value = null;
     beginRequest();
 
     // Warm this translation's catalog without blocking the text on it. The
@@ -1887,6 +1938,7 @@ export function createBibleReadingState(
     abortOpenContentRequest();
     const controller = new AbortController();
     contentRequestController = controller;
+    openContentRequestPosition = position;
 
     try {
       const chapter = await dataManager.getTranslationBookChapter(
@@ -1914,6 +1966,7 @@ export function createBibleReadingState(
     } finally {
       if (contentRequestController === controller) {
         contentRequestController = null;
+        openContentRequestPosition = null;
       }
       endRequest();
       settleContentWaiters(positionKey(position));
@@ -1935,6 +1988,9 @@ export function createBibleReadingState(
       const nextTranslationId = translationId.value;
       const nextBookId = bookId.value;
       const nextChapterNumber = chapterNumber.value;
+      // Subscribed but unused: this is how a retry of the position we are
+      // already on gets us to run again (see `contentRetryNonce`).
+      void contentRetryNonce.value;
 
       untracked(() => {
         if (disposed || !nextBookId) {
