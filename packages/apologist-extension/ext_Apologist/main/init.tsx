@@ -20,30 +20,110 @@ const completionsSchema = z.object({
   ),
 });
 
-const chatCompletionToolCallSchema = z.object({
-  id: z.string(),
+const chatCompletionChunkToolCallDeltaSchema = z.object({
+  index: z.number(),
+  id: z.string().optional(),
   function: z
     .object({
-      name: z.string(),
-      arguments: z.string(),
+      name: z.string().optional(),
+      arguments: z.string().optional(),
     })
     .optional(),
 });
 
-const chatCompletionMessageSchema = z.object({
-  role: z.literal("assistant"),
-  content: z.string().nullable().optional(),
-  tool_calls: z.array(chatCompletionToolCallSchema).optional(),
-});
-
-const chatCompletionResponseSchema = z.object({
+const chatCompletionChunkSchema = z.object({
   choices: z.array(
     z.object({
-      message: chatCompletionMessageSchema.optional(),
-      stop_reason: z.string().optional(),
+      delta: z
+        .object({
+          content: z.string().nullable().optional(),
+          tool_calls: z
+            .array(chatCompletionChunkToolCallDeltaSchema)
+            .optional(),
+        })
+        .optional(),
+      // Tolerate both the standard OpenAI field name and the `stop_reason`
+      // name the (now removed) non-streaming schema in this file used.
+      finish_reason: z.string().nullable().optional(),
+      stop_reason: z.string().nullable().optional(),
     })
   ),
 });
+
+interface StreamedChoice {
+  delta: {
+    content?: string | null;
+    tool_calls?: z.infer<typeof chatCompletionChunkToolCallDeltaSchema>[];
+  };
+  finishReason: string | null;
+}
+
+/**
+ * Reads an OpenAI-style SSE response body and yields the JSON payload of
+ * each `data: ...` line, stopping at the terminal `data: [DONE]` line.
+ */
+async function* parseSseJsonStream(
+  response: Response
+): AsyncGenerator<unknown> {
+  if (!response.body) {
+    throw new Error("Chat completions response has no readable body.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        return;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+
+        if (!line.startsWith("data:")) {
+          continue;
+        }
+
+        const payload = line.slice("data:".length).trim();
+        if (payload === "[DONE]") {
+          return;
+        }
+
+        yield JSON.parse(payload);
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/**
+ * Wraps {@link parseSseJsonStream}, validating each chunk and yielding its
+ * first choice with a single normalized `finishReason` field.
+ */
+async function* streamChoices(
+  response: Response
+): AsyncGenerator<StreamedChoice> {
+  for await (const payload of parseSseJsonStream(response)) {
+    const chunk = chatCompletionChunkSchema.parse(payload);
+    const choice = chunk.choices[0];
+    if (!choice) {
+      continue;
+    }
+
+    yield {
+      delta: choice.delta ?? {},
+      finishReason: choice.finish_reason ?? choice.stop_reason ?? null,
+    };
+  }
+}
 
 const shareSchema = z.object({
   messages: z.array(
@@ -183,7 +263,7 @@ export default function initApologistExtension() {
                 method: "POST",
                 body: JSON.stringify({
                   model: apologistModel,
-                  stream: false,
+                  stream: true,
                   metadata: {
                     bible: "bsb",
                     language: i18n.language,
@@ -199,63 +279,137 @@ export default function initApologistExtension() {
               }
             );
 
-            const responseData = chatCompletionResponseSchema.parse(
-              await response.json()
-            );
+            const stream = streamChoices(response);
 
-            const choice = responseData.choices[0];
-            if (!choice) {
-              throw new Error(
-                "No choices returned from chat completions response."
-              );
-            }
-            const message = choice.message;
-
-            if (message) {
-              messages.push(message);
-
-              if (message.tool_calls) {
-                // Resolve tool calls
-                for (const call of message.tool_calls) {
-                  const fn = call.function;
-                  if (fn) {
-                    const tool = chatContext.tools?.find(
-                      (t) => t.name === fn.name
-                    );
-                    if (!tool) {
-                      throw new Error(`Tool not found: ${fn.name}`);
-                    }
-
-                    const args = JSON.parse(fn.arguments);
-                    const result = await tool.function(args);
-
-                    messages.push({
-                      role: "tool",
-                      tool_call_id: call.id,
-                      name: fn.name,
-                      content: JSON.stringify(result),
-                    });
-
-                    yield {
-                      type: "tool_call",
-                      name: fn.name,
-                    };
-                  }
-                }
-              }
-
-              if (message.content && !message.tool_calls?.length) {
-                yield {
-                  type: "text",
-                  text: message.content,
-                };
-                return;
-              }
+            // Skip leading deltas that carry no content, no tool_calls, and
+            // no finish reason (e.g. the initial `{ role: "assistant" }`-only
+            // delta) so we can tell whether this turn is a tool-call turn or
+            // a content turn.
+            let next = await stream.next();
+            while (
+              !next.done &&
+              !next.value.delta.content &&
+              !next.value.delta.tool_calls?.length &&
+              !next.value.finishReason
+            ) {
+              next = await stream.next();
             }
 
-            if (choice.stop_reason === "stop") {
+            if (next.done) {
               break;
             }
+
+            const first = next.value;
+            let finishReason: string | null = null;
+
+            if (first.delta.tool_calls?.length) {
+              const pendingToolCalls = new Map<
+                number,
+                { id: string; name: string; args: string }
+              >();
+
+              const applyToolCallDeltas = (
+                deltas: StreamedChoice["delta"]["tool_calls"]
+              ) => {
+                for (const delta of deltas ?? []) {
+                  const existing = pendingToolCalls.get(delta.index) ?? {
+                    id: "",
+                    name: "",
+                    args: "",
+                  };
+                  if (delta.id) {
+                    existing.id = delta.id;
+                  }
+                  if (delta.function?.name) {
+                    existing.name += delta.function.name;
+                  }
+                  if (delta.function?.arguments) {
+                    existing.args += delta.function.arguments;
+                  }
+                  pendingToolCalls.set(delta.index, existing);
+                }
+              };
+
+              let current: StreamedChoice | null = first;
+              while (current) {
+                applyToolCallDeltas(current.delta.tool_calls);
+                if (current.finishReason) {
+                  finishReason = current.finishReason;
+                  break;
+                }
+                const n = await stream.next();
+                current = n.done ? null : n.value;
+              }
+
+              const toolCalls = Array.from(pendingToolCalls.values())
+                .filter((tc) => tc.name)
+                .map((tc) => ({
+                  id: tc.id,
+                  function: { name: tc.name, arguments: tc.args },
+                }));
+
+              messages.push({ role: "assistant", tool_calls: toolCalls });
+
+              // Resolve tool calls
+              for (const call of toolCalls) {
+                const fn = call.function;
+                const tool = chatContext.tools?.find((t) => t.name === fn.name);
+                if (!tool) {
+                  throw new Error(`Tool not found: ${fn.name}`);
+                }
+
+                const args = JSON.parse(fn.arguments);
+                const result = await tool.function(args);
+
+                messages.push({
+                  role: "tool",
+                  tool_call_id: call.id,
+                  name: fn.name,
+                  content: JSON.stringify(result),
+                });
+
+                yield {
+                  type: "tool_call",
+                  name: fn.name,
+                };
+              }
+
+              if (finishReason === "stop") {
+                break;
+              }
+              continue;
+            }
+
+            if (!first.delta.content) {
+              if (first.finishReason === "stop") {
+                break;
+              }
+              continue;
+            }
+
+            let assembledContent = "";
+            async function* textDeltas() {
+              let current: StreamedChoice | null = first;
+              while (current) {
+                if (current.delta.content) {
+                  assembledContent += current.delta.content;
+                  yield current.delta.content;
+                }
+                if (current.finishReason) {
+                  finishReason = current.finishReason;
+                  break;
+                }
+                const n = await stream.next();
+                current = n.done ? null : n.value;
+              }
+            }
+
+            yield {
+              type: "text",
+              text: textDeltas(),
+            };
+            messages.push({ role: "assistant", content: assembledContent });
+            return;
           }
         },
       });
