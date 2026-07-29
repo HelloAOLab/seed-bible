@@ -370,8 +370,6 @@ export interface SeedBibleState {
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import {
   createPlaylistManager,
-  VerseRefSchema,
-  type Playlist,
   type PlaylistManager,
   type SimplePlaylist,
 } from "./PlaylistManager";
@@ -387,6 +385,8 @@ import {
   GeneratedPlaylistSchema,
   generateFunctionTool,
 } from "./AIManager";
+import { z } from "zod";
+import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -1401,6 +1401,43 @@ export function createSeedBibleState(
       },
     });
 
+    const searchVerses = generateFunctionTool({
+      name: "searchVerses",
+      description:
+        "Searches the Bible for verses matching the given query. Returns a list of results.",
+      parameters: z.object({
+        q: z.string().describe("The search query to look for in the Bible."),
+      }),
+      function: async (args) => {
+        const readingState = currentReadingState.peek()?.tab.readingState;
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        const activeLanguage =
+          readingState?.translation.value?.language ??
+          readingState?.defaultTranslation.language ??
+          getDefaultTranslationForLanguage(i18n.defaultLanguage).language;
+        const results = await search.searchVerses(
+          activeLanguage,
+          readingState.translationId.peek(),
+          args.q
+        );
+
+        const verses = (results.hits ?? []).map((hit) => ({
+          translationId: hit.document.translation,
+          translationLabel: hit.document.translation,
+          bookId: hit.document.book,
+          bookLabel: hit.document.book,
+          chapterNumber: hit.document.chapter,
+          verseNumber: hit.document.verse,
+          text: hit.document.text,
+        }));
+
+        return JSON.stringify(verses);
+      },
+    });
+
     const playPlaylist = generateFunctionTool({
       name: "playPlaylist",
       description:
@@ -1420,7 +1457,7 @@ export function createSeedBibleState(
       },
     });
 
-    return [goToReference.tool, playPlaylist.tool];
+    return [goToReference.tool, searchVerses.tool, playPlaylist.tool];
   };
 
   const enableCoreChatContext = () => {
