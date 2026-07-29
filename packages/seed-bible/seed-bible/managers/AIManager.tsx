@@ -1,6 +1,7 @@
 import { z, type ZodSchema } from "zod";
 import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
 import type { PlaylistItemData } from "./PlaylistManager";
+import { getBookId, type BookId } from "./BibleDataManager";
 
 export interface AIProviderFunctionTool {
   name: string;
@@ -25,6 +26,29 @@ export interface AIProviderGenerateOptions {
   cancelToken: AbortSignal;
 }
 
+export const AIBibleVerseRefSchema = z.object({
+  ref: z.object({
+    bookId: z
+      .string()
+      .transform((value, ctx) => {
+        const bid = getBookId(value);
+        if (!bid) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Invalid book ID: ${value}. Only USFM book IDs are supported.`,
+            input: value,
+          });
+        }
+        return bid!;
+      })
+      .describe("The USFM book ID of the Bible verse reference."),
+    chapter: z.number().positive(),
+    endChapter: z.number().positive().nullable(),
+    verse: z.number().positive().nullable(),
+    endVerse: z.number().positive().nullable(),
+  }),
+});
+
 /**
  * The shape the AI is asked to produce for a single playlist item. Kept
  * distinct from {@link PlaylistItem}: it uses nullable (not optional) fields
@@ -35,35 +59,27 @@ export interface AIProviderGenerateOptions {
  */
 export const AIPlaylistItemSchema = z.object({
   type: z.enum(["bible-verse", "link", "html"]),
-  bibleVerse: z
-    .object({
-      ref: z.object({
-        bookId: z.string(),
-        chapter: z.number().positive(),
-        endChapter: z.number().positive().nullable(),
-        verse: z.number().positive().nullable(),
-        endVerse: z.number().positive().nullable(),
-      }),
-    })
-    .nullable(),
+  bibleVerse: AIBibleVerseRefSchema.nullable().default(null),
   link: z
     .object({
       title: z.string().nullable(),
       url: z.string(),
     })
-    .nullable(),
+    .nullable()
+    .default(null),
   html: z
     .object({
       title: z.string().nullable(),
       html: z.string(),
     })
-    .nullable(),
+    .nullable()
+    .default(null),
 });
 
 export const GeneratedPlaylistSchema = z.object({
   items: z.array(AIPlaylistItemSchema),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
+  title: z.string().nullable().default(null),
+  description: z.string().nullable().default(null),
 });
 
 export type GeneratedPlaylistItem = z.infer<typeof AIPlaylistItemSchema>;
@@ -108,7 +124,7 @@ export function convertToAiPlaylistItem(
         type: item.type,
         bibleVerse: {
           ref: {
-            bookId: item.ref.bookId,
+            bookId: item.ref.bookId as BookId,
             chapter: item.ref.chapter,
             endChapter: item.ref.endChapter ?? null,
             verse: item.ref.verse ?? null,
@@ -151,7 +167,7 @@ export function generateFunctionTool<T>(options: {
     name: options.name,
     type: "function",
     description: options.description,
-    parameters: options.parameters.toJSONSchema(),
+    parameters: options.parameters.toJSONSchema({ io: "input" }),
     function: (args: unknown) => {
       const result = options.parameters.safeParse(args);
       if (!result.success) {
