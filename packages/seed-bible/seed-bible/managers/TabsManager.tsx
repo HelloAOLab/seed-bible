@@ -269,9 +269,15 @@ export function createTabs(
     i18nManager.defaultLanguage
   );
 
-  const highlightedVerses = getInitialHighlightedVerses(
-    navigation.currentUrl.value
-  );
+  // Every startup read below comes from `initialUrl` — the frozen snapshot of the
+  // URL the page was opened with — rather than the live `currentUrl`. They are
+  // the same href at this point, but only the snapshot is guaranteed to stay
+  // that way: `currentUrl` is a signal that the reader's own position-to-URL echo
+  // (and anything else constructed between the navigation manager and here) can
+  // move. Reading one source for all of them also keeps this consistent with the
+  // reconcile below, which needs the snapshot to tell "the user linked here" from
+  // "the reader wrote its position into the URL".
+  const highlightedVerses = getInitialHighlightedVerses(navigation.initialUrl);
 
   // Builds a reader tab from a persisted descriptor, seeding its reading state
   // so it loads the stored chapter directly (no Genesis 1 flash). The selected
@@ -331,13 +337,11 @@ export function createTabs(
     // No stored state (SSR or first-ever visit): seed a single tab from the URL
     // reading params, or the defaults — the original behavior.
     const initialTranslationId = getInitialTranslationId(
-      navigation.currentUrl.value,
+      navigation.initialUrl,
       i18nManager.defaultLanguage
     );
-    const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
-    const initialChapter = getInitialFirstTabChapter(
-      navigation.currentUrl.value
-    );
+    const initialBookId = getInitialFirstTabBookId(navigation.initialUrl);
+    const initialChapter = getInitialFirstTabChapter(navigation.initialUrl);
 
     initialTabs = createInitialTabs(
       dataManager,
@@ -354,10 +358,9 @@ export function createTabs(
     );
     initialSelectedTabId = initialTabs[0]?.id ?? "";
   } else {
-    // Restore the stored tabs, reconciled against the URL reading params. Read
-    // the params from `initialUrl` (the frozen pre-echo snapshot) so we compare
-    // against what the user actually linked with, not a position the reader may
-    // have already written back.
+    // Restore the stored tabs, reconciled against the URL reading params — from
+    // the same frozen snapshot as the reads above, so we compare against what the
+    // user actually linked with, not a position the reader may have written back.
     const query = readQueryReadingParams(navigation.initialUrl);
     const { tabs: descriptors, selectedTabId } = reconcileStoredTabs(
       storedState,

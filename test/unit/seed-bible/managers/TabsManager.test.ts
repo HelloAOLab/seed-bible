@@ -394,6 +394,42 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
+  it("reads its startup params from the URL the page opened with, not a later one", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/?book=EXO&chapter=2&verse=5");
+    setWebResponses(createExampleManagerResponseMap());
+
+    // The navigation manager freezes the arrival URL; something then moves the
+    // live one before the tabs are built. The reader's own position-to-URL echo
+    // does exactly this on a real cold start, which is why the startup reads have
+    // to come from the frozen snapshot.
+    const navigation = createNavigationManager();
+    window.history.replaceState(null, "", "/");
+    expect(navigation.currentUrl.value.search).toBe("");
+
+    const i18nManager = createI18nManager(navigation, ["en"]);
+    const manager = createTabs(
+      navigation,
+      createDataManager(),
+      createHighlightsManagerMock() as any,
+      {} as any,
+      i18nManager
+    );
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.bookId.value).toBe("EXO");
+    expect(firstTab.readingState.chapterNumber.value).toBe(2);
+    // `?verse=` is read from the same snapshot, so the scroll target and the
+    // transient highlight survive too.
+    expect(firstTab.readingState.scrollToVerse.value).toBe(5);
+    expect(
+      firstTab.readingState.decorations.value.some((decoration) =>
+        decoration.verses.includes(5)
+      )
+    ).toBe(true);
+  });
+
   it("restores stored tabs when the URL has no reading params", async () => {
     window.localStorage.clear();
     window.history.replaceState(null, "", "/");
