@@ -2059,6 +2059,7 @@ describe("createChatsManager", () => {
 
     chats.addContext({
       id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
       instructions: "Current playlist: {}",
       tools: [playlistTool],
     });
@@ -2097,8 +2098,16 @@ describe("createChatsManager", () => {
     });
     session.addParticipant("provider-1");
 
-    chats.addContext({ id: "playlist", instructions: "First playlist." });
-    chats.addContext({ id: "playlist", instructions: "Second playlist." });
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "First playlist.",
+    });
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Second playlist.",
+    });
 
     await session.sendMessage({ type: "text", text: "Hi @provider-1" });
 
@@ -2129,6 +2138,7 @@ describe("createChatsManager", () => {
 
     chats.addContext({
       id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
       instructions: "Current playlist: {}",
       tools: [playlistTool],
     });
@@ -2165,7 +2175,12 @@ describe("createChatsManager", () => {
     sessionB.addParticipant("provider-1");
 
     // A context added to the manager is visible to both sessions.
-    chats.addContext({ id: "playlist", instructions: "Shared", tools: [tool] });
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Shared",
+      tools: [tool],
+    });
     expect(sessionA.context.value).toEqual(sessionB.context.value);
     expect(sessionA.context.value).toEqual({
       instructions: "Shared",
@@ -2409,6 +2424,9 @@ describe("createChatsManager", () => {
       text: "Provider reply",
     });
     await sendPromise;
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(session.typingParticipants.value).not.toContainEqual(
       expect.objectContaining({
@@ -2467,6 +2485,8 @@ describe("createChatsManager", () => {
       text: "Shared provider reply",
     });
     await sendPromise;
+    await Promise.resolve();
+    await Promise.resolve();
     await Promise.resolve();
 
     expect(chat.typingParticipants.value).not.toContainEqual(
@@ -2610,6 +2630,151 @@ describe("createChatsManager", () => {
       type: "text",
       text: "Shared",
     });
+  });
+
+  it("sendMessage() appends every message yielded by a local provider's message stream", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn().mockImplementation(async function* () {
+        yield { type: "text", text: "Thinking..." };
+        yield { type: "text", text: "Here's the answer." };
+      }),
+    });
+    session.addParticipant("provider-1");
+
+    await session.sendMessage({ type: "text", text: "Hello there" });
+
+    await vi.waitFor(() => {
+      expect(session.messages.value).toHaveLength(3);
+    });
+    expect(session.messages.value[1]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Thinking...",
+    });
+    expect(session.messages.value[2]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Here's the answer.",
+    });
+    expect(session.messages.value[1]!.id).not.toBe(
+      session.messages.value[2]!.id
+    );
+  });
+
+  it("sendMessage() streams the text of a message yielded mid-stream by a local provider", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chunk = createDeferred<IteratorResult<string>>();
+    const textStream = {
+      next: vi
+        .fn<() => Promise<IteratorResult<string>>>()
+        .mockImplementationOnce(() => chunk.promise)
+        .mockResolvedValue({ done: true, value: undefined as any }),
+    };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn().mockImplementation(async function* () {
+        yield { type: "text", text: "Thinking..." };
+        yield { type: "text", text: textStream };
+      }),
+    });
+    session.addParticipant("provider-1");
+
+    const sendPromise = session.sendMessage({
+      type: "text",
+      text: "Hello there",
+    });
+
+    await vi.waitFor(() => {
+      expect(session.messages.value).toHaveLength(2);
+    });
+    expect(session.messages.value[1]).toMatchObject({ text: "Thinking..." });
+
+    chunk.resolve({ done: false, value: "Streamed answer" });
+    await sendPromise;
+
+    await vi.waitFor(() => {
+      expect(session.messages.value).toHaveLength(3);
+    });
+    expect(session.messages.value[1]).toMatchObject({ text: "Thinking..." });
+    expect(session.messages.value[2]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Streamed answer",
+    });
+  });
+
+  it("createSharedSession() appends every message yielded by a provider's message stream", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn().mockImplementation(async function* () {
+        yield { type: "text", text: "Thinking..." };
+        yield { type: "text", text: "Here's the shared answer." };
+      }),
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+    chat.addParticipant("conn-user-a_provider-1");
+    await Promise.resolve();
+
+    await chat.sendMessage({
+      type: "text",
+      text: "Hello @conn-user-a_provider-1",
+    });
+
+    await vi.waitFor(() => {
+      expect(chat.messages.value).toHaveLength(3);
+    });
+    expect(chat.messages.value[1]).toMatchObject({
+      authors: ["conn-user-a_provider-1"],
+      type: "text",
+      text: "Thinking...",
+    });
+    expect(chat.messages.value[2]).toMatchObject({
+      authors: ["conn-user-a_provider-1"],
+      type: "text",
+      text: "Here's the shared answer.",
+    });
+    expect(chat.messages.value[1]!.id).not.toBe(chat.messages.value[2]!.id);
   });
 
   it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {

@@ -85,6 +85,22 @@ export type ChatProviderMessageOptions =
   | ChatMessageOptions
   | StreamingTextChatMessageOptions;
 
+/**
+ * A stream of messages that a {@link ChatProvider} can return from
+ * `generateResponse` instead of a single message, e.g. to narrate multiple
+ * turns of a tool-calling loop. Each yielded message may itself be a
+ * {@link StreamingTextChatMessageOptions} with progressively-streamed text.
+ */
+export type ChatProviderMessageStream =
+  | Iterable<ChatProviderMessageOptions>
+  | AsyncIterable<ChatProviderMessageOptions>
+  | Iterator<ChatProviderMessageOptions>
+  | AsyncIterator<ChatProviderMessageOptions>;
+
+export type ChatProviderResponse =
+  | ChatProviderMessageOptions
+  | ChatProviderMessageStream;
+
 export interface ParsedChatTextMessage extends ChatMessageBase {
   type: "text";
   /** The original text of the message. */
@@ -195,13 +211,16 @@ export interface ChatProvider {
   /** Whether this provider supports being added to shared chats. If false, then the provider can only be used in local (single user) chats. */
   supportsSharedChats: boolean;
 
-  /** Generates a response for the given chat context. */
+  /**
+   * Generates a response for the given chat context. May return a single
+   * message, or an (async) iterable/iterator of messages to emit a sequence
+   * of messages for one turn (e.g. across a multi-step tool-calling loop).
+   * Each message, whether returned directly or yielded from a stream, may
+   * itself stream its text progressively via {@link StreamingTextChatMessageOptions}.
+   */
   generateResponse: (
     context: ChatContext
-  ) =>
-    | ChatProviderMessageOptions
-    | Promise<ChatProviderMessageOptions | null>
-    | null;
+  ) => ChatProviderResponse | Promise<ChatProviderResponse | null> | null;
   /** Called when this provider is added as a participant to a chat. */
   onJoinChat?: (context: JoinLeaveChatContext) => void | Promise<void>;
   /** Called when this provider is removed as a participant from a chat. */
@@ -566,44 +585,57 @@ function mergeLocalChatContexts(
   };
 }
 
-function toAsyncTextIterator(
-  stream: ChatProviderTextStream
-): AsyncIterator<string> {
+function toAsyncIterator<T>(
+  stream: Iterable<T> | AsyncIterable<T> | Iterator<T> | AsyncIterator<T>
+): AsyncIterator<T> {
   if (
-    typeof (stream as AsyncIterable<string>)[Symbol.asyncIterator] ===
-    "function"
+    typeof (stream as AsyncIterable<T>)[Symbol.asyncIterator] === "function"
   ) {
-    return (stream as AsyncIterable<string>)[Symbol.asyncIterator]();
+    return (stream as AsyncIterable<T>)[Symbol.asyncIterator]();
   }
-  if (typeof (stream as Iterable<string>)[Symbol.iterator] === "function") {
-    const iterator = (stream as Iterable<string>)[Symbol.iterator]();
+  if (typeof (stream as Iterable<T>)[Symbol.iterator] === "function") {
+    const iterator = (stream as Iterable<T>)[Symbol.iterator]();
     return {
-      next: async () => {
-        const next = iterator.next();
-        return {
-          done: next.done ?? false,
-          value: (next.value ?? "") as string,
-        };
-      },
+      next: async () => iterator.next(),
     };
   }
-  if (typeof (stream as AsyncIterator<string>).next === "function") {
-    return stream as AsyncIterator<string>;
+  if (typeof (stream as AsyncIterator<T>).next === "function") {
+    return stream as AsyncIterator<T>;
   }
 
   return {
     next: async () => ({
       done: true,
-      value: undefined as unknown as string,
+      value: undefined as unknown as T,
     }),
   };
+}
+
+/**
+ * Distinguishes a single {@link ChatProviderMessageOptions} (always
+ * discriminated by a `type` field) from a {@link ChatProviderMessageStream}
+ * (an (async) iterable/iterator of messages, with no `type` field of its
+ * own). Plain arrays of messages are supported since arrays are `Iterable`.
+ */
+function isProviderMessageStream(
+  response: ChatProviderResponse
+): response is ChatProviderMessageStream {
+  if (typeof response === "object" && response !== null && "type" in response) {
+    return false;
+  }
+  return (
+    typeof (response as AsyncIterable<unknown>)[Symbol.asyncIterator] ===
+      "function" ||
+    typeof (response as Iterable<unknown>)[Symbol.iterator] === "function" ||
+    typeof (response as Iterator<unknown>).next === "function"
+  );
 }
 
 async function consumeProviderTextStream(options: {
   stream: ChatProviderTextStream;
   onChunk: (currentText: string) => void;
 }): Promise<string> {
-  const iterator = toAsyncTextIterator(options.stream);
+  const iterator = toAsyncIterator(options.stream);
   let text = "";
 
   while (true) {
@@ -620,6 +652,104 @@ async function consumeProviderTextStream(options: {
   }
 
   return text;
+}
+
+/**
+ * Handles a single message returned (or yielded) by a {@link ChatProvider},
+ * building a {@link ChatMessage} and handing it to `upsertMessage`. If the
+ * message's text is itself a stream, it is consumed chunk by chunk, calling
+ * `upsertMessage` with the same message ID each time so the caller can
+ * upsert-in-place as the text grows.
+ */
+async function processProviderMessage(options: {
+  message: ChatProviderMessageOptions;
+  authorId: string;
+  getParticipants: () => ChatParticipant[];
+  i18n: i18n;
+  upsertMessage: (message: ChatMessage) => void;
+}): Promise<void> {
+  const { message, authorId, getParticipants, i18n, upsertMessage } = options;
+  if (message.type !== "text") {
+    return;
+  }
+
+  if (typeof message.text !== "string") {
+    const messageId = uuid();
+    const messageTimeMs = Date.now();
+
+    const upsertStreamingResponse = (text: string) => {
+      const responseTargets = resolveMessageTargets(
+        getParticipants(),
+        text,
+        i18n
+      );
+      upsertMessage(
+        createChatMessage(
+          { type: "text", text },
+          [authorId],
+          responseTargets.map((target) => target.id),
+          { id: messageId, timeMs: messageTimeMs }
+        )
+      );
+    };
+
+    const finalText = await consumeProviderTextStream({
+      stream: message.text,
+      onChunk: upsertStreamingResponse,
+    });
+    upsertStreamingResponse(finalText);
+    return;
+  }
+
+  const responseTargets = resolveMessageTargets(
+    getParticipants(),
+    message.text,
+    i18n
+  );
+  upsertMessage(
+    createChatMessage(
+      { type: "text", text: message.text },
+      [authorId],
+      responseTargets.map((target) => target.id)
+    )
+  );
+}
+
+/**
+ * Handles the full response returned by a {@link ChatProvider}'s
+ * `generateResponse`: a single message, a stream of messages, or `null`.
+ * Messages are processed sequentially — including fully consuming each
+ * message's own text stream — before the next message is requested from the
+ * provider's iterator.
+ */
+async function processProviderResponse(options: {
+  response: ChatProviderResponse | null;
+  authorId: string;
+  getParticipants: () => ChatParticipant[];
+  i18n: i18n;
+  upsertMessage: (message: ChatMessage) => void;
+}): Promise<void> {
+  const { response, ...messageOptions } = options;
+  if (!response) {
+    return;
+  }
+
+  if (!isProviderMessageStream(response)) {
+    await processProviderMessage({ message: response, ...messageOptions });
+    return;
+  }
+
+  const iterator = toAsyncIterator(response);
+  while (true) {
+    const next = await iterator.next();
+    if (next.done) {
+      break;
+    }
+    if (!next.value) {
+      continue;
+    }
+    await processProviderMessage({ message: next.value, ...messageOptions });
+  }
 }
 
 function upsertMessageInList(
@@ -1460,67 +1590,13 @@ function createSharedChatSession(
             instructions: merged.instructions,
             tools: merged.tools,
           });
-          if (!response) {
-            return;
-          }
-
-          const streamingText =
-            response.type === "text" && typeof response.text !== "string"
-              ? response.text
-              : null;
-
-          if (streamingText) {
-            const messageId = uuid();
-            const messageTimeMs = Date.now();
-
-            const upsertStreamingResponse = (text: string) => {
-              const responseTargets = resolveMessageTargets(
-                participants.value,
-                text,
-                i18n
-              );
-              const nextResponseMessage = createChatMessage(
-                {
-                  type: "text",
-                  text,
-                },
-                [participant.id],
-                responseTargets.map((target) => target.id),
-                {
-                  id: messageId,
-                  timeMs: messageTimeMs,
-                }
-              );
-              upsertSharedMessage(nextResponseMessage);
-            };
-
-            const finalText = await consumeProviderTextStream({
-              stream: streamingText,
-              onChunk: upsertStreamingResponse,
-            });
-            upsertStreamingResponse(finalText);
-            return;
-          }
-
-          if (response.type !== "text" || typeof response.text !== "string") {
-            return;
-          }
-
-          const responseTargets = resolveMessageTargets(
-            participants.value,
-            response.text,
-            i18n
-          );
-          chats.push(
-            createChatMessage(
-              {
-                type: "text",
-                text: response.text,
-              },
-              [participant.id],
-              responseTargets.map((target) => target.id)
-            )
-          );
+          await processProviderResponse({
+            response,
+            authorId: participant.id,
+            getParticipants: () => participants.value,
+            i18n,
+            upsertMessage: upsertSharedMessage,
+          });
         } finally {
           setParticipantTyping(participant.id, false);
         }
@@ -1941,71 +2017,15 @@ function createLocalChatSession(
             instructions: merged.instructions,
             tools: merged.tools,
           });
-          if (!response) {
-            return;
-          }
-
-          const streamingText =
-            response.type === "text" && typeof response.text !== "string"
-              ? response.text
-              : null;
-
-          if (streamingText) {
-            const messageId = uuid();
-            const messageTimeMs = Date.now();
-
-            const upsertStreamingResponse = (text: string) => {
-              const responseTargets = resolveMessageTargets(
-                participants.value,
-                text,
-                i18n
-              );
-              const nextResponseMessage = createChatMessage(
-                {
-                  type: "text",
-                  text,
-                },
-                [target.id],
-                responseTargets.map((entry) => entry.id),
-                {
-                  id: messageId,
-                  timeMs: messageTimeMs,
-                }
-              );
-              messages.value = upsertMessageInList(
-                messages.value,
-                nextResponseMessage
-              );
-            };
-
-            const finalText = await consumeProviderTextStream({
-              stream: streamingText,
-              onChunk: upsertStreamingResponse,
-            });
-            upsertStreamingResponse(finalText);
-            return;
-          }
-
-          if (response.type !== "text" || typeof response.text !== "string") {
-            return;
-          }
-
-          const responseTargets = resolveMessageTargets(
-            participants.value,
-            response.text,
-            i18n
-          );
-          messages.value = [
-            ...messages.value,
-            createChatMessage(
-              {
-                type: "text",
-                text: response.text,
-              },
-              [target.id],
-              responseTargets.map((entry) => entry.id)
-            ),
-          ];
+          await processProviderResponse({
+            response,
+            authorId: target.id,
+            getParticipants: () => participants.value,
+            i18n,
+            upsertMessage: (message) => {
+              messages.value = upsertMessageInList(messages.value, message);
+            },
+          });
         } finally {
           providerTypingParticipantIds.value =
             providerTypingParticipantIds.value.filter((id) => id !== target.id);
