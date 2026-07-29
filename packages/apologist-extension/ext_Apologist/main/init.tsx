@@ -147,6 +147,9 @@ export default function initApologistExtension() {
           const messages: ChatMessage[] = [contextMessage];
 
           for (const m of chatContext.messages) {
+            if (m.type !== "text") {
+              continue;
+            }
             const authors = resolveMessageAuthors(chatContext.participants, m);
             if (authors.some((a) => a.isSelf)) {
               messages.push({

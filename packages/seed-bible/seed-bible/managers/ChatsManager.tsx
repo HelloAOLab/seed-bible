@@ -51,8 +51,14 @@ export const textChatMessageSchema = chatMessageBaseSchema.extend({
   text: z.string(),
 });
 
+export const toolCallChatMessageSchema = chatMessageBaseSchema.extend({
+  type: z.literal("tool_call"),
+  name: z.string(),
+});
+
 export const chatMessageSchema = z.discriminatedUnion("type", [
   textChatMessageSchema,
+  toolCallChatMessageSchema,
 ]);
 
 export type ChatMessageBase = z.infer<typeof chatMessageBaseSchema>;
@@ -61,6 +67,12 @@ export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
 export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
   textChatMessageSchema.omit({
+    timeMs: true,
+    id: true,
+    authors: true,
+    targets: true,
+  }),
+  toolCallChatMessageSchema.omit({
     timeMs: true,
     id: true,
     authors: true,
@@ -669,6 +681,21 @@ async function processProviderMessage(options: {
   upsertMessage: (message: ChatMessage) => void;
 }): Promise<void> {
   const { message, authorId, getParticipants, i18n, upsertMessage } = options;
+
+  if (message.type === "tool_call") {
+    upsertMessage(
+      createChatMessage(
+        {
+          type: "tool_call",
+          name: message.name,
+        },
+        [authorId],
+        [],
+        { id: uuid(), timeMs: Date.now() }
+      )
+    );
+  }
+
   if (message.type !== "text") {
     return;
   }
@@ -1689,16 +1716,7 @@ function createSharedChatSession(
 
 function getWasMentionedSignal(
   participants: ReadonlySignal<(UserChatParticipant | AIChatParticipant)[]>,
-  unreadMessages: ReadonlySignal<
-    {
-      id: string;
-      authors: string[];
-      timeMs: number;
-      targets: string[] | true;
-      type: "text";
-      text: string;
-    }[]
-  >
+  unreadMessages: ReadonlySignal<ChatMessage[]>
 ) {
   return computed(() => {
     const selfParticipantIds = new Set(
