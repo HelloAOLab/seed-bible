@@ -112,6 +112,7 @@ import {
   createBibleReadingExtensionManager,
   type BibleReadingExtensionManager,
 } from "../managers/BibleReadingExtensionManager";
+import { v4 as uuid } from "uuid";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -367,13 +368,25 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
-import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import {
+  createPlaylistManager,
+  VerseRefSchema,
+  type Playlist,
+  type PlaylistManager,
+  type SimplePlaylist,
+} from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
   DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
+import {
+  AIBibleVerseRefSchema,
+  convertToPlaylistItem,
+  GeneratedPlaylistSchema,
+  generateFunctionTool,
+} from "./AIManager";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -1357,6 +1370,76 @@ export function createSeedBibleState(
       playlists.view.value = playlists.playing.peek()
         ? "play_playlist"
         : "discover";
+    }
+  });
+
+  /**
+   * Builds the AI tools that let a provider interact with the core app state.
+   */
+  const getCoreTools = () => {
+    const goToReference = generateFunctionTool({
+      name: "goToReference",
+      description:
+        "Navigates the user to a specific book, chapter, and verse in the Bible.",
+      parameters: AIBibleVerseRefSchema,
+      function: async (args) => {
+        const readingState = currentReadingState.peek();
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        await readingState.tab.readingState.selectTranslationAndChapter(
+          readingState.translationId,
+          args.ref.bookId,
+          args.ref.chapter,
+          {
+            scrollToVerse: args.ref.verse ?? undefined,
+          }
+        );
+
+        return "success";
+      },
+    });
+
+    const playPlaylist = generateFunctionTool({
+      name: "playPlaylist",
+      description:
+        "Starts playing the given playlist. Useful for giving the user a tour of verses/chapters to read.",
+      parameters: GeneratedPlaylistSchema,
+      function: async (args) => {
+        const playlist: SimplePlaylist = {
+          id: uuid(),
+          title: args.title,
+          description: args.description,
+          items: args.items.map((i) => convertToPlaylistItem(i)),
+        };
+
+        playlists.startPlaying(playlist);
+
+        return "success";
+      },
+    });
+
+    return [goToReference.tool, playPlaylist.tool];
+  };
+
+  const enableCoreChatContext = () => {
+    chats.addContext({
+      id: "core",
+      label: { key: "seed-bible", defaultValue: "Seed Bible" },
+      tools: getCoreTools(),
+    });
+  };
+
+  const disableCoreChatContext = () => {
+    chats.removeContext("core");
+  };
+
+  effect(() => {
+    if (playlists.isDiscoverOpen.value) {
+      disableCoreChatContext();
+    } else {
+      enableCoreChatContext();
     }
   });
 
