@@ -38,6 +38,7 @@ import {
   getSelfDisplayName,
   openBookmarkCategoryModal,
 } from "../Tabs/Tabs";
+import { VerseReferenceText } from "../../app/verseReferenceLink";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -1744,7 +1745,13 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
 
             <div className="sb-footnote-modal-content">
-              {selectedFootnote.value.note.text}
+              <VerseReferenceText
+                text={selectedFootnote.value.note.text}
+                onReferenceClick={(ref) => {
+                  selectFootnote(null);
+                  void state?.app.openVerseReference(ref);
+                }}
+              />
             </div>
           </div>
         </div>
