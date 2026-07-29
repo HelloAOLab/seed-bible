@@ -40,7 +40,8 @@ export interface LoginManager {
    * something to show instantly instead of blank/loading. It is NOT a substitute for
    * `profile` when deciding whether it's safe to write — writes must keep gating on
    * `profile`, which stays null until the network genuinely confirms it. Reset to null
-   * on logout and on switching accounts.
+   * on logout and on switching accounts; an explicit logout also erases the stored
+   * copy (of every account) from the device, so nothing personal outlives the session.
    */
   cachedProfile: Signal<UserProfile | null>;
 
@@ -184,6 +185,41 @@ function writeCachedProfile(userId: string, profile: UserProfile): void {
     );
   } catch {
     // Best-effort; the profile record on the server is the durable source of truth.
+  }
+}
+
+/**
+ * Removes every cached profile on this device.
+ *
+ * Called on explicit sign-out. Clearing only the departing account's entry
+ * would be enough to stop `cachedProfile` from showing it again, but the
+ * point is that "Sign out" shouldn't leave a readable name/location/picture
+ * behind on a shared machine — and entries belonging to accounts that
+ * switched away without a full logout would otherwise never be cleaned up
+ * (nothing evicts them, so they accumulate one per account, indefinitely).
+ * Dropping all of them costs nothing: only one account can be signed in per
+ * browser, and this is purely a display cache that the next successful
+ * profile load rewrites.
+ */
+function clearCachedProfiles(): void {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+  try {
+    // Collect first, then remove — removing while walking by index shifts the
+    // remaining entries and would skip some of them.
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
+        keys.push(key);
+      }
+    }
+    for (const key of keys) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // Best-effort; storage may be unavailable (private mode, blocked).
   }
 }
 
@@ -552,6 +588,12 @@ export function createLoginManager({
         sessionKey: sessionKey.value!,
       });
     }
+    // Wipe the on-disk profile cache before dropping the session. The effect
+    // below already nulls the `cachedProfile` signal once `userId` goes null,
+    // but that only clears what's in memory — the stored copy would otherwise
+    // outlive the session with the user's name, location, description and
+    // picture URL still readable on the device.
+    clearCachedProfiles();
     batch(() => {
       sessionKey.value = null;
       connectionKey.value = null;

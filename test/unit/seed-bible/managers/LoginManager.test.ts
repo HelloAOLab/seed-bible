@@ -587,6 +587,67 @@ describe("createLoginManager", () => {
 
       await waitFor(() => manager.userId.value === null);
       expect(manager.cachedProfile.value).toBeNull();
+      // Nulling the signal isn't enough — the stored copy holds the user's
+      // name/location/picture, so it must not outlive the session on the
+      // device either.
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBeNull();
+    });
+
+    it("erases every account's stored profile on logout, not just the current one", async () => {
+      // A previous account that switched away without a full logout would
+      // otherwise leave its cache behind forever — nothing else evicts these.
+      localStorage.setItem(
+        "sb-profile-cache-user-2",
+        JSON.stringify({ name: "Someone Else", location: "Springfield" })
+      );
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+
+      await manager.logout();
+
+      await waitFor(() => manager.userId.value === null);
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBeNull();
+      expect(localStorage.getItem("sb-profile-cache-user-2")).toBeNull();
+    });
+
+    it("leaves unrelated storage alone when clearing profile caches on logout", async () => {
+      localStorage.setItem("sb-profile-config-local", JSON.stringify({}));
+      localStorage.setItem("sb-install-dismissed", "true");
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+
+      await manager.logout();
+
+      await waitFor(() => manager.userId.value === null);
+      expect(localStorage.getItem("sb-profile-config-local")).toBe("{}");
+      expect(localStorage.getItem("sb-install-dismissed")).toBe("true");
+    });
+
+    it("still logs out when clearing the stored profile caches fails", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+
+      // Throw from the enumeration `clearCachedProfiles` uses to find the
+      // cache keys. Spying on `removeItem` instead would also break the
+      // unrelated session-key persistence effect, which has never been
+      // guarded and would fail this test for the wrong reason.
+      const keySpy = vi
+        .spyOn(Storage.prototype, "key")
+        .mockImplementation(() => {
+          throw new Error("storage unavailable");
+        });
+
+      try {
+        await expect(manager.logout()).resolves.toBeUndefined();
+      } finally {
+        keySpy.mockRestore();
+      }
+
+      await waitFor(() => manager.userId.value === null);
+      expect(manager.cachedProfile.value).toBeNull();
     });
 
     it("clears the cached profile when switching accounts", async () => {
