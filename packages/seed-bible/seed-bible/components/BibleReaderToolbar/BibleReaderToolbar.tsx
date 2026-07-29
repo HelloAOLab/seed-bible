@@ -545,6 +545,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
   const isMoreMenuOpen = useSignal(false);
+  // The mobile More button, so dismissing its menu with Escape can hand focus
+  // back to it instead of dropping it on the removed popover.
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
   // Whether the mobile verse sheet shows its overflow actions (the "More" /
@@ -839,6 +842,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // toolbar button works normally while the menu is open, it just also
   // dismisses the menu. Capture phase so we still see the tap even if the
   // target stops propagation.
+  //
+  // `pointerdown` (rather than `click`) means a touch-scroll that starts while
+  // the menu is open also dismisses it, since a scroll gesture begins with a
+  // pointerdown. That is intended: it matches how dropdowns usually behave, and
+  // dismissing as the gesture starts feels more responsive than waiting for it
+  // to finish. Scrolling the menu's own list is unaffected — those touches land
+  // inside the anchor and return early below.
   useEffect(() => {
     if (!isMoreMenuOpen.value) return;
 
@@ -853,6 +863,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         isMoreMenuOpen.value = false;
+        // Escape is a keyboard dismissal, so send focus back to the button that
+        // opened the menu — otherwise it is left on the now-unmounted popover and
+        // the next Tab starts over from the top of the document. Only for
+        // Escape: after an outside tap the user is already interacting
+        // somewhere else, and pulling focus back would fight them.
+        moreButtonRef.current?.focus();
       }
     };
 
@@ -1245,6 +1261,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
                     <button
                       type="button"
+                      ref={moreButtonRef}
                       onClick={() => {
                         // Opening the More menu should dismiss whatever else is
                         // covering the reader — the search bar, the chat panel,
