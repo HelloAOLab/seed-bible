@@ -446,7 +446,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
-      openChat: sidebar.openChatPanel,
+      openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
       modals: props.state.modals,
@@ -921,14 +921,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
+  /**
+   * Display name for a book id, resolved from the current translation's
+   * catalog.
+   *
+   * The catalog covers every book and tracks the reader's position the instant
+   * it moves; the loaded chapter only ever describes one book, and during a
+   * fast skim it describes the one the reader has already left. Falls back to
+   * the chapter only while that translation's catalog is still downloading, and
+   * only when it happens to be the book being asked about.
+   */
+  const resolveBookName = (id: string | null | undefined): string => {
+    if (!id) {
+      return "";
+    }
+    const state = readingState.value;
+    const loadedBook = state?.chapterData.value?.book;
+    const book =
+      state?.translationBooks.value?.books.find((b) => b.id === id) ??
+      (loadedBook?.id === id ? loadedBook : null);
+    return book?.name ?? book?.commonName ?? id;
+  };
+
   const getReaderNavLabel = () => {
     return (
       <>
-        <div>
-          {readingState.value?.chapterData.value?.book.name ??
-            readingState.value?.bookId.value ??
-            " "}
-        </div>
+        <div>{resolveBookName(readingState.value?.bookId.value) || " "}</div>
         <div>{readingState.value?.chapterNumber.value}</div>
       </>
     );
@@ -937,10 +955,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const getPlayingNavLabel = (playing: PlayingState) => {
     const currentItem = playing.currentItem.value;
     if (currentItem) {
-      const label = playlistItemLabel(currentItem, t, (bookId: string) => {
-        const book = readingState.value?.chapterData.value?.book;
-        return book?.name ?? book?.commonName ?? bookId;
-      });
+      const label = playlistItemLabel(currentItem, t, resolveBookName);
       return (
         <>
           <div>{label}</div>

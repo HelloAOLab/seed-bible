@@ -599,9 +599,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronLeftIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.hasPrevious.value ||
-        context.readingState.loading.value,
+      // Deliberately not gated on `loading`: navigation no longer waits on the
+      // text request, so pressing again mid-load is exactly what should work.
+      isDisabled: (context) => !context.readingState.hasPrevious.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
@@ -644,7 +644,6 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 100,
       title: { key: "books", defaultValue: "Books" },
       icon: OpenSelectorIcon,
-      isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
         const currentSlot =
           context.tabsLayoutManager.slots.value.find(
@@ -690,7 +689,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>menu_book</MaterialIcon>,
       isVisible: (context) =>
         !!context.readingPlans &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS),
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
         const readingPlans = context.readingPlans;
         if (!readingPlans) {
@@ -740,9 +739,8 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronRightIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.hasNext.value ||
-        context.readingState.loading.value,
+      // See `previous-chapter`: in-flight text must not block moving on.
+      isDisabled: (context) => !context.readingState.hasNext.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadNextChapter();

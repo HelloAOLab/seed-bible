@@ -15,7 +15,11 @@ import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUs
 import {
   EXAMPLE_API_ENDPOINT,
   type WebResponseMap,
+  aabBooks,
   createExampleManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeExampleUrl,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
@@ -368,6 +372,57 @@ describe("createTabs", () => {
     expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
   });
 
+  it.each([
+    ["?book=GEN&chapter=0.5", 1],
+    ["?book=GEN&chapter=2.7", 2],
+    ["?book=GEN&chapter=abc", 1],
+    ["?book=GEN&chapter=-4", 1],
+  ])(
+    "reads a non-integer chapter param safely: %s",
+    async (query, expected) => {
+      // `chapter=0.5` used to reach the reader as chapter 0 — the range check
+      // ran before the flooring, so anything between 0 and 1 slipped past it.
+      // A fractional chapter that floors to something real still resolves to
+      // it rather than being thrown away.
+      window.history.replaceState(null, "", query);
+      const responses = createExampleManagerResponseMap();
+      responses[makeExampleUrl("/api/AAB/GEN/2.json")] = createResponse(
+        makeChapter(aabBooks, "GEN", 2)
+      );
+      setWebResponses(responses);
+
+      const { tabs: manager } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
+
+      const readingState = manager.tabs.value[0]!.readingState;
+      expect(readingState.chapterNumber.value).toBe(expected);
+      expect(
+        webGetMock.mock.calls.map((call) => call[0] as string)
+      ).not.toContain(makeExampleUrl("/api/AAB/GEN/0.json"));
+    }
+  );
+
+  it("still dims a deep-linked verse when the chapter param is fractional", async () => {
+    // The reader's chapter signal is normalised a second time inside
+    // `createBibleReadingState`, so a bad chapter param never reaches the
+    // loader. The verse decoration is not: `createInitialTabs` keys it off the
+    // raw parsed value. Parsing `0.5` as chapter 0 therefore produced a
+    // decoration for a chapter the reader is never on, and the dimming that is
+    // supposed to point out the linked verse silently did nothing.
+    window.history.replaceState(null, "", "?book=GEN&chapter=0.5&verse=3");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.chapterNumber.value).toBe(1);
+    // Decorations for a position the reader is not on are pruned, so surviving
+    // this far is the assertion.
+    expect(readingState.decorations.value).toHaveLength(1);
+    expect(readingState.decorations.value[0]!.chapterNumber).toBe(1);
+  });
+
   it("reuses the translationId URL param instead of writing the translation param", async () => {
     window.history.replaceState(null, "", "?translationId=NIV&book=MAT");
     setWebResponses(createExampleManagerResponseMap());
@@ -654,6 +709,38 @@ describe("createTabs", () => {
     // several steps; prescriptive updates collapse that into a single entry.
     expect(readingState.bookId.value).toBe("MAT");
     expect(pushSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("a fast skim costs one history entry, not one per chapter", async () => {
+    // The Back button is the whole point of coalescing: after skimming, one
+    // press has to return the reader to where the skim started rather than
+    // walking them back through every chapter they flicked past.
+    const responses = createExampleManagerResponseMap();
+    for (const chapter of [2, 3, 4, 5]) {
+      responses[makeExampleUrl(`/api/AAB/GEN/${chapter}.json`)] =
+        createResponse(makeChapter(aabBooks, "GEN", chapter));
+    }
+    setWebResponses(responses);
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+
+    // Spy only after the initial mount commit (a replace) has happened.
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
+    readingState.loadNextChapter();
+    readingState.loadNextChapter();
+    readingState.loadNextChapter();
+    readingState.loadNextChapter();
+    await waitFor(() => readingState.chapterNumber.value === 5);
+
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(replaceSpy).toHaveBeenCalledTimes(3);
+
+    const url = new URL(window.location.href);
+    expect(url.searchParams.get("chapter")).toBe("5");
   });
 
   it("switching tabs replaces the URL without pushing a new history entry", async () => {

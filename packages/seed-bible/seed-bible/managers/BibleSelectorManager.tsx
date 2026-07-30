@@ -176,6 +176,11 @@ export interface BibleSelectorState {
     translation: Translation;
     position: { x: number; y: number };
   } | null>;
+  /**
+   * The translation whose offline download the user is being asked to confirm
+   * removing, or null when no confirmation is pending.
+   */
+  pendingOfflineDelete: Signal<Translation | null>;
   inputValue: Signal<string>;
   filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   handleTranslationAddition: () => void;
@@ -596,6 +601,8 @@ export function createBibleSelectorState(
     translation: Translation;
     position: { x: number; y: number };
   } | null>(null);
+
+  const pendingOfflineDelete = signal<Translation | null>(null);
 
   const inputValue = signal<string>("");
 
@@ -1050,6 +1057,7 @@ export function createBibleSelectorState(
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
+    pendingOfflineDelete,
     inputValue,
     filteredApiTranslations,
     handleTranslationAddition,
