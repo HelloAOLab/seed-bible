@@ -7,6 +7,7 @@
 - The Seed Bible now opens with no internet connection. The reader and the files it needs to start are stored on your device the first time you visit, so a later visit offline still opens the app instead of the browser's "no connection" page. Extra languages and extensions are kept as you use them, so they are there offline too. On a connection that is present but not working, the app waits three seconds for the network before falling back to its stored copy rather than hanging.
 - Download a whole translation to your device from the Bible selector and read it with no connection, with live progress, a cancel option, a size readout, and a prompt to re-download when a newer version is published. ([#1533](https://github.com/HelloAOLab/seed-bible/pull/1533))
 - Show a loading placeholder in place of the verses while the chapter you moved to is still downloading, after briefly dimming the chapter you left, instead of leaving the previous chapter's text under the new chapter's title. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- The Seed Bible now remembers the last translation you selected and loads it by default. ([#1445](https://github.com/HelloAOLab/seed-bible/pull/1511))
 
 ### 🔧 Changed
 
@@ -14,7 +15,8 @@
 - Collapse a fast skim into a single browser history entry, so one Back press returns you to where the skim started instead of stepping back through every chapter you passed. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Resolve the reader's book and chapter labels from the book catalog instead of the loaded chapter, so the titles, the tab strip and the mobile navigation pill update the moment you move. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Work out the next and previous chapter from the book catalog instead of following links on the loaded chapter, which includes apocryphal books wherever a translation lists them. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
-- When a chapter fails to load, the reader now shows a "Chapter unavailable" message with an offline icon and a **Reload** button that retries the load, instead of a raw red error message like "Failed to fetch".
+- When a chapter fails to load, the reader now shows a "Chapter unavailable" message with an offline icon and a **Reload** button that retries the load, instead of a raw red error message like "Failed to fetch". ([#1531](https://github.com/HelloAOLab/seed-bible/pull/1531))
+- Improved how verse text is copied. ([#1532](https://github.com/HelloAOLab/seed-bible/pull/1532))
 
 ### 🐛 Fixed
 
