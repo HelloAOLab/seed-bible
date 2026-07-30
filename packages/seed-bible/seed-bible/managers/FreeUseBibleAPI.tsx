@@ -1274,8 +1274,17 @@ export class FreeUseBibleAPI {
         ? contentLength
         : null;
 
+    // Each chunk is decoded as it arrives and then dropped, rather than keeping
+    // every chunk and joining them into one big buffer at the end. A complete
+    // translation is several megabytes, and this feature is aimed at low-end
+    // phones on poor connections — the buffer-then-decode version held the raw
+    // bytes, the merged copy, and the decoded text all at once, roughly four
+    // times the payload at peak, which is enough to run a cheap device out of
+    // memory. `stream: true` is what makes per-chunk decoding safe: it holds back
+    // a partial character split across a chunk boundary instead of corrupting it.
     const reader = body.getReader();
-    const chunks: Uint8Array[] = [];
+    const decoder = new TextDecoder();
+    let text = "";
     let receivedBytes = 0;
 
     onProgress(0, totalBytes);
@@ -1285,20 +1294,14 @@ export class FreeUseBibleAPI {
         break;
       }
       if (value) {
-        chunks.push(value);
+        text += decoder.decode(value, { stream: true });
         receivedBytes += value.byteLength;
         onProgress(receivedBytes, totalBytes);
       }
     }
+    text += decoder.decode();
 
-    const merged = new Uint8Array(receivedBytes);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-
-    return JSON.parse(new TextDecoder().decode(merged)) as CompleteTranslation;
+    return JSON.parse(text) as CompleteTranslation;
   }
 
   async getNextChapter(

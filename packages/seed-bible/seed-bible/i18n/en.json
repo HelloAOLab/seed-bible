@@ -193,7 +193,7 @@
   "download-translation-offline": "Download for offline use",
   "cancel-translation-download": "Downloading {{percent}}% — tap to cancel",
   "cancel-translation-download-unknown-size": "Downloading {{size}} so far — tap to cancel",
-  "saving-translation-to-device": "Saving to this device… {{percent}}%",
+  "saving-translation-to-device": "Saving to this device… {{percent}}% — tap to cancel",
   "translation-available-offline": "Available offline ({{size}}) — tap to remove",
   "update-offline-translation": "A newer version is available — tap to update",
   "retry-translation-download": "Download failed ({{error}}) — tap to retry",

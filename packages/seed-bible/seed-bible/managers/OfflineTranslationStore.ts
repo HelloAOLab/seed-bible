@@ -107,6 +107,23 @@ export interface StoredChapterEntry {
 export interface SaveTranslationOptions {
   /** Called as chapters are written, so callers can show save progress. */
   onProgress?: (savedChapters: number, totalChapters: number) => void;
+
+  /**
+   * Aborts the save partway.
+   *
+   * Chapters are written in chunks, so aborting stops before the next chunk
+   * rather than instantly. Whatever was already written is deleted again and the
+   * save rejects with an `AbortError`, so a cancelled download never leaves a
+   * half-written translation behind.
+   */
+  signal?: AbortSignal;
+}
+
+/** The error a cancelled save rejects with. */
+function abortError(): Error {
+  const error = new Error("The save was cancelled.");
+  error.name = "AbortError";
+  return error;
 }
 
 /**
@@ -132,6 +149,9 @@ export interface OfflineTranslationStore {
    * The metadata record is written last on purpose: if the save is interrupted
    * partway, no metadata record exists, so the translation reads back as "not
    * downloaded" rather than as a usable copy with holes in it.
+   *
+   * Rejects with an `AbortError` if `options.signal` is aborted before the save
+   * finishes, having removed the chapters written so far.
    */
   save(
     record: DownloadedTranslation,
@@ -310,6 +330,18 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
     const database = await openDatabase();
     await deleteTranslation(record.translationId);
 
+    // Between chunks is the only safe place to give up: a chunk is one
+    // transaction, so it either lands whole or not at all.
+    const abortIfCancelled = async () => {
+      if (!options?.signal?.aborted) {
+        return;
+      }
+      await deleteTranslation(record.translationId);
+      throw abortError();
+    };
+
+    await abortIfCancelled();
+
     for (let index = 0; index < chapters.length; index += SAVE_CHUNK_SIZE) {
       const chunk = chapters.slice(index, index + SAVE_CHUNK_SIZE);
       const transaction = database.transaction(CHAPTERS_STORE, "readwrite");
@@ -327,6 +359,7 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
         store.put(chapterRecord);
       }
       await transactionToPromise(transaction);
+      await abortIfCancelled();
       options?.onProgress?.(
         Math.min(index + chunk.length, chapters.length),
         chapters.length
@@ -385,11 +418,18 @@ export function createInMemoryTranslationStore(): OfflineTranslationStore {
     },
     async save(record, entries, options) {
       await deleteTranslation(record.translationId);
+      if (options?.signal?.aborted) {
+        throw abortError();
+      }
       for (const entry of entries) {
         chapters.set(
           chapterKey(record.translationId, entry.book, entry.chapter),
           entry.data
         );
+      }
+      if (options?.signal?.aborted) {
+        await deleteTranslation(record.translationId);
+        throw abortError();
       }
       options?.onProgress?.(entries.length, entries.length);
       translations.set(record.translationId, record);

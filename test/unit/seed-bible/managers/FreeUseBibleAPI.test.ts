@@ -410,6 +410,31 @@ describe("FreeUseBibleAPI", () => {
       expect(totals.every((total) => total === null)).toBe(true);
     });
 
+    it("decodes text whose characters are split across chunk boundaries", async () => {
+      // The body is decoded chunk by chunk as it arrives rather than buffered
+      // and decoded once at the end, which keeps peak memory near the size of
+      // the payload instead of several times it. One byte per chunk is the
+      // worst case for that: every non-ASCII character arrives in pieces, so a
+      // decoder that treated each chunk as standalone text would corrupt them.
+      const multiByte = {
+        translation: { id: "BSB", name: "Ἡ Καινὴ Διαθήκη — 聖經 🕊" },
+        books: [{ id: "GEN", chapters: [] }],
+      };
+      const byteLength = new TextEncoder().encode(
+        JSON.stringify(multiByte)
+      ).byteLength;
+      fetchMock.mockResolvedValue(
+        createStreamingResponse(multiByte, { chunks: byteLength })
+      );
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const result = await api.getCompleteTranslation("BSB", {
+        onProgress: () => {},
+      });
+
+      expect(result).toEqual(multiByte);
+    });
+
     it("does not cache the response, so a second download re-requests it", async () => {
       fetchMock.mockResolvedValue(createResponse(payload));
 

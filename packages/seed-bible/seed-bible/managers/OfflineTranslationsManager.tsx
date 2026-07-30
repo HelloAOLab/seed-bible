@@ -21,6 +21,9 @@
  */
 
 import { computed, signal, type ReadonlySignal } from "@preact/signals";
+// Type-only, so this doesn't create a runtime cycle with BibleDataManager (which
+// imports this module to construct the manager).
+import type { MergeTranslationsOptions } from "./BibleDataManager";
 import type {
   CompleteTranslation,
   FreeUseBibleAPI,
@@ -175,6 +178,15 @@ export interface OfflineTranslationsManager {
     chapter: TranslationBookChapter,
     direction: "next" | "previous"
   ) => Promise<TranslationBookChapter | null>;
+
+  /**
+   * Releases the manager's hold on the page: removes its `online`/`offline`
+   * listeners and aborts any in-flight download.
+   *
+   * The app's instance lives as long as the page does, so this is mainly for
+   * tests and for anything that builds a manager per unit of work.
+   */
+  dispose: () => void;
 }
 
 export interface CreateOfflineTranslationsManagerOptions {
@@ -201,8 +213,16 @@ export interface CreateOfflineTranslationsManagerOptions {
    *
    * Called after downloads load so a downloaded translation still shows up in
    * the selector when the device is offline and the API list can't be fetched.
+   *
+   * `fillOnly` is passed whenever the metadata is a saved copy from download
+   * time, so it can't overwrite something the app has since learned from the
+   * API — see {@link MergeTranslationsOptions}.
    */
-  mergeTranslations: (endpoint: string, translations: Translation[]) => void;
+  mergeTranslations: (
+    endpoint: string,
+    translations: Translation[],
+    options?: MergeTranslationsOptions
+  ) => void;
 }
 
 /** A book plus chapter coordinate, used for next/previous resolution. */
@@ -466,12 +486,48 @@ export function createOfflineTranslationsManager(
   };
 
   /**
+   * Re-reads one translation's metadata from storage so the signal matches what
+   * is actually on the device.
+   *
+   * Needed after a failed or cancelled download: saving replaces any existing
+   * copy, so it deletes the old one before writing the new one. If it doesn't get
+   * that far, the device has nothing even though the signal still remembers the
+   * previous download.
+   */
+  const syncRecordFromStore = async (translationId: string): Promise<void> => {
+    if (!store) {
+      return;
+    }
+    try {
+      const stored = await store.get(translationId);
+      if (stored) {
+        setRecord(stored);
+      } else {
+        removeRecord(translationId);
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to re-read the stored copy of ${translationId}.`,
+        error
+      );
+    }
+  };
+
+  /**
    * Makes downloaded translations visible in the app's translation list even
    * when the API can't be reached, so an offline user can still find and open
    * what they downloaded.
+   *
+   * `options.fillOnly` decides whether these records are allowed to replace what
+   * the list already holds. Records read back from storage must not (their
+   * metadata is from download time, and replacing a newly fetched `sha256` with
+   * it would hide an available update), but a record from a download that just
+   * finished may — its metadata came from the payload we downloaded seconds ago,
+   * which is the freshest thing anyone has.
    */
   const publishRecordTranslations = (
-    storedRecords: Iterable<DownloadedTranslation>
+    storedRecords: Iterable<DownloadedTranslation>,
+    options?: MergeTranslationsOptions
   ) => {
     const byEndpoint = new Map<string, Translation[]>();
     for (const record of storedRecords) {
@@ -483,7 +539,7 @@ export function createOfflineTranslationsManager(
       }
     }
     for (const [endpoint, translations] of byEndpoint) {
-      mergeTranslations(endpoint, translations);
+      mergeTranslations(endpoint, translations, options);
     }
   };
 
@@ -496,21 +552,35 @@ export function createOfflineTranslationsManager(
       records.value = new Map(
         storedRecords.map((record) => [record.translationId, record])
       );
-      publishRecordTranslations(storedRecords);
+      publishRecordTranslations(storedRecords, { fillOnly: true });
     } catch (error) {
       console.warn("Failed to read downloaded translations.", error);
     }
   })();
 
+  const handleOnline = () => {
+    isOnline.value = true;
+    void checkForUpdates();
+  };
+  const handleOffline = () => {
+    isOnline.value = false;
+  };
+
   if (typeof window !== "undefined") {
-    window.addEventListener("online", () => {
-      isOnline.value = true;
-      void checkForUpdates();
-    });
-    window.addEventListener("offline", () => {
-      isOnline.value = false;
-    });
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
   }
+
+  const dispose = () => {
+    if (typeof window !== "undefined") {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    }
+    for (const controller of controllers.values()) {
+      controller.abort();
+    }
+    controllers.clear();
+  };
 
   const getRecord = async (
     translationId: string
@@ -608,10 +678,12 @@ export function createOfflineTranslationsManager(
       };
 
       await store.save(record, chapters, {
+        // Handing the signal to the store is what makes cancelling during the
+        // save phase real: it stops writing chapters and removes the ones it
+        // already wrote, instead of finishing the save while the UI still shows
+        // a cancel button.
+        signal: controller.signal,
         onProgress: (savedChapters, totalChapters) => {
-          if (controller.signal.aborted) {
-            return;
-          }
           setProgress(translationId, {
             translationId,
             phase: "saving",
@@ -625,13 +697,20 @@ export function createOfflineTranslationsManager(
       });
 
       setRecord(record);
+      // Not `fillOnly`: this metadata came from the payload we just downloaded,
+      // so it is the freshest the app has and should replace whatever is there.
       publishRecordTranslations([record]);
       return true;
     } catch (error) {
+      // Whatever went wrong, the device may now hold less than `records` claims,
+      // because saving deletes the previous copy before writing the new one.
+      await syncRecordFromStore(translationId);
+
       if (isAbortError(error)) {
-        // Cancelling isn't a failure, so it leaves no error behind. Any chapters
-        // already written stay orphaned without a metadata record, and the next
-        // download of this translation clears them.
+        // Cancelling isn't a failure, so it leaves no error behind. Nothing
+        // half-written is left on the device either: cancelling during the
+        // download never starts writing, and cancelling during the save rolls its
+        // own writes back.
         return false;
       }
       setError(translationId, toErrorMessage(error));
@@ -827,5 +906,6 @@ export function createOfflineTranslationsManager(
     getTranslationBooks,
     getTranslationBookChapter,
     getAdjacentChapter,
+    dispose,
   };
 }
