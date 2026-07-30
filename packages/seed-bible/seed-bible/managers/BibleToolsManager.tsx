@@ -1008,11 +1008,7 @@ function openShareModal(
   });
 }
 
-/**
- * Formats the selected verses from the reading state into a human-readable string.
- * @param readingState The reading state containing the selected verses to format.
- * @returns A string representing the formatted selected verses.
- */
+/** Splits verses into groups of consecutive verse numbers. */
 function groupConsecutiveVerses(verses: BibleSelectedVerse[]) {
   const groups: BibleSelectedVerse[][] = [];
   let current: BibleSelectedVerse[] = [];
@@ -1035,28 +1031,22 @@ function groupConsecutiveVerses(verses: BibleSelectedVerse[]) {
 
   return groups;
 }
+
+/**
+ * Formats a single contiguous run of verse numbers, e.g. `12` or `12-17`.
+ * Assumes `verseNumbers` is already sorted and contiguous, which holds for
+ * every caller since it only ever receives a group from `groupConsecutiveVerses`.
+ */
 function formatVerseRanges(verseNumbers: number[]): string {
   if (verseNumbers.length === 0) return "";
 
-  const sorted = [...new Set(verseNumbers)].sort((a, b) => a - b);
+  const start = verseNumbers[0]!;
+  const end = verseNumbers[verseNumbers.length - 1]!;
 
-  const ranges: string[] = [];
-  let start = sorted[0]!;
-  let end = start;
-
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i] === end + 1) {
-      end = sorted[i]!;
-    } else {
-      ranges.push(start === end ? `${start}` : `${start}-${end}`);
-      start = end = sorted[i]!;
-    }
-  }
-
-  ranges.push(start === end ? `${start}` : `${start}-${end}`);
-
-  return ranges.join(",");
+  return start === end ? `${start}` : `${start}-${end}`;
 }
+
+/** Extracts and normalizes the plain text content of a single selected verse. */
 function extractVerseText(verse: BibleSelectedVerse): string {
   return verse.verse.content
     .map((part) => {
@@ -1073,6 +1063,12 @@ function extractVerseText(verse: BibleSelectedVerse): string {
     .replace(/\s+([,.;:!?’”)\]])/g, "$1")
     .trim();
 }
+
+/**
+ * Formats the selected verses from the reading state into a human-readable string.
+ * @param readingState The reading state containing the selected verses to format.
+ * @returns A string representing the formatted selected verses.
+ */
 export function formatSelectedVerses(readingState: BibleReadingState) {
   const verses = readingState.selectedVerses.value;
 
@@ -1103,6 +1099,7 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
     })
     .join("\n\n");
 }
+
 /**
  * Creates the tools manager with default tool sets and registration APIs.
  *
