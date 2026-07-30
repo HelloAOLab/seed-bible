@@ -4,11 +4,16 @@
 
 ### ✨ Added
 
-- The Seed Bible now opens with no internet connection. The reader and the files it needs to start are stored on your device the first time you visit, so a later visit offline still opens the app instead of the browser's "no connection" page. Extra languages and extensions are kept as you use them, so they are there offline too. On a connection that is present but not working, the app waits three seconds for the network before falling back to its stored copy rather than hanging.
+- The Seed Bible now opens with no internet connection. The reader and the files it needs to start are stored on your device the first time you visit, so a later visit offline still opens the app instead of the browser's "no connection" page. Extra languages and extensions are kept as you use them, so they are there offline too. On a connection that is present but not working, the app waits three seconds for the network before falling back to its stored copy rather than hanging. ([#1534](https://github.com/HelloAOLab/seed-bible/pull/1534))
 - Download a whole translation to your device from the Bible selector and read it with no connection, with live progress, a cancel option, a size readout, and a prompt to re-download when a newer version is published. ([#1533](https://github.com/HelloAOLab/seed-bible/pull/1533))
 - Show a loading placeholder in place of the verses while the chapter you moved to is still downloading, after briefly dimming the chapter you left, instead of leaving the previous chapter's text under the new chapter's title. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - The Seed Bible now remembers the last translation you selected and loads it by default. ([#1445](https://github.com/HelloAOLab/seed-bible/pull/1511))
 - The Seed Bible is now able to save your settings even if you are not logged in. ([#1471](https://github.com/HelloAOLab/seed-bible/pull/1471))
+- Turn Bible references inside footnotes into clickable links that jump to that verse. ([#1517](https://github.com/HelloAOLab/seed-bible/pull/1517))
+- Sign the user out automatically when their stored session is no longer valid. ([#1546](https://github.com/HelloAOLab/seed-bible/pull/1546))
+- Add an XML sitemap for search engines. ([#1469](https://github.com/HelloAOLab/seed-bible/pull/1469))
+- Add a close button to the floating chat panel header. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
+- Add dedicated theme colors for links and visited links. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
 
 ### 🔧 Changed
 
@@ -18,6 +23,7 @@
 - Work out the next and previous chapter from the book catalog instead of following links on the loaded chapter, which includes apocryphal books wherever a translation lists them. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - When a chapter fails to load, the reader now shows a "Chapter unavailable" message with an offline icon and a **Reload** button that retries the load, instead of a raw red error message like "Failed to fetch". ([#1531](https://github.com/HelloAOLab/seed-bible/pull/1531))
 - Improved how verse text is copied. ([#1532](https://github.com/HelloAOLab/seed-bible/pull/1532))
+- Only save your translation choice when picked from the selector, not from other paths. ([#1511](https://github.com/HelloAOLab/seed-bible/pull/1511))
 
 ### 🐛 Fixed
 
@@ -26,9 +32,17 @@
 - Fix an out-of-range chapter in the address, such as `?chapter=99999`, leaving the address pointing at a chapter you are not on, so pressing Back returned you to it and bounced straight forward again. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Fix a fractional chapter in the address, such as `?chapter=0.5&verse=3`, losing the highlight that points out the linked verse. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Fix picking the chapter you are already reading costing a browser history entry, so Back still returns you to where you came from instead of leaving you where you are. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
-- Hide the verse toolbar while a pane covers the reader (e.g. the Locations map) instead of letting it sit on top and hide most of the pane. The verse selection is kept, so the toolbar comes back unchanged when the pane is closed.
-- Stop selecting or clearing a verse from closing an open fullscreen pane. Selecting a verse is mirrored into the `?verse` URL parameter, which was being read as a navigation.
-- Reserve the mobile bottom bar's height on a fullscreen pane, so the bottom of the pane's own content is no longer hidden behind the bar.
+- Hide the verse toolbar while a pane covers the reader (e.g. the Locations map) instead of letting it sit on top and hide most of the pane. The verse selection is kept, so the toolbar comes back unchanged when the pane is closed. ([#1535](https://github.com/HelloAOLab/seed-bible/pull/1535))
+- Stop selecting or clearing a verse from closing an open fullscreen pane. Selecting a verse is mirrored into the `?verse` URL parameter, which was being read as a navigation. ([#1535](https://github.com/HelloAOLab/seed-bible/pull/1535))
+- Reserve the mobile bottom bar's height on a fullscreen pane, so the bottom of the pane's own content is no longer hidden behind the bar. ([#1535](https://github.com/HelloAOLab/seed-bible/pull/1535))
+- Fix anonymous edits reverting when the URL carries a matching app parameter. ([#1471](https://github.com/HelloAOLab/seed-bible/pull/1471))
+- Clear cached profile data on sign-out, and guard against corrupt or oversized local settings being adopted into an account. ([#1471](https://github.com/HelloAOLab/seed-bible/pull/1471))
+- Fix the restored translation being overwritten by the tab's initial load or a later navigation, with a graceful fallback when the saved translation lacks the current book. ([#1511](https://github.com/HelloAOLab/seed-bible/pull/1511))
+- Close the mobile More menu when tapping outside it, pressing Escape, or opening another overlapping panel. ([#1536](https://github.com/HelloAOLab/seed-bible/pull/1536))
+- Fix the translation license notice being cut off at the bottom of the mobile reader. ([#1540](https://github.com/HelloAOLab/seed-bible/pull/1540))
+- Recover from a corrupted stored session key instead of crashing. ([#1546](https://github.com/HelloAOLab/seed-bible/pull/1546))
+- Fix chat links changing color once visited, and using the toolbar's orange instead of the theme's own link color. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
+- Fix the floating chat window not toggling from the toolbar button, overflowing the top of the screen on short viewports, and being too small to use comfortably. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
 
 ### 🗑️ Removed
 
