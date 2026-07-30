@@ -1,12 +1,14 @@
 import type {
   AvailableTranslations,
+  CompleteTranslation,
   Translation,
   TranslationBookChapter,
   TranslationBooks,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { FREE_USE_BIBLE_API_ENDPOINT } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
-export type WebResponse = Pick<Response, "status" | "statusText" | "json">;
+export type WebResponse = Pick<Response, "status" | "statusText" | "json"> &
+  Partial<Pick<Response, "headers" | "body">>;
 
 export type WebResponseMap = Record<string, WebResponse>;
 
@@ -376,6 +378,84 @@ export function createControlledFetch(
     reject: (url: string, error = new Error(`Request failed: ${url}`)) => {
       release(url).reject(error);
     },
+  };
+}
+
+/**
+ * A response whose body is a real stream, so code that reads
+ * `response.body.getReader()` (the complete-translation download) exercises its
+ * streaming/progress path rather than falling back to `json()`.
+ */
+export function createStreamingResponse<T>(
+  payload: T,
+  options: { chunks?: number; withContentLength?: boolean } = {}
+): WebResponse {
+  const { chunks = 2, withContentLength = true } = options;
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  const chunkSize = Math.max(1, Math.ceil(bytes.byteLength / chunks));
+
+  const body = new ReadableStream<Uint8Array<ArrayBuffer>>({
+    start(controller) {
+      for (let offset = 0; offset < bytes.byteLength; offset += chunkSize) {
+        controller.enqueue(bytes.slice(offset, offset + chunkSize));
+      }
+      controller.close();
+    },
+  });
+
+  return {
+    status: 200,
+    statusText: "OK",
+    headers: new Headers(
+      withContentLength ? { "content-length": String(bytes.byteLength) } : {}
+    ),
+    body,
+    json: () => Promise.resolve(payload),
+  };
+}
+
+/**
+ * Builds a `complete.json` payload: every book with all of its chapters nested
+ * inside, matching what `api/{translation}/complete.json` returns.
+ */
+export function makeCompleteTranslation(
+  translationBooks: TranslationBooks,
+  chaptersPerBook: number = 2,
+  overrides: Partial<Translation> = {}
+): CompleteTranslation {
+  return {
+    translation: { ...translationBooks.translation, ...overrides },
+    books: translationBooks.books.map((book) => ({
+      id: book.id,
+      name: book.name,
+      commonName: book.commonName,
+      title: book.title,
+      order: book.order,
+      numberOfChapters: chaptersPerBook,
+      totalNumberOfVerses: book.totalNumberOfVerses,
+      chapters: Array.from({ length: chaptersPerBook }, (_unused, index) => ({
+        numberOfVerses: 2,
+        thisChapterAudioLinks: {
+          reader: `https://audio.example/${book.id}/${index + 1}.mp3`,
+        },
+        chapter: {
+          number: index + 1,
+          content: [
+            {
+              type: "verse" as const,
+              number: 1,
+              content: [`${book.commonName} ${index + 1}:1`],
+            },
+            {
+              type: "verse" as const,
+              number: 2,
+              content: [`${book.commonName} ${index + 1}:2`],
+            },
+          ],
+          footnotes: [],
+        },
+      })),
+    })),
   };
 }
 

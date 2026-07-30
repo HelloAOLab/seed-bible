@@ -67,6 +67,17 @@ export interface Translation {
   textDirection: "ltr" | "rtl";
 
   /**
+   * The SHA-256 hash of the translation's entire contents.
+   *
+   * Two translations with the same hash contain identical text, so comparing a
+   * locally downloaded copy's hash against the one in
+   * `available_translations.json` is how we detect that a download is stale.
+   *
+   * Null or undefined if the API did not report a hash.
+   */
+  sha256?: string;
+
+  /**
    * The available list of formats.
    */
   availableFormats: ("json" | "usfm")[];
@@ -75,6 +86,14 @@ export interface Translation {
    * The API link for the list of available books for this translation.
    */
   listOfBooksApiLink: string;
+
+  /**
+   * The API link for the entire translation (every book and chapter) in a
+   * single file. Used to download a translation for offline reading.
+   *
+   * Null or undefined if the API does not offer a complete download.
+   */
+  completeTranslationApiLink?: string;
 
   /**
    * The number of books that are contained in this translation.
@@ -249,7 +268,7 @@ export interface TranslationBookChapter {
   chapter: ChapterData;
 }
 
-interface ChapterData {
+export interface ChapterData {
   /**
    * The number of the chapter.
    */
@@ -450,6 +469,114 @@ export interface TranslationBookChapterAudioLinks {
    * The reader for the chapter and the URL link to the audio file.
    */
   [reader: string]: string;
+}
+
+/**
+ * An entire translation — every book and every chapter — as returned by the
+ * `api/{translation}/complete.json` endpoint.
+ *
+ * This is the shape used to download a translation for offline reading. It is
+ * not the same shape as the per-chapter endpoint: chapters are nested inside
+ * their book, and the cross-chapter navigation links (`nextChapterApiLink` and
+ * friends) are absent because everything is already present in the one file.
+ */
+export interface CompleteTranslation {
+  /**
+   * The translation information.
+   */
+  translation: Translation;
+
+  /**
+   * Every book in the translation, in canonical order, with its chapters.
+   */
+  books: CompleteTranslationBook[];
+}
+
+export interface CompleteTranslationBook {
+  /**
+   * The ID of the book.
+   */
+  id: string;
+
+  /**
+   * The name that the translation provided for the book.
+   */
+  name: string;
+
+  /**
+   * The common name for the book.
+   */
+  commonName: string;
+
+  /**
+   * The title of the book, or null/undefined when the translation didn't
+   * provide one.
+   */
+  title?: string | null;
+
+  /**
+   * The numerical order of the book in the translation.
+   */
+  order: number;
+
+  /**
+   * The number of chapters that the book contains.
+   */
+  numberOfChapters: number;
+
+  /**
+   * The number of verses that the book contains.
+   */
+  totalNumberOfVerses: number;
+
+  /**
+   * Whether the book is an apocryphal book.
+   * Omitted if the book is canonical.
+   */
+  isApocryphal?: boolean;
+
+  /**
+   * Every chapter in the book, in order.
+   */
+  chapters: CompleteTranslationChapter[];
+}
+
+export interface CompleteTranslationChapter {
+  /**
+   * The number of verses that the chapter contains.
+   */
+  numberOfVerses: number;
+
+  /**
+   * The links to different audio versions for the chapter.
+   */
+  thisChapterAudioLinks: TranslationBookChapterAudioLinks;
+
+  /**
+   * The information for the chapter.
+   */
+  chapter: ChapterData;
+}
+
+/**
+ * Options for downloading an entire translation.
+ */
+export interface GetCompleteTranslationOptions {
+  /**
+   * The API endpoint to download from. Defaults to the API's own endpoint.
+   */
+  endpoint?: string;
+
+  /**
+   * Signal used to abort an in-flight download.
+   */
+  signal?: AbortSignal;
+
+  /**
+   * Called as bytes arrive. `totalBytes` is null when the server didn't report
+   * a `Content-Length`.
+   */
+  onProgress?: (receivedBytes: number, totalBytes: number | null) => void;
 }
 
 export interface AvailableCommentaries {
@@ -1013,6 +1140,11 @@ export function getDefaultAPIEndpoint(url: URL): string {
     : PRIVATE_API_ENDPOINT;
 }
 
+/** The conventional path to a translation's complete-download file. */
+function completeTranslationPath(translationId: string): string {
+  return `api/${encodeURIComponent(translationId)}/complete.json`;
+}
+
 /**
  * Options accepted by every `FreeUseBibleAPI` request method. `signal` lets a
  * caller cancel its own in-flight request (e.g. when the user navigates
@@ -1021,6 +1153,7 @@ export function getDefaultAPIEndpoint(url: URL): string {
  */
 export interface ApiRequestOptions {
   signal?: AbortSignal;
+  refresh?: boolean;
 }
 
 /** Per-URL bookkeeping for an in-flight request shared by multiple callers. */
@@ -1046,6 +1179,15 @@ export class FreeUseBibleAPI {
     this.endpoint = endpoint;
   }
 
+  /**
+   * Gets the translations the API offers.
+   *
+   * @param endpoint The endpoint to read from. Defaults to this API's endpoint.
+   * @param options Pass `refresh: true` to discard the cached response and hit
+   * the network again. Needed when the caller cares about values that change
+   * over time — notably each translation's `sha256`, which is how a downloaded
+   * copy is found to be out of date.
+   */
   async getAvailableTranslations(
     endpoint?: string,
     options?: ApiRequestOptions
@@ -1087,6 +1229,81 @@ export class FreeUseBibleAPI {
     );
   }
 
+  /**
+   * Downloads an entire translation in one request.
+   *
+   * Unlike the other methods this deliberately skips the response cache — the
+   * payload is several megabytes, so holding it forever would be a large,
+   * permanent memory cost for something the caller immediately writes to disk.
+   *
+   * @param translation The translation to download. Passing the full
+   * {@link Translation} uses the API-provided `completeTranslationApiLink`;
+   * passing just an ID falls back to the conventional path.
+   * @param options Endpoint override, abort signal, and progress callback.
+   */
+  async getCompleteTranslation(
+    translation: string | Translation,
+    options?: GetCompleteTranslationOptions
+  ): Promise<CompleteTranslation> {
+    const path =
+      typeof translation === "string"
+        ? completeTranslationPath(translation)
+        : (translation.completeTranslationApiLink ??
+          completeTranslationPath(translation.id));
+    const url = this._buildUrl(path, options?.endpoint);
+
+    const response = await fetch(url, { signal: options?.signal });
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(
+        `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const onProgress = options?.onProgress;
+    const body = response.body;
+    if (!onProgress || !body) {
+      return (await response.json()) as CompleteTranslation;
+    }
+
+    // `Content-Length` counts the bytes on the wire, which for a compressed
+    // response is fewer than the bytes the reader hands back. Callers therefore
+    // treat the total as an estimate and clamp their own progress display.
+    const contentLength = Number(response.headers.get("content-length"));
+    const totalBytes =
+      Number.isFinite(contentLength) && contentLength > 0
+        ? contentLength
+        : null;
+
+    // Each chunk is decoded as it arrives and then dropped, rather than keeping
+    // every chunk and joining them into one big buffer at the end. A complete
+    // translation is several megabytes, and this feature is aimed at low-end
+    // phones on poor connections — the buffer-then-decode version held the raw
+    // bytes, the merged copy, and the decoded text all at once, roughly four
+    // times the payload at peak, which is enough to run a cheap device out of
+    // memory. `stream: true` is what makes per-chunk decoding safe: it holds back
+    // a partial character split across a chunk boundary instead of corrupting it.
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+    let receivedBytes = 0;
+
+    onProgress(0, totalBytes);
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      if (value) {
+        text += decoder.decode(value, { stream: true });
+        receivedBytes += value.byteLength;
+        onProgress(receivedBytes, totalBytes);
+      }
+    }
+    text += decoder.decode();
+
+    return JSON.parse(text) as CompleteTranslation;
+  }
+
   async getNextChapter(
     chapter: TranslationBookChapter,
     endpoint?: string,
@@ -1123,6 +1340,9 @@ export class FreeUseBibleAPI {
     options?: ApiRequestOptions
   ): Promise<T> {
     const url = this._buildUrl(path, endpoint);
+    if (options?.refresh) {
+      this._responseCache.delete(url);
+    }
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
       return this._subscribeToRequest(url, existing, options?.signal);

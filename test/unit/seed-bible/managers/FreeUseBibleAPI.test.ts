@@ -281,6 +281,181 @@ describe("FreeUseBibleAPI", () => {
     );
   });
 
+  it("re-requests available translations when refresh is set", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        createResponse({ translations: [{ id: "BSB", sha256: "one" }] })
+      )
+      .mockResolvedValueOnce(
+        createResponse({ translations: [{ id: "BSB", sha256: "two" }] })
+      );
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+
+    await api.getAvailableTranslations();
+    const cached = await api.getAvailableTranslations();
+    expect(cached.translations[0]?.sha256).toBe("one");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const refreshed = await api.getAvailableTranslations(undefined, {
+      refresh: true,
+    });
+
+    expect(refreshed.translations[0]?.sha256).toBe("two");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  describe("getCompleteTranslation()", () => {
+    function createStreamingResponse<T>(
+      payload: T,
+      options: { chunks?: number; withContentLength?: boolean } = {}
+    ) {
+      const { chunks = 3, withContentLength = true } = options;
+      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      const chunkSize = Math.max(1, Math.ceil(bytes.byteLength / chunks));
+
+      return {
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(
+          withContentLength
+            ? { "content-length": String(bytes.byteLength) }
+            : {}
+        ),
+        body: new ReadableStream<Uint8Array<ArrayBuffer>>({
+          start(controller) {
+            for (
+              let offset = 0;
+              offset < bytes.byteLength;
+              offset += chunkSize
+            ) {
+              controller.enqueue(bytes.slice(offset, offset + chunkSize));
+            }
+            controller.close();
+          },
+        }),
+        json: () => Promise.resolve(payload),
+        byteLength: bytes.byteLength,
+      };
+    }
+
+    const payload = {
+      translation: { id: "BSB", sha256: "abc" },
+      books: [{ id: "GEN", chapters: [] }],
+    };
+
+    it("downloads from the conventional path when given an ID", async () => {
+      fetchMock.mockResolvedValue(createResponse(payload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const result = await api.getCompleteTranslation("BSB");
+
+      expect(result).toEqual(payload);
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/api/BSB/complete.json",
+        { signal: undefined }
+      );
+    });
+
+    it("prefers the link the API reported over the conventional path", async () => {
+      fetchMock.mockResolvedValue(createResponse(payload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      await api.getCompleteTranslation({
+        id: "BSB",
+        completeTranslationApiLink: "/api/custom/BSB.json",
+        // The rest of the Translation fields are irrelevant to this method.
+      } as never);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/api/custom/BSB.json",
+        { signal: undefined }
+      );
+    });
+
+    it("reports byte progress as the body streams in", async () => {
+      const response = createStreamingResponse(payload, { chunks: 3 });
+      fetchMock.mockResolvedValue(response);
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const progress: Array<[number, number | null]> = [];
+      const result = await api.getCompleteTranslation("BSB", {
+        onProgress: (received, total) => progress.push([received, total]),
+      });
+
+      expect(result).toEqual(payload);
+      // Starts at zero and ends at the full size, never exceeding the total.
+      expect(progress[0]).toEqual([0, response.byteLength]);
+      expect(progress.at(-1)).toEqual([
+        response.byteLength,
+        response.byteLength,
+      ]);
+      expect(progress.length).toBeGreaterThan(2);
+      for (const [received, total] of progress) {
+        expect(received).toBeLessThanOrEqual(total!);
+      }
+    });
+
+    it("reports a null total when the server omits Content-Length", async () => {
+      fetchMock.mockResolvedValue(
+        createStreamingResponse(payload, { withContentLength: false })
+      );
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const totals: Array<number | null> = [];
+      await api.getCompleteTranslation("BSB", {
+        onProgress: (_received, total) => totals.push(total),
+      });
+
+      expect(totals.every((total) => total === null)).toBe(true);
+    });
+
+    it("decodes text whose characters are split across chunk boundaries", async () => {
+      // The body is decoded chunk by chunk as it arrives rather than buffered
+      // and decoded once at the end, which keeps peak memory near the size of
+      // the payload instead of several times it. One byte per chunk is the
+      // worst case for that: every non-ASCII character arrives in pieces, so a
+      // decoder that treated each chunk as standalone text would corrupt them.
+      const multiByte = {
+        translation: { id: "BSB", name: "Ἡ Καινὴ Διαθήκη — 聖經 🕊" },
+        books: [{ id: "GEN", chapters: [] }],
+      };
+      const byteLength = new TextEncoder().encode(
+        JSON.stringify(multiByte)
+      ).byteLength;
+      fetchMock.mockResolvedValue(
+        createStreamingResponse(multiByte, { chunks: byteLength })
+      );
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      const result = await api.getCompleteTranslation("BSB", {
+        onProgress: () => {},
+      });
+
+      expect(result).toEqual(multiByte);
+    });
+
+    it("does not cache the response, so a second download re-requests it", async () => {
+      fetchMock.mockResolvedValue(createResponse(payload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      await api.getCompleteTranslation("BSB");
+      await api.getCompleteTranslation("BSB");
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("throws on non-2xx responses", async () => {
+      fetchMock.mockResolvedValue(createResponse(null, 404, "Not Found"));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      await expect(api.getCompleteTranslation("NOPE")).rejects.toThrow(
+        "Failed request to https://example.com/api/NOPE/complete.json. Status: 404 Not Found"
+      );
+    });
+  });
+
   it("rejects with an AbortError when the caller's signal is aborted", async () => {
     fetchMock.mockImplementation(
       (_url: string, options?: { signal?: AbortSignal }) =>

@@ -4,7 +4,7 @@ import {
   type CreateTestSeedBibleStateOptions,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
-import { signal } from "@preact/signals";
+import { batch, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
 
@@ -1045,23 +1045,30 @@ describe("createSeedBibleState", () => {
           (t) => t.id === state.tabs.selectedTabId.value
         ) ?? null;
       expect(tab).not.toBeNull();
-      tab!.readingState.bookId.value = bookId;
-      tab!.readingState.chapterNumber.value = chapterNumber;
-      tab!.readingState.chapterData.value = {
-        translation: {
-          id: "test-translation",
-          name: translationName,
-          textDirection,
-        },
-        book: { id: bookId, name: bookName, abbreviation: bookId },
-        chapter: {
-          number: chapterNumber,
-          id: `${bookId}-${chapterNumber}`,
-          reference: `${bookName} ${chapterNumber}`,
-        },
-        verses: [],
-        notes: [],
-      } as any;
+      // Batched, and with translationId set to match chapterData.translation.id,
+      // so the reading-state effect that watches translationId/bookId/chapterNumber
+      // (and re-fetches content whenever they don't match chapterData) sees a
+      // fully consistent position and never issues a real network request.
+      batch(() => {
+        tab!.readingState.translationId.value = "test-translation";
+        tab!.readingState.bookId.value = bookId;
+        tab!.readingState.chapterNumber.value = chapterNumber;
+        tab!.readingState.chapterData.value = {
+          translation: {
+            id: "test-translation",
+            name: translationName,
+            textDirection,
+          },
+          book: { id: bookId, name: bookName, abbreviation: bookId },
+          chapter: {
+            number: chapterNumber,
+            id: `${bookId}-${chapterNumber}`,
+            reference: `${bookName} ${chapterNumber}`,
+          },
+          verses: [],
+          notes: [],
+        } as any;
+      });
     }
 
     it("sets pageTitle from the selected book and chapter", async () => {

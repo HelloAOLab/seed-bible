@@ -365,6 +365,24 @@ importers:
       vitest:
         specifier: ^4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@29.1.1)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
+      workbox-cacheable-response:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-core:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-expiration:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-precaching:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-routing:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-strategies:
+        specifier: 7.4.1
+        version: 7.4.1
 
   packages/apologist-extension:
     dependencies:
