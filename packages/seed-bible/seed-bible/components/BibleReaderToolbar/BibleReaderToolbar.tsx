@@ -532,9 +532,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
   const isSmallScreen = props.state.app.isMobile;
-  const shouldReplaceDefaultToolbar = useComputed(
-    () => isSmallScreen.value && hasVerseSelection.value
-  );
   // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
   // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
   // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
@@ -543,6 +540,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     panes.panes.value.some(
       (pane) => pane.placement === "fullscreen" || isSmallScreen.value
     )
+  );
+  // The verse toolbar belongs to the reader, so it's suspended (not dismissed)
+  // while a pane covers the reader — otherwise it floats on top of the pane and
+  // hides most of it. The selection itself is kept, so the toolbar comes back
+  // exactly as it was once the pane is closed.
+  const isVerseToolbarVisible = useComputed(
+    () => hasVerseSelection.value && !isFullscreenPaneVisible.value
+  );
+  const shouldReplaceDefaultToolbar = useComputed(
+    () => isSmallScreen.value && isVerseToolbarVisible.value
   );
   const isMoreMenuOpen = useSignal(false);
   // The mobile More button, so dismissing its menu with Escape can hand focus
@@ -818,9 +825,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   }, [hasVerseSelection.value]);
 
   // Clicking anywhere outside the chapter content or the verse toolbar
-  // dismisses the verse selection (and therefore the toolbar).
+  // dismisses the verse selection (and therefore the toolbar). Only while the
+  // toolbar is actually showing — with a pane covering the reader every tap
+  // lands "outside", which would silently throw the selection away behind the
+  // pane instead of restoring the toolbar when the pane closes.
   useEffect(() => {
-    if (!hasVerseSelection.value) return;
+    if (!isVerseToolbarVisible.value) return;
 
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
@@ -834,7 +844,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return () => {
       document.removeEventListener("pointerdown", handleDocumentPointerDown);
     };
-  }, [hasVerseSelection.value]);
+  }, [isVerseToolbarVisible.value]);
 
   // Tapping anywhere outside the mobile More menu closes it. Deliberately done
   // with a document listener rather than a backdrop element so the tap still
@@ -1494,7 +1504,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         </div>
       )}
 
-      {hasVerseSelection.value && verseToolbarTools.value.length > 0 && (
+      {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <div
           className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
           style={
