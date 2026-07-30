@@ -661,7 +661,9 @@ export function createBibleDataManager(
       mergeTranslations(endpoint, [books.translation], options);
     };
 
-    const downloadedBooks = await offline.getTranslationBooks(translationId);
+    const downloadedBooks = offline.supported
+      ? await offline.getTranslationBooks(translationId)
+      : null;
     if (downloadedBooks) {
       // `fillOnly` because these books come from storage: the translation
       // metadata saved with them is from download time, so it must not overwrite
@@ -695,7 +697,7 @@ export function createBibleDataManager(
     options?: ApiRequestOptions
   ): Promise<TranslationBookChapter> => {
     const chapterNumber = Number(chapter);
-    if (Number.isFinite(chapterNumber)) {
+    if (Number.isFinite(chapterNumber) && offline.supported) {
       const downloaded = await offline.getTranslationBookChapter(
         translationId,
         book,
@@ -720,7 +722,9 @@ export function createBibleDataManager(
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
   ) => {
-    const downloaded = await offline.getAdjacentChapter(chapter, "next");
+    const downloaded = offline.supported
+      ? await offline.getAdjacentChapter(chapter, "next")
+      : null;
     if (downloaded) {
       return downloaded;
     }
@@ -738,7 +742,9 @@ export function createBibleDataManager(
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
   ) => {
-    const downloaded = await offline.getAdjacentChapter(chapter, "previous");
+    const downloaded = offline.supported
+      ? await offline.getAdjacentChapter(chapter, "previous")
+      : null;
     if (downloaded) {
       return downloaded;
     }
