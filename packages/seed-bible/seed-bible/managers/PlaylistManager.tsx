@@ -1009,25 +1009,29 @@ export function createPlaylistManager(
         },
         // Navigation hooks are unconditional now that playback state is synced:
         // any participant can drive next/previous and it propagates via `data`.
-        navigateNext: async () => {
+        // These return synchronously when they decline to intervene. Chapter
+        // navigation writes its new position before the first `await`, so an
+        // `async` hook here would put a microtask in front of every press —
+        // enough for two quick presses to compute the same target.
+        navigateNext: () => {
           if (playingState.queue.value.length === 0) {
             return { type: "default" };
           }
           if (!playingState.hasNext.value) {
             return { type: "prevent" };
           }
-          await playingState.next();
-          return { type: "prevent" };
+          return playingState.next().then(() => ({ type: "prevent" }) as const);
         },
-        navigatePrevious: async () => {
+        navigatePrevious: () => {
           if (playingState.queue.value.length === 0) {
             return { type: "default" };
           }
           if (!playingState.hasPrevious.value) {
             return { type: "prevent" };
           }
-          await playingState.previous();
-          return { type: "prevent" };
+          return playingState
+            .previous()
+            .then(() => ({ type: "prevent" }) as const);
         },
         dispose: () => {
           disposeOut();

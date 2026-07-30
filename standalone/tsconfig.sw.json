@@ -1,28 +1,24 @@
 {
+  // The service worker runs in a worker global scope, not a document, so it
+  // needs `lib.webworker` — which collides with the `dom` lib the rest of the
+  // app is checked against (both declare `self`, `fetch`, `Event`, …). It
+  // therefore gets its own project, mirroring how `patterns/` is split out.
+  // Checked by `pnpm check:ts:sw`; excluded from the root tsconfig.
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2024",
-    "allowJs": true,
-    "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "jsxImportSource": "preact",
-    "jsx": "preserve",
-    "jsxFactory": "h",
-    "jsxFragmentFactory": "Fragment",
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "module": "preserve",
     "noEmit": true,
-    "lib": ["es2024", "dom", "dom.iterable"],
-    "paths": {
-      "@packages/*": ["./packages/*"]
-    },
+    "lib": ["es2024", "webworker"],
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
@@ -38,12 +34,8 @@
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
     "preserveConstEnums": true,
-    "typeRoots": ["./node_modules/@types", "./typings", "./node_modules"],
-    "types": ["vitest/globals", "vitest/jsdom", "node"]
+    "typeRoots": ["../node_modules/@types"],
+    "types": []
   },
-  "include": ["packages", "typings", "script", "test", "standalone", "server"],
-  // `standalone/sw.ts` needs the `webworker` lib, which conflicts with `dom`.
-  // It has its own project (`standalone/tsconfig.sw.json`, run by
-  // `pnpm check:ts:sw`), the same way `patterns/` does.
-  "exclude": ["obsolete", "patterns", "standalone/sw.ts"]
+  "include": ["./sw.ts"]
 }
