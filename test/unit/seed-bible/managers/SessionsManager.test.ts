@@ -1,4 +1,4 @@
-import { batch, signal } from "@preact/signals";
+import { batch, effect, signal } from "@preact/signals";
 import {
   createSessionsManager,
   getUserAnimalVisual,
@@ -196,15 +196,21 @@ function createMockReadingState() {
           scrollToVerse?: number;
         }
       ) => {
-        translationId.value = nextTranslationId;
-        bookId.value = nextBookId;
-        chapterNumber.value = nextChapterNumber;
-        scrollToVerse.value = options?.scrollToVerse ?? null;
-        chapterData.value = createMockChapterData(
-          nextTranslationId,
-          nextBookId,
-          nextChapterNumber
-        );
+        // Batched, like the real `applyPosition`: subscribers must never
+        // observe a half-written position (e.g. the new translation against
+        // the old book), because that combination matches nothing and makes
+        // sync logic think the reader navigated somewhere of their own accord.
+        batch(() => {
+          translationId.value = nextTranslationId;
+          bookId.value = nextBookId;
+          chapterNumber.value = nextChapterNumber;
+          scrollToVerse.value = options?.scrollToVerse ?? null;
+          chapterData.value = createMockChapterData(
+            nextTranslationId,
+            nextBookId,
+            nextChapterNumber
+          );
+        });
       }
     ),
   } as any;
@@ -259,6 +265,32 @@ function deferred<T>() {
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+/**
+ * Waits out the trailing debounce on publishing the local position to peers
+ * (`PUBLISH_DEBOUNCE_MS` in SessionsManager, 150ms).
+ *
+ * Needed by every assertion about the shared map — including the negative ones.
+ * Without it, "was not published" passes for the wrong reason: nothing is
+ * published synchronously any more.
+ */
+async function flushPublishDebounce(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 250));
+}
+
+/**
+ * Yields to the macrotask queue `count` times, letting any pending work run.
+ *
+ * Used to prove the *absence* of a self-sustaining sync loop: take a
+ * measurement, idle for a while, and assert nothing moved. Counting macrotasks
+ * rather than microtasks is deliberate — a runaway loop that only ever awaits
+ * resolved promises would starve `setTimeout` entirely and hang the suite.
+ */
+async function idleTicks(count: number): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
 }
 
 describe("SessionsManager", () => {
@@ -575,6 +607,7 @@ describe("SessionsManager", () => {
     session.readingState.translationId.value = "NIV";
     session.readingState.bookId.value = "EXO";
     session.readingState.chapterNumber.value = 8;
+    await flushPublishDebounce();
 
     expect(mockMap.set).not.toHaveBeenCalled();
     expect(mockDocument.transact).not.toHaveBeenCalled();
@@ -602,6 +635,7 @@ describe("SessionsManager", () => {
     session.readingState.translationId.value = "NIV";
     session.readingState.bookId.value = "EXO";
     session.readingState.chapterNumber.value = 8;
+    await flushPublishDebounce();
 
     expect(mockMap.set).not.toHaveBeenCalled();
     expect(mockDocument.transact).not.toHaveBeenCalled();
@@ -986,6 +1020,7 @@ describe("SessionsManager", () => {
       session.readingState.chapterNumber.value = 8;
       session.readingState.scrollToVerse.value = 6;
     });
+    await flushPublishDebounce();
 
     expect(mockMap.set).toHaveBeenCalledWith("translationId", "NIV");
     expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
@@ -1004,16 +1039,21 @@ describe("SessionsManager", () => {
     );
     const session = await manager.joinSession("group-abc");
 
+    // Let the initial position publish land first, so the shared map already
+    // agrees on book and chapter. Without this the write below is not
+    // "scrollToVerse only" — it is the reader's whole position arriving late.
+    await flushPublishDebounce();
     mockMap.set.mockClear();
     mockDocument.transact.mockClear();
 
     session.readingState.scrollToVerse.value = 9;
+    await flushPublishDebounce();
 
     expect(mockMap.set).not.toHaveBeenCalled();
     expect(mockDocument.transact).not.toHaveBeenCalled();
   });
 
-  it("does not loop when local state changes are echoed back from the shared map", async () => {
+  it("publishes a burst of local navigations as one transaction, and does not loop on the echo", async () => {
     mockMap.setEmitOnSet(true);
     // Translation only propagates when sharing is enabled.
     mockOptionsMap.set("shareTranslation", true);
@@ -1033,9 +1073,13 @@ describe("SessionsManager", () => {
     session.readingState.translationId.value = "NIV";
     session.readingState.bookId.value = "EXO";
     session.readingState.chapterNumber.value = 8;
+    await flushPublishDebounce();
 
+    // Three position changes, but one shared-document write of where the
+    // reader ended up: the shared document never shrinks, so a fast skim must
+    // not leave a transaction per chapter in it.
+    expect(mockDocument.transact).toHaveBeenCalledTimes(1);
     expect(mockMap.set).toHaveBeenCalledTimes(3);
-    expect(mockDocument.transact).toHaveBeenCalledTimes(3);
     expect(session.readingState.translationId.value).toBe("NIV");
     expect(session.readingState.bookId.value).toBe("EXO");
     expect(session.readingState.chapterNumber.value).toBe(8);
@@ -1116,6 +1160,75 @@ describe("SessionsManager", () => {
     // The book ID is null in the shared session, so it falls back to the
     // book the reader was already on rather than being cleared.
     expect(session.readingState.bookId.value).toBe("GEN");
+
+    // Applying that partial position writes the chapter signal directly while
+    // the "don't echo remote state" flag is held. The publish effect runs
+    // during that window, and if it bails out before reading any signal it
+    // loses every dependency and never fires again — so local navigation must
+    // still reach the shared document afterwards.
+    mockMap.get.mockImplementation((key: string) =>
+      key === "chapterNumber" ? 5 : null
+    );
+    // Drain any publish already armed from joining, so the assertion below can
+    // only be satisfied by a publish the local navigation itself triggered.
+    await flushPublishDebounce();
+    mockMap.set.mockClear();
+
+    session.readingState.chapterNumber.value = 42;
+    await flushPublishDebounce();
+
+    expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 42);
+  });
+
+  it("applies a partial remote position in one batch", async () => {
+    // The reading state's content loader watches all three position signals.
+    // Written one at a time they are three separate changes, so the loader runs
+    // three times for one remote update — starting and cancelling a request
+    // each time, and in between asking for the new translation against the old
+    // book and chapter, a position no peer ever navigated to.
+    mockOptionsMap.set("shareTranslation", true);
+
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = (await manager.joinSession(
+      "group-abc"
+    )) as BibleReadingSession;
+
+    // Stands in for the real content loader: the same three tracked reads.
+    let loaderRuns = 0;
+    const stopLoader = effect(() => {
+      void session.readingState.translationId.value;
+      void session.readingState.bookId.value;
+      void session.readingState.chapterNumber.value;
+      loaderRuns++;
+    });
+    loaderRuns = 0;
+
+    // A translation and a chapter but no book, so canLoadSessionData() is false
+    // and the position is applied field by field rather than through a chapter
+    // load. Two of the three signals genuinely change.
+    mockMap.get.mockImplementation((key: string) => {
+      if (key === "translationId") {
+        return "ESV";
+      }
+      if (key === "chapterNumber") {
+        return 5;
+      }
+      return null;
+    });
+    mockMap.emitChange();
+
+    await waitFor(() => session.readingState.chapterNumber.value === 5);
+
+    expect(session.readingState.translationId.value).toBe("ESV");
+    expect(loaderRuns).toBe(1);
+
+    stopLoader();
   });
 
   it("keeps local selection when user changes chapter during remote sync", async () => {
@@ -1162,9 +1275,12 @@ describe("SessionsManager", () => {
     expect(session.readingState.chapterNumber.value).toBe(3);
   });
 
-  it("applies only the latest remote sync when requests finish out of order", async () => {
-    const chapterDeferred1 = deferred<any>();
-    const chapterDeferred2 = deferred<any>();
+  it("skips remote chapters a peer has already moved past", async () => {
+    // A peer skimming chapters must cost us one chapter load, not one per
+    // chapter they touched. Remote positions are applied one at a time, and
+    // whatever arrives during an application is collapsed to just the newest —
+    // so the chapters they passed through are never loaded or displayed.
+    const firstApply = deferred<void>();
 
     const manager = createSessionsManager(
       os,
@@ -1174,35 +1290,85 @@ describe("SessionsManager", () => {
       i18n
     );
     const session = await manager.joinSession("group-abc");
-    (session.readingState.selectTranslationAndChapter as Mock)
-      .mockImplementationOnce(async () => {
-        await chapterDeferred1.promise;
+
+    const select = session.readingState.selectTranslationAndChapter as Mock;
+    const applyChapter = (chapterNumber: number) => {
+      batch(() => {
         session.readingState.translationId.value = "ESV";
         session.readingState.bookId.value = "MAT";
-        session.readingState.chapterNumber.value = 1;
+        session.readingState.chapterNumber.value = chapterNumber;
         session.readingState.chapterData.value = createMockChapterData(
           "ESV",
           "MAT",
-          1
+          chapterNumber
         );
-      })
+      });
+    };
+    // Hold the first application open so the rest of the burst piles up behind
+    // it, then apply normally.
+    select
       .mockImplementationOnce(async () => {
-        await chapterDeferred2.promise;
-        session.readingState.translationId.value = "ESV";
-        session.readingState.bookId.value = "MAT";
-        session.readingState.chapterNumber.value = 2;
-        session.readingState.chapterData.value = createMockChapterData(
-          "ESV",
-          "MAT",
-          2
-        );
+        await firstApply.promise;
+        applyChapter(1);
       })
       .mockImplementation(
-        async (
-          nextTranslationId: string,
-          nextBookId: string,
-          nextChapterNumber: number
-        ) => {
+        async (_translationId: string, _bookId: string, chapter: number) => {
+          applyChapter(chapter);
+        }
+      );
+
+    const publishRemote = (chapterNumber: number) => {
+      mockMap.get.mockImplementation((key: string) => {
+        if (key === "translationId") return "ESV";
+        if (key === "bookId") return "MAT";
+        if (key === "chapterNumber") return chapterNumber;
+        return null;
+      });
+      mockMap.emitChange();
+    };
+
+    publishRemote(1);
+    publishRemote(2);
+    publishRemote(3);
+
+    firstApply.resolve();
+    await waitFor(() => session.readingState.chapterNumber.value === 3);
+    await idleTicks(10);
+
+    // Chapter 2 was superseded while chapter 1 was still being applied, so it
+    // was never requested at all.
+    const requestedChapters = select.mock.calls.map((call) => call[2]);
+    expect(requestedChapters).toEqual([1, 3]);
+    expect(session.readingState.chapterData.value?.chapter?.number).toBe(3);
+  });
+
+  it("stops syncing once a burst of remote navigations has been applied", async () => {
+    // Regression guard for the freeze/out-of-memory crash: two remote syncs
+    // overlapping was enough to leave the follower spinning forever, because
+    // each stale sync invalidated the other on completion and spawned a
+    // replacement. Symptom in the browser was a frozen tab whose heap climbed
+    // until it crashed.
+    mockOptionsMap.set("shareTranslation", true);
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    const select = session.readingState.selectTranslationAndChapter as Mock;
+    // Applying a chapter takes a macrotask, so overlapping syncs are possible
+    // and any resulting loop yields rather than hanging the suite.
+    select.mockImplementation(
+      async (
+        nextTranslationId: string,
+        nextBookId: string,
+        nextChapterNumber: number
+      ) => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        batch(() => {
           session.readingState.translationId.value = nextTranslationId;
           session.readingState.bookId.value = nextBookId;
           session.readingState.chapterNumber.value = nextChapterNumber;
@@ -1211,41 +1377,33 @@ describe("SessionsManager", () => {
             nextBookId,
             nextChapterNumber
           );
-        }
-      );
-
-    mockMap.get.mockImplementation((key: string) => {
-      if (key === "translationId") return "ESV";
-      if (key === "bookId") return "MAT";
-      if (key === "chapterNumber") return 1;
-      return null;
-    });
-    mockMap.emitChange();
-
-    mockMap.get.mockImplementation((key: string) => {
-      if (key === "translationId") return "ESV";
-      if (key === "bookId") return "MAT";
-      if (key === "chapterNumber") return 2;
-      return null;
-    });
-    mockMap.emitChange();
-
-    chapterDeferred2.resolve(createMockChapterData("ESV", "MAT", 2));
-    await chapterDeferred2.promise;
-
-    await waitFor(
-      () => session.readingState.chapterData.value?.chapter?.number === 2
+        });
+      }
     );
 
-    chapterDeferred1.resolve(createMockChapterData("ESV", "MAT", 1));
-    await chapterDeferred1.promise;
+    const publishRemote = (chapterNumber: number) => {
+      mockMap.get.mockImplementation((key: string) => {
+        if (key === "translationId") return "ESV";
+        if (key === "bookId") return "MAT";
+        if (key === "chapterNumber") return chapterNumber;
+        return null;
+      });
+      mockMap.emitChange();
+    };
 
-    await waitFor(
-      () => session.readingState.chapterData.value?.chapter?.number === 2
-    );
+    // A peer flips two chapters faster than either one can be applied.
+    publishRemote(1);
+    publishRemote(2);
 
+    await waitFor(() => session.readingState.chapterNumber.value === 2);
+    await idleTicks(15);
+    const callsAfterSettling = select.mock.calls.length;
+
+    // Nothing new has arrived, so nothing more should happen.
+    await idleTicks(30);
+
+    expect(select.mock.calls.length).toBe(callsAfterSettling);
     expect(session.readingState.chapterNumber.value).toBe(2);
-    expect(session.readingState.chapterData.value?.chapter?.number).toBe(2);
   });
 
   it("dispose() unsubscribes from the shared document", async () => {

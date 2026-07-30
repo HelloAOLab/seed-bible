@@ -42,5 +42,8 @@
     "types": ["vitest/globals", "vitest/jsdom", "node"]
   },
   "include": ["packages", "typings", "script", "test", "standalone", "server"],
-  "exclude": ["obsolete", "patterns"]
+  // `standalone/sw.ts` needs the `webworker` lib, which conflicts with `dom`.
+  // It has its own project (`standalone/tsconfig.sw.json`, run by
+  // `pnpm check:ts:sw`), the same way `patterns/` does.
+  "exclude": ["obsolete", "patterns", "standalone/sw.ts"]
 }

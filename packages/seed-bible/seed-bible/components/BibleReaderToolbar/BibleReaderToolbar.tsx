@@ -446,7 +446,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
-      openChat: sidebar.openChatPanel,
+      openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
       modals: props.state.modals,
@@ -552,6 +552,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () => isSmallScreen.value && isVerseToolbarVisible.value
   );
   const isMoreMenuOpen = useSignal(false);
+  // The mobile More button, so dismissing its menu with Escape can hand focus
+  // back to it instead of dropping it on the removed popover.
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
   // Whether the mobile verse sheet shows its overflow actions (the "More" /
@@ -843,6 +846,54 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
   }, [isVerseToolbarVisible.value]);
 
+  // Tapping anywhere outside the mobile More menu closes it. Deliberately done
+  // with a document listener rather than a backdrop element so the tap still
+  // reaches whatever was tapped — selecting a verse or hitting a top quick
+  // toolbar button works normally while the menu is open, it just also
+  // dismisses the menu. Capture phase so we still see the tap even if the
+  // target stops propagation.
+  //
+  // `pointerdown` (rather than `click`) means a touch-scroll that starts while
+  // the menu is open also dismisses it, since a scroll gesture begins with a
+  // pointerdown. That is intended: it matches how dropdowns usually behave, and
+  // dismissing as the gesture starts feels more responsive than waiting for it
+  // to finish. Scrolling the menu's own list is unaffected — those touches land
+  // inside the anchor and return early below.
+  useEffect(() => {
+    if (!isMoreMenuOpen.value) return;
+
+    const handleDocumentPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      // The anchor wraps both the More button and the popover, so this covers
+      // taps on either. The button's own click handler does the toggling.
+      if (target?.closest(".sb-reader-toolbar-more-anchor")) return;
+      isMoreMenuOpen.value = false;
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        isMoreMenuOpen.value = false;
+        // Escape is a keyboard dismissal, so send focus back to the button that
+        // opened the menu — otherwise it is left on the now-unmounted popover and
+        // the next Tab starts over from the top of the document. Only for
+        // Escape: after an outside tap the user is already interacting
+        // somewhere else, and pulling focus back would fight them.
+        moreButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown, true);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handleDocumentPointerDown,
+        true
+      );
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMoreMenuOpen.value]);
+
   const { t } = useI18n();
 
   // Opens the Today screen. If the `today-screen` extension isn't installed
@@ -931,14 +982,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
+  /**
+   * Display name for a book id, resolved from the current translation's
+   * catalog.
+   *
+   * The catalog covers every book and tracks the reader's position the instant
+   * it moves; the loaded chapter only ever describes one book, and during a
+   * fast skim it describes the one the reader has already left. Falls back to
+   * the chapter only while that translation's catalog is still downloading, and
+   * only when it happens to be the book being asked about.
+   */
+  const resolveBookName = (id: string | null | undefined): string => {
+    if (!id) {
+      return "";
+    }
+    const state = readingState.value;
+    const loadedBook = state?.chapterData.value?.book;
+    const book =
+      state?.translationBooks.value?.books.find((b) => b.id === id) ??
+      (loadedBook?.id === id ? loadedBook : null);
+    return book?.name ?? book?.commonName ?? id;
+  };
+
   const getReaderNavLabel = () => {
     return (
       <>
-        <div>
-          {readingState.value?.chapterData.value?.book.name ??
-            readingState.value?.bookId.value ??
-            " "}
-        </div>
+        <div>{resolveBookName(readingState.value?.bookId.value) || " "}</div>
         <div>{readingState.value?.chapterNumber.value}</div>
       </>
     );
@@ -947,10 +1016,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const getPlayingNavLabel = (playing: PlayingState) => {
     const currentItem = playing.currentItem.value;
     if (currentItem) {
-      const label = playlistItemLabel(currentItem, t, (bookId: string) => {
-        const book = readingState.value?.chapterData.value?.book;
-        return book?.name ?? book?.commonName ?? bookId;
-      });
+      const label = playlistItemLabel(currentItem, t, resolveBookName);
       return (
         <>
           <div>{label}</div>
@@ -1220,10 +1286,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
                     <button
                       type="button"
+                      ref={moreButtonRef}
                       onClick={() => {
-                        // Opening the More menu should dismiss the
-                        // tabs/bookmarks drawer if it's open.
+                        // Opening the More menu should dismiss whatever else is
+                        // covering the reader — the search bar, the chat panel,
+                        // the settings view, or the tabs/bookmarks drawer — the
+                        // same way the other bottom tabs do. Extension panes are
+                        // left alone, since those are opened *from* this menu.
                         if (!isMoreMenuOpen.value) {
+                          sidebar.closeSearchPanel();
+                          sidebar.closeChatPanel();
+                          sidebar.closeSettings();
                           sidebar.closeSidebar();
                         }
                         isMoreMenuOpen.value = !isMoreMenuOpen.value;
