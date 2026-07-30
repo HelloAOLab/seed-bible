@@ -14,6 +14,7 @@ if (
   (globalThis as any).posthog = {
     init: () => {},
     capture: () => {},
+    onFeatureFlags: () => {},
     identify: () => {},
     setPersonProperties: () => {},
   };
@@ -24,10 +25,15 @@ if (
   !(function (t, e) {
     var o, n, p, r;
     e.__SV ||
-      (((window as any).posthog = e),
+      // @ts-ignore
+      (window.posthog && window.posthog.__loaded) ||
+      // @ts-ignore
+      ((window.posthog = e),
       (e._i = []),
-      (e.init = function (i: any, s: any, a: any) {
-        function g(t: any, e: any) {
+      // @ts-ignore
+      (e.init = function (i, s, a) {
+        // @ts-ignore
+        function g(t, e) {
           var o = e.split(".");
           (2 == o.length && ((t = t[o[0]]), (e = o[1])),
             (t[e] = function () {
@@ -50,7 +56,8 @@ if (
         for (
           void 0 !== a ? (u = e[a] = []) : (a = "posthog"),
             u.people = u.people || [],
-            u.toString = function (t: any) {
+            // @ts-ignore
+            u.toString = function (t) {
               var e = "posthog";
               return (
                 "posthog" !== a && (e += "." + a),
@@ -62,7 +69,7 @@ if (
               return u.toString(1) + ".people (stub)";
             },
             o =
-              "init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(
+              "init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(
                 " "
               ),
             n = 0;
@@ -73,13 +80,14 @@ if (
         e._i.push([i, s, a]);
       }),
       (e.__SV = 1));
-  })(document, (window as any).posthog || []);
+    // @ts-ignore
+  })(document, window.posthog || []);
 
   const seedBibleApiKey = "phc_rEUogfrnXkdTitOTrfWK2laEINF1QwNtGNQizzuMW0";
   posthog.init(seedBibleApiKey, {
     api_host: "https://i.ao.bot",
     ui_host: "https://us.posthog.com",
-    defaults: "2025-05-24",
+    defaults: "2026-05-30",
   });
 
   posthog.register({});

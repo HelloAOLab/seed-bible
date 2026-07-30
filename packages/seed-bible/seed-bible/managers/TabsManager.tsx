@@ -102,10 +102,8 @@ function getInitialTranslationId(url: URL, language: string): string {
 }
 
 function getInitialFirstTabChapter(url: URL): number {
-  const value = Number(url.searchParams.get("chapter"));
-  return Number.isFinite(value) && value > 0
-    ? Math.floor(value)
-    : DEFAULT_CHAPTER_NUMBER;
+  const value = Math.floor(Number(url.searchParams.get("chapter")));
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_CHAPTER_NUMBER;
 }
 
 function getInitialHighlightedVerses(url: URL): number[] {
@@ -433,6 +431,10 @@ export function createTabs(
     return dispose;
   });
 
+  // Mirrors the selected tab's *verse selection* into `?verse` so it can be
+  // shared/restored. This is selection state, not a navigation — consumers that
+  // watch the URL for "the reader moved" must ignore this param (see the
+  // fullscreen-pane effect in SeedBibleStateManager).
   effect(() => {
     const params: Record<string, string | null> = {
       verse: null,

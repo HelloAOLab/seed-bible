@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { computed, signal, type Signal } from "@preact/signals";
+import { batch, computed, signal, type Signal } from "@preact/signals";
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import type {
   BibleReadingState,
@@ -128,6 +128,7 @@ function createFixture(): ReaderFixture {
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
     error: signal<string | null>(null),
+    retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
     highlightSelectedVerses: vi.fn(async () => undefined),
@@ -146,6 +147,8 @@ function createFixture(): ReaderFixture {
     highlights,
     defaultTranslation: { id: "BSB", language: "en" },
     chapterDataPromise: Promise.resolve(),
+    initialChapterLoadSettled: signal(true),
+    isChapterContentStale: computed(() => chapterData.value === null),
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
     discoveredStudyNotes: signal([]),
@@ -227,7 +230,7 @@ function createMobileState(): SeedBibleState {
       playing: signal(null),
     },
     features: {
-      isFeatureEnabled: vi.fn(() => true),
+      isFeatureEnabled: vi.fn(() => signal(true)),
     },
   } as any as SeedBibleState;
 }
@@ -257,7 +260,7 @@ function createDesktopState(): SeedBibleState {
       playing: signal(null),
     },
     features: {
-      isFeatureEnabled: vi.fn(() => true),
+      isFeatureEnabled: vi.fn(() => signal(true)),
     },
   } as any as SeedBibleState;
 }
@@ -394,6 +397,42 @@ describe("TabSlotReader integration", () => {
     ) as HTMLDivElement | null;
     expect(scroller).not.toBeNull();
     expect(scroller?.scrollTop).toBe(133);
+  });
+
+  it("returns the reader to the top the moment navigation starts, before the new text arrives", () => {
+    const { slot, readingState } = createFixture();
+    const state = createDesktopState();
+
+    renderTabSlotReader(slot, readingState, state, container);
+
+    const scroller = container.querySelector(
+      ".sb-pane-reader"
+    ) as HTMLDivElement | null;
+    expect(scroller).not.toBeNull();
+
+    // The reader is partway down the chapter they're reading.
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 420;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+    expect(readingState.scrollPosition.value).toBe(420);
+
+    // Navigate. This is what `applyPosition` writes: the scroll reset and the
+    // new position together, in one batch, with no content for it yet.
+    act(() => {
+      batch(() => {
+        readingState.scrollPosition.value = 0;
+        readingState.chapterNumber.value = 2;
+      });
+    });
+
+    // Still showing the old chapter's text, so the reader would otherwise be
+    // left mid-page with the new chapter's title scrolled off above.
+    expect(readingState.chapterData.value?.chapter.number).toBe(1);
+    expect(scroller?.scrollTop).toBe(0);
   });
 
   it("scroll-to-verse scrolls to the specified verse in non-mobile layout", () => {

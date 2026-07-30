@@ -4,7 +4,13 @@ import {
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useState,
+} from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
   adjacentInlineRect,
@@ -33,11 +39,13 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
+import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
   SelfAvatarVisual,
   getSelfDisplayName,
   openBookmarkCategoryModal,
 } from "../Tabs/Tabs";
+import { VerseReferenceText } from "../../app/verseReferenceLink";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -972,9 +980,49 @@ interface Ribbon {
 }
 const RIBBON_FADE_MS = 250;
 
+/**
+ * How long the chapter the reader has left stays on screen, dimmed, before the
+ * placeholder takes over.
+ *
+ * Swapping to the placeholder the instant you navigate reads as a flicker on a
+ * fast connection, where the new text lands in well under this. Dimming costs
+ * nothing and moves nothing, so it carries the common case; the placeholder is
+ * only for waits long enough that dimmed text starts to look stuck.
+ *
+ * Does not apply on a cold start — with no chapter on screen there is nothing
+ * to dim, so the placeholder shows straight away.
+ */
+const CHAPTER_SKELETON_DELAY_MS = 500;
+
+/**
+ * Bar widths for the chapter loading placeholder, one array per paragraph.
+ *
+ * Hand-picked rather than random so the placeholder is identical on every
+ * render — a fresh set each time would shimmer *and* reflow — and so it reads
+ * as ragged prose rather than a block.
+ *
+ * Deliberately more paragraphs than the tallest reading pane needs. The two
+ * failure modes are not symmetric: falling short leaves visible dead space
+ * below the bars, while overshooting spills below the fold where nobody sees
+ * it (the pane scrolls internally, and scroll position resets on every chapter
+ * change). Tuning the fill is editing this one array — no measurement, and no
+ * reflow on a placeholder that remounts on every navigation.
+ */
+const CHAPTER_SKELETON_PARAGRAPHS = [
+  ["97%", "92%", "99%", "88%", "71%"],
+  ["94%", "99%", "90%", "96%", "58%"],
+  ["99%", "89%", "95%", "93%", "77%"],
+  ["91%", "98%", "87%", "96%", "64%"],
+  ["96%", "93%", "99%", "85%", "80%"],
+  ["98%", "90%", "94%", "97%", "52%"],
+  ["93%", "99%", "91%", "88%", "74%"],
+  ["95%", "96%", "98%", "89%", "68%"],
+] as const;
+
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
+  initialChapterLoadSettled: ReadonlySignal<boolean>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
@@ -987,12 +1035,18 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  /**
+   * True while this is the chapter the reader has *left* — shown dimmed until
+   * the chapter they navigated to arrives.
+   */
+  isStale?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
   const {
     chapterData,
     chapterDataPromise,
+    initialChapterLoadSettled,
     selectedVerses,
     highlights,
     decorations,
@@ -1226,7 +1280,13 @@ function ChapterContent(props: ChapterContentProps) {
   }, []);
 
   if (chapterData.value === null) {
-    throw chapterDataPromise;
+    if (!initialChapterLoadSettled.value) {
+      throw chapterDataPromise;
+    }
+    // The load finished and produced nothing. Rendering the error branch above
+    // is the caller's job; throwing the (now-resolved) promise again would just
+    // suspend and resume forever.
+    return null;
   }
 
   const containerClasses = decorations.value
@@ -1242,7 +1302,9 @@ function ChapterContent(props: ChapterContentProps) {
   return (
     <div
       ref={contentRef}
-      className={`sb-chapter-content ${containerClasses}`}
+      className={`sb-chapter-content${
+        props.isStale ? " sb-chapter-content-stale" : ""
+      } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
@@ -1307,6 +1369,7 @@ export function BibleReader(props: BibleReaderProps) {
     highlights,
     decorations,
     loading,
+    isChapterContentStale,
     error,
     selectVerse,
     clearSelectedVerses,
@@ -1314,7 +1377,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  if (!chapterData.value && import.meta.env.SSR) {
+  if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
   }
 
@@ -1339,6 +1402,33 @@ export function BibleReader(props: BibleReaderProps) {
   const readerFontSizeClass = `sb-font-size-${(
     state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
+
+  // Hard-gated off under SSR, which is what keeps both the dimming and the
+  // placeholder out of the served HTML. Rendering the placeholder server-side
+  // would strip the scripture out of the document — for a Bible reader that is
+  // an SEO regression, not a cosmetic one. The reader suspends on
+  // `chapterDataPromise` there instead, so by render time there is either
+  // content or a settled failure.
+  const isContentStale = !import.meta.env.SSR && isChapterContentStale.value;
+  // Held back by `CHAPTER_SKELETON_DELAY_MS` so a fast navigation shows only
+  // dimmed text, never a flash of placeholder. Skipped when there is no chapter
+  // on screen to dim — a cold start would otherwise sit blank for the delay.
+  const [isWaitLong, setIsWaitLong] = useState(false);
+  useEffect(() => {
+    if (!isContentStale) {
+      setIsWaitLong(false);
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setIsWaitLong(true),
+      CHAPTER_SKELETON_DELAY_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [isContentStale]);
+
+  const showChapterSkeleton =
+    isContentStale && (chapterData.value === null || isWaitLong);
+  const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
@@ -1442,6 +1532,43 @@ export function BibleReader(props: BibleReaderProps) {
     </h2>
   );
 
+  /**
+   * Placeholder shown in place of the verses while the chapter the reader has
+   * navigated to is still downloading. Without it, a fast skim shows the *old*
+   * chapter's text under the new chapter's title, which reads as though the
+   * navigation silently failed.
+   */
+  const renderChapterSkeleton = () => (
+    <SkeletonContainer
+      label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
+      className="sb-chapter-content sb-chapter-skeleton"
+    >
+      <Skeleton shape="block" width="42%" />
+      {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
+        <div className="sb-chapter-skeleton-paragraph" key={paragraph}>
+          {widths.map((width, line) => (
+            <Skeleton shape="line" key={line} width={width} />
+          ))}
+        </div>
+      ))}
+    </SkeletonContainer>
+  );
+
+  // Keep the failure state on screen while a retry is in flight — `retryLoad()`
+  // clears `error` as it starts, so without this the panel would flash back to
+  // the (still empty) chapter body before the new request settles.
+  const [retrying, setRetrying] = useState(false);
+  const retryChapterLoad = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await readingState.retryLoad();
+    } finally {
+      setRetrying(false);
+    }
+  };
+  const showLoadError = (!!error.value && !loading.value) || retrying;
+
   const renderMainContent = () => (
     <>
       {isMobile &&
@@ -1450,36 +1577,74 @@ export function BibleReader(props: BibleReaderProps) {
           chapterNumber.value ?? ""
         )}
 
-      {error.value && !loading.value && (
-        <p className="sb-reader-error">{error.value}</p>
+      {showLoadError && (
+        <div className="sb-reader-error" role="alert">
+          <span
+            className="material-symbols-outlined sb-reader-error-icon"
+            aria-hidden="true"
+          >
+            cloud_off
+          </span>
+          <h2 className="sb-reader-error-title">
+            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
+          </h2>
+          <p className="sb-reader-error-message">
+            {t("chapter-unavailable-description", {
+              defaultValue:
+                "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-reader-error-retry"
+            onClick={() => void retryChapterLoad()}
+            disabled={retrying}
+            aria-busy={retrying}
+          >
+            {retrying && (
+              <span
+                className="material-symbols-outlined sb-reader-error-retry-spinner"
+                aria-hidden="true"
+              >
+                progress_activity
+              </span>
+            )}
+            {t("reload", { defaultValue: "Reload" })}
+          </button>
+        </div>
       )}
 
-      {!error.value && (
-        <Suspense
-          fallback={
-            <p>
-              {t("no-chapter-content-found", {
-                defaultValue: "No chapter content found.",
-              })}
-            </p>
-          }
-        >
-          <ChapterContent
-            chapterData={chapterData}
-            chapterDataPromise={readingState.chapterDataPromise}
-            selectedVerses={selectedVerses}
-            selectVersesFromTextSelection={selectVersesFromTextSelection}
-            justConvertedSelectionRef={justConvertedSelectionRef}
-            highlights={highlights}
-            decorations={decorations}
-            selectVerse={selectVerse}
-            selectFootnote={selectFootnote}
-            scriptureElements={scriptureElements}
-          />
-        </Suspense>
-      )}
+      {!showLoadError &&
+        (showChapterSkeleton ? (
+          renderChapterSkeleton()
+        ) : (
+          <Suspense
+            fallback={
+              <p>
+                {t("no-chapter-content-found", {
+                  defaultValue: "No chapter content found.",
+                })}
+              </p>
+            }
+          >
+            <ChapterContent
+              isStale={dimStaleChapter}
+              chapterData={chapterData}
+              chapterDataPromise={readingState.chapterDataPromise}
+              initialChapterLoadSettled={readingState.initialChapterLoadSettled}
+              selectedVerses={selectedVerses}
+              selectVersesFromTextSelection={selectVersesFromTextSelection}
+              justConvertedSelectionRef={justConvertedSelectionRef}
+              highlights={highlights}
+              decorations={decorations}
+              selectVerse={selectVerse}
+              selectFootnote={selectFootnote}
+              scriptureElements={scriptureElements}
+            />
+          </Suspense>
+        ))}
 
-      {!availableTranslations.value && !error.value && (
+      {!availableTranslations.value && !showLoadError && (
         <p>
           {t("no-translations-available", {
             defaultValue: "No translations available.",
@@ -1487,7 +1652,7 @@ export function BibleReader(props: BibleReaderProps) {
         </p>
       )}
 
-      {!error.value && translationLicenseNotice.value.length > 0 && (
+      {!showLoadError && translationLicenseNotice.value.length > 0 && (
         <>
           <p className="sb-translation-license-notice">
             {translationLicenseNotice.value}
@@ -1734,7 +1899,13 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
 
             <div className="sb-footnote-modal-content">
-              {selectedFootnote.value.note.text}
+              <VerseReferenceText
+                text={selectedFootnote.value.note.text}
+                onReferenceClick={(ref) => {
+                  selectFootnote(null);
+                  void state?.app.openVerseReference(ref);
+                }}
+              />
             </div>
           </div>
         </div>
