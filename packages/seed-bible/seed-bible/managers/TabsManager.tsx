@@ -13,6 +13,7 @@ import {
   DEFAULT_CHAPTER_NUMBER,
   createBibleReadingState,
   getDefaultTranslationForLanguage,
+  resolveChapterInBook,
   type BibleReadingState,
   type InitialBibleReadingOptions,
   type TranslationWithLanguage,
@@ -468,6 +469,12 @@ export function createTabs(
     readingState: BibleReadingState,
     savedTranslationId: string
   ) => {
+    // Snapshot what this reading state was on before any of our awaits below,
+    // so a real navigation that happens while we're waiting — the user
+    // explicitly picking a different translation, most notably — can be told
+    // apart from our own restore having not landed yet.
+    const translationIdAtStart = readingState.translationId.peek();
+
     // A freshly-created tab's `loadInitialData()` is likely still in flight
     // (it's kicked off synchronously at tab construction, well before the
     // profile has had a chance to load over the network) and unconditionally
@@ -496,6 +503,23 @@ export function createTabs(
       return;
     }
 
+    // Bail if a real navigation moved this reading state on while we were
+    // waiting — most notably the user explicitly picking a different
+    // translation via the selector, which should always win over a stale
+    // restore. Also bail if the tab itself was closed in the meantime: the
+    // reading state is disposed and nothing will ever render it again, so
+    // finishing the restore would just be a wasted network round trip and a
+    // set of writes nobody observes.
+    const stillAttached = tabs
+      .peek()
+      .some((tab) => tab.readingState === readingState);
+    if (
+      !stillAttached ||
+      readingState.translationId.peek() !== translationIdAtStart
+    ) {
+      return;
+    }
+
     const currentBookId = readingState.bookId.peek() ?? DEFAULT_BOOK_ID;
     const matchingBook = books.find((book) => book.id === currentBookId);
     const targetBook = matchingBook ?? books[0];
@@ -503,17 +527,10 @@ export function createTabs(
       return;
     }
 
-    const firstChapterNumber =
-      targetBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
-    const maxChapterNumber =
-      firstChapterNumber + targetBook.numberOfChapters - 1;
-    const requestedChapter = readingState.chapterNumber.peek();
-    const nextChapter =
-      matchingBook &&
-      requestedChapter >= firstChapterNumber &&
-      requestedChapter <= maxChapterNumber
-        ? requestedChapter
-        : firstChapterNumber;
+    const nextChapter = resolveChapterInBook(
+      targetBook,
+      readingState.chapterNumber.peek()
+    );
 
     await readingState.selectTranslationAndChapter(
       savedTranslationId,

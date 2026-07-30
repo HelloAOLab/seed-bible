@@ -16,10 +16,12 @@ import {
   EXAMPLE_API_ENDPOINT,
   type WebResponseMap,
   aabBooks,
+  bsbBooks,
   createExampleManagerResponseMap,
   createResponse,
   makeChapter,
   makeExampleUrl,
+  translations,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
@@ -580,6 +582,115 @@ describe("createTabs", () => {
     await waitFor(() => firstTab.readingState.translationId.value === "NIV");
     await waitForInitialLoad(firstTab.readingState);
     expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("does not let the restore overwrite a translation the user explicitly picks while it is still in flight", async () => {
+    // Regression test: the restore captures the saved translation id and does
+    // two awaits (waitForIdle, then fetching that translation's books) before
+    // actually switching. If the user explicitly picks a different
+    // translation while those awaits are pending, that deliberate choice must
+    // win — the restore should notice the reading state moved on and bail
+    // instead of clobbering it back to the (now stale) saved translation.
+    const responses: WebResponseMap = {
+      ...createExampleManagerResponseMap(),
+      [makeExampleUrl("/api/available_translations.json")]: createResponse({
+        translations: [...translations.translations, bsbBooks.translation],
+      }),
+      [makeExampleUrl("/api/BSB/books.json")]: createResponse(bsbBooks),
+      [makeExampleUrl("/api/BSB/GEN/1.json")]: createResponse(
+        makeChapter(bsbBooks, "GEN", 1)
+      ),
+    };
+
+    const nivBooksUrl = makeExampleUrl("/api/NIV/books.json");
+    let resolveNivBooks: () => void = () => undefined;
+    const nivBooksGate = new Promise<void>((resolve) => {
+      resolveNivBooks = resolve;
+    });
+
+    webGetMock.mockImplementation(async (url: string) => {
+      if (url === nivBooksUrl) {
+        await nivBooksGate;
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    const { tabs: manager, login } = createTabsManager();
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    // The restore is now waiting on the (gated) NIV books fetch. Simulate the
+    // user explicitly picking a different translation in the meantime.
+    await firstTab.readingState.selectTranslation("BSB");
+    expect(firstTab.readingState.translationId.value).toBe("BSB");
+
+    // Let the restore's books fetch finish.
+    resolveNivBooks();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await waitForInitialLoad(firstTab.readingState);
+
+    // The user's explicit pick must stick — the restore should have noticed
+    // the translation changed out from under it and bailed, not reverted to
+    // the (stale) saved translation.
+    expect(firstTab.readingState.translationId.value).toBe("BSB");
+  });
+
+  it("does not act on a restore for a tab that was closed while it was still in flight", async () => {
+    // Regression test: the restore fetches the saved translation's books
+    // asynchronously; if the tab is closed while that's in flight, the
+    // restore should notice and bail rather than run selectTranslationAndChapter
+    // against a disposed reading state nobody will ever see.
+    const responses = createExampleManagerResponseMap();
+    const nivBooksUrl = makeExampleUrl("/api/NIV/books.json");
+    let resolveNivBooks: () => void = () => undefined;
+    const nivBooksGate = new Promise<void>((resolve) => {
+      resolveNivBooks = resolve;
+    });
+
+    webGetMock.mockImplementation(async (url: string) => {
+      if (url === nivBooksUrl) {
+        await nivBooksGate;
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    const { tabs: manager, login } = createTabsManager();
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+
+    // A second tab so removing the first one doesn't leave the manager empty.
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    manager.selectTab(firstTab.id);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    // The restore is now waiting on the (gated) NIV books fetch. Close the
+    // tab it's targeting in the meantime.
+    manager.removeTab(firstTab.id);
+
+    resolveNivBooks();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Nothing to assert on the closed tab's reading state beyond "it didn't
+    // throw" — the point is the restore quietly no-ops instead of acting on
+    // a disposed reading state.
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
   });
 
   it("keeps an explicit URL translation over a saved profile translation", async () => {
