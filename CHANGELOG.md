@@ -14,6 +14,7 @@
 - Collapse a fast skim into a single browser history entry, so one Back press returns you to where the skim started instead of stepping back through every chapter you passed. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Resolve the reader's book and chapter labels from the book catalog instead of the loaded chapter, so the titles, the tab strip and the mobile navigation pill update the moment you move. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Work out the next and previous chapter from the book catalog instead of following links on the loaded chapter, which includes apocryphal books wherever a translation lists them. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
+- When a chapter fails to load, the reader now shows a "Chapter unavailable" message with an offline icon and a **Reload** button that retries the load, instead of a raw red error message like "Failed to fetch".
 
 ### 🐛 Fixed
 
