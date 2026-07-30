@@ -1469,6 +1469,21 @@ export function createSeedBibleState(
           }
         );
 
+        if (args.ref.verse) {
+          readingState.tab.readingState.decorateVerses(
+            args.ref.bookId,
+            args.ref.chapter,
+            args.ref.endVerse
+              ? range(args.ref.verse, args.ref.endVerse + 1)
+              : args.ref.verse,
+            {
+              className: "sb-verse-decoration-diminish",
+              containerClassName: "sb-chapter-decoration-diminish",
+              removeAfterMs: 3000,
+            }
+          );
+        }
+
         return "success";
       },
     });
