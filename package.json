@@ -134,7 +134,6 @@
     "i18next": "catalog:",
     "i18next-resources-to-backend": "catalog:",
     "imagetracerjs": "^1.2.6",
-    "luxon": "catalog:",
     "opentype.js": "^1.3.4",
     "preact-render-to-string": "catalog:",
     "prompts": "^2.4.2",

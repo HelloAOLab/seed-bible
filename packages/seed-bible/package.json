@@ -30,7 +30,6 @@
     "@casual-simulation/websocket": "catalog:",
     "axios": "catalog:",
     "i18next": "catalog:",
-    "luxon": "catalog:",
     "preact": "catalog:",
     "preact-iso": "catalog:",
     "react": "catalog:",
