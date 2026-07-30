@@ -173,7 +173,7 @@ export class PieceDataRepository implements PieceDataRepositoryPort, StackManage
   }) => StackPieceDataMap[K] | undefined = ({ type, id }) => {
     const targetSet = this.#dataStrategy[type];
     for (const data of targetSet) {
-      if (data.id === id) {
+      if (data.piece?.id === id) {
         return data;
       }
     }

@@ -5,7 +5,7 @@ export type ObjectPoolerConfig<
   P extends Record<keyof P, TypedBot<PieceBotTags>>,
 > = {
   [K in keyof P]: PoolData<K, P[K]>;
-}[keyof P][];
+};
 
 export interface DimensionGetter {
   getDimension: () => string;
@@ -20,8 +20,11 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     poolsData: ObjectPoolerConfig<P>,
     dimensionGetter: DimensionGetter
   ) {
+    const poolDataList = Object.values(
+      poolsData
+    ) as ObjectPoolerConfig<P>[keyof P][];
     const dictionary = new Map(
-      poolsData.map((poolData) => {
+      poolDataList.map((poolData) => {
         return [poolData.key, this.#createPool(poolData)];
       })
     );

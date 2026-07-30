@@ -72,6 +72,12 @@ import { thisTypedBot as crossLinePrefab } from "../prefabs/crossLine/botAdapter
 import { thisTypedBot as sectionShadowPrefab } from "../prefabs/sectionShadow/botAdapter";
 import { thisTypedBot as bibleTransformerPrefab } from "../prefabs/bibleTransformer/botAdapter";
 import { thisTypedBot as bibleShadowPrefab } from "../prefabs/shadow/botAdapter";
+import { thisTypedBot as activityIndicatorPrefab } from "../prefabs/activityIndicator/botAdapter";
+import { thisTypedBot as activityNotificationPrefab } from "../prefabs/activityNotification/botAdapter";
+import { thisTypedBot as infoLabelDatePrefab } from "../prefabs/infoLabelDate/botAdapter";
+import { thisTypedBot as infoLabelTailPrefab } from "../prefabs/infoLabelTail/botAdapter";
+import { thisTypedBot as infoLabelTextPrefab } from "../prefabs/infoLabelText/botAdapter";
+import { thisTypedBot as infoLabelTransformerPrefab } from "../prefabs/infoLabelTransformer/botAdapter";
 import { thisTypedBot as entrypointBot } from "../entrypoints/botAdapter";
 import { StackTestamentMapper } from "../mappers/StackTestamentMapper";
 import { StackSectionMapper } from "../mappers/StackSectionMapper";
@@ -195,9 +201,6 @@ import { BibleModeSequenceAdapter } from "../adapters/sequences/BibleModeSequenc
 let initialized = false;
 
 export const bootstrapExtension = () => {
-  console.log(`[Debug] bible-stack pattern bootstrap bootstrapExtension`, {
-    initialized,
-  });
   if (initialized) return;
 
   initialized = true;
@@ -295,20 +298,94 @@ export const bootstrapExtension = () => {
   }
 
   const objectPooler = new ObjectPooler<BibleStackObjectPoolerMap>(
-    [
-      makePoolData(BiblePieces.StackTestament, testamentPrefab, 2),
-      makePoolData(BiblePieces.StackSection, sectionPrefab, 8),
-      makePoolData(BiblePieces.StackBook, bookPrefab, 20),
-      makePoolData(BiblePieces.StackSectionBook, bookPrefab, 8),
-      makePoolData(BiblePieces.StackChapter, chapterPrefab, 20),
-      makePoolData(BiblePieces.StackSectionShadow, sectionShadowPrefab, 8),
-      makePoolData(BiblePieces.VersesBundle, versesBunblePrefab, 3),
-      makePoolData(BiblePieces.Verse, versePrefab, 3),
-      makePoolData(BiblePieces.StackCover, coverPrefab, 3),
-      makePoolData(BiblePieces.StackCrossLine, crossLinePrefab, 2),
-      makePoolData(BiblePieces.StackTransformer, bibleTransformerPrefab, 1),
-      makePoolData(BiblePieces.StackShadow, bibleShadowPrefab, 1),
-    ],
+    {
+      [BiblePieces.StackTestament]: makePoolData(
+        BiblePieces.StackTestament,
+        testamentPrefab,
+        2
+      ),
+      [BiblePieces.StackSection]: makePoolData(
+        BiblePieces.StackSection,
+        sectionPrefab,
+        8
+      ),
+      [BiblePieces.StackBook]: makePoolData(
+        BiblePieces.StackBook,
+        bookPrefab,
+        20
+      ),
+      [BiblePieces.StackSectionBook]: makePoolData(
+        BiblePieces.StackSectionBook,
+        bookPrefab,
+        8
+      ),
+      [BiblePieces.StackChapter]: makePoolData(
+        BiblePieces.StackChapter,
+        chapterPrefab,
+        20
+      ),
+      [BiblePieces.StackSectionShadow]: makePoolData(
+        BiblePieces.StackSectionShadow,
+        sectionShadowPrefab,
+        8
+      ),
+      [BiblePieces.VersesBundle]: makePoolData(
+        BiblePieces.VersesBundle,
+        versesBunblePrefab,
+        3
+      ),
+      [BiblePieces.Verse]: makePoolData(BiblePieces.Verse, versePrefab, 3),
+      [BiblePieces.StackCover]: makePoolData(
+        BiblePieces.StackCover,
+        coverPrefab,
+        3
+      ),
+      [BiblePieces.StackCrossLine]: makePoolData(
+        BiblePieces.StackCrossLine,
+        crossLinePrefab,
+        2
+      ),
+      [BiblePieces.StackTransformer]: makePoolData(
+        BiblePieces.StackTransformer,
+        bibleTransformerPrefab,
+        1
+      ),
+      [BiblePieces.StackShadow]: makePoolData(
+        BiblePieces.StackShadow,
+        bibleShadowPrefab,
+        1
+      ),
+      [BiblePieces.ActivityIndicator]: makePoolData(
+        BiblePieces.ActivityIndicator,
+        activityIndicatorPrefab,
+        8
+      ),
+      [BiblePieces.ActivityNotification]: makePoolData(
+        BiblePieces.ActivityNotification,
+        activityNotificationPrefab,
+        5
+      ),
+      [BiblePieces.InfoLabelDate]: makePoolData(
+        BiblePieces.InfoLabelDate,
+        infoLabelDatePrefab,
+        8
+      ),
+      [BiblePieces.InfoLabelTail]: makePoolData(
+        BiblePieces.InfoLabelTail,
+        infoLabelTailPrefab,
+        8
+      ),
+      [BiblePieces.InfoLabelText]: makePoolData(
+        BiblePieces.InfoLabelText,
+        infoLabelTextPrefab,
+        8
+      ),
+      [BiblePieces.InfoLabelTransformer]: makePoolData(
+        BiblePieces.InfoLabelTransformer,
+        infoLabelTransformerPrefab,
+        8
+      ),
+    },
     {
       getDimension: () => os.getCurrentDimension(),
     }
