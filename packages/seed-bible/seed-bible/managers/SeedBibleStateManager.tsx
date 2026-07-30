@@ -1540,16 +1540,8 @@ export function createSeedBibleState(
     });
   };
 
-  const disableCoreChatContext = () => {
-    chats.removeContext("core");
-  };
-
   effect(() => {
-    if (playlists.isDiscoverOpen.value) {
-      disableCoreChatContext();
-    } else {
-      enableCoreChatContext();
-    }
+    enableCoreChatContext();
   });
 
   // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
