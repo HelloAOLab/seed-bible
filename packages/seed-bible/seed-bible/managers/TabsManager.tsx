@@ -440,6 +440,23 @@ export function createTabs(
     return dispose;
   });
 
+  // Resolves once `readingState` is no longer in the middle of an operation
+  // (its own initial load, or any other in-flight navigation). Resolves
+  // immediately if it's already idle.
+  const waitForIdle = (readingState: BibleReadingState): Promise<void> =>
+    new Promise((resolve) => {
+      if (!readingState.loading.peek()) {
+        resolve();
+        return;
+      }
+      const dispose = effect(() => {
+        if (!readingState.loading.value) {
+          dispose();
+          resolve();
+        }
+      });
+    });
+
   // Restores the profile's saved translation on the given reading state.
   // `selectTranslationAndChapter` clamps an out-of-range chapter but throws
   // if the current book isn't in the target translation at all (a partial/
@@ -451,6 +468,19 @@ export function createTabs(
     readingState: BibleReadingState,
     savedTranslationId: string
   ) => {
+    // A freshly-created tab's `loadInitialData()` is likely still in flight
+    // (it's kicked off synchronously at tab construction, well before the
+    // profile has had a chance to load over the network) and unconditionally
+    // writes its own translation/book/chapter at the end, with no awareness
+    // of anything that happened after it started. Racing it here would let
+    // that stale write land *after* ours and silently revert the restore —
+    // this was reproducible on a bare cold load (no URL params) where the tab
+    // starts on the default translation and nothing short-circuits either
+    // load. Waiting for the tab to go idle first guarantees our restore is
+    // the last write, not a call that gets clobbered by an earlier one still
+    // finishing up.
+    await waitForIdle(readingState);
+
     const books = await dataManager
       .getTranslationBooks(savedTranslationId)
       .then((result) => result.books)
@@ -491,6 +521,20 @@ export function createTabs(
       nextChapter,
       { updateUrl: false }
     );
+
+    // Commit the restored translation into the URL right away (a `replace`,
+    // not a `push` — this isn't a navigation the user asked for) instead of
+    // waiting for the next real navigation to write it via
+    // `getUrlQueryParams`. Without this, the URL still has no translation
+    // param immediately after restoring, so any unrelated query-param write
+    // that happens before the user's first navigation — e.g. an extension
+    // opening its own pane on load, which is a real, observed case — looks
+    // like an external navigation to the effect below. That effect
+    // recomputes the desired translation from the URL, finds none, and
+    // reverts this restore straight back to the default.
+    if (selectedTab.peek()?.readingState === readingState) {
+      commitSelectedTabToUrl({ replace: true });
+    }
   };
 
   // Apply the profile's saved translation to the selected tab, but ONLY when

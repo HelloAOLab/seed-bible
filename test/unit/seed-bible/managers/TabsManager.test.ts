@@ -493,6 +493,95 @@ describe("createTabs", () => {
     expect(firstTab.readingState.chapterNumber.value).toBe(1);
   });
 
+  it("commits the restored translation to the URL immediately, so an unrelated query-param write elsewhere doesn't revert it", async () => {
+    // Regression test: an extension mounting its own `?today=open`-style URL
+    // param (via `syncSignalsToUrl`) right after the restore used to look
+    // like an external navigation to `syncSelectedTabFromUrl`, which read
+    // the (still translation-less) URL and reverted straight back to AAB.
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    // The restore should have committed `translation=NIV` (a `replace`, no
+    // history push) to the URL right away.
+    expect(new URL(window.location.href).searchParams.get("translation")).toBe(
+      "NIV"
+    );
+
+    // Simulate an extension binding its own param to the URL after the
+    // restore, unrelated to translation/book/chapter.
+    navigation.updateQueryParams({ today: "open" });
+    await waitForInitialLoad(firstTab.readingState);
+
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+    expect(new URL(window.location.href).searchParams.get("today")).toBe(
+      "open"
+    );
+  });
+
+  it("does not let a slow initial tab load clobber a translation restored while it was still in flight", async () => {
+    // Regression test for the real root cause behind the "flickers to the
+    // saved translation, then reverts to the default" bug: a freshly created
+    // tab's own initial load (`loadInitialData`) is already in flight when
+    // the profile loads, and unconditionally writes its own (stale, default)
+    // translation/book/chapter when it finishes — with no awareness that a
+    // restore already landed in the meantime. This reproduces that ordering
+    // by holding the initial chapter fetch open until after the restore has
+    // had a chance to (wrongly) race ahead.
+    const responses = createExampleManagerResponseMap();
+    const aabChapterUrl = makeExampleUrl("/api/AAB/GEN/1.json");
+    let resolveAabChapter: () => void = () => undefined;
+    const aabChapterGate = new Promise<void>((resolve) => {
+      resolveAabChapter = resolve;
+    });
+
+    webGetMock.mockImplementation(async (url: string) => {
+      if (url === aabChapterUrl) {
+        await aabChapterGate;
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+
+    const { tabs: manager, login } = createTabsManager();
+    const firstTab = manager.tabs.value[0]!;
+
+    // Still stuck fetching the default translation's first chapter.
+    expect(firstTab.readingState.loading.value).toBe(true);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    // The restore should be waiting for the tab to go idle rather than racing
+    // ahead of the still-in-flight initial load.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    // Let the slow initial load finish.
+    resolveAabChapter();
+    await waitForInitialLoad(firstTab.readingState);
+
+    // The restore runs after, so it's the last write and isn't clobbered by
+    // the (now-finished) initial load.
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
   it("keeps an explicit URL translation over a saved profile translation", async () => {
     window.history.replaceState(
       null,
