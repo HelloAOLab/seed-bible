@@ -372,7 +372,7 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
 /**
  * Defines a map that maps the book ID to the USFM Book identifier.
  */
-const BOOK_ID_MAP: Map<string, BookId> = new Map([
+export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["gen", "GEN"],
   ["genesis", "GEN"],
   ["exo", "EXO"],
@@ -583,7 +583,7 @@ export function getBookId(book: string): BookId | null {
  * routing (e.g. "/genesis/1"). Apocrypha books fall back to their lowercase
  * USFM code since they have no full-name entry in `BOOK_ID_MAP`.
  */
-const BOOK_SLUGS: Record<BookId, string> = {
+export const BOOK_SLUGS: Record<BookId, string> = {
   GEN: "genesis",
   EXO: "exodus",
   LEV: "leviticus",

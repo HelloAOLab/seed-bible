@@ -1,4 +1,6 @@
 import {
+  BOOK_ID_MAP,
+  BOOK_SLUGS,
   createBibleDataManager,
   findClosestBookId,
   getBookId,
@@ -583,5 +585,18 @@ describe("findClosestBookId()", () => {
     // fails, but it should still behave sanely (return the real match) if
     // called directly on an exact name.
     expect(findClosestBookId("genesis")).toBe("GEN");
+  });
+
+  it("every BookId has a slug that round-trips through findClosestBookId", () => {
+    for (const bookId of BOOK_ID_MAP.values()) {
+      const slug = BOOK_SLUGS[bookId];
+      expect(findClosestBookId(slug)).toBe(bookId);
+    }
+  });
+
+  it("every slug maps to a book ID", () => {
+    for (const bookId of Object.keys(BOOK_SLUGS) as BookId[]) {
+      expect(getBookId(bookId)).toBe(bookId);
+    }
   });
 });
