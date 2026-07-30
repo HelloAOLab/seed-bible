@@ -35,6 +35,7 @@ import {
   createServer,
   type IncomingMessage,
   type IncomingHttpHeaders,
+  type Server,
   type ServerResponse,
 } from "node:http";
 import { pathToFileURL } from "node:url";
@@ -43,6 +44,25 @@ import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
+import { SpanKind, type Span } from "@opentelemetry/api";
+import {
+  expressSpanMiddleware,
+  extractContext,
+  initTelemetry,
+  instrumentStore,
+  markRenderDegraded,
+  recordAssetProxy,
+  recordCacheLookup,
+  recordError,
+  recordHttpRequest,
+  recordRender,
+  requestSpanAttributes,
+  routeLabel,
+  setResponseStatus,
+  setRouteAttributes,
+  withSpan,
+  type Telemetry,
+} from "./telemetry";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PORT = Number(process.env.PORT ?? 3002);
@@ -115,7 +135,11 @@ const pointerCache = new Map<string, PointerEntry>();
 async function resolvePointer(branch: string): Promise<BranchPointer | null> {
   const cached = pointerCache.get(branch);
   const now = Date.now();
-  if (cached && cached.expires > now) return cached.pointer;
+  if (cached && cached.expires > now) {
+    recordCacheLookup("pointer", true);
+    return cached.pointer;
+  }
+  recordCacheLookup("pointer", false);
   const pointer = await store.readPointer(branch);
   pointerCache.set(branch, { pointer, expires: now + POINTER_TTL_MS });
   return pointer;
@@ -138,14 +162,25 @@ async function loadBuild(
     // Refresh LRU recency.
     moduleCache.delete(key);
     moduleCache.set(key, existing);
+    recordCacheLookup("module", true);
     return existing;
   }
+  recordCacheLookup("module", false);
 
   const { serverModulePath, html } = await store.fetchArtifacts(
     branch,
     buildId
   );
-  const mod = await import(pathToFileURL(serverModulePath).href);
+  // Evaluating a branch's SSR bundle is a cold-start cliff — the first request
+  // for a build pays for it while later ones hit the cache above. Give it its
+  // own span so those outlier latencies are explainable.
+  const mod = await withSpan(
+    "build.import",
+    {
+      attributes: { "seedbible.branch": branch, "seedbible.build_id": buildId },
+    },
+    () => import(pathToFileURL(serverModulePath).href)
+  );
   const render = mod.render as RenderFn;
   if (typeof render !== "function") {
     throw new Error(`Build ${key} does not export render()`);
@@ -172,8 +207,10 @@ async function loadHtml(branch: string, buildId: string): Promise<string> {
     // Refresh LRU recency.
     htmlCache.delete(key);
     htmlCache.set(key, existing);
+    recordCacheLookup("html", true);
     return existing;
   }
+  recordCacheLookup("html", false);
 
   const html = await store.fetchHtml(branch, buildId);
   htmlCache.set(key, html);
@@ -249,23 +286,42 @@ async function renderAndRespond(
   );
 
   let html: string;
+  const renderStart = performance.now();
+  let renderFailed = false;
   try {
-    html = await render({
-      path: route.appUrl,
-      config: {
-        basePath: route.basePath,
-        assetHost: ASSET_HOST,
-        renderedAsMobile,
-        acceptedLanguages,
+    html = await withSpan(
+      "ssr.render",
+      {
+        attributes: {
+          "seedbible.branch": route.branch,
+          "seedbible.rendered_as_mobile": renderedAsMobile,
+        },
       },
-      html: preRenderedHtml,
-    });
+      () =>
+        render({
+          path: route.appUrl,
+          config: {
+            basePath: route.basePath,
+            assetHost: ASSET_HOST,
+            renderedAsMobile,
+            acceptedLanguages,
+          },
+          html: preRenderedHtml,
+        })
+    );
   } catch (err) {
+    renderFailed = true;
     console.error(
       `SSR render() failed for branch "${route.branch}" (${route.appUrl}); falling back to unrendered HTML:`,
       err
     );
+    // This path answers 200 with a page that has no server-rendered content, so
+    // from the outside the site looks healthy. Flag it on the request span and
+    // count it — otherwise the degradation is invisible.
+    markRenderDegraded();
     html = preRenderedHtml;
+  } finally {
+    recordRender(renderStart, route.branch, renderFailed);
   }
 
   res.writeHead(200, {
@@ -312,19 +368,31 @@ async function proxyAsset(
     if (typeof value === "string") forwardHeaders[name] = value;
   }
 
+  const upstreamUrl = `${ASSET_HOST}${pathAndQuery}`;
+  const proxyStart = performance.now();
   let upstream: Response;
   try {
-    upstream = await fetch(`${ASSET_HOST}${pathAndQuery}`, {
-      method: "GET",
-      headers: forwardHeaders,
-      redirect: "manual",
-    });
+    upstream = await withSpan(
+      "asset.proxy",
+      { kind: SpanKind.CLIENT, attributes: { "url.full": upstreamUrl } },
+      async (span) => {
+        const response = await fetch(upstreamUrl, {
+          method: "GET",
+          headers: forwardHeaders,
+          redirect: "manual",
+        });
+        span.setAttribute("http.response.status_code", response.status);
+        return response;
+      }
+    );
   } catch (err) {
     console.error(`Asset proxy failed for ${pathAndQuery}:`, err);
+    recordAssetProxy(proxyStart, 502);
     res.writeHead(502, { "content-type": "text/plain" });
     res.end("Bad gateway");
     return;
   }
+  recordAssetProxy(proxyStart, upstream.status);
 
   const headers: Record<string, string> = {};
   upstream.headers.forEach((value, key) => {
@@ -347,21 +415,86 @@ async function proxyAsset(
   }
 }
 
+/**
+ * Entry point for every request. Opens the server span, then delegates to
+ * `dispatch` for the actual routing.
+ */
 async function handle(
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> {
   const url = req.url ?? "/";
 
+  // Answered before any span is opened: liveness probes fire every few seconds
+  // and carry no information, so tracing them would drown out real traffic and
+  // skew the latency histogram.
   if (url === "/healthz") {
     res.writeHead(200, { "content-type": "text/plain" });
     res.end("ok");
     return;
   }
 
+  const parsedUrl = new URL(url, "http://localhost");
+  const isAssetRequest =
+    Boolean(ASSET_HOST) && ASSET_PATH_RE.test(parsedUrl.pathname);
+  const method = req.method ?? "GET";
+  // A bounded label — the raw path contains branch names and build ids, which
+  // would be unbounded cardinality as a metric attribute.
+  const routeName = isAssetRequest
+    ? "asset-proxy"
+    : routeLabel(parsedUrl.pathname);
+  const metricBranch =
+    isAssetRequest || routeName === "/__invalidate"
+      ? ""
+      : resolveRoute(url).branch;
+  const start = performance.now();
+
+  await withSpan(
+    `${method} ${routeName}`,
+    {
+      kind: SpanKind.SERVER,
+      // Continue an upstream trace (CDN, load balancer) when one is present.
+      parent: extractContext(req.headers),
+      attributes: requestSpanAttributes({
+        method,
+        pathname: parsedUrl.pathname,
+        route: routeName,
+        httpVersion: req.httpVersion,
+        host:
+          typeof req.headers.host === "string" ? req.headers.host : undefined,
+        clientAddress: req.socket.remoteAddress ?? undefined,
+        userAgent:
+          typeof req.headers["user-agent"] === "string"
+            ? req.headers["user-agent"]
+            : undefined,
+      }),
+    },
+    async (span) => {
+      try {
+        await dispatch(req, res, url, parsedUrl, isAssetRequest, span);
+      } finally {
+        setResponseStatus(span, res.statusCode);
+        recordHttpRequest(start, {
+          method,
+          statusCode: res.statusCode,
+          route: routeName,
+          branch: metricBranch,
+        });
+      }
+    }
+  );
+}
+
+async function dispatch(
+  req: IncomingMessage,
+  res: ServerResponse,
+  url: string,
+  parsedUrl: URL,
+  isAssetRequest: boolean,
+  span: Span
+): Promise<void> {
   // Legacy CasualOS deep links used a `?pattern=` query param. Redirect those
   // to the ao.bot host, preserving the full query string.
-  const parsedUrl = new URL(url, "http://localhost");
   if (parsedUrl.searchParams.has("pattern")) {
     res.writeHead(302, { location: `https://ao.bot/${parsedUrl.search}` });
     res.end();
@@ -400,17 +533,21 @@ async function handle(
   // backstops root-scoped same-origin files like the PWA shell (sw.js,
   // registerSW.js, the web manifest). Without an asset host configured there is
   // nowhere to forward them, so let them fall through to the app router (and 404).
-  if (ASSET_HOST && ASSET_PATH_RE.test(parsedUrl.pathname)) {
+  if (isAssetRequest) {
     await proxyAsset(req, res, `${parsedUrl.pathname}${parsedUrl.search}`);
     return;
   }
 
   const route = resolveRoute(url);
+  const ssrAllowed = ALLOWED_SSR_BRANCHES.has(route.branch);
 
   try {
     const pointer = route.patternVersion
       ? { buildId: route.patternVersion }
       : await resolvePointer(route.branch);
+    // Spans are not aggregated, so the real branch name is safe to record here
+    // even though the metric attribute has to be clamped.
+    setRouteAttributes(span, route.branch, pointer?.buildId, ssrAllowed);
     if (!pointer) {
       res.writeHead(404, { "content-type": "text/html" });
       res.end(
@@ -431,7 +568,7 @@ async function handle(
     }
 
     // Whitelisted branches are rendered by their own SSR bundle.
-    if (ALLOWED_SSR_BRANCHES.has(route.branch)) {
+    if (ssrAllowed) {
       const { render, html: preRenderedHtml } = await loadBuild(
         route.branch,
         pointer.buildId
@@ -470,6 +607,9 @@ async function handle(
     res.end(preRenderedHtml);
   } catch (err) {
     console.error(`Render failed for ${route.branch} (${url}):`, err);
+    // Swallowed here so the client still gets a page; record it on the span so
+    // it is not swallowed from the trace too.
+    recordError(span, err);
     res.writeHead(500, { "content-type": "text/html" });
     res.end(
       "<!doctype html><meta charset=utf-8><h1>500</h1><p>Render error.</p>"
@@ -477,15 +617,51 @@ async function handle(
   }
 }
 
+/** How long to wait for in-flight requests before flushing telemetry and exiting. */
+const SHUTDOWN_GRACE_MS = Number(process.env.SHUTDOWN_GRACE_MS ?? 5_000);
+
+/**
+ * Closes the server on SIGTERM/SIGINT and flushes buffered spans and metrics
+ * before exiting. Without this, the last batch is lost on every deploy — which
+ * is exactly the batch covering whatever prompted the deploy.
+ */
+function installShutdownHandlers(server: Server, telemetry: Telemetry): void {
+  let finished = false;
+  const finish = async (): Promise<void> => {
+    if (finished) return;
+    finished = true;
+    await telemetry.shutdown();
+    process.exit(0);
+  };
+
+  const stop = (signal: NodeJS.Signals): void => {
+    console.log(`Received ${signal}; shutting down.`);
+    server.close(() => void finish());
+    // A hung keep-alive connection must not block the flush indefinitely.
+    setTimeout(() => void finish(), SHUTDOWN_GRACE_MS).unref();
+  };
+
+  process.on("SIGTERM", stop);
+  process.on("SIGINT", stop);
+}
+
 function startProdServer(): void {
-  store = createStore();
-  createServer((req, res) => {
+  const storeBackend = process.env.STORE_BACKEND ?? "local";
+  const telemetry = initTelemetry({
+    allowedBranches: ALLOWED_SSR_BRANCHES,
+    rootBranch: ROOT_BRANCH,
+  });
+  store = instrumentStore(createStore(), storeBackend);
+
+  const server = createServer((req, res) => {
     void handle(req, res);
   }).listen(PORT, () => {
     console.log(
-      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${process.env.STORE_BACKEND ?? "local"}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"})`
+      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${storeBackend}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"}, telemetry: ${telemetry.enabled ? "on" : "off"})`
     );
   });
+
+  installShutdownHandlers(server, telemetry);
 }
 
 // ─── Development: Express + Vite dev server ──────────────────────────────────
@@ -504,6 +680,15 @@ async function startDevServer(): Promise<void> {
   const path = await import("node:path");
 
   const app = express();
+
+  const telemetry = initTelemetry({
+    allowedBranches: ALLOWED_SSR_BRANCHES,
+    rootBranch: ROOT_BRANCH,
+  });
+
+  // Registered ahead of Vite's middleware so it wraps the whole chain. No-op
+  // unless an OTLP endpoint is configured.
+  app.use(expressSpanMiddleware(ROOT_BRANCH));
 
   // Create Vite server in middleware mode and configure the app type as
   // 'custom', disabling Vite's own HTML serving logic so the parent server
@@ -562,16 +747,34 @@ async function startDevServer(): Promise<void> {
       );
 
       // 4. Render the app HTML.
-      const html = await render({
-        path: req.originalUrl,
-        config: {
-          basePath: "",
-          assetHost: "",
-          renderedAsMobile,
-          acceptedLanguages,
-        },
-        html: transformed,
-      });
+      const renderStart = performance.now();
+      let html: string;
+      try {
+        html = await withSpan(
+          "ssr.render",
+          {
+            attributes: {
+              "seedbible.branch": ROOT_BRANCH,
+              "seedbible.rendered_as_mobile": renderedAsMobile,
+            },
+          },
+          () =>
+            render({
+              path: req.originalUrl,
+              config: {
+                basePath: "",
+                assetHost: "",
+                renderedAsMobile,
+                acceptedLanguages,
+              },
+              html: transformed,
+            })
+        );
+      } catch (e) {
+        recordRender(renderStart, ROOT_BRANCH, true);
+        throw e;
+      }
+      recordRender(renderStart, ROOT_BRANCH, false);
 
       // 5. Send the rendered HTML back.
       res.status(200).set({ "Content-Type": "text/html" }).end(html);
@@ -584,14 +787,19 @@ async function startDevServer(): Promise<void> {
         `SSR render failed for ${req.originalUrl}; falling back to unrendered index.html:`,
         e
       );
+      markRenderDegraded();
       // Serve the unrendered index.html rather than failing the request.
       res.status(200).set({ "Content-Type": "text/html" }).end(template);
     }
   });
 
-  app.listen(PORT, () => {
-    console.log(`Seed Bible dev server running at http://localhost:${PORT}`);
+  const server = app.listen(PORT, () => {
+    console.log(
+      `Seed Bible dev server running at http://localhost:${PORT} (telemetry: ${telemetry.enabled ? "on" : "off"})`
+    );
   });
+
+  installShutdownHandlers(server, telemetry);
 }
 
 if (IS_PRODUCTION) {
