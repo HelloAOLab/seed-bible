@@ -163,4 +163,30 @@ describe("buildReadingPath", () => {
     });
     expect(path).toBe(`/en/${encodeURIComponent(customUrl)}/john/3`);
   });
+
+  it("forceExplicitLanguage includes the language segment even in the fully-default state", () => {
+    expect(
+      buildReadingPath({
+        language: DEFAULT_UI_LANGUAGE,
+        translationId: "AAB",
+        bookId: "JHN",
+        chapter: 3,
+        defaultTranslationId,
+        forceExplicitLanguage: true,
+      })
+    ).toBe("/en/AAB/john/3");
+  });
+
+  it("forceExplicitLanguage is a no-op when the segment would already be shown", () => {
+    expect(
+      buildReadingPath({
+        language: "es",
+        translationId: "spa_onbv",
+        bookId: "JHN",
+        chapter: 3,
+        defaultTranslationId,
+        forceExplicitLanguage: true,
+      })
+    ).toBe("/es/spa_onbv/john/3");
+  });
 });

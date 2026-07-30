@@ -30,8 +30,10 @@ describe("acceptLanguageRedirect", () => {
     expect(acceptLanguageRedirect("/AAB/john/3", "", ["en-US"])).toBeNull();
   });
 
-  it("does not redirect when no Accept-Language header was sent", () => {
-    expect(acceptLanguageRedirect("/AAB/john/3", "", [])).toBeNull();
+  it("redirects to the explicit English URL when no Accept-Language header was sent", () => {
+    expect(acceptLanguageRedirect("/AAB/john/3", "", [])).toBe(
+      "/en/AAB/john/3"
+    );
   });
 
   it("does not redirect when none of the visitor's preferences are supported", () => {
@@ -71,6 +73,20 @@ describe("render() Accept-Language redirect wiring", () => {
 
     expect(result).toEqual({
       redirectTo: "/fr/AAB/john/3",
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    });
+  });
+
+  it("returns a 302 with a Vary: Accept-Language header for the no-header English redirect", async () => {
+    const result = await render({
+      path: "/AAB/john/3",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/AAB/john/3",
       redirectStatus: 302,
       vary: "Accept-Language",
     });

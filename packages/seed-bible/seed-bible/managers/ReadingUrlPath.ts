@@ -111,6 +111,13 @@ export function parseReadingPath(
  * `getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id`) rather than
  * looked up here, keeping this module free of a BibleReadingManager
  * dependency.
+ *
+ * `forceExplicitLanguage` always includes the `{lang}` segment, even for the
+ * "fully default" state — for a caller that specifically needs an explicit,
+ * self-describing URL rather than the shortest canonical one (e.g. a
+ * language-negotiation redirect landing a visitor on English: the omitted
+ * form is indistinguishable from "not yet negotiated" and would send them
+ * right back through the same redirect).
  */
 export function buildReadingPath(params: {
   language: string;
@@ -118,13 +125,22 @@ export function buildReadingPath(params: {
   bookId: BookId;
   chapter: number;
   defaultTranslationId: string;
+  forceExplicitLanguage?: boolean;
 }): string {
-  const { language, translationId, bookId, chapter, defaultTranslationId } =
-    params;
+  const {
+    language,
+    translationId,
+    bookId,
+    chapter,
+    defaultTranslationId,
+    forceExplicitLanguage,
+  } = params;
   const bookSlug = getBookSlug(bookId);
   const encodedTranslation = encodeURIComponent(translationId);
   const isFullyDefault =
-    language === DEFAULT_UI_LANGUAGE && translationId === defaultTranslationId;
+    !forceExplicitLanguage &&
+    language === DEFAULT_UI_LANGUAGE &&
+    translationId === defaultTranslationId;
 
   if (isFullyDefault) {
     return `/${encodedTranslation}/${bookSlug}/${chapter}`;

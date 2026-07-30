@@ -163,7 +163,10 @@ function legacyReadingUrlRedirect(
  * chosen English on purpose; their browser just wasn't asked. If their
  * `Accept-Language` header names a language this app actually supports,
  * redirect to the explicit 4-segment form for that language instead of
- * silently rendering in English.
+ * silently rendering in English. When no `Accept-Language` header was sent
+ * at all (most often a crawler or a bare HTTP client, not a browser),
+ * there is nothing to negotiate — redirect to the explicit English URL
+ * rather than silently rendering the ambiguous 3-segment form as English.
  *
  * Deliberately a redirect (not just an SSR language switch at the same URL):
  * the URL itself is meant to reflect the language being read in — see the
@@ -200,20 +203,39 @@ export function acceptLanguageRedirect(
     return null;
   }
 
+  const bookId = parsed.bookId;
+  const buildRedirect = (language: string): string => {
+    const readingPath = buildReadingPath({
+      language,
+      translationId: parsed.translationId,
+      bookId,
+      chapter: parsed.chapter,
+      defaultTranslationId:
+        getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+      // Always land on the explicit 4-segment form: the omitted form is
+      // exactly the 3-segment URL this redirect started from, so omitting it
+      // here would just redirect the visitor back to themselves.
+      forceExplicitLanguage: true,
+    });
+    return `${basePath}${readingPath}${url.search}`;
+  };
+
+  // No header at all means there is no preference to negotiate against —
+  // land explicitly on English rather than rendering the ambiguous
+  // 3-segment form as English with nothing in the address bar to show for
+  // it. A header that was sent but named only unsupported languages is
+  // different: that visitor does have a preference, it's just one this app
+  // can't serve, so it falls through to the silent English render below.
+  if (acceptedLanguages.length === 0) {
+    return buildRedirect(DEFAULT_UI_LANGUAGE);
+  }
+
   const preferred = getPreferredSupportedLanguage(acceptedLanguages);
   if (!preferred || preferred === DEFAULT_UI_LANGUAGE) {
     return null;
   }
 
-  const readingPath = buildReadingPath({
-    language: preferred,
-    translationId: parsed.translationId,
-    bookId: parsed.bookId,
-    chapter: parsed.chapter,
-    defaultTranslationId:
-      getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
-  });
-  return `${basePath}${readingPath}${url.search}`;
+  return buildRedirect(preferred);
 }
 
 /**
