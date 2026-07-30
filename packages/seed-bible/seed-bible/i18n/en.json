@@ -432,5 +432,8 @@
   "share-current-session-subtitle": "Copy a link to invite others to read along live",
   "signed-out-message": "You've been signed out. Please sign in again.",
   "account-suspended-message": "Your account has been suspended.",
-  "loading-chapter": "Loading chapter…"
+  "loading-chapter": "Loading chapter…",
+  "chapter-unavailable": "Chapter unavailable",
+  "chapter-unavailable-description": "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+  "reload": "Reload"
 }

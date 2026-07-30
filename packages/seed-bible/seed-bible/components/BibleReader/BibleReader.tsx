@@ -1412,7 +1412,7 @@ export function BibleReader(props: BibleReaderProps) {
   // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
   const readerFontSizeClass = `sb-font-size-${(
-    state?.config?.config.value.fontSize ?? "M"
+    state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
 
   // Hard-gated off under SSR, which is what keeps both the dimming and the
@@ -1566,6 +1566,21 @@ export function BibleReader(props: BibleReaderProps) {
     </SkeletonContainer>
   );
 
+  // Keep the failure state on screen while a retry is in flight — `retryLoad()`
+  // clears `error` as it starts, so without this the panel would flash back to
+  // the (still empty) chapter body before the new request settles.
+  const [retrying, setRetrying] = useState(false);
+  const retryChapterLoad = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await readingState.retryLoad();
+    } finally {
+      setRetrying(false);
+    }
+  };
+  const showLoadError = (!!error.value && !loading.value) || retrying;
+
   const renderMainContent = () => (
     <>
       {isMobile &&
@@ -1616,11 +1631,44 @@ export function BibleReader(props: BibleReaderProps) {
         </div>
       )}
 
-      {error.value && !loading.value && (
-        <p className="sb-reader-error">{error.value}</p>
+      {showLoadError && (
+        <div className="sb-reader-error" role="alert">
+          <span
+            className="material-symbols-outlined sb-reader-error-icon"
+            aria-hidden="true"
+          >
+            cloud_off
+          </span>
+          <h2 className="sb-reader-error-title">
+            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
+          </h2>
+          <p className="sb-reader-error-message">
+            {t("chapter-unavailable-description", {
+              defaultValue:
+                "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-reader-error-retry"
+            onClick={() => void retryChapterLoad()}
+            disabled={retrying}
+            aria-busy={retrying}
+          >
+            {retrying && (
+              <span
+                className="material-symbols-outlined sb-reader-error-retry-spinner"
+                aria-hidden="true"
+              >
+                progress_activity
+              </span>
+            )}
+            {t("reload", { defaultValue: "Reload" })}
+          </button>
+        </div>
       )}
 
-      {!error.value &&
+      {!showLoadError &&
         !bookNotFound.value &&
         (showChapterSkeleton ? (
           renderChapterSkeleton()
@@ -1651,7 +1699,7 @@ export function BibleReader(props: BibleReaderProps) {
           </Suspense>
         ))}
 
-      {!availableTranslations.value && !error.value && (
+      {!availableTranslations.value && !showLoadError && (
         <p>
           {t("no-translations-available", {
             defaultValue: "No translations available.",
@@ -1659,7 +1707,7 @@ export function BibleReader(props: BibleReaderProps) {
         </p>
       )}
 
-      {!error.value && translationLicenseNotice.value.length > 0 && (
+      {!showLoadError && translationLicenseNotice.value.length > 0 && (
         <>
           <p className="sb-translation-license-notice">
             {translationLicenseNotice.value}

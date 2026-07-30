@@ -20,9 +20,9 @@ export function getProfileConfigValue(
 }
 
 /**
- * For object/array values, deep-equality would be ideal but JSON.stringify
- * is sufficient here since config values are always written as
- * parsed/normalized shapes.
+ * Whether two config values are equal. For object/array values, deep-equality
+ * would be ideal but JSON.stringify is sufficient here since config values
+ * are always written as parsed/normalized shapes.
  */
 function isEqualConfigValue(a: unknown, b: unknown): boolean {
   if (a === b) {
@@ -84,6 +84,22 @@ export async function saveProfileConfigValues(
   values: Record<string, unknown>
 ): Promise<void> {
   if (!login.userId.value) {
+    // Not logged in: persist to the device-local config store instead. If a
+    // brand-new account later logs in on this device for the first time,
+    // `LoginManager` adopts this as the starting `profile.config`.
+    const existingLocal = login.localConfig.value;
+    const changedLocalEntries = Object.entries(values).filter(
+      ([key, value]) => !isEqualConfigValue(existingLocal[key], value)
+    );
+
+    if (changedLocalEntries.length === 0) {
+      return;
+    }
+
+    login.localConfig.value = {
+      ...existingLocal,
+      ...Object.fromEntries(changedLocalEntries),
+    };
     return;
   }
 

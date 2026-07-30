@@ -1561,7 +1561,7 @@ const LanguageComponent = (props: {
     showAllLanguages,
     showTranslationInfo,
     filteredApiTranslations,
-    selectTranslation,
+    pickTranslation,
   } = bibleSelectorState;
   const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
   if (!showRef.current) showRef.current = signal(false);
@@ -1662,7 +1662,7 @@ const LanguageComponent = (props: {
               return (
                 <div
                   onClick={async () => {
-                    selectTranslation(value.id);
+                    pickTranslation(value.id);
                   }}
                   style={{
                     background:
