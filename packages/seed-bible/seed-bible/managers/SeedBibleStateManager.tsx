@@ -5,6 +5,7 @@ import {
   type BibleDataManager,
   type VerseRef,
 } from "../managers/BibleDataManager";
+import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import { createConfig } from "../managers/ConfigManager";
@@ -387,6 +388,11 @@ export interface CreateSeedBibleStateOptions {
   config?: AppConfig;
   /** Full initial URL — supplied during SSR where `window` is unavailable. */
   initialHref?: string;
+  /**
+   * Where translations downloaded for offline reading are stored. Defaults to
+   * IndexedDB; tests pass an in-memory store, and null disables the feature.
+   */
+  offlineStore?: OfflineTranslationStore | null;
 }
 
 export function createSeedBibleState(
@@ -407,7 +413,9 @@ export function createSeedBibleState(
     navigation,
     options.config?.acceptedLanguages ?? []
   );
-  const data = createBibleDataManager(api);
+  const data = createBibleDataManager(api, {
+    offlineStore: options.offlineStore,
+  });
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
@@ -595,21 +603,33 @@ export function createSeedBibleState(
     i18n,
     readingExtensions
   );
-  // Close any fullscreen pane when the book/chapter/verse params change, so
+  // Close any fullscreen pane when the book/chapter params change, so
   // navigating reveals the reader (every navigation path writes these params).
   // The first location only sets a baseline, so load-time init doesn't close a
   // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  //
+  // `?verse` is deliberately NOT part of the location: TabsManager mirrors the
+  // verse *selection* into that param, so counting it here made selecting (or
+  // clearing) a verse look like a navigation — which closed the very pane the
+  // user had just opened from the verse toolbar.
+  //
+  // The flip side is that this effect can't see a move *within* a chapter, so any
+  // path that jumps to a verse and must reveal the reader has to call
+  // `closeFullscreenPanes` itself rather than rely on this: verse reference links
+  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
+  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleSelectTab`) closes them too, which covers most of the remaining
+  // paths incidentally.
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
     const book = url.searchParams.get("book");
     const chapter = url.searchParams.get("chapter");
-    const verse = url.searchParams.get("verse");
     if (!book || !chapter) {
       return;
     }
 
-    const location = `${book}|${chapter}|${verse ?? ""}`;
+    const location = `${book}|${chapter}`;
     const previous = lastReadingLocation;
     lastReadingLocation = location;
 
@@ -935,6 +955,21 @@ export function createSeedBibleState(
     });
   });
 
+  /**
+   * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
+   * along with `description` and `canonicalUrl`.
+   *
+   * These three stay derived from the *loaded chapter*, unlike the reader's own
+   * titles, which are derived from the book catalog so they can move the instant
+   * navigation happens. Two reasons: a server render has no navigation to lag
+   * behind, and it suspends until the first chapter settles, so content is there
+   * whenever it could be. And when it genuinely isn't — a failed load — falling
+   * back to a generic title and a bare canonical URL is better than advertising
+   * a chapter the server could not actually serve.
+   *
+   * `title` is the exception and is position-derived: it also drives
+   * `document.title` on the client, where the lag would be visible.
+   */
   const socialTitle = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
@@ -966,6 +1001,18 @@ export function createSeedBibleState(
       );
       canonicalUrl.searchParams.set("book", chapter.book.id);
       canonicalUrl.searchParams.set("chapter", String(chapter.chapter.number));
+    }
+
+    // Preserve an explicit `?lang=` so the canonical is self-referential for
+    // the language-specific URLs the sitemap emits (otherwise search engines
+    // collapse every `?lang=` variant onto the lang-less URL and none of them
+    // index distinctly). Echo only the explicit URL param — deriving it from
+    // the active i18n language would make the canonical vary by
+    // Accept-Language, which must not happen. Set last to match the sitemap's
+    // `translation,book,chapter,lang` ordering.
+    const lang = currentUrl.searchParams.get("lang");
+    if (lang) {
+      canonicalUrl.searchParams.set("lang", lang);
     }
 
     return `${canonicalUrl.pathname}${canonicalUrl.search}`;
@@ -1335,6 +1382,31 @@ export function createSeedBibleState(
       toastTimer = null;
     }, 3500);
   };
+
+  // Tell the user when we signed them out for them. `login.sessionEnded` only fires
+  // when a forced sign-out actually happened, so this can't toast for a request that
+  // merely failed, nor for a sign-out the user asked for. Without a message they
+  // would just watch their highlights and bookmarks vanish with no explanation.
+  effect(() => {
+    const ended = login.sessionEnded.value;
+    if (!ended || typeof window === "undefined") {
+      return;
+    }
+
+    // Destructured rather than called as `i18n.t(...)`: the translation lint rules
+    // only recognise calls to a bare `t`, and `translation-unused-keys` is
+    // auto-fixable, so `i18n.t("...")` would get these keys deleted from en.json.
+    const { t } = i18n;
+    toast(
+      ended.reason === "account_suspended"
+        ? t("account-suspended-message", {
+            defaultValue: "Your account has been suspended.",
+          })
+        : t("signed-out-message", {
+            defaultValue: "You've been signed out. Please sign in again.",
+          })
+    );
+  });
 
   // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {

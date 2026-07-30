@@ -5,6 +5,7 @@ pattern-dist
 size-head.json
 size-base.json
 size-report.md
+coverage-summary.md
 .DS_Store
 package-lock.json
 .claude

@@ -50,7 +50,13 @@ jobs:
           pnpm check:ts
       - name: Test
         run: |
-          pnpm test
+          pnpm test:coverage
+      - name: Coverage summary
+        if: always()
+        continue-on-error: true
+        run: |
+          pnpm coverage-summary --summary coverage/coverage-summary.json --out coverage-summary.md
+          cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Build
         run: |
           pnpm build
@@ -120,7 +126,16 @@ jobs:
             const fs = require("fs");
             const marker = "<!-- build-size-report -->";
             try {
-              const body = `${marker}\n## 📦 Build Size Report\n\n${fs.readFileSync("size-report.md", "utf8")}`;
+              // Read independently of the try/catch below so a missing
+              // coverage-summary.md (e.g. the coverage step failed) only
+              // drops this section instead of skipping the whole comment.
+              let coverageSection = "";
+              try {
+                coverageSection = `\n\n## 🧪 Coverage Summary\n\n${fs.readFileSync("coverage-summary.md", "utf8")}`;
+              } catch (error) {
+                core.warning(`Failed to read coverage summary: ${error}`);
+              }
+              const body = `${marker}\n## 📦 Build Size Report\n\n${fs.readFileSync("size-report.md", "utf8")}${coverageSection}`;
               const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

@@ -7,6 +7,7 @@ import {
   createDefaultManagerResponseMap,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
+import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
 // the glob backend in I18nManager. Without this, `changeLanguage("ar")` (etc.)
@@ -30,6 +31,11 @@ type TestGlobalScope = typeof globalThis;
 export interface CreateTestSeedBibleStateOptions {
   responses?: WebResponseMap;
   timeoutMs?: number;
+  /**
+   * Where offline translation downloads are stored. jsdom has no IndexedDB, so
+   * pass an in-memory store to exercise anything that depends on downloads.
+   */
+  offlineStore?: OfflineTranslationStore | null;
 }
 
 export async function waitFor(
@@ -136,8 +142,12 @@ export async function createTestSeedBibleState(
 
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
-  const state = createSeedBibleState();
+  const state = createSeedBibleState({ offlineStore: options.offlineStore });
+  // Tabs first: awaiting anything else here would let asynchronously-created
+  // tabs (e.g. an auto-joined shared session) appear before this runs, and those
+  // tabs' reading states are mocked without a `loading` signal.
   await waitForTabsToLoad(state, timeoutMs);
+  await state.bibleData.offline.ready;
 
   return state;
 }
