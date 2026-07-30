@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   createI18nManager,
+  getPreferredSupportedLanguage,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -138,6 +139,34 @@ describe("I18nManager getInitialLanguage()", () => {
     const language = getDefaultLanguage();
 
     expect(language).toBe("en");
+  });
+});
+
+describe("getPreferredSupportedLanguage", () => {
+  it("returns the first Accept-Language entry that matches a supported locale", () => {
+    expect(getPreferredSupportedLanguage(["fr-FR", "es-ES"])).toBe("fr");
+  });
+
+  it("skips unsupported entries ahead of a supported one", () => {
+    expect(getPreferredSupportedLanguage(["xx-XX", "de-DE", "fr-FR"])).toBe(
+      "de"
+    );
+  });
+
+  it("matches a language-only tag with no region subtag", () => {
+    expect(getPreferredSupportedLanguage(["es"])).toBe("es");
+  });
+
+  it.each(supportedLanguages)("recognizes %s as supported", (language) => {
+    expect(getPreferredSupportedLanguage([language])).toBe(language);
+  });
+
+  it("returns null when nothing in the list is supported", () => {
+    expect(getPreferredSupportedLanguage(["xx-XX", "yy-YY"])).toBeNull();
+  });
+
+  it("returns null for an empty list (no Accept-Language header)", () => {
+    expect(getPreferredSupportedLanguage([])).toBeNull();
   });
 });
 

@@ -13,6 +13,7 @@ import {
   buildReadingPath,
   parseReadingPath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
+import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -156,6 +157,66 @@ function legacyReadingUrlRedirect(
 }
 
 /**
+ * The 3-segment `{translationId}/{bookSlug}/{chapter}` form omits `{lang}`,
+ * which canonically means `DEFAULT_UI_LANGUAGE` ("en") — but a first-time
+ * visitor landing there (a shared link, a search result) has almost never
+ * chosen English on purpose; their browser just wasn't asked. If their
+ * `Accept-Language` header names a language this app actually supports,
+ * redirect to the explicit 4-segment form for that language instead of
+ * silently rendering in English.
+ *
+ * Deliberately a redirect (not just an SSR language switch at the same URL):
+ * the URL itself is meant to reflect the language being read in — see the
+ * URL scheme's four examples — so a browser-language visitor should end up
+ * with that language's URL in their address bar and history, not a 3-segment
+ * URL that quietly rendered as something else.
+ *
+ * Only fires for an already-exact book match; a fuzzy or unresolved one is
+ * handled by `legacyReadingUrlRedirect`/`render()`'s `notFound` check
+ * instead, and `render()` only calls this once those have both declined.
+ *
+ * This is content negotiation, not a canonical-URL correction: a different
+ * visitor to the exact same 3-segment URL gets a different destination (or
+ * none), so unlike the redirects above this must be a 302 (temporary), never
+ * a 301 — a 301 would tell caches and crawlers this URL always redirects
+ * here, collapsing every visitor onto one visitor's language. The caller is
+ * responsible for pairing it with a `Vary: Accept-Language` response header
+ * so shared caches don't serve one visitor's redirect (or lack of one) to
+ * another with a different header.
+ */
+export function acceptLanguageRedirect(
+  path: string,
+  basePath: string,
+  acceptedLanguages: string[]
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+  const parsed = parseReadingPath(url.pathname, basePath);
+  if (
+    !parsed ||
+    parsed.language !== null ||
+    parsed.bookMatch !== "exact" ||
+    !parsed.bookId
+  ) {
+    return null;
+  }
+
+  const preferred = getPreferredSupportedLanguage(acceptedLanguages);
+  if (!preferred || preferred === DEFAULT_UI_LANGUAGE) {
+    return null;
+  }
+
+  const readingPath = buildReadingPath({
+    language: preferred,
+    translationId: parsed.translationId,
+    bookId: parsed.bookId,
+    chapter: parsed.chapter,
+    defaultTranslationId:
+      getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+  });
+  return `${basePath}${readingPath}${url.search}`;
+}
+
+/**
  * Server-side renders the app to a complete HTML document.
  *
  * The app shell (chrome, theme, head) renders on the server; verse content
@@ -164,12 +225,28 @@ function legacyReadingUrlRedirect(
  */
 export async function render(
   options: RenderOptions
-): Promise<{ html: string; notFound?: true } | { redirectTo: string }> {
+): Promise<
+  | { html: string; notFound?: true }
+  | { redirectTo: string; redirectStatus?: number; vary?: string }
+> {
   const { config } = options;
 
   const redirectTo = legacyReadingUrlRedirect(options.path, config.basePath);
   if (redirectTo) {
     return { redirectTo };
+  }
+
+  const languageRedirectTo = acceptLanguageRedirect(
+    options.path,
+    config.basePath,
+    config.acceptedLanguages
+  );
+  if (languageRedirectTo) {
+    return {
+      redirectTo: languageRedirectTo,
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    };
   }
 
   // A pure URL-level check (no network involved): a canonical-shaped path

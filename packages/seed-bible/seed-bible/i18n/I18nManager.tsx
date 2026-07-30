@@ -105,6 +105,25 @@ export function getInitialLanguage(acceptedLanguages: string[]): string {
 }
 
 /**
+ * Picks the visitor's most-preferred UI language, out of an `Accept-Language`
+ * header's ordered list of tags, that this app actually ships a locale for.
+ * Returns null when none of the visitor's preferences match a supported
+ * language — the caller should keep whatever it already had rather than
+ * guess.
+ */
+export function getPreferredSupportedLanguage(
+  acceptedLanguages: string[]
+): string | null {
+  for (const tag of acceptedLanguages) {
+    const language = getLanguage(tag);
+    if (language && availableLanguages.includes(language)) {
+      return language;
+    }
+  }
+  return null;
+}
+
+/**
  * Resolves the UI language a URL implies. A valid reading path (e.g.
  * "/es/spa_onbv/john/3") takes priority: an explicit `{lang}` segment wins,
  * and an omitted one canonically means `DEFAULT_UI_LANGUAGE` — that's the
