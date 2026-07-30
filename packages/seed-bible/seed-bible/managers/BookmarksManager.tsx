@@ -276,6 +276,13 @@ export interface BookmarksManager {
   removeBookmark: (id: string) => Promise<void>;
 
   /**
+   * Moves an existing bookmark into another category (creating the category
+   * first when needed). No-op when the bookmark id is unknown or the target
+   * category is already the bookmark's current folder.
+   */
+  moveBookmark: (id: string, category: string) => Promise<void>;
+
+  /**
    * Toggles a chapter-level bookmark for a tab's current location. If the
    * user is not logged in this triggers a login first. Newly added
    * bookmarks land in the default category.
@@ -494,6 +501,28 @@ export function createBookmarksManager(
     await persist(next, categories.value);
   };
 
+  const moveBookmark: BookmarksManager["moveBookmark"] = async (
+    id,
+    category
+  ) => {
+    const trimmed = category.trim();
+    if (!trimmed) return;
+    const existing = bookmarks.value.find((bookmark) => bookmark.id === id);
+    if (!existing || existing.category === trimmed) {
+      return;
+    }
+    const nextBookmarks = bookmarks.value.map((bookmark) =>
+      bookmark.id === id ? { ...bookmark, category: trimmed } : bookmark
+    );
+    const nextCategories = ensureCategory(categories.value, trimmed);
+    bookmarks.value = nextBookmarks;
+    categories.value = nextCategories;
+    const nextExpanded = new Set(expandedCategories.value);
+    nextExpanded.add(trimmed);
+    expandedCategories.value = nextExpanded;
+    await persist(nextBookmarks, nextCategories);
+  };
+
   const removeBookmarkForLocation: BookmarksManager["removeBookmarkForLocation"] =
     async (translationId, bookId, chapterNumber, verse) => {
       const next = bookmarks.value.filter(
@@ -653,6 +682,7 @@ export function createBookmarksManager(
     isChapterBookmarked,
     addBookmark,
     removeBookmark,
+    moveBookmark,
     removeBookmarkForLocation,
     toggleBookmarkForTab,
     toggleBookmarkAtLocation,

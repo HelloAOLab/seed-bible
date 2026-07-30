@@ -2,28 +2,83 @@ import { signal, effect, type Signal } from "@preact/signals";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
+  type ApiRequestOptions,
   type Translation,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
+import {
+  createOfflineTranslationsManager,
+  type OfflineTranslationsManager,
+} from "../managers/OfflineTranslationsManager";
+import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
+
+/** How a set of translations should be folded into the known-translations list. */
+export interface MergeTranslationsOptions {
+  /**
+   * When true, translations that are already known are left untouched instead of
+   * being replaced.
+   *
+   * Use this for metadata that may be older than what the app already has — most
+   * importantly a downloaded translation's saved copy, whose `sha256` is from
+   * download time. Overwriting a freshly fetched hash with that older one would
+   * make an available update look like it had already been applied.
+   */
+  fillOnly?: boolean;
+}
 
 export interface BibleDataManager {
   endpoints: Signal<string[]>;
   availableTranslations: Signal<Translation[]>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
-  getTranslations: (endpoint?: string) => Promise<Translation[]>;
+
+  /**
+   * Translations the user has downloaded to their device for offline reading.
+   *
+   * Every read below checks this first, so a downloaded translation is served
+   * from the device rather than the network.
+   */
+  offline: OfflineTranslationsManager;
+
+  /**
+   * Loads an endpoint's translation list and merges it into
+   * `availableTranslations`.
+   *
+   * @param endpoint The endpoint to read. Defaults to the API's own endpoint.
+   * @param options Pass `refresh: true` to bypass the API's response cache. Only
+   * needed when the caller depends on values that change over time, such as each
+   * translation's content hash.
+   */
+  getTranslations: (
+    endpoint?: string,
+    options?: { refresh?: boolean }
+  ) => Promise<Translation[]>;
   getTranslationBooks: (translationId: string) => Promise<TranslationBooks>;
+
+  /**
+   * Returns the already-downloaded book catalog for a translation, or null when
+   * it has not been fetched yet. Never hits the network, so callers can answer
+   * questions like "which chapter comes next" synchronously.
+   *
+   * Reads the cache **untracked**, so calling this from inside an `effect()` or
+   * `computed()` does not subscribe that reaction to the catalog. Reactive
+   * consumers should read the `translationBooks` signal directly instead.
+   */
+  getCachedTranslationBooks: (translationId: string) => TranslationBooks | null;
   getTranslationBookChapter: (
     translationId: string,
     book: string,
-    chapter: number | string
+    chapter: number | string,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter>;
   getNextChapter: (
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
   getPreviousChapter: (
-    chapter: TranslationBookChapter
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
 
   /**
@@ -487,7 +542,18 @@ export function getBookId(book: string): BookId | null {
   return null;
 }
 
-export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
+export interface CreateBibleDataManagerOptions {
+  /**
+   * Where downloaded translations are stored. Defaults to IndexedDB; tests pass
+   * an in-memory store, and null disables offline downloads entirely.
+   */
+  offlineStore?: OfflineTranslationStore | null;
+}
+
+export function createBibleDataManager(
+  api: FreeUseBibleAPI,
+  options: CreateBibleDataManagerOptions = {}
+): BibleDataManager {
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
@@ -516,7 +582,8 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
 
   const mergeTranslations = (
     endpoint: string,
-    nextTranslations: Translation[]
+    nextTranslations: Translation[],
+    options?: MergeTranslationsOptions
   ) => {
     const merged = new Map(
       availableTranslations.value.map((translation) => [
@@ -527,6 +594,15 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
 
     const nextTranslationEndpoints = new Map(translationEndpoints.value);
     for (const translation of nextTranslations) {
+      if (options?.fillOnly && merged.has(translation.id)) {
+        // Something already knows about this translation, and what it knows may
+        // be newer than what we were handed — leave it alone. The endpoint is
+        // still filled in below if it's missing, since that never goes stale.
+        if (!nextTranslationEndpoints.has(translation.id)) {
+          nextTranslationEndpoints.set(translation.id, endpoint);
+        }
+        continue;
+      }
       merged.set(translation.id, translation);
       nextTranslationEndpoints.set(translation.id, endpoint);
     }
@@ -535,56 +611,148 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     translationEndpoints.value = nextTranslationEndpoints;
   };
 
-  const getTranslations = async (endpoint?: string): Promise<Translation[]> => {
+  const getTranslations = async (
+    endpoint?: string,
+    options?: { refresh?: boolean }
+  ): Promise<Translation[]> => {
     const normalizedEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
     ensureEndpointTracked(normalizedEndpoint);
 
-    const result = await api.getAvailableTranslations(normalizedEndpoint);
+    const result = await api.getAvailableTranslations(
+      normalizedEndpoint,
+      options
+    );
     mergeTranslations(normalizedEndpoint, result.translations);
     return result.translations;
   };
 
+  // Created here (rather than by the caller) so it can share this manager's
+  // endpoint resolution and translation list. It must come after
+  // `getTranslations` because the update check calls it.
+  const offline = createOfflineTranslationsManager({
+    api,
+    store: options.offlineStore,
+    availableTranslations,
+    getEndpointForTranslation,
+    // `refresh` matters here: the update check exists to notice a changed
+    // content hash, which the API's response cache would otherwise hide.
+    refreshTranslations: (endpoint) =>
+      getTranslations(endpoint, { refresh: true }),
+    mergeTranslations,
+  });
+
   const getTranslationBooks = async (
-    translationId: string
+    translationId: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBooks> => {
     const existing = translationBooks.value.get(translationId);
     if (existing) {
       return existing;
     }
 
+    const cacheBooks = (
+      endpoint: string,
+      books: TranslationBooks,
+      options?: MergeTranslationsOptions
+    ) => {
+      const nextBooksMap = new Map(translationBooks.value);
+      nextBooksMap.set(translationId, books);
+      translationBooks.value = nextBooksMap;
+      mergeTranslations(endpoint, [books.translation], options);
+    };
+
+    const downloadedBooks = offline.supported
+      ? await offline.getTranslationBooks(translationId)
+      : null;
+    if (downloadedBooks) {
+      // `fillOnly` because these books come from storage: the translation
+      // metadata saved with them is from download time, so it must not overwrite
+      // whatever the app has since learned from the API.
+      cacheBooks(getEndpointForTranslation(translationId), downloadedBooks, {
+        fillOnly: true,
+      });
+      return downloadedBooks;
+    }
+
     const endpoint = getEndpointForTranslation(translationId);
-    const books = await api.getTranslationBooks(translationId, endpoint);
-
-    const nextBooksMap = new Map(translationBooks.value);
-    nextBooksMap.set(translationId, books);
-    translationBooks.value = nextBooksMap;
-
-    mergeTranslations(endpoint, [books.translation]);
+    const books = await api.getTranslationBooks(
+      translationId,
+      endpoint,
+      options
+    );
+    cacheBooks(endpoint, books);
     return books;
+  };
+
+  const getCachedTranslationBooks = (
+    translationId: string
+  ): TranslationBooks | null => {
+    return translationBooks.peek().get(translationId) ?? null;
   };
 
   const getTranslationBookChapter = async (
     translationId: string,
     book: string,
-    chapter: number | string
+    chapter: number | string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter> => {
+    const chapterNumber = Number(chapter);
+    if (Number.isFinite(chapterNumber) && offline.supported) {
+      const downloaded = await offline.getTranslationBookChapter(
+        translationId,
+        book,
+        chapterNumber
+      );
+      if (downloaded) {
+        return downloaded;
+      }
+    }
+
     const endpoint = getEndpointForTranslation(translationId);
     return await api.getTranslationBookChapter(
       translationId,
       book,
       chapter,
-      endpoint
+      endpoint,
+      options
     );
   };
 
-  const getNextChapter = async (chapter: TranslationBookChapter) => {
+  const getNextChapter = async (
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
+  ) => {
+    const downloaded = offline.supported
+      ? await offline.getAdjacentChapter(chapter, "next")
+      : null;
+    if (downloaded) {
+      return downloaded;
+    }
+
+    // Reaching here for a downloaded translation means the chapter genuinely
+    // isn't stored, so the network is the right next stop. It costs nothing at
+    // the end of the Bible: a chapter read from a download has no
+    // `nextChapterApiLink` there, and `api.getNextChapter` answers null without
+    // making a request.
     const endpoint = getEndpointForTranslation(chapter.translation.id);
-    return await api.getNextChapter(chapter, endpoint);
+    return await api.getNextChapter(chapter, endpoint, options);
   };
 
-  const getPreviousChapter = async (chapter: TranslationBookChapter) => {
+  const getPreviousChapter = async (
+    chapter: TranslationBookChapter,
+    options?: ApiRequestOptions
+  ) => {
+    const downloaded = offline.supported
+      ? await offline.getAdjacentChapter(chapter, "previous")
+      : null;
+    if (downloaded) {
+      return downloaded;
+    }
+
+    // As above — at Genesis 1 there is no previous link to follow, so this
+    // resolves to null locally.
     const endpoint = getEndpointForTranslation(chapter.translation.id);
-    return await api.getPreviousChapter(chapter, endpoint);
+    return await api.getPreviousChapter(chapter, endpoint, options);
   };
 
   const buildTranslationId = (translationId: string) => {
@@ -639,8 +807,10 @@ export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
     availableTranslations,
     translationBooks,
     api,
+    offline,
     getTranslations,
     getTranslationBooks,
+    getCachedTranslationBooks,
     getTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,

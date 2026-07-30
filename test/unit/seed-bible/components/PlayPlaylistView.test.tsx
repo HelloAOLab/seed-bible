@@ -164,7 +164,9 @@ describe("PlayPlaylistView", () => {
       false
     );
     expect(
-      items[0]?.querySelector("button")?.getAttribute("aria-current")
+      items[0]
+        ?.querySelector(".sb-play-playlist-item-button")
+        ?.getAttribute("aria-current")
     ).toBe("true");
   });
 
@@ -226,5 +228,168 @@ describe("PlayPlaylistView", () => {
     });
 
     expect(playing.currentIndex.value).toBe(2);
+  });
+
+  it("shows a leading icon per item type", () => {
+    const playlist = createPlaylist({
+      items: [
+        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        { type: "link", url: "https://example.com" },
+        { type: "html", html: "<p>hi</p>" },
+      ],
+    });
+    const playing = createPlayingState([playlist]);
+    const { playlists } = createMockPlaylists(playing);
+    const tabs = createMockTabs();
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const icons = Array.from(
+      container.querySelectorAll(".sb-discover-item-icon")
+    ).map((el) => el.textContent);
+    expect(icons).toEqual(["menu_book", "link", "notes"]);
+  });
+
+  describe("drag to reorder", () => {
+    let offsetHeightSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      offsetHeightSpy = vi
+        .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(40);
+    });
+
+    afterEach(() => {
+      offsetHeightSpy.mockRestore();
+    });
+
+    it("shows a drag handle for each queue item", () => {
+      const playlist = createPlaylist({
+        items: [
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+        ],
+      });
+      const playing = createPlayingState([playlist]);
+      const { playlists } = createMockPlaylists(playing);
+      const tabs = createMockTabs();
+
+      act(() => {
+        render(
+          <PlayPlaylistView
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+
+      const handles = container.querySelectorAll(
+        ".sb-discover-item-drag-handle"
+      );
+      expect(handles).toHaveLength(2);
+      expect(handles[0]?.getAttribute("aria-label")).toBe("Drag to reorder");
+    });
+
+    it("dragging a queue item's handle reorders the queue and keeps the current item highlighted", () => {
+      const playlist = createPlaylist({
+        items: [
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
+        ],
+      });
+      const playing = createPlayingState([playlist]);
+      const { playlists } = createMockPlaylists(playing);
+      const tabs = createMockTabs();
+
+      act(() => {
+        render(
+          <PlayPlaylistView
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+
+      // Currently playing item 0; drag it past item 1.
+      const handles = container.querySelectorAll(
+        ".sb-discover-item-drag-handle"
+      );
+      act(() => {
+        handles[0]?.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerId: 1,
+            clientY: 0,
+          })
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointermove", { pointerId: 1, clientY: 45 })
+        );
+      });
+
+      expect(playing.queue.value).toEqual([
+        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
+      ]);
+      expect(playing.currentIndex.value).toBe(1);
+
+      const items = Array.from(
+        container.querySelectorAll(".sb-play-playlist-item")
+      );
+      expect(
+        items[1]?.classList.contains("sb-play-playlist-item--current")
+      ).toBe(true);
+    });
+
+    it("clicking a queue item still jumps playback with the drag handle present", () => {
+      const playlist = createPlaylist({
+        items: [
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+        ],
+      });
+      const playing = createPlayingState([playlist]);
+      const { playlists } = createMockPlaylists(playing);
+      const tabs = createMockTabs();
+
+      act(() => {
+        render(
+          <PlayPlaylistView
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+
+      const buttons = container.querySelectorAll(
+        ".sb-play-playlist-item-button"
+      );
+      act(() => {
+        buttons[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(playing.currentIndex.value).toBe(1);
+    });
   });
 });

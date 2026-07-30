@@ -1,6 +1,7 @@
 import { RoundToStep } from "@packages/seed-bible-utils/domain/functions/math";
 import type {
   RGB,
+  RGBA,
   HexString,
   WeightedColor,
 } from "@packages/seed-bible-utils/domain/models/commonTypes";
@@ -9,8 +10,17 @@ export type ClampRGBColorType = (colorToClamp: RGB) => RGB;
 export type HexToRgbType = (params: { hexColor: HexString }) => RGB;
 export type RgbToHexType = (params: { rgbColor: RGB }) => HexString;
 export type ColorType = "stringRGB" | "arrayRGB" | "longHex" | "shortHex";
-export type GetColorTypeType = (color: string | RGB) => ColorType | false;
-export type RGBStringToArrayType = (color: string) => RGB;
+export type GetColorTypeType = (
+  color: string | RGB | RGBA
+) => ColorType | false;
+export type RGBStringToArrayType = (color: string, background?: RGB) => RGB;
+export type RgbaToRgbType = (
+  r: number,
+  g: number,
+  b: number,
+  a: number,
+  background?: RGB
+) => RGB;
 export type HexLongToShortType = (hex: HexString) => string;
 export type HexShortToLongType = (hex: string) => HexString;
 export interface ColorParserMap {
@@ -111,29 +121,52 @@ export const HexLongToShort: HexLongToShortType = (hex) => {
   return hex;
 };
 
-export const RGBStringToArray: RGBStringToArrayType = (color) => {
-  const match = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+export const RgbaToRgb: RgbaToRgbType = (
+  r,
+  g,
+  b,
+  a,
+  background = [255, 255, 255]
+) => [
+  Math.round(r * a + background[0] * (1 - a)),
+  Math.round(g * a + background[1] * (1 - a)),
+  Math.round(b * a + background[2] * (1 - a)),
+];
+
+export const RGBStringToArray: RGBStringToArrayType = (color, background) => {
+  const match = color.match(
+    /rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?/
+  );
   if (!match) return [0, 0, 0];
-  return [
-    parseInt(match[1]!, 10),
-    parseInt(match[2]!, 10),
-    parseInt(match[3]!, 10),
-  ];
+  const r = parseInt(match[1]!, 10);
+  const g = parseInt(match[2]!, 10);
+  const b = parseInt(match[3]!, 10);
+  const a = match[4] !== undefined ? parseFloat(match[4]) : 1;
+  return a >= 1 ? [r, g, b] : RgbaToRgb(r, g, b, a, background);
 };
 
 export function ColorParser<T extends ColorType>(
-  value: string | RGB,
-  target: T
+  value: string | RGB | RGBA,
+  target: T,
+  background?: RGB
 ): ColorParserMap[T] {
   const sourceType = GetColorType(value);
 
-  if (!sourceType || sourceType === target) return value as ColorParserMap[T];
+  if (!sourceType) return value as ColorParserMap[T];
 
+  // Normalize any input to a flat RGB tuple; an rgba alpha is composited over
+  // `background` (default white via RgbaToRgb) so targets get an opaque color.
   let rgb: RGB;
   if (sourceType === "arrayRGB") {
-    rgb = value as RGB;
+    if ((value as RGB | RGBA).length >= 4) {
+      const [r, g, b, a] = value as RGBA;
+      rgb = RgbaToRgb(r, g, b, a, background);
+    } else {
+      const [r, g, b] = value as RGB;
+      rgb = [r, g, b];
+    }
   } else if (sourceType === "stringRGB") {
-    rgb = RGBStringToArray(value as string);
+    rgb = RGBStringToArray(value as string, background);
   } else {
     const long =
       sourceType === "shortHex"

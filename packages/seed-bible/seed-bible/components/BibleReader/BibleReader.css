@@ -334,6 +334,10 @@
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
   padding-top: 2.5rem;
 }
+.sb-bible-reader-mobile
+  .sb-reader-swipe-panel:has(.sb-translation-license-notice) {
+  padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+}
 
 .sb-reader-swipe-panel {
   flex: 0 0 33.333%;
@@ -407,6 +411,10 @@
   font-size: 1em;
 
   padding-bottom: 8.125rem;
+
+  /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
+     Short enough to read as immediate rather than as an animation. */
+  transition: opacity 0.1s ease;
 
   /* Positioning context + own stacking context so the highlight ribbon layer
      can sit behind the scripture text (z-index: -1) without slipping behind the
@@ -578,6 +586,57 @@
   color: red;
 }
 
+/* The chapter the reader has navigated away from, still on screen while the one
+   they chose downloads. Dimmed rather than replaced, because on a fast
+   connection the new text lands before the placeholder below is ever shown, and
+   dimming neither moves anything nor flickers.
+
+   Not interactive: a verse tapped here belongs to a chapter the reader has
+   already left. Pointer events fall through to the swipe viewport above, so
+   mobile swipe gestures keep working. (The opacity transition that softens this
+   both ways lives on `.sb-chapter-content` itself, further up.) */
+.sb-chapter-content-stale {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ─── Chapter loading placeholder ────────────────────────────────────────── */
+/* Stands in for the verses while the chapter the reader has navigated to is
+   still downloading (see `isChapterContentStale`). It also carries
+   `.sb-chapter-content`, so it sits in the same box as the real text — same
+   padding, same bottom spacing — and swapping the verses in doesn't shift the
+   page.
+
+   Heights are in `em`, not `rem`: these blocks stand in for scripture, so they
+   should track the reader's own font-size setting rather than the UI scale.
+   That is why no inline `height` is passed to `Skeleton` — an inline style
+   would win over these rules. Widths *are* passed inline, per block, to give
+   the stack a ragged prose edge instead of a uniform grid. */
+.sb-chapter-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-chapter-skeleton .sb-skeleton--line {
+  height: 0.85em;
+}
+
+/* Stands in for a section heading, so it is taller and sits clear of the
+   first paragraph. */
+.sb-chapter-skeleton .sb-skeleton--block {
+  height: 1.15em;
+  margin-bottom: 1.5em;
+}
+
+.sb-chapter-skeleton-paragraph {
+  display: flex;
+  flex-direction: column;
+  /* Leave the same air between bars as the reader leaves between lines of
+     verse text: the line box minus the bar itself. */
+  gap: calc(var(--text-verse-line-height, 1.7) * 1em - 0.85em);
+  margin-bottom: 1.5em;
+}
+
 .sb-footnote-modal-overlay {
   position: fixed;
   inset: 0;
@@ -639,11 +698,38 @@
   overflow: auto;
 }
 
+.sb-footnote-modal-content .sb-verse-reference-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.sb-footnote-modal-content .sb-verse-reference-link:hover {
+  color: color-mix(in srgb, var(--sb-primary-color), var(--sb-font-color) 20%);
+}
+
 .sb-footnote-modal-reference {
   margin: 0 0 0.625rem 0;
   font-family: var(--sb-font-family);
   color: var(--sb-font-color);
   font-weight: 600;
+}
+
+/* Embedded playlist links/videos want to fill a large portion of the screen
+ * rather than sit in the small default modal box, so grow the shared modal
+ * frame (and let its content area stretch) whenever it's showing one. */
+.sb-footnote-modal:has(.sb-play-playlist-content-embed) {
+  width: min(94vw, 1400px);
+  max-height: min(92dvh, 900px);
+  height: min(92dvh, 900px);
+}
+
+.sb-footnote-modal:has(.sb-play-playlist-content-embed)
+  .sb-footnote-modal-content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
 }
 
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
@@ -664,15 +750,41 @@
   }
 }
 
-.sb-verse-decoration-search-result,
-.sb-verse-decoration-initial-verse-highlight,
-.sb-verse-decoration-open-reference-highlight,
-.sb-verse-decoration-playlist-verse-highlight {
+.sb-verse-decoration-highlight {
   background: color-mix(
     in srgb,
     var(--sb-secondary-color),
-    transparent 28%
+    transparent 20%
   ) !important;
+}
+
+.sb-chapter-decoration-diminish {
+  .sb-verse,
+  .sb-chapter-heading {
+    animation: diminish-in-out 3s ease-in-out;
+  }
+}
+
+@keyframes diminish-in-out {
+  0% {
+    opacity: 1;
+  }
+
+  10%,
+  90% {
+    opacity: 0.4;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.sb-verse {
+  &:has(.sb-verse-decoration-diminish) {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .sb-highlight-preview-pill {

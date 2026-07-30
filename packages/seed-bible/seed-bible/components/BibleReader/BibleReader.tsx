@@ -4,11 +4,19 @@ import {
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useState,
+} from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
+  adjacentInlineRect,
   buildRibbonPath,
   collectLineRects,
+  type RibbonRect,
   RIBBON_RADIUS_EM,
   RIBBON_PAD_X_EM,
 } from "../../app/highlightRibbon";
@@ -31,7 +39,13 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
-import { SelfAvatarVisual, getSelfDisplayName } from "../Tabs/Tabs";
+import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import {
+  SelfAvatarVisual,
+  getSelfDisplayName,
+  openBookmarkCategoryModal,
+} from "../Tabs/Tabs";
+import { VerseReferenceText } from "../../app/verseReferenceLink";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -43,8 +57,8 @@ interface ReaderBookmarkButtonProps {
 /**
  * Toggle for the chapter currently shown in the reader. Sits in the top-right
  * of the chapter content area: filled + orange when the chapter is saved,
- * outlined when not. The per-tab-row bookmark button was removed in favor of
- * this single control because only one chapter is ever in view at a time.
+ * outlined when not. Opens the category picker to save into an existing or
+ * new folder; when already bookmarked, removes the chapter-level bookmark.
  */
 function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
   const { state, translationId, bookId, chapterNumber } = props;
@@ -61,12 +75,22 @@ function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
         isBookmarked ? " sb-bible-reader-bookmark-button-active" : ""
       }`}
       onClick={() => {
-        if (!canBookmark) return;
-        void state.bookmarks.toggleBookmarkAtLocation(
+        if (!canBookmark || !translationId || !bookId || !chapterNumber) {
+          return;
+        }
+        if (isBookmarked) {
+          void state.bookmarks.removeBookmarkForLocation(
+            translationId,
+            bookId,
+            chapterNumber
+          );
+          return;
+        }
+        openBookmarkCategoryModal(state, {
           translationId,
           bookId,
-          chapterNumber
-        );
+          chapterNumber,
+        });
       }}
       disabled={!canBookmark}
       aria-pressed={isBookmarked}
@@ -956,9 +980,49 @@ interface Ribbon {
 }
 const RIBBON_FADE_MS = 250;
 
+/**
+ * How long the chapter the reader has left stays on screen, dimmed, before the
+ * placeholder takes over.
+ *
+ * Swapping to the placeholder the instant you navigate reads as a flicker on a
+ * fast connection, where the new text lands in well under this. Dimming costs
+ * nothing and moves nothing, so it carries the common case; the placeholder is
+ * only for waits long enough that dimmed text starts to look stuck.
+ *
+ * Does not apply on a cold start — with no chapter on screen there is nothing
+ * to dim, so the placeholder shows straight away.
+ */
+const CHAPTER_SKELETON_DELAY_MS = 500;
+
+/**
+ * Bar widths for the chapter loading placeholder, one array per paragraph.
+ *
+ * Hand-picked rather than random so the placeholder is identical on every
+ * render — a fresh set each time would shimmer *and* reflow — and so it reads
+ * as ragged prose rather than a block.
+ *
+ * Deliberately more paragraphs than the tallest reading pane needs. The two
+ * failure modes are not symmetric: falling short leaves visible dead space
+ * below the bars, while overshooting spills below the fold where nobody sees
+ * it (the pane scrolls internally, and scroll position resets on every chapter
+ * change). Tuning the fill is editing this one array — no measurement, and no
+ * reflow on a placeholder that remounts on every navigation.
+ */
+const CHAPTER_SKELETON_PARAGRAPHS = [
+  ["97%", "92%", "99%", "88%", "71%"],
+  ["94%", "99%", "90%", "96%", "58%"],
+  ["99%", "89%", "95%", "93%", "77%"],
+  ["91%", "98%", "87%", "96%", "64%"],
+  ["96%", "93%", "99%", "85%", "80%"],
+  ["98%", "90%", "94%", "97%", "52%"],
+  ["93%", "99%", "91%", "88%", "74%"],
+  ["95%", "96%", "98%", "89%", "68%"],
+] as const;
+
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
+  initialChapterLoadSettled: ReadonlySignal<boolean>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
@@ -971,12 +1035,18 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  /**
+   * True while this is the chapter the reader has *left* — shown dimmed until
+   * the chapter they navigated to arrives.
+   */
+  isStale?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
   const {
     chapterData,
     chapterDataPromise,
+    initialChapterLoadSettled,
     selectedVerses,
     highlights,
     decorations,
@@ -1048,12 +1118,13 @@ function ChapterContent(props: ChapterContentProps) {
     const rtl = style.direction === "rtl";
 
     // Phase 1: measure every highlighted run's per-line geometry. `leadPad` /
-    // `trailPad` default to padX and may be dropped to 0 below where two colors
-    // abut horizontally.
+    // `trailPad` default to padX and may be dropped to 0 below where the run's
+    // edge sits alongside another verse's text on the same line.
     const runs = Array.from(
       content.querySelectorAll<HTMLElement>("[data-highlight-fill]")
     )
       .map((el, index) => ({
+        el,
         key: el.getAttribute("data-highlight-key") || `i${index}`,
         fill: el.getAttribute("data-highlight-fill") ?? "",
         lines: collectLineRects(el, box.left, box.top),
@@ -1062,35 +1133,25 @@ function ChapterContent(props: ChapterContentProps) {
       }))
       .filter((run) => run.fill !== "" && run.lines.length > 0);
 
-    // Phase 2: where two different-colored runs sit side by side on the same
-    // visual line (e.g. "...garden, ³but about..."), their facing pads would eat
-    // the small gap the verse-number margin leaves and the colors would nearly
-    // touch (and, when they overlap, the rounded ends read as points). Drop the
-    // pad on just those two facing edges — the earlier run's trailing edge (where
-    // it ends) and the later run's leading edge (where the next starts) — so that
-    // margin reads as a clean gutter. In RTL the earlier run sits to the right of
-    // the later one, so the gap is measured on the mirrored sides. Only
-    // consecutive runs that actually abut (a sub-em gap, not an unhighlighted
-    // verse between them) are trimmed.
-    const abutMax = fontSize; // ~1em: covers the verse-number margin, far under a verse's width
-    for (let k = 1; k < runs.length; k++) {
-      const prev = runs[k - 1]!;
-      const cur = runs[k]!;
-      if (prev.fill === cur.fill) continue;
-      const prevLast = prev.lines[prev.lines.length - 1]!;
-      const curFirst = cur.lines[0]!;
-      const sharesLine =
-        curFirst.top < prevLast.bottom - 2 &&
-        prevLast.top < curFirst.bottom - 2;
-      // Reading-order gap between where `prev` ends and `cur` begins: in LTR that
-      // is prev's right edge to cur's left edge; in RTL it mirrors.
-      const gap = rtl
-        ? prevLast.left - curFirst.right
-        : curFirst.left - prevLast.right;
-      if (sharesLine && gap >= 0 && gap < abutMax) {
-        prev.trailPad = 0;
-        cur.leadPad = 0;
-      }
+    // Phase 2: where a run begins or ends mid-line — with another verse's text
+    // right beside it on the same visual line — its horizontal pad would reach
+    // over into that text. This happens whenever a highlighted verse starts (or
+    // ends) partway along a line, whether the neighbour is a plain unhighlighted
+    // verse ("...had your fill. ²⁷Do not work...") or a differently-colored
+    // highlight abutting on the same line. Drop the pad on just that facing edge
+    // so the ribbon stops at its own glyphs and leaves the verse-number margin as
+    // a clean gutter. Every edge that faces a line break or the page margin keeps
+    // its pad. `adjacentInlineRect` reports the neighbouring text on each side;
+    // lead/trail map to the correct physical edge for RTL inside buildRibbonPath.
+    const sharesLine = (r: RibbonRect, line: RibbonRect) =>
+      r.top < line.bottom - 2 && r.bottom > line.top + 2;
+    for (const run of runs) {
+      const first = run.lines[0]!;
+      const last = run.lines[run.lines.length - 1]!;
+      const before = adjacentInlineRect(run.el, "before", box.left, box.top);
+      const after = adjacentInlineRect(run.el, "after", box.left, box.top);
+      if (before && sharesLine(before, first)) run.leadPad = 0;
+      if (after && sharesLine(after, last)) run.trailPad = 0;
     }
 
     const next: Array<{
@@ -1219,13 +1280,31 @@ function ChapterContent(props: ChapterContentProps) {
   }, []);
 
   if (chapterData.value === null) {
-    throw chapterDataPromise;
+    if (!initialChapterLoadSettled.value) {
+      throw chapterDataPromise;
+    }
+    // The load finished and produced nothing. Rendering the error branch above
+    // is the caller's job; throwing the (now-resolved) promise again would just
+    // suspend and resume forever.
+    return null;
   }
+
+  const containerClasses = decorations.value
+    .filter(
+      (d) =>
+        d.containerClassName &&
+        d.bookId === chapterData.value?.book.id &&
+        d.chapterNumber === chapterData.value?.chapter.number
+    )
+    .map((d) => d.containerClassName)
+    .join(" ");
 
   return (
     <div
       ref={contentRef}
-      className="sb-chapter-content"
+      className={`sb-chapter-content${
+        props.isStale ? " sb-chapter-content-stale" : ""
+      } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
@@ -1290,6 +1369,7 @@ export function BibleReader(props: BibleReaderProps) {
     highlights,
     decorations,
     loading,
+    isChapterContentStale,
     error,
     selectVerse,
     clearSelectedVerses,
@@ -1297,7 +1377,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  if (!chapterData.value && import.meta.env.SSR) {
+  if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
   }
 
@@ -1322,6 +1402,33 @@ export function BibleReader(props: BibleReaderProps) {
   const readerFontSizeClass = `sb-font-size-${(
     state?.config?.config.value.fontSize ?? "M"
   ).toLowerCase()}`;
+
+  // Hard-gated off under SSR, which is what keeps both the dimming and the
+  // placeholder out of the served HTML. Rendering the placeholder server-side
+  // would strip the scripture out of the document — for a Bible reader that is
+  // an SEO regression, not a cosmetic one. The reader suspends on
+  // `chapterDataPromise` there instead, so by render time there is either
+  // content or a settled failure.
+  const isContentStale = !import.meta.env.SSR && isChapterContentStale.value;
+  // Held back by `CHAPTER_SKELETON_DELAY_MS` so a fast navigation shows only
+  // dimmed text, never a flash of placeholder. Skipped when there is no chapter
+  // on screen to dim — a cold start would otherwise sit blank for the delay.
+  const [isWaitLong, setIsWaitLong] = useState(false);
+  useEffect(() => {
+    if (!isContentStale) {
+      setIsWaitLong(false);
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setIsWaitLong(true),
+      CHAPTER_SKELETON_DELAY_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [isContentStale]);
+
+  const showChapterSkeleton =
+    isContentStale && (chapterData.value === null || isWaitLong);
+  const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
@@ -1425,6 +1532,28 @@ export function BibleReader(props: BibleReaderProps) {
     </h2>
   );
 
+  /**
+   * Placeholder shown in place of the verses while the chapter the reader has
+   * navigated to is still downloading. Without it, a fast skim shows the *old*
+   * chapter's text under the new chapter's title, which reads as though the
+   * navigation silently failed.
+   */
+  const renderChapterSkeleton = () => (
+    <SkeletonContainer
+      label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
+      className="sb-chapter-content sb-chapter-skeleton"
+    >
+      <Skeleton shape="block" width="42%" />
+      {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
+        <div className="sb-chapter-skeleton-paragraph" key={paragraph}>
+          {widths.map((width, line) => (
+            <Skeleton shape="line" key={line} width={width} />
+          ))}
+        </div>
+      ))}
+    </SkeletonContainer>
+  );
+
   const renderMainContent = () => (
     <>
       {isMobile &&
@@ -1437,30 +1566,35 @@ export function BibleReader(props: BibleReaderProps) {
         <p className="sb-reader-error">{error.value}</p>
       )}
 
-      {!error.value && (
-        <Suspense
-          fallback={
-            <p>
-              {t("no-chapter-content-found", {
-                defaultValue: "No chapter content found.",
-              })}
-            </p>
-          }
-        >
-          <ChapterContent
-            chapterData={chapterData}
-            chapterDataPromise={readingState.chapterDataPromise}
-            selectedVerses={selectedVerses}
-            selectVersesFromTextSelection={selectVersesFromTextSelection}
-            justConvertedSelectionRef={justConvertedSelectionRef}
-            highlights={highlights}
-            decorations={decorations}
-            selectVerse={selectVerse}
-            selectFootnote={selectFootnote}
-            scriptureElements={scriptureElements}
-          />
-        </Suspense>
-      )}
+      {!error.value &&
+        (showChapterSkeleton ? (
+          renderChapterSkeleton()
+        ) : (
+          <Suspense
+            fallback={
+              <p>
+                {t("no-chapter-content-found", {
+                  defaultValue: "No chapter content found.",
+                })}
+              </p>
+            }
+          >
+            <ChapterContent
+              isStale={dimStaleChapter}
+              chapterData={chapterData}
+              chapterDataPromise={readingState.chapterDataPromise}
+              initialChapterLoadSettled={readingState.initialChapterLoadSettled}
+              selectedVerses={selectedVerses}
+              selectVersesFromTextSelection={selectVersesFromTextSelection}
+              justConvertedSelectionRef={justConvertedSelectionRef}
+              highlights={highlights}
+              decorations={decorations}
+              selectVerse={selectVerse}
+              selectFootnote={selectFootnote}
+              scriptureElements={scriptureElements}
+            />
+          </Suspense>
+        ))}
 
       {!availableTranslations.value && !error.value && (
         <p>
@@ -1717,7 +1851,13 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
 
             <div className="sb-footnote-modal-content">
-              {selectedFootnote.value.note.text}
+              <VerseReferenceText
+                text={selectedFootnote.value.note.text}
+                onReferenceClick={(ref) => {
+                  selectFootnote(null);
+                  void state?.app.openVerseReference(ref);
+                }}
+              />
             </div>
           </div>
         </div>

@@ -1,0 +1,41 @@
+{
+  // The service worker runs in a worker global scope, not a document, so it
+  // needs `lib.webworker` — which collides with the `dom` lib the rest of the
+  // app is checked against (both declare `self`, `fetch`, `Event`, …). It
+  // therefore gets its own project, mirroring how `patterns/` is split out.
+  // Checked by `pnpm check:ts:sw`; excluded from the root tsconfig.
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2024",
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "module": "preserve",
+    "noEmit": true,
+    "lib": ["es2024", "webworker"],
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "strictBuiltinIteratorReturn": true,
+    "alwaysStrict": true,
+    "useUnknownInCatchVariables": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
+    "resolvePackageJsonExports": true,
+    "resolvePackageJsonImports": true,
+    "preserveConstEnums": true,
+    "typeRoots": ["../node_modules/@types"],
+    "types": []
+  },
+  "include": ["./sw.ts"]
+}

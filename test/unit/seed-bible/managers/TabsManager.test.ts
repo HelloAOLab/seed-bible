@@ -15,7 +15,11 @@ import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUs
 import {
   EXAMPLE_API_ENDPOINT,
   type WebResponseMap,
+  aabBooks,
   createExampleManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeExampleUrl,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
@@ -187,6 +191,36 @@ function createTabsManager({
   };
 }
 
+function createMockSharedSession(
+  id: string,
+  readingState: BibleReadingState
+): BibleReadingSession {
+  return {
+    id,
+    readingState,
+    document: {} as SharedDocument,
+    options: signal({
+      allowedNavigators: null,
+      allowedDecorators: null,
+      hostUserId: null,
+      highlightDurationSeconds: 16,
+      endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
+    }),
+    updateOptions: vi.fn(),
+    removeSharedDecoration: vi.fn(),
+    dispose: vi.fn(),
+    allUsers: signal([]),
+    connectedUsers: signal([]),
+    localSessionId: signal(id),
+    userCanDecorate: vi.fn().mockReturnValue(true),
+    userCanNavigate: vi.fn().mockReturnValue(true),
+    currentUser: signal(null),
+    isHost: vi.fn().mockReturnValue(false),
+  } as BibleReadingSession;
+}
+
 describe("createTabs", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -221,36 +255,62 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    const sharedSession = {
-      id: "session-123",
-      readingState: manager.tabs.value[0]!.readingState,
-      document: {} as SharedDocument,
-      options: signal({
-        allowedNavigators: null,
-        allowedDecorators: null,
-        hostUserId: null,
-        highlightDurationSeconds: 16,
-        endedAt: null,
-        shareTranslation: false,
-        coHostUserIds: [],
-      }),
-      updateOptions: vi.fn(),
-      removeSharedDecoration: vi.fn(),
-      dispose: vi.fn(),
-      allUsers: signal([]),
-      connectedUsers: signal([]),
-      localSessionId: signal("session-123"),
-      userCanDecorate: vi.fn().mockReturnValue(true),
-      userCanNavigate: vi.fn().mockReturnValue(true),
-      currentUser: signal(null),
-      isHost: vi.fn().mockReturnValue(false),
-    } as BibleReadingSession;
+    const sharedSession = createMockSharedSession(
+      "session-123",
+      manager.tabs.value[0]!.readingState
+    );
 
     const nextTab = manager.addTab(sharedSession);
 
     expect(nextTab.readingState).toBe(sharedSession.readingState);
     expect(nextTab.sharedSession).toBe(sharedSession);
     expect(manager.selectedTabId.value).toBe(nextTab.id);
+  });
+
+  it("addTab() with a shared session writes its id to the URL as sessionId", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const sharedSession = createMockSharedSession(
+      "session-456",
+      manager.tabs.value[0]!.readingState
+    );
+
+    manager.addTab(sharedSession);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") !== null
+    );
+
+    expect(navigation.currentUrl.value.searchParams.get("sessionId")).toBe(
+      "session-456"
+    );
+  });
+
+  it("selectTab() away from a shared-session tab removes sessionId from the URL", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const plainTab = manager.tabs.value[0]!;
+    const sharedSession = createMockSharedSession(
+      "session-789",
+      plainTab.readingState
+    );
+    const sharedTab = manager.addTab(sharedSession);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") !== null
+    );
+
+    manager.selectTab(plainTab.id);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") === null
+    );
+
+    expect(
+      navigation.currentUrl.value.searchParams.get("sessionId")
+    ).toBeNull();
+    expect(sharedTab.sharedSession).toBe(sharedSession);
   });
 
   it("addTab() accepts a reading state for the new tab", async () => {
@@ -332,6 +392,57 @@ describe("createTabs", () => {
     expect(selectedTab!.readingState.translationId.value).toBe("NIV");
     expect(selectedTab!.readingState.bookId.value).toBe("MAT");
     expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
+  });
+
+  it.each([
+    ["?book=GEN&chapter=0.5", 1],
+    ["?book=GEN&chapter=2.7", 2],
+    ["?book=GEN&chapter=abc", 1],
+    ["?book=GEN&chapter=-4", 1],
+  ])(
+    "reads a non-integer chapter param safely: %s",
+    async (query, expected) => {
+      // `chapter=0.5` used to reach the reader as chapter 0 — the range check
+      // ran before the flooring, so anything between 0 and 1 slipped past it.
+      // A fractional chapter that floors to something real still resolves to
+      // it rather than being thrown away.
+      window.history.replaceState(null, "", query);
+      const responses = createExampleManagerResponseMap();
+      responses[makeExampleUrl("/api/AAB/GEN/2.json")] = createResponse(
+        makeChapter(aabBooks, "GEN", 2)
+      );
+      setWebResponses(responses);
+
+      const { tabs: manager } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
+
+      const readingState = manager.tabs.value[0]!.readingState;
+      expect(readingState.chapterNumber.value).toBe(expected);
+      expect(
+        webGetMock.mock.calls.map((call) => call[0] as string)
+      ).not.toContain(makeExampleUrl("/api/AAB/GEN/0.json"));
+    }
+  );
+
+  it("still dims a deep-linked verse when the chapter param is fractional", async () => {
+    // The reader's chapter signal is normalised a second time inside
+    // `createBibleReadingState`, so a bad chapter param never reaches the
+    // loader. The verse decoration is not: `createInitialTabs` keys it off the
+    // raw parsed value. Parsing `0.5` as chapter 0 therefore produced a
+    // decoration for a chapter the reader is never on, and the dimming that is
+    // supposed to point out the linked verse silently did nothing.
+    window.history.replaceState(null, "", "?book=GEN&chapter=0.5&verse=3");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.chapterNumber.value).toBe(1);
+    // Decorations for a position the reader is not on are pruned, so surviving
+    // this far is the assertion.
+    expect(readingState.decorations.value).toHaveLength(1);
+    expect(readingState.decorations.value[0]!.chapterNumber).toBe(1);
   });
 
   it("reuses the translationId URL param instead of writing the translation param", async () => {
@@ -615,6 +726,38 @@ describe("createTabs", () => {
     expect(pushSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("a fast skim costs one history entry, not one per chapter", async () => {
+    // The Back button is the whole point of coalescing: after skimming, one
+    // press has to return the reader to where the skim started rather than
+    // walking them back through every chapter they flicked past.
+    const responses = createExampleManagerResponseMap();
+    for (const chapter of [2, 3, 4, 5]) {
+      responses[makeExampleUrl(`/api/AAB/GEN/${chapter}.json`)] =
+        createResponse(makeChapter(aabBooks, "GEN", chapter));
+    }
+    setWebResponses(responses);
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+
+    // Spy only after the initial mount commit (a replace) has happened.
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
+    readingState.loadNextChapter();
+    readingState.loadNextChapter();
+    readingState.loadNextChapter();
+    readingState.loadNextChapter();
+    await waitFor(() => readingState.chapterNumber.value === 5);
+
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(replaceSpy).toHaveBeenCalledTimes(3);
+
+    const url = new URL(window.location.href);
+    expect(url.searchParams.get("chapter")).toBe("5");
+  });
+
   it("switching tabs replaces the URL without pushing a new history entry", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
@@ -679,7 +822,8 @@ describe("createTabs", () => {
 
       expect(decorateVersesSpy).not.toBeNull();
       expect(decorateVersesSpy).toHaveBeenCalledWith("GEN", 1, [3, 5, 6], {
-        className: "sb-verse-decoration-initial-verse-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 5000,
       });
     } finally {

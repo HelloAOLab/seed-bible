@@ -225,8 +225,14 @@ describe("RGBStringToArray", () => {
     expect(RGBStringToArray("rgb(255, 0, 0)")).toEqual([255, 0, 0]);
   });
 
-  it("parses an rgba() string and ignores the alpha channel", () => {
-    expect(RGBStringToArray("rgba(0, 128, 255, 0.5)")).toEqual([0, 128, 255]);
+  it("parses an rgba() string, compositing the alpha over white", () => {
+    expect(RGBStringToArray("rgba(0, 128, 255, 0.5)")).toEqual([128, 192, 255]);
+  });
+
+  it("composites an rgba() string over a provided background", () => {
+    expect(RGBStringToArray("rgba(0, 128, 255, 0.5)", [0, 0, 0])).toEqual([
+      0, 64, 128,
+    ]);
   });
 
   it("parses without spaces between values", () => {

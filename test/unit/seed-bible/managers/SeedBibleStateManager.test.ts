@@ -4,7 +4,7 @@ import {
   type CreateTestSeedBibleStateOptions,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
-import { signal } from "@preact/signals";
+import { batch, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
 
@@ -206,6 +206,23 @@ describe("createSeedBibleState", () => {
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
+  it("echoes an explicit ?lang= in the canonical URL so language-specific sitemap URLs stay self-canonical", async () => {
+    const state = await createState();
+
+    // A crawler lands on a language-specific sitemap URL.
+    window.history.replaceState(null, "", "/?lang=es");
+
+    expect(state.app.canonicalUrl.value).toContain("lang=es");
+  });
+
+  it("omits lang from the canonical URL when the page URL has none", async () => {
+    const state = await createState();
+
+    window.history.replaceState(null, "", "/?foo=bar");
+
+    expect(state.app.canonicalUrl.value).not.toContain("lang=");
+  });
+
   it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {
     const state = await createStateWithTwoTabs();
 
@@ -315,6 +332,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -374,6 +392,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -730,7 +749,10 @@ describe("createSeedBibleState", () => {
     beforeEach(() => {
       vi.useFakeTimers();
       mockPosthogCapture = vi.fn();
-      (globalThis as any).posthog = { capture: mockPosthogCapture };
+      (globalThis as any).posthog = {
+        capture: mockPosthogCapture,
+        onFeatureFlags: vi.fn(),
+      };
     });
 
     afterEach(() => {
@@ -904,7 +926,8 @@ describe("createSeedBibleState", () => {
       });
 
       expect(decorateSpy).toHaveBeenCalledWith("JHN", 3, 16, {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     });
@@ -926,7 +949,8 @@ describe("createSeedBibleState", () => {
       });
 
       expect(decorateSpy).toHaveBeenCalledWith("PSA", 23, [1, 2, 3], {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     });
@@ -965,6 +989,48 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("automatic sign-out toast", () => {
+    it("shows nothing while the session is intact", async () => {
+      const state = await createState();
+
+      expect(state.app.currentToast.value).toBe(null);
+    });
+
+    it("explains a session that ended on its own", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You've been signed out. Please sign in again."
+      );
+    });
+
+    it("explains a suspended account", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "account_suspended", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "Your account has been suspended."
+      );
+    });
+
+    it("shows a fresh toast for a second sign-out with the same reason", async () => {
+      // The event carries a monotonic id precisely so this case still notifies: a
+      // bare reason string would be `===` the previous value, so the effect would
+      // never re-run and the message would be silently swallowed.
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+      const firstToastId = state.app.currentToast.value?.id;
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
+
+      expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
+    });
+  });
+
   describe("pageTitle tag", () => {
     function setSelectedTabChapter(
       state: SeedBibleState,
@@ -979,23 +1045,30 @@ describe("createSeedBibleState", () => {
           (t) => t.id === state.tabs.selectedTabId.value
         ) ?? null;
       expect(tab).not.toBeNull();
-      tab!.readingState.bookId.value = bookId;
-      tab!.readingState.chapterNumber.value = chapterNumber;
-      tab!.readingState.chapterData.value = {
-        translation: {
-          id: "test-translation",
-          name: translationName,
-          textDirection,
-        },
-        book: { id: bookId, name: bookName, abbreviation: bookId },
-        chapter: {
-          number: chapterNumber,
-          id: `${bookId}-${chapterNumber}`,
-          reference: `${bookName} ${chapterNumber}`,
-        },
-        verses: [],
-        notes: [],
-      } as any;
+      // Batched, and with translationId set to match chapterData.translation.id,
+      // so the reading-state effect that watches translationId/bookId/chapterNumber
+      // (and re-fetches content whenever they don't match chapterData) sees a
+      // fully consistent position and never issues a real network request.
+      batch(() => {
+        tab!.readingState.translationId.value = "test-translation";
+        tab!.readingState.bookId.value = bookId;
+        tab!.readingState.chapterNumber.value = chapterNumber;
+        tab!.readingState.chapterData.value = {
+          translation: {
+            id: "test-translation",
+            name: translationName,
+            textDirection,
+          },
+          book: { id: bookId, name: bookName, abbreviation: bookId },
+          chapter: {
+            number: chapterNumber,
+            id: `${bookId}-${chapterNumber}`,
+            reference: `${bookName} ${chapterNumber}`,
+          },
+          verses: [],
+          notes: [],
+        } as any;
+      });
     }
 
     it("sets pageTitle from the selected book and chapter", async () => {

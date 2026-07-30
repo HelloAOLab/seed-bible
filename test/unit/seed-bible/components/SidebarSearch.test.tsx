@@ -198,10 +198,70 @@ describe("SidebarSearch", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
-        className: "sb-verse-decoration-search-result",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       },
     ]);
+  });
+
+  it("closes a pane covering the reader when a result opens in a brand new tab", async () => {
+    // With no tab to select, the search path creates one instead — and creating a
+    // tab doesn't reveal the reader the way selecting one does, so opening the
+    // result has to close the covering pane itself.
+    const fixture = await createFixture({ hasSelectedTab: false });
+
+    act(() => {
+      fixture.state.panes.openPane({
+        placement: "fullscreen",
+        title: "Locations",
+        component: () => <div className="test-pane-body" />,
+      });
+    });
+    expect(fixture.state.panes.panes.value).toHaveLength(1);
+
+    fixture.search.mockResolvedValue({
+      found: 1,
+      out_of: 1,
+      page: 1,
+      hits: [
+        {
+          document: {
+            id: "verse-3",
+            translation: "AAB",
+            book: "GEN",
+            chapter: 1,
+            verse: 2,
+            reference: "Genesis 1:2",
+            text: "And the earth was formless.",
+          },
+        },
+      ],
+    });
+
+    act(() => {
+      render(
+        <TestHost state={fixture.state}>
+          <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />
+        </TestHost>,
+        container
+      );
+    });
+
+    await searchForVerse("formless");
+
+    const resultButton = container.querySelector(
+      ".sb-sidebar-search-result-button"
+    ) as HTMLButtonElement | null;
+    expect(resultButton).not.toBeNull();
+
+    await act(async () => {
+      resultButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    // The reader has to be visible for the result to be any use.
+    expect(fixture.state.panes.panes.value).toHaveLength(0);
   });
 
   it("opens a new tab when there is no current tab", async () => {

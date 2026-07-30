@@ -114,12 +114,10 @@ describe("useWelcome", () => {
   });
 
   describe("static content", () => {
-    it("translates the selector, button, and footer texts", () => {
+    it("translates the selector and button texts", () => {
       const result = setup();
       expect(result.current.selectorText).toBe("open-bible");
       expect(result.current.startButtonText).toBe("read-first-chapter");
-      expect(result.current.footerTitle).toBe("everything-begins-small");
-      expect(result.current.footerContent).toBe("no-rush");
       expect(result.current.startButtonIcon).toBe("arrow_right_alt");
     });
 

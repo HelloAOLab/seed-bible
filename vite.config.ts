@@ -2,9 +2,17 @@
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
 import { analyzer } from "vite-bundle-analyzer";
 import { VitePWA } from "vite-plugin-pwa";
 import { patternPlugin } from "./script/lib/vite-plugin-patterns";
+import {
+  selectAndRelocateCoreAssets,
+  selectCoreAssetFiles,
+  type PrecacheManifestEntry,
+  type ViteManifestChunk,
+} from "./script/lib/precacheManifest";
 import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
@@ -38,12 +46,83 @@ function withTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
 
+const clientOutDir = "standalone/dist/client";
+
+/**
+ * Reads this build's Vite client manifest, which is written before the service
+ * worker is compiled, and works out which emitted files the app needs to boot.
+ */
+function readCoreAssetFiles(): Set<string> {
+  const manifestPath = path.resolve(
+    __dirname,
+    clientOutDir,
+    ".vite/manifest.json"
+  );
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as Record<
+    string,
+    ViteManifestChunk
+  >;
+  return selectCoreAssetFiles(manifest);
+}
+
+/**
+ * The `manifestTransforms` hook Workbox calls with the globbed build output.
+ *
+ * The selection and URL rewriting live in `script/lib/precacheManifest.ts` so
+ * they can be unit tested; this only supplies the two build-time inputs and
+ * reports anything the transform flagged.
+ */
+function transformPrecacheManifest(entries: PrecacheManifestEntry[]) {
+  const result = selectAndRelocateCoreAssets(entries, {
+    coreFiles: readCoreAssetFiles(),
+    assetBaseUrl,
+  });
+  // Returned as `warnings` because that is the hook's contract, and logged here
+  // as well: whether the plugin surfaces them is not something to rely on, and a
+  // missing core asset breaks offline boot with no other symptom.
+  for (const warning of result.warnings) {
+    console.warn(`[sw precache] ${warning}`);
+  }
+  return result;
+}
+
+// Baked into the client bundle so a build reports its own version/commit even
+// when a stale copy is being served — the value travels inside the JS chunk
+// rather than being fetched at request time.
+const appVersion = JSON.parse(
+  readFileSync(
+    path.resolve(__dirname, "packages/seed-bible/package.json"),
+    "utf-8"
+  )
+).version as string;
+
+// CI sets DEPLOY_BUILD_ID to the full commit SHA before `pnpm build` runs (see
+// cd.yml); falling back to `git rev-parse` covers local dev/build.
+function resolveGitCommit(): string {
+  if (deployBuildId) return deployBuildId;
+  try {
+    return execSync("git rev-parse HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
+const gitCommit = resolveGitCommit();
+
 export default defineConfig(({ isSsrBuild }) => ({
   // SSR builds must not treat index.html as an input; only the client build
   // is an HTML/SPA build.
   appType: "custom",
   publicDir: false,
   base: assetBaseUrl,
+
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __GIT_COMMIT__: JSON.stringify(gitCommit),
+    // Read by the service worker (`standalone/sw.ts`) to tell its own build's
+    // assets apart from another branch deployment's. vite-plugin-pwa reuses
+    // this `define` block when it compiles the worker.
+    __ASSET_BASE_URL__: JSON.stringify(assetBaseUrl),
+  },
 
   plugins: [
     preact(),
@@ -54,20 +133,40 @@ export default defineConfig(({ isSsrBuild }) => ({
       ? [
           VitePWA({
             registerType: "autoUpdate",
+            // A hand-written worker (`standalone/sw.ts`) rather than a
+            // generated one: the offline behaviour this deployment needs —
+            // network-first HTML keyed so every URL shares one cached copy,
+            // and asset caching scoped to this build's own chunks — can't be
+            // expressed in `generateSW`'s declarative config.
+            strategies: "injectManifest",
+            srcDir: "standalone",
+            filename: "sw.ts",
             // Pin the SW, its registration script, and the manifest to the site
             // root so they stay at stable, same-origin URLs even though the
             // hashed chunks are served from the versioned absolute CDN `base`.
             base: "/",
             scope: "/",
-            workbox: {
-              // Precache only the root-served web manifest. The hashed chunks
-              // (and favicon/apple-touch-icon, which Vite hashes into assets/)
-              // live on the versioned absolute CDN, not at the SW's root scope —
-              // precaching them by their root-relative path would 404 at install
-              // and abort SW registration. The SSR index.html is a placeholder
-              // template, not the served page, so it must not be a nav fallback.
-              globPatterns: ["manifest.webmanifest"],
-              navigateFallback: null,
+            injectManifest: {
+              // Glob everything cacheable, then let `selectAndRelocateCoreAssets`
+              // keep only the core assets — the boot chunks and their CSS, plus
+              // images and fonts. Everything the app loads on demand (the other
+              // 23 locales, extension chunks) is left to the worker's runtime
+              // cache, so installing doesn't pull down the whole app.
+              //
+              // The web manifest isn't listed: vite-plugin-pwa appends it to the
+              // precache list itself. index.html is absent on purpose — the
+              // served page is rendered per request by the host, so the built
+              // file is only a template; the worker runtime-caches the real
+              // response instead.
+              globPatterns: [
+                "assets/*.{js,css}",
+                "assets/*.{png,jpg,jpeg,gif,svg,webp,avif,ico,woff,woff2,ttf,otf,eot}",
+              ],
+              manifestTransforms: [transformPrecacheManifest],
+              // Workbox drops files over 2 MiB from the precache by default,
+              // which would silently leave the vendor chunk — the single most
+              // important thing to have offline — unprecached.
+              maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
             },
             manifest: {
               id: "seed-bible",
@@ -195,8 +294,10 @@ export default defineConfig(({ isSsrBuild }) => ({
         // Client build: hashed assets + a manifest mapping the entry to its
         // emitted files. The SSR entry reads the manifest to emit the correct
         // <script>/<link> tags (prefixed with the CDN host).
-        outDir: "standalone/dist/client",
+        outDir: clientOutDir,
         emptyOutDir: true,
+        // Also read back by `readCoreAssetFiles()` to work out which emitted
+        // files the service worker should precache.
         manifest: true,
         sourcemap: true,
         rolldownOptions: {
@@ -259,6 +360,17 @@ export default defineConfig(({ isSsrBuild }) => ({
     // Suites that bootstrap the full SeedBibleState pay a one-time ~6s
     // dynamic import of the entire app graph in their first test.
     testTimeout: 20000,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov", "json-summary"],
+      include: ["packages/**/*.{ts,tsx}"],
+      exclude: [
+        "**/*.test.{ts,tsx}",
+        "**/*.d.ts",
+        "**/obsolete/**",
+        "patterns/**",
+      ],
+    },
   },
 
   server: {

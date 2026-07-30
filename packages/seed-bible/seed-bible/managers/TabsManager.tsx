@@ -110,10 +110,8 @@ function getInitialTranslationId(url: URL, language: string): string {
 }
 
 function getInitialFirstTabChapter(url: URL): number {
-  const value = Number(url.searchParams.get("chapter"));
-  return Number.isFinite(value) && value > 0
-    ? Math.floor(value)
-    : DEFAULT_CHAPTER_NUMBER;
+  const value = Math.floor(Number(url.searchParams.get("chapter")));
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_CHAPTER_NUMBER;
 }
 
 function getInitialHighlightedVerses(url: URL): number[] {
@@ -164,7 +162,8 @@ export function createInitialTabs(
 
   if (highlightedVerses.length > 0) {
     tab.readingState.decorateVerses(bookId, chapter, highlightedVerses, {
-      className: "sb-verse-decoration-initial-verse-highlight",
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
       removeAfterMs: 5000,
     });
   }
@@ -395,9 +394,16 @@ export function createTabs(
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
-      const readingState = selectedTab.peek()?.readingState;
-      const nextQueryParams =
-        readingState?.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
+      const tab = selectedTab.peek();
+      const nextQueryParams: Record<string, string | null> =
+        tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
+
+      // Keep a shared session's id in the URL so a refresh rejoins it (see
+      // `setupInitialSession` in SeedBibleStateManager, which reads this
+      // param back on startup) instead of silently dropping the user.
+      if (tab?.sharedSession) {
+        nextQueryParams.sessionId = tab.sharedSession.id;
+      }
 
       const oldKeys = Object.keys(oldQueryParams);
       const newKeys = Object.keys(nextQueryParams);
@@ -522,6 +528,10 @@ export function createTabs(
     });
   });
 
+  // Mirrors the selected tab's *verse selection* into `?verse` so it can be
+  // shared/restored. This is selection state, not a navigation — consumers that
+  // watch the URL for "the reader moved" must ignore this param (see the
+  // fullscreen-pane effect in SeedBibleStateManager).
   effect(() => {
     const params: Record<string, string | null> = {
       verse: null,

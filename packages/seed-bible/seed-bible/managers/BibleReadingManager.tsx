@@ -13,6 +13,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -121,6 +122,8 @@ export interface VerseDecoration {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
@@ -141,6 +144,9 @@ export interface VerseDecorationInput {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
+
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
@@ -183,8 +189,12 @@ export interface BibleReadingState {
   chapterNumber: Signal<number>;
   /** Available translations from the current endpoint. */
   availableTranslations: Signal<AvailableTranslations | null>;
-  /** Books metadata for the currently selected translation. */
-  translationBooks: Signal<TranslationBooks | null>;
+  /**
+   * Books metadata for the currently selected translation, or null when that
+   * translation's catalog has not been downloaded yet. Derived from the data
+   * manager's cache, so it always agrees with `translationId`.
+   */
+  translationBooks: ReadonlySignal<TranslationBooks | null>;
   /** Loaded chapter payload for the current translation/book/chapter. */
   chapterData: Signal<TranslationBookChapter | null>;
   /** Highlights scoped to the active chapter. */
@@ -195,15 +205,41 @@ export interface BibleReadingState {
   selectedVerses: Signal<BibleSelectedVerse[]>;
   /** Currently selected footnote with resolved verse/chapter context. */
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
-  /** True while async loading/navigation operations are in progress. */
-  loading: Signal<boolean>;
+  /**
+   * True while this reading state is waiting on a request.
+   *
+   * Note this does *not* gate navigation — the position signals move
+   * immediately whether or not a request is outstanding. To ask "is the text on
+   * screen the text for where I am?", use `isChapterContentStale`.
+   */
+  loading: ReadonlySignal<boolean>;
+  /**
+   * True when `chapterData` is not the chapter for the current position —
+   * either nothing has loaded yet, or the reader has moved on and the new
+   * chapter's text has not arrived. This is what a loading placeholder should
+   * key off.
+   */
+  isChapterContentStale: ReadonlySignal<boolean>;
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
   /**
-   * Resolves once chapterData becomes non-null for the first time.
-   * Throw this in a component to suspend rendering until initial chapter data is available.
+   * Resolves once the first chapter load reaches a terminal outcome: content
+   * arrived, the load failed, or (during SSR only) it exceeded a deadline.
+   * Throw this in a component to suspend rendering until then.
+   *
+   * Never rejects — a rejected promise thrown during `renderToStringAsync`
+   * becomes a render exception and loses the whole document.
+   *
+   * Always pair a throw with `initialChapterLoadSettled`, or a load that
+   * finishes without content will suspend, resume, and suspend again in a loop.
    */
   chapterDataPromise: Promise<void>;
+  /**
+   * True once the first chapter load has finished, whether or not it produced
+   * content. Distinguishes "still loading" from "finished with nothing", which
+   * `chapterData === null` on its own cannot.
+   */
+  initialChapterLoadSettled: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -289,6 +325,22 @@ export interface BibleReadingState {
 
   /** Loads the next chapter relative to `chapterData` when available. */
   loadNextChapter: () => Promise<void>;
+
+  /**
+   * True when a next chapter is available to navigate to. Reflects the
+   * highest-priority enabled extension's `hasNext` override when one is
+   * provided; otherwise falls back to whether the current chapter has a
+   * `nextChapterApiLink`.
+   */
+  hasNext: ReadonlySignal<boolean>;
+
+  /**
+   * True when a previous chapter is available to navigate to. Reflects the
+   * highest-priority enabled extension's `hasPrevious` override when one is
+   * provided; otherwise falls back to whether the current chapter has a
+   * `previousChapterApiLink`.
+   */
+  hasPrevious: ReadonlySignal<boolean>;
   /** Streaming discovered cross references for the current chapter, grouped by provider. */
   discoveredCrossReferences: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
@@ -427,7 +479,7 @@ const FALLBACK_TRANSLATION: TranslationWithLanguage = {
  * Includes aliases so we can match the nearest available text even when the
  * preferred hardcoded ID is missing from the loaded catalog.
  */
-const UI_TO_BIBLE_LANGUAGE_CODES: Record<string, string[]> = {
+export const UI_TO_BIBLE_LANGUAGE_CODES: Record<string, string[]> = {
   am: ["amh"],
   ar: ["arb", "ara"],
   bn: ["ben"],
@@ -640,6 +692,17 @@ export function getNearestBibleTranslationForUiLanguage(
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
+/**
+ * How close together two position changes have to be to count as one gesture
+ * for the purposes of the Back button.
+ *
+ * Long enough to absorb a rapid skim — presses, held arrow keys, repeated
+ * swipes — so ten chapters cost one Back press rather than ten. Short enough
+ * that reading a chapter and then deliberately moving on gives you a history
+ * entry you can go back to.
+ */
+export const NAVIGATION_COALESCE_MS = 400;
+
 export interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
@@ -775,6 +838,183 @@ function parseTranslationInput(value?: string | null): ParsedTranslationInput {
   }
 }
 
+/**
+ * Where the reader is, independent of whether that chapter's text has been
+ * downloaded yet. Kept deliberately separate from `TranslationBookChapter` so
+ * navigation can be answered from book metadata alone, with no network call.
+ */
+export interface ReadingPosition {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+}
+
+/** Stable string form of a position, for use as a Map key. */
+export function positionKey(position: ReadingPosition): string {
+  return `${position.translationId}/${position.bookId}/${position.chapterNumber}`;
+}
+
+export function positionsEqual(
+  a: ReadingPosition | null,
+  b: ReadingPosition | null
+): boolean {
+  if (!a || !b) {
+    return a === b;
+  }
+  return (
+    a.translationId === b.translationId &&
+    a.bookId === b.bookId &&
+    a.chapterNumber === b.chapterNumber
+  );
+}
+
+/**
+ * The book's first chapter number, which is not always 1. Defaults defensively,
+ * matching how the existing navigation code has always read this field.
+ */
+function firstChapterOf(book: TranslationBook): number {
+  return book.firstChapterNumber ?? 1;
+}
+
+/**
+ * The book's last chapter number, derived from `firstChapterNumber` plus
+ * `numberOfChapters` rather than read from `lastChapterNumber`.
+ *
+ * Both fields describe the same thing, but the app has always clamped using the
+ * arithmetic form, so deriving it keeps `resolveChapterInBook` and
+ * `nextPosition` in agreement even if a catalog reports the two inconsistently.
+ * `lastChapterNumber` is only used as a fallback when the chapter count is
+ * missing or nonsensical.
+ */
+function lastChapterOf(book: TranslationBook): number {
+  const first = firstChapterOf(book);
+  const count = book.numberOfChapters;
+  if (Number.isFinite(count) && count > 0) {
+    return first + count - 1;
+  }
+  const last = book.lastChapterNumber;
+  return Number.isFinite(last) && last >= first ? last : first;
+}
+
+/**
+ * Resolves a requested chapter number against a book: the request is honoured
+ * when it falls inside the book, and otherwise falls back to the book's first
+ * chapter.
+ *
+ * Note this is a fallback rather than a true clamp — asking for chapter 99999
+ * of Genesis lands on Genesis 1, not Genesis 50. That is the app's existing
+ * behaviour, previously duplicated in `selectTranslationAndChapter` and
+ * `loadInitialData`; this is the single home for it.
+ */
+export function resolveChapterInBook(
+  book: TranslationBook,
+  chapterNumber: number
+): number {
+  const first = firstChapterOf(book);
+  const last = lastChapterOf(book);
+  return chapterNumber >= first && chapterNumber <= last
+    ? chapterNumber
+    : first;
+}
+
+/**
+ * The book immediately before or after `currentBookId` in canonical order.
+ *
+ * `order` is the canonical sequence, and it is neither contiguous (a translation
+ * that omits books leaves gaps — the test catalog jumps 1, 2, 40) nor guaranteed
+ * to match the array's own ordering. So this picks the nearest `order` in the
+ * requested direction rather than indexing into the array.
+ */
+function adjacentBook(
+  books: TranslationBooks,
+  currentBookId: string,
+  direction: 1 | -1
+): TranslationBook | null {
+  const current = books.books.find((book) => book.id === currentBookId);
+  if (!current) {
+    return null;
+  }
+
+  let nearest: TranslationBook | null = null;
+  for (const book of books.books) {
+    if (book.id === current.id) {
+      continue;
+    }
+    const isAhead =
+      direction === 1 ? book.order > current.order : book.order < current.order;
+    if (!isAhead) {
+      continue;
+    }
+    const isNearer =
+      !nearest ||
+      (direction === 1
+        ? book.order < nearest.order
+        : book.order > nearest.order);
+    if (isNearer) {
+      nearest = book;
+    }
+  }
+  return nearest;
+}
+
+/**
+ * The chapter after `position`, or null when there is none (the last chapter of
+ * the last book). Crossing a book boundary lands on the next book's first
+ * chapter. Returns null when the book is not in this translation's catalog.
+ */
+export function nextPosition(
+  books: TranslationBooks,
+  position: ReadingPosition
+): ReadingPosition | null {
+  const book = books.books.find((entry) => entry.id === position.bookId);
+  if (!book) {
+    return null;
+  }
+
+  if (position.chapterNumber < lastChapterOf(book)) {
+    return { ...position, chapterNumber: position.chapterNumber + 1 };
+  }
+
+  const next = adjacentBook(books, position.bookId, 1);
+  if (!next) {
+    return null;
+  }
+  return {
+    ...position,
+    bookId: next.id,
+    chapterNumber: firstChapterOf(next),
+  };
+}
+
+/**
+ * The chapter before `position`, or null when there is none (the first chapter
+ * of the first book). Crossing a book boundary lands on the previous book's
+ * last chapter.
+ */
+export function previousPosition(
+  books: TranslationBooks,
+  position: ReadingPosition
+): ReadingPosition | null {
+  const book = books.books.find((entry) => entry.id === position.bookId);
+  if (!book) {
+    return null;
+  }
+
+  if (position.chapterNumber > firstChapterOf(book)) {
+    return { ...position, chapterNumber: position.chapterNumber - 1 };
+  }
+
+  const previous = adjacentBook(books, position.bookId, -1);
+  if (!previous) {
+    return null;
+  }
+  return {
+    ...position,
+    bookId: previous.id,
+    chapterNumber: lastChapterOf(previous),
+  };
+}
+
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
@@ -824,16 +1064,23 @@ export function createBibleReadingState(
   const bookId = signal<string | null>(options.initialBookId ?? null);
   const chapterNumber = signal<number>(normalizedInitialChapterNumber);
   const availableTranslations = signal<AvailableTranslations | null>(null);
-  const translationBooks = signal<TranslationBooks | null>(null);
+  // Derived from the data manager's cache rather than stored locally, so the
+  // catalog always matches `translationId` — including the instant it changes.
+  // A locally stored copy was only refreshed after a chapter finished loading,
+  // which left it describing the *previous* translation in between (wrong
+  // chapter counts, and a stale text direction for RTL translations).
+  const translationBooks = computed<TranslationBooks | null>(
+    () => dataManager.translationBooks.value.get(translationId.value) ?? null
+  );
   const chapterData = signal<TranslationBookChapter | null>(null);
-  const chapterDataPromise = new Promise<void>((resolve) => {
-    const cleanup = effect(() => {
-      if (chapterData.value !== null) {
-        cleanup();
-        resolve();
-      }
-    });
-  });
+  /**
+   * Latches true once the first attempt to load chapter content reaches a
+   * terminal outcome — content arrived, the load failed, or (during SSR) it took
+   * too long. Consumers that suspend on `chapterDataPromise` use this to know
+   * the difference between "still coming" and "not coming", so they suspend once
+   * rather than repeatedly.
+   */
+  const initialChapterLoadSettled = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
@@ -849,7 +1096,21 @@ export function createBibleReadingState(
     string,
     ReturnType<typeof setTimeout>
   >();
-  const loading = signal<boolean>(true);
+  /**
+   * How many requests this reading state is currently waiting on.
+   *
+   * `loading` is derived from this rather than assigned, so overlapping
+   * navigations can't have one finishing request clear the flag while another is
+   * still in the air.
+   */
+  const inFlightCount = signal<number>(0);
+  const beginRequest = () => {
+    inFlightCount.value = inFlightCount.peek() + 1;
+  };
+  const endRequest = () => {
+    inFlightCount.value = inFlightCount.peek() - 1;
+  };
+  const loading = computed<boolean>(() => inFlightCount.value > 0);
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
@@ -872,6 +1133,47 @@ export function createBibleReadingState(
 
   // Disposers for internal effects, released by `dispose()`.
   const effectDisposers: Array<() => void> = [];
+
+  let resolveChapterDataPromise: () => void = () => {};
+  const chapterDataPromise = new Promise<void>((resolve) => {
+    resolveChapterDataPromise = resolve;
+  });
+
+  /**
+   * During SSR the render blocks on `chapterDataPromise`, so an upstream that
+   * never answers would hold the request open indefinitely. Past this deadline
+   * we give up waiting and serve the shell instead.
+   *
+   * Not armed on the client: there the promise only gates a Suspense boundary,
+   * and a genuinely slow connection deserves to keep waiting rather than have
+   * the reading area emptied out from under it.
+   */
+  const SSR_INITIAL_CHAPTER_TIMEOUT_MS = 5000;
+  const initialChapterLoadTimer = import.meta.env.SSR
+    ? setTimeout(() => {
+        initialChapterLoadSettled.value = true;
+      }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
+    : null;
+  const clearInitialChapterLoadTimer = () => {
+    if (initialChapterLoadTimer !== null) {
+      clearTimeout(initialChapterLoadTimer);
+    }
+  };
+  effectDisposers.push(clearInitialChapterLoadTimer);
+
+  // Resolves — never rejects. A rejected promise thrown during
+  // `renderToStringAsync` surfaces as a render exception and takes down the
+  // whole document; resolving lets the already-rendered error branch explain
+  // what went wrong instead. Depends only on the latch, so it settles once.
+  effectDisposers.push(
+    effect(() => {
+      if (!initialChapterLoadSettled.value) {
+        return;
+      }
+      clearInitialChapterLoadTimer();
+      resolveChapterDataPromise();
+    })
+  );
 
   // Forward reference to the object returned by this factory. It is assigned
   // just before `return`, so it is always set by the time any public method
@@ -946,34 +1248,52 @@ export function createBibleReadingState(
    * Runs the enabled extensions' navigation hooks in priority order, returning
    * the first non-`default` outcome (or `default` when none intervene).
    */
-  const runNavigationHooks = async (
+  const runNavigationHooks = (
     direction: "next" | "previous"
-  ): Promise<ReadingNavigationOutcome> => {
-    const currentChapter = chapterData.value;
+  ): ReadingNavigationOutcome | Promise<ReadingNavigationOutcome> => {
+    const currentChapter = chapterData.peek();
     if (!currentChapter) {
       return { type: "default" };
     }
 
-    for (const runtime of orderedEnabledRuntimes.value) {
-      const hook =
-        direction === "next"
-          ? runtime.instance.navigateNext
-          : runtime.instance.navigatePrevious;
-      if (!hook) {
-        continue;
+    const runtimes = orderedEnabledRuntimes.peek();
+
+    // Returns synchronously whenever the hooks do, so a hook that declines to
+    // intervene (the common case) does not put a microtask in front of the
+    // position write — which would let two rapid presses compute their targets
+    // from the same starting point.
+    const runFrom = (
+      startIndex: number
+    ): ReadingNavigationOutcome | Promise<ReadingNavigationOutcome> => {
+      for (let index = startIndex; index < runtimes.length; index++) {
+        const runtime = runtimes[index]!;
+        const hook =
+          direction === "next"
+            ? runtime.instance.navigateNext
+            : runtime.instance.navigatePrevious;
+        if (!hook) {
+          continue;
+        }
+
+        const outcome = hook({
+          readingState: readingStateRef,
+          currentChapter,
+          data: runtime.data,
+        });
+        if (outcome instanceof Promise) {
+          return outcome.then((resolved) =>
+            resolved.type === "default" ? runFrom(index + 1) : resolved
+          );
+        }
+        if (outcome.type !== "default") {
+          return outcome;
+        }
       }
 
-      const outcome = await hook({
-        readingState: readingStateRef,
-        currentChapter,
-        data: runtime.data,
-      });
-      if (outcome.type !== "default") {
-        return outcome;
-      }
-    }
+      return { type: "default" };
+    };
 
-    return { type: "default" };
+    return runFrom(0);
   };
 
   const navigationListeners = new Set<
@@ -995,7 +1315,50 @@ export function createBibleReadingState(
     }
   };
 
+  /**
+   * When the last position change was published to the URL, on a monotonic
+   * clock. Null until the first one.
+   *
+   * `performance.now()` rather than `Date.now()` because this measures an
+   * elapsed interval: a wall-clock adjustment mid-skim would otherwise decide
+   * how many history entries the reader gets.
+   */
+  let lastNavigateAt: number | null = null;
+
+  /**
+   * Publishes a position change for the URL, collapsing a burst into a single
+   * history entry.
+   *
+   * Navigation is instant now, so skimming ten chapters is ten position changes
+   * in about a second — and ten Back presses to undo. Anything following
+   * closely enough on the last one is treated as a continuation of the same
+   * gesture and replaces its history entry instead of adding one, so a skim
+   * costs one Back press and lands the reader where the skim started. A
+   * deliberate, paced navigation is still its own entry.
+   *
+   * Callers that already know they are correcting rather than navigating (a
+   * clamped chapter, an extension toggle) pass `replace` explicitly and are not
+   * subject to the timing rule.
+   */
+  const emitPositionNavigate = (explicitReplace?: boolean) => {
+    const now = performance.now();
+    const isContinuationOfGesture =
+      lastNavigateAt !== null && now - lastNavigateAt < NAVIGATION_COALESCE_MS;
+    lastNavigateAt = now;
+    emitNavigate({ replace: explicitReplace ?? isContinuationOfGesture });
+  };
+
   const disposeReadingState = () => {
+    // Stops the content loader from committing anything that resolves after
+    // teardown, and releases anyone still awaiting a navigation.
+    disposed = true;
+    // Nothing will read the result, so stop paying for it. Matters most when a
+    // tab is closed mid-load on a slow connection.
+    abortOpenContentRequest();
+    for (const key of Array.from(contentWaiters.keys())) {
+      settleContentWaiters(key);
+    }
+
     // Clear listeners first so extension teardown below cannot emit navigation
     // events into an owner that is being torn down.
     navigationListeners.clear();
@@ -1015,14 +1378,22 @@ export function createBibleReadingState(
     () => translationBooks.value?.translation ?? null
   );
 
-  // Resolves the current book's display record from the loaded chapter when
-  // available, otherwise the books catalog by id.
+  // Resolves the current book's display record from the books catalog by id,
+  // falling back to the loaded chapter while that catalog is missing.
+  //
+  // Catalog-first, not content-first: the catalog is keyed on `bookId`, which
+  // moves the instant the reader navigates, whereas `chapterData` still
+  // describes the chapter they left until its replacement downloads. Reading
+  // the chapter first left every title a chapter behind the header for the
+  // whole of a fast skim.
   const resolveCurrentBook = () => {
-    const chapterBook = chapterData.value?.book;
-    if (chapterBook) {
-      return chapterBook;
+    const catalogBook = translationBooks.value?.books.find(
+      (b) => b.id === bookId.value
+    );
+    if (catalogBook) {
+      return catalogBook;
     }
-    return translationBooks.value?.books.find((b) => b.id === bookId.value);
+    return chapterData.value?.book;
   };
 
   // Default title ("Genesis 1"), using the app-wide `name ?? commonName ?? id`
@@ -1046,22 +1417,19 @@ export function createBibleReadingState(
     return `${id} ${chapterNumber.value}`;
   });
 
-  // Default subtitle: the name of the current chapter's translation. Empty
-  // while it is not yet resolvable.
+  // Default subtitle: the name of the current translation. Catalog first, for
+  // the same reason as `resolveCurrentBook` — it tracks `translationId`, while
+  // the loaded chapter names whichever translation was on screen last.
   const baseSubTitle = computed<string>(() => {
-    return (
-      chapterData.value?.translation.name ??
-      translationBooks.value?.translation.name ??
-      ""
-    );
+    return translation.value?.name ?? chapterData.value?.translation.name ?? "";
   });
 
   // Default compact subtitle: the current translation's short name (e.g.
   // "AAB"). Empty while it is not yet resolvable.
   const baseShortSubTitle = computed<string>(() => {
     return (
+      translation.value?.shortName ??
       chapterData.value?.translation.shortName ??
-      translationBooks.value?.translation.shortName ??
       ""
     );
   });
@@ -1239,29 +1607,179 @@ export function createBibleReadingState(
     );
   };
 
-  const syncStateFromChapter = async (
-    chapter: TranslationBookChapter,
-    options?: SelectTranslationAndChapterOptions
+  /**
+   * A verse to scroll to once content for a specific position arrives.
+   *
+   * Held here rather than published straight to `scrollToVerse` because the
+   * request is made when navigation *starts* but is only meaningful once the
+   * matching chapter has rendered. Publishing it early would scroll into
+   * whichever chapter is currently on screen and consume the target before the
+   * intended one appears.
+   *
+   * Seeded from `options.scrollToVerse` so a `?verse=` deep link is recorded
+   * before anything can arrive. The content loader starts on the initial
+   * position immediately — one round trip — while `loadInitialData` needs two
+   * (translations, then the book catalog) before it can record the target
+   * itself, so the text reliably lands first. Waiting for that would drop the
+   * scroll, and since the position doesn't change afterwards nothing would ever
+   * publish it. `loadInitialData` still re-records it against the position it
+   * settles on, which is what covers a corrected translation or chapter.
+   */
+  let pendingScrollTarget: (ReadingPosition & { verse: number }) | null = (():
+    | (ReadingPosition & { verse: number })
+    | null => {
+    const initialBookId = bookId.peek();
+    const verse = options.scrollToVerse;
+    if (!initialBookId || verse === undefined) {
+      return null;
+    }
+    return {
+      translationId: translationId.peek(),
+      bookId: initialBookId,
+      chapterNumber: chapterNumber.peek(),
+      verse,
+    };
+  })();
+
+  /**
+   * Bumped for every content request. Only the newest generation is allowed to
+   * write `chapterData`, so a slow request for a chapter the reader has already
+   * skimmed past can never overwrite where they actually are.
+   */
+  let loadGeneration = 0;
+  let disposed = false;
+
+  /**
+   * Bumped to make the loader effect re-run for a position that has *not*
+   * changed.
+   *
+   * Re-applying the same position writes no new signal value, so on its own the
+   * effect would never notice. That makes a failed load unretryable: picking the
+   * same chapter again would issue no request, and anyone awaiting the
+   * navigation would be waiting on content nothing was fetching.
+   */
+  const contentRetryNonce = signal(0);
+
+  /** Callers waiting for content to arrive, keyed by `positionKey`. */
+  const contentWaiters = new Map<string, Array<() => void>>();
+
+  /** Where the reader is right now, or null before a book has been resolved. */
+  const currentPosition = (): ReadingPosition | null => {
+    const currentBookId = bookId.peek();
+    if (!currentBookId) {
+      return null;
+    }
+    return {
+      translationId: translationId.peek(),
+      bookId: currentBookId,
+      chapterNumber: chapterNumber.peek(),
+    };
+  };
+
+  const chapterMatchesPosition = (
+    chapter: TranslationBookChapter | null,
+    position: ReadingPosition
+  ): boolean =>
+    !!chapter &&
+    chapter.translation.id === position.translationId &&
+    chapter.book.id === position.bookId &&
+    chapter.chapter.number === position.chapterNumber;
+
+  const isChapterContentStale = computed<boolean>(() => {
+    const currentBookId = bookId.value;
+    if (!currentBookId) {
+      return true;
+    }
+    return !chapterMatchesPosition(chapterData.value, {
+      translationId: translationId.value,
+      bookId: currentBookId,
+      chapterNumber: chapterNumber.value,
+    });
+  });
+
+  const settleContentWaiters = (key: string) => {
+    const waiters = contentWaiters.get(key);
+    if (!waiters) {
+      return;
+    }
+    contentWaiters.delete(key);
+    for (const resolve of waiters) {
+      resolve();
+    }
+  };
+
+  /**
+   * Resolves once the given position has its content — or as soon as it is
+   * clear it never will, because the reader has already moved somewhere else.
+   *
+   * This is what keeps the navigation methods' promises meaning what they
+   * always meant ("the chapter is ready"), even though the signals themselves
+   * now move immediately. Callers that await a navigation and then read
+   * `chapterData` continue to work unchanged.
+   */
+  const whenContentSettled = (position: ReadingPosition): Promise<void> => {
+    if (chapterMatchesPosition(chapterData.peek(), position)) {
+      return Promise.resolve();
+    }
+    if (!positionsEqual(position, currentPosition())) {
+      return Promise.resolve();
+    }
+    const key = positionKey(position);
+    return new Promise<void>((resolve) => {
+      const waiters = contentWaiters.get(key);
+      if (waiters) {
+        waiters.push(resolve);
+      } else {
+        contentWaiters.set(key, [resolve]);
+      }
+    });
+  };
+
+  /**
+   * Commits where the reader is: the position signals plus everything keyed to
+   * a position (scroll reset, decorations, selection, highlights).
+   *
+   * Deliberately synchronous and free of any content dependency, so it can run
+   * the moment navigation is requested rather than after a chapter downloads.
+   */
+  const applyPosition = (
+    next: ReadingPosition,
+    options?: {
+      scrollToVerse?: number | null;
+      /** Defaults to true. False when the navigation came *from* the URL. */
+      updateUrl?: boolean;
+      /** Replace the current history entry instead of pushing a new one. */
+      replace?: boolean;
+      /**
+       * Content already in hand for this position, committed alongside it so
+       * the loader has nothing to fetch. Used by extension navigation hooks,
+       * which hand over a whole chapter rather than a reference.
+       */
+      content?: TranslationBookChapter;
+    }
   ) => {
-    const nextTranslationId = chapter.translation.id;
-    const nextBookId = chapter.book.id;
-    const nextChapterNumber = chapter.chapter.number;
-    const nextScrollToVerse = options?.scrollToVerse ?? null;
+    const didPositionChange =
+      translationId.peek() !== next.translationId ||
+      bookId.peek() !== next.bookId ||
+      chapterNumber.peek() !== next.chapterNumber;
+    const scrollToVerseRequest = options?.scrollToVerse ?? null;
 
     batch(() => {
       const didChapterChange =
-        bookId.value !== nextBookId ||
-        chapterNumber.value !== nextChapterNumber;
+        bookId.value !== next.bookId ||
+        chapterNumber.value !== next.chapterNumber;
       if (didChapterChange) {
         scrollPosition.value = 0;
       }
 
-      translationId.value = nextTranslationId;
-      bookId.value = nextBookId;
-      chapterNumber.value = nextChapterNumber;
-      chapterData.value = chapter;
-      scrollToVerse.value = nextScrollToVerse;
+      translationId.value = next.translationId;
+      bookId.value = next.bookId;
+      chapterNumber.value = next.chapterNumber;
       selectedFootnoteId.value = null;
+
+      // Pruning reads the position signals through `decorationMatchesState`, so
+      // it has to come after the writes above to be judged against the new
+      // position.
       const removedDecorationIds = decorations.value
         .filter(
           (decoration) =>
@@ -1284,22 +1802,221 @@ export function createBibleReadingState(
         }
       }
       clearSelectedVerses();
+
+      pendingScrollTarget =
+        scrollToVerseRequest === null
+          ? null
+          : { ...next, verse: scrollToVerseRequest };
+
+      activeChapterHighlights.value = highlightsManager.getChapterHighlights(
+        next.translationId,
+        next.bookId,
+        next.chapterNumber
+      );
+
+      if (options?.content) {
+        // Supersede any request already in the air before committing, so a
+        // slower fetch can't land on top of the content we were handed.
+        loadGeneration += 1;
+        applyChapterContent(options.content);
+      } else if (
+        !didPositionChange &&
+        !chapterMatchesPosition(chapterData.peek(), next) &&
+        !positionsEqual(openContentRequestPosition, next)
+      ) {
+        // The position is where it already was, but its text is missing — the
+        // last attempt failed, and nothing is trying again. The signals hold no
+        // news for the loader effect, so say so explicitly. Skipped while a
+        // request for this position is already open, so re-picking the chapter
+        // you are waiting on doesn't restart the download from scratch.
+        contentRetryNonce.value = contentRetryNonce.peek() + 1;
+      }
     });
 
-    if (translationBooks.value?.translation.id !== nextTranslationId) {
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
-      translationBooks.value = books;
-      availableTranslations.value = toAvailableTranslations(
-        dataManager.availableTranslations.value
-      );
+    // Anything still waiting on a different position is never going to get
+    // content now — release those callers rather than leaving them hanging.
+    const nextKey = positionKey(next);
+    for (const key of Array.from(contentWaiters.keys())) {
+      if (key !== nextKey) {
+        settleContentWaiters(key);
+      }
     }
 
-    activeChapterHighlights.value = highlightsManager.getChapterHighlights(
-      nextTranslationId,
-      nextBookId,
-      nextChapterNumber
-    );
+    if (options?.updateUrl === false) {
+      return;
+    }
+    if (!didPositionChange && scrollToVerseRequest === null) {
+      // Nothing moved, so this must not cost a Back entry. The URL is still
+      // rewritten rather than skipped, because it can be out of step with the
+      // position for reasons other than a move — a `verse` param to drop, an
+      // extension's params to re-derive. And because this is not part of a
+      // gesture, it goes straight to `emitNavigate`: letting it stamp the
+      // coalescing clock would make the reader's *next* real navigation look
+      // like a continuation of a press that never happened.
+      emitNavigate({ replace: true });
+      return;
+    }
+    emitPositionNavigate(options?.replace);
   };
+
+  /**
+   * Commits the chapter text for a position that has already been applied.
+   *
+   * `scrollToVerse` is published here, in the same batch as `chapterData`, so a
+   * consumer never observes a scroll target against the wrong chapter — and
+   * only when the arriving chapter is the one the target was requested for.
+   */
+  const applyChapterContent = (chapter: TranslationBookChapter) => {
+    batch(() => {
+      chapterData.value = chapter;
+      initialChapterLoadSettled.value = true;
+      error.value = null;
+
+      const target = pendingScrollTarget;
+      const targetMatchesChapter =
+        !!target &&
+        target.translationId === chapter.translation.id &&
+        target.bookId === chapter.book.id &&
+        target.chapterNumber === chapter.chapter.number;
+      scrollToVerse.value = targetMatchesChapter ? target.verse : null;
+      pendingScrollTarget = null;
+    });
+  };
+
+  /**
+   * Cancels the chapter request this reading state currently has open, if any.
+   *
+   * The generation counter already stops a superseded response being displayed;
+   * this is what stops it being *downloaded*. On a slow connection, skimming
+   * ten chapters otherwise leaves nine unwanted downloads queued ahead of the
+   * one the reader is actually waiting for.
+   */
+  let contentRequestController: AbortController | null = null;
+  /**
+   * The position the open request is for, so a re-apply of that same position
+   * can tell "nothing is fetching this" from "this is already on its way".
+   */
+  let openContentRequestPosition: ReadingPosition | null = null;
+  const abortOpenContentRequest = () => {
+    contentRequestController?.abort();
+    contentRequestController = null;
+    openContentRequestPosition = null;
+  };
+
+  /** True for the rejection a caller gets back from its own cancellation. */
+  const isAbortError = (err: unknown): boolean =>
+    err instanceof Error && err.name === "AbortError";
+
+  /**
+   * Fetches the chapter for a position and commits it — but only if it is still
+   * the newest request when it lands.
+   */
+  const requestContent = async (
+    position: ReadingPosition,
+    generation: number
+  ) => {
+    beginRequest();
+
+    // Warm this translation's catalog without blocking the text on it. The
+    // catalog supplies the book name and next/previous availability; a position
+    // reached by a direct signal write (shared sessions, deep links) may be the
+    // first time we have seen this translation at all.
+    //
+    // Deliberately not cancellable: it is one small request per translation,
+    // every position needs it, and letting it finish is what makes the *next*
+    // press instant.
+    void dataManager.getTranslationBooks(position.translationId).catch(() => {
+      // The chapter request below surfaces the failure; nothing to add here.
+    });
+
+    abortOpenContentRequest();
+    const controller = new AbortController();
+    contentRequestController = controller;
+    openContentRequestPosition = position;
+
+    try {
+      const chapter = await dataManager.getTranslationBookChapter(
+        position.translationId,
+        position.bookId,
+        position.chapterNumber,
+        { signal: controller.signal }
+      );
+      if (disposed || generation !== loadGeneration) {
+        return;
+      }
+      applyChapterContent(chapter);
+    } catch (err) {
+      if (disposed || generation !== loadGeneration) {
+        return;
+      }
+      // Our own cancellation, which only ever happens because a newer request
+      // replaced this one. Surfacing it would put an error on screen for a
+      // chapter the reader has already moved off.
+      if (isAbortError(err)) {
+        return;
+      }
+      error.value =
+        err instanceof Error ? err.message : "Failed to load chapter.";
+    } finally {
+      if (contentRequestController === controller) {
+        contentRequestController = null;
+        openContentRequestPosition = null;
+      }
+      endRequest();
+      settleContentWaiters(positionKey(position));
+    }
+  };
+
+  // The single owner of chapter loading. Navigation writes a position and
+  // returns; this notices and fetches the matching text.
+  //
+  // Centralising it here means *every* route into a new position gets content,
+  // including direct writes to the position signals (shared sessions do this),
+  // and gives one place to enforce that only the newest request may commit.
+  effectDisposers.push(
+    effect(() => {
+      // The only tracked reads in this effect. Everything else goes through
+      // `.peek()` inside `untracked` — subscribing to the catalog here would
+      // make it re-run when the catalog lands and abort the request it just
+      // started, refetching on every translation switch.
+      const nextTranslationId = translationId.value;
+      const nextBookId = bookId.value;
+      const nextChapterNumber = chapterNumber.value;
+      // Subscribed but unused: this is how a retry of the position we are
+      // already on gets us to run again (see `contentRetryNonce`).
+      void contentRetryNonce.value;
+
+      untracked(() => {
+        if (disposed || !nextBookId) {
+          return;
+        }
+        const position: ReadingPosition = {
+          translationId: nextTranslationId,
+          bookId: nextBookId,
+          chapterNumber: nextChapterNumber,
+        };
+
+        // The reader is moving somewhere (or explicitly retrying), so whatever
+        // failed before is not what they are looking at any more. Navigation
+        // itself no longer clears this, and `BibleReader` renders the banner in
+        // place of *any* content — so a stale error hides both the loading
+        // placeholder and, on the branch below, a chapter already in hand.
+        // Cleared here rather than in `requestContent` precisely because that
+        // branch issues no request: offline on a chapter that failed, pressing
+        // back to the one still on screen otherwise looked like it failed too.
+        error.value = null;
+
+        if (chapterMatchesPosition(chapterData.peek(), position)) {
+          // Already showing this chapter — nothing to fetch, but anyone
+          // awaiting this position is done.
+          settleContentWaiters(positionKey(position));
+          return;
+        }
+        loadGeneration += 1;
+        void requestContent(position, loadGeneration);
+      });
+    })
+  );
 
   const highlightSelectedVerses = async (
     highlightDetails: Omit<ChapterHighlight, "verse">
@@ -1434,45 +2151,123 @@ export function createBibleReadingState(
       .filter((decoration) => decoration.id !== decorationId);
   };
 
-  const loadPreviousChapter = async () => {
-    if (!chapterData.value) {
+  /**
+   * Moves one chapter forward or back.
+   *
+   * The position write is synchronous — no `await` runs before it in the common
+   * case — so pressing next repeatedly advances a chapter per press instead of
+   * recomputing the same target while a request is in flight. The target comes
+   * from the book catalog rather than the loaded chapter's next/previous link,
+   * which is what used to tie navigation to the download.
+   */
+  /**
+   * Degraded-path navigation for when this translation's book catalog hasn't
+   * downloaded: follows the loaded chapter's own next/previous link instead of
+   * computing the target from metadata.
+   *
+   * Slower by design — the position can only be written once the request lands,
+   * because nothing on hand says where "next" is. But `hasNext`/`hasPrevious`
+   * fall back to these same links in exactly this case, so without this the
+   * chevron would be enabled and do nothing at all. Reachable whenever content
+   * is committed without the loader warming the catalog (an extension handing
+   * over a chapter for a translation we have never opened), or when a catalog
+   * request failed while the chapter's succeeded.
+   */
+  const navigateByChapterLink = async (
+    direction: "next" | "previous",
+    from: ReadingPosition
+  ) => {
+    const chapter = chapterData.peek();
+    // Links from a chapter the reader has already left would send them
+    // somewhere they never asked for.
+    if (!chapterMatchesPosition(chapter, from) || !chapter) {
       return;
     }
 
-    const outcome = await runNavigationHooks("previous");
-    if (outcome.type === "handled") {
-      emitNavigate({ replace: false });
-      return;
-    } else if (outcome.type === "prevent") {
-      return;
-    }
-
-    loading.value = true;
-    error.value = null;
-
+    beginRequest();
+    // Captured, not bumped: superseding here would strand the request already
+    // fetching the current position if this one fails.
+    const generation = loadGeneration;
     try {
-      const chapter =
-        outcome.type === "navigate"
-          ? outcome.chapter
-          : await dataManager.getPreviousChapter(chapterData.value);
-      if (!chapter) {
+      const adjacent =
+        direction === "next"
+          ? await dataManager.getNextChapter(chapter)
+          : await dataManager.getPreviousChapter(chapter);
+      if (disposed || generation !== loadGeneration || !adjacent) {
         return;
       }
-      await syncStateFromChapter(chapter);
-
-      emitNavigate({ replace: false });
+      applyPosition(
+        {
+          translationId: adjacent.translation.id,
+          bookId: adjacent.book.id,
+          chapterNumber: adjacent.chapter.number,
+        },
+        { content: adjacent }
+      );
     } catch (err) {
+      if (disposed || generation !== loadGeneration) {
+        return;
+      }
       error.value =
-        err instanceof Error ? err.message : "Failed to load previous chapter.";
+        err instanceof Error ? err.message : "Failed to load chapter.";
     } finally {
-      loading.value = false;
+      endRequest();
     }
   };
 
-  const selectTranslation = async (translation: string) => {
-    loading.value = true;
-    error.value = null;
+  const navigateAdjacent = async (direction: "next" | "previous") => {
+    const hookOutcome = runNavigationHooks(direction);
+    const outcome =
+      hookOutcome instanceof Promise ? await hookOutcome : hookOutcome;
 
+    if (outcome.type === "handled") {
+      emitNavigate({ replace: false });
+      return;
+    }
+    if (outcome.type === "prevent") {
+      return;
+    }
+
+    if (outcome.type === "navigate") {
+      const chapter = outcome.chapter;
+      applyPosition(
+        {
+          translationId: chapter.translation.id,
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+        },
+        { content: chapter }
+      );
+      return;
+    }
+
+    const from = currentPosition();
+    if (!from) {
+      return;
+    }
+    const books = dataManager.getCachedTranslationBooks(from.translationId);
+    if (!books) {
+      await navigateByChapterLink(direction, from);
+      return;
+    }
+
+    const target =
+      direction === "next"
+        ? nextPosition(books, from)
+        : previousPosition(books, from);
+    if (!target) {
+      // Either end of the canon, or a book this translation does not have.
+      return;
+    }
+
+    applyPosition(target);
+    await whenContentSettled(target);
+  };
+
+  const loadPreviousChapter = () => navigateAdjacent("previous");
+
+  const selectTranslation = async (translation: string) => {
+    beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(translation);
 
@@ -1482,61 +2277,48 @@ export function createBibleReadingState(
         throw new Error("No books available for selected translation.");
       }
 
-      const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
-      const chapter = await dataManager.getTranslationBookChapter(
-        nextTranslationId,
-        firstBook.id,
-        firstChapterNumber
+      availableTranslations.value = toAvailableTranslations(
+        dataManager.availableTranslations.value
       );
 
-      await batch(async () => {
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
-        );
-        await syncStateFromChapter(chapter);
-      });
-
-      emitNavigate({ replace: false });
+      // The position is written only once the catalog has resolved, because
+      // until then there is no way to know which book this translation starts
+      // with — writing the translation alone would send the loader after a
+      // chapter that may not exist in it.
+      const target: ReadingPosition = {
+        translationId: nextTranslationId,
+        bookId: firstBook.id,
+        chapterNumber: firstBook.firstChapterNumber ?? 1,
+      };
+      applyPosition(target);
+      await whenContentSettled(target);
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select translation.";
     } finally {
-      loading.value = false;
+      endRequest();
     }
   };
 
   const selectBook = async (book: string) => {
-    if (!translationBooks.value) {
+    const activeTranslationId = translationId.peek();
+    const books = dataManager.getCachedTranslationBooks(activeTranslationId);
+    if (!books) {
       return;
     }
 
-    const selectedBook = translationBooks.value.books.find(
-      (entry) => entry.id === book
-    );
+    const selectedBook = books.books.find((entry) => entry.id === book);
     if (!selectedBook) {
       return;
     }
 
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const nextChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const chapter = await dataManager.getTranslationBookChapter(
-        translationId.value,
-        book,
-        nextChapterNumber
-      );
-
-      await syncStateFromChapter(chapter);
-
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to select book.";
-    } finally {
-      loading.value = false;
-    }
+    const target: ReadingPosition = {
+      translationId: activeTranslationId,
+      bookId: book,
+      chapterNumber: selectedBook.firstChapterNumber ?? 1,
+    };
+    applyPosition(target);
+    await whenContentSettled(target);
   };
 
   const selectTranslationAndChapter = async (
@@ -1545,9 +2327,7 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
-    loading.value = true;
-    error.value = null;
-
+    beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(
         nextTranslationIdOrUrl
@@ -1561,100 +2341,44 @@ export function createBibleReadingState(
         );
       }
 
-      const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const maxChapterNumber =
-        firstChapterNumber + selectedBook.numberOfChapters - 1;
-      const clampedChapterNumber =
-        nextChapterNumber >= firstChapterNumber &&
-        nextChapterNumber <= maxChapterNumber
-          ? nextChapterNumber
-          : firstChapterNumber;
-
-      const chapter = await dataManager.getTranslationBookChapter(
-        nextTranslationId,
-        selectedBook.id,
-        clampedChapterNumber
+      availableTranslations.value = toAvailableTranslations(
+        dataManager.availableTranslations.value
       );
 
-      await batch(async () => {
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
-        );
-        await syncStateFromChapter(chapter, options);
+      const target: ReadingPosition = {
+        translationId: nextTranslationId,
+        bookId: selectedBook.id,
+        chapterNumber: resolveChapterInBook(selectedBook, nextChapterNumber),
+      };
+      applyPosition(target, {
+        scrollToVerse: options?.scrollToVerse ?? null,
+        updateUrl: options?.updateUrl,
       });
-
-      if (options?.updateUrl !== false) {
-        emitNavigate({ replace: false });
-      }
+      await whenContentSettled(target);
     } catch (err) {
       error.value =
         err instanceof Error
           ? err.message
           : "Failed to select translation and chapter.";
     } finally {
-      loading.value = false;
+      endRequest();
     }
   };
 
   const selectChapter = async (book: string, chapter: number) => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const nextChapterData = await dataManager.getTranslationBookChapter(
-        translationId.value,
-        book,
-        chapter
-      );
-
-      await syncStateFromChapter(nextChapterData);
-
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to select chapter.";
-    } finally {
-      loading.value = false;
-    }
+    const target: ReadingPosition = {
+      translationId: translationId.peek(),
+      bookId: book,
+      chapterNumber: chapter,
+    };
+    applyPosition(target);
+    await whenContentSettled(target);
   };
 
-  const loadNextChapter = async () => {
-    if (!chapterData.value) {
-      return;
-    }
-
-    const outcome = await runNavigationHooks("next");
-    if (outcome.type === "handled") {
-      emitNavigate({ replace: false });
-      return;
-    } else if (outcome.type === "prevent") {
-      return;
-    }
-
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const chapter =
-        outcome.type === "navigate"
-          ? outcome.chapter
-          : await dataManager.getNextChapter(chapterData.value);
-      if (!chapter) {
-        return;
-      }
-      await syncStateFromChapter(chapter);
-
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to load next chapter.";
-    } finally {
-      loading.value = false;
-    }
-  };
+  const loadNextChapter = () => navigateAdjacent("next");
 
   const loadInitialData = async () => {
-    loading.value = true;
+    beginRequest();
     error.value = null;
 
     try {
@@ -1682,11 +2406,9 @@ export function createBibleReadingState(
       }
 
       const nextTranslationId = currentTranslation.id;
-      translationId.value = nextTranslationId;
       useFirstAvailableTranslation.value = false;
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
-      translationBooks.value = books;
       const firstBook = books.books[0];
       if (!firstBook) {
         throw new Error("No books available for selected translation.");
@@ -1697,35 +2419,41 @@ export function createBibleReadingState(
         ? (books.books.find((book) => book.id === requestedBookId) ?? firstBook)
         : firstBook;
 
-      const nextBookId = selectedBook.id;
-      const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const maxChapterNumber =
-        firstChapterNumber + selectedBook.numberOfChapters - 1;
-      const requestedChapterNumber = chapterNumber.value;
-      const nextChapterNumber =
-        requestedChapterNumber >= firstChapterNumber &&
-        requestedChapterNumber <= maxChapterNumber
-          ? requestedChapterNumber
-          : firstChapterNumber;
+      const target: ReadingPosition = {
+        translationId: nextTranslationId,
+        bookId: selectedBook.id,
+        chapterNumber: resolveChapterInBook(selectedBook, chapterNumber.peek()),
+      };
 
-      bookId.value = nextBookId;
-      chapterNumber.value = nextChapterNumber;
+      // Whether the position we settled on differs from the one asked for.
+      // Only meaningful when something *was* asked for — with no starting book
+      // there is nothing in the URL to correct.
+      const requested = currentPosition();
+      const wasCorrected = !!requested && !positionsEqual(requested, target);
 
-      const chapter = await dataManager.getTranslationBookChapter(
-        nextTranslationId,
-        nextBookId,
-        nextChapterNumber
-      );
-
-      await syncStateFromChapter(chapter, {
-        scrollToVerse: options.scrollToVerse,
+      // The loader picks this up and fetches the text. Normally no URL write:
+      // the app is already at this address, and pushing it again would add a
+      // redundant history entry on first paint. But a corrected position does
+      // need writing — `?chapter=99999` would otherwise leave the URL
+      // advertising a chapter the reader is not on, so Back would take them
+      // straight back to the bad address and bounce. `replace`, so the
+      // correction itself costs no history entry.
+      applyPosition(target, {
+        scrollToVerse: options.scrollToVerse ?? null,
+        updateUrl: wasCorrected,
+        replace: true,
       });
+      await whenContentSettled(target);
     } catch (err) {
       console.error("Error loading initial Bible data:", err);
       error.value =
         err instanceof Error ? err.message : "Failed to load Bible data.";
     } finally {
-      loading.value = false;
+      endRequest();
+      // Terminal either way. Without this a failed first load leaves anything
+      // suspended on `chapterDataPromise` waiting forever — which on the server
+      // means the HTTP request never completes.
+      initialChapterLoadSettled.value = true;
     }
   };
 
@@ -1967,6 +2695,66 @@ export function createBibleReadingState(
     return query;
   };
 
+  /**
+   * Availability surfaced to consumers: the highest-priority enabled
+   * extension's override wins, then the book catalog, and only then the loaded
+   * chapter's next/previous link.
+   *
+   * The catalog answers this for wherever the reader currently *is*, rather
+   * than for whichever chapter happens to be loaded — so the chevrons stay
+   * correct while a chapter is still downloading. The link fallback covers the
+   * window before a translation's catalog has arrived, so they don't flash
+   * disabled on first paint or mid-translation-switch.
+   */
+  const resolveAvailability = (
+    pick: (
+      instance: ReadingExtensionInstance
+    ) => ReadonlySignal<boolean> | undefined,
+    step: (
+      books: TranslationBooks,
+      position: ReadingPosition
+    ) => ReadingPosition | null,
+    chapterLink: (chapter: TranslationBookChapter) => string | null | undefined
+  ): boolean => {
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const override = pick(runtime.instance);
+      if (override) {
+        return override.value;
+      }
+    }
+
+    const books = translationBooks.value;
+    const currentBookId = bookId.value;
+    if (books && currentBookId) {
+      return (
+        step(books, {
+          translationId: translationId.value,
+          bookId: currentBookId,
+          chapterNumber: chapterNumber.value,
+        }) !== null
+      );
+    }
+
+    const chapter = chapterData.value;
+    return !!(chapter && chapterLink(chapter));
+  };
+
+  const hasNext = computed<boolean>(() =>
+    resolveAvailability(
+      (instance) => instance.hasNext,
+      nextPosition,
+      (chapter) => chapter.nextChapterApiLink
+    )
+  );
+
+  const hasPrevious = computed<boolean>(() =>
+    resolveAvailability(
+      (instance) => instance.hasPrevious,
+      previousPosition,
+      (chapter) => chapter.previousChapterApiLink
+    )
+  );
+
   loadInitialData();
 
   readingStateRef = {
@@ -1979,6 +2767,8 @@ export function createBibleReadingState(
     translationBooks,
     chapterData,
     chapterDataPromise,
+    initialChapterLoadSettled,
+    isChapterContentStale,
     highlights,
     decorations,
     selectedVerses,
@@ -2000,6 +2790,8 @@ export function createBibleReadingState(
     selectChapter,
     loadPreviousChapter,
     loadNextChapter,
+    hasNext,
+    hasPrevious,
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,

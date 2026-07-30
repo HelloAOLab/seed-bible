@@ -19,6 +19,7 @@ import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { JSX } from "preact";
 import type { BibleDataManager } from "../../managers/BibleDataManager";
+import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import {
   useEffect,
@@ -467,13 +468,9 @@ const SideBarBooks = (props: {
             <div
               class={`sidebar-itm flex-between-center ${isSelected ? "sidebar-selected-itm" : ""}`}
               tabIndex={index + 1}
-              onClick={() =>
-                handleClick({
-                  index,
-                  book,
-                  ...(chapterHint !== undefined ? { cht: chapterHint } : {}),
-                })
-              }
+              aria-current={isSelected ? "true" : undefined}
+              aria-expanded={isSelected}
+              onClick={() => handleClick({ book })}
               id={`booktab-${book.id}`}
               style={itemGridStyle}
             >
@@ -577,6 +574,46 @@ const SideBarBooks = (props: {
       const OTBooks = ghostArray(oldTestament, otColumns);
       const NTBooks = ghostArray(newTestament, ntColumns);
       const APBooks = ghostArray(apocrypha, ntColumns);
+      // Hint 2 is reserved for apocrypha so its chapter panel doesn't collide
+      // with the NT grid (hint 1). On desktop All Books there is no apocrypha
+      // column, so when the expanded book is apocrypha we short-circuit to the
+      // apocrypha-only grid (same layout as the Apocrypha filter).
+      const expandedIsApocrypha =
+        !!bd && apocrypha.some((book) => book.id === bd.id);
+      if (ws > MOBILE_BREAKPOINT && expandedIsApocrypha) {
+        return (
+          <div
+            class="books-container flex-gap-md"
+            dir={
+              bibleSelectorState.selectedTranslation.value?.textDirection ??
+              "ltr"
+            }
+          >
+            <div
+              class="testament-container flex-col-gap-sm"
+              style={{ width: "100%" }}
+            >
+              <span class="testament-title">
+                {t("extrabiblical-writings", {
+                  defaultValue: "Extrabiblical writings",
+                })}
+                <span
+                  class="material-symbols-outlined"
+                  onClick={() => {
+                    showApocryphaInfo.value = true;
+                  }}
+                >
+                  info
+                </span>
+              </span>
+              {renderBooksGrid(
+                ghostArray(apocrypha, singleColumns),
+                singleColumns
+              )}
+            </div>
+          </div>
+        );
+      }
       return (
         <div
           class="books-container flex-gap-md"
@@ -611,7 +648,7 @@ const SideBarBooks = (props: {
               <div
                 class="testament-container flex-col-gap-sm"
                 style={{
-                  width: `100%`,
+                  width: "100%",
                   color: "var(--sb-font-color)",
                   opacity: "0.7",
                 }}
@@ -629,7 +666,7 @@ const SideBarBooks = (props: {
                     info
                   </span>
                 </span>
-                {renderBooksGrid(APBooks, ntColumns, 1, undefined, true)}
+                {renderBooksGrid(APBooks, ntColumns, 2, undefined, true)}
               </div>
             </>
           )}
@@ -704,6 +741,8 @@ const SideBarChapters = (props: {
     currentPsalms,
     selectChapter,
     isOpen,
+    currentChapterNumber,
+    currentBookId,
   } = bibleSelectorState;
 
   const psalmsPartName = (props: {
@@ -724,57 +763,105 @@ const SideBarChapters = (props: {
   };
 
   const openBookId = bookData.value?.id ?? null;
+  const activeChapter =
+    openBookId && openBookId === currentBookId.value
+      ? currentChapterNumber.value
+      : null;
 
   useEffect(() => {
-    if (!openBookId) return;
+    if (!openBookId || !isOpen.value) return;
+
+    // Ensure the Psalm book-group containing the current chapter is expanded
+    // so the chapter button is visible for highlight + scroll-into-view.
+    // This must stay in the same effect as the scroll/focus logic below
+    // (rather than a separate effect keyed off `currentPsalms.value`) —
+    // `currentPsalms` is also written when the user manually opens/closes a
+    // Psalms section, and re-running the scroll/focus effect off that same
+    // signal would snap the view back to the current chapter every time,
+    // undoing the user's manual browsing.
+    if (openBookId === "PSA" && activeChapter != null) {
+      const partName = psalmsPartName({ chapterNumber: activeChapter });
+      if (!currentPsalms.value.includes(partName)) {
+        currentPsalms.value = [...currentPsalms.value, partName];
+      }
+    }
 
     const timeout = window.setTimeout(() => {
       const bookTab = document.getElementById(`booktab-${openBookId}`);
       const booksItem = bookTab?.closest(".books-item");
-      if (!booksItem) return;
+      if (!bookTab || !booksItem) return;
 
-      const chapterPanel = booksItem.querySelector(".show-sidebar-chapter");
-      if (!chapterPanel) return;
-
-      const chapterButtons = Array.from(
-        booksItem.querySelectorAll<HTMLElement>(
-          ".show-sidebar-chapter .chapter-btn"
-        )
-      );
-      const lastVisibleChapter = [...chapterButtons]
-        .reverse()
-        .find(
-          (btn) => btn.style.display !== "none" && btn.offsetParent !== null
-        );
-      const target = lastVisibleChapter ?? (chapterPanel as HTMLElement);
-
-      // Scroll the specific books-item (OT / NT / AP / single-testament)
-      // so the last chapter sits in view without relying on the wrong container.
-      const itemRect = booksItem.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      if (targetRect.bottom > itemRect.bottom) {
-        booksItem.scrollTop += targetRect.bottom - itemRect.bottom + 8;
-      } else if (targetRect.top < itemRect.top) {
-        booksItem.scrollTop -= itemRect.top - targetRect.top + 8;
+      // Don't yank focus off the search field while the user is typing.
+      // openBookId also changes when search narrows to a single book.
+      const active = document.activeElement as HTMLElement | null;
+      if (!active?.closest(".searchbar")) {
+        bookTab.focus({ preventScroll: true });
       }
 
-      // Mobile also scrolls the outer books-container.
-      const booksContainer = booksItem.closest(".books-container");
-      if (booksContainer) {
-        const containerRect = booksContainer.getBoundingClientRect();
-        const updatedTargetRect = target.getBoundingClientRect();
-        if (updatedTargetRect.bottom > containerRect.bottom) {
-          booksContainer.scrollTop +=
-            updatedTargetRect.bottom - containerRect.bottom + 8;
-        } else if (updatedTargetRect.top < containerRect.top) {
-          booksContainer.scrollTop -=
-            containerRect.top - updatedTargetRect.top + 8;
+      const chapterPanel = booksItem.querySelector(".show-sidebar-chapter");
+      const currentChapterButton =
+        activeChapter != null
+          ? booksItem.querySelector<HTMLElement>(
+              `.show-sidebar-chapter #chapter-btn-${activeChapter}`
+            )
+          : null;
+      // Psalms hide chapters outside the expanded group (`display: none`);
+      // those have a zero-size rect and must not be used as the scroll target.
+      const visibleChapterButton =
+        currentChapterButton &&
+        currentChapterButton.style.display !== "none" &&
+        currentChapterButton.offsetParent !== null
+          ? currentChapterButton
+          : null;
+      const target =
+        visibleChapterButton ?? (chapterPanel as HTMLElement | null) ?? bookTab;
+
+      // Scroll every overflow-y ancestor through the selector panel.
+      // Desktop usually only needs `.books-item`. On mobile both
+      // `.books-container` and `.sidebar-results` are `overflow: auto`, so
+      // either (or both) may need to scroll.
+      const scrollTargetInto = (scroller: HTMLElement) => {
+        const scrollerRect = scroller.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        // For a large book (e.g. Psalms) the chapter grid can be taller than
+        // the scroller — only chase the bottom edge when it fits, or this
+        // scrolls past the book's title to reveal the last chapters instead.
+        const targetFits = targetRect.height <= scrollerRect.height;
+        let delta = 0;
+        if (targetRect.top < scrollerRect.top) {
+          delta = -(scrollerRect.top - targetRect.top + 8);
+        } else if (targetFits && targetRect.bottom > scrollerRect.bottom) {
+          delta = targetRect.bottom - scrollerRect.bottom + 8;
         }
+        if (delta !== 0) {
+          // `behavior: "auto"` overrides `.sidebar-results { scroll-behavior:
+          // smooth }` so nested ancestor scrolls measure stable rects.
+          scroller.scrollTo({
+            top: scroller.scrollTop + delta,
+            behavior: "auto",
+          });
+        }
+      };
+
+      let node: HTMLElement | null = target.parentElement;
+      while (node) {
+        const { overflowY } = window.getComputedStyle(node);
+        if (
+          (overflowY === "auto" ||
+            overflowY === "scroll" ||
+            overflowY === "overlay") &&
+          node.scrollHeight > node.clientHeight + 1
+        ) {
+          scrollTargetInto(node);
+        }
+        if (node.classList.contains("sb-selector-panel")) break;
+        node = node.parentElement;
       }
     }, 50);
 
     return () => window.clearTimeout(timeout);
-  }, [openBookId]);
+    // Deliberately excludes `currentPsalms.value` — see comment above.
+  }, [openBookId, activeChapter, isOpen.value]);
 
   const renderChapters = computed(() => {
     const bd = bookData.value;
@@ -807,6 +894,7 @@ const SideBarChapters = (props: {
       isLast?: boolean;
     }) => {
       const { chapterNumber, isVisible, isLast } = props;
+      const isCurrentChapter = Boolean(hlb[chapterNumber]);
       const { cancel, ...chapterPressHandler } = useLongPress(() => {
         if (!isMobile.value) return;
         bibleSelectorState.forceNewTab.value = true;
@@ -817,12 +905,16 @@ const SideBarChapters = (props: {
       }, 1000);
       return (
         <button
+          id={`chapter-btn-${chapterNumber}`}
           style={
             isVisible === undefined
               ? undefined
               : { display: isVisible ? "flex" : "none" }
           }
-          class={`chapter-btn flex-center ${isLast ? "lastOne" : ""}`}
+          class={`chapter-btn flex-center ${isLast ? "lastOne" : ""} ${
+            isCurrentChapter ? "chapter-btn-current" : ""
+          }`}
+          aria-current={isCurrentChapter ? "true" : undefined}
           onClick={() => {
             cancel();
             selectChapter(bd.id, chapterNumber);
@@ -832,7 +924,7 @@ const SideBarChapters = (props: {
           {...chapterPressHandler}
         >
           <span
-            className={`sidebar-chapter-itm ${hlb[chapterNumber] ? "highlight" : "un-highlight"}`}
+            className={`sidebar-chapter-itm ${isCurrentChapter ? "highlight" : "un-highlight"}`}
           >
             {chapterNumber}
           </span>
@@ -941,6 +1033,275 @@ const LoadMoreButton = (props: { onLoadMore: () => void }) => {
   );
 };
 
+/** Renders a byte count as a short, human-readable size like "7.1 MB". */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  const kilobytes = bytes / 1024;
+  if (kilobytes < 1024) {
+    return `${Math.round(kilobytes)} KB`;
+  }
+  return `${(kilobytes / 1024).toFixed(1)} MB`;
+}
+
+/**
+ * The per-translation offline download controls shown in the translation list.
+ *
+ * Renders at most two buttons:
+ *
+ * - an **update** button, only while the API reports a newer version than the
+ *   copy on this device; and
+ * - a **download / remove** button, which downloads the translation, shows live
+ *   progress (tap to cancel) while it downloads, and offers to remove it once
+ *   it's stored.
+ *
+ * Renders nothing at all when the device can't store downloads (server-side
+ * rendering, or a browser with IndexedDB blocked).
+ */
+const OfflineTranslationControls = (props: {
+  translation: Translation;
+  offline: OfflineTranslationsManager;
+  bibleSelectorState: BibleSelectorState;
+  app: AppState;
+}) => {
+  const { translation, offline, bibleSelectorState, app } = props;
+  const { pendingOfflineDelete } = bibleSelectorState;
+  const { t } = useI18n();
+
+  if (!offline.supported) {
+    return null;
+  }
+
+  const progress = offline.downloads.value.get(translation.id) ?? null;
+  const summary = offline.downloaded.value.get(translation.id) ?? null;
+  const error = offline.errors.value.get(translation.id) ?? null;
+
+  const startDownload = async () => {
+    const succeeded = await offline.downloadTranslation(translation.id);
+    if (succeeded) {
+      app.toast(
+        t("translation-downloaded", {
+          name: translation.shortName,
+          defaultValue: "{{name}} is now available offline",
+        })
+      );
+      return;
+    }
+
+    const failure = offline.errors.value.get(translation.id);
+    if (failure) {
+      app.toast(
+        t("translation-download-failed", {
+          name: translation.shortName,
+          defaultValue: "Couldn't download {{name}}.",
+        })
+      );
+    }
+  };
+
+  if (progress) {
+    // The download phase usually has no percentage to show: the API doesn't send
+    // `Access-Control-Expose-Headers: Content-Length`, so a cross-origin page
+    // can't read the total size. Rather than fake a percentage, that case spins
+    // an indeterminate ring and reports the bytes received so far in the
+    // tooltip. The saving phase always knows its total (a chapter count), so it
+    // fills the ring properly.
+    const percent =
+      progress.ratio === null ? null : Math.round(progress.ratio * 100);
+    const label =
+      progress.phase === "saving"
+        ? t("saving-translation-to-device", {
+            percent: percent ?? 0,
+            defaultValue: "Saving to this device… {{percent}}% — tap to cancel",
+          })
+        : percent === null
+          ? t("cancel-translation-download-unknown-size", {
+              size: formatBytes(progress.receivedBytes),
+              defaultValue: "Downloading {{size}} so far — tap to cancel",
+            })
+          : t("cancel-translation-download", {
+              percent,
+              defaultValue: "Downloading {{percent}}% — tap to cancel",
+            });
+
+    return (
+      <button
+        type="button"
+        class="sb-offline-btn downloading flex-center"
+        title={label}
+        aria-label={label}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          offline.cancelDownload(translation.id);
+        }}
+      >
+        <span
+          class={`sb-offline-progress${percent === null ? " indeterminate" : ""}`}
+          style={{ "--sb-offline-progress": `${percent ?? 0}%` }}
+        >
+          {percent !== null && (
+            <span class="sb-offline-progress-label">{percent}</span>
+          )}
+        </span>
+      </button>
+    );
+  }
+
+  const downloadTitle = error
+    ? t("retry-translation-download", {
+        error,
+        defaultValue: "Download failed ({{error}}) — tap to retry",
+      })
+    : t("download-translation-offline", {
+        defaultValue: "Download for offline use",
+      });
+
+  const updateLabel = t("update-offline-translation", {
+    defaultValue: "A newer version is available — tap to update",
+  });
+  const downloadedLabel = summary
+    ? t("translation-available-offline", {
+        size: formatBytes(summary.sizeBytes),
+        defaultValue: "Available offline ({{size}}) — tap to remove",
+      })
+    : "";
+
+  // Every button carries its label as both `title` and `aria-label`: `title`
+  // alone gives a mouse tooltip but isn't reliably announced by screen readers,
+  // and these buttons have no visible text of their own. The icon glyphs are
+  // hidden from assistive tech so they can't be read out as stray words.
+  return (
+    <>
+      {summary?.updateAvailable && (
+        <button
+          type="button"
+          class="sb-offline-btn update flex-center"
+          title={updateLabel}
+          aria-label={updateLabel}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            void startDownload();
+          }}
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">
+            sync
+          </span>
+        </button>
+      )}
+      {summary ? (
+        <button
+          type="button"
+          class="sb-offline-btn downloaded flex-center"
+          title={downloadedLabel}
+          aria-label={downloadedLabel}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            pendingOfflineDelete.value = translation;
+          }}
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">
+            offline_pin
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
+          title={downloadTitle}
+          aria-label={downloadTitle}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            void startDownload();
+          }}
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">
+            download
+          </span>
+        </button>
+      )}
+    </>
+  );
+};
+
+/**
+ * Confirmation shown before removing a downloaded translation from the device.
+ *
+ * Rendered as a sibling of the translation modal (like the info and filter
+ * popovers) so it layers above the list without being clipped by it.
+ */
+const ConfirmOfflineDelete = (props: {
+  bibleSelectorState: BibleSelectorState;
+  offline: OfflineTranslationsManager;
+  app: AppState;
+  translation: Translation;
+}) => {
+  const { bibleSelectorState, offline, app, translation } = props;
+  const { pendingOfflineDelete } = bibleSelectorState;
+  const { t } = useI18n();
+
+  const close = () => {
+    pendingOfflineDelete.value = null;
+  };
+
+  const confirm = async () => {
+    close();
+    try {
+      await offline.deleteTranslation(translation.id);
+      app.toast(
+        t("translation-removed-from-device", {
+          name: translation.shortName,
+          defaultValue: "{{name}} was removed from this device",
+        })
+      );
+    } catch {
+      app.toast(
+        t("remove-offline-translation-failed", {
+          defaultValue: "Couldn't remove the download.",
+        })
+      );
+    }
+  };
+
+  return (
+    <div
+      className="modal translationDeleteModal"
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+      }}
+    >
+      <p className="sb-offline-delete-title">
+        {t("remove-offline-translation-title", {
+          defaultValue: "Remove download?",
+        })}
+      </p>
+      <p className="sb-offline-delete-message">
+        {t("remove-offline-translation-message", {
+          name: `${translation.name} (${translation.shortName})`,
+          defaultValue:
+            'Remove "{{name}}" from this device? You\'ll need a connection to read it again.',
+        })}
+      </p>
+      <div className="sb-offline-delete-actions">
+        <button
+          type="button"
+          className="sb-offline-delete-cancel"
+          onClick={close}
+        >
+          {t("cancel")}
+        </button>
+        <button
+          type="button"
+          className="sb-offline-delete-confirm"
+          onClick={() => void confirm()}
+        >
+          {t("remove", { defaultValue: "Remove" })}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const TranslationModal = (props: {
   app: AppState;
   bibleSelectorState: BibleSelectorState;
@@ -957,11 +1318,19 @@ const TranslationModal = (props: {
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
+    pendingOfflineDelete,
     filteredApiTranslations,
     setOpen,
   } = bibleSelectorState;
 
   const { t } = useI18n();
+
+  // Opening the list is the moment a stale download matters, so this is where we
+  // re-read the API's hashes. It's a no-op when nothing is downloaded or the
+  // device is offline.
+  useEffect(() => {
+    void bibleDataManager.offline.checkForUpdates();
+  }, []);
 
   // Helper function to check if should show expand button
   const shouldShowExpandButton = (
@@ -1046,6 +1415,7 @@ const TranslationModal = (props: {
           selectingTranslation.value = false;
           showTranslationSettings.value = false;
           showTranslationInfo.value = null;
+          pendingOfflineDelete.value = null;
         }}
       >
         <div
@@ -1054,6 +1424,7 @@ const TranslationModal = (props: {
             e.stopPropagation();
             showTranslationSettings.value = false;
             showTranslationInfo.value = null;
+            pendingOfflineDelete.value = null;
           }}
         >
           <div
@@ -1157,6 +1528,14 @@ const TranslationModal = (props: {
           translation={showTranslationInfo.value.translation}
           position={showTranslationInfo.value.position}
           isMobile={isMobile.value}
+        />
+      )}
+      {pendingOfflineDelete.value && (
+        <ConfirmOfflineDelete
+          bibleSelectorState={bibleSelectorState}
+          offline={bibleDataManager.offline}
+          app={app}
+          translation={pendingOfflineDelete.value}
         />
       )}
     </>
@@ -1347,15 +1726,23 @@ const LanguageComponent = (props: {
                       </span>
                     )}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      shareTranslatation({ translation: value });
-                    }}
-                    class="share-btn flex-center"
-                  >
-                    <ShareIcon height={18} width={22} />
-                  </button>
+                  <span class="sb-translation-actions inline-flex-start-center-gap-sm">
+                    <OfflineTranslationControls
+                      translation={value}
+                      offline={bibleDataManager.offline}
+                      bibleSelectorState={bibleSelectorState}
+                      app={app}
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        shareTranslatation({ translation: value });
+                      }}
+                      class="share-btn flex-center"
+                    >
+                      <ShareIcon height={18} width={22} />
+                    </button>
+                  </span>
                 </div>
               );
             })}
