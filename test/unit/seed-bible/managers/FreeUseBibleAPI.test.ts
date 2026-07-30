@@ -556,4 +556,38 @@ describe("FreeUseBibleAPI", () => {
     expect(retry).toEqual({ translations: [] });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("does not hand an abort to a caller that arrives before the cancelled request has rejected", async () => {
+    // Cancelling only *starts* the teardown: the underlying rejection, and the
+    // cache eviction that rides on it, land a microtask later. A request made
+    // inside that window must not be handed the doomed shared promise — it
+    // never asked to cancel anything. Reachable by flipping back to a chapter
+    // whose request was just superseded.
+    fetchMock.mockImplementationOnce(
+      (_url: string, options?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("The operation was aborted.", "AbortError")
+            );
+          });
+        })
+    );
+    fetchMock.mockResolvedValueOnce(createResponse({ translations: [] }));
+
+    const api = new FreeUseBibleAPI("https://example.com/");
+    const controller = new AbortController();
+
+    const first = api.getAvailableTranslations(undefined, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    // Deliberately not awaiting `first` before this call.
+    const second = api.getAvailableTranslations();
+
+    await expect(first).rejects.toMatchObject({ name: "AbortError" });
+    await expect(second).resolves.toEqual({ translations: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });

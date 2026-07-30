@@ -176,6 +176,70 @@ export const nivBooks: TranslationBooks = {
   ],
 };
 
+const EDGE_TRANSLATION: Translation = {
+  ...AAB_TRANSLATION,
+  id: "EDGE",
+  name: "Edge Case Bible",
+  englishName: "Edge Case Bible",
+  shortName: "EDGE",
+  listOfBooksApiLink: "/api/EDGE/books.json",
+};
+
+/**
+ * A catalog built for navigation edge cases rather than realism:
+ *
+ * - `order` is non-contiguous (1, 19, 100) and the array is deliberately *not*
+ *   in `order` sequence, so any logic that walks the array by index instead of
+ *   by `order` gets the wrong answer.
+ * - `PSA` starts at chapter 3, so a book's first chapter is not always 1.
+ * - `TOB` is apocryphal and sits at the end of the canon.
+ */
+export const edgeCaseBooks: TranslationBooks = {
+  translation: EDGE_TRANSLATION,
+  books: [
+    {
+      id: "TOB",
+      name: "Tobit",
+      commonName: "Tobit",
+      title: null,
+      order: 100,
+      numberOfChapters: 3,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/EDGE/TOB/1.json",
+      lastChapterNumber: 3,
+      lastChapterApiLink: "/api/EDGE/TOB/3.json",
+      totalNumberOfVerses: 30,
+      isApocryphal: true,
+    },
+    {
+      id: "GEN",
+      name: "Genesis",
+      commonName: "Genesis",
+      title: null,
+      order: 1,
+      numberOfChapters: 2,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/EDGE/GEN/1.json",
+      lastChapterNumber: 2,
+      lastChapterApiLink: "/api/EDGE/GEN/2.json",
+      totalNumberOfVerses: 20,
+    },
+    {
+      id: "PSA",
+      name: "Psalms",
+      commonName: "Psalms",
+      title: null,
+      order: 19,
+      numberOfChapters: 5,
+      firstChapterNumber: 3,
+      firstChapterApiLink: "/api/EDGE/PSA/3.json",
+      lastChapterNumber: 7,
+      lastChapterApiLink: "/api/EDGE/PSA/7.json",
+      totalNumberOfVerses: 50,
+    },
+  ],
+};
+
 export const altTranslations: AvailableTranslations = {
   translations: [
     {
@@ -200,6 +264,120 @@ export function createResponse<T>(
     status,
     statusText,
     json: () => Promise.resolve(payload),
+  };
+}
+
+export interface ControlledFetch {
+  /** Drop-in `fetch` implementation, including `AbortSignal` support. */
+  fetch: (url: string, init?: { signal?: AbortSignal }) => Promise<WebResponse>;
+  /** URLs currently held open, in the order they were requested. */
+  pending: () => string[];
+  /** URLs whose held request was cancelled, in the order they were cancelled. */
+  aborted: () => string[];
+  /** Releases the oldest held request for a URL with its mapped response. */
+  settle: (url: string) => void;
+  /** Releases every currently held request, oldest first. */
+  settleAll: () => void;
+  /** Fails the oldest held request for a URL. */
+  reject: (url: string, error?: Error) => void;
+}
+
+/**
+ * A `fetch` stand-in that can hold chosen requests open indefinitely.
+ *
+ * The plain `setWebResponses` helper resolves everything immediately, which
+ * makes "the reader navigated away before this request came back" impossible to
+ * express. Pass a predicate for the URLs that should hang, then release them by
+ * hand — in whatever order the test needs, including out of order.
+ *
+ * Honours `init.signal` the way a real `fetch` does: an aborted request rejects
+ * with an `AbortError` and stops being held. Without that, cancellation would
+ * look like a request that simply never returns, and `aborted()` — which is how
+ * tests assert the low-bandwidth win — could not exist.
+ *
+ * Requests are queued per URL rather than keyed by it, because cancelling a
+ * request drops it from the response cache, so the same URL genuinely can be
+ * in flight more than once across a test.
+ */
+export function createControlledFetch(
+  responses: WebResponseMap,
+  shouldHold: (url: string) => boolean = () => false
+): ControlledFetch {
+  interface HeldRequest {
+    url: string;
+    resolve: (response: WebResponse) => void;
+    reject: (error: Error) => void;
+  }
+  const held: HeldRequest[] = [];
+  const abortedUrls: string[] = [];
+
+  const responseFor = (url: string): WebResponse => {
+    const response = responses[url];
+    if (!response) {
+      throw new Error(`No mocked response for ${url}`);
+    }
+    return response;
+  };
+
+  const drop = (entry: HeldRequest) => {
+    const index = held.indexOf(entry);
+    if (index >= 0) {
+      held.splice(index, 1);
+    }
+  };
+
+  const release = (url: string): HeldRequest => {
+    const entry = held.find((candidate) => candidate.url === url);
+    if (!entry) {
+      throw new Error(
+        `No held request for ${url}. Held: ${
+          held.map((h) => h.url).join(", ") || "(none)"
+        }`
+      );
+    }
+    drop(entry);
+    return entry;
+  };
+
+  return {
+    fetch: (url: string, init?: { signal?: AbortSignal }) => {
+      if (!shouldHold(url)) {
+        return Promise.resolve(responseFor(url));
+      }
+      return new Promise<WebResponse>((resolve, reject) => {
+        const entry: HeldRequest = { url, resolve, reject };
+        held.push(entry);
+
+        const signal = init?.signal;
+        if (!signal) {
+          return;
+        }
+        const onAbort = () => {
+          drop(entry);
+          abortedUrls.push(url);
+          reject(new DOMException("The operation was aborted.", "AbortError"));
+        };
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener("abort", onAbort, { once: true });
+      });
+    },
+    pending: () => held.map((entry) => entry.url),
+    aborted: () => [...abortedUrls],
+    settle: (url: string) => {
+      release(url).resolve(responseFor(url));
+    },
+    settleAll: () => {
+      for (const entry of [...held]) {
+        drop(entry);
+        entry.resolve(responseFor(entry.url));
+      }
+    },
+    reject: (url: string, error = new Error(`Request failed: ${url}`)) => {
+      release(url).reject(error);
+    },
   };
 }
 

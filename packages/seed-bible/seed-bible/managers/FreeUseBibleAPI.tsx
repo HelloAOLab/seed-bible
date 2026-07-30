@@ -1409,6 +1409,17 @@ export class FreeUseBibleAPI {
         settled = true;
         subscription.subscriberCount--;
         if (subscription.subscriberCount <= 0) {
+          // Reaching zero means every caller that *could* walk away has, so
+          // nobody is waiting on this request any more and it is safe to
+          // cancel. Drop it from both maps first, synchronously: the rejection
+          // — and the cache eviction that rides on it — only land a microtask
+          // later, and a caller arriving in between would otherwise be handed
+          // this doomed promise and inherit an abort it never asked for.
+          // Reachable by navigating back to a chapter whose request was just
+          // superseded. Both deletes are idempotent with the ones in
+          // `_getJson`.
+          this._requestSubscriptions.delete(url);
+          this._responseCache.delete(url);
           subscription.controller.abort();
         }
         reject(this._abortError());

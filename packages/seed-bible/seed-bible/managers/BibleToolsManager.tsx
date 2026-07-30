@@ -599,8 +599,8 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronLeftIcon />
         ),
-      // Navigation is never blocked by an in-flight text request (#1414) —
-      // repeated taps queue behind each other instead of racing.
+      // Deliberately not gated on `loading`: navigation no longer waits on the
+      // text request, so pressing again mid-load is exactly what should work.
       isDisabled: (context) => !context.readingState.hasPrevious.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
@@ -739,8 +739,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronRightIcon />
         ),
-      // Navigation is never blocked by an in-flight text request (#1414) —
-      // repeated taps queue behind each other instead of racing.
+      // See `previous-chapter`: in-flight text must not block moving on.
       isDisabled: (context) => !context.readingState.hasNext.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {

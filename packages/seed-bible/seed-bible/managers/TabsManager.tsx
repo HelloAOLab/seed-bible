@@ -102,10 +102,8 @@ function getInitialTranslationId(url: URL, language: string): string {
 }
 
 function getInitialFirstTabChapter(url: URL): number {
-  const value = Number(url.searchParams.get("chapter"));
-  return Number.isFinite(value) && value > 0
-    ? Math.floor(value)
-    : DEFAULT_CHAPTER_NUMBER;
+  const value = Math.floor(Number(url.searchParams.get("chapter")));
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_CHAPTER_NUMBER;
 }
 
 function getInitialHighlightedVerses(url: URL): number[] {
