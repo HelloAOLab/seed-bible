@@ -50,6 +50,8 @@ describe("BookmarksManager", () => {
       userId: signal("user-1"),
       connectionId: "conn-1",
       profile: signal(null),
+      cachedProfile: signal(null),
+      localConfig: signal({}),
       profilePromise: null,
       isProfileLoading: signal(false),
       isSavingProfile: signal(false),

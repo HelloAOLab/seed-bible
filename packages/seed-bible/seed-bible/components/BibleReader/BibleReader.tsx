@@ -1400,7 +1400,7 @@ export function BibleReader(props: BibleReaderProps) {
   // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
   const readerFontSizeClass = `sb-font-size-${(
-    state?.config?.config.value.fontSize ?? "M"
+    state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
 
   // Hard-gated off under SSR, which is what keeps both the dimming and the
