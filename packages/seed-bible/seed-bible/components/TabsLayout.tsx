@@ -72,9 +72,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }
 
     const cleanup = effect(() => {
-      if (readingState.chapterData.value) {
-        element.scrollTop = readingState.scrollPosition.peek();
-      }
+      // Tracked on purpose: the reader's *position*, not just the loaded
+      // chapter, so the scroller moves the moment navigation happens.
+      // `applyPosition` has already reset `scrollPosition` to 0 for a chapter
+      // change, so this is what puts the reader back at the chapter heading
+      // while the placeholder shows. Waiting for `chapterData` left a reader
+      // who was halfway down a chapter stranded mid-page, looking at
+      // placeholder bars with the new book and chapter title off-screen above.
+      void readingState.translationId.value;
+      void readingState.bookId.value;
+      void readingState.chapterNumber.value;
+      element.scrollTop = readingState.scrollPosition.peek();
 
       const verseToScroll = readingState.scrollToVerse.value;
       if (readingState.chapterData.value && verseToScroll !== null) {
@@ -196,10 +204,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }
 
     let cancelled = false;
+    // Without this the prefetch holds a permanent claim on exactly the
+    // adjacent-chapter URLs a fast skim is trying to cancel — a request is only
+    // dropped once every caller that can walk away has — so cancellation would
+    // be inert on mobile, which is where it matters most.
+    const controller = new AbortController();
+    const prefetchOptions = { signal: controller.signal };
 
-    if (chapterData.previousChapterApiLink) {
+    if (readingState.hasPrevious.value) {
       state.bibleData
-        .getPreviousChapter(chapterData)
+        .getPreviousChapter(chapterData, prefetchOptions)
         .then((result) => {
           if (!cancelled) {
             setPrevChapterPreview(result ?? null);
@@ -214,9 +228,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       setPrevChapterPreview(null);
     }
 
-    if (chapterData.nextChapterApiLink) {
+    if (readingState.hasNext.value) {
       state.bibleData
-        .getNextChapter(chapterData)
+        .getNextChapter(chapterData, prefetchOptions)
         .then((result) => {
           if (!cancelled) {
             setNextChapterPreview(result ?? null);
@@ -233,6 +247,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [
     isMobile,
@@ -304,8 +319,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       const isRtl =
         readingState.chapterData.value?.translation.textDirection === "rtl";
-      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
-      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      const hasNext = readingState.hasNext.value;
+      const hasPrev = readingState.hasPrevious.value;
       let offset = dx;
       const attemptsNext = isRtl ? dx > 0 : dx < 0;
       const attemptsPrev = isRtl ? dx < 0 : dx > 0;
@@ -340,8 +355,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       const threshold = 80;
       const isRtl =
         readingState.chapterData.value?.translation.textDirection === "rtl";
-      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
-      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      const hasNext = readingState.hasNext.value;
+      const hasPrev = readingState.hasPrevious.value;
       const swipedLeft = dx < -threshold;
       const swipedRight = dx > threshold;
       const shouldLoadNext = isRtl ? swipedRight : swipedLeft;
@@ -433,18 +448,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
-      const chapterData = readingState.chapterData.value;
-      if (!chapterData || readingState.loading.value) {
-        return;
-      }
-
       // Visual direction: the next chapter sits to the right in LTR and to the
-      // left in RTL, matching the toolbar chevrons and swipe gesture.
-      const isRtl = chapterData.translation.textDirection === "rtl";
+      // left in RTL, matching the toolbar chevrons and swipe gesture. Read from
+      // the translation rather than the loaded chapter so the arrow keys keep
+      // working while the text for a new position is still on its way — and
+      // deliberately not gated on `loading`, so repeated presses advance.
+      const isRtl = readingState.translation.value?.textDirection === "rtl";
       const loadNext = event.key === (isRtl ? "ArrowLeft" : "ArrowRight");
       const canNavigate = loadNext
-        ? !!chapterData.nextChapterApiLink
-        : !!chapterData.previousChapterApiLink;
+        ? readingState.hasNext.value
+        : readingState.hasPrevious.value;
       if (!canNavigate) {
         return;
       }

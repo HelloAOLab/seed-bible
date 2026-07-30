@@ -11,6 +11,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
 } from "../managers/ReadingUrlPath";
+import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import { createConfig } from "../managers/ConfigManager";
@@ -393,6 +394,11 @@ export interface CreateSeedBibleStateOptions {
   config?: AppConfig;
   /** Full initial URL — supplied during SSR where `window` is unavailable. */
   initialHref?: string;
+  /**
+   * Where translations downloaded for offline reading are stored. Defaults to
+   * IndexedDB; tests pass an in-memory store, and null disables the feature.
+   */
+  offlineStore?: OfflineTranslationStore | null;
 }
 
 export function createSeedBibleState(
@@ -413,7 +419,9 @@ export function createSeedBibleState(
     navigation,
     options.config?.acceptedLanguages ?? []
   );
-  const data = createBibleDataManager(api);
+  const data = createBibleDataManager(api, {
+    offlineStore: options.offlineStore,
+  });
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
@@ -477,7 +485,7 @@ export function createSeedBibleState(
     (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
       !!navigation.currentUrl.value.searchParams.get("playlist"));
 
-  const onboarding = createOnboardingManager(login, openedViaContentLink);
+  const onboarding = createOnboardingManager(login);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -601,21 +609,33 @@ export function createSeedBibleState(
     i18n,
     readingExtensions
   );
-  // Close any fullscreen pane when the book/chapter/verse params change, so
+  // Close any fullscreen pane when the book/chapter params change, so
   // navigating reveals the reader (every navigation path writes these params).
   // The first location only sets a baseline, so load-time init doesn't close a
   // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  //
+  // `?verse` is deliberately NOT part of the location: TabsManager mirrors the
+  // verse *selection* into that param, so counting it here made selecting (or
+  // clearing) a verse look like a navigation — which closed the very pane the
+  // user had just opened from the verse toolbar.
+  //
+  // The flip side is that this effect can't see a move *within* a chapter, so any
+  // path that jumps to a verse and must reveal the reader has to call
+  // `closeFullscreenPanes` itself rather than rely on this: verse reference links
+  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
+  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleSelectTab`) closes them too, which covers most of the remaining
+  // paths incidentally.
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
     const book = url.searchParams.get("book");
     const chapter = url.searchParams.get("chapter");
-    const verse = url.searchParams.get("verse");
     if (!book || !chapter) {
       return;
     }
 
-    const location = `${book}|${chapter}|${verse ?? ""}`;
+    const location = `${book}|${chapter}`;
     const previous = lastReadingLocation;
     lastReadingLocation = location;
 
@@ -625,15 +645,96 @@ export function createSeedBibleState(
     panes.closeFullscreenPanes();
   });
 
+  // Whether Today will auto-open over the reader on this cold load — mirrors
+  // the predicate in `today-screen`'s bootstrap (an explicit `?today` param
+  // wins; otherwise it opens unless the boot URL already points somewhere
+  // specific). Read from `initialUrl`, not the live `currentUrl`, for the same
+  // reason today-screen does: TabsManager echoes the reader's book/chapter
+  // into the live URL before extensions finish loading.
+  const initialUrlParams = navigation.initialUrl.searchParams;
+  const todayWillAutoOpen =
+    initialUrlParams.get("today") !== null
+      ? initialUrlParams.get("today") === "open"
+      : !(
+          initialUrlParams.has("book") ||
+          initialUrlParams.has("chapter") ||
+          initialUrlParams.has("verse") ||
+          initialUrlParams.has("sessionId")
+        );
+
+  // Latches true the first time Today's pane is observed open, so the
+  // "about to be covered by Today" window (the gap between the chapter
+  // loading and Today's pane actually opening) doesn't read as reader-visible.
+  const todayHasOpened = signal(false);
+  effect(() => {
+    if (panes.panes.value.some((pane) => pane.id === "today-screen-pane")) {
+      todayHasOpened.value = true;
+    }
+  });
+
+  // The reader is visible when a chapter is loaded, no fullscreen pane covers
+  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
+  // any open pane covers the reader), and Today isn't about to auto-open over
+  // it for this load.
+  const readerVisible = computed<boolean>(() => {
+    const chapterLoaded =
+      selectedTab.value?.readingState.chapterData.value != null;
+    if (!chapterLoaded) {
+      return false;
+    }
+    const coveredByPane = panes.panes.value.some(
+      (pane) => pane.placement === "fullscreen" || isMobile.value
+    );
+    if (coveredByPane) {
+      return false;
+    }
+    if (todayWillAutoOpen && !todayHasOpened.value) {
+      return false;
+    }
+    return true;
+  });
+
   const tutorial = createTutorialManager(
     login,
-    onboarding,
+    readerVisible,
     selector,
     isMobile,
     panes,
     sidebar,
     openedViaContentLink
   );
+
+  // Once the tutorial has been resolved (seen, skipped, declined, or opted
+  // out) and the reader is visible, offer the install prompt — to any
+  // not-yet-installed user, logged in or not. Deferring past the tutorial
+  // means the profile has had time to load, so there's no "stale prompt"
+  // concern the way there was on startup. One-shot via `installOfferChecked`.
+  let installOfferChecked = false;
+  effect(() => {
+    if (installOfferChecked) {
+      return;
+    }
+    if (openedViaContentLink) {
+      return;
+    }
+    if (login.userId.value && login.profile.value === null) {
+      return;
+    }
+    if (!readerVisible.value) {
+      return;
+    }
+    const tutorialResolved =
+      !tutorial.promptVisible.value &&
+      !tutorial.running.value &&
+      (tutorial.completed.value || tutorial.optedOut.value);
+    if (!tutorialResolved) {
+      return;
+    }
+    installOfferChecked = true;
+    if (onboarding.installAvailable.value) {
+      onboarding.openInstall();
+    }
+  });
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
@@ -860,6 +961,21 @@ export function createSeedBibleState(
     });
   });
 
+  /**
+   * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
+   * along with `description` and `canonicalUrl`.
+   *
+   * These three stay derived from the *loaded chapter*, unlike the reader's own
+   * titles, which are derived from the book catalog so they can move the instant
+   * navigation happens. Two reasons: a server render has no navigation to lag
+   * behind, and it suspends until the first chapter settles, so content is there
+   * whenever it could be. And when it genuinely isn't — a failed load — falling
+   * back to a generic title and a bare canonical URL is better than advertising
+   * a chapter the server could not actually serve.
+   *
+   * `title` is the exception and is position-derived: it also drives
+   * `document.title` on the client, where the lag would be visible.
+   */
   const socialTitle = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
@@ -1219,7 +1335,8 @@ export function createSeedBibleState(
         ? range(ref.verse, ref.endVerse + 1)
         : ref.verse;
       tab.readingState.decorateVerses(ref.book, ref.chapter, verses, {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     }
@@ -1265,6 +1382,31 @@ export function createSeedBibleState(
       toastTimer = null;
     }, 3500);
   };
+
+  // Tell the user when we signed them out for them. `login.sessionEnded` only fires
+  // when a forced sign-out actually happened, so this can't toast for a request that
+  // merely failed, nor for a sign-out the user asked for. Without a message they
+  // would just watch their highlights and bookmarks vanish with no explanation.
+  effect(() => {
+    const ended = login.sessionEnded.value;
+    if (!ended || typeof window === "undefined") {
+      return;
+    }
+
+    // Destructured rather than called as `i18n.t(...)`: the translation lint rules
+    // only recognise calls to a bare `t`, and `translation-unused-keys` is
+    // auto-fixable, so `i18n.t("...")` would get these keys deleted from en.json.
+    const { t } = i18n;
+    toast(
+      ended.reason === "account_suspended"
+        ? t("account-suspended-message", {
+            defaultValue: "Your account has been suspended.",
+          })
+        : t("signed-out-message", {
+            defaultValue: "You've been signed out. Please sign in again.",
+          })
+    );
+  });
 
   // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {

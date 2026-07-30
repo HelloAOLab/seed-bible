@@ -68,7 +68,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  overflow-y: auto;
 }
 
 .sb-session-participants-list-item {
@@ -105,6 +104,7 @@
   align-items: center;
   gap: 0.75rem;
   width: 100%;
+  flex-shrink: 0;
   margin-top: 0.5rem;
   padding: 0.75rem 0.5rem;
   border: none;
@@ -128,6 +128,40 @@
 }
 
 .sb-session-participants-settings-button:active {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+/* Share-session shortcut, pinned below the settings button (or alone, for
+ * non-hosts). Styled as the same accent list row: icon, label, chevron. */
+.sb-session-participants-share-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-session-participants-share-label {
+  flex: 1 1 auto;
+}
+
+.sb-session-participants-share-chevron {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.sb-session-participants-share-button:active {
   background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
 }
 

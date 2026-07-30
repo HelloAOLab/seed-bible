@@ -249,13 +249,14 @@
   inset-inline-start: auto;
   inset-inline-end: 1rem;
   transform: none;
-  bottom: 0.5rem;
-  width: min(20rem, calc(100vw - 2rem));
-  min-height: 25rem;
+  bottom: 1rem;
+  width: 25rem;
+  height: calc(100dvh - 2rem);
+  max-height: 40rem;
   padding: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   animation: sb-floating-chat-panel-rise 0.18s ease-out;
 }
 
@@ -274,7 +275,7 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  min-height: 1.625rem;
+  min-height: 3.35rem;
   padding: 0.75rem;
   border-bottom: 1px solid var(--sb-divider-color);
 }
@@ -312,6 +313,35 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sb-floating-chat-header-icon {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
+}
+
+.sb-floating-chat-header-close {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-floating-chat-header-close:hover,
+.sb-floating-chat-header-close:focus-visible {
+  color: var(--sb-font-color);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
 
 @media (max-width: 480px) {
@@ -397,7 +427,7 @@
 .sb-floating-chat-list {
   display: flex;
   flex-direction: column;
-  max-height: 22.5rem;
+  max-height: 36.25rem;
   overflow: auto;
   padding: 0.25rem;
   flex: 1 1 auto;
@@ -424,7 +454,7 @@
   border-radius: 62.4375rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   background: var(--sb-primary-color);
-  color: #fff;
+  color: var(--sb-tertiary-color);
   box-shadow: 0 10px 24px
     color-mix(in srgb, var(--sb-primary-color), transparent 78%);
 }
@@ -692,6 +722,7 @@
     left: 50%;
     right: auto;
     bottom: 6.25rem;
+    height: calc(100dvh - 8.25rem);
     transform: translateX(-50%);
     animation: sb-floating-panel-rise 0.18s ease-out;
   }

@@ -378,7 +378,7 @@
   overflow-y: auto;
 }
 
-.testament-container {
+.books-container .testament-container {
   flex: 0 1 auto;
   min-width: 0;
   min-height: 0;
@@ -781,10 +781,33 @@
   color: var(--sb-primary-color);
   border-radius: 0.5rem;
   border-bottom-color: transparent;
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 88%
+  );
 }
 
 .sidebar-selected-itm .material-symbols-outlined {
   color: var(--sb-primary-color);
+}
+
+.chapter-btn-current,
+.chapter-btn.chapter-btn-current {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-weight: 600;
+}
+
+.chapter-btn-current:hover,
+.chapter-btn.chapter-btn-current:hover {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
+}
+
+.sidebar-chapter-itm.highlight {
+  color: inherit;
+  font-weight: 600;
 }
 
 .open-sideBar {
@@ -843,6 +866,183 @@
   border-radius: 0.3125rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+/* ─── Offline translation downloads ──────────────────────────────────────── */
+
+.sb-translation-actions {
+  flex: 0 0 auto;
+}
+
+.sb-offline-btn {
+  border: none;
+  height: 1.5rem;
+  width: 1.5rem;
+  background: transparent;
+  border-radius: 0.3125rem;
+  padding: 0.1875rem;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-offline-btn .material-symbols-outlined {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.sb-offline-btn:active {
+  background-color: rgba(1, 87, 155, 0.3);
+}
+
+.sb-offline-btn.downloaded {
+  color: var(--sb-primary-color);
+}
+
+.sb-offline-btn.update {
+  color: #f59e0b;
+}
+
+.sb-offline-btn.has-error {
+  color: #ef4444;
+}
+
+/*
+ * The ring is its own visual boundary, so it doesn't want the icon padding the
+ * other states use. Keeping that padding would also squash it: `box-sizing:
+ * border-box` is global, so padding shrinks the content box below the ring's
+ * width, and a flex item shrinks horizontally but not vertically — which turns
+ * a `border-radius: 50%` circle into an oval.
+ */
+.sb-offline-btn.downloading {
+  padding: 0;
+}
+
+/*
+ * A progress ring drawn entirely in CSS: the conic gradient fills clockwise up
+ * to `--sb-offline-progress`, and the inner mask leaves only the outer edge
+ * visible so it reads as a ring around the percentage.
+ */
+.sb-offline-progress {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Equal width/height plus no flex-shrink is what guarantees a true circle. */
+  flex: 0 0 auto;
+  height: 1.375rem;
+  width: 1.375rem;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--sb-primary-color) var(--sb-offline-progress, 0%),
+    color-mix(in srgb, var(--sb-font-color), transparent 85%) 0
+  );
+}
+
+.sb-offline-progress::before {
+  content: "";
+  position: absolute;
+  /* Ring thickness. Kept thin so three digits ("100") still fit inside. */
+  inset: 0.125rem;
+  border-radius: 50%;
+  background: var(--sb-book-selector-background);
+}
+
+/*
+ * Shown while the total download size is unknown (the API doesn't expose
+ * Content-Length cross-origin). A quarter-filled ring spins to say "working"
+ * without implying a specific amount of progress.
+ */
+.sb-offline-progress.indeterminate {
+  background: conic-gradient(
+    var(--sb-primary-color) 25%,
+    color-mix(in srgb, var(--sb-font-color), transparent 85%) 0
+  );
+  animation: sb-offline-spin 0.9s linear infinite;
+}
+
+@keyframes sb-offline-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-offline-progress.indeterminate {
+    animation: none;
+  }
+}
+
+.sb-offline-progress-label {
+  position: relative;
+  font-size: 0.5rem;
+  font-weight: 600;
+  font-family: "Satoshi", system-ui, sans-serif;
+  line-height: 1;
+  color: var(--sb-font-color);
+}
+
+.translationDeleteModal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(21.875rem, calc(100vw - 2.5rem));
+  height: fit-content;
+  z-index: 1001;
+  padding: 0.9375rem;
+  border-radius: 0.5rem;
+  color: var(--sb-font-color);
+  font-family: "Satoshi", system-ui, sans-serif;
+}
+
+.sb-offline-delete-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sb-offline-delete-message {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sb-offline-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sb-offline-delete-cancel,
+.sb-offline-delete-confirm {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sb-offline-delete-cancel {
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-offline-delete-cancel:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  color: var(--sb-font-color);
+}
+
+.sb-offline-delete-confirm {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.sb-offline-delete-confirm:hover {
+  background: #dc2626;
 }
 
 .filters-icon {
@@ -1133,6 +1333,25 @@
       );
   }
 
+  /*
+   * The mobile `.modal` rule above stretches the translation list to fill the
+   * screen; the delete confirmation must stay a centered dialog, so it restores
+   * its own box.
+   */
+  .translationDeleteModal {
+    top: 50%;
+    left: 50%;
+    width: calc(100% - 2.5rem);
+    height: fit-content;
+    border-radius: 0.5rem;
+    box-shadow: 0 5px 10px
+      color-mix(
+        in srgb,
+        var(--sb-detached-pane-toolbar-background) 15%,
+        transparent
+      );
+  }
+
   .language-list {
     height: calc(100% - 1.25rem);
   }
@@ -1217,11 +1436,9 @@
 }
 
 /* BibleSelector's testament columns stack full-width on mobile. Migrated from
-   the former global legacy.css. The bare selector also matches scripture-map's
-   .testament-container, but harmlessly: scripture-map sets its own width via a
-   higher-specificity rule and colors its text on child elements. */
+   the former global legacy.css. */
 @media only screen and (max-width: 480px) {
-  .testament-container {
+  .books-container .testament-container {
     width: 100%;
     color: var(--sb-font-color);
   }

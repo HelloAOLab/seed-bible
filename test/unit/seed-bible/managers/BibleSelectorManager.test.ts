@@ -261,6 +261,9 @@ describe("createBibleSelectorState", () => {
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
 
     expect(selector.expandedBookId.value).toBe("EXO");
+    expect(selector.bookData.value?.id).toBe("EXO");
+    expect(selector.lastBookClicked.value).toBeGreaterThanOrEqual(0);
+    expect(selector.highLightedButtonsID.value[2]).toBe(true);
     expect(selector.currentBookId.value).toBe("EXO");
     expect(selector.currentChapterNumber.value).toBe(2);
   });

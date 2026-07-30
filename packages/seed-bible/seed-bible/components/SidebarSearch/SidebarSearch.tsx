@@ -184,6 +184,16 @@ export function SidebarSearch(props: SidebarSearchProps) {
     resetSearch();
 
     const targetTab = getOrCreateSearchTargetTab(state);
+
+    // Opening a result has to reveal the reader. Selecting an existing tab
+    // already does this on its way through `app.selectTab`, but creating one
+    // above does not, and the fullscreen-pane effect in SeedBibleStateManager
+    // can't cover the difference — it only fires when the book or chapter
+    // changes, and a result may land in the chapter already on screen. Stating it
+    // here makes the guarantee hold for both branches instead of riding on
+    // another call's side effect.
+    state.panes.closeFullscreenPanes();
+
     await targetTab.readingState.selectTranslationAndChapter(
       result.translationId,
       result.bookId,
@@ -198,7 +208,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
         result.chapterNumber,
         result.verseNumber,
         {
-          className: "sb-verse-decoration-search-result",
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
           removeAfterMs: 3000,
         }
       );

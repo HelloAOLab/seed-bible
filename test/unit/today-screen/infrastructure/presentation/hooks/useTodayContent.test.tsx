@@ -29,11 +29,19 @@ describe("useTodayContent", () => {
   });
 
   function setup(options: {
-    lastReading?: { bookId: string; chapter: number } | undefined;
+    status?: "loading" | "empty" | "ready";
     bookmarks?: unknown[];
   }) {
+    const status = options.status ?? "ready";
+    const readingHistory =
+      status === "ready"
+        ? signal({
+            status: "ready" as const,
+            lastReading: { bookId: "GEN", chapter: 1 },
+          })
+        : signal({ status });
     (useTodayContext as Mock).mockReturnValue({
-      userLastReading: signal(options.lastReading),
+      readingHistory,
       bookmarks: signal(options.bookmarks ?? []),
     });
     const result = { current: null as unknown as Result };
@@ -46,13 +54,18 @@ describe("useTodayContent", () => {
   }
 
   describe("showResumeReading", () => {
-    it("is true when there is a last reading", () => {
-      const result = setup({ lastReading: { bookId: "GEN", chapter: 1 } });
+    it("is true when history is ready", () => {
+      const result = setup({ status: "ready" });
       expect(result.current.showResumeReading).toBe(true);
     });
 
-    it("is false when there is no last reading", () => {
-      const result = setup({ lastReading: undefined });
+    it("is true (placeholder) while history is loading", () => {
+      const result = setup({ status: "loading" });
+      expect(result.current.showResumeReading).toBe(true);
+    });
+
+    it("is false when history is empty", () => {
+      const result = setup({ status: "empty" });
       expect(result.current.showResumeReading).toBe(false);
     });
   });

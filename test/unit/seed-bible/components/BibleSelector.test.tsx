@@ -12,14 +12,20 @@ import {
 import {
   createDefaultManagerResponseMap,
   createResponse,
+  createStreamingResponse,
   makeUrl,
   makeExampleUrl,
   EXAMPLE_API_ENDPOINT,
   makeChapter,
+  makeCompleteTranslation,
   createDefaultSelectorManagerResponseMap,
   aabBooks,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
+import {
+  createInMemoryTranslationStore,
+  type OfflineTranslationStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -142,6 +148,50 @@ describe("BibleSelector", () => {
     expect(container.querySelector(".sb-selector-overlay.open")).not.toBeNull();
   });
 
+  it("auto-expands the current book and highlights the current chapter on open", async () => {
+    const { selectorState, bibleDataManager, state, slot } =
+      await createSelectorFixture({ open: false });
+
+    await slot.tab!.readingState.selectChapter("EXO", 2);
+    await selectorState.setOpen(true, slot);
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => selectorState.bookData.value?.id === "EXO");
+    await waitFor(() =>
+      Boolean(container.querySelector("#booktab-EXO.sidebar-selected-itm"))
+    );
+    await waitFor(() =>
+      Boolean(container.querySelector("#chapter-btn-2.chapter-btn-current"))
+    );
+
+    expect(selectorState.expandedBookId.value).toBe("EXO");
+    expect(
+      container
+        .querySelector("#booktab-EXO")
+        ?.classList.contains("sidebar-selected-itm")
+    ).toBe(true);
+    expect(
+      container
+        .querySelector("#chapter-btn-2")
+        ?.classList.contains("chapter-btn-current")
+    ).toBe(true);
+    expect(
+      container.querySelector("#chapter-btn-2 .sidebar-chapter-itm.highlight")
+    ).not.toBeNull();
+  });
+
   it("sets dir to match selected translation text direction", async () => {
     const { selectorState, bibleDataManager, state } =
       await createSelectorFixture();
@@ -225,17 +275,23 @@ describe("BibleSelector", () => {
       );
     });
 
+    // Current reading position (GEN) is auto-expanded on open — only click
+    // the book row when chapters are not already visible.
     await waitFor(() => Boolean(container.querySelector("#booktab-GEN")));
 
-    const genesisButton = Array.from(
-      container.querySelectorAll("#booktab-GEN")
-    )[0] as HTMLDivElement | undefined;
+    if (selectorState.bookData.value?.id !== "GEN") {
+      const genesisButton = Array.from(
+        container.querySelectorAll("#booktab-GEN")
+      )[0] as HTMLDivElement | undefined;
 
-    expect(genesisButton).toBeDefined();
+      expect(genesisButton).toBeDefined();
 
-    act(() => {
-      genesisButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+      act(() => {
+        genesisButton?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+    }
 
     await waitFor(() =>
       Array.from(container.querySelectorAll(".chapter-btn")).some(
@@ -1678,5 +1734,190 @@ describe("BibleSelector sharing translations", () => {
     expect(translationParam).toContain("example.test");
     expect(translationParam).toContain("CST");
     expect(translationParam).toContain("books.json");
+  });
+});
+
+describe("BibleSelector offline downloads", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    localStorage.clear();
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  /**
+   * Opens the translation list with the AAB group expanded, backed by an
+   * in-memory download store (jsdom has no IndexedDB, so without one the
+   * download controls correctly render nothing).
+   */
+  async function openTranslationList(
+    options: { offlineStore?: OfflineTranslationStore | null } = {}
+  ) {
+    const store =
+      options.offlineStore === undefined
+        ? createInMemoryTranslationStore()
+        : options.offlineStore;
+
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultSelectorManagerResponseMap(),
+        [makeUrl("/api/AAB/complete.json")]: createStreamingResponse(
+          makeCompleteTranslation(aabBooks, 2, { sha256: "hash-one" })
+        ),
+      },
+      offlineStore: store,
+    });
+
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    await state.selector.setOpen(true, slot);
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={state.selector}
+          bibleDataManager={state.bibleData}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      state.selector.showAllLanguages.value = "all";
+      state.selector.selectingTranslation.value = true;
+      state.selector.languageQuery.value = "aab";
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translation-option"))
+    );
+
+    return { state, store };
+  }
+
+  function offlineButton(modifier?: string): HTMLButtonElement | null {
+    return container.querySelector(
+      modifier ? `.sb-offline-btn.${modifier}` : ".sb-offline-btn"
+    );
+  }
+
+  it("renders nothing when the device can't store downloads", async () => {
+    await openTranslationList({ offlineStore: null });
+
+    expect(container.querySelector(".translation-option")).not.toBeNull();
+    expect(offlineButton()).toBeNull();
+  });
+
+  it("downloads the translation when the download button is clicked", async () => {
+    const { state, store } = await openTranslationList();
+
+    const button = offlineButton();
+    expect(button?.title).toBe("Download for offline use");
+
+    act(() => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => state.bibleData.offline.isDownloaded("AAB"));
+
+    expect(await store!.getChapter("AAB", "GEN", 1)).not.toBeNull();
+    // The button now offers to remove the download instead.
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+    expect(offlineButton("downloaded")?.title).toContain("Available offline");
+  });
+
+  it("asks for confirmation before removing a download, and removes it on confirm", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+
+    act(() => {
+      offlineButton("downloaded")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translationDeleteModal"))
+    );
+    // Still downloaded — the confirmation alone must not delete anything.
+    expect(state.bibleData.offline.isDownloaded("AAB")).toBe(true);
+
+    act(() => {
+      container
+        .querySelector(".sb-offline-delete-confirm")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => !state.bibleData.offline.isDownloaded("AAB"));
+    expect(container.querySelector(".translationDeleteModal")).toBeNull();
+  });
+
+  it("keeps the download when the confirmation is cancelled", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+
+    act(() => {
+      offlineButton("downloaded")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() =>
+      Boolean(container.querySelector(".translationDeleteModal"))
+    );
+
+    act(() => {
+      container
+        .querySelector(".sb-offline-delete-cancel")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => !container.querySelector(".translationDeleteModal"));
+    expect(state.bibleData.offline.isDownloaded("AAB")).toBe(true);
+  });
+
+  it("offers an update button once the API reports a newer version", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+    expect(offlineButton("update")).toBeNull();
+
+    // The API now publishes a different hash for the same translation.
+    act(() => {
+      state.bibleData.availableTranslations.value =
+        state.bibleData.availableTranslations.value.map((translation) =>
+          translation.id === "AAB"
+            ? { ...translation, sha256: "hash-two" }
+            : translation
+        );
+    });
+
+    await waitFor(() => Boolean(offlineButton("update")));
+    expect(offlineButton("update")?.title).toContain("newer version");
   });
 });

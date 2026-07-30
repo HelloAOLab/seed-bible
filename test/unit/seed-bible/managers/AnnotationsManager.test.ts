@@ -44,10 +44,13 @@ describe("AnnotationsManager", () => {
 
     login = {
       authBot: signal(null),
+      sessionEnded: signal(null),
       userId: signal("user-1"),
       connectionId: "conn-1",
       profile: signal(null),
       profilePromise: null,
+      isProfileLoading: signal(false),
+      isSavingProfile: signal(false),
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       updateProfile: vi.fn().mockResolvedValue(undefined),
