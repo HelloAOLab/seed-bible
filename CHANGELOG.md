@@ -8,6 +8,7 @@
 - Download a whole translation to your device from the Bible selector and read it with no connection, with live progress, a cancel option, a size readout, and a prompt to re-download when a newer version is published. ([#1533](https://github.com/HelloAOLab/seed-bible/pull/1533))
 - Show a loading placeholder in place of the verses while the chapter you moved to is still downloading, after briefly dimming the chapter you left, instead of leaving the previous chapter's text under the new chapter's title. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - The Seed Bible now remembers the last translation you selected and loads it by default. ([#1445](https://github.com/HelloAOLab/seed-bible/pull/1511))
+- The Seed Bible is now able to save your settings even if you are not logged in. ([#1471](https://github.com/HelloAOLab/seed-bible/pull/1471))
 
 ### 🔧 Changed
 
