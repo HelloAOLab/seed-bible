@@ -90,6 +90,7 @@ import {
   type NavigationManager,
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
+import { type AppConfig } from "../app/appConfig";
 import { createI18nManager, type I18nManager } from "../i18n";
 import {
   createOnboardingManager,
