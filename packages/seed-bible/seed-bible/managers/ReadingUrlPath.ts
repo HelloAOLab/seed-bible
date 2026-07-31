@@ -111,48 +111,20 @@ export function parseReadingPath(
 }
 
 /**
- * Builds the canonical reading path from resolved state. The `{lang}`
- * segment is included unless both `language` and `translationId` match the
- * "fully default" state (`DEFAULT_UI_LANGUAGE` + that language's own default
- * translation) — see the four examples worked through in the URL scheme
- * design. `defaultTranslationId` is supplied by the caller (typically
- * `getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id`) rather than
- * looked up here, keeping this module free of a BibleReadingManager
- * dependency.
- *
- * `forceExplicitLanguage` always includes the `{lang}` segment, even for the
- * "fully default" state — for a caller that specifically needs an explicit,
- * self-describing URL rather than the shortest canonical one (e.g. a
- * language-negotiation redirect landing a visitor on English: the omitted
- * form is indistinguishable from "not yet negotiated" and would send them
- * right back through the same redirect).
+ * Builds the canonical reading path from resolved state: always the explicit
+ * `/{lang}/{translationId}/{bookSlug}/{chapter}` form. A URL that omits
+ * `{lang}` is a redirect entry point, not a second valid canonical shape —
+ * see `legacyReadingUrlRedirect` in `entry-ssr.tsx`, which promotes every
+ * 3-segment request to this form.
  */
 export function buildReadingPath(params: {
   language: string;
   translationId: string;
   bookId: BookId;
   chapter: number;
-  defaultTranslationId: string;
-  forceExplicitLanguage?: boolean;
 }): string {
-  const {
-    language,
-    translationId,
-    bookId,
-    chapter,
-    defaultTranslationId,
-    forceExplicitLanguage,
-  } = params;
+  const { language, translationId, bookId, chapter } = params;
   const bookSlug = getBookSlug(bookId);
   const encodedTranslation = encodeURIComponent(translationId);
-  const isFullyDefault =
-    !forceExplicitLanguage &&
-    language === DEFAULT_UI_LANGUAGE &&
-    translationId === defaultTranslationId;
-
-  if (isFullyDefault) {
-    return `/${encodedTranslation}/${bookSlug}/${chapter}`;
-  }
-
   return `/${encodeURIComponent(language)}/${encodedTranslation}/${bookSlug}/${chapter}`;
 }

@@ -115,54 +115,37 @@ describe("parseReadingPath", () => {
 });
 
 describe("buildReadingPath", () => {
-  const defaultTranslationId = "AAB";
-
-  it("omits the language segment in the fully-default state", () => {
+  it("always includes the language segment, even for the default language and translation", () => {
     expect(
       buildReadingPath({
         language: DEFAULT_UI_LANGUAGE,
         translationId: "AAB",
         bookId: "JHN",
         chapter: 3,
-        defaultTranslationId,
       })
-    ).toBe("/AAB/john/3");
+    ).toBe("/en/AAB/john/3");
   });
 
-  it("includes the language segment when the translation isn't the default, even for the default language", () => {
+  it("includes the language segment for a non-default translation", () => {
     expect(
       buildReadingPath({
         language: DEFAULT_UI_LANGUAGE,
         translationId: "ARBNAV",
         bookId: "JHN",
         chapter: 3,
-        defaultTranslationId,
       })
     ).toBe("/en/ARBNAV/john/3");
   });
 
-  it("includes the language segment when the language isn't the default, even for that language's own default translation", () => {
+  it("includes the language segment for a non-default language", () => {
     expect(
       buildReadingPath({
         language: "es",
         translationId: "spa_onbv",
         bookId: "JHN",
         chapter: 3,
-        defaultTranslationId,
       })
     ).toBe("/es/spa_onbv/john/3");
-  });
-
-  it("includes the language segment for a non-default language", () => {
-    expect(
-      buildReadingPath({
-        language: "ar",
-        translationId: "ARBNAV",
-        bookId: "JHN",
-        chapter: 3,
-        defaultTranslationId,
-      })
-    ).toBe("/ar/ARBNAV/john/3");
   });
 
   it("encodes a custom-endpoint translation URL as a single path segment", () => {
@@ -172,34 +155,7 @@ describe("buildReadingPath", () => {
       translationId: customUrl,
       bookId: "JHN",
       chapter: 3,
-      defaultTranslationId,
     });
     expect(path).toBe(`/en/${encodeURIComponent(customUrl)}/john/3`);
-  });
-
-  it("forceExplicitLanguage includes the language segment even in the fully-default state", () => {
-    expect(
-      buildReadingPath({
-        language: DEFAULT_UI_LANGUAGE,
-        translationId: "AAB",
-        bookId: "JHN",
-        chapter: 3,
-        defaultTranslationId,
-        forceExplicitLanguage: true,
-      })
-    ).toBe("/en/AAB/john/3");
-  });
-
-  it("forceExplicitLanguage is a no-op when the segment would already be shown", () => {
-    expect(
-      buildReadingPath({
-        language: "es",
-        translationId: "spa_onbv",
-        bookId: "JHN",
-        chapter: 3,
-        defaultTranslationId,
-        forceExplicitLanguage: true,
-      })
-    ).toBe("/es/spa_onbv/john/3");
   });
 });

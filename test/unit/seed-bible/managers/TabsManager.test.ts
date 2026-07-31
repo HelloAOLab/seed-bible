@@ -469,10 +469,10 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    // Fully-default state (English UI, AAB translation) -> 3-segment form,
-    // language omitted.
+    // The language segment is always explicit now, even for the fully-default
+    // state (English UI, AAB translation).
     const url = new URL(window.location.href);
-    expect(url.pathname).toBe("/AAB/notabook/1");
+    expect(url.pathname).toBe("/en/AAB/notabook/1");
     expect(url.searchParams.has("book")).toBe(false);
     expect(url.searchParams.has("chapter")).toBe(false);
   });
@@ -552,11 +552,11 @@ describe("createTabs", () => {
   it.each([
     // Only resolves through the fuzzy fallback: "senesis" shares none of
     // getBookId's "gen"/"genesis" prefixes (see ReadingUrlPath.test.ts).
-    ["/AAB/senesis/1", "/AAB/genesis/1", "GEN"],
-    ["/AAB/genocide/1", "/AAB/genesis/1", "GEN"],
-    ["/AAB/matthew-effect/1", "/AAB/matthew/1", "MAT"],
-    ["/AAB/gen/1", "/AAB/genesis/1", "GEN"],
-    ["/AAB/Genesis/1", "/AAB/genesis/1", "GEN"],
+    ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/genocide/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
+    ["/AAB/gen/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
   ])(
     "self-heals %s to %s on mount",
     async (from, expectedPath, expectedBookId) => {
@@ -573,9 +573,9 @@ describe("createTabs", () => {
   );
 
   it.each([
-    ["/AAB/senesis/1", "/AAB/genesis/1", "GEN"],
-    ["/AAB/matthew-effect/1", "/AAB/matthew/1", "MAT"],
-    ["/AAB/Genesis/1", "/AAB/genesis/1", "GEN"],
+    ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
+    ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
   ])(
     "self-heals %s to %s on external navigation",
     async (from, expectedPath, expectedBookId) => {
@@ -604,18 +604,18 @@ describe("createTabs", () => {
 
     navigation.push("/AAB/matthew-effect/1");
     await waitFor(
-      () => new URL(window.location.href).pathname === "/AAB/matthew/1"
+      () => new URL(window.location.href).pathname === "/en/AAB/matthew/1"
     );
 
     // Navigate to the corrected URL itself: it must be left exactly as-is.
     const pushSpy = vi.spyOn(window.history, "pushState");
     const replaceSpy = vi.spyOn(window.history, "replaceState");
-    navigation.push("/AAB/matthew/1");
+    navigation.push("/en/AAB/matthew/1");
     await waitFor(
       () => manager.tabs.value[0]!.readingState.bookId.value === "MAT"
     );
 
-    expect(new URL(window.location.href).pathname).toBe("/AAB/matthew/1");
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/matthew/1");
     // The only history write should be the `push` above — no correcting
     // `replace` on top of it.
     expect(pushSpy).toHaveBeenCalledTimes(1);
@@ -632,7 +632,7 @@ describe("createTabs", () => {
     await waitFor(() => readingState.bookId.value === "EXO");
 
     const url = new URL(window.location.href);
-    expect(url.pathname).toBe("/AAB/exodus/2");
+    expect(url.pathname).toBe("/en/AAB/exodus/2");
     expect(url.searchParams.has("book")).toBe(false);
     expect(url.searchParams.has("chapter")).toBe(false);
   });
@@ -1148,7 +1148,7 @@ describe("createTabs", () => {
     expect(replaceSpy).toHaveBeenCalledTimes(3);
 
     const url = new URL(window.location.href);
-    expect(url.pathname).toBe("/AAB/genesis/5");
+    expect(url.pathname).toBe("/en/AAB/genesis/5");
     expect(url.searchParams.has("chapter")).toBe(false);
   });
 
@@ -1169,7 +1169,7 @@ describe("createTabs", () => {
 
     manager.selectTab(manager.tabs.value[0]!.id);
     await waitFor(
-      () => new URL(window.location.href).pathname === "/AAB/genesis/1"
+      () => new URL(window.location.href).pathname === "/en/AAB/genesis/1"
     );
 
     expect(pushSpy).not.toHaveBeenCalled();

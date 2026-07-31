@@ -7,7 +7,6 @@
  * splitting URL sets across the 50,000-per-file sitemap limit — can be verified
  * without hitting the network.
  */
-import { getDefaultTranslationForLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
@@ -74,13 +73,11 @@ export function buildTranslationParam(
  * shape) by going through the same `buildReadingPath`:
  *   `<origin>/<locale>/<translationId>/<book-slug>/<n>`
  *
- * The language segment is always spelled out, even for the English default
- * where `buildReadingPath` would normally omit it. That short three-segment
- * form is a redirect entry point, not a destination: a request for it with no
- * `Accept-Language` header — which is exactly what a crawler sends — is 302'd
- * to the explicit form (see `acceptLanguageRedirect` in `entry-ssr.tsx`).
- * Listing the short form here would make every sitemap entry a redirect that
- * disagrees with the destination page's own `rel=canonical`.
+ * The language segment is always spelled out — a 3-segment URL omitting it is
+ * a redirect entry point, not a destination (see `legacyReadingUrlRedirect`
+ * in `entry-ssr.tsx`). Listing the short form here would make every sitemap
+ * entry a redirect that disagrees with the destination page's own
+ * `rel=canonical`.
  */
 export function buildChapterUrl(
   origin: string,
@@ -91,12 +88,6 @@ export function buildChapterUrl(
     translationId: params.translationId,
     bookId: params.bookId as BookId,
     chapter: params.chapter,
-    // Irrelevant while `forceExplicitLanguage` is set — the omission rule it
-    // feeds never fires — but passing the real value keeps this honest if that
-    // ever changes.
-    defaultTranslationId:
-      getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
-    forceExplicitLanguage: true,
   });
   return new URL(readingPath, ensureTrailingSlash(origin)).toString();
 }

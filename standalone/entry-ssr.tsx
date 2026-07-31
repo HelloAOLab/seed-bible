@@ -7,14 +7,16 @@ import {
   getBookId,
   type BookId,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
-import { getDefaultTranslationForLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import {
+  getDefaultTranslationForLanguage,
+  uiLocaleForDefaultTranslation,
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
   parseReadingPath,
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
-import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -51,26 +53,33 @@ const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
 
 /**
  * Detects a URL that isn't already the canonical
- * `[/{lang}]/{translationId}/{bookSlug}/{chapter}` form and computes the
- * path to 301 to. Three shapes are recognized: an already-canonical (3/4
- * segment) path whose segments don't spell the canonical form exactly; a
- * bare root with legacy `?book=`/`?chapter=` (and optionally
- * `?translation=`/`?translationId=`/`?lang=`) query params; and the prior
- * `/{book}/{chapter}` path format (no translation/language). Returns null
- * when the URL is already canonical, or when the book doesn't resolve at
- * all — falling through to a normal render (see `render()`'s `notFound`
- * handling for the latter).
+ * `/{lang}/{translationId}/{bookSlug}/{chapter}` form and computes the path
+ * to redirect to. Three shapes are recognized: an already-4-segment path
+ * whose segments don't spell the canonical form exactly; a 3-segment path,
+ * which always redirects since the language segment is never optional in
+ * the canonical form; a bare root with legacy `?book=`/`?chapter=` (and
+ * optionally `?translation=`/`?translationId=`/`?lang=`) query params; and
+ * the prior `/{book}/{chapter}` path format (no translation/language).
+ * Returns null when the URL is already canonical, or when the book doesn't
+ * resolve at all — falling through to a normal render (see `render()`'s
+ * `notFound` handling for the latter).
  *
- * For the canonical-shaped case the test is deliberately "does this path
- * differ from `buildReadingPath` of what it resolved to", not "was the
- * book a fuzzy match". `getBookId` resolves a lot more than exact slugs —
- * aliases ("gen"), other casings ("Genesis"), and, via its `startsWith`
- * fallback, anything that merely begins with a book name
- * ("luke-skywalker" → Luke). Keying off the fuzzy flag left every one of
- * those served 200 at its own indexable URL, so a real typo got
- * canonicalized while junk did not. Comparing against the rebuilt path
- * catches all of them, plus zero-padded chapters and trailing slashes,
- * with one rule.
+ * For the 4-segment case the test is deliberately "does this path differ
+ * from `buildReadingPath` of what it resolved to", not "was the book a
+ * fuzzy match". `getBookId` resolves a lot more than exact slugs — aliases
+ * ("gen"), other casings ("Genesis"), and, via its `startsWith` fallback,
+ * anything that merely begins with a book name ("luke-skywalker" → Luke).
+ * Keying off the fuzzy flag left every one of those served 200 at its own
+ * indexable URL, so a real typo got canonicalized while junk did not.
+ * Comparing against the rebuilt path catches all of them, plus zero-padded
+ * chapters and trailing slashes, with one rule.
+ *
+ * A 3-segment path has no language segment to compare, so it always
+ * redirects (when the book resolves) — to the language the translation
+ * itself is written in when that's known without a network call (see
+ * `uiLocaleForDefaultTranslation`), or English otherwise. `render()` gives
+ * this specific promotion a 302, since it's the visitor's first landing on
+ * an ambiguous URL, not a permanent correction of a mistyped one.
  *
  * This is safe from redirect loops because every `BOOK_SLUGS` entry
  * round-trips through `getBookId` (locked in by a test in
@@ -91,20 +100,17 @@ export function legacyReadingUrlRedirect(
       return null;
     }
 
+    const language =
+      parsed.language !== null
+        ? parsed.language.toLowerCase()
+        : (uiLocaleForDefaultTranslation(parsed.translationId) ??
+          DEFAULT_UI_LANGUAGE);
+
     const readingPath = buildReadingPath({
-      language: (parsed.language ?? DEFAULT_UI_LANGUAGE).toLowerCase(),
+      language,
       translationId: parsed.translationId,
       bookId: parsed.bookId,
       chapter: parsed.chapter,
-      defaultTranslationId:
-        getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
-      // Keep the shape the request used. Collapsing an explicit
-      // "/en/AAB/john/3" down to "/AAB/john/3" would hand it straight to
-      // `acceptLanguageRedirect`, which sends it back up again — an
-      // infinite loop. Promoting 3 segments to 4 is that function's job,
-      // as a 302 with `Vary`, because the target depends on the request
-      // headers; this correction is header-independent and permanent.
-      forceExplicitLanguage: parsed.language !== null,
     });
     if (stripBasePath(url.pathname, basePath) === readingPath) {
       return null;
@@ -158,8 +164,6 @@ export function legacyReadingUrlRedirect(
     translationId,
     bookId,
     chapter,
-    defaultTranslationId:
-      getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
   });
 
   const remainingParams = new URLSearchParams(url.search);
@@ -178,88 +182,6 @@ export function legacyReadingUrlRedirect(
 }
 
 /**
- * The 3-segment `{translationId}/{bookSlug}/{chapter}` form omits `{lang}`,
- * which canonically means `DEFAULT_UI_LANGUAGE` ("en") — but a first-time
- * visitor landing there (a shared link, a search result) has almost never
- * chosen English on purpose; their browser just wasn't asked. If their
- * `Accept-Language` header names a language this app actually supports,
- * redirect to the explicit 4-segment form for that language instead of
- * silently rendering in English. When no `Accept-Language` header was sent
- * at all (most often a crawler or a bare HTTP client, not a browser),
- * there is nothing to negotiate — redirect to the explicit English URL
- * rather than silently rendering the ambiguous 3-segment form as English.
- *
- * Deliberately a redirect (not just an SSR language switch at the same URL):
- * the URL itself is meant to reflect the language being read in — see the
- * URL scheme's four examples — so a browser-language visitor should end up
- * with that language's URL in their address bar and history, not a 3-segment
- * URL that quietly rendered as something else.
- *
- * Only fires for an already-exact book match; a fuzzy or unresolved one is
- * handled by `legacyReadingUrlRedirect`/`render()`'s `notFound` check
- * instead, and `render()` only calls this once those have both declined.
- *
- * This is content negotiation, not a canonical-URL correction: a different
- * visitor to the exact same 3-segment URL gets a different destination (or
- * none), so unlike the redirects above this must be a 302 (temporary), never
- * a 301 — a 301 would tell caches and crawlers this URL always redirects
- * here, collapsing every visitor onto one visitor's language. The caller is
- * responsible for pairing it with a `Vary: Accept-Language` response header
- * so shared caches don't serve one visitor's redirect (or lack of one) to
- * another with a different header.
- */
-export function acceptLanguageRedirect(
-  path: string,
-  basePath: string,
-  acceptedLanguages: string[]
-): string | null {
-  const url = new URL(path, "http://ssr.local");
-  const parsed = parseReadingPath(url.pathname, basePath);
-  if (
-    !parsed ||
-    parsed.language !== null ||
-    parsed.bookMatch !== "exact" ||
-    !parsed.bookId
-  ) {
-    return null;
-  }
-
-  const bookId = parsed.bookId;
-  const buildRedirect = (language: string): string => {
-    const readingPath = buildReadingPath({
-      language,
-      translationId: parsed.translationId,
-      bookId,
-      chapter: parsed.chapter,
-      defaultTranslationId:
-        getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
-      // Always land on the explicit 4-segment form: the omitted form is
-      // exactly the 3-segment URL this redirect started from, so omitting it
-      // here would just redirect the visitor back to themselves.
-      forceExplicitLanguage: true,
-    });
-    return `${basePath}${readingPath}${url.search}`;
-  };
-
-  // No header at all means there is no preference to negotiate against —
-  // land explicitly on English rather than rendering the ambiguous
-  // 3-segment form as English with nothing in the address bar to show for
-  // it. A header that was sent but named only unsupported languages is
-  // different: that visitor does have a preference, it's just one this app
-  // can't serve, so it falls through to the silent English render below.
-  if (acceptedLanguages.length === 0) {
-    return buildRedirect(DEFAULT_UI_LANGUAGE);
-  }
-
-  const preferred = getPreferredSupportedLanguage(acceptedLanguages);
-  if (!preferred || preferred === DEFAULT_UI_LANGUAGE) {
-    return null;
-  }
-
-  return buildRedirect(preferred);
-}
-
-/**
  * Server-side renders the app to a complete HTML document.
  *
  * The app shell (chrome, theme, head) renders on the server; verse content
@@ -270,25 +192,25 @@ export async function render(
   options: RenderOptions
 ): Promise<
   | { html: string; notFound?: true }
-  | { redirectTo: string; redirectStatus?: number; vary?: string }
+  | { redirectTo: string; redirectStatus?: number }
 > {
   const { config } = options;
 
   const redirectTo = legacyReadingUrlRedirect(options.path, config.basePath);
   if (redirectTo) {
-    return { redirectTo };
-  }
-
-  const languageRedirectTo = acceptLanguageRedirect(
-    options.path,
-    config.basePath,
-    config.acceptedLanguages
-  );
-  if (languageRedirectTo) {
+    // A 3-segment request (no language segment) is promoted with a 302: it's
+    // the visitor's first landing on an ambiguous URL, not a permanent
+    // correction of a mistyped one, so it shouldn't be cached as if the
+    // 3-segment URL always redirects here. Every other correction this
+    // function makes (typos, casing, zero-padding, legacy shapes) is
+    // header-independent and permanent, so it keeps the default 301.
+    const requestedLanguage = parseReadingPath(
+      new URL(options.path, "http://ssr.local").pathname,
+      config.basePath
+    )?.language;
     return {
-      redirectTo: languageRedirectTo,
-      redirectStatus: 302,
-      vary: "Accept-Language",
+      redirectTo,
+      ...(requestedLanguage === null ? { redirectStatus: 302 } : {}),
     };
   }
 

@@ -20,6 +20,7 @@ import {
   createBibleReadingState,
   getDefaultTranslationForLanguage,
   resolveChapterInBook,
+  uiLocaleForDefaultTranslation,
   type BibleReadingState,
   type InitialBibleReadingOptions,
   type TranslationWithLanguage,
@@ -157,37 +158,35 @@ function getUrlReadingLanguage(url: URL, basePath: string): string | null {
  * Corrects the address bar when the current URL resolves to a real reading
  * position but doesn't spell it canonically — the client-side counterpart of
  * `legacyReadingUrlRedirect` in `entry-ssr.tsx`, for navigation that never
- * made a fresh server request and so never had a chance to be 301'd.
+ * made a fresh server request and so never had a chance to be redirected.
  *
  * Same test as the server: rebuild the path from what the URL resolved to and
  * rewrite only if it differs. That covers a typo ("senesis"), an alias
- * ("gen"), other casings ("Genesis"), and the junk `getBookId`'s prefix
- * fallback accepts ("luke-skywalker" → Luke). A no-op for a URL that is
- * already canonical, a book that resolves to nothing (the reader shows its
- * own not-found state), or a legacy/non-reading-path URL.
- *
- * One deliberate difference from the server: no `forceExplicitLanguage`, so a
- * fully-default position keeps the short "/AAB/genesis/1" form here. That
- * short form is the pleasant one to have in the address bar, and it is only
- * unsuitable for crawlers — who arrive over HTTP and get promoted to the
- * explicit form by `acceptLanguageRedirect` before ever running this code.
+ * ("gen"), other casings ("Genesis"), the junk `getBookId`'s prefix fallback
+ * accepts ("luke-skywalker" → Luke), and — since the canonical form always
+ * includes the language segment — a 3-segment URL missing it entirely. A
+ * no-op for a URL that is already canonical, a book that resolves to nothing
+ * (the reader shows its own not-found state), or a legacy/non-reading-path
+ * URL.
  */
-function selfHealNonCanonicalPath(
-  navigation: NavigationManager,
-  defaultTranslationId: string
-): void {
+function selfHealNonCanonicalPath(navigation: NavigationManager): void {
   const url = navigation.currentUrl.peek();
   const parsed = parseReadingPath(url.pathname, navigation.basePath);
   if (!parsed || !parsed.bookId) {
     return;
   }
 
+  const language =
+    parsed.language !== null
+      ? parsed.language.toLowerCase()
+      : (uiLocaleForDefaultTranslation(parsed.translationId) ??
+        DEFAULT_UI_LANGUAGE);
+
   const correctedPath = buildReadingPath({
-    language: (parsed.language ?? DEFAULT_UI_LANGUAGE).toLowerCase(),
+    language,
     translationId: parsed.translationId,
     bookId: parsed.bookId,
     chapter: parsed.chapter,
-    defaultTranslationId,
   });
   if (stripBasePath(url.pathname, navigation.basePath) === correctedPath) {
     return;
@@ -349,11 +348,6 @@ export function createTabs(
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
   );
-  // The site-wide default translation (fixed "en", not the session's
-  // detected default language) — what `buildReadingPath` compares against
-  // to decide whether the `{lang}` segment can be omitted.
-  const defaultTranslationIdForDefaultLanguage =
-    getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id;
   const initialTranslationId = getInitialTranslationId(
     navigation.currentUrl.value,
     navigation.basePath,
@@ -380,7 +374,7 @@ export function createTabs(
     navigation.currentUrl.value,
     navigation.basePath
   );
-  selfHealNonCanonicalPath(navigation, defaultTranslationIdForDefaultLanguage);
+  selfHealNonCanonicalPath(navigation);
 
   console.log("Creating TabsManager with initial URL parameters:", {
     initialTranslationId,
@@ -418,10 +412,7 @@ export function createTabs(
       return;
     }
 
-    selfHealNonCanonicalPath(
-      navigation,
-      defaultTranslationIdForDefaultLanguage
-    );
+    selfHealNonCanonicalPath(navigation);
 
     const requestedTranslation = getInitialTranslationId(
       navigation.currentUrl.value,
@@ -580,7 +571,6 @@ export function createTabs(
           translationId,
           bookId: bookId as BookId,
           chapter: Number(chapter),
-          defaultTranslationId: defaultTranslationIdForDefaultLanguage,
         });
         writeUrl(queryUpdate, options.replace, pathname);
       } else {

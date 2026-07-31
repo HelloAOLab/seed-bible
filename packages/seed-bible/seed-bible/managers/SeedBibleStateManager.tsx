@@ -8,13 +8,9 @@ import {
 } from "../managers/BibleDataManager";
 import {
   bibleLanguageToUiLocale,
-  getDefaultTranslationForLanguage,
   uiLocaleForDefaultTranslation,
 } from "../managers/BibleReadingManager";
-import {
-  DEFAULT_UI_LANGUAGE,
-  buildReadingPath,
-} from "../managers/ReadingUrlPath";
+import { buildReadingPath } from "../managers/ReadingUrlPath";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
@@ -1043,9 +1039,6 @@ export function createSeedBibleState(
       translationId,
       bookId: bookId as BookId,
       chapter: readingState.chapterNumber.value,
-      defaultTranslationId:
-        getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
-      forceExplicitLanguage: true,
     });
 
     return `${navigation.basePath}${readingPath}`;
