@@ -422,6 +422,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       track.style.transform = landingTransform;
       readingState.clearSelectedVerses();
 
+      window.clearTimeout(swipeCommitTimer.current);
+
       swipeCommitTimer.current = window.setTimeout(() => {
         // The navigation always runs, even if another gesture has since taken
         // the track over: the reader completed the swipe that asked for it.
