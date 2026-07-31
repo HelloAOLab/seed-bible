@@ -5,8 +5,31 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { signal } from "@preact/signals";
 
+// A minimal stand-in for the i18next instance: the manager only reads the
+// active language and subscribes to changes. `emitLanguageChanged` lets a test
+// drive a language switch without booting real i18next.
+const i18nListeners = new Map<string, ((lng: string) => void)[]>();
+const i18nStub = {
+  language: "en",
+  on(event: string, handler: (lng: string) => void) {
+    const handlers = i18nListeners.get(event) ?? [];
+    handlers.push(handler);
+    i18nListeners.set(event, handlers);
+  },
+};
+
+function emitLanguageChanged(language: string) {
+  i18nStub.language = language;
+  for (const handler of i18nListeners.get("languageChanged") ?? []) {
+    handler(language);
+  }
+}
+
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
   addTranslations: vi.fn(),
+  get i18n() {
+    return i18nStub;
+  },
 }));
 
 import {
@@ -399,6 +422,10 @@ describe("createExtensionManager", () => {
     >("@packages/seed-bible/seed-bible/i18n/I18nManager");
     addTranslationsMock = addTranslations as Mock;
     addTranslationsMock.mockReset();
+    // The i18n stub is module-level, so a test that switches language would
+    // otherwise leak that language into the next one.
+    i18nStub.language = "en";
+    i18nListeners.clear();
   });
 
   it("loadExtensionSet() installs dependencies before dependents", async () => {
@@ -609,6 +636,125 @@ describe("createExtensionManager", () => {
       "ext.translation-b",
       translationsB
     );
+  });
+
+  it("loadExtensionSet() fetches only the active language's list translations", async () => {
+    const manager = createExtensionManager(login);
+    const loadEn = vi.fn().mockResolvedValue({
+      "ext.listed": { title: "Listed", description: "A listed extension" },
+    });
+    const loadEs = vi.fn().mockResolvedValue({
+      "ext.listed": { title: "Listada", description: "Una extensión" },
+    });
+
+    // The bundled set ships empty meta.translations and defers the list
+    // strings to one chunk per language.
+    const set: ExtensionSet = {
+      id: "set.list-translations",
+      extensions: [
+        {
+          url: "pkg://listed",
+          meta: {
+            id: "ext.listed",
+            // The bundled set inlines English and defers the rest.
+            translations: { en: { title: "Listed", description: "" } },
+          },
+        },
+      ],
+      loadListTranslations: { en: loadEn, es: loadEs },
+    };
+
+    await manager.loadExtensionSet(set, () => false);
+    await vi.waitFor(() => expect(loadEn).toHaveBeenCalled());
+
+    // Only English is fetched — this is the whole point of the split.
+    expect(loadEs).not.toHaveBeenCalled();
+    expect(addTranslationsMock).toHaveBeenCalledWith("ext.listed", {
+      en: { title: "Listed", description: "A listed extension" },
+    });
+  });
+
+  it("fetches the new language's list translations when the language changes", async () => {
+    const manager = createExtensionManager(login);
+    const loadEs = vi.fn().mockResolvedValue({
+      "ext.listed": { title: "Listada", description: "Una extensión" },
+    });
+    const set: ExtensionSet = {
+      id: "set.language-change",
+      extensions: [
+        {
+          url: "pkg://listed",
+          meta: {
+            id: "ext.listed",
+            // The bundled set inlines English and defers the rest.
+            translations: { en: { title: "Listed", description: "" } },
+          },
+        },
+      ],
+      loadListTranslations: {
+        en: vi.fn().mockResolvedValue({}),
+        es: loadEs,
+      },
+    };
+
+    await manager.loadExtensionSet(set, () => false);
+    addTranslationsMock.mockClear();
+
+    emitLanguageChanged("es");
+    await vi.waitFor(() => expect(loadEs).toHaveBeenCalled());
+
+    expect(addTranslationsMock).toHaveBeenCalledWith("ext.listed", {
+      es: { title: "Listada", description: "Una extensión" },
+    });
+  });
+
+  it("still uses meta.translations for sets without loadListTranslations", async () => {
+    const manager = createExtensionManager(login);
+    const translations = {
+      en: { title: "Inline", description: "Ships its own strings" },
+    };
+    const set: ExtensionSet = {
+      id: "set.inline",
+      extensions: [
+        { url: "pkg://inline", meta: { id: "ext.inline", translations } },
+      ],
+    };
+
+    await manager.loadExtensionSet(set, () => false);
+
+    expect(addTranslationsMock).toHaveBeenCalledWith(
+      "ext.inline",
+      translations
+    );
+  });
+
+  it("survives a list-translation chunk that fails to load", async () => {
+    const manager = createExtensionManager(login);
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const loadEn = vi.fn().mockRejectedValue(new Error("chunk 404"));
+    const set: ExtensionSet = {
+      id: "set.broken-chunk",
+      extensions: [
+        {
+          url: "pkg://listed",
+          meta: {
+            id: "ext.listed",
+            // The bundled set inlines English and defers the rest.
+            translations: { en: { title: "Listed", description: "" } },
+          },
+        },
+      ],
+      loadListTranslations: { en: loadEn },
+    };
+
+    // The Settings list falls back to rendering ids; nothing should throw.
+    await expect(
+      manager.loadExtensionSet(set, () => false)
+    ).resolves.toBeDefined();
+    await vi.waitFor(() => expect(consoleError).toHaveBeenCalled());
+    consoleError.mockRestore();
   });
 
   it("loadExtension() adds the extension's full translations from loadFullTranslations(), not the (trimmed) meta.translations", async () => {

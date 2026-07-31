@@ -2,6 +2,16 @@ import type { Plugin, ViteDevServer } from "vite";
 import { readdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import {
+  generateEntryModuleSource,
+  generateLocaleModuleSource,
+  parseLocaleModuleId,
+  LOCALE_VIRTUAL_PREFIX,
+  RESOLVED_ID,
+  VIRTUAL_ID,
+  type DiscoveredExtension,
+  type ExtensionMetaFile,
+} from "./extensionsModule";
 
 // Virtual module convention: `virtual:@extensions` resolves to a module whose
 // default export is the `ExtensionSet` for the app — auto-discovered from every
@@ -11,18 +21,21 @@ import path from "node:path";
 // `extension.json` at its root (the extension's `meta`). This matches every
 // extension and excludes the main `packages/seed-bible` app, which has none.
 //
-// The module is generated as source: the `meta` for each extension is inlined
-// as a JS literal, but trimmed down to just `title`/`description` per locale —
-// the only translations needed before an extension is installed (to render it
-// in the Settings extensions list). The full per-locale translations (every
-// other UI string the extension uses) and the extension's code are each
-// exposed as `() => import(...)` thunks, so Vite code-splits both into chunks
-// that are only fetched once the extension is actually installed.
+// The module is generated as source: each extension's `meta` is inlined as a JS
+// literal, trimmed to `id`/`dependencies`/`autoinstall` — what the boot path
+// needs to resolve install order. Its code and its full per-locale translations
+// are `() => import(...)` thunks, so Vite code-splits both into chunks fetched
+// only once the extension is installed.
 //
-// The `\0` prefix on the resolved id is the Rollup convention that tells other
-// plugins to leave the id alone.
-const VIRTUAL_ID = "virtual:@extensions";
-const RESOLVED_ID = "\0" + VIRTUAL_ID;
+// The `title`/`description` shown in the Settings extensions list live in a
+// second virtual module family, `virtual:@extensions/locale/<lang>`, one chunk
+// per language, reached through the set's `loadListTranslations` map. They used
+// to be inlined for all 77 languages, which cost 138 KB (72.5 KB gzipped) in
+// the entry chunk for strings a reader sees in one language, in one screen.
+//
+// The generation itself lives in `./extensionsModule` so it can be unit tested
+// without running a build. The `\0` prefix on resolved ids is the Rollup
+// convention that tells other plugins to leave the id alone.
 
 // Must match the `id` of the hand-written set this replaces.
 const EXTENSION_SET_ID = "seed-bible";
@@ -44,78 +57,20 @@ async function discoverExtensionFolders(): Promise<string[]> {
     .sort();
 }
 
-interface ExtensionTranslationFile {
-  title: string;
-  description: string;
-  [key: string]: string;
-}
-
-interface ExtensionMetaFile {
-  id: string;
-  translations: Record<string, ExtensionTranslationFile>;
-  dependencies?: string[];
-  autoinstall?: boolean;
-}
-
 async function readExtensionMeta(folder: string): Promise<ExtensionMetaFile> {
   const raw = await readFile(extensionJsonPath(folder), "utf-8");
   return JSON.parse(raw);
 }
 
-/**
- * Reduces an extension's meta to just what's needed before it's installed:
- * `title`/`description` per locale (for the Settings extensions list), plus
- * `id`/`dependencies`/`autoinstall` (needed to resolve install order and
- * auto-install eligibility). Every other translation key is dropped — it's
- * only available via the extension's `loadFullTranslations()` thunk.
- */
-function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
-  const translations: Record<string, ExtensionTranslationFile> = {};
-  for (const [lang, translation] of Object.entries(meta.translations)) {
-    translations[lang] = {
-      title: translation.title,
-      description: translation.description,
-    };
-  }
-
-  return {
-    id: meta.id,
-    translations,
-    ...(meta.dependencies ? { dependencies: meta.dependencies } : {}),
-    ...(meta.autoinstall !== undefined
-      ? { autoinstall: meta.autoinstall }
-      : {}),
-  };
-}
-
-// U+2028/U+2029 are valid JSON string characters but, unescaped, are illegal
-// in JS string literals in some contexts — escape them before inlining.
-function toJsLiteral(value: unknown): string {
-  return JSON.stringify(value)
-    .replace(/\u2028/g, "\\u2028")
-    .replace(/\u2029/g, "\\u2029");
-}
-
-async function generateModuleSource(folders: string[]): Promise<string> {
-  const metas = await Promise.all(folders.map(readExtensionMeta));
-
-  const entries = folders
-    .map((folder, i) => {
-      const trimmed = trimMeta(metas[i]!);
-      return `  {
-    meta: ${toJsLiteral(trimmed)},
-    loadFullTranslations: () => import("@packages/${folder}/extension.json").then((m) => m.default.translations),
-    import: () => import("@packages/${folder}/index"),
-  },`;
-    })
-    .join("\n");
-
-  return `const extensions = [
-${entries}
-];
-
-export default { id: ${JSON.stringify(EXTENSION_SET_ID)}, extensions };
-`;
+/** Every extension package under `packages/`, with its meta parsed. */
+async function discoverExtensions(): Promise<DiscoveredExtension[]> {
+  const folders = await discoverExtensionFolders();
+  return Promise.all(
+    folders.map(async (folder) => ({
+      folder,
+      meta: await readExtensionMeta(folder),
+    }))
+  );
 }
 
 /**
@@ -131,22 +86,29 @@ export function extensionsPlugin(): Plugin {
       if (id === VIRTUAL_ID) {
         return RESOLVED_ID;
       }
+      if (id.startsWith(LOCALE_VIRTUAL_PREFIX)) {
+        return "\0" + id;
+      }
       return null;
     },
 
     async load(id) {
-      if (id !== RESOLVED_ID) {
+      const isEntry = id === RESOLVED_ID;
+      const language = parseLocaleModuleId(id);
+      if (!isEntry && language === null) {
         return null;
       }
 
-      const folders = await discoverExtensionFolders();
+      const extensions = await discoverExtensions();
 
       // Reload the module if any extension's meta changes.
-      for (const folder of folders) {
+      for (const { folder } of extensions) {
         this.addWatchFile(extensionJsonPath(folder));
       }
 
-      return await generateModuleSource(folders);
+      return isEntry
+        ? generateEntryModuleSource(extensions, EXTENSION_SET_ID)
+        : generateLocaleModuleSource(extensions, language!);
     },
 
     configureServer(server: ViteDevServer) {
@@ -173,9 +135,15 @@ export function extensionsPlugin(): Plugin {
         }
         pending = setTimeout(() => {
           pending = undefined;
-          const mod = server.moduleGraph.getModuleById(RESOLVED_ID);
-          if (mod) {
-            server.moduleGraph.invalidateModule(mod);
+          // The per-locale modules are generated from the same metas, so
+          // invalidate them alongside the entry module.
+          for (const [moduleId, mod] of server.moduleGraph.idToModuleMap) {
+            if (
+              moduleId === RESOLVED_ID ||
+              parseLocaleModuleId(moduleId) !== null
+            ) {
+              server.moduleGraph.invalidateModule(mod);
+            }
           }
           server.config.logger.info("[extensions] extension set changed");
           server.ws.send({ type: "full-reload" });
