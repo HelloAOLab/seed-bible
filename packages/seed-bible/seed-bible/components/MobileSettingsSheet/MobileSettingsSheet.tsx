@@ -48,7 +48,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
   const { t } = useI18n();
   const settings = state.settings;
   const current = settings.settings.value;
-  const fontSize = state.config.config.value.fontSize;
+  const fontSize = current.fontSize;
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(
     fontSize as (typeof FONT_SIZE_OPTIONS)[number]
   );
@@ -62,13 +62,13 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
   const handleDecreaseFontSize = () => {
     if (fontSizeIndex > 0) {
       const next = FONT_SIZE_OPTIONS[fontSizeIndex - 1];
-      if (next) state.config.setFontSize(next);
+      if (next) settings.setFontSize(next);
     }
   };
   const handleIncreaseFontSize = () => {
     if (fontSizeIndex < FONT_SIZE_OPTIONS.length - 1 && fontSizeIndex >= 0) {
       const next = FONT_SIZE_OPTIONS[fontSizeIndex + 1];
-      if (next) state.config.setFontSize(next);
+      if (next) settings.setFontSize(next);
     }
   };
   const handleCycleLineHeight = () => {

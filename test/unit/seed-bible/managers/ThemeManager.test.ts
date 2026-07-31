@@ -1,8 +1,21 @@
 import {
+  createTheme as createThemeManager,
   generateThemeCssClasses,
   generateThemeCssVariables,
   type BibleTheme,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import {
+  createSettings,
+  type SettingsManager,
+} from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import {
+  createLoginManager,
+  type LoginManager,
+  type UserProfile,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import { signal } from "@preact/signals";
 
 describe("ThemeManager CSS helpers", () => {
   function createTheme(overrides: Partial<BibleTheme> = {}): BibleTheme {
@@ -100,5 +113,121 @@ describe("ThemeManager CSS helpers", () => {
         "color: var(--sb-highlight-yellow-words-of-jesus-font-color);"
       );
     });
+  });
+});
+
+/**
+ * Minimal LoginManager stand-in, matching the one in
+ * `SettingsManager.test.ts` — `createTheme` now reads/writes exclusively
+ * through `SettingsManager`, so these tests build a real `SettingsManager`
+ * against a fake `login` and pass it in, rather than touching `login`
+ * directly.
+ */
+function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
+  const userId = signal<string | null>(initialProfile ? "user-1" : null);
+  const profile = signal<UserProfile | null>(initialProfile);
+  const localConfig = signal<Record<string, unknown>>({});
+  return {
+    userId,
+    profile,
+    localConfig,
+    profilePromise: Promise.resolve(initialProfile),
+    updateProfile: (newData: Partial<UserProfile>) => {
+      if (!profile.value) return;
+      profile.value = { ...profile.value, ...newData };
+    },
+  } as unknown as LoginManager;
+}
+
+function navWith(hrefSuffix = ""): ReturnType<typeof createNavigationManager> {
+  return createNavigationManager({
+    initialHref: `http://localhost:3000/${hrefSuffix}`,
+  });
+}
+
+function makeSettings(login: LoginManager, hrefSuffix = ""): SettingsManager {
+  return createSettings(CasualOSManager(), login, navWith(hrefSuffix));
+}
+
+describe("ThemeManager storage (via SettingsManager)", () => {
+  it("setTheme persists to the profile when logged in", () => {
+    const login = makeFakeLogin({ name: "Test", config: {} } as UserProfile);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("dark");
+
+    expect(theme.selectedThemeId.value).toBe("dark");
+    expect((login.profile.value as any)?.config?.themeId).toBe("dark");
+  });
+
+  it("setTheme rejects an id that isn't in the themes list", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setTheme("not-a-real-theme");
+
+    expect(theme.selectedThemeId.value).toBe("light");
+  });
+
+  it("an anonymous theme choice survives a simulated page refresh", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+    const login1 = createLoginManager({ os });
+    const settings1 = createSettings(os, login1, nav);
+    const theme1 = createThemeManager(settings1);
+
+    theme1.setTheme("dark");
+
+    // Simulate a fresh page load: brand-new manager instances sharing the
+    // same (real) localStorage that `login1`'s anonymous write persisted to.
+    // This is the bug the refactor fixes — ThemeManager used to write
+    // anonymous edits to `login.localConfig` but never read them back.
+    const login2 = createLoginManager({ os });
+    const settings2 = createSettings(os, login2, nav);
+    const theme2 = createThemeManager(settings2);
+
+    expect(theme2.selectedThemeId.value).toBe("dark");
+  });
+
+  it("?app.themeId sets only the starting value and doesn't fight a later setTheme call", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login, "?app.themeId=dark");
+    const theme = createThemeManager(settings);
+
+    expect(theme.selectedThemeId.value).toBe("dark");
+
+    theme.setTheme("light");
+
+    expect(login.localConfig.value.themeId).toBe("light");
+    expect(theme.selectedThemeId.value).toBe("light");
+  });
+
+  it("setCustomColor / resetCustomColor read back correctly through settings", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setCustomColor("primaryColor", "#123456");
+    expect(theme.customOverrides.value.primaryColor).toBe("#123456");
+    expect(login.localConfig.value.customTheme).toEqual({
+      primaryColor: "#123456",
+    });
+
+    theme.resetCustomColor("primaryColor");
+    expect(theme.customOverrides.value.primaryColor).toBeUndefined();
+  });
+
+  it("setHighlightColor / resetHighlightColor read back correctly through settings", () => {
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setHighlightColor("yellow", { color: "#ffff00" });
+    expect(theme.customHighlightOverrides.value.yellow?.color).toBe("#ffff00");
+
+    theme.resetHighlightColor("yellow");
+    expect(theme.customHighlightOverrides.value.yellow).toBeUndefined();
   });
 });
