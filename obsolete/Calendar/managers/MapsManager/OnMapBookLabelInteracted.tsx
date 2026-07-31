@@ -1,1 +1,0 @@
-thisBot.HandleMapBookLabelInteraction(that);

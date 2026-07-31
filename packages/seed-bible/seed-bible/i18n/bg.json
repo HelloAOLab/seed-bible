@@ -309,7 +309,7 @@
   "chat-x-and-count-joined_one": "{{name}} и още един човек се присъединиха",
   "chat-x-and-count-joined_other": "{{name}} и {{count}} други се присъединиха",
   "open-chat": "Отвори чат",
-  "tutorial.promptTitle": "Добре дошли в Seed Bible. Искате ли урок?",
+  "tutorial.promptTitle": "Добре дошли в {{appName}}. Искате ли урок?",
   "tutorial.promptBody": "Предлага се обиколка с екскурзовод, която ще ви помогне да научите тънкостите на Библията на семената.",
   "tutorial.promptDecline": "Не, благодаря",
   "tutorial.promptAccept": "Направете обиколката",

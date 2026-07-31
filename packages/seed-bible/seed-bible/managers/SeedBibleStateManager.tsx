@@ -90,7 +90,7 @@ import {
   type NavigationManager,
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
-import type { AppConfig } from "../app/appConfig";
+import { useAppConfig, type AppConfig } from "../app/appConfig";
 import { createI18nManager, type I18nManager } from "../i18n";
 import {
   createOnboardingManager,
@@ -406,6 +406,7 @@ export function createSeedBibleState(
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
   });
+  const branding = options.config?.branding;
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
@@ -939,6 +940,7 @@ export function createSeedBibleState(
       return t("seed-bible-description", {
         bookName: chapter.book.name,
         chapterNumber: chapter.chapter.number,
+        appName: branding?.appName ?? "Seed Bible",
         defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
       });
     };

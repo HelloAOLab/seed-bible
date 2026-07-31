@@ -310,7 +310,7 @@
   "chat-x-and-count-joined_other": "{{name}}和其他{{count}}人加入了",
   "open-chat": "开放聊天",
   "tutorial.promptTitle": "欢迎来到种子圣经。您需要教程吗？",
-  "tutorial.promptBody": "我们提供导览服务，帮助您了解 Seed Bible 的方方面面。",
+  "tutorial.promptBody": "我们提供导览服务，帮助您了解 {{appName}} 的方方面面。",
   "tutorial.promptDecline": "不，谢谢",
   "tutorial.promptAccept": "参加参观",
   "session-id": "会话 ID",

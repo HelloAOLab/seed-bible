@@ -1,1 +1,0 @@
-thisBot.HandleMapChapterInteraction(that);

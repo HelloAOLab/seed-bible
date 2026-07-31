@@ -1,6 +1,0 @@
-export const StackAnimationsDuration = {
-  Highlight: 0.15,
-  Unhighlight: 0.15,
-  Rehighlight: 0.15,
-  IncreaseHighlight: 0.15,
-} as const;

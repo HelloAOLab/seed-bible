@@ -309,7 +309,7 @@
   "chat-x-and-count-joined_one": "{{name}} i una altra persona s'hi han unit",
   "chat-x-and-count-joined_other": "{{name}} i {{count}} persones més s'hi han unit",
   "open-chat": "Obre el xat",
-  "tutorial.promptTitle": "Benvingut/da a Seed Bible. Voleu un tutorial?",
+  "tutorial.promptTitle": "Benvingut/da a {{appName}}. Voleu un tutorial?",
   "tutorial.promptBody": "S'ofereix una visita guiada per ajudar-vos a aprendre els detalls de la Bíblia de les llavors.",
   "tutorial.promptDecline": "No, gràcies",
   "tutorial.promptAccept": "Fes el recorregut",

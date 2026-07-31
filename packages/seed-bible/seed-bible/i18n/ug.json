@@ -310,7 +310,7 @@
   "chat-x-and-count-joined_other": "{{name}} ۋە يەنە {{count}} ئادەم قوشۇلدى",
   "open-chat": "پاراڭنى ئېچىڭ",
   "tutorial.promptTitle": "ئۇرۇق ئىنجىلغا خۇش كەپسىز. سىزگە بىر دەرسلىك كېرەكمۇ؟",
-  "tutorial.promptBody": "«Seed Bible» نىڭ ئىچكى-تاشقى تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
+  "tutorial.promptBody": "{{appName}} نىڭ ئىچكى-تاشقى تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
   "tutorial.promptDecline": "ياق، رەھمەت",
   "tutorial.promptAccept": "ساياھەتكە چىقىڭ",
   "session-id": "يىغىن نومۇرى",
