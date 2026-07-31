@@ -2,7 +2,7 @@ import * as Typesense from "typesense";
 import * as z from "zod/v4";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 
-const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");
+const TYPESENSE_NODE_URL = new URL("https://search.seedbible.org");
 const TYPESENSE_API_KEY = "5A496vKeCWhVxntITkcrZ6i7Fehh9lCB";
 const VERSE_COLLECTION_PREFIX = "bibleVerses";
 
