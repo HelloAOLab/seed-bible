@@ -309,6 +309,25 @@ const SWIPE_PANEL_PCT = 100 / 3;
 const CENTRE_PANEL_TRANSFORM = `translateX(${-SWIPE_PANEL_PCT}%)`;
 const NEXT_PANEL_TRANSFORM = `translateX(${-SWIPE_PANEL_PCT * 2}%)`;
 
+/**
+ * Records every write to an element's `scrollTop`, returning the array they
+ * land in. jsdom has no layout, so the real property would clamp everything to
+ * 0 and hide exactly what these tests are about.
+ */
+function recordScrollTopWrites(element: HTMLElement): number[] {
+  const writes: number[] = [];
+  let stored = 0;
+  Object.defineProperty(element, "scrollTop", {
+    configurable: true,
+    get: () => stored,
+    set: (value: number) => {
+      stored = value;
+      writes.push(value);
+    },
+  });
+  return writes;
+}
+
 describe("TabSlotReader integration", () => {
   let container: HTMLDivElement;
 
@@ -1009,5 +1028,74 @@ describe("TabSlotReader integration", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // Attaching a scroll listener must never move the reader. When the two were
+  // the same effect, every re-render re-attached the scroller and rewrote
+  // `scrollTop` — which yanked a partially scrolled chapter back to its saved
+  // offset mid-frame during the render burst that follows a swipe.
+  it("does not move the reader when an ordinary re-render re-attaches the scroller in mobile layout", () => {
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    renderTabSlotReader(slot, readingState, state, container);
+
+    const panel = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement;
+    const writes = recordScrollTopWrites(panel);
+
+    // The reader is partway down the chapter.
+    readingState.scrollPosition.value = 500;
+    writes.length = 0;
+
+    // A plain re-render at the same position: same chapter, new object
+    // identity. This is what content settling and a preview resolving both do.
+    act(() => {
+      chapterData.value = { ...chapterData.value! };
+    });
+
+    expect(writes).toEqual([]);
+  });
+
+  it("does not move the reader when an ordinary re-render re-attaches the scroller in non-mobile layout", () => {
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createDesktopState();
+
+    renderTabSlotReader(slot, readingState, state, container);
+
+    const pane = container.querySelector(".sb-pane-reader") as HTMLDivElement;
+    const writes = recordScrollTopWrites(pane);
+
+    readingState.scrollPosition.value = 500;
+    writes.length = 0;
+
+    act(() => {
+      chapterData.value = { ...chapterData.value! };
+    });
+
+    expect(writes).toEqual([]);
+  });
+
+  it("still restores the saved scroll offset when the reader's position changes", () => {
+    const { slot, readingState } = createFixture();
+    const state = createMobileState();
+
+    renderTabSlotReader(slot, readingState, state, container);
+
+    const panel = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement;
+    const writes = recordScrollTopWrites(panel);
+
+    readingState.scrollPosition.value = 120;
+    writes.length = 0;
+
+    // Navigating is the one thing that should move the scroller on its own.
+    act(() => {
+      readingState.chapterNumber.value = 2;
+    });
+
+    expect(writes).toEqual([120]);
   });
 });

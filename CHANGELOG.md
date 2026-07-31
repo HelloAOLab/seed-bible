@@ -27,6 +27,7 @@
 
 ### 🐛 Fixed
 
+- Fix the reader jumping around for a moment after swiping to another chapter from partway down the page. Setting up the scroll tracking also moved the page, and it was being set up again on every redraw — so each redraw yanked the reader back to a stale offset. Setting up the tracking no longer moves the page; only actually changing chapter does. ([#1558](https://github.com/HelloAOLab/seed-bible/issues/1558))
 - Fix swiping between chapters on mobile flashing the chapter you just left. The swipe used to slide over to the next chapter's preview and then immediately snap back to the centre of the reader — which was still showing the previous chapter — while the new text downloaded. It now stays on the preview until the new chapter's text is ready, and only gives up and snaps back if the download is genuinely slow. ([#1558](https://github.com/HelloAOLab/seed-bible/issues/1558))
 - Changing chapter or book no longer waits on an in-flight text request. The position updates the moment you press, and repeated presses advance a chapter each, instead of the chevrons and arrow keys switching off until the download finished. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Fix shared sessions freezing and eventually crashing the tab with an out-of-memory error when another participant moved through chapters quickly. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))

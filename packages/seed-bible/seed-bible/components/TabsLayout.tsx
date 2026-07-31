@@ -9,7 +9,7 @@ import { type ToolsManager } from "../managers/BibleToolsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../app/utils";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
 interface TabSlotReaderProps {
   slot: TabSlot;
@@ -46,7 +46,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const swipeParked = useRef(false);
   const currentChapterRef = useRef(readingState.chapterData.value);
   const lastScrollTopRef = useRef(0);
-  const scrollerCleanupRef = useRef<(() => void) | null>(null);
 
   const [prevChapterPreview, setPrevChapterPreview] =
     useState<TranslationBookChapter | null>(null);
@@ -71,129 +70,183 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [isMobile, isScrolled]);
 
-  const attachScroller = (element: HTMLDivElement | null) => {
-    scrollerCleanupRef.current?.();
-    scrollerCleanupRef.current = null;
+  // The element the reader actually scrolls in: the slot itself on desktop, the
+  // centre swipe panel on mobile. Held as state rather than a ref so the
+  // effects below re-run when the element genuinely changes — and *only* then.
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
 
-    if (!element) {
+  // Every ref callback below is memoised. Handing Preact a fresh function each
+  // render makes it detach and re-attach the ref on every render, and
+  // re-attaching the scroller used to move the reader (see the scroll-restore
+  // effect): an ordinary re-render could yank a partially scrolled chapter back
+  // to its saved offset mid-frame.
+  const slotScrollerRefCallback = useCallback(
+    (element: HTMLDivElement | null) => {
+      slotScrollerRef.current = element;
+      if (!isMobile) {
+        setScroller(element);
+      }
+    },
+    [isMobile]
+  );
+
+  const currentScrollerRefCallback = useCallback(
+    (element: HTMLDivElement | null) => {
+      mobileScrollerRef.current = element;
+      if (isMobile) {
+        setScroller(element);
+      }
+    },
+    [isMobile]
+  );
+
+  const swipeViewportRefCallback = useCallback(
+    (element: HTMLDivElement | null) => {
+      swipeViewportRef.current = element;
+    },
+    []
+  );
+
+  const swipeTrackRefCallback = useCallback(
+    (element: HTMLDivElement | null) => {
+      swipeTrackRef.current = element;
+    },
+    []
+  );
+
+  // Which chapter's text the scroller is currently showing. `handleScroll`
+  // compares it against the reader's position so a scroll event that lands
+  // while the two disagree — the position has moved but the new text has not
+  // arrived — is not recorded as the new chapter's scroll offset.
+  useEffect(
+    () =>
+      effect(() => {
+        currentChapterRef.current = readingState.chapterData.value;
+      }),
+    [readingState]
+  );
+
+  // Restore the scroll offset when the reader's *position* changes — that is
+  // the only thing that should move the scroller on its own.
+  //
+  // Tracked on purpose: the position, not the loaded chapter, so the scroller
+  // moves the moment navigation happens. `applyPosition` has already reset
+  // `scrollPosition` to 0 for a chapter change, so this is what puts the reader
+  // back at the chapter heading while the placeholder shows. Waiting for
+  // `chapterData` left a reader who was halfway down a chapter stranded
+  // mid-page, looking at placeholder bars with the new book and chapter title
+  // off-screen above.
+  //
+  // Deliberately separate from the listener effect below: attaching a scroll
+  // listener must never move the reader, or every re-render that re-attaches it
+  // re-runs this write.
+  useEffect(() => {
+    if (!scroller) {
       return;
     }
 
-    const cleanup = effect(() => {
-      // Tracked on purpose: the reader's *position*, not just the loaded
-      // chapter, so the scroller moves the moment navigation happens.
-      // `applyPosition` has already reset `scrollPosition` to 0 for a chapter
-      // change, so this is what puts the reader back at the chapter heading
-      // while the placeholder shows. Waiting for `chapterData` left a reader
-      // who was halfway down a chapter stranded mid-page, looking at
-      // placeholder bars with the new book and chapter title off-screen above.
+    return effect(() => {
       void readingState.translationId.value;
       void readingState.bookId.value;
       void readingState.chapterNumber.value;
-      element.scrollTop = readingState.scrollPosition.peek();
+      scroller.scrollTop = readingState.scrollPosition.peek();
+    });
+  }, [scroller, readingState]);
 
+  // Bring a linked verse into view once its chapter is on screen.
+  useEffect(() => {
+    if (!scroller) {
+      return;
+    }
+
+    let frame: number | null = null;
+    const dispose = effect(() => {
       const verseToScroll = readingState.scrollToVerse.value;
-      if (readingState.chapterData.value && verseToScroll !== null) {
-        requestAnimationFrame(() => {
-          const targetVerse = element.querySelector(
-            `[data-verse-number="${verseToScroll}"]`
-          );
-          if (!(targetVerse instanceof HTMLElement)) {
-            return;
-          }
-
-          targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
-          batch(() => {
-            readingState.scrollToVerse.value = null;
-            readingState.scrollPosition.value = element.scrollTop;
-          });
-        });
+      if (!readingState.chapterData.value || verseToScroll === null) {
+        return;
       }
 
-      currentChapterRef.current = readingState.chapterData.value;
-
-      const handleScroll = () => {
-        if (
-          currentChapterRef.current?.translation.id ===
-            readingState.translationId.value &&
-          currentChapterRef.current?.book.id === readingState.bookId.value &&
-          currentChapterRef.current?.chapter.number ===
-            readingState.chapterNumber.value
-        ) {
-          readingState.scrollPosition.value = element.scrollTop;
-        }
-
-        if (!isMobile) {
+      if (frame !== null) {
+        cancelAnimationFrame(frame);
+      }
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        const targetVerse = scroller.querySelector(
+          `[data-verse-number="${verseToScroll}"]`
+        );
+        if (!(targetVerse instanceof HTMLElement)) {
           return;
         }
 
-        const currentScrollTop = element.scrollTop;
-        // Distance from the current scroll position to the very bottom of the
-        // chapter. When the reader lands within a small threshold of the end,
-        // re-show the toolbar so the chapter-navigation controls are within
-        // reach — even though the user is still scrolling down. Only counts
-        // when the content actually overflows; otherwise there's no downward
-        // scroll to reverse and `scrollHeight - clientHeight` isn't meaningful.
-        const isScrollable = element.scrollHeight > element.clientHeight;
-        const distanceToBottom =
-          element.scrollHeight - (currentScrollTop + element.clientHeight);
-        const reachedBottom =
-          isScrollable && distanceToBottom <= BOTTOM_REVEAL_MARGIN;
-        if (currentScrollTop <= 0 || reachedBottom) {
-          setIsScrolled(false);
-        } else if (
-          currentScrollTop > lastScrollTopRef.current &&
-          currentScrollTop > 50
-        ) {
-          setIsScrolled(true);
-        } else if (currentScrollTop < lastScrollTopRef.current) {
-          setIsScrolled(false);
-        }
-        lastScrollTopRef.current = currentScrollTop;
-      };
-
-      element.addEventListener("scroll", handleScroll, { passive: true });
-
-      return () => {
-        element.removeEventListener("scroll", handleScroll);
-      };
+        targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
+        batch(() => {
+          readingState.scrollToVerse.value = null;
+          readingState.scrollPosition.value = scroller.scrollTop;
+        });
+      });
     });
 
-    scrollerCleanupRef.current = cleanup;
-  };
+    return () => {
+      if (frame !== null) {
+        cancelAnimationFrame(frame);
+      }
+      dispose();
+    };
+  }, [scroller, readingState]);
 
-  const slotScrollerRefCallback = (element: HTMLDivElement | null) => {
-    slotScrollerRef.current = element;
-    if (!isMobile) {
-      attachScroller(element);
-    }
-  };
-
-  const currentScrollerRefCallback = (element: HTMLDivElement | null) => {
-    mobileScrollerRef.current = element;
-    if (isMobile) {
-      attachScroller(element);
-    }
-  };
-
-  const swipeViewportRefCallback = (element: HTMLDivElement | null) => {
-    swipeViewportRef.current = element;
-  };
-
-  const swipeTrackRefCallback = (element: HTMLDivElement | null) => {
-    swipeTrackRef.current = element;
-  };
-
+  // Record where the reader has scrolled to, and drive the mobile chrome. Pure
+  // observation — this effect never writes `scrollTop`.
   useEffect(() => {
-    attachScroller(
-      isMobile ? mobileScrollerRef.current : slotScrollerRef.current
-    );
+    if (!scroller) {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (
+        currentChapterRef.current?.translation.id ===
+          readingState.translationId.value &&
+        currentChapterRef.current?.book.id === readingState.bookId.value &&
+        currentChapterRef.current?.chapter.number ===
+          readingState.chapterNumber.value
+      ) {
+        readingState.scrollPosition.value = scroller.scrollTop;
+      }
+
+      if (!isMobile) {
+        return;
+      }
+
+      const currentScrollTop = scroller.scrollTop;
+      // Distance from the current scroll position to the very bottom of the
+      // chapter. When the reader lands within a small threshold of the end,
+      // re-show the toolbar so the chapter-navigation controls are within
+      // reach — even though the user is still scrolling down. Only counts
+      // when the content actually overflows; otherwise there's no downward
+      // scroll to reverse and `scrollHeight - clientHeight` isn't meaningful.
+      const isScrollable = scroller.scrollHeight > scroller.clientHeight;
+      const distanceToBottom =
+        scroller.scrollHeight - (currentScrollTop + scroller.clientHeight);
+      const reachedBottom =
+        isScrollable && distanceToBottom <= BOTTOM_REVEAL_MARGIN;
+      if (currentScrollTop <= 0 || reachedBottom) {
+        setIsScrolled(false);
+      } else if (
+        currentScrollTop > lastScrollTopRef.current &&
+        currentScrollTop > 50
+      ) {
+        setIsScrolled(true);
+      } else if (currentScrollTop < lastScrollTopRef.current) {
+        setIsScrolled(false);
+      }
+      lastScrollTopRef.current = currentScrollTop;
+    };
+
+    scroller.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
-      scrollerCleanupRef.current?.();
-      scrollerCleanupRef.current = null;
+      scroller.removeEventListener("scroll", handleScroll);
     };
-  }, [isMobile, readingState]);
+  }, [scroller, isMobile, readingState]);
 
   const currentChapterValue = readingState.chapterData.value;
 
@@ -555,15 +608,25 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [readingState, state, slot.id]);
 
-  effect(() => {
-    void readingState.translationId.value;
-    const track = swipeTrackRef.current;
-    if (!track) {
-      return;
-    }
+  // Drop the inline transform when the translation changes, so the track falls
+  // back to the stylesheet's centred rest position (which flips for RTL).
+  //
+  // Wrapped in `useEffect` rather than called bare in the render body: a bare
+  // `effect()` subscribes afresh on every render and is never disposed, so the
+  // component leaked one live subscription per render.
+  useEffect(
+    () =>
+      effect(() => {
+        void readingState.translationId.value;
+        const track = swipeTrackRef.current;
+        if (!track) {
+          return;
+        }
 
-    track.style.removeProperty("transform");
-  });
+        track.style.removeProperty("transform");
+      }),
+    [readingState]
+  );
 
   const openAllSettings = () => {
     if (!state) {
