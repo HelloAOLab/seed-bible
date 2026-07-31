@@ -19,7 +19,7 @@ const { createRecordsClient } = createRequire(import.meta.url)(
 
 const recordName = "aoBot";
 const headers = {
-  Origin: "https://auth.ao.bot",
+  Origin: "https://auth.seedbible.org",
 };
 
 /**

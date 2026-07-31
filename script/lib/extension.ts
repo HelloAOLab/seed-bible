@@ -13,7 +13,7 @@ import * as z from "zod/v4";
 // const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
 const headers = {
-  Origin: "https://auth.ao.bot",
+  Origin: "https://auth.seedbible.org",
 };
 
 /**
@@ -372,7 +372,7 @@ export async function upload(
 
   const programOptions: string[] = [
     `--endpoint "https://api.ao.bot"`,
-    `--origin "https://auth.ao.bot"`,
+    `--origin "https://auth.seedbible.org"`,
   ];
   if (options.sessionKey) {
     programOptions.push(`--session-key "${options.sessionKey}"`);

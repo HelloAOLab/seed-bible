@@ -64,7 +64,9 @@ const UNSAFE_HEADERS = new Set([
   "host",
 ]);
 
-export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
+export function CasualOSManager(
+  endpoint: string = "https://auth.seedbible.org"
+) {
   const rawClient = createRecordsClient(endpoint);
   const connectionId = uuid();
   let currentWakeLock: WakeLockSentinel | null = null;
@@ -127,7 +129,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
 
   function getInstClient(): InstRecordsClient {
     if (!instRecordsClient) {
-      const url = new URL("wss://auth.ao.bot");
+      const url = new URL("wss://auth.seedbible.org");
       const manager = new WebsocketManager(url);
       manager.init();
       const client = new WebsocketConnectionClient(manager.socket);

@@ -14,7 +14,7 @@ const { createRecordsClient } = createRequire(import.meta.url)(
 ) as typeof import("@casual-simulation/aux-records/RecordsClient.js");
 
 const headers = {
-  Origin: "https://auth.ao.bot",
+  Origin: "https://auth.seedbible.org",
 };
 
 const UNSAFE_HEADERS = new Set([
