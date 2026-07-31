@@ -91,6 +91,9 @@
   --sb-secondary-color: #faddd1;
   --sb-secondary-font-color: #333;
 
+  --sb-link-color: #b34d1c;
+  --sb-link-visited-color: #8d5a6b;
+
   --sb-sidebar-background: transparent;
   --sb-sidebar-font-family: inherit;
   --sb-sidebar-font-color: inherit;
@@ -349,11 +352,11 @@ h6 {
 }
 
 a {
-  color: var(--sb-primary-color);
+  color: var(--sb-link-color);
 }
 
 a:visited {
-  color: var(--sb-secondary-color);
+  color: var(--sb-link-visited-color);
 }
 
 .sb-font-size-xs {

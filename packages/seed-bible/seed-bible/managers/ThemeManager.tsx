@@ -1,16 +1,10 @@
 import {
   computed,
-  effect,
   signal,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import type { LoginManager } from "../managers/LoginManager";
-import {
-  getProfileConfigValue,
-  saveProfileConfigValue,
-} from "../managers/ProfileConfigSync";
-import type { NavigationManager } from "./NavigationManager";
+import type { SettingsManager } from "./SettingsManager";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -20,6 +14,9 @@ export interface BibleThemeVariables {
   secondaryFontColor: string;
 
   tertiaryColor: string;
+
+  linkColor: string;
+  linkVisitedColor: string;
 
   /**
    * The background color for the entire app. This is used as the background for the body element, so it will be visible in areas that don't have a specific background set (e.g. when a pane is detached or when there are gaps between panes). It should generally match the readerBackground color to create a seamless look, but can be set to a different color if desired.
@@ -471,8 +468,6 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
     .join("\n");
 }
 
-const DEFAULT_THEME_ID = "light";
-
 const LIGHT_THEME: BibleTheme = {
   id: "light",
   name: "Light",
@@ -484,6 +479,9 @@ const LIGHT_THEME: BibleTheme = {
     secondaryFontColor: "#333",
 
     tertiaryColor: "#f0f0f0",
+
+    linkColor: "#e07b4c",
+    linkVisitedColor: "#8d5a6b",
 
     background: "#f8fafc",
 
@@ -626,6 +624,9 @@ const DARK_THEME: BibleTheme = {
     secondaryFontColor: "#f5f5f5",
 
     tertiaryColor: "#1c1c1c",
+
+    linkColor: "#e07b4c",
+    linkVisitedColor: "#d99bb0",
 
     background: "#0a0a0a",
 
@@ -775,6 +776,8 @@ export type ThemeColorKey =
   | "secondaryColor"
   | "secondaryFontColor"
   | "tertiaryColor"
+  | "linkColor"
+  | "linkVisitedColor"
   | "background"
   | "fontColor"
   | "sidebarBackground"
@@ -815,6 +818,8 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "secondaryColor", label: "Secondary" },
       { key: "secondaryFontColor", label: "Secondary text" },
       { key: "tertiaryColor", label: "Tertiary" },
+      { key: "linkColor", label: "Link" },
+      { key: "linkVisitedColor", label: "Visited link" },
     ],
   },
   {
@@ -870,16 +875,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
   },
 ];
 
-const TAG_THEME_ID = "app.themeId";
-const TAG_CUSTOM_THEME = "app.customTheme";
-const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
-
-// Profile.config keys (matches the unprefixed convention used by
-// ConfigManager / SettingsManager).
-const PROFILE_THEME_ID = "themeId";
-const PROFILE_CUSTOM_THEME = "customTheme";
-const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
-
 export const DEFAULT_HIGHLIGHT_IDS = [
   "yellow",
   "green",
@@ -892,45 +887,11 @@ export const DEFAULT_HIGHLIGHT_IDS = [
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
 
 type ThemeOverrides = Partial<Record<ThemeColorKey, string>>;
-type HighlightOverrides = Partial<Record<string, Partial<ThemeHighlightColor>>>;
+type HighlightOverrides = Record<string, Partial<ThemeHighlightColor>>;
 
 const THEME_COLOR_KEYS: ThemeColorKey[] = THEME_COLOR_GROUPS.flatMap((group) =>
   group.fields.map((field) => field.key)
 );
-
-function parseThemeId(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim().length > 0
-    ? value
-    : fallback;
-}
-
-function parseHighlightOverrides(value: unknown): HighlightOverrides {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return {};
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return {};
-  }
-  const obj = parsed as Record<string, unknown>;
-  const overrides: HighlightOverrides = {};
-  for (const [id, entry] of Object.entries(obj)) {
-    if (!entry || typeof entry !== "object") continue;
-    const e = entry as Record<string, unknown>;
-    const sub: Partial<ThemeHighlightColor> = {};
-    if (typeof e.color === "string") sub.color = e.color;
-    if (typeof e.fontColor === "string") sub.fontColor = e.fontColor;
-    if (typeof e.wordsOfJesusFontColor === "string") {
-      sub.wordsOfJesusFontColor = e.wordsOfJesusFontColor;
-    }
-    if (Object.keys(sub).length > 0) overrides[id] = sub;
-  }
-  return overrides;
-}
 
 function applyHighlightOverrides(
   theme: BibleTheme,
@@ -947,24 +908,20 @@ function applyHighlightOverrides(
   };
 }
 
-function parseCustomTheme(value: unknown): ThemeOverrides {
-  let parsed: unknown = value;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return {};
-    }
-  }
-  if (!parsed || typeof parsed !== "object") {
-    return {};
-  }
-  const obj = parsed as Record<string, unknown>;
+/**
+ * Filters a raw, already-decoded color-override record down to the keys the
+ * customization UI actually exposes. `SettingsManager` stores/decodes the
+ * raw `Record<string, string>` (it doesn't know about `ThemeColorKey`); this
+ * is the theme-domain validation layered on top of that generic storage.
+ */
+function filterValidColorOverrides(
+  raw: Record<string, string>
+): ThemeOverrides {
   const overrides: ThemeOverrides = {};
   for (const key of THEME_COLOR_KEYS) {
-    const raw = obj[key];
-    if (typeof raw === "string" && raw.length > 0) {
-      overrides[key] = raw;
+    const value = raw[key];
+    if (typeof value === "string" && value.length > 0) {
+      overrides[key] = value;
     }
   }
   return overrides;
@@ -986,15 +943,15 @@ function applyOverrides(
 
 export interface ThemeManager {
   themes: Signal<BibleTheme[]>;
-  selectedThemeId: Signal<string>;
+  selectedThemeId: ReadonlySignal<string>;
   /** Effective theme = preset with custom overrides applied. */
   currentTheme: ReadonlySignal<BibleTheme>;
   /** The base preset for `selectedThemeId`, without custom overrides. */
   basePresetTheme: ReadonlySignal<BibleTheme>;
   /** User color overrides layered on top of the selected preset. */
-  customOverrides: Signal<ThemeOverrides>;
+  customOverrides: ReadonlySignal<ThemeOverrides>;
   /** User highlight color overrides layered on top of the preset highlights. */
-  customHighlightOverrides: Signal<HighlightOverrides>;
+  customHighlightOverrides: ReadonlySignal<HighlightOverrides>;
   setTheme: (themeId: string) => void;
   setCustomColor: (key: ThemeColorKey, value: string) => void;
   resetCustomColor: (key: ThemeColorKey) => void;
@@ -1007,47 +964,16 @@ export interface ThemeManager {
   resetAllHighlightColors: () => void;
 }
 
-export function createTheme(
-  login: LoginManager,
-  navigation: NavigationManager
-): ThemeManager {
+export function createTheme(settings: SettingsManager): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
-  const url = navigation.currentUrl.value;
-
-  const readThemeId = () =>
-    parseThemeId(
-      getProfileConfigValue(login.profile.value, PROFILE_THEME_ID) ??
-        url.searchParams.get(TAG_THEME_ID),
-      DEFAULT_THEME_ID
-    );
-
-  const readCustomOverrides = () =>
-    parseCustomTheme(
-      getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_THEME) ??
-        url.searchParams.get(TAG_CUSTOM_THEME)
-    );
-
-  const readHighlightOverrides = () =>
-    parseHighlightOverrides(
-      getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_HIGHLIGHTS) ??
-        url.searchParams.get(TAG_CUSTOM_HIGHLIGHTS)
-    );
-
-  const selectedThemeId = signal<string>(readThemeId());
-  const customOverrides = signal<ThemeOverrides>(readCustomOverrides());
-  const customHighlightOverrides = signal<HighlightOverrides>(
-    readHighlightOverrides()
+  const selectedThemeId = computed(() => settings.settings.value.themeId);
+  const customOverrides = computed(() =>
+    filterValidColorOverrides(settings.settings.value.customTheme)
   );
-
-  // Re-read whenever the user logs in/out so the profile's saved theme
-  // overlays the local cache.
-  effect(() => {
-    void login.profile.value;
-    selectedThemeId.value = readThemeId();
-    customOverrides.value = readCustomOverrides();
-    customHighlightOverrides.value = readHighlightOverrides();
-  });
+  const customHighlightOverrides = computed(
+    () => settings.settings.value.customHighlights
+  );
 
   const basePresetTheme = computed<BibleTheme>(
     () =>
@@ -1065,14 +991,12 @@ export function createTheme(
 
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
-      selectedThemeId.value = themeId;
-      saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
+      settings.setThemeId(themeId);
     }
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
-    customOverrides.value = next;
-    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
+    settings.setCustomTheme(next);
   };
 
   const setCustomColor = (key: ThemeColorKey, value: string) => {
@@ -1090,8 +1014,7 @@ export function createTheme(
   };
 
   const writeHighlightOverrides = (next: HighlightOverrides) => {
-    customHighlightOverrides.value = next;
-    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
+    settings.setCustomHighlights(next);
   };
 
   const setHighlightColor = (
