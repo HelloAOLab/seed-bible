@@ -79,7 +79,7 @@ interface ClientConfig {
   acceptedLanguages: string[];
 }
 
-type RenderFn = (opts: {
+export type RenderFn = (opts: {
   path: string;
   config: {
     basePath: string;
@@ -94,7 +94,9 @@ type RenderFn = (opts: {
 >;
 
 /** Derives per-client render config (mobile, languages) from request headers. */
-function clientConfigFromHeaders(headers: IncomingHttpHeaders): ClientConfig {
+export function clientConfigFromHeaders(
+  headers: IncomingHttpHeaders
+): ClientConfig {
   const browser = Bowser.getParser(headers["user-agent"]!);
   const renderedAsMobile = browser.getPlatformType(true) === "mobile";
   const acceptedLanguages = headers["accept-language"]
@@ -188,7 +190,7 @@ async function loadHtml(branch: string, buildId: string): Promise<string> {
 }
 
 // ─── Routing ─────────────────────────────────────────────────────────────────
-interface Route {
+export interface Route {
   branch: string;
   /** Path prefix this deployment is mounted under (no trailing slash). */
   basePath: string;
@@ -240,7 +242,7 @@ function resolveRoute(rawUrl: string): Route {
  * `preRenderedHtml` is served as-is instead of failing the request — the
  * client still gets a working page (just without server-rendered content).
  */
-async function renderAndRespond(
+export async function renderAndRespond(
   req: IncomingMessage,
   res: ServerResponse,
   render: RenderFn,
@@ -619,8 +621,12 @@ async function startDevServer(): Promise<void> {
   });
 }
 
-if (IS_PRODUCTION) {
-  startProdServer();
-} else {
-  void startDevServer();
+// Vitest sets this in every worker process — skipped there so importing this
+// module for its exported helpers doesn't also bind a real port.
+if (process.env.VITEST !== "true") {
+  if (IS_PRODUCTION) {
+    startProdServer();
+  } else {
+    void startDevServer();
+  }
 }
