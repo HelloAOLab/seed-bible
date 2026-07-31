@@ -58,7 +58,7 @@ export async function uploadFile(
   sessionKey: string,
   markers: string[] = ["publicRead"]
 ) {
-  const client = createRecordsClient("https://api.ao.bot");
+  const client = createRecordsClient("https://auth.seedbible.org");
 
   client.sessionKey = sessionKey;
 
