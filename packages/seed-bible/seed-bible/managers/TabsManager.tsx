@@ -10,6 +10,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
   parseReadingPath,
+  stripBasePath,
 } from "./ReadingUrlPath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
@@ -153,30 +154,44 @@ function getUrlReadingLanguage(url: URL, basePath: string): string | null {
 }
 
 /**
- * If the current URL's book segment only resolved via a fuzzy typo match,
- * corrects the address bar to the canonical path — mirrors the SSR
- * redirect (`entry-ssr.tsx`) for client-side navigation that never made a
- * fresh server request (so never had a chance to 301). A no-op for an
- * exact match, an unresolved book (nothing confident to correct to), or a
- * legacy/non-reading-path URL.
+ * Corrects the address bar when the current URL resolves to a real reading
+ * position but doesn't spell it canonically — the client-side counterpart of
+ * `legacyReadingUrlRedirect` in `entry-ssr.tsx`, for navigation that never
+ * made a fresh server request and so never had a chance to be 301'd.
+ *
+ * Same test as the server: rebuild the path from what the URL resolved to and
+ * rewrite only if it differs. That covers a typo ("senesis"), an alias
+ * ("gen"), other casings ("Genesis"), and the junk `getBookId`'s prefix
+ * fallback accepts ("luke-skywalker" → Luke). A no-op for a URL that is
+ * already canonical, a book that resolves to nothing (the reader shows its
+ * own not-found state), or a legacy/non-reading-path URL.
+ *
+ * One deliberate difference from the server: no `forceExplicitLanguage`, so a
+ * fully-default position keeps the short "/AAB/genesis/1" form here. That
+ * short form is the pleasant one to have in the address bar, and it is only
+ * unsuitable for crawlers — who arrive over HTTP and get promoted to the
+ * explicit form by `acceptLanguageRedirect` before ever running this code.
  */
-function selfHealFuzzyBookMatch(
+function selfHealNonCanonicalPath(
   navigation: NavigationManager,
   defaultTranslationId: string
 ): void {
   const url = navigation.currentUrl.peek();
   const parsed = parseReadingPath(url.pathname, navigation.basePath);
-  if (!parsed || parsed.bookMatch !== "fuzzy" || !parsed.bookId) {
+  if (!parsed || !parsed.bookId) {
     return;
   }
 
   const correctedPath = buildReadingPath({
-    language: parsed.language ?? DEFAULT_UI_LANGUAGE,
+    language: (parsed.language ?? DEFAULT_UI_LANGUAGE).toLowerCase(),
     translationId: parsed.translationId,
     bookId: parsed.bookId,
     chapter: parsed.chapter,
     defaultTranslationId,
   });
+  if (stripBasePath(url.pathname, navigation.basePath) === correctedPath) {
+    return;
+  }
   navigation.updatePathAndQueryParams(correctedPath, {}, true);
 }
 
@@ -365,7 +380,7 @@ export function createTabs(
     navigation.currentUrl.value,
     navigation.basePath
   );
-  selfHealFuzzyBookMatch(navigation, defaultTranslationIdForDefaultLanguage);
+  selfHealNonCanonicalPath(navigation, defaultTranslationIdForDefaultLanguage);
 
   console.log("Creating TabsManager with initial URL parameters:", {
     initialTranslationId,
@@ -403,7 +418,10 @@ export function createTabs(
       return;
     }
 
-    selfHealFuzzyBookMatch(navigation, defaultTranslationIdForDefaultLanguage);
+    selfHealNonCanonicalPath(
+      navigation,
+      defaultTranslationIdForDefaultLanguage
+    );
 
     const requestedTranslation = getInitialTranslationId(
       navigation.currentUrl.value,

@@ -542,35 +542,84 @@ describe("createTabs", () => {
     expect(readingState.decorations.value[0]!.chapterNumber).toBe(1);
   });
 
-  it("self-heals a fuzzy-matched book typo to the canonical URL on mount", async () => {
-    // "senesis" doesn't share getBookId's "gen"/"genesis" alias prefixes, so
-    // it only resolves through the fuzzy fallback (see ReadingUrlPath.test.ts).
-    window.history.replaceState(null, "", "/AAB/senesis/1");
-    setWebResponses(createExampleManagerResponseMap());
+  // The client-side counterpart of `legacyReadingUrlRedirect`. It has to
+  // correct the same set the server does, not just typos: `getBookId` also
+  // accepts aliases, other casings, and — through its `startsWith` fallback —
+  // anything merely starting with a book name.
+  // The fixture translation only carries GEN/EXO/MAT, so every case here
+  // corrects to one of those — otherwise the reader can't follow the
+  // correction and the URL is rewritten back to where it actually is.
+  it.each([
+    // Only resolves through the fuzzy fallback: "senesis" shares none of
+    // getBookId's "gen"/"genesis" prefixes (see ReadingUrlPath.test.ts).
+    ["/AAB/senesis/1", "/AAB/genesis/1", "GEN"],
+    ["/AAB/genocide/1", "/AAB/genesis/1", "GEN"],
+    ["/AAB/matthew-effect/1", "/AAB/matthew/1", "MAT"],
+    ["/AAB/gen/1", "/AAB/genesis/1", "GEN"],
+    ["/AAB/Genesis/1", "/AAB/genesis/1", "GEN"],
+  ])(
+    "self-heals %s to %s on mount",
+    async (from, expectedPath, expectedBookId) => {
+      window.history.replaceState(null, "", from);
+      setWebResponses(createExampleManagerResponseMap());
 
-    const { tabs: manager } = createTabsManager();
-    await waitForTabsToLoad(manager.tabs.value);
+      const { tabs: manager } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
 
-    const readingState = manager.tabs.value[0]!.readingState;
-    expect(readingState.bookId.value).toBe("GEN");
+      const readingState = manager.tabs.value[0]!.readingState;
+      expect(readingState.bookId.value).toBe(expectedBookId);
+      expect(new URL(window.location.href).pathname).toBe(expectedPath);
+    }
+  );
 
-    const url = new URL(window.location.href);
-    expect(url.pathname).toBe("/AAB/genesis/1");
-  });
+  it.each([
+    ["/AAB/senesis/1", "/AAB/genesis/1", "GEN"],
+    ["/AAB/matthew-effect/1", "/AAB/matthew/1", "MAT"],
+    ["/AAB/Genesis/1", "/AAB/genesis/1", "GEN"],
+  ])(
+    "self-heals %s to %s on external navigation",
+    async (from, expectedPath, expectedBookId) => {
+      setWebResponses(createExampleManagerResponseMap());
+      const { tabs: manager, navigation } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
 
-  it("self-heals a fuzzy-matched book typo on external navigation", async () => {
+      navigation.push(from);
+
+      await waitFor(
+        () => new URL(window.location.href).pathname === expectedPath
+      );
+      await waitFor(
+        () =>
+          manager.tabs.value[0]!.readingState.bookId.value === expectedBookId
+      );
+    }
+  );
+
+  it("settles a corrected URL after one rewrite rather than looping", async () => {
+    // The correction writes `buildReadingPath` output and re-parses it on the
+    // next navigation, so feeding its own result back in has to be a no-op.
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager, navigation } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    navigation.push("/AAB/senesis/1");
+    navigation.push("/AAB/matthew-effect/1");
+    await waitFor(
+      () => new URL(window.location.href).pathname === "/AAB/matthew/1"
+    );
 
+    // Navigate to the corrected URL itself: it must be left exactly as-is.
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+    navigation.push("/AAB/matthew/1");
     await waitFor(
-      () => new URL(window.location.href).pathname === "/AAB/genesis/1"
+      () => manager.tabs.value[0]!.readingState.bookId.value === "MAT"
     );
-    await waitFor(
-      () => manager.tabs.value[0]!.readingState.bookId.value === "GEN"
-    );
+
+    expect(new URL(window.location.href).pathname).toBe("/AAB/matthew/1");
+    // The only history write should be the `push` above — no correcting
+    // `replace` on top of it.
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(replaceSpy).not.toHaveBeenCalled();
   });
 
   it("writes book/chapter navigation to the URL path instead of query params", async () => {

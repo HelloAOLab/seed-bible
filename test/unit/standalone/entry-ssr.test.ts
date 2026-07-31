@@ -4,6 +4,8 @@ import {
   render,
 } from "../../../standalone/entry-ssr";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
+import { createDefaultManagerResponseMap } from "../seed-bible/managers/testUtils/mockBibleApiData";
+import { buildChapterUrl } from "../../../script/lib/sitemap";
 
 describe("legacyReadingUrlRedirect", () => {
   describe("already the canonical shape", () => {
@@ -230,5 +232,125 @@ describe("render() Accept-Language redirect wiring", () => {
     });
 
     expect(result).toEqual({ redirectTo: "/AAB/genesis/3" });
+  });
+});
+
+// Everything above stops at a redirect, which `render()` decides before it
+// builds any state. These go the whole way through to HTML, because the
+// canonical link is only wired up at the very end (the meta block in
+// `render()`) and a regression there — or in the ordering that lets the meta
+// tags render before the chapter suspension settles — would be invisible to a
+// test that only reads `state.app.canonicalUrl`.
+describe("render() server-rendered meta tags", () => {
+  const TEMPLATE = [
+    "<!doctype html><html><head>",
+    "<!-- META -->",
+    '</head><body><script id="config"><!-- CONFIG_JSON --></script>',
+    '<div id="app"><!-- APP_HTML --></div></body></html>',
+  ].join("");
+
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    // `render()` builds its state against `http://ssr.local<path>`. Real SSR
+    // has no `window`, so the URL-writing effects no-op; under jsdom `window`
+    // exists, so they try a real history write and jsdom rejects it as
+    // cross-origin. Matching the origin lets those writes land harmlessly —
+    // the assertions below read the returned HTML, not `window.location`.
+    jsdom.reconfigure({ url: "http://ssr.local/" });
+    originalFetch = globalThis.fetch;
+    // `?useFreeBibleAPI=true` points the app at the endpoint this map is keyed
+    // on (see `getDefaultAPIEndpoint`), so no network is touched.
+    const responses = createDefaultManagerResponseMap();
+    globalThis.fetch = (async (url: string) => {
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    }) as typeof globalThis.fetch;
+    // The reader only suspends on the chapter load when it believes it is on
+    // the server, and that suspension is what makes the meta tags render with
+    // content rather than an empty shell.
+    import.meta.env.SSR = true;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    delete import.meta.env.SSR;
+  });
+
+  const renderHtml = async (
+    path: string,
+    config: Partial<typeof DEFAULT_APP_CONFIG> = {}
+  ): Promise<string> => {
+    const result = await render({
+      path,
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [], ...config },
+      html: TEMPLATE,
+    });
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    return result.html;
+  };
+
+  it("emits the reading position as the canonical URL and og:url", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    // Guards against a silently empty render making the assertions below
+    // vacuous: the chapter text has to actually be in the document.
+    expect(html).toContain("Verse 1");
+
+    expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/1"');
+    expect(html).toContain(
+      '<meta property="og:url" content="/en/AAB/genesis/1"'
+    );
+    expect(html).not.toContain('<link rel="canonical" href="/"');
+  });
+
+  it("includes the deployment basePath in the canonical URL", async () => {
+    const html = await renderHtml(
+      "/b/branch-x/en/AAB/genesis/1?useFreeBibleAPI=true",
+      { basePath: "/b/branch-x" }
+    );
+
+    expect(html).toContain(
+      '<link rel="canonical" href="/b/branch-x/en/AAB/genesis/1"'
+    );
+  });
+
+  // The review's complaint about the sitemap was not just that its URLs
+  // redirected, but that "each one disagrees with its target page's own
+  // rel=canonical". Both sides are otherwise pinned to the same literal in two
+  // separate test files, which would keep passing if only one drifted. This
+  // compares the published URL against the one the served page actually
+  // declares.
+  it("publishes exactly the URL the served page declares canonical", async () => {
+    const origin = "https://seedbible.org";
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const served = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
+    expect(served).toBeDefined();
+
+    expect(
+      buildChapterUrl(origin, {
+        translationId: "AAB",
+        bookId: "GEN",
+        chapter: 1,
+        uiLocale: "en",
+      })
+    ).toBe(`${origin}${served}`);
+  });
+
+  it("still emits the real canonical URL when the chapter fails to load", async () => {
+    // Regression for `<link rel="canonical" href="/">` on every SSR'd page.
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the fetch fails — which used to collapse the
+    // canonical to the site root and point the whole site at its front page.
+    const html = await renderHtml("/en/AAB/genesis/2?useFreeBibleAPI=true");
+
+    expect(html).toContain('<link rel="canonical" href="/en/AAB/genesis/2"');
+    expect(html).not.toContain('<link rel="canonical" href="/"');
   });
 });
