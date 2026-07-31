@@ -36,6 +36,14 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const swipeTouchStartY = useRef<number | null>(null);
   const swipeDirectionLocked = useRef<"h" | "v" | null>(null);
   const swipeCurrentDx = useRef(0);
+  // Identifies whoever currently owns the track's transform. Bumped by every
+  // new gesture, so a committed swipe still waiting to recentre knows it has
+  // been superseded and leaves the track to the gesture in progress.
+  const swipeCommitToken = useRef(0);
+  // True while a committed swipe is resting on a neighbouring panel waiting for
+  // the chapter it navigated to. The track is off-centre in that window, which
+  // a new gesture has to correct before it starts following the finger.
+  const swipeParked = useRef(false);
   const currentChapterRef = useRef(readingState.chapterData.value);
   const lastScrollTopRef = useRef(0);
   const scrollerCleanupRef = useRef<(() => void) | null>(null);
@@ -268,6 +276,31 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }
 
     const PANEL_PCT = 100 / 3;
+    // How long the track takes to slide over to a neighbouring panel.
+    const SWIPE_ANIMATION_MS = 250;
+    /**
+     * How long the track will rest on that neighbouring panel waiting for the
+     * text of the chapter it just navigated to, before recentring anyway.
+     *
+     * Navigation deliberately does not wait on a download (see
+     * `isChapterContentStale`), so for as long as the new chapter is in flight
+     * the *centre* panel still holds the chapter the reader just left.
+     * Recentring into that is what made a swipe flash the outgoing chapter.
+     * Waiting costs nothing in the usual case — the panel we are resting on is
+     * the prefetched preview of exactly the chapter being fetched, so it is
+     * already cached and settles in a few milliseconds — and the cap keeps a
+     * slow connection from stranding the reader on a static, unscrollable
+     * preview. Set to half the reader's own skeleton delay so a genuinely slow
+     * chapter falls back to the dimmed-text path well before the placeholder
+     * would appear.
+     */
+    const SWIPE_SETTLE_BUDGET_MS = 250;
+
+    const centreTransform = () => {
+      const isRtl =
+        readingState.chapterData.value?.translation.textDirection === "rtl";
+      return `translateX(${(isRtl ? 1 : -1) * PANEL_PCT}%)`;
+    };
 
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
@@ -280,9 +313,19 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       swipeDirectionLocked.current = null;
       swipeCurrentDx.current = 0;
 
+      // This gesture takes the track over from any committed swipe still
+      // waiting on its chapter.
+      swipeCommitToken.current += 1;
+
       const track = swipeTrackRef.current;
       if (track) {
         track.style.transition = "none";
+        if (swipeParked.current) {
+          // Bring the track back to centre before it starts following the
+          // finger, which `onTouchMove` measures from centre.
+          swipeParked.current = false;
+          track.style.transform = centreTransform();
+        }
       }
     };
 
@@ -344,6 +387,50 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
     };
 
+    /**
+     * Finishes a swipe that crossed the threshold: slides the track over to the
+     * neighbouring panel, navigates once it arrives, and recentres only when
+     * the new chapter's text is actually on screen.
+     *
+     * The panel we land on is a static preview of the chapter being navigated
+     * to, so resting there shows the reader the right text throughout the wait.
+     */
+    const commitSwipe = (
+      track: HTMLDivElement,
+      landingTransform: string,
+      navigate: () => Promise<void>
+    ) => {
+      const commit = ++swipeCommitToken.current;
+      track.style.transition = `transform ${SWIPE_ANIMATION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+      track.style.transform = landingTransform;
+      readingState.clearSelectedVerses();
+
+      window.setTimeout(() => {
+        // The navigation always runs, even if another gesture has since taken
+        // the track over: the reader completed the swipe that asked for it.
+        // Only the transform below is the superseding gesture's to own.
+        const settled = navigate().catch(() => undefined);
+        if (swipeCommitToken.current !== commit) {
+          return;
+        }
+
+        swipeParked.current = true;
+        void Promise.race([
+          settled,
+          new Promise<void>((resolve) =>
+            window.setTimeout(resolve, SWIPE_SETTLE_BUDGET_MS)
+          ),
+        ]).then(() => {
+          if (swipeCommitToken.current !== commit) {
+            return;
+          }
+          swipeParked.current = false;
+          track.style.transition = "none";
+          track.style.transform = centreTransform();
+        });
+      }, SWIPE_ANIMATION_MS);
+    };
+
     const onTouchEnd = () => {
       if (swipeDirectionLocked.current !== "h") {
         swipeTouchStartX.current = null;
@@ -371,32 +458,19 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      const sign = isRtl ? 1 : -1;
+
       if (shouldLoadNext && hasNext) {
-        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
-        const sign = isRtl ? 1 : -1;
-        const nextTransform = `translateX(${sign * PANEL_PCT * 2}%)`;
-        track.style.transform = nextTransform;
-        readingState.clearSelectedVerses();
-        window.setTimeout(async () => {
-          track.style.transition = "none";
-          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
-          await readingState.loadNextChapter();
-        }, 250);
+        commitSwipe(track, `translateX(${sign * PANEL_PCT * 2}%)`, () =>
+          readingState.loadNextChapter()
+        );
       } else if (shouldLoadPrev && hasPrev) {
-        track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
-        const sign = isRtl ? 1 : -1;
-        const prevTransform = "translateX(0%)";
-        track.style.transform = prevTransform;
-        readingState.clearSelectedVerses();
-        window.setTimeout(async () => {
-          track.style.transition = "none";
-          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
-          await readingState.loadPreviousChapter();
-        }, 250);
+        commitSwipe(track, "translateX(0%)", () =>
+          readingState.loadPreviousChapter()
+        );
       } else {
         track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
-        const sign = isRtl ? 1 : -1;
-        track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
+        track.style.transform = centreTransform();
       }
     };
 
@@ -405,6 +479,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
+      // Retires any commit still waiting to recentre, so it doesn't write a
+      // transform onto a track this effect no longer owns.
+      swipeCommitToken.current += 1;
+      swipeParked.current = false;
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
