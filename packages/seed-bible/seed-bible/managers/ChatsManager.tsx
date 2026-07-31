@@ -1624,6 +1624,21 @@ function createSharedChatSession(
             i18n,
             upsertMessage: upsertSharedMessage,
           });
+        } catch (err) {
+          upsertSharedMessage(
+            createChatMessage(
+              {
+                type: "text",
+                text: i18n.t("chat-ai-error", {
+                  defaultValue:
+                    "Sorry, something went wrong generating a response ({{error}}).",
+                  error: err instanceof Error ? err.message : String(err),
+                }),
+              },
+              [participant.id],
+              []
+            )
+          );
         } finally {
           setParticipantTyping(participant.id, false);
         }
@@ -2044,6 +2059,22 @@ function createLocalChatSession(
               messages.value = upsertMessageInList(messages.value, message);
             },
           });
+        } catch (err) {
+          messages.value = upsertMessageInList(
+            messages.value,
+            createChatMessage(
+              {
+                type: "text",
+                text: i18n.t("chat-ai-error", {
+                  defaultValue:
+                    "Sorry, something went wrong generating a response ({{error}}).",
+                  error: err instanceof Error ? err.message : String(err),
+                }),
+              },
+              [target.id],
+              []
+            )
+          );
         } finally {
           providerTypingParticipantIds.value =
             providerTypingParticipantIds.value.filter((id) => id !== target.id);

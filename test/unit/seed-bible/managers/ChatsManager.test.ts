@@ -2496,6 +2496,101 @@ describe("createChatsManager", () => {
     );
   });
 
+  it("sendMessage() surfaces an error message when the local provider's generateResponse rejects", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi
+        .fn()
+        .mockRejectedValue(new Error("Tool not found: doStuff")),
+    });
+    session.addParticipant("provider-1");
+
+    await session.sendMessage({
+      type: "text",
+      text: "Hello there",
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(session.typingParticipants.value).not.toContainEqual(
+      expect.objectContaining({
+        id: "provider-1",
+      })
+    );
+    expect(session.messages.value).toContainEqual(
+      expect.objectContaining({
+        authors: ["provider-1"],
+        type: "text",
+        text: "chat-ai-error",
+      })
+    );
+  });
+
+  it("createSharedSession() surfaces an error message when the provider's generateResponse rejects", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi
+        .fn()
+        .mockRejectedValue(new Error("Tool not found: doStuff")),
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+    chat.addParticipant("conn-user-a_provider-1");
+    await Promise.resolve();
+
+    await chat.sendMessage({
+      type: "text",
+      text: "Hello @conn-user-a_provider-1",
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(chat.typingParticipants.value).not.toContainEqual(
+      expect.objectContaining({
+        id: "conn-user-a_provider-1",
+      })
+    );
+    expect(chat.messages.value).toContainEqual(
+      expect.objectContaining({
+        authors: ["conn-user-a_provider-1"],
+        type: "text",
+        text: "chat-ai-error",
+      })
+    );
+  });
+
   it("sendMessage() incrementally updates local provider responses when streaming", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";

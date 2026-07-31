@@ -330,6 +330,7 @@
   "chat-tool-used": "{{name}} used {{count}} tools",
   "chat-tool-used_one": "{{name}} used a tool",
   "chat-tool-used_other": "{{name}} used {{count}} tools",
+  "chat-ai-error": "Sorry, something went wrong generating a response ({{error}}).",
   "session-chat-just-you": "In-session chat (Just You)",
   "you-have-no-chats": "You have no chats. Create one using the + button below.",
   "no-chat-providers": "No chat providers are available. Connect an AI or messaging provider to start chatting.",

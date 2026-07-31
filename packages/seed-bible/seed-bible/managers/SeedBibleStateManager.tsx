@@ -368,6 +368,7 @@ import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import {
   createPlaylistManager,
   type PlaylistManager,
+  type PlaylistItemData,
   type SimplePlaylist,
 } from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
@@ -1528,11 +1529,18 @@ export function createSeedBibleState(
         "Starts playing the given playlist. Useful for giving the user a tour of verses/chapters to read.",
       parameters: GeneratedPlaylistSchema,
       function: async (args) => {
+        let items: PlaylistItemData[];
+        try {
+          items = args.items.map((i) => convertToPlaylistItem(i));
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+
         const playlist: SimplePlaylist = {
           id: uuid(),
           title: args.title,
           description: args.description,
-          items: args.items.map((i) => convertToPlaylistItem(i)),
+          items,
         };
 
         playlists.startPlaying(playlist);
@@ -1552,9 +1560,7 @@ export function createSeedBibleState(
     });
   };
 
-  effect(() => {
-    enableCoreChatContext();
-  });
+  enableCoreChatContext();
 
   // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
   // // load that playlist and start playing it immediately. The locator's `id` is

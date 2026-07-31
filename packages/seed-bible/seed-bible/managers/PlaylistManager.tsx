@@ -1121,8 +1121,16 @@ export function createPlaylistManager(
       parameters: AIPlaylistItemSchema.extend({
         index: z.number(),
       }),
-      function: async (args) =>
-        insertEditingPlaylistItem(args.index, convertToPlaylistItem(args)),
+      function: async (args) => {
+        try {
+          return insertEditingPlaylistItem(
+            args.index,
+            convertToPlaylistItem(args)
+          );
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+      },
     });
 
     const updatePlaylistItemTool = generateFunctionTool({
@@ -1131,8 +1139,16 @@ export function createPlaylistManager(
       parameters: AIPlaylistItemSchema.extend({
         index: z.number(),
       }),
-      function: async (args) =>
-        updateEditingPlaylistItem(args.index, convertToPlaylistItem(args)),
+      function: async (args) => {
+        try {
+          return updateEditingPlaylistItem(
+            args.index,
+            convertToPlaylistItem(args)
+          );
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+      },
     });
 
     const movePlaylistItemTool = generateFunctionTool({

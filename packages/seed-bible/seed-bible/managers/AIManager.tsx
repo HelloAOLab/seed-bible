@@ -9,7 +9,7 @@ export interface AIProviderFunctionTool {
   description: string;
   parameters: ZodStandardJSONSchemaPayload<unknown>;
 
-  /**d
+  /**
    * The function that should be called by the AI provider if the AI model chooses to call this tool.
    * @param args The arguments to provide to the function.
    * @returns A promise that resolves with the result of the function call.
@@ -90,27 +90,38 @@ export function convertToPlaylistItem(
 ): PlaylistItemData {
   switch (item.type) {
     case "bible-verse":
+      if (!item.bibleVerse) {
+        throw new Error(
+          'Item has type "bible-verse" but no bibleVerse was provided.'
+        );
+      }
       return {
         type: item.type,
         ref: {
-          bookId: item.bibleVerse!.ref.bookId,
-          chapter: item.bibleVerse!.ref.chapter,
-          endChapter: item.bibleVerse!.ref.endChapter ?? undefined,
-          verse: item.bibleVerse!.ref.verse ?? undefined,
-          endVerse: item.bibleVerse!.ref.endVerse ?? undefined,
+          bookId: item.bibleVerse.ref.bookId,
+          chapter: item.bibleVerse.ref.chapter,
+          endChapter: item.bibleVerse.ref.endChapter ?? undefined,
+          verse: item.bibleVerse.ref.verse ?? undefined,
+          endVerse: item.bibleVerse.ref.endVerse ?? undefined,
         },
       };
     case "link":
+      if (!item.link) {
+        throw new Error('Item has type "link" but no link was provided.');
+      }
       return {
         type: item.type,
-        title: item.link!.title ?? undefined,
-        url: item.link!.url,
+        title: item.link.title ?? undefined,
+        url: item.link.url,
       };
     case "html":
+      if (!item.html) {
+        throw new Error('Item has type "html" but no html was provided.');
+      }
       return {
         type: item.type,
-        title: item.html!.title ?? undefined,
-        html: item.html!.html,
+        title: item.html.title ?? undefined,
+        html: item.html.html,
       };
   }
 }

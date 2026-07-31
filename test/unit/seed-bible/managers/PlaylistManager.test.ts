@@ -820,6 +820,54 @@ describe("createPlaylistManager", () => {
       expect(manager.editingPlaylist.value!.items).toEqual([]);
     });
 
+    it("insertPlaylistItem reports an error instead of throwing when the type's matching field is missing", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 0,
+          type: "bible-verse",
+          bibleVerse: null,
+          link: null,
+          html: null,
+        })
+      ).resolves.toBe(
+        'error: Item has type "bible-verse" but no bibleVerse was provided.'
+      );
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("updatePlaylistItem reports an error instead of throwing when the type's matching field is missing", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      const updatePlaylistItem = getTool("updatePlaylistItem");
+
+      await expect(
+        updatePlaylistItem.function({
+          index: 0,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: null,
+        })
+      ).resolves.toBe('error: Item has type "html" but no html was provided.');
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+      ]);
+    });
+
     it("insertPlaylistItem reports an error when nothing is being edited", async () => {
       const manager = makeManager("user-1");
       await flush();

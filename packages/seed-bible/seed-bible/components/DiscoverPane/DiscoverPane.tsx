@@ -45,15 +45,13 @@ export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
   }
 
   return (
-    <>
-      <button
-        type="button"
-        className="sb-discover-create"
-        onClick={() => playlists.createNewPlaylist()}
-      >
-        + {t("create-playlist", { defaultValue: "Create" })}
-      </button>
-    </>
+    <button
+      type="button"
+      className="sb-discover-create"
+      onClick={() => playlists.createNewPlaylist()}
+    >
+      + {t("create-playlist", { defaultValue: "Create" })}
+    </button>
   );
 }
 

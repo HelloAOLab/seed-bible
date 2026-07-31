@@ -77,6 +77,13 @@ async function* parseSseJsonStream(
     while (true) {
       const { value, done } = await reader.read();
       if (done) {
+        const line = buffer.trim();
+        if (line.startsWith("data:")) {
+          const payload = line.slice("data:".length).trim();
+          if (payload && payload !== "[DONE]") {
+            yield JSON.parse(payload);
+          }
+        }
         return;
       }
 
@@ -201,11 +208,6 @@ export default function initApologistExtension() {
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {
-          const lastMessage =
-            chatContext.messages[chatContext.messages.length - 1];
-          console.log("Generating response for message:", lastMessage);
-          console.log("Chat context:", chatContext);
-
           const instructions =
             chatContext.instructions ??
             `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`;
@@ -217,10 +219,6 @@ export default function initApologistExtension() {
 
           const tools = chatContext.tools?.map((t) => ({
             type: t.type,
-            name: t.name,
-            description: t.description,
-            parameters: t.parameters,
-            strict: true,
             function: {
               name: t.name,
               description: t.description,
@@ -278,6 +276,15 @@ export default function initApologistExtension() {
                   : {},
               }
             );
+
+            if (!response.ok) {
+              const body = await response.text().catch(() => "");
+              throw new Error(
+                `Chat completions request failed (${response.status})${
+                  body ? `: ${body}` : ""
+                }`
+              );
+            }
 
             const stream = streamChoices(response);
 
