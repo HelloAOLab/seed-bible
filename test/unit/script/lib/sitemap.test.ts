@@ -14,7 +14,10 @@ import {
   MAX_URLS_PER_SITEMAP,
   type BookChapters,
 } from "../../../../script/lib/sitemap";
-import { legacyReadingUrlRedirect } from "../../../../standalone/entry-ssr";
+import {
+  acceptLanguageRedirect,
+  legacyReadingUrlRedirect,
+} from "../../../../standalone/entry-ssr";
 
 const ORIGIN = "https://seedbible.org";
 
@@ -217,15 +220,17 @@ describe("chapterUrlsForTranslation", () => {
   });
 
   // The sitemap's whole job is to list URLs a crawler can fetch directly, so
-  // nothing it emits may redirect. `legacyReadingUrlRedirect` redirects any
-  // reading path that isn't already the explicit 4-segment canonical form —
-  // including every 3-segment URL, which is why the sitemap always spells out
-  // the language segment (see `buildChapterUrl` above).
+  // nothing it emits may redirect. `legacyReadingUrlRedirect` handles
+  // corrections for URLs with an explicit language (301); `acceptLanguageRedirect`
+  // handles the 3-segment form with no language at all (302) — since the
+  // sitemap always spells out the language segment explicitly (see
+  // `buildChapterUrl` above), neither should ever fire for its URLs.
   it("emits URLs the server serves directly, with no redirect", () => {
     const urls = chapterUrlsForTranslation(ORIGIN, "AAB", "en", books);
     for (const url of urls) {
       const { pathname } = new URL(url);
       expect(legacyReadingUrlRedirect(pathname, "")).toBeNull();
+      expect(acceptLanguageRedirect(pathname, "", [])).toBeNull();
     }
   });
 });

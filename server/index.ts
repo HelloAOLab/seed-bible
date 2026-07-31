@@ -90,7 +90,7 @@ type RenderFn = (opts: {
   html: string;
 }) => Promise<
   | { html: string; notFound?: true }
-  | { redirectTo: string; redirectStatus?: number }
+  | { redirectTo: string; redirectStatus?: number; vary?: string }
 >;
 
 /** Derives per-client render config (mobile, languages) from request headers. */
@@ -274,6 +274,7 @@ async function renderAndRespond(
   if ("redirectTo" in result) {
     res.writeHead(result.redirectStatus ?? 301, {
       location: result.redirectTo,
+      ...(result.vary ? { vary: result.vary } : {}),
     });
     res.end();
     return;
@@ -589,6 +590,9 @@ async function startDevServer(): Promise<void> {
       // URLs being migrated to path-based routes, or a 404 for an
       // unrecognized book that couldn't be corrected).
       if ("redirectTo" in result) {
+        if (result.vary) {
+          res.set("Vary", result.vary);
+        }
         res.redirect(result.redirectStatus ?? 301, result.redirectTo);
         return;
       }

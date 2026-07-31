@@ -1,4 +1,5 @@
 import {
+  acceptLanguageRedirect,
   legacyReadingUrlRedirect,
   render,
 } from "../../../standalone/entry-ssr";
@@ -13,49 +14,37 @@ describe("legacyReadingUrlRedirect", () => {
       expect(legacyReadingUrlRedirect("/es/spa_onbv/john/3", "")).toBeNull();
     });
 
-    it("promotes a 3-segment path to the translation's own language", () => {
-      // AAB is the hardcoded default English translation, so its language is
-      // known without a network call.
-      expect(legacyReadingUrlRedirect("/AAB/john/3", "")).toBe(
-        "/en/AAB/john/3"
-      );
+    it("declines a 3-segment path — it has no explicit language to correct deterministically", () => {
+      // That's `acceptLanguageRedirect`'s job (a 302), even when the book
+      // is already an exact match.
+      expect(legacyReadingUrlRedirect("/AAB/john/3", "")).toBeNull();
     });
 
-    it("falls back to English when the translation isn't a known language default", () => {
-      // NIV isn't any language's hardcoded default, so its language can't be
-      // determined without fetching the catalog — falls back to English
-      // rather than paying for a network round trip on every redirect.
-      expect(legacyReadingUrlRedirect("/NIV/john/3", "")).toBe(
-        "/en/NIV/john/3"
+    it("corrects a typo in an already-explicit 4-segment path without disturbing its language", () => {
+      expect(legacyReadingUrlRedirect("/en/AAB/luke-skywalker/1", "")).toBe(
+        "/en/AAB/luke/1"
       );
-    });
-
-    it("corrects a close typo in the book segment, promoting the language too", () => {
-      // "senesis" shares no prefix with any book name, so it only resolves
-      // through the fuzzy fallback.
-      expect(legacyReadingUrlRedirect("/AAB/senesis/1", "")).toBe(
-        "/en/AAB/genesis/1"
-      );
+      expect(legacyReadingUrlRedirect("/en/AAB/john/3", "")).toBeNull();
     });
 
     // The review's table. `getBookId`'s `startsWith` fallback resolves all of
     // these, so they used to be served 200 at their own indexable URLs.
     it.each([
-      ["/AAB/luke-skywalker/1", "/en/AAB/luke/1"],
-      ["/AAB/genocide/1", "/en/AAB/genesis/1"],
-      ["/AAB/mark-twain/1", "/en/AAB/mark/1"],
-      ["/AAB/acts-of-congress/1", "/en/AAB/acts/1"],
-      ["/AAB/gen/1", "/en/AAB/genesis/1"],
-      ["/AAB/Genesis/1", "/en/AAB/genesis/1"],
+      ["/en/AAB/luke-skywalker/1", "/en/AAB/luke/1"],
+      ["/en/AAB/genocide/1", "/en/AAB/genesis/1"],
+      ["/en/AAB/mark-twain/1", "/en/AAB/mark/1"],
+      ["/en/AAB/acts-of-congress/1", "/en/AAB/acts/1"],
+      ["/en/AAB/gen/1", "/en/AAB/genesis/1"],
+      ["/en/AAB/Genesis/1", "/en/AAB/genesis/1"],
     ])("canonicalizes %s -> %s", (from, to) => {
       expect(legacyReadingUrlRedirect(from, "")).toBe(to);
     });
 
     it("canonicalizes a zero-padded chapter and a trailing slash", () => {
-      expect(legacyReadingUrlRedirect("/AAB/john/03", "")).toBe(
+      expect(legacyReadingUrlRedirect("/en/AAB/john/03", "")).toBe(
         "/en/AAB/john/3"
       );
-      expect(legacyReadingUrlRedirect("/AAB/john/3/", "")).toBe(
+      expect(legacyReadingUrlRedirect("/en/AAB/john/3/", "")).toBe(
         "/en/AAB/john/3"
       );
     });
@@ -66,30 +55,23 @@ describe("legacyReadingUrlRedirect", () => {
       );
     });
 
-    it("corrects a typo in an already-explicit 4-segment path without disturbing its language", () => {
-      expect(legacyReadingUrlRedirect("/en/AAB/luke-skywalker/1", "")).toBe(
-        "/en/AAB/luke/1"
-      );
-      expect(legacyReadingUrlRedirect("/en/AAB/john/3", "")).toBeNull();
-    });
-
     it("does not redirect a book it cannot resolve at all", () => {
       // Falls through to render()'s 404 instead of guessing a target.
-      expect(legacyReadingUrlRedirect("/AAB/notabook/1", "")).toBeNull();
+      expect(legacyReadingUrlRedirect("/en/AAB/notabook/1", "")).toBeNull();
     });
 
     it("preserves unrelated query params", () => {
-      expect(legacyReadingUrlRedirect("/AAB/senesis/1?verse=5", "")).toBe(
+      expect(legacyReadingUrlRedirect("/en/AAB/senesis/1?verse=5", "")).toBe(
         "/en/AAB/genesis/1?verse=5"
       );
     });
 
     it("strips and re-applies the deployment basePath", () => {
       expect(
-        legacyReadingUrlRedirect("/b/branch-x/AAB/senesis/1", "/b/branch-x")
-      ).toBe("/b/branch-x/en/AAB/genesis/1");
-      expect(
-        legacyReadingUrlRedirect("/b/branch-x/AAB/genesis/1", "/b/branch-x")
+        legacyReadingUrlRedirect(
+          "/b/branch-x/en/AAB/senesis/1",
+          "/b/branch-x"
+        )
       ).toBe("/b/branch-x/en/AAB/genesis/1");
       expect(
         legacyReadingUrlRedirect("/b/branch-x/en/AAB/genesis/1", "/b/branch-x")
@@ -98,26 +80,39 @@ describe("legacyReadingUrlRedirect", () => {
   });
 
   describe("legacy shapes", () => {
-    it("upgrades the prior /{book}/{chapter} path format", () => {
-      expect(legacyReadingUrlRedirect("/john/3", "")).toBe("/en/AAB/john/3");
-    });
-
-    it("folds bare-root legacy query params into the path", () => {
-      expect(legacyReadingUrlRedirect("/?book=GEN&chapter=2", "")).toBe(
-        "/en/AAB/genesis/2"
-      );
-    });
-
-    it("folds a legacy ?translation= and ?lang= into the path", () => {
+    it("declines a legacy shape with no explicit ?lang= — acceptLanguageRedirect negotiates it instead", () => {
+      expect(legacyReadingUrlRedirect("/john/3", "")).toBeNull();
+      expect(legacyReadingUrlRedirect("/?book=GEN&chapter=2", "")).toBeNull();
       expect(
-        legacyReadingUrlRedirect("/?book=MAT&chapter=1&translation=NIV", "")
+        legacyReadingUrlRedirect(
+          "/?book=MAT&chapter=1&translation=NIV",
+          ""
+        )
+      ).toBeNull();
+    });
+
+    it("folds a legacy ?translation=&?lang= into the path, keeping the explicit language", () => {
+      expect(
+        legacyReadingUrlRedirect(
+          "/?book=MAT&chapter=1&translation=NIV&lang=en",
+          ""
+        )
       ).toBe("/en/NIV/matthew/1");
     });
 
+    it("folds bare-root legacy query params (with ?lang=) into the path", () => {
+      expect(
+        legacyReadingUrlRedirect("/?book=GEN&chapter=2&lang=en", "")
+      ).toBe("/en/AAB/genesis/2");
+    });
+
     it("keeps query params that aren't part of the reading position", () => {
-      expect(legacyReadingUrlRedirect("/?book=GEN&chapter=2&verse=5", "")).toBe(
-        "/en/AAB/genesis/2?verse=5"
-      );
+      expect(
+        legacyReadingUrlRedirect(
+          "/?book=GEN&chapter=2&lang=en&verse=5",
+          ""
+        )
+      ).toBe("/en/AAB/genesis/2?verse=5");
     });
 
     it("leaves a bare root with no reading params alone", () => {
@@ -130,20 +125,17 @@ describe("legacyReadingUrlRedirect", () => {
   // round-tripping through `getBookId` is what guarantees it (see
   // BibleDataManager.test.ts) — this checks the property end-to-end.
   it.each([
-    "/AAB/luke-skywalker/1",
-    "/AAB/genocide/1",
-    "/AAB/gen/1",
-    "/AAB/Genesis/1",
-    "/AAB/senesis/1",
-    "/AAB/john/03",
-    "/AAB/john/3/",
+    "/en/AAB/luke-skywalker/1",
+    "/en/AAB/genocide/1",
+    "/en/AAB/gen/1",
+    "/en/AAB/Genesis/1",
+    "/en/AAB/senesis/1",
+    "/en/AAB/john/03",
+    "/en/AAB/john/3/",
     "/EN/NIV/john/3",
     "/en/AAB/john/3",
-    "/AAB/john/3",
-    "/AAB/tob/1",
     "/es/spa_onbv/john/3",
-    "/john/3",
-    "/?book=GEN&chapter=2",
+    "/?book=GEN&chapter=2&lang=en",
   ])("settles after at most one redirect: %s", (from) => {
     const once = legacyReadingUrlRedirect(from, "");
     if (once === null) {
@@ -153,20 +145,140 @@ describe("legacyReadingUrlRedirect", () => {
   });
 });
 
+describe("acceptLanguageRedirect", () => {
+  describe("translation given (3-segment path, or ?translation= on a bare root)", () => {
+    it("uses the hardcoded per-language-default table without consulting Accept-Language", () => {
+      // AAB is English's hardcoded default translation, so this is
+      // deterministic regardless of the header.
+      expect(acceptLanguageRedirect("/AAB/john/3", "", ["fr-FR"])).toBe(
+        "/en/AAB/john/3"
+      );
+      expect(acceptLanguageRedirect("/AAB/john/3", "", [])).toBe(
+        "/en/AAB/john/3"
+      );
+    });
+
+    it("falls back to Accept-Language when the translation isn't a known language default", () => {
+      // NIV isn't any language's hardcoded default.
+      expect(acceptLanguageRedirect("/NIV/john/3", "", ["fr-FR"])).toBe(
+        "/fr/NIV/john/3"
+      );
+    });
+
+    it("falls back to English when neither the table nor Accept-Language resolves it", () => {
+      expect(acceptLanguageRedirect("/NIV/john/3", "", [])).toBe(
+        "/en/NIV/john/3"
+      );
+      expect(acceptLanguageRedirect("/NIV/john/3", "", ["xx-XX"])).toBe(
+        "/en/NIV/john/3"
+      );
+    });
+
+    it("also corrects a typo in the book segment, in the same redirect", () => {
+      // "senesis" only resolves via the fuzzy fallback (see
+      // ReadingUrlPath.test.ts) — unlike the old design, this function
+      // handles fuzzy matches too, so there's no second redirect.
+      expect(acceptLanguageRedirect("/AAB/senesis/1", "", [])).toBe(
+        "/en/AAB/genesis/1"
+      );
+    });
+
+    it("folds ?translation= (no ?lang=) on a bare root the same way", () => {
+      expect(
+        acceptLanguageRedirect(
+          "/?book=MAT&chapter=1&translation=NIV",
+          "",
+          ["fr-FR"]
+        )
+      ).toBe("/fr/NIV/matthew/1");
+    });
+
+    it("preserves other query params and the deployment basePath", () => {
+      expect(
+        acceptLanguageRedirect("/AAB/john/3?verse=5", "", [])
+      ).toBe("/en/AAB/john/3?verse=5");
+      expect(
+        acceptLanguageRedirect("/d/branch-x/AAB/john/3", "/d/branch-x", [])
+      ).toBe("/d/branch-x/en/AAB/john/3");
+    });
+  });
+
+  describe("no translation given (legacy /{book}/{chapter} path, or a bare root with no ?translation=)", () => {
+    it("picks the language from Accept-Language, then that language's default translation", () => {
+      expect(acceptLanguageRedirect("/genesis/1", "", ["es-ES"])).toBe(
+        "/es/spa_onbv/genesis/1"
+      );
+      expect(acceptLanguageRedirect("/?book=GEN&chapter=1", "", ["es-ES"])).toBe(
+        "/es/spa_onbv/genesis/1"
+      );
+    });
+
+    it("falls back to English/AAB when nothing in Accept-Language is supported", () => {
+      expect(acceptLanguageRedirect("/genesis/1", "", [])).toBe(
+        "/en/AAB/genesis/1"
+      );
+      expect(acceptLanguageRedirect("/genesis/1", "", ["xx-XX"])).toBe(
+        "/en/AAB/genesis/1"
+      );
+      expect(acceptLanguageRedirect("/?book=GEN&chapter=1", "", [])).toBe(
+        "/en/AAB/genesis/1"
+      );
+    });
+  });
+
+  it("does not redirect anything that already has an explicit language", () => {
+    expect(acceptLanguageRedirect("/en/AAB/john/3", "", ["fr-FR"])).toBeNull();
+    expect(
+      acceptLanguageRedirect("/?book=GEN&chapter=1&lang=en", "", ["fr-FR"])
+    ).toBeNull();
+  });
+
+  it("does not redirect an unresolved book", () => {
+    expect(acceptLanguageRedirect("/AAB/notabook/3", "", ["fr-FR"])).toBeNull();
+    expect(acceptLanguageRedirect("/notabook/3", "", ["fr-FR"])).toBeNull();
+    expect(
+      acceptLanguageRedirect("/?book=notabook&chapter=3", "", ["fr-FR"])
+    ).toBeNull();
+  });
+
+  it("leaves a bare root with no reading params alone", () => {
+    expect(acceptLanguageRedirect("/", "", ["fr-FR"])).toBeNull();
+  });
+
+  // Mirrors `legacyReadingUrlRedirect`'s own property: the target this
+  // returns must be something neither function redirects again.
+  it.each([
+    "/AAB/john/3",
+    "/NIV/john/3",
+    "/AAB/senesis/1",
+    "/genesis/1",
+    "/?book=GEN&chapter=1",
+    "/?book=MAT&chapter=1&translation=NIV",
+  ])("settles after at most one redirect: %s", (from) => {
+    const once = acceptLanguageRedirect(from, "", []);
+    if (once === null) {
+      return;
+    }
+    expect(legacyReadingUrlRedirect(once, "")).toBeNull();
+    expect(acceptLanguageRedirect(once, "", [])).toBeNull();
+  });
+});
+
 describe("render() redirect wiring", () => {
   // These resolve before any network call (the redirect checks run ahead of
   // `createSeedBibleState`), so no fetch mocking is needed.
 
-  it("returns a 302 for a 3-segment URL promoted to its translation's language", async () => {
+  it("returns a 302 with Vary: Accept-Language for a negotiated redirect", async () => {
     const result = await render({
       path: "/AAB/john/3",
-      config: DEFAULT_APP_CONFIG,
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: ["fr-FR"] },
       html: "",
     });
 
     expect(result).toEqual({
       redirectTo: "/en/AAB/john/3",
       redirectStatus: 302,
+      vary: "Accept-Language",
     });
   });
 
@@ -180,10 +292,11 @@ describe("render() redirect wiring", () => {
     expect(result).toEqual({
       redirectTo: "/en/AAB/genesis/3",
       redirectStatus: 302,
+      vary: "Accept-Language",
     });
   });
 
-  it("returns a plain 301 (no redirectStatus) for a correction that already has an explicit language", async () => {
+  it("returns a plain 301 (no redirectStatus/vary) for a correction that already has an explicit language", async () => {
     const result = await render({
       path: "/en/AAB/senesis/3",
       config: DEFAULT_APP_CONFIG,
@@ -191,6 +304,16 @@ describe("render() redirect wiring", () => {
     });
 
     expect(result).toEqual({ redirectTo: "/en/AAB/genesis/3" });
+  });
+
+  it("returns a plain 301 for a legacy query-param URL that already names an explicit ?lang=", async () => {
+    const result = await render({
+      path: "/?translation=AAB&book=GEN&chapter=1&lang=en",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({ redirectTo: "/en/AAB/genesis/1" });
   });
 });
 
