@@ -295,13 +295,20 @@ function renderTabSlotReader(
 function dispatchTouch(
   element: Element,
   type: "touchstart" | "touchmove" | "touchend",
-  touchPoints: Array<{ clientX: number; clientY: number }>
+  touchPoints: Array<{ clientX: number; clientY: number }>,
+  timeStamp?: number
 ) {
   const event = new Event(type, { bubbles: true, cancelable: true });
   Object.defineProperty(event, "touches", {
     configurable: true,
     value: touchPoints,
   });
+  if (timeStamp !== undefined) {
+    Object.defineProperty(event, "timeStamp", {
+      configurable: true,
+      value: timeStamp,
+    });
+  }
   element.dispatchEvent(event);
 }
 
@@ -1078,5 +1085,91 @@ describe("TabSlotReader integration", () => {
     });
 
     expect(writes).toEqual([120]);
+  });
+
+  // Replays a capture from a real device. A touchmove generated during the
+  // previous swipe was delivered 1.2s late, in the middle of the next gesture,
+  // carrying the coordinate the finger had back then — which threw the track
+  // ~200px sideways for a single frame.
+  it("ignores a touch sample delivered late from a previous gesture", () => {
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: { ...chapterData.value!.translation, textDirection: "ltr" },
+    };
+
+    renderTabSlotReader(slot, readingState, state, container);
+
+    const viewport = container.querySelector(
+      ".sb-reader-swipe-viewport"
+    ) as HTMLDivElement;
+    const track = container.querySelector(
+      ".sb-reader-swipe-track"
+    ) as HTMLDivElement;
+
+    const offsets: number[] = [];
+    let transform = "";
+    Object.defineProperty(track, "style", {
+      configurable: true,
+      value: new Proxy(track.style, {
+        set(target, prop, value) {
+          if (prop === "transform") {
+            transform = value;
+            const px = /([-\d.]+)px/.exec(value);
+            if (px) offsets.push(Number(px[1]));
+            return true;
+          }
+          (target as any)[prop] = value;
+          return true;
+        },
+        get(target, prop) {
+          if (prop === "transform") return transform;
+          const v = (target as any)[prop];
+          return typeof v === "function" ? v.bind(target) : v;
+        },
+      }),
+    });
+
+    act(() => {
+      dispatchTouch(
+        viewport,
+        "touchstart",
+        [{ clientX: 381, clientY: 50 }],
+        11828
+      );
+      dispatchTouch(
+        viewport,
+        "touchmove",
+        [{ clientX: 372, clientY: 50 }],
+        11860
+      );
+      // The stale sample: generated at 10638, during the previous gesture.
+      dispatchTouch(
+        viewport,
+        "touchmove",
+        [{ clientX: 218, clientY: 50 }],
+        10638
+      );
+      dispatchTouch(
+        viewport,
+        "touchmove",
+        [{ clientX: 369, clientY: 50 }],
+        11865
+      );
+      dispatchTouch(
+        viewport,
+        "touchmove",
+        [{ clientX: 367, clientY: 50 }],
+        11870
+      );
+    });
+
+    // The finger never moved more than 14px from where it started, so nothing
+    // near the stale sample's 163px should ever reach the track.
+    expect(offsets.every((offset) => Math.abs(offset) <= 14)).toBe(true);
   });
 });

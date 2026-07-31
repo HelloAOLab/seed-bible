@@ -34,6 +34,9 @@ export const PANEL_PCT = 100 / 3;
 // How long the track takes to slide over to a neighbouring panel.
 const SWIPE_ANIMATION_MS = 250;
 
+// How far a touch must travel before the gesture commits to an axis.
+const SWIPE_LOCK_THRESHOLD_PX = 10;
+
 /**
  * Cap on how long the track rests on the neighbouring panel waiting for the
  * chapter it navigated to. Navigation doesn't wait on the download, so until
@@ -58,6 +61,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // swipe still waiting on its chapter knows it has been superseded.
   const swipeCommitToken = useRef(0);
   const swipeCommitTimer = useRef(0);
+  // Timestamp of the newest touch sample accepted for this gesture.
+  const swipeLastStamp = useRef(0);
   const lastScrollTopRef = useRef(0);
 
   const [prevChapterPreview, setPrevChapterPreview] =
@@ -309,6 +314,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       swipeTouchStartY.current = touch.clientY;
       swipeDirectionLocked.current = null;
       swipeCurrentDx.current = 0;
+      swipeLastStamp.current = event.timeStamp;
 
       // This gesture takes the track over from any committed swipe still
       // waiting on its chapter.
@@ -337,13 +343,30 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      // Touch samples can arrive out of order. A move generated during the
+      // *previous* gesture can sit in the queue while a chapter change blocks
+      // the main thread, then be delivered mid-gesture — measured at 1.2s late —
+      // carrying a coordinate from where the finger was back then. Acting on it
+      // threw the track a couple of hundred pixels for one frame. Anything
+      // older than the newest sample we have accepted is stale by definition;
+      // the touchstart seeds this, so a sample predating the gesture is caught
+      // too. Fails safe if a browser reports no useful timestamps: every
+      // comparison is then false and nothing is dropped.
+      if (event.timeStamp < swipeLastStamp.current) {
+        return;
+      }
+      swipeLastStamp.current = event.timeStamp;
+
       const dx = touch.clientX - swipeTouchStartX.current;
       const dy = touch.clientY - swipeTouchStartY.current;
 
       if (!swipeDirectionLocked.current) {
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        if (
+          Math.abs(dx) > Math.abs(dy) &&
+          Math.abs(dx) > SWIPE_LOCK_THRESHOLD_PX
+        ) {
           swipeDirectionLocked.current = "h";
-        } else if (Math.abs(dy) > 10) {
+        } else if (Math.abs(dy) > SWIPE_LOCK_THRESHOLD_PX) {
           swipeDirectionLocked.current = "v";
           return;
         } else {
@@ -358,16 +381,20 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       const rtl = isRtl();
       const hasNext = readingState.hasNext.value;
       const hasPrev = readingState.hasPrevious.value;
-      let offset = dx;
+      // Discount the distance spent reaching the lock threshold, so the track
+      // starts from where the gesture became horizontal rather than jumping by
+      // the threshold the moment it engages.
+      const travel = dx - Math.sign(dx) * SWIPE_LOCK_THRESHOLD_PX;
+      let offset = travel;
       const attemptsNext = rtl ? dx > 0 : dx < 0;
       const attemptsPrev = rtl ? dx < 0 : dx > 0;
 
       if ((attemptsNext && !hasNext) || (attemptsPrev && !hasPrev)) {
-        offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
+        offset = Math.sign(dx) * Math.min(Math.abs(travel) * 0.15, 30);
       } else {
         const limit = window.innerWidth * 0.5;
-        if (Math.abs(dx) > limit) {
-          offset = Math.sign(dx) * (limit + (Math.abs(dx) - limit) * 0.2);
+        if (Math.abs(travel) > limit) {
+          offset = Math.sign(dx) * (limit + (Math.abs(travel) - limit) * 0.2);
         }
       }
 
