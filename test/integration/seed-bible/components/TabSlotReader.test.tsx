@@ -302,6 +302,13 @@ function dispatchTouch(
   element.dispatchEvent(event);
 }
 
+// The swipe track is three panels wide: previous preview | current | next
+// preview. These are the transforms that park it over each one, written the
+// same way the component writes them so the float formatting matches.
+const SWIPE_PANEL_PCT = 100 / 3;
+const CENTRE_PANEL_TRANSFORM = `translateX(${-SWIPE_PANEL_PCT}%)`;
+const NEXT_PANEL_TRANSFORM = `translateX(${-SWIPE_PANEL_PCT * 2}%)`;
+
 describe("TabSlotReader integration", () => {
   let container: HTMLDivElement;
 
@@ -822,6 +829,183 @@ describe("TabSlotReader integration", () => {
 
       expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
       expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // Navigation does not wait on the download, so the *centre* panel still holds
+  // the outgoing chapter while the new one is in flight. Recentring straight
+  // away is what made a swipe flash the chapter the reader just left.
+  it("rests on the swiped-to preview until the new chapter's text arrives, instead of recentring onto the outgoing chapter", async () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    let settleNavigation: () => void = () => {};
+    readingState.loadNextChapter = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          settleNavigation = resolve;
+        })
+    );
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+      expect(track.style.transform).toBe(NEXT_PANEL_TRANSFORM);
+
+      settleNavigation();
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(track.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // The cap is what keeps the promise of navigation that never waits on a
+  // download: a slow chapter must not strand the reader on a static,
+  // unscrollable preview panel.
+  it("recentres anyway once the settle budget runs out, even if the chapter is still downloading", async () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    // Never resolves — stands in for a chapter still on its way.
+    readingState.loadNextChapter = vi.fn(() => new Promise<void>(() => {}));
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(track.style.transform).toBe(NEXT_PANEL_TRANSFORM);
+
+      await act(async () => {
+        vi.advanceTimersByTime(250);
+        await Promise.resolve();
+      });
+
+      expect(track.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // A reader who swipes again while the previous chapter is still settling owns
+  // the track; the pending commit must not yank it back mid-gesture.
+  it("hands the track to a new gesture started while a commit is still waiting", async () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    let settleNavigation: () => void = () => {};
+    readingState.loadNextChapter = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          settleNavigation = resolve;
+        })
+    );
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(track.style.transform).toBe(NEXT_PANEL_TRANSFORM);
+
+      // A second gesture takes over: touching down recentres immediately, then
+      // the drag follows the finger from there.
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+      });
+      expect(track.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
+
+      act(() => {
+        dispatchTouch(viewport, "touchmove", [{ clientX: 180, clientY: 50 }]);
+      });
+      const draggedTransform = track.style.transform;
+      expect(draggedTransform).not.toBe(CENTRE_PANEL_TRANSFORM);
+
+      // The superseded commit settling must not disturb the gesture in flight.
+      settleNavigation();
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(track.style.transform).toBe(draggedTransform);
     } finally {
       vi.useRealTimers();
     }
