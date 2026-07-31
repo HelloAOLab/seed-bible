@@ -1,10 +1,11 @@
 import {
   chapterHighlightsSchema,
   createHighlightsManager,
+  type ChapterHighlights,
 } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 
 describe("HighlightsManager", () => {
@@ -17,6 +18,14 @@ describe("HighlightsManager", () => {
   const flushPromises = async () => {
     await Promise.resolve();
     await Promise.resolve();
+  };
+
+  const createDeferred = <T>() => {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => {
+      resolve = r;
+    });
+    return { promise, resolve };
   };
 
   beforeEach(() => {
@@ -500,6 +509,245 @@ describe("HighlightsManager", () => {
     await manager.unhighlightVerses("BSB", "GEN", 1, [2, 3, 6, 7]);
 
     expect(recordDataMock).toHaveBeenCalledTimes(0);
+  });
+
+  describe("account switching (regression for #1564)", () => {
+    const mockPerUserHighlights = () => {
+      getDataMock.mockImplementation(async (recordName: unknown) => {
+        if (recordName === "user-1") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "user-1-color", verse: 1 }] },
+          };
+        }
+        if (recordName === "user-2") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "user-2-color", verse: 2 }] },
+          };
+        }
+        return {
+          success: false,
+          errorCode: "data_not_found",
+          errorMessage: "Data not found",
+        };
+      });
+    };
+
+    it("loads the newly signed-in account's highlights after switching accounts", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const first = manager.getChapterHighlights("BSB", "GEN", 11);
+      await flushPromises();
+      expect(first.value).toEqual({
+        highlights: [{ colorId: "user-1-color", verse: 1 }],
+      });
+
+      // Simulates navigating to a chapter user A had already visited, now
+      // signed in as user B.
+      login.userId.value = "user-2";
+      const second = manager.getChapterHighlights("BSB", "GEN", 11);
+      await flushPromises();
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "user-2",
+        "highlights:BSB/GEN/11"
+      );
+      expect(second.value).toEqual({
+        highlights: [{ colorId: "user-2-color", verse: 2 }],
+      });
+    });
+
+    it("updates a view already held by a caller in place when the account changes, without another getChapterHighlights() call", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      // Simulates a reader pane holding the signal for rendering, the way
+      // BibleReadingManager's activeChapterHighlights does.
+      const view = manager.getChapterHighlights("BSB", "GEN", 12);
+      await flushPromises();
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "user-1-color", verse: 1 }],
+      });
+
+      const seen: ChapterHighlights[] = [];
+      const dispose = effect(() => {
+        seen.push(view.value);
+      });
+
+      login.userId.value = "user-2";
+      await flushPromises();
+
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "user-2-color", verse: 2 }],
+      });
+      expect(getDataMock).toHaveBeenCalledWith(
+        "user-2",
+        "highlights:BSB/GEN/12"
+      );
+      expect(getDataMock).toHaveBeenCalledTimes(2);
+      dispose();
+    });
+
+    it("clears a held view immediately when the user signs out", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+      });
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getChapterHighlights("BSB", "GEN", 1);
+      await flushPromises();
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "color-1", verse: 1 }],
+      });
+
+      login.userId.value = null;
+
+      expect(view.value).toEqual({ highlights: [] });
+    });
+
+    it("refetches from the server after signing out and back in as the same account", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+      });
+      const manager = createHighlightsManager(os, login);
+
+      manager.getChapterHighlights("BSB", "GEN", 1);
+      await flushPromises();
+      expect(getDataMock).toHaveBeenCalledTimes(1);
+
+      login.userId.value = null;
+      login.userId.value = "user-1";
+
+      const view = manager.getChapterHighlights("BSB", "GEN", 1);
+      await flushPromises();
+
+      expect(getDataMock).toHaveBeenCalledTimes(2);
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "color-1", verse: 1 }],
+      });
+    });
+
+    it("ignores a late response from the previous account after switching", async () => {
+      const user1Load = createDeferred<{
+        success: boolean;
+        data: { highlights: { colorId: string; verse: number }[] };
+      }>();
+      getDataMock.mockImplementation((recordName: unknown) => {
+        if (recordName === "user-1") {
+          return user1Load.promise;
+        }
+        return Promise.resolve({
+          success: true,
+          data: { highlights: [{ colorId: "user-2-color", verse: 2 }] },
+        });
+      });
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getChapterHighlights("BSB", "GEN", 1);
+      // user-1's load is now pending and held open by resolveUser1Load.
+
+      // Simulates navigating to the same chapter as user-2.
+      login.userId.value = "user-2";
+      manager.getChapterHighlights("BSB", "GEN", 1);
+      await flushPromises();
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "user-2-color", verse: 2 }],
+      });
+
+      // The stale user-1 request finally resolves after the switch.
+      user1Load.resolve({
+        success: true,
+        data: { highlights: [{ colorId: "user-1-color", verse: 1 }] },
+      });
+      await flushPromises();
+
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "user-2-color", verse: 2 }],
+      });
+    });
+
+    it("loads highlights once an anonymous session signs in, for a view already held by the caller", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+      });
+      login.userId.value = null;
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getChapterHighlights("BSB", "GEN", 1);
+      expect(view.value).toEqual({ highlights: [] });
+      expect(getDataMock).not.toHaveBeenCalled();
+
+      const seen: ChapterHighlights[] = [];
+      const dispose = effect(() => {
+        seen.push(view.value);
+      });
+
+      login.userId.value = "user-1";
+      await flushPromises();
+
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "color-1", verse: 1 }],
+      });
+      expect(getDataMock).toHaveBeenCalledTimes(1);
+      dispose();
+    });
+
+    it("highlightVerses() merges into the newly signed-in account's existing highlights instead of replacing them", async () => {
+      login.userId.value = null;
+      login.login.mockImplementation(async () => {
+        login.userId.value = "user-2";
+        return { id: "user-2", email: "test@example.com" };
+      });
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+      });
+      const manager = createHighlightsManager(os, login);
+
+      await manager.highlightVerses("BSB", "GEN", 1, [5], {
+        colorId: "color-9",
+      });
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "user-2",
+        "highlights:BSB/GEN/1"
+      );
+      expect(getDataMock.mock.invocationCallOrder[0]).toBeLessThan(
+        recordDataMock.mock.invocationCallOrder[0]!
+      );
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-2",
+        "highlights:BSB/GEN/1",
+        {
+          highlights: [
+            { colorId: "color-1", verse: 1 },
+            { colorId: "color-9", verse: 5 },
+          ],
+        },
+        { marker: "publicRead:highlights/BSB" }
+      );
+    });
+
+    it("highlightVerses() warns and does not save when login does not authenticate", async () => {
+      login.userId.value = null;
+      const manager = createHighlightsManager(os, login);
+
+      await manager.highlightVerses("BSB", "GEN", 1, [5], {
+        colorId: "color-9",
+      });
+
+      expect(login.login).toHaveBeenCalledTimes(1);
+      expect(getDataMock).not.toHaveBeenCalled();
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Unable to save highlights: user is not authenticated."
+      );
+    });
   });
 });
 
