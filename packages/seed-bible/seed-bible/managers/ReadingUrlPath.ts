@@ -16,6 +16,18 @@ export const DEFAULT_UI_LANGUAGE = "en";
 /** How the book segment was resolved to a `BookId`. */
 export type BookMatchKind = "exact" | "fuzzy" | "unresolved";
 
+/**
+ * Removes the deployment prefix (e.g. "/b/some-branch") from a pathname,
+ * leaving the root-relative app path. A pathname that doesn't start with
+ * `basePath` — and the root deployment, where `basePath` is "" — comes back
+ * unchanged.
+ */
+export function stripBasePath(pathname: string, basePath: string): string {
+  return basePath.length > 0 && pathname.startsWith(basePath)
+    ? pathname.slice(basePath.length)
+    : pathname;
+}
+
 export interface ParsedReadingPath {
   /**
    * Explicit language segment, or null when the path omitted it (3-segment
@@ -50,11 +62,7 @@ export function parseReadingPath(
   pathname: string,
   basePath: string
 ): ParsedReadingPath | null {
-  const stripped =
-    basePath.length > 0 && pathname.startsWith(basePath)
-      ? pathname.slice(basePath.length)
-      : pathname;
-  const segments = stripped
+  const segments = stripBasePath(pathname, basePath)
     .split("/")
     .filter(Boolean)
     .map((segment) => decodeURIComponent(segment));

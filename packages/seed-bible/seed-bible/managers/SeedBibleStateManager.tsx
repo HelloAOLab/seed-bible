@@ -6,7 +6,11 @@ import {
   type BookId,
   type VerseRef,
 } from "../managers/BibleDataManager";
-import { getDefaultTranslationForLanguage } from "../managers/BibleReadingManager";
+import {
+  bibleLanguageToUiLocale,
+  getDefaultTranslationForLanguage,
+  uiLocaleForDefaultTranslation,
+} from "../managers/BibleReadingManager";
 import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
@@ -960,18 +964,19 @@ export function createSeedBibleState(
 
   /**
    * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
-   * along with `description` and `canonicalUrl`.
+   * along with `description`.
    *
-   * These three stay derived from the *loaded chapter*, unlike the reader's own
+   * These two stay derived from the *loaded chapter*, unlike the reader's own
    * titles, which are derived from the book catalog so they can move the instant
    * navigation happens. Two reasons: a server render has no navigation to lag
    * behind, and it suspends until the first chapter settles, so content is there
    * whenever it could be. And when it genuinely isn't — a failed load — falling
-   * back to a generic title and a bare canonical URL is better than advertising
-   * a chapter the server could not actually serve.
+   * back to a generic blurb is better than describing a chapter the server
+   * could not actually serve.
    *
    * `title` is the exception and is position-derived: it also drives
    * `document.title` on the client, where the lag would be visible.
+   * `canonicalUrl` is position-derived too, for a different reason — see there.
    */
   const socialTitle = computed(() => {
     void i18n.language.value;
@@ -991,28 +996,59 @@ export function createSeedBibleState(
     });
   });
 
+  /**
+   * The one URL that should be indexed for whatever the reader is looking at.
+   *
+   * Derived from the reading *position* signals, not from `chapterData`. Those
+   * are set from the URL when the tab is constructed, with no network involved,
+   * so this stays correct in the three cases where a chapter never arrives — an
+   * API failure, a book absent from the translation, or the server's five-second
+   * load timeout. Keying off the loaded chapter meant all three server-rendered
+   * as `<link rel="canonical" href="/">`, pointing the whole site at its own
+   * front page. A transient upstream failure shouldn't change a chapter's
+   * address, and a book that doesn't exist at all is already answered with a 404
+   * (see `entry-ssr.tsx`), so there is nothing left for the old fallback to
+   * protect against.
+   *
+   * The language segment follows the *translation*, not the reader's UI
+   * language: someone reading the English AAB with a French interface is
+   * looking at the same scripture as someone reading it in English, so both
+   * point at `/en/AAB/…` instead of each claiming to be canonical. This is the
+   * same mapping the sitemap generator uses, so the URLs it publishes and the
+   * pages they lead to agree.
+   *
+   * Always the explicit four-segment form. The short three-segment form is a
+   * redirect entry point — requested without an `Accept-Language` header, which
+   * is what a crawler sends, it 302s to the explicit form — so naming it here
+   * would point every canonical at a URL that redirects.
+   */
   const canonicalUrl = computed(() => {
-    const currentUrl = navigation.currentUrl.value;
-    const chapter = selectedTab.value?.readingState.chapterData.value;
+    const readingState = selectedTab.value?.readingState;
+    const bookId = readingState?.bookId.value;
 
-    const canonicalUrl = new URL("/", currentUrl);
-
-    if (!chapter) {
-      canonicalUrl.pathname = navigation.basePath || "/";
-      return `${canonicalUrl.pathname}${canonicalUrl.search}`;
+    if (!readingState || !bookId) {
+      return navigation.basePath || "/";
     }
 
+    const translationId = data.buildTranslationId(
+      readingState.translationId.value
+    );
+    const language =
+      bibleLanguageToUiLocale(readingState.translation.value?.language) ??
+      uiLocaleForDefaultTranslation(translationId) ??
+      i18n.language.value;
+
     const readingPath = buildReadingPath({
-      language: i18n.language.value,
-      translationId: data.buildTranslationId(chapter.translation.id),
-      bookId: chapter.book.id as BookId,
-      chapter: chapter.chapter.number,
+      language,
+      translationId,
+      bookId: bookId as BookId,
+      chapter: readingState.chapterNumber.value,
       defaultTranslationId:
         getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+      forceExplicitLanguage: true,
     });
-    canonicalUrl.pathname = `${navigation.basePath}${readingPath}`;
 
-    return `${canonicalUrl.pathname}${canonicalUrl.search}`;
+    return `${navigation.basePath}${readingPath}`;
   });
 
   effect(() => {

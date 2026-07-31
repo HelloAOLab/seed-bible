@@ -548,6 +548,26 @@ describe("getBookSlug()", () => {
     expect(getBookId(getBookSlug("1CO"))).toBe("1CO");
   });
 
+  // Load-bearing for SSR routing, not just a tidiness check.
+  // `legacyReadingUrlRedirect` 301s any reading path that differs from
+  // `buildReadingPath` of what it resolved to, and that path is built from
+  // `getBookSlug`. If a slug failed to resolve back to its own book, the
+  // redirect target would itself be non-canonical and the server would
+  // redirect it forever. The apocrypha are the ones to watch: they only got
+  // `BOOK_ID_MAP` entries in 6e6e7b60, and their slugs are bare USFM codes.
+  it("resolves every book's own slug back to that book", () => {
+    for (const [bookId, slug] of Object.entries(BOOK_SLUGS)) {
+      expect({ slug, id: getBookId(slug) }).toEqual({ slug, id: bookId });
+    }
+  });
+
+  it("resolves spelled-out apocrypha names that collide with a shorter book's prefix", () => {
+    // Without explicit entries these fall through to the `startsWith` scan
+    // and land on Jude ("jud") and Ecclesiastes ("ecc").
+    expect(getBookId("judith")).toBe("JDT");
+    expect(getBookId("ecclesiasticus")).toBe("SIR");
+  });
+
   it("falls back to a lowercased version of an unrecognized id instead of returning undefined", () => {
     // Callers on the legacy-URL fallback path (an old `?book=` link with a
     // value that isn't a real book) pass an unvalidated string through as if

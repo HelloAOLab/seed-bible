@@ -520,9 +520,14 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["revelation", "REV"],
   ["tob", "TOB"],
   ["jdt", "JDT"],
+  // Spelled out because the prefix fallback below would otherwise hand
+  // "judith" to Jude ("jud") and "ecclesiasticus" to Ecclesiastes ("ecc").
+  // Exact lookups run before that fallback, so position here doesn't matter.
+  ["judith", "JDT"],
   ["esg", "ESG"],
   ["wis", "WIS"],
   ["sir", "SIR"],
+  ["ecclesiasticus", "SIR"],
   ["bar", "BAR"],
   ["lje", "LJE"],
   ["s3y", "S3Y"],

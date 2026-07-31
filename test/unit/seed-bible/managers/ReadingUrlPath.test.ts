@@ -16,6 +16,19 @@ describe("parseReadingPath", () => {
     });
   });
 
+  // Regression for the infinite-redirect loop fixed in 6e6e7b60: apocrypha
+  // books had no `BOOK_ID_MAP` entry, so their own canonical slug resolved
+  // only via the fuzzy fallback and every one of their URLs redirected to
+  // itself forever.
+  it.each(["tob", "jdt", "wis", "sir", "1ma", "lao"])(
+    "treats the apocrypha slug %s as an exact match, not fuzzy",
+    (slug) => {
+      const parsed = parseReadingPath(`/AAB/${slug}/1`, "");
+      expect(parsed?.bookMatch).toBe("exact");
+      expect(parsed?.bookId).toBe(slug.toUpperCase());
+    }
+  );
+
   it("parses the 4-segment form (lang/translation/book/chapter)", () => {
     expect(parseReadingPath("/es/spa_onbv/john/3", "")).toEqual({
       language: "es",

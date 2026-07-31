@@ -98,8 +98,8 @@ cleanupOutdatedCaches();
 
 /**
  * Every cached copy of the page is stored under this one key, so a visit to
- * `/?book=GEN&chapter=10` can be answered from a copy that was saved for
- * `/?book=JHN&chapter=9&lang=ar`.
+ * `/AAB/genesis/10` can be answered from a copy that was saved for
+ * `/ar/ARBNAV/john/9`.
  *
  * That is safe here because the served HTML is a shell: the client entry
  * (`app/init.tsx`) calls Preact's `render`, not `hydrate`, and reads the book
@@ -148,7 +148,15 @@ async function warmAppShellCache(): Promise<void> {
     // this can't seed the cache with something the route would have rejected.
     if (response.status !== 200) return;
     const cache = await caches.open(HTML_CACHE);
-    await cache.put(APP_SHELL_CACHE_KEY, response);
+    // Copied before storing, to drop the `redirected` flag. This `fetch` is
+    // built from a string, so it follows redirects — meaning a `/` that ever
+    // starts redirecting would land here as a perfectly ordinary 200 that is
+    // also flagged `redirected`. Serving such a response to a navigation
+    // (whose redirect mode is "manual") is a hard browser error, so caching
+    // one would turn every offline launch into a failure instead of the
+    // shell. `/` does not redirect today; this keeps that from becoming a
+    // prerequisite anyone has to remember.
+    await cache.put(APP_SHELL_CACHE_KEY, new Response(response.body, response));
   } catch {
     // Offline at install time — nothing to do.
   }
@@ -175,6 +183,14 @@ registerRoute(
     plugins: [
       // Never let a 404 (unknown branch) or 500 (render error) become the
       // stored copy of the app.
+      //
+      // This is also what makes the server's redirects harmless here. A
+      // navigation request carries `redirect: "manual"`, and Workbox passes
+      // navigations through to `fetch` untouched, so the 301/302 the host
+      // serves for a legacy or non-canonical reading URL arrives as an
+      // opaque redirect — status 0, which this rejects. The browser then
+      // follows the redirect itself and we see a fresh fetch event for the
+      // destination, whose 200 is what gets stored.
       new CacheableResponsePlugin({ statuses: [200] }),
       useAppShellCacheKey,
     ],

@@ -12,6 +12,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
   parseReadingPath,
+  stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
@@ -49,19 +50,34 @@ export interface RenderOptions {
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
 
 /**
- * Detects an obsolete URL shape, or a canonical-shaped one whose book
- * segment is only a close typo away from a real book, and computes the
- * equivalent canonical `[/{lang}]/{translationId}/{bookSlug}/{chapter}`
- * path to 301 to. Three cases are recognized: an already-canonical (3/4
- * segment) path whose book only fuzzy-matches; a bare root with legacy
- * `?book=`/`?chapter=` (and optionally `?translation=`/`?translationId=`/
- * `?lang=`) query params; and the prior `/{book}/{chapter}` path format (no
- * translation/language) — both of the latter two also fuzzy-correct the
- * book. Returns null when the book resolves exactly already, or doesn't
- * resolve even via a fuzzy match — falling through to a normal render (see
- * `render()`'s `notFound` handling for the latter).
+ * Detects a URL that isn't already the canonical
+ * `[/{lang}]/{translationId}/{bookSlug}/{chapter}` form and computes the
+ * path to 301 to. Three shapes are recognized: an already-canonical (3/4
+ * segment) path whose segments don't spell the canonical form exactly; a
+ * bare root with legacy `?book=`/`?chapter=` (and optionally
+ * `?translation=`/`?translationId=`/`?lang=`) query params; and the prior
+ * `/{book}/{chapter}` path format (no translation/language). Returns null
+ * when the URL is already canonical, or when the book doesn't resolve at
+ * all — falling through to a normal render (see `render()`'s `notFound`
+ * handling for the latter).
+ *
+ * For the canonical-shaped case the test is deliberately "does this path
+ * differ from `buildReadingPath` of what it resolved to", not "was the
+ * book a fuzzy match". `getBookId` resolves a lot more than exact slugs —
+ * aliases ("gen"), other casings ("Genesis"), and, via its `startsWith`
+ * fallback, anything that merely begins with a book name
+ * ("luke-skywalker" → Luke). Keying off the fuzzy flag left every one of
+ * those served 200 at its own indexable URL, so a real typo got
+ * canonicalized while junk did not. Comparing against the rebuilt path
+ * catches all of them, plus zero-padded chapters and trailing slashes,
+ * with one rule.
+ *
+ * This is safe from redirect loops because every `BOOK_SLUGS` entry
+ * round-trips through `getBookId` (locked in by a test in
+ * `BibleDataManager.test.ts`), so the path this returns always compares
+ * equal on the next request.
  */
-function legacyReadingUrlRedirect(
+export function legacyReadingUrlRedirect(
   path: string,
   basePath: string
 ): string | null {
@@ -69,29 +85,34 @@ function legacyReadingUrlRedirect(
 
   const parsed = parseReadingPath(url.pathname, basePath);
   if (parsed) {
-    // Already the canonical shape — only a fuzzy book match needs a
-    // redirect; an exact match needs none, and an unresolved one has no
-    // confident target to redirect to (falls through to notFound instead).
-    if (parsed.bookMatch !== "fuzzy" || !parsed.bookId) {
+    // Resolved to nothing — no confident target to send them to, so fall
+    // through to the 404 render instead of guessing.
+    if (!parsed.bookId) {
       return null;
     }
 
     const readingPath = buildReadingPath({
-      language: parsed.language ?? DEFAULT_UI_LANGUAGE,
+      language: (parsed.language ?? DEFAULT_UI_LANGUAGE).toLowerCase(),
       translationId: parsed.translationId,
       bookId: parsed.bookId,
       chapter: parsed.chapter,
       defaultTranslationId:
         getDefaultTranslationForLanguage(DEFAULT_UI_LANGUAGE).id,
+      // Keep the shape the request used. Collapsing an explicit
+      // "/en/AAB/john/3" down to "/AAB/john/3" would hand it straight to
+      // `acceptLanguageRedirect`, which sends it back up again — an
+      // infinite loop. Promoting 3 segments to 4 is that function's job,
+      // as a 302 with `Vary`, because the target depends on the request
+      // headers; this correction is header-independent and permanent.
+      forceExplicitLanguage: parsed.language !== null,
     });
+    if (stripBasePath(url.pathname, basePath) === readingPath) {
+      return null;
+    }
     return `${basePath}${readingPath}${url.search}`;
   }
 
-  const strippedPathname =
-    basePath.length > 0 && url.pathname.startsWith(basePath)
-      ? url.pathname.slice(basePath.length)
-      : url.pathname;
-  const segments = strippedPathname
+  const segments = stripBasePath(url.pathname, basePath)
     .split("/")
     .filter(Boolean)
     .map((segment) => decodeURIComponent(segment));
@@ -278,6 +299,16 @@ export async function render(
   // SEO discussion this came out of: a 200 with substitute content is a
   // "soft 404" that search engines penalize and can index as duplicate
   // content.
+  //
+  // Known gap, deliberately not closed here: this only asks "is this a real
+  // book", not "does *this translation* have it". A book that exists but is
+  // absent from the requested translation — Deuterocanon in most of them —
+  // resolves fine, so it returns 200 and the reader shows the same "book not
+  // found" state. That is a soft 404 of exactly the kind above, one layer
+  // down. Catching it would mean fetching the translation's book list before
+  // responding, which puts a network round trip in front of every render;
+  // the reader already fetches that list and offers a way out, so the cost
+  // isn't worth it for URLs nothing links to.
   const parsedForNotFound = parseReadingPath(
     new URL(options.path, "http://ssr.local").pathname,
     config.basePath

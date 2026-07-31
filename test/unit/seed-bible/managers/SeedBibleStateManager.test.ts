@@ -206,11 +206,22 @@ describe("createSeedBibleState", () => {
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
-  it("includes the language as a path segment in the canonical URL when the UI language isn't the default", async () => {
-    // The default endpoint has no mocked chapter data, so the reading state
-    // never settles a chapter and `canonicalUrl` falls back to `basePath`.
-    // The free-use endpoint's catalog is mocked (see
-    // `createDefaultManagerResponseMap`), so route through it here.
+  it("always spells out the language segment in the canonical URL", async () => {
+    // The three-segment form is a redirect entry point, not a destination, so
+    // it must never be advertised as canonical.
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    expect(state.app.canonicalUrl.value).not.toContain("lang=");
+    expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/1");
+  });
+
+  it("keys the canonical URL to the translation, not the reader's UI language", async () => {
+    // A French interface over the English AAB is the same scripture as an
+    // English one, so both have to point at the single indexable copy rather
+    // than each claiming to be canonical.
     jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
     const state = await createState();
     const readingState = state.tabs.tabs.value[0]!.readingState;
@@ -218,24 +229,26 @@ describe("createSeedBibleState", () => {
 
     try {
       await state.i18n.changeLanguage("de");
-
-      // AAB is still the default translation, so only the language segment
-      // (not `?lang=`) marks this canonical URL as non-default.
-      expect(state.app.canonicalUrl.value).not.toContain("lang=");
-      expect(state.app.canonicalUrl.value).toBe("/de/AAB/genesis/1");
+      expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/1");
     } finally {
       await state.i18n.changeLanguage("en");
     }
   });
 
-  it("omits the language segment from the canonical URL when everything is default", async () => {
-    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+  it("still produces the real canonical URL when the chapter fails to load", async () => {
+    // Regression for `<link rel="canonical" href="/">`: this used to key off
+    // `chapterData`, so any load failure pointed the page at the site root.
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the fetch fails.
+    jsdom.reconfigure({
+      url: "https://example.com/en/AAB/genesis/2?useFreeBibleAPI=true",
+    });
     const state = await createState();
     const readingState = state.tabs.tabs.value[0]!.readingState;
-    await waitFor(() => readingState.chapterData.value !== null);
+    await waitFor(() => readingState.error.value !== null);
 
-    expect(state.app.canonicalUrl.value).not.toContain("lang=");
-    expect(state.app.canonicalUrl.value).toBe("/AAB/genesis/1");
+    expect(readingState.chapterData.value).toBeNull();
+    expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/2");
   });
 
   it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {

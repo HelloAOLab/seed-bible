@@ -545,6 +545,76 @@ export const UI_TO_BIBLE_LANGUAGE_CODES: Record<string, string[]> = {
   mn: ["mon", "khk"],
 };
 
+/**
+ * Builds the inverse of `UI_TO_BIBLE_LANGUAGE_CODES`: a map from a Bible-API
+ * language code (ISO 639-3, e.g. "spa") to the single UI locale that should
+ * wrap it (e.g. "es").
+ *
+ * Some UI locales share a Bible language (e.g. `he`/`iw` both map to `heb`,
+ * `fil`/`tl` to `tgl`, `no`/`nb` to `nob`/`nor`). Ties are broken by insertion
+ * order in `UI_TO_BIBLE_LANGUAGE_CODES`: the first locale listed for a code
+ * wins, which is the canonical two-letter code (`he` over `iw`, `fil` over
+ * `tl`, `no` over `nb`).
+ */
+export function buildBibleLanguageToUiLocale(): Map<string, string> {
+  const map = new Map<string, string>();
+
+  for (const [ui, codes] of Object.entries(UI_TO_BIBLE_LANGUAGE_CODES)) {
+    for (const code of codes) {
+      const key = code.toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, ui);
+      }
+    }
+  }
+
+  return map;
+}
+
+const BIBLE_LANGUAGE_TO_UI_LOCALE = buildBibleLanguageToUiLocale();
+
+/**
+ * Resolves the UI locale that maps to a translation's Bible language, or
+ * `null` when no supported UI locale covers that language.
+ *
+ * Shared by the sitemap generator (`script/lib/sitemap.ts`) and the app's own
+ * `canonicalUrl`, which must agree on the language segment or the sitemap
+ * would advertise URLs whose pages disown them.
+ */
+export function bibleLanguageToUiLocale(
+  bibleLanguage: string | null | undefined
+): string | null {
+  if (!bibleLanguage) {
+    return null;
+  }
+  return BIBLE_LANGUAGE_TO_UI_LOCALE.get(bibleLanguage.toLowerCase()) ?? null;
+}
+
+const UI_LOCALE_BY_DEFAULT_TRANSLATION_ID = new Map<string, string>(
+  Array.from(DEFAULT_TRANSLATIONS_BY_LANGUAGE, ([ui, translation]) => [
+    translation.id,
+    ui,
+  ])
+);
+
+/**
+ * The UI locale a translation is the hardcoded default for, or `null` if it
+ * isn't one.
+ *
+ * A static lookup, unlike `bibleLanguageToUiLocale`, which needs the
+ * translation's `language` from the catalog. That matters on the server, where
+ * the catalog may not have arrived (or may have failed) but the URL still names
+ * a translation we need a canonical language for.
+ */
+export function uiLocaleForDefaultTranslation(
+  translationId: string | null | undefined
+): string | null {
+  if (!translationId) {
+    return null;
+  }
+  return UI_LOCALE_BY_DEFAULT_TRANSLATION_ID.get(translationId) ?? null;
+}
+
 function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
   if (mapped?.length) {
