@@ -310,7 +310,7 @@
   "chat-x-and-count-joined_other": "{{name}} e {{count}} outras pessoas se juntaram",
   "open-chat": "Abrir bate-papo",
   "tutorial.promptTitle": "Bem-vindo(a) à Bíblia das Sementes. Gostaria de um tutorial?",
-  "tutorial.promptBody": "Está disponível uma visita guiada para ajudá-lo a aprender todos os detalhes da {{appName}}.",
+  "tutorial.promptBody": "Está disponível uma visita guiada para ajudá-lo a aprender todos os detalhes da Seed Bible.",
   "tutorial.promptDecline": "Não, obrigado",
   "tutorial.promptAccept": "Faça o tour",
   "session-id": "ID da sessão",

@@ -33,7 +33,7 @@ export interface AppConfig {
 
   /** The list of languages included in the `Accept-Language` header */
   acceptedLanguages: string[];
-  /**the list of client config values */
+  /** Client branding configuration. */
   branding?: BrandingConfig;
 }
 

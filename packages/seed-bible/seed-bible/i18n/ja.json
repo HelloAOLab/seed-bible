@@ -233,7 +233,7 @@
   "onboarding.installThanks": "インストールしていただきありがとうございます！",
   "onboarding.installMaybe": "また今度！",
   "onboarding.installUnavailable": "PWAのインストールは利用できません",
-  "onboarding.installBodyPre": "{{appName}} をあなたの ",
+  "onboarding.installBodyPre": "Seed Bible をあなたの ",
   "onboarding.installBodyPost": "いつでも戻ることができます。このオプションは後で設定画面からいつでも確認できます。",
   "onboarding.iosStepsPre": "タップ ",
   "onboarding.iosStepsPost": " ツールバーで「ホーム画面に追加」を選択します。",

@@ -219,7 +219,7 @@
   "privacy-policy": "गोपनीयता नीति",
   "code-of-conduct": "आचार संहिता",
   "read-the-bible": "बाइबल पढ़ें",
-  "seed-bible-description": "{{appName}} में {{bookName}} {{chapterNumber}} पढ़ें",
+  "seed-bible-description": "सीड बाइबल में {{bookName}} {{chapterNumber}} पढ़ें",
   "social-title": "{{bookName}} {{chapterNumber}} पढ़ें",
   "new-bookmark-folder": "नया फ़ोल्डर",
   "chapter-navigation": "अध्याय नेविगेशन",

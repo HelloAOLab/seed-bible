@@ -309,7 +309,7 @@
   "chat-x-and-count-joined_one": "{{name}} dhe një tjetër u bashkuan",
   "chat-x-and-count-joined_other": "{{name}} dhe {{count}} të tjerë u bashkuan",
   "open-chat": "Hap bisedën",
-  "tutorial.promptTitle": "Mirë se vini në {{appName}}. Dëshironi një tutorial?",
+  "tutorial.promptTitle": "Mirë se vini në Seed Bible. Dëshironi një tutorial?",
   "tutorial.promptBody": "Një tur me guidë është në dispozicion për t'ju ndihmuar të mësoni hollësitë e Biblës së Seed-it.",
   "tutorial.promptDecline": "Jo, faleminderit",
   "tutorial.promptAccept": "Bëni turin",
