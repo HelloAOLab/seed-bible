@@ -1,4 +1,7 @@
-import { BibleReader } from "./BibleReader/BibleReader";
+import {
+  BibleReader,
+  CHAPTER_SKELETON_DELAY_MS,
+} from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
 import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
@@ -23,28 +26,38 @@ interface TabSlotReaderProps {
 // the true bottom.
 const BOTTOM_REVEAL_MARGIN = 4;
 
+// The swipe track is three panels wide — previous preview | current | next
+// preview — so one panel is a third of it. Keep in sync with
+// `.sb-reader-swipe-track` / `.sb-reader-swipe-panel` in BibleReader.css.
+export const PANEL_PCT = 100 / 3;
+
+// How long the track takes to slide over to a neighbouring panel.
+const SWIPE_ANIMATION_MS = 250;
+
+/**
+ * Cap on how long the track rests on the neighbouring panel waiting for the
+ * chapter it navigated to. Navigation doesn't wait on the download, so until
+ * then the centre panel still holds the outgoing chapter — recentring early is
+ * what made a swipe flash it. Half the reader's skeleton delay, so a slow
+ * chapter falls back to dimmed text before the placeholder appears.
+ */
+const SWIPE_SETTLE_BUDGET_MS = CHAPTER_SKELETON_DELAY_MS / 2;
+
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
   const isMobile = state?.app.isMobile.value ?? false;
 
-  const slotScrollerRef = useRef<HTMLDivElement | null>(null);
-  const mobileScrollerRef = useRef<HTMLDivElement | null>(null);
   const swipeViewportRef = useRef<HTMLDivElement | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
   const swipeTouchStartX = useRef<number | null>(null);
   const swipeTouchStartY = useRef<number | null>(null);
   const swipeDirectionLocked = useRef<"h" | "v" | null>(null);
   const swipeCurrentDx = useRef(0);
-  // Identifies whoever currently owns the track's transform. Bumped by every
-  // new gesture, so a committed swipe still waiting to recentre knows it has
-  // been superseded and leaves the track to the gesture in progress.
+  // Who owns the track's transform. Bumped by every new gesture, so a committed
+  // swipe still waiting on its chapter knows it has been superseded.
   const swipeCommitToken = useRef(0);
-  // True while a committed swipe is resting on a neighbouring panel waiting for
-  // the chapter it navigated to. The track is off-centre in that window, which
-  // a new gesture has to correct before it starts following the finger.
-  const swipeParked = useRef(false);
-  const currentChapterRef = useRef(readingState.chapterData.value);
+  const swipeCommitTimer = useRef(0);
   const lastScrollTopRef = useRef(0);
 
   const [prevChapterPreview, setPrevChapterPreview] =
@@ -75,14 +88,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // effects below re-run when the element genuinely changes — and *only* then.
   const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
 
-  // Every ref callback below is memoised. Handing Preact a fresh function each
-  // render makes it detach and re-attach the ref on every render, and
-  // re-attaching the scroller used to move the reader (see the scroll-restore
-  // effect): an ordinary re-render could yank a partially scrolled chapter back
-  // to its saved offset mid-frame.
+  // Memoised: a fresh function each render makes Preact detach and re-attach
+  // the ref, which re-runs the scroll-restore effect below and yanks a partly
+  // scrolled chapter back to its saved offset.
   const slotScrollerRefCallback = useCallback(
     (element: HTMLDivElement | null) => {
-      slotScrollerRef.current = element;
       if (!isMobile) {
         setScroller(element);
       }
@@ -92,7 +102,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   const currentScrollerRefCallback = useCallback(
     (element: HTMLDivElement | null) => {
-      mobileScrollerRef.current = element;
       if (isMobile) {
         setScroller(element);
       }
@@ -100,46 +109,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     [isMobile]
   );
 
-  const swipeViewportRefCallback = useCallback(
-    (element: HTMLDivElement | null) => {
-      swipeViewportRef.current = element;
-    },
-    []
-  );
-
-  const swipeTrackRefCallback = useCallback(
-    (element: HTMLDivElement | null) => {
-      swipeTrackRef.current = element;
-    },
-    []
-  );
-
-  // Which chapter's text the scroller is currently showing. `handleScroll`
-  // compares it against the reader's position so a scroll event that lands
-  // while the two disagree — the position has moved but the new text has not
-  // arrived — is not recorded as the new chapter's scroll offset.
-  useEffect(
-    () =>
-      effect(() => {
-        currentChapterRef.current = readingState.chapterData.value;
-      }),
-    [readingState]
-  );
-
-  // Restore the scroll offset when the reader's *position* changes — that is
-  // the only thing that should move the scroller on its own.
-  //
-  // Tracked on purpose: the position, not the loaded chapter, so the scroller
-  // moves the moment navigation happens. `applyPosition` has already reset
-  // `scrollPosition` to 0 for a chapter change, so this is what puts the reader
-  // back at the chapter heading while the placeholder shows. Waiting for
-  // `chapterData` left a reader who was halfway down a chapter stranded
-  // mid-page, looking at placeholder bars with the new book and chapter title
-  // off-screen above.
-  //
-  // Deliberately separate from the listener effect below: attaching a scroll
-  // listener must never move the reader, or every re-render that re-attaches it
-  // re-runs this write.
+  // Triggered by the *position* changing, not by `chapterData` arriving:
+  // `applyPosition` has already zeroed `scrollPosition`, so this is what puts
+  // the reader at the chapter heading while the placeholder shows. Kept
+  // separate from the listener effect below — attaching a listener must never
+  // move the reader, or every re-render that re-attaches it repeats this write.
   useEffect(() => {
     if (!scroller) {
       return;
@@ -159,18 +133,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       return;
     }
 
-    let frame: number | null = null;
+    let frame = 0;
     const dispose = effect(() => {
       const verseToScroll = readingState.scrollToVerse.value;
       if (!readingState.chapterData.value || verseToScroll === null) {
         return;
       }
 
-      if (frame !== null) {
-        cancelAnimationFrame(frame);
-      }
+      cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        frame = null;
+        frame = 0;
         const targetVerse = scroller.querySelector(
           `[data-verse-number="${verseToScroll}"]`
         );
@@ -187,9 +159,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     });
 
     return () => {
-      if (frame !== null) {
-        cancelAnimationFrame(frame);
-      }
+      cancelAnimationFrame(frame);
       dispose();
     };
   }, [scroller, readingState]);
@@ -202,43 +172,39 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }
 
     const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scroller;
+
+      // Only record the offset while the text on screen is the text the
+      // position points at. Between the two — the reader has moved but the new
+      // chapter is still downloading — a scroll event belongs to neither.
+      const chapter = readingState.chapterData.peek();
       if (
-        currentChapterRef.current?.translation.id ===
-          readingState.translationId.value &&
-        currentChapterRef.current?.book.id === readingState.bookId.value &&
-        currentChapterRef.current?.chapter.number ===
-          readingState.chapterNumber.value
+        chapter?.translation.id === readingState.translationId.peek() &&
+        chapter?.book.id === readingState.bookId.peek() &&
+        chapter?.chapter.number === readingState.chapterNumber.peek()
       ) {
-        readingState.scrollPosition.value = scroller.scrollTop;
+        readingState.scrollPosition.value = scrollTop;
       }
 
       if (!isMobile) {
         return;
       }
 
-      const currentScrollTop = scroller.scrollTop;
-      // Distance from the current scroll position to the very bottom of the
-      // chapter. When the reader lands within a small threshold of the end,
-      // re-show the toolbar so the chapter-navigation controls are within
-      // reach — even though the user is still scrolling down. Only counts
-      // when the content actually overflows; otherwise there's no downward
-      // scroll to reverse and `scrollHeight - clientHeight` isn't meaningful.
-      const isScrollable = scroller.scrollHeight > scroller.clientHeight;
-      const distanceToBottom =
-        scroller.scrollHeight - (currentScrollTop + scroller.clientHeight);
+      // Re-show the toolbar within a few px of the end so the chapter controls
+      // stay reachable even while scrolling down. Only when the content
+      // overflows — otherwise `scrollHeight - clientHeight` is meaningless.
+      const isScrollable = scrollHeight > clientHeight;
+      const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
       const reachedBottom =
         isScrollable && distanceToBottom <= BOTTOM_REVEAL_MARGIN;
-      if (currentScrollTop <= 0 || reachedBottom) {
+      if (scrollTop <= 0 || reachedBottom) {
         setIsScrolled(false);
-      } else if (
-        currentScrollTop > lastScrollTopRef.current &&
-        currentScrollTop > 50
-      ) {
+      } else if (scrollTop > lastScrollTopRef.current && scrollTop > 50) {
         setIsScrolled(true);
-      } else if (currentScrollTop < lastScrollTopRef.current) {
+      } else if (scrollTop < lastScrollTopRef.current) {
         setIsScrolled(false);
       }
-      lastScrollTopRef.current = currentScrollTop;
+      lastScrollTopRef.current = scrollTop;
     };
 
     scroller.addEventListener("scroll", handleScroll, { passive: true });
@@ -328,32 +294,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       return;
     }
 
-    const PANEL_PCT = 100 / 3;
-    // How long the track takes to slide over to a neighbouring panel.
-    const SWIPE_ANIMATION_MS = 250;
-    /**
-     * How long the track will rest on that neighbouring panel waiting for the
-     * text of the chapter it just navigated to, before recentring anyway.
-     *
-     * Navigation deliberately does not wait on a download (see
-     * `isChapterContentStale`), so for as long as the new chapter is in flight
-     * the *centre* panel still holds the chapter the reader just left.
-     * Recentring into that is what made a swipe flash the outgoing chapter.
-     * Waiting costs nothing in the usual case — the panel we are resting on is
-     * the prefetched preview of exactly the chapter being fetched, so it is
-     * already cached and settles in a few milliseconds — and the cap keeps a
-     * slow connection from stranding the reader on a static, unscrollable
-     * preview. Set to half the reader's own skeleton delay so a genuinely slow
-     * chapter falls back to the dimmed-text path well before the placeholder
-     * would appear.
-     */
-    const SWIPE_SETTLE_BUDGET_MS = 250;
-
-    const centreTransform = () => {
-      const isRtl =
-        readingState.chapterData.value?.translation.textDirection === "rtl";
-      return `translateX(${(isRtl ? 1 : -1) * PANEL_PCT}%)`;
-    };
+    const isRtl = () =>
+      readingState.chapterData.peek()?.translation.textDirection === "rtl";
+    const centreTransform = () =>
+      `translateX(${(isRtl() ? 1 : -1) * PANEL_PCT}%)`;
 
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
@@ -373,12 +317,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       const track = swipeTrackRef.current;
       if (track) {
         track.style.transition = "none";
-        if (swipeParked.current) {
-          // Bring the track back to centre before it starts following the
-          // finger, which `onTouchMove` measures from centre.
-          swipeParked.current = false;
-          track.style.transform = centreTransform();
-        }
+        // Recentre unconditionally: a committed swipe may have left the track
+        // resting on a neighbouring panel, and `onTouchMove` measures from
+        // centre. A no-op when it is already there.
+        track.style.transform = centreTransform();
       }
     };
 
@@ -413,13 +355,12 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
-      const isRtl =
-        readingState.chapterData.value?.translation.textDirection === "rtl";
+      const rtl = isRtl();
       const hasNext = readingState.hasNext.value;
       const hasPrev = readingState.hasPrevious.value;
       let offset = dx;
-      const attemptsNext = isRtl ? dx > 0 : dx < 0;
-      const attemptsPrev = isRtl ? dx < 0 : dx > 0;
+      const attemptsNext = rtl ? dx > 0 : dx < 0;
+      const attemptsPrev = rtl ? dx < 0 : dx > 0;
 
       if ((attemptsNext && !hasNext) || (attemptsPrev && !hasPrev)) {
         offset = Math.sign(dx) * Math.min(Math.abs(dx) * 0.15, 30);
@@ -433,20 +374,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       swipeCurrentDx.current = offset;
       const track = swipeTrackRef.current;
       if (track) {
-        const isRtl =
-          readingState.chapterData.value?.translation.textDirection === "rtl";
-        const sign = isRtl ? 1 : -1;
+        const sign = rtl ? 1 : -1;
         track.style.transform = `translateX(calc(${sign * PANEL_PCT}% + ${offset}px))`;
       }
     };
 
     /**
-     * Finishes a swipe that crossed the threshold: slides the track over to the
-     * neighbouring panel, navigates once it arrives, and recentres only when
-     * the new chapter's text is actually on screen.
-     *
-     * The panel we land on is a static preview of the chapter being navigated
-     * to, so resting there shows the reader the right text throughout the wait.
+     * Finishes a swipe past the threshold: slide to the neighbouring panel,
+     * navigate, and recentre only once the new text is on screen. That panel is
+     * a static preview of the chapter being fetched, so the wait shows the
+     * right text.
      */
     const commitSwipe = (
       track: HTMLDivElement,
@@ -458,7 +395,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       track.style.transform = landingTransform;
       readingState.clearSelectedVerses();
 
-      window.setTimeout(() => {
+      swipeCommitTimer.current = window.setTimeout(() => {
         // The navigation always runs, even if another gesture has since taken
         // the track over: the reader completed the swipe that asked for it.
         // Only the transform below is the superseding gesture's to own.
@@ -467,17 +404,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           return;
         }
 
-        swipeParked.current = true;
+        let budget = 0;
         void Promise.race([
           settled,
-          new Promise<void>((resolve) =>
-            window.setTimeout(resolve, SWIPE_SETTLE_BUDGET_MS)
-          ),
+          new Promise<void>((resolve) => {
+            budget = window.setTimeout(resolve, SWIPE_SETTLE_BUDGET_MS);
+          }),
         ]).then(() => {
+          window.clearTimeout(budget);
           if (swipeCommitToken.current !== commit) {
             return;
           }
-          swipeParked.current = false;
           track.style.transition = "none";
           track.style.transform = centreTransform();
         });
@@ -493,14 +430,13 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       const dx = swipeCurrentDx.current;
       const threshold = 80;
-      const isRtl =
-        readingState.chapterData.value?.translation.textDirection === "rtl";
+      const rtl = isRtl();
       const hasNext = readingState.hasNext.value;
       const hasPrev = readingState.hasPrevious.value;
       const swipedLeft = dx < -threshold;
       const swipedRight = dx > threshold;
-      const shouldLoadNext = isRtl ? swipedRight : swipedLeft;
-      const shouldLoadPrev = isRtl ? swipedLeft : swipedRight;
+      const shouldLoadNext = rtl ? swipedRight : swipedLeft;
+      const shouldLoadPrev = rtl ? swipedLeft : swipedRight;
 
       swipeTouchStartX.current = null;
       swipeDirectionLocked.current = null;
@@ -511,7 +447,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
-      const sign = isRtl ? 1 : -1;
+      const sign = rtl ? 1 : -1;
 
       if (shouldLoadNext && hasNext) {
         commitSwipe(track, `translateX(${sign * PANEL_PCT * 2}%)`, () =>
@@ -532,10 +468,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
-      // Retires any commit still waiting to recentre, so it doesn't write a
-      // transform onto a track this effect no longer owns.
+      // Retire any commit still in flight: the pending timer would otherwise
+      // navigate on behalf of a component that no longer exists, and the token
+      // bump stops a settled one writing to a track this effect no longer owns.
+      window.clearTimeout(swipeCommitTimer.current);
       swipeCommitToken.current += 1;
-      swipeParked.current = false;
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
@@ -608,12 +545,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [readingState, state, slot.id]);
 
-  // Drop the inline transform when the translation changes, so the track falls
-  // back to the stylesheet's centred rest position (which flips for RTL).
-  //
-  // Wrapped in `useEffect` rather than called bare in the render body: a bare
-  // `effect()` subscribes afresh on every render and is never disposed, so the
-  // component leaked one live subscription per render.
+  // Drop the inline transform on a translation change so the track falls back
+  // to the stylesheet's centred rest (which flips for RTL). In `useEffect`
+  // because a bare `effect()` in the render body resubscribes on every render
+  // and is never disposed.
   useEffect(
     () =>
       effect(() => {
@@ -656,8 +591,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         },
         onCloseMobileSettings: () => setShowMobileSettings(false),
         onOpenAllSettings: openAllSettings,
-        swipeViewportRefCallback,
-        swipeTrackRefCallback,
+        swipeViewportRef,
+        swipeTrackRef,
         currentScrollerRefCallback,
       }
     : undefined;

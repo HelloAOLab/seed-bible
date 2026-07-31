@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { batch, computed, signal, type Signal } from "@preact/signals";
-import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
+import {
+  PANEL_PCT,
+  TabSlotReader,
+} from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import type {
   BibleReadingState,
   SelectedFootnote,
@@ -302,17 +305,14 @@ function dispatchTouch(
   element.dispatchEvent(event);
 }
 
-// The swipe track is three panels wide: previous preview | current | next
-// preview. These are the transforms that park it over each one, written the
-// same way the component writes them so the float formatting matches.
-const SWIPE_PANEL_PCT = 100 / 3;
-const CENTRE_PANEL_TRANSFORM = `translateX(${-SWIPE_PANEL_PCT}%)`;
-const NEXT_PANEL_TRANSFORM = `translateX(${-SWIPE_PANEL_PCT * 2}%)`;
+// The transforms that park the track over the centre and next-chapter panels,
+// built from the component's own constant so the float formatting matches.
+const CENTRE_PANEL_TRANSFORM = `translateX(${-PANEL_PCT}%)`;
+const NEXT_PANEL_TRANSFORM = `translateX(${-PANEL_PCT * 2}%)`;
 
 /**
- * Records every write to an element's `scrollTop`, returning the array they
- * land in. jsdom has no layout, so the real property would clamp everything to
- * 0 and hide exactly what these tests are about.
+ * Records every write to an element's `scrollTop`. These tests assert on the
+ * writes themselves, which the stored value alone cannot reveal.
  */
 function recordScrollTopWrites(element: HTMLElement): number[] {
   const writes: number[] = [];
@@ -1030,66 +1030,47 @@ describe("TabSlotReader integration", () => {
     }
   });
 
-  // Attaching a scroll listener must never move the reader. When the two were
-  // the same effect, every re-render re-attached the scroller and rewrote
-  // `scrollTop` — which yanked a partially scrolled chapter back to its saved
-  // offset mid-frame during the render burst that follows a swipe.
-  it("does not move the reader when an ordinary re-render re-attaches the scroller in mobile layout", () => {
-    const { slot, readingState, chapterData } = createFixture();
-    const state = createMobileState();
+  // Attaching a scroll listener must never move the reader: when the two shared
+  // one effect, every re-render re-attached the scroller and rewrote
+  // `scrollTop`, yanking a partly scrolled chapter back to its saved offset.
+  it.each([
+    ["mobile", createMobileState, ".sb-reader-swipe-panel-current"],
+    ["non-mobile", createDesktopState, ".sb-pane-reader"],
+  ])(
+    "does not move the reader when an ordinary re-render re-attaches the scroller in %s layout",
+    (_label, createState, selector) => {
+      const { slot, readingState, chapterData } = createFixture();
 
-    renderTabSlotReader(slot, readingState, state, container);
+      renderTabSlotReader(slot, readingState, createState(), container);
 
-    const panel = container.querySelector(
-      ".sb-reader-swipe-panel-current"
-    ) as HTMLDivElement;
-    const writes = recordScrollTopWrites(panel);
+      const writes = recordScrollTopWrites(
+        container.querySelector(selector) as HTMLDivElement
+      );
 
-    // The reader is partway down the chapter.
-    readingState.scrollPosition.value = 500;
-    writes.length = 0;
+      // The reader is partway down the chapter.
+      readingState.scrollPosition.value = 500;
 
-    // A plain re-render at the same position: same chapter, new object
-    // identity. This is what content settling and a preview resolving both do.
-    act(() => {
-      chapterData.value = { ...chapterData.value! };
-    });
+      // A plain re-render at the same position: same chapter, new object
+      // identity. This is what content settling and a preview resolving do.
+      act(() => {
+        chapterData.value = { ...chapterData.value! };
+      });
 
-    expect(writes).toEqual([]);
-  });
-
-  it("does not move the reader when an ordinary re-render re-attaches the scroller in non-mobile layout", () => {
-    const { slot, readingState, chapterData } = createFixture();
-    const state = createDesktopState();
-
-    renderTabSlotReader(slot, readingState, state, container);
-
-    const pane = container.querySelector(".sb-pane-reader") as HTMLDivElement;
-    const writes = recordScrollTopWrites(pane);
-
-    readingState.scrollPosition.value = 500;
-    writes.length = 0;
-
-    act(() => {
-      chapterData.value = { ...chapterData.value! };
-    });
-
-    expect(writes).toEqual([]);
-  });
+      expect(writes).toEqual([]);
+    }
+  );
 
   it("still restores the saved scroll offset when the reader's position changes", () => {
     const { slot, readingState } = createFixture();
-    const state = createMobileState();
 
-    renderTabSlotReader(slot, readingState, state, container);
+    renderTabSlotReader(slot, readingState, createMobileState(), container);
 
-    const panel = container.querySelector(
-      ".sb-reader-swipe-panel-current"
-    ) as HTMLDivElement;
-    const writes = recordScrollTopWrites(panel);
-
+    const writes = recordScrollTopWrites(
+      container.querySelector(
+        ".sb-reader-swipe-panel-current"
+      ) as HTMLDivElement
+    );
     readingState.scrollPosition.value = 120;
-    writes.length = 0;
 
     // Navigating is the one thing that should move the scroller on its own.
     act(() => {
