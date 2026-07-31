@@ -8,6 +8,8 @@
 
 ### 🐛 Fixed
 
+- Fix highlights from a previous account staying visible on already-visited chapters after signing out and into a different one, instead of updating to the signed-in account immediately.
+
 ### 🗑️ Removed
 
 ## v1.3.0 — 2026-07-31
@@ -56,7 +58,6 @@
 - Recover from a corrupted stored session key instead of crashing. ([#1546](https://github.com/HelloAOLab/seed-bible/pull/1546))
 - Fix chat links changing color once visited, and using the toolbar's orange instead of the theme's own link color. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
 - Fix the floating chat window not toggling from the toolbar button, overflowing the top of the screen on short viewports, and being too small to use comfortably. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
-- Fix highlights from a previous account staying visible on already-visited chapters after signing out and into a different one, instead of updating to the signed-in account immediately.
 
 ## v1.2.1 — 2026-07-23
 
