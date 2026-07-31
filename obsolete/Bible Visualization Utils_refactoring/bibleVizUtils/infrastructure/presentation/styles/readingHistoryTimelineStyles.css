@@ -1,0 +1,159 @@
+.reading-history-timeline-container {
+  width: 100%;
+  padding: 8px;
+  --timelineItemSize: 16px;
+}
+
+.reading-history-timeline {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  align-items: start;
+  overflow-x: scroll;
+  scroll-behavior: smooth;
+  justify-content: start;
+  /* scrollbar-width: thin !important; */
+}
+
+.reading-history-timeline-item {
+  width: var(--timelineItemSize);
+  height: var(--timelineItemSize);
+  background: var(--sb-divider-color);
+  border-radius: 2px;
+  border-style: solid;
+  border-width: 0px;
+  border-color: transparent;
+  cursor: pointer;
+}
+
+.reading-history-timeline-item.upcoming,
+.reading-history-timeline-item.selected {
+  border-width: 2px;
+}
+
+.reading-history-timeline-item.upcoming {
+  background: var(--background);
+  border-color: var(--sb-divider-color);
+  border-style: dashed;
+}
+
+.reading-history-timeline-item.selected {
+  border-color: var(--sb-primary-color);
+}
+
+.reading-history-timeline-label {
+  font-family: system-ui;
+  font-size: 12px;
+  color: var(--text1);
+}
+
+.reading-history-timeline-label-month {
+  margin-bottom: 4px;
+}
+
+.reading-history-timeline-label-day {
+  margin-right: 4px;
+  height: var(--timelineItemSize);
+}
+
+.reading-history-timeline-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.reading-history-timeline-footer > .legend {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+  color: var(--sb-reader-font-color);
+}
+
+.reading-history-timeline-footer > .legend > span:first-child,
+.reading-history-timeline-footer > .legend > span:last-child {
+  font-size: 12px;
+}
+
+.reading-history-timeline-footer > .legend > span:nth-of-type(2),
+.reading-history-timeline-footer > .legend > span:nth-of-type(3),
+.reading-history-timeline-footer > .legend > span:nth-of-type(4),
+.reading-history-timeline-footer > .legend > span:nth-of-type(5),
+.reading-history-timeline-footer > .legend > span:nth-of-type(6) {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.reading-history-timeline-footer > .year-selector {
+  font-size: 12px;
+  position: relative;
+}
+
+.reading-history-timeline-footer > .year-selector > .year-selector-label {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.reading-history-timeline-footer
+  > .year-selector
+  > .year-selector-label
+  > span {
+  color: var(--sb-reader-font-color);
+}
+
+.reading-history-timeline-footer
+  > .year-selector
+  > .year-selector-label
+  > span:nth-of-type(2) {
+  font-size: 16px;
+}
+
+.reading-history-timeline-footer > .year-selector > .year-selector-options {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: var(--sb-background);
+  color: var(--sb-reader-font-color);
+  border-radius: 4px;
+  border: solid 1px var(--sb-secondary-color);
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 0 4px 0px var(--sb-divider-color);
+  z-index: 1;
+}
+
+.reading-history-timeline-footer
+  > .year-selector
+  > .year-selector-options
+  > .year-selector-option {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.reading-history-timeline-footer
+  > .year-selector
+  > .year-selector-options
+  > .year-selector-option:hover {
+  background-color: var(--sb-secondary-color);
+}
+
+.reading-history-timeline-footer
+  > .year-selector
+  > .year-selector-options
+  > .year-selector-option.selected {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
+}

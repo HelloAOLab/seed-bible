@@ -1,0 +1,10 @@
+const {mapData} = that
+shout("switchToOld")
+shout("hideYears")
+mapData.childrenStructureLayer.map(e=>{
+    e.map(ee => {
+
+        ee.dateWrote.tags.label = ""
+        
+    })
+})

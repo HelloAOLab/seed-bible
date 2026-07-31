@@ -1,0 +1,31 @@
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  font-size: 24px;
+  padding: 8px;
+}
+button {
+  border-radius: 5px;
+  appearance: none;
+  padding: 8px;
+  margin: 8px;
+  background-color: #fff;
+  cursor: pointer;
+  color: #000;
+  font-family: "Material Symbols Outlined", sans-serif;
+}
+button:hover {
+  color: #fff;
+  background-color: #000;
+}
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}

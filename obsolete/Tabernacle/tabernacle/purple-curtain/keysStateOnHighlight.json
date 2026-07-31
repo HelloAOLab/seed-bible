@@ -1,0 +1,26 @@
+[
+  {
+    "key": "brown-curtain",
+    "state": "Hidden"
+  },
+  {
+    "key": "grey-curtain",
+    "state": "Hidden"
+  },
+  {
+    "key": "red-curtain",
+    "state": "Hidden"
+  },
+  {
+    "key": "rings",
+    "state": "Shown"
+  },
+  {
+    "key": "walls",
+    "state": "Shown"
+  },
+  {
+    "key": "bars",
+    "state": "Shown"
+  }
+]

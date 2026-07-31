@@ -1,0 +1,97 @@
+.close {
+  display: flex;
+  position: absolute;
+  bottom: 40px;
+  height: 34px;
+  width: 34px;
+  border: 2px solid black;
+  border-radius: 5px;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  right: calc(70vw + 40px);
+  left: 0;
+  animation: closeButtonnAni ease 1s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+.reset {
+  display: none;
+  position: absolute;
+  bottom: 40px;
+  height: 34px;
+  width: 34px;
+  border: 2px solid black;
+  border-radius: 5px;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  right: calc(70vw + 40px);
+  left: 0;
+  animation: closeButtonnAni ease 1s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+.close:hover {
+  background: white;
+}
+
+@keyframes closeButtonnAni {
+  0% {
+    right: calc(50vw + 40px);
+    opacity: 0;
+  }
+  100% {
+    right: calc(70vw + 40px);
+    opacity: 1;
+  }
+}
+
+.close-blink {
+  animation: blink-ani ease 0.3s;
+  animation-iteration-count: 6;
+  animation-fill-mode: forwards;
+}
+
+@keyframes blink-ani {
+  0% {
+    background: white;
+  }
+  50% {
+    background: transparent;
+  }
+  100% {
+    background: white;
+  }
+}
+
+.chaism-close-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: white;
+}
+
+.custom-button-1 {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid black;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  cursor: pointer;
+  color: black !important;
+  font-size: 16px;
+}
+
+.custom-button-1:hover {
+  background: #eceff1;
+}
+
+.DonationStackButton {
+  opacity: 0;
+  display: none;
+}

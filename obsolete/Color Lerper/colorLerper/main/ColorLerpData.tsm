@@ -1,0 +1,14 @@
+export class ColorLerpData {
+    constructor({
+        botId,
+        tag = "color",
+        lerpIntervalId,
+        reject
+    })
+    {
+        this.botId = botId
+        this.tag = tag
+        this.lerpIntervalId = lerpIntervalId
+        this.reject = reject;
+    }
+}

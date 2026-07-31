@@ -1,0 +1,38 @@
+import {getID} from "casualos"
+
+export class ColorLerpsArray {
+    constructor({
+        currentLerps = []
+    })
+    {
+        this.currentLerps = currentLerps
+    }
+
+    AddColorLerpData(newColorLerpData)
+    {
+        if(!this.IncludesColorLerpData(newColorLerpData))
+        {
+            this.currentLerps.push(newColorLerpData);
+        }
+    }
+
+    ClearColorLerpData(colorLerpData)
+    {
+        if(this.IncludesColorLerpData(colorLerpData))
+        {
+            this.currentLerps = this.currentLerps.toSpliced(this.currentLerps.indexOf(colorLerpData), 1);
+        }
+    }
+
+    IncludesColorLerpData(colorLerpData)
+    {
+        return this.currentLerps.includes(colorLerpData)
+    }
+
+    GetColorLerpData({bot, tag})
+    {
+        return this.currentLerps.find((lerpData) => {
+            return lerpData.botId === getID(bot) && lerpData.tag === tag
+        })
+    }
+}

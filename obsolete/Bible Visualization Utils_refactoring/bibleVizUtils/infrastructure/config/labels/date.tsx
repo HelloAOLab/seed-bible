@@ -1,0 +1,10 @@
+export const LabelDateConfigs = {
+  absoluteDateScales: { x: 2.2, y: 0.375 },
+  relativeDateScales: { x: 1.6125, y: 0.375 },
+  absoluteDateFormAddress:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Canvas/69c95c260f512caab92f2eff1596fa654391543a3d1a33a787b9c16af5d34ce2.png",
+  relativeDateFormAddress:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Canvas/5893ca13bd10acda50a4adc5a920761d136caa8ed21580035bd2a1d030ce9c2b.png",
+} as const;
+
+export type LabelDateConfigsType = typeof LabelDateConfigs;

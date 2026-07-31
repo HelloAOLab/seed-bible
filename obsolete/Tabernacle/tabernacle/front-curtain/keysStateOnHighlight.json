@@ -1,0 +1,38 @@
+[
+  {
+    "key": "brown-curtain",
+    "state": "Hidden"
+  },
+  {
+    "key": "grey-curtain",
+    "state": "Hidden"
+  },
+  {
+    "key": "purple-curtain",
+    "state": "Hidden"
+  },
+  {
+    "key": "red-curtain",
+    "state": "Hidden"
+  },
+  {
+    "key": "front-pillars",
+    "state": "Translucent"
+  },
+  {
+    "key": "inner-pillars",
+    "state": "Translucent"
+  },
+  {
+    "key": "walls",
+    "state": "Translucent"
+  },
+  {
+    "key": "rings",
+    "state": "Translucent"
+  },
+  {
+    "key": "bars",
+    "state": "Translucent"
+  }
+]

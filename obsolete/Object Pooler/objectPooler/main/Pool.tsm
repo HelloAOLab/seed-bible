@@ -1,0 +1,13 @@
+export class Pool
+{
+    constructor({
+        poolData,
+        objectPool,
+        inUseObjects
+    })
+    {
+        this.poolData = poolData;
+        this.objectPool = objectPool;
+        this.inUseObjects = inUseObjects;
+    }
+}

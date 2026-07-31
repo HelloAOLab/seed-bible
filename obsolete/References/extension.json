@@ -1,0 +1,31 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "app": null,
+    "author": "Sujan",
+    "toolbarConfig": {
+      "icon": "quick_reference_all",
+      "label": "References",
+      "hasToggle": "true"
+    }
+  },
+  "createdAt": "2025-09-10T14:53:53.604Z",
+  "description": "Shows References for the selected verses",
+  "id": 1757516233604,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "references.manager",
+  "name": "References",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "ec311bf67ef2e5de8dd61834fe52f24d7fb5188faba9cda5928ab255533a65a7",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/ec311bf67ef2e5de8dd61834fe52f24d7fb5188faba9cda5928ab255533a65a7.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/ec311bf67ef2e5de8dd61834fe52f24d7fb5188faba9cda5928ab255533a65a7.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-25T18:17:32.364Z",
+  "userAuth": "1946d76e-bdde-47ec-81ec-497255d8a972",
+  "version": "1.0.7"
+}

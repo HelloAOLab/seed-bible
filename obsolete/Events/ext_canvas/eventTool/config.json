@@ -1,0 +1,10 @@
+{
+  "author": "Sujan",
+  "app": "@getEventsInterface",
+  "toolbarConfig": {
+    "icon": "database",
+    "label": "Events",
+    "hasToggle": "true",
+    "to": "canvas"
+  }
+}
