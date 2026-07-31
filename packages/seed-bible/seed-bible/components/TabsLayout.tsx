@@ -456,7 +456,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
 
       const dx = swipeCurrentDx.current;
-      const threshold = 80;
+      const threshold = 70;
       const rtl = isRtl();
       const hasNext = readingState.hasNext.value;
       const hasPrev = readingState.hasPrevious.value;
