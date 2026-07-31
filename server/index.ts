@@ -559,8 +559,9 @@ async function startDevServer(): Promise<void> {
       // 2. Apply Vite HTML transforms (injects the HMR client + plugin
       //    preambles).
       const transformed = await vite.transformIndexHtml(
-        req.originalUrl,
-        template
+        "/index.html",
+        template,
+        req.originalUrl
       );
 
       // 3. Load the server entry. ssrLoadModule transforms ESM source to be
