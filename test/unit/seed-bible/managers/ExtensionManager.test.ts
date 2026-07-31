@@ -30,9 +30,13 @@ function createTestLogin(initial?: {
   userId?: string | null;
   profile?: UserProfile | null;
   profilePromise?: Promise<UserProfile> | null;
+  localConfig?: Record<string, unknown>;
 }): LoginManager {
   const userId = signal<string | null>(initial?.userId ?? null);
   const profile = signal<UserProfile | null>(initial?.profile ?? null);
+  const localConfig = signal<Record<string, unknown>>(
+    initial?.localConfig ?? {}
+  );
   const updateProfile = (newData: Partial<UserProfile>) => {
     profile.value = {
       ...(profile.value ?? { name: "" }),
@@ -42,6 +46,7 @@ function createTestLogin(initial?: {
   return {
     userId,
     profile,
+    localConfig,
     updateProfile,
     profilePromise: initial?.profilePromise ?? null,
   } as unknown as LoginManager;

@@ -223,6 +223,13 @@ export interface BibleReadingState {
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
   /**
+   * Re-runs the most recent load operation — initial load, translation/book/
+   * chapter selection, or next/previous navigation — so a failed load can be
+   * retried without the user losing their place. Falls back to reloading the
+   * initial data when no load has been attempted yet.
+   */
+  retryLoad: () => Promise<void>;
+  /**
    * Resolves once the first chapter load reaches a terminal outcome: content
    * arrived, the load failed, or (during SSR only) it exceeded a deadline.
    * Throw this in a component to suspend rendering until then.
@@ -2152,6 +2159,15 @@ export function createBibleReadingState(
   };
 
   /**
+   * The load that is currently in flight (or was the last one to run), kept so
+   * `retryLoad()` can repeat exactly what failed. Every direct navigation entry
+   * point records itself here — except the navigation-hook step of
+   * next/previous navigation, so that retrying never re-runs a hook that may
+   * have already acted (see `navigateAdjacent`).
+   */
+  let lastLoadAttempt: (() => Promise<void>) | null = null;
+
+  /**
    * Moves one chapter forward or back.
    *
    * The position write is synchronous — no `await` runs before it in the common
@@ -2183,6 +2199,11 @@ export function createBibleReadingState(
     if (!chapterMatchesPosition(chapter, from) || !chapter) {
       return;
     }
+
+    // Recorded here, not at the top of `navigateAdjacent`: the hooks already
+    // ran and declined to act, so a retry must resume from this fetch rather
+    // than ask them again.
+    lastLoadAttempt = () => navigateByChapterLink(direction, from);
 
     beginRequest();
     // Captured, not bumped: superseding here would strand the request already
@@ -2260,6 +2281,14 @@ export function createBibleReadingState(
       return;
     }
 
+    // Recorded here, not at the top of `navigateAdjacent`, for the same reason
+    // as `navigateByChapterLink`: the hooks already ran, so retrying must not
+    // ask them again — just re-apply the same target, which is what makes the
+    // loader retry its fetch.
+    lastLoadAttempt = () => {
+      applyPosition(target);
+      return whenContentSettled(target);
+    };
     applyPosition(target);
     await whenContentSettled(target);
   };
@@ -2267,6 +2296,7 @@ export function createBibleReadingState(
   const loadPreviousChapter = () => navigateAdjacent("previous");
 
   const selectTranslation = async (translation: string) => {
+    lastLoadAttempt = () => selectTranslation(translation);
     beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(translation);
@@ -2312,6 +2342,7 @@ export function createBibleReadingState(
       return;
     }
 
+    lastLoadAttempt = () => selectBook(book);
     const target: ReadingPosition = {
       translationId: activeTranslationId,
       bookId: book,
@@ -2327,6 +2358,13 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
+    lastLoadAttempt = () =>
+      selectTranslationAndChapter(
+        nextTranslationIdOrUrl,
+        nextBookId,
+        nextChapterNumber,
+        options
+      );
     beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(
@@ -2366,6 +2404,7 @@ export function createBibleReadingState(
   };
 
   const selectChapter = async (book: string, chapter: number) => {
+    lastLoadAttempt = () => selectChapter(book, chapter);
     const target: ReadingPosition = {
       translationId: translationId.peek(),
       bookId: book,
@@ -2378,6 +2417,7 @@ export function createBibleReadingState(
   const loadNextChapter = () => navigateAdjacent("next");
 
   const loadInitialData = async () => {
+    lastLoadAttempt = loadInitialData;
     beginRequest();
     error.value = null;
 
@@ -2455,6 +2495,10 @@ export function createBibleReadingState(
       // means the HTTP request never completes.
       initialChapterLoadSettled.value = true;
     }
+  };
+
+  const retryLoad = async () => {
+    await (lastLoadAttempt ?? loadInitialData)();
   };
 
   const selectFootnote = (noteId: number | null) => {
@@ -2775,6 +2819,7 @@ export function createBibleReadingState(
     selectedFootnote,
     loading,
     error,
+    retryLoad,
     scrollPosition,
     scrollToVerse,
     selectVerse,

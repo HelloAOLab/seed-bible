@@ -158,6 +158,7 @@ function createFixture(): ReaderFixture {
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
     error: signal<string | null>(null),
+    retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
     highlightSelectedVerses: vi.fn(async () => undefined),
@@ -336,6 +337,84 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, slot);
+  });
+
+  it("shows a retryable failure state when the chapter fails to load", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const errorPanel = container.querySelector(".sb-reader-error");
+    expect(errorPanel).not.toBeNull();
+    expect(errorPanel?.textContent).toContain("Chapter unavailable");
+    // The raw failure message is never surfaced to the reader.
+    expect(errorPanel?.textContent).not.toContain("Failed to fetch");
+    expect(container.querySelector(".sb-chapter-content")).toBeNull();
+
+    const reload = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-error-retry"
+    );
+    expect(reload).not.toBeNull();
+
+    act(() => {
+      reload?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(readingState.retryLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the failure state visible while a retry is in flight", async () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+
+    let resolveRetry: (() => void) | undefined;
+    (readingState.retryLoad as Mock).mockImplementation(() => {
+      // Mirror the manager: the retry clears `error` as it starts.
+      readingState.error.value = null;
+      return new Promise<void>((resolve) => {
+        resolveRetry = resolve;
+      });
+    });
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-reader-error-retry")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.querySelector(".sb-reader-error")).not.toBeNull();
+    expect(
+      container.querySelector<HTMLButtonElement>(".sb-reader-error-retry")
+        ?.disabled
+    ).toBe(true);
+
+    await act(async () => {
+      resolveRetry?.();
+    });
+
+    expect(container.querySelector(".sb-reader-error")).toBeNull();
+    expect(container.querySelector(".sb-chapter-content")).not.toBeNull();
   });
 
   it("updates the displayed book name when the current book changes", () => {

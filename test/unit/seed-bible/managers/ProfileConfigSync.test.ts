@@ -17,9 +17,13 @@ function createTestLogin(initial?: {
   userId?: string | null;
   profile?: UserProfile | null;
   profilePromise?: Promise<UserProfile> | null;
+  localConfig?: Record<string, unknown>;
 }): LoginManager {
   const userId = signal<string | null>(initial?.userId ?? null);
   const profile = signal<UserProfile | null>(initial?.profile ?? null);
+  const localConfig = signal<Record<string, unknown>>(
+    initial?.localConfig ?? {}
+  );
   const updateProfile = (newData: Partial<UserProfile>) => {
     profile.value = {
       ...(profile.value ?? { name: "" }),
@@ -29,6 +33,7 @@ function createTestLogin(initial?: {
   return {
     userId,
     profile,
+    localConfig,
     profilePromise: initial?.profilePromise ?? null,
     updateProfile,
   } as unknown as LoginManager;
@@ -45,12 +50,40 @@ function deferred<T>() {
 }
 
 describe("saveProfileConfigValue", () => {
-  it("no-ops when the user is not logged in", () => {
+  it("saves to the device-local config store when the user is not logged in", () => {
     const login = createTestLogin();
 
     saveProfileConfigValue(login, "fontSize", "large");
 
     expect(login.profile.value).toBeNull();
+    expect(login.localConfig.value).toEqual({ fontSize: "large" });
+  });
+
+  it("does not write to the local config store when the value is unchanged", () => {
+    const login = createTestLogin({ localConfig: { fontSize: "large" } });
+    const localConfig = login.localConfig.value;
+
+    saveProfileConfigValue(login, "fontSize", "large");
+
+    expect(login.localConfig.value).toBe(localConfig);
+  });
+
+  it("does not write to the local config store when an object value is unchanged by content", () => {
+    // Anonymous saves cover object-shaped settings (selectionUI, textConfig,
+    // etc.) too, not just primitives — a new object literal with the same
+    // content (e.g. `{ ...current, ...patch }` where the patch changes
+    // nothing) must not be treated as a change just because it's a new
+    // reference.
+    const login = createTestLogin({
+      localConfig: { selectionUI: { showSelectedItems: true } },
+    });
+    const localConfig = login.localConfig.value;
+
+    saveProfileConfigValue(login, "selectionUI", {
+      showSelectedItems: true,
+    });
+
+    expect(login.localConfig.value).toBe(localConfig);
   });
 
   it("does not write, and does not overwrite the profile, while the profile is still loading", () => {

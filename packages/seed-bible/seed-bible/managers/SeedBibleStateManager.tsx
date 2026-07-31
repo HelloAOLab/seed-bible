@@ -8,8 +8,6 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
-import { createConfig } from "../managers/ConfigManager";
-import type { ConfigManager } from "../managers/ConfigManager";
 import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
@@ -269,8 +267,6 @@ export interface SeedBibleState {
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
-  /** Persisted app configuration (layout, font size, etc.). */
-  config: ConfigManager;
   /** Theme manager plus derived CSS variables/classes for rendering. */
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
@@ -304,7 +300,7 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
-  /** App-level settings: book orientation, UI size, selection UI, etc. */
+  /** App-level settings: font size, layout, book orientation, UI size, selection UI, etc. */
   settings: SettingsManager;
   /** Incoming session invitations and invite-sending. */
   invitations: InvitationsManager;
@@ -433,13 +429,13 @@ export function createSeedBibleState(
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
-  const config = createConfig(login, navigation);
+  const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
   // listener) keeps URL-driven language changes view-only.
-  i18n.setLanguagePersister(config.persistLanguage);
-  const panelsEnabled = computed(() => !config.config.value.disablePanels);
-  const themeManager = createTheme(login, navigation);
+  i18n.setLanguagePersister(settings.persistLanguage);
+  const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
+  const themeManager = createTheme(settings);
   const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
@@ -450,11 +446,11 @@ export function createSeedBibleState(
     highlights,
     chats,
     i18n,
+    login,
     discover,
     readingExtensions
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
-  const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
     data,
     tabs,
@@ -462,7 +458,8 @@ export function createSeedBibleState(
     settings,
     sidebar,
     bookmarks,
-    navigation
+    navigation,
+    login
   );
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
@@ -1603,7 +1600,6 @@ export function createSeedBibleState(
   const state: SeedBibleState = {
     os,
     bibleData: data,
-    config,
     theme: {
       ...themeManager,
       themeCssVariables,
