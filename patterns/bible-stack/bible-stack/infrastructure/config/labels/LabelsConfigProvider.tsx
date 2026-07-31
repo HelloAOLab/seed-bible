@@ -10,7 +10,14 @@ import {
   type ShowAnimationDurationMapType,
   type ShowAnimationConfigType,
 } from "./showAnimation";
-import type { ShowSequencePacing } from "../../../domain/models/label";
+import {
+  LabelTranslucencyModes,
+  type LabelTranslucencyMode,
+  type ShowSequencePacing,
+} from "../../../domain/models/label";
+import { MEASUREMENTS, type MeasurementsType } from "./measurements";
+import type { Scales } from "../../functions/layout";
+import type { Vector3 as Vector3Type } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 
 type FontsSchema = typeof Fonts;
 
@@ -19,6 +26,11 @@ type FontName = keyof FontsSchema;
 type FontData = FontsSchema[FontName];
 
 export type { FontName, FontData };
+
+const OPACITY_MAP: Record<LabelTranslucencyMode, number> = {
+  [LabelTranslucencyModes.Faded]: 0.5,
+  [LabelTranslucencyModes.Solid]: 1,
+};
 
 export class LabelsConfigProvider {
   getFontData(font: FontName): FontData {
@@ -54,5 +66,33 @@ export class LabelsConfigProvider {
     key: K
   ): ShowAnimationConfigType[K] {
     return ShowAnimationConfig[key];
+  }
+
+  getMeasurement<K extends keyof MeasurementsType>(
+    key: K
+  ): MeasurementsType[K] {
+    return MEASUREMENTS[key];
+  }
+
+  getOpacity<K extends LabelTranslucencyMode>(
+    mode: K
+  ): (typeof OPACITY_MAP)[K] {
+    return OPACITY_MAP[mode];
+  }
+
+  getTransformerDesiredScales(): Scales {
+    return {
+      x: MEASUREMENTS.TransformerDesiredScaleX,
+      y: MEASUREMENTS.TransformerDesiredScaleY,
+      z: MEASUREMENTS.TransformerDesiredScaleZ,
+    };
+  }
+
+  getTransformerOffset(): Vector3Type {
+    return new Vector3(
+      MEASUREMENTS.TransformeOffsetX,
+      MEASUREMENTS.TransformeOffsetY,
+      MEASUREMENTS.TransformeOffsetZ
+    );
   }
 }

@@ -1,3 +1,4 @@
+import type { Vector3 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import { BiblePieces } from "../../domain/models/canvas";
 import type { HexString } from "../../domain/models/commonTypes";
 
@@ -68,6 +69,26 @@ export interface VerseVisualState {
   initialColor: string;
 }
 
+export interface InfoLabelTransformerState {
+  makesAttentionFeedback: boolean;
+  targetOpacity: number;
+  isInteractable: boolean;
+}
+
+export interface ShakeablePiece {
+  initialPosition: Vector3;
+}
+
+export type InfoLabelDateState = ShakeablePiece;
+
+export type InfoLabelTextState = ShakeablePiece;
+
+export type InfoLabelTailState = ShakeablePiece;
+
+export interface ActivityIndicatorState extends ShakeablePiece {
+  targetOpacity: number;
+}
+
 export interface VisualStateMap {
   [BiblePieces.StackTransformer]: BibleTransformerState;
   [BiblePieces.StackTestament]: TestamentVisualState;
@@ -78,4 +99,9 @@ export interface VisualStateMap {
   [BiblePieces.StackChapter]: ChapterVisualState;
   [BiblePieces.VersesBundle]: VersesBundleVisualState;
   [BiblePieces.Verse]: VerseVisualState;
+  [BiblePieces.InfoLabelTransformer]: InfoLabelTransformerState;
+  [BiblePieces.InfoLabelDate]: InfoLabelDateState;
+  [BiblePieces.InfoLabelText]: InfoLabelTextState;
+  [BiblePieces.InfoLabelTail]: InfoLabelTailState;
+  [BiblePieces.ActivityIndicator]: ActivityIndicatorState;
 }

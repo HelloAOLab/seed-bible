@@ -12,6 +12,7 @@ export const LISTEN_TAGS: {
     "onDragging",
     "onDrop",
     "onPointerEnter",
+    "onPointerExit",
     "onPointerUp",
   ],
   StackSection: [

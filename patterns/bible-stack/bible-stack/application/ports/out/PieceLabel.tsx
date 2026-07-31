@@ -7,10 +7,11 @@ import type {
   LabelTranslucencyMode,
   ShowSequencePacing,
 } from "../../../domain/models/label";
+import type { StackLabelableBiblePiece } from "../../../domain/models/pieceLifecycle";
 import type { ActivityContainer, ShowIndicatorsCommand } from "./PieceActivity";
 
 export type SpawnLabel = (params: {
-  piece: Piece;
+  piece: Piece<StackLabelableBiblePiece>;
   label: string;
   date?: string;
   color: HexString;
@@ -34,7 +35,7 @@ export interface LabelAdapterPort {
   despawnLabel: DespawnLabel;
   locateLabel(params: {
     positioning: LabelPosition;
-    piece: Piece;
+    piece: Piece<StackLabelableBiblePiece>;
     infoLabelTransformer: Piece<"InfoLabelTransformer">;
   }): void;
 }

@@ -9,4 +9,5 @@ export interface TestamentInteractionServicePort {
     interaction: SelectionModality;
   }): void;
   handleTestamentFocusBegin(testament: Piece<"StackTestament">): void;
+  handleTestamentFocusEnd(testament: Piece<"StackTestament">): void;
 }

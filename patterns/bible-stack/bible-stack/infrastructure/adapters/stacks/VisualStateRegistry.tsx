@@ -15,6 +15,11 @@ export class VisualStateRegistry {
     [BiblePieces.StackChapter]: new Map(),
     [BiblePieces.VersesBundle]: new Map(),
     [BiblePieces.Verse]: new Map(),
+    [BiblePieces.InfoLabelTransformer]: new Map(),
+    [BiblePieces.InfoLabelDate]: new Map(),
+    [BiblePieces.InfoLabelText]: new Map(),
+    [BiblePieces.InfoLabelTail]: new Map(),
+    [BiblePieces.ActivityIndicator]: new Map(),
   };
 
   registerState<K extends keyof VisualStateMap>({

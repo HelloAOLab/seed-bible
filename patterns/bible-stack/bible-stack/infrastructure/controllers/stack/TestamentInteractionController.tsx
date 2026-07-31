@@ -78,6 +78,11 @@ export class TestamentInteractionController {
     this.#testamentInteractionServicePort.handleTestamentFocusBegin(piece);
   }
 
+  handleTestamentPointerExit(testament: TestamentBot) {
+    const piece = this.#pieceMapperPort.toDomain(testament);
+    this.#testamentInteractionServicePort.handleTestamentFocusEnd(piece);
+  }
+
   handleTestamentDrag(testament: TestamentBot) {
     const piece = this.#pieceMapperPort.toDomain(testament);
     this.#dragServicePort.handlePieceDrag(piece);

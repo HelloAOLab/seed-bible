@@ -7,11 +7,10 @@ import {
   ComputeInfoLabelTailRotationZ,
   ComputeInfoLabelTailOffset,
 } from "../../functions/layout";
-import { GetBotScales } from "../../functions/casualos";
+import { ApplyStrictMod, GetBotScales } from "../../functions/casualos";
 import { BiblePieces } from "../../../domain/models/canvas";
 import {
   LabelDateFormats,
-  LabelTranslucencyModes,
   type LabelPosition,
 } from "../../../domain/models/label";
 import type { PieceMapperPort } from "../../mappers/PieceMapper";
@@ -31,20 +30,8 @@ import type { InfoLabelTransformerMapper } from "../../mappers/InfoLabelTransfor
 import type { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
 import type { Piece } from "../../../domain/models/canvas";
 import type { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
-import type {
-  FontData,
-  FontName,
-} from "../../config/labels/LabelsConfigProvider";
-import type { DialogBoxFormAddress } from "../../config/labels/formAddresses";
-import type { LabelDateConfig } from "../../config/labels/date";
-
-interface LabelConfigProviderPort {
-  getFontData: (font: FontName) => FontData;
-  getDialogBoxFormAddresses: () => DialogBoxFormAddress;
-  getDateConfig: <K extends keyof LabelDateConfig>(
-    key: K
-  ) => LabelDateConfig[K];
-}
+import type { LabelsConfigProvider } from "../../config/labels/LabelsConfigProvider";
+import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
 
 interface DimensionProviderPort {
   getDimension(): string;
@@ -58,13 +45,14 @@ interface InfoLabelTextMapperPort {
 
 interface ServiceParams {
   objectPooler: ObjectPooler<BibleStackObjectPoolerMap>;
-  labelConfigProviderPort: LabelConfigProviderPort;
+  labelConfigProviderPort: LabelsConfigProvider;
   dimensionProviderPort: DimensionProviderPort;
   infoLabelTextMapperPort: InfoLabelTextMapperPort;
   pieceMapperPort: PieceMapperPort;
   infoLabelTransformerMapperPort: InfoLabelTransformerMapper;
   infoLabelTailMapperPort: InfoLabelTailMapper;
   infoLabelDateMapperPort: InfoLabelDateMapper;
+  visualStateRegistry: VisualStateRegistry;
 }
 
 export class LabelAdapter implements LabelAdapterPort {
@@ -76,6 +64,8 @@ export class LabelAdapter implements LabelAdapterPort {
   #infoLabelTransformerMapperPort: ServiceParams["infoLabelTransformerMapperPort"];
   #infoLabelTailMapperPort: ServiceParams["infoLabelTailMapperPort"];
   #infoLabelDateMapperPort: ServiceParams["infoLabelDateMapperPort"];
+  #visualStateRegistry: ServiceParams["visualStateRegistry"];
+
   constructor({
     objectPooler,
     labelConfigProviderPort,
@@ -85,6 +75,7 @@ export class LabelAdapter implements LabelAdapterPort {
     infoLabelTransformerMapperPort,
     infoLabelTailMapperPort,
     infoLabelDateMapperPort,
+    visualStateRegistry,
   }: ServiceParams) {
     this.#objectPooler = objectPooler;
     this.#labelConfigProviderPort = labelConfigProviderPort;
@@ -94,12 +85,8 @@ export class LabelAdapter implements LabelAdapterPort {
     this.#infoLabelTransformerMapperPort = infoLabelTransformerMapperPort;
     this.#infoLabelTailMapperPort = infoLabelTailMapperPort;
     this.#infoLabelDateMapperPort = infoLabelDateMapperPort;
+    this.#visualStateRegistry = visualStateRegistry;
   }
-
-  #opacityMap = {
-    [LabelTranslucencyModes.Faded]: 0.5,
-    [LabelTranslucencyModes.Solid]: 1,
-  };
 
   spawnLabel: LabelAdapterPort["spawnLabel"] = ({
     piece,
@@ -119,13 +106,17 @@ export class LabelAdapter implements LabelAdapterPort {
       throw new Error(`LabelAdapter: pieceBot not found at spawnLabelForPiece`);
     }
     const { scaleY } = GetDialogBotScaleY({
-      scaleXLimit: 5,
+      scaleXLimit: this.#labelConfigProviderPort.getMeasurement("ScaleXLimit"),
       line: label,
-      paddingX: 0.4,
-      paddingY: 0.4,
+      paddingX: this.#labelConfigProviderPort.getMeasurement("PaddingX"),
+      paddingY: this.#labelConfigProviderPort.getMeasurement("PaddingY"),
       font: this.#labelConfigProviderPort.getFontData("Roboto"),
     });
-    const infoLabelScales = { x: 5, y: scaleY, z: 1 };
+    const infoLabelScales = {
+      x: this.#labelConfigProviderPort.getMeasurement("ScaleXLimit"),
+      y: scaleY,
+      z: this.#labelConfigProviderPort.getMeasurement("TextScaleZ"),
+    };
     const infoLabelAspectRatio = infoLabelScales.x / infoLabelScales.y;
     const infoLabelFormAddress = GetLabelFormAddress(
       infoLabelAspectRatio,
@@ -142,20 +133,30 @@ export class LabelAdapter implements LabelAdapterPort {
       BiblePieces.InfoLabelTail
     );
     let infoLabelDate: InfoLabelDateBot | undefined;
-    const infoLabelTransformerDesiredScales = { x: 1, y: 1, z: 1 };
+    const infoLabelTransformerDesiredScales =
+      this.#labelConfigProviderPort.getTransformerDesiredScales();
     const radialVector = new Vector2(pieceScales.x / 2, pieceScales.y / 2);
-    const infoLabelOffsetMargin = 0.25;
     const infoLabelTailDesiredScales = {
-      x: 0.3 / infoLabelTransformerDesiredScales.x,
-      y: 0.3 / infoLabelTransformerDesiredScales.y,
-      z: 0.3 / infoLabelTransformerDesiredScales.z,
+      x:
+        this.#labelConfigProviderPort.getMeasurement("TailDesiredScaleX") /
+        infoLabelTransformerDesiredScales.x,
+      y:
+        this.#labelConfigProviderPort.getMeasurement("TailDesiredScaleY") /
+        infoLabelTransformerDesiredScales.y,
+      z:
+        this.#labelConfigProviderPort.getMeasurement("TailDesiredScaleZ") /
+        infoLabelTransformerDesiredScales.z,
     };
-    const dateGap = { x: 0.2, y: 0.05 };
+    const dateGap = {
+      x: this.#labelConfigProviderPort.getMeasurement("DateGapX"),
+      y: this.#labelConfigProviderPort.getMeasurement("DateGapY"),
+    };
 
     const infoLabelOffset = ComputeInfoLabelOffset({
       positioning: labelPositioning,
       radialVector,
-      infoLabelOffsetMargin,
+      infoLabelOffsetMargin:
+        this.#labelConfigProviderPort.getMeasurement("TextOffsetMargin"),
       infoLabelScales,
       infoLabelTailDesiredScales,
     });
@@ -169,6 +170,7 @@ export class LabelAdapter implements LabelAdapterPort {
       infoLabelOffset,
     });
 
+    let infoLabelDateDomain: Piece<"InfoLabelDate"> | undefined = undefined;
     if (date) {
       infoLabelDate = this.#objectPooler.getObject(BiblePieces.InfoLabelDate);
       if (infoLabelDate) {
@@ -182,7 +184,9 @@ export class LabelAdapter implements LabelAdapterPort {
               : this.#labelConfigProviderPort.getDateConfig(
                   "absoluteDateScales"
                 ).x,
-          y: 0.375 / infoLabelTransformerDesiredScales.y,
+          y:
+            this.#labelConfigProviderPort.getMeasurement("DateDesiredScaleY") /
+            infoLabelTransformerDesiredScales.y,
           z: infoLabelScales.z / infoLabelTransformerDesiredScales.z,
         };
         const infoLabelDateOffset = ComputeInfoLabelDateOffset({
@@ -202,7 +206,6 @@ export class LabelAdapter implements LabelAdapterPort {
           [dimension + "X"]: infoLabelDateOffset.x,
           [dimension + "Y"]: infoLabelDateOffset.y,
           [dimension + "Z"]: infoLabelDateOffset.z,
-          initialPosition: infoLabelDateOffset,
           transformer: getID(infoLabelTransformer),
           label: date,
           color,
@@ -218,10 +221,16 @@ export class LabelAdapter implements LabelAdapterPort {
           scaleY: infoLabelDateDesiredScales.y,
           scaleZ: infoLabelDateDesiredScales.z,
           labelColor,
-          formOpacity: 0,
           ownerBotId: piece.id,
         };
-        applyMod(infoLabelDate, infoLabelDateMod);
+        infoLabelDateDomain = this.#pieceMapperPort.toDomain(infoLabelDate);
+        ApplyStrictMod(infoLabelDate, infoLabelDateMod);
+        this.#visualStateRegistry.registerState({
+          piece: infoLabelDateDomain,
+          state: {
+            initialPosition: infoLabelDateOffset,
+          },
+        });
       }
     }
 
@@ -231,25 +240,19 @@ export class LabelAdapter implements LabelAdapterPort {
       scaleY: infoLabelTransformerDesiredScales.y,
       scaleZ: infoLabelTransformerDesiredScales.z,
       ownerBotId: piece.id,
-      isAnimatable: makesAttentionFeedback,
-      targetOpacity: this.#opacityMap[translucencyMode],
-      pointableDefault: isInteractable,
+      ownerBotType: piece.type,
     };
     const infoLabelMod: Partial<InfoLabelTextTags> = {
       [dimension]: true,
       [dimension + "X"]: infoLabelOffset.x,
       [dimension + "Y"]: infoLabelOffset.y,
       [dimension + "Z"]: infoLabelOffset.z,
-      initialPosition: infoLabelOffset,
       label,
       transformer: getID(infoLabelTransformer),
       scaleX: infoLabelScales.x / infoLabelTransformerDesiredScales.x,
       scaleY: infoLabelScales.y / infoLabelTransformerDesiredScales.y,
       scaleZ: infoLabelScales.z / infoLabelTransformerDesiredScales.z,
       formAddress: infoLabelFormAddress,
-      pointable: false,
-      formOpacity: 0,
-      labelOpacity: 0,
       color,
       labelColor,
       ownerBotId: piece.id,
@@ -259,21 +262,20 @@ export class LabelAdapter implements LabelAdapterPort {
       [dimension + "X"]: infoLabelTailOffset.x,
       [dimension + "Y"]: infoLabelTailOffset.y,
       [dimension + "Z"]: infoLabelTailOffset.z,
-      initialPosition: infoLabelTailOffset,
       [dimension + "RotationZ"]: infoLabelTailDesiredRotationZ,
       transformer: getID(infoLabelTransformer),
       scaleX: infoLabelTailDesiredScales.x,
       scaleY: infoLabelTailDesiredScales.y,
       scaleZ: infoLabelTailDesiredScales.z,
       color,
-      formOpacity: 0,
       ownerBotId: piece.id,
     };
-    applyMod(infoLabelTransformer, infoLabelTransformerMod);
-    applyMod(infoLabelText, infoLabelMod);
-    applyMod(infoLabelTail, infoLabelTailMod);
 
-    setTagMask([infoLabelText], "formOpacity", 0);
+    ApplyStrictMod(infoLabelTransformer, infoLabelTransformerMod);
+    ApplyStrictMod(infoLabelText, infoLabelMod);
+    ApplyStrictMod(infoLabelTail, infoLabelTailMod);
+
+    // setTagMask([infoLabelText], "formOpacity", 0);
     const piecesToSetOpacity: (
       | InfoLabelTailBot
       | InfoLabelTextBot
@@ -282,10 +284,34 @@ export class LabelAdapter implements LabelAdapterPort {
     if (infoLabelDate) {
       piecesToSetOpacity.push(infoLabelDate);
     }
-    setTagMask(piecesToSetOpacity, "labelOpacity", 0);
+    // setTagMask(piecesToSetOpacity, "labelOpacity", 0);
 
     const infoLabelTransformerDomain =
       this.#pieceMapperPort.toDomain(infoLabelTransformer);
+    const infoLabelTailDomain = this.#pieceMapperPort.toDomain(infoLabelTail);
+    const infoLabelTextDomain = this.#pieceMapperPort.toDomain(infoLabelText);
+
+    this.#visualStateRegistry.registerState({
+      piece: infoLabelTransformerDomain,
+      state: {
+        makesAttentionFeedback,
+        targetOpacity:
+          this.#labelConfigProviderPort.getOpacity(translucencyMode),
+        isInteractable,
+      },
+    });
+    this.#visualStateRegistry.registerState({
+      piece: infoLabelTailDomain,
+      state: {
+        initialPosition: infoLabelTailOffset,
+      },
+    });
+    this.#visualStateRegistry.registerState({
+      piece: infoLabelTextDomain,
+      state: {
+        initialPosition: infoLabelOffset,
+      },
+    });
 
     this.locateLabel({
       positioning: labelPositioning,
@@ -295,11 +321,9 @@ export class LabelAdapter implements LabelAdapterPort {
 
     return {
       transformer: infoLabelTransformerDomain,
-      tail: this.#pieceMapperPort.toDomain(infoLabelTail),
-      label: this.#pieceMapperPort.toDomain(infoLabelText),
-      date: infoLabelDate
-        ? this.#pieceMapperPort.toDomain(infoLabelDate)
-        : undefined,
+      tail: infoLabelTailDomain,
+      label: infoLabelTextDomain,
+      date: infoLabelDateDomain,
     };
   };
 
@@ -320,13 +344,15 @@ export class LabelAdapter implements LabelAdapterPort {
     const transformer = pieceBot.tags.transformer
       ? getBot(byID(pieceBot.tags.transformer))
       : null;
-    const transformerOffset = new Vector3(0, 0, 1);
+    const transformerOffset =
+      this.#labelConfigProviderPort.getTransformerOffset();
     const transformerPosition = transformer
       ? getBotPosition(transformer, dimension).add(transformerOffset)
       : new Vector3(0, 0, 0);
     const piecePosition = getBotPosition(pieceBot, dimension);
     const pieceScales = GetBotScales(pieceBot);
-    const infoLabelTransformerDesiredScales = { x: 1, y: 1, z: 1 };
+    const infoLabelTransformerDesiredScales =
+      this.#labelConfigProviderPort.getTransformerDesiredScales();
     const transformerBot =
       this.#infoLabelTransformerMapperPort.toInfrastructure(
         infoLabelTransformer
@@ -345,7 +371,7 @@ export class LabelAdapter implements LabelAdapterPort {
         transformerPosition,
       });
 
-    applyMod(transformerBot, {
+    ApplyStrictMod(transformerBot, {
       [dimension + "X"]: infoLabelTransformerDesiredPosition.x,
       [dimension + "Y"]: infoLabelTransformerDesiredPosition.y,
       [dimension + "Z"]: infoLabelTransformerDesiredPosition.z,

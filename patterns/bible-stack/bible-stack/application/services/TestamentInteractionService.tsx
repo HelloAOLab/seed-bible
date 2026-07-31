@@ -15,6 +15,7 @@ import { HighlightRequestSources } from "../../domain/models/pieces";
 import type { PaintPort } from "../ports/in/Paint";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
+import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -53,16 +54,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
     this.#paintPort = paintPort;
   }
 
-  #meetsBaseInteractionConditions(testament: Piece<"StackTestament">) {
-    const testamentData =
-      this.#testamentDataRepositoryPort.getPieceData(testament);
-
-    if (!testamentData) {
-      throw new Error(
-        "TestamentInteractionService: testamentData not found at meetsBaseInteractionConditions"
-      );
-    }
-
+  #meetsBaseInteractionConditions(testamentData: StackTestamentData): boolean {
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
       testamentData.parentDataIds as StackParentDataIds
     );
@@ -73,7 +65,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
     )
       return false;
 
-    return { testamentData };
+    return true;
   }
 
   handleTestamentSelection({
@@ -83,15 +75,22 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
     testament: Piece<"StackTestament">;
     interaction: SelectionModality;
   }): void {
+    const testamentData =
+      this.#testamentDataRepositoryPort.getPieceData(testament);
+
+    if (!testamentData) {
+      throw new Error(
+        "TestamentInteractionService: testamentData not found at meetsBaseInteractionConditions"
+      );
+    }
+
     if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
 
-    const result = this.#meetsBaseInteractionConditions(testament);
+    const result = this.#meetsBaseInteractionConditions(testamentData);
 
     if (!result) {
       return;
     }
-
-    const { testamentData } = result;
 
     if (this.#paintPort.isActive) {
       this.#paintPort.paint(testamentData);
@@ -129,9 +128,20 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
   }
 
   handleTestamentFocusBegin(testament: Piece<"StackTestament">): void {
+    const testamentData =
+      this.#testamentDataRepositoryPort.getPieceData(testament);
+
+    if (!testamentData) {
+      throw new Error(
+        "TestamentInteractionService: testamentData not found at meetsBaseInteractionConditions"
+      );
+    }
+
+    testamentData.beginFocus();
+
     if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
 
-    const result = this.#meetsBaseInteractionConditions(testament);
+    const result = this.#meetsBaseInteractionConditions(testamentData);
 
     if (!result) {
       return;
@@ -141,5 +151,18 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
       piece: testament,
       source: HighlightRequestSources.UserFocus,
     });
+  }
+
+  handleTestamentFocusEnd(testament: Piece<"StackTestament">) {
+    const testamentData =
+      this.#testamentDataRepositoryPort.getPieceData(testament);
+
+    if (!testamentData) {
+      throw new Error(
+        "TestamentInteractionService: testamentData not found at meetsBaseInteractionConditions"
+      );
+    }
+
+    testamentData.endFocus();
   }
 }

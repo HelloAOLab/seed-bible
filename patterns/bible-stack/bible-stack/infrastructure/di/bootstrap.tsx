@@ -119,7 +119,7 @@ import { PieceHierarchyService } from "../../application/services/PieceHierarchy
 import { ViewportService } from "../../application/services/ViewportService";
 import { TourGuideService } from "../../application/services/TourGuideService";
 import { SequenceStateService } from "../../application/services/SequenceStateService";
-import { ExplodedViewService } from "../../application/services/ExplodedViewService";
+import { ExplodedViewService } from "../../application/services/ExplodedVIewService";
 import { TestamentSelectionService } from "../../application/services/TestamentSelectionService";
 import { ScripturePiecesStateService } from "../../application/services/ScripturePiecesStateService";
 import { PieceInteractabilityService } from "../../application/services/PieceInteractabilityService";
@@ -438,6 +438,7 @@ export const bootstrapExtension = () => {
     infoLabelTransformerMapperPort: infoLabelTransformerMapper,
     infoLabelTailMapperPort: infoLabelTailMapper,
     infoLabelDateMapperPort: infoLabelDateMapper,
+    visualStateRegistryPort: visualStateRegistry,
   });
   const stackPieceLifecycleAdapter = new StackPieceLifecycleAdapter({
     objectPoolerPort: objectPooler,
@@ -673,6 +674,7 @@ export const bootstrapExtension = () => {
     infoLabelDateMapperPort: infoLabelDateMapper,
     infoLabelTailMapperPort: infoLabelTailMapper,
     pieceMapperPort: pieceMapper,
+    visualStateRegistry,
   });
   const renderOrderAdapter = new RenderOrderAdapter({
     dimensionProviderPort: {
@@ -1394,6 +1396,11 @@ export const bootstrapExtension = () => {
 
   listenTagEventBus.subscribe("onPointerExit", ({ bot }) => {
     switch (bot.tags.type) {
+      case "StackTestament":
+        testamentInteractionController.handleTestamentPointerExit(
+          bot as TestamentBot
+        );
+        break;
       case "StackSection":
         sectionInteractionController.handleSectionPointerExit(
           bot as SectionBot

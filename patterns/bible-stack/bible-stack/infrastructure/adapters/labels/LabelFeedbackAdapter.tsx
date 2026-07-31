@@ -9,10 +9,11 @@ import type {
   Easing,
   Vector2 as TVector2,
   Vector3 as TVector3,
+  Vector3,
 } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
 import type { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
-import type { PieceBot } from "../../models/casualos";
+import type { PieceBot, TypedBot } from "../../models/casualos";
 import type {
   ActivityIndicatorBot,
   InfoLabelDateBot,
@@ -25,6 +26,8 @@ import type {
   ShowAnimationDurationMapType,
   ShowAnimationConfigType,
 } from "../../config/labels/showAnimation";
+import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
+import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
 
 interface LabelFeedbackConfigProviderPort {
   getShowAnimationDuration: <P extends ShowSequencePacing>(
@@ -62,6 +65,7 @@ interface AdapterProps {
   infoLabelTransformerMapperPort: InfoLabelTransformerMapper;
   infoLabelTailMapperPort: InfoLabelTailMapper;
   infoLabelDateMapperPort: InfoLabelDateMapper;
+  visualStateRegistryPort: VisualStateRegistry;
 }
 
 const shakeForwardConstructor = ({
@@ -79,7 +83,7 @@ const shakeForwardConstructor = ({
   duration: number;
   easing: Easing;
 }) => {
-  return animateTag(pieceBot, {
+  return AnimateStrictTag(pieceBot, {
     fromValue: {
       [dimension + "X"]: initialPosition.x,
       [dimension + "Y"]: initialPosition.y,
@@ -108,7 +112,7 @@ const shakeBackwardConstructor = ({
   duration: number;
   easing: Easing;
 }) => {
-  return animateTag(pieceBot, {
+  return AnimateStrictTag(pieceBot, {
     fromValue: {
       [dimension + "X"]: initialPosition.x + direction.x,
       [dimension + "Y"]: initialPosition.y + direction.y,
@@ -131,6 +135,7 @@ export class LabelFeedbackAdapter {
   #infoLabelTransformerMapperPort: AdapterProps["infoLabelTransformerMapperPort"];
   #infoLabelTailMapperPort: AdapterProps["infoLabelTailMapperPort"];
   #infoLabelDateMapperPort: AdapterProps["infoLabelDateMapperPort"];
+  #visualStateRegistryPort: AdapterProps["visualStateRegistryPort"];
 
   constructor({
     dimensionProvider,
@@ -140,6 +145,7 @@ export class LabelFeedbackAdapter {
     infoLabelTransformerMapperPort,
     infoLabelTailMapperPort,
     infoLabelDateMapperPort,
+    visualStateRegistryPort,
   }: AdapterProps) {
     this.#dimensionProvider = dimensionProvider;
     this.#labelFeedbackConfigProviderPort = labelFeedbackConfigProviderPort;
@@ -148,6 +154,7 @@ export class LabelFeedbackAdapter {
     this.#infoLabelTransformerMapperPort = infoLabelTransformerMapperPort;
     this.#infoLabelTailMapperPort = infoLabelTailMapperPort;
     this.#infoLabelDateMapperPort = infoLabelDateMapperPort;
+    this.#visualStateRegistryPort = visualStateRegistryPort;
   }
 
   displayAttentionFeedback(data: InfoLabelData) {
@@ -173,23 +180,61 @@ export class LabelFeedbackAdapter {
     const duration = this.#labelFeedbackConfigProviderPort.getShakeDuration();
     const easing = this.#labelFeedbackConfigProviderPort.getShakeEasing();
 
-    const piecesBot = [
-      this.#infoLabelTextMapperPort.toInfrastructure(data.label),
-      this.#infoLabelTailMapperPort.toInfrastructure(data.tail),
+    const piecesBotData: (
+      | {
+          pieceBot:
+            | ActivityIndicatorBot
+            | InfoLabelTransformerBot
+            | InfoLabelTextBot
+            | InfoLabelTailBot
+            | InfoLabelDateBot
+            | undefined;
+          initialPosition: Vector3;
+        }
+      | undefined
+    )[] = [
+      {
+        pieceBot: this.#infoLabelTextMapperPort.toInfrastructure(data.label),
+        initialPosition: this.#visualStateRegistryPort.getStateProperty({
+          piece: data.label,
+          property: "initialPosition",
+        }),
+      },
+      {
+        pieceBot: this.#infoLabelTailMapperPort.toInfrastructure(data.tail),
+        initialPosition: this.#visualStateRegistryPort.getStateProperty({
+          piece: data.tail,
+          property: "initialPosition",
+        }),
+      },
       data.date
-        ? this.#infoLabelDateMapperPort.toInfrastructure(data.date)
+        ? {
+            pieceBot: this.#infoLabelDateMapperPort.toInfrastructure(data.date),
+            initialPosition: this.#visualStateRegistryPort.getStateProperty({
+              piece: data.date,
+              property: "initialPosition",
+            }),
+          }
         : undefined,
-      ...data.activityIndicators.map((indicator) =>
-        this.#activityIndicatorMapperPort.toInfrastructure(indicator)
-      ),
+      ...data.activityIndicators.map((indicator) => ({
+        pieceBot: this.#activityIndicatorMapperPort.toInfrastructure(indicator),
+        initialPosition: this.#visualStateRegistryPort.getStateProperty({
+          piece: indicator,
+          property: "initialPosition",
+        }),
+      })),
     ];
 
-    const animations = piecesBot.map(async (pieceBot) => {
-      if (!pieceBot) {
+    const animations = piecesBotData.map(async (pieceBotData) => {
+      if (!pieceBotData) {
         return;
       }
 
-      const initialPosition = pieceBot.tags.initialPosition;
+      const { pieceBot, initialPosition } = pieceBotData;
+
+      if (!pieceBot) {
+        return;
+      }
 
       if (!initialPosition) {
         throw new Error(
@@ -258,52 +303,71 @@ export class LabelFeedbackAdapter {
       this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
     this.stopOpacityTransition(data);
 
-    const { transformer, text, tail, activityIndicators, date } =
+    const { text, tail, activityIndicators, date } =
       this.#unpackLabelData(data);
 
+    const labelTargetOpacity = this.#visualStateRegistryPort.getStateProperty({
+      piece: data.transformer,
+      property: "targetOpacity",
+    });
+    const isLabelInteractable = this.#visualStateRegistryPort.getStateProperty({
+      piece: data.transformer,
+      property: "isInteractable",
+    });
+
     try {
+      const botsToAnimateOpacity: TypedBot[] = [tail, text];
+      const botsToAnimateLabelOpacity: TypedBot[] = [text];
+      if (date) {
+        botsToAnimateOpacity.push(date);
+        botsToAnimateLabelOpacity.push(date);
+      }
+
       await Promise.all([
-        animateTag([tail, text, date ?? ""], "formOpacity", {
-          toValue: thisBot.tags.targetOpacity,
+        AnimateStrictTag(botsToAnimateOpacity, "formOpacity", {
+          toValue: labelTargetOpacity,
           duration,
           easing:
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
         ...(activityIndicators?.map((indicator) => {
-          return animateTag(indicator, "formOpacity", {
-            toValue: indicator.tags.targetOpacity,
+          return AnimateStrictTag(indicator, "formOpacity", {
+            toValue: this.#visualStateRegistryPort.getStateProperty({
+              piece: { id: indicator.id, type: indicator.tags.type },
+              property: "targetOpacity",
+            }),
             duration,
             easing:
               this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
                 "easing"
               ),
+            tagMaskSpace: false,
           });
         }) ?? []),
-        animateTag(activityIndicators, {
+        AnimateStrictTag(activityIndicators, {
           fromValue: { labelOpacity: 0 },
-          toValue: { labelOpacity: transformer.tags.targetOpacity },
+          toValue: { labelOpacity: labelTargetOpacity },
           duration,
           easing:
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
-        animateTag([text, date ?? ""], "labelOpacity", {
-          toValue: transformer.tags.targetOpacity,
+        AnimateStrictTag(botsToAnimateLabelOpacity, "labelOpacity", {
+          toValue: labelTargetOpacity,
           duration,
           easing:
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
       ]).then(() => {
-        setTagMask(
-          [text, tail],
-          "pointable",
-          transformer.tags.pointableDefault
-        );
+        SetStrictTag([text, tail], "pointable", isLabelInteractable);
       });
     } catch (error) {
       console.error(error);
@@ -324,20 +388,19 @@ export class LabelFeedbackAdapter {
       this.#unpackLabelData(data);
 
     try {
+      const botsToAnimateOpacity: TypedBot[] = [
+        ...activityIndicators,
+        tail,
+        text,
+      ];
+      const botsToAnimateLabelOpacity: TypedBot[] = [text];
+      if (date) {
+        botsToAnimateOpacity.push(date);
+        botsToAnimateLabelOpacity.push(date);
+      }
+
       await Promise.all([
-        animateTag(
-          [...activityIndicators, tail, text, date ?? ""],
-          "formOpacity",
-          {
-            toValue: 0,
-            duration,
-            easing:
-              this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
-                "easing"
-              ),
-          }
-        ),
-        animateTag(activityIndicators, "labelOpacity", {
+        AnimateStrictTag(botsToAnimateOpacity, "formOpacity", {
           toValue: 0,
           duration,
           easing:
@@ -345,7 +408,15 @@ export class LabelFeedbackAdapter {
               "easing"
             ),
         }),
-        animateTag([text, date ?? ""], "labelOpacity", {
+        AnimateStrictTag(activityIndicators, "labelOpacity", {
+          toValue: 0,
+          duration,
+          easing:
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
+        }),
+        AnimateStrictTag(botsToAnimateLabelOpacity, "labelOpacity", {
           toValue: 0,
           duration,
           easing:
@@ -379,20 +450,18 @@ export class LabelFeedbackAdapter {
       this.#unpackLabelData(data);
 
     try {
+      const botsToAnimateOpacity: TypedBot[] = [
+        ...activityIndicators,
+        tail,
+        text,
+      ];
+      const botsToAnimateLabelOpacity: TypedBot[] = [text];
+      if (date) {
+        botsToAnimateOpacity.push(date);
+        botsToAnimateLabelOpacity.push(date);
+      }
       await Promise.all([
-        animateTag(
-          [...activityIndicators, tail, text, date ?? ""],
-          "formOpacity",
-          {
-            toValue: opacity,
-            duration,
-            easing:
-              this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
-                "easing"
-              ),
-          }
-        ),
-        animateTag(activityIndicators, "labelOpacity", {
+        AnimateStrictTag(botsToAnimateOpacity, "formOpacity", {
           toValue: opacity,
           duration,
           easing:
@@ -400,7 +469,15 @@ export class LabelFeedbackAdapter {
               "easing"
             ),
         }),
-        animateTag([text, date ?? ""], "labelOpacity", {
+        AnimateStrictTag(activityIndicators, "labelOpacity", {
+          toValue: opacity,
+          duration,
+          easing:
+            this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
+              "easing"
+            ),
+        }),
+        AnimateStrictTag(botsToAnimateLabelOpacity, "labelOpacity", {
           toValue: opacity,
           duration,
           easing:

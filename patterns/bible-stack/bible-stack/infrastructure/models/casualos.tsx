@@ -57,6 +57,14 @@ export const MouseButtonIds = {
 export type MouseButtonId =
   (typeof MouseButtonIds)[keyof typeof MouseButtonIds];
 
+export type OrientarionMode =
+  | "absolute"
+  | "billboard"
+  | "billboardTop"
+  | "billboardFront";
+export type Form = "sprite";
+export type Cursor = "pointer";
+
 export interface TypedBot<T = BotTags, M = BotTags> {
   id: string;
   link: string;
