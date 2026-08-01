@@ -1710,10 +1710,31 @@ describe("BibleSelector sharing translations", () => {
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("ao.bot");
-    // Regression: this used to copy `?translation=AAB`, which the recipient's
-    // app ignored — the path names the translation and is read first, so the
-    // link opened whatever the sharer happened to be reading instead.
     expect(copiedUrl.pathname).toBe("/en/AAB/genesis/1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
+  });
+
+  it("shares the chosen translation, not the one the sharer is reading", async () => {
+    // The regression itself. Every other case here starts from a page whose
+    // path names no translation, where setting `?translation=` happened to
+    // work — so only this one actually pits the query against the path, which
+    // is what the old link did and lost: the recipient opened NIV.
+    jsdom.reconfigure({ url: "https://ao.bot/en/NIV/exodus/2" });
+
+    await openTranslationModalWithGroup("AAB", "English");
+
+    act(() => {
+      container
+        .querySelector(".share-btn")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => setClipboard.mock.calls.length > 0);
+
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
+    // AAB, the translation whose row was clicked — and the reader's position
+    // is carried over rather than reset.
+    expect(copiedUrl.pathname).toBe("/en/AAB/exodus/2");
     expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
 
