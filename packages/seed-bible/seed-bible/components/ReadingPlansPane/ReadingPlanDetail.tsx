@@ -6,10 +6,21 @@ import { useI18n } from "../../i18n/I18nManager";
 import {
   cadenceDurationDays,
   estimateReadingMinutes,
+  isReadingChapterComplete,
+  readingChapters,
+  readingCompletion,
   summarizeCalendar,
   type CalendarReadingDay,
+  type PlanReading,
+  type ReadingPlan,
+  type ReadingPlanSession,
   type ReadingPlansManager,
+  type SessionProgress,
 } from "../../managers/ReadingPlansManager";
+import type {
+  PlaylistItemData,
+  VerseRef,
+} from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
@@ -31,6 +42,21 @@ interface ReadingPlanDetailProps {
   /** Modals host for opening a text/link reading. Optional — without it the
    * open action is simply not offered. */
   modals?: ModalManager;
+  /** Navigates the reader to a scripture reading. */
+  onOpenScripture?: (
+    ref: VerseRef,
+    translationId?: string
+  ) => void | Promise<void>;
+  /** Hands a day's readings to the reader's playback queue. */
+  onPlayReadings?: (
+    plan: ReadingPlan,
+    items: PlaylistItemData[],
+    startIndex: number
+  ) => void;
+  /** Opens this plan in the editor. */
+  onEdit?: () => void;
+  /** Called after the plan has been deleted, so the pane can leave this view. */
+  onDeleted?: () => void;
 }
 
 function formatShortDate(ms: number): string {
@@ -53,27 +79,95 @@ const SELF_PACED_CHOICE = "__self_paced__";
  * (see `ReadingPlansPane`), so this view starts at the progress summary.
  */
 export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
-  const { readingPlans, books, modals } = props;
+  const {
+    readingPlans,
+    books,
+    modals,
+    onOpenScripture,
+    onPlayReadings,
+    onEdit,
+    onDeleted,
+  } = props;
   const { t } = useI18n();
 
   const [starting, setStarting] = useState(false);
   const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [pace, setPace] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // Scripture readings covering several chapters can be opened out to tick off
+  // one chapter at a time; keyed by reading id.
+  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
+    null
+  );
 
   const resolveBookName = (bookId: string): string => {
     const book = books.find((b) => b.id === bookId);
     return book?.name ?? book?.commonName ?? bookId;
   };
 
+  // Feeds the time estimate a book's average chapter length, so a chapter of
+  // Psalms doesn't read as taking as long as a chapter of Isaiah.
+  const resolveBookLength = (bookId: string) =>
+    books.find((b) => b.id === bookId) ?? null;
+
   // `.value` reads subscribe this component to the manager's signals.
   const plan = readingPlans.selectedReadingPlan.value;
   const progress = readingPlans.selectedReadingPlanProgress.value;
   const calendar = readingPlans.selectedReadingPlanProgressCalendar.value;
+  const canEdit = readingPlans.canEditSelectedPlan.value;
 
   if (!plan) {
     return null;
   }
+
+  const deletePlan = async () => {
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    setConfirmingDelete(false);
+    try {
+      await readingPlans.deleteReadingPlan(plan);
+      onDeleted?.();
+    } catch (error) {
+      console.error("Failed to delete reading plan:", error);
+    }
+  };
+
+  /**
+   * Edit and delete for the open plan. Delete is offered whether or not the
+   * plan is the user's to edit — a plan you can't get rid of is a plan you're
+   * stuck with — and asks once before erasing anything.
+   */
+  const planActions = (
+    <div className="sb-rpd-plan-actions">
+      {canEdit && onEdit ? (
+        <button
+          type="button"
+          className="sb-rp-icon-button"
+          onClick={onEdit}
+          aria-label={t("edit-reading-plan", { defaultValue: "Edit plan" })}
+          title={t("edit-reading-plan", { defaultValue: "Edit plan" })}
+        >
+          <MaterialIcon>edit</MaterialIcon>
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className={`sb-rp-restart${
+          confirmingDelete ? " sb-rp-restart-danger" : ""
+        }`}
+        onClick={() => void deletePlan()}
+      >
+        {confirmingDelete
+          ? t("reading-plan-delete-confirm", {
+              defaultValue: "Delete for good?",
+            })
+          : t("reading-plan-delete", { defaultValue: "Delete" })}
+      </button>
+    </div>
+  );
 
   // Not started yet: pick how to read it, then start.
   if (!progress) {
@@ -157,6 +251,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
               onSelect={() => setPace(SELF_PACED_CHOICE)}
             />
           </div>
+          {planActions}
         </div>
         <footer className="sb-rpd-footer">
           <button
@@ -179,6 +274,9 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   // rather than days and never shows dates, streaks or "behind".
   const selfPaced = progress.selfPaced === true;
 
+  const sessionProgressFor = (sessionId: string): SessionProgress | undefined =>
+    progress.sessions.find((s) => s.sessionId === sessionId);
+
   // Average minutes per reading day, for the "~N min/day" chip.
   const avgMinutes =
     readingDays.length > 0
@@ -187,7 +285,8 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
             (sum, day) =>
               sum +
               estimateReadingMinutes(
-                day.sessions.flatMap((s) => s.session.readings)
+                day.sessions.flatMap((s) => s.session.readings),
+                resolveBookLength
               ),
             0
           ) / readingDays.length
@@ -207,13 +306,12 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
       : Math.max(0, autoIndex);
   const activeDay = readingDays[activeIndex] ?? null;
 
-  const isReadingDone = (sessionId: string, readingId: string): boolean => {
-    const sp = progress.sessions.find((s) => s.sessionId === sessionId);
-    return sp?.completedReadingIds.includes(readingId) ?? false;
-  };
+  const isReadingDone = (sessionId: string, readingId: string): boolean =>
+    sessionProgressFor(sessionId)?.completedReadingIds.includes(readingId) ??
+    false;
 
   const toggleReading = async (
-    session: CalendarReadingDay["sessions"][number]["session"],
+    session: ReadingPlanSession,
     readingId: string,
     done: boolean
   ) => {
@@ -224,6 +322,24 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     }
   };
 
+  const toggleReadingChapter = async (
+    session: ReadingPlanSession,
+    readingId: string,
+    chapter: number,
+    done: boolean
+  ) => {
+    try {
+      await readingPlans.markReadingChapterComplete(
+        session,
+        readingId,
+        chapter,
+        !done
+      );
+    } catch (error) {
+      console.error("Failed to update chapter:", error);
+    }
+  };
+
   const completeDay = async (day: CalendarReadingDay, dayNumber: number) => {
     try {
       await readingPlans.markDayComplete(day, true);
@@ -231,6 +347,32 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     } catch (error) {
       console.error("Failed to complete day:", error);
     }
+  };
+
+  /**
+   * Opens a scripture reading in the reader, at the first chapter of it the
+   * user hasn't finished — reopening a reading you're six chapters into should
+   * put you at chapter seven, not back at chapter one.
+   */
+  const openScripture = (session: ReadingPlanSession, reading: PlanReading) => {
+    const item = reading.item;
+    if (item.type !== "bible-verse" || !onOpenScripture) {
+      return;
+    }
+    const sp = sessionProgressFor(session.id);
+    const chapters = readingChapters(reading);
+    const firstUnread = chapters.find(
+      (chapter) => !isReadingChapterComplete(sp, reading.id, chapter)
+    );
+    const chapter = firstUnread ?? item.ref.chapter;
+    void onOpenScripture(
+      // Only the first chapter of a range starts at a specific verse; landing
+      // mid-range should start at the top of that chapter.
+      chapter === item.ref.chapter
+        ? item.ref
+        : { bookId: item.ref.bookId, chapter },
+      item.translationId
+    );
   };
 
   // Celebration overlay after completing a day.
@@ -292,6 +434,26 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     );
   const activeDayNote = activeDay?.sessions.find((s) => s.session.note)?.session
     .note;
+
+  /**
+   * Reads the day straight through: hands its readings to the reader's playback
+   * queue — the same one playlists use — starting at the first one that isn't
+   * finished, so next/back step through the plan rather than a parallel set of
+   * controls being grown here.
+   */
+  const playActiveDay = () => {
+    if (!onPlayReadings || activeDayReadings.length === 0) {
+      return;
+    }
+    const firstUnread = activeDayReadings.findIndex(
+      ({ session, reading }) => !isReadingDone(session.id, reading.id)
+    );
+    onPlayReadings(
+      plan,
+      activeDayReadings.map(({ reading }) => reading.item),
+      Math.max(0, firstUnread)
+    );
+  };
 
   return (
     <div className="sb-rpd">
@@ -367,6 +529,8 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
             </span>
           ) : null}
         </div>
+
+        {planActions}
       </header>
 
       <div className="sb-rpd-body">
@@ -419,120 +583,52 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
             {activeDay ? (
               <>
                 <ul className="sb-rpd-reading-cards">
-                  {activeDayReadings.map(({ session, reading }) => {
-                    const done = isReadingDone(session.id, reading.id);
-                    const minutes = estimateReadingMinutes([reading]);
-                    // Scripture is read in the reader, so its card stays a
-                    // single big "mark complete" target. A text or link reading
-                    // has nowhere else to go — the card opens it, and the check
-                    // beside it becomes the toggle.
-                    const canOpen =
-                      !!modals && canPreviewPlaylistItem(reading.item);
-                    const toggle = () =>
-                      void toggleReading(session, reading.id, done);
-                    const preview = readingPreviewText(reading.item, t);
-
-                    // Leading type icon (only where it adds something — every
-                    // scripture reading would carry the same book icon), then
-                    // the title, its one-line summary, and the time/read meta.
-                    const body = (
-                      <>
-                        {canOpen ? (
-                          <span
-                            className="sb-rpd-reading-icon"
-                            aria-hidden="true"
-                          >
-                            <MaterialIcon>
-                              {readingItemIcon(reading.item)}
-                            </MaterialIcon>
-                          </span>
-                        ) : null}
-                        <span className="sb-rpd-reading-text">
-                          <span className="sb-rpd-reading-title">
-                            {readingLabel(reading.item, resolveBookName)}
-                          </span>
-                          {preview ? (
-                            <span className="sb-rpd-reading-preview" dir="auto">
-                              {preview}
-                            </span>
-                          ) : null}
-                          <span className="sb-rpd-reading-meta">
-                            {done
-                              ? t("reading-plan-reading-read", {
-                                  defaultValue: "Read",
-                                })
-                              : t("reading-plan-reading-mins", {
-                                  defaultValue: "~{{count}} min",
-                                  count: minutes,
-                                })}
-                          </span>
-                        </span>
-                      </>
-                    );
-
-                    const check = (
-                      <span
-                        className={`sb-rpd-reading-check${
-                          done ? " sb-rpd-reading-check-done" : ""
-                        }`}
-                        aria-hidden="true"
-                      >
-                        <MaterialIcon>
-                          {done ? "check_circle" : "radio_button_unchecked"}
-                        </MaterialIcon>
-                      </span>
-                    );
-
-                    if (!canOpen) {
-                      return (
-                        <li key={reading.id}>
-                          <button
-                            type="button"
-                            className={`sb-rpd-reading-card${
-                              done ? " sb-rpd-reading-card-done" : ""
-                            }`}
-                            onClick={toggle}
-                            aria-pressed={done}
-                          >
-                            {check}
-                            {body}
-                          </button>
-                        </li>
-                      );
-                    }
-
-                    return (
-                      <li key={reading.id} className="sb-rpd-reading-row">
-                        <button
-                          type="button"
-                          className="sb-rpd-reading-toggle"
-                          onClick={toggle}
-                          aria-pressed={done}
-                          aria-label={t("reading-plan-mark-reading-complete", {
-                            defaultValue: "Mark reading complete",
-                          })}
-                        >
-                          {check}
-                        </button>
-                        <button
-                          type="button"
-                          className={`sb-rpd-reading-card sb-rpd-reading-card-open${
-                            done ? " sb-rpd-reading-card-done" : ""
-                          }`}
-                          onClick={() =>
-                            openPlaylistItemPreview(
-                              modals,
-                              reading.item,
-                              PLAN_READING_PREVIEW_MODAL_ID,
-                              t
-                            )
-                          }
-                        >
-                          {body}
-                        </button>
-                      </li>
-                    );
-                  })}
+                  {activeDayReadings.map(({ session, reading }) => (
+                    <ReadingRow
+                      key={reading.id}
+                      session={session}
+                      reading={reading}
+                      sessionProgress={sessionProgressFor(session.id)}
+                      expanded={expandedReadingId === reading.id}
+                      canPreview={
+                        !!modals && canPreviewPlaylistItem(reading.item)
+                      }
+                      canNavigate={
+                        !!onOpenScripture && reading.item.type === "bible-verse"
+                      }
+                      resolveBookName={resolveBookName}
+                      resolveBookLength={resolveBookLength}
+                      onToggleExpanded={() =>
+                        setExpandedReadingId((current) =>
+                          current === reading.id ? null : reading.id
+                        )
+                      }
+                      onToggle={(done) =>
+                        void toggleReading(session, reading.id, done)
+                      }
+                      onToggleChapter={(chapter, done) =>
+                        void toggleReadingChapter(
+                          session,
+                          reading.id,
+                          chapter,
+                          done
+                        )
+                      }
+                      onOpen={() => {
+                        if (reading.item.type === "bible-verse") {
+                          openScripture(session, reading);
+                        } else if (modals) {
+                          openPlaylistItemPreview(
+                            modals,
+                            reading.item,
+                            PLAN_READING_PREVIEW_MODAL_ID,
+                            t
+                          );
+                        }
+                      }}
+                      t={t}
+                    />
+                  ))}
                 </ul>
 
                 {activeDayNote ? (
@@ -552,22 +648,34 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
 
       {activeDay ? (
         <footer className="sb-rpd-footer">
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-primary"
-            disabled={!activeDayAllDone}
-            onClick={() => void completeDay(activeDay, activeIndex + 1)}
-          >
-            {selfPaced
-              ? t("reading-plan-mark-session-complete", {
-                  defaultValue: "Mark session {{day}} complete",
-                  day: activeIndex + 1,
-                })
-              : t("reading-plan-mark-day-complete", {
-                  defaultValue: "Mark Day {{day}} complete",
-                  day: activeIndex + 1,
-                })}
-          </button>
+          <div className="sb-rpd-footer-actions">
+            {onPlayReadings && activeDayReadings.length > 0 ? (
+              <button
+                type="button"
+                className="sb-rp-button sb-rp-button-primary"
+                onClick={playActiveDay}
+              >
+                <MaterialIcon>play_arrow</MaterialIcon>
+                {t("reading-plan-read-day", { defaultValue: "Read" })}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="sb-rp-button sb-rp-button-secondary"
+              disabled={!activeDayAllDone}
+              onClick={() => void completeDay(activeDay, activeIndex + 1)}
+            >
+              {selfPaced
+                ? t("reading-plan-mark-session-complete", {
+                    defaultValue: "Mark session {{day}} complete",
+                    day: activeIndex + 1,
+                  })
+                : t("reading-plan-mark-day-complete", {
+                    defaultValue: "Mark Day {{day}} complete",
+                    day: activeIndex + 1,
+                  })}
+            </button>
+          </div>
           {!activeDayAllDone ? (
             <p className="sb-rpd-footer-note">
               {t("reading-plan-finish-readings", {
@@ -578,6 +686,179 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
         </footer>
       ) : null}
     </div>
+  );
+}
+
+interface ReadingRowProps {
+  session: ReadingPlanSession;
+  reading: PlanReading;
+  sessionProgress: SessionProgress | undefined;
+  expanded: boolean;
+  canPreview: boolean;
+  canNavigate: boolean;
+  resolveBookName: (bookId: string) => string;
+  resolveBookLength: (
+    bookId: string
+  ) => { numberOfChapters: number; totalNumberOfVerses: number } | null;
+  onToggleExpanded: () => void;
+  onToggle: (done: boolean) => void;
+  onToggleChapter: (chapter: number, done: boolean) => void;
+  onOpen: () => void;
+  t: ReturnType<typeof useI18n>["t"];
+}
+
+/**
+ * One reading in the day's list. Every kind of reading has the same shape — the
+ * completion check sits outside the card on the left, and the card itself is
+ * the thing you tap to go and read it: scripture opens in the reader, a text or
+ * link reading opens its preview. (Scripture used to be the odd one out, a
+ * single big "mark complete" target with the check tucked inside, because there
+ * was nowhere for it to take you.)
+ *
+ * A scripture reading covering several chapters can also be opened out to tick
+ * off one chapter at a time, so being six chapters into "John 1–10" is
+ * something the plan can actually record.
+ */
+function ReadingRow(props: ReadingRowProps) {
+  const {
+    session,
+    reading,
+    sessionProgress,
+    expanded,
+    canPreview,
+    canNavigate,
+    resolveBookName,
+    resolveBookLength,
+    onToggleExpanded,
+    onToggle,
+    onToggleChapter,
+    onOpen,
+    t,
+  } = props;
+
+  const { done: doneUnits, total: totalUnits } = readingCompletion(
+    reading,
+    sessionProgress
+  );
+  const done = doneUnits === totalUnits;
+  const partly = doneUnits > 0 && !done;
+  const minutes = estimateReadingMinutes([reading], resolveBookLength);
+  const chapters = readingChapters(reading);
+  const multiChapter = chapters.length > 1;
+  const openable = canPreview || canNavigate;
+  const preview = readingPreviewText(reading.item, t);
+
+  const meta = done
+    ? t("reading-plan-reading-read", { defaultValue: "Read" })
+    : partly
+      ? t("reading-plan-reading-chapters-done", {
+          defaultValue: "{{done}} of {{total}} chapters",
+          done: doneUnits,
+          total: totalUnits,
+        })
+      : t("reading-plan-reading-mins", {
+          defaultValue: "~{{count}} min",
+          count: minutes,
+        });
+
+  return (
+    <li className="sb-rpd-reading-row">
+      <div className="sb-rpd-reading-main">
+        <button
+          type="button"
+          className="sb-rpd-reading-toggle"
+          onClick={() => onToggle(done)}
+          aria-pressed={done}
+          aria-label={t("reading-plan-mark-reading-complete", {
+            defaultValue: "Mark reading complete",
+          })}
+        >
+          <span
+            className={`sb-rpd-reading-check${
+              done ? " sb-rpd-reading-check-done" : ""
+            }${partly ? " sb-rpd-reading-check-partial" : ""}`}
+            aria-hidden="true"
+          >
+            <MaterialIcon>
+              {done
+                ? "check_circle"
+                : partly
+                  ? "incomplete_circle"
+                  : "radio_button_unchecked"}
+            </MaterialIcon>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={`sb-rpd-reading-card${
+            done ? " sb-rpd-reading-card-done" : ""
+          }${openable ? " sb-rpd-reading-card-open" : ""}`}
+          onClick={onOpen}
+          disabled={!openable}
+        >
+          <span className="sb-rpd-reading-icon" aria-hidden="true">
+            <MaterialIcon>{readingItemIcon(reading.item)}</MaterialIcon>
+          </span>
+          <span className="sb-rpd-reading-text">
+            <span className="sb-rpd-reading-title">
+              {readingLabel(reading.item, resolveBookName)}
+            </span>
+            {preview ? (
+              <span className="sb-rpd-reading-preview" dir="auto">
+                {preview}
+              </span>
+            ) : null}
+            <span className="sb-rpd-reading-meta">{meta}</span>
+          </span>
+        </button>
+
+        {multiChapter ? (
+          <button
+            type="button"
+            className="sb-rp-icon-button sb-rpd-reading-expand"
+            onClick={onToggleExpanded}
+            aria-expanded={expanded}
+            aria-label={t("reading-plan-reading-chapters", {
+              defaultValue: "Chapters",
+            })}
+            title={t("reading-plan-reading-chapters", {
+              defaultValue: "Chapters",
+            })}
+          >
+            <MaterialIcon>
+              {expanded ? "expand_less" : "expand_more"}
+            </MaterialIcon>
+          </button>
+        ) : null}
+      </div>
+
+      {multiChapter && expanded ? (
+        <ul className="sb-rpd-chapter-chips">
+          {chapters.map((chapter) => {
+            const chapterDone = isReadingChapterComplete(
+              sessionProgress,
+              reading.id,
+              chapter
+            );
+            return (
+              <li key={`${session.id}-${reading.id}-${chapter}`}>
+                <button
+                  type="button"
+                  className={`sb-rpd-chapter-chip${
+                    chapterDone ? " sb-rpd-chapter-chip-done" : ""
+                  }`}
+                  onClick={() => onToggleChapter(chapter, chapterDone)}
+                  aria-pressed={chapterDone}
+                >
+                  {chapter}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </li>
   );
 }
 

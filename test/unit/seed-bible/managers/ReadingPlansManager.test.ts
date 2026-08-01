@@ -14,10 +14,15 @@ import {
   dateForSession,
   sessionsForDate,
   isSessionComplete,
+  isReadingChapterComplete,
+  readingChapters,
+  readingCompletion,
+  readingUnits,
   planCompletion,
   withProgressStats,
   getReadingCalendar,
   markReadingCompleteInProgress,
+  markReadingChapterCompleteInProgress,
   markSessionCompleteInProgress,
   markDayCompleteInProgress,
   createReadingPlanProgress,
@@ -270,6 +275,179 @@ describe("schedule math", () => {
   });
 });
 
+describe("per-chapter completion", () => {
+  const spanning = (id: string, chapter: number, endChapter?: number) =>
+    PlanReadingSchema.parse({
+      id,
+      item: {
+        type: "bible-verse",
+        ref: endChapter
+          ? { bookId: "JHN", chapter, endChapter }
+          : { bookId: "JHN", chapter },
+      },
+    });
+  const textReading = (id: string) =>
+    PlanReadingSchema.parse({
+      id,
+      item: { type: "html", title: "Intro", html: "<p>Hi</p>" },
+    });
+
+  it("readingChapters lists every chapter a reading covers", () => {
+    expect(readingChapters(spanning("r1", 1, 10))).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    ]);
+    expect(readingChapters(spanning("r1", 4))).toEqual([4]);
+    // Text and link readings aren't read a chapter at a time.
+    expect(readingChapters(textReading("r1"))).toEqual([]);
+    expect(readingUnits(textReading("r1"))).toBe(1);
+    expect(readingUnits(spanning("r1", 1, 10))).toBe(10);
+  });
+
+  it("credits one chapter of a multi-chapter reading without completing it", () => {
+    const session = { id: "s1", readings: [spanning("r1", 1, 10)] };
+    const progress = markReadingChapterCompleteInProgress(
+      makeProgress(),
+      session,
+      "r1",
+      4,
+      START_MS
+    );
+    const sp = progress.sessions.find((s) => s.sessionId === "s1")!;
+
+    // John 4 is read; the other nine chapters are not, so the reading — and
+    // the session — are still open.
+    expect(isReadingChapterComplete(sp, "r1", 4)).toBe(true);
+    expect(isReadingChapterComplete(sp, "r1", 5)).toBe(false);
+    expect(sp.completedReadingIds).toEqual([]);
+    expect(sp.completedAtMs).toBeNull();
+    expect(readingCompletion(session.readings[0]!, sp)).toEqual({
+      done: 1,
+      total: 10,
+    });
+  });
+
+  it("completes the reading once its last chapter is read", () => {
+    const session = { id: "s1", readings: [spanning("r1", 1, 3)] };
+    let progress = makeProgress();
+    for (const chapter of [1, 2, 3]) {
+      progress = markReadingChapterCompleteInProgress(
+        progress,
+        session,
+        "r1",
+        chapter,
+        START_MS
+      );
+    }
+    const sp = progress.sessions.find((s) => s.sessionId === "s1")!;
+    expect(sp.completedReadingIds).toEqual(["r1"]);
+    // Finished readings carry no part-way chapter list.
+    expect(sp.partialChapters).toEqual([]);
+    expect(sp.completedAtMs).toBe(START_MS);
+    expect(isSessionComplete(session, sp)).toBe(true);
+  });
+
+  it("un-reading one chapter of a complete reading leaves the rest read", () => {
+    const session = { id: "s1", readings: [spanning("r1", 1, 3)] };
+    const complete = markReadingCompleteInProgress(
+      makeProgress(),
+      session,
+      "r1",
+      START_MS
+    );
+    const undone = markReadingChapterCompleteInProgress(
+      complete,
+      session,
+      "r1",
+      2,
+      START_MS,
+      false
+    );
+    const sp = undone.sessions.find((s) => s.sessionId === "s1")!;
+    expect(sp.completedReadingIds).toEqual([]);
+    expect(readingCompletion(session.readings[0]!, sp)).toEqual({
+      done: 2,
+      total: 3,
+    });
+    expect(isReadingChapterComplete(sp, "r1", 2)).toBe(false);
+    expect(isReadingChapterComplete(sp, "r1", 3)).toBe(true);
+  });
+
+  it("treats a single-chapter reading as all-or-nothing", () => {
+    const session = { id: "s1", readings: [spanning("r1", 4)] };
+    const progress = markReadingChapterCompleteInProgress(
+      makeProgress(),
+      session,
+      "r1",
+      4,
+      START_MS
+    );
+    const sp = progress.sessions.find((s) => s.sessionId === "s1")!;
+    expect(sp.completedReadingIds).toEqual(["r1"]);
+    expect(sp.partialChapters).toEqual([]);
+  });
+
+  it("ignores chapters and readings the session doesn't have", () => {
+    const session = { id: "s1", readings: [spanning("r1", 1, 3)] };
+    const base = makeProgress();
+    // A chapter outside the reading's range, a reading that isn't in the
+    // session, and a reading that has no chapters at all.
+    expect(
+      markReadingChapterCompleteInProgress(base, session, "r1", 9, START_MS)
+    ).toBe(base);
+    expect(
+      markReadingChapterCompleteInProgress(base, session, "nope", 1, START_MS)
+    ).toBe(base);
+    expect(
+      markReadingChapterCompleteInProgress(
+        base,
+        { id: "s1", readings: [textReading("r1")] },
+        "r1",
+        1,
+        START_MS
+      )
+    ).toBe(base);
+  });
+
+  it("marking the whole session complete clears part-way chapters", () => {
+    const session = { id: "s1", readings: [spanning("r1", 1, 10)] };
+    const partial = markReadingChapterCompleteInProgress(
+      makeProgress(),
+      session,
+      "r1",
+      4,
+      START_MS
+    );
+    const done = markSessionCompleteInProgress(partial, session, START_MS);
+    const sp = done.sessions.find((s) => s.sessionId === "s1")!;
+    expect(sp.completedReadingIds).toEqual(["r1"]);
+    expect(sp.partialChapters).toEqual([]);
+  });
+
+  it("counts progress in chapters, so a part-read reading moves the bar", () => {
+    const plan = makePlan({
+      sessions: [{ id: "s1", readings: [spanning("r1", 1, 10)] }],
+    });
+    const partial = markReadingChapterCompleteInProgress(
+      makeProgress(),
+      plan.sessions[0]!,
+      "r1",
+      1,
+      START_MS
+    );
+    // Whole readings: 0 of 1 done. Chapters: 1 of 10 — which is what a reader
+    // who has finished John 1 should see.
+    expect(planCompletion(plan, partial)).toEqual({
+      doneSessions: 0,
+      totalSessions: 1,
+      doneReadings: 0,
+      totalReadings: 1,
+      doneUnits: 1,
+      totalUnits: 10,
+    });
+    expect(withProgressStats(plan, partial).percentComplete).toBeCloseTo(0.1);
+  });
+});
+
 describe("completion tracking", () => {
   it("isSessionComplete requires all readings done", () => {
     const session = { id: "s1", readings: [reading("r1"), reading("r2")] };
@@ -278,12 +456,14 @@ describe("completion tracking", () => {
       isSessionComplete(session, {
         sessionId: "s1",
         completedReadingIds: ["r1"],
+        partialChapters: [],
       })
     ).toBe(false);
     expect(
       isSessionComplete(session, {
         sessionId: "s1",
         completedReadingIds: ["r1", "r2"],
+        partialChapters: [],
       })
     ).toBe(true);
   });
@@ -297,8 +477,8 @@ describe("completion tracking", () => {
     });
     const progress = makeProgress({
       sessions: [
-        { sessionId: "s1", completedReadingIds: ["r1"] },
-        { sessionId: "s2", completedReadingIds: ["r3"] },
+        { sessionId: "s1", completedReadingIds: ["r1"], partialChapters: [] },
+        { sessionId: "s2", completedReadingIds: ["r3"], partialChapters: [] },
       ],
     });
     expect(planCompletion(plan, progress)).toEqual({
@@ -306,6 +486,9 @@ describe("completion tracking", () => {
       totalSessions: 2,
       doneReadings: 2,
       totalReadings: 3,
+      // Every reading here is a single chapter, so units track readings 1:1.
+      doneUnits: 2,
+      totalUnits: 3,
     });
   });
 });
@@ -435,8 +618,18 @@ describe("getReadingCalendar", () => {
       plan,
       calProgress(cadence, {
         sessions: [
-          { sessionId: "s0", completedReadingIds: ["s0"], completedAtMs: 100 },
-          { sessionId: "s1", completedReadingIds: ["s1"], completedAtMs: 200 },
+          {
+            sessionId: "s0",
+            completedReadingIds: ["s0"],
+            partialChapters: [],
+            completedAtMs: 100,
+          },
+          {
+            sessionId: "s1",
+            completedReadingIds: ["s1"],
+            partialChapters: [],
+            completedAtMs: 200,
+          },
         ],
       }),
       START_MS
@@ -449,7 +642,12 @@ describe("getReadingCalendar", () => {
       plan,
       calProgress(cadence, {
         sessions: [
-          { sessionId: "s0", completedReadingIds: ["s0"], completedAtMs: 100 },
+          {
+            sessionId: "s0",
+            completedReadingIds: ["s0"],
+            partialChapters: [],
+            completedAtMs: 100,
+          },
         ],
       }),
       START_MS
@@ -526,6 +724,7 @@ describe("reading plan drafts", () => {
     }),
     selectedSessionIndex: 0,
     persisted: false,
+    isNew: true,
   });
 
   it("counts every reading across the draft's sessions", () => {
@@ -830,12 +1029,17 @@ describe("estimateReadingMinutes", () => {
       item: { type: "bible-verse", ref },
     });
 
-  it("counts a single chapter (or a verse within one) as one chapter", () => {
+  it("charges a whole chapter at a typical chapter's length", () => {
+    // 24 verses at 8 verses a minute.
     expect(
       estimateReadingMinutes([
         verseReading("r1", { bookId: "GEN", chapter: 1 }),
       ])
     ).toBe(3);
+  });
+
+  it("counts an explicit verse range exactly, not as a whole chapter", () => {
+    // 5 verses is under a minute, and the floor keeps it at one.
     expect(
       estimateReadingMinutes([
         verseReading("r1", {
@@ -845,7 +1049,44 @@ describe("estimateReadingMinutes", () => {
           endVerse: 5,
         }),
       ])
-    ).toBe(3);
+    ).toBe(1);
+    // 40 verses at 8 a minute.
+    expect(
+      estimateReadingMinutes([
+        verseReading("r1", {
+          bookId: "GEN",
+          chapter: 1,
+          verse: 1,
+          endVerse: 40,
+        }),
+      ])
+    ).toBe(5);
+  });
+
+  it("uses the book's own average chapter length when it is known", () => {
+    const psalms = { numberOfChapters: 150, totalNumberOfVerses: 2461 };
+    const isaiah = { numberOfChapters: 66, totalNumberOfVerses: 1292 };
+    const resolve = (bookId: string) =>
+      bookId === "PSA" ? psalms : bookId === "ISA" ? isaiah : null;
+
+    // Psalms averages ~16 verses a chapter, Isaiah ~20 — so a chapter of
+    // Isaiah reads as longer than a chapter of Psalms.
+    const psalm = estimateReadingMinutes(
+      [verseReading("r1", { bookId: "PSA", chapter: 23 })],
+      resolve
+    );
+    const isaiahChapter = estimateReadingMinutes(
+      [verseReading("r2", { bookId: "ISA", chapter: 40 })],
+      resolve
+    );
+    expect(psalm).toBe(2);
+    expect(isaiahChapter).toBe(2);
+    expect(
+      estimateReadingMinutes(
+        [verseReading("r3", { bookId: "ISA", chapter: 1, endChapter: 10 })],
+        resolve
+      )
+    ).toBe(24);
   });
 
   it("counts a chapter range inclusively", () => {
@@ -1108,14 +1349,39 @@ describe("createReadingPlansManager", () => {
     expect(manager.selectedReadingPlan.value).toBeNull();
   });
 
-  it("selectReadingPlan leaves the selection unchanged when loading fails", async () => {
+  it("selectReadingPlan rejects (and selects nothing) when loading fails", async () => {
     getDataMock.mockResolvedValue({ success: false, errorCode: "not_found" });
     const manager = makeManager("user-1");
 
-    await manager.selectReadingPlan(metadataOf(makePlan()));
+    // The failure has to reach the caller: a plan that can't be loaded must
+    // leave the user on the list with an error, not on a blank detail view.
+    await expect(
+      manager.selectReadingPlan(metadataOf(makePlan()))
+    ).rejects.toThrow(/not_found/);
 
     expect(manager.selectedReadingPlan.value).toBeNull();
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("selectReadingPlan serves an already-cached plan without refetching", async () => {
+    const plan = makePlan({ updatedAtMs: START_MS });
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [{ address: `${plan.address}_metadata`, data: metadataOf(plan) }],
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+    // The initial full-plan sync has it in hand; opening it is a cache hit.
+    expect(manager.fullReadingPlans.value).toHaveLength(1);
+    getDataMock.mockClear();
+
+    const opened = await manager.selectReadingPlan(metadataOf(plan));
+
+    expect(opened).toEqual(plan);
+    expect(manager.selectedReadingPlan.value).toEqual(plan);
+    expect(getDataMock).not.toHaveBeenCalled();
   });
 
   it("markSessionComplete updates the selected progress and persists it", async () => {
@@ -1281,132 +1547,6 @@ describe("createReadingPlansManager", () => {
     ).rejects.toThrow("Not signed in");
   });
 
-  it("createNewReadingPlan saves an empty plan owned by the user and appends it", async () => {
-    const manager = makeManager("user-1");
-    await flush();
-    recordDataMock.mockClear();
-
-    await manager.createNewReadingPlan();
-
-    const plans = manager.userReadingPlans.value;
-    expect(plans).toHaveLength(1);
-    const plan = plans[0]!;
-    expect(plan.authorUserId).toBe("user-1");
-    expect(plan.recordName).toBe("user-1");
-    expect(plan.address).toMatch(/^plan_/);
-    // The list holds metadata only — `sessions` live on the full-plan cache.
-    expect(plan).not.toHaveProperty("sessions");
-    expect(manager.fullReadingPlans.value[0]!.sessions).toEqual([]);
-
-    // saveReadingPlan persists the full plan and the metadata separately
-    const markers = recordDataMock.mock.calls.map((c) => c[3]?.marker);
-    expect(markers).toEqual(
-      expect.arrayContaining([
-        "publicRead:readingPlan",
-        "publicRead:readingPlanMetadata",
-      ])
-    );
-
-    const firstCall = recordDataMock.mock.calls[0]!;
-    expect(firstCall[0]).toBe("user-1"); // recordName
-    expect(firstCall[1]).toMatch(/^plan_/); // address
-
-    const secondCall = recordDataMock.mock.calls[1]!;
-    expect(secondCall[0]).toBe("user-1"); // recordName
-    expect(secondCall[1]).toMatch(/^plan_.*_metadata$/); // address
-
-    expect(recordDataMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("createNewReadingPlan applies provided metadata and returns the plan", async () => {
-    const manager = makeManager("user-1");
-    await flush();
-
-    const plan = await manager.createNewReadingPlan({
-      title: "Bible in a Year",
-      description: "One year daily plan",
-      locale: "es-MX",
-    });
-
-    expect(plan.title).toBe("Bible in a Year");
-    expect(plan.description).toBe("One year daily plan");
-    expect(plan.locale).toBe("es-MX");
-    expect(plan.sessions).toEqual([]);
-    expect(manager.userReadingPlans.value).toContainEqual(metadataOf(plan));
-    expect(manager.fullReadingPlans.value).toContainEqual(plan);
-  });
-
-  it("createNewReadingPlan writes a plan and all its sessions in one save", async () => {
-    const manager = makeManager("user-1");
-    await flush();
-    recordDataMock.mockClear();
-    getDataMock.mockClear();
-
-    const sessions = [
-      { id: "s1", readings: [reading("r1")] },
-      { id: "s2", readings: [reading("r2"), reading("r3")] },
-    ];
-    const plan = await manager.createNewReadingPlan({
-      title: "Three readings",
-      sessions,
-    });
-    await flush();
-
-    expect(plan.sessions).toEqual(sessions);
-
-    // One saveReadingPlan == 2 records (full + metadata), regardless of how
-    // many sessions the plan has. A per-session save would multiply this.
-    expect(recordDataMock).toHaveBeenCalledTimes(2);
-    const saved = recordDataMock.mock.calls.find(
-      (c) => c[3]?.marker === "publicRead:readingPlan"
-    )!;
-    expect((saved[2] as ReadingPlan).sessions).toEqual(sessions);
-
-    // The full-plan cache is seeded from what was just saved, so the sync
-    // effect has nothing to fetch.
-    expect(manager.fullReadingPlans.value).toEqual([plan]);
-    expect(getDataMock).not.toHaveBeenCalled();
-  });
-
-  it("appending a session doesn't refetch the user's other plans", async () => {
-    const planA = makePlan({ address: "plan-a" });
-    const planB = makePlan({ address: "plan-b" });
-    const byAddress: Record<string, ReadingPlan> = {
-      "plan-a": planA,
-      "plan-b": planB,
-    };
-    setListData({
-      "publicRead:readingPlanMetadata": [
-        [
-          { address: "plan-a_metadata", data: metadataOf(planA) },
-          { address: "plan-b_metadata", data: metadataOf(planB) },
-        ],
-      ],
-    });
-    getDataMock.mockImplementation(async (_record: string, address: string) => {
-      const found = byAddress[address];
-      return found ? { success: true, data: found } : { success: false };
-    });
-    const manager = makeManager("user-1");
-    await flush();
-
-    // The initial sync loads both listed plans.
-    expect(manager.fullReadingPlans.value).toHaveLength(2);
-    expect(getDataMock).toHaveBeenCalledTimes(2);
-    getDataMock.mockClear();
-
-    const updated = await manager.addSessionToReadingPlan(planA, {
-      id: "s-new",
-      readings: [reading("r-new")],
-    });
-    await flush();
-
-    // The appended-to plan is updated in the cache in place, and the untouched
-    // plan is reused from cache — neither is re-read over the network.
-    expect(getDataMock).not.toHaveBeenCalled();
-    expect(manager.fullReadingPlans.value).toEqual([updated, planB]);
-  });
-
   it("the draft survives so the reader can add to the plan being authored", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -1524,6 +1664,38 @@ describe("createReadingPlansManager", () => {
     expect(
       manager.editingReadingPlan.value!.plan.sessions[0]!.readings
     ).toEqual([]);
+  });
+
+  it("removing a session before the selected one keeps the same session selected", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    // Four sessions: A(0) B(1) C(2) D(3).
+    manager.addSessionToEditingPlan();
+    manager.addSessionToEditingPlan();
+    manager.addSessionToEditingPlan();
+    const ids = manager.editingReadingPlan.value!.plan.sessions.map(
+      (s) => s.id
+    );
+    manager.selectEditingPlanSession(2); // C
+    expect(manager.editingReadingPlan.value!.selectedSessionIndex).toBe(2);
+
+    manager.removeSessionFromEditingPlan(0); // drop A -> [B, C, D]
+
+    // C shifted down to index 1. Clamping the old index instead would leave
+    // the selection on D while the UI still showed C, and quietly send the
+    // next reading there.
+    const draft = manager.editingReadingPlan.value!;
+    expect(draft.selectedSessionIndex).toBe(1);
+    expect(draft.plan.sessions[draft.selectedSessionIndex]!.id).toBe(ids[2]);
+
+    manager.addReadingToEditingPlan({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+    });
+    const after = manager.editingReadingPlan.value!.plan.sessions;
+    expect(after.find((s) => s.id === ids[2])!.readings).toHaveLength(1);
+    expect(after.find((s) => s.id === ids[3])!.readings).toEqual([]);
   });
 
   it("addReadingToEditingPlan clamps the target session into range", async () => {
@@ -1674,6 +1846,126 @@ describe("createReadingPlansManager", () => {
     }
   });
 
+  it("editing a published plan keeps it, so backing out changes nothing", async () => {
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    const draft = manager.editingReadingPlan.value!;
+    // Not "new": it is already out in the world, so discard must not delete it
+    // and the plan keeps its published status while being edited.
+    expect(draft.isNew).toBe(false);
+    expect(draft.persisted).toBe(true);
+    expect(draft.plan.status).toBe("complete");
+
+    eraseDataMock.mockClear();
+    await manager.discardEditingReadingPlan();
+
+    expect(manager.editingReadingPlan.value).toBeNull();
+    expect(eraseDataMock).not.toHaveBeenCalled();
+  });
+
+  it("deleting a plan erases its records and the user's progress through it", async () => {
+    const plan = makePlan({ recordName: "user-1", address: "plan-1" });
+    const progress = makeProgress({
+      id: "progress-1",
+      recordName: "user-1",
+      planId: "rp_user-1_plan-1",
+    });
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [{ address: "plan-1_metadata", data: metadataOf(plan) }],
+      ],
+      "publicRead:readingPlanProgress": [
+        [{ address: "progress-1", data: progress }],
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+    expect(manager.userReadingPlanProgresses.value).toHaveLength(1);
+    eraseDataMock.mockClear();
+
+    await manager.deleteReadingPlan(plan);
+
+    expect(eraseDataMock).toHaveBeenCalledWith("user-1", "plan-1");
+    expect(eraseDataMock).toHaveBeenCalledWith("user-1", "plan-1_metadata");
+    // Progress that points at a plan which no longer exists is unreadable, so
+    // it goes too rather than sitting in the account forever.
+    expect(eraseDataMock).toHaveBeenCalledWith("user-1", "progress-1");
+    expect(manager.userReadingPlans.value).toEqual([]);
+    expect(manager.fullReadingPlans.value).toEqual([]);
+    expect(manager.userReadingPlanProgresses.value).toEqual([]);
+  });
+
+  it("setPassageCompleteForProgress credits only the chapter that was read", async () => {
+    const session = ReadingPlanSessionSchema.parse({
+      id: "s1",
+      readings: [
+        {
+          id: "r-scripture",
+          item: {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 1, endChapter: 10 },
+          },
+        },
+        {
+          id: "r-text",
+          item: { type: "html", title: "Intro", html: "<p>Hi</p>" },
+        },
+      ],
+    });
+    const plan = makePlan({
+      recordName: "user-1",
+      address: "plan-1",
+      sessions: [session],
+    });
+    const progress = makeProgress({
+      id: "progress-1",
+      recordName: "user-1",
+      planId: "rp_user-1_plan-1",
+    });
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [{ address: "plan-1_metadata", data: metadataOf(plan) }],
+      ],
+      "publicRead:readingPlanProgress": [
+        [{ address: "progress-1", data: progress }],
+      ],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    // The reader finished John 4 and tapped the plan in the "belongs to" card.
+    await manager.setPassageCompleteForProgress(
+      "progress-1",
+      session,
+      "JHN",
+      4,
+      true
+    );
+
+    const sp = manager.userReadingPlanProgresses.value[0]!.sessions.find(
+      (s) => s.sessionId === "s1"
+    )!;
+    // John 4 only — not the other nine chapters, and not the text reading,
+    // which isn't reachable from the reader at all.
+    expect(sp.partialChapters).toEqual([
+      { readingId: "r-scripture", chapters: [4] },
+    ]);
+    expect(sp.completedReadingIds).toEqual([]);
+    expect(manager.userReadingPlanProgresses.value[0]!.percentComplete).toBe(
+      1 / 11
+    );
+  });
+
   it("starting a plan at your own pace records no cadence to keep to", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -1694,14 +1986,6 @@ describe("createReadingPlansManager", () => {
     });
   });
 
-  it("createNewReadingPlan throws when signed out", async () => {
-    const manager = makeManager(null);
-    await flush();
-    await expect(manager.createNewReadingPlan()).rejects.toThrow(
-      "Not signed in"
-    );
-  });
-
   it("canEditSelectedPlan is true only when the user authored the selected plan", async () => {
     // no plan selected → cannot edit
     const manager = makeManager("user-1");
@@ -1719,93 +2003,6 @@ describe("createReadingPlansManager", () => {
     getDataMock.mockResolvedValue({ success: true, data: other });
     await manager.selectReadingPlan(metadataOf(other));
     expect(manager.canEditSelectedPlan.value).toBe(false);
-  });
-
-  it("addSessionToReadingPlan appends the session, bumps updatedAtMs, and saves", async () => {
-    const manager = makeManager("user-1");
-    await flush();
-    const plan = makePlan({
-      sessions: [{ id: "s1", readings: [reading("r1")] }],
-      updatedAtMs: START_MS,
-    });
-    const newSession = { id: "s2", readings: [reading("r2")] };
-    recordDataMock.mockClear();
-    const NOW = START_MS + 60_000;
-    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(NOW);
-
-    const updated = await manager.addSessionToReadingPlan(plan, newSession);
-    nowSpy.mockRestore();
-
-    expect(updated.sessions.map((s) => s.id)).toEqual(["s1", "s2"]);
-    expect(updated.sessions[1]).toEqual(newSession);
-    expect(updated.updatedAtMs).toBe(NOW);
-    expect(plan.sessions).toHaveLength(1); // input not mutated
-
-    // persisted via saveReadingPlan (full plan + metadata)
-    const markers = recordDataMock.mock.calls.map((c) => c[3]?.marker);
-    expect(markers).toEqual(
-      expect.arrayContaining([
-        "publicRead:readingPlan",
-        "publicRead:readingPlanMetadata",
-      ])
-    );
-
-    const firstCall = recordDataMock.mock.calls[0]!;
-    expect(firstCall[0]).toBe("record-1"); // recordName
-    expect(firstCall[1]).toMatch(/^plan/); // address
-
-    const secondCall = recordDataMock.mock.calls[1]!;
-    expect(secondCall[0]).toBe("record-1"); // recordName
-    expect(secondCall[1]).toMatch(/^plan.*_metadata$/); // address
-
-    expect(recordDataMock).toHaveBeenCalledTimes(2);
-    const fullPlanCall = recordDataMock.mock.calls.find(
-      (c) => c[3]?.marker === "publicRead:readingPlan"
-    )!;
-    expect((fullPlanCall[2] as ReadingPlan).sessions).toHaveLength(2);
-  });
-
-  it("addSessionToReadingPlan syncs the selected plan when it matches", async () => {
-    const plan = makePlan({ authorUserId: "user-1", sessions: [] });
-    getDataMock.mockResolvedValue({ success: true, data: plan });
-    const manager = makeManager("user-1");
-    await flush();
-    await manager.selectReadingPlan(metadataOf(plan));
-
-    await manager.addSessionToReadingPlan(plan, {
-      id: "s1",
-      readings: [reading("r1")],
-    });
-
-    expect(
-      manager.selectedReadingPlan.value!.sessions.map((s) => s.id)
-    ).toEqual(["s1"]);
-  });
-
-  it("addSessionToReadingPlan refreshes the matching userReadingPlans entry", async () => {
-    const plan = makePlan({ updatedAtMs: START_MS });
-    setListData({
-      "publicRead:readingPlanMetadata": [
-        [{ address: plan.address, data: metadataOf(plan) }],
-      ],
-    });
-    const manager = makeManager("user-1");
-    await flush();
-    expect(manager.userReadingPlans.value).toHaveLength(1);
-    const NOW = START_MS + 60_000;
-    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(NOW);
-
-    await manager.addSessionToReadingPlan(plan, {
-      id: "s9",
-      readings: [reading("r9")],
-    });
-    nowSpy.mockRestore();
-
-    const entry = manager.userReadingPlans.value.find(
-      (p) => p.address === plan.address
-    )!;
-    expect(entry.updatedAtMs).toBe(NOW);
-    expect(entry).not.toHaveProperty("sessions");
   });
 
   it("recomputes progress stats after marking, against the selected plan", async () => {
@@ -2102,9 +2299,9 @@ describe("withProgressStats", () => {
       plan,
       makeProgress({
         sessions: [
-          { sessionId: "s1", completedReadingIds: ["r1"] },
-          { sessionId: "s2", completedReadingIds: ["r2"] },
-          { sessionId: "s3", completedReadingIds: ["r3"] },
+          { sessionId: "s1", completedReadingIds: ["r1"], partialChapters: [] },
+          { sessionId: "s2", completedReadingIds: ["r2"], partialChapters: [] },
+          { sessionId: "s3", completedReadingIds: ["r3"], partialChapters: [] },
         ],
       })
     );
@@ -2121,7 +2318,13 @@ describe("withProgressStats", () => {
     const next = withProgressStats(
       plan,
       makeProgress({
-        sessions: [{ sessionId: "s1", completedReadingIds: ["r1a"] }],
+        sessions: [
+          {
+            sessionId: "s1",
+            completedReadingIds: ["r1a"],
+            partialChapters: [],
+          },
+        ],
       })
     );
     expect(next.totalSessions).toBe(2);

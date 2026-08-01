@@ -120,9 +120,28 @@ export type ReadingPlan = z.infer<typeof ReadingPlanSchema>;
 // and granular completion — per session and per reading within the session.
 // ---------------------------------------------------------------------------
 
+/**
+ * Chapters already read inside a scripture reading that covers several of them.
+ * "John 1–10" is read a chapter at a time, so finishing it has to be recorded a
+ * chapter at a time too — otherwise the only way to record any of it is to
+ * claim all ten. Once every chapter is listed here the reading moves to the
+ * session's `completedReadingIds` and this entry is dropped, so it only ever
+ * holds readings that are part-way through.
+ */
+export const ReadingChapterProgressSchema = z.object({
+  readingId: z.string(),
+  chapters: z.array(z.number().int().positive()),
+});
+export type ReadingChapterProgress = z.infer<
+  typeof ReadingChapterProgressSchema
+>;
+
 export const SessionProgressSchema = z.object({
   sessionId: z.string(),
   completedReadingIds: z.array(z.string()),
+  // Sparse — only readings that are part-way through. Defaulted so progress
+  // records written before per-chapter tracking existed still parse.
+  partialChapters: z.array(ReadingChapterProgressSchema).default([]),
   completedAtMs: z.number().positive().nullable().optional(),
 });
 export type SessionProgress = z.infer<typeof SessionProgressSchema>;
@@ -313,14 +332,21 @@ export function createReadingPlan(
 // the plan the user is in the middle of authoring.
 // ---------------------------------------------------------------------------
 
-/** A reading plan being authored, plus the wizard state that goes with it. */
+/** A reading plan being authored, plus the editor state that goes with it. */
 export interface ReadingPlanDraft {
-  /** The plan itself, always with `status: "draft"`. */
+  /** The plan being edited — `status: "draft"` unless it was already published. */
   plan: ReadingPlan;
   /** Index of the session a new reading is added to. */
   selectedSessionIndex: number;
   /** True once this draft has been written to the author's account. */
   persisted: boolean;
+  /**
+   * True while the plan is still being brought into existence — a new draft, or
+   * a saved one picked back up. False when an already-published plan is being
+   * edited, which is what stops "discard" from deleting a plan people may
+   * already be reading: backing out of an edit throws away nothing.
+   */
+  isNew: boolean;
 }
 
 /** An empty session, ready for the author to fill in. */
@@ -593,6 +619,93 @@ export function sessionsForDate(
   return result;
 }
 
+/** No book of the Bible (Psalms, the longest) has more than 150 chapters. */
+const MAX_CHAPTER_NUMBER = 150;
+
+/**
+ * The chapters a reading covers, in order. A scripture reading spanning
+ * `chapter`–`endChapter` covers every chapter between them; one without an
+ * `endChapter` covers its single chapter. Non-scripture readings (text, links)
+ * have no chapters and return an empty list — they are read in one go.
+ */
+export function readingChapters(reading: PlanReading): number[] {
+  const item = reading.item;
+  if (item.type !== "bible-verse") {
+    return [];
+  }
+  const start = item.ref.chapter;
+  const end = Math.min(item.ref.endChapter ?? start, MAX_CHAPTER_NUMBER);
+  if (end <= start) {
+    return [start];
+  }
+  const chapters: number[] = [];
+  for (let chapter = start; chapter <= end; chapter++) {
+    chapters.push(chapter);
+  }
+  return chapters;
+}
+
+/**
+ * How many separate pieces a reading breaks into — one per chapter for
+ * scripture, one for everything else. This is the unit progress is measured in,
+ * so a ten-chapter reading counts for ten times as much as a one-chapter one
+ * and the progress bar moves as each chapter is read.
+ */
+export function readingUnits(reading: PlanReading): number {
+  return Math.max(1, readingChapters(reading).length);
+}
+
+/** The chapters of `readingId` recorded as read, when it is part-way through. */
+function partialChaptersFor(
+  sessionProgress: SessionProgress | undefined,
+  readingId: string
+): number[] {
+  return (
+    sessionProgress?.partialChapters.find((p) => p.readingId === readingId)
+      ?.chapters ?? []
+  );
+}
+
+/** True when the whole reading has been completed. */
+export function isReadingComplete(
+  sessionProgress: SessionProgress | undefined,
+  readingId: string
+): boolean {
+  return sessionProgress?.completedReadingIds.includes(readingId) ?? false;
+}
+
+/** True when this one chapter of a reading has been read. */
+export function isReadingChapterComplete(
+  sessionProgress: SessionProgress | undefined,
+  readingId: string,
+  chapter: number
+): boolean {
+  return (
+    isReadingComplete(sessionProgress, readingId) ||
+    partialChaptersFor(sessionProgress, readingId).includes(chapter)
+  );
+}
+
+/**
+ * How much of a reading is done, in chapters (or 1/1 for a text or link
+ * reading). Drives the "3 of 10 chapters" line on a multi-chapter reading.
+ */
+export function readingCompletion(
+  reading: PlanReading,
+  sessionProgress: SessionProgress | undefined
+): { done: number; total: number } {
+  const total = readingUnits(reading);
+  if (isReadingComplete(sessionProgress, reading.id)) {
+    return { done: total, total };
+  }
+  const chapters = readingChapters(reading);
+  if (chapters.length === 0) {
+    return { done: 0, total };
+  }
+  const read = new Set(partialChaptersFor(sessionProgress, reading.id));
+  return { done: chapters.filter((c) => read.has(c)).length, total };
+}
+
 /** True when every reading in the session has been completed. */
 export function isSessionComplete(
   session: ReadingPlanSession,
@@ -605,7 +718,12 @@ export function isSessionComplete(
   return session.readings.every((r) => done.has(r.id));
 }
 
-/** Aggregate completion counts across the whole plan. */
+/**
+ * Aggregate completion counts across the whole plan. Readings are counted both
+ * whole (`doneReadings`) and in chapters (`doneUnits`) — the chapter counts are
+ * what the progress bar uses, so reading 3 chapters of a 10-chapter reading
+ * shows as progress instead of nothing.
+ */
 export function planCompletion(
   plan: ReadingPlan,
   progress: ReadingPlanProgress
@@ -614,6 +732,8 @@ export function planCompletion(
   totalSessions: number;
   doneReadings: number;
   totalReadings: number;
+  doneUnits: number;
+  totalUnits: number;
 } {
   const progressBySession = new Map(
     progress.sessions.map((s) => [s.sessionId, s])
@@ -621,16 +741,25 @@ export function planCompletion(
   let doneSessions = 0;
   let doneReadings = 0;
   let totalReadings = 0;
+  let doneUnits = 0;
+  let totalUnits = 0;
   for (const session of plan.sessions) {
     totalReadings += session.readings.length;
     const sp = progressBySession.get(session.id);
-    if (sp) {
-      const done = new Set(sp.completedReadingIds);
-      const completed = session.readings.filter((r) => done.has(r.id)).length;
-      doneReadings += completed;
-      if (completed === session.readings.length) {
-        doneSessions++;
+    let completed = 0;
+    for (const reading of session.readings) {
+      const { done, total } = readingCompletion(reading, sp);
+      totalUnits += total;
+      doneUnits += done;
+      if (done === total) {
+        completed++;
       }
+    }
+    doneReadings += completed;
+    // `sp` is required: without any recorded progress there is nothing done,
+    // and a session with no readings must not count itself finished.
+    if (sp && completed === session.readings.length) {
+      doneSessions++;
     }
   }
   return {
@@ -638,6 +767,8 @@ export function planCompletion(
     totalSessions: plan.sessions.length,
     doneReadings,
     totalReadings,
+    doneUnits,
+    totalUnits,
   };
 }
 
@@ -666,23 +797,23 @@ export function sessionMatchesPassage(
 }
 
 /**
- * Recomputes the derived stats (`percentComplete` by readings, plus the plan's
+ * Recomputes the derived stats (`percentComplete`, plus the plan's
  * `totalSessions`/`totalReadings`) onto the progress so consumers can show
- * progress without loading the plan. Purely derived — leaves `updatedAtMs`.
+ * progress without loading the plan. The percentage is measured in chapters
+ * rather than whole readings, so a reader part-way through a ten-chapter
+ * reading sees the bar move. Purely derived — leaves `updatedAtMs`.
  */
 export function withProgressStats(
   plan: ReadingPlan,
   progress: ReadingPlanProgress
 ): ReadingPlanProgress {
-  const { doneReadings, totalReadings, totalSessions } = planCompletion(
-    plan,
-    progress
-  );
+  const { totalReadings, totalSessions, doneUnits, totalUnits } =
+    planCompletion(plan, progress);
   return {
     ...progress,
     totalSessions,
     totalReadings,
-    percentComplete: totalReadings > 0 ? doneReadings / totalReadings : 0,
+    percentComplete: totalUnits > 0 ? doneUnits / totalUnits : 0,
   };
 }
 
@@ -701,7 +832,9 @@ function withSessionProgress(
   nowMs: number
 ): ReadingPlanProgress {
   const existing = progress.sessions.find((s) => s.sessionId === sessionId);
-  const next = update(existing ?? { sessionId, completedReadingIds: [] });
+  const next = update(
+    existing ?? { sessionId, completedReadingIds: [], partialChapters: [] }
+  );
   const sessions = existing
     ? progress.sessions.map((s) => (s.sessionId === sessionId ? next : s))
     : [...progress.sessions, next];
@@ -741,7 +874,102 @@ export function markReadingCompleteInProgress(
           ? sp.completedReadingIds
           : [...sp.completedReadingIds, readingId]
         : sp.completedReadingIds.filter((id) => id !== readingId);
-      const next: SessionProgress = { ...sp, completedReadingIds };
+      const next: SessionProgress = {
+        ...sp,
+        completedReadingIds,
+        // Whole-reading completion supersedes any part-way chapter record —
+        // either every chapter is done or none of them are.
+        partialChapters: sp.partialChapters.filter(
+          (p) => p.readingId !== readingId
+        ),
+      };
+      next.completedAtMs = isSessionComplete(session, next)
+        ? (sp.completedAtMs ?? nowMs)
+        : null;
+      return next;
+    },
+    nowMs
+  );
+}
+
+/**
+ * Marks one chapter of a reading read (`complete`, default) or unread. This is
+ * what the reader's "this reading belongs to" card uses: a reader who finishes
+ * John 4 gets credit for John 4, not for the whole "John 1–10" reading it sits
+ * inside.
+ *
+ * Reading the last outstanding chapter completes the reading itself (and, if it
+ * was the session's last, the session). Marking a chapter unread on an
+ * already-complete reading leaves the reading's other chapters intact. A
+ * `readingId` that doesn't belong to the session, a chapter the reading doesn't
+ * cover, or a non-scripture reading is a no-op.
+ */
+export function markReadingChapterCompleteInProgress(
+  progress: ReadingPlanProgress,
+  session: ReadingPlanSession,
+  readingId: string,
+  chapter: number,
+  nowMs: number,
+  complete = true
+): ReadingPlanProgress {
+  const reading = session.readings.find((r) => r.id === readingId);
+  if (!reading) {
+    return progress;
+  }
+  const chapters = readingChapters(reading);
+  if (!chapters.includes(chapter)) {
+    return progress;
+  }
+  // A single-chapter reading has nothing to track part-way through: reading its
+  // one chapter is reading all of it.
+  if (chapters.length === 1) {
+    return markReadingCompleteInProgress(
+      progress,
+      session,
+      readingId,
+      nowMs,
+      complete
+    );
+  }
+
+  const existing = progress.sessions.find((s) => s.sessionId === session.id);
+  const alreadyRead = new Set(
+    isReadingComplete(existing, readingId)
+      ? chapters
+      : partialChaptersFor(existing, readingId)
+  );
+  if (alreadyRead.has(chapter) === complete) {
+    return progress; // nothing to change
+  }
+  if (complete) {
+    alreadyRead.add(chapter);
+  } else {
+    alreadyRead.delete(chapter);
+  }
+  const readChapters = chapters.filter((c) => alreadyRead.has(c));
+  const nowWholeReading = readChapters.length === chapters.length;
+
+  return withSessionProgress(
+    progress,
+    session.id,
+    (sp) => {
+      const withoutThis = sp.partialChapters.filter(
+        (p) => p.readingId !== readingId
+      );
+      const next: SessionProgress = {
+        ...sp,
+        completedReadingIds: nowWholeReading
+          ? sp.completedReadingIds.includes(readingId)
+            ? sp.completedReadingIds
+            : [...sp.completedReadingIds, readingId]
+          : sp.completedReadingIds.filter((id) => id !== readingId),
+        // Only part-way readings are recorded here; a finished (or untouched)
+        // one carries no chapter list.
+        partialChapters:
+          nowWholeReading || readChapters.length === 0
+            ? withoutThis
+            : [...withoutThis, { readingId, chapters: readChapters }],
+      };
       next.completedAtMs = isSessionComplete(session, next)
         ? (sp.completedAtMs ?? nowMs)
         : null;
@@ -771,6 +999,8 @@ export function markSessionCompleteInProgress(
     (sp) => ({
       ...sp,
       completedReadingIds: complete ? session.readings.map((r) => r.id) : [],
+      // Either way nothing is left part-way through.
+      partialChapters: [],
       completedAtMs: complete ? nowMs : null,
     }),
     nowMs
@@ -959,26 +1189,62 @@ export function getReadingCalendar(
   return entries;
 }
 
+/** Verses a typical reader gets through in a minute (~200 words a minute). */
+const VERSES_PER_MINUTE = 8;
+
+/** Verses in a chapter when the book's own figures aren't available. */
+const FALLBACK_VERSES_PER_CHAPTER = 24;
+
+/** Just enough of a book to work out its average chapter length. */
+export interface BookLength {
+  numberOfChapters: number;
+  totalNumberOfVerses: number;
+}
+
 /**
- * Rough reading-time estimate in minutes for a set of readings, at ~3 minutes
- * per chapter (a verse-level reading still counts as its one chapter). Used for
- * the "~N min" hints; it's an estimate, not measured content length.
+ * Rough reading-time estimate in minutes for a set of readings, counted in
+ * verses rather than chapters so a long chapter reads as longer than a short
+ * one. An explicit verse range is counted exactly; a whole chapter is counted
+ * at the book's average chapter length, which `resolveBook` supplies (Psalms
+ * averages far shorter chapters than Isaiah). Without it, every chapter falls
+ * back to a typical length — the same flat estimate as before.
+ *
+ * It remains an estimate: the average can't tell Psalm 119 from Psalm 117.
+ * Getting that exact would mean knowing each chapter's verse count, which is
+ * only available once the chapter itself has been loaded.
  */
-export function estimateReadingMinutes(readings: PlanReading[]): number {
-  let chapters = 0;
+export function estimateReadingMinutes(
+  readings: PlanReading[],
+  resolveBook?: (bookId: string) => BookLength | null | undefined
+): number {
+  let verses = 0;
   for (const reading of readings) {
     const item = reading.item;
-    if (item.type === "bible-verse") {
-      const ref = item.ref;
-      chapters += Math.max(
-        1,
-        (ref.endChapter ?? ref.chapter) - ref.chapter + 1
-      );
+    if (item.type !== "bible-verse") {
+      verses += FALLBACK_VERSES_PER_CHAPTER;
+      continue;
+    }
+    const ref = item.ref;
+    const book = resolveBook?.(ref.bookId);
+    const perChapter =
+      book && book.numberOfChapters > 0
+        ? book.totalNumberOfVerses / book.numberOfChapters
+        : FALLBACK_VERSES_PER_CHAPTER;
+    const chapters = Math.max(
+      1,
+      (ref.endChapter ?? ref.chapter) - ref.chapter + 1
+    );
+    // A verse range inside a single chapter is the one case we can count
+    // exactly; anything spanning chapters falls back to the average.
+    if (chapters === 1 && ref.verse != null && ref.endVerse != null) {
+      verses += Math.max(1, ref.endVerse - ref.verse + 1);
+    } else if (chapters === 1 && ref.verse != null && !ref.toEndOfChapter) {
+      verses += 1;
     } else {
-      chapters += 1;
+      verses += chapters * perChapter;
     }
   }
-  return Math.max(1, chapters * 3);
+  return Math.max(1, Math.round(verses / VERSES_PER_MINUTE));
 }
 
 /** Derived, at-a-glance stats about a user's progress through a plan's calendar. */
@@ -1126,16 +1392,20 @@ export function createReadingPlansManager(
     return parsed.data;
   };
 
+  // A plan lives in two records: the plan itself and a `_metadata` companion
+  // the list reads so it can render without loading every plan's contents.
+  // They are written one after the other rather than together, so a failure
+  // can only ever leave the metadata *behind* the plan, never ahead of it —
+  // the list may briefly describe the previous version, but it can't advertise
+  // a plan (say, as "complete") that the content record doesn't back up.
   const saveReadingPlan = async (plan: ReadingPlan) => {
     const metadata = omit(plan, ["sessions"]);
-    await Promise.all([
-      os.recordData(plan.recordName, plan.address, plan, {
-        marker: "publicRead:readingPlan",
-      }),
-      os.recordData(plan.recordName, `${plan.address}_metadata`, metadata, {
-        marker: "publicRead:readingPlanMetadata",
-      }),
-    ]);
+    await os.recordData(plan.recordName, plan.address, plan, {
+      marker: "publicRead:readingPlan",
+    });
+    await os.recordData(plan.recordName, `${plan.address}_metadata`, metadata, {
+      marker: "publicRead:readingPlanMetadata",
+    });
   };
 
   const saveReadingPlanProgress = async (progress: ReadingPlanProgress) => {
@@ -1246,17 +1516,38 @@ export function createReadingPlansManager(
     }
   };
 
-  const selectReadingPlan = async (plan: ReadingPlanMetadata | null) => {
+  /**
+   * Opens a plan. When the full plan is already cached at the listed version
+   * it is shown straight away and nothing is fetched — opening a plan you can
+   * already see in the list should be instant, not a network round trip.
+   * Otherwise it is loaded, and a failure is re-thrown so the caller can keep
+   * the user on the list with an error rather than dropping them on an empty
+   * screen titled "Untitled plan".
+   */
+  const selectReadingPlan = async (
+    plan: ReadingPlanMetadata | null
+  ): Promise<ReadingPlan | null> => {
     if (!plan) {
       selectedReadingPlan.value = null;
-      return;
+      return null;
+    }
+
+    const cached = fullReadingPlans.value.find(
+      (p) => p.recordName === plan.recordName && p.address === plan.address
+    );
+    if (cached && cached.updatedAtMs >= plan.updatedAtMs) {
+      selectedReadingPlan.value = cached;
+      return cached;
     }
 
     try {
       const fullPlan = await getReadingPlan(plan.recordName, plan.address);
       selectedReadingPlan.value = fullPlan;
+      return fullPlan;
     } catch (error) {
       console.error("Failed to load selected reading plan:", error);
+      selectedReadingPlan.value = null;
+      throw error;
     }
   };
 
@@ -1332,13 +1623,49 @@ export function createReadingPlansManager(
     );
   };
 
+  /** Marks one chapter of one reading complete/incomplete and saves. */
+  const markReadingChapterComplete = async (
+    session: ReadingPlanSession,
+    readingId: string,
+    chapter: number,
+    complete = true
+  ) => {
+    const current = requireSelectedProgress();
+    await updateSelectedProgress(
+      markReadingChapterCompleteInProgress(
+        current,
+        session,
+        readingId,
+        chapter,
+        Date.now(),
+        complete
+      )
+    );
+  };
+
+  /**
+   * Applies an updated progress that isn't necessarily the selected one:
+   * recomputes derived stats against the matching full plan when it's cached,
+   * updates in-memory state (list + the selected progress if it matches), and
+   * persists.
+   */
+  const applyProgressUpdate = async (updated: ReadingPlanProgress) => {
+    const plan = fullReadingPlans.value.find(
+      (p) => formatReadingPlanId(p.recordName, p.address) === updated.planId
+    );
+    const next = plan ? withProgressStats(plan, updated) : updated;
+    userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
+      (p) => (p.id === next.id ? next : p)
+    );
+    if (selectedReadingPlanProgress.value?.id === next.id) {
+      selectedReadingPlanProgress.value = next;
+    }
+    await saveReadingPlanProgress(next);
+  };
+
   /**
    * Marks a session complete/incomplete for a specific progress (by id), not
-   * necessarily the currently-selected one. Recomputes derived stats against the
-   * matching full plan when it's cached, updates in-memory state (list + the
-   * selected progress if it matches), and persists. Used by the in-reader
-   * "this reading belongs to" card, which acts on plans the user isn't actively
-   * viewing. No-op when the progress isn't found.
+   * necessarily the currently-selected one. No-op when the progress isn't found.
    */
   const setSessionCompleteForProgress = async (
     progressId: string,
@@ -1351,23 +1678,56 @@ export function createReadingPlansManager(
     if (!current) {
       return;
     }
-    const updated = markSessionCompleteInProgress(
-      current,
-      session,
-      Date.now(),
-      complete
+    await applyProgressUpdate(
+      markSessionCompleteInProgress(current, session, Date.now(), complete)
     );
-    const plan = fullReadingPlans.value.find(
-      (p) => formatReadingPlanId(p.recordName, p.address) === updated.planId
+  };
+
+  /**
+   * Marks every reading in `session` that covers `chapter` of `bookId` read (or
+   * unread) for a specific progress. Used by the in-reader "this reading
+   * belongs to" card: the reader has finished the chapter in front of them, so
+   * that is exactly what gets credited — a reading of John 1–10 advances by one
+   * chapter rather than being ticked off whole, and the text and link readings
+   * that happen to share the session (and aren't reachable from the reader at
+   * all) are left alone. No-op when the progress isn't found.
+   */
+  const setPassageCompleteForProgress = async (
+    progressId: string,
+    session: ReadingPlanSession,
+    bookId: string,
+    chapter: number,
+    complete: boolean
+  ) => {
+    const current = userReadingPlanProgresses.value.find(
+      (p) => p.id === progressId
     );
-    const next = plan ? withProgressStats(plan, updated) : updated;
-    userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
-      (p) => (p.id === next.id ? next : p)
-    );
-    if (selectedReadingPlanProgress.value?.id === next.id) {
-      selectedReadingPlanProgress.value = next;
+    if (!current) {
+      return;
     }
-    await saveReadingPlanProgress(next);
+    const nowMs = Date.now();
+    let updated = current;
+    for (const reading of session.readings) {
+      const item = reading.item;
+      if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
+        continue;
+      }
+      if (!readingChapters(reading).includes(chapter)) {
+        continue;
+      }
+      updated = markReadingChapterCompleteInProgress(
+        updated,
+        session,
+        reading.id,
+        chapter,
+        nowMs,
+        complete
+      );
+    }
+    if (updated === current) {
+      return;
+    }
+    await applyProgressUpdate(updated);
   };
 
   /**
@@ -1401,77 +1761,6 @@ export function createReadingPlansManager(
       progress,
     ];
     return progress;
-  };
-
-  /**
-   * Creates a plan and writes it once. Pass `sessions` to create a plan with
-   * its content already in place: a single save means a failure leaves nothing
-   * behind to orphan or duplicate on retry, and it avoids one round trip per
-   * session.
-   */
-  const createNewReadingPlan = async (options?: {
-    title?: string | null;
-    description?: string | null;
-    locale?: string;
-    cadenceOptions?: CadenceOption[];
-    defaultCadenceId?: string | null;
-    status?: ReadingPlanStatus;
-    sessions?: ReadingPlanSession[];
-  }): Promise<ReadingPlan> => {
-    if (!login.userId.value) {
-      throw new Error("Not signed in");
-    }
-    const plan = createReadingPlan(
-      login.userId.value,
-      login.userId.value,
-      `plan_${uuid()}`,
-      Date.now(),
-      options
-    );
-    await saveReadingPlan(plan);
-    // Seed both caches in one batch so the `syncFullReadingPlans` effect sees
-    // the new plan already loaded and doesn't refetch the user's whole library.
-    batch(() => {
-      fullReadingPlans.value = [...fullReadingPlans.value, plan];
-      userReadingPlans.value = [
-        ...userReadingPlans.value,
-        omit(plan, ["sessions"]),
-      ];
-    });
-    return plan;
-  };
-
-  /** Appends a session to a plan, saves it, and keeps in-memory state in sync. */
-  const addSessionToReadingPlan = async (
-    plan: ReadingPlan,
-    session: ReadingPlanSession
-  ): Promise<ReadingPlan> => {
-    const updated: ReadingPlan = {
-      ...plan,
-      sessions: [...plan.sessions, session],
-      updatedAtMs: Date.now(),
-    };
-    await saveReadingPlan(updated);
-
-    const isUpdated = (p: { recordName: string; address: string }) =>
-      p.recordName === updated.recordName && p.address === updated.address;
-
-    if (selectedReadingPlan.value && isUpdated(selectedReadingPlan.value)) {
-      selectedReadingPlan.value = updated;
-    }
-    const metadata = omit(updated, ["sessions"]);
-    // Update both caches in one batch. Refreshing the full-plan cache here is
-    // what lets the `syncFullReadingPlans` effect see the metadata change as
-    // already-satisfied instead of reloading every plan over the network.
-    batch(() => {
-      fullReadingPlans.value = fullReadingPlans.value.some(isUpdated)
-        ? fullReadingPlans.value.map((p) => (isUpdated(p) ? updated : p))
-        : [...fullReadingPlans.value, updated];
-      userReadingPlans.value = userReadingPlans.value.map((p) =>
-        isUpdated(p) ? metadata : p
-      );
-    });
-    return updated;
   };
 
   // -------------------------------------------------------------------------
@@ -1593,6 +1882,7 @@ export function createReadingPlansManager(
       }),
       selectedSessionIndex: 0,
       persisted: false,
+      isNew: true,
     };
     editingReadingPlanSaveError.value = false;
   };
@@ -1606,6 +1896,26 @@ export function createReadingPlansManager(
           : { ...plan, sessions: [createDraftSession(uuid())] },
       selectedSessionIndex: Math.max(0, plan.sessions.length - 1),
       persisted: true,
+      isNew: true,
+    };
+    editingReadingPlanSaveError.value = false;
+  };
+
+  /**
+   * Opens an already-published plan in the same editor used to create one, so
+   * there is one screen for both. Edits autosave exactly as a draft's do, and
+   * the plan keeps its `"complete"` status throughout so it never drops out of
+   * the reader's list mid-edit.
+   */
+  const editExistingReadingPlan = (plan: ReadingPlan) => {
+    editingReadingPlan.value = {
+      plan:
+        plan.sessions.length > 0
+          ? plan
+          : { ...plan, sessions: [createDraftSession(uuid())] },
+      selectedSessionIndex: Math.max(0, plan.sessions.length - 1),
+      persisted: true,
+      isNew: false,
     };
     editingReadingPlanSaveError.value = false;
   };
@@ -1684,7 +1994,7 @@ export function createReadingPlansManager(
 
   /**
    * Removes a session (and everything in it) from the draft. The last session
-   * is emptied rather than removed, so the wizard always has somewhere to put
+   * is emptied rather than removed, so the editor always has somewhere to put
    * the next reading.
    */
   const removeSessionFromEditingPlan = (index: number) => {
@@ -1696,9 +2006,17 @@ export function createReadingPlansManager(
       current.plan.sessions.length === 1
         ? [createDraftSession(uuid())]
         : current.plan.sessions.filter((_, i) => i !== index);
+    // Removing a session *before* the selected one shifts every later session
+    // down by one, so the selection has to move with it. Clamping the old index
+    // alone would silently leave the user pointed at the session that took the
+    // selected one's place — and send their next reading there.
+    let selected = current.selectedSessionIndex;
+    if (index < selected) {
+      selected -= 1;
+    }
     mutateDraft((plan) => ({ ...plan, sessions }), {
       selectedSessionIndex: Math.min(
-        current.selectedSessionIndex,
+        Math.max(0, selected),
         sessions.length - 1
       ),
     });
@@ -1790,6 +2108,11 @@ export function createReadingPlansManager(
       userReadingPlans.value = userReadingPlans.value.some(isPlan)
         ? userReadingPlans.value.map((p) => (isPlan(p) ? metadata : p))
         : [...userReadingPlans.value, metadata];
+      // Editing an already-open plan should leave the detail view showing what
+      // was just saved, not the version it was opened with.
+      if (selectedReadingPlan.value && isPlan(selectedReadingPlan.value)) {
+        selectedReadingPlan.value = plan;
+      }
     });
     editingReadingPlan.value = null;
     editingReadingPlanSaving.value = false;
@@ -1797,26 +2120,56 @@ export function createReadingPlansManager(
   };
 
   /**
-   * Deletes a plan (both its content and metadata records) and drops it from
-   * the in-memory caches. Used to throw away a draft the author doesn't want.
+   * Deletes a plan — its content record, its metadata companion, and the
+   * reader's own progress through it — and drops all three from the in-memory
+   * caches. Progress goes too: a progress record that points at a plan which no
+   * longer exists is unreadable, and would otherwise sit in the account forever.
+   * Used both to throw away a draft and to delete a finished plan.
    */
   const deleteReadingPlan = async (plan: {
     recordName: string;
     address: string;
   }) => {
-    await Promise.all([
-      os.eraseData(plan.recordName, plan.address),
-      os.eraseData(plan.recordName, `${plan.address}_metadata`),
-    ]);
+    const planId = formatReadingPlanId(plan.recordName, plan.address);
+    const ownProgresses = userReadingPlanProgresses.value.filter(
+      (p) => p.planId === planId
+    );
+    await os.eraseData(plan.recordName, `${plan.address}_metadata`);
+    await os.eraseData(plan.recordName, plan.address);
+    // Best effort: a progress that fails to erase leaves nothing broken behind
+    // (it simply stops matching a plan), so it must not fail the delete.
+    await Promise.all(
+      ownProgresses.map((progress) =>
+        os
+          .eraseData(progress.recordName, progress.id)
+          .catch((error: unknown) =>
+            console.error("Failed to erase reading plan progress:", error)
+          )
+      )
+    );
     const isPlan = (p: { recordName: string; address: string }) =>
       p.recordName === plan.recordName && p.address === plan.address;
     batch(() => {
       fullReadingPlans.value = fullReadingPlans.value.filter((p) => !isPlan(p));
       userReadingPlans.value = userReadingPlans.value.filter((p) => !isPlan(p));
+      userReadingPlanProgresses.value = userReadingPlanProgresses.value.filter(
+        (p) => p.planId !== planId
+      );
+      if (
+        selectedReadingPlan.value &&
+        isPlan(selectedReadingPlan.value) === true
+      ) {
+        selectedReadingPlan.value = null;
+        selectedReadingPlanProgress.value = null;
+      }
     });
   };
 
-  /** Throws the current draft away, deleting it if it was already saved. */
+  /**
+   * Throws the current edit away. For a plan still being created that means
+   * deleting it; for an edit of an already-published plan it means stepping out
+   * and leaving the plan alone.
+   */
   const discardEditingReadingPlan = async () => {
     const draft = editingReadingPlan.peek();
     if (draftSaveTimer !== null) {
@@ -1825,7 +2178,7 @@ export function createReadingPlansManager(
     }
     editingReadingPlan.value = null;
     editingReadingPlanSaving.value = false;
-    if (!draft?.persisted) {
+    if (!draft?.persisted || !draft.isNew) {
       return;
     }
     try {
@@ -1849,6 +2202,7 @@ export function createReadingPlansManager(
   return {
     fullReadingPlans,
     setSessionCompleteForProgress,
+    setPassageCompleteForProgress,
     userReadingPlanProgresses,
     userReadingPlans,
     selectedReadingPlan,
@@ -1859,10 +2213,9 @@ export function createReadingPlansManager(
     selectedReadingPlanProgressCalendar,
     startReadingPlan,
     markReadingComplete,
+    markReadingChapterComplete,
     markSessionComplete,
     markDayComplete,
-    createNewReadingPlan,
-    addSessionToReadingPlan,
     deleteReadingPlan,
     canEditSelectedPlan,
     editingReadingPlan,
@@ -1870,6 +2223,7 @@ export function createReadingPlansManager(
     editingReadingPlanSaveError,
     startEditingReadingPlan,
     resumeEditingReadingPlan,
+    editExistingReadingPlan,
     cancelEditingReadingPlan,
     discardEditingReadingPlan,
     updateEditingReadingPlan,

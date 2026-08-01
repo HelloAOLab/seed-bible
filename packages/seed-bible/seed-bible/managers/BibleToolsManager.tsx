@@ -720,6 +720,37 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
               readingPlans={readingPlans}
               books={readingState.translationBooks.value?.books ?? []}
               modals={context.modals}
+              // Tapping a scripture reading takes the user to it. Without this
+              // a plan can only be ticked off, never actually read from.
+              onOpenScripture={async (ref, translationId) => {
+                await readingState.selectTranslationAndChapter(
+                  translationId ?? readingState.translationId.peek(),
+                  ref.bookId,
+                  ref.chapter,
+                  { scrollToVerse: ref.verse }
+                );
+              }}
+              // A day of a plan is a run of readings, which is exactly what the
+              // playlist queue already steps through — so it is handed straight
+              // to `startPlaying` rather than growing a second set of next/back
+              // controls here. The synthetic playlist borrows the plan's own
+              // record name and address so playback is identifiable; it isn't a
+              // real playlist record, so a shared/reloaded URL won't resume it.
+              onPlayReadings={(plan, items, startIndex) => {
+                context.playlists?.startPlaying(
+                  {
+                    id: plan.address,
+                    recordName: plan.recordName,
+                    authorUserId: plan.authorUserId,
+                    title: plan.title,
+                    description: plan.description,
+                    items,
+                    createdAtMs: plan.createdAtMs,
+                    updatedAtMs: plan.updatedAtMs,
+                  },
+                  startIndex
+                );
+              }}
             />
           ),
         });

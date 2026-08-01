@@ -147,6 +147,35 @@
   gap: 12px;
 }
 
+/* A card plus the things that hang off it: its edit/delete row, and the load
+   error shown in place of opening a dead screen. */
+.sb-rp-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-rp-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.sb-rp-card-error {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 0.8125rem;
+  color: #dc2626;
+}
+
+.sb-rp-card:disabled,
+.sb-rp-card-open:disabled,
+.sb-rp-today:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
 /* Cards */
 .sb-rp-card {
   display: flex;

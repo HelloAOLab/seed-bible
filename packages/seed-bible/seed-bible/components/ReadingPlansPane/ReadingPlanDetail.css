@@ -174,10 +174,17 @@
   gap: 10px;
 }
 
-/* Layout for a text/link reading: the card itself opens the content, so the
-   check moves out into its own small toggle beside it. Scripture readings keep
-   the single-button card below and don't use this row. */
+/* Every reading has the same layout, whatever kind it is: the completion check
+   sits outside the card on the left, and the card itself opens the reading —
+   scripture in the reader, text and links in a preview. A multi-chapter
+   scripture reading adds a chapter strip beneath, hence the column. */
 .sb-rpd-reading-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-rpd-reading-main {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -199,7 +206,7 @@
   background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
 }
 
-.sb-rpd-reading-row .sb-rpd-reading-card {
+.sb-rpd-reading-main .sb-rpd-reading-card {
   flex: 1;
   min-width: 0;
 }
@@ -210,6 +217,51 @@
 
 .sb-rpd-reading-card-open:hover .sb-rpd-reading-title {
   text-decoration: underline;
+}
+
+/* A reading with nowhere to go (no reader wired up) is still a card, just not
+   a target — the check beside it remains the way to tick it off. */
+.sb-rpd-reading-card:disabled {
+  cursor: default;
+}
+
+.sb-rpd-reading-expand {
+  flex: none;
+  color: var(--rp-muted);
+}
+
+/* One chip per chapter of a multi-chapter reading, so "six chapters into John
+   1–10" is something the plan can record instead of an all-or-nothing tick. */
+.sb-rpd-chapter-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 44px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-rpd-chapter-chip {
+  min-width: 34px;
+  padding: 5px 8px;
+  border: 1px solid var(--rp-border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-rpd-chapter-chip:hover {
+  border-color: var(--rp-accent);
+}
+
+.sb-rpd-chapter-chip-done {
+  border-color: var(--rp-success);
+  background: color-mix(in srgb, var(--rp-success) 15%, transparent);
+  color: var(--rp-success);
 }
 
 /* Leading type icon for a text/link reading, in the same soft tile idiom the
@@ -274,6 +326,11 @@
   color: var(--rp-success);
 }
 
+/* Part-way through a multi-chapter reading — neither empty nor ticked. */
+.sb-rpd-reading-check-partial {
+  color: var(--rp-accent);
+}
+
 .sb-rpd-reading-text {
   display: flex;
   flex-direction: column;
@@ -319,16 +376,43 @@
   line-height: 1.5;
 }
 
-/* Footer. `--rp-toolbar-clearance` keeps the button out from under the floating
-   reader toolbar — see the note in CreateReadingPlanWizard.css, which defines
-   it for both footers. */
+/* Footer. `--rp-toolbar-clearance` keeps the buttons out from under the
+   floating reader toolbar — see the note in ReadingPlanEditor.css, which
+   defines it for both footers. */
 .sb-rpd-footer {
   padding: 12px 16px calc(16px + var(--rp-toolbar-clearance, 0px));
   border-top: 1px solid var(--rp-border);
 }
 
+.sb-rpd-footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.sb-rpd-footer-actions .sb-rp-button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 .sb-rpd-footer .sb-rp-button {
   width: 100%;
+}
+
+.sb-rpd-footer-actions .sb-rp-button {
+  width: auto;
+}
+
+/* Edit / delete for the open plan. Kept visually quiet — they sit alongside
+   the progress summary, not in place of it. */
+.sb-rpd-plan-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .sb-rpd-footer-note {

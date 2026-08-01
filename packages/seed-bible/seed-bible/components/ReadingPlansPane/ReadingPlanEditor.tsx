@@ -1,4 +1,4 @@
-import "./CreateReadingPlanWizard.css";
+import "./ReadingPlanEditor.css";
 import { useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
@@ -27,66 +27,58 @@ import {
   readingPreviewText,
 } from "./readingPreview";
 
-interface CreateReadingPlanWizardProps {
+interface ReadingPlanEditorProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
   /** Modals host for previewing a text/link reading. Optional — without it the
    * preview action is simply not offered. */
   modals?: ModalManager;
-  /** Called when the user backs out of the first step (or cancels). */
+  /** Called when the user backs out of (or discards) the plan. */
   onCancel: () => void;
-  /** Called after a plan is successfully created. */
-  onCreated: () => void;
+  /** Called after the plan is successfully saved. */
+  onSaved: () => void;
 }
 
-/** The ordered steps of the wizard. */
-const STEP_IDS = ["name", "cadences", "sessions"] as const;
-type StepId = (typeof STEP_IDS)[number];
-
 /**
- * The full create-a-reading-plan flow: a name, the cadences the plan offers,
- * and its list of reading sessions.
+ * The reading-plan editor: one screen holding a plan's name, its readings, and
+ * the paces it offers. The same screen creates a new plan and edits an existing
+ * one — a plan is a name, a list of readings and some suggested paces, and
+ * there is no reason those should be reachable in one order when creating and
+ * not at all when editing.
+ *
+ * The readings come first because they *are* the plan; the paces come after,
+ * because "how fast should this be read" is a question you can only answer once
+ * you know what's in it.
  *
  * A plan is deliberately just content plus suggested paces — it has no duration
  * of its own and no start date. How long it takes follows from whichever
  * cadence a reader picks when they start it, which is what lets the same plan
  * be offered as, say, "the Bible in a year" and "the Bible in two years".
  *
- * The draft lives on the manager (`editingReadingPlan`), not in this component
- * — so closing the plans pane to go read doesn't lose it, and the reader's
- * "Add to plan" verse action can add straight into the session the wizard is
- * showing. Every change is saved to the user's account as a `"draft"` plan, so
- * leaving mid-flow (or losing the tab) costs nothing.
+ * The plan being edited lives on the manager (`editingReadingPlan`), not in this
+ * component — so closing the plans pane to go read doesn't lose it, and the
+ * reader's "Add to plan" verse action can add straight into the session shown
+ * here. Every change is saved to the user's account as it's made, so leaving
+ * mid-edit (or losing the tab) costs nothing.
  *
  * The component is fluid-width, so it fills the desktop side pane and the
  * mobile fullscreen pane without any breakpoint of its own.
  */
-export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
-  const { readingPlans, books, modals, onCancel, onCreated } = props;
+export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
+  const { readingPlans, books, modals, onCancel, onSaved } = props;
   const { t } = useI18n();
 
-  // Resume on the sessions step when the draft already has readings — either
-  // the user got that far and left to add a passage from the reader, or they
-  // are picking a saved draft back up.
-  const [stepIndex, setStepIndex] = useState(() => {
-    const inFlight = readingPlans.editingReadingPlan.peek();
-    return inFlight && draftReadingCount(inFlight) > 0
-      ? STEP_IDS.length - 1
-      : 0;
-  });
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+  // Discarding a new plan erases it for good, so the button asks once first.
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
 
-  // Reading `.value` during render subscribes the component to draft edits,
-  // including ones made from the reader's verse toolbar.
+  // Reading `.value` during render subscribes the component to edits, including
+  // ones made from the reader's verse toolbar.
   const draft = readingPlans.editingReadingPlan.value;
   const autosaving = readingPlans.editingReadingPlanSaving.value;
   const autosaveFailed = readingPlans.editingReadingPlanSaveError.value;
-
-  const step: StepId = STEP_IDS[stepIndex]!;
-  const isFirstStep = stepIndex === 0;
-  const isLastStep = stepIndex === STEP_IDS.length - 1;
 
   if (!draft) {
     return null;
@@ -94,117 +86,74 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
 
   const totalReadings = draftReadingCount(draft);
   const selectedCadenceIds = draft.plan.cadenceOptions.map((o) => o.id);
+  const hasTitle = (draft.plan.title ?? "").trim().length > 0;
+  const canSave = hasTitle && totalReadings > 0;
 
-  // Whether the current step is complete enough to advance / submit.
-  const canAdvance = (() => {
-    if (step === "name") {
-      return (draft.plan.title ?? "").trim().length > 0;
-    }
-    if (step === "cadences") {
-      return selectedCadenceIds.length > 0;
-    }
-    return totalReadings > 0;
-  })();
-
-  const goBack = () => {
-    setSubmitError(false);
-    if (isFirstStep) {
-      onCancel();
-      return;
-    }
-    setStepIndex((i) => i - 1);
-  };
-
-  const handleCreate = async () => {
-    if (saving || totalReadings === 0) {
+  const handleSave = async () => {
+    if (saving || !canSave) {
       return;
     }
     setSaving(true);
     setSubmitError(false);
     try {
       await readingPlans.finishEditingReadingPlan();
-      onCreated();
+      onSaved();
     } catch (error) {
-      console.error("Failed to create reading plan:", error);
+      console.error("Failed to save reading plan:", error);
       setSubmitError(true);
       setSaving(false);
     }
   };
 
-  const goNext = () => {
-    if (!canAdvance) {
+  const handleDiscard = async () => {
+    if (!confirmingDiscard) {
+      setConfirmingDiscard(true);
       return;
     }
-    if (isLastStep) {
-      void handleCreate();
-      return;
-    }
-    setStepIndex((i) => i + 1);
+    setConfirmingDiscard(false);
+    await readingPlans.discardEditingReadingPlan();
+    onCancel();
   };
 
-  const stepTitle = {
-    name: t("reading-plan-step-name-title", { defaultValue: "Name your plan" }),
-    cadences: t("reading-plan-step-cadences-title", {
-      defaultValue: "Reading cadences",
-    }),
-    sessions: t("reading-plan-step-scripture-title", {
-      defaultValue: "Select readings",
-    }),
-  }[step];
+  // What's still missing before the plan can be saved, so the reason the button
+  // is disabled is on screen rather than left to be guessed at.
+  const blockingNote = !hasTitle
+    ? t("reading-plan-needs-name", {
+        defaultValue: "Give your plan a name to save it",
+      })
+    : totalReadings === 0
+      ? t("reading-plan-no-readings", {
+          defaultValue: "Add at least one reading to create the plan",
+        })
+      : null;
 
   return (
-    <div className="sb-rp-wizard">
-      <div className="sb-rp-wizard-steps">
-        <span className="sb-rp-wizard-step-count">
-          {t("reading-plan-step-indicator", {
-            defaultValue: "Step {{current}} of {{total}}",
-            current: stepIndex + 1,
-            total: STEP_IDS.length,
-          })}
-        </span>
-        <span className="sb-rp-wizard-save-state" aria-live="polite">
-          {autosaveFailed
-            ? t("reading-plan-draft-save-failed", {
-                defaultValue: "Couldn't save draft",
-              })
-            : autosaving
-              ? t("reading-plan-draft-saving", { defaultValue: "Saving…" })
-              : draft.persisted
-                ? t("reading-plan-draft-saved", { defaultValue: "Draft saved" })
-                : ""}
-        </span>
+    <div className="sb-rp-editor">
+      <div className="sb-rp-editor-status" aria-live="polite">
+        {autosaveFailed
+          ? t("reading-plan-draft-save-failed", {
+              defaultValue: "Couldn't save draft",
+            })
+          : autosaving
+            ? t("reading-plan-draft-saving", { defaultValue: "Saving…" })
+            : draft.persisted
+              ? t("reading-plan-draft-saved", { defaultValue: "Draft saved" })
+              : ""}
       </div>
 
-      <div
-        className="sb-rp-progress"
-        role="progressbar"
-        aria-valuenow={stepIndex + 1}
-        aria-valuemin={1}
-        aria-valuemax={STEP_IDS.length}
-      >
-        <div
-          className="sb-rp-progress-fill"
-          style={{
-            width: `${((stepIndex + 1) / STEP_IDS.length) * 100}%`,
-          }}
-        />
-      </div>
-
-      <div className="sb-rp-wizard-body">
-        <h2 className="sb-rp-step-title">{stepTitle}</h2>
-
-        {step === "name" && (
-          <div className="sb-rp-field">
-            <p className="sb-rp-hint">
-              {t("reading-plan-step-name-hint", {
-                defaultValue: "Give your plan a name people will recognise",
+      <div className="sb-rp-editor-body">
+        <section className="sb-rp-editor-section">
+          <label className="sb-rp-field">
+            <span className="sb-rp-field-label">
+              {t("reading-plan-step-name-title", {
+                defaultValue: "Name your plan",
               })}
-            </p>
+            </span>
             <input
               className="sb-rp-text-input"
               type="text"
               value={draft.plan.title ?? ""}
-              autoFocus
+              autoFocus={draft.isNew && totalReadings === 0}
               onInput={(event: Event) =>
                 readingPlans.updateEditingReadingPlan({
                   title: (event.currentTarget as HTMLInputElement).value,
@@ -214,30 +163,36 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
                 defaultValue: "e.g. My Psalms Journey",
               })}
             />
-          </div>
-        )}
+          </label>
+          <label className="sb-rp-field">
+            <span className="sb-rp-field-label">
+              {t("reading-plan-description-label", {
+                defaultValue: "Description (optional)",
+              })}
+            </span>
+            <input
+              className="sb-rp-text-input"
+              type="text"
+              value={draft.plan.description ?? ""}
+              onInput={(event: Event) =>
+                readingPlans.updateEditingReadingPlan({
+                  description: (event.currentTarget as HTMLInputElement).value,
+                })
+              }
+              placeholder={t("reading-plan-description_placeholder", {
+                defaultValue: "What is this plan about?",
+              })}
+            />
+          </label>
+        </section>
 
-        {step === "cadences" && (
-          <CadencesStep
-            selectedIds={selectedCadenceIds}
-            // Only sessions that hold something take a day to read, so an empty
-            // one the author has added but not filled must not lengthen the
-            // estimate — or a brand-new plan would claim to finish in a day.
-            sessionCount={
-              draft.plan.sessions.filter((s) => s.readings.length > 0).length
-            }
-            onToggle={(id) =>
-              readingPlans.setEditingPlanCadenceOptions(
-                selectedCadenceIds.includes(id)
-                  ? selectedCadenceIds.filter((existing) => existing !== id)
-                  : [...selectedCadenceIds, id]
-              )
-            }
-          />
-        )}
-
-        {step === "sessions" && (
-          <SessionsStep
+        <section className="sb-rp-editor-section">
+          <h3 className="sb-rp-editor-section-title">
+            {t("reading-plan-step-scripture-title", {
+              defaultValue: "Select readings",
+            })}
+          </h3>
+          <SessionsSection
             books={books}
             modals={modals}
             draft={draft}
@@ -253,10 +208,34 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
               readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
             }
           />
-        )}
+        </section>
+
+        <section className="sb-rp-editor-section">
+          <h3 className="sb-rp-editor-section-title">
+            {t("reading-plan-step-cadences-title", {
+              defaultValue: "Reading cadences",
+            })}
+          </h3>
+          <CadencesSection
+            selectedIds={selectedCadenceIds}
+            // Only sessions that hold something take a day to read, so an empty
+            // one the author has added but not filled must not lengthen the
+            // estimate — or a brand-new plan would claim to finish in a day.
+            sessionCount={
+              draft.plan.sessions.filter((s) => s.readings.length > 0).length
+            }
+            onToggle={(id) =>
+              readingPlans.setEditingPlanCadenceOptions(
+                selectedCadenceIds.includes(id)
+                  ? selectedCadenceIds.filter((existing) => existing !== id)
+                  : [...selectedCadenceIds, id]
+              )
+            }
+          />
+        </section>
       </div>
 
-      <footer className="sb-rp-wizard-footer">
+      <footer className="sb-rp-editor-footer">
         {submitError && (
           <p className="sb-rp-error" role="alert">
             {t("reading-plan-create-error", {
@@ -265,31 +244,47 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
             })}
           </p>
         )}
-        {step === "sessions" && totalReadings === 0 && (
-          <p className="sb-rp-footer-note">
-            {t("reading-plan-no-readings", {
-              defaultValue: "Add at least one reading to create the plan",
-            })}
-          </p>
-        )}
-        <div className="sb-rp-wizard-actions">
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-secondary"
-            onClick={goBack}
-            disabled={saving}
-          >
-            {t("back", { defaultValue: "Back" })}
-          </button>
+        {blockingNote && <p className="sb-rp-footer-note">{blockingNote}</p>}
+        <div className="sb-rp-editor-actions">
+          {/* Discarding only ever throws away a plan that is still being
+              created. Backing out of an edit to a published plan leaves it
+              alone, so that case gets a plain "Done" instead. */}
+          {draft.isNew ? (
+            <button
+              type="button"
+              className={`sb-rp-button sb-rp-button-secondary${
+                confirmingDiscard ? " sb-rp-button-danger" : ""
+              }`}
+              onClick={() => void handleDiscard()}
+              disabled={saving}
+            >
+              {confirmingDiscard
+                ? t("reading-plan-discard-draft-confirm", {
+                    defaultValue: "Delete for good?",
+                  })
+                : t("reading-plan-discard-draft", { defaultValue: "Discard" })}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="sb-rp-button sb-rp-button-secondary"
+              onClick={onCancel}
+              disabled={saving}
+            >
+              {t("cancel", { defaultValue: "Cancel" })}
+            </button>
+          )}
           <button
             type="button"
             className="sb-rp-button sb-rp-button-primary"
-            onClick={goNext}
-            disabled={!canAdvance || saving}
+            onClick={() => void handleSave()}
+            disabled={!canSave || saving}
           >
-            {isLastStep
+            {draft.isNew
               ? t("reading-plan-create-submit", { defaultValue: "Create plan" })
-              : t("next", { defaultValue: "Next" })}
+              : t("reading-plan-save-changes", {
+                  defaultValue: "Save changes",
+                })}
           </button>
         </div>
       </footer>
@@ -297,7 +292,7 @@ export function CreateReadingPlanWizard(props: CreateReadingPlanWizardProps) {
   );
 }
 
-interface CadencesStepProps {
+interface CadencesSectionProps {
   selectedIds: string[];
   sessionCount: number;
   onToggle: (id: string) => void;
@@ -309,7 +304,7 @@ interface CadencesStepProps {
  * decides how long the plan takes them — so the same content can be offered at
  * several speeds instead of being locked to one duration.
  */
-function CadencesStep(props: CadencesStepProps) {
+function CadencesSection(props: CadencesSectionProps) {
   const { selectedIds, sessionCount, onToggle } = props;
   const { t } = useI18n();
 
@@ -317,10 +312,12 @@ function CadencesStep(props: CadencesStepProps) {
 
   return (
     <div className="sb-rp-choices">
+      {/* Says plainly that this is authoring options *for readers*, and that
+          self-pacing is always on offer without being one of these boxes. */}
       <p className="sb-rp-hint">
         {t("reading-plan-step-cadences-hint", {
           defaultValue:
-            "Pick the paces readers can choose from. They can also read at their own pace.",
+            "Choose the reading paces you want to offer. Readers can always choose to go at their own pace instead.",
         })}
       </p>
       {DEFAULT_CADENCE_OPTIONS.map((option: CadenceOption) => {
@@ -368,7 +365,7 @@ function CadencesStep(props: CadencesStepProps) {
   );
 }
 
-interface SessionsStepProps {
+interface SessionsSectionProps {
   books: TranslationBook[];
   modals?: ModalManager;
   draft: ReadingPlanDraft;
@@ -385,7 +382,7 @@ interface SessionsStepProps {
  * control the playlist editor uses (scripture, text, or link) inside it, and is
  * also where the reader's "Add to plan" verse action puts a passage.
  */
-function SessionsStep(props: SessionsStepProps) {
+function SessionsSection(props: SessionsSectionProps) {
   const {
     books,
     modals,

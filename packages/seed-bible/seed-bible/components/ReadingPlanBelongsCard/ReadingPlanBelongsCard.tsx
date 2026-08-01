@@ -7,7 +7,8 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
 import {
   formatReadingPlanId,
-  isSessionComplete,
+  readingChapters,
+  isReadingChapterComplete,
   sessionMatchesPassage,
   type ReadingPlanProgress,
   type ReadingPlanSession,
@@ -32,6 +33,7 @@ interface PlanMatch {
   progress: ReadingPlanProgress;
   /** Sessions in this plan whose readings cover the current passage. */
   sessions: ReadingPlanSession[];
+  /** True when this chapter is recorded as read everywhere it appears. */
   allComplete: boolean;
 }
 
@@ -41,6 +43,12 @@ interface PlanMatch {
  * done/not-done indicator and a tap-to-toggle, plus a "Mark as complete"
  * action. A lightweight tracker watches for a realistic read (scrolled to the
  * end + a dwell threshold) and, when met, gently nudges toward completing it.
+ *
+ * Everything here is scoped to the chapter actually on screen. Marking complete
+ * credits *this chapter* — a plan whose reading is "John 1–10" advances by one
+ * chapter when you finish John 4, rather than being ticked off whole, and the
+ * text and link readings that happen to share the session (and can't be reached
+ * from the reader at all) are left alone.
  */
 export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
   const { state, readingState } = props;
@@ -76,12 +84,21 @@ export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
       if (sessions.length === 0) {
         continue;
       }
-      const allComplete = sessions.every((s) =>
-        isSessionComplete(
-          s,
-          progress.sessions.find((sp) => sp.sessionId === s.id)
-        )
-      );
+      // Done means "this chapter is read", not "the whole session is read":
+      // every reading covering the open chapter has that chapter recorded.
+      const allComplete = sessions.every((s) => {
+        const sp = progress.sessions.find((entry) => entry.sessionId === s.id);
+        return s.readings.every((reading) => {
+          const item = reading.item;
+          if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
+            return true; // not this passage — not this card's business
+          }
+          if (!readingChapters(reading).includes(chapter)) {
+            return true;
+          }
+          return isReadingChapterComplete(sp, reading.id, chapter);
+        });
+      });
       matches.push({
         planKey: planId,
         planTitle: plan.title ?? untitled,
@@ -153,10 +170,15 @@ export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
   }
 
   const setPlanComplete = async (match: PlanMatch, complete: boolean) => {
+    if (!bookId) {
+      return;
+    }
     for (const session of match.sessions) {
-      await readingPlans.setSessionCompleteForProgress(
+      await readingPlans.setPassageCompleteForProgress(
         match.progress.id,
         session,
+        bookId,
+        chapter,
         complete
       );
     }
@@ -274,8 +296,11 @@ export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
             onClick={() => void markAllComplete()}
           >
             <MaterialIcon>check</MaterialIcon>
-            {t("reading-plan-mark-complete", {
-              defaultValue: "Mark as complete",
+            {/* Names the passage so it's plain that this credits the chapter
+                in front of the reader, not the whole reading it belongs to. */}
+            {t("reading-plan-mark-passage-complete", {
+              defaultValue: "Mark {{passage}} as read",
+              passage: passageLabel,
             })}
           </button>
         ) : null}
