@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Scripture Map packs books in a masonry layout by height, keeping left-to-right book order while removing empty gaps under shorter books. ([#1392](https://github.com/HelloAOLab/seed-bible/issues/1392))
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

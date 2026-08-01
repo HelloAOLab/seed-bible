@@ -1,22 +1,63 @@
 import type { MutableRef } from "preact/hooks";
 import { useLayoutEffect } from "preact/hooks";
 
-const clearItemStyles = (item: HTMLElement) => {
+export const clearItemStyles = (item: HTMLElement) => {
   item.style.position = "";
   item.style.left = "";
   item.style.top = "";
   item.style.width = "";
 };
 
-const clearContainerStyles = (container: HTMLElement) => {
+export const clearContainerStyles = (container: HTMLElement) => {
   container.style.height = "";
 };
 
-const getGap = (container: HTMLElement) => {
+export const getGap = (container: HTMLElement) => {
   const styles = getComputedStyle(container);
   const scaleFactor =
     parseFloat(styles.getPropertyValue("--scale-factor")) || 1;
   return 12 * scaleFactor;
+};
+
+export const computeColumnCount = (
+  containerWidth: number,
+  columnWidth: number,
+  gap: number
+): number => {
+  if (columnWidth <= 0) return 1;
+  return Math.max(1, Math.floor((containerWidth + gap) / (columnWidth + gap)));
+};
+
+export interface MasonryPosition {
+  left: number;
+  top: number;
+  width: number;
+}
+
+/**
+ * Round-robin column assignment: item i → column (i % columnCount).
+ * Preserves left-to-right reading order across the top of each column.
+ */
+export const computeMasonryPositions = (
+  heights: readonly number[],
+  columnWidth: number,
+  gap: number,
+  columnCount: number
+): { positions: MasonryPosition[]; containerHeight: number } => {
+  const safeColumnCount = Math.max(1, columnCount);
+  const columnHeights = new Array<number>(safeColumnCount).fill(0);
+  const positions = heights.map((height, index) => {
+    const column = index % safeColumnCount;
+    const left = column * (columnWidth + gap);
+    const top = columnHeights[column]!;
+    columnHeights[column] = top + height + gap;
+    return { left, top, width: columnWidth };
+  });
+  const tallest = columnHeights.length > 0 ? Math.max(...columnHeights) : 0;
+  return {
+    positions,
+    containerHeight: Math.max(0, tallest - gap),
+  };
 };
 
 /**
@@ -76,15 +117,15 @@ export const useMasonryLayout = (
         );
         if (columnWidth <= 0) return;
 
-        const columnCount = Math.max(
-          1,
-          Math.floor((container.clientWidth + gap) / (columnWidth + gap))
+        const columnCount = computeColumnCount(
+          container.clientWidth,
+          columnWidth,
+          gap
         );
         const heights = items.map((item) => item.offsetHeight);
         const signature = `${container.clientWidth}|${columnCount}|${columnWidth}|${heights.join(",")}`;
 
         if (signature === lastLayoutSignature) {
-          // Width was cleared for measure — restore it even on a no-op.
           const widthPx = `${columnWidth}px`;
           for (const item of items) {
             if (item.style.width !== widthPx) item.style.width = widthPx;
@@ -93,13 +134,19 @@ export const useMasonryLayout = (
         }
         lastLayoutSignature = signature;
 
-        const columnHeights = new Array<number>(columnCount).fill(0);
+        const { positions, containerHeight } = computeMasonryPositions(
+          heights,
+          columnWidth,
+          gap,
+          columnCount
+        );
+
         const widthPx = `${columnWidth}px`;
         items.forEach((item, index) => {
-          const height = heights[index] ?? item.offsetHeight;
-          const column = index % columnCount;
-          const leftPx = `${column * (columnWidth + gap)}px`;
-          const topPx = `${columnHeights[column]!}px`;
+          const position = positions[index];
+          if (!position) return;
+          const leftPx = `${position.left}px`;
+          const topPx = `${position.top}px`;
 
           if (item.style.position !== "absolute") {
             item.style.position = "absolute";
@@ -107,11 +154,9 @@ export const useMasonryLayout = (
           if (item.style.left !== leftPx) item.style.left = leftPx;
           if (item.style.top !== topPx) item.style.top = topPx;
           if (item.style.width !== widthPx) item.style.width = widthPx;
-          columnHeights[column] = columnHeights[column]! + height + gap;
         });
 
-        const tallest = Math.max(...columnHeights);
-        const heightPx = `${Math.max(0, tallest - gap)}px`;
+        const heightPx = `${containerHeight}px`;
         if (container.style.height !== heightPx) {
           container.style.height = heightPx;
         }
@@ -164,5 +209,5 @@ export const useMasonryLayout = (
         clearItemStyles(child as HTMLElement);
       }
     };
-  }, [containerRef, enabled]);
+  }, [containerRef]);
 };
