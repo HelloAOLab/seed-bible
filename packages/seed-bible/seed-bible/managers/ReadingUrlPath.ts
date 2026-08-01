@@ -128,3 +128,71 @@ export function buildReadingPath(params: {
   const encodedTranslation = encodeURIComponent(translationId);
   return `/${encodeURIComponent(language)}/${encodedTranslation}/${bookSlug}/${chapter}`;
 }
+
+/** Query params that used to carry the reading position before it moved into the path. */
+const LEGACY_POSITION_PARAMS = [
+  "book",
+  "chapter",
+  "translation",
+  "translationId",
+  "lang",
+];
+
+/**
+ * Rewrites the reading position inside an existing app URL, keeping the
+ * origin, the deployment prefix, the language segment already in the path,
+ * and any unrelated query params (`?verse=`, `?sessionId=`, an extension's
+ * own params).
+ *
+ * This is what anything that *hands out* a link should use — the share
+ * buttons, scripture reference links — rather than setting `?book=`/`?chapter=`
+ * on top of the current URL. Since the position moved into the path, those
+ * params no longer win: `getInitialFirstTabBookId` and friends read the path
+ * first and only fall back to the query, so a link that sets them alongside a
+ * path that says something else silently opens the path's position instead.
+ * They're stripped here for the same reason.
+ */
+export function buildReadingUrl(params: {
+  /** The URL to rewrite — normally the page's current one. */
+  currentUrl: URL;
+  basePath: string;
+  translationId: string;
+  bookId: BookId;
+  chapter: number;
+  /**
+   * Language for the path when the current URL has none to inherit. Callers
+   * that can resolve one for the translation (`uiLocaleForDefaultTranslation`,
+   * `bibleLanguageToUiLocale`) should pass it; defaults to
+   * {@link DEFAULT_UI_LANGUAGE}.
+   */
+  fallbackLanguage?: string;
+}): URL {
+  const {
+    currentUrl,
+    basePath,
+    translationId,
+    bookId,
+    chapter,
+    fallbackLanguage,
+  } = params;
+
+  const parsed = parseReadingPath(currentUrl.pathname, basePath);
+  const url = new URL(currentUrl.href);
+  url.pathname = `${basePath}${buildReadingPath({
+    // Keep whatever language the page is already being read in, so a link
+    // handed out while reading in Spanish stays Spanish.
+    language:
+      parsed?.language?.toLowerCase() ??
+      fallbackLanguage ??
+      DEFAULT_UI_LANGUAGE,
+    translationId,
+    bookId,
+    chapter,
+  })}`;
+
+  for (const key of LEGACY_POSITION_PARAMS) {
+    url.searchParams.delete(key);
+  }
+
+  return url;
+}

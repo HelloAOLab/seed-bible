@@ -1694,7 +1694,7 @@ describe("BibleSelector sharing translations", () => {
     return { selectorState, bibleDataManager };
   }
 
-  it("clicking share on a default-endpoint translation copies a URL with just the translation ID", async () => {
+  it("clicking share on a default-endpoint translation copies a URL naming it in the path", async () => {
     await openTranslationModalWithGroup("AAB", "English");
 
     const shareButton = container.querySelector(
@@ -1710,7 +1710,11 @@ describe("BibleSelector sharing translations", () => {
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("ao.bot");
-    expect(copiedUrl.searchParams.get("translation")).toBe("AAB");
+    // Regression: this used to copy `?translation=AAB`, which the recipient's
+    // app ignored — the path names the translation and is read first, so the
+    // link opened whatever the sharer happened to be reading instead.
+    expect(copiedUrl.pathname).toBe("/en/AAB/genesis/1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
 
   it("clicking share on a non-default-endpoint translation copies a URL with the full books.json URL", async () => {
@@ -1730,10 +1734,17 @@ describe("BibleSelector sharing translations", () => {
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("ao.bot");
-    const translationParam = copiedUrl.searchParams.get("translation")!;
-    expect(translationParam).toContain("example.test");
-    expect(translationParam).toContain("CST");
-    expect(translationParam).toContain("books.json");
+    // The whole books.json URL is one path segment, so its slashes stay
+    // encoded rather than splitting the path into extra segments.
+    const [, language, translationSegment, book, chapter] =
+      copiedUrl.pathname.split("/");
+    expect(language).toBe("en");
+    expect(decodeURIComponent(translationSegment!)).toContain("example.test");
+    expect(decodeURIComponent(translationSegment!)).toContain("CST");
+    expect(decodeURIComponent(translationSegment!)).toContain("books.json");
+    expect(book).toBe("genesis");
+    expect(chapter).toBe("1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
 });
 

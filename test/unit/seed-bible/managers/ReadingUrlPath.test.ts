@@ -1,6 +1,7 @@
 import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
+  buildReadingUrl,
   parseReadingPath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 
@@ -157,5 +158,133 @@ describe("buildReadingPath", () => {
       chapter: 3,
     });
     expect(path).toBe(`/en/${encodeURIComponent(customUrl)}/john/3`);
+  });
+});
+
+describe("buildReadingUrl", () => {
+  const at = (href: string) => new URL(href);
+
+  it("replaces the reading position while keeping the origin", () => {
+    expect(
+      buildReadingUrl({
+        currentUrl: at("https://seedbible.org/en/AAB/genesis/1"),
+        basePath: "",
+        translationId: "AAB",
+        bookId: "JHN",
+        chapter: 3,
+      }).toString()
+    ).toBe("https://seedbible.org/en/AAB/john/3");
+  });
+
+  it("keeps the language the current URL is already using", () => {
+    expect(
+      buildReadingUrl({
+        currentUrl: at("https://seedbible.org/es/spa_onbv/genesis/1"),
+        basePath: "",
+        translationId: "spa_onbv",
+        bookId: "JHN",
+        chapter: 3,
+      }).pathname
+    ).toBe("/es/spa_onbv/john/3");
+  });
+
+  it("normalises a shouted language segment", () => {
+    expect(
+      buildReadingUrl({
+        currentUrl: at("https://seedbible.org/ES/spa_onbv/genesis/1"),
+        basePath: "",
+        translationId: "spa_onbv",
+        bookId: "JHN",
+        chapter: 3,
+      }).pathname
+    ).toBe("/es/spa_onbv/john/3");
+  });
+
+  // The whole point of the helper: a link that carried these alongside a path
+  // saying something else opened the path's position, because that is what the
+  // app reads first.
+  it("strips legacy position params that would contradict the path", () => {
+    const url = buildReadingUrl({
+      currentUrl: at(
+        "https://seedbible.org/en/AAB/genesis/1?book=EXO&chapter=9&translation=NIV&translationId=NIV&lang=de"
+      ),
+      basePath: "",
+      translationId: "AAB",
+      bookId: "JHN",
+      chapter: 3,
+    });
+
+    expect(url.pathname).toBe("/en/AAB/john/3");
+    expect(url.search).toBe("");
+  });
+
+  it("leaves unrelated query params alone", () => {
+    const url = buildReadingUrl({
+      currentUrl: at(
+        "https://seedbible.org/en/AAB/genesis/1?sessionId=abc&verse=4"
+      ),
+      basePath: "",
+      translationId: "AAB",
+      bookId: "JHN",
+      chapter: 3,
+    });
+
+    expect(url.searchParams.get("sessionId")).toBe("abc");
+    expect(url.searchParams.get("verse")).toBe("4");
+  });
+
+  it("preserves the deployment prefix", () => {
+    expect(
+      buildReadingUrl({
+        currentUrl: at(
+          "https://alpha.seedbible.org/b/branch-x/en/AAB/genesis/1"
+        ),
+        basePath: "/b/branch-x",
+        translationId: "AAB",
+        bookId: "JHN",
+        chapter: 3,
+      }).pathname
+    ).toBe("/b/branch-x/en/AAB/john/3");
+  });
+
+  describe("when the current URL has no language to inherit", () => {
+    const bareRoot = "https://seedbible.org/";
+
+    it("uses the caller's fallback language", () => {
+      expect(
+        buildReadingUrl({
+          currentUrl: at(bareRoot),
+          basePath: "",
+          translationId: "spa_onbv",
+          bookId: "JHN",
+          chapter: 3,
+          fallbackLanguage: "es",
+        }).pathname
+      ).toBe("/es/spa_onbv/john/3");
+    });
+
+    it("defaults to English when the caller has no better guess", () => {
+      expect(
+        buildReadingUrl({
+          currentUrl: at(bareRoot),
+          basePath: "",
+          translationId: "NIV",
+          bookId: "JHN",
+          chapter: 3,
+        }).pathname
+      ).toBe("/en/NIV/john/3");
+    });
+
+    it("never emits the 3-segment form, which is only a redirect entry point", () => {
+      const url = buildReadingUrl({
+        currentUrl: at(bareRoot),
+        basePath: "",
+        translationId: "AAB",
+        bookId: "GEN",
+        chapter: 1,
+      });
+      expect(url.pathname).toBe("/en/AAB/genesis/1");
+      expect(url.pathname.split("/").filter(Boolean)).toHaveLength(4);
+    });
   });
 });

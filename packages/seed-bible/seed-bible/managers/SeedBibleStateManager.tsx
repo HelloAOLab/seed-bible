@@ -218,7 +218,9 @@ export interface AppState {
 
   /**
    * The Canonical URL for the current page.
-   * Doesn't include the origin, but does include the query params for the current chapter (e.g. `/?translation=abc&book=GEN&chapter=1`).
+   * Origin-relative, and always the explicit four-segment reading path
+   * (e.g. `/en/AAB/genesis/1`) — see the computed for why the language segment
+   * is always spelled out and why it follows the translation.
    */
   canonicalUrl: ReadonlySignal<string>;
 
