@@ -551,8 +551,14 @@
   white-space: nowrap;
   vertical-align: middle;
   /* Phase 2 (UI-scaling): gutters in em so they track the reader glyph knob.
-     Color/opacity adopted from develop. */
-  /* margin-inline-start: 0.625em; */
+     Color/opacity adopted from develop.
+     The leading gutter is the only thing separating a verse number from the
+     end of the previous verse — verse text carries no spaces of its own — so
+     dropping it mashes them together ("...had your fill.²Do not work..."). It
+     has no bearing on the numbers-off case this fix is about: no number is
+     rendered then, which is why the space is inserted in the markup instead
+     (see `needsVerseSpacing` in BibleReader.tsx). */
+  margin-inline-start: 0.625em;
   margin-inline-end: 0.3125em;
   color: inherit;
   opacity: 0.7;

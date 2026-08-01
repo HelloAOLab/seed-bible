@@ -1341,9 +1341,15 @@ describe("BibleReader", () => {
       );
     });
 
-    // The verse number's trailing margin already provides the gap.
+    // No separating text node: with numbers on, the gap either side of the
+    // number comes from `.sb-verse-number`'s inline margins in
+    // BibleReader.css, which `textContent` can't see. So the run-together
+    // string below is the correct markup, NOT a mashed-up rendering — adding a
+    // literal space here would double the gap. What has to hold is that the
+    // number is actually rendered, since it is the thing carrying the margins.
     const content = container.querySelector(".sb-chapter-content");
     expect(content?.textContent).toContain("First verse.2Second verse.");
+    expect(container.querySelectorAll(".sb-verse-number")).toHaveLength(2);
   });
 
   it("separates verses inside one highlight run when verse numbers are hidden", () => {

@@ -3,7 +3,7 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import type { JSX } from "preact";
+import { Fragment, type JSX } from "preact";
 import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
@@ -784,17 +784,22 @@ function renderChapterContent(
     Array.isArray((entry as ChapterVerse).content);
 
   const entries = chapterData.chapter.content;
-  const nodes: (JSX.Element | string | null)[] = [];
+  const nodes: (JSX.Element | null)[] = [];
 
   // Verse text carries no leading/trailing spaces of its own — with numbers on,
-  // the superscript's trailing margin is what keeps one verse off the back of
-  // the previous one. Hide the numbers and adjacent verses collide
+  // the number's own margins are what keep one verse off the back of the
+  // previous one. Hide the numbers and adjacent verses collide
   // ("...had your fill.Do not work..."), so emit a real space between them.
   // It sits between the verse spans rather than inside one, so highlight
   // ribbons and verse selection still stop at a verse's own glyphs, and it
   // collapses away at a line break like any other space.
   const needsVerseSpacing = !scriptureElements.showVerseNumbers;
   let previousWasVerse = false;
+
+  // Keyed so the separator is a first-class sibling of the keyed verses it sits
+  // between, rather than an unkeyed string mixed in among them. A fragment adds
+  // nothing to the DOM — what renders is the bare text node either way.
+  const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
 
   for (let i = 0; i < entries.length; ) {
     const entry = entries[i];
@@ -858,7 +863,7 @@ function renderChapterContent(
       const colorKey = getHighlightColorKey(highlight);
 
       if (needsVerseSpacing && previousWasVerse) {
-        nodes.push(" ");
+        nodes.push(verseSeparator(`space-${i}`));
       }
       previousWasVerse = true;
 
@@ -927,7 +932,7 @@ function renderChapterContent(
             // Same separator as between top-level verses; inside a run it falls
             // within the ribbon, which is correct — the whole run is one fill.
             return needsVerseSpacing && runIndex > 0
-              ? [" ", verseNode]
+              ? [verseSeparator(`space-${idx}`), verseNode]
               : [verseNode];
           })}
         </span>
