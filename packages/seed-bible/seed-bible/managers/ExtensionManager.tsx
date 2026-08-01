@@ -910,8 +910,21 @@ export function createExtensionManager(
     extensionsSignal.value = computeExtensions();
   };
 
+  // Fetching list strings is a client-only concern, for two reasons. The
+  // Settings extensions list is never server-rendered and English is already
+  // inline as the fallback, so there is nothing for the server to gain. More
+  // importantly `i18n` is the process-wide i18next singleton while this factory
+  // runs once per SSR request (`entry-ssr.tsx` → `createSeedBibleState` →
+  // here), so on the server both the listener below and the fetch would be
+  // per-request writes to state shared by every request — the listener in
+  // particular would accumulate for the life of the process.
+  const fetchesListTranslations = !import.meta.env.SSR;
+
   // Sets whose list strings are fetched per language, kept so a later language
-  // change can re-fetch for the new one.
+  // change can re-fetch for the new one. Nothing removes from this today
+  // because there is no path that untracks a set; if one is added, it should
+  // delete from here too, or the handler below will keep re-fetching for sets
+  // that no longer matter.
   const setsWithListTranslations = new Set<ExtensionSet>();
 
   /**
@@ -947,17 +960,19 @@ export function createExtensionManager(
     }
   };
 
-  i18n.on("languageChanged", (language: string) => {
-    for (const set of setsWithListTranslations) {
-      void loadListTranslationsForLanguage(set, language);
-    }
-  });
+  if (fetchesListTranslations) {
+    i18n.on("languageChanged", (language: string) => {
+      for (const set of setsWithListTranslations) {
+        void loadListTranslationsForLanguage(set, language);
+      }
+    });
+  }
 
   const trackExtensionSet = (set: ExtensionSet) => {
     for (const extension of set.extensions) {
       knownExtensionsById.set(extension.meta.id, extension);
     }
-    if (set.loadListTranslations) {
+    if (fetchesListTranslations && set.loadListTranslations) {
       setsWithListTranslations.add(set);
       void loadListTranslationsForLanguage(set, i18n.language);
     }

@@ -63,7 +63,7 @@ async function readExtensionMeta(folder: string): Promise<ExtensionMetaFile> {
 }
 
 /** Every extension package under `packages/`, with its meta parsed. */
-async function discoverExtensions(): Promise<DiscoveredExtension[]> {
+async function readExtensions(): Promise<DiscoveredExtension[]> {
   const folders = await discoverExtensionFolders();
   return Promise.all(
     folders.map(async (folder) => ({
@@ -71,6 +71,27 @@ async function discoverExtensions(): Promise<DiscoveredExtension[]> {
       meta: await readExtensionMeta(folder),
     }))
   );
+}
+
+// `load()` runs once for the entry module and once per language module, and
+// the entry module names one import per language — so a build asks for ~77
+// modules, each of which would otherwise re-`readdir` `packages/` and re-parse
+// every `extension.json`. The metas are identical across all of them, so the
+// first read is shared. Cleared by the dev-server watcher below when an
+// `extension.json` is added or removed.
+let cachedExtensions: Promise<DiscoveredExtension[]> | null = null;
+
+function discoverExtensions(): Promise<DiscoveredExtension[]> {
+  if (!cachedExtensions) {
+    // Cache the promise rather than the result so concurrent `load()` calls —
+    // which is how Rollup drives this — share one read instead of racing.
+    cachedExtensions = readExtensions().catch((err) => {
+      // Don't poison the cache with a failed read; let the next call retry.
+      cachedExtensions = null;
+      throw err;
+    });
+  }
+  return cachedExtensions;
 }
 
 /**
@@ -119,16 +140,31 @@ export function extensionsPlugin(): Plugin {
 
       let pending: NodeJS.Timeout | undefined;
 
-      const handle = (file: string) => {
+      /** True for a top-level `packages/<folder>/extension.json`. */
+      const isExtensionManifest = (file: string) => {
         if (path.basename(file) !== "extension.json") {
-          return;
+          return false;
         }
         const rel = path.relative(packagesDir, path.resolve(file));
-        // Only top-level `packages/<folder>/extension.json` (not nested ones).
         const segments = rel.split(/[\\/]/);
-        if (rel.startsWith("..") || segments.length !== 2) {
+        return !rel.startsWith("..") && segments.length === 2;
+      };
+
+      // A file's *contents* changing is already handled by the `addWatchFile`
+      // calls in `load()`, which make Vite re-run it — but that would now be
+      // served the cached metas, so the cache has to be dropped here too.
+      server.watcher.on("change", (file) => {
+        if (isExtensionManifest(file)) {
+          cachedExtensions = null;
+        }
+      });
+
+      const handle = (file: string) => {
+        if (!isExtensionManifest(file)) {
           return;
         }
+        // An added or removed package changes the discovered set itself.
+        cachedExtensions = null;
 
         if (pending) {
           clearTimeout(pending);

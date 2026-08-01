@@ -708,6 +708,47 @@ describe("createExtensionManager", () => {
     });
   });
 
+  it("fetches nothing and registers no listener during SSR", async () => {
+    // `createExtensionManager` runs once per SSR request, while `i18n` is the
+    // process-wide i18next singleton — so a listener registered here would
+    // accumulate for the life of the server process. The Settings list is
+    // never server-rendered and English is inline, so there is nothing to lose
+    // by sitting this out on the server.
+    const loadEn = vi.fn().mockResolvedValue({
+      "ext.listed": { title: "Listed", description: "A listed extension" },
+    });
+    const set: ExtensionSet = {
+      id: "set.ssr",
+      extensions: [
+        {
+          url: "pkg://listed",
+          meta: {
+            id: "ext.listed",
+            translations: { en: { title: "Listed", description: "" } },
+          },
+        },
+      ],
+      loadListTranslations: { en: loadEn },
+    };
+
+    try {
+      import.meta.env.SSR = true;
+      const manager = createExtensionManager(login);
+      await manager.loadExtensionSet(set, () => false);
+
+      expect(loadEn).not.toHaveBeenCalled();
+      expect(i18nListeners.get("languageChanged") ?? []).toHaveLength(0);
+    } finally {
+      delete import.meta.env.SSR;
+    }
+  });
+
+  it("registers exactly one listener per manager on the client", () => {
+    // Guards the other side of the SSR check: the client still needs it.
+    createExtensionManager(login);
+    expect(i18nListeners.get("languageChanged") ?? []).toHaveLength(1);
+  });
+
   it("still uses meta.translations for sets without loadListTranslations", async () => {
     const manager = createExtensionManager(login);
     const translations = {
