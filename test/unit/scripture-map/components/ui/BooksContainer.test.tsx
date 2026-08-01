@@ -26,13 +26,27 @@ describe("BooksContainer", () => {
     }
   });
 
-  function setup(children?: preact.ComponentChildren) {
-    act(() => render(<BooksContainer>{children}</BooksContainer>, container));
+  function setup(children?: preact.ComponentChildren, masonry?: boolean) {
+    act(() =>
+      render(
+        <BooksContainer masonry={masonry}>{children}</BooksContainer>,
+        container
+      )
+    );
     return container;
   }
 
-  it("renders the masonry books container", () => {
+  it("renders the books container without masonry by default", () => {
     setup();
+    const wrapper = container.querySelector(".scripture-map-books-container");
+    expect(wrapper).not.toBeNull();
+    expect(
+      wrapper!.classList.contains("scripture-map-books-container-masonry")
+    ).toBe(false);
+  });
+
+  it("adds the masonry class when masonry is enabled", () => {
+    setup(undefined, true);
     const wrapper = container.querySelector(".scripture-map-books-container");
     expect(wrapper).not.toBeNull();
     expect(
