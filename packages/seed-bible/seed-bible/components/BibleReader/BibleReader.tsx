@@ -1043,6 +1043,7 @@ interface ChapterContentProps {
    * the chapter they navigated to arrives.
    */
   isStale?: boolean;
+  isMobile: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1058,6 +1059,7 @@ function ChapterContent(props: ChapterContentProps) {
     selectVersesFromTextSelection,
     justConvertedSelectionRef,
     scriptureElements,
+    isMobile,
   } = props;
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1307,7 +1309,7 @@ function ChapterContent(props: ChapterContentProps) {
       ref={contentRef}
       className={`sb-chapter-content${
         props.isStale ? " sb-chapter-content-stale" : ""
-      } ${containerClasses}`}
+      } ${containerClasses} ${isMobile && selectedVerses?.value?.length > 0 ? "sb-chapter-content-margin" : ""}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
@@ -1643,6 +1645,7 @@ export function BibleReader(props: BibleReaderProps) {
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
+              isMobile={isMobile}
             />
           </Suspense>
         ))}
