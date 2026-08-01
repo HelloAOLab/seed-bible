@@ -10,33 +10,19 @@ const clearItemStyles = (item: HTMLElement) => {
 
 const clearContainerStyles = (container: HTMLElement) => {
   container.style.height = "";
-  container.style.position = "";
 };
 
-const getMasonryMetrics = (container: HTMLElement) => {
+const getGap = (container: HTMLElement) => {
   const styles = getComputedStyle(container);
   const scaleFactor =
     parseFloat(styles.getPropertyValue("--scale-factor")) || 1;
-  const gap = 12 * scaleFactor;
-  const chapterWidth =
-    parseFloat(styles.getPropertyValue("--chapter-width")) || scaleFactor * 32;
-  const chapterGap =
-    parseFloat(styles.getPropertyValue("--chapter-gap")) || scaleFactor * 3;
-  const maxColumns =
-    parseInt(styles.getPropertyValue("--book-max-columns"), 10) || 5;
-  const padding = 16 * scaleFactor;
-  const border = 4 * scaleFactor;
-  const gridWidth = maxColumns * chapterWidth + (maxColumns - 1) * chapterGap;
-  const contentWidth = gridWidth;
-  const outerWidth = contentWidth + padding + border;
-
-  return { contentWidth, outerWidth, gap };
+  return 12 * scaleFactor;
 };
 
 /**
- * Waterfall masonry: each item goes into the shortest column so shorter books
- * leave no rigid row gaps. DOM order stays Genesis → Exodus → Leviticus; only
- * visual positions change.
+ * Column masonry (waterfall): books keep left-to-right order by going into
+ * column `index % columnCount`, then stack in that column. Book width stays
+ * natural (CSS max-content) so padding matches the original flex layout.
  */
 export const useMasonryLayout = (
   containerRef: MutableRef<HTMLDivElement | null>,
@@ -76,57 +62,53 @@ export const useMasonryLayout = (
           return;
         }
 
-        const { contentWidth, outerWidth, gap } = getMasonryMetrics(container);
-        if (outerWidth <= 0) return;
+        const gap = getGap(container);
 
-        const contentWidthPx = `${contentWidth}px`;
+        // Drop inline width so CSS `width: max-content` measures the true
+        // natural book size (chapter grid + padding + border + header).
         for (const item of items) {
-          if (item.style.width !== contentWidthPx) {
-            item.style.width = contentWidthPx;
-          }
+          item.style.width = "";
         }
+
+        const columnWidth = Math.max(
+          ...items.map((item) => item.offsetWidth),
+          0
+        );
+        if (columnWidth <= 0) return;
 
         const columnCount = Math.max(
           1,
-          Math.floor((container.clientWidth + gap) / (outerWidth + gap))
+          Math.floor((container.clientWidth + gap) / (columnWidth + gap))
         );
         const heights = items.map((item) => item.offsetHeight);
-        const signature = `${container.clientWidth}|${columnCount}|${heights.join(",")}`;
+        const signature = `${container.clientWidth}|${columnCount}|${columnWidth}|${heights.join(",")}`;
 
-        if (signature === lastLayoutSignature) return;
+        if (signature === lastLayoutSignature) {
+          // Width was cleared for measure — restore it even on a no-op.
+          const widthPx = `${columnWidth}px`;
+          for (const item of items) {
+            if (item.style.width !== widthPx) item.style.width = widthPx;
+          }
+          return;
+        }
         lastLayoutSignature = signature;
 
         const columnHeights = new Array<number>(columnCount).fill(0);
-
-        if (container.style.position !== "relative") {
-          container.style.position = "relative";
-        }
-
-        for (const item of items) {
-          const height = item.offsetHeight;
-          let column = 0;
-          for (let i = 1; i < columnCount; i++) {
-            if (columnHeights[i]! < columnHeights[column]!) {
-              column = i;
-            }
-          }
-
-          const x = column * (outerWidth + gap);
-          const y = columnHeights[column]!;
-          const leftPx = `${x}px`;
-          const topPx = `${y}px`;
+        const widthPx = `${columnWidth}px`;
+        items.forEach((item, index) => {
+          const height = heights[index] ?? item.offsetHeight;
+          const column = index % columnCount;
+          const leftPx = `${column * (columnWidth + gap)}px`;
+          const topPx = `${columnHeights[column]!}px`;
 
           if (item.style.position !== "absolute") {
             item.style.position = "absolute";
           }
-          if (item.style.left !== leftPx) {
-            item.style.left = leftPx;
-          }
-          if (item.style.top !== topPx) {
-            item.style.top = topPx;
-          }
-          columnHeights[column] = y + height + gap;
-        }
+          if (item.style.left !== leftPx) item.style.left = leftPx;
+          if (item.style.top !== topPx) item.style.top = topPx;
+          if (item.style.width !== widthPx) item.style.width = widthPx;
+          columnHeights[column] = columnHeights[column]! + height + gap;
+        });
 
         const tallest = Math.max(...columnHeights);
         const heightPx = `${Math.max(0, tallest - gap)}px`;
