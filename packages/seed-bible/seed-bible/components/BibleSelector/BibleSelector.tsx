@@ -1433,7 +1433,7 @@ const TranslationModal = (props: {
           >
             {isMobile.value && (
               <span
-                class="material-symbols-outlined"
+                class="close-icon material-symbols-outlined"
                 onClick={() => {
                   selectingTranslation.value = false;
                   showTranslationSettings.value = false;
@@ -1476,7 +1476,7 @@ const TranslationModal = (props: {
             </span>
             {!isMobile.value && (
               <span
-                class="material-symbols-outlined"
+                class="close-icon material-symbols-outlined"
                 onClick={() => {
                   selectingTranslation.value = false;
                   showTranslationSettings.value = false;
