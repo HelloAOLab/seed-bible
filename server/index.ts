@@ -38,7 +38,7 @@ import {
   type ServerResponse,
 } from "node:http";
 import { pathToFileURL } from "node:url";
-import { Readable } from "node:stream";
+import { pipeline, Readable } from "node:stream";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { createGzip } from "node:zlib";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
@@ -115,6 +115,16 @@ function acceptsGzip(headers: IncomingHttpHeaders): boolean {
   return typeof acceptEncoding === "string" && /\bgzip\b/i.test(acceptEncoding);
 }
 
+/** Logs a streaming response failure; `pipeline` has already torn down every stage. */
+function logStreamFailure(
+  context: string,
+  err: NodeJS.ErrnoException | null
+): void {
+  if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
+    console.error(`${context}:`, err);
+  }
+}
+
 /**
  * Writes an HTML response, gzip-compressing it when the client supports it
  * and the body is large enough for compression to be worthwhile. Compression
@@ -138,7 +148,9 @@ function sendHtml(
   if (body.length >= GZIP_THRESHOLD_BYTES && acceptsGzip(req.headers)) {
     headers["content-encoding"] = "gzip";
     res.writeHead(statusCode, headers);
-    Readable.from(body).pipe(createGzip()).pipe(res);
+    pipeline(Readable.from(body), createGzip(), res, (err) =>
+      logStreamFailure("gzip HTML response failed", err)
+    );
     return;
   }
 
@@ -385,6 +397,9 @@ async function proxyAsset(
 
   // Only gzip a full 200 response — a 206 (range) or 304 (not modified) has no
   // body worth compressing, and re-encoding a byte range would corrupt it.
+  // This also assumes `fetch` has fully decoded any upstream content-coding
+  // (it does, transparently) — if the asset host ever served a coding undici
+  // leaves encoded, this would gzip an already-encoded body and corrupt it.
   const shouldGzip =
     upstream.status === 200 &&
     !!upstream.body &&
@@ -399,9 +414,13 @@ async function proxyAsset(
       upstream.body as NodeReadableStream<Uint8Array>
     );
     if (shouldGzip) {
-      upstreamBody.pipe(createGzip()).pipe(res);
+      pipeline(upstreamBody, createGzip(), res, (err) =>
+        logStreamFailure(`Asset proxy gzip failed for ${pathAndQuery}`, err)
+      );
     } else {
-      upstreamBody.pipe(res);
+      pipeline(upstreamBody, res, (err) =>
+        logStreamFailure(`Asset proxy failed for ${pathAndQuery}`, err)
+      );
     }
   } else {
     res.end();
