@@ -1609,22 +1609,42 @@ export function createSeedBibleState(
   // Settings UI language changes also select the nearest available Bible
   // translation (preferred ID → same language in catalog → LANG_META.fallback
   // → English), using existing tabs + selector state. Keep the user on the
-  // same book/chapter when the new translation has that book.
+  // same book/chapter/verse when the new translation has that book.
   i18n.setBibleTranslationApplicator(
     async (translation) => {
       const tab = selectedTab.value;
       if (tab) {
         const currentBookId = tab.readingState.bookId.peek();
         const currentChapterNumber = tab.readingState.chapterNumber.peek();
-        const books = await data.getTranslationBooks(translation.id);
-        const matchingBook =
-          currentBookId &&
-          books.books.find((book) => book.id === currentBookId);
+        const currentVerse =
+          tab.readingState.selectedVerses
+            .peek()
+            .find(
+              (verse) =>
+                verse.bookId === currentBookId &&
+                verse.chapterNumber === currentChapterNumber
+            )?.verse.number ??
+          tab.readingState.scrollToVerse.peek() ??
+          undefined;
+
+        let matchingBook: { id: string } | undefined;
+        try {
+          const books = await data.getTranslationBooks(translation.id);
+          matchingBook = currentBookId
+            ? books.books.find((book) => book.id === currentBookId)
+            : undefined;
+        } catch {
+          // Catalog isn't cached yet and the fetch failed — fall through to
+          // selectTranslation, which handles its own errors the way this
+          // path did before position preservation was added.
+        }
+
         if (matchingBook && currentChapterNumber != null) {
           await tab.readingState.selectTranslationAndChapter(
             translation.id,
             matchingBook.id,
-            currentChapterNumber
+            currentChapterNumber,
+            currentVerse != null ? { scrollToVerse: currentVerse } : undefined
           );
         } else {
           await tab.readingState.selectTranslation(translation.id);

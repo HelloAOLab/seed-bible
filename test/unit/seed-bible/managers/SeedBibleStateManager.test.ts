@@ -1242,6 +1242,59 @@ describe("createSeedBibleState", () => {
       expect(readingState.chapterNumber.value).toBe(2);
     });
 
+    it("passes the selected verse through when switching translation", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      const chapter = readingState.chapterData.value!;
+      const verseEntry = chapter.chapter.content.find(
+        (entry) =>
+          !!entry &&
+          typeof entry === "object" &&
+          (entry as { type?: string }).type === "verse" &&
+          (entry as { number?: number }).number === 2
+      );
+      expect(verseEntry).toBeTruthy();
+
+      readingState.selectVerse(
+        {
+          bookId: "EXO",
+          chapterNumber: 2,
+          verse: verseEntry as (typeof chapter.chapter.content)[number] & {
+            type: "verse";
+            number: number;
+          },
+          translationId: "AAB",
+        },
+        0,
+        0
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+
+      const selectTranslationAndChapterSpy = vi.spyOn(
+        readingState,
+        "selectTranslationAndChapter"
+      );
+
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(selectTranslationAndChapterSpy).toHaveBeenCalledWith(
+        "spa_onbv",
+        "EXO",
+        2,
+        { scrollToVerse: 2 }
+      );
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+    });
+
     it("falls back to the first book when the new translation lacks the current book", async () => {
       const spaMatOnly = booksForTranslation(nivBooks, SPA_TRANSLATION);
       const state = await createStateWithOptions({
@@ -1265,6 +1318,39 @@ describe("createSeedBibleState", () => {
 
       expect(readingState.translationId.value).toBe("spa_onbv");
       expect(readingState.bookId.value).toBe("MAT");
+      expect(readingState.chapterNumber.value).toBe(1);
+    });
+
+    it("falls back to selectTranslation when the book catalog prefetch fails", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      const selectTranslationSpy = vi.spyOn(readingState, "selectTranslation");
+      const selectTranslationAndChapterSpy = vi.spyOn(
+        readingState,
+        "selectTranslationAndChapter"
+      );
+      // First call is the applicator's position-preserving prefetch; later
+      // calls (from selectTranslation) should use the real catalog again.
+      vi.spyOn(state.bibleData, "getTranslationBooks").mockRejectedValueOnce(
+        new Error("network down")
+      );
+
+      await expect(
+        state.i18n.requestLanguageChange("es")
+      ).resolves.toBeUndefined();
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(selectTranslationAndChapterSpy).not.toHaveBeenCalled();
+      expect(selectTranslationSpy).toHaveBeenCalledWith("spa_onbv");
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      // Degraded path: first book of the new translation, not EXO 2.
+      expect(readingState.bookId.value).toBe("GEN");
       expect(readingState.chapterNumber.value).toBe(1);
     });
 
