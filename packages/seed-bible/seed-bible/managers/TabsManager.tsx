@@ -13,11 +13,14 @@ import {
   DEFAULT_CHAPTER_NUMBER,
   createBibleReadingState,
   getDefaultTranslationForLanguage,
+  resolveChapterInBook,
   type BibleReadingState,
   type InitialBibleReadingOptions,
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { LoginManager } from "../managers/LoginManager";
+import { getProfileConfigValue } from "../managers/ProfileConfigSync";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -93,6 +96,12 @@ function getInitialFirstTabBookId(url: URL): string {
   return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
+// profile.config key the selected translation is persisted under, matching
+// the PROFILE_THEME_ID convention in ThemeManager.tsx. Written by
+// BibleSelectorManager.tsx when the user explicitly picks a translation from
+// the selector; read here to restore it once the profile loads.
+export const PROFILE_TRANSLATION_ID = "translationId";
+
 function getInitialTranslationId(url: URL, language: string): string {
   return (
     url.searchParams.get("translationId") ??
@@ -102,10 +111,8 @@ function getInitialTranslationId(url: URL, language: string): string {
 }
 
 function getInitialFirstTabChapter(url: URL): number {
-  const value = Number(url.searchParams.get("chapter"));
-  return Number.isFinite(value) && value > 0
-    ? Math.floor(value)
-    : DEFAULT_CHAPTER_NUMBER;
+  const value = Math.floor(Number(url.searchParams.get("chapter")));
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_CHAPTER_NUMBER;
 }
 
 function getInitialHighlightedVerses(url: URL): number[] {
@@ -255,6 +262,7 @@ export function createTabs(
   highlightsManager: HighlightsManager,
   chatsManager: ReturnType<typeof createChatsManager>,
   i18nManager: I18nManager,
+  login: LoginManager,
   discoverManager?: DiscoverManager,
   readingExtensionManager?: BibleReadingExtensionManager
 ): TabsManager {
@@ -433,6 +441,158 @@ export function createTabs(
     return dispose;
   });
 
+  // Resolves once `readingState` is no longer in the middle of an operation
+  // (its own initial load, or any other in-flight navigation). Resolves
+  // immediately if it's already idle.
+  const waitForIdle = (readingState: BibleReadingState): Promise<void> =>
+    new Promise((resolve) => {
+      if (!readingState.loading.peek()) {
+        resolve();
+        return;
+      }
+      const dispose = effect(() => {
+        if (!readingState.loading.value) {
+          dispose();
+          resolve();
+        }
+      });
+    });
+
+  // Restores the profile's saved translation on the given reading state.
+  // `selectTranslationAndChapter` clamps an out-of-range chapter but throws
+  // if the current book isn't in the target translation at all (a partial/
+  // NT-only translation, for example) — so resolve the saved translation's
+  // own book catalog first and fall back to its first book, mirroring the
+  // same guard `syncSelectedTabFromUrl` above already applies for the URL
+  // path.
+  const applySavedTranslation = async (
+    readingState: BibleReadingState,
+    savedTranslationId: string
+  ) => {
+    // Snapshot what this reading state was on before any of our awaits below,
+    // so a real navigation that happens while we're waiting — the user
+    // explicitly picking a different translation, most notably — can be told
+    // apart from our own restore having not landed yet.
+    const translationIdAtStart = readingState.translationId.peek();
+
+    // A freshly-created tab's `loadInitialData()` is likely still in flight
+    // (it's kicked off synchronously at tab construction, well before the
+    // profile has had a chance to load over the network) and unconditionally
+    // writes its own translation/book/chapter at the end, with no awareness
+    // of anything that happened after it started. Racing it here would let
+    // that stale write land *after* ours and silently revert the restore —
+    // this was reproducible on a bare cold load (no URL params) where the tab
+    // starts on the default translation and nothing short-circuits either
+    // load. Waiting for the tab to go idle first guarantees our restore is
+    // the last write, not a call that gets clobbered by an earlier one still
+    // finishing up.
+    await waitForIdle(readingState);
+
+    const books = await dataManager
+      .getTranslationBooks(savedTranslationId)
+      .then((result) => result.books)
+      .catch((err) => {
+        console.warn(
+          "Failed to load books for saved profile translation:",
+          savedTranslationId,
+          err
+        );
+        return null;
+      });
+    if (!books) {
+      return;
+    }
+
+    // Bail if a real navigation moved this reading state on while we were
+    // waiting — most notably the user explicitly picking a different
+    // translation via the selector, which should always win over a stale
+    // restore. Also bail if the tab itself was closed in the meantime: the
+    // reading state is disposed and nothing will ever render it again, so
+    // finishing the restore would just be a wasted network round trip and a
+    // set of writes nobody observes.
+    const stillAttached = tabs
+      .peek()
+      .some((tab) => tab.readingState === readingState);
+    if (
+      !stillAttached ||
+      readingState.translationId.peek() !== translationIdAtStart
+    ) {
+      return;
+    }
+
+    const currentBookId = readingState.bookId.peek() ?? DEFAULT_BOOK_ID;
+    const matchingBook = books.find((book) => book.id === currentBookId);
+    const targetBook = matchingBook ?? books[0];
+    if (!targetBook) {
+      return;
+    }
+
+    const nextChapter = resolveChapterInBook(
+      targetBook,
+      readingState.chapterNumber.peek()
+    );
+
+    await readingState.selectTranslationAndChapter(
+      savedTranslationId,
+      targetBook.id,
+      nextChapter,
+      { updateUrl: false }
+    );
+
+    // Commit the restored translation into the URL right away (a `replace`,
+    // not a `push` — this isn't a navigation the user asked for) instead of
+    // waiting for the next real navigation to write it via
+    // `getUrlQueryParams`. Without this, the URL still has no translation
+    // param immediately after restoring, so any unrelated query-param write
+    // that happens before the user's first navigation — e.g. an extension
+    // opening its own pane on load, which is a real, observed case — looks
+    // like an external navigation to the effect below. That effect
+    // recomputes the desired translation from the URL, finds none, and
+    // reverts this restore straight back to the default.
+    if (selectedTab.peek()?.readingState === readingState) {
+      commitSelectedTabToUrl({ replace: true });
+    }
+  };
+
+  // Apply the profile's saved translation to the selected tab, but ONLY when
+  // the profile itself changes (login/profile load) — never on URL changes —
+  // so it doesn't fight an explicit `?translation=`/`?translationId=` deep
+  // link or an in-session pick. Mirrors ConfigManager's `lang` profile-sync
+  // effect.
+  effect(() => {
+    const savedTranslationId = getProfileConfigValue(
+      login.profile.value,
+      PROFILE_TRANSLATION_ID
+    );
+    if (typeof savedTranslationId !== "string" || !savedTranslationId) {
+      return;
+    }
+
+    untracked(() => {
+      const url = navigation.currentUrl.peek();
+      const hasExplicitUrlTranslation =
+        url.searchParams.has("translationId") ||
+        url.searchParams.has("translation");
+      if (hasExplicitUrlTranslation) {
+        return;
+      }
+
+      const readingState = selectedTab.peek()?.readingState;
+      if (
+        !readingState ||
+        readingState.translationId.peek() === savedTranslationId
+      ) {
+        return;
+      }
+
+      void applySavedTranslation(readingState, savedTranslationId);
+    });
+  });
+
+  // Mirrors the selected tab's *verse selection* into `?verse` so it can be
+  // shared/restored. This is selection state, not a navigation — consumers that
+  // watch the URL for "the reader moved" must ignore this param (see the
+  // fullscreen-pane effect in SeedBibleStateManager).
   effect(() => {
     const params: Record<string, string | null> = {
       verse: null,

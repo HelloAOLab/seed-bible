@@ -1,7 +1,6 @@
 import "./SettingsPage.css";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { TextSize } from "../../managers/ConfigManager";
 import {
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
@@ -13,6 +12,7 @@ import {
   type TextAlignment,
   type TextSectionConfig,
   type TextSectionId,
+  type TextSize,
   type UISize,
 } from "../../managers/SettingsManager";
 import {
@@ -21,7 +21,14 @@ import {
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
 import { download, translateTitle } from "../../app/utils";
-import { ProfilePictureModalContent } from "../../components/ProfilePictureModal/ProfilePictureModal";
+// The picture editor pulls in `react-avatar-editor`, and it is only reachable
+// through the "Update picture" button — so it is fetched on that click rather
+// than at boot, the same way TextItemInput defers TipTap.
+const ProfilePictureModalContent = lazy(() =>
+  import("../../components/ProfilePictureModal/ProfilePictureModal").then(
+    (m) => ({ default: m.ProfilePictureModalContent })
+  )
+);
 import {
   Skeleton,
   SkeletonContainer,
@@ -41,6 +48,7 @@ import {
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
 import { useRef } from "preact/hooks";
+import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
@@ -207,11 +215,19 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   const { login } = state;
   const { t } = useI18n();
   const isLoggedIn = useComputed(() => login.userId.value !== null);
-  const profile = useComputed(() => login.profile.value);
-  // Show the loading state only while a fetch is in flight *and* we have no
-  // profile to display yet. If we already hold a cached profile (e.g. a
-  // background re-fetch), keep showing the real form rather than flashing
-  // skeletons over data the user can already read and edit.
+  const profile = useComputed(
+    () => login.profile.value ?? login.cachedProfile.value
+  );
+  // `profile` above can be showing a cached value while `login.profile` (the
+  // network-confirmed one `updateProfile` actually writes against) is still
+  // null — Save must not let the user believe an edit was saved in that
+  // window.
+  const isProfileLoaded = useComputed(() => login.profile.value !== null);
+  // Show the loading skeleton only while a fetch is in flight *and* we have
+  // no profile (cached or confirmed) to display yet. If we already hold a
+  // profile — from the localStorage cache, or a background re-fetch — keep
+  // showing the real form rather than flashing a skeleton over data the user
+  // can already read and edit.
   const isProfileLoading = useComputed(
     () => login.isProfileLoading.value && profile.value === null
   );
@@ -232,6 +248,11 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   const uidCopied = useSignal(false);
 
   const handleSave = () => {
+    if (!isProfileLoaded.value) {
+      // `updateProfile` would silently no-op here (profile not confirmed
+      // yet) — refuse instead of clearing the user's in-progress edits below.
+      return;
+    }
     login.updateProfile({
       name: name.value,
       location: location.value || null,
@@ -247,20 +268,32 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     const modalId = state.modals.openModal({
       title: { key: "update-picture", defaultValue: "Update picture" },
       content: () => (
-        <ProfilePictureModalContent
-          onClose={() => state.modals.closeModal(modalId)}
-          onUpload={async (file) => {
-            isUploadingPicture.value = true;
-            try {
-              await login.uploadProfilePicture(file);
-            } catch (error) {
-              console.error("Failed to upload profile picture.", error);
-              throw error;
-            } finally {
-              isUploadingPicture.value = false;
-            }
-          }}
-        />
+        <Suspense
+          fallback={
+            <SkeletonContainer
+              label={t("loading-picture-editor", {
+                defaultValue: "Loading the picture editor…",
+              })}
+            >
+              <Skeleton width="100%" height="16rem" radius="0.625rem" />
+            </SkeletonContainer>
+          }
+        >
+          <ProfilePictureModalContent
+            onClose={() => state.modals.closeModal(modalId)}
+            onUpload={async (file) => {
+              isUploadingPicture.value = true;
+              try {
+                await login.uploadProfilePicture(file);
+              } catch (error) {
+                console.error("Failed to upload profile picture.", error);
+                throw error;
+              } finally {
+                isUploadingPicture.value = false;
+              }
+            }}
+          />
+        </Suspense>
       ),
     });
   };
@@ -443,10 +476,14 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
               <button
                 className="sb-settings-save-button sb-account-save-button"
                 onClick={handleSave}
-                disabled={isSaving.value}
+                disabled={!isProfileLoaded.value || isSaving.value}
                 aria-busy={isSaving.value}
               >
-                {isSaving.value ? (
+                {!isProfileLoaded.value ? (
+                  t("loading-profile", {
+                    defaultValue: "Loading your profile…",
+                  })
+                ) : isSaving.value ? (
                   <span className="sb-account-save-saving">
                     <span
                       className="material-symbols-outlined sb-account-save-spinner"
@@ -590,10 +627,10 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
 
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { config, setFontSize } = state.config;
-  const selectedFontSize = config.value.fontSize;
   const settings = state.settings;
+  const { setFontSize } = settings;
   const current = settings.settings.value;
+  const selectedFontSize = current.fontSize;
   const isMobile = state.app.isMobile.value;
 
   const verseConfig = settings.settings.value.textConfig.verse;

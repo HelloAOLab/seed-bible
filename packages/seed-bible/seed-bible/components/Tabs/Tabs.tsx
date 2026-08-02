@@ -977,7 +977,13 @@ interface TabRowProps {
 function TabRow(props: TabRowProps) {
   const { state, tab, isSelected, closeLayoutMenu, panelsEnabled } = props;
 
-  if (import.meta.env.SSR && tab.readingState.loading.value) {
+  // Suspend on the *initial* load only, and only until it settles one way or
+  // the other. Keying this off `loading` would re-suspend on every later
+  // navigation, and a first load that fails would never resume at all.
+  if (
+    import.meta.env.SSR &&
+    !tab.readingState.initialChapterLoadSettled.value
+  ) {
     throw tab.readingState.chapterDataPromise;
   }
 

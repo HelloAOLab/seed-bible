@@ -63,5 +63,22 @@ catalog:
   "@tiptap/extension-underline": "3.27.1"
   "@tiptap/starter-kit": "3.27.1"
   "prosemirror-model": "1.25.9"
+  "prosemirror-transform": "1.12.0"
+  "prosemirror-view": "1.42.0"
+# The prosemirror packages and zod each resolved to two versions, so the bundle
+# carried both copies (prosemirror-view alone cost 94 KB twice over). Vite's
+# `resolve.dedupe` cannot fix this: it resolves to the copy in the project root
+# `node_modules`, and pnpm does not hoist transitive dependencies there. Pinning
+# via `overrides` is what actually collapses them.
 overrides:
   "prosemirror-model": "catalog:"
+  "prosemirror-transform": "catalog:"
+  "prosemirror-view": "catalog:"
+  # @casual-simulation/aux-common's @anthropic-ai/sdk pulled zod 4.1.12 next to
+  # the app's 4.4.3. Both are zod 4.x, so one copy serves both.
+  "zod": "catalog:"
+  # ...but chromium-bidi (via puppeteer, which `script/dev.ts` drives) is built
+  # against zod 3 and its internals are not compatible with zod 4. This more
+  # specific selector wins over the blanket override above and keeps the dev
+  # tooling on the version it expects. It never reaches the client bundle.
+  "chromium-bidi>zod": "3.25.76"
