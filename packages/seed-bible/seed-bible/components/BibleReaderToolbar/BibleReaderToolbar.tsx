@@ -864,10 +864,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       root.style.setProperty("--sb-reader-bottom-inset", `${insetPx}px`);
     };
 
-    const observer = new ResizeObserver(() => {
+    const scheduleMeasure = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
-    });
+    };
+
+    const observer = new ResizeObserver(scheduleMeasure);
 
     const reobserve = () => {
       observer.disconnect();
@@ -885,7 +887,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         if (nav instanceof HTMLElement) observer.observe(nav);
       }
 
-      measure();
+      scheduleMeasure();
     };
 
     reobserve();

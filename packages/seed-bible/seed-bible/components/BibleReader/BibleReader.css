@@ -336,6 +336,8 @@
 }
 .sb-bible-reader-mobile
   .sb-reader-swipe-panel:has(.sb-translation-license-notice) {
+  /* Trailing chrome clearance when a license line is the last content —
+     chapter content drops its own inset in that case (see below). */
   padding-bottom: var(--sb-reader-bottom-inset);
 }
 
@@ -421,6 +423,14 @@
      page background. */
   position: relative;
   isolation: isolate;
+}
+
+/* When a translation license notice follows the chapter, only the trailing
+   element reserves the bottom-chrome inset (mobile swipe panel padding, or
+   BelowReaderToolbar on desktop). Keep a small content gap here instead of a
+   second full inset, which stacked badly with a tall mobile verse sheet. */
+.sb-bible-reader:has(.sb-translation-license-notice) .sb-chapter-content {
+  padding-bottom: 1.5rem;
 }
 
 /* The highlight ribbons are drawn here, behind the text: an SVG overlay sized to
