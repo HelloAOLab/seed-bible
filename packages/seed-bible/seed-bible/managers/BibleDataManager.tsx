@@ -314,9 +314,9 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
   // Book name patterns:
   //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
   //   [A-Za-z][A-Za-z0-9]* — word starting with a letter, e.g. "GEN", "John", "Kings"
-  //   (?:\s+of\s+[A-Za-z][A-Za-z0-9]*)? — optional "of …" for "Song of Solomon"
+  //   (?:\s+[Oo][Ff]\s+[A-Za-z][A-Za-z0-9]*)? — optional "of …" for "Song of Solomon"
   const pattern =
-    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*(?:\s+of\s+[A-Za-z][A-Za-z0-9]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
+    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*(?:\s+[Oo][Ff]\s+[A-Za-z][A-Za-z0-9]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
@@ -547,6 +547,7 @@ const BOOK_ID_MAP: Map<string, BookId> = new Map([
  * @param book The name/ID of the book.
  */
 export function getBookId(book: string): BookId | null {
+  const hadSpaces = /\s/.test(book.trim());
   const bookLower = book.toLowerCase().replaceAll(/\s+/g, "");
 
   const id = BOOK_ID_MAP.get(bookLower);
@@ -554,9 +555,15 @@ export function getBookId(book: string): BookId | null {
     return id;
   }
 
-  for (const [key, id] of BOOK_ID_MAP) {
-    if (bookLower.startsWith(key)) {
-      return id;
+  // Loose prefix fallback is for single-token inputs (e.g. "Leviticus" → lev)
+  // and numbered-book abbreviations (e.g. "1 chron" → 1ch). Multi-word phrases
+  // that aren't numbered — like "Song of Moses" — must match a book name
+  // exactly, or not at all.
+  if (!hadSpaces || /^\d/.test(bookLower)) {
+    for (const [key, mappedId] of BOOK_ID_MAP) {
+      if (bookLower.startsWith(key)) {
+        return mappedId;
+      }
     }
   }
 

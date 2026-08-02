@@ -523,6 +523,21 @@ describe("parseVerseReferences()", () => {
       },
     ]);
   });
+
+  it("should not treat 'Song of …' phrases as Song of Solomon", () => {
+    expect(parseVerseReferences("the Song of Moses 2:1")).toEqual([]);
+    expect(parseVerseReferences("See Song of Mary 1:46")).toEqual([]);
+    expect(getBookId("song of moses")).toBeNull();
+    expect(getBookId("Song of Mary")).toBeNull();
+  });
+
+  it("should accept title-cased 'Of' in Song of Solomon", () => {
+    expect(parseVerseReferences("Song Of Solomon 2:1")).toContainEqual(
+      expect.objectContaining({
+        ref: expect.objectContaining({ book: "SNG", chapter: 2, verse: 1 }),
+      })
+    );
+  });
 });
 
 /**
@@ -614,6 +629,22 @@ describe("all 66 Protestant-canon books", () => {
         expect(getBookId(name)).toBe(id);
       }
     );
+  });
+
+  describe("parseVerseReference() by book ID", () => {
+    it.each(PROTESTANT_CANON)("parses standalone $id 1:1", ({ id }) => {
+      expect(parseVerseReference(`${id} 1:1`)).toEqual(
+        expect.objectContaining({ book: id, chapter: 1, verse: 1 })
+      );
+    });
+  });
+
+  describe("parseVerseReference() by English name", () => {
+    it.each(PROTESTANT_CANON)("parses standalone $name 1:1", ({ id, name }) => {
+      expect(parseVerseReference(`${name} 1:1`)).toEqual(
+        expect.objectContaining({ book: id, chapter: 1, verse: 1 })
+      );
+    });
   });
 
   describe("parseVerseReferences() by book ID", () => {
