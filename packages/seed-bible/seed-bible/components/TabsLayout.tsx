@@ -95,7 +95,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   useEffect(() => {
     if (!isMobile) return;
     return effect(() => {
-      if (state.panes.panes.value.length > 0) {
+      if ((state.panes?.panes.value.length ?? 0) > 0) {
         setIsScrolled(false);
       }
     });
