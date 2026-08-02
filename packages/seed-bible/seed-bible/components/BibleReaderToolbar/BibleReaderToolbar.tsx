@@ -555,6 +555,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // The mobile More button, so dismissing its menu with Escape can hand focus
   // back to it instead of dropping it on the removed popover.
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+  // Bottom chrome elements whose measured height drives
+  // `--sb-reader-bottom-inset` on the document (chapter padding clears them).
+  const toolbarWrapRef = useRef<HTMLDivElement>(null);
+  const verseToolbarRef = useRef<HTMLDivElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
   // Whether the mobile verse sheet shows its overflow actions (the "More" /
@@ -824,6 +828,97 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   }, [hasVerseSelection.value]);
 
+  // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
+  // chapter content / end-of-chapter controls clear it when the toolbar grows
+  // (mobile verse sheet "More", floating nav appearing, UI scale, etc.).
+  useEffect(() => {
+    const root = document.documentElement;
+    if (typeof ResizeObserver === "undefined") return;
+
+    let frame = 0;
+
+    const measure = () => {
+      const verse = verseToolbarRef.current;
+      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
+        root.style.setProperty(
+          "--sb-reader-bottom-inset",
+          `${verse.offsetHeight}px`
+        );
+        return;
+      }
+
+      const wrap = toolbarWrapRef.current;
+      const toolbar = wrap?.querySelector(".sb-reader-toolbar");
+      if (!(toolbar instanceof HTMLElement)) return;
+
+      let insetPx = toolbar.offsetHeight;
+      const nav = wrap?.querySelector(".sb-reader-floating-nav");
+      if (nav instanceof HTMLElement) {
+        insetPx += nav.offsetHeight;
+      } else {
+        // Desktop: toolbar floats above the viewport bottom.
+        const bottom = parseFloat(getComputedStyle(toolbar).bottom);
+        if (!Number.isNaN(bottom)) insetPx += bottom;
+      }
+
+      root.style.setProperty("--sb-reader-bottom-inset", `${insetPx}px`);
+    };
+
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    });
+
+    const reobserve = () => {
+      observer.disconnect();
+
+      const verse = verseToolbarRef.current;
+      const wrap = toolbarWrapRef.current;
+
+      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
+        observer.observe(verse);
+      } else if (wrap) {
+        observer.observe(wrap);
+        const toolbar = wrap.querySelector(".sb-reader-toolbar");
+        const nav = wrap.querySelector(".sb-reader-floating-nav");
+        if (toolbar instanceof HTMLElement) observer.observe(toolbar);
+        if (nav instanceof HTMLElement) observer.observe(nav);
+      }
+
+      measure();
+    };
+
+    reobserve();
+
+    const wrap = toolbarWrapRef.current;
+    const mutationObserver =
+      wrap && typeof MutationObserver !== "undefined"
+        ? new MutationObserver(reobserve)
+        : null;
+    mutationObserver?.observe(wrap!, { childList: true });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      mutationObserver?.disconnect();
+    };
+  }, [
+    shouldReplaceDefaultToolbar.value,
+    isVerseToolbarVisible.value,
+    isVerseSheetExpanded.value,
+    isHighlightPickerOpen.value,
+    isSmallScreen.value,
+    activeMobileTab.value,
+  ]);
+
+  // Drop the runtime override when the toolbar unmounts so the CSS fallback
+  // in base.css takes over again.
+  useEffect(() => {
+    return () => {
+      document.documentElement.style.removeProperty("--sb-reader-bottom-inset");
+    };
+  }, []);
+
   // Clicking anywhere outside the chapter content or the verse toolbar
   // dismisses the verse selection (and therefore the toolbar). Only while the
   // toolbar is actually showing — with a pane covering the reader every tap
@@ -1031,6 +1126,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     <>
       {!shouldReplaceDefaultToolbar.value && (
         <div
+          ref={toolbarWrapRef}
           className="sb-reader-toolbar-wrap"
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
@@ -1506,6 +1602,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
       {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <div
+          ref={verseToolbarRef}
           className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
           style={
             isSmallScreen.value

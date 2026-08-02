@@ -336,7 +336,7 @@
 }
 .sb-bible-reader-mobile
   .sb-reader-swipe-panel:has(.sb-translation-license-notice) {
-  padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--sb-reader-bottom-inset);
 }
 
 .sb-reader-swipe-panel {
@@ -410,7 +410,7 @@
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
 
-  padding-bottom: 8.125rem;
+  padding-bottom: var(--sb-reader-bottom-inset);
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
      Short enough to read as immediate rather than as an animation. */
