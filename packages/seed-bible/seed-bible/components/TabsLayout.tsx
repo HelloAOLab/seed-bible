@@ -88,6 +88,19 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [isMobile, isScrolled]);
 
+  // When a mobile pane opens (every pane fills the screen there), the verse
+  // sheet yields and the default bottom toolbar comes back. Clear scroll-hide
+  // so that bar isn't left translated off-screen — e.g. after Locations opens
+  // a map from a verse selection while the user had scrolled down.
+  useEffect(() => {
+    if (!isMobile) return;
+    return effect(() => {
+      if (state.panes.panes.value.length > 0) {
+        setIsScrolled(false);
+      }
+    });
+  }, [isMobile, state]);
+
   // The element the reader actually scrolls in: the slot itself on desktop, the
   // centre swipe panel on mobile. Held as state rather than a ref so the
   // effects below re-run when the element genuinely changes — and *only* then.
@@ -727,7 +740,7 @@ function EmptySlotToolbar({
                         item.onSelect();
                         setSelectedToolId(null);
                       }}
-                      className="sb-tool-context-menu-item"
+                      className="sb-tool-context-menu-item ssd"
                     >
                       <MenuItemIcon />
                       <span>{translateTitle(t, item.title)}</span>
