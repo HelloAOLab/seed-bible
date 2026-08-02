@@ -58,6 +58,46 @@ describe("selectCoreAssetFiles()", () => {
     expect(core.has("assets/extension-GGG.js")).toBe(false);
   });
 
+  // The extension API shims are entries only so the page's import map has a
+  // URL to point at. Nothing on the boot path imports them, and the extensions
+  // that do arrive over the network, so an offline user can never reach one.
+  it("skips ignored entries and anything only they reach", () => {
+    const manifest = createViteManifest();
+    manifest["standalone/extension-api/seed-bible.ts"] = {
+      file: "assets/extension-api-seed-bible-HHH.js",
+      isEntry: true,
+      imports: ["_icons-III.js"],
+    };
+    manifest["_icons-III.js"] = { file: "assets/icons-III.js" };
+
+    const core = selectCoreAssetFiles(manifest, {
+      ignoredEntryKeys: ["standalone/extension-api/seed-bible.ts"],
+    });
+
+    expect(core.has("assets/extension-api-seed-bible-HHH.js")).toBe(false);
+    expect(core.has("assets/icons-III.js")).toBe(false);
+    // The real entry is untouched.
+    expect(core.has("assets/index-AAA.js")).toBe(true);
+  });
+
+  // A chunk the app itself needs stays core even when an ignored entry also
+  // imports it — otherwise ignoring a shim would break offline boot.
+  it("keeps chunks a real entry shares with an ignored one", () => {
+    const manifest = createViteManifest();
+    manifest["standalone/extension-api/preact.ts"] = {
+      file: "assets/extension-api-preact-HHH.js",
+      isEntry: true,
+      imports: ["_vendor-BBB.js"],
+    };
+
+    const core = selectCoreAssetFiles(manifest, {
+      ignoredEntryKeys: ["standalone/extension-api/preact.ts"],
+    });
+
+    expect(core.has("assets/vendor-BBB.js")).toBe(true);
+    expect(core.has("assets/extension-api-preact-HHH.js")).toBe(false);
+  });
+
   it("survives a manifest whose import points at a missing chunk", () => {
     const core = selectCoreAssetFiles({
       "app/init.tsx": {

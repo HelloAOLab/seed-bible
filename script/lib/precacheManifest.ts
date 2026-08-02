@@ -39,6 +39,21 @@ export const IMAGE_OR_FONT_RE =
 /** Where the globbed entries live, and so what a warning can be raised about. */
 const ASSET_DIR_PREFIX = "assets/";
 
+export interface SelectCoreAssetOptions {
+  /**
+   * Manifest keys for entries that exist for reasons other than booting the
+   * app, and whose chunks should therefore not be precached.
+   *
+   * The extension API shims (`standalone/extension-api/*`) are entries only so
+   * that each gets a URL for the page's import map to point at. Nothing on the
+   * boot path imports them, and the extensions that do are themselves fetched
+   * over the network — so an offline user can never reach one, and precaching
+   * them (and the component/i18n chunks they pull in) would just make the
+   * install bigger for no offline benefit.
+   */
+  ignoredEntryKeys?: readonly string[];
+}
+
 /**
  * The emitted files the app needs in order to *boot*: every entry chunk,
  * everything it statically imports (transitively), and the stylesheets and
@@ -53,8 +68,10 @@ const ASSET_DIR_PREFIX = "assets/";
  * other 23 locales, every extension. Those are runtime-cached on first use.
  */
 export function selectCoreAssetFiles(
-  manifest: Record<string, ViteManifestChunk>
+  manifest: Record<string, ViteManifestChunk>,
+  options: SelectCoreAssetOptions = {}
 ): Set<string> {
+  const ignoredEntries = new Set(options.ignoredEntryKeys ?? []);
   const core = new Set<string>();
   const visited = new Set<string>();
 
@@ -72,7 +89,7 @@ export function selectCoreAssetFiles(
   }
 
   for (const [key, chunk] of Object.entries(manifest)) {
-    if (chunk.isEntry) visit(key);
+    if (chunk.isEntry && !ignoredEntries.has(key)) visit(key);
   }
 
   return core;

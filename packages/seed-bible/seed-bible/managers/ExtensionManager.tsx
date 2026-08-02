@@ -393,6 +393,52 @@ function isExtensionModule(value: unknown): value is ExtensionModule {
 }
 
 /**
+ * The bare specifiers (`"seed-bible"`, `"preact"`, …) the page publishes to
+ * extensions loaded from a URL, read back out of the import map the build put
+ * in the document.
+ *
+ * Reading the live map rather than keeping a copy of the list here means this
+ * can never drift from what the page actually provides — the list itself is
+ * defined once, in `script/lib/importMap.ts`.
+ */
+function getMappedSpecifiers(): string[] {
+  if (typeof document === "undefined") {
+    return [];
+  }
+
+  const element = document.querySelector('script[type="importmap"]');
+  if (!element?.textContent) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(element.textContent) as {
+      imports?: Record<string, string>;
+    };
+    return Object.keys(parsed.imports ?? {});
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Whether a failed `import(url)` failed because the extension imported a bare
+ * specifier the page doesn't map.
+ *
+ * Browsers surface this as an ordinary `TypeError` whose only distinguishing
+ * feature is its wording, so this matches on the two phrasings in use
+ * (Chromium/Safari say "Failed to resolve module specifier", Firefox says the
+ * name "was a bare specifier").
+ */
+function isBareSpecifierError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    message.includes("Failed to resolve module specifier") ||
+    message.includes("bare specifier")
+  );
+}
+
+/**
  * Per-store metadata for the installed-extensions ID list: when each
  * currently-installed extension was installed, and when this store's ID list
  * was last mutated (an install or uninstall). Used by
@@ -948,7 +994,9 @@ export function createExtensionManager(
     }
 
     try {
-      const mod: unknown = await import(/** @vite-ignore */ url);
+      // The single-star form is the one Vite matches; `/** ... */` looks the
+      // same but doesn't suppress its dynamic-import analysis.
+      const mod: unknown = await import(/* @vite-ignore */ url);
       if (!isExtensionModule(mod)) {
         refreshExtensionsSignal();
         console.error(
@@ -965,6 +1013,18 @@ export function createExtensionManager(
     } catch (err) {
       refreshExtensionsSignal();
       console.error("Failed to install extension:", id, err);
+      if (isBareSpecifierError(err)) {
+        const available = getMappedSpecifiers();
+        console.error(
+          `Extension '${id}' imports a module this page does not provide. ` +
+            (available.length > 0
+              ? `Extensions loaded from a URL may import ${available
+                  .map((specifier) => `'${specifier}'`)
+                  .join(", ")}. `
+              : "") +
+            `Anything else has to be bundled into the extension's own file.`
+        );
+      }
       return false;
     }
   };

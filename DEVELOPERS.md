@@ -30,6 +30,56 @@ Extensions now need the following:
 - a `index.ts` file at the root
 - a `extension.json` file with metadata
 
+#### Third-party extensions loaded from a URL
+
+An extension does not have to live in this repo. `loadExtension({ url, meta })`
+imports a plain ES module from any URL (the server has to allow cross-origin
+requests) and calls its default export:
+
+```js
+import { registerExtension } from "seed-bible";
+
+export default function initMyExtension() {
+  registerExtension({
+    id: "my-extension",
+    init: function* (context) {
+      yield context.tools.registerToolbarTool({
+        /* ... */
+      });
+    },
+  });
+}
+```
+
+The default export must be safe to call more than once — the browser evaluates a
+module only once per URL, so reinstalling an extension re-invokes this function
+rather than re-running the file.
+
+Because the browser loads the file directly, with no bundler involved, it can
+only resolve the bare specifiers the page publishes in its import map:
+
+| Specifier               | What it gives you                                     |
+| ----------------------- | ----------------------------------------------------- |
+| `seed-bible`            | `registerExtension`, `getExtensionExports`, and types |
+| `seed-bible/components` | Shared components (`MaterialIcon`, `PortalComponent`) |
+| `seed-bible/i18n`       | `useI18n` and the translation helpers                 |
+| `preact`                | The app's preact instance                             |
+| `preact/hooks`          | ditto                                                 |
+| `preact/jsx-runtime`    | ditto (what compiled JSX imports on your behalf)      |
+| `preact/compat`         | ditto                                                 |
+| `@preact/signals`       | The app's signals runtime                             |
+
+Everything else — third-party npm packages, your own modules — has to be bundled
+into the file you serve.
+
+Importing `preact` and `@preact/signals` from this list rather than shipping your
+own copy is not optional: two preact instances on one page break hooks with
+`Cannot read properties of undefined (reading '__H')`, and two signals runtimes
+track subscriptions separately, so writes never re-render the host's components.
+
+The list is defined in `script/lib/importMap.ts`; each entry is served by a
+re-export shim in `standalone/extension-api/`.
+
 ### Patterns
 
 If you need to display content inside the gridPortal or mapPortal, then you need to create a pattern.

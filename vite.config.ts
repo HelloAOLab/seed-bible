@@ -14,6 +14,8 @@ import {
   type ViteManifestChunk,
 } from "./script/lib/precacheManifest";
 import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
+import { importMapPlugin } from "./script/lib/vite-plugin-import-map";
+import { extensionApiBuildInputs } from "./script/lib/importMap";
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
 // asset URL is namespaced by branch and build id: assets for a build live at
@@ -62,7 +64,12 @@ function readCoreAssetFiles(): Set<string> {
     string,
     ViteManifestChunk
   >;
-  return selectCoreAssetFiles(manifest);
+  return selectCoreAssetFiles(manifest, {
+    // The extension API shims are entries purely so the import map has a URL
+    // to point at — they are not on the boot path, and the extensions that
+    // import them arrive over the network anyway. See `SelectCoreAssetOptions`.
+    ignoredEntryKeys: Object.values(extensionApiBuildInputs()),
+  });
 }
 
 /**
@@ -128,6 +135,10 @@ export default defineConfig(({ isSsrBuild }) => ({
     preact(),
     patternPlugin(),
     extensionsPlugin(),
+    // Publishes the app's own modules to extensions loaded from a URL, by
+    // writing a `<script type="importmap">` into the page. See
+    // `script/lib/importMap.ts`.
+    importMapPlugin(),
     // Only the root build ships a service worker (see `isRootBuild` above).
     ...(isRootBuild
       ? [
@@ -301,6 +312,10 @@ export default defineConfig(({ isSsrBuild }) => ({
         manifest: true,
         sourcemap: true,
         rolldownOptions: {
+          // The extension API shims are emitted as extra chunks by
+          // `importMapPlugin` rather than listed here, so that the app's own
+          // entry keeps Vite's default chunking. See the plugin for why.
+          //
           // `@casual-simulation/aux-common` ships no `sideEffects` field, so
           // every module in it is assumed to have import-time side effects and
           // cannot be tree-shaken away. That matters because `aux-websocket`'s
