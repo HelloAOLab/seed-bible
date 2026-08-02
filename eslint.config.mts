@@ -38,6 +38,10 @@ export default defineConfig([
     "tsc-silent.config.cjs",
     "jest.config.cjs",
     "babel.config.cjs",
+    // Machine-generated (see seed-bible-extension-scripts/scripts/sync-types.ts
+    // and create-seed-bible-extension/templates/) — not authored source.
+    "packages/seed-bible-extension-scripts/vendor-types/**",
+    "packages/create-seed-bible-extension/templates/**",
   ]),
   {
     files: ["**/*.{js,mjs,cjs,ts,tsx,jsx}"],

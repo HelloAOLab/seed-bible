@@ -45,5 +45,19 @@
   // `standalone/sw.ts` needs the `webworker` lib, which conflicts with `dom`.
   // It has its own project (`standalone/tsconfig.sw.json`, run by
   // `pnpm check:ts:sw`), the same way `patterns/` does.
-  "exclude": ["obsolete", "patterns", "standalone/sw.ts"]
+  //
+  // `seed-bible-extension-scripts`/`create-seed-bible-extension` are plain
+  // Node/CLI tooling, not `preact`+`dom`-typed app code, and their own
+  // `build-shims` declare a `Window.__seedBibleExtensionRuntime` global that
+  // (by design — see ExtensionManager.tsx) shadows the real app's own
+  // declaration of the same global with a deliberately looser type; folding
+  // both into one project trips "subsequent property declaration must have
+  // the same type". Each has its own project (`check:ts:extension-tools`).
+  "exclude": [
+    "obsolete",
+    "patterns",
+    "standalone/sw.ts",
+    "packages/seed-bible-extension-scripts",
+    "packages/create-seed-bible-extension"
+  ]
 }

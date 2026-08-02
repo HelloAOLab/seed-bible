@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { execSync } from "child_process";
@@ -13,7 +13,17 @@ import {
   type PrecacheManifestEntry,
   type ViteManifestChunk,
 } from "./script/lib/precacheManifest";
-import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
+import {
+  extensionsPlugin,
+  parseExtraExtensionDirs,
+} from "./script/lib/vite-plugin-extensions";
+
+// Directories outside `packages/` that hold an out-of-tree extension under
+// active development (see `seed-bible-extension-scripts dev`). Empty by
+// default — every normal dev/build run is unaffected. When set, the dev
+// server's filesystem allowlist needs to include them too, since Vite checks
+// the *realpath* of any `/@fs/`-served file against `server.fs.allow`.
+const extraExtensionDirs = parseExtraExtensionDirs();
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
 // asset URL is namespaced by branch and build id: assets for a build live at
@@ -412,5 +422,19 @@ export default defineConfig(({ isSsrBuild }) => ({
 
   server: {
     middlewareMode: true,
+    // Only set an explicit allowlist when there's actually an external
+    // extension directory to add — an explicit `fs.allow` replaces Vite's
+    // default rather than merging with it, so the default workspace root is
+    // included by hand here to avoid narrowing access for the common case.
+    ...(extraExtensionDirs.length > 0
+      ? {
+          fs: {
+            allow: [
+              searchForWorkspaceRoot(process.cwd()),
+              ...extraExtensionDirs,
+            ],
+          },
+        }
+      : {}),
   },
 }));

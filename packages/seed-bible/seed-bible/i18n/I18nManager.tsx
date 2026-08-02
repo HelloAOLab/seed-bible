@@ -1,4 +1,5 @@
 import i18n from "i18next";
+import type { TFunction } from "i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
@@ -248,7 +249,15 @@ export function createI18nManager(
     persistLanguage = persister;
   };
 
-  const changeLanguage = i18n.changeLanguage.bind(i18n);
+  // Explicitly typed (dropping the rarely-used `callback` second parameter,
+  // never passed by any caller here) rather than left inferred from
+  // `.bind()`: the inferred type otherwise carries i18next's internal,
+  // non-portable `Callback` type, which TypeScript's declaration emitter
+  // refuses to print (TS2883) — this only surfaces when actually emitting
+  // `.d.ts` output (e.g. `seed-bible-extension-scripts`'s vendored-types
+  // sync), never during this repo's own `noEmit` type-checking.
+  const changeLanguage: (lng?: string) => Promise<TFunction> =
+    i18n.changeLanguage.bind(i18n);
 
   const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
     let available = getAvailableTranslations?.() ?? null;

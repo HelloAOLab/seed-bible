@@ -29,19 +29,115 @@ const EXTENSION_SET_ID = "seed-bible";
 
 const packagesDir = path.resolve("packages");
 
-function extensionJsonPath(folder: string): string {
-  return path.resolve(packagesDir, folder, "extension.json");
+// An extension package either lives under `packages/<folder>/` (bundled — the
+// normal case, discovered below) or, for local development of an
+// out-of-tree/third-party extension (see `seed-bible-extension-scripts dev`),
+// in an arbitrary external directory supplied via `SEED_BIBLE_EXTRA_EXTENSION_DIRS`.
+// Both are discovered the same way (an `extension.json` at the directory's
+// root) but need different import specifiers, since the `@packages` alias
+// only reaches inside `packagesDir`.
+interface BundledExtensionEntry {
+  kind: "bundled";
+  /** Folder name directly under `packages/`. */
+  folder: string;
+}
+
+interface ExternalExtensionEntry {
+  kind: "external";
+  /** Absolute path to the extension's root directory. */
+  dir: string;
+}
+
+type ExtensionEntry = BundledExtensionEntry | ExternalExtensionEntry;
+
+/**
+ * Parses `SEED_BIBLE_EXTRA_EXTENSION_DIRS` — a comma-separated list of
+ * absolute (or cwd-relative) paths to extension directories living outside
+ * `packages/`. Unset/empty by default, which is what every normal dev/build
+ * run uses; this only matters for `seed-bible-extension-scripts dev`, which
+ * sets it to point at a scaffolded third-party extension project.
+ */
+export function parseExtraExtensionDirs(): string[] {
+  const raw = process.env.SEED_BIBLE_EXTRA_EXTENSION_DIRS;
+  if (!raw) {
+    return [];
+  }
+  return raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0)
+    .map((entry) => path.resolve(entry));
+}
+
+function extensionMetaPath(entry: ExtensionEntry): string {
+  return entry.kind === "bundled"
+    ? path.resolve(packagesDir, entry.folder, "extension.json")
+    : path.resolve(entry.dir, "extension.json");
+}
+
+/**
+ * Builds a Vite `/@fs/` URL for an absolute directory, mirroring Vite's own
+ * `FS_PREFIX` convention for importing files outside the project root — this
+ * is what lets an external extension directory be imported by the dev server
+ * without needing to live under the `@packages` alias. Works for both POSIX
+ * (`/@fs/home/user/my-ext`) and Windows (`/@fs/C:/Users/dev/my-ext`) paths.
+ */
+function toFsImportBase(absDir: string): string {
+  const normalized = absDir.split(path.sep).join("/");
+  return path.posix.join("/@fs", normalized);
+}
+
+/**
+ * Import specifiers for an extension entry's metadata JSON and code. Bundled
+ * entries go through the `@packages` alias (unchanged); external entries use
+ * a `/@fs/` URL so Vite can resolve them at their real, out-of-tree location.
+ */
+function extensionImportSpecifiers(entry: ExtensionEntry): {
+  metaImportSpecifier: string;
+  codeImportSpecifier: string;
+} {
+  if (entry.kind === "bundled") {
+    return {
+      metaImportSpecifier: `@packages/${entry.folder}/extension.json`,
+      codeImportSpecifier: `@packages/${entry.folder}/index`,
+    };
+  }
+  const fsBase = toFsImportBase(entry.dir);
+  return {
+    metaImportSpecifier: `${fsBase}/extension.json`,
+    codeImportSpecifier: `${fsBase}/index`,
+  };
 }
 
 // The folders under `packages/` that are extensions, sorted for deterministic
 // output (ordering is not load-bearing — ExtensionManager resolves
-// `dependencies` itself — but determinism keeps diffs/HMR stable).
-async function discoverExtensionFolders(): Promise<string[]> {
-  const entries = await readdir(packagesDir, { withFileTypes: true });
-  return entries
-    .filter((e) => e.isDirectory() && existsSync(extensionJsonPath(e.name)))
-    .map((e) => e.name)
-    .sort();
+// `dependencies` itself — but determinism keeps diffs/HMR stable), plus any
+// external directories from `SEED_BIBLE_EXTRA_EXTENSION_DIRS`. External
+// directories without an `extension.json` at their root are skipped with a
+// warning rather than failing discovery outright.
+async function discoverExtensionEntries(): Promise<ExtensionEntry[]> {
+  const dirEntries = await readdir(packagesDir, { withFileTypes: true });
+  const bundled: ExtensionEntry[] = dirEntries
+    .filter(
+      (e) =>
+        e.isDirectory() &&
+        existsSync(path.resolve(packagesDir, e.name, "extension.json"))
+    )
+    .map((e) => ({ kind: "bundled" as const, folder: e.name }))
+    .sort((a, b) => a.folder.localeCompare(b.folder));
+
+  const external: ExtensionEntry[] = [];
+  for (const dir of parseExtraExtensionDirs()) {
+    if (!existsSync(path.resolve(dir, "extension.json"))) {
+      console.warn(
+        `[extensions] SEED_BIBLE_EXTRA_EXTENSION_DIRS entry '${dir}' has no extension.json at its root; skipping.`
+      );
+      continue;
+    }
+    external.push({ kind: "external", dir });
+  }
+
+  return [...bundled, ...external];
 }
 
 interface ExtensionTranslationFile {
@@ -57,8 +153,8 @@ interface ExtensionMetaFile {
   autoinstall?: boolean;
 }
 
-async function readExtensionMeta(folder: string): Promise<ExtensionMetaFile> {
-  const raw = await readFile(extensionJsonPath(folder), "utf-8");
+async function readExtensionMeta(metaPath: string): Promise<ExtensionMetaFile> {
+  const raw = await readFile(metaPath, "utf-8");
   return JSON.parse(raw);
 }
 
@@ -96,22 +192,28 @@ function toJsLiteral(value: unknown): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
-async function generateModuleSource(folders: string[]): Promise<string> {
-  const metas = await Promise.all(folders.map(readExtensionMeta));
+async function generateModuleSource(
+  entries: ExtensionEntry[]
+): Promise<string> {
+  const metas = await Promise.all(
+    entries.map((entry) => readExtensionMeta(extensionMetaPath(entry)))
+  );
 
-  const entries = folders
-    .map((folder, i) => {
+  const source = entries
+    .map((entry, i) => {
       const trimmed = trimMeta(metas[i]!);
+      const { metaImportSpecifier, codeImportSpecifier } =
+        extensionImportSpecifiers(entry);
       return `  {
     meta: ${toJsLiteral(trimmed)},
-    loadFullTranslations: () => import("@packages/${folder}/extension.json").then((m) => m.default.translations),
-    import: () => import("@packages/${folder}/index"),
+    loadFullTranslations: () => import(${JSON.stringify(metaImportSpecifier)}).then((m) => m.default.translations),
+    import: () => import(${JSON.stringify(codeImportSpecifier)}),
   },`;
     })
     .join("\n");
 
   return `const extensions = [
-${entries}
+${source}
 ];
 
 export default { id: ${JSON.stringify(EXTENSION_SET_ID)}, extensions };
@@ -121,7 +223,8 @@ export default { id: ${JSON.stringify(EXTENSION_SET_ID)}, extensions };
 /**
  * Vite plugin that exposes a `virtual:@extensions` module: the `ExtensionSet`
  * assembled from every extension package — a directory under `packages/` that
- * contains an `extension.json` — discovered under `packages/`.
+ * contains an `extension.json` — discovered under `packages/`, plus (in dev,
+ * when set) any external directories named by `SEED_BIBLE_EXTRA_EXTENSION_DIRS`.
  */
 export function extensionsPlugin(): Plugin {
   return {
@@ -139,32 +242,54 @@ export function extensionsPlugin(): Plugin {
         return null;
       }
 
-      const folders = await discoverExtensionFolders();
+      const entries = await discoverExtensionEntries();
 
       // Reload the module if any extension's meta changes.
-      for (const folder of folders) {
-        this.addWatchFile(extensionJsonPath(folder));
+      for (const entry of entries) {
+        this.addWatchFile(extensionMetaPath(entry));
       }
 
-      return await generateModuleSource(folders);
+      return await generateModuleSource(entries);
     },
 
     configureServer(server: ViteDevServer) {
       // Reflect added/removed extension packages in dev: when an
       // `extension.json` appears or disappears, the discovered set changes, so
-      // invalidate the virtual module and reload.
+      // invalidate the virtual module and reload. External dirs (if any) are
+      // watched the same way as `packagesDir`, so editing an out-of-tree
+      // extension under active development triggers the same reload path.
       server.watcher.add(packagesDir);
+      const externalDirs = parseExtraExtensionDirs();
+      for (const dir of externalDirs) {
+        server.watcher.add(dir);
+      }
 
       let pending: NodeJS.Timeout | undefined;
 
-      const handle = (file: string) => {
+      const isRelevantChange = (file: string): boolean => {
         if (path.basename(file) !== "extension.json") {
-          return;
+          return false;
         }
-        const rel = path.relative(packagesDir, path.resolve(file));
+        const resolved = path.resolve(file);
+
         // Only top-level `packages/<folder>/extension.json` (not nested ones).
-        const segments = rel.split(/[\\/]/);
-        if (rel.startsWith("..") || segments.length !== 2) {
+        const relToPackages = path.relative(packagesDir, resolved);
+        if (
+          !relToPackages.startsWith("..") &&
+          relToPackages.split(/[\\/]/).length === 2
+        ) {
+          return true;
+        }
+
+        // Only an external dir's own root `extension.json` (not nested ones).
+        return externalDirs.some((dir) => {
+          const relToDir = path.relative(dir, resolved);
+          return !relToDir.startsWith("..") && relToDir === "extension.json";
+        });
+      };
+
+      const handle = (file: string) => {
+        if (!isRelevantChange(file)) {
           return;
         }
 

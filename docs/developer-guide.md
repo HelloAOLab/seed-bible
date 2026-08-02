@@ -13,13 +13,13 @@ Seed Bible is a free, collaborative Bible reading and study app. You can read it
 Two facts about how it's built matter for anyone extending it:
 
 - **It's a standalone web app**, not a plugin running inside some other product. The main app (everything under `packages/seed-bible/`) is server-rendered for the initial page load (for fast load times and good SEO) and then runs as a normal single-page app in the browser.
-- **It uses [CasualOS](https://github.com/casual-simulation/casualos) as its backend**, but only as a backend. CasualOS is a distributed, real-time data platform — it provides user accounts, encrypted file/record storage, and real-time multiplayer syncing (via a CRDT library called Yjs, which is what makes "two people see the same live cursor/scroll position" possible). Seed Bible talks to CasualOS through its SDK, the same way an app might talk to Firebase or Supabase. There's a second, unrelated way CasualOS shows up in this codebase — see [§6, Extensions vs. Patterns](#6-extensions-vs-patterns) — but as an app, Seed Bible is *not* itself a CasualOS bot script; it's ordinary React-like frontend code.
+- **It uses [CasualOS](https://github.com/casual-simulation/casualos) as its backend**, but only as a backend. CasualOS is a distributed, real-time data platform — it provides user accounts, encrypted file/record storage, and real-time multiplayer syncing (via a CRDT library called Yjs, which is what makes "two people see the same live cursor/scroll position" possible). Seed Bible talks to CasualOS through its SDK, the same way an app might talk to Firebase or Supabase. There's a second, unrelated way CasualOS shows up in this codebase — see [§6, Extensions vs. Patterns](#6-extensions-vs-patterns) — but as an app, Seed Bible is _not_ itself a CasualOS bot script; it's ordinary React-like frontend code.
 
 If you've used React before, you already know most of what you need:
 
 - **Preact** is a much smaller library with (almost) the same API as React — components, props, hooks. Anywhere you'd write React, the same mental model applies.
 - **JSX** — the HTML-like syntax you see mixed into `.tsx` files (`<div>{title}</div>`) — is the same JSX you know from React. It compiles down to plain function calls that build up a UI tree; it's not special CasualOS or Seed Bible syntax.
-- **Signals** (`@preact/signals`) replace React's `useState`/`useReducer` as this codebase's way of holding reactive state. A signal is a box around a value: `const count = signal(0)` gives you `count.value` to read or write it. The important part is that anything that *reads* `count.value` — a component's render, or a `computed()`, or an `effect()` — automatically re-runs whenever that value changes, with no dependency array to maintain. Think of it as a spreadsheet cell: everything that references it updates when it changes.
+- **Signals** (`@preact/signals`) replace React's `useState`/`useReducer` as this codebase's way of holding reactive state. A signal is a box around a value: `const count = signal(0)` gives you `count.value` to read or write it. The important part is that anything that _reads_ `count.value` — a component's render, or a `computed()`, or an `effect()` — automatically re-runs whenever that value changes, with no dependency array to maintain. Think of it as a spreadsheet cell: everything that references it updates when it changes.
 
 You'll see these three things constantly, so it's worth having that mental model going in.
 
@@ -60,8 +60,10 @@ Before Seed Bible had this system, adding a feature meant editing the core app. 
 
 ### Two ways an extension reaches the app
 
-1. **Bundled** — the extension package lives in this repo under `packages/`, and gets automatically discovered at build time (any folder containing an `extension.json` is picked up — see `script/lib/vite-plugin-extensions.ts`). This is how every extension in this repo today works (`seed-bible-refresh-example-extension`, `locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-extension`, `twitchPub-extension`, `twitchSub-extension`).
-2. **Loaded from a URL at runtime** — an extension package doesn't have to live in this repo at all. `ExtensionManager.loadExtensionFromUrl(id, url)` can dynamically `import()` a module from any URL and install it the same way, provided that module's default export follows the same contract. This is the mechanism a genuinely third-party, out-of-tree extension would use.
+1. **Bundled** — the extension package lives in this repo under `packages/`, and gets automatically discovered at build time (any folder containing an `extension.json` is picked up — see `script/lib/vite-plugin-extensions.ts`). This is how every extension in this repo today works (`seed-bible-refresh-example-extension`, `locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-extension`, `twitchPub-extension`, `twitchSub-extension`), and it's the fully-supported way to ship one: no build step, just source, swept into the app's own bundle alongside everything else.
+2. **Loaded from a URL at runtime** — `ExtensionManager.loadExtension({ meta, url })` can dynamically `import()` a module from any URL and install it the same way, provided that module's default export follows the same contract. In practice this only works for a bundle built with the specific tooling described in [§8](#8-building-an-extension-outside-this-repo) (a plain, hand-written bundle can't resolve a bare `import ... from "seed-bible"` — there's no import map for it): treat this as an **experimental, best-effort distribution path**, not the default choice.
+
+If you don't work inside this monorepo at all — a genuinely third-party developer building your own extension in your own project — see [§8](#8-building-an-extension-outside-this-repo) for the supported way to do that: a scaffolding CLI, plus a toolkit that can type-check, test, build, and (the part that actually matters) run a real Seed Bible dev server with your in-development extension auto-installed.
 
 Either way, the extension itself is written the same way and follows the same lifecycle below.
 
@@ -91,7 +93,7 @@ my-extension/
 }
 ```
 
-**`extension.json`** — the metadata that the app needs *before* the extension is even installed, so it can list the extension in the Settings UI:
+**`extension.json`** — the metadata that the app needs _before_ the extension is even installed, so it can list the extension in the Settings UI:
 
 ```json
 {
@@ -133,12 +135,12 @@ export default function initMyExtension() {
 `init(context, dependencies)` is called once your extension is actually being activated:
 
 - **`context`** is the entire app state object (`SeedBibleState`) — the same object every manager listed in [§2](#2-major-features) hangs off of. Your extension reads and calls into it directly: `context.tools.registerToolbarTool(...)`, `context.panes.openPane(...)`, `context.app.toast(...)`, etc. There's no separate, cut-down "extension API" — you get the same surface the core app itself uses, which is a deliberate choice: an extension can do everything the core app can do.
-- **`dependencies`** is an object keyed by extension ID, containing whatever each of your declared `dependencies` returned from *its own* `init`. This is how one extension can call functions exposed by another (see [§4.4](#44-dependencies-between-extensions)).
+- **`dependencies`** is an object keyed by extension ID, containing whatever each of your declared `dependencies` returned from _its own_ `init`. This is how one extension can call functions exposed by another (see [§4.4](#44-dependencies-between-extensions)).
 
 `init` can be written two ways, and you'll see both in this codebase:
 
 1. **A plain function that returns an object.** The returned object is this extension's public export — what other extensions see in their `dependencies` if they depend on this one.
-2. **A generator function** (`function* (context) { ... }`) — this is the more common pattern, and it's worth explaining if you haven't used JS generators before. Inside a generator, `yield someValue` doesn't return from the function; it pauses and hands `someValue` back to the caller, and hands control back to you the *next* time the caller asks for the next value. `ExtensionInitalizer` (the thing that runs your `init`) takes advantage of this: every value you `yield` is treated as a **cleanup function** — most tool-registration calls (`registerToolbarTool`, `registerVerseToolbarTool`, an `effect()`, etc.) themselves return a "stop doing this" function, so you `yield` that return value. When the extension is later uninstalled, every yielded cleanup function gets called, undoing exactly what that registration did. When the generator finally `return`s (like an ordinary function would), that return value becomes the extension's public export, exactly as in case 1.
+2. **A generator function** (`function* (context) { ... }`) — this is the more common pattern, and it's worth explaining if you haven't used JS generators before. Inside a generator, `yield someValue` doesn't return from the function; it pauses and hands `someValue` back to the caller, and hands control back to you the _next_ time the caller asks for the next value. `ExtensionInitalizer` (the thing that runs your `init`) takes advantage of this: every value you `yield` is treated as a **cleanup function** — most tool-registration calls (`registerToolbarTool`, `registerVerseToolbarTool`, an `effect()`, etc.) themselves return a "stop doing this" function, so you `yield` that return value. When the extension is later uninstalled, every yielded cleanup function gets called, undoing exactly what that registration did. When the generator finally `return`s (like an ordinary function would), that return value becomes the extension's public export, exactly as in case 1.
 
 Here's the shape in practice, from the example extension:
 
@@ -164,7 +166,7 @@ If your extension doesn't register anything that needs cleanup, a plain function
 Putting it together, here's the full life of an extension:
 
 1. **Discovery.** For bundled extensions, this happens at build/dev-server time: every `packages/<folder>/extension.json` is scanned and becomes an entry in the app's known extension set. For URL-loaded extensions, discovery is just whatever piece of your app UI calls `loadExtensionFromUrl(id, url)`.
-2. **Registration.** The extension's module is imported and its default export function is *called*. That call runs `registerExtension({ id, init, dependencies })`, which records the extension as "known" but does **not** run `init` yet — only when the app's context is ready and all declared dependencies are already initialized.
+2. **Registration.** The extension's module is imported and its default export function is _called_. That call runs `registerExtension({ id, init, dependencies })`, which records the extension as "known" but does **not** run `init` yet — only when the app's context is ready and all declared dependencies are already initialized.
 3. **Initialization.** Once the app context exists and dependencies (if any) have resolved, `init(context, dependencyExports)` runs. This is where your extension actually adds its tools/panes/providers. If `init` throws, the error is logged and the extension is treated as not-yet-initialized (it'll retry the next time something re-triggers initialization, e.g. a dependency resolving).
 4. **Installed state persists.** Once installation succeeds, the extension's ID is saved to `localStorage` and (if the user is logged in) mirrored into their synced profile — so an installed extension is remembered across reloads and follows the user to other devices. (`autoinstall: true` extensions get installed for every user automatically the first time, but a user who then uninstalls one won't have it silently reinstalled later.)
 5. **Uninstallation.** When the user uninstalls the extension, every cleanup function it `yield`ed gets called (removing its tools, closing its effects, etc.), and its ID is dropped from the persisted install list.
@@ -210,7 +212,11 @@ The example extension uses this to open a custom pane:
 ```tsx
 yield context.tools.registerToolbarTool({
   id: "my-example-tool",
-  title: { key: "my-example-tool", defaultValue: "My Example Tool", ns: "example-extension" },
+  title: {
+    key: "my-example-tool",
+    defaultValue: "My Example Tool",
+    ns: "example-extension",
+  },
   icon: () => <span>TOOL!</span>,
   onSelect: () => {
     context.panes.openPane({
@@ -227,7 +233,7 @@ yield context.tools.registerToolbarTool({
 
 `context.tools.registerVerseToolbarTool({...})` adds an action that appears when the user has selected one or more verses. `isVisible` can be a function returning `true`/`false` (or a signal), so the tool can hide itself unless it's relevant.
 
-The **locations extension** (`packages/locations-extension/`) uses this well: it scans the currently-selected verses' text for place names it recognizes, and only shows a "Locations" tool (with a submenu listing each found place) when at least one match was found. Selecting a place fetches GeoJSON boundary data and opens it on a map (rendered via a CasualOS *pattern* — see [§6](#6-extensions-vs-patterns)) inside a floating pane.
+The **locations extension** (`packages/locations-extension/`) uses this well: it scans the currently-selected verses' text for place names it recognizes, and only shows a "Locations" tool (with a submenu listing each found place) when at least one match was found. Selecting a place fetches GeoJSON boundary data and opens it on a map (rendered via a CasualOS _pattern_ — see [§6](#6-extensions-vs-patterns)) inside a floating pane.
 
 ### Quick tools — compact icons above the reader
 
@@ -275,19 +281,32 @@ The audio-reader extension uses the same mechanism to stop playback the instant 
 
 These are two different mechanisms and it's easy to conflate them because both live in this repo and both are "pluggable":
 
-- An **extension** (`packages/*-extension/`, this guide) runs *inside* the main Seed Bible app, in the same page, with full access to `SeedBibleState`. It's written the same way the app itself is (Preact/JSX/signals).
-- A **pattern** (`patterns/`) is a separate CasualOS application — bot scripts packaged into a `.aux` file — that gets embedded as a *cross-origin* `ao.bot` iframe via `<PortalComponent>`. It runs in its own sandboxed context with its own CasualOS runtime (`os`, `thisBot`, `configBot` globals), and it communicates with the host page only through the iframe boundary (query params in, and whatever CasualOS's cross-frame APIs allow).
+- An **extension** (`packages/*-extension/`, this guide) runs _inside_ the main Seed Bible app, in the same page, with full access to `SeedBibleState`. It's written the same way the app itself is (Preact/JSX/signals).
+- A **pattern** (`patterns/`) is a separate CasualOS application — bot scripts packaged into a `.aux` file — that gets embedded as a _cross-origin_ `ao.bot` iframe via `<PortalComponent>`. It runs in its own sandboxed context with its own CasualOS runtime (`os`, `thisBot`, `configBot` globals), and it communicates with the host page only through the iframe boundary (query params in, and whatever CasualOS's cross-frame APIs allow).
 
-The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The locations extension does exactly this — it's an *extension* (runs in the main app, reacts to verse selection) that opens a pane whose content is the `geo-importer` *pattern* (a separate CasualOS map applet) to actually render the map. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
+The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The locations extension does exactly this — it's an _extension_ (runs in the main app, reacts to verse selection) that opens a pane whose content is the `geo-importer` _pattern_ (a separate CasualOS map applet) to actually render the map. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
 
 ### A note on overloaded terminology
 
-You'll also encounter `context.readingExtensions` (backed by `BibleReadingExtensionManager`) in the app state. Despite the name, **this is not the plugin system described in this guide.** It's a narrower, session-level mechanism for customizing reading *navigation* and *Discover content* on a per-reading-state basis (e.g. hooking "what happens when the user hits next chapter," or transforming what Discover shows, with data that syncs within a shared session). If you're building a plugin that a user installs from the Settings page, you want `registerExtension` and the app-wide `context.tools`/`context.panes`/`context.discover` APIs covered above — not `readingExtensions`.
+You'll also encounter `context.readingExtensions` (backed by `BibleReadingExtensionManager`) in the app state. Despite the name, **this is not the plugin system described in this guide.** It's a narrower, session-level mechanism for customizing reading _navigation_ and _Discover content_ on a per-reading-state basis (e.g. hooking "what happens when the user hits next chapter," or transforming what Discover shows, with data that syncs within a shared session). If you're building a plugin that a user installs from the Settings page, you want `registerExtension` and the app-wide `context.tools`/`context.panes`/`context.discover` APIs covered above — not `readingExtensions`.
 
 ---
 
-## 7. Where to go from here
+## 8. Building an extension outside this repo
 
-- Copy `packages/seed-bible-refresh-example-extension/` as a starting point — it demonstrates every extension point covered in §5 in one file.
+Everything in §§3–6 assumes your extension's source lives inside this monorepo, under `packages/`. If you're a genuinely third-party developer — your own project, your own repo, no local clone of `seed-bible` — two companion packages give you the same experience anyway:
+
+- **`create-seed-bible-extension`** scaffolds a new, self-contained extension project anywhere on disk: `npx create-seed-bible-extension@latest my-extension` (or the `npm create`/`pnpm create` equivalents). The generated project has its own `package.json`, `tsconfig.json`, ESLint/Prettier config, a starting `src/init.tsx` (the same shape as [§4](#4-anatomy-of-an-extension-package), demonstrating a toolbar tool and an effect), and a matching test that mocks `"seed-bible"` the way this repo's own extension tests do. It also vendors real, generated TypeScript declarations for `SeedBibleState`/`registerExtension`/`useI18n`/etc. (kept in sync with the actual app by a maintenance script, `seed-bible-extension-scripts/scripts/sync-types.ts`), so you get accurate types without a published `seed-bible` npm package existing (there isn't one — depending on one directly would also risk a second, disconnected copy of Preact/`@preact/signals` alongside the app's own).
+- **`seed-bible-extension-scripts`** is the toolkit that project's `package.json` scripts call: `check` (type-check), `test` (Vitest), `build`, and `dev`.
+
+`dev` is the one worth understanding, because it's what makes this genuinely usable rather than a toy: rather than the fragile URL-loading path from [§3](#3-what-is-an-extension), it clones (and caches) a real `seed-bible` checkout, starts its actual dev server with an environment variable (`SEED_BIBLE_EXTRA_EXTENSION_DIRS`) pointing at your project directory — a small, additive change to `script/lib/vite-plugin-extensions.ts` that lets it discover an extension folder living _outside_ `packages/`, the same way it discovers one inside it — and opens your browser with the existing `?autoinstall-<id>=true` query param, so your extension is installed and running in a real instance, with full HMR when you edit it. Pass `--repo <path>` to point at an existing checkout instead of the managed cache (e.g. if you're also working on `seed-bible` itself).
+
+`build` produces two things: the primary, fully-supported output is your extension's source, validated and copied to `dist/monorepo-package/` — ready to drop straight into a `seed-bible` checkout's `packages/<name>/` (§3's "bundled" path, no compilation needed there). `build --standalone` additionally produces `dist/standalone/index.js`, a genuinely self-contained ES module for the URL-loading path mentioned above — it's the thing that makes that path actually work, by aliasing `preact`/`@preact/signals`/`seed-bible`/etc. to small shims that read off a runtime object (`window.__seedBibleExtensionRuntime`) the real app exposes, rather than bundling second, disconnected copies. Still label it experimental in your own head: it only works loaded into a real, running Seed Bible page, and (today) `seed-bible/components` needs `await loadSeedBibleComponents()` instead of a normal static import, since the host only exposes components as a lazy loader.
+
+---
+
+## 9. Where to go from here
+
+- Copy `packages/seed-bible-refresh-example-extension/` as a starting point — it demonstrates every extension point covered in §5 in one file. (If you're not working inside this repo at all, use `create-seed-bible-extension` instead — see §8.)
 - Run `pnpm dev` and use the in-app Settings extensions list to install/uninstall your extension while iterating; bundled extensions are auto-discovered, so adding a new `packages/<name>/extension.json` is picked up by the dev server automatically.
 - Look at `packages/locations-extension`, `packages/audio-reader-extension`, and `packages/apologist-extension` for complete, real-world extensions covering three very different use cases: content analysis + map integration, media playback tied to reading state, and third-party chat integration.

@@ -1,8 +1,20 @@
 import { effect, signal } from "@preact/signals";
+import * as PreactSignalsNamespace from "@preact/signals";
+import * as PreactNamespace from "preact";
+import * as PreactHooksNamespace from "preact/hooks";
+import * as PreactJsxRuntimeNamespace from "preact/jsx-runtime";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { addTranslations } from "../i18n/I18nManager";
+// The whole `../i18n` barrel is already reachable via a static import chain
+// from several other files (e.g. `SeedBibleStateManager.tsx`), so it's always
+// part of the main bundle regardless — importing it eagerly here (unlike
+// `../components`, see `loadComponents` below) doesn't add real weight, and a
+// dynamic import of an already-statically-reachable module just produces a
+// harmless "ineffective dynamic import" build warning instead of an actual
+// lazy chunk.
+import * as SeedBibleI18nNamespace from "../i18n";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   getProfileConfigValue,
@@ -360,6 +372,57 @@ export function registerExtension(
 
 export function unregisterExtension(id: string): boolean {
   return ExtensionInitalizer.getInstance().unregisterExtension(id);
+}
+
+/**
+ * A small, stable surface exposed on `window` for extension bundles that
+ * genuinely can't be part of this app's own Vite module graph — i.e. a
+ * standalone bundle built by `seed-bible-extension-scripts build --standalone`
+ * and loaded via `extensions.loadExtension({ meta, url })`. Such a bundle
+ * can't have a bare `import ... from "seed-bible"` (there's no import map, and
+ * a raw browser `import(url)` can't resolve one), and it must not bring its
+ * own copy of Preact/signals — this codebase has already hit the "two Preact
+ * instances" bug once (see `vite.config.ts`'s `resolve.dedupe` comment). By
+ * reading `registerExtension`/`preact`/`@preact/signals` off this global
+ * instead, such a bundle shares the exact instances already running on the
+ * page rather than a second, disconnected copy.
+ *
+ * `components` is exposed as a lazy loader (not an eager namespace import) so
+ * referencing this runtime object doesn't force the entire
+ * `seed-bible/components` barrel — effectively the whole app's UI surface —
+ * into this module's own eager import graph, which loads very early in boot.
+ * `i18n` is exposed eagerly since it's already reachable from several other
+ * eager import chains (see the import above), so there's no lazy-loading
+ * benefit to gain by deferring it.
+ */
+export interface SeedBibleExtensionRuntime {
+  registerExtension: typeof registerExtension;
+  unregisterExtension: typeof unregisterExtension;
+  preact: typeof PreactNamespace;
+  preactHooks: typeof PreactHooksNamespace;
+  preactJsxRuntime: typeof PreactJsxRuntimeNamespace;
+  preactSignals: typeof PreactSignalsNamespace;
+  i18n: typeof SeedBibleI18nNamespace;
+  loadComponents: () => Promise<typeof import("../components")>;
+}
+
+declare global {
+  interface Window {
+    __seedBibleExtensionRuntime?: SeedBibleExtensionRuntime;
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.__seedBibleExtensionRuntime = {
+    registerExtension,
+    unregisterExtension,
+    preact: PreactNamespace,
+    preactHooks: PreactHooksNamespace,
+    preactJsxRuntime: PreactJsxRuntimeNamespace,
+    preactSignals: PreactSignalsNamespace,
+    i18n: SeedBibleI18nNamespace,
+    loadComponents: () => import("../components"),
+  };
 }
 
 export function setupExtensionContext(context: SeedBibleState) {
