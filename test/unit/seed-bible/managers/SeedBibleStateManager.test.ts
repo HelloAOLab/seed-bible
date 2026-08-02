@@ -1214,6 +1214,15 @@ describe("createSeedBibleState", () => {
   });
 
   describe("UI language Bible translation switch", () => {
+    beforeEach(async () => {
+      // Language changes share the process-wide i18n instance; reset so each
+      // case starts from English defaults rather than the prior test's locale.
+      const i18nMod = await import("i18next");
+      if (i18nMod.default.isInitialized && i18nMod.default.language !== "en") {
+        await i18nMod.default.changeLanguage("en");
+      }
+    });
+
     it("keeps the current book and chapter when the new translation has that book", async () => {
       const state = await createStateWithOptions({
         responses: createLanguageSwitchResponses(),
@@ -1236,12 +1245,20 @@ describe("createSeedBibleState", () => {
     it("falls back to the first book when the new translation lacks the current book", async () => {
       const spaMatOnly = booksForTranslation(nivBooks, SPA_TRANSLATION);
       const state = await createStateWithOptions({
-        responses: createLanguageSwitchResponses({ spaBooks: spaMatOnly }),
+        responses: {
+          ...createLanguageSwitchResponses({ spaBooks: spaMatOnly }),
+          [privateUrl("/api/AAB/EXO/1.json")]: createResponse(
+            makeChapter(aabBooks, "EXO", 1)
+          ),
+        },
       });
       const readingState = state.tabs.tabs.value[0]!.readingState;
 
-      expect(readingState.bookId.value).toBe("GEN");
-      expect(readingState.chapterNumber.value).toBe(1);
+      // Start on a book spa_onbv does not contain.
+      await readingState.selectTranslationAndChapter("AAB", "EXO", 1);
+      await waitForInitialLoad(readingState, 1000);
+      expect(readingState.translationId.value).toBe("AAB");
+      expect(readingState.bookId.value).toBe("EXO");
 
       await state.i18n.requestLanguageChange("es");
       await waitForInitialLoad(readingState, 1000);
