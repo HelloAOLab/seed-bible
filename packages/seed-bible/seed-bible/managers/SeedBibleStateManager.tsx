@@ -1608,12 +1608,27 @@ export function createSeedBibleState(
 
   // Settings UI language changes also select the nearest available Bible
   // translation (preferred ID → same language in catalog → LANG_META.fallback
-  // → English), using existing tabs + selector state.
+  // → English), using existing tabs + selector state. Keep the user on the
+  // same book/chapter when the new translation has that book.
   i18n.setBibleTranslationApplicator(
     async (translation) => {
       const tab = selectedTab.value;
       if (tab) {
-        await tab.readingState.selectTranslation(translation.id);
+        const currentBookId = tab.readingState.bookId.peek();
+        const currentChapterNumber = tab.readingState.chapterNumber.peek();
+        const books = await data.getTranslationBooks(translation.id);
+        const matchingBook =
+          currentBookId &&
+          books.books.find((book) => book.id === currentBookId);
+        if (matchingBook && currentChapterNumber != null) {
+          await tab.readingState.selectTranslationAndChapter(
+            translation.id,
+            matchingBook.id,
+            currentChapterNumber
+          );
+        } else {
+          await tab.readingState.selectTranslation(translation.id);
+        }
       }
       await selector.selectTranslation(translation.id);
     },

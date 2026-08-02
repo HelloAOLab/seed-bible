@@ -1,12 +1,116 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type {
+  Translation,
+  TranslationBooks,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
+import {
+  aabBooks,
+  createResponse,
+  makeChapter,
+  makeUrl,
+  nivBooks,
+  translations,
+} from "./testUtils/mockBibleApiData";
 import { batch, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
+
+// App defaults to the private API; shared mock maps target the free-use host.
+const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
+
+const SPA_TRANSLATION: Translation = {
+  id: "spa_onbv",
+  name: "Open Nueva Biblia Viva",
+  englishName: "Open Nueva Biblia Viva",
+  website: "https://example.com",
+  licenseUrl: "https://example.com/license",
+  shortName: "ONBV",
+  language: "spa",
+  textDirection: "ltr",
+  availableFormats: ["json"],
+  listOfBooksApiLink: "/api/spa_onbv/books.json",
+  numberOfBooks: 66,
+  totalNumberOfChapters: 1189,
+  totalNumberOfVerses: 31102,
+};
+
+const HIN_TRANSLATION: Translation = {
+  id: "hin_cvb",
+  name: "Hindi Contemporary Version",
+  englishName: "Hindi Contemporary Version",
+  website: "https://example.com",
+  licenseUrl: "https://example.com/license",
+  shortName: "CVB",
+  language: "hin",
+  textDirection: "ltr",
+  availableFormats: ["json"],
+  listOfBooksApiLink: "/api/hin_cvb/books.json",
+  numberOfBooks: 66,
+  totalNumberOfChapters: 1189,
+  totalNumberOfVerses: 31102,
+};
+
+function booksForTranslation(
+  base: TranslationBooks,
+  translation: Translation
+): TranslationBooks {
+  return {
+    translation,
+    books: base.books.map((book) => ({
+      ...book,
+      firstChapterApiLink: `/api/${translation.id}/${book.id}/${book.firstChapterNumber ?? 1}.json`,
+      lastChapterApiLink: `/api/${translation.id}/${book.id}/${book.lastChapterNumber}.json`,
+    })),
+  };
+}
+
+function privateUrl(path: string): string {
+  return makeUrl(path, PRIVATE_API_ENDPOINT);
+}
+
+function createLanguageSwitchResponses(options?: {
+  spaBooks?: TranslationBooks;
+}): Record<string, ReturnType<typeof createResponse>> {
+  const spaBooks =
+    options?.spaBooks ?? booksForTranslation(aabBooks, SPA_TRANSLATION);
+  const hinBooks = booksForTranslation(aabBooks, HIN_TRANSLATION);
+
+  return {
+    [privateUrl("/api/available_translations.json")]: createResponse({
+      translations: [
+        ...translations.translations,
+        SPA_TRANSLATION,
+        HIN_TRANSLATION,
+      ],
+    }),
+    [privateUrl("/api/AAB/books.json")]: createResponse(aabBooks),
+    [privateUrl("/api/AAB/GEN/1.json")]: createResponse(
+      makeChapter(aabBooks, "GEN", 1)
+    ),
+    [privateUrl("/api/AAB/EXO/2.json")]: createResponse(
+      makeChapter(aabBooks, "EXO", 2)
+    ),
+    [privateUrl("/api/spa_onbv/books.json")]: createResponse(spaBooks),
+    [privateUrl("/api/spa_onbv/GEN/1.json")]: createResponse(
+      makeChapter(spaBooks, "GEN", 1)
+    ),
+    [privateUrl("/api/spa_onbv/EXO/2.json")]: createResponse(
+      makeChapter(spaBooks, "EXO", 2)
+    ),
+    [privateUrl("/api/spa_onbv/MAT/1.json")]: createResponse(
+      makeChapter(spaBooks, "MAT", 1)
+    ),
+    [privateUrl("/api/hin_cvb/books.json")]: createResponse(hinBooks),
+    [privateUrl("/api/hin_cvb/EXO/2.json")]: createResponse(
+      makeChapter(hinBooks, "EXO", 2)
+    ),
+  };
+}
 
 const mockSaveReadingHistory = vi.fn();
 const mockHighlightsManager = {
@@ -1106,6 +1210,70 @@ describe("createSeedBibleState", () => {
       expect(state.app.title.value).toBe(
         `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
+    });
+  });
+
+  describe("UI language Bible translation switch", () => {
+    it("keeps the current book and chapter when the new translation has that book", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+    });
+
+    it("falls back to the first book when the new translation lacks the current book", async () => {
+      const spaMatOnly = booksForTranslation(nivBooks, SPA_TRANSLATION);
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({ spaBooks: spaMatOnly }),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      expect(readingState.bookId.value).toBe("GEN");
+      expect(readingState.chapterNumber.value).toBe(1);
+
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("MAT");
+      expect(readingState.chapterNumber.value).toBe(1);
+    });
+
+    it("keeps the current book and chapter when confirming a nearest-translation fallback", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      // Gujarati has no Bible text; nearest is Hindi (hin_cvb).
+      await state.i18n.requestLanguageChange("gu");
+      expect(state.i18n.languageFallbackPrompt.value).toEqual({
+        requestedLanguage: "gu",
+        fallbackLanguage: "hi",
+        fallbackTranslation: { id: "hin_cvb", language: "hin" },
+      });
+
+      await state.i18n.confirmLanguageFallback();
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(readingState.translationId.value).toBe("hin_cvb");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
     });
   });
 });
