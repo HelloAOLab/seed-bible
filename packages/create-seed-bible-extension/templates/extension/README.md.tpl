@@ -5,6 +5,8 @@ A Seed Bible extension, scaffolded by `create-seed-bible-extension`.
 ## Commands
 
 - `npm run check` — type-check with TypeScript.
+- `npm run lint` — lint with ESLint.
+- `npm run lint:fix` — lint with ESLint, automatically fixing what it can.
 - `npm run test` — run the test suite with Vitest.
 - `npm run dev` — run a real Seed Bible instance with this extension
   auto-installed. The first run clones and installs the seed-bible app into a

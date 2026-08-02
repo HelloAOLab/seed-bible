@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "check": "seed-bible-extension-scripts check",
+    "lint": "seed-bible-extension-scripts lint",
+    "lint:fix": "seed-bible-extension-scripts lint --fix",
     "test": "seed-bible-extension-scripts test",
     "build": "seed-bible-extension-scripts build",
     "build:standalone": "seed-bible-extension-scripts build --standalone",
@@ -22,6 +24,7 @@
     "@typescript-eslint/utils": "^8.58.0",
     "es-toolkit": "1.39.10",
     "eslint": "^9.32.0",
+    "jiti": "^2.6.1",
     "jsdom": "^29.1.1",
     "prettier": "^3.6.2",
     "typescript": "^6.0.3",

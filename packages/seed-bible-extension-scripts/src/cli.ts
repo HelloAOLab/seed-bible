@@ -4,6 +4,7 @@ import { runCheck } from "./commands/check.js";
 import { runTest } from "./commands/test.js";
 import { runBuild } from "./commands/build.js";
 import { runDev } from "./commands/dev.js";
+import { runLint } from "./commands/lint.js";
 
 const program = new Command();
 
@@ -18,6 +19,14 @@ program
   .description("Type-check the extension with its own tsconfig.json.")
   .action(async () => {
     process.exitCode = await runCheck();
+  });
+
+program
+  .command("lint")
+  .description("Lint the extension with its own eslint.config.mts.")
+  .option("--fix", "automatically fix problems where possible")
+  .action(async (opts: { fix?: boolean }) => {
+    process.exitCode = await runLint({ fix: Boolean(opts.fix) });
   });
 
 program
