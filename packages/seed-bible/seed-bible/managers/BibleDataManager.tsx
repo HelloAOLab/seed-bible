@@ -314,8 +314,9 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
   // Book name patterns:
   //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
   //   [A-Za-z][A-Za-z0-9]* — word starting with a letter, e.g. "GEN", "John", "Kings"
+  //   (?:\s+of\s+[A-Za-z][A-Za-z0-9]*)? — optional "of …" for "Song of Solomon"
   const pattern =
-    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
+    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*(?:\s+of\s+[A-Za-z][A-Za-z0-9]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
@@ -328,16 +329,35 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
       rangeEndStr,
     ] = match;
 
-    if (!bookStr || !chapterStr) continue;
+    // Rejected candidates must retry one character later. Otherwise a false
+    // hit like "See 1" consumes the leading digit of "1 Corinthians" and the
+    // real numbered-book reference is never found.
+    const retryFromNextChar = () => {
+      pattern.lastIndex = match!.index + 1;
+    };
+
+    if (!bookStr || !chapterStr) {
+      retryFromNextChar();
+      continue;
+    }
 
     const bookId = getBookId(bookStr);
-    if (!bookId) continue;
+    if (!bookId) {
+      retryFromNextChar();
+      continue;
+    }
 
     const chapter = parseInt(chapterStr);
-    if (isNaN(chapter)) continue;
+    if (isNaN(chapter)) {
+      retryFromNextChar();
+      continue;
+    }
 
     const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-    if (verse !== undefined && isNaN(verse)) continue;
+    if (verse !== undefined && isNaN(verse)) {
+      retryFromNextChar();
+      continue;
+    }
 
     let endChapter: number | undefined;
     let endVerse: number | undefined;
@@ -426,6 +446,7 @@ const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["sng", "SNG"],
   ["song", "SNG"],
   ["songofsolomon", "SNG"],
+  ["songofsongs", "SNG"],
   ["isa", "ISA"],
   ["isaiah", "ISA"],
   ["jer", "JER"],
