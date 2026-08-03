@@ -5,7 +5,7 @@ describe("createTestSeedBibleState", () => {
     const state = await createTestSeedBibleState();
 
     expect(state.bibleData).toBeDefined();
-    expect(state.config).toBeDefined();
+    expect(state.settings).toBeDefined();
     expect(state.theme).toBeDefined();
     expect(state.sidebar).toBeDefined();
     expect(state.tabs).toBeDefined();

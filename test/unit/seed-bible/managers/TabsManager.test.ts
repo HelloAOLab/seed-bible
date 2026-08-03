@@ -16,10 +16,12 @@ import {
   EXAMPLE_API_ENDPOINT,
   type WebResponseMap,
   aabBooks,
+  bsbBooks,
   createExampleManagerResponseMap,
   createResponse,
   makeChapter,
   makeExampleUrl,
+  translations,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
@@ -40,9 +42,9 @@ beforeEach(() => {
 
 afterEach(() => {
   logSpy.mockRestore();
-  // Clear any query params written by tab/URL sync effects so they don't
-  // leak into the next test's initial tab state.
-  window.history.replaceState(null, "", window.location.pathname);
+  // Reset to "/" so neither query params nor a book/chapter path written by
+  // tab/URL sync effects leak into the next test's initial tab state.
+  window.history.replaceState(null, "", "/");
   globalThis.fetch = originalFetch;
 });
 
@@ -68,6 +70,21 @@ function createHighlightsManagerMock() {
   return {
     getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
+}
+
+function createLoginManagerMock() {
+  const userId = signal<string | null>(null);
+  const profile = signal<{
+    name: string;
+    config?: Record<string, unknown>;
+  } | null>(null);
+  const updateProfile = vi.fn((newData: Record<string, unknown>) => {
+    profile.value = {
+      ...(profile.value ?? { name: "" }),
+      ...newData,
+    } as { name: string; config?: Record<string, unknown> };
+  });
+  return { userId, profile, profilePromise: null, updateProfile };
 }
 
 async function waitFor(
@@ -156,15 +173,24 @@ function createTabsManager({
   const dataManager = data || createDataManager();
   const highlightsManager = createHighlightsManagerMock() as any;
   const i18nManager = i18n || createI18nManager(navigation, ["en"]);
+  const login = createLoginManagerMock() as any;
   const tabs = createTabs(
     navigation,
     dataManager,
     highlightsManager,
     {} as any,
-    i18nManager
+    i18nManager,
+    login
   );
 
-  return { navigation, dataManager, highlightsManager, i18nManager, tabs };
+  return {
+    navigation,
+    dataManager,
+    highlightsManager,
+    i18nManager,
+    login,
+    tabs,
+  };
 }
 
 function createMockSharedSession(
@@ -354,7 +380,10 @@ describe("createTabs", () => {
     await waitForInitialLoad(secondTab.readingState);
     manager.selectTab(secondTab.id);
 
-    navigation.push("?translation=NIV&book=MAT&chapter=1");
+    // Absolute path "/" (rather than a bare relative "?...") so this
+    // simulates a genuine legacy query-param-only URL instead of inheriting
+    // whatever path-based URL the initial mount already wrote.
+    navigation.push("/?translation=NIV&book=MAT&chapter=1");
 
     const selectedTab = manager.tabs.value.find(
       (tab) => tab.id === manager.selectedTabId.value
@@ -368,6 +397,98 @@ describe("createTabs", () => {
     expect(selectedTab!.readingState.translationId.value).toBe("NIV");
     expect(selectedTab!.readingState.bookId.value).toBe("MAT");
     expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
+  });
+
+  it("syncs the selected tab to match a path-based URL", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    manager.selectTab(secondTab.id);
+
+    // 3-segment form: translation/book/chapter, language omitted (implies
+    // the default, "en").
+    navigation.push("/NIV/matthew/1");
+
+    const selectedTab = manager.tabs.value.find(
+      (tab) => tab.id === manager.selectedTabId.value
+    );
+    expect(selectedTab).toBeDefined();
+    await waitFor(
+      () => selectedTab!.readingState.translationId.value === "NIV"
+    );
+    await waitForInitialLoad(selectedTab!.readingState);
+
+    expect(selectedTab!.readingState.translationId.value).toBe("NIV");
+    expect(selectedTab!.readingState.bookId.value).toBe("MAT");
+    expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
+  });
+
+  // Regression for #1443, moved here from I18nManager.test.ts: the language
+  // segment is part of the same coordinated reading path as
+  // translation/book/chapter now, so an external URL change with an explicit
+  // `{lang}` segment must reload the actual i18next translations, not just
+  // update a signal.
+  it("reloads i18n when an external URL navigation specifies a different language", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation, i18nManager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    expect(i18nManager.language.value).toBe("en");
+
+    try {
+      // 4-segment form: explicit language segment.
+      navigation.push("/de/AAB/matthew/1");
+
+      await waitFor(() => i18nManager.language.value === "de");
+      expect(i18nManager.i18n.language).toBe("de");
+    } finally {
+      // i18next is a shared singleton across tests in this file — reset it
+      // so a later test doesn't inherit "de".
+      await i18nManager.changeLanguage("en");
+    }
+  });
+
+  // Note: the "re-commit the URL when the language changes outside of a
+  // navigation" behavior (the effect added alongside `commitSelectedTabToUrl`
+  // for exactly this case) isn't covered by its own direct test here.
+  // `i18n` is a real, module-level i18next singleton shared across every test
+  // in this file, and `createTabsManager()` never tears down the TabsManager
+  // instances created by earlier tests — so a second test directly calling
+  // `changeLanguage` fans out to every still-subscribed effect left over
+  // from prior tests (each reacting to the same global language change) and
+  // races to rewrite the shared jsdom URL. The test above already exercises
+  // the same effect indirectly (its `changeLanguage` call is what makes that
+  // test's own commit land), so the mechanism has real coverage without the
+  // added flakiness of a second, order-dependent case.
+
+  it("clears stale book/chapter from a legacy query-param URL when writing the path, even for an unrecognized book", async () => {
+    window.history.replaceState(null, "", "/?book=NOTABOOK&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // The language segment is always explicit now, even for the fully-default
+    // state (English UI, AAB translation).
+    const url = new URL(window.location.href);
+    expect(url.pathname).toBe("/en/AAB/notabook/1");
+    expect(url.searchParams.has("book")).toBe(false);
+    expect(url.searchParams.has("chapter")).toBe(false);
+  });
+
+  it("leaves bookId as the raw unresolved segment (not a default) so the reading state can detect it wasn't found", async () => {
+    window.history.replaceState(null, "", "/AAB/notabook/1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.bookId.value).toBe("notabook");
+    expect(readingState.chapterNumber.value).toBe(1);
+    expect(readingState.translationBooks.value).not.toBeNull();
+    expect(readingState.error.value).toBeNull();
   });
 
   it.each([
@@ -421,16 +542,114 @@ describe("createTabs", () => {
     expect(readingState.decorations.value[0]!.chapterNumber).toBe(1);
   });
 
-  it("reuses the translationId URL param instead of writing the translation param", async () => {
+  // The client-side counterpart of `legacyReadingUrlRedirect`. It has to
+  // correct the same set the server does, not just typos: `getBookId` also
+  // accepts aliases, other casings, and — through its `startsWith` fallback —
+  // anything merely starting with a book name.
+  // The fixture translation only carries GEN/EXO/MAT, so every case here
+  // corrects to one of those — otherwise the reader can't follow the
+  // correction and the URL is rewritten back to where it actually is.
+  it.each([
+    // Only resolves through the fuzzy fallback: "senesis" shares none of
+    // getBookId's "gen"/"genesis" prefixes (see ReadingUrlPath.test.ts).
+    ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/genocide/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
+    ["/AAB/gen/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
+  ])(
+    "self-heals %s to %s on mount",
+    async (from, expectedPath, expectedBookId) => {
+      window.history.replaceState(null, "", from);
+      setWebResponses(createExampleManagerResponseMap());
+
+      const { tabs: manager } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
+
+      const readingState = manager.tabs.value[0]!.readingState;
+      expect(readingState.bookId.value).toBe(expectedBookId);
+      expect(new URL(window.location.href).pathname).toBe(expectedPath);
+    }
+  );
+
+  it.each([
+    ["/AAB/senesis/1", "/en/AAB/genesis/1", "GEN"],
+    ["/AAB/matthew-effect/1", "/en/AAB/matthew/1", "MAT"],
+    ["/AAB/Genesis/1", "/en/AAB/genesis/1", "GEN"],
+  ])(
+    "self-heals %s to %s on external navigation",
+    async (from, expectedPath, expectedBookId) => {
+      setWebResponses(createExampleManagerResponseMap());
+      const { tabs: manager, navigation } = createTabsManager();
+      await waitForTabsToLoad(manager.tabs.value);
+
+      navigation.push(from);
+
+      await waitFor(
+        () => new URL(window.location.href).pathname === expectedPath
+      );
+      await waitFor(
+        () =>
+          manager.tabs.value[0]!.readingState.bookId.value === expectedBookId
+      );
+    }
+  );
+
+  it("settles a corrected URL after one rewrite rather than looping", async () => {
+    // The correction writes `buildReadingPath` output and re-parses it on the
+    // next navigation, so feeding its own result back in has to be a no-op.
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    navigation.push("/AAB/matthew-effect/1");
+    await waitFor(
+      () => new URL(window.location.href).pathname === "/en/AAB/matthew/1"
+    );
+
+    // Navigate to the corrected URL itself: it must be left exactly as-is.
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+    navigation.push("/en/AAB/matthew/1");
+    await waitFor(
+      () => manager.tabs.value[0]!.readingState.bookId.value === "MAT"
+    );
+
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/matthew/1");
+    // The only history write should be the `push` above — no correcting
+    // `replace` on top of it.
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(replaceSpy).not.toHaveBeenCalled();
+  });
+
+  it("writes book/chapter navigation to the URL path instead of query params", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    await readingState.selectChapter("EXO", 2);
+    await waitFor(() => readingState.bookId.value === "EXO");
+
+    const url = new URL(window.location.href);
+    expect(url.pathname).toBe("/en/AAB/exodus/2");
+    expect(url.searchParams.has("book")).toBe(false);
+    expect(url.searchParams.has("chapter")).toBe(false);
+  });
+
+  it("folds a legacy translationId query param into the path instead of writing it as a query param", async () => {
     window.history.replaceState(null, "", "?translationId=NIV&book=MAT");
     setWebResponses(createExampleManagerResponseMap());
 
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
+    // NIV isn't the default (AAB), so the language segment is shown
+    // explicitly even though it's "en".
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("translationId")).toBe("NIV");
-    expect(url.searchParams.get("translation")).toBeNull();
+    expect(url.pathname).toBe("/en/NIV/matthew/1");
+    expect(url.searchParams.has("translationId")).toBe(false);
+    expect(url.searchParams.has("translation")).toBe(false);
   });
 
   it("prioritizes the translationId URL param over the translation param for the initial tab", async () => {
@@ -447,7 +666,314 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
-  it("saves a full custom-endpoint URL to the translation URL param", async () => {
+  it("applies the saved profile translation to the selected tab once the profile loads, when the URL has no explicit translation", async () => {
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+    // Only the translation should change; the reading position is preserved.
+    expect(firstTab.readingState.bookId.value).toBe("MAT");
+    expect(firstTab.readingState.chapterNumber.value).toBe(1);
+  });
+
+  it("commits the restored translation to the URL immediately, so an unrelated query-param write elsewhere doesn't revert it", async () => {
+    // Regression test: an extension mounting its own `?today=open`-style URL
+    // param (via `syncSignalsToUrl`) right after the restore used to look
+    // like an external navigation to `syncSelectedTabFromUrl`, which read
+    // the (still translation-less) URL and reverted straight back to AAB.
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    // The restore should have committed the NIV translation (a `replace`, no
+    // history push) to the URL right away. NIV isn't the default translation,
+    // so the language segment is shown explicitly even though it's "en".
+    expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+
+    // Simulate an extension binding its own param to the URL after the
+    // restore, unrelated to translation/book/chapter.
+    navigation.updateQueryParams({ today: "open" });
+    await waitForInitialLoad(firstTab.readingState);
+
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+    expect(new URL(window.location.href).searchParams.get("today")).toBe(
+      "open"
+    );
+  });
+
+  it("does not let a slow initial tab load clobber a translation restored while it was still in flight", async () => {
+    // Regression test for the real root cause behind the "flickers to the
+    // saved translation, then reverts to the default" bug: a freshly created
+    // tab's own initial load (`loadInitialData`) is already in flight when
+    // the profile loads, and unconditionally writes its own (stale, default)
+    // translation/book/chapter when it finishes — with no awareness that a
+    // restore already landed in the meantime. This reproduces that ordering
+    // by holding the initial chapter fetch open until after the restore has
+    // had a chance to (wrongly) race ahead.
+    const responses = createExampleManagerResponseMap();
+    const aabChapterUrl = makeExampleUrl("/api/AAB/GEN/1.json");
+    let resolveAabChapter: () => void = () => undefined;
+    const aabChapterGate = new Promise<void>((resolve) => {
+      resolveAabChapter = resolve;
+    });
+
+    webGetMock.mockImplementation(async (url: string) => {
+      if (url === aabChapterUrl) {
+        await aabChapterGate;
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+
+    const { tabs: manager, login } = createTabsManager();
+    const firstTab = manager.tabs.value[0]!;
+
+    // Still stuck fetching the default translation's first chapter.
+    expect(firstTab.readingState.loading.value).toBe(true);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    // The restore should be waiting for the tab to go idle rather than racing
+    // ahead of the still-in-flight initial load.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    // Let the slow initial load finish.
+    resolveAabChapter();
+    await waitForInitialLoad(firstTab.readingState);
+
+    // The restore runs after, so it's the last write and isn't clobbered by
+    // the (now-finished) initial load.
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("does not let the restore overwrite a translation the user explicitly picks while it is still in flight", async () => {
+    // Regression test: the restore captures the saved translation id and does
+    // two awaits (waitForIdle, then fetching that translation's books) before
+    // actually switching. If the user explicitly picks a different
+    // translation while those awaits are pending, that deliberate choice must
+    // win — the restore should notice the reading state moved on and bail
+    // instead of clobbering it back to the (now stale) saved translation.
+    const responses: WebResponseMap = {
+      ...createExampleManagerResponseMap(),
+      [makeExampleUrl("/api/available_translations.json")]: createResponse({
+        translations: [...translations.translations, bsbBooks.translation],
+      }),
+      [makeExampleUrl("/api/BSB/books.json")]: createResponse(bsbBooks),
+      [makeExampleUrl("/api/BSB/GEN/1.json")]: createResponse(
+        makeChapter(bsbBooks, "GEN", 1)
+      ),
+    };
+
+    const nivBooksUrl = makeExampleUrl("/api/NIV/books.json");
+    let resolveNivBooks: () => void = () => undefined;
+    const nivBooksGate = new Promise<void>((resolve) => {
+      resolveNivBooks = resolve;
+    });
+
+    webGetMock.mockImplementation(async (url: string) => {
+      if (url === nivBooksUrl) {
+        await nivBooksGate;
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    const { tabs: manager, login } = createTabsManager();
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    // The restore is now waiting on the (gated) NIV books fetch. Simulate the
+    // user explicitly picking a different translation in the meantime.
+    await firstTab.readingState.selectTranslation("BSB");
+    expect(firstTab.readingState.translationId.value).toBe("BSB");
+
+    // Let the restore's books fetch finish.
+    resolveNivBooks();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await waitForInitialLoad(firstTab.readingState);
+
+    // The user's explicit pick must stick — the restore should have noticed
+    // the translation changed out from under it and bailed, not reverted to
+    // the (stale) saved translation.
+    expect(firstTab.readingState.translationId.value).toBe("BSB");
+  });
+
+  it("does not act on a restore for a tab that was closed while it was still in flight", async () => {
+    // Regression test: the restore fetches the saved translation's books
+    // asynchronously; if the tab is closed while that's in flight, the
+    // restore should notice and bail rather than run selectTranslationAndChapter
+    // against a disposed reading state nobody will ever see.
+    const responses = createExampleManagerResponseMap();
+    const nivBooksUrl = makeExampleUrl("/api/NIV/books.json");
+    let resolveNivBooks: () => void = () => undefined;
+    const nivBooksGate = new Promise<void>((resolve) => {
+      resolveNivBooks = resolve;
+    });
+
+    webGetMock.mockImplementation(async (url: string) => {
+      if (url === nivBooksUrl) {
+        await nivBooksGate;
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    const { tabs: manager, login } = createTabsManager();
+    const firstTab = manager.tabs.value[0]!;
+    await waitForInitialLoad(firstTab.readingState);
+
+    // A second tab so removing the first one doesn't leave the manager empty.
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    manager.selectTab(firstTab.id);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    // The restore is now waiting on the (gated) NIV books fetch. Close the
+    // tab it's targeting in the meantime.
+    manager.removeTab(firstTab.id);
+
+    resolveNivBooks();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Nothing to assert on the closed tab's reading state beyond "it didn't
+    // throw" — the point is the restore quietly no-ops instead of acting on
+    // a disposed reading state.
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+  });
+
+  it("keeps an explicit URL translation over a saved profile translation", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "?translation=NIV&book=MAT&chapter=1"
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "AAB" } };
+
+    // The profile-apply effect runs synchronously off the profile signal; a
+    // differing saved value must not override an explicit URL translation.
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("falls back to the saved translation's first book when it doesn't contain the current book", async () => {
+    // No `?book=` param, so the initial tab is on the default book (GEN),
+    // which AAB has but NIV (mocked with a single book, MAT) does not.
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+    expect(firstTab.readingState.bookId.value).toBe("GEN");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    // Falls back to NIV's first available book/chapter instead of failing.
+    expect(firstTab.readingState.bookId.value).toBe("MAT");
+    expect(firstTab.readingState.chapterNumber.value).toBe(1);
+    expect(firstTab.readingState.error.value).toBeNull();
+  });
+
+  it("does not persist a translation change by itself — only the Bible selector's explicit pick does", async () => {
+    // TabsManager only reads the saved translation (to restore it on login);
+    // persisting it is BibleSelectorManager's job, wired to the explicit
+    // pick in the selector UI. A translation change driven directly through
+    // the reading state (as any of the many non-selector call sites do)
+    // should never write to the profile on its own.
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: {} };
+
+    const firstTab = manager.tabs.value[0]!;
+    await firstTab.readingState.selectTranslation("NIV");
+
+    expect(login.updateProfile).not.toHaveBeenCalled();
+    expect(login.profile.value).toEqual({ name: "", config: {} });
+  });
+
+  it("does not persist a translation change driven by URL sync (e.g. browser back/forward or a deep link)", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: {} };
+
+    navigation.push("/en/NIV/matthew/1");
+
+    const selectedTab = manager.tabs.value.find(
+      (tab) => tab.id === manager.selectedTabId.value
+    )!;
+    await waitFor(() => selectedTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(selectedTab.readingState);
+
+    expect(login.updateProfile).not.toHaveBeenCalled();
+    expect(login.profile.value).toEqual({ name: "", config: {} });
+  });
+
+  it("encodes a full custom-endpoint translation URL as a single path segment", async () => {
     window.history.replaceState(
       null,
       "",
@@ -464,14 +990,15 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager({ dataManager });
     await waitForTabsToLoad(manager.tabs.value);
 
+    // Not the fully-default translation, so the language segment is shown
+    // explicitly even though it's "en".
+    const expectedPathname = `/en/${encodeURIComponent(customTranslationUrl)}/matthew/1`;
     await waitFor(
-      () =>
-        new URL(window.location.href).searchParams.get("translation") ===
-        customTranslationUrl
+      () => new URL(window.location.href).pathname === expectedPathname
     );
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("translationId")).toBeNull();
-    expect(url.searchParams.get("translation")).toBe(customTranslationUrl);
+    expect(url.searchParams.has("translationId")).toBe(false);
+    expect(url.searchParams.has("translation")).toBe(false);
     expect(buildTranslationIdSpy).toHaveBeenCalledWith("NIV");
   });
 
@@ -621,7 +1148,8 @@ describe("createTabs", () => {
     expect(replaceSpy).toHaveBeenCalledTimes(3);
 
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("chapter")).toBe("5");
+    expect(url.pathname).toBe("/en/AAB/genesis/5");
+    expect(url.searchParams.has("chapter")).toBe(false);
   });
 
   it("switching tabs replaces the URL without pushing a new history entry", async () => {
@@ -641,7 +1169,7 @@ describe("createTabs", () => {
 
     manager.selectTab(manager.tabs.value[0]!.id);
     await waitFor(
-      () => new URL(window.location.href).searchParams.get("book") === "GEN"
+      () => new URL(window.location.href).pathname === "/en/AAB/genesis/1"
     );
 
     expect(pushSpy).not.toHaveBeenCalled();
@@ -658,8 +1186,10 @@ describe("createTabs", () => {
     const pushSpy = vi.spyOn(window.history, "pushState");
 
     // Simulate a back/forward / deep-link URL change; the reader should update
-    // the reading state without writing the URL back.
-    navigation.replace("?book=EXO&chapter=2");
+    // the reading state without writing the URL back. Absolute path "/" (not
+    // a bare relative "?...") so this is a genuine legacy query-param-only
+    // URL rather than inheriting the path the initial mount already wrote.
+    navigation.replace("/?book=EXO&chapter=2");
     await waitFor(() => readingState.bookId.value === "EXO");
     await waitForInitialLoad(readingState);
 

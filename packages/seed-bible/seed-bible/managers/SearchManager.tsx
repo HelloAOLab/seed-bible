@@ -1,8 +1,10 @@
-import * as Typesense from "typesense";
+// Type-only: erased at build time, so it costs nothing in the bundle. The
+// runtime client is loaded on demand in `getClient` below.
+import type * as Typesense from "typesense";
 import * as z from "zod/v4";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 
-const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");
+const TYPESENSE_NODE_URL = new URL("https://search.seedbible.org");
 const TYPESENSE_API_KEY = "5A496vKeCWhVxntITkcrZ6i7Fehh9lCB";
 const VERSE_COLLECTION_PREFIX = "bibleVerses";
 
@@ -215,16 +217,29 @@ export function createSearchManager(): SearchManager {
     };
   }
 
-  const client = new Typesense.Client({
-    apiKey: TYPESENSE_API_KEY,
-    nodes: [
-      {
-        host: TYPESENSE_NODE_URL.hostname,
-        port: Number(TYPESENSE_NODE_URL.port || 443),
-        protocol: TYPESENSE_NODE_URL.protocol.replace(":", ""),
-      },
-    ],
-  });
+  // Typesense (and the copy of axios it brings with it) is ~150 KB, and nobody
+  // needs it until they run their first search — so it is fetched then rather
+  // than at boot. The promise is cached, so the chunk is downloaded once and
+  // every later search reuses the same client.
+  let clientPromise: Promise<Typesense.Client> | null = null;
+  const getClient = (): Promise<Typesense.Client> => {
+    if (!clientPromise) {
+      clientPromise = import("typesense").then(
+        (Typesense) =>
+          new Typesense.Client({
+            apiKey: TYPESENSE_API_KEY,
+            nodes: [
+              {
+                host: TYPESENSE_NODE_URL.hostname,
+                port: Number(TYPESENSE_NODE_URL.port || 443),
+                protocol: TYPESENSE_NODE_URL.protocol.replace(":", ""),
+              },
+            ],
+          })
+      );
+    }
+    return clientPromise;
+  };
 
   const searchVerses = async (
     language: string,
@@ -235,6 +250,7 @@ export function createSearchManager(): SearchManager {
     const filterBy = buildVerseFilterBy(translationId, filters);
 
     const collection = `${VERSE_COLLECTION_PREFIX}.${language}`;
+    const client = await getClient();
     return await client
       .collections<VerseSearchDocument>(collection)
       .documents()

@@ -39,8 +39,9 @@ import {
   type ServerResponse,
 } from "node:http";
 import { pathToFileURL } from "node:url";
-import { Readable } from "node:stream";
+import { pipeline, Readable } from "node:stream";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
+import { createGzip } from "node:zlib";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
@@ -99,7 +100,7 @@ interface ClientConfig {
   acceptedLanguages: string[];
 }
 
-type RenderFn = (opts: {
+export type RenderFn = (opts: {
   path: string;
   config: {
     basePath: string;
@@ -108,16 +109,96 @@ type RenderFn = (opts: {
     acceptedLanguages: string[];
   };
   html: string;
-}) => Promise<string>;
+}) => Promise<
+  | { html: string; notFound?: true }
+  | { redirectTo: string; redirectStatus?: number; vary?: string }
+  | string
+>;
 
 /** Derives per-client render config (mobile, languages) from request headers. */
-function clientConfigFromHeaders(headers: IncomingHttpHeaders): ClientConfig {
+export function clientConfigFromHeaders(
+  headers: IncomingHttpHeaders
+): ClientConfig {
   const browser = Bowser.getParser(headers["user-agent"]!);
   const renderedAsMobile = browser.getPlatformType(true) === "mobile";
   const acceptedLanguages = headers["accept-language"]
     ? parseAcceptLanguages(headers["accept-language"])
     : [];
   return { renderedAsMobile, acceptedLanguages };
+}
+
+// ─── Gzip compression ────────────────────────────────────────────────────────
+
+/** Below this size, gzip's overhead isn't worth the CPU cost. */
+const GZIP_THRESHOLD_BYTES = 1024;
+
+/** Content-Type prefixes worth gzipping; binary/already-compressed formats are excluded. */
+const COMPRESSIBLE_CONTENT_TYPE_RE =
+  /^(text\/|application\/(json|javascript|manifest\+json)|image\/svg)/i;
+
+function acceptsGzip(headers: IncomingHttpHeaders): boolean {
+  const acceptEncoding = headers["accept-encoding"];
+  return typeof acceptEncoding === "string" && /\bgzip\b/i.test(acceptEncoding);
+}
+
+/**
+ * Resolves once the response body has actually been flushed to the socket.
+ *
+ * Both the gzip path in `sendHtml` and the asset proxy stream their body with
+ * `pipeline`, which returns before the transfer completes. Timing a request
+ * without waiting for this would stop the clock too early and understate
+ * latency on nearly every page. `close` is listened for as well as `finish` so
+ * an aborted connection still settles this rather than leaking a span.
+ */
+function responseFinished(res: ServerResponse): Promise<void> {
+  if (res.writableFinished) return Promise.resolve();
+  return new Promise((resolve) => {
+    res.once("finish", () => resolve());
+    res.once("close", () => resolve());
+  });
+}
+
+/** Logs a streaming response failure; `pipeline` has already torn down every stage. */
+function logStreamFailure(
+  context: string,
+  err: NodeJS.ErrnoException | null
+): void {
+  if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
+    console.error(`${context}:`, err);
+  }
+}
+
+/**
+ * Writes an HTML response, gzip-compressing it when the client supports it
+ * and the body is large enough for compression to be worthwhile. Compression
+ * is streamed through a Transform rather than buffered in full, so only one
+ * chunk's worth of compressed output is held at a time.
+ */
+function sendHtml(
+  req: IncomingMessage,
+  res: ServerResponse,
+  statusCode: number,
+  html: string,
+  extraHeaders: Record<string, string> = {}
+): void {
+  const body = Buffer.from(html, "utf8");
+  const headers: Record<string, string> = {
+    ...extraHeaders,
+    "content-type": "text/html; charset=utf-8",
+    vary: "accept-encoding",
+  };
+
+  if (body.length >= GZIP_THRESHOLD_BYTES && acceptsGzip(req.headers)) {
+    headers["content-encoding"] = "gzip";
+    res.writeHead(statusCode, headers);
+    pipeline(Readable.from(body), createGzip(), res, (err) =>
+      logStreamFailure("gzip HTML response failed", err)
+    );
+    return;
+  }
+
+  res.writeHead(statusCode, headers);
+  res.end(body);
 }
 
 // ─── Production: multi-branch host ───────────────────────────────────────────
@@ -222,7 +303,7 @@ async function loadHtml(branch: string, buildId: string): Promise<string> {
 }
 
 // ─── Routing ─────────────────────────────────────────────────────────────────
-interface Route {
+export interface Route {
   branch: string;
   /** Path prefix this deployment is mounted under (no trailing slash). */
   basePath: string;
@@ -274,7 +355,7 @@ function resolveRoute(rawUrl: string): Route {
  * `preRenderedHtml` is served as-is instead of failing the request — the
  * client still gets a working page (just without server-rendered content).
  */
-async function renderAndRespond(
+export async function renderAndRespond(
   req: IncomingMessage,
   res: ServerResponse,
   render: RenderFn,
@@ -285,11 +366,11 @@ async function renderAndRespond(
     req.headers
   );
 
-  let html: string;
+  let result: Awaited<ReturnType<RenderFn>>;
   const renderStart = performance.now();
   let renderFailed = false;
   try {
-    html = await withSpan(
+    result = await withSpan(
       "ssr.render",
       {
         attributes: {
@@ -319,18 +400,32 @@ async function renderAndRespond(
     // from the outside the site looks healthy. Flag it on the request span and
     // count it — otherwise the degradation is invisible.
     markRenderDegraded();
-    html = preRenderedHtml;
+    result = { html: preRenderedHtml };
   } finally {
     recordRender(renderStart, route.branch, renderFailed);
   }
 
-  res.writeHead(200, {
-    "content-type": "text/html; charset=utf-8",
-    // The HTML is per-build and cheap to regenerate; let the CDN cache it
-    // briefly but always revalidate so a pointer flip is picked up fast.
+  if (typeof result === "object" && result !== null && "redirectTo" in result) {
+    res.writeHead(result.redirectStatus ?? 301, {
+      location: result.redirectTo,
+      ...(result.vary ? { vary: result.vary } : {}),
+    });
+    res.end();
+    return;
+  }
+
+  const notFound =
+    typeof result === "object" &&
+    result !== null &&
+    "notFound" in result &&
+    result.notFound;
+  const html = typeof result === "string" ? result : result.html;
+
+  // The HTML is per-build and cheap to regenerate; let the CDN cache it
+  // briefly but always revalidate so a pointer flip is picked up fast.
+  sendHtml(req, res, notFound ? 404 : 200, html, {
     "cache-control": "public, max-age=0, must-revalidate",
   });
-  res.end(html);
 }
 
 /**
@@ -407,9 +502,33 @@ async function proxyAsset(
     }
   });
 
+  // Only gzip a full 200 response — a 206 (range) or 304 (not modified) has no
+  // body worth compressing, and re-encoding a byte range would corrupt it.
+  // This also assumes `fetch` has fully decoded any upstream content-coding
+  // (it does, transparently) — if the asset host ever served a coding undici
+  // leaves encoded, this would gzip an already-encoded body and corrupt it.
+  const shouldGzip =
+    upstream.status === 200 &&
+    !!upstream.body &&
+    COMPRESSIBLE_CONTENT_TYPE_RE.test(headers["content-type"] ?? "") &&
+    acceptsGzip(req.headers);
+  if (shouldGzip) headers["content-encoding"] = "gzip";
+  headers["vary"] = "accept-encoding";
+
   res.writeHead(upstream.status, headers);
   if (upstream.body) {
-    Readable.fromWeb(upstream.body as NodeReadableStream<Uint8Array>).pipe(res);
+    const upstreamBody = Readable.fromWeb(
+      upstream.body as NodeReadableStream<Uint8Array>
+    );
+    if (shouldGzip) {
+      pipeline(upstreamBody, createGzip(), res, (err) =>
+        logStreamFailure(`Asset proxy gzip failed for ${pathAndQuery}`, err)
+      );
+    } else {
+      pipeline(upstreamBody, res, (err) =>
+        logStreamFailure(`Asset proxy failed for ${pathAndQuery}`, err)
+      );
+    }
   } else {
     res.end();
   }
@@ -472,6 +591,9 @@ async function handle(
     async (span) => {
       try {
         await dispatch(req, res, url, parsedUrl, isAssetRequest, span);
+        // Gzipped and proxied responses stream after dispatch returns; wait for
+        // the body to be flushed so the recorded duration covers it.
+        await responseFinished(res);
       } finally {
         setResponseStatus(span, res.statusCode);
         recordHttpRequest(start, {
@@ -549,8 +671,10 @@ async function dispatch(
     // even though the metric attribute has to be clamped.
     setRouteAttributes(span, route.branch, pointer?.buildId, ssrAllowed);
     if (!pointer) {
-      res.writeHead(404, { "content-type": "text/html" });
-      res.end(
+      sendHtml(
+        req,
+        res,
+        404,
         `<!doctype html><meta charset=utf-8><h1>404</h1><p>No deployment for branch <code>${route.branch}</code>.</p>`
       );
       return;
@@ -600,18 +724,18 @@ async function dispatch(
     }
 
     // No SSR for this branch — serve the pre-rendered HTML verbatim.
-    res.writeHead(200, {
-      "content-type": "text/html; charset=utf-8",
+    sendHtml(req, res, 200, preRenderedHtml, {
       "cache-control": "public, max-age=0, must-revalidate",
     });
-    res.end(preRenderedHtml);
   } catch (err) {
     console.error(`Render failed for ${route.branch} (${url}):`, err);
     // Swallowed here so the client still gets a page; record it on the span so
     // it is not swallowed from the trace too.
     recordError(span, err);
-    res.writeHead(500, { "content-type": "text/html" });
-    res.end(
+    sendHtml(
+      req,
+      res,
+      500,
       "<!doctype html><meta charset=utf-8><h1>500</h1><p>Render error.</p>"
     );
   }
@@ -732,8 +856,9 @@ async function startDevServer(): Promise<void> {
       // 2. Apply Vite HTML transforms (injects the HMR client + plugin
       //    preambles).
       const transformed = await vite.transformIndexHtml(
-        req.originalUrl,
-        template
+        "/index.html",
+        template,
+        req.originalUrl
       );
 
       // 3. Load the server entry. ssrLoadModule transforms ESM source to be
@@ -748,9 +873,9 @@ async function startDevServer(): Promise<void> {
 
       // 4. Render the app HTML.
       const renderStart = performance.now();
-      let html: string;
+      let result: Awaited<ReturnType<RenderFn>>;
       try {
-        html = await withSpan(
+        result = await withSpan(
           "ssr.render",
           {
             attributes: {
@@ -776,8 +901,26 @@ async function startDevServer(): Promise<void> {
       }
       recordRender(renderStart, ROOT_BRANCH, false);
 
+      // 5. Send the rendered HTML back (or redirect, for legacy query-param
+      // URLs being migrated to path-based routes, or a 404 for an
+      // unrecognized book that couldn't be corrected).
+      if (typeof result === "object" && result && "redirectTo" in result) {
+        if (result.vary) {
+          res.set("Vary", result.vary);
+        }
+        res.redirect(result.redirectStatus ?? 301, result.redirectTo);
+        return;
+      }
+
+      const notFound =
+        typeof result === "object" &&
+        result !== null &&
+        "notFound" in result &&
+        result.notFound;
+      const html = typeof result === "string" ? result : result.html;
+
       // 5. Send the rendered HTML back.
-      res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      sendHtml(req, res, notFound ? 404 : 200, html);
     } catch (e) {
       if (e instanceof Error) {
         // Let Vite fix the stack trace so it maps back to the actual source.
@@ -789,7 +932,7 @@ async function startDevServer(): Promise<void> {
       );
       markRenderDegraded();
       // Serve the unrendered index.html rather than failing the request.
-      res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      sendHtml(req, res, 200, template);
     }
   });
 
@@ -802,8 +945,12 @@ async function startDevServer(): Promise<void> {
   installShutdownHandlers(server, telemetry);
 }
 
-if (IS_PRODUCTION) {
-  startProdServer();
-} else {
-  void startDevServer();
+// Vitest sets this in every worker process — skipped there so importing this
+// module for its exported helpers doesn't also bind a real port.
+if (process.env.VITEST !== "true") {
+  if (IS_PRODUCTION) {
+    startProdServer();
+  } else {
+    void startDevServer();
+  }
 }

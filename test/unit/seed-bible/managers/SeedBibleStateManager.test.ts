@@ -151,7 +151,7 @@ describe("createSeedBibleState", () => {
   it("created with default values", async () => {
     const state = await createState();
 
-    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.settings.settings.value.disablePanels).toBe(false);
     expect(state.app.panelsEnabled.value).toBe(true);
 
     expect(state.tabs.tabs.value).toHaveLength(1);
@@ -183,7 +183,7 @@ describe("createSeedBibleState", () => {
 
     const state = await createState();
 
-    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.settings.settings.value.disablePanels).toBe(false);
     expect(state.app.panelsEnabled.value).toBe(true);
 
     expect(state.tabs.tabs.value).toHaveLength(1);
@@ -206,21 +206,49 @@ describe("createSeedBibleState", () => {
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
-  it("echoes an explicit ?lang= in the canonical URL so language-specific sitemap URLs stay self-canonical", async () => {
+  it("always spells out the language segment in the canonical URL", async () => {
+    // The three-segment form is a redirect entry point, not a destination, so
+    // it must never be advertised as canonical.
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
     const state = await createState();
-
-    // A crawler lands on a language-specific sitemap URL.
-    window.history.replaceState(null, "", "/?lang=es");
-
-    expect(state.app.canonicalUrl.value).toContain("lang=es");
-  });
-
-  it("omits lang from the canonical URL when the page URL has none", async () => {
-    const state = await createState();
-
-    window.history.replaceState(null, "", "/?foo=bar");
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
 
     expect(state.app.canonicalUrl.value).not.toContain("lang=");
+    expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/1");
+  });
+
+  it("keys the canonical URL to the translation, not the reader's UI language", async () => {
+    // A French interface over the English AAB is the same scripture as an
+    // English one, so both have to point at the single indexable copy rather
+    // than each claiming to be canonical.
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    try {
+      await state.i18n.changeLanguage("de");
+      expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/1");
+    } finally {
+      await state.i18n.changeLanguage("en");
+    }
+  });
+
+  it("still produces the real canonical URL when the chapter fails to load", async () => {
+    // Regression for `<link rel="canonical" href="/">`: this used to key off
+    // `chapterData`, so any load failure pointed the page at the site root.
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the fetch fails.
+    jsdom.reconfigure({
+      url: "https://example.com/en/AAB/genesis/2?useFreeBibleAPI=true",
+    });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.error.value !== null);
+
+    expect(readingState.chapterData.value).toBeNull();
+    expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/2");
   });
 
   it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {
@@ -560,7 +588,7 @@ describe("createSeedBibleState", () => {
       state.tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
       state.app.selectTab("tab-2");
 
-      state.config.setDisablePanels(true);
+      state.settings.setDisablePanels(true);
 
       expect(state.app.panelsEnabled.value).toBe(false);
       expect(state.app.effectiveSlots.value).toHaveLength(1);

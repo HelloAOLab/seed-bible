@@ -1,4 +1,5 @@
 import { effect, signal, type Signal } from "@preact/signals";
+import i18n from "i18next";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -7,12 +8,72 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
+import type { ThemeHighlightColor } from "./ThemeManager";
 import { parseNumber } from "./Utils";
 
 export type BookOrientation = "traditional" | "tanakh";
 export type UISize = "S" | "M" | "L" | "XL";
 export type TextAlignment = "unset" | "left" | "center" | "right";
 export type TextSectionId = "bookTitle" | "heading" | "verse";
+
+export type TextSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
+
+export type SettingsPresetId = "minimal" | "full";
+
+interface FontSizePanelsPreset {
+  fontSize: TextSize;
+  disablePanels: boolean;
+}
+
+const FULL_CONFIG: FontSizePanelsPreset = {
+  disablePanels: false,
+  fontSize: "M",
+};
+
+const MINIMAL_CONFIG: FontSizePanelsPreset = {
+  disablePanels: true,
+  fontSize: "M",
+};
+
+const DEFAULT_CONFIG_PRESETS: Record<SettingsPresetId, FontSizePanelsPreset> = {
+  minimal: MINIMAL_CONFIG,
+  full: FULL_CONFIG,
+};
+
+const DEFAULT_SETTINGS_PRESET: SettingsPresetId = "full";
+
+function getPresetConfig(
+  settingsPreset: SettingsPresetId
+): FontSizePanelsPreset {
+  return DEFAULT_CONFIG_PRESETS[settingsPreset] ?? FULL_CONFIG;
+}
+
+function parseSettingsPreset(value: unknown): SettingsPresetId {
+  if (value === "minimal" || value === "full") {
+    return value;
+  }
+
+  return DEFAULT_SETTINGS_PRESET;
+}
+
+function parseFontSize(value: unknown, fallback: TextSize): TextSize {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  switch (normalized) {
+    case "XS":
+    case "S":
+    case "M":
+    case "L":
+    case "XL":
+    case "XXL":
+      return normalized;
+    default:
+      return fallback;
+  }
+}
 
 export interface SelectionUIBehavior {
   showSelectedItems: boolean;
@@ -55,6 +116,8 @@ export interface ToolbarCustomization {
 }
 
 export interface AppSettings {
+  fontSize: TextSize;
+  disablePanels: boolean;
   bookOrientation: BookOrientation;
   uiSize: UISize;
   selectionUI: SelectionUIBehavior;
@@ -66,9 +129,17 @@ export interface AppSettings {
   customHighlightColors: string[];
   /** Horizontal padding (px) applied to the bible reader container. */
   scriptureMargin: number;
+  /** Selected theme preset id (owned/consumed by ThemeManager). */
+  themeId: string;
+  /** User color overrides layered on top of the selected theme preset. */
+  customTheme: Record<string, string>;
+  /** User highlight-color overrides layered on top of the preset highlights. */
+  customHighlights: Record<string, Partial<ThemeHighlightColor>>;
 }
 
 export const AppSettingsSchema = z.object({
+  fontSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+  disablePanels: z.boolean(),
   bookOrientation: z.enum(["traditional", "tanakh"]),
   uiSize: z.enum(["S", "M", "L", "XL"]),
   selectionUI: z.object({
@@ -128,6 +199,16 @@ export const AppSettingsSchema = z.object({
   keepScreenAwake: z.boolean(),
   customHighlightColors: z.array(z.string()).max(3),
   scriptureMargin: z.number().min(0).max(45),
+  themeId: z.string(),
+  customTheme: z.record(z.string(), z.string()),
+  customHighlights: z.record(
+    z.string(),
+    z.object({
+      color: z.string().optional(),
+      fontColor: z.string().optional(),
+      wordsOfJesusFontColor: z.string().optional(),
+    })
+  ),
 });
 
 export const DEFAULT_SCRIPTURE_MARGIN = 27;
@@ -135,6 +216,8 @@ export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 
+const TAG_FONT_SIZE = "app.fontSize";
+const TAG_DISABLE_PANELS = "app.disablePanels";
 const TAG_BOOK_ORIENTATION = "app.bookOrientation";
 const TAG_UI_SIZE = "app.uiSize";
 const TAG_SELECTION_UI = "app.selectionUI";
@@ -144,9 +227,13 @@ const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
+const TAG_THEME_ID = "app.themeId";
+const TAG_CUSTOM_THEME = "app.customTheme";
+const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 
-// Profile.config keys are stored unprefixed (matching the pattern set by
-// ConfigManager for `fontSize`, `lang`, `disablePanels`).
+// Profile.config keys are stored unprefixed.
+const PROFILE_FONT_SIZE = "fontSize";
+const PROFILE_DISABLE_PANELS = "disablePanels";
 const PROFILE_BOOK_ORIENTATION = "bookOrientation";
 const PROFILE_UI_SIZE = "uiSize";
 const PROFILE_SELECTION_UI = "selectionUI";
@@ -156,12 +243,14 @@ const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
 const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
+const PROFILE_THEME_ID = "themeId";
+const PROFILE_CUSTOM_THEME = "customTheme";
+const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
   { value: "'Plus Jakarta Sans', sans-serif", label: "Plus Jakarta Sans" },
-  { value: "'Satoshi', system-ui, sans-serif", label: "Satoshi" },
-  { value: "'DM Sans', sans-serif", label: "DM Sans" },
+  { value: "system-ui, sans-serif", label: "System UI" },
   { value: "'Helvetica Neue', sans-serif", label: "Helvetica Neue" },
   { value: "'Roboto', sans-serif", label: "Roboto" },
   { value: "'Inter', sans-serif", label: "Inter" },
@@ -254,6 +343,8 @@ const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
+  fontSize: "M",
+  disablePanels: false,
   bookOrientation: "traditional",
   uiSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
@@ -263,6 +354,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   keepScreenAwake: false,
   customHighlightColors: [],
   scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
+  themeId: "light",
+  customTheme: {},
+  customHighlights: {},
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -278,6 +372,63 @@ function parseCustomHighlightColors(value: unknown): string[] {
   return parsed
     .filter((v): v is string => typeof v === "string" && v.length > 0)
     .slice(0, MAX_CUSTOM_HIGHLIGHT_COLORS);
+}
+
+function parseThemeId(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim().length > 0
+    ? value
+    : fallback;
+}
+
+function parseStringRecord(value: unknown): Record<string, string> {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return {};
+  }
+  const result: Record<string, string> = {};
+  for (const [key, v] of Object.entries(parsed as Record<string, unknown>)) {
+    if (typeof v === "string") {
+      result[key] = v;
+    }
+  }
+  return result;
+}
+
+function parseHighlightOverrides(
+  value: unknown
+): Record<string, Partial<ThemeHighlightColor>> {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return {};
+  }
+  const obj = parsed as Record<string, unknown>;
+  const overrides: Record<string, Partial<ThemeHighlightColor>> = {};
+  for (const [id, entry] of Object.entries(obj)) {
+    if (!entry || typeof entry !== "object") continue;
+    const e = entry as Record<string, unknown>;
+    const sub: Partial<ThemeHighlightColor> = {};
+    if (typeof e.color === "string") sub.color = e.color;
+    if (typeof e.fontColor === "string") sub.fontColor = e.fontColor;
+    if (typeof e.wordsOfJesusFontColor === "string") {
+      sub.wordsOfJesusFontColor = e.wordsOfJesusFontColor;
+    }
+    if (Object.keys(sub).length > 0) overrides[id] = sub;
+  }
+  return overrides;
 }
 
 function parseBoolean(value: unknown, fallback: boolean): boolean {
@@ -538,6 +689,17 @@ function applyTextConfigToCSSVars(config: TextConfig) {
 
 export interface SettingsManager {
   settings: Signal<AppSettings>;
+  setFontSize: (fontSize: TextSize) => void;
+  setDisablePanels: (disablePanels: boolean) => void;
+  /**
+   * Persists the user's chosen UI language to their profile. Wired into
+   * `I18nManager`'s `requestLanguageChange` (the selector path) via
+   * `setLanguagePersister`, so it runs ONLY for explicit selector choices —
+   * never for URL-driven changes (a shared `?lang=` link or browser
+   * back/forward), which stay view-only, and never for the profile-to-i18n
+   * sync effect (which would just write the value straight back).
+   */
+  persistLanguage: (language: string) => void;
   setBookOrientation: (orientation: BookOrientation) => void;
   setUISize: (size: UISize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
@@ -561,6 +723,14 @@ export interface SettingsManager {
   removeCustomHighlightColor: (color: string) => void;
   setAllSettings: (next: AppSettings) => void;
   resetToDefaults: () => void;
+  /** Persists the selected theme preset id. Consumed by ThemeManager. */
+  setThemeId: (themeId: string) => void;
+  /** Persists theme color overrides. Consumed by ThemeManager. */
+  setCustomTheme: (next: Record<string, string>) => void;
+  /** Persists theme highlight-color overrides. Consumed by ThemeManager. */
+  setCustomHighlights: (
+    next: Record<string, Partial<ThemeHighlightColor>>
+  ) => void;
 }
 
 export function createSettings(
@@ -568,109 +738,181 @@ export function createSettings(
   login: LoginManager,
   navigation: NavigationManager
 ): SettingsManager {
-  const configBot = {
-    tags: Object.fromEntries(
-      navigation.currentUrl.value.searchParams
-    ) as Record<string, string | boolean | number>,
-  };
+  // A per-instance, non-persisted overlay: seeded once from the URL's query
+  // params at construction (deep-linking — e.g. a partner site embedding
+  // Seed Bible with `?app.fontSize=XL` to preset a starting value), then
+  // kept up to date by every setter below (mirroring the pre-merge
+  // `configBot.tags` this replaces). It sits between `profile` and
+  // `login.localConfig` in the read precedence, so a URL param only ever
+  // sets the *starting* value for this session: if `readSettings()` instead
+  // re-read `navigation.currentUrl.value` fresh on every call, the
+  // still-present param would permanently outrank `login.localConfig`,
+  // reverting every anonymous edit back to the URL's value in the same tick
+  // it was made (since every setter's `saveProfileConfigValue` call writes
+  // to `login.localConfig`, which the effect below reactively re-reads).
+  const sessionOverrides: Record<string, unknown> = Object.fromEntries(
+    navigation.currentUrl.value.searchParams
+  );
 
-  // Read each setting with the precedence: user profile > local configBot tag
-  // > default. The profile is the source of truth when the user is logged
-  // in; configBot.tags acts as a local cache for anonymous use and offline
-  // bootstrapping before the profile loads.
+  // Read each setting with the precedence: user profile > this session's
+  // URL/override cache > `login.localConfig` (the anonymous, device-only
+  // store shared with every other config/settings caller via
+  // `saveProfileConfigValue`) > preset/default. The profile is the source
+  // of truth once logged in; `login.localConfig` covers anonymous use and
+  // offline bootstrapping before the profile loads — every setter below
+  // already writes there via `saveProfileConfigValue`, so reading it back
+  // here is what makes anonymous edits survive a refresh.
   const readSettings = (): AppSettings => {
     const profile = login.profile.value;
+    const local = login.localConfig.value;
+    const settingsPreset = parseSettingsPreset(sessionOverrides.settingsPreset);
+    const presetConfig = getPresetConfig(settingsPreset);
+
+    const read = (profileKey: string, urlKey: string): unknown =>
+      getProfileConfigValue(profile, profileKey) ??
+      sessionOverrides[urlKey] ??
+      local[profileKey];
+
     return {
+      fontSize: parseFontSize(
+        read(PROFILE_FONT_SIZE, TAG_FONT_SIZE),
+        presetConfig.fontSize
+      ),
+      disablePanels: parseBoolean(
+        read(PROFILE_DISABLE_PANELS, TAG_DISABLE_PANELS),
+        presetConfig.disablePanels
+      ),
       bookOrientation: parseBookOrientation(
-        getProfileConfigValue(profile, PROFILE_BOOK_ORIENTATION) ??
-          configBot.tags[TAG_BOOK_ORIENTATION],
+        read(PROFILE_BOOK_ORIENTATION, TAG_BOOK_ORIENTATION),
         DEFAULT_SETTINGS.bookOrientation
       ),
       uiSize: parseUISize(
-        getProfileConfigValue(profile, PROFILE_UI_SIZE) ??
-          configBot.tags[TAG_UI_SIZE],
+        read(PROFILE_UI_SIZE, TAG_UI_SIZE),
         DEFAULT_SETTINGS.uiSize
       ),
       selectionUI: parseSelectionUI(
-        getProfileConfigValue(profile, PROFILE_SELECTION_UI) ??
-          configBot.tags[TAG_SELECTION_UI],
+        read(PROFILE_SELECTION_UI, TAG_SELECTION_UI),
         DEFAULT_SETTINGS.selectionUI
       ),
       scriptureElements: parseScriptureElements(
-        getProfileConfigValue(profile, PROFILE_SCRIPTURE_ELEMENTS) ??
-          configBot.tags[TAG_SCRIPTURE_ELEMENTS],
+        read(PROFILE_SCRIPTURE_ELEMENTS, TAG_SCRIPTURE_ELEMENTS),
         DEFAULT_SETTINGS.scriptureElements
       ),
       textConfig: parseTextConfig(
-        getProfileConfigValue(profile, PROFILE_TEXT_CONFIG) ??
-          configBot.tags[TAG_TEXT_CONFIG],
+        read(PROFILE_TEXT_CONFIG, TAG_TEXT_CONFIG),
         DEFAULT_SETTINGS.textConfig
       ),
       toolbar: parseToolbarConfig(
-        getProfileConfigValue(profile, PROFILE_TOOLBAR) ??
-          configBot.tags[TAG_TOOLBAR],
+        read(PROFILE_TOOLBAR, TAG_TOOLBAR),
         DEFAULT_SETTINGS.toolbar
       ),
       keepScreenAwake: parseBoolean(
-        getProfileConfigValue(profile, PROFILE_KEEP_AWAKE) ??
-          configBot.tags[TAG_KEEP_AWAKE],
+        read(PROFILE_KEEP_AWAKE, TAG_KEEP_AWAKE),
         DEFAULT_SETTINGS.keepScreenAwake
       ),
       customHighlightColors: parseCustomHighlightColors(
-        getProfileConfigValue(profile, PROFILE_CUSTOM_HIGHLIGHT_COLORS) ??
-          configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS]
+        read(PROFILE_CUSTOM_HIGHLIGHT_COLORS, TAG_CUSTOM_HIGHLIGHT_COLORS)
       ),
       scriptureMargin: parseNumber(
-        getProfileConfigValue(profile, PROFILE_SCRIPTURE_MARGIN) ??
-          configBot.tags[TAG_SCRIPTURE_MARGIN],
+        read(PROFILE_SCRIPTURE_MARGIN, TAG_SCRIPTURE_MARGIN),
         DEFAULT_SETTINGS.scriptureMargin
+      ),
+      themeId: parseThemeId(
+        read(PROFILE_THEME_ID, TAG_THEME_ID),
+        DEFAULT_SETTINGS.themeId
+      ),
+      customTheme: parseStringRecord(
+        read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)
+      ),
+      customHighlights: parseHighlightOverrides(
+        read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
       ),
     };
   };
 
   const settings = signal<AppSettings>(readSettings());
 
-  const syncFromBot = () => {
+  // Re-read whenever the profile or the anonymous local config changes —
+  // `readSettings()` reads both, so this effect stays in sync with
+  // login/logout and anonymous edits (which land in `login.localConfig` via
+  // `saveProfileConfigValue`). Safe to also depend on `login.localConfig`
+  // now: `sessionOverrides` (above), not a fresh URL read, is what sits
+  // above it in precedence, and setters keep both in sync, so a re-read
+  // triggered by this effect can no longer revert a same-session edit.
+  effect(() => {
     settings.value = readSettings();
+  });
+
+  const setFontSize = (fontSize: TextSize) => {
+    const nextFontSize = parseFontSize(fontSize, settings.value.fontSize);
+    settings.value = { ...settings.value, fontSize: nextFontSize };
+    sessionOverrides[TAG_FONT_SIZE] = nextFontSize;
+    saveProfileConfigValue(login, PROFILE_FONT_SIZE, nextFontSize);
   };
 
-  // Re-read whenever the user logs in/out so the profile's saved settings
-  // overlay the local cache.
+  const setDisablePanels = (disablePanels: boolean) => {
+    settings.value = { ...settings.value, disablePanels };
+    sessionOverrides[TAG_DISABLE_PANELS] = disablePanels;
+    saveProfileConfigValue(login, PROFILE_DISABLE_PANELS, disablePanels);
+  };
+
+  // Apply the profile's saved UI language, but ONLY when the profile itself
+  // changes (i.e. on login / profile load) — deliberately NOT on every URL
+  // change.
+  //
+  // The `?lang=` query param is owned by I18nManager (see its
+  // `syncSignalsToUrl({ lang })`), which is the single source of truth for
+  // the URL <-> `i18n.language` relationship. If this ran on URL changes
+  // too, it would fight the user's in-session language switch: picking a
+  // language writes `?lang=` first, that URL write would re-run this
+  // effect, and the profile's still-unsaved previous language would revert
+  // `i18n.language` (leaving only `?translation=` applied). Only read
+  // `login.profile` here so the effect subscribes to the profile alone.
   effect(() => {
-    // Track profile.value as a dependency.
-    void login.profile.value;
-    syncFromBot();
+    const profileLanguage = getProfileConfigValue(login.profile.value, "lang");
+    const nextLanguage =
+      typeof profileLanguage === "string" && profileLanguage.trim().length > 0
+        ? profileLanguage
+        : null;
+
+    if (nextLanguage && nextLanguage !== i18n.language) {
+      void i18n.changeLanguage(nextLanguage);
+    }
   });
+
+  const persistLanguage = (language: string) => {
+    void saveProfileConfigValue(login, "lang", language);
+  };
 
   const setBookOrientation = (orientation: BookOrientation) => {
     settings.value = { ...settings.value, bookOrientation: orientation };
-    configBot.tags[TAG_BOOK_ORIENTATION] = orientation;
+    sessionOverrides[TAG_BOOK_ORIENTATION] = orientation;
     saveProfileConfigValue(login, PROFILE_BOOK_ORIENTATION, orientation);
   };
 
   const setUISize = (size: UISize) => {
     settings.value = { ...settings.value, uiSize: size };
-    configBot.tags[TAG_UI_SIZE] = size;
+    sessionOverrides[TAG_UI_SIZE] = size;
     saveProfileConfigValue(login, PROFILE_UI_SIZE, size);
   };
 
   const setSelectionUI = (patch: Partial<SelectionUIBehavior>) => {
     const next = { ...settings.value.selectionUI, ...patch };
     settings.value = { ...settings.value, selectionUI: next };
-    configBot.tags[TAG_SELECTION_UI] = JSON.stringify(next);
+    sessionOverrides[TAG_SELECTION_UI] = next;
     saveProfileConfigValue(login, PROFILE_SELECTION_UI, next);
   };
 
   const setScriptureElements = (patch: Partial<ScriptureElementsBehavior>) => {
     const next = { ...settings.value.scriptureElements, ...patch };
     settings.value = { ...settings.value, scriptureElements: next };
-    configBot.tags[TAG_SCRIPTURE_ELEMENTS] = JSON.stringify(next);
+    sessionOverrides[TAG_SCRIPTURE_ELEMENTS] = next;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_ELEMENTS, next);
   };
 
   const writeTextConfig = (next: TextConfig) => {
     settings.value = { ...settings.value, textConfig: next };
-    configBot.tags[TAG_TEXT_CONFIG] = JSON.stringify(next);
+    sessionOverrides[TAG_TEXT_CONFIG] = next;
     saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, next);
   };
 
@@ -690,6 +932,7 @@ export function createSettings(
     if (!Number.isFinite(margin)) return;
     const clamped = Math.max(0, Math.min(45, margin));
     settings.value = { ...settings.value, scriptureMargin: clamped };
+    sessionOverrides[TAG_SCRIPTURE_MARGIN] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_MARGIN, clamped);
   };
 
@@ -705,7 +948,7 @@ export function createSettings(
 
   const resetTextConfig = () => {
     settings.value = { ...settings.value, textConfig: DEFAULT_TEXT_CONFIG };
-    configBot.tags[TAG_TEXT_CONFIG] = "";
+    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_TEXT_CONFIG;
     saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, DEFAULT_TEXT_CONFIG);
   };
 
@@ -728,8 +971,7 @@ export function createSettings(
 
   const writeToolbarConfig = (next: ToolbarCustomization) => {
     settings.value = { ...settings.value, toolbar: next };
-    const isDefault = next.hidden.length === 0 && next.order.length === 0;
-    configBot.tags[TAG_TOOLBAR] = isDefault ? "" : JSON.stringify(next);
+    sessionOverrides[TAG_TOOLBAR] = next;
     saveProfileConfigValue(login, PROFILE_TOOLBAR, next);
   };
 
@@ -762,13 +1004,13 @@ export function createSettings(
       os.disableWakeLock();
     }
     settings.value = { ...settings.value, keepScreenAwake: nextValue };
+    sessionOverrides[TAG_KEEP_AWAKE] = nextValue;
     saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, nextValue);
   };
 
   const writeCustomHighlightColors = (colors: string[]) => {
     settings.value = { ...settings.value, customHighlightColors: colors };
-    configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] =
-      colors.length === 0 ? "" : JSON.stringify(colors);
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = colors;
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, colors);
   };
 
@@ -794,6 +1036,26 @@ export function createSettings(
     );
   };
 
+  const setThemeId = (themeId: string) => {
+    settings.value = { ...settings.value, themeId };
+    sessionOverrides[TAG_THEME_ID] = themeId;
+    saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
+  };
+
+  const setCustomTheme = (next: Record<string, string>) => {
+    settings.value = { ...settings.value, customTheme: next };
+    sessionOverrides[TAG_CUSTOM_THEME] = next;
+    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
+  };
+
+  const setCustomHighlights = (
+    next: Record<string, Partial<ThemeHighlightColor>>
+  ) => {
+    settings.value = { ...settings.value, customHighlights: next };
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = next;
+    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
+  };
+
   const setAllSettings = (next: AppSettings) => {
     next = AppSettingsSchema.parse(next);
     settings.value = next;
@@ -810,19 +1072,27 @@ export function createSettings(
 
   const resetToDefaults = () => {
     settings.value = DEFAULT_SETTINGS;
-    configBot.tags[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
-    configBot.tags[TAG_UI_SIZE] = DEFAULT_SETTINGS.uiSize;
-    configBot.tags[TAG_SELECTION_UI] = JSON.stringify(
-      DEFAULT_SETTINGS.selectionUI
+    sessionOverrides[TAG_FONT_SIZE] = DEFAULT_SETTINGS.fontSize;
+    sessionOverrides[TAG_DISABLE_PANELS] = DEFAULT_SETTINGS.disablePanels;
+    sessionOverrides[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
+    sessionOverrides[TAG_UI_SIZE] = DEFAULT_SETTINGS.uiSize;
+    sessionOverrides[TAG_SELECTION_UI] = DEFAULT_SETTINGS.selectionUI;
+    sessionOverrides[TAG_SCRIPTURE_ELEMENTS] =
+      DEFAULT_SETTINGS.scriptureElements;
+    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_SETTINGS.textConfig;
+    sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
+    sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
+    sessionOverrides[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
+    sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
+    sessionOverrides[TAG_CUSTOM_THEME] = {};
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
+    saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISABLE_PANELS,
+      DEFAULT_SETTINGS.disablePanels
     );
-    configBot.tags[TAG_SCRIPTURE_ELEMENTS] = JSON.stringify(
-      DEFAULT_SETTINGS.scriptureElements
-    );
-    configBot.tags[TAG_TEXT_CONFIG] = "";
-    configBot.tags[TAG_TOOLBAR] = "";
-    configBot.tags[TAG_KEEP_AWAKE] = false;
-    configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] = "";
-    configBot.tags[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
     saveProfileConfigValue(
       login,
       PROFILE_BOOK_ORIENTATION,
@@ -856,6 +1126,9 @@ export function createSettings(
       PROFILE_SCRIPTURE_MARGIN,
       DEFAULT_SETTINGS.scriptureMargin
     );
+    saveProfileConfigValue(login, PROFILE_THEME_ID, DEFAULT_SETTINGS.themeId);
+    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, {});
+    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, {});
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
@@ -899,6 +1172,9 @@ export function createSettings(
 
   return {
     settings,
+    setFontSize,
+    setDisablePanels,
+    persistLanguage,
     setBookOrientation,
     setUISize: setUISize,
     setSelectionUI,
@@ -916,5 +1192,8 @@ export function createSettings(
     removeCustomHighlightColor,
     setAllSettings,
     resetToDefaults,
+    setThemeId,
+    setCustomTheme,
+    setCustomHighlights,
   };
 }
