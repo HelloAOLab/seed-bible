@@ -339,6 +339,7 @@ export async function render(
 ): Promise<
   | { html: string; notFound?: true }
   | { redirectTo: string; redirectStatus?: number; vary?: string }
+  | string
 > {
   const { config } = options;
 

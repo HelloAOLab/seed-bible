@@ -92,6 +92,7 @@ export type RenderFn = (opts: {
 }) => Promise<
   | { html: string; notFound?: true }
   | { redirectTo: string; redirectStatus?: number; vary?: string }
+  | string
 >;
 
 /** Derives per-client render config (mobile, languages) from request headers. */
@@ -331,7 +332,7 @@ export async function renderAndRespond(
     result = { html: preRenderedHtml };
   }
 
-  if ("redirectTo" in result) {
+  if (typeof result === "object" && result !== null && "redirectTo" in result) {
     res.writeHead(result.redirectStatus ?? 301, {
       location: result.redirectTo,
       ...(result.vary ? { vary: result.vary } : {}),
@@ -340,9 +341,16 @@ export async function renderAndRespond(
     return;
   }
 
+  const notFound =
+    typeof result === "object" &&
+    result !== null &&
+    "notFound" in result &&
+    result.notFound;
+  const html = typeof result === "string" ? result : result.html;
+
   // The HTML is per-build and cheap to regenerate; let the CDN cache it
   // briefly but always revalidate so a pointer flip is picked up fast.
-  sendHtml(req, res, result.notFound ? 404 : 200, result.html, {
+  sendHtml(req, res, notFound ? 404 : 200, html, {
     "cache-control": "public, max-age=0, must-revalidate",
   });
 }
@@ -673,7 +681,7 @@ async function startDevServer(): Promise<void> {
       // 5. Send the rendered HTML back (or redirect, for legacy query-param
       // URLs being migrated to path-based routes, or a 404 for an
       // unrecognized book that couldn't be corrected).
-      if ("redirectTo" in result) {
+      if (typeof result === "object" && result && "redirectTo" in result) {
         if (result.vary) {
           res.set("Vary", result.vary);
         }
@@ -681,8 +689,15 @@ async function startDevServer(): Promise<void> {
         return;
       }
 
+      const notFound =
+        typeof result === "object" &&
+        result !== null &&
+        "notFound" in result &&
+        result.notFound;
+      const html = typeof result === "string" ? result : result.html;
+
       // 5. Send the rendered HTML back.
-      sendHtml(req, res, result.notFound ? 404 : 200, result.html);
+      sendHtml(req, res, notFound ? 404 : 200, html);
     } catch (e) {
       if (e instanceof Error) {
         // Let Vite fix the stack trace so it maps back to the actual source.
