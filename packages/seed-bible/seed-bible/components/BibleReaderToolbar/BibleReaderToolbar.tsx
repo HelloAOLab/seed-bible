@@ -1834,7 +1834,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
                   : t("bookmark-verses", { defaultValue: "Bookmark" });
 
-                // const canHighlight = !sessionState.value || sessionState.value.userCanDecorate(sessionState.value.localSessionId.value);
                 const highlightCard = selectionUI.value.showHighlightColors ? (
                   <div key="highlight" className="sb-verse-toolbar-action-item">
                     <button
