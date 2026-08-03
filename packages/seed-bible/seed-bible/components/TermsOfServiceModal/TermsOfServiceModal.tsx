@@ -26,12 +26,14 @@ function loadTermsOfService(
 ): Promise<void> {
   let promise = loadingPromises.get(language);
   if (!promise) {
-    promise = import(`../i18n/policies/terms-of-service/${language}.json`).then(
-      (resources) => {
+    promise = import(`../../i18n/policies/terms-of-service/${language}.json`)
+      .then((resources) => {
         i18n.addResourceBundle(language, "terms-of-service", resources.default);
         loadedLanguages.value = new Set(loadedLanguages.value).add(language);
-      }
-    );
+      })
+      .catch((error) => {
+        console.error("Failed to load terms of service policy bundle", error);
+      });
     loadingPromises.set(language, promise);
   }
   return promise;

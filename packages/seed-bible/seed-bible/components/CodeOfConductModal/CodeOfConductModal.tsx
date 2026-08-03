@@ -25,12 +25,14 @@ function loadCodeOfConduct(
 ): Promise<void> {
   let promise = loadingPromises.get(language);
   if (!promise) {
-    promise = import(`../i18n/policies/code-of-conduct/${language}.json`).then(
-      (resources) => {
+    promise = import(`../../i18n/policies/code-of-conduct/${language}.json`)
+      .then((resources) => {
         i18n.addResourceBundle(language, "code-of-conduct", resources.default);
         loadedLanguages.value = new Set(loadedLanguages.value).add(language);
-      }
-    );
+      })
+      .catch((error) => {
+        console.error("Failed to load code of conduct policy bundle", error);
+      });
     loadingPromises.set(language, promise);
   }
   return promise;
