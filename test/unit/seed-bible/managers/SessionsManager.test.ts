@@ -1336,6 +1336,117 @@ describe("SessionsManager", () => {
     expect(session.isSynced.value).toBe(true);
   });
 
+  // Regression coverage for #1346: after the local connection drops and
+  // recovers, the OS suppresses the peer list it re-sends, so presence would
+  // stay empty forever (self included) unless the subscription is rebuilt and
+  // the OS's stale peer cache is cleared first.
+  describe("presence recovery after a reconnect", () => {
+    let clearBranchDeviceCacheSpy: Mock;
+
+    beforeEach(() => {
+      // Stub the cache purge — the real one lazily builds the inst client,
+      // which would open a websocket.
+      clearBranchDeviceCacheSpy = vi
+        .spyOn(os, "clearBranchDeviceCache")
+        .mockImplementation(() => undefined) as unknown as Mock;
+    });
+
+    async function joinSession() {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      return manager.joinSession("group-abc");
+    }
+
+    it("rebuilds the presence subscription and clears the stale peer cache when the connection recovers", async () => {
+      const session = await joinSession();
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(1);
+
+      // The connection drops: the OS reports every peer as gone, ourselves
+      // included, which is what empties the list.
+      mockRemoteClients.emit({
+        type: "client_disconnected",
+        isSelf: true,
+        client: { connectionId: "test-config-bot-id", userId: null },
+      });
+      mockStatusUpdated.emit({ type: "sync", synced: false });
+      await waitFor(() => session.connectedUsers.value.length === 0);
+
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+
+      expect(clearBranchDeviceCacheSpy).toHaveBeenCalledWith(
+        null,
+        "group-abc",
+        "session_data"
+      );
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(2);
+    });
+
+    it("repopulates connected users from the peer list replayed after the rebuild", async () => {
+      const session = await joinSession();
+
+      mockStatusUpdated.emit({ type: "sync", synced: false });
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+
+      // The fresh watch request gets the full current peer list back, which
+      // the re-established subscription now receives.
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: "test-config-bot-id", userId: null },
+      });
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: false,
+        client: { connectionId: "host-conn", userId: "host-user" },
+      });
+
+      await waitFor(() => session.connectedUsers.value.length === 2);
+      expect(session.connectedUsers.value.some((user) => user.isSelf)).toBe(
+        true
+      );
+      expect(
+        session.connectedUsers.value.map((user) => user.connectionId).sort()
+      ).toEqual(["host-conn", "test-config-bot-id"]);
+    });
+
+    it("does not rebuild on the initial sync, which already delivered a peer list", async () => {
+      await joinSession();
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(1);
+
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+
+      expect(clearBranchDeviceCacheSpy).not.toHaveBeenCalled();
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("stops tracking presence after dispose(), including across a rebuild", async () => {
+      const session = await joinSession();
+
+      mockStatusUpdated.emit({ type: "sync", synced: false });
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+      session.dispose();
+
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: false,
+        client: { connectionId: "late-conn", userId: "late-user" },
+      });
+
+      // The rebuilt subscription (not just the original one) must be the one
+      // dispose() tore down.
+      expect(
+        session.connectedUsers.value.some(
+          (user) => user.connectionId === "late-conn"
+        )
+      ).toBe(false);
+    });
+  });
+
   it("tracks connected users from remoteClients and loads profiles for authenticated users", async () => {
     const manager = createSessionsManager(
       os,

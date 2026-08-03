@@ -966,8 +966,8 @@ async function createBibleReadingSession(
     }
   });
 
-  const remoteClientsSubscription = document.remoteClients.subscribe(
-    (event) => {
+  const subscribeToRemoteClients = () =>
+    document.remoteClients.subscribe((event) => {
       if (event.type === "client_connected") {
         connectedClients.set(event.client.connectionId, {
           ...event.client,
@@ -979,8 +979,23 @@ async function createBibleReadingSession(
 
       const nextVersion = ++remoteClientsVersion;
       void syncConnectedUsers(nextVersion);
-    }
-  );
+    });
+
+  let remoteClientsSubscription = subscribeToRemoteClients();
+
+  // Rebuilds the presence subscription from scratch. The OS reports every
+  // peer as disconnected when our own connection drops, but on reconnect it
+  // silently suppresses the re-sent peer list, so presence would otherwise
+  // stay empty forever — including our own entry (see `clearBranchDeviceCache`).
+  // Dropping the subscription resets the document's peer list, clearing the
+  // OS cache lets the re-sent list through, and re-subscribing asks for it.
+  const rebuildRemoteClientsSubscription = () => {
+    remoteClientsSubscription.unsubscribe();
+    os.clearBranchDeviceCache(null, id, "session_data");
+    connectedClients.clear();
+    remoteClientsSubscription = subscribeToRemoteClients();
+    void syncConnectedUsers(++remoteClientsVersion);
+  };
 
   // `getSharedDocument()` already awaited the first sync before returning,
   // so we start out synced. Keep listening for the life of the session —
@@ -989,8 +1004,15 @@ async function createBibleReadingSession(
   const isSynced = signal(true);
   const statusUpdatedSubscription = document.onStatusUpdated.subscribe(
     (status) => {
-      if (status.type === "sync") {
-        isSynced.value = status.synced;
+      if (status.type !== "sync") {
+        return;
+      }
+      const wasSynced = isSynced.value;
+      isSynced.value = status.synced;
+      // Only a genuine drop-and-recover needs the presence rebuild — not the
+      // initial sync, which already delivered a fresh peer list.
+      if (status.synced && !wasSynced) {
+        rebuildRemoteClientsSubscription();
       }
     }
   );

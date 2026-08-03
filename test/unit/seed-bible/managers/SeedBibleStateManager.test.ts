@@ -444,6 +444,14 @@ describe("createSeedBibleState", () => {
       connectionId: "host-connection",
       isSelf: false,
     };
+    // Our own presence entry. The grace timer only trusts a presence list
+    // that includes us — a list missing self means the presence channel
+    // itself is broken, not that anyone actually left.
+    const selfConnectedUser = {
+      userId: "guest-user-1",
+      connectionId: "guest-connection",
+      isSelf: true,
+    };
 
     function createMockHostedSession(id: string) {
       const session = createMockSharedSession(id);
@@ -466,7 +474,7 @@ describe("createSeedBibleState", () => {
       // connected at least once before the disconnect heuristic applies,
       // so joiners don't immediately close their own tab before they even
       // see the host.
-      session.connectedUsers.value = [hostConnectedUser];
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
       return { session, originalDispose };
     }
 
@@ -481,7 +489,7 @@ describe("createSeedBibleState", () => {
       )!.id;
 
       session.isSynced.value = false;
-      session.connectedUsers.value = [];
+      session.connectedUsers.value = [selfConnectedUser];
 
       vi.advanceTimersByTime(20_000);
 
@@ -500,7 +508,7 @@ describe("createSeedBibleState", () => {
         (tab) => tab.sharedSession === session
       )!.id;
 
-      session.connectedUsers.value = [];
+      session.connectedUsers.value = [selfConnectedUser];
 
       expect(state.app.currentToast.value?.message).toBe(
         "Reconnecting to the session…"
@@ -528,10 +536,10 @@ describe("createSeedBibleState", () => {
         (tab) => tab.sharedSession === session
       )!.id;
 
-      session.connectedUsers.value = [];
+      session.connectedUsers.value = [selfConnectedUser];
       vi.advanceTimersByTime(15_000);
 
-      session.connectedUsers.value = [hostConnectedUser];
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
         "Reconnected to the session"
       );
@@ -552,7 +560,7 @@ describe("createSeedBibleState", () => {
         (tab) => tab.sharedSession === session
       )!.id;
 
-      session.connectedUsers.value = [];
+      session.connectedUsers.value = [selfConnectedUser];
       vi.advanceTimersByTime(1000);
       // This client's own connection drops mid-wait (e.g. the phone was
       // backgrounded right after the host first looked gone). The host is
@@ -575,7 +583,7 @@ describe("createSeedBibleState", () => {
 
       document.dispatchEvent(new Event("visibilitychange"));
 
-      session.connectedUsers.value = [];
+      session.connectedUsers.value = [selfConnectedUser];
       expect(state.app.currentToast.value).toBeNull();
 
       vi.advanceTimersByTime(4999);
@@ -591,6 +599,34 @@ describe("createSeedBibleState", () => {
 
       vi.advanceTimersByTime(30_000);
       expect(originalDispose).toHaveBeenCalledTimes(1);
+    });
+
+    // Regression test for the two-device repro in #1346: after the guest
+    // backgrounded and resumed, the OS stopped reporting presence entirely
+    // (the list went empty and never recovered, self included) while the
+    // document itself kept syncing. The host had not left, so the guest must
+    // not be ejected on the strength of that empty list.
+    it("never closes the tab when the presence list is empty because the presence channel itself is broken", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-presence-broken"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      // The document resynced fine (navigation still works)...
+      session.isSynced.value = true;
+      // ...but presence went silent: nobody is listed, not even ourselves,
+      // even though we are obviously still here.
+      session.connectedUsers.value = [];
+
+      vi.advanceTimersByTime(120_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+      expect(state.app.currentToast.value).toBeNull();
     });
   });
 

@@ -1124,6 +1124,16 @@ export function createSeedBibleState(
         isSessionHost(session.options.value, user.userId) ||
         isSessionHost(session.options.value, user.connectionId)
     );
+  // Whether this client's view of who's present is worth acting on. We are
+  // definitionally present in our own session, so a list that doesn't even
+  // include us means the presence channel is broken (it can go permanently
+  // silent after a dropped connection) — and "the host isn't in the list"
+  // tells us nothing at all. Never eject anyone on that basis.
+  const sessionPresenceIsTrustworthy = (
+    session: BibleReadingSession
+  ): boolean =>
+    session.isSynced.value &&
+    session.connectedUsers.value.some((user) => user.isSelf);
   effect(() => {
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
@@ -1164,7 +1174,7 @@ export function createSeedBibleState(
       } else if (
         sessionsWhereHostWasSeen.has(session.id) &&
         !pendingHostDisconnectTimers.has(session.id) &&
-        session.isSynced.value &&
+        sessionPresenceIsTrustworthy(session) &&
         !justResumedFromBackground.value
       ) {
         // Host appears to have left, but it may be a transient reconnect
@@ -1193,14 +1203,14 @@ export function createSeedBibleState(
             return;
           }
           if (
-            !currentSession.isSynced.value ||
+            !sessionPresenceIsTrustworthy(currentSession) ||
             sessionHostIsConnected(currentSession)
           ) {
-            // Our own connection is still resyncing, or the host is
-            // actually back — don't tear down on stale/incomplete
-            // information. The effect above will re-evaluate and re-arm
-            // this timer if the host is still genuinely gone once this
-            // client is back in sync.
+            // Our own connection is still resyncing, our presence view is
+            // unreliable, or the host is actually back — don't tear down on
+            // stale/incomplete information. The effect above will
+            // re-evaluate and re-arm this timer if the host is still
+            // genuinely gone once presence is trustworthy again.
             return;
           }
           sessionsWhereHostWasSeen.delete(sessionId);
