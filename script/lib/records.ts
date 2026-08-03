@@ -14,7 +14,7 @@ const { createRecordsClient } = createRequire(import.meta.url)(
 ) as typeof import("@casual-simulation/aux-records/RecordsClient.js");
 
 const headers = {
-  Origin: "https://auth.ao.bot",
+  Origin: "https://auth.seedbible.org",
 };
 
 const UNSAFE_HEADERS = new Set([
@@ -58,7 +58,7 @@ export async function uploadFile(
   sessionKey: string,
   markers: string[] = ["publicRead"]
 ) {
-  const client = createRecordsClient("https://api.ao.bot");
+  const client = createRecordsClient("https://auth.seedbible.org");
 
   client.sessionKey = sessionKey;
 
