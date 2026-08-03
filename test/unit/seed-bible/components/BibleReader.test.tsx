@@ -1179,6 +1179,33 @@ describe("BibleReader", () => {
     expect(wrappers[0]?.getAttribute("data-highlight-key")).toBe("1-2");
   });
 
+  it("uses a custom highlight color even when no font color comes with it", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
+
+    // The font color is optional in the schema; requiring it meant a highlight
+    // like this silently fell back to rendering as its preset color.
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow", customColor: "#123456" }],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe("#123456");
+    expect(wrapper?.style.color).toBe("");
+  });
+
   it("marks a decoration highlight as a broadcast and leaves a saved one unmarked", () => {
     const { slot, selectorState, readingState, highlights, decorations } =
       createFixture();

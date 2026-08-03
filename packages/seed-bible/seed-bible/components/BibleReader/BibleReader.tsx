@@ -624,10 +624,15 @@ function renderChapterContent(
 
     const { highlight, broadcast } = resolved;
 
-    if (highlight.customColor && highlight.customFontColor) {
+    // A custom colour stands on its own — the font colour is optional and the
+    // text inherits when it's absent. Requiring both meant a highlight with
+    // only a custom colour silently rendered as its preset instead.
+    if (highlight.customColor) {
       return {
         className: "sb-highlight",
-        style: { color: highlight.customFontColor } as JSX.CSSProperties,
+        style: highlight.customFontColor
+          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
+          : undefined,
         fill: highlight.customColor,
         broadcast,
       };
@@ -673,8 +678,8 @@ function renderChapterContent(
     }
     const { highlight, broadcast } = resolved;
     const prefix = broadcast ? "broadcast:" : "";
-    if (highlight.customColor && highlight.customFontColor) {
-      return `${prefix}custom:${highlight.customColor}:${highlight.customFontColor}`;
+    if (highlight.customColor) {
+      return `${prefix}custom:${highlight.customColor}:${highlight.customFontColor ?? ""}`;
     }
     return `${prefix}${highlight.colorId}`;
   };
@@ -1032,7 +1037,6 @@ interface Ribbon {
   key: string;
   d: string;
   fill: string;
-  /** Drawn as an outline rather than a solid fill — see `ResolvedHighlight`. */
   broadcast: boolean;
   first: number;
   last: number;
