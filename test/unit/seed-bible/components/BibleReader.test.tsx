@@ -816,7 +816,7 @@ describe("BibleReader", () => {
     ) as HTMLElement | null;
     expect(wrapper).not.toBeNull();
     expect(wrapper?.getAttribute("data-highlight-fill")).toBe(
-      "var(--sb-highlight-yellow-color)"
+      "var(--sb-highlight-yellow-color, transparent)"
     );
     const firstDecorator = container.querySelector(
       ".sb-verse-decorator"
@@ -866,7 +866,7 @@ describe("BibleReader", () => {
     const wrapper = highlightEls[0] as HTMLElement;
     expect(wrapper.classList.contains("sb-verse-decorator")).toBe(false);
     expect(wrapper.getAttribute("data-highlight-fill")).toBe(
-      "var(--sb-highlight-yellow-color)"
+      "var(--sb-highlight-yellow-color, transparent)"
     );
     expect(wrapper.querySelectorAll(".sb-verse").length).toBe(2);
     // The verses' own decorators stay transparent (no highlight of their own).
@@ -1088,7 +1088,7 @@ describe("BibleReader", () => {
     ) as HTMLElement | null;
     expect(wrapper).not.toBeNull();
     expect(wrapper?.getAttribute("data-highlight-fill")).toBe(
-      "var(--sb-highlight-yellow-color)"
+      "var(--sb-highlight-yellow-color, transparent)"
     );
   });
 
@@ -1244,8 +1244,8 @@ describe("BibleReader", () => {
       w.getAttribute("data-highlight-broadcast"),
     ]);
     expect(marks).toEqual([
-      ["var(--sb-highlight-yellow-color)", null],
-      ["var(--sb-highlight-green-color)", "true"],
+      ["var(--sb-highlight-yellow-color, transparent)", null],
+      ["var(--sb-highlight-green-color, transparent)", "true"],
     ]);
   });
 
@@ -1339,7 +1339,7 @@ describe("BibleReader", () => {
       "[data-highlight-fill]"
     ) as HTMLElement | null;
     expect(wrapper?.getAttribute("data-highlight-fill")).toBe(
-      "var(--sb-highlight-green-color)"
+      "var(--sb-highlight-green-color, transparent)"
     );
     expect(wrapper?.classList.contains("sb-highlight-yellow")).toBe(false);
   });
@@ -1386,7 +1386,7 @@ describe("BibleReader", () => {
       container.querySelectorAll("[data-highlight-fill]")
     );
     expect(wrappers.map((w) => w.getAttribute("data-highlight-fill"))).toEqual([
-      "var(--sb-highlight-green-color)",
+      "var(--sb-highlight-green-color, transparent)",
     ]);
   });
 

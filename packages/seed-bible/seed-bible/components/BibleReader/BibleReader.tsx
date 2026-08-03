@@ -638,10 +638,16 @@ function renderChapterContent(
       };
     }
 
+    // The `transparent` fallback matters: a colorId with no matching theme
+    // variable would otherwise make `fill` invalid at computed-value time, and
+    // `fill` inherits down to its initial value of black — a solid black bar
+    // behind the verse. Colour ids don't all come from our own picker (an
+    // extension can pass one through from a chat message), so an unrecognised
+    // one has to fail invisible.
     return {
       className: `sb-highlight sb-highlight-${highlight.colorId}`,
       style: undefined as JSX.CSSProperties | undefined,
-      fill: `var(--sb-highlight-${highlight.colorId}-color)`,
+      fill: `var(--sb-highlight-${highlight.colorId}-color, transparent)`,
       broadcast,
     };
   };
