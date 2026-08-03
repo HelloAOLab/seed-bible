@@ -386,6 +386,9 @@ export function createHighlightsManager(
   // Cached highlights, keyed by account + chapter address.
   const entries = new Map<string, ChapterHighlightsEntry>();
   // Identity-stable per-chapter views handed to callers, keyed by address.
+  // Never pruned on account switch (unlike `entries`): evicting a view would
+  // mint a new computed on the next call, breaking that identity for callers
+  // still holding the old one.
   const views = new Map<string, ReadonlySignal<ChapterHighlights>>();
 
   const getOrCreateEntry = (
