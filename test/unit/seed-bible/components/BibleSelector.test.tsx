@@ -1694,7 +1694,7 @@ describe("BibleSelector sharing translations", () => {
     return { selectorState, bibleDataManager };
   }
 
-  it("clicking share on a default-endpoint translation copies a URL with just the translation ID", async () => {
+  it("clicking share on a default-endpoint translation copies a URL naming it in the path", async () => {
     await openTranslationModalWithGroup("AAB", "English");
 
     const shareButton = container.querySelector(
@@ -1710,7 +1710,32 @@ describe("BibleSelector sharing translations", () => {
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("seedbible.org");
-    expect(copiedUrl.searchParams.get("translation")).toBe("AAB");
+    expect(copiedUrl.pathname).toBe("/en/AAB/genesis/1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
+  });
+
+  it("shares the chosen translation, not the one the sharer is reading", async () => {
+    // The regression itself. Every other case here starts from a page whose
+    // path names no translation, where setting `?translation=` happened to
+    // work — so only this one actually pits the query against the path, which
+    // is what the old link did and lost: the recipient opened NIV.
+    jsdom.reconfigure({ url: "https://seedbible.org/en/NIV/exodus/2" });
+
+    await openTranslationModalWithGroup("AAB", "English");
+
+    act(() => {
+      container
+        .querySelector(".share-btn")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => setClipboard.mock.calls.length > 0);
+
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
+    // AAB, the translation whose row was clicked — and the reader's position
+    // is carried over rather than reset.
+    expect(copiedUrl.pathname).toBe("/en/AAB/exodus/2");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
 
   it("clicking share on a non-default-endpoint translation copies a URL with the full books.json URL", async () => {
@@ -1730,10 +1755,17 @@ describe("BibleSelector sharing translations", () => {
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("seedbible.org");
-    const translationParam = copiedUrl.searchParams.get("translation")!;
-    expect(translationParam).toContain("example.test");
-    expect(translationParam).toContain("CST");
-    expect(translationParam).toContain("books.json");
+    // The whole books.json URL is one path segment, so its slashes stay
+    // encoded rather than splitting the path into extra segments.
+    const [, language, translationSegment, book, chapter] =
+      copiedUrl.pathname.split("/");
+    expect(language).toBe("en");
+    expect(decodeURIComponent(translationSegment!)).toContain("example.test");
+    expect(decodeURIComponent(translationSegment!)).toContain("CST");
+    expect(decodeURIComponent(translationSegment!)).toContain("books.json");
+    expect(book).toBe("genesis");
+    expect(chapter).toBe("1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
 });
 

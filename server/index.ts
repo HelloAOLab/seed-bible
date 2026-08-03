@@ -80,7 +80,7 @@ interface ClientConfig {
   acceptedLanguages: string[];
 }
 
-type RenderFn = (opts: {
+export type RenderFn = (opts: {
   path: string;
   config: {
     basePath: string;
@@ -89,10 +89,15 @@ type RenderFn = (opts: {
     acceptedLanguages: string[];
   };
   html: string;
-}) => Promise<string>;
+}) => Promise<
+  | { html: string; notFound?: true }
+  | { redirectTo: string; redirectStatus?: number; vary?: string }
+>;
 
 /** Derives per-client render config (mobile, languages) from request headers. */
-function clientConfigFromHeaders(headers: IncomingHttpHeaders): ClientConfig {
+export function clientConfigFromHeaders(
+  headers: IncomingHttpHeaders
+): ClientConfig {
   const browser = Bowser.getParser(headers["user-agent"]!);
   const renderedAsMobile = browser.getPlatformType(true) === "mobile";
   const acceptedLanguages = headers["accept-language"]
@@ -243,7 +248,7 @@ async function loadHtml(branch: string, buildId: string): Promise<string> {
 }
 
 // ─── Routing ─────────────────────────────────────────────────────────────────
-interface Route {
+export interface Route {
   branch: string;
   /** Path prefix this deployment is mounted under (no trailing slash). */
   basePath: string;
@@ -295,7 +300,7 @@ function resolveRoute(rawUrl: string): Route {
  * `preRenderedHtml` is served as-is instead of failing the request — the
  * client still gets a working page (just without server-rendered content).
  */
-async function renderAndRespond(
+export async function renderAndRespond(
   req: IncomingMessage,
   res: ServerResponse,
   render: RenderFn,
@@ -306,9 +311,9 @@ async function renderAndRespond(
     req.headers
   );
 
-  let html: string;
+  let result: Awaited<ReturnType<RenderFn>>;
   try {
-    html = await render({
+    result = await render({
       path: route.appUrl,
       config: {
         basePath: route.basePath,
@@ -323,12 +328,21 @@ async function renderAndRespond(
       `SSR render() failed for branch "${route.branch}" (${route.appUrl}); falling back to unrendered HTML:`,
       err
     );
-    html = preRenderedHtml;
+    result = { html: preRenderedHtml };
+  }
+
+  if ("redirectTo" in result) {
+    res.writeHead(result.redirectStatus ?? 301, {
+      location: result.redirectTo,
+      ...(result.vary ? { vary: result.vary } : {}),
+    });
+    res.end();
+    return;
   }
 
   // The HTML is per-build and cheap to regenerate; let the CDN cache it
   // briefly but always revalidate so a pointer flip is picked up fast.
-  sendHtml(req, res, 200, html, {
+  sendHtml(req, res, result.notFound ? 404 : 200, result.html, {
     "cache-control": "public, max-age=0, must-revalidate",
   });
 }
@@ -629,8 +643,9 @@ async function startDevServer(): Promise<void> {
       // 2. Apply Vite HTML transforms (injects the HMR client + plugin
       //    preambles).
       const transformed = await vite.transformIndexHtml(
-        req.originalUrl,
-        template
+        "/index.html",
+        template,
+        req.originalUrl
       );
 
       // 3. Load the server entry. ssrLoadModule transforms ESM source to be
@@ -644,7 +659,7 @@ async function startDevServer(): Promise<void> {
       );
 
       // 4. Render the app HTML.
-      const html = await render({
+      const result = await render({
         path: req.originalUrl,
         config: {
           basePath: "",
@@ -655,8 +670,19 @@ async function startDevServer(): Promise<void> {
         html: transformed,
       });
 
+      // 5. Send the rendered HTML back (or redirect, for legacy query-param
+      // URLs being migrated to path-based routes, or a 404 for an
+      // unrecognized book that couldn't be corrected).
+      if ("redirectTo" in result) {
+        if (result.vary) {
+          res.set("Vary", result.vary);
+        }
+        res.redirect(result.redirectStatus ?? 301, result.redirectTo);
+        return;
+      }
+
       // 5. Send the rendered HTML back.
-      sendHtml(req, res, 200, html);
+      sendHtml(req, res, result.notFound ? 404 : 200, result.html);
     } catch (e) {
       if (e instanceof Error) {
         // Let Vite fix the stack trace so it maps back to the actual source.
@@ -676,8 +702,12 @@ async function startDevServer(): Promise<void> {
   });
 }
 
-if (IS_PRODUCTION) {
-  startProdServer();
-} else {
-  void startDevServer();
+// Vitest sets this in every worker process — skipped there so importing this
+// module for its exported helpers doesn't also bind a real port.
+if (process.env.VITEST !== "true") {
+  if (IS_PRODUCTION) {
+    startProdServer();
+  } else {
+    void startDevServer();
+  }
 }
