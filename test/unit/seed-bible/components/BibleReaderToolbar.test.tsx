@@ -350,7 +350,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     expect(readingState.highlights.value.highlights).toHaveLength(1);
   });
 
-  it("drops a personal highlight the author already had when broadcasting with a timer", async () => {
+  it("keeps a personal highlight the author already had when broadcasting with a timer", async () => {
     // Highlight under ∞ (saved), then switch the session to a finite duration
     // and re-highlight the same verse.
     const { options } = attachFakeSession({ highlightDurationSeconds: null });
@@ -364,9 +364,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     });
     await openPickerAndHighlight();
 
-    // Without this the saved copy resurfaces on the author's screen alone once
-    // the broadcast expires.
-    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    // The broadcast covers the saved highlight while it lives and uncovers it
+    // on expiry. Deleting it here meant highlighting a verse you had already
+    // highlighted destroyed your own colour once the timer ran out.
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
     expect(broadcastHighlights()).toHaveLength(1);
   });
 

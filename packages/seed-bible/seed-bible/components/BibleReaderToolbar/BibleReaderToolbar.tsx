@@ -356,10 +356,10 @@ function removeSharedHighlightsFromSelection(
  *   AND broadcast a decoration so other clients see it. The saved copy is the
  *   author's alone: participants get the broadcast, not a highlight of their
  *   own, and the author still has theirs once the session ends.
- * - Broadcasting with a finite duration → broadcast a decoration only. Don't
- *   persist, and clear any existing permanent highlight on the same verses so
- *   the author's view stays in sync with the timer — otherwise the old
- *   highlight resurfaces on their screen alone once the broadcast expires.
+ * - Broadcasting with a finite duration → broadcast a decoration only, and
+ *   leave any existing personal highlight on those verses alone. The broadcast
+ *   covers it for as long as it lives (the reader draws a decoration highlight
+ *   over a saved one) and it reappears when the broadcast expires.
  */
 function applyHighlightWithSession(
   rs: BibleReadingState,
@@ -380,13 +380,7 @@ function applyHighlightWithSession(
   const duration = session.options.value.highlightDurationSeconds;
   const isTransient = duration !== null && duration > 0;
 
-  if (isTransient) {
-    // Wipe any prior permanent highlight on these verses so the timer is the
-    // sole source of truth for how long the highlight shows. Scoped to the
-    // verses the user just re-highlighted, so nothing they weren't acting on
-    // is touched.
-    void rs.unhighlightSelectedVerses();
-  } else {
+  if (!isTransient) {
     void rs.highlightSelectedVerses(details);
   }
 
