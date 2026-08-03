@@ -3,7 +3,7 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import type { JSX } from "preact";
+import type { JSX, RefObject } from "preact";
 import {
   Suspense,
   useEffect,
@@ -945,8 +945,11 @@ export interface BibleReaderMobileChromeProps {
   onOpenMobileSettings: () => void;
   onCloseMobileSettings: () => void;
   onOpenAllSettings: () => void;
-  swipeViewportRefCallback: (el: HTMLDivElement | null) => void;
-  swipeTrackRefCallback: (el: HTMLDivElement | null) => void;
+  // Plain refs: these only need `.current` filled in, which Preact does for a
+  // ref object on its own.
+  swipeViewportRef: RefObject<HTMLDivElement>;
+  swipeTrackRef: RefObject<HTMLDivElement>;
+  // A callback because it feeds component state, not just a ref.
   currentScrollerRefCallback: (el: HTMLDivElement | null) => void;
 }
 
@@ -992,7 +995,7 @@ const RIBBON_FADE_MS = 250;
  * Does not apply on a cold start — with no chapter on screen there is nothing
  * to dim, so the placeholder shows straight away.
  */
-const CHAPTER_SKELETON_DELAY_MS = 500;
+export const CHAPTER_SKELETON_DELAY_MS = 500;
 
 /**
  * Bar widths for the chapter loading placeholder, one array per paragraph.
@@ -1816,11 +1819,11 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
 
           <div
-            ref={mobileChrome?.swipeViewportRefCallback}
+            ref={mobileChrome?.swipeViewportRef}
             className="sb-reader-swipe-viewport"
           >
             <div
-              ref={mobileChrome?.swipeTrackRefCallback}
+              ref={mobileChrome?.swipeTrackRef}
               className="sb-reader-swipe-track"
             >
               <div

@@ -301,12 +301,47 @@ export default defineConfig(({ isSsrBuild }) => ({
         manifest: true,
         sourcemap: true,
         rolldownOptions: {
+          // `@casual-simulation/aux-common` ships no `sideEffects` field, so
+          // every module in it is assumed to have import-time side effects and
+          // cannot be tree-shaken away. That matters because `aux-websocket`'s
+          // `WebsocketConnectionClient` — which the boot path needs — imports
+          // the aux-common package root, and that barrel re-exports
+          // `./partitions`, which reaches the Yjs document classes. The result
+          // was Yjs + lib0 (~97 KB) sitting in the eager vendor chunk even
+          // though the app only touches shared documents behind a dynamic
+          // import. Declaring these two directories side-effect-free lets the
+          // barrel shake out; anything genuinely imported from them (we use
+          // `PartitionAuthSource` at boot and `RemoteYjsSharedDocument`
+          // on demand) is still kept, and the one real side effect in the
+          // subtree — `import '../BlobPolyfill'` — also reaches the bundle via
+          // the package root, which is untouched by this rule.
+          treeshake: {
+            moduleSideEffects: [
+              {
+                test: /aux-common[\\/](documents|partitions)[\\/]/,
+                sideEffects: false,
+              },
+            ],
+          },
           output: {
             codeSplitting: {
               groups: [
                 {
                   test: /(node_modules|\.pnpm)/,
                   name: "vendor",
+                  // `$initial` restricts the group to modules a user-defined
+                  // entry imports statically (or reaches through a static
+                  // import chain). Without it, rolldown reads the `test` above
+                  // literally and puts *every* node_modules module in `vendor`
+                  // — including ones only reachable via `import()`. Because the
+                  // entry statically needs some of `vendor`, the chunk loads
+                  // eagerly, so that hoisting silently undid every lazy import
+                  // in the app: TipTap/ProseMirror (~500 KB), the transcript
+                  // extension's reference parser (~120 KB), and dompurify all
+                  // shipped on first paint. Tagging keeps one long-cacheable
+                  // vendor chunk for boot-path libraries and lets everything
+                  // else land in the lazy chunk that actually needs it.
+                  tags: ["$initial"],
                 },
               ],
             },
@@ -331,6 +366,12 @@ export default defineConfig(({ isSsrBuild }) => ({
     // extensions. Two copies (the CasualOS SDK pulls in preact 10.28.4 while the
     // app uses the catalog's 10.29.2) break hooks with
     // "Cannot read properties of undefined (reading '__H')".
+    // Only packages this project depends on directly belong here: `dedupe`
+    // resolves to the copy in the project root `node_modules`, which under
+    // pnpm's strict layout only exists for direct dependencies. The
+    // prosemirror packages used to be listed and had no effect for exactly
+    // that reason — they are pinned in `pnpm-workspace.yaml`'s `overrides`
+    // instead, which is the mechanism that reaches transitive dependencies.
     dedupe: [
       "preact",
       "preact/hooks",
@@ -338,10 +379,6 @@ export default defineConfig(({ isSsrBuild }) => ({
       "preact/jsx-runtime",
       "@preact/signals",
       "@preact/signals-core",
-      "prosemirror-model",
-      "prosemirror-state",
-      "prosemirror-transform",
-      "prosemirror-view",
     ],
   },
 

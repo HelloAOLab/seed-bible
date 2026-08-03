@@ -91,7 +91,7 @@ describe("BibleSelector", () => {
   beforeEach(() => {
     // The mocked Bible API responses are keyed to the free-use endpoint, so
     // opt into it via the URL (the app otherwise defaults to the private one).
-    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
 
     // The data manager persists per-translation endpoints to localStorage;
     // clear it so state does not leak between tests.
@@ -738,7 +738,7 @@ describe("BibleSelector translation selector", () => {
   beforeEach(() => {
     // The mocked Bible API responses are keyed to the free-use endpoint, so
     // opt into it via the URL (the app otherwise defaults to the private one).
-    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
 
     // The data manager persists per-translation endpoints to localStorage;
     // clear it so state does not leak between tests.
@@ -1620,7 +1620,7 @@ describe("BibleSelector sharing translations", () => {
   let setClipboard: Mock;
 
   beforeEach(() => {
-    jsdom.reconfigure({ url: "https://ao.bot/somepage" });
+    jsdom.reconfigure({ url: "https://seedbible.org/somepage" });
 
     // Clear persisted per-translation endpoints so state does not leak in
     // from earlier tests (which would mark default-endpoint translations as
@@ -1709,7 +1709,7 @@ describe("BibleSelector sharing translations", () => {
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
-    expect(copiedUrl.hostname).toBe("ao.bot");
+    expect(copiedUrl.hostname).toBe("seedbible.org");
     expect(copiedUrl.pathname).toBe("/en/AAB/genesis/1");
     expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
@@ -1719,7 +1719,7 @@ describe("BibleSelector sharing translations", () => {
     // path names no translation, where setting `?translation=` happened to
     // work — so only this one actually pits the query against the path, which
     // is what the old link did and lost: the recipient opened NIV.
-    jsdom.reconfigure({ url: "https://ao.bot/en/NIV/exodus/2" });
+    jsdom.reconfigure({ url: "https://seedbible.org/en/NIV/exodus/2" });
 
     await openTranslationModalWithGroup("AAB", "English");
 
@@ -1754,7 +1754,7 @@ describe("BibleSelector sharing translations", () => {
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
-    expect(copiedUrl.hostname).toBe("ao.bot");
+    expect(copiedUrl.hostname).toBe("seedbible.org");
     // The whole books.json URL is one path segment, so its slashes stay
     // encoded rather than splitting the path into extra segments.
     const [, language, translationSegment, book, chapter] =
@@ -1773,7 +1773,7 @@ describe("BibleSelector offline downloads", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
     localStorage.clear();
     container = document.createElement("div");
     document.body.appendChild(container);

@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.3.0 — 2026-07-31
+
+### ✨ Added
+
 - The Seed Bible now opens with no internet connection. The reader and the files it needs to start are stored on your device the first time you visit, so a later visit offline still opens the app instead of the browser's "no connection" page. Extra languages and extensions are kept as you use them, so they are there offline too. On a connection that is present but not working, the app waits three seconds for the network before falling back to its stored copy rather than hanging. ([#1534](https://github.com/HelloAOLab/seed-bible/pull/1534))
 - Download a whole translation to your device from the Bible selector and read it with no connection, with live progress, a cancel option, a size readout, and a prompt to re-download when a newer version is published. ([#1533](https://github.com/HelloAOLab/seed-bible/pull/1533))
 - Show a loading placeholder in place of the verses while the chapter you moved to is still downloading, after briefly dimming the chapter you left, instead of leaving the previous chapter's text under the new chapter's title. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
@@ -27,6 +37,9 @@
 
 ### 🐛 Fixed
 
+- Fix the page jerking sideways when you swipe again right after changing chapter. ([#1565](https://github.com/HelloAOLab/seed-bible/pull/1565))
+- Fix the reader jumping around after swiping to another chapter from partway down the page. ([#1565](https://github.com/HelloAOLab/seed-bible/pull/1565))
+- Fix swiping between chapters on mobile briefly flashing the chapter you just left. ([#1565](https://github.com/HelloAOLab/seed-bible/pull/1565))
 - Changing chapter or book no longer waits on an in-flight text request. The position updates the moment you press, and repeated presses advance a chapter each, instead of the chevrons and arrow keys switching off until the download finished. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Fix shared sessions freezing and eventually crashing the tab with an out-of-memory error when another participant moved through chapters quickly. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
 - Fix an out-of-range chapter in the address, such as `?chapter=99999`, leaving the address pointing at a chapter you are not on, so pressing Back returned you to it and bounced straight forward again. ([#1551](https://github.com/HelloAOLab/seed-bible/pull/1551))
@@ -43,8 +56,6 @@
 - Recover from a corrupted stored session key instead of crashing. ([#1546](https://github.com/HelloAOLab/seed-bible/pull/1546))
 - Fix chat links changing color once visited, and using the toolbar's orange instead of the theme's own link color. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
 - Fix the floating chat window not toggling from the toolbar button, overflowing the top of the screen on short viewports, and being too small to use comfortably. ([#1529](https://github.com/HelloAOLab/seed-bible/pull/1529))
-
-### 🗑️ Removed
 
 ## v1.2.1 — 2026-07-23
 
