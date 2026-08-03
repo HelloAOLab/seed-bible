@@ -189,6 +189,8 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     state = await createTestSeedBibleState({
       responses: createPrivateEndpointResponses(),
     });
+    stubRecords();
+    signIn();
 
     await act(async () => {
       window.dispatchEvent(new Event("resize"));
@@ -199,6 +201,50 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     render(null, container);
     container.remove();
   });
+
+  /**
+   * Highlights are stored per user, so a signed-in fixture starts reading and
+   * writing records. Nothing here is about the wire format — stub both ends so
+   * a chapter loads empty and a save reports success.
+   */
+  function stubRecords() {
+    Object.defineProperty(state.os, "getData", {
+      value: vi.fn(async () => null),
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(state.os, "recordData", {
+      value: vi.fn(async () => ({ success: true })),
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  /**
+   * Gives the state a signed-in user. `userId` is a computed off the session
+   * key, so it can't be assigned — but the managers read `login.userId` off the
+   * same object at call time, so swapping the property reaches all of them.
+   * Signed in is the default here because it's the case these tests are about;
+   * the signed-out ones say so explicitly.
+   */
+  function signIn(userId: string | null = "user-1") {
+    Object.defineProperty(state.login, "userId", {
+      value: signal(userId),
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  /** Spy on the login prompt so a test can assert it never opens. */
+  function watchLoginPrompt() {
+    const prompt = vi.fn(async () => null);
+    Object.defineProperty(state.login, "login", {
+      value: prompt,
+      configurable: true,
+      writable: true,
+    });
+    return prompt;
+  }
 
   /**
    * Minimal stand-in for a joined session. The toolbar only reaches for
@@ -290,6 +336,9 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     }
     await act(async () => {
       element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      // Highlighting is fire-and-forget from the handler and a signed-in save
+      // waits on a record read first, so let that chain settle before asserting.
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
   }
 
@@ -369,6 +418,51 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     // highlighted destroyed your own colour once the timer ran out.
     expect(readingState.highlights.value.highlights).toHaveLength(1);
     expect(broadcastHighlights()).toHaveLength(1);
+  });
+
+  it("broadcasts without prompting a signed-out user to log in, even with no expiry", async () => {
+    signIn(null);
+    const prompt = watchLoginPrompt();
+    attachFakeSession({ highlightDurationSeconds: null });
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPickerAndHighlight();
+
+    // Broadcasting only needs a connection id. Reaching for the save path would
+    // open the login modal over a highlight the session is already carrying.
+    expect(broadcastHighlights()).toHaveLength(1);
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(prompt).not.toHaveBeenCalled();
+  });
+
+  it("does not prompt a signed-out user to log in when clearing a broadcast-only highlight", async () => {
+    signIn(null);
+    attachFakeSession({ highlightDurationSeconds: 16 });
+    await selectFirstVerse();
+    await renderToolbar();
+    await openPickerAndHighlight();
+
+    // Nothing was ever saved, so clearing has no write to make — and asking for
+    // an account to undo something that never persisted is pure interruption.
+    const prompt = watchLoginPrompt();
+    await click(".sb-verse-toolbar-clear");
+
+    expect(broadcastHighlights()).toHaveLength(0);
+    expect(prompt).not.toHaveBeenCalled();
+  });
+
+  it("does not apply a highlight a signed-out user declines to log in for", async () => {
+    signIn(null);
+    const prompt = watchLoginPrompt();
+    // Restricted participant: saving is the only thing highlighting can mean.
+    attachFakeSession({ canDecorate: false });
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPickerAndHighlight();
+
+    expect(prompt).toHaveBeenCalled();
+    // The highlight used to appear behind the modal and then never save.
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
   });
 
   it("saves a personal highlight instead, when not allowed to broadcast", async () => {

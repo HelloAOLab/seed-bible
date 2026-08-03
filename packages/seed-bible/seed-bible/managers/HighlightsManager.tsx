@@ -450,12 +450,9 @@ export function createHighlightsManager(
     const chapterHighlightsSignal = getOrCreateChapterHighlightsSignal(address);
     const normalized = normalizeHighlights(highlights);
 
-    // Optimistically update local state before waiting for persistence.
-    chapterHighlightsSignal.value = {
-      highlights: normalized,
-    };
-    loadedAddresses.add(address);
-
+    // Settle who the user is before showing anything. `login()` opens a modal,
+    // and applying first left the highlight sitting behind it looking saved —
+    // then quietly not saving when the prompt was dismissed.
     if (!login.userId.value) {
       await login.login();
     }
@@ -465,6 +462,13 @@ export function createHighlightsManager(
       console.warn("Unable to save highlights: user is not authenticated.");
       return;
     }
+
+    // Show it before waiting on the write, which is the point of doing this
+    // optimistically; for an already-signed-in user nothing above suspends.
+    chapterHighlightsSignal.value = {
+      highlights: normalized,
+    };
+    loadedAddresses.add(address);
 
     const payload = chapterHighlightsSchema.parse({
       highlights: normalized,
@@ -576,6 +580,18 @@ export function createHighlightsManager(
       chapterNumber
     );
     await awaitChapterLoad(address);
+
+    // Nothing saved on these verses — no write to make, and no reason to ask an
+    // anonymous user to sign in just to clear a highlight that was never theirs
+    // to save (a session's broadcast highlight, say).
+    const coversAnyVerse = deduplicatedVerseNumbers.some((verseNumber) =>
+      current.value.highlights.some((highlight) =>
+        highlightContainsVerse(highlight, verseNumber)
+      )
+    );
+    if (!coversAnyVerse) {
+      return;
+    }
 
     const targetRanges = rangesFromVerseNumbers(deduplicatedVerseNumbers);
     let updated = current.value.highlights.map(toRangeHighlight);

@@ -355,7 +355,10 @@ function removeSharedHighlightsFromSelection(
  * - Broadcasting with `highlightDurationSeconds` = null (∞) → save permanently
  *   AND broadcast a decoration so other clients see it. The saved copy is the
  *   author's alone: participants get the broadcast, not a highlight of their
- *   own, and the author still has theirs once the session ends.
+ *   own, and the author still has theirs once the session ends. Skipped when
+ *   the user is signed out: there is nowhere to save it, and attempting to
+ *   would interrupt them with a login modal for a highlight the session is
+ *   already carrying. Broadcasting itself only needs a connection id.
  * - Broadcasting with a finite duration → broadcast a decoration only, and
  *   leave any existing personal highlight on those verses alone. The broadcast
  *   covers it for as long as it lives (the reader draws a decoration highlight
@@ -368,11 +371,13 @@ function applyHighlightWithSession(
     colorId: string;
     customColor?: string;
     customFontColor?: string;
-  }
+  },
+  isSignedIn: boolean
 ): void {
   if (!session || !session.userCanDecorate(session.localSessionId.value)) {
     // A participant who can't broadcast used to match neither branch here, so
-    // highlighting silently did nothing for them.
+    // highlighting silently did nothing for them. Saving is the only thing this
+    // can mean, so a signed-out user is asked to sign in before it applies.
     void rs.highlightSelectedVerses(details);
     return;
   }
@@ -380,7 +385,7 @@ function applyHighlightWithSession(
   const duration = session.options.value.highlightDurationSeconds;
   const isTransient = duration !== null && duration > 0;
 
-  if (!isTransient) {
+  if (!isTransient && isSignedIn) {
     void rs.highlightSelectedVerses(details);
   }
 
@@ -403,6 +408,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     settings,
     bookmarks,
     extensions,
+    login,
   } = props.state;
   const selectedTab = useComputed(
     () =>
@@ -739,11 +745,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       settings.addCustomHighlightColor(color);
       const rs = readingState.value;
       if (rs) {
-        applyHighlightWithSession(rs, sessionState.value, {
-          colorId: "yellow",
-          customColor: color,
-          customFontColor: getContrastTextColor(color),
-        });
+        applyHighlightWithSession(
+          rs,
+          sessionState.value,
+          {
+            colorId: "yellow",
+            customColor: color,
+            customFontColor: getContrastTextColor(color),
+          },
+          !!login.userId.value
+        );
       }
       customColorCommitTimeoutRef.current = null;
     }, 300);
@@ -1585,9 +1596,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   onClick={() => {
                     const rs = readingState.value;
                     if (!rs) return;
-                    applyHighlightWithSession(rs, sessionState.value, {
-                      colorId,
-                    });
+                    applyHighlightWithSession(
+                      rs,
+                      sessionState.value,
+                      { colorId },
+                      !!login.userId.value
+                    );
                   }}
                   aria-label={`Highlight ${colorId}`}
                   title={colorId}
@@ -1609,11 +1623,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   onClick={() => {
                     const rs = readingState.value;
                     if (!rs) return;
-                    applyHighlightWithSession(rs, sessionState.value, {
-                      colorId: "yellow",
-                      customColor: hex,
-                      customFontColor: getContrastTextColor(hex),
-                    });
+                    applyHighlightWithSession(
+                      rs,
+                      sessionState.value,
+                      {
+                        colorId: "yellow",
+                        customColor: hex,
+                        customFontColor: getContrastTextColor(hex),
+                      },
+                      !!login.userId.value
+                    );
                   }}
                   onContextMenu={(event: MouseEvent) => {
                     event.preventDefault();
