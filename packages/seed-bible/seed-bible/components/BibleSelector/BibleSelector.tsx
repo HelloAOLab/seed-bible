@@ -455,6 +455,7 @@ const SideBarBooks = (props: {
       index: number,
       chapterPos: number,
       separator: number,
+      chapterAtEnd: boolean,
       chapterHint?: number,
       itemStyle?: JSX.CSSProperties,
       narrowChapterStyle?: boolean,
@@ -511,10 +512,13 @@ const SideBarBooks = (props: {
                 style={{
                   ...chapterGridStyle,
                   justifyContent:
-                    ws <= MOBILE_BREAKPOINT ||
-                    bd.numberOfChapters < 4 * separator
-                      ? "flex-end"
-                      : "space-between",
+                    ws <= MOBILE_BREAKPOINT
+                      ? "flex-start"
+                      : bd.numberOfChapters < 4 * separator
+                        ? chapterAtEnd
+                          ? "flex-end"
+                          : "flex-start"
+                        : "space-between",
                 }}
               >
                 {narrowChapterStyle && ntColumns === 2 && (
@@ -547,6 +551,8 @@ const SideBarBooks = (props: {
         openVisualRow !== null
           ? { gridColumn: "1 / -1", gridRow: openVisualRow + 2 }
           : undefined;
+      const openVisualCol = columns > 1 ? Math.floor(lbc / rows) : 0;
+      const chapterAtEnd = openVisualCol === columns - 1;
 
       return (
         <div
@@ -559,6 +565,7 @@ const SideBarBooks = (props: {
               index,
               chapterPos,
               columns,
+              chapterAtEnd,
               chapterHint,
               itemStyle,
               narrowChapterStyle,
