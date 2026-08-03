@@ -2,8 +2,13 @@ import {
   createAnnotationsManager,
   type Annotation,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type {
+  ReaderTab,
+  TabsManager,
+} from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 
@@ -23,12 +28,44 @@ function createCommentAnnotation(
   };
 }
 
+function createMockTab(
+  overrides: {
+    id?: string;
+    bookId?: string | null;
+    chapterNumber?: number;
+    selectedVerses?: Array<{
+      bookId: string;
+      chapterNumber: number;
+      verse: { number: number };
+    }>;
+  } = {}
+): ReaderTab {
+  return {
+    id: overrides.id ?? "tab-1",
+    readingState: {
+      bookId: signal(overrides.bookId === undefined ? "GEN" : overrides.bookId),
+      chapterNumber: signal(overrides.chapterNumber ?? 1),
+      selectedVerses: signal(overrides.selectedVerses ?? []),
+    },
+  } as unknown as ReaderTab;
+}
+
+function createMockTabsManager(tab: ReaderTab | null): TabsManager {
+  return {
+    tabs: signal(tab ? [tab] : []),
+    selectedTabId: signal(tab?.id ?? null),
+  } as unknown as TabsManager;
+}
+
 describe("AnnotationsManager", () => {
   let recordDataMock: Mock;
   let eraseDataMock: Mock;
   let listDataByMarkerMock: Mock;
   let login: Mocked<LoginManager>;
   let os: CasualOSManager;
+  let tab: ReaderTab;
+  let tabs: TabsManager;
+  let discover: ReturnType<typeof createDiscoverManager>;
 
   beforeEach(() => {
     os = CasualOSManager();
@@ -69,10 +106,18 @@ describe("AnnotationsManager", () => {
         userInfo: { id: "user-1", email: "test@example.com" },
       }),
     };
+
+    tab = createMockTab();
+    tabs = createMockTabsManager(tab);
+    discover = createDiscoverManager();
   });
 
+  function createManager() {
+    return createAnnotationsManager(os, login, tabs, discover);
+  }
+
   it("saveAnnotation() stores annotation using default marker", async () => {
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
     const annotation = createCommentAnnotation();
 
     const saved = await manager.saveAnnotation(annotation);
@@ -84,7 +129,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("saveAnnotation() supports custom record and marker group", async () => {
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
     const annotation = createCommentAnnotation({ id: "ann-2" });
 
     await manager.saveAnnotation(annotation, {
@@ -108,7 +153,7 @@ describe("AnnotationsManager", () => {
       login.userId.value = "user-after-login";
       return { id: "user-after-login", email: "test@example.com" };
     });
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
 
     await manager.saveAnnotation(createCommentAnnotation());
 
@@ -124,7 +169,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("deleteAnnotation() deletes the record by annotation id", async () => {
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
 
     await manager.deleteAnnotation("ann-5");
 
@@ -132,7 +177,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("deleteAnnotation() supports record names", async () => {
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
 
     await manager.deleteAnnotation("ann-5", {
       recordName: "shared-record",
@@ -170,7 +215,7 @@ describe("AnnotationsManager", () => {
         items: [],
       });
 
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
     const annotations = await manager.listAnnotationsForChapter("GEN", 1);
 
     expect(listDataByMarkerMock).toHaveBeenNthCalledWith(
@@ -219,7 +264,7 @@ describe("AnnotationsManager", () => {
       })
       .mockResolvedValueOnce({ success: true, items: [] });
 
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
     const annotations = await manager.listAnnotationsForChapter("GEN", 1);
 
     expect(annotations).toHaveLength(1);
@@ -232,7 +277,7 @@ describe("AnnotationsManager", () => {
       id: "user-after-login",
       email: "test@example.com",
     });
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
 
     await expect(
       manager.saveAnnotation(createCommentAnnotation())
@@ -259,7 +304,7 @@ describe("AnnotationsManager", () => {
       errorCode: "server_error",
     });
 
-    const manager = createAnnotationsManager(os, login);
+    const manager = createManager();
 
     await expect(
       manager.saveAnnotation(createCommentAnnotation())
@@ -270,5 +315,274 @@ describe("AnnotationsManager", () => {
     await expect(manager.listAnnotationsForChapter("GEN", 1)).rejects.toThrow(
       "Error listing annotations: server_error"
     );
+  });
+
+  describe("getAnnotationsForChapter", () => {
+    it("is empty when signed out", () => {
+      login.userId.value = null;
+      const manager = createManager();
+
+      expect(manager.getAnnotationsForChapter("GEN", 1).value).toEqual([]);
+      expect(listDataByMarkerMock).not.toHaveBeenCalled();
+    });
+
+    it("lazily loads via listAnnotationsForChapter on first access", async () => {
+      listDataByMarkerMock
+        .mockResolvedValueOnce({
+          success: true,
+          items: [
+            { address: "a1", data: createCommentAnnotation({ id: "a1" }) },
+          ],
+        })
+        .mockResolvedValueOnce({ success: true, items: [] });
+
+      const manager = createManager();
+      const view = manager.getAnnotationsForChapter("GEN", 1);
+      expect(view.value).toEqual([]);
+
+      await vi.waitFor(() => {
+        expect(view.value.map((a) => a.id)).toEqual(["a1"]);
+      });
+    });
+
+    it("returns the same signal identity for repeated calls with the same args", () => {
+      const manager = createManager();
+      const first = manager.getAnnotationsForChapter("GEN", 1);
+      const second = manager.getAnnotationsForChapter("GEN", 1);
+      expect(first).toBe(second);
+    });
+
+    it("reflects an account switch instead of leaking the previous account's data", async () => {
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: string, _marker: string, lastAddress?: string) => {
+          // Pagination terminates on the second call (`lastAddress` set) —
+          // real behavior when there's exactly one page of results.
+          if (lastAddress) {
+            return { success: true, items: [] };
+          }
+          return {
+            success: true,
+            items:
+              recordName === "user-1"
+                ? [
+                    {
+                      address: "a1",
+                      data: createCommentAnnotation({ id: "user-1-note" }),
+                    },
+                  ]
+                : [
+                    {
+                      address: "a2",
+                      data: createCommentAnnotation({ id: "user-2-note" }),
+                    },
+                  ],
+          };
+        }
+      );
+
+      const manager = createManager();
+      const view = manager.getAnnotationsForChapter("GEN", 1);
+
+      await vi.waitFor(() => {
+        expect(view.value.map((a) => a.id)).toEqual(["user-1-note"]);
+      });
+
+      login.userId.value = "user-2";
+
+      await vi.waitFor(() => {
+        expect(view.value.map((a) => a.id)).toEqual(["user-2-note"]);
+      });
+    });
+  });
+
+  describe("createNewAnnotation", () => {
+    it("no-ops and warns when signed out and login is declined", async () => {
+      login.userId.value = null;
+      login.login.mockResolvedValue(undefined);
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(warn).toHaveBeenCalled();
+    });
+
+    it("no-ops and warns when there is no active tab", async () => {
+      tabs = createMockTabsManager(null);
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(warn).toHaveBeenCalled();
+    });
+
+    it("no-ops and warns when the active tab has no chapter loaded", async () => {
+      tab = createMockTab({ bookId: null });
+      tabs = createMockTabsManager(tab);
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(warn).toHaveBeenCalled();
+    });
+
+    it("starts a whole-chapter draft on the active tab's chapter and switches the view", async () => {
+      tab = createMockTab({ bookId: "EXO", chapterNumber: 3 });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      const draft = manager.editingAnnotation.value;
+      expect(draft?.bookId).toBe("EXO");
+      expect(draft?.chapterNumber).toBe(3);
+      expect(draft?.verseNumber).toBeNull();
+      expect(draft?.endVerseNumber).toBeNull();
+      expect(draft?.data).toMatchObject({ type: "comment", html: "" });
+      expect(discover.view.value).toBe("create_annotation");
+    });
+
+    it("pre-fills verse targeting from the reader's current text selection", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 7 } },
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 6 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      const draft = manager.editingAnnotation.value;
+      expect(draft?.verseNumber).toBe(5);
+      expect(draft?.endVerseNumber).toBe(7);
+    });
+
+    it("ignores selected verses that belong to a different chapter", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 2, verse: { number: 5 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      const draft = manager.editingAnnotation.value;
+      expect(draft?.verseNumber).toBeNull();
+      expect(draft?.endVerseNumber).toBeNull();
+    });
+  });
+
+  describe("editAnnotation", () => {
+    it("copies the annotation into editingAnnotation and switches the view", () => {
+      const manager = createManager();
+      const annotation = createCommentAnnotation({ id: "existing" });
+
+      manager.editAnnotation(annotation);
+
+      expect(manager.editingAnnotation.value).toEqual(annotation);
+      expect(manager.editingAnnotation.value).not.toBe(annotation);
+      expect(discover.view.value).toBe("create_annotation");
+    });
+  });
+
+  describe("saveEditingAnnotation", () => {
+    it("no-ops when nothing is being edited", async () => {
+      const manager = createManager();
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("persists, upserts into the chapter cache, clears the draft, and returns to discover", async () => {
+      const manager = createManager();
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("discover");
+      expect(
+        manager.getAnnotationsForChapter("GEN", 1).value.map((a) => a.id)
+      ).toEqual(["a1"]);
+    });
+
+    it("leaves the draft intact and rethrows when saving fails", async () => {
+      recordDataMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "server_error",
+      });
+      const manager = createManager();
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+
+      await expect(manager.saveEditingAnnotation()).rejects.toThrow();
+
+      expect(manager.editingAnnotation.value?.id).toBe("a1");
+    });
+  });
+
+  describe("cancelEditingAnnotation", () => {
+    it("discards the draft and returns to discover", () => {
+      const manager = createManager();
+      manager.editAnnotation(createCommentAnnotation());
+
+      manager.cancelEditingAnnotation();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("discover");
+    });
+  });
+
+  describe("deleteAnnotationAndRefresh", () => {
+    it("removes the annotation from the chapter cache", async () => {
+      const manager = createManager();
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+      await manager.saveEditingAnnotation();
+
+      await manager.deleteAnnotationAndRefresh(
+        createCommentAnnotation({ id: "a1" })
+      );
+
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", "a1");
+      expect(manager.getAnnotationsForChapter("GEN", 1).value).toEqual([]);
+    });
+
+    it("clears editingAnnotation when the deleted annotation was open", async () => {
+      const manager = createManager();
+      const annotation = createCommentAnnotation({ id: "a1" });
+      manager.editAnnotation(annotation);
+
+      await manager.deleteAnnotationAndRefresh(annotation);
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBe("discover");
+    });
+
+    it("rethrows on failure", async () => {
+      eraseDataMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "not_allowed",
+      });
+      const manager = createManager();
+
+      await expect(
+        manager.deleteAnnotationAndRefresh(createCommentAnnotation())
+      ).rejects.toThrow();
+    });
   });
 });

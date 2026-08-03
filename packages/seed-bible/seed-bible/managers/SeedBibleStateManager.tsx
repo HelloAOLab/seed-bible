@@ -459,7 +459,7 @@ export function createSeedBibleState(
   );
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login);
+  const annotations = createAnnotationsManager(os, login, tabs, discover);
   const sessions = createSessionsManager(
     os,
     data,
@@ -1600,8 +1600,12 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: () => <DiscoverPaneTitle playlists={playlists} />,
-        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        title: () => (
+          <DiscoverPaneTitle playlists={playlists} annotations={annotations} />
+        ),
+        header: () => (
+          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
+        ),
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -1616,6 +1620,7 @@ export function createSeedBibleState(
             state={state}
             tabs={tabs}
             playlists={playlists}
+            annotations={annotations}
             modals={modals}
             toast={state.app.toast}
           />

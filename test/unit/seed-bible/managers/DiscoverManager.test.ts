@@ -235,6 +235,8 @@ describe("createDiscoverManager", () => {
       expect(manager.view.value).toBe("create_playlist");
       manager.view.value = "play_playlist";
       expect(manager.view.value).toBe("play_playlist");
+      manager.view.value = "create_annotation";
+      expect(manager.view.value).toBe("create_annotation");
       manager.view.value = null;
       expect(manager.view.value).toBeNull();
     });
@@ -253,6 +255,8 @@ describe("createDiscoverManager", () => {
       manager.view.value = "create_playlist";
       expect(manager.isDiscoverOpen.value).toBe(true);
       manager.view.value = "play_playlist";
+      expect(manager.isDiscoverOpen.value).toBe(true);
+      manager.view.value = "create_annotation";
       expect(manager.isDiscoverOpen.value).toBe(true);
     });
 
@@ -279,7 +283,12 @@ describe("createDiscoverManager", () => {
 
     it("returns view unchanged for every other value regardless of isPlaying", () => {
       const manager = createDiscoverManager();
-      for (const value of [null, "discover", "create_playlist"] as const) {
+      for (const value of [
+        null,
+        "discover",
+        "create_playlist",
+        "create_annotation",
+      ] as const) {
         manager.view.value = value;
         expect(manager.resolveActualView(false)).toBe(value);
         expect(manager.resolveActualView(true)).toBe(value);

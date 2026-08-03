@@ -10,7 +10,8 @@ export type DiscoverView =
   | null
   | "discover"
   | "create_playlist"
-  | "play_playlist";
+  | "play_playlist"
+  | "create_annotation";
 
 export interface DiscoverContext {
   translationId: string;

@@ -1,17 +1,24 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
+import { useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
 import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type {
+  Annotation,
+  AnnotationsManager,
+} from "../../managers/AnnotationsManager";
+import { setSafeHtml } from "../../managers/Sanitization";
 import { MaterialIcon } from "../icons";
 import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
 import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
+import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -19,6 +26,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 interface DiscoverPaneProps {
   tabs: TabsManager;
   playlists: PlaylistManager;
+  annotations: AnnotationsManager;
   modals: ModalManager;
   state: SeedBibleState;
   toast: SeedBibleState["app"]["toast"];
@@ -29,12 +37,15 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
 /**
  * Header actions rendered in the pane's `PaneHeader` slot (see how the Discover
  * side pane is opened in `SeedBibleStateManager`). Only the discover sub-view
- * offers "create a playlist", so the button hides itself during the
- * create/play sub-views. Reads the `actualView` signal, so it stays reactive
- * and resets alongside the pane body when the active tab stops playing.
+ * offers "create", so the button hides itself during the create/play
+ * sub-views. Reads the `actualView` signal, so it stays reactive and resets
+ * alongside the pane body when the active tab stops playing.
  */
-export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
+export function DiscoverPaneHeader(props: {
+  playlists: PlaylistManager;
+  annotations: AnnotationsManager;
+}) {
+  const { playlists, annotations } = props;
   const { t } = useI18n();
 
   if (playlists.actualView.value !== "discover") {
@@ -42,13 +53,24 @@ export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
   }
 
   return (
-    <button
-      type="button"
-      className="sb-discover-create"
-      onClick={() => playlists.createNewPlaylist()}
+    <ContextMenuWithButton
+      buttonClassName="sb-discover-create"
+      aria-label={t("create-menu", { defaultValue: "Create" })}
+      icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
     >
-      + {t("create-playlist", { defaultValue: "Create" })}
-    </button>
+      <ContextMenuItem onClick={() => void annotations.createNewAnnotation()}>
+        <MaterialIcon className="sb-context-menu-item-icon">
+          edit_note
+        </MaterialIcon>
+        {t("create-annotation-menu-item", { defaultValue: "Annotation" })}
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => void playlists.createNewPlaylist()}>
+        <MaterialIcon className="sb-context-menu-item-icon">
+          queue_music
+        </MaterialIcon>
+        {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+      </ContextMenuItem>
+    </ContextMenuWithButton>
   );
 }
 
@@ -61,10 +83,31 @@ export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
  * `actualView`/`playing`/`editingPlaylist` signals, so it stays reactive and
  * resets alongside the pane body when the active tab stops playing.
  */
-export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
+export function DiscoverPaneTitle(props: {
+  playlists: PlaylistManager;
+  annotations: AnnotationsManager;
+}) {
+  const { playlists, annotations } = props;
   const { t } = useI18n();
   const view = playlists.actualView.value;
+
+  if (view === "create_annotation") {
+    return (
+      <div className="sb-discover-title-row">
+        <button
+          type="button"
+          className="sb-reading-plans-back"
+          aria-label={t("back", { defaultValue: "Back" })}
+          onClick={() => annotations.cancelEditingAnnotation()}
+        >
+          <MaterialIcon>arrow_back</MaterialIcon>
+        </button>
+        <span className="sb-discover-title" dir="auto">
+          {t("annotation-form-title", { defaultValue: "Annotation" })}
+        </span>
+      </div>
+    );
+  }
 
   if (view === "play_playlist") {
     const playing = playlists.playing.value;
@@ -126,23 +169,26 @@ export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
 }
 
 /**
- * Pane content for the "Discover" tool. Shows the user's authored playlists plus
- * discovered cross references, study notes, and content for the currently
- * selected reader tab. Annotations are a placeholder for now (display-only).
+ * Pane content for the "Discover" tool. Shows the user's authored playlists and
+ * annotations plus discovered cross references, study notes, and content for
+ * the currently selected reader tab.
  *
  * Rendered inside the managed side pane (`SidePane`), so the pane shell supplies
  * the surrounding chrome — the title/close (`PaneHeader`), the docking layout,
  * and the mobile-fullscreen behavior. This component just renders the content.
  */
 export function DiscoverPane(props: DiscoverPaneProps) {
-  const { tabs, playlists, modals } = props;
-  const { t } = useI18n();
+  const { tabs, playlists, annotations, modals } = props;
   const { actualView } = playlists;
 
   if (actualView.value === "create_playlist") {
     return (
       <CreatePlaylistForm playlists={playlists} tabs={tabs} modals={modals} />
     );
+  }
+
+  if (actualView.value === "create_annotation") {
+    return <CreateAnnotationForm annotations={annotations} tabs={tabs} />;
   }
 
   if (actualView.value === "play_playlist") {
@@ -170,15 +216,12 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         toast={props.toast}
       />
 
-      <DiscoverSection
-        title={t("annotations", { defaultValue: "Annotations" })}
-      >
-        <DiscoverEmpty
-          text={t("discover-annotations-empty", {
-            defaultValue: "You have no annotations",
-          })}
-        />
-      </DiscoverSection>
+      <AnnotationsSection
+        tab={selectedTab}
+        annotations={annotations}
+        modals={modals}
+        toast={props.toast}
+      />
 
       <CrossReferencesSection tab={selectedTab} />
       <StudyNotesSection tab={selectedTab} />
@@ -378,6 +421,218 @@ function openDeletePlaylistConfirm(
       <ConfirmDeletePlaylistModalContent
         playlists={playlists}
         playlist={playlist}
+        toast={toast}
+        onClose={() => modals.closeModal(modalId)}
+      />
+    ),
+  });
+}
+
+/** Formats an annotation's verse targeting into a human-readable label. */
+function annotationVerseLabel(
+  annotation: Annotation,
+  t: ReturnType<typeof useI18n>["t"]
+): string {
+  if (annotation.verseNumber == null) {
+    return t("annotation-whole-chapter", { defaultValue: "Whole chapter" });
+  }
+  if (
+    annotation.endVerseNumber == null ||
+    annotation.endVerseNumber === annotation.verseNumber
+  ) {
+    return t("annotation-verse", {
+      verse: annotation.verseNumber,
+      defaultValue: "Verse {{verse}}",
+    });
+  }
+  return t("annotation-verse-range", {
+    start: annotation.verseNumber,
+    end: annotation.endVerseNumber,
+    defaultValue: "Verses {{start}}-{{end}}",
+  });
+}
+
+/** Renders an annotation's sanitized HTML body as a preview snippet. */
+function AnnotationPreview({ html }: { html: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (ref.current) {
+      void setSafeHtml(html, ref.current);
+    }
+  }, [html]);
+  return (
+    <span
+      ref={ref}
+      className="sb-discover-item-description sb-annotation-item-preview"
+      dir="auto"
+    />
+  );
+}
+
+function AnnotationsSection(props: {
+  tab: ReaderTab | null;
+  annotations: AnnotationsManager;
+  modals: ModalManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { tab, annotations, modals, toast } = props;
+  const { t } = useI18n();
+  const title = t("annotations", { defaultValue: "Annotations" });
+
+  if (!tab) {
+    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+  }
+
+  const bookId = tab.readingState.bookId.value;
+  const chapterNumber = tab.readingState.chapterNumber.value;
+  if (!bookId || !chapterNumber) {
+    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+  }
+
+  const chapterAnnotations = annotations.getAnnotationsForChapter(
+    bookId,
+    chapterNumber
+  ).value;
+
+  return (
+    <DiscoverSection title={title}>
+      {chapterAnnotations.length === 0 ? (
+        <DiscoverEmpty
+          text={t("discover-annotations-empty", {
+            defaultValue: "You have no annotations",
+          })}
+        />
+      ) : (
+        <ul className="sb-discover-list">
+          {chapterAnnotations.map((annotation) => (
+            <li
+              key={annotation.id}
+              className="sb-discover-item sb-discover-item--row sb-annotation-item"
+              dir="auto"
+              onClick={() => annotations.editAnnotation(annotation)}
+            >
+              <div className="sb-discover-item-main">
+                <span className="sb-discover-item-title">
+                  {annotationVerseLabel(annotation, t)}
+                </span>
+                <AnnotationPreview html={annotation.data.html} />
+              </div>
+              <ContextMenuWithButton
+                buttonClassName="sb-discover-item-menu"
+                aria-label={t("annotation-options", {
+                  defaultValue: "Annotation options",
+                })}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ContextMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    annotations.editAnnotation(annotation);
+                  }}
+                >
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    edit
+                  </MaterialIcon>
+                  {t("edit-annotation", { defaultValue: "Edit" })}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  className="sb-context-menu-item--danger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDeleteAnnotationConfirm(
+                      modals,
+                      annotations,
+                      annotation,
+                      toast
+                    );
+                  }}
+                >
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    delete
+                  </MaterialIcon>
+                  {t("delete-annotation", { defaultValue: "Delete" })}
+                </ContextMenuItem>
+              </ContextMenuWithButton>
+            </li>
+          ))}
+        </ul>
+      )}
+    </DiscoverSection>
+  );
+}
+
+/**
+ * Confirmation body shown before permanently deleting an annotation.
+ * Confirming erases the annotation and closes the modal; on failure it
+ * surfaces a toast but still closes.
+ */
+function ConfirmDeleteAnnotationModalContent(props: {
+  annotations: AnnotationsManager;
+  annotation: Annotation;
+  toast: SeedBibleState["app"]["toast"];
+  onClose: () => void;
+}) {
+  const { annotations, annotation, toast, onClose } = props;
+  const { t } = useI18n();
+
+  const confirm = async () => {
+    try {
+      await annotations.deleteAnnotationAndRefresh(annotation);
+    } catch {
+      toast(
+        t("delete-annotation-failed", {
+          defaultValue: "Couldn't delete the annotation.",
+        })
+      );
+    }
+    onClose();
+  };
+
+  return (
+    <div className="sb-confirm-delete">
+      <p className="sb-confirm-delete-message">
+        {t("delete-annotation-confirm-message", {
+          defaultValue: "Delete this annotation? This can't be undone.",
+        })}
+      </p>
+      <div className="sb-confirm-delete-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onClose}
+        >
+          {t("cancel")}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-end"
+          onClick={confirm}
+        >
+          {t("delete")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Opens the delete-annotation confirmation modal. */
+function openDeleteAnnotationConfirm(
+  modals: ModalManager,
+  annotations: AnnotationsManager,
+  annotation: Annotation,
+  toast: SeedBibleState["app"]["toast"]
+) {
+  const modalId = `delete-annotation-confirm-${annotation.id}`;
+  modals.openModal({
+    id: modalId,
+    title: {
+      key: "delete-annotation-confirm-title",
+      defaultValue: "Delete annotation?",
+    },
+    content: () => (
+      <ConfirmDeleteAnnotationModalContent
+        annotations={annotations}
+        annotation={annotation}
         toast={toast}
         onClose={() => modals.closeModal(modalId)}
       />

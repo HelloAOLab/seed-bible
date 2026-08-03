@@ -37,7 +37,12 @@
   font-weight: 600;
 }
 
-.sb-discover-create {
+/* Overrides `.sb-context-menu-button`'s icon-button sizing (fixed
+   width/height, zero padding) — the "+ Create" trigger keeps its original
+   pill-button look now that it's a `ContextMenuWithButton`. */
+.sb-discover-create.sb-context-menu-button {
+  width: auto;
+  height: auto;
   padding: 6px 12px;
   border: 1px solid var(--sb-primary-color);
   border-radius: 8px;
@@ -47,8 +52,9 @@
   cursor: pointer;
 }
 
-.sb-discover-create:hover {
+.sb-discover-create.sb-context-menu-button:hover {
   opacity: 0.9;
+  background: var(--sb-primary-color);
 }
 
 /*
@@ -82,7 +88,8 @@
   gap: 8px;
 }
 
-.sb-playlist-item {
+.sb-playlist-item,
+.sb-annotation-item {
   cursor: pointer;
 }
 
