@@ -1,9 +1,14 @@
 import {
+  BOOK_ID_MAP,
+  BOOK_SLUGS,
   createBibleDataManager,
+  findClosestBookId,
   getBookId,
+  getBookSlug,
   parseVerseReference,
   parseVerseReferences,
   type BibleDataManager,
+  type BookId,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -521,5 +526,97 @@ describe("getBookId()", () => {
     expect(getBookId("Nah")).toBe("NAM");
     expect(getBookId("Phil")).toBe("PHP");
     expect(getBookId("Phlm")).toBe("PHM");
+  });
+
+  it("resolves hyphenated URL slugs (path-based routing)", () => {
+    expect(getBookId("genesis")).toBe("GEN");
+    expect(getBookId("song-of-solomon")).toBe("SNG");
+    expect(getBookId("1-kings")).toBe("1KI");
+    expect(getBookId("1-corinthians")).toBe("1CO");
+  });
+});
+
+describe("getBookSlug()", () => {
+  it("returns the canonical URL slug for a book", () => {
+    expect(getBookSlug("GEN")).toBe("genesis");
+    expect(getBookSlug("SNG")).toBe("song-of-solomon");
+    expect(getBookSlug("1KI")).toBe("1-kings");
+  });
+
+  it("round-trips through getBookId", () => {
+    expect(getBookId(getBookSlug("REV"))).toBe("REV");
+    expect(getBookId(getBookSlug("1CO"))).toBe("1CO");
+  });
+
+  // Load-bearing for SSR routing, not just a tidiness check.
+  // `legacyReadingUrlRedirect` 301s any reading path that differs from
+  // `buildReadingPath` of what it resolved to, and that path is built from
+  // `getBookSlug`. If a slug failed to resolve back to its own book, the
+  // redirect target would itself be non-canonical and the server would
+  // redirect it forever. The apocrypha are the ones to watch: they only got
+  // `BOOK_ID_MAP` entries in 6e6e7b60, and their slugs are bare USFM codes.
+  it("resolves every book's own slug back to that book", () => {
+    for (const [bookId, slug] of Object.entries(BOOK_SLUGS)) {
+      expect({ slug, id: getBookId(slug) }).toEqual({ slug, id: bookId });
+    }
+  });
+
+  it("resolves spelled-out apocrypha names that collide with a shorter book's prefix", () => {
+    // Without explicit entries these fall through to the `startsWith` scan
+    // and land on Jude ("jud") and Ecclesiastes ("ecc").
+    expect(getBookId("judith")).toBe("JDT");
+    expect(getBookId("ecclesiasticus")).toBe("SIR");
+  });
+
+  it("falls back to a lowercased version of an unrecognized id instead of returning undefined", () => {
+    // Callers on the legacy-URL fallback path (an old `?book=` link with a
+    // value that isn't a real book) pass an unvalidated string through as if
+    // it were a BookId; this must never surface "undefined" in a URL path.
+    expect(getBookSlug("NOTABOOK" as BookId)).toBe("notabook");
+  });
+});
+
+describe("findClosestBookId()", () => {
+  it("accepts a close typo of a book slug", () => {
+    // Doesn't share getBookId's "gen"/"genesis" alias prefixes, so this only
+    // resolves through the fuzzy fallback.
+    expect(findClosestBookId("senesis")).toBe("GEN");
+  });
+
+  it("accepts a close typo of a multi-word slug", () => {
+    expect(findClosestBookId("song-of-solomen")).toBe("SNG");
+  });
+
+  it("is case-insensitive and ignores whitespace/hyphens like getBookId", () => {
+    expect(findClosestBookId("Senesis")).toBe("GEN");
+  });
+
+  it("rejects a string too dissimilar from any book", () => {
+    expect(findClosestBookId("notabook")).toBeNull();
+    expect(findClosestBookId("xyzabc123")).toBeNull();
+  });
+
+  it("rejects strings too short to judge confidently", () => {
+    expect(findClosestBookId("ab")).toBeNull();
+  });
+
+  it("returns null instead of getBookId already having a real exact/prefix match", () => {
+    // findClosestBookId is only ever consulted as a fallback after getBookId
+    // fails, but it should still behave sanely (return the real match) if
+    // called directly on an exact name.
+    expect(findClosestBookId("genesis")).toBe("GEN");
+  });
+
+  it("every BookId has a slug that round-trips through findClosestBookId", () => {
+    for (const bookId of BOOK_ID_MAP.values()) {
+      const slug = BOOK_SLUGS[bookId];
+      expect(findClosestBookId(slug)).toBe(bookId);
+    }
+  });
+
+  it("every slug maps to a book ID", () => {
+    for (const bookId of Object.keys(BOOK_SLUGS) as BookId[]) {
+      expect(getBookId(bookId)).toBe(bookId);
+    }
   });
 });

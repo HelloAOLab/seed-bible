@@ -26,9 +26,20 @@ function cacheable(href: string) {
 describe("isAppShellNavigation()", () => {
   it("answers page loads on this origin", () => {
     expect(navigation(`${ORIGIN}/`)).toBe(true);
-    expect(navigation(`${ORIGIN}/?book=GEN&chapter=10`)).toBe(true);
+    expect(navigation(`${ORIGIN}/AAB/genesis/10`)).toBe(true);
     // A deep link with a different language still shares the one shell.
-    expect(navigation(`${ORIGIN}/?book=JHN&chapter=9&lang=ar`)).toBe(true);
+    expect(navigation(`${ORIGIN}/ar/ARBNAV/john/9`)).toBe(true);
+    // Legacy query-param URLs still reach the app (the host 301s them to the
+    // path form), so the shell has to answer them too.
+    expect(navigation(`${ORIGIN}/?book=GEN&chapter=10`)).toBe(true);
+  });
+
+  it("is not fooled by a book slug that looks like a file extension", () => {
+    // Only the last path segment is a chapter number, so nothing in a reading
+    // path can trip `STATIC_FILE_RE` — but the apocrypha slugs are bare
+    // three-letter codes, which is the closest thing to a near-miss.
+    expect(navigation(`${ORIGIN}/AAB/tob/1`)).toBe(true);
+    expect(navigation(`${ORIGIN}/es/spa_onbv/genesis/1`)).toBe(true);
   });
 
   it("ignores anything that isn't a navigation", () => {

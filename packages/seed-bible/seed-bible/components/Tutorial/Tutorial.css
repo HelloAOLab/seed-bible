@@ -67,7 +67,7 @@
 
 .sb-tour-popover-title {
   margin: 0 0 0.375rem;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 1rem;
   line-height: 1;
   font-weight: 700;
@@ -75,7 +75,7 @@
 
 .sb-tour-popover-body {
   margin: 0 0 1rem;
-  font-family: "DM Sans", sans-serif;
+  font-family: system-ui, sans-serif;
   line-height: 1.55;
   font-size: 0.95em;
   opacity: 0.7;
@@ -137,7 +137,7 @@
 .sb-tour-btn-text {
   background: transparent;
   color: var(--sb-font-color);
-  font-family: "DM Sans", sans-serif;
+  font-family: system-ui, sans-serif;
   opacity: 0.7;
   padding-left: 0.125rem;
   padding-right: 0.125rem;
