@@ -6,9 +6,13 @@
 
 ### 🔧 Changed
 
+- Serve HTML and proxied assets gzip-compressed when the browser supports it, and stop the reader's initial font requests from blocking rendering by loading them without the render-blocking stylesheet, both PageSpeed wins. ([#1570](https://github.com/HelloAOLab/seed-bible/pull/1570))
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
+
+- Removed the Satoshi and DM Sans typefaces in favor of the system font, reducing the number of font files the reader has to download. ([#1570](https://github.com/HelloAOLab/seed-bible/pull/1570))
 
 ## v1.3.0 — 2026-07-31
 
