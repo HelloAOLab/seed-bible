@@ -394,6 +394,7 @@
   "languageUnavailable.noGoBack": "No, Go back",
   "ui-size": "UI size",
   "loading-profile": "Loading your profile…",
+  "loading-picture-editor": "Loading the picture editor…",
   "saving": "Saving…",
   "app-version": "v{{version}} · {{commit}}",
   "move-bookmark": "Move to folder",

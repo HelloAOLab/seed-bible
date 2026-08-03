@@ -1053,6 +1053,9 @@
   padding: 0.125rem;
   cursor: pointer;
 }
+.close-icon {
+  cursor: pointer;
+}
 
 .emptyCircle {
   display: inline-block;
