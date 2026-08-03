@@ -527,7 +527,55 @@ function renderChapterContent(
     return null;
   }
 
+  const getVerseDecorations = (verseNumber: number) => {
+    return decorations.filter(
+      (decoration) =>
+        (!decoration.translationId ||
+          decoration.translationId === chapterData.translation.id) &&
+        decoration.bookId === chapterData.book.id &&
+        decoration.chapterNumber === chapterData.chapter.number &&
+        decoration.verses.includes(verseNumber)
+    );
+  };
+
+  // Decorations asking to be drawn as highlights (`decoration.highlight`),
+  // flattened to one entry per verse. Content-targeted decorations are skipped:
+  // the ribbon layer works per verse-run and can't paint a text fragment.
+  // Later decorations win, matching how their CSS is layered below.
+  const decorationHighlights = new Map<number, ChapterHighlight>();
+  for (const decoration of decorations) {
+    if (!decoration.highlight || hasContentTargeting(decoration)) {
+      continue;
+    }
+    if (
+      (decoration.translationId &&
+        decoration.translationId !== chapterData.translation.id) ||
+      decoration.bookId !== chapterData.book.id ||
+      decoration.chapterNumber !== chapterData.chapter.number
+    ) {
+      continue;
+    }
+    for (const verseNumber of decoration.verses) {
+      decorationHighlights.set(verseNumber, {
+        ...decoration.highlight,
+        verse: verseNumber,
+      });
+    }
+  }
+
+  // `showHighlights` hides the reader's *saved* highlights. Decoration
+  // highlights are a live signal from a session peer or an extension, so they
+  // stay visible either way — as they did when they were plain CSS.
   const getVerseHighlight = (verseNumber: number): ChapterHighlight | null => {
+    const decorated = decorationHighlights.get(verseNumber);
+    if (decorated) {
+      return decorated;
+    }
+
+    if (!scriptureElements.showHighlights) {
+      return null;
+    }
+
     for (const highlight of highlights) {
       if (typeof highlight.verse === "number") {
         if (highlight.verse === verseNumber) {
@@ -594,17 +642,6 @@ function renderChapterContent(
         className: "",
         style: undefined as JSX.CSSProperties | undefined,
       }
-    );
-  };
-
-  const getVerseDecorations = (verseNumber: number) => {
-    return decorations.filter(
-      (decoration) =>
-        (!decoration.translationId ||
-          decoration.translationId === chapterData.translation.id) &&
-        decoration.bookId === chapterData.book.id &&
-        decoration.chapterNumber === chapterData.chapter.number &&
-        decoration.verses.includes(verseNumber)
     );
   };
 
@@ -847,9 +884,7 @@ function renderChapterContent(
     }
 
     if (isVerseEntry(entry)) {
-      const highlight = scriptureElements.showHighlights
-        ? getVerseHighlight(entry.number)
-        : null;
+      const highlight = getVerseHighlight(entry.number);
       const colorKey = getHighlightColorKey(highlight);
 
       if (colorKey === null) {
@@ -876,11 +911,7 @@ function renderChapterContent(
           if (!isVerseEntry(next)) {
             break;
           }
-          const nextKey = getHighlightColorKey(
-            scriptureElements.showHighlights
-              ? getVerseHighlight(next.number)
-              : null
-          );
+          const nextKey = getHighlightColorKey(getVerseHighlight(next.number));
           const nextIsPoetry = splitVerseIntoSegments(next.content).some(
             (s) => s.type === "poetry"
           );
