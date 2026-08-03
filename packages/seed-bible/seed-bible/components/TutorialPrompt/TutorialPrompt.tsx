@@ -1,6 +1,7 @@
 import "./TutorialPrompt.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
+import { useAppConfig } from "../../app/appConfig";
 
 /**
  * First-run tutorial offer. A small card pinned to the top-right of the screen
@@ -16,6 +17,7 @@ export function TutorialPrompt({
   className?: string;
 }) {
   const { t } = useI18n();
+  const { branding } = useAppConfig();
 
   if (!tutorial.promptVisible.value) {
     return null;
@@ -30,11 +32,13 @@ export function TutorialPrompt({
     >
       <h3 className="sb-tutorial-prompt-title" id="sb-tutorial-prompt-title">
         {t("tutorial.promptTitle", {
+          appName: branding?.appName ?? "Seed Bible",
           defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
         })}
       </h3>
       <p className="sb-tutorial-prompt-body">
         {t("tutorial.promptBody", {
+          appName: branding?.appName ?? "Seed Bible",
           defaultValue:
             "A guided tour is available to help you learn the ins and outs of Seed Bible.",
         })}

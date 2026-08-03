@@ -11,6 +11,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { TranslationWithLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { signal } from "@preact/signals";
 
 /**
@@ -67,10 +68,13 @@ describe("SettingsManager language handling", () => {
   });
 
   // Regression for #1443: changing the UI language in the settings screen
-  // must change the interface language (`?lang=`), not only the scripture
-  // translation (`?translation=`). The bug was that the manager re-applied
-  // the profile's still-unsaved previous language whenever the URL changed —
-  // and the language switch itself writes `?lang=` — so it reverted the switch.
+  // must change the interface language, not only the scripture translation.
+  // The bug was that the manager re-applied the profile's still-unsaved
+  // previous language whenever the URL changed — reverting the switch. (URL
+  // writing for the language itself has since moved to TabsManager, which
+  // folds language/translation/book/chapter into one coordinated path, so
+  // this test no longer asserts on a `?lang=` query param — the language
+  // and translation signals themselves are the source of truth here.)
   it("keeps a logged-in user's newly selected UI language (does not revert to the profile's previous language)", async () => {
     const nav = createNavigationManager({ initialHref: window.location.href });
     const i18n = createI18nManager(nav, ["en"]);
@@ -82,9 +86,9 @@ describe("SettingsManager language handling", () => {
     // SeedBibleState in production).
     i18n.setLanguagePersister(settings.persistLanguage);
 
-    // The scripture-translation side-effect writes `?translation=`.
-    const apply = vi.fn(async () => {
-      nav.updateQueryParam("translation", "fra_onbv");
+    let appliedTranslation: string | null = null;
+    const apply = vi.fn(async (translation: TranslationWithLanguage) => {
+      appliedTranslation = translation.id;
     });
     i18n.setBibleTranslationApplicator(
       apply,
@@ -96,13 +100,10 @@ describe("SettingsManager language handling", () => {
     // Let any queued microtasks / async effects settle.
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    // Primary effect: the UI language changed and is reflected in `?lang=`.
+    // Primary effect: the UI language changed and stuck (didn't revert).
     expect(i18n.language.value).toBe("fr");
-    expect(nav.currentUrl.value.searchParams.get("lang")).toBe("fr");
     // Secondary effect: the scripture translation changed too.
-    expect(nav.currentUrl.value.searchParams.get("translation")).toBe(
-      "fra_onbv"
-    );
+    expect(appliedTranslation).toBe("fra_onbv");
     // The new language is persisted back to the profile.
     expect(getProfileLang(login)).toBe("fr");
   });
@@ -123,10 +124,14 @@ describe("SettingsManager language handling", () => {
     expect(i18n.language.value).toBe("fr");
   });
 
-  // A shared `?lang=` link or browser back/forward changes the displayed
+  // A shared deep link or browser back/forward changes the displayed
   // language, but must NOT overwrite the account's saved language — only the
-  // in-app selector persists.
-  it("does not persist a URL-driven language change to the profile", async () => {
+  // in-app selector persists. URL <-> language sync now lives in
+  // TabsManager, which reacts to an external navigation by calling
+  // `changeLanguage` directly (never `requestLanguageChange` — see
+  // `syncSelectedTabFromUrl`), so that's what this simulates directly rather
+  // than driving it through a real URL push.
+  it("does not persist a directly-applied (non-selector) language change to the profile", async () => {
     const nav = createNavigationManager({ initialHref: window.location.href });
     const i18n = createI18nManager(nav, ["en"]);
     await i18n.ready;
@@ -135,12 +140,7 @@ describe("SettingsManager language handling", () => {
     const settings = createSettings(CasualOSManager(), login, nav);
     i18n.setLanguagePersister(settings.persistLanguage);
 
-    // Deep-link / back-forward navigation that puts ?lang=de in the URL.
-    window.history.pushState({}, "", "/?lang=de");
-    const start = Date.now();
-    while (i18n.i18n.language !== "de" && Date.now() - start < 1000) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    await i18n.changeLanguage("de");
 
     // The displayed language switched ...
     expect(i18n.language.value).toBe("de");
