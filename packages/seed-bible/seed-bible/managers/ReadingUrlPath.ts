@@ -28,6 +28,35 @@ export function stripBasePath(pathname: string, basePath: string): string {
     : pathname;
 }
 
+/**
+ * Strips `basePath` and splits the remaining pathname into its non-empty,
+ * decoded segments. A segment with a malformed percent-escape (a lone `%`,
+ * or a truncated multi-byte sequence) is passed through as-is rather than
+ * decoded — `decodeURIComponent` throws a `URIError` on those rather than
+ * returning a best-effort string, and that's a routine occurrence on the
+ * open web (bots probing odd paths, a copy-pasted link with a stray `%`),
+ * not a contrived edge case.
+ *
+ * Falling back to the raw segment (instead of discarding the whole path)
+ * preserves the segment count, so a malformed book segment in an otherwise
+ * canonical-shaped path still reaches `getBookId`/`findClosestBookId` — which
+ * correctly fail to match it — and comes out `bookMatch: "unresolved"`
+ * rather than being mistaken for a differently-shaped or unparseable path.
+ */
+export function splitPathSegments(
+  pathname: string,
+  basePath: string
+): string[] {
+  const raw = stripBasePath(pathname, basePath).split("/").filter(Boolean);
+  return raw.map((segment) => {
+    try {
+      return decodeURIComponent(segment);
+    } catch {
+      return segment;
+    }
+  });
+}
+
 export interface ParsedReadingPath {
   /**
    * Explicit language segment, or null when the path omitted it (3-segment
@@ -62,10 +91,7 @@ export function parseReadingPath(
   pathname: string,
   basePath: string
 ): ParsedReadingPath | null {
-  const segments = stripBasePath(pathname, basePath)
-    .split("/")
-    .filter(Boolean)
-    .map((segment) => decodeURIComponent(segment));
+  const segments = splitPathSegments(pathname, basePath);
 
   let language: string | undefined | null;
   let translationId: string | undefined;

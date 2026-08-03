@@ -80,6 +80,24 @@ describe("parseReadingPath", () => {
     expect(parseReadingPath("/AAB/john/abc", "")).toBeNull();
   });
 
+  // Regression for the review at #1547: decodeURIComponent throws a
+  // URIError on a malformed percent-escape rather than returning a
+  // best-effort string. A malformed book segment must still come out
+  // "unresolved" (so callers fall through to their existing 404 handling)
+  // instead of the whole parse throwing or silently returning null (which
+  // would be mistaken for "not a reading path at all" and fall through to a
+  // default render instead of a 404).
+  it.each(["%", "%E0", "100%off"])(
+    "treats a malformed percent-escape (%s) in the book segment as unresolved, not a thrown error",
+    (malformed) => {
+      expect(() => parseReadingPath(`/AAB/${malformed}/1`, "")).not.toThrow();
+      const parsed = parseReadingPath(`/AAB/${malformed}/1`, "");
+      expect(parsed?.bookMatch).toBe("unresolved");
+      expect(parsed?.bookId).toBeNull();
+      expect(parsed?.rawBookSegment).toBe(malformed);
+    }
+  );
+
   it("fuzzy-matches a close typo of the book segment", () => {
     // "senesis" doesn't share getBookId's alias prefixes ("gen", "genesis"),
     // so this only resolves via the fuzzy fallback, not the exact/prefix path.

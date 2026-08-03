@@ -15,6 +15,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
   parseReadingPath,
+  splitPathSegments,
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
@@ -113,10 +114,7 @@ export function legacyReadingUrlRedirect(
     return `${basePath}${readingPath}${url.search}`;
   }
 
-  const segments = stripBasePath(url.pathname, basePath)
-    .split("/")
-    .filter(Boolean)
-    .map((segment) => decodeURIComponent(segment));
+  const segments = splitPathSegments(url.pathname, basePath);
 
   let bookId: BookId | null = null;
   let chapter = 1;
@@ -243,10 +241,7 @@ export function acceptLanguageRedirect(
     chapter = parsed.chapter;
     explicitTranslationId = parsed.translationId;
   } else {
-    const segments = stripBasePath(url.pathname, basePath)
-      .split("/")
-      .filter(Boolean)
-      .map((segment) => decodeURIComponent(segment));
+    const segments = splitPathSegments(url.pathname, basePath);
 
     if (segments.length === 2) {
       // The prior /{book}/{chapter} format: no translation named at all.

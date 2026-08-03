@@ -60,6 +60,15 @@ describe("legacyReadingUrlRedirect", () => {
       expect(legacyReadingUrlRedirect("/en/AAB/notabook/1", "")).toBeNull();
     });
 
+    // Regression for the review at #1547: decodeURIComponent throws a
+    // URIError on a malformed percent-escape rather than returning a
+    // best-effort string. Same fallthrough as any other unresolved book —
+    // no redirect, no thrown exception.
+    it("does not throw for a malformed percent-escape, and does not redirect it", () => {
+      expect(() => legacyReadingUrlRedirect("/en/AAB/%/1", "")).not.toThrow();
+      expect(legacyReadingUrlRedirect("/en/AAB/%/1", "")).toBeNull();
+    });
+
     it("preserves unrelated query params", () => {
       expect(legacyReadingUrlRedirect("/en/AAB/senesis/1?verse=5", "")).toBe(
         "/en/AAB/genesis/1?verse=5"
@@ -108,6 +117,11 @@ describe("legacyReadingUrlRedirect", () => {
 
     it("leaves a bare root with no reading params alone", () => {
       expect(legacyReadingUrlRedirect("/", "")).toBeNull();
+    });
+
+    it("does not throw for a malformed percent-escape in the legacy 2-segment shape", () => {
+      expect(() => legacyReadingUrlRedirect("/%E0/1", "")).not.toThrow();
+      expect(legacyReadingUrlRedirect("/%E0/1", "")).toBeNull();
     });
   });
 
@@ -232,6 +246,13 @@ describe("acceptLanguageRedirect", () => {
 
   it("leaves a bare root with no reading params alone", () => {
     expect(acceptLanguageRedirect("/", "", ["fr-FR"])).toBeNull();
+  });
+
+  it("does not throw for a malformed percent-escape, in either shape", () => {
+    expect(() =>
+      acceptLanguageRedirect("/AAB/%/1", "", ["fr-FR"])
+    ).not.toThrow();
+    expect(() => acceptLanguageRedirect("/%E0/1", "", ["fr-FR"])).not.toThrow();
   });
 
   // Mirrors `legacyReadingUrlRedirect`'s own property: the target this
@@ -488,6 +509,24 @@ describe("render() server-rendered meta tags", () => {
   it("returns notFound: true (the server's 404 signal) for an unresolved book", async () => {
     const result = await render({
       path: "/en/AAB/notabook/1?useFreeBibleAPI=true",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: TEMPLATE,
+    });
+
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    expect(result.notFound).toBe(true);
+  });
+
+  // Regression for the review at #1547: a malformed percent-escape (a lone
+  // "%") in the book segment used to make decodeURIComponent throw an
+  // uncaught URIError, which server/index.ts's try/catch turned into a
+  // confusing 200-with-unrendered-shell instead of the clean 404 the rest of
+  // this suite exercises above.
+  it("returns notFound: true, not a thrown error, for a malformed percent-escape in the book segment", async () => {
+    const result = await render({
+      path: "/en/AAB/%/1?useFreeBibleAPI=true",
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
       html: TEMPLATE,
     });
