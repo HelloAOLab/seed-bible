@@ -1179,6 +1179,106 @@ describe("BibleReader", () => {
     expect(wrappers[0]?.getAttribute("data-highlight-key")).toBe("1-2");
   });
 
+  it("marks a decoration highlight as a broadcast and leaves a saved one unmarked", () => {
+    const { slot, selectorState, readingState, highlights, decorations } =
+      createFixture();
+
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // The ribbon layer reads this off the DOM to decide outline vs solid.
+    const wrappers = Array.from(
+      container.querySelectorAll("[data-highlight-fill]")
+    );
+    const marks = wrappers.map((w) => [
+      w.getAttribute("data-highlight-fill"),
+      w.getAttribute("data-highlight-broadcast"),
+    ]);
+    expect(marks).toEqual([
+      ["var(--sb-highlight-yellow-color)", null],
+      ["var(--sb-highlight-green-color)", "true"],
+    ]);
+  });
+
+  it("does not merge a broadcast and a saved highlight of the same color into one run", () => {
+    const {
+      slot,
+      selectorState,
+      readingState,
+      highlights,
+      decorations,
+      chapterData,
+    } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "green" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Same color, but one draws solid and the other outlined — merging them into
+    // a single continuous ribbon would paint both the same way.
+    const wrappers = Array.from(
+      container.querySelectorAll("[data-highlight-fill]")
+    );
+    expect(wrappers.length).toBe(2);
+    expect(
+      wrappers.map((w) => w.getAttribute("data-highlight-broadcast"))
+    ).toEqual([null, "true"]);
+  });
+
   it("lets a decoration highlight win over a saved highlight on the same verse", () => {
     const { slot, selectorState, readingState, highlights, decorations } =
       createFixture();

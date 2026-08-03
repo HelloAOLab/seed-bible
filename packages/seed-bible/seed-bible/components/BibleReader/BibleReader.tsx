@@ -181,6 +181,16 @@ function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
 }
 
+/**
+ * A highlight resolved for one verse, plus where it came from. `broadcast` is
+ * true for a highlight carried by a decoration — a session peer's, or an
+ * extension's — as opposed to one the reader saved themselves.
+ */
+interface ResolvedHighlight {
+  highlight: ChapterHighlight;
+  broadcast: boolean;
+}
+
 function hasContentTargeting(decoration: VerseDecoration): boolean {
   const hasTargetContent =
     typeof decoration.targetContent === "string" &&
@@ -566,10 +576,15 @@ function renderChapterContent(
   // `showHighlights` hides the reader's *saved* highlights. Decoration
   // highlights are a live signal from a session peer or an extension, so they
   // stay visible either way — as they did when they were plain CSS.
-  const getVerseHighlight = (verseNumber: number): ChapterHighlight | null => {
+  //
+  // `broadcast` distinguishes the two for rendering: a decoration highlight is
+  // drawn as an outline, a saved one as a solid ribbon. A broadcast covers the
+  // reader's own highlight rather than replacing it, so the outline is what
+  // says "this isn't yours, and yours is still underneath".
+  const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
     const decorated = decorationHighlights.get(verseNumber);
     if (decorated) {
-      return decorated;
+      return { highlight: decorated, broadcast: true };
     }
 
     if (!scriptureElements.showHighlights) {
@@ -579,14 +594,14 @@ function renderChapterContent(
     for (const highlight of highlights) {
       if (typeof highlight.verse === "number") {
         if (highlight.verse === verseNumber) {
-          return highlight;
+          return { highlight, broadcast: false };
         }
         continue;
       }
 
       const [start, end] = highlight.verse;
       if (verseNumber >= start && verseNumber <= end) {
-        return highlight;
+        return { highlight, broadcast: false };
       }
     }
 
@@ -597,20 +612,24 @@ function renderChapterContent(
   // ChapterContent), so a highlighted run's wrapper paints no background itself.
   // It only carries the readable font color and a `fill` (a CSS-var reference for
   // preset colors, or the custom hex) that the layer reads back off the DOM.
-  const getHighlightPresentation = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  const getHighlightPresentation = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return {
         className: "",
         style: undefined as JSX.CSSProperties | undefined,
         fill: null as string | null,
+        broadcast: false,
       };
     }
+
+    const { highlight, broadcast } = resolved;
 
     if (highlight.customColor && highlight.customFontColor) {
       return {
         className: "sb-highlight",
         style: { color: highlight.customFontColor } as JSX.CSSProperties,
         fill: highlight.customColor,
+        broadcast,
       };
     }
 
@@ -618,6 +637,7 @@ function renderChapterContent(
       className: `sb-highlight sb-highlight-${highlight.colorId}`,
       style: undefined as JSX.CSSProperties | undefined,
       fill: `var(--sb-highlight-${highlight.colorId}-color)`,
+      broadcast,
     };
   };
 
@@ -645,14 +665,18 @@ function renderChapterContent(
     );
   };
 
-  const getHighlightColorKey = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  // Also keys on `broadcast`, so a broadcast highlight never merges into one run
+  // with a saved highlight of the same colour — they draw differently.
+  const getHighlightColorKey = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return null;
     }
+    const { highlight, broadcast } = resolved;
+    const prefix = broadcast ? "broadcast:" : "";
     if (highlight.customColor && highlight.customFontColor) {
-      return `custom:${highlight.customColor}:${highlight.customFontColor}`;
+      return `${prefix}custom:${highlight.customColor}:${highlight.customFontColor}`;
     }
-    return highlight.colorId;
+    return `${prefix}${highlight.colorId}`;
   };
 
   // Renders a single verse's `<span class="sb-verse">`. The highlight background
@@ -939,6 +963,7 @@ function renderChapterContent(
           style={presentation.style}
           data-highlight-fill={presentation.fill ?? undefined}
           data-highlight-key={runKey}
+          data-highlight-broadcast={presentation.broadcast ? "true" : undefined}
         >
           {runIndices.map((idx) =>
             renderVerseNode(entries[idx] as ChapterVerse, idx)
@@ -1007,6 +1032,8 @@ interface Ribbon {
   key: string;
   d: string;
   fill: string;
+  /** Drawn as an outline rather than a solid fill — see `ResolvedHighlight`. */
+  broadcast: boolean;
   first: number;
   last: number;
   enter: boolean;
@@ -1161,6 +1188,7 @@ function ChapterContent(props: ChapterContentProps) {
         el,
         key: el.getAttribute("data-highlight-key") || `i${index}`,
         fill: el.getAttribute("data-highlight-fill") ?? "",
+        broadcast: el.getAttribute("data-highlight-broadcast") === "true",
         lines: collectLineRects(el, box.left, box.top),
         leadPad: padX,
         trailPad: padX,
@@ -1192,6 +1220,7 @@ function ChapterContent(props: ChapterContentProps) {
       key: string;
       d: string;
       fill: string;
+      broadcast: boolean;
       first: number;
       last: number;
     }> = [];
@@ -1211,6 +1240,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: `${chapterId}:${run.key}`,
         d,
         fill: run.fill,
+        broadcast: run.broadcast,
         first,
         last,
       });
@@ -1255,6 +1285,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: r.key,
         d: r.d,
         fill: r.fill,
+        broadcast: r.broadcast,
         first: r.first,
         last: r.last,
         enter,
@@ -1348,14 +1379,19 @@ function ChapterContent(props: ChapterContentProps) {
         {ribbons.map((ribbon) => (
           <path
             key={ribbon.key}
-            className={
-              ribbon.enter
-                ? "sb-highlight-ribbon sb-highlight-ribbon-enter"
-                : "sb-highlight-ribbon"
-            }
+            className={[
+              "sb-highlight-ribbon",
+              ribbon.enter ? "sb-highlight-ribbon-enter" : "",
+              ribbon.broadcast ? "sb-highlight-ribbon-broadcast" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             d={ribbon.d}
             style={{
               fill: ribbon.fill,
+              // Same colour on the stroke; the class decides how much of the
+              // fill shows through.
+              stroke: ribbon.broadcast ? ribbon.fill : undefined,
               opacity: ribbon.exiting ? 0 : undefined,
             }}
           />

@@ -455,6 +455,22 @@
   }
 }
 
+/* A highlight arriving from a shared session (or an extension) is outlined
+   rather than solid, so it reads as somebody else's mark laid over the page
+   instead of one of the reader's own. The reader's highlight is still there
+   underneath and returns to solid when the broadcast goes away. Same colour on
+   the stroke — only the amount of fill differs — so the colour still says who
+   picked what. One opacity serves both themes; the presets are light enough in
+   light mode and dark enough in dark mode to read at the same strength. */
+.sb-highlight-ribbon-broadcast {
+  fill-opacity: 0.5;
+  stroke-width: 2;
+  transition:
+    opacity 0.25s ease,
+    fill 0.25s ease,
+    stroke 0.25s ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sb-highlight-ribbon {
     transition: none;
