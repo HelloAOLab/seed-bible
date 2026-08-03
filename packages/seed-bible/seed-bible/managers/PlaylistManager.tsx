@@ -21,6 +21,7 @@ import type {
   BibleReadingExtensionManager,
   ReadingExtensionInstance,
 } from "./BibleReadingExtensionManager";
+import type { DiscoverManager } from "./DiscoverManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -444,7 +445,8 @@ export function createPlaylistManager(
   isMobile: ReadonlySignal<boolean>,
   modals: ModalManager,
   i18n: I18nManager,
-  readingExtensionManager: BibleReadingExtensionManager
+  readingExtensionManager: BibleReadingExtensionManager,
+  discover: DiscoverManager
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -453,11 +455,10 @@ export function createPlaylistManager(
     navigation.currentUrl.value.searchParams.get("playlistStep")
   );
   const userPlaylists = signal<Playlist[]>([]);
-  const view = signal<null | "discover" | "create_playlist" | "play_playlist">(
-    null
-  );
-
-  const isDiscoverOpen = computed(() => !!view.value);
+  // view/isDiscoverOpen are owned by DiscoverManager now; these are local
+  // aliases so the rest of this function keeps working unchanged.
+  const view = discover.view;
+  const isDiscoverOpen = discover.isDiscoverOpen;
 
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
@@ -490,13 +491,9 @@ export function createPlaylistManager(
       : null;
   });
 
-  const actualView = computed(() => {
-    if (view.value === "play_playlist" && !playing.value) {
-      return "discover";
-    }
-
-    return view.value;
-  });
+  const actualView = computed(() =>
+    discover.resolveActualView(!!playing.value)
+  );
 
   const availablePlaylists = computed(() => {
     return userPlaylists;

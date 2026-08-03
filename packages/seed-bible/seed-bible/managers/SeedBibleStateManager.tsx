@@ -607,7 +607,8 @@ export function createSeedBibleState(
     isMobile,
     modals,
     i18n,
-    readingExtensions
+    readingExtensions,
+    discover
   );
   // Close any fullscreen pane when the book/chapter params change, so
   // navigating reveals the reader (every navigation path writes these params).
@@ -1438,7 +1439,6 @@ export function createSeedBibleState(
     );
   });
 
-  // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
     if (!playlists.view.peek()) {
       playlists.view.value = playlists.playing.peek()
