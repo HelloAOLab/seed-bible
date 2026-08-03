@@ -13,6 +13,17 @@ function makeReq(headers: Record<string, string> = {}): IncomingMessage {
 }
 
 /**
+ * `sendHtml` (server/index.ts) writes the body as a `Buffer`, not the raw
+ * string that was rendered — decode it back for assertions.
+ */
+function bodyText(body: unknown): string {
+  if (!Buffer.isBuffer(body)) {
+    throw new Error(`Expected a Buffer body, got ${typeof body}`);
+  }
+  return body.toString("utf8");
+}
+
+/**
  * Captures every `writeHead`/`end` call instead of writing to a real socket,
  * so a test can assert on exactly what `renderAndRespond` sent.
  */
@@ -114,7 +125,8 @@ describe("renderAndRespond", () => {
     await renderAndRespond(makeReq(), res, render, ROUTE, html);
 
     expect(calls.writeHead[0]![0]).toBe(404);
-    expect(calls.end).toEqual(["<html>not found</html>"]);
+    expect(calls.end).toHaveLength(1);
+    expect(bodyText(calls.end[0])).toBe("<html>not found</html>");
   });
 
   it("writes a 200 with the rendered HTML for an ordinary render", async () => {
@@ -127,7 +139,8 @@ describe("renderAndRespond", () => {
     expect(calls.writeHead[0]![1]).toMatchObject({
       "content-type": "text/html; charset=utf-8",
     });
-    expect(calls.end).toEqual(["<html>rendered</html>"]);
+    expect(calls.end).toHaveLength(1);
+    expect(bodyText(calls.end[0])).toBe("<html>rendered</html>");
   });
 
   it("falls back to the unrendered pre-rendered HTML at 200 when render() throws", async () => {
@@ -145,7 +158,8 @@ describe("renderAndRespond", () => {
     }
 
     expect(calls.writeHead[0]![0]).toBe(200);
-    expect(calls.end).toEqual([html]);
+    expect(calls.end).toHaveLength(1);
+    expect(bodyText(calls.end[0])).toBe(html);
   });
 
   it("passes Accept-Language and mobile detection through to render()'s config", async () => {
