@@ -7,6 +7,7 @@
 ### 🔧 Changed
 
 - Serve HTML and proxied assets gzip-compressed when the browser supports it, and stop the reader's initial font requests from blocking rendering by loading them without the render-blocking stylesheet, both PageSpeed wins. ([#1570](https://github.com/HelloAOLab/seed-bible/pull/1570))
+- Use paths instead of query parameters for better SEO. ([#1547](https://github.com/HelloAOLab/seed-bible/pull/1547))
 
 ### 🐛 Fixed
 
