@@ -381,7 +381,7 @@ describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
     "<!doctype html><html><head>",
     "<!-- META -->",
-    '</head><body><script id="config"><!-- CONFIG_JSON --></script>',
+    '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -420,11 +420,11 @@ describe("render() server-rendered meta tags", () => {
     path: string,
     config: Partial<typeof DEFAULT_APP_CONFIG> = {}
   ): Promise<string> => {
-    const result = await render({
+    const result = (await render({
       path,
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [], ...config },
       html: TEMPLATE,
-    });
+    })) as { html: string; notFound?: true; redirectTo?: string };
     if ("redirectTo" in result) {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
     }
@@ -454,6 +454,20 @@ describe("render() server-rendered meta tags", () => {
     expect(html).toContain(
       '<link rel="canonical" href="/b/branch-x/en/AAB/genesis/1"'
     );
+  });
+
+  it("injects the config into the #app-config JSON script tag", async () => {
+    const config = { basePath: "/b/branch-x", assetHost: "https://cdn.test" };
+    const html = await renderHtml(
+      "/b/branch-x/en/AAB/genesis/1?useFreeBibleAPI=true",
+      config
+    );
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    expect(JSON.parse(injected as string)).toMatchObject(config);
   });
 
   // The review's complaint about the sitemap was not just that its URLs
@@ -491,11 +505,11 @@ describe("render() server-rendered meta tags", () => {
   });
 
   it("renders the bare root directly, with no redirect and no notFound", async () => {
-    const result = await render({
+    const result = (await render({
       path: "/?useFreeBibleAPI=true",
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
       html: TEMPLATE,
-    });
+    })) as { html: string; notFound?: true; redirectTo?: string };
 
     if ("redirectTo" in result) {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
@@ -507,11 +521,11 @@ describe("render() server-rendered meta tags", () => {
   });
 
   it("returns notFound: true (the server's 404 signal) for an unresolved book", async () => {
-    const result = await render({
+    const result = (await render({
       path: "/en/AAB/notabook/1?useFreeBibleAPI=true",
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
       html: TEMPLATE,
-    });
+    })) as { html: string; notFound?: true; redirectTo?: string };
 
     if ("redirectTo" in result) {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
@@ -525,11 +539,11 @@ describe("render() server-rendered meta tags", () => {
   // confusing 200-with-unrendered-shell instead of the clean 404 the rest of
   // this suite exercises above.
   it("returns notFound: true, not a thrown error, for a malformed percent-escape in the book segment", async () => {
-    const result = await render({
+    const result = (await render({
       path: "/en/AAB/%/1?useFreeBibleAPI=true",
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
       html: TEMPLATE,
-    });
+    })) as { html: string; notFound?: true; redirectTo?: string };
 
     if ("redirectTo" in result) {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
