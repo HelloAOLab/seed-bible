@@ -353,8 +353,8 @@ type ChapterHighlightsEntry = {
   userId: string;
   /** Latest known highlights for this account + chapter. */
   data: Signal<ChapterHighlights>;
-  /** True once a load or a save has settled for this account + chapter. */
-  loaded: boolean;
+  /** True once a load or a save has put real highlights in `data`. */
+  settled: boolean;
   /** In-flight load, shared by concurrent readers and mutators. */
   load: Promise<void> | null;
 };
@@ -375,7 +375,9 @@ function entryKey(userId: string, address: string): string {
  * - Returned views track the signed-in account, so switching accounts
  *   updates every view in place without callers re-requesting them.
  * - Normalizes overlapping highlight ranges to deterministic output.
- * - Persists highlights under user-scoped storage keys.
+ * - Persists highlights under user-scoped storage keys, writing to the account
+ *   a mutation read from rather than to whoever is signed in by the time the
+ *   write starts.
  */
 export function createHighlightsManager(
   os: CasualOSManager,
@@ -396,7 +398,7 @@ export function createHighlightsManager(
       entry = {
         userId,
         data: signal<ChapterHighlights>(emptyChapterHighlights),
-        loaded: false,
+        settled: false,
         load: null,
       };
       entries.set(key, entry);
@@ -411,9 +413,15 @@ export function createHighlightsManager(
   ): Promise<void> => {
     const data = await os.getData(userId, address);
 
+    // Anything that settled the entry while this request was in the air holds
+    // newer highlights than this response does.
+    if (entry.settled) {
+      return;
+    }
+
     if (!data || !data.success || !data.data) {
       entry.data.value = emptyChapterHighlights;
-      entry.loaded = true;
+      entry.settled = true;
       return;
     }
 
@@ -421,14 +429,14 @@ export function createHighlightsManager(
     if (!parsed.success) {
       console.warn("Failed to parse chapter highlights:", parsed.error);
       entry.data.value = emptyChapterHighlights;
-      entry.loaded = true;
+      entry.settled = true;
       return;
     }
 
     entry.data.value = {
       highlights: normalizeHighlights(parsed.data.highlights),
     };
-    entry.loaded = true;
+    entry.settled = true;
   };
 
   // Starts (or awaits an existing) load for an entry. Does not write any
@@ -439,7 +447,7 @@ export function createHighlightsManager(
     address: string,
     entry: ChapterHighlightsEntry
   ): Promise<void> | null => {
-    if (entry.loaded) {
+    if (entry.settled) {
       return entry.load;
     }
     if (!entry.load) {
@@ -510,6 +518,35 @@ export function createHighlightsManager(
     return view;
   };
 
+  // Writes a chapter's highlights for the account the entry belongs to, rather
+  // than for whoever happens to be signed in when the write starts. Callers
+  // that merged into existing highlights resolved an account to read from, and
+  // the write has to go to that same account: an account switch part-way
+  // through a mutation would otherwise store one account's highlights in
+  // another account's record.
+  const writeChapterHighlights = async (
+    entry: ChapterHighlightsEntry,
+    address: string,
+    translationId: string,
+    highlights: ChapterHighlight[]
+  ): Promise<void> => {
+    const normalized = normalizeHighlights(highlights);
+
+    // Optimistically update local state before waiting for persistence.
+    entry.data.value = {
+      highlights: normalized,
+    };
+    entry.settled = true;
+
+    const payload = chapterHighlightsSchema.parse({
+      highlights: normalized,
+    });
+
+    await os.recordData(entry.userId, address, payload, {
+      marker: `publicRead:highlights/${translationId}`,
+    });
+  };
+
   const saveChapterHighlights = async (
     translationId: string,
     bookId: string,
@@ -521,7 +558,6 @@ export function createHighlightsManager(
       bookId,
       chapterNumber
     );
-    const normalized = normalizeHighlights(highlights);
 
     let userId = login.userId.value;
     if (!userId) {
@@ -533,29 +569,23 @@ export function createHighlightsManager(
       return;
     }
 
-    const entry = getOrCreateEntry(userId, address);
-
-    // Optimistically update local state before waiting for persistence.
-    entry.data.value = {
-      highlights: normalized,
-    };
-    entry.loaded = true;
-
-    const payload = chapterHighlightsSchema.parse({
-      highlights: normalized,
-    });
-
-    await os.recordData(userId, address, payload, {
-      marker: `publicRead:highlights/${translationId}`,
-    });
+    await writeChapterHighlights(
+      getOrCreateEntry(userId, address),
+      address,
+      translationId,
+      highlights
+    );
   };
 
   // Resolves the signed-in account (attempting login if needed) and returns
-  // its loaded entry for a chapter, or null if the account could not be
-  // resolved. Used by mutations that need to merge into existing highlights
+  // that account's entry for a chapter with its highlights loaded, or null if
+  // the account could not be resolved. Used by mutations that merge into
+  // existing highlights
   // rather than replace them: reading highlights while signed out would be
   // empty, and saving would then replace the signed-in account's real data
-  // instead of merging into it.
+  // instead of merging into it. The entry also carries the account the merged
+  // result must be written back to, so pass it to `writeChapterHighlights`
+  // rather than resolving the account a second time.
   const resolveEntryToMutate = async (
     address: string
   ): Promise<ChapterHighlightsEntry | null> => {
@@ -634,10 +664,10 @@ export function createHighlightsManager(
       });
     }
 
-    await saveChapterHighlights(
+    await writeChapterHighlights(
+      entry,
+      address,
       translationId,
-      bookId,
-      chapterNumber,
       mergeHighlights(updated).map(fromRangeHighlight)
     );
   };
@@ -689,10 +719,10 @@ export function createHighlightsManager(
       updated = removeRangeFromHighlights(updated, range);
     }
 
-    await saveChapterHighlights(
+    await writeChapterHighlights(
+      entry,
+      address,
       translationId,
-      bookId,
-      chapterNumber,
       mergeHighlights(updated).map(fromRangeHighlight)
     );
   };

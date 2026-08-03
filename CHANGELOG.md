@@ -9,6 +9,7 @@
 ### 🐛 Fixed
 
 - Fix highlights from a previous account staying visible on already-visited chapters after signing out and into a different one, instead of updating to the signed-in account immediately.
+- Fix a highlight added as your session was ending being saved to whichever account signed in next, overwriting that account's highlights for the chapter.
 
 ### 🗑️ Removed
 

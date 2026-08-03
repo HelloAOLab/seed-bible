@@ -309,6 +309,36 @@ describe("HighlightsManager", () => {
     await savePromise;
   });
 
+  it("saveChapterHighlights() is not reverted by a load that was already in flight", async () => {
+    const pendingLoad = createDeferred<{
+      success: boolean;
+      data: { highlights: { colorId: string; verse: number }[] };
+    }>();
+    getDataMock.mockReturnValue(pendingLoad.promise);
+    const manager = createHighlightsManager(os, login);
+
+    // Arriving at the chapter starts a load that hasn't come back yet.
+    const view = manager.getChapterHighlights("BSB", "GEN", 1);
+
+    await manager.saveChapterHighlights("BSB", "GEN", 1, [
+      { colorId: "color-9", verse: [2, 4] },
+    ]);
+    expect(view.value).toEqual({
+      highlights: [{ colorId: "color-9", verse: [2, 4] }],
+    });
+
+    // The load finally answers, with what the server held before the save.
+    pendingLoad.resolve({
+      success: true,
+      data: { highlights: [{ colorId: "stale-color", verse: 8 }] },
+    });
+    await flushPromises();
+
+    expect(view.value).toEqual({
+      highlights: [{ colorId: "color-9", verse: [2, 4] }],
+    });
+  });
+
   it("highlightVerse() adds or overrides overlapping highlights", async () => {
     getDataMock.mockResolvedValue({
       success: true,
@@ -727,6 +757,89 @@ describe("HighlightsManager", () => {
           highlights: [
             { colorId: "color-1", verse: 1 },
             { colorId: "color-9", verse: 5 },
+          ],
+        },
+        { marker: "publicRead:highlights/BSB" }
+      );
+    });
+
+    it("highlightVerses() writes to the account it merged from when the account changes mid-load", async () => {
+      const user1Load = createDeferred<{
+        success: boolean;
+        data: { highlights: { colorId: string; verse: number }[] };
+      }>();
+      getDataMock.mockImplementation((recordName: unknown) => {
+        if (recordName === "user-1") {
+          return user1Load.promise;
+        }
+        return Promise.resolve({
+          success: true,
+          data: { highlights: [{ colorId: "user-2-color", verse: 9 }] },
+        });
+      });
+      const manager = createHighlightsManager(os, login);
+
+      const highlighting = manager.highlightVerses("BSB", "GEN", 1, [5], {
+        colorId: "color-9",
+      });
+
+      // The session is invalidated and a different account signs in while
+      // user-1's existing highlights are still on the wire.
+      login.userId.value = "user-2";
+      user1Load.resolve({
+        success: true,
+        data: { highlights: [{ colorId: "user-1-color", verse: 1 }] },
+      });
+      await highlighting;
+
+      // user-1's highlights must never be stored in user-2's record.
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        "highlights:BSB/GEN/1",
+        {
+          highlights: [
+            { colorId: "user-1-color", verse: 1 },
+            { colorId: "color-9", verse: 5 },
+          ],
+        },
+        { marker: "publicRead:highlights/BSB" }
+      );
+    });
+
+    it("unhighlightVerses() writes to the account it merged from when the account changes mid-load", async () => {
+      const user1Load = createDeferred<{
+        success: boolean;
+        data: { highlights: { colorId: string; verse: number[] }[] };
+      }>();
+      getDataMock.mockImplementation((recordName: unknown) => {
+        if (recordName === "user-1") {
+          return user1Load.promise;
+        }
+        return Promise.resolve({
+          success: true,
+          data: { highlights: [{ colorId: "user-2-color", verse: 9 }] },
+        });
+      });
+      const manager = createHighlightsManager(os, login);
+
+      const unhighlighting = manager.unhighlightVerses("BSB", "GEN", 1, [2]);
+
+      login.userId.value = "user-2";
+      user1Load.resolve({
+        success: true,
+        data: { highlights: [{ colorId: "user-1-color", verse: [1, 3] }] },
+      });
+      await unhighlighting;
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        "highlights:BSB/GEN/1",
+        {
+          highlights: [
+            { colorId: "user-1-color", verse: 1 },
+            { colorId: "user-1-color", verse: 3 },
           ],
         },
         { marker: "publicRead:highlights/BSB" }
