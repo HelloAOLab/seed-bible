@@ -18,7 +18,18 @@ import {
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { JSX } from "preact";
-import type { BibleDataManager } from "../../managers/BibleDataManager";
+import type { BibleDataManager, BookId } from "../../managers/BibleDataManager";
+import {
+  DEFAULT_BOOK_ID,
+  DEFAULT_CHAPTER_NUMBER,
+  bibleLanguageToUiLocale,
+  uiLocaleForDefaultTranslation,
+} from "../../managers/BibleReadingManager";
+import {
+  buildReadingUrl,
+  parseReadingPath,
+} from "../../managers/ReadingUrlPath";
+import { readInjectedConfig } from "../../app/appConfig";
 import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import {
@@ -1433,7 +1444,7 @@ const TranslationModal = (props: {
           >
             {isMobile.value && (
               <span
-                class="material-symbols-outlined"
+                class="close-icon material-symbols-outlined"
                 onClick={() => {
                   selectingTranslation.value = false;
                   showTranslationSettings.value = false;
@@ -1476,7 +1487,7 @@ const TranslationModal = (props: {
             </span>
             {!isMobile.value && (
               <span
-                class="material-symbols-outlined"
+                class="close-icon material-symbols-outlined"
                 onClick={() => {
                   selectingTranslation.value = false;
                   showTranslationSettings.value = false;
@@ -1570,14 +1581,33 @@ const LanguageComponent = (props: {
 
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
-    const url = new URL(location.href);
-    // url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
-    url.searchParams.set(
-      "translation",
-      bibleDataManager.buildTranslationId(translation.id)
-    );
-    url.searchParams.delete("book");
-    url.searchParams.delete("chapter");
+    const current = new URL(location.href);
+    const { basePath } = readInjectedConfig();
+    const parsed = parseReadingPath(current.pathname, basePath);
+    // The translation is a path segment now, so setting `?translation=` next
+    // to a path that names a different one handed out a link that opened the
+    // *current* translation — the path wins. It has to be written into the
+    // path instead.
+    //
+    // This used to clear book/chapter so the link opened at the translation's
+    // default position; the path form has nowhere to put "no position", so it
+    // keeps whatever the reader is on. That is the more useful link anyway,
+    // and a book the shared translation happens to lack lands on the reader's
+    // not-found state, which offers its first book — where the old link went.
+    const translationId = bibleDataManager.buildTranslationId(translation.id);
+    const url = buildReadingUrl({
+      currentUrl: current,
+      basePath,
+      translationId,
+      bookId: (parsed?.bookId ?? DEFAULT_BOOK_ID) as BookId,
+      chapter: parsed?.chapter ?? DEFAULT_CHAPTER_NUMBER,
+      // Only used when the page has no language in its path to inherit — the
+      // shared translation's own language beats defaulting to English.
+      fallbackLanguage:
+        uiLocaleForDefaultTranslation(translationId) ??
+        bibleLanguageToUiLocale(translation.language) ??
+        undefined,
+    });
     navigator.clipboard.writeText(url.href);
 
     app.toast(

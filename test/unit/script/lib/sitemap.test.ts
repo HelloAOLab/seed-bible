@@ -14,6 +14,10 @@ import {
   MAX_URLS_PER_SITEMAP,
   type BookChapters,
 } from "../../../../script/lib/sitemap";
+import {
+  acceptLanguageRedirect,
+  legacyReadingUrlRedirect,
+} from "../../../../standalone/entry-ssr";
 
 const ORIGIN = "https://seedbible.org";
 
@@ -73,21 +77,44 @@ describe("buildChapterUrl", () => {
         chapter: 1,
         uiLocale: "es",
       })
-    ).toBe(
-      "https://seedbible.org/?translation=spa_onbv&book=GEN&chapter=1&lang=es"
-    );
+    ).toBe("https://seedbible.org/es/spa_onbv/genesis/1");
   });
 
-  it("omits lang when no UI locale is given", () => {
+  it("uses the human-readable book slug, not the USFM code", () => {
+    expect(
+      buildChapterUrl(ORIGIN, {
+        translationId: "AAB",
+        bookId: "SNG",
+        chapter: 2,
+        uiLocale: "en",
+      })
+    ).toBe("https://seedbible.org/en/AAB/song-of-solomon/2");
+  });
+
+  it("falls back to the default language when no UI locale is given", () => {
+    // A translation whose Bible language maps to no supported UI locale still
+    // needs a URL that resolves without redirecting.
     expect(
       buildChapterUrl(ORIGIN, {
         translationId: "xyz_translation",
         bookId: "REV",
         chapter: 22,
       })
-    ).toBe(
-      "https://seedbible.org/?translation=xyz_translation&book=REV&chapter=22"
-    );
+    ).toBe("https://seedbible.org/en/xyz_translation/revelation/22");
+  });
+
+  it("spells out the language even for the English default translation", () => {
+    // `buildReadingPath` would normally omit it here, but that short form is a
+    // redirect entry point: a crawler sends no `Accept-Language` and would be
+    // 302'd off it. Every sitemap entry has to be a destination.
+    expect(
+      buildChapterUrl(ORIGIN, {
+        translationId: "AAB",
+        bookId: "GEN",
+        chapter: 1,
+        uiLocale: "en",
+      })
+    ).toBe("https://seedbible.org/en/AAB/genesis/1");
   });
 
   it("percent-encodes reserved characters in the translation ID", () => {
@@ -97,7 +124,9 @@ describe("buildChapterUrl", () => {
       chapter: 1,
       uiLocale: "en",
     });
-    expect(url).toContain("translation=eng%2Fesv");
+    // The whole ID is one path segment, so its slash must not become a
+    // separator — that would turn a 4-segment path into a 5-segment one.
+    expect(url).toBe("https://seedbible.org/en/eng%2Fesv/genesis/1");
   });
 
   it("works whether or not the origin has a trailing slash", () => {
@@ -112,7 +141,7 @@ describe("buildChapterUrl", () => {
       chapter: 1,
     });
     expect(withSlash).toBe(withoutSlash);
-    expect(withSlash).toBe("https://x.org/?translation=t&book=GEN&chapter=1");
+    expect(withSlash).toBe("https://x.org/en/t/genesis/1");
   });
 });
 
@@ -166,15 +195,9 @@ describe("chapterUrlsForTranslation", () => {
   it("emits one URL per chapter across all books", () => {
     const urls = chapterUrlsForTranslation(ORIGIN, "t", "en", books);
     expect(urls).toHaveLength(5);
-    expect(urls[0]).toBe(
-      "https://seedbible.org/?translation=t&book=GEN&chapter=1&lang=en"
-    );
-    expect(urls[2]).toBe(
-      "https://seedbible.org/?translation=t&book=GEN&chapter=3&lang=en"
-    );
-    expect(urls[4]).toBe(
-      "https://seedbible.org/?translation=t&book=EXO&chapter=2&lang=en"
-    );
+    expect(urls[0]).toBe("https://seedbible.org/en/t/genesis/1");
+    expect(urls[2]).toBe("https://seedbible.org/en/t/genesis/3");
+    expect(urls[4]).toBe("https://seedbible.org/en/t/exodus/2");
   });
 
   it("honors a non-1 firstChapterNumber", () => {
@@ -182,8 +205,8 @@ describe("chapterUrlsForTranslation", () => {
       { bookId: "PSA", firstChapterNumber: 42, numberOfChapters: 2 },
     ]);
     expect(urls).toEqual([
-      "https://seedbible.org/?translation=t&book=PSA&chapter=42",
-      "https://seedbible.org/?translation=t&book=PSA&chapter=43",
+      "https://seedbible.org/en/t/psalms/42",
+      "https://seedbible.org/en/t/psalms/43",
     ]);
   });
 
@@ -193,7 +216,22 @@ describe("chapterUrlsForTranslation", () => {
       { bookId: "EXO", firstChapterNumber: 1, numberOfChapters: 1 },
     ]);
     expect(urls).toHaveLength(1);
-    expect(urls[0]).toContain("book=EXO");
+    expect(urls[0]).toContain("/exodus/");
+  });
+
+  // The sitemap's whole job is to list URLs a crawler can fetch directly, so
+  // nothing it emits may redirect. `legacyReadingUrlRedirect` handles
+  // corrections for URLs with an explicit language (301); `acceptLanguageRedirect`
+  // handles the 3-segment form with no language at all (302) — since the
+  // sitemap always spells out the language segment explicitly (see
+  // `buildChapterUrl` above), neither should ever fire for its URLs.
+  it("emits URLs the server serves directly, with no redirect", () => {
+    const urls = chapterUrlsForTranslation(ORIGIN, "AAB", "en", books);
+    for (const url of urls) {
+      const { pathname } = new URL(url);
+      expect(legacyReadingUrlRedirect(pathname, "")).toBeNull();
+      expect(acceptLanguageRedirect(pathname, "", [])).toBeNull();
+    }
   });
 });
 
@@ -209,18 +247,22 @@ describe("escapeXml", () => {
 });
 
 describe("renderUrlset", () => {
-  it("renders well-formed XML with escaped locs", () => {
-    const xml = renderUrlset([
-      "https://x.org/?translation=t&book=GEN&chapter=1",
-    ]);
+  it("renders well-formed XML", () => {
+    const xml = renderUrlset(["https://x.org/en/t/genesis/1"]);
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain(
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
     );
-    expect(xml).toContain(
-      "<loc>https://x.org/?translation=t&amp;book=GEN&amp;chapter=1</loc>"
-    );
+    expect(xml).toContain("<loc>https://x.org/en/t/genesis/1</loc>");
     expect(xml.trimEnd().endsWith("</urlset>")).toBe(true);
+  });
+
+  it("escapes a loc that contains XML-significant characters", () => {
+    // Reading URLs no longer carry a query string, so the everyday case has
+    // nothing to escape. A custom API endpoint can still put arbitrary text
+    // in the translation segment, so the escaping has to stay correct.
+    const xml = renderUrlset(["https://x.org/en/a&b/genesis/1"]);
+    expect(xml).toContain("<loc>https://x.org/en/a&amp;b/genesis/1</loc>");
     // No raw unescaped ampersand should survive.
     expect(xml).not.toMatch(/&(?!amp;|lt;|gt;|quot;|apos;)/);
   });

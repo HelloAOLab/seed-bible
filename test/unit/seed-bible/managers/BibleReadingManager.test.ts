@@ -265,6 +265,24 @@ describe("createBibleReadingState", () => {
     expect(state.translationId.value).toBe("AAB");
   });
 
+  it("does not silently substitute a different book when the requested book isn't in the translation's book list", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager(), {
+      initialBookId: "NOTABOOK",
+      initialChapterNumber: 1,
+    });
+    await waitForInitialLoad(state);
+
+    // Left exactly as requested — not silently corrected to GEN (the
+    // translation's first book) — so the UI can detect "book not found"
+    // instead of showing substitute content at the wrong URL.
+    expect(state.bookId.value).toBe("NOTABOOK");
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.error.value).toBeNull();
+    expect(state.translationBooks.value).not.toBeNull();
+    expect(state.chapterData.value).toBeNull();
+  });
+
   it("loads highlights for the current chapter during initial load", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
@@ -3423,7 +3441,7 @@ describe("createBibleReadingState", () => {
       expect(listener).toHaveBeenCalledWith({ replace: true });
     });
 
-    it("falls back to a real book when the URL names one the translation lacks", async () => {
+    it("does not fire onNavigate when the URL names a book the translation lacks", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const state = createBibleReadingState(createDataManager(), {
         initialTranslationId: "AAB",
@@ -3435,14 +3453,14 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await waitForInitialLoad(state);
-      await waitFor(() => !state.isChapterContentStale.value);
 
-      expect(state.bookId.value).toBe("GEN");
+      // No silent substitution to a real book — bookId/chapterNumber stay
+      // exactly as requested so the UI can detect "book not found", and
+      // since nothing was corrected, no navigation event fires.
+      expect(state.bookId.value).toBe("ZZZ");
       expect(state.chapterNumber.value).toBe(1);
-      // The bogus book's request fails, but the corrected position's content
-      // clears it, so the reader is not left looking at an error.
       expect(state.error.value).toBeNull();
-      expect(listener).toHaveBeenCalledWith({ replace: true });
+      expect(listener).not.toHaveBeenCalled();
     });
 
     it("does not fire when the navigation is driven from the URL (updateUrl: false)", async () => {

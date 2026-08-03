@@ -15,7 +15,7 @@
 }
 
 .scripture-map-wrapper *:not(.material-symbols-outlined) {
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 /* .scripture-map-wrapper > * {
@@ -810,7 +810,7 @@
 }
 
 .tooltip *:not(.material-symbols-outlined) {
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 .tooltip.tooltip-up {

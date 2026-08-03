@@ -85,7 +85,7 @@ if (
 
   const seedBibleApiKey = "phc_rEUogfrnXkdTitOTrfWK2laEINF1QwNtGNQizzuMW0";
   posthog.init(seedBibleApiKey, {
-    api_host: "https://i.ao.bot",
+    api_host: "https://i.seedbible.org",
     ui_host: "https://us.posthog.com",
     defaults: "2026-05-30",
   });

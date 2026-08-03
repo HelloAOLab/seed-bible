@@ -250,8 +250,7 @@ const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
   { value: "'Plus Jakarta Sans', sans-serif", label: "Plus Jakarta Sans" },
-  { value: "'Satoshi', system-ui, sans-serif", label: "Satoshi" },
-  { value: "'DM Sans', sans-serif", label: "DM Sans" },
+  { value: "system-ui, sans-serif", label: "System UI" },
   { value: "'Helvetica Neue', sans-serif", label: "Helvetica Neue" },
   { value: "'Roboto', sans-serif", label: "Roboto" },
   { value: "'Inter', sans-serif", label: "Inter" },

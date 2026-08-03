@@ -17,7 +17,7 @@
 
 .sb-tutorial-prompt-title {
   margin: 0 0 0.375rem;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 1rem;
   line-height: 1.2;
   font-weight: 700;
@@ -25,7 +25,7 @@
 
 .sb-tutorial-prompt-body {
   margin: 0 0 1rem;
-  font-family: "DM Sans", sans-serif;
+  font-family: system-ui, sans-serif;
   line-height: 1.55;
   font-size: 0.95em;
   opacity: 0.7;
