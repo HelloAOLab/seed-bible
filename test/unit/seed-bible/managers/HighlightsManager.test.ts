@@ -1,6 +1,8 @@
 import {
   chapterHighlightsSchema,
   createHighlightsManager,
+  highlightContainsVerse,
+  type ChapterHighlight,
   type ChapterHighlights,
 } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
@@ -152,6 +154,52 @@ describe("HighlightsManager", () => {
     manager.getChapterHighlights("BSB", "GEN", 2);
     await flushPromises();
     expect(getDataMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("getChapterHighlights() reads empty for a chapter with nothing stored yet", async () => {
+    // The default mock in beforeEach answers `data_not_found`, which is what
+    // the server returns for any chapter the user has never highlighted.
+    const manager = createHighlightsManager(os, login);
+
+    const view = manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
+
+    expect(getDataMock).toHaveBeenCalledWith("user-1", "highlights:BSB/GEN/1");
+    expect(view.value).toEqual({ highlights: [] });
+
+    // "Nothing stored" is an answer, so re-reading must not ask again.
+    manager.getChapterHighlights("BSB", "GEN", 1);
+    await flushPromises();
+    expect(getDataMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("getChapterHighlights() shares one request between callers that arrive before it answers", async () => {
+    const load = createDeferred<{
+      success: boolean;
+      data: { highlights: { colorId: string; verse: number }[] };
+    }>();
+    getDataMock.mockReturnValue(load.promise);
+    const manager = createHighlightsManager(os, login);
+
+    // Both callers arrive while the request is still on the wire, the way a
+    // reader skimming chapters revisits one that is mid-load.
+    const first = manager.getChapterHighlights("BSB", "GEN", 1);
+    const second = manager.getChapterHighlights("BSB", "GEN", 1);
+
+    expect(getDataMock).toHaveBeenCalledTimes(1);
+    // BibleReadingManager reassigns this signal on every navigation, so the
+    // same chapter has to keep handing back the same signal.
+    expect(second).toBe(first);
+
+    load.resolve({
+      success: true,
+      data: { highlights: [{ colorId: "color-1", verse: 3 }] },
+    });
+    await flushPromises();
+
+    expect(first.value).toEqual({
+      highlights: [{ colorId: "color-1", verse: 3 }],
+    });
   });
 
   it("getChapterHighlights() returns empty highlights when stored data is invalid", async () => {
@@ -541,6 +589,32 @@ describe("HighlightsManager", () => {
     expect(recordDataMock).toHaveBeenCalledTimes(0);
   });
 
+  it("highlightVerses() does nothing for an empty verse list, without asking the user to sign in", async () => {
+    login.userId.value = null;
+    const manager = createHighlightsManager(os, login);
+
+    await manager.highlightVerses("BSB", "GEN", 1, [], {
+      colorId: "color-9",
+    });
+
+    // Bailing out before resolving an account is the point: a stray empty
+    // call must not put a login prompt in front of a signed-out reader.
+    expect(login.login).not.toHaveBeenCalled();
+    expect(getDataMock).not.toHaveBeenCalled();
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("unhighlightVerses() does nothing for an empty verse list, without asking the user to sign in", async () => {
+    login.userId.value = null;
+    const manager = createHighlightsManager(os, login);
+
+    await manager.unhighlightVerses("BSB", "GEN", 1, []);
+
+    expect(login.login).not.toHaveBeenCalled();
+    expect(getDataMock).not.toHaveBeenCalled();
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
   describe("account switching (regression for #1564)", () => {
     const mockPerUserHighlights = () => {
       getDataMock.mockImplementation(async (recordName: unknown) => {
@@ -861,6 +935,26 @@ describe("HighlightsManager", () => {
         "Unable to save highlights: user is not authenticated."
       );
     });
+  });
+});
+
+describe("highlightContainsVerse", () => {
+  it("matches only the verse a single-verse highlight covers", () => {
+    const highlight: ChapterHighlight = { colorId: "color-1", verse: 5 };
+
+    expect(highlightContainsVerse(highlight, 4)).toBe(false);
+    expect(highlightContainsVerse(highlight, 5)).toBe(true);
+    expect(highlightContainsVerse(highlight, 6)).toBe(false);
+  });
+
+  it("includes both ends of a range highlight and nothing beyond them", () => {
+    const highlight: ChapterHighlight = { colorId: "color-1", verse: [5, 8] };
+
+    expect(highlightContainsVerse(highlight, 4)).toBe(false);
+    expect(highlightContainsVerse(highlight, 5)).toBe(true);
+    expect(highlightContainsVerse(highlight, 7)).toBe(true);
+    expect(highlightContainsVerse(highlight, 8)).toBe(true);
+    expect(highlightContainsVerse(highlight, 9)).toBe(false);
   });
 });
 
