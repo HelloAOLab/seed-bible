@@ -36,9 +36,10 @@ import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
-import type {
-  DiscoverManager,
-  DiscoverProviderResults,
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+  type DiscoverProviderResults,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import {
   createBibleReadingExtensionManager,
@@ -2359,6 +2360,7 @@ describe("createBibleReadingState", () => {
     ): DiscoverManager {
       let callIndex = 0;
       return {
+        ...createDiscoverManager(),
         registerDiscoverProvider: vi.fn(),
         discover: vi.fn().mockImplementation(async function* () {
           const results = responses[callIndex++] ?? [];
@@ -2706,6 +2708,7 @@ describe("createBibleReadingState", () => {
 
     function createContentDiscoverManager(): DiscoverManager {
       return {
+        ...createDiscoverManager(),
         registerDiscoverProvider: vi.fn(),
         discover: vi.fn().mockImplementation(async function* () {
           yield {

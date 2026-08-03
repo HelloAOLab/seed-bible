@@ -398,7 +398,7 @@ describe("AnnotationsManager", () => {
   describe("createNewAnnotation", () => {
     it("no-ops and warns when signed out and login is declined", async () => {
       login.userId.value = null;
-      login.login.mockResolvedValue(undefined);
+      login.login.mockResolvedValue(null);
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       const manager = createManager();
 
