@@ -513,7 +513,7 @@ const SideBarBooks = (props: {
                   justifyContent:
                     ws <= MOBILE_BREAKPOINT ||
                     bd.numberOfChapters < 4 * separator
-                      ? "flex-start"
+                      ? "flex-end"
                       : "space-between",
                 }}
               >
