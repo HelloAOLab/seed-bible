@@ -22,6 +22,8 @@ import type {
   ReadingExtensionInstance,
 } from "./BibleReadingExtensionManager";
 import type { DiscoverManager } from "./DiscoverManager";
+import { emphasizeVerses } from "./BibleReadingManager";
+import type { BookId } from "./BibleDataManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -252,31 +254,23 @@ export function createPlayingState(
       { scrollToVerse: ref.verse }
     );
 
-    if (ref.verse) {
-      // `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know
-      // the chapter's actual verse count until it's loaded; resolve it here,
-      // guarding against stale chapter data left over from a failed fetch
-      // (`selectTranslationAndChapter` doesn't clear `chapterData` on error).
-      const loadedChapter = tab.readingState.chapterData.value;
-      const chapterDataMatches =
-        loadedChapter?.book.id === ref.bookId &&
-        loadedChapter?.chapter.number === ref.chapter;
-      const endVerse = ref.toEndOfChapter
-        ? chapterDataMatches
-          ? loadedChapter.numberOfVerses
-          : undefined
-        : ref.endVerse;
-      decorationId = tab.readingState.decorateVerses(
-        ref.bookId,
-        ref.chapter,
-        endVerse ? range(ref.verse, endVerse + 1) : [ref.verse],
-        {
-          className: "sb-verse-decoration-diminish",
-          containerClassName: "sb-chapter-decoration-diminish",
-          removeAfterMs: 3000,
-        }
-      );
-    }
+    const loadedChapter = tab.readingState.chapterData.value;
+    const chapterDataMatches =
+      loadedChapter?.book.id === ref.bookId &&
+      loadedChapter?.chapter.number === ref.chapter;
+    const endVerse = ref.toEndOfChapter
+      ? chapterDataMatches
+        ? loadedChapter.numberOfVerses
+        : undefined
+      : ref.endVerse;
+
+    decorationId = emphasizeVerses(tab.readingState, {
+      book: ref.bookId as BookId,
+      chapter: ref.chapter,
+      verse: ref.verse,
+      endChapter: ref.endChapter,
+      endVerse: endVerse,
+    });
   };
 
   /** Advances to the next step. No-op at the end of the queue. */

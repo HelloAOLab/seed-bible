@@ -7,7 +7,10 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
-import { type BibleDataManager } from "../managers/BibleDataManager";
+import {
+  type BibleDataManager,
+  type VerseRef,
+} from "../managers/BibleDataManager";
 import {
   batch,
   computed,
@@ -18,7 +21,7 @@ import {
   type Signal,
 } from "@preact/signals";
 import type { JSX } from "preact";
-import { sortBy } from "es-toolkit";
+import { range, sortBy } from "es-toolkit";
 import type {
   ChapterHighlight,
   ChapterHighlights,
@@ -1090,6 +1093,36 @@ export function previousPosition(
     bookId: previous.id,
     chapterNumber: lastChapterOf(previous),
   };
+}
+
+/**
+ * Highlights `ref`'s verse range in `tab`, diminishing after 3s.
+ *
+ * `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know the
+ * chapter's actual verse count until it's loaded; resolve it here, guarding
+ * against stale chapter data left over from a failed fetch
+ * (`selectTranslationAndChapter` doesn't clear `chapterData` on error).
+ */
+export function emphasizeVerses(
+  readingState: BibleReadingState,
+  ref: VerseRef
+): string | null {
+  if (!ref.verse) {
+    return null;
+  }
+
+  const endVerse = ref.endVerse;
+
+  return readingState.decorateVerses(
+    ref.book,
+    ref.chapter,
+    endVerse ? range(ref.verse, endVerse + 1) : [ref.verse],
+    {
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
+      removeAfterMs: 3000,
+    }
+  );
 }
 
 export function createBibleReadingState(

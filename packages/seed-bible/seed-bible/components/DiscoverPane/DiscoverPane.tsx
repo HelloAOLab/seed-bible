@@ -30,6 +30,8 @@ import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import { emphasizeVerses } from "../../managers";
+import type { BookId } from "../../managers/BibleDataManager";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -663,7 +665,33 @@ function AnnotationGroupSection(props: {
               key={annotation.id}
               className="sb-annotation-item"
               dir="auto"
-              onClick={() => annotations.editAnnotation(annotation)}
+              onClick={async () => {
+                if (!annotation.verseNumber) {
+                  return;
+                }
+                const tab = tabs.tabs.value.find(
+                  (t) => t.id === tabs.selectedTabId.value
+                );
+                if (!tab) {
+                  return;
+                }
+
+                // `translationId` is optional on the item; fall back to the tab's current
+                // translation. `.peek()` avoids re-navigating when the tab changes it.
+                await tab.readingState.selectTranslationAndChapter(
+                  tab.readingState.translationId.peek(),
+                  annotation.bookId,
+                  annotation.chapterNumber,
+                  { scrollToVerse: annotation.verseNumber }
+                );
+
+                emphasizeVerses(tab.readingState, {
+                  book: annotation.bookId as BookId,
+                  chapter: annotation.chapterNumber,
+                  verse: annotation.verseNumber,
+                  endVerse: annotation.endVerseNumber ?? undefined,
+                });
+              }}
             >
               <div className="sb-annotation-item-main">
                 <AnnotationPreview html={annotation.data.html} />
