@@ -4,9 +4,13 @@ import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
+  uiLocaleForDefaultTranslation,
   type BibleReadingState,
   type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
+import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import type { BookId } from "../managers/BibleDataManager";
+import { readInjectedConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
@@ -931,8 +935,8 @@ export interface ToolsManager {
  * @returns A URL object representing the sharable link for the current reading state.
  */
 export function getShareUrl(readingState: BibleReadingState) {
-  const url = new URL(window.location.href);
-  url.search = "";
+  const current = new URL(window.location.href);
+  current.search = "";
   // if (configBot.tags.pattern) {
   //   url.searchParams.set("pattern", configBot.tags.pattern);
   // }
@@ -940,9 +944,18 @@ export function getShareUrl(readingState: BibleReadingState) {
     readingState.translation.value?.id ?? readingState.defaultTranslation.id;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
   const chapter = readingState.chapterNumber.value;
-  url.searchParams.set("translation", translation);
-  url.searchParams.set("book", bookId);
-  url.searchParams.set("chapter", String(chapter));
+  const { basePath } = readInjectedConfig();
+  // Written into the path rather than as `?translation=&book=&chapter=`, so a
+  // shared link is the canonical URL for the passage instead of one that
+  // redirects to it.
+  const url = buildReadingUrl({
+    currentUrl: current,
+    basePath,
+    translationId: translation,
+    bookId: bookId as BookId,
+    chapter,
+    fallbackLanguage: uiLocaleForDefaultTranslation(translation) ?? undefined,
+  });
 
   if (readingState.selectedVerses.value.length > 0) {
     const verses = readingState.selectedVerses.value
