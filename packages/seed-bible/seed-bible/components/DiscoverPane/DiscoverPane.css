@@ -63,7 +63,8 @@
  * playlist/cross-reference/study-note/content sections. CreatePlaylistForm
  * and PlayPlaylistView reuse the same classes for their own item lists.
  */
-.sb-discover-list {
+.sb-discover-list,
+.sb-annotation-group-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -88,18 +89,49 @@
   gap: 8px;
 }
 
-.sb-playlist-item,
-.sb-annotation-item {
+.sb-playlist-item {
   cursor: pointer;
 }
 
-.sb-discover-item-main {
+.sb-annotation-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Annotation row (see `AnnotationGroupSection`) — its own class rather than
+   reusing `.sb-discover-item`/`.sb-discover-item--row` so it can diverge
+   visually (e.g. no border) without affecting playlists/cross-references/
+   study notes/content, which still use the shared discover-item classes. */
+.sb-annotation-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sb-annotation-item-preview {
+  font-size: 0.9rem;
+
+  & p {
+    margin: 0;
+  }
+}
+
+.sb-discover-item-main,
+.sb-annotation-item-main {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
   flex: 1;
   min-width: 0;
+}
+
+.sb-annotation-item-main {
+  gap: 4px;
 }
 
 .sb-discover-item-edit,
@@ -192,7 +224,7 @@
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 4px 2px;
+  padding: 4px 0px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -212,7 +244,7 @@
 }
 
 .sb-annotation-group-header-title {
-  font-size: 0.8125rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -221,7 +253,8 @@
   align-items: center;
   gap: 6px;
   font-size: 0.6875rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+  font-style: italic;
 }
 
 .sb-annotation-comment-author {

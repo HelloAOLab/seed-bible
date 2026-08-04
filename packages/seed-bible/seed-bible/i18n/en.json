@@ -451,5 +451,6 @@
   "chapter-unavailable-description": "We were unable to load the data for this chapter. Please check your internet connection and try again.",
   "reload": "Reload",
   "loading-picture-editor": "Loading the picture editor…",
+  "notes": "Notes",
   "note": "Note"
 }

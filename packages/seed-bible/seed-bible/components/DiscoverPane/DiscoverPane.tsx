@@ -486,13 +486,7 @@ function AnnotationPreview({ html }: { html: string }) {
       void setSafeHtml(html, ref.current);
     }
   }, [html]);
-  return (
-    <span
-      ref={ref}
-      className="sb-discover-item-description sb-annotation-item-preview"
-      dir="auto"
-    />
-  );
+  return <span ref={ref} className="sb-annotation-item-preview" dir="auto" />;
 }
 
 // Shared across every `AnnotationAuthor` instance so authors of multiple
@@ -614,12 +608,10 @@ function AnnotationCommentMeta(props: {
       />
       {updatedAtMs != null ? (
         <span className="sb-annotation-comment-updated">
-          {t("annotation-comment-updated", {
-            date: getAnnotationUpdatedTimeFormatter(language).format(
-              new Date(updatedAtMs)
-            ),
-            defaultValue: "Updated {{date}}",
-          })}
+          |{" "}
+          {getAnnotationUpdatedTimeFormatter(language).format(
+            new Date(updatedAtMs)
+          )}
         </span>
       ) : null}
     </span>
@@ -659,6 +651,7 @@ function AnnotationGroupSection(props: {
         }
         onClick={() => (expanded.value = !expanded.value)}
       >
+        <span className="sb-annotation-group-header-title">{label}</span>
         <MaterialIcon
           className={`sb-annotation-group-header-icon${
             expanded.value ? "" : " sb-annotation-group-header-icon--collapsed"
@@ -666,18 +659,17 @@ function AnnotationGroupSection(props: {
         >
           expand_more
         </MaterialIcon>
-        <span className="sb-annotation-group-header-title">{label}</span>
       </button>
       {expanded.value ? (
-        <ul className="sb-discover-list">
+        <ul className="sb-annotation-group-list">
           {group.annotations.map((annotation) => (
             <li
               key={annotation.id}
-              className="sb-discover-item sb-discover-item--row sb-annotation-item"
+              className="sb-annotation-item"
               dir="auto"
               onClick={() => annotations.editAnnotation(annotation)}
             >
-              <div className="sb-discover-item-main">
+              <div className="sb-annotation-item-main">
                 <AnnotationPreview html={annotation.data.html} />
                 <AnnotationCommentMeta
                   annotation={annotation}
@@ -687,7 +679,7 @@ function AnnotationGroupSection(props: {
                 />
               </div>
               <ContextMenuWithButton
-                buttonClassName="sb-discover-item-menu"
+                buttonClassName="sb-annotation-item-menu"
                 aria-label={t("annotation-options", {
                   defaultValue: "Annotation options",
                 })}
@@ -740,7 +732,7 @@ function AnnotationsSection(props: {
 }) {
   const { tab, annotations, modals, toast, login, tabs } = props;
   const { t } = useI18n();
-  const title = t("annotations", { defaultValue: "Annotations" });
+  const title = t("notes", { defaultValue: "Notes" });
 
   if (!tab) {
     return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
