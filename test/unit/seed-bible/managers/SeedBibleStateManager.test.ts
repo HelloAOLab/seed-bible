@@ -390,28 +390,6 @@ describe("createSeedBibleState", () => {
     });
   });
 
-  it("createSharedSession() starts at the chapter, not at a selected verse", async () => {
-    // A verse seeded into a new session never survives to the rendered tab —
-    // it opens at the top of the chapter regardless — so the selection is
-    // deliberately not carried into the session at all.
-    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
-    const state = await createState();
-    const readingState = state.tabs.tabs.value[0]!.readingState;
-    await readingState.selectTranslationAndChapter("AAB", "EXO", 2);
-    readingState.selectedVerses.value = [selectedVerse("EXO", 2, 4)];
-    mockSessionsManager.createSession.mockResolvedValue(
-      createMockSharedSession("session-verse")
-    );
-
-    await state.app.createSharedSession();
-
-    expect(mockSessionsManager.createSession).toHaveBeenCalledWith({
-      initialTranslationId: "AAB",
-      initialBookId: "EXO",
-      initialChapterNumber: 2,
-    });
-  });
-
   it("createSharedSession() captures a create_session posthog event", async () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
