@@ -502,6 +502,9 @@ export function ChatView(props: ChatViewProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const isFirstRenderRef = useRef(true);
   const wasAtBottomRef = useRef(true);
+  // Mobile-only: fake blinking caret until the user focuses once (real focus
+  // opens the soft keyboard, so we don't autofocus; the caret is a type-hint).
+  const showMobileInputHint = useSignal(false);
 
   const activeParticipants = chat.participants.value.filter(
     (participant) => participant.isActive
@@ -587,7 +590,9 @@ export function ChatView(props: ChatViewProps) {
 
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
+    // Show a CSS blinking caret instead as a subtle “you can type here” hint.
     if (state.app.isMobile.value) {
+      showMobileInputHint.value = true;
       return;
     }
     inputRef.current?.focus();
@@ -953,32 +958,50 @@ export function ChatView(props: ChatViewProps) {
         )}
 
         <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
-          <input
-            ref={inputRef}
-            type="text"
-            className="sb-chat-view-input"
-            placeholder={t("type-a-message", {
-              defaultValue: "Type a message...",
-            })}
-            value={draft.value}
-            onInput={(event) => {
-              const input = event.currentTarget as HTMLInputElement;
-              draft.value = input.value;
-              cursorPosition.value = input.selectionStart ?? input.value.length;
-              chat.setTypingStatus(input.value.trim().length > 0);
-            }}
-            onKeyDown={handleMentionKeyDown}
-            onClick={handleInputPositionUpdate}
-            onKeyUp={handleInputPositionUpdate}
-            onSelect={handleInputPositionUpdate}
-            onFocus={handleInputPositionUpdate}
-            onBlur={() => {
-              chat.setTypingStatus(false);
-            }}
-            aria-autocomplete="list"
-            aria-expanded={isMentionPickerOpen}
-            aria-haspopup="listbox"
-          />
+          <div
+            className={
+              showMobileInputHint.value && draft.value.length === 0
+                ? "sb-chat-view-input-wrap sb-chat-view-input-wrap--hint"
+                : "sb-chat-view-input-wrap"
+            }
+          >
+            <span
+              className="sb-chat-view-input-hint-caret"
+              aria-hidden="true"
+            />
+            <input
+              ref={inputRef}
+              type="text"
+              className="sb-chat-view-input"
+              placeholder={t("type-a-message", {
+                defaultValue: "Type a message...",
+              })}
+              value={draft.value}
+              onInput={(event) => {
+                const input = event.currentTarget as HTMLInputElement;
+                draft.value = input.value;
+                cursorPosition.value =
+                  input.selectionStart ?? input.value.length;
+                chat.setTypingStatus(input.value.trim().length > 0);
+              }}
+              onKeyDown={handleMentionKeyDown}
+              onClick={handleInputPositionUpdate}
+              onKeyUp={handleInputPositionUpdate}
+              onSelect={handleInputPositionUpdate}
+              onFocus={(event) => {
+                // Permanently dismiss the mobile type-hint once the user knows
+                // the field is interactive (matches Telegram/WhatsApp open chat).
+                showMobileInputHint.value = false;
+                handleInputPositionUpdate(event);
+              }}
+              onBlur={() => {
+                chat.setTypingStatus(false);
+              }}
+              aria-autocomplete="list"
+              aria-expanded={isMentionPickerOpen}
+              aria-haspopup="listbox"
+            />
+          </div>
           <button
             type="submit"
             className="sb-chat-view-send"
