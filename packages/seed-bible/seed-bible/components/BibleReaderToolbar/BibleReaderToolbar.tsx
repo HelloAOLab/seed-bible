@@ -840,19 +840,34 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
   // chapter content / end-of-chapter controls clear it when the toolbar grows
   // (mobile verse sheet "More", floating nav appearing, UI scale, etc.).
+  //
+  // The observers are built once and only re-pointed when the open chrome
+  // changes (see the effect below) — rebuilding them per signal change churned
+  // allocations and re-fired ResizeObserver's initial callback each time.
+  const reobserveInsetRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     const root = document.documentElement;
     if (typeof ResizeObserver === "undefined") return;
 
     let frame = 0;
+    let lastValue = "";
+
+    // `--sb-reader-bottom-inset` is inherited by the whole document, so writing
+    // it invalidates style for every element in the chapter. Most measures
+    // produce the value we already wrote (a re-point, a child mutation, an
+    // observer's initial callback), so only write on a real change.
+    const write = (chromePx: number) => {
+      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
+      if (next === lastValue) return;
+      lastValue = next;
+      root.style.setProperty("--sb-reader-bottom-inset", next);
+    };
 
     const measure = () => {
       const verse = verseToolbarRef.current;
       if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
-        root.style.setProperty(
-          "--sb-reader-bottom-inset",
-          `${verse.offsetHeight + BOTTOM_CHROME_GAP_PX}px`
-        );
+        write(verse.offsetHeight);
         return;
       }
 
@@ -870,10 +885,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         if (!Number.isNaN(bottom)) insetPx += bottom;
       }
 
-      root.style.setProperty(
-        "--sb-reader-bottom-inset",
-        `${insetPx + BOTTOM_CHROME_GAP_PX}px`
-      );
+      write(insetPx);
     };
 
     const scheduleMeasure = () => {
@@ -882,9 +894,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
 
     const observer = new ResizeObserver(scheduleMeasure);
+    const mutationObserver =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(() => reobserve())
+        : null;
 
     const reobserve = () => {
       observer.disconnect();
+      mutationObserver?.disconnect();
 
       const verse = verseToolbarRef.current;
       const wrap = toolbarWrapRef.current;
@@ -897,25 +914,30 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         const nav = wrap.querySelector(".sb-reader-floating-nav");
         if (toolbar instanceof HTMLElement) observer.observe(toolbar);
         if (nav instanceof HTMLElement) observer.observe(nav);
+        mutationObserver?.observe(wrap, { childList: true });
       }
 
       scheduleMeasure();
     };
 
+    reobserveInsetRef.current = reobserve;
     reobserve();
 
-    const wrap = toolbarWrapRef.current;
-    const mutationObserver =
-      wrap && typeof MutationObserver !== "undefined"
-        ? new MutationObserver(reobserve)
-        : null;
-    mutationObserver?.observe(wrap!, { childList: true });
-
     return () => {
+      reobserveInsetRef.current = null;
       cancelAnimationFrame(frame);
       observer.disconnect();
       mutationObserver?.disconnect();
+      // Drop the runtime override so the CSS fallback in base.css takes over.
+      root.style.removeProperty("--sb-reader-bottom-inset");
     };
+  }, []);
+
+  // Re-point the observers at whichever chrome is now open. Cheap enough to run
+  // on every one of these — `reobserve` only re-registers and schedules a
+  // measure, and the measure no-ops unless the height actually moved.
+  useEffect(() => {
+    reobserveInsetRef.current?.();
   }, [
     shouldReplaceDefaultToolbar.value,
     isVerseToolbarVisible.value,
@@ -924,14 +946,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     isSmallScreen.value,
     activeMobileTab.value,
   ]);
-
-  // Drop the runtime override when the toolbar unmounts so the CSS fallback
-  // in base.css takes over again.
-  useEffect(() => {
-    return () => {
-      document.documentElement.style.removeProperty("--sb-reader-bottom-inset");
-    };
-  }, []);
 
   // Clicking anywhere outside the chapter content or the verse toolbar
   // dismisses the verse selection (and therefore the toolbar). Only while the
