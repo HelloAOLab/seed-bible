@@ -121,6 +121,19 @@ function createMockSharedSession(id: string) {
   } as any;
 }
 
+function selectedVerse(
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number
+) {
+  return {
+    bookId,
+    chapterNumber,
+    translationId: "AAB",
+    verse: { type: "verse", number: verseNumber, content: [] },
+  } as any;
+}
+
 async function createStateWithOptions(
   options: CreateTestSeedBibleStateOptions
 ) {
@@ -354,6 +367,49 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe(
       state.tabs.tabs.value[previousTabCount]?.id
     );
+  });
+
+  it("regression #1589: createSharedSession() starts the session where the active tab is reading", async () => {
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    // Two tabs on different chapters, so a session that read the position off
+    // the wrong tab can't look correct by accident.
+    const state = await createStateWithTwoTabs();
+    const activeTab = state.tabs.tabs.value[1]!;
+    await activeTab.readingState.selectTranslationAndChapter("AAB", "EXO", 2);
+    state.app.selectTab(activeTab.id);
+    mockSessionsManager.createSession.mockResolvedValue(
+      createMockSharedSession("session-position")
+    );
+
+    await state.app.createSharedSession();
+
+    expect(mockSessionsManager.createSession).toHaveBeenCalledWith({
+      initialTranslationId: "AAB",
+      initialBookId: "EXO",
+      initialChapterNumber: 2,
+    });
+  });
+
+  it("createSharedSession() starts at the chapter, not at a selected verse", async () => {
+    // A verse seeded into a new session never survives to the rendered tab —
+    // it opens at the top of the chapter regardless — so the selection is
+    // deliberately not carried into the session at all.
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await readingState.selectTranslationAndChapter("AAB", "EXO", 2);
+    readingState.selectedVerses.value = [selectedVerse("EXO", 2, 4)];
+    mockSessionsManager.createSession.mockResolvedValue(
+      createMockSharedSession("session-verse")
+    );
+
+    await state.app.createSharedSession();
+
+    expect(mockSessionsManager.createSession).toHaveBeenCalledWith({
+      initialTranslationId: "AAB",
+      initialBookId: "EXO",
+      initialChapterNumber: 2,
+    });
   });
 
   it("createSharedSession() captures a create_session posthog event", async () => {

@@ -11,6 +11,7 @@
 
 ### 🐛 Fixed
 
+- Fix starting a shared session dropping you back at Genesis 1 instead of opening at the chapter you were already reading, in your translation.
 - Fix highlights from a previous account staying visible on already-visited chapters after signing out and into a different one, instead of updating to the signed-in account immediately. ([#1587](https://github.com/HelloAOLab/seed-bible/pull/1587))
 - Fix a highlight added as your session was ending being saved to whichever account signed in next, overwriting that account's highlights for the chapter. ([#1587](https://github.com/HelloAOLab/seed-bible/pull/1587))
 
