@@ -10,6 +10,7 @@ import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import type { TabSlotLayoutId } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 
 const STORAGE_KEY = "sb-tabs-state";
 const DEFAULT_TRANSLATION = "AAB";
@@ -357,7 +358,7 @@ describe("read/write round-trip", () => {
   it("returns null for a mismatched version", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(makeState({ version: 999 }))
+      JSON.stringify({ ...makeState(), version: 999 })
     );
     expect(readStoredTabsState()).toBeNull();
   });
@@ -366,6 +367,55 @@ describe("read/write round-trip", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ version: 1, tabs: "nope" })
+    );
+    expect(readStoredTabsState()).toBeNull();
+  });
+
+  it("returns null for a tab with a non-positive chapter number", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(
+        makeState({
+          tabs: [
+            {
+              id: "tab-1",
+              translationId: "AAB",
+              bookId: "GEN",
+              chapterNumber: 0,
+            },
+          ],
+        })
+      )
+    );
+    expect(readStoredTabsState()).toBeNull();
+  });
+
+  // Guards against a new TabSlotLayoutId being added without adding it to
+  // TAB_SLOT_LAYOUT_IDS in TabsPersistence, which would silently drop that
+  // layout on restore. The Record makes an unlisted id a compile error; the
+  // loop then proves the schema actually accepts each one.
+  it("accepts every supported layout id and rejects an unknown one", () => {
+    const allLayoutIds: Record<TabSlotLayoutId, true> = {
+      single: true,
+      "split-2v": true,
+      "split-left-two-right": true,
+      "split-3v": true,
+      "grid-2x2": true,
+      "split-4v": true,
+      "stacked-2": true,
+    };
+
+    for (const layout of Object.keys(allLayoutIds) as TabSlotLayoutId[]) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(makeState({ layout }))
+      );
+      expect(readStoredTabsState()?.layout).toBe(layout);
+    }
+
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...makeState(), layout: "split-9v" })
     );
     expect(readStoredTabsState()).toBeNull();
   });

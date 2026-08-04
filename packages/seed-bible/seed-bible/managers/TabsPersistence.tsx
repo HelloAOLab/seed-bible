@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
@@ -13,39 +14,69 @@ const TABS_STORAGE_KEY = "sb-tabs-state";
 const TABS_STORAGE_VERSION = 1;
 
 /**
+ * Layout ids accepted from storage. Listed literally here instead of imported
+ * from `TabsLayoutManager` because that module imports this one — importing a
+ * *value* back from it would create a runtime import cycle. `satisfies` makes a
+ * renamed or removed id a compile error, and the layout round-trip test in
+ * `TabsPersistence.test.ts` fails to compile when a new `TabSlotLayoutId` is
+ * added without being listed here.
+ */
+const TAB_SLOT_LAYOUT_IDS = [
+  "single",
+  "split-2v",
+  "split-left-two-right",
+  "split-3v",
+  "grid-2x2",
+  "split-4v",
+  "stacked-2",
+] as const satisfies readonly TabSlotLayoutId[];
+
+/**
  * A single reader tab, reduced to the values worth persisting. Ephemeral state
  * (highlights, decorations, selected verses, scroll position, discovered
  * content, shared sessions) is intentionally omitted.
  */
-export interface PersistedTab {
+export const PersistedTabSchema = z.object({
   /** Stable tab id (for example: tab-1). */
-  id: string;
+  id: z.string(),
   /** Selected translation id. */
-  translationId: string;
+  translationId: z.string(),
   /** Selected book id (for example: GEN), or null when unresolved. */
-  bookId: string | null;
+  bookId: z.string().nullable(),
   /** Selected 1-based chapter number. */
-  chapterNumber: number;
+  chapterNumber: z.number().int().positive(),
   /**
    * True for a hidden clone that only backs a split-pane slot (never shown in
    * the tab strip). Restored so a split layout comes back intact.
    */
-  slotOnly?: boolean;
-}
+  slotOnly: z.boolean().optional(),
+});
+
+export type PersistedTab = z.infer<typeof PersistedTabSchema>;
 
 /** The whole persisted tab state: tabs, selection, and pane layout. */
-export interface PersistedTabsState {
-  version: number;
-  tabs: PersistedTab[];
+export const PersistedTabsStateSchema = z.object({
+  /**
+   * Storage version; a blob stamped with any other version fails to parse and
+   * is treated as "no stored state".
+   */
+  version: z.literal(TABS_STORAGE_VERSION),
+  tabs: z.array(PersistedTabSchema),
   /** Id of the selected tab. */
-  selectedTabId: string;
+  selectedTabId: z.string(),
   /** Active slot layout preset. */
-  layout: TabSlotLayoutId;
+  layout: z.enum(TAB_SLOT_LAYOUT_IDS),
   /** Tab id occupying each slot, in slot order (null for an empty slot). */
-  slotTabIds: (string | null)[];
-  /** Index (into `slotTabIds`) of the selected slot, or null. */
-  selectedSlotIndex: number | null;
-}
+  slotTabIds: z.array(z.string().nullable()),
+  /**
+   * Index (into `slotTabIds`) of the selected slot, or null. Out-of-range
+   * indexes are tolerated here and clamped by the restore code, so a stale
+   * index doesn't throw away the rest of an otherwise-valid state.
+   */
+  selectedSlotIndex: z.number().int().nullable(),
+});
+
+export type PersistedTabsState = z.infer<typeof PersistedTabsStateSchema>;
 
 /** Reading parameters read from the URL, before any defaulting. */
 export interface QueryReadingParams {
@@ -57,41 +88,6 @@ export interface QueryReadingParams {
   chapter: number | null;
   /** True when the URL carried any of translation/book/chapter. */
   specified: boolean;
-}
-
-function isPersistedTab(value: unknown): value is PersistedTab {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const tab = value as Record<string, unknown>;
-  return (
-    typeof tab.id === "string" &&
-    typeof tab.translationId === "string" &&
-    (tab.bookId === null || typeof tab.bookId === "string") &&
-    typeof tab.chapterNumber === "number" &&
-    Number.isFinite(tab.chapterNumber) &&
-    tab.chapterNumber > 0 &&
-    (tab.slotOnly === undefined || typeof tab.slotOnly === "boolean")
-  );
-}
-
-function isPersistedTabsState(value: unknown): value is PersistedTabsState {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const state = value as Record<string, unknown>;
-  return (
-    state.version === TABS_STORAGE_VERSION &&
-    Array.isArray(state.tabs) &&
-    state.tabs.every(isPersistedTab) &&
-    typeof state.selectedTabId === "string" &&
-    typeof state.layout === "string" &&
-    Array.isArray(state.slotTabIds) &&
-    state.slotTabIds.every((id) => id === null || typeof id === "string") &&
-    (state.selectedSlotIndex === null ||
-      (typeof state.selectedSlotIndex === "number" &&
-        Number.isFinite(state.selectedSlotIndex)))
-  );
 }
 
 /**
@@ -108,11 +104,8 @@ export function readStoredTabsState(): PersistedTabsState | null {
     if (!raw) {
       return null;
     }
-    const parsed: unknown = JSON.parse(raw);
-    if (!isPersistedTabsState(parsed)) {
-      return null;
-    }
-    return parsed;
+    const parsed = PersistedTabsStateSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
   } catch {
     // Ignore malformed/unavailable storage.
     return null;
