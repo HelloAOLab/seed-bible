@@ -598,6 +598,26 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         : 0
   );
 
+  /**
+   * Natural height of the "swipe up" hint, measured from the DOM for the same
+   * reason as the overflow row: the hint collapses to nothing as the drawer
+   * opens, and a height can only be animated between two known numbers.
+   */
+  const verseSheetHintHeight = useSignal(0);
+
+  /**
+   * How far open the drawer is, 0 (shut) to 1 (fully open). Drives the hint's
+   * fade and collapse so it leaves in step with the drag rather than in a jump.
+   */
+  const verseSheetRevealFraction = useComputed(() =>
+    verseSheetOverflowHeight.value > 0
+      ? Math.min(
+          1,
+          verseSheetRevealHeight.value / verseSheetOverflowHeight.value
+        )
+      : 0
+  );
+
   // True when the sidebar drawer is open showing the tabs/bookmarks view
   // (not the settings view) with the bookmark filter active.
   const isBookmarksViewOpen = useComputed(
@@ -769,15 +789,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    *
    * The sheet follows the finger rather than snapping at a threshold: dragging up
    * grows the overflow row a pixel at a time, dragging back down shrinks it, and
-   * dragging down on an already-collapsed sheet slides the whole sheet toward the
-   * bottom of the screen to dismiss it. Releasing settles to whichever resting
-   * position the gesture ended up nearest, so a half-finished drag animates the
-   * rest of the way instead of being abandoned.
+   * carrying on downward once the row is shut slides the whole sheet toward the
+   * bottom of the screen to dismiss it — closing the drawer and dismissing the
+   * sheet are one continuous gesture, not two separate drags.
    *
-   * A press that barely moves is a tap, and toggles.
+   * Releasing settles in the direction the drag was heading: any lift leaves the
+   * drawer open, any push down leaves it shut. It deliberately isn't a midpoint
+   * rule — a short lift used to fall back closed, which read as the drawer
+   * refusing to stay where it was put.
+   *
+   * A press that never travels past the tap slop is a tap, and toggles. Until
+   * that slop is exceeded nothing moves at all, so a tap animates cleanly from
+   * the sheet's resting position instead of from a few pixels off it.
    */
   const VERSE_SHEET_TAP_SLOP = 6;
-  /** How far the sheet must be pushed down before releasing dismisses it. */
+  /**
+   * How far the sheet must be pushed down *past* the shut position before
+   * releasing dismisses it.
+   */
   const VERSE_SHEET_DISMISS_THRESHOLD = 64;
   const verseSheetDrag = useRef<{
     pointerId: number;
@@ -785,14 +814,36 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     startExpanded: boolean;
     /** Overflow height showing when the drag began: full when expanded, else 0. */
     startReveal: number;
-    /** Furthest the pointer has travelled, used to tell a tap from a drag. */
-    maxTravel: number;
+    /** True once the finger has travelled far enough to count as a drag. */
+    isDrag: boolean;
   } | null>(null);
 
   /** The overflow row, measured so the reveal has a pixel target to animate to. */
   const measureVerseSheetOverflow = (element: HTMLElement | null) => {
     if (!element) return;
     verseSheetOverflowHeight.value = element.scrollHeight;
+  };
+
+  /** The hint, measured so its slot can collapse from a known height to zero. */
+  const measureVerseSheetHint = (element: HTMLElement | null) => {
+    if (!element) return;
+    verseSheetHintHeight.value = element.scrollHeight;
+  };
+
+  /**
+   * Chooses the drawer's resting state once a gesture is over: whichever
+   * direction the drag was heading, not whichever end it finished nearest. A
+   * lift of any distance leaves the drawer open and a push down leaves it shut,
+   * so it stays where it was put. A gesture that ended back where it started
+   * (say a downward drag on an already-shut sheet that fell short of dismissing)
+   * changes nothing.
+   */
+  const settleVerseSheet = (reveal: number, startReveal: number): void => {
+    if (reveal > startReveal) {
+      isVerseSheetExpanded.value = true;
+    } else if (reveal < startReveal) {
+      isVerseSheetExpanded.value = false;
+    }
   };
 
   const endVerseSheetDrag = (event: PointerEvent): void => {
@@ -812,11 +863,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       startY: event.clientY,
       startExpanded: expanded,
       startReveal: expanded ? verseSheetOverflowHeight.value : 0,
-      maxTravel: 0,
+      isDrag: false,
     };
-    // Take over the height from the expanded/collapsed state so the first move
-    // continues from where the sheet is now rather than jumping.
-    verseSheetDragReveal.value = expanded ? verseSheetOverflowHeight.value : 0;
+    // Nothing takes over the sheet's height yet: a press that turns out to be a
+    // tap has to leave the sheet exactly where it was, otherwise the toggle
+    // animation starts from a nudged position and reads as a stutter.
     // Keep the drag from also scrolling the chapter behind the sheet.
     event.preventDefault();
   };
@@ -826,18 +877,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     if (!drag || drag.pointerId !== event.pointerId) return;
 
     const dy = event.clientY - drag.startY;
-    drag.maxTravel = Math.max(drag.maxTravel, Math.abs(dy));
+    if (!drag.isDrag) {
+      // Still within tap range, so leave the sheet alone. Once the slop is
+      // exceeded the reveal picks up at exactly the distance travelled, so
+      // there's no jump when the gesture turns into a drag either.
+      if (Math.abs(dy) <= VERSE_SHEET_TAP_SLOP) return;
+      drag.isDrag = true;
+    }
 
     const overflowHeight = verseSheetOverflowHeight.value;
     // Up is negative, so subtracting `dy` grows the reveal as the finger rises.
     const reveal = Math.min(overflowHeight, Math.max(0, drag.startReveal - dy));
     verseSheetDragReveal.value = reveal;
 
-    // Only start sliding the sheet away once there is no overflow left to close:
-    // a downward drag first puts the sheet back to collapsed, and only carries on
-    // into a dismiss if it began there.
-    verseSheetDismissOffset.value =
-      reveal === 0 && dy > 0 && drag.startReveal === 0 ? dy : 0;
+    // Whatever downward travel is left over once the drawer is shut pushes the
+    // whole sheet away. Starting from expanded, the first `startReveal` pixels
+    // close the drawer and everything beyond that keeps going into a dismiss —
+    // one gesture from fully open to gone.
+    verseSheetDismissOffset.value = Math.max(0, dy - drag.startReveal);
   };
 
   const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
@@ -849,7 +906,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const overflowHeight = verseSheetOverflowHeight.value;
     endVerseSheetDrag(event);
 
-    if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) {
+    if (!drag.isDrag) {
       // A tap on the handle is the keyboard-free way to toggle, and the only
       // affordance left now that the sheet has no "More" card.
       if (overflowHeight > 0) {
@@ -863,19 +920,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       return;
     }
 
-    // Settle to whichever end the drag finished nearest. Using the midpoint
-    // rather than a fixed threshold means the sheet always ends up where the
-    // finger left it pointing, in either direction.
-    isVerseSheetExpanded.value =
-      overflowHeight > 0 && reveal >= overflowHeight / 2;
+    settleVerseSheet(reveal, drag.startReveal);
   };
 
   const handleVerseSheetHandlePointerCancel = (event: PointerEvent) => {
     const drag = verseSheetDrag.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
+    const reveal = verseSheetDragReveal.value ?? drag.startReveal;
     endVerseSheetDrag(event);
-    // An interrupted gesture shouldn't leave the sheet half-committed.
-    isVerseSheetExpanded.value = drag.startExpanded;
+    // A cancel keeps whatever the drag achieved, exactly as a release would —
+    // just never the dismissal, which has to be a deliberate lift of the finger.
+    // The sheet sits along the bottom edge of the screen, where the OS's own
+    // swipe gestures live, so an upward drag being cancelled out from under the
+    // finger is common; throwing the drag away there looked like the drawer
+    // refusing to open.
+    settleVerseSheet(reveal, drag.startReveal);
   };
 
   const handleVerseSheetHandleKeyDown = (event: KeyboardEvent) => {
@@ -2107,27 +2166,31 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           )}
           {/* Replaces the old "More" card: a line of text at the foot of the
               sheet naming the gesture, instead of a button occupying a whole
-              card slot. Only while there is something left to reveal, and it
-              fades out as the sheet opens. Hidden from assistive tech because
-              the gesture it describes isn't available to them — the handle
-              itself carries the accessible toggle. */}
-          {isSmallScreen.value &&
-            hasVerseSheetOverflow.value &&
-            !isVerseSheetExpanded.value && (
+              card slot. Hidden from assistive tech because the gesture it
+              describes isn't available to them — the handle itself carries the
+              accessible toggle. */}
+          {isSmallScreen.value && hasVerseSheetOverflow.value && (
+            // The hint stays mounted and collapses to nothing as the drawer
+            // opens. Unmounting it the moment the drawer opened took its whole
+            // height out of the sheet in a single frame, so the sheet jumped
+            // before it started animating — the transition looked broken.
+            <div
+              className="sb-verse-toolbar-swipe-hint-slot"
+              aria-hidden="true"
+              style={{
+                height: `${
+                  verseSheetHintHeight.value *
+                  (1 - verseSheetRevealFraction.value)
+                }px`,
+              }}
+            >
               <div
                 className="sb-verse-toolbar-swipe-hint"
-                aria-hidden="true"
+                ref={measureVerseSheetHint}
                 style={{
                   // Fades in step with the drag, so the hint gets out of the way
                   // as the sheet opens rather than blinking off at the end.
-                  opacity: verseSheetOverflowHeight.value
-                    ? 1 -
-                      Math.min(
-                        1,
-                        verseSheetRevealHeight.value /
-                          verseSheetOverflowHeight.value
-                      )
-                    : 1,
+                  opacity: 1 - verseSheetRevealFraction.value,
                 }}
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
@@ -2139,7 +2202,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   })}
                 </span>
               </div>
-            )}
+            </div>
+          )}
         </div>
       )}
     </>

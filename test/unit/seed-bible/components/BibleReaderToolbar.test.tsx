@@ -36,6 +36,9 @@ function createPrivateEndpointResponses() {
  */
 const OVERFLOW_HEIGHT = 120;
 
+/** Same, for the "swipe up to see more" hint, which collapses as the drawer opens. */
+const HINT_HEIGHT = 24;
+
 describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   let container: HTMLDivElement;
   let state: SeedBibleState;
@@ -54,9 +57,13 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
       configurable: true,
       get(this: HTMLElement) {
-        return this.classList.contains("sb-verse-toolbar-overflow-row")
-          ? OVERFLOW_HEIGHT
-          : 0;
+        if (this.classList.contains("sb-verse-toolbar-overflow-row")) {
+          return OVERFLOW_HEIGHT;
+        }
+        if (this.classList.contains("sb-verse-toolbar-swipe-hint")) {
+          return HINT_HEIGHT;
+        }
+        return 0;
       },
     });
 
@@ -142,6 +149,8 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     container.querySelector<HTMLElement>(".sb-verse-toolbar-overflow");
   const hint = () =>
     container.querySelector<HTMLElement>(".sb-verse-toolbar-swipe-hint");
+  const hintSlot = () =>
+    container.querySelector<HTMLElement>(".sb-verse-toolbar-swipe-hint-slot");
 
   async function press(handle: HTMLElement, clientY: number) {
     await act(async () => {
@@ -184,8 +193,8 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await renderSheet();
 
     expect(overflow()?.style.height).toBe("0px");
-    expect(hint()).not.toBeNull();
     expect(hint()?.textContent).toContain("Swipe up to see more");
+    expect(hintSlot()?.style.height).toBe(`${HINT_HEIGHT}px`);
     // The card that used to carry this job is gone — the hint replaced it.
     expect(container.querySelector(".sb-verse-toolbar-more-toggle")).toBeNull();
   });
@@ -248,19 +257,40 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
     expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
-    // Nothing left to reveal, so the hint stands down.
-    expect(hint()).toBeNull();
+    // Nothing left to reveal, so the hint collapses out of the way.
+    expect(hintSlot()?.style.height).toBe("0px");
   });
 
-  it("falls back closed when released short of halfway", async () => {
+  it("stays open after a short lift instead of falling back closed", async () => {
     const handle = await renderSheet();
 
+    // Well short of halfway. A midpoint rule would abandon this drag, which
+    // read as the drawer refusing to stay where it had been put.
     await press(handle, 500);
     await moveTo(handle, 480);
     await release(handle, 480);
 
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+    expect(hintSlot()?.style.height).toBe("0px");
+  });
+
+  it("leaves the sheet untouched until the finger clears the tap slop", async () => {
+    const handle = await renderSheet();
+
+    await press(handle, 500);
+    // 4px of thumb wobble: the sheet must not budge, or the toggle that follows
+    // animates from a nudged position and looks like it snaps before it moves.
+    await moveTo(handle, 496);
     expect(overflow()?.style.height).toBe("0px");
-    expect(hint()).not.toBeNull();
+    expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
+
+    await moveTo(handle, 504);
+    expect(sheet()?.style.transform).toBe("");
+    expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
+
+    // Still a tap on release, so it toggles.
+    await release(handle, 504);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
   });
 
   it("closes an open drawer when dragged back down", async () => {
@@ -276,9 +306,32 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await press(handle, 300);
     await moveTo(handle, 300 + OVERFLOW_HEIGHT);
     expect(overflow()?.style.height).toBe("0px");
+    // Exactly shut, and no further — the sheet itself hasn't started moving yet.
+    expect(sheet()?.style.transform).toBe("");
     await release(handle, 300 + OVERFLOW_HEIGHT);
 
     expect(overflow()?.style.height).toBe("0px");
+  });
+
+  it("closes the drawer and dismisses the sheet in one continuous drag", async () => {
+    const handle = await renderSheet();
+
+    // Open it first.
+    await press(handle, 500);
+    await moveTo(handle, 300);
+    await release(handle, 300);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+
+    // One drag down: the first OVERFLOW_HEIGHT pixels shut the drawer, and the
+    // travel beyond that pushes the whole sheet away. It used to take two
+    // separate drags to get from fully open to dismissed.
+    await press(handle, 300);
+    await moveTo(handle, 300 + OVERFLOW_HEIGHT + 100);
+    expect(overflow()?.style.height).toBe("0px");
+    expect(sheet()?.style.transform).toBe("translateY(100px)");
+
+    await release(handle, 300 + OVERFLOW_HEIGHT + 100);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
   });
 
   it("toggles on a tap that barely moves", async () => {
@@ -330,13 +383,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe("0px");
   });
 
-  it("restores the starting state when the gesture is cancelled", async () => {
-    const handle = await renderSheet();
-
-    await press(handle, 500);
-    await moveTo(handle, 380);
-    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
-
+  async function cancel(handle: HTMLElement) {
     await act(async () => {
       handle.dispatchEvent(
         new window.PointerEvent("pointercancel", {
@@ -345,9 +392,34 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
         })
       );
     });
+  }
 
-    expect(overflow()?.style.height).toBe("0px");
+  it("keeps what an upward drag achieved when the gesture is cancelled", async () => {
+    const handle = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 380);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+
+    // The sheet lives on the bottom edge, where the OS's own swipe-up gesture
+    // is, so an upward drag getting cancelled mid-flight is routine. Discarding
+    // it there looked exactly like the drawer refusing to stay open.
+    await cancel(handle);
+
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
     expect(readingState.selectedVerses.value).toHaveLength(1);
+  });
+
+  it("never dismisses the selection on a cancelled gesture", async () => {
+    const handle = await renderSheet();
+
+    // Far enough down that releasing would have dismissed it.
+    await press(handle, 500);
+    await moveTo(handle, 620);
+    await cancel(handle);
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(sheet()?.style.transform).toBe("");
   });
 
   it("exposes the handle to keyboards, which have no gesture available", async () => {
