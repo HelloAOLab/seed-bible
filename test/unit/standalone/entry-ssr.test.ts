@@ -381,7 +381,7 @@ describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
     "<!doctype html><html><head>",
     "<!-- META -->",
-    '</head><body><script id="config"><!-- CONFIG_JSON --></script>',
+    '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -454,6 +454,20 @@ describe("render() server-rendered meta tags", () => {
     expect(html).toContain(
       '<link rel="canonical" href="/b/branch-x/en/AAB/genesis/1"'
     );
+  });
+
+  it("injects the config into the #app-config JSON script tag", async () => {
+    const config = { basePath: "/b/branch-x", assetHost: "https://cdn.test" };
+    const html = await renderHtml(
+      "/b/branch-x/en/AAB/genesis/1?useFreeBibleAPI=true",
+      config
+    );
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    expect(JSON.parse(injected as string)).toMatchObject(config);
   });
 
   // The review's complaint about the sitemap was not just that its URLs

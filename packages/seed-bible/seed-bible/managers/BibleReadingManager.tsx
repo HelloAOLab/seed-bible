@@ -1176,7 +1176,7 @@ export function createBibleReadingState(
   const initialChapterLoadSettled = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
-  const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
+  const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
     signal<ChapterHighlights>({
       highlights: [],
     })

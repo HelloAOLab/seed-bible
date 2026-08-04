@@ -26,7 +26,10 @@ const html = await render({
 // Basic assertions.
 const checks = {
   "has <!doctype": html.startsWith("<!doctype html>"),
-  "injects __APP_CONFIG__": html.includes("window.__APP_CONFIG__"),
+  "injects app-config JSON script tag":
+    /<script type="application\/json" id="app-config">[^<]*"basePath":"\/d\/branch-develop"/.test(
+      html
+    ),
   // Assets are now namespaced per branch/build under a versioned prefix, e.g.
   // https://assets.seedbible.com/branches/<branch>/<buildId>/assets/...
   "asset on versioned CDN prefix":
