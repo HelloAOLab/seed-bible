@@ -174,6 +174,120 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
   });
 });
 
+describe("BibleReaderToolbar — verse selection vs. side panes", () => {
+  let container: HTMLDivElement;
+  let state: SeedBibleState;
+
+  beforeEach(async () => {
+    // Desktop viewport: a "side" pane (e.g. Discover) docks beside the
+    // reader instead of covering it, so `isVerseToolbarVisible` stays true
+    // and the outside-click listener stays attached while the pane is open.
+    window.innerWidth = 1200;
+    window.innerHeight = 900;
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  async function selectFirstVerse() {
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    const chapter = readingState.chapterData.value!;
+    const firstVerse = chapter.chapter.content.find(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )!;
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: firstVerse,
+          translationId: chapter.translation.id,
+        },
+        10,
+        10
+      );
+    });
+
+    return readingState;
+  }
+
+  async function renderToolbar() {
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+  }
+
+  it("does not clear the verse selection when a tap lands inside a side pane docked beside the reader", async () => {
+    expect(state.app.isMobile.value).toBe(false);
+
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    await act(async () => {
+      state.panes.openPane({
+        placement: "side",
+        title: "Discover",
+        component: () => <div className="test-side-pane-body" />,
+      });
+    });
+
+    // Stands in for the actual side-pane shell PaneLayout's `SidePane`
+    // renders (not mounted in this unit test) - a tap on the real Discover
+    // pane (e.g. composing an annotation) lands inside the same wrapper.
+    const sidePane = document.createElement("div");
+    sidePane.className = "sb-pane-side-shell";
+    document.body.appendChild(sidePane);
+
+    try {
+      await act(async () => {
+        sidePane.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      sidePane.remove();
+    }
+  });
+
+  it("still clears the verse selection when a tap lands truly outside the reader", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      document.body.dispatchEvent(
+        new window.PointerEvent("pointerdown", { bubbles: true })
+      );
+    });
+
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+  });
+});
+
 describe("BibleReaderToolbar mobile More menu", () => {
   let container: HTMLDivElement;
   let originalInnerWidth: number;

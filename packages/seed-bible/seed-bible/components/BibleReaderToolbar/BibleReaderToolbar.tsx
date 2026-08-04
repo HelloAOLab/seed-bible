@@ -829,6 +829,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // toolbar is actually showing — with a pane covering the reader every tap
   // lands "outside", which would silently throw the selection away behind the
   // pane instead of restoring the toolbar when the pane closes.
+  //
+  // A pane docked beside the reader (e.g. Discover, open on desktop) doesn't
+  // cover it, so `isVerseToolbarVisible` stays true and this listener stays
+  // attached — clicks inside that pane (composing an annotation, say) are
+  // also excluded so they can't clear a selection the pane's own content is
+  // actively using (e.g. the annotation title/target derived from it).
   useEffect(() => {
     if (!isVerseToolbarVisible.value) return;
 
@@ -837,6 +843,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (!target) return;
       if (target.closest(".sb-chapter-content")) return;
       if (target.closest(".sb-verse-toolbar")) return;
+      if (target.closest(".sb-pane-side-shell")) return;
+      if (target.closest(".sb-pane-shell")) return;
       readingState.value?.clearSelectedVerses();
     };
 
