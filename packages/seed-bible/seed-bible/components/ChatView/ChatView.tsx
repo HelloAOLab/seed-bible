@@ -502,9 +502,14 @@ export function ChatView(props: ChatViewProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const isFirstRenderRef = useRef(true);
   const wasAtBottomRef = useRef(true);
-  // Mobile-only: fake blinking caret until the user focuses once (real focus
-  // opens the soft keyboard, so we don't autofocus; the caret is a type-hint).
+  // Mobile-only: blink a fake caret until the user first accesses the input
+  // during this open of chat. Resets the next time chat is opened/mounted;
+  // stays hidden after blur within the same open.
   const showMobileInputHint = useSignal(false);
+
+  const dismissInputHint = () => {
+    showMobileInputHint.value = false;
+  };
 
   const activeParticipants = chat.participants.value.filter(
     (participant) => participant.isActive
@@ -590,7 +595,8 @@ export function ChatView(props: ChatViewProps) {
 
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
-    // Show a CSS blinking caret instead as a subtle “you can type here” hint.
+    // Show a CSS blinking caret instead as a subtle “you can type here” hint
+    // for this open of chat only.
     if (state.app.isMobile.value) {
       showMobileInputHint.value = true;
       return;
@@ -960,7 +966,7 @@ export function ChatView(props: ChatViewProps) {
         <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
           <div
             className={
-              showMobileInputHint.value && draft.value.length === 0
+              showMobileInputHint.value
                 ? "sb-chat-view-input-wrap sb-chat-view-input-wrap--hint"
                 : "sb-chat-view-input-wrap"
             }
@@ -978,6 +984,7 @@ export function ChatView(props: ChatViewProps) {
               })}
               value={draft.value}
               onInput={(event) => {
+                dismissInputHint();
                 const input = event.currentTarget as HTMLInputElement;
                 draft.value = input.value;
                 cursorPosition.value =
@@ -985,13 +992,13 @@ export function ChatView(props: ChatViewProps) {
                 chat.setTypingStatus(input.value.trim().length > 0);
               }}
               onKeyDown={handleMentionKeyDown}
+              onPointerDown={dismissInputHint}
               onClick={handleInputPositionUpdate}
               onKeyUp={handleInputPositionUpdate}
               onSelect={handleInputPositionUpdate}
               onFocus={(event) => {
-                // Permanently dismiss the mobile type-hint once the user knows
-                // the field is interactive (matches Telegram/WhatsApp open chat).
-                showMobileInputHint.value = false;
+                // Hide the type-hint for this chat open once the field is used.
+                dismissInputHint();
                 handleInputPositionUpdate(event);
               }}
               onBlur={() => {

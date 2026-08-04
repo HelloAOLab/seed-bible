@@ -234,7 +234,7 @@ describe("ChatView", () => {
     expect(input?.tagName.toLowerCase()).toBe("input");
   });
 
-  it("shows a mobile type-hint caret until the input is focused once", () => {
+  it("shows a mobile type-hint caret until the input is accessed once", () => {
     const chat = createMockChatSession();
     const state = {
       app: {
@@ -266,6 +266,25 @@ describe("ChatView", () => {
     expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
       false
     );
+
+    // Stays dismissed after blur within this open…
+    act(() => {
+      input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+    });
+    expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
+      false
+    );
+
+    // …but shows again the next time chat is opened (remount).
+    act(() => {
+      render(null, container);
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+    expect(
+      container
+        .querySelector(".sb-chat-view-input-wrap")
+        ?.classList.contains("sb-chat-view-input-wrap--hint")
+    ).toBe(true);
   });
 
   it("does not show a mobile type-hint caret on desktop", () => {
