@@ -13,7 +13,6 @@ import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import {
   handleGridKeyNav,
-  handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
 import {
