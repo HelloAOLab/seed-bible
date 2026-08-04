@@ -245,9 +245,21 @@
   --sb-highlight-green-font-color: #333;
   --sb-highlight-green-words-of-jesus-font-color: #e07b4c;
 
-  --sb-highlight-blue-color: #fff59d;
+  --sb-highlight-cyan-color: #80deea;
+  --sb-highlight-cyan-font-color: #333;
+  --sb-highlight-cyan-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-blue-color: #90caf9;
   --sb-highlight-blue-font-color: #333;
   --sb-highlight-blue-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-red-color: #ef9a9a;
+  --sb-highlight-red-font-color: #333;
+  --sb-highlight-red-words-of-jesus-font-color: #c62828;
+
+  --sb-highlight-magenta-color: #ea80fc;
+  --sb-highlight-magenta-font-color: #333;
+  --sb-highlight-magenta-words-of-jesus-font-color: #e07b4c;
 
   --sb-highlight-pink-color: #f48fb1;
   --sb-highlight-pink-font-color: #333;
@@ -260,6 +272,18 @@
   --sb-highlight-orange-color: #ffcc80;
   --sb-highlight-orange-font-color: #333;
   --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-cream-color: #fff8e1;
+  --sb-highlight-cream-font-color: #333;
+  --sb-highlight-cream-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-gray-color: #cfd8dc;
+  --sb-highlight-gray-font-color: #333;
+  --sb-highlight-gray-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-tan-color: #e0c9a6;
+  --sb-highlight-tan-font-color: #333;
+  --sb-highlight-tan-words-of-jesus-font-color: #e07b4c;
 
   --sb-dynamic-range-limit: standard;
 }

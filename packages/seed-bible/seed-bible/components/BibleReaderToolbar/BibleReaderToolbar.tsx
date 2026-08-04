@@ -12,6 +12,7 @@ import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import {
+  handleGridKeyNav,
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
@@ -27,8 +28,7 @@ import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bo
 import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
-
-const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
+import { DEFAULT_HIGHLIGHT_IDS } from "../../managers/ThemeManager";
 
 /**
  * Spawns a Material-style ripple inside the pressed button: a circle centered on
@@ -428,6 +428,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   }
 
   const viewportWidth = props.state.app.viewportWidth;
+  const viewportHeight = props.state.app.viewportHeight;
 
   const tools = useComputed(() => {
     const resolved = toolsManager.getToolbarTools({
@@ -664,6 +665,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const uiScale = useComputed(
     () => UI_SIZE_SCALE_MAP[settings.settings.value.uiSize]
   );
+  // Verse toolbar highlight picker state (declared early so position clamping
+  // can account for the picker's taller fallback height before measure).
+  const isHighlightPickerOpen = useSignal(false);
+  // Measured height of the floating desktop verse toolbar. The toolbar uses
+  // `transform: translate(-50%, -100%)`, so `top` is the bottom edge — we need
+  // the real height to keep that bottom edge low enough that the top edge
+  // (especially the taller highlight-color picker) stays inside the viewport.
+  const verseToolbarRef = useRef<HTMLDivElement | null>(null);
+  const verseToolbarHeight = useSignal(0);
+
   const floatingX = useComputed(() => {
     const inset = 84 * uiScale.value;
     return Math.min(
@@ -672,8 +683,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     );
   });
   const floatingY = useComputed(() => {
-    const inset = 64 * uiScale.value;
-    return Math.max((floatingAnchor.value?.y ?? 0) - inset, inset);
+    const scale = uiScale.value;
+    // Prefer sitting just above the selection anchor.
+    const preferredY = (floatingAnchor.value?.y ?? 0) - 16 * scale;
+    // Fallback heights before ResizeObserver measures (avoids a clip flash).
+    const measured = verseToolbarHeight.value;
+    const fallback = (isHighlightPickerOpen.value ? 200 : 88) * scale;
+    const height = measured > 0 ? measured : fallback;
+    // Bottom of the toolbar is at `top`; top of toolbar is at `top - height`.
+    // Keep a small viewport inset so nothing is flush with the browser chrome.
+    const topInset = 8 * scale;
+    const bottomInset = 8 * scale;
+    const minY = topInset + height;
+    const maxY = Math.max(minY, viewportHeight.value - bottomInset);
+    return Math.min(Math.max(preferredY, minY), maxY);
   });
 
   // Drag-to-move offset applied on top of the anchor-computed position.
@@ -693,6 +716,51 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     lastSelectedAtRef.current = currentSelectedAt;
     verseToolbarOffset.value = { dx: 0, dy: 0 };
   }
+
+  // Keep the measured height current as the picker expands/collapses.
+  useEffect(() => {
+    if (isSmallScreen.value || !isVerseToolbarVisible.value) {
+      verseToolbarHeight.value = 0;
+      return;
+    }
+    const el = verseToolbarRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      verseToolbarHeight.value = el.offsetHeight;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    isSmallScreen.value,
+    isVerseToolbarVisible.value,
+    isHighlightPickerOpen.value,
+  ]);
+
+  // Final on-screen position after drag, clamped so the taller picker can't be
+  // dragged (or open) past the top/bottom of the viewport either.
+  const clampedToolbarTop = useComputed(() => {
+    const scale = uiScale.value;
+    const topInset = 8 * scale;
+    const bottomInset = 8 * scale;
+    const measured = verseToolbarHeight.value;
+    const fallback = (isHighlightPickerOpen.value ? 200 : 88) * scale;
+    const height = measured > 0 ? measured : fallback;
+    const minY = topInset + height;
+    const maxY = Math.max(minY, viewportHeight.value - bottomInset);
+    const y = floatingY.value + verseToolbarOffset.value.dy;
+    return Math.min(Math.max(y, minY), maxY);
+  });
+  const clampedToolbarLeft = useComputed(() => {
+    const inset = 84 * uiScale.value;
+    const x = floatingX.value + verseToolbarOffset.value.dx;
+    return Math.min(
+      Math.max(x, inset),
+      Math.max(inset, viewportWidth.value - inset)
+    );
+  });
 
   const handleVerseToolbarPointerDown = (event: PointerEvent) => {
     if (isSmallScreen.value) return;
@@ -727,8 +795,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     verseToolbarDrag.current = null;
   };
 
-  // Verse toolbar highlight picker state
-  const isHighlightPickerOpen = useSignal(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
   const customColorCommitTimeoutRef = useRef<number | null>(null);
   const customHighlightColors = useComputed(
@@ -1506,13 +1572,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
       {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <div
+          ref={verseToolbarRef}
           className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
           style={
             isSmallScreen.value
               ? undefined
               : {
-                  left: `${floatingX.value + verseToolbarOffset.value.dx}px`,
-                  top: `${floatingY.value + verseToolbarOffset.value.dy}px`,
+                  left: `${clampedToolbarLeft.value}px`,
+                  top: `${clampedToolbarTop.value}px`,
                 }
           }
           onPointerDown={
@@ -1546,11 +1613,34 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           )}
           {(isHighlightPickerOpen.value || isSmallScreen.value) && (
             <div
-              className="sb-verse-toolbar-ref"
-              aria-live="polite"
-              title={selectedVersesReference.value}
+              className={`sb-verse-toolbar-ref${
+                isHighlightPickerOpen.value
+                  ? " sb-verse-toolbar-ref-with-back"
+                  : ""
+              }`}
             >
-              {selectedVersesReference.value}
+              {isHighlightPickerOpen.value && (
+                <button
+                  type="button"
+                  className="sb-verse-toolbar-back"
+                  onClick={() => {
+                    isHighlightPickerOpen.value = false;
+                  }}
+                  aria-label={t("back", { defaultValue: "Back" })}
+                  title={t("back", { defaultValue: "Back" })}
+                >
+                  <span className="material-symbols-outlined">
+                    chevron_left
+                  </span>
+                </button>
+              )}
+              <span
+                className="sb-verse-toolbar-ref-text"
+                aria-live="polite"
+                title={selectedVersesReference.value}
+              >
+                {selectedVersesReference.value}
+              </span>
             </div>
           )}
           {isHighlightPickerOpen.value ? (
@@ -1561,138 +1651,140 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 if (event.key === "Escape") {
                   event.preventDefault();
                   isHighlightPickerOpen.value = false;
-                  return;
                 }
-                handleHorizontalListKeyNav(event, event.currentTarget);
               }}
             >
-              <button
-                type="button"
-                className="sb-verse-toolbar-back"
-                onClick={() => {
-                  isHighlightPickerOpen.value = false;
+              <div
+                className="sb-verse-toolbar-swatches"
+                role="group"
+                aria-label={t("highlight-colors", {
+                  defaultValue: "Highlight colors",
+                })}
+                onKeyDown={(event) => {
+                  handleGridKeyNav(event, event.currentTarget);
                 }}
-                aria-label={t("back", { defaultValue: "Back" })}
-                title={t("back", { defaultValue: "Back" })}
               >
-                <span className="material-symbols-outlined">chevron_left</span>
-              </button>
-
-              {DEFAULT_HIGHLIGHT_COLOR_IDS.map((colorId) => (
-                <button
-                  key={colorId}
-                  type="button"
-                  className="sb-verse-toolbar-color-button"
-                  onClick={() => {
-                    const rs = readingState.value;
-                    if (!rs) return;
-                    applyHighlightWithSession(rs, sessionState.value, {
-                      colorId,
-                    });
-                  }}
-                  aria-label={`Highlight ${colorId}`}
-                  title={colorId}
-                >
-                  <span
-                    className="sb-verse-toolbar-color"
-                    style={{
-                      background: `var(--sb-highlight-${colorId}-color)`,
+                {DEFAULT_HIGHLIGHT_IDS.map((colorId) => (
+                  <button
+                    key={colorId}
+                    type="button"
+                    className="sb-verse-toolbar-color-button"
+                    onClick={() => {
+                      const rs = readingState.value;
+                      if (!rs) return;
+                      applyHighlightWithSession(rs, sessionState.value, {
+                        colorId,
+                      });
                     }}
-                  />
-                </button>
-              ))}
+                    aria-label={`Highlight ${colorId}`}
+                    title={colorId}
+                  >
+                    <span
+                      className="sb-verse-toolbar-color"
+                      style={{
+                        background: `var(--sb-highlight-${colorId}-color)`,
+                      }}
+                    />
+                  </button>
+                ))}
 
-              {customHighlightColors.value.map((hex) => (
+                {customHighlightColors.value.map((hex) => (
+                  <button
+                    key={hex}
+                    type="button"
+                    className="sb-verse-toolbar-color-button"
+                    onClick={() => {
+                      const rs = readingState.value;
+                      if (!rs) return;
+                      applyHighlightWithSession(rs, sessionState.value, {
+                        colorId: "yellow",
+                        customColor: hex,
+                        customFontColor: getContrastTextColor(hex),
+                      });
+                    }}
+                    onContextMenu={(event: MouseEvent) => {
+                      event.preventDefault();
+                      settings.removeCustomHighlightColor(hex);
+                    }}
+                    aria-label={`Highlight ${hex}`}
+                    title={`${hex} — right-click to remove`}
+                  >
+                    <span
+                      className="sb-verse-toolbar-color"
+                      style={{ background: hex }}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <div className="sb-verse-toolbar-picker-actions">
                 <button
-                  key={hex}
                   type="button"
-                  className="sb-verse-toolbar-color-button"
+                  className="sb-verse-toolbar-plus"
+                  onClick={() => {
+                    colorInputRef.current?.click();
+                  }}
+                  aria-label={t("add-custom-color", {
+                    defaultValue: "Add custom color",
+                  })}
+                  title={t("add-color", { defaultValue: "Add color" })}
+                >
+                  <span className="material-symbols-outlined">add</span>
+                  <span className="sb-verse-toolbar-action-text">
+                    {t("add", { defaultValue: "Add" })}
+                  </span>
+                </button>
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  className="sb-verse-toolbar-color-input"
+                  onChange={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    commitCustomColor(target.value);
+                  }}
+                  onInput={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    commitCustomColor(target.value);
+                  }}
+                />
+
+                <button
+                  type="button"
+                  className="sb-verse-toolbar-clear"
+                  disabled={!hasAnyHighlighted.value}
                   onClick={() => {
                     const rs = readingState.value;
                     if (!rs) return;
-                    applyHighlightWithSession(rs, sessionState.value, {
-                      colorId: "yellow",
-                      customColor: hex,
-                      customFontColor: getContrastTextColor(hex),
-                    });
+                    if (
+                      sessionState.value &&
+                      sessionState.value.userCanDecorate(
+                        sessionState.value.localSessionId.value
+                      )
+                    ) {
+                      // Clean up the shared decoration first so the removal
+                      // propagates to other clients even if the local
+                      // unhighlight is a no-op (e.g. user isn't logged in
+                      // with HighlightsManager but the session had a
+                      // decoration broadcast earlier).
+                      removeSharedHighlightsFromSelection(
+                        sessionState.value,
+                        rs
+                      );
+                    } else {
+                      rs.unhighlightSelectedVerses();
+                    }
                   }}
-                  onContextMenu={(event: MouseEvent) => {
-                    event.preventDefault();
-                    settings.removeCustomHighlightColor(hex);
-                  }}
-                  aria-label={`Highlight ${hex}`}
-                  title={`${hex} — right-click to remove`}
+                  aria-label={t("clear-highlight", {
+                    defaultValue: "Clear highlight",
+                  })}
+                  title={t("clear", { defaultValue: "Clear" })}
                 >
-                  <span
-                    className="sb-verse-toolbar-color"
-                    style={{ background: hex }}
-                  />
+                  <span className="material-symbols-outlined">ink_eraser</span>
+                  <span className="sb-verse-toolbar-action-text">
+                    {t("clear", { defaultValue: "Clear" })}
+                  </span>
                 </button>
-              ))}
-
-              <button
-                type="button"
-                className="sb-verse-toolbar-plus"
-                onClick={() => {
-                  colorInputRef.current?.click();
-                }}
-                aria-label={t("add-custom-color", {
-                  defaultValue: "Add custom color",
-                })}
-                title={t("add-color", { defaultValue: "Add color" })}
-              >
-                <span className="material-symbols-outlined">add</span>
-                <span className="sb-verse-toolbar-action-text">
-                  {t("add", { defaultValue: "Add" })}
-                </span>
-              </button>
-              <input
-                ref={colorInputRef}
-                type="color"
-                className="sb-verse-toolbar-color-input"
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  commitCustomColor(target.value);
-                }}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  commitCustomColor(target.value);
-                }}
-              />
-
-              <button
-                type="button"
-                className="sb-verse-toolbar-clear"
-                disabled={!hasAnyHighlighted.value}
-                onClick={() => {
-                  const rs = readingState.value;
-                  if (!rs) return;
-                  if (
-                    sessionState.value &&
-                    sessionState.value.userCanDecorate(
-                      sessionState.value.localSessionId.value
-                    )
-                  ) {
-                    // Clean up the shared decoration first so the removal
-                    // propagates to other clients even if the local
-                    // unhighlight is a no-op (e.g. user isn't logged in
-                    // with HighlightsManager but the session had a
-                    // decoration broadcast earlier).
-                    removeSharedHighlightsFromSelection(sessionState.value, rs);
-                  } else {
-                    rs.unhighlightSelectedVerses();
-                  }
-                }}
-                aria-label={t("clear-highlight", {
-                  defaultValue: "Clear highlight",
-                })}
-                title={t("clear", { defaultValue: "Clear" })}
-              >
-                <span className="material-symbols-outlined">ink_eraser</span>
-                <span className="sb-verse-toolbar-action-text">
-                  {t("clear", { defaultValue: "Clear" })}
-                </span>
-              </button>
+              </div>
             </div>
           ) : (
             <div
