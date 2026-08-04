@@ -183,6 +183,15 @@
 
   --sb-reader-toolbar-floating-button-side-offset: 1rem;
 
+  /* Space reserved at the bottom of scrollable reader content so the last
+   * verses / end-of-chapter controls clear the fixed bottom chrome (reader
+   * toolbar, floating chapter nav, or mobile verse sheet), plus a 3rem gap so
+   * the trailing content doesn't sit flush against it. Updated at runtime from
+   * the open chrome's measured height (see BOTTOM_CHROME_GAP_PX in
+   * BibleReaderToolbar.tsx); this value is the pre-measurement fallback, sized
+   * for the tallest case (mobile toolbar + floating nav). */
+  --sb-reader-bottom-inset: 10.375rem;
+
   /* Full-width floating chapter-nav bar. Composed from theme-injected vars so
    * the bar, arrow circles, and peach play button adapt across themes. */
   --sb-reader-floating-nav-background: color-mix(
