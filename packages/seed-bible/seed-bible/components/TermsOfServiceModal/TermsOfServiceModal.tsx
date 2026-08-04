@@ -20,18 +20,27 @@ const loadingPromises = new Map<string, Promise<void>>();
  * resolves once the bundle is available — callers can await it (during SSR) to
  * block rendering until the policy text is present.
  */
+// Resolves — never rejects, even on failure (logged below). A rejected
+// promise thrown during `renderToStringAsync` surfaces as a render exception
+// and takes down the whole SSR document (see BibleReadingManager's
+// `chapterDataPromise`); resolving lets the modal render with an empty body
+// instead.
 function loadTermsOfService(
   i18n: I18nInstance,
   language: string
 ): Promise<void> {
   let promise = loadingPromises.get(language);
   if (!promise) {
-    promise = import(`../i18n/policies/terms-of-service/${language}.json`).then(
-      (resources) => {
+    promise = import(`../../i18n/policies/terms-of-service/${language}.json`)
+      .then((resources) => {
         i18n.addResourceBundle(language, "terms-of-service", resources.default);
         loadedLanguages.value = new Set(loadedLanguages.value).add(language);
-      }
-    );
+      })
+      .catch((error) => {
+        console.error("Failed to load terms of service policy bundle", error);
+        // Don't cache the failure — let the next modal open retry the import.
+        loadingPromises.delete(language);
+      });
     loadingPromises.set(language, promise);
   }
   return promise;

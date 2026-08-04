@@ -31,6 +31,15 @@ import type { PlayingState } from "../../managers/PlaylistManager";
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
 /**
+ * Breathing room between the reader's last content and the bottom chrome, in
+ * pixels. The measurement in `--sb-reader-bottom-inset` is exact occlusion —
+ * how many pixels of toolbar / nav / verse sheet cover the viewport bottom —
+ * so without this the trailing element (translation license line, the
+ * "Powered by" row) ends flush against the toolbar's top edge.
+ */
+const BOTTOM_CHROME_GAP_PX = 48;
+
+/**
  * Spawns a Material-style ripple inside the pressed button: a circle centered on
  * the button (not the touch point) that scales up and fades out, then removes
  * itself. Used for tap feedback on the mobile floating-nav buttons, where the
@@ -446,7 +455,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
-      openChat: sidebar.openChatPanel,
+      openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
       modals: props.state.modals,
@@ -532,9 +541,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
   const isSmallScreen = props.state.app.isMobile;
-  const shouldReplaceDefaultToolbar = useComputed(
-    () => isSmallScreen.value && hasVerseSelection.value
-  );
   // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
   // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
   // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
@@ -544,7 +550,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (pane) => pane.placement === "fullscreen" || isSmallScreen.value
     )
   );
+  // The verse toolbar belongs to the reader, so it's suspended (not dismissed)
+  // while a pane covers the reader — otherwise it floats on top of the pane and
+  // hides most of it. The selection itself is kept, so the toolbar comes back
+  // exactly as it was once the pane is closed.
+  const isVerseToolbarVisible = useComputed(
+    () => hasVerseSelection.value && !isFullscreenPaneVisible.value
+  );
+  const shouldReplaceDefaultToolbar = useComputed(
+    () => isSmallScreen.value && isVerseToolbarVisible.value
+  );
   const isMoreMenuOpen = useSignal(false);
+  // The mobile More button, so dismissing its menu with Escape can hand focus
+  // back to it instead of dropping it on the removed popover.
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  // Bottom chrome elements whose measured height drives
+  // `--sb-reader-bottom-inset` on the document (chapter padding clears them).
+  const toolbarWrapRef = useRef<HTMLDivElement>(null);
+  const verseToolbarRef = useRef<HTMLDivElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
   // Whether the mobile verse sheet shows its overflow actions (the "More" /
@@ -814,10 +837,123 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   }, [hasVerseSelection.value]);
 
-  // Clicking anywhere outside the chapter content or the verse toolbar
-  // dismisses the verse selection (and therefore the toolbar).
+  // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
+  // chapter content / end-of-chapter controls clear it when the toolbar grows
+  // (mobile verse sheet "More", floating nav appearing, UI scale, etc.).
+  //
+  // The observers are built once and only re-pointed when the open chrome
+  // changes (see the effect below) — rebuilding them per signal change churned
+  // allocations and re-fired ResizeObserver's initial callback each time.
+  const reobserveInsetRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
-    if (!hasVerseSelection.value) return;
+    const root = document.documentElement;
+    if (typeof ResizeObserver === "undefined") return;
+
+    let frame = 0;
+    let lastValue = "";
+
+    // `--sb-reader-bottom-inset` is inherited by the whole document, so writing
+    // it invalidates style for every element in the chapter. Most measures
+    // produce the value we already wrote (a re-point, a child mutation, an
+    // observer's initial callback), so only write on a real change.
+    const write = (chromePx: number) => {
+      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
+      if (next === lastValue) return;
+      lastValue = next;
+      root.style.setProperty("--sb-reader-bottom-inset", next);
+    };
+
+    const measure = () => {
+      const verse = verseToolbarRef.current;
+      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
+        write(verse.offsetHeight);
+        return;
+      }
+
+      const wrap = toolbarWrapRef.current;
+      const toolbar = wrap?.querySelector(".sb-reader-toolbar");
+      if (!(toolbar instanceof HTMLElement)) return;
+
+      let insetPx = toolbar.offsetHeight;
+      const nav = wrap?.querySelector(".sb-reader-floating-nav");
+      if (nav instanceof HTMLElement) {
+        insetPx += nav.offsetHeight;
+      } else {
+        // Desktop: toolbar floats above the viewport bottom.
+        const bottom = parseFloat(getComputedStyle(toolbar).bottom);
+        if (!Number.isNaN(bottom)) insetPx += bottom;
+      }
+
+      write(insetPx);
+    };
+
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+
+    const observer = new ResizeObserver(scheduleMeasure);
+    const mutationObserver =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(() => reobserve())
+        : null;
+
+    const reobserve = () => {
+      observer.disconnect();
+      mutationObserver?.disconnect();
+
+      const verse = verseToolbarRef.current;
+      const wrap = toolbarWrapRef.current;
+
+      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
+        observer.observe(verse);
+      } else if (wrap) {
+        observer.observe(wrap);
+        const toolbar = wrap.querySelector(".sb-reader-toolbar");
+        const nav = wrap.querySelector(".sb-reader-floating-nav");
+        if (toolbar instanceof HTMLElement) observer.observe(toolbar);
+        if (nav instanceof HTMLElement) observer.observe(nav);
+        mutationObserver?.observe(wrap, { childList: true });
+      }
+
+      scheduleMeasure();
+    };
+
+    reobserveInsetRef.current = reobserve;
+    reobserve();
+
+    return () => {
+      reobserveInsetRef.current = null;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      mutationObserver?.disconnect();
+      // Drop the runtime override so the CSS fallback in base.css takes over.
+      root.style.removeProperty("--sb-reader-bottom-inset");
+    };
+  }, []);
+
+  // Re-point the observers at whichever chrome is now open. Cheap enough to run
+  // on every one of these — `reobserve` only re-registers and schedules a
+  // measure, and the measure no-ops unless the height actually moved.
+  useEffect(() => {
+    reobserveInsetRef.current?.();
+  }, [
+    shouldReplaceDefaultToolbar.value,
+    isVerseToolbarVisible.value,
+    isVerseSheetExpanded.value,
+    isHighlightPickerOpen.value,
+    isSmallScreen.value,
+    activeMobileTab.value,
+  ]);
+
+  // Clicking anywhere outside the chapter content or the verse toolbar
+  // dismisses the verse selection (and therefore the toolbar). Only while the
+  // toolbar is actually showing — with a pane covering the reader every tap
+  // lands "outside", which would silently throw the selection away behind the
+  // pane instead of restoring the toolbar when the pane closes.
+  useEffect(() => {
+    if (!isVerseToolbarVisible.value) return;
 
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
@@ -831,7 +967,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return () => {
       document.removeEventListener("pointerdown", handleDocumentPointerDown);
     };
-  }, [hasVerseSelection.value]);
+  }, [isVerseToolbarVisible.value]);
 
   // Tapping anywhere outside the mobile More menu closes it. Deliberately done
   // with a document listener rather than a backdrop element so the tap still
@@ -839,6 +975,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // toolbar button works normally while the menu is open, it just also
   // dismisses the menu. Capture phase so we still see the tap even if the
   // target stops propagation.
+  //
+  // `pointerdown` (rather than `click`) means a touch-scroll that starts while
+  // the menu is open also dismisses it, since a scroll gesture begins with a
+  // pointerdown. That is intended: it matches how dropdowns usually behave, and
+  // dismissing as the gesture starts feels more responsive than waiting for it
+  // to finish. Scrolling the menu's own list is unaffected — those touches land
+  // inside the anchor and return early below.
   useEffect(() => {
     if (!isMoreMenuOpen.value) return;
 
@@ -853,6 +996,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         isMoreMenuOpen.value = false;
+        // Escape is a keyboard dismissal, so send focus back to the button that
+        // opened the menu — otherwise it is left on the now-unmounted popover and
+        // the next Tab starts over from the top of the document. Only for
+        // Escape: after an outside tap the user is already interacting
+        // somewhere else, and pulling focus back would fight them.
+        moreButtonRef.current?.focus();
       }
     };
 
@@ -956,14 +1105,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
+  /**
+   * Display name for a book id, resolved from the current translation's
+   * catalog.
+   *
+   * The catalog covers every book and tracks the reader's position the instant
+   * it moves; the loaded chapter only ever describes one book, and during a
+   * fast skim it describes the one the reader has already left. Falls back to
+   * the chapter only while that translation's catalog is still downloading, and
+   * only when it happens to be the book being asked about.
+   */
+  const resolveBookName = (id: string | null | undefined): string => {
+    if (!id) {
+      return "";
+    }
+    const state = readingState.value;
+    const loadedBook = state?.chapterData.value?.book;
+    const book =
+      state?.translationBooks.value?.books.find((b) => b.id === id) ??
+      (loadedBook?.id === id ? loadedBook : null);
+    return book?.name ?? book?.commonName ?? id;
+  };
+
   const getReaderNavLabel = () => {
     return (
       <>
-        <div>
-          {readingState.value?.chapterData.value?.book.name ??
-            readingState.value?.bookId.value ??
-            " "}
-        </div>
+        <div>{resolveBookName(readingState.value?.bookId.value) || " "}</div>
         <div>{readingState.value?.chapterNumber.value}</div>
       </>
     );
@@ -972,10 +1139,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const getPlayingNavLabel = (playing: PlayingState) => {
     const currentItem = playing.currentItem.value;
     if (currentItem) {
-      const label = playlistItemLabel(currentItem, t, (bookId: string) => {
-        const book = readingState.value?.chapterData.value?.book;
-        return book?.name ?? book?.commonName ?? bookId;
-      });
+      const label = playlistItemLabel(currentItem, t, resolveBookName);
       return (
         <>
           <div>{label}</div>
@@ -990,6 +1154,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     <>
       {!shouldReplaceDefaultToolbar.value && (
         <div
+          ref={toolbarWrapRef}
           className="sb-reader-toolbar-wrap"
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
@@ -1245,6 +1410,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
                     <button
                       type="button"
+                      ref={moreButtonRef}
                       onClick={() => {
                         // Opening the More menu should dismiss whatever else is
                         // covering the reader — the search bar, the chat panel,
@@ -1462,8 +1628,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         </div>
       )}
 
-      {hasVerseSelection.value && verseToolbarTools.value.length > 0 && (
+      {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <div
+          ref={verseToolbarRef}
           className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
           style={
             isSmallScreen.value

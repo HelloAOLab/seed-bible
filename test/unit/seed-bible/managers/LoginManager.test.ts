@@ -3,6 +3,7 @@ import {
   userProfileSchema,
   type LoginManager,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { saveProfileConfigValue } from "@packages/seed-bible/seed-bible/managers/ProfileConfigSync";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import type { Mock } from "vitest";
@@ -431,7 +432,8 @@ describe("createLoginManager", () => {
       expect(os.sessionKey.value).toBe(sessionKey);
       expect(os.client.sessionKey).toBe(sessionKey);
       expect(warnSpy).toHaveBeenCalledWith(
-        "[LoginManager] Failed to refresh session, clearing session key:",
+        "[LoginManager] Failed to refresh session; keeping the existing session key:",
+        "unacceptable_session_key",
         "nope"
       );
     });
@@ -479,6 +481,243 @@ describe("createLoginManager", () => {
       // Advancing to the scheduled time triggers the refresh.
       await vi.advanceTimersByTimeAsync(ONE_WEEK);
       expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("automatic sign-out when the session is dead", () => {
+    /**
+     * Drives a forced sign-out through `getUserInfo`, which the manager calls on init
+     * whenever a session key is already stored.
+     */
+    async function signOutViaGetUserInfo(errorCode: string) {
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode,
+        errorMessage: `${errorCode} happened`,
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.sessionEnded.value !== null);
+      return manager;
+    }
+
+    it("clears the session when a call reports session_expired", async () => {
+      const manager = await signOutViaGetUserInfo("session_expired");
+
+      expect(manager.userId.value).toBe(null);
+      expect(manager.userInfo.value).toBe(null);
+      expect(os.sessionKey.value).toBe(null);
+      expect(os.connectionKey.value).toBe(null);
+      expect(localStorage.getItem("sessionKey")).toBe(null);
+      expect(localStorage.getItem("connectionKey")).toBe(null);
+    });
+
+    it("does not call revokeSession when signing out for a dead session", async () => {
+      // The session is already gone server side, so the round trip could only fail.
+      await signOutViaGetUserInfo("session_expired");
+
+      expect(revokeSessionMock).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["session_expired", "signed_out"],
+      ["invalid_key", "signed_out"],
+      ["user_is_banned", "account_suspended"],
+    ])("reports %s to the UI as '%s'", async (errorCode, reason) => {
+      const manager = await signOutViaGetUserInfo(errorCode);
+
+      expect(manager.sessionEnded.value?.reason).toBe(reason);
+    });
+
+    it.each(["server_error", "not_authorized", "rate_limit_exceeded"])(
+      "keeps the session when a call fails with %s",
+      async (errorCode) => {
+        getUserInfoMock.mockResolvedValue({
+          success: false,
+          errorCode,
+          errorMessage: "transient",
+        });
+
+        const manager = createAuthenticatedManager();
+        await flush();
+
+        expect(manager.userId.value).toBe(USER_ID);
+        expect(os.sessionKey.value).toBe(SESSION_KEY);
+        expect(manager.sessionEnded.value).toBe(null);
+      }
+    );
+
+    it("keeps the session when a call rejects outright", async () => {
+      // Offline is not the same as signed out.
+      getUserInfoMock.mockRejectedValue(new Error("offline"));
+
+      const manager = createAuthenticatedManager();
+      await flush();
+
+      expect(manager.userId.value).toBe(USER_ID);
+      expect(os.sessionKey.value).toBe(SESSION_KEY);
+      expect(manager.sessionEnded.value).toBe(null);
+    });
+
+    it("signs out once when several calls fail at the same time", async () => {
+      // A key expiring within the week makes init both refresh and load user info,
+      // so two independent requests report the dead session together.
+      const deadKey = sessionKeyExpiringIn(1000 * 60 * 60);
+      localStorage.setItem("sessionKey", deadKey);
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => manager.sessionEnded.value !== null);
+      await flush();
+
+      // The incrementing id is the count of forced sign-outs, so it proves the burst
+      // collapsed into exactly one.
+      expect(manager.sessionEnded.value?.id).toBe(1);
+    });
+
+    it("signs out when the session refresh reports the key is dead", async () => {
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => manager.sessionEnded.value !== null);
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.sessionEnded.value?.reason).toBe("signed_out");
+    });
+
+    it("does not resurrect the session when a refresh succeeds after a forced sign-out", async () => {
+      // The guard reports the dead session before `refreshSession` resumes after its
+      // await, so without a mid-flight check the success branch would install a new
+      // key for a session we just deliberately dropped.
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
+      getUserInfoMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "gone",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => manager.sessionEnded.value !== null);
+      await flush();
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.userInfo.value).toBe(null);
+    });
+  });
+
+  describe("an unparseable stored session key", () => {
+    // Anything not shaped `vSK1.<base64>...` fails to parse. Reading the expiry off
+    // that null parse used to throw during construction, and nothing catches it, so a
+    // single corrupted character in localStorage meant a blank page the user could not
+    // sign out of.
+    const CORRUPT_KEY = "total-garbage";
+
+    it("does not throw while constructing the manager", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      expect(() => createLoginManager({ os })).not.toThrow();
+    });
+
+    it("discards the bad key instead of keeping it", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+      localStorage.setItem("connectionKey", "connection-key-1");
+
+      createLoginManager({ os });
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(os.connectionKey.value).toBe(null);
+      expect(localStorage.getItem("sessionKey")).toBe(null);
+      expect(localStorage.getItem("connectionKey")).toBe(null);
+    });
+
+    it("does not try to refresh a key it cannot parse", async () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      createLoginManager({ os });
+      await flush();
+
+      expect(replaceSessionMock).not.toHaveBeenCalled();
+      expect(getUserInfoMock).not.toHaveBeenCalled();
+    });
+
+    it("reports the discarded key to the UI as a plain sign-out", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      const manager = createLoginManager({ os });
+
+      // Nothing expired here, so the message must not say so.
+      expect(manager.sessionEnded.value?.reason).toBe("signed_out");
+    });
+
+    it("leaves the user signed out rather than half-authenticated", () => {
+      localStorage.setItem("sessionKey", CORRUPT_KEY);
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.userId.value).toBe(null);
+      expect(manager.userInfo.value).toBe(null);
+    });
+
+    it("still accepts a well-formed key", async () => {
+      // Guards against the parse check being too eager and rejecting good keys.
+      localStorage.setItem("sessionKey", SESSION_KEY);
+
+      const manager = createLoginManager({ os });
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.sessionEnded.value).toBe(null);
+      expect(os.sessionKey.value).toBe(SESSION_KEY);
+    });
+  });
+
+  describe("deliberate sign-out", () => {
+    it("does not report a session end when revokeSession says the key expired", async () => {
+      // Revoking an already-expired key fails by design. Someone who just pressed
+      // "Sign out" must not be told their session expired.
+      revokeSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+        errorMessage: "already gone",
+      });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      await manager.logout();
+      await flush();
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.sessionEnded.value).toBe(null);
+    });
+
+    it("signs out locally even when revokeSession rejects", async () => {
+      // Previously the rejection threw past the local clear, leaving the app looking
+      // signed in — and the sign-out button calls `logout()` with `void`, so nothing
+      // surfaced the error either.
+      revokeSessionMock.mockRejectedValue(new Error("offline"));
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      await expect(manager.logout()).resolves.toBeUndefined();
+
+      expect(os.sessionKey.value).toBe(null);
+      expect(manager.userId.value).toBe(null);
+      expect(localStorage.getItem("sessionKey")).toBe(null);
+      expect(manager.sessionEnded.value).toBe(null);
     });
   });
 
@@ -533,6 +772,269 @@ describe("createLoginManager", () => {
 
       expect(localStorage.getItem("sessionKey")).toBe(null);
       expect(localStorage.getItem("connectionKey")).toBe(null);
+    });
+  });
+
+  describe("cachedProfile", () => {
+    it("caches a confirmed profile load to localStorage, keyed by user id", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Erin" } });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Erin");
+
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBe(
+        JSON.stringify({ name: "Erin" })
+      );
+      expect(manager.cachedProfile.value).toEqual({ name: "Erin" });
+    });
+
+    it("shows the cached profile immediately, before the network load resolves", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Erin" } });
+      const first = createAuthenticatedManager();
+      await waitFor(() => first.profile.value?.name === "Erin");
+
+      // A fresh manager for the same stored session key should see the
+      // cached profile right away, even while the network call is stalled.
+      getDataMock.mockReturnValue(new Promise(() => undefined));
+      const second = createLoginManager({ os });
+
+      await waitFor(() => second.userId.value === USER_ID);
+      expect(second.cachedProfile.value).toEqual({ name: "Erin" });
+      expect(second.profile.value).toBeNull();
+    });
+
+    it("updates the cache immediately when updateProfile() writes locally", async () => {
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+
+      manager.updateProfile({ name: "Updated" });
+
+      expect(manager.cachedProfile.value).toEqual({ name: "Updated" });
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBe(
+        JSON.stringify({ name: "Updated" })
+      );
+    });
+
+    it("clears the cached profile on logout", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+      expect(manager.cachedProfile.value).toEqual({ name: "Frank" });
+
+      await manager.logout();
+
+      await waitFor(() => manager.userId.value === null);
+      expect(manager.cachedProfile.value).toBeNull();
+      // Nulling the signal isn't enough — the stored copy holds the user's
+      // name/location/picture, so it must not outlive the session on the
+      // device either.
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBeNull();
+    });
+
+    it("erases every account's stored profile on logout, not just the current one", async () => {
+      // A previous account that switched away without a full logout would
+      // otherwise leave its cache behind forever — nothing else evicts these.
+      localStorage.setItem(
+        "sb-profile-cache-user-2",
+        JSON.stringify({ name: "Someone Else", location: "Springfield" })
+      );
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+
+      await manager.logout();
+
+      await waitFor(() => manager.userId.value === null);
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBeNull();
+      expect(localStorage.getItem("sb-profile-cache-user-2")).toBeNull();
+    });
+
+    it("leaves unrelated storage alone when clearing profile caches on logout", async () => {
+      localStorage.setItem("sb-profile-config-local", JSON.stringify({}));
+      localStorage.setItem("sb-install-dismissed", "true");
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+
+      await manager.logout();
+
+      await waitFor(() => manager.userId.value === null);
+      expect(localStorage.getItem("sb-profile-config-local")).toBe("{}");
+      expect(localStorage.getItem("sb-install-dismissed")).toBe("true");
+    });
+
+    it("still logs out when clearing the stored profile caches fails", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+
+      // Throw from the enumeration `clearCachedProfiles` uses to find the
+      // cache keys. Spying on `removeItem` instead would also break the
+      // unrelated session-key persistence effect, which has never been
+      // guarded and would fail this test for the wrong reason.
+      const keySpy = vi
+        .spyOn(Storage.prototype, "key")
+        .mockImplementation(() => {
+          throw new Error("storage unavailable");
+        });
+
+      try {
+        await expect(manager.logout()).resolves.toBeUndefined();
+      } finally {
+        keySpy.mockRestore();
+      }
+
+      await waitFor(() => manager.userId.value === null);
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("clears the cached profile when switching accounts", async () => {
+      // Mirrors "drops the previous account's profile when switching accounts
+      // and the new load fails" above, but for `cachedProfile`.
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "Alice" },
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.cachedProfile.value?.name === "Alice");
+
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "stale key",
+      });
+
+      // Swap the session key to a different account's key without logging
+      // out first — moves user-1 -> user-2 directly.
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("clears a stale cachedProfile when switching accounts while the previous load is still pending", async () => {
+      // Pre-seed user-1's cache so `cachedProfile` is non-null before its
+      // network load resolves — this is the exact scenario a guard keyed on
+      // "is `profileUserId` set" or "is `cachedProfile` null" both miss:
+      // `profileUserId` stays null while pending, but `cachedProfile` already
+      // holds a non-null value read from the cache.
+      localStorage.setItem(
+        `sb-profile-cache-${USER_ID}`,
+        JSON.stringify({ name: "Alice" })
+      );
+      getDataMock.mockReturnValue(new Promise(() => undefined));
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.cachedProfile.value?.name === "Alice");
+      expect(manager.profile.value).toBeNull();
+
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("clears a stale cachedProfile when switching accounts after the previous load already failed", async () => {
+      localStorage.setItem(
+        `sb-profile-cache-${USER_ID}`,
+        JSON.stringify({ name: "Alice" })
+      );
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "stale key",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.cachedProfile.value?.name === "Alice");
+      await flush();
+      expect(manager.profile.value).toBeNull();
+
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("does not leak a different user's cached profile", async () => {
+      localStorage.setItem(
+        "sb-profile-cache-user-2",
+        JSON.stringify({ name: "Not Erin" })
+      );
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("ignores malformed JSON in the cache instead of throwing", async () => {
+      localStorage.setItem(`sb-profile-cache-${USER_ID}`, "not json");
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("ignores schema-invalid cached profile data", async () => {
+      localStorage.setItem(
+        `sb-profile-cache-${USER_ID}`,
+        JSON.stringify({ name: 123 })
+      );
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("swallows a localStorage.setItem failure instead of throwing", async () => {
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+
+      const originalSetItem = Storage.prototype.setItem;
+      const setItemSpy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (
+          this: Storage,
+          key: string,
+          value: string
+        ) {
+          if (key.startsWith("sb-profile-cache-")) {
+            throw new DOMException("QuotaExceededError");
+          }
+          return originalSetItem.call(this, key, value);
+        });
+
+      try {
+        expect(() =>
+          manager.updateProfile({ name: "Persisted?" })
+        ).not.toThrow();
+        // The in-memory signal still updates even though persistence failed.
+        expect(manager.cachedProfile.value).toEqual({ name: "Persisted?" });
+      } finally {
+        setItemSpy.mockRestore();
+      }
     });
   });
 
@@ -717,6 +1219,258 @@ describe("createLoginManager", () => {
       } finally {
         delete (globalThis as any).posthog;
       }
+    });
+  });
+
+  describe("localConfig (anonymous device-local config)", () => {
+    it("reads a previously-saved local config on construction", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL" })
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({ fontSize: "XL" });
+    });
+
+    it("persists localConfig writes to localStorage", () => {
+      const manager = createLoginManager({ os });
+
+      manager.localConfig.value = { fontSize: "L" };
+
+      expect(localStorage.getItem("sb-profile-config-local")).toBe(
+        JSON.stringify({ fontSize: "L" })
+      );
+    });
+
+    it("does not redundantly re-write the store on construction", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL" })
+      );
+      const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+      createLoginManager({ os });
+
+      expect(setItemSpy).not.toHaveBeenCalledWith(
+        "sb-profile-config-local",
+        expect.anything()
+      );
+
+      setItemSpy.mockRestore();
+    });
+
+    it("clears local config on login into an existing account, even without adoption", async () => {
+      // The account already has a profile, so no adoption happens — but the
+      // leftover anonymous config must still be consumed here, or it could
+      // later be silently adopted by an unrelated account signing up on this
+      // same (possibly shared) device.
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "L" })
+      );
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "Existing User" },
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value?.name === "Existing User");
+
+      expect(manager.localConfig.value).toEqual({});
+      expect(localStorage.getItem("sb-profile-config-local")).toBe("{}");
+    });
+
+    it("adopts local config into a brand-new account's profile on first login and persists it", async () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "L", themeId: "dark" })
+      );
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({
+        name: "",
+        config: { fontSize: "L", themeId: "dark" },
+      });
+      expect(recordDataMock).toHaveBeenCalledWith(
+        USER_ID,
+        "profile",
+        { name: "", config: { fontSize: "L", themeId: "dark" } },
+        { marker: "publicRead" }
+      );
+      // Adoption succeeded, so the local store is cleared — it shouldn't be
+      // silently adopted again by a different account on the same device.
+      expect(manager.localConfig.value).toEqual({});
+      expect(localStorage.getItem("sb-profile-config-local")).toBe("{}");
+    });
+
+    it("does not adopt anything when there is no saved local config", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({ name: "" });
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("keeps the local config in place if persisting the adopted profile fails", async () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "L" })
+      );
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+      recordDataMock.mockRejectedValueOnce(new Error("network error"));
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({
+        name: "",
+        config: { fontSize: "L" },
+      });
+      expect(manager.localConfig.value).toEqual({ fontSize: "L" });
+      expect(localStorage.getItem("sb-profile-config-local")).toBe(
+        JSON.stringify({ fontSize: "L" })
+      );
+    });
+
+    it("ignores malformed JSON in the local config store", () => {
+      localStorage.setItem("sb-profile-config-local", "not json");
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("ignores non-object JSON in the local config store", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify([1, 2, 3])
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("ignores an oversized local config store instead of adopting it verbatim", () => {
+      // A brand-new account's first login adopts this data verbatim into its
+      // profile (see the "adopts local config..." test below) — an
+      // oversized/corrupt entry must not become durable account state.
+      const oversized = { blob: "x".repeat(60_000) };
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify(oversized)
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("ignores a local config store with an implausible number of keys", () => {
+      const tooManyKeys: Record<string, string> = {};
+      for (let i = 0; i < 200; i++) {
+        tooManyKeys[`key-${i}`] = "value";
+      }
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify(tooManyKeys)
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("swallows a localStorage.setItem failure instead of throwing", () => {
+      const manager = createLoginManager({ os });
+
+      const originalSetItem = Storage.prototype.setItem;
+      const setItemSpy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (
+          this: Storage,
+          key: string,
+          value: string
+        ) {
+          if (key === "sb-profile-config-local") {
+            throw new DOMException("QuotaExceededError");
+          }
+          return originalSetItem.call(this, key, value);
+        });
+
+      try {
+        expect(() => {
+          manager.localConfig.value = { fontSize: "L" };
+        }).not.toThrow();
+        // The in-memory signal still updates even though persistence failed.
+        expect(manager.localConfig.value).toEqual({ fontSize: "L" });
+      } finally {
+        setItemSpy.mockRestore();
+      }
+    });
+  });
+
+  describe("anonymous edit then login (end-to-end)", () => {
+    it("adopts config saved anonymously via saveProfileConfigValue into a brand-new account on first login", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createLoginManager({ os });
+      expect(manager.userId.value).toBeNull();
+
+      // Save a config value the way a real caller (ConfigManager, etc.) would,
+      // through the shared helper, rather than seeding localStorage directly.
+      await saveProfileConfigValue(manager, "fontSize", "L");
+      expect(manager.localConfig.value).toEqual({ fontSize: "L" });
+
+      const loginPromise = manager.login();
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success) {
+        throw new Error("expected login request to succeed");
+      }
+      await manager.submitLoginCode("123456", request);
+      await loginPromise;
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({
+        name: "",
+        config: { fontSize: "L" },
+      });
+      expect(recordDataMock).toHaveBeenCalledWith(
+        USER_ID,
+        "profile",
+        { name: "", config: { fontSize: "L" } },
+        { marker: "publicRead" }
+      );
+      // Adopted and persisted, so the anonymous local store is now empty.
+      expect(manager.localConfig.value).toEqual({});
     });
   });
 

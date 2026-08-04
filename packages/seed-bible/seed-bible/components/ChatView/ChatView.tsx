@@ -12,13 +12,12 @@ import {
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
-import { translateTitle } from "../../app/utils";
+import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { AskIcon } from "../icons";
 import { VerseReferenceLink } from "../../app/verseReferenceLink";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { DateTime } from "luxon";
 
 interface ChatViewProps {
   chat: ChatSession;
@@ -244,9 +243,12 @@ function RelativeDateTime({ timeMs }: { timeMs: number }) {
   }, []);
 
   void refreshTick.value;
-  const date = DateTime.fromMillis(timeMs).setLocale(language);
 
-  return <span className="relative-date-time">{date.toRelative()}</span>;
+  return (
+    <span className="relative-date-time">
+      {formatRelativeTime(timeMs, language)}
+    </span>
+  );
 }
 
 export function getMessageAvatar(

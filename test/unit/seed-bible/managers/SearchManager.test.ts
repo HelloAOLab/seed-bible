@@ -77,7 +77,7 @@ describe("createSearchManager", () => {
       apiKey: expect.any(String),
       nodes: [
         {
-          host: "search.ao.bot",
+          host: "search.seedbible.org",
           port: 443,
           protocol: "https",
         },

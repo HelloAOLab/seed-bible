@@ -142,11 +142,18 @@
     0 22px 40px #0000002c;
 }
 
+/* The single fullscreen pane renders inside `.sb-content-row` (see
+   PaneLayout's FullscreenPane), so it fills the reader area rather than the
+   whole viewport and the desktop sidebar stays docked beside it. These
+   properties live here rather than in an inline style so the mobile bottom
+   inset below can actually override them — an inline `bottom: 0` would win
+   over any stylesheet rule and silently defeat that media query. */
 .sb-pane-shell-detached[data-placement="fullscreen"] {
   box-shadow: none;
   border-radius: 0;
-  position: fixed;
+  position: absolute;
   inset: 0;
+  z-index: 35;
 }
 
 /* On mobile, every pane renders fullscreen (see app.effectivePanes) and the
@@ -157,7 +164,10 @@
    Toolbar height = 0.5rem top padding + 3.25rem tab min-height + 0.625rem
    bottom padding (see BibleReaderToolbar.css mobile layout). The toolbar sits
    flush at bottom: 0 with no safe-area padding of its own, so we reserve its
-   exact box height (no env() addition, which would open a gap below the pane). */
+   exact box height (no env() addition, which would open a gap below the pane).
+   The verse toolbar is taller than this bar, which is why it is hidden outright
+   while a pane fills the screen rather than having room reserved for it (see
+   `isVerseToolbarVisible` in BibleReaderToolbar). */
 @media (max-width: 480px) {
   .sb-pane-shell-detached[data-placement="fullscreen"] {
     bottom: 4.375rem;
