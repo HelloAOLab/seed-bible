@@ -10,7 +10,7 @@ import {
 import type { LoginManager } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
 import type { DiscoverManager } from "./DiscoverManager";
-import type { TabsManager } from "./TabsManager";
+import type { ReaderTab, TabsManager } from "./TabsManager";
 
 export interface AnnotationQuery {
   recordName?: string;
@@ -159,6 +159,51 @@ export function formatAnnotationVerseNumbers(verseNumbers: number[]): string {
     end = n;
   }
   return groups.join(",");
+}
+
+interface VerseTargeting {
+  verseNumber: number | null;
+  endVerseNumber: number | null;
+  verseNumbers: number[] | null;
+}
+
+/**
+ * Derives verse targeting from a tab's current text selection, restricted to
+ * the given book/chapter (mirrors how `BibleReaderToolbar` reads
+ * `selectedVerses` for highlighting). Empty/non-matching selection means
+ * "whole chapter".
+ */
+function deriveVerseTargeting(
+  tab: ReaderTab,
+  bookId: string,
+  chapterNumber: number
+): VerseTargeting {
+  const selectedVerseNumbers = Array.from(
+    new Set(
+      tab.readingState.selectedVerses.value
+        .filter((v) => v.bookId === bookId && v.chapterNumber === chapterNumber)
+        .map((v) => v.verse.number)
+    )
+  ).sort((a, b) => a - b);
+
+  if (selectedVerseNumbers.length === 0) {
+    return { verseNumber: null, endVerseNumber: null, verseNumbers: null };
+  }
+
+  const verseNumber = selectedVerseNumbers[0]!;
+  const maxVerseNumber = selectedVerseNumbers[selectedVerseNumbers.length - 1]!;
+  return {
+    verseNumber,
+    endVerseNumber: maxVerseNumber !== verseNumber ? maxVerseNumber : null,
+    verseNumbers: selectedVerseNumbers,
+  };
+}
+
+function verseNumbersEqual(a: number[] | null, b: number[] | null): boolean {
+  if (a == null || b == null) {
+    return a == null && b == null;
+  }
+  return a.length === b.length && a.every((n, i) => n === b[i]);
 }
 
 function getAnnotationMarker(
@@ -470,10 +515,45 @@ export function createAnnotationsManager(
 
   const editingAnnotation = signal<Annotation | null>(null);
 
+  // True only while composing a brand-new annotation (between
+  // `createNewAnnotation` and save/cancel) - gates the live-selection sync
+  // effect below so re-opening an *existing* annotation for editing never
+  // has its saved verse targeting silently overwritten by whatever happens
+  // to still be selected in the reader.
+  const isDraftingNewAnnotation = signal(false);
+
   const activeTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
+
+  // Keeps a new annotation's verse targeting in sync with the reader's live
+  // text selection for as long as it's being drafted, so the user can select
+  // verses before, during, or after opening the composer and always see (and
+  // save) the current selection - no manual verse-range controls needed.
+  effect(() => {
+    if (!isDraftingNewAnnotation.value) {
+      return;
+    }
+    const current = editingAnnotation.value;
+    const tab = activeTab.value;
+    if (!current || !tab) {
+      return;
+    }
+    const targeting = deriveVerseTargeting(
+      tab,
+      current.bookId,
+      current.chapterNumber
+    );
+    if (
+      current.verseNumber === targeting.verseNumber &&
+      current.endVerseNumber === targeting.endVerseNumber &&
+      verseNumbersEqual(current.verseNumbers ?? null, targeting.verseNumbers)
+    ) {
+      return;
+    }
+    editingAnnotation.value = { ...current, ...targeting };
+  });
 
   const createNewAnnotation = async (): Promise<void> => {
     let userId = login.userId.value;
@@ -494,37 +574,17 @@ export function createAnnotationsManager(
       return;
     }
 
-    // Pre-fill verse targeting from the reader's current text selection, if
-    // any of it lands on this same chapter (mirrors how BibleReaderToolbar
-    // reads `selectedVerses` for highlighting).
-    const selectedVerseNumbers = Array.from(
-      new Set(
-        tab.readingState.selectedVerses.value
-          .filter(
-            (v) => v.bookId === bookId && v.chapterNumber === chapterNumber
-          )
-          .map((v) => v.verse.number)
-      )
-    ).sort((a, b) => a - b);
-    let verseNumber: number | null = null;
-    let endVerseNumber: number | null = null;
-    let verseNumbers: number[] | null = null;
-    if (selectedVerseNumbers.length > 0) {
-      verseNumber = selectedVerseNumbers[0]!;
-      const maxVerseNumber =
-        selectedVerseNumbers[selectedVerseNumbers.length - 1]!;
-      endVerseNumber = maxVerseNumber !== verseNumber ? maxVerseNumber : null;
-      verseNumbers = selectedVerseNumbers;
-    }
-
     const now = Date.now();
+    isDraftingNewAnnotation.value = true;
+    // Verse targeting starts null; the sync effect above fills it in
+    // immediately from the current selection, then keeps it live.
     editingAnnotation.value = annotationSchema.parse({
       id: `annotation_${uuid()}`,
       bookId,
       chapterNumber,
-      verseNumber,
-      endVerseNumber,
-      verseNumbers,
+      verseNumber: null,
+      endVerseNumber: null,
+      verseNumbers: null,
       data: {
         type: "comment",
         html: "",
@@ -537,6 +597,7 @@ export function createAnnotationsManager(
   };
 
   const editAnnotation = (annotation: Annotation): void => {
+    isDraftingNewAnnotation.value = false;
     editingAnnotation.value = { ...annotation };
     discover.view.value = "create_annotation";
   };
@@ -557,11 +618,13 @@ export function createAnnotationsManager(
     };
     const saved = await saveAnnotation(next);
     upsertIntoCache(saved);
+    isDraftingNewAnnotation.value = false;
     editingAnnotation.value = null;
     discover.view.value = "discover";
   };
 
   const cancelEditingAnnotation = (): void => {
+    isDraftingNewAnnotation.value = false;
     editingAnnotation.value = null;
     discover.view.value = "discover";
   };

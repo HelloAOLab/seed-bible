@@ -511,6 +511,81 @@ describe("AnnotationsManager", () => {
       expect(draft?.endVerseNumber).toBeNull();
       expect(draft?.verseNumbers).toBeNull();
     });
+
+    it("keeps a new draft's verse targeting live-synced to the selection while composing", async () => {
+      tab = createMockTab({ bookId: "GEN", chapterNumber: 1 });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+      expect(manager.editingAnnotation.value?.verseNumber).toBeNull();
+
+      tab.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+      ] as never;
+
+      expect(manager.editingAnnotation.value?.verseNumber).toBe(5);
+      expect(manager.editingAnnotation.value?.endVerseNumber).toBeNull();
+      expect(manager.editingAnnotation.value?.verseNumbers).toEqual([5]);
+
+      tab.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 3 } },
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 7 } },
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+      ] as never;
+
+      expect(manager.editingAnnotation.value?.verseNumber).toBe(3);
+      expect(manager.editingAnnotation.value?.endVerseNumber).toBe(7);
+      expect(manager.editingAnnotation.value?.verseNumbers).toEqual([3, 5, 7]);
+
+      tab.readingState.selectedVerses.value = [];
+
+      expect(manager.editingAnnotation.value?.verseNumber).toBeNull();
+      expect(manager.editingAnnotation.value?.endVerseNumber).toBeNull();
+      expect(manager.editingAnnotation.value?.verseNumbers).toBeNull();
+    });
+
+    it("stops syncing once the new draft is saved", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+      await manager.saveEditingAnnotation();
+
+      tab.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 9 } },
+      ] as never;
+
+      expect(manager.editingAnnotation.value).toBeNull();
+    });
+
+    it("stops syncing once the new draft is cancelled", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+      manager.cancelEditingAnnotation();
+
+      tab.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 9 } },
+      ] as never;
+
+      expect(manager.editingAnnotation.value).toBeNull();
+    });
   });
 
   describe("editAnnotation", () => {
@@ -523,6 +598,34 @@ describe("AnnotationsManager", () => {
       expect(manager.editingAnnotation.value).toEqual(annotation);
       expect(manager.editingAnnotation.value).not.toBe(annotation);
       expect(discover.view.value).toBe("create_annotation");
+    });
+
+    it("does not live-sync an existing annotation's verse targeting to the reader's selection", () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 9 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+      const annotation = createCommentAnnotation({
+        id: "existing",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verseNumber: 3,
+        endVerseNumber: 5,
+      });
+
+      manager.editAnnotation(annotation);
+
+      tab.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 12 } },
+      ] as never;
+
+      expect(manager.editingAnnotation.value?.verseNumber).toBe(3);
+      expect(manager.editingAnnotation.value?.endVerseNumber).toBe(5);
     });
   });
 
