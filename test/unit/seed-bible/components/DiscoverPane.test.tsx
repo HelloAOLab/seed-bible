@@ -264,6 +264,9 @@ function createMockTab(
     discoveredCrossReferences?: unknown[];
     discoveredStudyNotes?: unknown[];
     discoveredContent?: unknown[];
+    translationId?: string;
+    selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
+    decorateVerses?: ReturnType<typeof vi.fn>;
   } = {}
 ): ReaderTab {
   return {
@@ -278,6 +281,11 @@ function createMockTab(
       discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
       discoveredContent: signal(overrides.discoveredContent ?? []),
       translationBooks: signal(null),
+      translationId: signal(overrides.translationId ?? "BSB"),
+      selectTranslationAndChapter:
+        overrides.selectTranslationAndChapter ??
+        vi.fn().mockResolvedValue(undefined),
+      decorateVerses: overrides.decorateVerses ?? vi.fn(() => "decoration-1"),
     },
   } as unknown as ReaderTab;
 }
@@ -292,6 +300,7 @@ function createMockState(
       toast: vi.fn(),
     },
     login: {
+      userId: signal(null),
       getUserProfile:
         overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
     },
@@ -724,14 +733,14 @@ describe("DiscoverPane", () => {
     expect(emptyStates).toContain("You have no annotations");
   });
 
-  it("lists annotations with a book/chapter/verse location label and a sanitized preview, and clicking a row opens it for editing", () => {
+  it("lists annotations with a book/chapter/verse location label and a sanitized preview", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
       id: "a1",
       verseNumber: 3,
       data: { type: "comment", html: "<p>Great verse</p>" },
     });
-    const { annotations, editAnnotation } = createMockAnnotations({
+    const { annotations } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
     const tab = createMockTab({
@@ -766,13 +775,126 @@ describe("DiscoverPane", () => {
     expect(
       items[0]?.querySelector(".sb-annotation-item-preview")?.textContent
     ).toBe("Great verse");
+  });
+
+  it("clicking an annotation row navigates to its verse and emphasizes it, without opening it for editing", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+      endVerseNumber: 5,
+      data: { type: "comment", html: "<p>Great verse</p>" },
+    });
+    const { annotations, editAnnotation } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const decorateVerses = vi.fn(() => "decoration-1");
+    const tab = createMockTab({
+      translationId: "BSB",
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+      decorateVerses,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
 
     act(() => {
-      (items[0] as HTMLLIElement).dispatchEvent(
-        new MouseEvent("click", { bubbles: true })
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
       );
     });
-    expect(editAnnotation).toHaveBeenCalledWith(annotation);
+
+    const item = container.querySelector(
+      ".sb-annotation-item"
+    ) as HTMLLIElement;
+
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith("BSB", "GEN", 1, {
+      scrollToVerse: 3,
+    });
+    expect(decorateVerses).toHaveBeenCalledWith(
+      "GEN",
+      1,
+      [3, 4, 5],
+      expect.objectContaining({
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
+        removeAfterMs: 3000,
+      })
+    );
+    expect(editAnnotation).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotation row with no verse targeting does not navigate or emphasize anything", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: null,
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const decorateVerses = vi.fn(() => "decoration-1");
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+      decorateVerses,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const item = container.querySelector(
+      ".sb-annotation-item"
+    ) as HTMLLIElement;
+
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+    expect(decorateVerses).not.toHaveBeenCalled();
   });
 
   it("shows just the book/chapter for annotations with no verse targeting", () => {
@@ -1025,7 +1147,7 @@ describe("DiscoverPane", () => {
     });
     expect(
       container.querySelector(".sb-annotation-comment-updated")?.textContent
-    ).toContain("Updated");
+    ).toBe("| Jan 5, 2026, 5:30 AM");
   });
 
   it("shows the comment's avatar resolved from their profile picture, before the name", async () => {
