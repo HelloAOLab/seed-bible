@@ -451,6 +451,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      annotations: props.state.annotations,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -513,6 +514,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      annotations: props.state.annotations,
     });
 
     const { selectionUI } = settings.settings.value;

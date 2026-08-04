@@ -26,6 +26,7 @@ import type { AppState } from "./SeedBibleStateManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
+import type { AnnotationsManager } from "./AnnotationsManager";
 import { i18n, useI18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
@@ -164,6 +165,9 @@ export interface BibleToolContext {
   readingPlans?: ReadingPlansManager;
   /** Playlist manager */
   playlists?: PlaylistManager;
+
+  /** Annotations manager, for creating/editing notes on selected verses. */
+  annotations?: AnnotationsManager;
 
   /** Features manager */
   features: FeaturesManager;
@@ -802,6 +806,19 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         };
 
         context.readingState.clearSelectedVerses();
+      },
+    },
+    {
+      id: "annotate-verse",
+      priority: 150,
+      title: { key: "note", defaultValue: "Note" },
+      icon: () => <MaterialIcon>note_add</MaterialIcon>,
+      isVisible: (context) =>
+        !!context.annotations &&
+        context.readingState.selectedVerses.value.length > 0,
+      onSelect: async (context) => {
+        if (!context.annotations) return;
+        await context.annotations.createNewAnnotation();
       },
     },
     {
