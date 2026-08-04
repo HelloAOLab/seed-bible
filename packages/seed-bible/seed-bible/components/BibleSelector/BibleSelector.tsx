@@ -834,17 +834,21 @@ const SideBarChapters = (props: {
       const scrollTargetInto = (scroller: HTMLElement) => {
         const scrollerRect = scroller.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
-        // For a large book (e.g. Psalms) the chapter grid can be taller than
-        // the scroller — only chase the bottom edge when it fits, or this
-        // scrolls past the book's title to reveal the last chapters instead.
+        // Prefer centering so neighboring chapters stay in view. `scrollTo`
+        // clamps to the scroll range, so near the start/end the chapter sits
+        // as close to center as possible without leaving empty space.
+        // For a tall fallback (e.g. full chapter grid) only pin the top —
+        // centering would hide the book title above the grid.
         const targetFits = targetRect.height <= scrollerRect.height;
         let delta = 0;
-        if (targetRect.top < scrollerRect.top) {
+        if (targetFits) {
+          const targetCenter = targetRect.top + targetRect.height / 2;
+          const scrollerCenter = scrollerRect.top + scrollerRect.height / 2;
+          delta = targetCenter - scrollerCenter;
+        } else if (targetRect.top < scrollerRect.top) {
           delta = -(scrollerRect.top - targetRect.top + 8);
-        } else if (targetFits && targetRect.bottom > scrollerRect.bottom) {
-          delta = targetRect.bottom - scrollerRect.bottom + 8;
         }
-        if (delta !== 0) {
+        if (Math.abs(delta) > 1) {
           // `behavior: "auto"` overrides `.sidebar-results { scroll-behavior:
           // smooth }` so nested ancestor scrolls measure stable rects.
           scroller.scrollTo({
