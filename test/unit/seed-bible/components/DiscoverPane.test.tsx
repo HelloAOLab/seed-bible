@@ -724,7 +724,7 @@ describe("DiscoverPane", () => {
     expect(emptyStates).toContain("You have no annotations");
   });
 
-  it("lists annotations with a verse label and a sanitized preview, and clicking a row opens it for editing", () => {
+  it("lists annotations with a book/chapter/verse location label and a sanitized preview, and clicking a row opens it for editing", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
       id: "a1",
@@ -734,7 +734,12 @@ describe("DiscoverPane", () => {
     const { annotations, editAnnotation } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
-    const tab = createMockTab();
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
     const state = createMockState();
@@ -757,7 +762,7 @@ describe("DiscoverPane", () => {
     expect(items).toHaveLength(1);
     expect(
       container.querySelector(".sb-annotation-group-header-title")?.textContent
-    ).toBe("Verse 3");
+    ).toBe("Genesis 1:3");
     expect(
       items[0]?.querySelector(".sb-annotation-item-preview")?.textContent
     ).toBe("Great verse");
@@ -770,13 +775,18 @@ describe("DiscoverPane", () => {
     expect(editAnnotation).toHaveBeenCalledWith(annotation);
   });
 
-  it("shows 'Whole chapter' for annotations with no verse targeting", () => {
+  it("shows just the book/chapter for annotations with no verse targeting", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({ id: "a1", verseNumber: null });
     const { annotations } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
-    const tab = createMockTab();
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
     const state = createMockState();
@@ -797,10 +807,10 @@ describe("DiscoverPane", () => {
 
     expect(
       container.querySelector(".sb-annotation-group-header-title")?.textContent
-    ).toBe("Whole chapter");
+    ).toBe("Genesis 1");
   });
 
-  it("shows a verse range for annotations spanning multiple verses", () => {
+  it("shows a book/chapter/verse-range label for annotations spanning multiple verses", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
       id: "a1",
@@ -810,7 +820,12 @@ describe("DiscoverPane", () => {
     const { annotations } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
-    const tab = createMockTab();
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
     const state = createMockState();
@@ -831,7 +846,7 @@ describe("DiscoverPane", () => {
 
     expect(
       container.querySelector(".sb-annotation-group-header-title")?.textContent
-    ).toBe("Verses 3-5");
+    ).toBe("Genesis 1:3-5");
   });
 
   it("shows a grouped range plus a non-contiguous verse for gapped selections", () => {
@@ -845,7 +860,12 @@ describe("DiscoverPane", () => {
     const { annotations } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
-    const tab = createMockTab();
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
     const state = createMockState();
@@ -866,7 +886,7 @@ describe("DiscoverPane", () => {
 
     expect(
       container.querySelector(".sb-annotation-group-header-title")?.textContent
-    ).toBe("Verses 3-5,7");
+    ).toBe("Genesis 1:3-5,7");
   });
 
   it("groups annotations with the same verse range together and gives each distinct range its own group, ordered by verse", () => {
@@ -881,7 +901,12 @@ describe("DiscoverPane", () => {
     const { annotations } = createMockAnnotations({
       annotationsForChapter: [verse7, verse3a, wholeChapter, verse3b],
     });
-    const tab = createMockTab();
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
     const state = createMockState();
@@ -903,7 +928,7 @@ describe("DiscoverPane", () => {
     const groupTitles = Array.from(
       container.querySelectorAll(".sb-annotation-group-header-title")
     ).map((el) => el.textContent);
-    expect(groupTitles).toEqual(["Whole chapter", "Verse 3", "Verse 7"]);
+    expect(groupTitles).toEqual(["Genesis 1", "Genesis 1:3", "Genesis 1:7"]);
 
     const groups = container.querySelectorAll(".sb-annotation-group");
     expect(groups[1]?.querySelectorAll(".sb-annotation-item")).toHaveLength(2);

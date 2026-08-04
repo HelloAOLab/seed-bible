@@ -236,6 +236,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         modals={modals}
         toast={props.toast}
         login={props.state.login}
+        tabs={tabs}
       />
 
       <CrossReferencesSection tab={selectedTab} />
@@ -477,27 +478,6 @@ function annotationLocationLabel(
   return `${base}:${formatAnnotationVerseNumbers(verseNumbers)}`;
 }
 
-/** Formats an annotation's verse targeting into a human-readable label. */
-function annotationVerseLabel(
-  annotation: Annotation,
-  t: ReturnType<typeof useI18n>["t"]
-): string {
-  const verseNumbers = annotationVerseNumbers(annotation);
-  if (verseNumbers.length === 0) {
-    return t("annotation-whole-chapter", { defaultValue: "Whole chapter" });
-  }
-  if (verseNumbers.length === 1) {
-    return t("annotation-verse", {
-      verse: verseNumbers[0],
-      defaultValue: "Verse {{verse}}",
-    });
-  }
-  return t("annotation-verses", {
-    range: formatAnnotationVerseNumbers(verseNumbers),
-    defaultValue: "Verses {{range}}",
-  });
-}
-
 /** Renders an annotation's sanitized HTML body as a preview snippet. */
 function AnnotationPreview({ html }: { html: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -657,11 +637,12 @@ function AnnotationGroupSection(props: {
   modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
+  tabs: TabsManager;
 }) {
-  const { group, annotations, modals, toast, login } = props;
+  const { group, annotations, modals, toast, login, tabs } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
-  const label = annotationVerseLabel(group.annotations[0]!, t);
+  const label = annotationLocationLabel(group.annotations[0]!, tabs);
 
   return (
     <div className="sb-annotation-group">
@@ -755,8 +736,9 @@ function AnnotationsSection(props: {
   modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
+  tabs: TabsManager;
 }) {
-  const { tab, annotations, modals, toast, login } = props;
+  const { tab, annotations, modals, toast, login, tabs } = props;
   const { t } = useI18n();
   const title = t("annotations", { defaultValue: "Annotations" });
 
@@ -795,6 +777,7 @@ function AnnotationsSection(props: {
             modals={modals}
             toast={toast}
             login={login}
+            tabs={tabs}
           />
         ))
       )}
