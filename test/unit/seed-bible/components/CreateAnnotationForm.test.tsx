@@ -6,10 +6,6 @@ import type {
   Annotation,
   AnnotationsManager,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
-import type {
-  TabsManager,
-  ReaderTab,
-} from "@packages/seed-bible/seed-bible/managers/TabsManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -108,33 +104,6 @@ function createMockAnnotationsManager(editing: Annotation | null) {
   return { annotations, saveEditingAnnotation, cancelEditingAnnotation };
 }
 
-function createMockTabs(
-  overrides: {
-    bookId?: string;
-    chapterNumber?: number;
-    numberOfVerses?: number;
-  } = {}
-): TabsManager {
-  const tab = {
-    id: "tab-1",
-    readingState: {
-      chapterData: signal(
-        overrides.numberOfVerses
-          ? {
-              book: { id: overrides.bookId ?? "GEN" },
-              chapter: { number: overrides.chapterNumber ?? 1 },
-              numberOfVerses: overrides.numberOfVerses,
-            }
-          : null
-      ),
-    },
-  } as unknown as ReaderTab;
-  return {
-    tabs: signal([tab]),
-    selectedTabId: signal(tab.id),
-  } as unknown as TabsManager;
-}
-
 describe("CreateAnnotationForm", () => {
   let container: HTMLDivElement;
 
@@ -153,13 +122,9 @@ describe("CreateAnnotationForm", () => {
 
   it("renders nothing when there is no annotation being edited", async () => {
     const { annotations } = createMockAnnotationsManager(null);
-    const tabs = createMockTabs();
 
     await act(async () => {
-      render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
-        container
-      );
+      render(<CreateAnnotationForm annotations={annotations} />, container);
       await flushLazyLoad();
     });
 
@@ -168,13 +133,9 @@ describe("CreateAnnotationForm", () => {
 
   it("disables Save while the editor is empty, and enables it once typed", async () => {
     const { annotations } = createMockAnnotationsManager(createAnnotation());
-    const tabs = createMockTabs();
 
     await act(async () => {
-      render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
-        container
-      );
+      render(<CreateAnnotationForm annotations={annotations} />, container);
       await flushLazyLoad();
     });
 
@@ -189,16 +150,12 @@ describe("CreateAnnotationForm", () => {
     expect(saveButton.disabled).toBe(false);
   });
 
-  it("Save writes the sanitized HTML and verse selection into the draft, then saves", async () => {
+  it("Save writes the sanitized HTML into the draft, then saves", async () => {
     const { annotations, saveEditingAnnotation } =
       createMockAnnotationsManager(createAnnotation());
-    const tabs = createMockTabs();
 
     await act(async () => {
-      render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
-        container
-      );
+      render(<CreateAnnotationForm annotations={annotations} />, container);
       await flushLazyLoad();
     });
 
@@ -224,13 +181,9 @@ describe("CreateAnnotationForm", () => {
   it("Cancel calls cancelEditingAnnotation", async () => {
     const { annotations, cancelEditingAnnotation } =
       createMockAnnotationsManager(createAnnotation());
-    const tabs = createMockTabs();
 
     await act(async () => {
-      render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
-        container
-      );
+      render(<CreateAnnotationForm annotations={annotations} />, container);
       await flushLazyLoad();
     });
 
@@ -242,96 +195,5 @@ describe("CreateAnnotationForm", () => {
     });
 
     expect(cancelEditingAnnotation).toHaveBeenCalledTimes(1);
-  });
-
-  it("defaults to 'Whole chapter' and switching to specific verses sets verseNumber/endVerseNumber", async () => {
-    const { annotations } = createMockAnnotationsManager(createAnnotation());
-    const tabs = createMockTabs();
-
-    await act(async () => {
-      render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
-        container
-      );
-      await flushLazyLoad();
-    });
-
-    const radios = container.querySelectorAll<HTMLInputElement>(
-      'input[name="annotation-scope"]'
-    );
-    expect(radios).toHaveLength(2);
-    expect(radios[0]?.checked).toBe(true); // "Whole chapter"
-
-    act(() => {
-      radios[1]!.checked = true;
-      radios[1]!.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    expect(annotations.editingAnnotation.value?.verseNumber).toBe(1);
-    expect(annotations.editingAnnotation.value?.endVerseNumber).toBeNull();
-  });
-
-  it("switching back to 'Whole chapter' clears verseNumber/endVerseNumber", async () => {
-    const { annotations } = createMockAnnotationsManager(
-      createAnnotation({ verseNumber: 3, endVerseNumber: 5 })
-    );
-    const tabs = createMockTabs();
-
-    await act(async () => {
-      render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
-        container
-      );
-      await flushLazyLoad();
-    });
-
-    const radios = container.querySelectorAll<HTMLInputElement>(
-      'input[name="annotation-scope"]'
-    );
-    expect(radios[1]?.checked).toBe(true); // "Specific verse(s)"
-
-    act(() => {
-      radios[0]!.checked = true;
-      radios[0]!.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    expect(annotations.editingAnnotation.value?.verseNumber).toBeNull();
-    expect(annotations.editingAnnotation.value?.endVerseNumber).toBeNull();
-  });
-
-  it("editing the from/to verse inputs updates the draft, clamped to the chapter's verse count", async () => {
-    const { annotations } = createMockAnnotationsManager(
-      createAnnotation({ verseNumber: 1, endVerseNumber: null })
-    );
-    const tabs = createMockTabs({
-      bookId: "GEN",
-      chapterNumber: 1,
-      numberOfVerses: 10,
-    });
-
-    await act(async () => {
-      render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
-        container
-      );
-      await flushLazyLoad();
-    });
-
-    const [fromInput, toInput] = container.querySelectorAll<HTMLInputElement>(
-      ".sb-annotation-verse-input"
-    );
-
-    act(() => {
-      fromInput!.value = "3";
-      fromInput!.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    act(() => {
-      toInput!.value = "999";
-      toInput!.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    expect(annotations.editingAnnotation.value?.verseNumber).toBe(3);
-    // Clamped to the chapter's actual verse count (10).
-    expect(annotations.editingAnnotation.value?.endVerseNumber).toBe(10);
   });
 });

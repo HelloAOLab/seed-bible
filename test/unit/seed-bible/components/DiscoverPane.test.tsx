@@ -258,7 +258,7 @@ function createMockTab(
     bookId?: string | null;
     chapterNumber?: number;
     chapterData?: {
-      book: { name: string };
+      book: { id?: string; name: string; commonName?: string };
       chapter: { number: number };
     } | null;
     discoveredCrossReferences?: unknown[];
@@ -829,6 +829,42 @@ describe("DiscoverPane", () => {
     ).toBe("Verses 3-5");
   });
 
+  it("shows a grouped range plus a non-contiguous verse for gapped selections", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      endVerseNumber: 7,
+      verseNumbers: [3, 4, 5, 7],
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-annotation-item .sb-discover-item-title")
+        ?.textContent
+    ).toBe("Verses 3-5,7");
+  });
+
   it("the annotation Edit menu item calls editAnnotation", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({ id: "a1" });
@@ -1255,7 +1291,11 @@ describe("DiscoverPaneTitle", () => {
 
     act(() => {
       render(
-        <DiscoverPaneTitle playlists={playlists} annotations={annotations} />,
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+        />,
         container
       );
     });
@@ -1275,7 +1315,11 @@ describe("DiscoverPaneTitle", () => {
 
     act(() => {
       render(
-        <DiscoverPaneTitle playlists={playlists} annotations={annotations} />,
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+        />,
         container
       );
     });
@@ -1302,7 +1346,11 @@ describe("DiscoverPaneTitle", () => {
 
     act(() => {
       render(
-        <DiscoverPaneTitle playlists={playlists} annotations={annotations} />,
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+        />,
         container
       );
     });
@@ -1342,7 +1390,11 @@ describe("DiscoverPaneTitle", () => {
 
     act(() => {
       render(
-        <DiscoverPaneTitle playlists={playlists} annotations={annotations} />,
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+        />,
         container
       );
     });
@@ -1369,7 +1421,11 @@ describe("DiscoverPaneTitle", () => {
 
     act(() => {
       render(
-        <DiscoverPaneTitle playlists={playlists} annotations={annotations} />,
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+        />,
         container
       );
     });
@@ -1403,7 +1459,11 @@ describe("DiscoverPaneTitle", () => {
 
     act(() => {
       render(
-        <DiscoverPaneTitle playlists={playlists} annotations={annotations} />,
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+        />,
         container
       );
     });
@@ -1419,19 +1479,93 @@ describe("DiscoverPaneTitle", () => {
     expect(playlists.editingPlaylist.value?.title).toBeNull();
   });
 
-  it("shows a back button and the 'Annotation' title in the create_annotation view", () => {
+  function renderAnnotationTitle(editing: Annotation) {
     const { playlists } = createMockPlaylists({ view: "create_annotation" });
-    const { annotations, cancelEditingAnnotation } = createMockAnnotations();
+    const { annotations, cancelEditingAnnotation } = createMockAnnotations({
+      editingAnnotation: editing,
+    });
+    const tab = createMockTab({
+      bookId: editing.bookId,
+      chapterNumber: editing.chapterNumber,
+      chapterData: {
+        book: { id: editing.bookId, name: "Genesis" },
+        chapter: { number: editing.chapterNumber },
+      },
+    });
+    const tabs = createMockTabs(tab);
 
     act(() => {
       render(
-        <DiscoverPaneTitle playlists={playlists} annotations={annotations} />,
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={tabs}
+        />,
         container
       );
     });
 
+    return { cancelEditingAnnotation };
+  }
+
+  it("shows 'Annotate {book} {chapter}' when no verses are selected", () => {
+    renderAnnotationTitle(
+      createAnnotation({ bookId: "GEN", chapterNumber: 3 })
+    );
+
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
-      "Annotation"
+      "Annotate Genesis 3"
+    );
+  });
+
+  it("shows 'Annotate {book} {chapter}:{verse}' when a single verse is selected", () => {
+    renderAnnotationTitle(
+      createAnnotation({
+        bookId: "GEN",
+        chapterNumber: 3,
+        verseNumber: 5,
+      })
+    );
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate Genesis 3:5"
+    );
+  });
+
+  it("shows 'Annotate {book} {chapter}:{verse}-{endVerse}' when a range is selected", () => {
+    renderAnnotationTitle(
+      createAnnotation({
+        bookId: "GEN",
+        chapterNumber: 3,
+        verseNumber: 3,
+        endVerseNumber: 5,
+      })
+    );
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate Genesis 3:3-5"
+    );
+  });
+
+  it("shows a range plus a non-contiguous verse when the selection has a gap", () => {
+    renderAnnotationTitle(
+      createAnnotation({
+        bookId: "GEN",
+        chapterNumber: 3,
+        verseNumber: 3,
+        endVerseNumber: 7,
+        verseNumbers: [3, 4, 5, 7],
+      })
+    );
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate Genesis 3:3-5,7"
+    );
+  });
+
+  it("back button in the create_annotation view calls cancelEditingAnnotation", () => {
+    const { cancelEditingAnnotation } = renderAnnotationTitle(
+      createAnnotation({ bookId: "GEN", chapterNumber: 3 })
     );
 
     const backButton = container.querySelector(

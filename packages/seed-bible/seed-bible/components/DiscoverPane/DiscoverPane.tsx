@@ -7,9 +7,11 @@ import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
-import type {
-  Annotation,
-  AnnotationsManager,
+import {
+  annotationVerseNumbers,
+  formatAnnotationVerseNumbers,
+  type Annotation,
+  type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import { setSafeHtml } from "../../managers/Sanitization";
 import { MaterialIcon } from "../icons";
@@ -86,12 +88,15 @@ export function DiscoverPaneHeader(props: {
 export function DiscoverPaneTitle(props: {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
+  tabs: TabsManager;
 }) {
-  const { playlists, annotations } = props;
+  const { playlists, annotations, tabs } = props;
   const { t } = useI18n();
   const view = playlists.actualView.value;
 
   if (view === "create_annotation") {
+    const editing = annotations.editingAnnotation.value;
+    const location = editing ? annotationLocationLabel(editing, tabs) : null;
     return (
       <div className="sb-discover-title-row">
         <button
@@ -103,7 +108,10 @@ export function DiscoverPaneTitle(props: {
           <MaterialIcon>arrow_back</MaterialIcon>
         </button>
         <span className="sb-discover-title" dir="auto">
-          {t("annotation-form-title", { defaultValue: "Annotation" })}
+          {t("annotate-title", {
+            location: location ?? "",
+            defaultValue: "Annotate {{location}}",
+          })}
         </span>
       </div>
     );
@@ -188,7 +196,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   }
 
   if (actualView.value === "create_annotation") {
-    return <CreateAnnotationForm annotations={annotations} tabs={tabs} />;
+    return <CreateAnnotationForm annotations={annotations} />;
   }
 
   if (actualView.value === "play_playlist") {
@@ -428,27 +436,58 @@ function openDeletePlaylistConfirm(
   });
 }
 
+/**
+ * Resolves the display name of the book an annotation targets, using
+ * whichever open tab currently has that chapter loaded. Falls back to the
+ * raw book id when no open tab has it loaded (e.g. a note for a chapter no
+ * longer open).
+ */
+function annotationBookName(
+  annotation: Pick<Annotation, "bookId" | "chapterNumber">,
+  tabs: TabsManager
+): string {
+  const chapter = tabs.tabs.value
+    .map((tab) => tab.readingState.chapterData.value)
+    .find(
+      (c) =>
+        c?.book.id === annotation.bookId &&
+        c?.chapter.number === annotation.chapterNumber
+    );
+  return chapter?.book.name ?? chapter?.book.commonName ?? annotation.bookId;
+}
+
+/** Formats an annotation's book/chapter/verse targeting, e.g. "Genesis 3:3-5,7". */
+function annotationLocationLabel(
+  annotation: Annotation,
+  tabs: TabsManager
+): string {
+  const book = annotationBookName(annotation, tabs);
+  const base = `${book} ${annotation.chapterNumber}`;
+  const verseNumbers = annotationVerseNumbers(annotation);
+  if (verseNumbers.length === 0) {
+    return base;
+  }
+  return `${base}:${formatAnnotationVerseNumbers(verseNumbers)}`;
+}
+
 /** Formats an annotation's verse targeting into a human-readable label. */
 function annotationVerseLabel(
   annotation: Annotation,
   t: ReturnType<typeof useI18n>["t"]
 ): string {
-  if (annotation.verseNumber == null) {
+  const verseNumbers = annotationVerseNumbers(annotation);
+  if (verseNumbers.length === 0) {
     return t("annotation-whole-chapter", { defaultValue: "Whole chapter" });
   }
-  if (
-    annotation.endVerseNumber == null ||
-    annotation.endVerseNumber === annotation.verseNumber
-  ) {
+  if (verseNumbers.length === 1) {
     return t("annotation-verse", {
-      verse: annotation.verseNumber,
+      verse: verseNumbers[0],
       defaultValue: "Verse {{verse}}",
     });
   }
-  return t("annotation-verse-range", {
-    start: annotation.verseNumber,
-    end: annotation.endVerseNumber,
-    defaultValue: "Verses {{start}}-{{end}}",
+  return t("annotation-verses", {
+    range: formatAnnotationVerseNumbers(verseNumbers),
+    defaultValue: "Verses {{range}}",
   });
 }
 

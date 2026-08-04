@@ -1,39 +1,3 @@
-.sb-annotation-form-scope {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  font-size: 0.8125rem;
-}
-
-.sb-annotation-form-scope-label {
-  font-weight: 600;
-  color: var(--sb-font-color-secondary, var(--sb-font-color));
-}
-
-.sb-annotation-form-scope-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-}
-
-.sb-annotation-form-verse-inputs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-}
-
-.sb-annotation-verse-input {
-  width: 6rem;
-}
-
-.sb-annotation-form-verse-separator {
-  color: var(--sb-font-color-secondary, var(--sb-font-color));
-}
-
 .sb-annotation-editor {
   min-height: 8rem;
   margin-bottom: 8px;

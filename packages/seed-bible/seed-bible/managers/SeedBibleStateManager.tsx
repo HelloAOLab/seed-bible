@@ -1601,7 +1601,11 @@ export function createSeedBibleState(
         id: DISCOVER_PANE_ID,
         placement: "side",
         title: () => (
-          <DiscoverPaneTitle playlists={playlists} annotations={annotations} />
+          <DiscoverPaneTitle
+            playlists={playlists}
+            annotations={annotations}
+            tabs={tabs}
+          />
         ),
         header: () => (
           <DiscoverPaneHeader playlists={playlists} annotations={annotations} />

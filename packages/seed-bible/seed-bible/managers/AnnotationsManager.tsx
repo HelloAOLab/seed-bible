@@ -111,6 +111,56 @@ export const annotationSchema = z.object({
   data: annotationDataSchema,
 });
 
+/**
+ * Resolves the verse numbers an annotation targets: `verseNumbers` when
+ * present (the exact, possibly non-contiguous selection), else expanded from
+ * `verseNumber`/`endVerseNumber` for annotations saved before that field
+ * existed, else empty for a whole-chapter annotation.
+ */
+export function annotationVerseNumbers(
+  annotation: Pick<
+    Annotation,
+    "verseNumber" | "endVerseNumber" | "verseNumbers"
+  >
+): number[] {
+  if (annotation.verseNumbers && annotation.verseNumbers.length > 0) {
+    return annotation.verseNumbers;
+  }
+  if (annotation.verseNumber == null) {
+    return [];
+  }
+  const end = annotation.endVerseNumber ?? annotation.verseNumber;
+  const numbers: number[] = [];
+  for (let n = annotation.verseNumber; n <= end; n++) {
+    numbers.push(n);
+  }
+  return numbers;
+}
+
+/**
+ * Formats verse numbers into a compact label, grouping consecutive runs:
+ * `[3, 4, 5]` -> `"3-5"`, `[3, 4, 5, 7]` -> `"3-5,7"`, `[7]` -> `"7"`.
+ */
+export function formatAnnotationVerseNumbers(verseNumbers: number[]): string {
+  const sorted = Array.from(new Set(verseNumbers)).sort((a, b) => a - b);
+  const groups: string[] = [];
+  let start = sorted[0];
+  let end = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    const n = sorted[i];
+    if (n !== undefined && end !== undefined && n === end + 1) {
+      end = n;
+      continue;
+    }
+    if (start !== undefined && end !== undefined) {
+      groups.push(start === end ? `${start}` : `${start}-${end}`);
+    }
+    start = n;
+    end = n;
+  }
+  return groups.join(",");
+}
+
 function getAnnotationMarker(
   bookId: string,
   chapterNumber: number,
@@ -447,15 +497,24 @@ export function createAnnotationsManager(
     // Pre-fill verse targeting from the reader's current text selection, if
     // any of it lands on this same chapter (mirrors how BibleReaderToolbar
     // reads `selectedVerses` for highlighting).
-    const selectedVerseNumbers = tab.readingState.selectedVerses.value
-      .filter((v) => v.bookId === bookId && v.chapterNumber === chapterNumber)
-      .map((v) => v.verse.number);
+    const selectedVerseNumbers = Array.from(
+      new Set(
+        tab.readingState.selectedVerses.value
+          .filter(
+            (v) => v.bookId === bookId && v.chapterNumber === chapterNumber
+          )
+          .map((v) => v.verse.number)
+      )
+    ).sort((a, b) => a - b);
     let verseNumber: number | null = null;
     let endVerseNumber: number | null = null;
+    let verseNumbers: number[] | null = null;
     if (selectedVerseNumbers.length > 0) {
-      verseNumber = Math.min(...selectedVerseNumbers);
-      const maxVerseNumber = Math.max(...selectedVerseNumbers);
+      verseNumber = selectedVerseNumbers[0]!;
+      const maxVerseNumber =
+        selectedVerseNumbers[selectedVerseNumbers.length - 1]!;
       endVerseNumber = maxVerseNumber !== verseNumber ? maxVerseNumber : null;
+      verseNumbers = selectedVerseNumbers;
     }
 
     const now = Date.now();
@@ -465,6 +524,7 @@ export function createAnnotationsManager(
       chapterNumber,
       verseNumber,
       endVerseNumber,
+      verseNumbers,
       data: {
         type: "comment",
         html: "",

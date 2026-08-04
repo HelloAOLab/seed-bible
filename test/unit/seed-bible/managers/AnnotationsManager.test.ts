@@ -1,5 +1,7 @@
 import {
+  annotationVerseNumbers,
   createAnnotationsManager,
+  formatAnnotationVerseNumbers,
   type Annotation,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -443,6 +445,7 @@ describe("AnnotationsManager", () => {
       expect(draft?.chapterNumber).toBe(3);
       expect(draft?.verseNumber).toBeNull();
       expect(draft?.endVerseNumber).toBeNull();
+      expect(draft?.verseNumbers).toBeNull();
       expect(draft?.data).toMatchObject({ type: "comment", html: "" });
       expect(discover.view.value).toBe("create_annotation");
     });
@@ -465,6 +468,29 @@ describe("AnnotationsManager", () => {
       const draft = manager.editingAnnotation.value;
       expect(draft?.verseNumber).toBe(5);
       expect(draft?.endVerseNumber).toBe(7);
+      expect(draft?.verseNumbers).toEqual([5, 6, 7]);
+    });
+
+    it("preserves gaps in a non-contiguous selection instead of collapsing to a range", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 3 } },
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 7 } },
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 4 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      const draft = manager.editingAnnotation.value;
+      expect(draft?.verseNumber).toBe(3);
+      expect(draft?.endVerseNumber).toBe(7);
+      expect(draft?.verseNumbers).toEqual([3, 4, 5, 7]);
     });
 
     it("ignores selected verses that belong to a different chapter", async () => {
@@ -483,6 +509,7 @@ describe("AnnotationsManager", () => {
       const draft = manager.editingAnnotation.value;
       expect(draft?.verseNumber).toBeNull();
       expect(draft?.endVerseNumber).toBeNull();
+      expect(draft?.verseNumbers).toBeNull();
     });
   });
 
@@ -584,5 +611,53 @@ describe("AnnotationsManager", () => {
         manager.deleteAnnotationAndRefresh(createCommentAnnotation())
       ).rejects.toThrow();
     });
+  });
+});
+
+describe("annotationVerseNumbers", () => {
+  it("returns verseNumbers when present, even if it doesn't match verseNumber/endVerseNumber", () => {
+    expect(
+      annotationVerseNumbers({
+        verseNumber: 3,
+        endVerseNumber: 7,
+        verseNumbers: [3, 4, 5, 7],
+      })
+    ).toEqual([3, 4, 5, 7]);
+  });
+
+  it("expands verseNumber/endVerseNumber into a range when verseNumbers is absent", () => {
+    expect(
+      annotationVerseNumbers({ verseNumber: 3, endVerseNumber: 5 })
+    ).toEqual([3, 4, 5]);
+  });
+
+  it("returns a single verse when endVerseNumber is absent", () => {
+    expect(
+      annotationVerseNumbers({ verseNumber: 5, endVerseNumber: null })
+    ).toEqual([5]);
+  });
+
+  it("returns an empty array for a whole-chapter annotation", () => {
+    expect(
+      annotationVerseNumbers({ verseNumber: null, endVerseNumber: null })
+    ).toEqual([]);
+  });
+});
+
+describe("formatAnnotationVerseNumbers", () => {
+  it("formats a single verse", () => {
+    expect(formatAnnotationVerseNumbers([7])).toBe("7");
+  });
+
+  it("formats a contiguous run as a range", () => {
+    expect(formatAnnotationVerseNumbers([3, 4, 5])).toBe("3-5");
+  });
+
+  it("groups a range plus a non-contiguous verse", () => {
+    expect(formatAnnotationVerseNumbers([3, 4, 5, 7])).toBe("3-5,7");
+  });
+
+  it("sorts and dedupes before grouping", () => {
+    expect(formatAnnotationVerseNumbers([7, 3, 5, 4, 4])).toBe("3-5,7");
   });
 });
