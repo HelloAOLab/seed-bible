@@ -502,20 +502,16 @@ const annotationAuthorProfileCache = new Map<
 
 /**
  * Shows a comment annotation's author avatar and name, resolved live from
- * their profile (not just the `userName`/`userProfilePicture` snapshotted on
- * the comment at creation time). Renders the snapshot immediately as a
- * placeholder so there's no flash of blank text/missing picture, then swaps
- * to the profile's current name/picture once it resolves.
+ * their profile by user id.
  */
 function AnnotationAuthor(props: {
   userId: string | null | undefined;
-  fallbackName: string | null | undefined;
-  fallbackPictureUrl: string | null | undefined;
   login: LoginManager;
 }) {
-  const { userId, fallbackName, fallbackPictureUrl, login } = props;
-  const name = useSignal(fallbackName ?? "");
-  const pictureUrl = useSignal(fallbackPictureUrl ?? null);
+  const { userId, login } = props;
+  const name = useSignal("");
+  const pictureUrl = useSignal<string | null>(null);
+  const isSelf = userId === login.userId.value;
 
   useEffect(() => {
     if (!userId) {
@@ -540,25 +536,30 @@ function AnnotationAuthor(props: {
         }
       })
       .catch(() => {
-        // Keep showing the snapshotted fallback name/picture on failure.
+        // No profile available; author renders with no name/picture.
       });
     return () => {
       cancelled = true;
     };
   }, [userId]);
 
-  if (!userId && !name.value && !pictureUrl.value) {
+  if (!userId) {
     return null;
   }
+
+  const { t } = useI18n();
+
   return (
     <span className="sb-annotation-comment-author">
       <Avatar
         imageUrl={pictureUrl.value}
-        visual={getUserAnimalVisual(userId ?? "")}
+        visual={getUserAnimalVisual(userId)}
         title={name.value}
       />
-      {name.value ? (
-        <span className="sb-annotation-comment-author-name">{name.value}</span>
+      {isSelf || name.value ? (
+        <span className="sb-annotation-comment-author-name">
+          {isSelf ? t("you", { defaultValue: "You" }) : name.value}
+        </span>
       ) : null}
     </span>
   );
@@ -600,12 +601,7 @@ function AnnotationCommentMeta(props: {
 
   return (
     <span className="sb-annotation-comment-meta">
-      <AnnotationAuthor
-        userId={annotation.data.userId}
-        fallbackName={annotation.data.userName}
-        fallbackPictureUrl={annotation.data.userProfilePicture}
-        login={login}
-      />
+      <AnnotationAuthor userId={annotation.data.userId} login={login} />
       {updatedAtMs != null ? (
         <span className="sb-annotation-comment-updated">
           |{" "}
