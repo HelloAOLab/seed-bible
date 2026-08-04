@@ -591,7 +591,7 @@ function AnnotationCommentMeta(props: {
   t: ReturnType<typeof useI18n>["t"];
   language: string;
 }) {
-  const { annotation, login, t, language } = props;
+  const { annotation, login, language } = props;
   if (annotation.data.type !== "comment") {
     return null;
   }
