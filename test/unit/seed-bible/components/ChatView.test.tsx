@@ -97,6 +97,7 @@ function createMockState(): SeedBibleState {
   return {
     app: {
       openVerseReference: vi.fn().mockResolvedValue(undefined),
+      isMobile: signal(false),
     },
   } as unknown as SeedBibleState;
 }

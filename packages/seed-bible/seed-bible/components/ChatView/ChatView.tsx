@@ -586,6 +586,10 @@ export function ChatView(props: ChatViewProps) {
   }, [messages.length]);
 
   useEffect(() => {
+    // Don't autofocus on mobile — focusing opens the soft keyboard.
+    if (state.app.isMobile.value) {
+      return;
+    }
     inputRef.current?.focus();
   }, []);
 
