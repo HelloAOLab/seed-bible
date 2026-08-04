@@ -1,5 +1,6 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
+import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
@@ -7,10 +8,13 @@ import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { LoginManager } from "../../managers/LoginManager";
 import {
   annotationVerseNumbers,
   formatAnnotationVerseNumbers,
+  groupAnnotationsByVerseRange,
   type Annotation,
+  type AnnotationGroup,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import { setSafeHtml } from "../../managers/Sanitization";
@@ -229,6 +233,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         annotations={annotations}
         modals={modals}
         toast={props.toast}
+        login={props.state.login}
       />
 
       <CrossReferencesSection tab={selectedTab} />
@@ -508,42 +513,160 @@ function AnnotationPreview({ html }: { html: string }) {
   );
 }
 
-function AnnotationsSection(props: {
-  tab: ReaderTab | null;
+// Shared across every `AnnotationAuthor` instance so authors of multiple
+// comments (or comments re-rendered across chapters) resolve their profile
+// once per session instead of once per row. `LoginManager.getUserProfile`
+// has no built-in cache of its own for arbitrary user ids (only for the
+// signed-in account), so this mirrors the per-id cache already used in
+// `SessionsManager.tsx`.
+const annotationAuthorProfileCache = new Map<
+  string,
+  ReturnType<LoginManager["getUserProfile"]>
+>();
+
+/**
+ * Shows a comment annotation's author name, resolved live from their profile
+ * (not just the `userName` snapshotted on the comment at creation time).
+ * Renders the snapshot immediately as a placeholder so there's no flash of
+ * blank text, then swaps to the profile's current name once it resolves.
+ */
+function AnnotationAuthor(props: {
+  userId: string | null | undefined;
+  fallbackName: string | null | undefined;
+  login: LoginManager;
+}) {
+  const { userId, fallbackName, login } = props;
+  const name = useSignal(fallbackName ?? "");
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+    let cancelled = false;
+    let promise = annotationAuthorProfileCache.get(userId);
+    if (!promise) {
+      promise = login.getUserProfile(userId);
+      annotationAuthorProfileCache.set(userId, promise);
+    }
+    promise
+      .then((profile) => {
+        if (!cancelled && profile.name) {
+          name.value = profile.name;
+        }
+      })
+      .catch(() => {
+        // Keep showing the snapshotted fallback name on failure.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  if (!name.value) {
+    return null;
+  }
+  return <span className="sb-annotation-comment-author">{name.value}</span>;
+}
+
+const annotationUpdatedTimeFormatterCache = new Map<
+  string,
+  Intl.DateTimeFormat
+>();
+
+function getAnnotationUpdatedTimeFormatter(
+  language: string
+): Intl.DateTimeFormat {
+  let formatter = annotationUpdatedTimeFormatterCache.get(language);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(language, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+    annotationUpdatedTimeFormatterCache.set(language, formatter);
+  }
+  return formatter;
+}
+
+/** A comment annotation's author name plus its last-updated time. */
+function AnnotationCommentMeta(props: {
+  annotation: Annotation;
+  login: LoginManager;
+  t: ReturnType<typeof useI18n>["t"];
+  language: string;
+}) {
+  const { annotation, login, t, language } = props;
+  if (annotation.data.type !== "comment") {
+    return null;
+  }
+
+  const updatedAtMs =
+    annotation.data.updatedAtMs ?? annotation.data.createdAtMs;
+
+  return (
+    <span className="sb-annotation-comment-meta">
+      <AnnotationAuthor
+        userId={annotation.data.userId}
+        fallbackName={annotation.data.userName}
+        login={login}
+      />
+      {updatedAtMs != null ? (
+        <span className="sb-annotation-comment-updated">
+          {t("annotation-comment-updated", {
+            date: getAnnotationUpdatedTimeFormatter(language).format(
+              new Date(updatedAtMs)
+            ),
+            defaultValue: "Updated {{date}}",
+          })}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/**
+ * One verse-range group of annotations: a collapsible header showing the
+ * shared verse label, and (while expanded) the annotation rows themselves.
+ * Starts expanded.
+ */
+function AnnotationGroupSection(props: {
+  group: AnnotationGroup;
   annotations: AnnotationsManager;
   modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
+  login: LoginManager;
 }) {
-  const { tab, annotations, modals, toast } = props;
-  const { t } = useI18n();
-  const title = t("annotations", { defaultValue: "Annotations" });
-
-  if (!tab) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
-  }
-
-  const bookId = tab.readingState.bookId.value;
-  const chapterNumber = tab.readingState.chapterNumber.value;
-  if (!bookId || !chapterNumber) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
-  }
-
-  const chapterAnnotations = annotations.getAnnotationsForChapter(
-    bookId,
-    chapterNumber
-  ).value;
+  const { group, annotations, modals, toast, login } = props;
+  const { t, language } = useI18n();
+  const expanded = useSignal(true);
+  const label = annotationVerseLabel(group.annotations[0]!, t);
 
   return (
-    <DiscoverSection title={title}>
-      {chapterAnnotations.length === 0 ? (
-        <DiscoverEmpty
-          text={t("discover-annotations-empty", {
-            defaultValue: "You have no annotations",
-          })}
-        />
-      ) : (
+    <div className="sb-annotation-group">
+      <button
+        type="button"
+        className="sb-annotation-group-header"
+        aria-expanded={expanded.value}
+        aria-label={
+          expanded.value
+            ? t("annotation-group-collapse", {
+                defaultValue: "Collapse group",
+              })
+            : t("annotation-group-expand", { defaultValue: "Expand group" })
+        }
+        onClick={() => (expanded.value = !expanded.value)}
+      >
+        <MaterialIcon
+          className={`sb-annotation-group-header-icon${
+            expanded.value ? "" : " sb-annotation-group-header-icon--collapsed"
+          }`}
+        >
+          expand_more
+        </MaterialIcon>
+        <span className="sb-annotation-group-header-title">{label}</span>
+      </button>
+      {expanded.value ? (
         <ul className="sb-discover-list">
-          {chapterAnnotations.map((annotation) => (
+          {group.annotations.map((annotation) => (
             <li
               key={annotation.id}
               className="sb-discover-item sb-discover-item--row sb-annotation-item"
@@ -551,10 +674,13 @@ function AnnotationsSection(props: {
               onClick={() => annotations.editAnnotation(annotation)}
             >
               <div className="sb-discover-item-main">
-                <span className="sb-discover-item-title">
-                  {annotationVerseLabel(annotation, t)}
-                </span>
                 <AnnotationPreview html={annotation.data.html} />
+                <AnnotationCommentMeta
+                  annotation={annotation}
+                  login={login}
+                  t={t}
+                  language={language}
+                />
               </div>
               <ContextMenuWithButton
                 buttonClassName="sb-discover-item-menu"
@@ -595,6 +721,59 @@ function AnnotationsSection(props: {
             </li>
           ))}
         </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function AnnotationsSection(props: {
+  tab: ReaderTab | null;
+  annotations: AnnotationsManager;
+  modals: ModalManager;
+  toast: SeedBibleState["app"]["toast"];
+  login: LoginManager;
+}) {
+  const { tab, annotations, modals, toast, login } = props;
+  const { t } = useI18n();
+  const title = t("annotations", { defaultValue: "Annotations" });
+
+  if (!tab) {
+    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+  }
+
+  const bookId = tab.readingState.bookId.value;
+  const chapterNumber = tab.readingState.chapterNumber.value;
+  if (!bookId || !chapterNumber) {
+    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+  }
+
+  const chapterAnnotations = annotations.getAnnotationsForChapter(
+    bookId,
+    chapterNumber
+  ).value;
+  const groups = groupAnnotationsByVerseRange(chapterAnnotations);
+
+  return (
+    <DiscoverSection title={title}>
+      {groups.length === 0 ? (
+        <DiscoverEmpty
+          text={t("discover-annotations-empty", {
+            defaultValue: "You have no annotations",
+          })}
+        />
+      ) : (
+        groups.map((group) => (
+          <AnnotationGroupSection
+            key={`${group.startVerseNumber ?? "chapter"}-${
+              group.endVerseNumber ?? "chapter"
+            }`}
+            group={group}
+            annotations={annotations}
+            modals={modals}
+            toast={toast}
+            login={login}
+          />
+        ))
       )}
     </DiscoverSection>
   );

@@ -2,6 +2,7 @@ import {
   annotationVerseNumbers,
   createAnnotationsManager,
   formatAnnotationVerseNumbers,
+  groupAnnotationsByVerseRange,
   type Annotation,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -762,5 +763,113 @@ describe("formatAnnotationVerseNumbers", () => {
 
   it("sorts and dedupes before grouping", () => {
     expect(formatAnnotationVerseNumbers([7, 3, 5, 4, 4])).toBe("3-5,7");
+  });
+});
+
+describe("groupAnnotationsByVerseRange", () => {
+  it("groups annotations that share the same start and end verse", () => {
+    const a = createCommentAnnotation({ id: "a", verseNumber: 3 });
+    const b = createCommentAnnotation({ id: "b", verseNumber: 3 });
+
+    const groups = groupAnnotationsByVerseRange([a, b]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.startVerseNumber).toBe(3);
+    expect(groups[0]?.endVerseNumber).toBe(3);
+    expect(groups[0]?.annotations.map((x) => x.id)).toEqual(["a", "b"]);
+  });
+
+  it("splits annotations with a different start or end verse into separate groups", () => {
+    const a = createCommentAnnotation({ id: "a", verseNumber: 3 });
+    const b = createCommentAnnotation({
+      id: "b",
+      verseNumber: 3,
+      endVerseNumber: 5,
+    });
+    const c = createCommentAnnotation({ id: "c", verseNumber: 4 });
+
+    const groups = groupAnnotationsByVerseRange([a, b, c]);
+
+    expect(groups).toHaveLength(3);
+  });
+
+  it("groups whole-chapter annotations together, separate from verse-targeted ones", () => {
+    const wholeChapterA = createCommentAnnotation({
+      id: "a",
+      verseNumber: null,
+    });
+    const wholeChapterB = createCommentAnnotation({
+      id: "b",
+      verseNumber: null,
+    });
+    const verseSpecific = createCommentAnnotation({ id: "c", verseNumber: 3 });
+
+    const groups = groupAnnotationsByVerseRange([
+      wholeChapterA,
+      verseSpecific,
+      wholeChapterB,
+    ]);
+
+    expect(groups).toHaveLength(2);
+    const chapterGroup = groups.find((g) => g.startVerseNumber === null);
+    expect(chapterGroup?.annotations.map((x) => x.id)).toEqual(["a", "b"]);
+  });
+
+  it("orders groups with whole-chapter first, then ascending by start verse, then end verse", () => {
+    const verse7 = createCommentAnnotation({ id: "verse-7", verseNumber: 7 });
+    const verse3to5 = createCommentAnnotation({
+      id: "verse-3-5",
+      verseNumber: 3,
+      endVerseNumber: 5,
+    });
+    const verse3 = createCommentAnnotation({ id: "verse-3", verseNumber: 3 });
+    const wholeChapter = createCommentAnnotation({
+      id: "chapter",
+      verseNumber: null,
+    });
+
+    const groups = groupAnnotationsByVerseRange([
+      verse7,
+      verse3to5,
+      verse3,
+      wholeChapter,
+    ]);
+
+    expect(groups.map((g) => g.annotations[0]?.id)).toEqual([
+      "chapter",
+      "verse-3",
+      "verse-3-5",
+      "verse-7",
+    ]);
+  });
+
+  it("sorts annotations within a group oldest-first by createdAtMs", () => {
+    const newer = createCommentAnnotation({
+      id: "newer",
+      verseNumber: 3,
+      data: { type: "comment", html: "", createdAtMs: 200 },
+    });
+    const older = createCommentAnnotation({
+      id: "older",
+      verseNumber: 3,
+      data: { type: "comment", html: "", createdAtMs: 100 },
+    });
+
+    const groups = groupAnnotationsByVerseRange([newer, older]);
+
+    expect(groups[0]?.annotations.map((a) => a.id)).toEqual(["older", "newer"]);
+  });
+
+  it("keeps incoming order when createdAtMs is missing on either side", () => {
+    const a = createCommentAnnotation({ id: "a", verseNumber: 3 });
+    const b = createCommentAnnotation({
+      id: "b",
+      verseNumber: 3,
+      data: { type: "comment", html: "", createdAtMs: 100 },
+    });
+
+    const groups = groupAnnotationsByVerseRange([a, b]);
+
+    expect(groups[0]?.annotations.map((x) => x.id)).toEqual(["a", "b"]);
   });
 });

@@ -161,6 +161,78 @@ export function formatAnnotationVerseNumbers(verseNumbers: number[]): string {
   return groups.join(",");
 }
 
+export interface AnnotationGroup {
+  /** Lowest verse number targeted by every annotation in this group, or `null` for a whole-chapter group. */
+  startVerseNumber: number | null;
+  /** Highest verse number targeted by every annotation in this group, or `null` for a whole-chapter group. */
+  endVerseNumber: number | null;
+  annotations: Annotation[];
+}
+
+function annotationVerseRangeKey(annotation: Annotation): string {
+  const verseNumbers = annotationVerseNumbers(annotation);
+  if (verseNumbers.length === 0) {
+    return "chapter";
+  }
+  return `${Math.min(...verseNumbers)}-${Math.max(...verseNumbers)}`;
+}
+
+/**
+ * Groups annotations that target the same verse range (same start *and* end
+ * verse - a whole-chapter annotation only groups with other whole-chapter
+ * annotations), sorts within each group oldest-first by `createdAtMs` (a
+ * comment thread reads top-to-bottom in the order it was written; ties or
+ * missing timestamps keep their incoming relative order), and sorts the
+ * groups themselves with whole-chapter groups first, then ascending by
+ * start verse, then by end verse.
+ */
+export function groupAnnotationsByVerseRange(
+  annotations: Annotation[]
+): AnnotationGroup[] {
+  const groups = new Map<string, AnnotationGroup>();
+
+  for (const annotation of annotations) {
+    const key = annotationVerseRangeKey(annotation);
+    let group = groups.get(key);
+    if (!group) {
+      const verseNumbers = annotationVerseNumbers(annotation);
+      group = {
+        startVerseNumber:
+          verseNumbers.length > 0 ? Math.min(...verseNumbers) : null,
+        endVerseNumber:
+          verseNumbers.length > 0 ? Math.max(...verseNumbers) : null,
+        annotations: [],
+      };
+      groups.set(key, group);
+    }
+    group.annotations.push(annotation);
+  }
+
+  for (const group of groups.values()) {
+    group.annotations.sort((a, b) => {
+      const aTime = a.data.createdAtMs;
+      const bTime = b.data.createdAtMs;
+      if (typeof aTime === "number" && typeof bTime === "number") {
+        return aTime - bTime;
+      }
+      return 0;
+    });
+  }
+
+  return Array.from(groups.values()).sort((a, b) => {
+    if (a.startVerseNumber == null) {
+      return b.startVerseNumber == null ? 0 : -1;
+    }
+    if (b.startVerseNumber == null) {
+      return 1;
+    }
+    if (a.startVerseNumber !== b.startVerseNumber) {
+      return a.startVerseNumber - b.startVerseNumber;
+    }
+    return (a.endVerseNumber ?? 0) - (b.endVerseNumber ?? 0);
+  });
+}
+
 interface VerseTargeting {
   verseNumber: number | null;
   endVerseNumber: number | null;

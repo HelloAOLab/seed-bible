@@ -181,6 +181,53 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
+/* One verse-range group of annotations (see `AnnotationGroupSection`): a
+   collapsible header plus its `.sb-discover-list` of annotation rows. */
+.sb-annotation-group + .sb-annotation-group {
+  margin-top: 4px;
+}
+
+.sb-annotation-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--sb-font-color);
+  text-align: start;
+}
+
+.sb-annotation-group-header-icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  transition: transform 0.15s ease;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-annotation-group-header-icon--collapsed {
+  transform: rotate(-90deg);
+}
+
+.sb-annotation-group-header-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sb-annotation-comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-annotation-comment-author {
+  font-weight: 500;
+}
+
 .sb-discover-item-content {
   font-size: 0.8125rem;
   margin-top: 4px;

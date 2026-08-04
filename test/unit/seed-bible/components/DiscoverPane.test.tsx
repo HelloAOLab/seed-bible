@@ -282,11 +282,18 @@ function createMockTab(
   } as unknown as ReaderTab;
 }
 
-function createMockState(isMobile = false): SeedBibleState {
+function createMockState(
+  isMobile = false,
+  overrides: { getUserProfile?: ReturnType<typeof vi.fn> } = {}
+): SeedBibleState {
   return {
     app: {
       isMobile: signal(isMobile),
       toast: vi.fn(),
+    },
+    login: {
+      getUserProfile:
+        overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
     },
   } as unknown as SeedBibleState;
 }
@@ -749,7 +756,7 @@ describe("DiscoverPane", () => {
     const items = container.querySelectorAll(".sb-annotation-item");
     expect(items).toHaveLength(1);
     expect(
-      items[0]?.querySelector(".sb-discover-item-title")?.textContent
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
     ).toBe("Verse 3");
     expect(
       items[0]?.querySelector(".sb-annotation-item-preview")?.textContent
@@ -789,8 +796,7 @@ describe("DiscoverPane", () => {
     });
 
     expect(
-      container.querySelector(".sb-annotation-item .sb-discover-item-title")
-        ?.textContent
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
     ).toBe("Whole chapter");
   });
 
@@ -824,8 +830,7 @@ describe("DiscoverPane", () => {
     });
 
     expect(
-      container.querySelector(".sb-annotation-item .sb-discover-item-title")
-        ?.textContent
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
     ).toBe("Verses 3-5");
   });
 
@@ -860,9 +865,141 @@ describe("DiscoverPane", () => {
     });
 
     expect(
-      container.querySelector(".sb-annotation-item .sb-discover-item-title")
-        ?.textContent
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
     ).toBe("Verses 3-5,7");
+  });
+
+  it("groups annotations with the same verse range together and gives each distinct range its own group, ordered by verse", () => {
+    const { playlists } = createMockPlaylists();
+    const wholeChapter = createAnnotation({
+      id: "chapter-note",
+      verseNumber: null,
+    });
+    const verse3a = createAnnotation({ id: "verse-3-a", verseNumber: 3 });
+    const verse3b = createAnnotation({ id: "verse-3-b", verseNumber: 3 });
+    const verse7 = createAnnotation({ id: "verse-7", verseNumber: 7 });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [verse7, verse3a, wholeChapter, verse3b],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const groupTitles = Array.from(
+      container.querySelectorAll(".sb-annotation-group-header-title")
+    ).map((el) => el.textContent);
+    expect(groupTitles).toEqual(["Whole chapter", "Verse 3", "Verse 7"]);
+
+    const groups = container.querySelectorAll(".sb-annotation-group");
+    expect(groups[1]?.querySelectorAll(".sb-annotation-item")).toHaveLength(2);
+  });
+
+  it("collapses and re-expands a group's annotations when its header is clicked", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({ id: "a1", verseNumber: 3 });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const header = container.querySelector(
+      ".sb-annotation-group-header"
+    ) as HTMLButtonElement;
+    expect(header.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
+
+    act(() => {
+      header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(header.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(0);
+
+    act(() => {
+      header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(header.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
+  });
+
+  it("shows the comment's author name resolved from their profile and a formatted updated time", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-42",
+        userName: "Loading Placeholder",
+        updatedAtMs: Date.UTC(2026, 0, 5, 10, 30),
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const getUserProfile = vi.fn().mockResolvedValue({ name: "Jordan Rivera" });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, { getUserProfile });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(getUserProfile).toHaveBeenCalledWith("user-42");
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector(".sb-annotation-comment-author")?.textContent
+      ).toBe("Jordan Rivera");
+    });
+    expect(
+      container.querySelector(".sb-annotation-comment-updated")?.textContent
+    ).toContain("Updated");
   });
 
   it("the annotation Edit menu item calls editAnnotation", () => {
