@@ -6,6 +6,7 @@
 
 ### 🔧 Changed
 
+- Scripture Map packs books in a masonry layout by height, keeping left-to-right book order while removing empty gaps under shorter books. ([#1392](https://github.com/HelloAOLab/seed-bible/issues/1392))
 - Serve HTML and proxied assets gzip-compressed when the browser supports it, and stop the reader's initial font requests from blocking rendering by loading them without the render-blocking stylesheet, both PageSpeed wins. ([#1570](https://github.com/HelloAOLab/seed-bible/pull/1570))
 - Use paths instead of query parameters for better SEO. ([#1547](https://github.com/HelloAOLab/seed-bible/pull/1547))
 

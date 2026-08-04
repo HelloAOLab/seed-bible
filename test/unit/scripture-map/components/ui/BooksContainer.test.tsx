@@ -4,27 +4,54 @@ import { BooksContainer } from "../../../../../packages/scripture-map/components
 
 describe("BooksContainer", () => {
   let container: HTMLDivElement;
+  let originalResizeObserver: typeof ResizeObserver | undefined;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    originalResizeObserver = globalThis.ResizeObserver;
+    // Avoid observer async paths in these smoke tests.
+    // @ts-expect-error -- deleting for the test
+    delete globalThis.ResizeObserver;
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
+    if (originalResizeObserver) {
+      globalThis.ResizeObserver = originalResizeObserver;
+    } else {
+      // @ts-expect-error -- restore absence
+      delete globalThis.ResizeObserver;
+    }
   });
 
-  function setup(children?: preact.ComponentChildren) {
-    act(() => render(<BooksContainer>{children}</BooksContainer>, container));
+  function setup(children?: preact.ComponentChildren, masonry?: boolean) {
+    act(() =>
+      render(
+        <BooksContainer masonry={masonry}>{children}</BooksContainer>,
+        container
+      )
+    );
     return container;
   }
 
-  it("renders the .scripture-map-books-container div", () => {
+  it("renders the books container without masonry by default", () => {
     setup();
+    const wrapper = container.querySelector(".scripture-map-books-container");
+    expect(wrapper).not.toBeNull();
     expect(
-      container.querySelector(".scripture-map-books-container")
-    ).not.toBeNull();
+      wrapper!.classList.contains("scripture-map-books-container-masonry")
+    ).toBe(false);
+  });
+
+  it("adds the masonry class when masonry is enabled", () => {
+    setup(undefined, true);
+    const wrapper = container.querySelector(".scripture-map-books-container");
+    expect(wrapper).not.toBeNull();
+    expect(
+      wrapper!.classList.contains("scripture-map-books-container-masonry")
+    ).toBe(true);
   });
 
   it("renders children inside the container", () => {
