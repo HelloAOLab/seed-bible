@@ -18,6 +18,7 @@ import {
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import { setSafeHtml } from "../../managers/Sanitization";
+import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { MaterialIcon } from "../icons";
 import {
   ContextMenuWithButton,
@@ -27,6 +28,7 @@ import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 
 interface DiscoverPaneProps {
@@ -525,18 +527,21 @@ const annotationAuthorProfileCache = new Map<
 >();
 
 /**
- * Shows a comment annotation's author name, resolved live from their profile
- * (not just the `userName` snapshotted on the comment at creation time).
- * Renders the snapshot immediately as a placeholder so there's no flash of
- * blank text, then swaps to the profile's current name once it resolves.
+ * Shows a comment annotation's author avatar and name, resolved live from
+ * their profile (not just the `userName`/`userProfilePicture` snapshotted on
+ * the comment at creation time). Renders the snapshot immediately as a
+ * placeholder so there's no flash of blank text/missing picture, then swaps
+ * to the profile's current name/picture once it resolves.
  */
 function AnnotationAuthor(props: {
   userId: string | null | undefined;
   fallbackName: string | null | undefined;
+  fallbackPictureUrl: string | null | undefined;
   login: LoginManager;
 }) {
-  const { userId, fallbackName, login } = props;
+  const { userId, fallbackName, fallbackPictureUrl, login } = props;
   const name = useSignal(fallbackName ?? "");
+  const pictureUrl = useSignal(fallbackPictureUrl ?? null);
 
   useEffect(() => {
     if (!userId) {
@@ -550,22 +555,39 @@ function AnnotationAuthor(props: {
     }
     promise
       .then((profile) => {
-        if (!cancelled && profile.name) {
+        if (cancelled) {
+          return;
+        }
+        if (profile.name) {
           name.value = profile.name;
+        }
+        if (profile.pictureUrl) {
+          pictureUrl.value = profile.pictureUrl;
         }
       })
       .catch(() => {
-        // Keep showing the snapshotted fallback name on failure.
+        // Keep showing the snapshotted fallback name/picture on failure.
       });
     return () => {
       cancelled = true;
     };
   }, [userId]);
 
-  if (!name.value) {
+  if (!userId && !name.value && !pictureUrl.value) {
     return null;
   }
-  return <span className="sb-annotation-comment-author">{name.value}</span>;
+  return (
+    <span className="sb-annotation-comment-author">
+      <Avatar
+        imageUrl={pictureUrl.value}
+        visual={getUserAnimalVisual(userId ?? "")}
+        title={name.value}
+      />
+      {name.value ? (
+        <span className="sb-annotation-comment-author-name">{name.value}</span>
+      ) : null}
+    </span>
+  );
 }
 
 const annotationUpdatedTimeFormatterCache = new Map<
@@ -607,6 +629,7 @@ function AnnotationCommentMeta(props: {
       <AnnotationAuthor
         userId={annotation.data.userId}
         fallbackName={annotation.data.userName}
+        fallbackPictureUrl={annotation.data.userProfilePicture}
         login={login}
       />
       {updatedAtMs != null ? (

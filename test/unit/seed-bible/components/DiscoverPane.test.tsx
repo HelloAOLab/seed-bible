@@ -994,12 +994,109 @@ describe("DiscoverPane", () => {
     expect(getUserProfile).toHaveBeenCalledWith("user-42");
     await vi.waitFor(() => {
       expect(
-        container.querySelector(".sb-annotation-comment-author")?.textContent
+        container.querySelector(".sb-annotation-comment-author-name")
+          ?.textContent
       ).toBe("Jordan Rivera");
     });
     expect(
       container.querySelector(".sb-annotation-comment-updated")?.textContent
     ).toContain("Updated");
+  });
+
+  it("shows the comment's avatar resolved from their profile picture, before the name", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-99",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const getUserProfile = vi.fn().mockResolvedValue({
+      name: "Jordan Rivera",
+      pictureUrl: "https://example.com/jordan.png",
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, { getUserProfile });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    await vi.waitFor(() => {
+      const avatar = container.querySelector(
+        ".sb-tab-user-icon-has-image"
+      ) as HTMLElement;
+      expect(avatar).not.toBeNull();
+      expect(avatar?.style.backgroundImage).toContain(
+        "https://example.com/jordan.png"
+      );
+    });
+
+    const author = container.querySelector(".sb-annotation-comment-author")!;
+    const avatarIndex = Array.from(author.children).findIndex((el) =>
+      el.classList.contains("sb-tab-user-icon")
+    );
+    const nameIndex = Array.from(author.children).findIndex((el) =>
+      el.classList.contains("sb-annotation-comment-author-name")
+    );
+    expect(avatarIndex).toBeGreaterThanOrEqual(0);
+    expect(avatarIndex).toBeLessThan(nameIndex);
+  });
+
+  it("shows a deterministic fallback avatar (derived from the user id) when the author has no profile picture", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-no-picture",
+        userName: "No Picture",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-has-image")).toBeNull();
   });
 
   it("the annotation Edit menu item calls editAnnotation", () => {
