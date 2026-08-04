@@ -436,5 +436,20 @@
   "chapter-unavailable": "Chapter unavailable",
   "chapter-unavailable-description": "We were unable to load the data for this chapter. Please check your internet connection and try again.",
   "reload": "Reload",
-  "loading-picture-editor": "Loading the picture editor…"
+  "loading-picture-editor": "Loading the picture editor…",
+  "following": "Following",
+  "follow": "Follow",
+  "unfollow": "Unfollow",
+  "following-in-progress": "Following…",
+  "follow-user": "Follow {{name}}",
+  "unfollow-user": "Unfollow {{name}}",
+  "follow-unnamed-user": "User {{id}}",
+  "follow-failed": "Couldn't follow this account. Please try again.",
+  "follow-prompt-description": "Following {{name}} lets you see their highlights, playlists, and reading activity. They aren't notified, and you can unfollow at any time.",
+  "following-user-toast": "Following {{name}}",
+  "following-share-description": "Share this link so other people can follow you and see your highlights, playlists, and reading activity.",
+  "following-copy-my-link": "Copy my follow link",
+  "following-empty": "You aren't following anyone yet. Open someone's follow link, or follow people you're reading with in a shared session.",
+  "following-signed-out": "Sign in to follow other people.",
+  "loading": "Loading…"
 }

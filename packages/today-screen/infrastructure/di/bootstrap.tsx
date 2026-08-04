@@ -54,8 +54,9 @@ export const bootstrapExtension = () => {
         seedBibleUtilsId
       ] as DependenciesMap[typeof seedBibleUtilsId];
 
-      const subscribedUsersProvider = new SubscribedUsersProvider();
-      // sessionProvider
+      const subscribedUsersProvider = new SubscribedUsersProvider(
+        context.follows
+      );
 
       const localGetReadingHistoryEvents = (
         recordName: string,

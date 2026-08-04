@@ -578,6 +578,42 @@ export function createPlaylistManager(
   };
 
   /**
+   * Lists the playlists of several accounts at once — used to show the
+   * playlists of everyone the signed-in user follows.
+   *
+   * Takes the account IDs rather than reading the follow list itself, so the
+   * playlist manager doesn't need to know that following exists.
+   *
+   * One unreachable or empty account must not blank the whole list, so failures
+   * are logged and skipped rather than rejecting. Results are grouped by
+   * account and returned in the order the IDs were given; accounts with no
+   * playlists are omitted.
+   */
+  const listPlaylistsForUsers = async (
+    recordNames: string[]
+  ): Promise<{ recordName: string; playlists: Playlist[] }[]> => {
+    const settled = await Promise.allSettled(
+      recordNames.map((recordName) => listPlaylists(recordName))
+    );
+
+    const results: { recordName: string; playlists: Playlist[] }[] = [];
+    settled.forEach((result, index) => {
+      const recordName = recordNames[index]!;
+      if (result.status === "rejected") {
+        console.warn(
+          `Failed to load playlists for ${recordName}:`,
+          result.reason
+        );
+        return;
+      }
+      if (result.value.length > 0) {
+        results.push({ recordName, playlists: result.value });
+      }
+    });
+    return results;
+  };
+
+  /**
    * Loads a single playlist by its `{recordName, id}` locator. Used to open a
    * playlist that isn't the current user's own — e.g. from a shared `?playlist=`
    * link. Playlists are stored with the `publicRead:playlists` marker, so this
@@ -1061,6 +1097,7 @@ export function createPlaylistManager(
     reorderEditingPlaylistItem,
     cancelEditingPlaylist,
     listPlaylists,
+    listPlaylistsForUsers,
     loadPlaylist,
     userPlaylists,
     availablePlaylists,

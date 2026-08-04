@@ -30,6 +30,7 @@ import type { ConnectedUserData } from "../../../seed-bible-utils/domain/models/
 // }; // TODO: Correctly defined this.
 
 import { useState, useMemo, useEffect, useCallback } from "preact/hooks";
+import { useSignalEffect } from "@preact/signals";
 
 type UseReadingHistoryProvider = () => ReadingHistoryContextType;
 
@@ -159,42 +160,35 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
     if (!myAuthBotId) return null;
 
     try {
-      // const componentsBot = getBot(byTag("system", "app.components"));
       const loggedUsers = sessionProvider
         .getConnectedUsers()
         ?.filter((userIds) => {
           return userIds.authId; // && userIds.configId !== myAuthBotId
         });
-      // const subscribedUsers = await getSubscribedUsers();
-
-      // if (!subscribedUsers) return null;
-
-      // const allAuthBotIds = [
-      //   myAuthBotId,
-      // ...subscribedUsers.map((user) => user.id),
-      // ...loggedUsers
-      // ];
-
-      // const dataPromises: Promise<UserData>[] = allAuthBotIds.map(
-      //   async (id) => {
-      //     const firstResult = await os.getData(id, id);
-      //     if (firstResult.success) return { ...firstResult.data, id };
-
-      //     const secondResult = await os.getData(componentsBot.tags.key, id);
-      //     if (secondResult.success) return { ...secondResult.data, id };
-
-      //     return undefined;
-      //   }
-      // );
-
-      // let rawUsersData = await Promise.all(dataPromises);
-      // rawUsersData = rawUsersData.filter(Boolean);
 
       const newUsersData: Map<string, ConnectedUserData> = new Map(
         loggedUsers.map((user) => {
           return [user.authId!, user];
         })
       );
+
+      // People the user follows, on top of whoever happens to be online. Their
+      // reading history is world-readable, so the timeline can show them
+      // whether or not they're currently in a session. Added after the
+      // connected users so a live entry (which carries presence details) wins
+      // over the stored follow snapshot for the same account.
+      for (const followed of seedBibleState.follows.following.value) {
+        if (newUsersData.has(followed.userId)) {
+          continue;
+        }
+        newUsersData.set(followed.userId, {
+          authId: followed.userId,
+          profile: {
+            name: followed.name ?? "",
+            pictureUrl: followed.pictureUrl ?? null,
+          },
+        });
+      }
 
       return newUsersData;
     } catch (error) {
@@ -218,17 +212,18 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
         refreshUsersDataMap();
       }
     );
-    // const unsubscribeSubscriptionsChanged =
-    //   scriptureMapEventManager.subscribe(
-    //     "SubscriptionsChanged",
-    //     refreshUsersDataMap
-    //   );
-
     return () => {
       unsubscribeOnlineUsersChanged();
-      // unsubscribeSubscriptionsChanged();
     };
   }, [refreshUsersDataMap]);
+
+  // Following or unfollowing someone changes who belongs on the timeline.
+  // `fetchUsersDataMap` is a `useCallback` keyed on the user id, so it can't
+  // notice that on its own — reading the follow signal here is what re-runs it.
+  useSignalEffect(() => {
+    void seedBibleState.follows.following.value;
+    void refreshUsersDataMap();
+  });
 
   useEffect(() => {
     let isMounted = true;

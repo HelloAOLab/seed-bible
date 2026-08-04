@@ -4,6 +4,9 @@
 
 ### ✨ Added
 
+- Follow other people and see what they are reading. Share your follow link, or tap Follow next to someone in a shared session, and their reading activity joins yours in the Today screen's Community section and on the scripture map. Following needs no approval and the other person isn't notified — the highlights, playlists, and reading history it shows have always been public to anyone with your link. A new Following panel lists everyone you follow and lets you unfollow at any time.
+- Shared sessions hosted by people you follow now appear as joinable invitations again. Previously this listed sessions from every user in the app, so it was switched off; it now only surfaces the people you have chosen to follow.
+
 ### 🔧 Changed
 
 - Serve HTML and proxied assets gzip-compressed when the browser supports it, and stop the reader's initial font requests from blocking rendering by loading them without the render-blocking stylesheet, both PageSpeed wins. ([#1570](https://github.com/HelloAOLab/seed-bible/pull/1570))

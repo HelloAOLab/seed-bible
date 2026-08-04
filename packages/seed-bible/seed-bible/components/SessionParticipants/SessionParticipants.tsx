@@ -22,6 +22,72 @@ import { MaterialIcon } from "../icons";
 const MAX_STACK_AVATARS = 3;
 
 /**
+ * Follow/unfollow toggle for one session participant.
+ *
+ * Reading together is the highest-intent moment to follow someone, and the
+ * session already knows every participant's account id — so this is the one
+ * discovery path that needs no link to be passed around.
+ *
+ * Renders nothing for the local user or for anonymous participants: someone who
+ * isn't signed in has only a per-tab connection id, which identifies a browser
+ * tab rather than an account and would be meaningless to follow.
+ */
+function ParticipantFollowButton({
+  state,
+  userId,
+  displayName,
+}: {
+  state: SeedBibleState;
+  userId: string | null | undefined;
+  displayName: string;
+}) {
+  const { t } = useI18n();
+  const isBusy = useSignal(false);
+
+  if (!userId || userId === state.login.userId.value) {
+    return null;
+  }
+
+  const isFollowing = state.follows.isFollowing(userId).value;
+
+  return (
+    <button
+      type="button"
+      className="sb-session-participants-follow"
+      disabled={isBusy.value}
+      aria-label={
+        isFollowing
+          ? t("unfollow-user", {
+              name: displayName,
+              defaultValue: "Unfollow {{name}}",
+            })
+          : t("follow-user", {
+              name: displayName,
+              defaultValue: "Follow {{name}}",
+            })
+      }
+      onClick={() => {
+        isBusy.value = true;
+        const action = isFollowing
+          ? state.follows.unfollow(userId)
+          : state.follows.follow(userId);
+        void action
+          .catch((error) => {
+            console.error("Failed to change follow state:", error);
+          })
+          .finally(() => {
+            isBusy.value = false;
+          });
+      }}
+    >
+      {isFollowing
+        ? t("following", { defaultValue: "Following" })
+        : t("follow", { defaultValue: "Follow" })}
+    </button>
+  );
+}
+
+/**
  * Compact, tappable presence indicator for a shared session, sized for the
  * mobile reader header. Shows an overlapping stack of the first few
  * participants (host first) plus a "+N" chip when there are more; tapping it
@@ -163,6 +229,11 @@ export function MobileSessionParticipants({
                         <span className="sb-session-participants-list-name">
                           {getUserDisplayName(user)}
                         </span>
+                        <ParticipantFollowButton
+                          state={state}
+                          userId={user.userId}
+                          displayName={getUserDisplayName(user)}
+                        />
                       </li>
                     );
                   })}

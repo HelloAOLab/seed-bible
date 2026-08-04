@@ -439,6 +439,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabsLayoutManager: tabsLayout,
       readingPlans: props.state.readingPlans,
       playlists: props.state.playlists,
+      follows: props.state.follows,
+      login: props.state.login,
       features: props.state.features,
       window: {
         isMobile: props.state.app.isMobile.value,
@@ -501,6 +503,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabsLayoutManager: tabsLayout,
       readingPlans: props.state.readingPlans,
       playlists: props.state.playlists,
+      follows: props.state.follows,
+      login: props.state.login,
       features: props.state.features,
       window: {
         isMobile: props.state.app.isMobile.value,

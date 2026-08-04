@@ -90,11 +90,36 @@
 }
 
 .sb-session-participants-list-name {
+  flex: 1;
+  min-width: 0;
   font-size: 0.9375rem;
   color: var(--sb-font-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Follow/unfollow toggle on a participant row. */
+.sb-session-participants-follow {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-session-participants-follow:hover:not(:disabled) {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-primary-color);
+}
+
+.sb-session-participants-follow:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* Host-only shortcut into the full session settings dialog, pinned below the

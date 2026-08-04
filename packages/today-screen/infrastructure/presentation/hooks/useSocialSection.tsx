@@ -76,26 +76,33 @@ export const useSocialSection: UseSocialSection = () => {
     };
   });
 
-  const [userProfileMap, setUserProfileMap] = useState<UserProfileMap>(
-    new Map()
-  );
+  // Called during render on purpose: `getUsersIds()` reads the follow-list
+  // signal, and reading a signal while rendering subscribes this component to
+  // it. That's what makes following or unfollowing someone re-render the
+  // section — a dependency array alone can't see a signal change, so the map
+  // would otherwise stay stale until the section remounted.
+  const subscribedUserIds = subscribedUsersIdsProvider.getUsersIds();
+  // Key the memo on the ids themselves, not the array's identity. `userFilters`
+  // below is derived from `userProfileMap` in an effect that always stores a new
+  // Map, so a `userProfileMap` that changed identity on every render would
+  // re-render → new array → new map → re-render, forever.
+  const subscribedUsersKey = subscribedUserIds.join(",");
 
-  useEffect(() => {
-    if (userId && userProfile) {
-      const map: UserProfileMap = new Map([
-        [userId, userProfile],
-        ...subscribedUsersIdsProvider
-          .getUsersIds()
-          .map((id): [string, UserProfile] => [
-            id,
-            subscribedUsersProfileProvider.getUserProfile(id)!,
-          ]),
-      ]);
-      setUserProfileMap(map);
-    } else {
-      setUserProfileMap(new Map());
+  const userProfileMap = useMemo<UserProfileMap>(() => {
+    if (!userId || !userProfile) {
+      return new Map();
     }
-  }, [userId, userProfile]);
+    const entries: [string, UserProfile][] = [[userId, userProfile]];
+    for (const id of subscribedUserIds) {
+      const profile = subscribedUsersProfileProvider.getUserProfile(id);
+      // A followed account whose profile snapshot hasn't loaded yet is skipped
+      // rather than rendered as a blank row.
+      if (profile) {
+        entries.push([id, profile]);
+      }
+    }
+    return new Map(entries);
+  }, [userId, userProfile, subscribedUsersKey]);
 
   const [userFilters, setUserFilters] = useState(() => {
     return new Map(

@@ -28,9 +28,13 @@ import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPan
 import type { PlaylistManager } from "./PlaylistManager";
 import { i18n, useI18n } from "../i18n";
 import {
+  FEATURE_KEY_FOLLOWING,
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
+import type { FollowsManager } from "./FollowsManager";
+import type { LoginManager } from "./LoginManager";
+import { FollowingPane } from "../components/FollowingPane/FollowingPane";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 
@@ -164,6 +168,12 @@ export interface BibleToolContext {
   readingPlans?: ReadingPlansManager;
   /** Playlist manager */
   playlists?: PlaylistManager;
+
+  /** The accounts the signed-in user follows, for the Following pane. */
+  follows?: FollowsManager;
+
+  /** Login manager, for identifying the signed-in account. */
+  login?: LoginManager;
 
   /** Features manager */
   features: FeaturesManager;
@@ -707,6 +717,29 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           // TODO: Translate this title
           title: "Reading Plans",
           component: () => <ReadingPlansPane readingPlans={readingPlans} />,
+        });
+      },
+    },
+    {
+      id: "open-following",
+      priority: 117,
+      title: { key: "following", defaultValue: "Following" },
+      icon: () => <MaterialIcon>group</MaterialIcon>,
+      isVisible: (context) =>
+        !!context.follows &&
+        !!context.login &&
+        context.features.isFeatureEnabled(FEATURE_KEY_FOLLOWING).value,
+      onSelect: (context) => {
+        const follows = context.follows;
+        const login = context.login;
+        if (!follows || !login) {
+          return;
+        }
+        context.panesManager.openPane({
+          id: "following-pane",
+          placement: "side",
+          title: i18n.t("following", { defaultValue: "Following" }),
+          component: () => <FollowingPane follows={follows} login={login} />,
         });
       },
     },
