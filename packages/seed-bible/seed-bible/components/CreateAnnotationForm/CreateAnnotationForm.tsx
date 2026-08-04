@@ -56,13 +56,13 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
       <Suspense
         fallback={
           <div
-            className="sb-settings-text-input sb-playlist-input sb-annotation-editor sb-annotation-editor--loading"
+            className="sb-settings-text-input sb-annotation-editor sb-annotation-editor--loading"
             aria-busy="true"
           />
         }
       >
         <TipTapEditor
-          className="sb-settings-text-input sb-playlist-input sb-annotation-editor"
+          className="sb-settings-text-input sb-annotation-editor"
           initialContent={editing.data.html}
           onEditor={(editor) => {
             editorRef.current = editor;
