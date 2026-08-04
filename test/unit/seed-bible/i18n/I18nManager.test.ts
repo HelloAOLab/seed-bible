@@ -59,6 +59,7 @@ describe("I18nManager getInitialLanguage()", () => {
       linkToQuery: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
+      dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ssrLanguages);
   });
@@ -189,6 +190,7 @@ describe("I18nManager language fallback prompt", () => {
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
+      dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
     manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
