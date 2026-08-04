@@ -141,8 +141,14 @@ const MAX_CHAPTER_NUMBER = 150;
  * chapter by chapter instead of only ever visiting the first chapter. Other
  * item types, and bible-verse items that don't cross a chapter boundary, pass
  * through unchanged.
+ *
+ * Exported because callers that pass a `startIndex` to `startPlaying` have to
+ * count that index in the same expanded steps this produces — a list of
+ * readings and the queue built from it are not the same length.
  */
-function expandCrossChapterItem(item: PlaylistItemData): PlaylistItemData[] {
+export function expandCrossChapterItem(
+  item: PlaylistItemData
+): PlaylistItemData[] {
   if (item.type !== "bible-verse") {
     return [item];
   }
@@ -897,11 +903,27 @@ export function createPlaylistManager(
         }
       });
 
+      // Playback governs stepping *within* the queue; at its edges the reader's
+      // own chapter navigation takes over again. Before this, reaching the last
+      // item left next/previous permanently dead — nothing stops playback from
+      // the reading plans pane (its player lives in the discover pane, which
+      // isn't even open), so the reader simply looked broken with no way out.
+      const hasNext = computed(
+        () =>
+          playingState.hasNext.value ||
+          !!readingState.chapterData.value?.nextChapterApiLink
+      );
+      const hasPrevious = computed(
+        () =>
+          playingState.hasPrevious.value ||
+          !!readingState.chapterData.value?.previousChapterApiLink
+      );
+
       const instance: PlaylistReadingExtensionInstance = {
         playingState,
 
-        hasNext: playingState.hasNext,
-        hasPrevious: playingState.hasPrevious,
+        hasNext,
+        hasPrevious,
 
         transformShortSubTitle: ({ data, label }) => {
           const current = data.value;
@@ -935,25 +957,57 @@ export function createPlaylistManager(
         },
         // Navigation hooks are unconditional now that playback state is synced:
         // any participant can drive next/previous and it propagates via `data`.
+        // At the ends of the queue these fall through to `default` rather than
+        // `prevent`, so the reader keeps navigating chapter by chapter once the
+        // queue is exhausted instead of going dead (see `hasNext` above).
         navigateNext: async () => {
-          if (playingState.queue.value.length === 0) {
+          if (
+            playingState.queue.value.length === 0 ||
+            !playingState.hasNext.value
+          ) {
             return { type: "default" };
-          }
-          if (!playingState.hasNext.value) {
-            return { type: "prevent" };
           }
           await playingState.next();
           return { type: "prevent" };
         },
         navigatePrevious: async () => {
-          if (playingState.queue.value.length === 0) {
+          if (
+            playingState.queue.value.length === 0 ||
+            !playingState.hasPrevious.value
+          ) {
             return { type: "default" };
-          }
-          if (!playingState.hasPrevious.value) {
-            return { type: "prevent" };
           }
           await playingState.previous();
           return { type: "prevent" };
+        },
+        // Keeps the mobile swipe preview honest: while playing, the next chapter
+        // is the queue's next scripture step, not the chapter that happens to
+        // follow this one. A plan session whose readings jump between books
+        // (Genesis 1, then Exodus 2) used to animate in Genesis 2 and then land
+        // on Exodus 2 — the swipe looked broken.
+        getAdjacentChapter: ({ direction }) => {
+          const queue = playingState.queue.value;
+          if (queue.length === 0) {
+            return undefined; // nothing playing — the reader's own neighbour
+          }
+          const stepIndex =
+            playingState.currentIndex.value + (direction === "next" ? 1 : -1);
+          const step = queue[stepIndex];
+          if (!step) {
+            // Past the queue's edge, navigation falls through to the reader's
+            // own chapter stepping, so preview that instead.
+            return undefined;
+          }
+          if (step.type !== "bible-verse") {
+            // A text/link step doesn't move the reader (it opens a modal), so
+            // the chapter on screen is what stays. Nothing to preview.
+            return null;
+          }
+          return {
+            translationId: step.translationId,
+            bookId: step.ref.bookId,
+            chapter: step.ref.chapter,
+          };
         },
         dispose: () => {
           disposeOut();

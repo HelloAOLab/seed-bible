@@ -242,6 +242,12 @@ export function FullscreenPane(props: FullscreenPaneProps) {
   const { state, pane } = props;
   const { app, panes: panesManager } = state;
 
+  // `bottom` is deliberately absent from the inline style below and left to the
+  // stylesheet: PaneLayout.css pins it to 0 on desktop but insets it above the
+  // mobile reader toolbar, and an inline value wins over that media query —
+  // which is why the mobile inset silently never applied and pane footers (the
+  // plan detail's "Read" button, the plan wizard's "Next") sat underneath the
+  // toolbar.
   return (
     <div
       className="sb-pane-shell sb-pane-shell-detached"
@@ -251,7 +257,6 @@ export function FullscreenPane(props: FullscreenPaneProps) {
         top: "0px",
         left: "0px",
         right: "0px",
-        bottom: "0px",
         zIndex: 35,
       }}
       onPointerDown={() => app.selectPane(pane.id)}

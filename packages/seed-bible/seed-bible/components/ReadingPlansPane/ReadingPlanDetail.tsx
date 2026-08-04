@@ -28,6 +28,7 @@ import {
   openPlaylistItemPreview,
 } from "../playlistItemPreview";
 import { cadenceOptionLabel } from "./cadenceLabels";
+import { planQueueStartIndex } from "./planQueue";
 import { readingLabel } from "./readingLabel";
 import {
   PLAN_READING_PREVIEW_MODAL_ID,
@@ -445,13 +446,13 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     if (!onPlayReadings || activeDayReadings.length === 0) {
       return;
     }
-    const firstUnread = activeDayReadings.findIndex(
-      ({ session, reading }) => !isReadingDone(session.id, reading.id)
-    );
     onPlayReadings(
       plan,
       activeDayReadings.map(({ reading }) => reading.item),
-      Math.max(0, firstUnread)
+      planQueueStartIndex(activeDayReadings, {
+        isReadingDone,
+        sessionProgressFor,
+      })
     );
   };
 

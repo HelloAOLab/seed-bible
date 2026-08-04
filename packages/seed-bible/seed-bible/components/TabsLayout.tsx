@@ -181,6 +181,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   }, [isMobile, readingState]);
 
   const currentChapterValue = readingState.chapterData.value;
+  // Reading `.value` here subscribes this component to playback position, which
+  // the swipe previews below depend on (the queue decides the neighbour).
+  const playbackStep =
+    state?.playlists?.playing.value?.currentIndex.value ?? null;
 
   useEffect(() => {
     if (!isMobile || !state) {
@@ -198,36 +202,38 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
     let cancelled = false;
 
-    if (readingState.hasPrevious.value) {
-      state.bibleData
-        .getPreviousChapter(chapterData)
+    // `getAdjacentChapter` — not `bibleData.getNextChapter` — because an enabled
+    // reading extension can redirect where next/previous actually go. While a
+    // reading plan session or playlist is playing, the next chapter is the
+    // queue's next step, which for a session spanning two books is not the
+    // chapter that follows this one. Previewing the canonical neighbour made the
+    // swipe animate in one chapter and then land on another.
+    const loadPreview = (
+      direction: "next" | "previous",
+      set: (chapter: TranslationBookChapter | null) => void
+    ) => {
+      readingState
+        .getAdjacentChapter(direction)
         .then((result) => {
           if (!cancelled) {
-            setPrevChapterPreview(result ?? null);
+            set(result ?? null);
           }
         })
         .catch(() => {
           if (!cancelled) {
-            setPrevChapterPreview(null);
+            set(null);
           }
         });
+    };
+
+    if (readingState.hasPrevious.value) {
+      loadPreview("previous", setPrevChapterPreview);
     } else {
       setPrevChapterPreview(null);
     }
 
     if (readingState.hasNext.value) {
-      state.bibleData
-        .getNextChapter(chapterData)
-        .then((result) => {
-          if (!cancelled) {
-            setNextChapterPreview(result ?? null);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setNextChapterPreview(null);
-          }
-        });
+      loadPreview("next", setNextChapterPreview);
     } else {
       setNextChapterPreview(null);
     }
@@ -241,6 +247,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     currentChapterValue?.translation.id,
     currentChapterValue?.book.id,
     currentChapterValue?.chapter.number,
+    // While playing, the neighbour depends on the queue position too — without
+    // this the preview would keep showing the step the reader has left behind.
+    playbackStep,
   ]);
 
   useEffect(() => {

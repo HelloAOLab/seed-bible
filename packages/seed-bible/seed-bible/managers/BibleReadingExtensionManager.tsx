@@ -38,6 +38,36 @@ export type ReadingNavigationHook<TData = unknown> = (
   ctx: ReadingNavigationHookContext<TData>
 ) => ReadingNavigationOutcome | Promise<ReadingNavigationOutcome>;
 
+/** Where an extension says the next/previous chapter is. */
+export interface AdjacentChapterTarget {
+  /** Defaults to the current chapter's translation. */
+  translationId?: string;
+  bookId: string;
+  chapter: number;
+}
+
+/**
+ * Answers "which chapter is next/previous?" *without* navigating, so callers
+ * that show the neighbouring chapter ahead of time (the mobile swipe preview)
+ * display the chapter `navigateNext`/`navigatePrevious` will actually land on.
+ *
+ * Returns a target, not a loaded chapter — the reading state does the fetching,
+ * so extensions don't need data-layer access. Return `undefined` to defer to the
+ * next extension (and ultimately to the chapter's own next/previous link), or
+ * `null` to say "there is no neighbour to show".
+ */
+export type AdjacentChapterHook<TData = unknown> = (ctx: {
+  readingState: BibleReadingState;
+  /** The chapter currently being viewed. */
+  currentChapter: TranslationBookChapter;
+  direction: "next" | "previous";
+  data: Signal<TData>;
+}) =>
+  | AdjacentChapterTarget
+  | null
+  | undefined
+  | Promise<AdjacentChapterTarget | null | undefined>;
+
 /**
  * Transforms the discovered content shown for the current chapter.
  *
@@ -87,6 +117,13 @@ export interface ReadingExtensionInstance<TData = unknown> {
   navigateNext?: ReadingNavigationHook<TData>;
   /** Intercepts backward navigation (`loadPreviousChapter`). */
   navigatePrevious?: ReadingNavigationHook<TData>;
+
+  /**
+   * Reports where `navigateNext`/`navigatePrevious` would go, without going
+   * there. Implement this alongside those hooks so previewing callers don't
+   * show one chapter and then land on another.
+   */
+  getAdjacentChapter?: AdjacentChapterHook<TData>;
   /** Adds to, filters, or replaces the discovered content for the chapter. */
   transformDiscoveredContent?: DiscoveredContentHook<TData>;
 

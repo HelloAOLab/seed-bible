@@ -157,7 +157,9 @@
    Toolbar height = 0.5rem top padding + 3.25rem tab min-height + 0.625rem
    bottom padding (see BibleReaderToolbar.css mobile layout). The toolbar sits
    flush at bottom: 0 with no safe-area padding of its own, so we reserve its
-   exact box height (no env() addition, which would open a gap below the pane). */
+   exact box height (no env() addition, which would open a gap below the pane).
+   NOTE: `FullscreenPane` must not set `bottom` inline — an inline value beats
+   this media query and reopens the "footer hidden behind the toolbar" bug. */
 @media (max-width: 480px) {
   .sb-pane-shell-detached[data-placement="fullscreen"] {
     bottom: 4.375rem;
