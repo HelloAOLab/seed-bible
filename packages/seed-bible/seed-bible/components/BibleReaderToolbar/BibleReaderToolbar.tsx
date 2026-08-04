@@ -31,6 +31,15 @@ import type { PlayingState } from "../../managers/PlaylistManager";
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
 /**
+ * Breathing room between the reader's last content and the bottom chrome, in
+ * pixels. The measurement in `--sb-reader-bottom-inset` is exact occlusion —
+ * how many pixels of toolbar / nav / verse sheet cover the viewport bottom —
+ * so without this the trailing element (translation license line, the
+ * "Powered by" row) ends flush against the toolbar's top edge.
+ */
+const BOTTOM_CHROME_GAP_PX = 48;
+
+/**
  * Spawns a Material-style ripple inside the pressed button: a circle centered on
  * the button (not the touch point) that scales up and fades out, then removes
  * itself. Used for tap feedback on the mobile floating-nav buttons, where the
@@ -842,7 +851,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
         root.style.setProperty(
           "--sb-reader-bottom-inset",
-          `${verse.offsetHeight}px`
+          `${verse.offsetHeight + BOTTOM_CHROME_GAP_PX}px`
         );
         return;
       }
@@ -861,7 +870,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         if (!Number.isNaN(bottom)) insetPx += bottom;
       }
 
-      root.style.setProperty("--sb-reader-bottom-inset", `${insetPx}px`);
+      root.style.setProperty(
+        "--sb-reader-bottom-inset",
+        `${insetPx + BOTTOM_CHROME_GAP_PX}px`
+      );
     };
 
     const scheduleMeasure = () => {
