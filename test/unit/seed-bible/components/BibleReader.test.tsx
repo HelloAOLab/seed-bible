@@ -34,6 +34,13 @@ type ReaderFixture = {
   selectorState: BibleSelectorState;
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
+  /**
+   * Forces `isChapterContentStale` on or off. Set it to `true` to express
+   * "the reader has moved on but the new chapter's text hasn't arrived" —
+   * chapter data is still loaded, just for the wrong position, which is not
+   * something `chapterData` alone can say.
+   */
+  contentStale: Signal<boolean | null>;
   highlights: Signal<BibleReadingState["highlights"]["value"]>;
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
@@ -129,6 +136,7 @@ function createFixture(): ReaderFixture {
   const currentTranslation = computed(
     () => chapterData.value?.translation ?? null
   );
+  const contentStale = signal<boolean | null>(null);
 
   const readingState = {
     translationId: signal("BSB"),
@@ -150,6 +158,7 @@ function createFixture(): ReaderFixture {
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
     error: signal<string | null>(null),
+    retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
     highlightSelectedVerses: vi.fn(async () => undefined),
@@ -167,6 +176,10 @@ function createFixture(): ReaderFixture {
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
+    initialChapterLoadSettled: signal(true),
+    isChapterContentStale: computed(
+      () => contentStale.value ?? chapterData.value === null
+    ),
     defaultTranslation: { id: "BSB", language: "en" },
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
@@ -199,6 +212,7 @@ function createFixture(): ReaderFixture {
     selectorState,
     readingState,
     chapterData,
+    contentStale,
     highlights,
     decorations,
     selectedVerses,
@@ -239,7 +253,7 @@ function createMobileState(): SeedBibleState {
       playing: signal(null),
     },
     features: {
-      isFeatureEnabled: vi.fn(() => true),
+      isFeatureEnabled: vi.fn(() => signal(true)),
     },
   } as any as SeedBibleState;
 }
@@ -323,6 +337,127 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, slot);
+  });
+
+  it("shows a not-found state and lets the user jump to the translation's first book when the requested book isn't in the book list", () => {
+    const { slot, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // The fixture's book (GEN) matches its own translationBooks list, so no
+    // not-found state initially.
+    expect(container.querySelector(".sb-reader-not-found")).toBeNull();
+
+    act(() => {
+      readingState.bookId.value = "NOTABOOK";
+    });
+
+    expect(container.querySelector(".sb-reader-not-found")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-reader-not-found-icon")?.textContent
+    ).toBe("search_off");
+    // The chapter content Suspense/ChapterContent shouldn't render alongside
+    // the not-found state.
+    expect(container.querySelector(".sb-chapter-content")).toBeNull();
+
+    const action = container.querySelector(
+      ".sb-reader-not-found-action"
+    ) as HTMLButtonElement | null;
+    expect(action).not.toBeNull();
+
+    act(() => {
+      action?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // The fixture's translationBooks list has one book (GEN, chapter 1).
+    expect(readingState.selectChapter).toHaveBeenCalledWith("GEN", 1);
+  });
+
+  it("shows a retryable failure state when the chapter fails to load", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const errorPanel = container.querySelector(".sb-reader-error");
+    expect(errorPanel).not.toBeNull();
+    expect(errorPanel?.textContent).toContain("Chapter unavailable");
+    // The raw failure message is never surfaced to the reader.
+    expect(errorPanel?.textContent).not.toContain("Failed to fetch");
+    expect(container.querySelector(".sb-chapter-content")).toBeNull();
+
+    const reload = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-error-retry"
+    );
+    expect(reload).not.toBeNull();
+
+    act(() => {
+      reload?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(readingState.retryLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the failure state visible while a retry is in flight", async () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+
+    let resolveRetry: (() => void) | undefined;
+    (readingState.retryLoad as Mock).mockImplementation(() => {
+      // Mirror the manager: the retry clears `error` as it starts.
+      readingState.error.value = null;
+      return new Promise<void>((resolve) => {
+        resolveRetry = resolve;
+      });
+    });
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-reader-error-retry")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.querySelector(".sb-reader-error")).not.toBeNull();
+    expect(
+      container.querySelector<HTMLButtonElement>(".sb-reader-error-retry")
+        ?.disabled
+    ).toBe(true);
+
+    await act(async () => {
+      resolveRetry?.();
+    });
+
+    expect(container.querySelector(".sb-reader-error")).toBeNull();
+    expect(container.querySelector(".sb-chapter-content")).not.toBeNull();
   });
 
   it("updates the displayed book name when the current book changes", () => {
@@ -421,6 +556,127 @@ describe("BibleReader", () => {
     expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
       "Exodus"
     );
+  });
+
+  it("dims the previous chapter's verses when navigation starts, without flashing the placeholder", () => {
+    const { slot, selectorState, readingState, contentStale } = createFixture();
+    contentStale.value = true;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Most navigations resolve well inside the placeholder delay, so this is
+    // what a reader normally sees: the old text, dimmed, and nothing moving.
+    expect(container.querySelector(".sb-chapter-content-stale")).not.toBeNull();
+    expect(container.querySelector(".sb-verse")).not.toBeNull();
+    expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+  });
+
+  it("replaces the dimmed verses with the placeholder once the wait gets long", () => {
+    vi.useFakeTimers();
+    try {
+      const { slot, selectorState, readingState, contentStale } =
+        createFixture();
+      contentStale.value = true;
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(600);
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).not.toBeNull();
+      // Chapter data is still loaded, just for the position the reader left —
+      // those verses must not be on screen under the new chapter's title.
+      expect(readingState.chapterData.value).not.toBeNull();
+      expect(container.querySelector(".sb-verse")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows the placeholder immediately on a cold start, with no text to dim", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    chapterData.value = null;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Waiting out the delay here would leave the reader looking at an empty
+    // pane, since there is no previous chapter to dim.
+    expect(container.querySelector(".sb-chapter-skeleton")).not.toBeNull();
+  });
+
+  it("shows the verses, not the placeholder, once content matches the position", () => {
+    const { slot, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+    expect(container.querySelector(".sb-verse")).not.toBeNull();
+  });
+
+  it("never renders the loading placeholder server-side", () => {
+    // The placeholder would replace the verses in the served HTML, costing a
+    // Bible reader its indexable scripture text.
+    const { slot, selectorState, readingState, contentStale } = createFixture();
+    contentStale.value = true;
+
+    try {
+      import.meta.env.SSR = true;
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+      expect(container.querySelector(".sb-verse")).not.toBeNull();
+    } finally {
+      delete import.meta.env.SSR;
+    }
   });
 
   it("clicking a verse selects it with event coordinates", () => {
@@ -1456,6 +1712,80 @@ describe("BibleReader", () => {
     });
 
     expect(selectFootnote).toHaveBeenCalledWith(null);
+  });
+
+  it("makes scripture references in footnote text clickable", () => {
+    const {
+      slot,
+      selectorState,
+      readingState,
+      selectedFootnote,
+      selectFootnote,
+      chapterData,
+    } = createFixture();
+    const openVerseReference = vi.fn(async () => undefined);
+    const state = {
+      app: {
+        isMobile: signal(false),
+        openVerseReference,
+      },
+      tools: createBibleToolsManager(),
+      playlists: {
+        playing: signal(null),
+      },
+      features: {
+        isFeatureEnabled: vi.fn(() => true),
+      },
+      bookmarks: {
+        isLocationBookmarked: vi.fn(() => false),
+      },
+    } as any as SeedBibleState;
+
+    selectedFootnote.value = {
+      chapter: chapterData.value!,
+      verse: {
+        type: "verse",
+        number: 1,
+        content: ["Text"],
+      },
+      note: {
+        noteId: 7,
+        text: "See also John 3:16 and Hab.3.8-15.",
+        caller: "+",
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const links = Array.from(
+      container.querySelectorAll(".sb-verse-reference-link")
+    ) as HTMLAnchorElement[];
+    expect(links).toHaveLength(2);
+    expect(links[0]?.textContent).toBe("John 3:16");
+    expect(links[1]?.textContent).toBe("Hab.3.8-15");
+
+    act(() => {
+      links[0]?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+    });
+
+    expect(selectFootnote).toHaveBeenCalledWith(null);
+    expect(openVerseReference).toHaveBeenCalledWith({
+      book: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
   });
 
   it("shows translation license notice and website when licenseNotice is present", () => {

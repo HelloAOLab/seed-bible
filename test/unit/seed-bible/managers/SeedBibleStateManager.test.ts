@@ -4,7 +4,7 @@ import {
   type CreateTestSeedBibleStateOptions,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
-import { signal } from "@preact/signals";
+import { batch, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
 
@@ -151,7 +151,7 @@ describe("createSeedBibleState", () => {
   it("created with default values", async () => {
     const state = await createState();
 
-    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.settings.settings.value.disablePanels).toBe(false);
     expect(state.app.panelsEnabled.value).toBe(true);
 
     expect(state.tabs.tabs.value).toHaveLength(1);
@@ -183,7 +183,7 @@ describe("createSeedBibleState", () => {
 
     const state = await createState();
 
-    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.settings.settings.value.disablePanels).toBe(false);
     expect(state.app.panelsEnabled.value).toBe(true);
 
     expect(state.tabs.tabs.value).toHaveLength(1);
@@ -204,6 +204,51 @@ describe("createSeedBibleState", () => {
     expect(typeof state.search.searchVerses).toBe("function");
 
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
+  });
+
+  it("always spells out the language segment in the canonical URL", async () => {
+    // The three-segment form is a redirect entry point, not a destination, so
+    // it must never be advertised as canonical.
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    expect(state.app.canonicalUrl.value).not.toContain("lang=");
+    expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/1");
+  });
+
+  it("keys the canonical URL to the translation, not the reader's UI language", async () => {
+    // A French interface over the English AAB is the same scripture as an
+    // English one, so both have to point at the single indexable copy rather
+    // than each claiming to be canonical.
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    try {
+      await state.i18n.changeLanguage("de");
+      expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/1");
+    } finally {
+      await state.i18n.changeLanguage("en");
+    }
+  });
+
+  it("still produces the real canonical URL when the chapter fails to load", async () => {
+    // Regression for `<link rel="canonical" href="/">`: this used to key off
+    // `chapterData`, so any load failure pointed the page at the site root.
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the fetch fails.
+    jsdom.reconfigure({
+      url: "https://example.com/en/AAB/genesis/2?useFreeBibleAPI=true",
+    });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.error.value !== null);
+
+    expect(readingState.chapterData.value).toBeNull();
+    expect(state.app.canonicalUrl.value).toBe("/en/AAB/genesis/2");
   });
 
   it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {
@@ -315,6 +360,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -374,6 +420,7 @@ describe("createSeedBibleState", () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
+      onFeatureFlags: vi.fn(),
     };
 
     try {
@@ -541,7 +588,7 @@ describe("createSeedBibleState", () => {
       state.tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
       state.app.selectTab("tab-2");
 
-      state.config.setDisablePanels(true);
+      state.settings.setDisablePanels(true);
 
       expect(state.app.panelsEnabled.value).toBe(false);
       expect(state.app.effectiveSlots.value).toHaveLength(1);
@@ -730,7 +777,10 @@ describe("createSeedBibleState", () => {
     beforeEach(() => {
       vi.useFakeTimers();
       mockPosthogCapture = vi.fn();
-      (globalThis as any).posthog = { capture: mockPosthogCapture };
+      (globalThis as any).posthog = {
+        capture: mockPosthogCapture,
+        onFeatureFlags: vi.fn(),
+      };
     });
 
     afterEach(() => {
@@ -967,6 +1017,48 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("automatic sign-out toast", () => {
+    it("shows nothing while the session is intact", async () => {
+      const state = await createState();
+
+      expect(state.app.currentToast.value).toBe(null);
+    });
+
+    it("explains a session that ended on its own", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You've been signed out. Please sign in again."
+      );
+    });
+
+    it("explains a suspended account", async () => {
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "account_suspended", id: 1 };
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "Your account has been suspended."
+      );
+    });
+
+    it("shows a fresh toast for a second sign-out with the same reason", async () => {
+      // The event carries a monotonic id precisely so this case still notifies: a
+      // bare reason string would be `===` the previous value, so the effect would
+      // never re-run and the message would be silently swallowed.
+      const state = await createState();
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 1 };
+      const firstToastId = state.app.currentToast.value?.id;
+
+      state.login.sessionEnded.value = { reason: "signed_out", id: 2 };
+
+      expect(state.app.currentToast.value?.id).not.toBe(firstToastId);
+    });
+  });
+
   describe("pageTitle tag", () => {
     function setSelectedTabChapter(
       state: SeedBibleState,
@@ -981,23 +1073,30 @@ describe("createSeedBibleState", () => {
           (t) => t.id === state.tabs.selectedTabId.value
         ) ?? null;
       expect(tab).not.toBeNull();
-      tab!.readingState.bookId.value = bookId;
-      tab!.readingState.chapterNumber.value = chapterNumber;
-      tab!.readingState.chapterData.value = {
-        translation: {
-          id: "test-translation",
-          name: translationName,
-          textDirection,
-        },
-        book: { id: bookId, name: bookName, abbreviation: bookId },
-        chapter: {
-          number: chapterNumber,
-          id: `${bookId}-${chapterNumber}`,
-          reference: `${bookName} ${chapterNumber}`,
-        },
-        verses: [],
-        notes: [],
-      } as any;
+      // Batched, and with translationId set to match chapterData.translation.id,
+      // so the reading-state effect that watches translationId/bookId/chapterNumber
+      // (and re-fetches content whenever they don't match chapterData) sees a
+      // fully consistent position and never issues a real network request.
+      batch(() => {
+        tab!.readingState.translationId.value = "test-translation";
+        tab!.readingState.bookId.value = bookId;
+        tab!.readingState.chapterNumber.value = chapterNumber;
+        tab!.readingState.chapterData.value = {
+          translation: {
+            id: "test-translation",
+            name: translationName,
+            textDirection,
+          },
+          book: { id: bookId, name: bookName, abbreviation: bookId },
+          chapter: {
+            number: chapterNumber,
+            id: `${bookId}-${chapterNumber}`,
+            reference: `${bookName} ${chapterNumber}`,
+          },
+          verses: [],
+          notes: [],
+        } as any;
+      });
     }
 
     it("sets pageTitle from the selected book and chapter", async () => {

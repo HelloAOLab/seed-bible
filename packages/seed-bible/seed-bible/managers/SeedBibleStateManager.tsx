@@ -3,12 +3,17 @@ import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import {
   createBibleDataManager,
   type BibleDataManager,
+  type BookId,
   type VerseRef,
 } from "../managers/BibleDataManager";
+import {
+  bibleLanguageToUiLocale,
+  uiLocaleForDefaultTranslation,
+} from "../managers/BibleReadingManager";
+import { buildReadingPath } from "../managers/ReadingUrlPath";
+import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
-import { createConfig } from "../managers/ConfigManager";
-import type { ConfigManager } from "../managers/ConfigManager";
 import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
@@ -89,7 +94,7 @@ import {
   type NavigationManager,
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
-import type { AppConfig } from "../app/appConfig";
+import { type AppConfig } from "../app/appConfig";
 import { createI18nManager, type I18nManager } from "../i18n";
 import {
   createOnboardingManager,
@@ -213,7 +218,9 @@ export interface AppState {
 
   /**
    * The Canonical URL for the current page.
-   * Doesn't include the origin, but does include the query params for the current chapter (e.g. `/?translation=abc&book=GEN&chapter=1`).
+   * Origin-relative, and always the explicit four-segment reading path
+   * (e.g. `/en/AAB/genesis/1`) — see the computed for why the language segment
+   * is always spelled out and why it follows the translation.
    */
   canonicalUrl: ReadonlySignal<string>;
 
@@ -267,8 +274,6 @@ export interface SeedBibleState {
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
-  /** Persisted app configuration (layout, font size, etc.). */
-  config: ConfigManager;
   /** Theme manager plus derived CSS variables/classes for rendering. */
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
@@ -302,7 +307,7 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
-  /** App-level settings: book orientation, UI size, selection UI, etc. */
+  /** App-level settings: font size, layout, book orientation, UI size, selection UI, etc. */
   settings: SettingsManager;
   /** Incoming session invitations and invite-sending. */
   invitations: InvitationsManager;
@@ -387,6 +392,11 @@ export interface CreateSeedBibleStateOptions {
   config?: AppConfig;
   /** Full initial URL — supplied during SSR where `window` is unavailable. */
   initialHref?: string;
+  /**
+   * Where translations downloaded for offline reading are stored. Defaults to
+   * IndexedDB; tests pass an in-memory store, and null disables the feature.
+   */
+  offlineStore?: OfflineTranslationStore | null;
 }
 
 export function createSeedBibleState(
@@ -400,6 +410,7 @@ export function createSeedBibleState(
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
   });
+  const branding = options.config?.branding;
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
@@ -407,18 +418,20 @@ export function createSeedBibleState(
     navigation,
     options.config?.acceptedLanguages ?? []
   );
-  const data = createBibleDataManager(api);
+  const data = createBibleDataManager(api, {
+    offlineStore: options.offlineStore,
+  });
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
-  const config = createConfig(login, navigation);
+  const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
   // listener) keeps URL-driven language changes view-only.
-  i18n.setLanguagePersister(config.persistLanguage);
-  const panelsEnabled = computed(() => !config.config.value.disablePanels);
-  const themeManager = createTheme(login, navigation);
+  i18n.setLanguagePersister(settings.persistLanguage);
+  const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
+  const themeManager = createTheme(settings);
   const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
@@ -429,11 +442,11 @@ export function createSeedBibleState(
     highlights,
     chats,
     i18n,
+    login,
     discover,
     readingExtensions
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
-  const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
     data,
     tabs,
@@ -441,7 +454,8 @@ export function createSeedBibleState(
     settings,
     sidebar,
     bookmarks,
-    navigation
+    navigation,
+    login
   );
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
@@ -595,21 +609,33 @@ export function createSeedBibleState(
     i18n,
     readingExtensions
   );
-  // Close any fullscreen pane when the book/chapter/verse params change, so
+  // Close any fullscreen pane when the book/chapter params change, so
   // navigating reveals the reader (every navigation path writes these params).
   // The first location only sets a baseline, so load-time init doesn't close a
   // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  //
+  // `?verse` is deliberately NOT part of the location: TabsManager mirrors the
+  // verse *selection* into that param, so counting it here made selecting (or
+  // clearing) a verse look like a navigation — which closed the very pane the
+  // user had just opened from the verse toolbar.
+  //
+  // The flip side is that this effect can't see a move *within* a chapter, so any
+  // path that jumps to a verse and must reveal the reader has to call
+  // `closeFullscreenPanes` itself rather than rely on this: verse reference links
+  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
+  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleSelectTab`) closes them too, which covers most of the remaining
+  // paths incidentally.
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
     const book = url.searchParams.get("book");
     const chapter = url.searchParams.get("chapter");
-    const verse = url.searchParams.get("verse");
     if (!book || !chapter) {
       return;
     }
 
-    const location = `${book}|${chapter}|${verse ?? ""}`;
+    const location = `${book}|${chapter}`;
     const previous = lastReadingLocation;
     lastReadingLocation = location;
 
@@ -919,6 +945,7 @@ export function createSeedBibleState(
       return t("seed-bible-description", {
         bookName: chapter.book.name,
         chapterNumber: chapter.chapter.number,
+        appName: branding?.appName ?? "Seed Bible",
         defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
       });
     };
@@ -935,6 +962,22 @@ export function createSeedBibleState(
     });
   });
 
+  /**
+   * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
+   * along with `description`.
+   *
+   * These two stay derived from the *loaded chapter*, unlike the reader's own
+   * titles, which are derived from the book catalog so they can move the instant
+   * navigation happens. Two reasons: a server render has no navigation to lag
+   * behind, and it suspends until the first chapter settles, so content is there
+   * whenever it could be. And when it genuinely isn't — a failed load — falling
+   * back to a generic blurb is better than describing a chapter the server
+   * could not actually serve.
+   *
+   * `title` is the exception and is position-derived: it also drives
+   * `document.title` on the client, where the lag would be visible.
+   * `canonicalUrl` is position-derived too, for a different reason — see there.
+   */
   const socialTitle = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
@@ -953,22 +996,56 @@ export function createSeedBibleState(
     });
   });
 
+  /**
+   * The one URL that should be indexed for whatever the reader is looking at.
+   *
+   * Derived from the reading *position* signals, not from `chapterData`. Those
+   * are set from the URL when the tab is constructed, with no network involved,
+   * so this stays correct in the three cases where a chapter never arrives — an
+   * API failure, a book absent from the translation, or the server's five-second
+   * load timeout. Keying off the loaded chapter meant all three server-rendered
+   * as `<link rel="canonical" href="/">`, pointing the whole site at its own
+   * front page. A transient upstream failure shouldn't change a chapter's
+   * address, and a book that doesn't exist at all is already answered with a 404
+   * (see `entry-ssr.tsx`), so there is nothing left for the old fallback to
+   * protect against.
+   *
+   * The language segment follows the *translation*, not the reader's UI
+   * language: someone reading the English AAB with a French interface is
+   * looking at the same scripture as someone reading it in English, so both
+   * point at `/en/AAB/…` instead of each claiming to be canonical. This is the
+   * same mapping the sitemap generator uses, so the URLs it publishes and the
+   * pages they lead to agree.
+   *
+   * Always the explicit four-segment form. The short three-segment form is a
+   * redirect entry point — requested without an `Accept-Language` header, which
+   * is what a crawler sends, it 302s to the explicit form — so naming it here
+   * would point every canonical at a URL that redirects.
+   */
   const canonicalUrl = computed(() => {
-    const currentUrl = navigation.currentUrl.value;
+    const readingState = selectedTab.value?.readingState;
+    const bookId = readingState?.bookId.value;
 
-    const canonicalUrl = new URL("/", currentUrl);
-    const chapter = selectedTab.value?.readingState.chapterData.value;
-
-    if (chapter) {
-      canonicalUrl.searchParams.set(
-        "translation",
-        data.buildTranslationId(chapter.translation.id)
-      );
-      canonicalUrl.searchParams.set("book", chapter.book.id);
-      canonicalUrl.searchParams.set("chapter", String(chapter.chapter.number));
+    if (!readingState || !bookId) {
+      return navigation.basePath || "/";
     }
 
-    return `${canonicalUrl.pathname}${canonicalUrl.search}`;
+    const translationId = data.buildTranslationId(
+      readingState.translationId.value
+    );
+    const language =
+      bibleLanguageToUiLocale(readingState.translation.value?.language) ??
+      uiLocaleForDefaultTranslation(translationId) ??
+      i18n.language.value;
+
+    const readingPath = buildReadingPath({
+      language,
+      translationId,
+      bookId: bookId as BookId,
+      chapter: readingState.chapterNumber.value,
+    });
+
+    return `${navigation.basePath}${readingPath}`;
   });
 
   effect(() => {
@@ -1336,6 +1413,31 @@ export function createSeedBibleState(
     }, 3500);
   };
 
+  // Tell the user when we signed them out for them. `login.sessionEnded` only fires
+  // when a forced sign-out actually happened, so this can't toast for a request that
+  // merely failed, nor for a sign-out the user asked for. Without a message they
+  // would just watch their highlights and bookmarks vanish with no explanation.
+  effect(() => {
+    const ended = login.sessionEnded.value;
+    if (!ended || typeof window === "undefined") {
+      return;
+    }
+
+    // Destructured rather than called as `i18n.t(...)`: the translation lint rules
+    // only recognise calls to a bare `t`, and `translation-unused-keys` is
+    // auto-fixable, so `i18n.t("...")` would get these keys deleted from en.json.
+    const { t } = i18n;
+    toast(
+      ended.reason === "account_suspended"
+        ? t("account-suspended-message", {
+            defaultValue: "Your account has been suspended.",
+          })
+        : t("signed-out-message", {
+            defaultValue: "You've been signed out. Please sign in again.",
+          })
+    );
+  });
+
   // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
     if (!playlists.view.peek()) {
@@ -1403,7 +1505,6 @@ export function createSeedBibleState(
   const state: SeedBibleState = {
     os,
     bibleData: data,
-    config,
     theme: {
       ...themeManager,
       themeCssVariables,
