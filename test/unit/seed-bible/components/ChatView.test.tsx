@@ -97,6 +97,7 @@ function createMockState(): SeedBibleState {
   return {
     app: {
       openVerseReference: vi.fn().mockResolvedValue(undefined),
+      isMobile: signal(false),
     },
   } as unknown as SeedBibleState;
 }
@@ -231,6 +232,104 @@ describe("ChatView", () => {
     );
     expect(input).not.toBeNull();
     expect(input?.tagName.toLowerCase()).toBe("input");
+  });
+
+  it("shows a mobile type-hint caret whenever the empty input is blurred", () => {
+    const chat = createMockChatSession();
+    const state = {
+      app: {
+        openVerseReference: vi.fn().mockResolvedValue(undefined),
+        isMobile: signal(true),
+      },
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const wrap = container.querySelector(".sb-chat-view-input-wrap");
+    expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
+      true
+    );
+    // Opening chat must not focus the field — focus would open the soft keyboard.
+    const input = container.querySelector<HTMLInputElement>(
+      ".sb-chat-view-input"
+    )!;
+    expect(document.activeElement).not.toBe(input);
+
+    act(() => {
+      input.dispatchEvent(new FocusEvent("focus", { bubbles: true }));
+    });
+    expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
+      false
+    );
+
+    // Blurring an empty field brings the hint back…
+    act(() => {
+      input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+    });
+    expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
+      true
+    );
+
+    // …but not if the field has text — the fake caret would sit on top of it.
+    act(() => {
+      input.dispatchEvent(new FocusEvent("focus", { bubbles: true }));
+      input.value = "Hi";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+    });
+    expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
+      false
+    );
+  });
+
+  it("does not show a mobile type-hint caret on desktop", () => {
+    const chat = createMockChatSession();
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const wrap = container.querySelector(".sb-chat-view-input-wrap");
+    expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
+      false
+    );
+  });
+
+  it("autofocuses the compose input on desktop but not on mobile", () => {
+    const chat = createMockChatSession();
+
+    const mobileState = {
+      app: {
+        openVerseReference: vi.fn().mockResolvedValue(undefined),
+        isMobile: signal(true),
+      },
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<ChatView chat={chat} state={mobileState} />, container);
+    });
+
+    const mobileInput = container.querySelector<HTMLInputElement>(
+      ".sb-chat-view-input"
+    );
+    expect(document.activeElement).not.toBe(mobileInput);
+
+    act(() => {
+      render(null, container);
+    });
+
+    const desktopState = createMockState();
+    act(() => {
+      render(<ChatView chat={chat} state={desktopState} />, container);
+    });
+
+    const desktopInput = container.querySelector<HTMLInputElement>(
+      ".sb-chat-view-input"
+    );
+    expect(document.activeElement).toBe(desktopInput);
   });
 
   it("renders chat messages with mentions and verse references", () => {
@@ -479,7 +578,10 @@ describe("ChatView", () => {
     });
     const openVerseReference = vi.fn().mockResolvedValue(undefined);
     const state = {
-      app: { openVerseReference },
+      app: {
+        openVerseReference,
+        isMobile: signal(false),
+      },
     } as unknown as SeedBibleState;
 
     act(() => {

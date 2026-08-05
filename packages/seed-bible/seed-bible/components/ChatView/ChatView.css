@@ -394,6 +394,13 @@ img.sb-chat-view-message-avatar {
   white-space: nowrap;
 }
 
+.sb-chat-view-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
 .sb-chat-view-input {
   flex: 1;
   min-width: 0;
@@ -404,6 +411,38 @@ img.sb-chat-view-message-avatar {
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
   line-height: 1.2;
+}
+
+/* Mobile type-hint: faux blinking caret while the field is unfocused.
+   Inputs can't host ::before/::after, so this is a sibling pseudo-caret. */
+.sb-chat-view-input-hint-caret {
+  display: none;
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  width: 1.5px;
+  height: 1.05em;
+  transform: translateY(-50%);
+  background: var(--sb-font-color);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sb-chat-view-input-wrap--hint .sb-chat-view-input-hint-caret {
+  display: block;
+  animation: sb-chat-input-caret-blink 1s step-end infinite;
+}
+
+/* Real focus always wins over the hint caret (even before the flag clears). */
+.sb-chat-view-input-wrap:focus-within .sb-chat-view-input-hint-caret {
+  display: none;
+  animation: none;
+}
+
+@keyframes sb-chat-input-caret-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
 .sb-chat-view-input:focus-visible {
