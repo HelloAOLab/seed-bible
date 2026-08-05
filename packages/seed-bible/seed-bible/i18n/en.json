@@ -454,5 +454,8 @@
   "notes": "Notes",
   "note": "Note",
   "show-more-verse-actions": "Show more actions",
-  "show-fewer-verse-actions": "Show fewer actions"
+  "show-fewer-verse-actions": "Show fewer actions",
+  "x-notes": "{{count}} notes",
+  "x-notes_one": "{{count}} note",
+  "x-notes_other": "{{count}} notes"
 }

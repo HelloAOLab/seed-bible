@@ -2349,6 +2349,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Swipe up to see more",
                   })}
                 </span>
+                {selectionAnnotations.value.length > 0 && (
+                  <span>
+                    &#x2022;{" "}
+                    {t("x-notes", {
+                      defaultValue: "{{count}} notes",
+                      count: selectionAnnotations.value.length,
+                    })}
+                  </span>
+                )}
               </div>
             )}
         </div>
