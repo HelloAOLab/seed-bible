@@ -10,7 +10,6 @@ import {
 import type { CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
-import { range } from "es-toolkit";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
