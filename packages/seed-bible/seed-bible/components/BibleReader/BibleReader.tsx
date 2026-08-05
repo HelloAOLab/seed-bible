@@ -683,10 +683,16 @@ function renderChapterContent(
     return highlight.colorId;
   };
 
+  // Only matches an annotation to the verse number it *starts* at (the
+  // lowest verse it targets), not every verse it spans — a Genesis 1:3-6
+  // note marks verse 3 only, not 4, 5, and 6 too.
   const getVerseAnnotations = (verseNumber: number): Annotation[] =>
-    chapterAnnotations.filter((annotation) =>
-      annotationVerseNumbers(annotation).includes(verseNumber)
-    );
+    chapterAnnotations.filter((annotation) => {
+      const verseNumbers = annotationVerseNumbers(annotation);
+      return (
+        verseNumbers.length > 0 && Math.min(...verseNumbers) === verseNumber
+      );
+    });
 
   // Renders a verse's number when shown, boxed if the verse has a covering
   // annotation; when verse numbers are hidden, an annotated verse still shows
