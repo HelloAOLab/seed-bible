@@ -130,6 +130,60 @@ function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
   );
 }
 
+interface ChapterNotesButtonProps {
+  state: SeedBibleState;
+  bookId: string | null;
+  chapterNumber: number | null;
+}
+
+/**
+ * Shows the note count for the chapter currently in view; hidden entirely
+ * when the chapter has no annotations. Opens the Discover pane, which lists
+ * the chapter's annotations grouped by verse range.
+ */
+function ChapterNotesButton(props: ChapterNotesButtonProps) {
+  const { state, bookId, chapterNumber } = props;
+  const { t } = useI18n();
+  const noteCount =
+    bookId && chapterNumber
+      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+          .length
+      : 0;
+
+  if (noteCount === 0) {
+    return null;
+  }
+
+  const label = t("chapter-notes-count", {
+    defaultValue: "{{count}} notes for this chapter",
+    count: noteCount,
+  });
+
+  return (
+    <button
+      type="button"
+      className="sb-bible-reader-mobile-header-notes"
+      // Mirrors the account button below: stop the tap here so the reader
+      // pane wrapper's pointerdown handler doesn't interfere with opening
+      // Discover.
+      onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+        state.app.openDiscover();
+      }}
+      aria-label={label}
+      title={label}
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        sticky_note_2
+      </span>
+      <span className="sb-bible-reader-mobile-header-notes-count">
+        {noteCount}
+      </span>
+    </button>
+  );
+}
+
 interface VerseLine {
   indentLevel: number;
   parts: ChapterVerse["content"];
@@ -1820,6 +1874,11 @@ export function BibleReader(props: BibleReaderProps) {
               playlists={state.playlists}
               features={state.features}
               className="sb-quick-toolbar-mobile-header"
+            />
+            <ChapterNotesButton
+              state={state}
+              bookId={bookId.value}
+              chapterNumber={chapterNumber.value}
             />
             {!state.playlists.playing.value && (
               <ReaderBookmarkButton

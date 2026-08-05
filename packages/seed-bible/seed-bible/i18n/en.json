@@ -457,5 +457,8 @@
   "show-fewer-verse-actions": "Show fewer actions",
   "x-notes": "{{count}} notes",
   "x-notes_one": "{{count}} note",
-  "x-notes_other": "{{count}} notes"
+  "x-notes_other": "{{count}} notes",
+  "chapter-notes-count": "{{count}} notes for this chapter",
+  "chapter-notes-count_one": "{{count}} note for this chapter",
+  "chapter-notes-count_other": "{{count}} notes for this chapter"
 }
