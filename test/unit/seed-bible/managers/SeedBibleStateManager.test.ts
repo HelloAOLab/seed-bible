@@ -640,6 +640,25 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
   });
 
+  it("closes a fullscreen pane when navigating to a new chapter", async () => {
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    state.panes.openPane({
+      placement: "fullscreen",
+      title: "Fullscreen Pane",
+      component: () => null,
+    });
+    expect(state.panes.panes.value).toHaveLength(1);
+
+    await readingState.selectChapter("EXO", 2);
+    await waitFor(() => readingState.bookId.value === "EXO");
+
+    expect(state.panes.panes.value).toHaveLength(0);
+  });
+
   describe("mobile tab slot restrictions", () => {
     // isMobile is derived from viewportWidth; the returned signal is the same
     // writable instance, so tests drive the mobile layout by writing to it.

@@ -10,7 +10,11 @@ import {
   bibleLanguageToUiLocale,
   uiLocaleForDefaultTranslation,
 } from "../managers/BibleReadingManager";
-import { buildReadingPath } from "../managers/ReadingUrlPath";
+import {
+  buildReadingPath,
+  hasReadingUrlPosition,
+  parseReadingPath,
+} from "../managers/ReadingUrlPath";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
@@ -609,8 +613,9 @@ export function createSeedBibleState(
     i18n,
     readingExtensions
   );
-  // Close any fullscreen pane when the book/chapter params change, so
-  // navigating reveals the reader (every navigation path writes these params).
+  // Close any fullscreen pane when the book/chapter in the URL path changes,
+  // so navigating reveals the reader (every navigation path writes this
+  // position into the path — see `commitSelectedTabToUrl` in TabsManager).
   // The first location only sets a baseline, so load-time init doesn't close a
   // pane auto-opened for the same load (e.g. Today via `?today=open`).
   //
@@ -629,13 +634,12 @@ export function createSeedBibleState(
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
-    const book = url.searchParams.get("book");
-    const chapter = url.searchParams.get("chapter");
-    if (!book || !chapter) {
+    const parsed = parseReadingPath(url.pathname, navigation.basePath);
+    if (!parsed) {
       return;
     }
 
-    const location = `${book}|${chapter}`;
+    const location = `${parsed.bookId ?? parsed.rawBookSegment}|${parsed.chapter}`;
     const previous = lastReadingLocation;
     lastReadingLocation = location;
 
@@ -656,9 +660,7 @@ export function createSeedBibleState(
     initialUrlParams.get("today") !== null
       ? initialUrlParams.get("today") === "open"
       : !(
-          initialUrlParams.has("book") ||
-          initialUrlParams.has("chapter") ||
-          initialUrlParams.has("verse") ||
+          hasReadingUrlPosition(navigation.initialUrl, navigation.basePath) ||
           initialUrlParams.has("sessionId")
         );
 
