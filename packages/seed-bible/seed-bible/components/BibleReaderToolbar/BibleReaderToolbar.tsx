@@ -38,6 +38,7 @@ import {
   annotationLocationLabel,
 } from "../DiscoverPane/DiscoverPane";
 import type { TabsManager } from "../../managers/TabsManager";
+import type { VerseRef } from "../../managers/BibleDataManager";
 import type { LoginManager } from "../../managers/LoginManager";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
@@ -420,8 +421,9 @@ function VerseToolbarAnnotationGroup(props: {
   group: AnnotationGroup;
   tabs: TabsManager;
   login: LoginManager;
+  onReferenceClick?: (ref: VerseRef) => void;
 }) {
-  const { id, group, tabs, login } = props;
+  const { id, group, tabs, login, onReferenceClick } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
@@ -456,7 +458,10 @@ function VerseToolbarAnnotationGroup(props: {
             <li key={annotation.id} className="sb-annotation-item" dir="auto">
               <div className="sb-annotation-item-main">
                 {annotation.data.type === "comment" && (
-                  <AnnotationPreview html={annotation.data.html} />
+                  <AnnotationPreview
+                    html={annotation.data.html}
+                    onReferenceClick={onReferenceClick}
+                  />
                 )}
                 <AnnotationCommentMeta
                   annotation={annotation}
@@ -2339,6 +2344,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     group={group}
                                     tabs={tabs}
                                     login={props.state.login}
+                                    onReferenceClick={
+                                      props.state.app.openVerseReference
+                                    }
                                   />
                                 );
                               })}

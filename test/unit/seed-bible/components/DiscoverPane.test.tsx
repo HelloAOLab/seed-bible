@@ -292,17 +292,25 @@ function createMockTab(
 
 function createMockState(
   isMobile = false,
-  overrides: { getUserProfile?: ReturnType<typeof vi.fn> } = {}
+  overrides: {
+    getUserProfile?: ReturnType<typeof vi.fn>;
+    openVerseReference?: ReturnType<typeof vi.fn>;
+  } = {}
 ): SeedBibleState {
   return {
     app: {
       isMobile: signal(isMobile),
       toast: vi.fn(),
+      openVerseReference:
+        overrides.openVerseReference ?? vi.fn().mockResolvedValue(undefined),
     },
     login: {
       userId: signal(null),
       getUserProfile:
         overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
+    },
+    discover: {
+      scrollToVerse: signal(null),
     },
   } as unknown as SeedBibleState;
 }
@@ -775,6 +783,67 @@ describe("DiscoverPane", () => {
     expect(
       items[0]?.querySelector(".sb-annotation-item-preview")?.textContent
     ).toBe("Great verse");
+  });
+
+  it("clicking a verse-reference link inside an annotation's preview navigates to that reference, without also navigating to the annotation's own verse", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: '<p>See <a class="sb-verse-reference-link" href="/read?book=JHN&chapter=3">John 3:16</a></p>',
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const openVerseReference = vi.fn().mockResolvedValue(undefined);
+    const state = createMockState(false, { openVerseReference });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const link = container.querySelector(
+      ".sb-annotation-item-preview a.sb-verse-reference-link"
+    ) as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+
+    await act(async () => {
+      link.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+      await Promise.resolve();
+    });
+
+    expect(openVerseReference).toHaveBeenCalledWith(
+      expect.objectContaining({ book: "JHN", chapter: 3, verse: 16 })
+    );
+    // The row's own navigate-on-click (to GEN 1:3) must not also fire.
+    expect(selectTranslationAndChapter).not.toHaveBeenCalled();
   });
 
   it("clicking an annotation row navigates to its verse and emphasizes it, without opening it for editing", async () => {

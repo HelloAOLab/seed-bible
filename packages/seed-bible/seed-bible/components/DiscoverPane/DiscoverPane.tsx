@@ -2,6 +2,7 @@ import "./DiscoverPane.css";
 import "./DiscoverShared.css";
 import { effect, useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
+import type { JSX } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
 import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
@@ -34,7 +35,11 @@ import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { emphasizeVerses } from "../../managers";
-import type { BookId } from "../../managers/BibleDataManager";
+import {
+  parseVerseReference,
+  type BookId,
+  type VerseRef,
+} from "../../managers/BibleDataManager";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -243,6 +248,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         login={props.state.login}
         tabs={tabs}
         discover={props.state.discover}
+        onReferenceClick={props.state.app.openVerseReference}
       />
 
       <CrossReferencesSection tab={selectedTab} />
@@ -485,14 +491,47 @@ export function annotationLocationLabel(
 }
 
 /** Renders an annotation's sanitized HTML body as a preview snippet. */
-export function AnnotationPreview({ html }: { html: string }) {
+export function AnnotationPreview({
+  html,
+  onReferenceClick,
+}: {
+  html: string;
+  onReferenceClick?: (ref: VerseRef) => void;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (ref.current) {
       void setSafeHtml(html, ref.current);
     }
   }, [html]);
-  return <span ref={ref} className="sb-annotation-item-preview" dir="auto" />;
+
+  const handleClick = (event: JSX.TargetedMouseEvent<HTMLSpanElement>) => {
+    if (!onReferenceClick) {
+      return;
+    }
+    const anchor = (event.target as HTMLElement).closest?.(
+      "a.sb-verse-reference-link"
+    );
+    if (!anchor) {
+      return;
+    }
+    const parsed = parseVerseReference(anchor.textContent ?? "");
+    if (!parsed) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    onReferenceClick(parsed);
+  };
+
+  return (
+    <span
+      ref={ref}
+      className="sb-annotation-item-preview"
+      dir="auto"
+      onClick={handleClick}
+    />
+  );
 }
 
 // Shared across every `AnnotationAuthor` instance so authors of multiple
@@ -633,8 +672,18 @@ function AnnotationGroupSection(props: {
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
   tabs: TabsManager;
+  onReferenceClick?: (ref: VerseRef) => void;
 }) {
-  const { id, group, annotations, modals, toast, login, tabs } = props;
+  const {
+    id,
+    group,
+    annotations,
+    modals,
+    toast,
+    login,
+    tabs,
+    onReferenceClick,
+  } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
@@ -699,7 +748,10 @@ function AnnotationGroupSection(props: {
               }}
             >
               <div className="sb-annotation-item-main">
-                <AnnotationPreview html={annotation.data.html} />
+                <AnnotationPreview
+                  html={annotation.data.html}
+                  onReferenceClick={onReferenceClick}
+                />
                 <AnnotationCommentMeta
                   annotation={annotation}
                   login={login}
@@ -759,8 +811,18 @@ function AnnotationsSection(props: {
   login: LoginManager;
   tabs: TabsManager;
   discover: DiscoverManager;
+  onReferenceClick?: (ref: VerseRef) => void;
 }) {
-  const { tab, annotations, modals, toast, login, tabs, discover } = props;
+  const {
+    tab,
+    annotations,
+    modals,
+    toast,
+    login,
+    tabs,
+    discover,
+    onReferenceClick,
+  } = props;
   const { t } = useI18n();
   const title = t("notes", { defaultValue: "Notes" });
 
@@ -851,6 +913,7 @@ function AnnotationsSection(props: {
               toast={toast}
               login={login}
               tabs={tabs}
+              onReferenceClick={onReferenceClick}
             />
           );
         })
