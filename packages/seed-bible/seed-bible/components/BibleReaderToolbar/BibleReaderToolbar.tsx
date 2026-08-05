@@ -686,11 +686,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Component-local only — not persisted across sessions/reloads.
   const showHighlightColorSwipeHint = useSignal(true);
   const colorSwatchesRef = useRef<HTMLDivElement | null>(null);
-  // Measured height of the floating desktop verse toolbar. The toolbar uses
-  // `transform: translate(-50%, -100%)`, so `top` is the bottom edge — we need
-  // the real height to keep that bottom edge low enough that the top edge
-  // (especially the taller highlight-color picker) stays inside the viewport.
-  const verseToolbarRef = useRef<HTMLDivElement | null>(null);
+  // Measured height of the floating desktop verse toolbar. Uses the same
+  // `verseToolbarRef` already attached for `--sb-reader-bottom-inset` measuring.
+  // The toolbar uses `transform: translate(-50%, -100%)`, so `top` is the bottom
+  // edge — we need the real height so the taller color picker stays on-screen.
   const verseToolbarHeight = useSignal(0);
 
   const floatingX = useComputed(() => {
