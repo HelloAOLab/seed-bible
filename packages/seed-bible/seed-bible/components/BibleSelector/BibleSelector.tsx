@@ -563,7 +563,7 @@ const SideBarBooks = (props: {
           ? { gridColumn: "1 / -1", gridRow: openVisualRow + 2 }
           : undefined;
       const openVisualCol = columns > 1 ? Math.floor(lbc / rows) : 0;
-      const chapterAtEnd = openVisualCol === columns - 1;
+      const chapterAtEnd = columns > 1 && openVisualCol === columns - 1;
 
       return (
         <div
