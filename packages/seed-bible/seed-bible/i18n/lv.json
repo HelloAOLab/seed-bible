@@ -434,5 +434,6 @@
   "remove": "Noņemt",
   "signed-out-message": "Jūs esat izrakstījies. Lūdzu, pierakstieties vēlreiz.",
   "account-suspended-message": "Jūsu konta darbība ir apturēta.",
-  "loading-chapter": "Notiek nodaļas ielāde…"
+  "loading-chapter": "Notiek nodaļas ielāde…",
+  "swipe-to-see-more": "Pavelciet, lai skatītu vairāk"
 }

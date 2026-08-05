@@ -434,5 +434,6 @@
   "remove": "Odstranit",
   "signed-out-message": "Byli jste odhlášeni. Přihlaste se prosím znovu.",
   "account-suspended-message": "Váš účet byl pozastaven.",
-  "loading-chapter": "Načítání kapitoly…"
+  "loading-chapter": "Načítání kapitoly…",
+  "swipe-to-see-more": "Přejetím prstem zobrazíte více"
 }

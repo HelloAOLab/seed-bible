@@ -434,5 +434,6 @@
   "remove": "Eliminar",
   "signed-out-message": "Se ha cerrado tu sesión. Por favor, inicia sesión de nuevo.",
   "account-suspended-message": "Tu cuenta ha sido suspendida.",
-  "loading-chapter": "Cargando capítulo…"
+  "loading-chapter": "Cargando capítulo…",
+  "swipe-to-see-more": "Desliza para ver más"
 }

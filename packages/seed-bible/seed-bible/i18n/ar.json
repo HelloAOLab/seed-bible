@@ -434,5 +434,6 @@
   "remove": "يزيل",
   "signed-out-message": "تم تسجيل خروجك. يرجى تسجيل الدخول مرة أخرى.",
   "account-suspended-message": "تم تعليق حسابك.",
-  "loading-chapter": "جارٍ تحميل الفصل…"
+  "loading-chapter": "جارٍ تحميل الفصل…",
+  "swipe-to-see-more": "اسحب لعرض المزيد"
 }

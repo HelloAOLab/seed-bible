@@ -434,5 +434,6 @@
   "remove": "Eemalda",
   "signed-out-message": "Teid on välja logitud. Palun logige uuesti sisse.",
   "account-suspended-message": "Teie konto on peatatud.",
-  "loading-chapter": "Peatüki laadimine…"
+  "loading-chapter": "Peatüki laadimine…",
+  "swipe-to-see-more": "Libista, et rohkem näha"
 }

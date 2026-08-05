@@ -434,5 +434,6 @@
   "remove": "Алып салуу",
   "signed-out-message": "Сиз аккаунтуңуздан чыктыңыз. Кайрадан кириңиз.",
   "account-suspended-message": "Аккаунтуңуз убактылуу токтотулду.",
-  "loading-chapter": "Бөлүм жүктөлүүдө…"
+  "loading-chapter": "Бөлүм жүктөлүүдө…",
+  "swipe-to-see-more": "Көбүрөөк көрүү үчүн сүрүңүз"
 }

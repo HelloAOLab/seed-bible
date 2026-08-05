@@ -434,5 +434,6 @@
   "remove": "ลบ",
   "signed-out-message": "คุณได้ออกจากระบบแล้ว โปรดเข้าสู่ระบบอีกครั้ง",
   "account-suspended-message": "บัญชีของคุณถูกระงับชั่วคราว",
-  "loading-chapter": "กำลังโหลดบท..."
+  "loading-chapter": "กำลังโหลดบท...",
+  "swipe-to-see-more": "เลื่อนเพื่อดูเพิ่มเติม"
 }

@@ -434,5 +434,6 @@
   "remove": "消除",
   "signed-out-message": "您已登出，请重新登录。",
   "account-suspended-message": "您的账户已被暂停。",
-  "loading-chapter": "正在加载章节…"
+  "loading-chapter": "正在加载章节…",
+  "swipe-to-see-more": "滑动查看更多"
 }

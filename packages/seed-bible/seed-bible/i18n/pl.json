@@ -434,5 +434,6 @@
   "remove": "Usunąć",
   "signed-out-message": "Zostałeś wylogowany. Zaloguj się ponownie.",
   "account-suspended-message": "Twoje konto zostało zawieszone.",
-  "loading-chapter": "Ładowanie rozdziału…"
+  "loading-chapter": "Ładowanie rozdziału…",
+  "swipe-to-see-more": "Przesuń, aby zobaczyć więcej"
 }

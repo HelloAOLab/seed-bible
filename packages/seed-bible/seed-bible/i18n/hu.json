@@ -434,5 +434,6 @@
   "remove": "Eltávolítás",
   "signed-out-message": "Kijelentkeztél. Kérjük, jelentkezz be újra.",
   "account-suspended-message": "Fiókját felfüggesztettük.",
-  "loading-chapter": "Fejezet betöltése…"
+  "loading-chapter": "Fejezet betöltése…",
+  "swipe-to-see-more": "Csúsztasson a továbbiak megtekintéséhez"
 }

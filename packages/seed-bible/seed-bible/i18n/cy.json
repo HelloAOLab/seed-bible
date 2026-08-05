@@ -434,5 +434,6 @@
   "remove": "Tynnu",
   "signed-out-message": "Rydych chi wedi allgofnodi. Mewngofnodwch eto.",
   "account-suspended-message": "Mae eich cyfrif wedi cael ei atal.",
-  "loading-chapter": "Wrthi'n llwytho pennod…"
+  "loading-chapter": "Wrthi'n llwytho pennod…",
+  "swipe-to-see-more": "Sweipiwch i weld mwy"
 }

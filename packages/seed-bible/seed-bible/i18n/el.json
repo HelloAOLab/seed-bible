@@ -434,5 +434,6 @@
   "remove": "Αφαιρώ",
   "signed-out-message": "Έχετε αποσυνδεθεί. Συνδεθείτε ξανά.",
   "account-suspended-message": "Ο λογαριασμός σας έχει ανασταλεί.",
-  "loading-chapter": "Φόρτωση κεφαλαίου…"
+  "loading-chapter": "Φόρτωση κεφαλαίου…",
+  "swipe-to-see-more": "Σύρετε για να δείτε περισσότερα"
 }

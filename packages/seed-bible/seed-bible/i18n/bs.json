@@ -434,5 +434,6 @@
   "remove": "Ukloni",
   "signed-out-message": "Odjavljeni ste. Molimo vas da se ponovo prijavite.",
   "account-suspended-message": "Vaš račun je suspendovan.",
-  "loading-chapter": "Učitavanje poglavlja…"
+  "loading-chapter": "Učitavanje poglavlja…",
+  "swipe-to-see-more": "Prevucite prstom da biste vidjeli više"
 }

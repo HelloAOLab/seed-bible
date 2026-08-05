@@ -434,5 +434,6 @@
   "remove": "Di dời",
   "signed-out-message": "Bạn đã bị đăng xuất. Vui lòng đăng nhập lại.",
   "account-suspended-message": "Tài khoản của bạn đã bị tạm ngưng.",
-  "loading-chapter": "Đang tải chương…"
+  "loading-chapter": "Đang tải chương…",
+  "swipe-to-see-more": "Vuốt để xem thêm"
 }

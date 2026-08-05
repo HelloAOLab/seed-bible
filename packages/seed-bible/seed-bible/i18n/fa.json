@@ -434,5 +434,6 @@
   "remove": "حذف",
   "signed-out-message": "شما از سیستم خارج شده‌اید. لطفاً دوباره وارد شوید.",
   "account-suspended-message": "حساب کاربری شما به حالت تعلیق درآمده است.",
-  "loading-chapter": "در حال بارگذاری فصل…"
+  "loading-chapter": "در حال بارگذاری فصل…",
+  "swipe-to-see-more": "برای مشاهده بیشتر بکشید"
 }

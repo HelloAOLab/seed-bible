@@ -434,5 +434,6 @@
   "remove": "Verwijderen",
   "signed-out-message": "Je bent uitgelogd. Log opnieuw in.",
   "account-suspended-message": "Je account is geblokkeerd.",
-  "loading-chapter": "Hoofdstuk laden…"
+  "loading-chapter": "Hoofdstuk laden…",
+  "swipe-to-see-more": "Veeg om meer te bekijken"
 }

@@ -434,5 +434,6 @@
   "remove": "Elimina",
   "signed-out-message": "Has tancat la sessió. Torna a iniciar-la.",
   "account-suspended-message": "El vostre compte ha estat suspès.",
-  "loading-chapter": "S'està carregant el capítol…"
+  "loading-chapter": "S'està carregant el capítol…",
+  "swipe-to-see-more": "Llisca per veure'n més"
 }

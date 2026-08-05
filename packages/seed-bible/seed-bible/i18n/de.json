@@ -434,5 +434,6 @@
   "remove": "Entfernen",
   "signed-out-message": "Sie wurden abgemeldet. Bitte melden Sie sich erneut an.",
   "account-suspended-message": "Ihr Konto wurde gesperrt.",
-  "loading-chapter": "Kapitel wird geladen…"
+  "loading-chapter": "Kapitel wird geladen…",
+  "swipe-to-see-more": "Wischen, um mehr anzuzeigen"
 }

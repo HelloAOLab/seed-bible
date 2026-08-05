@@ -434,5 +434,6 @@
   "remove": "取り除く",
   "signed-out-message": "ログアウトしました。再度ログインしてください。",
   "account-suspended-message": "あなたのアカウントは停止されました。",
-  "loading-chapter": "チャプターを読み込んでいます…"
+  "loading-chapter": "チャプターを読み込んでいます…",
+  "swipe-to-see-more": "スワイプしてさらに表示"
 }
