@@ -1,5 +1,5 @@
 import "./BibleReaderToolbar.css";
-import { useComputed, useSignal } from "@preact/signals";
+import { effect, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
@@ -28,6 +28,7 @@ import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
+  annotationVerseNumbers,
   groupAnnotationsByVerseRange,
   type AnnotationGroup,
 } from "../../managers/AnnotationsManager";
@@ -415,17 +416,18 @@ function applyHighlightWithSession(
  * instance, keyed by group below.
  */
 function VerseToolbarAnnotationGroup(props: {
+  id: string;
   group: AnnotationGroup;
   tabs: TabsManager;
   login: LoginManager;
 }) {
-  const { group, tabs, login } = props;
+  const { id, group, tabs, login } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
 
   return (
-    <div className="sb-annotation-group">
+    <div className="sb-annotation-group" id={id}>
       <button
         type="button"
         className="sb-annotation-group-header"
@@ -1088,6 +1090,48 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       verseSheetDismissOffset.value = 0;
     }
   }, [hasVerseSelection.value]);
+
+  // Clicking an annotated verse number (BibleReader.tsx) sets this once;
+  // expand the sheet and scroll to that verse's annotation group, then clear
+  // it. Mirrors `readingState.scrollToVerse`'s consumer in TabsLayout.tsx.
+  useEffect(() => {
+    const rs = readingState.value;
+    if (!rs) return;
+
+    let frame = 0;
+    const dispose = effect(() => {
+      const verseNumber = rs.pendingAnnotationScrollVerse.value;
+      if (verseNumber === null) return;
+      rs.pendingAnnotationScrollVerse.value = null; // consume once, immediately
+
+      const group = groupAnnotationsByVerseRange(
+        selectionAnnotations.value
+      ).find((g) =>
+        g.annotations.some((a) =>
+          annotationVerseNumbers(a).includes(verseNumber)
+        )
+      );
+      if (!group) return;
+
+      isVerseSheetExpanded.value = true;
+      const groupKey =
+        group.annotations[0]?.id ??
+        `${group.startVerseNumber}-${group.endVerseNumber}`;
+
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        document
+          .getElementById(`sb-verse-toolbar-annotation-group-${groupKey}`)
+          ?.scrollIntoView({ block: "nearest" });
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      dispose();
+    };
+  }, [readingState.value]);
 
   // Clicking anywhere outside the chapter content or the verse toolbar
   // dismisses the verse selection (and therefore the toolbar). Only while the
@@ -2284,17 +2328,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             <div className="sb-verse-toolbar-annotations">
                               {groupAnnotationsByVerseRange(
                                 selectionAnnotations.value
-                              ).map((group) => (
-                                <VerseToolbarAnnotationGroup
-                                  key={
-                                    group.annotations[0]?.id ??
-                                    `${group.startVerseNumber}-${group.endVerseNumber}`
-                                  }
-                                  group={group}
-                                  tabs={tabs}
-                                  login={props.state.login}
-                                />
-                              ))}
+                              ).map((group) => {
+                                const groupKey =
+                                  group.annotations[0]?.id ??
+                                  `${group.startVerseNumber}-${group.endVerseNumber}`;
+                                return (
+                                  <VerseToolbarAnnotationGroup
+                                    key={groupKey}
+                                    id={`sb-verse-toolbar-annotation-group-${groupKey}`}
+                                    group={group}
+                                    tabs={tabs}
+                                    login={props.state.login}
+                                  />
+                                );
+                              })}
                             </div>
                           )}
                         </div>

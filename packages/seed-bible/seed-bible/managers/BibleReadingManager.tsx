@@ -267,6 +267,12 @@ export interface BibleReadingState {
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
   scrollToVerse: Signal<number | null>;
+  /**
+   * Set when an annotated verse number is clicked; consumed once by whichever
+   * surface renders that verse's annotation (the mobile verse toolbar) to
+   * expand and scroll to it, then cleared.
+   */
+  pendingAnnotationScrollVerse: Signal<number | null>;
 
   /**
    * Toggles a verse in the current selection.
@@ -1258,6 +1264,7 @@ export function createBibleReadingState(
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
+  const pendingAnnotationScrollVerse = signal<number | null>(null);
 
   // Reading-extension enablement (per reading state). Extensions are registered
   // globally on the BibleReadingExtensionManager but never enabled by default;
@@ -2981,6 +2988,7 @@ export function createBibleReadingState(
     decorations,
     selectedVerses,
     selectionAnnotations,
+    pendingAnnotationScrollVerse,
     selectedFootnote,
     loading,
     error,

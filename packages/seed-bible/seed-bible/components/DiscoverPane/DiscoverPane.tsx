@@ -1,11 +1,14 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
-import { useSignal } from "@preact/signals";
+import { effect, useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
 import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
-import type { DiscoverReference } from "../../managers/DiscoverManager";
+import type {
+  DiscoverManager,
+  DiscoverReference,
+} from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { LoginManager } from "../../managers/LoginManager";
@@ -239,6 +242,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         toast={props.toast}
         login={props.state.login}
         tabs={tabs}
+        discover={props.state.discover}
       />
 
       <CrossReferencesSection tab={selectedTab} />
@@ -622,6 +626,7 @@ export function AnnotationCommentMeta(props: {
  * Starts expanded.
  */
 function AnnotationGroupSection(props: {
+  id: string;
   group: AnnotationGroup;
   annotations: AnnotationsManager;
   modals: ModalManager;
@@ -629,13 +634,13 @@ function AnnotationGroupSection(props: {
   login: LoginManager;
   tabs: TabsManager;
 }) {
-  const { group, annotations, modals, toast, login, tabs } = props;
+  const { id, group, annotations, modals, toast, login, tabs } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
 
   return (
-    <div className="sb-annotation-group">
+    <div className="sb-annotation-group" id={id}>
       <button
         type="button"
         className="sb-annotation-group-header"
@@ -753,10 +758,59 @@ function AnnotationsSection(props: {
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
   tabs: TabsManager;
+  discover: DiscoverManager;
 }) {
-  const { tab, annotations, modals, toast, login, tabs } = props;
+  const { tab, annotations, modals, toast, login, tabs, discover } = props;
   const { t } = useI18n();
   const title = t("notes", { defaultValue: "Notes" });
+
+  // Clicking an annotated verse number on desktop (BibleReader.tsx) sets
+  // this once; scroll to that verse's annotation group if it's this tab's
+  // chapter, then clear it. Mirrors the mobile equivalent in
+  // BibleReaderToolbar.tsx.
+  useEffect(() => {
+    if (!tab) return;
+
+    let frame = 0;
+    const dispose = effect(() => {
+      const target = discover.scrollToVerse.value;
+      if (!target) return;
+      if (
+        target.bookId !== tab.readingState.bookId.value ||
+        target.chapterNumber !== tab.readingState.chapterNumber.value
+      ) {
+        return;
+      }
+      discover.scrollToVerse.value = null; // consume once, immediately
+
+      const chapterAnnotations = annotations.getAnnotationsForChapter(
+        target.bookId,
+        target.chapterNumber
+      ).value;
+      const group = groupAnnotationsByVerseRange(chapterAnnotations).find((g) =>
+        g.annotations.some((a) =>
+          annotationVerseNumbers(a).includes(target.verseNumber)
+        )
+      );
+      if (!group) return;
+
+      const groupKey = `${group.startVerseNumber ?? "chapter"}-${
+        group.endVerseNumber ?? "chapter"
+      }`;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        document
+          .getElementById(`sb-annotation-group-${groupKey}`)
+          ?.scrollIntoView({ block: "nearest" });
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      dispose();
+    };
+  }, [tab, discover, annotations]);
 
   if (!tab) {
     return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
@@ -783,19 +837,23 @@ function AnnotationsSection(props: {
           })}
         />
       ) : (
-        groups.map((group) => (
-          <AnnotationGroupSection
-            key={`${group.startVerseNumber ?? "chapter"}-${
-              group.endVerseNumber ?? "chapter"
-            }`}
-            group={group}
-            annotations={annotations}
-            modals={modals}
-            toast={toast}
-            login={login}
-            tabs={tabs}
-          />
-        ))
+        groups.map((group) => {
+          const groupKey = `${group.startVerseNumber ?? "chapter"}-${
+            group.endVerseNumber ?? "chapter"
+          }`;
+          return (
+            <AnnotationGroupSection
+              key={groupKey}
+              id={`sb-annotation-group-${groupKey}`}
+              group={group}
+              annotations={annotations}
+              modals={modals}
+              toast={toast}
+              login={login}
+              tabs={tabs}
+            />
+          );
+        })
       )}
     </DiscoverSection>
   );

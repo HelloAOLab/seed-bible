@@ -196,6 +196,8 @@ function createFixture(): ReaderFixture {
     shortTitle: signal<string>("shortTitle"),
     subTitle: signal<string>("subTitle"),
     title: signal<string>("title"),
+    selectionAnnotations: signal([]),
+    pendingAnnotationScrollVerse: signal<number | null>(null),
   } as BibleReadingState;
 
   const selectorState = {

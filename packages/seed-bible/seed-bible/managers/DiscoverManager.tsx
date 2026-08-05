@@ -67,6 +67,13 @@ export interface DiscoverProviderResults {
   results: DiscoverResult[];
 }
 
+/** A verse to scroll the Discover pane's annotations list to once it's open. */
+export interface DiscoverScrollTarget {
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number;
+}
+
 export interface DiscoverManager {
   registerDiscoverProvider: (provider: DiscoverProvider) => void;
   discover: (
@@ -83,12 +90,18 @@ export interface DiscoverManager {
    * playback state exists.
    */
   resolveActualView: (isPlaying: boolean) => DiscoverView;
+  /**
+   * Set when an annotated verse number is clicked on desktop; consumed once
+   * by the annotations section to scroll to that verse's group, then cleared.
+   */
+  scrollToVerse: Signal<DiscoverScrollTarget | null>;
 }
 
 export function createDiscoverManager(): DiscoverManager {
   const providers: DiscoverProvider[] = [];
   const view = signal<DiscoverView>(null);
   const isDiscoverOpen = computed(() => !!view.value);
+  const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
 
   function resolveActualView(isPlaying: boolean): DiscoverView {
     if (view.value === "play_playlist" && !isPlaying) {
@@ -110,6 +123,7 @@ export function createDiscoverManager(): DiscoverManager {
     view,
     isDiscoverOpen,
     resolveActualView,
+    scrollToVerse,
 
     async *discover(
       context: DiscoverContext

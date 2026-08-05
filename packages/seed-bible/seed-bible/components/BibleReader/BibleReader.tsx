@@ -581,7 +581,12 @@ function renderChapterContent(
   highlights: ChapterHighlight[],
   decorations: VerseDecoration[],
   chapterAnnotations: Annotation[],
-  scriptureElements: ScriptureElementsBehavior
+  scriptureElements: ScriptureElementsBehavior,
+  onAnnotationVerseClick: (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => void
 ) {
   if (!chapterData) {
     return null;
@@ -686,8 +691,15 @@ function renderChapterContent(
   // Renders a verse's number when shown, boxed if the verse has a covering
   // annotation; when verse numbers are hidden, an annotated verse still shows
   // a `sticky_note_2` icon in that spot so the indicator survives the setting.
-  const renderVerseNumberOrIcon = (verseNumber: number) => {
+  // An annotated number/icon is clickable, jumping straight to its note.
+  const renderVerseNumberOrIcon = (
+    verseNumber: number,
+    verse: BibleSelectedVerse
+  ) => {
     const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
+    const handleAnnotationClick = (event: MouseEvent) =>
+      onAnnotationVerseClick(verse, verseNumber, event);
+
     if (scriptureElements.showVerseNumbers) {
       return (
         <sup
@@ -696,6 +708,9 @@ function renderChapterContent(
               ? "sb-verse-number sb-verse-number-annotated"
               : "sb-verse-number"
           }
+          onClick={hasAnnotation ? handleAnnotationClick : undefined}
+          role={hasAnnotation ? "button" : undefined}
+          tabIndex={hasAnnotation ? 0 : undefined}
         >
           {verseNumber}
         </sup>
@@ -705,7 +720,12 @@ function renderChapterContent(
       return null;
     }
     return (
-      <sup className="sb-verse-number sb-verse-annotation-icon">
+      <sup
+        className="sb-verse-number sb-verse-annotation-icon"
+        onClick={handleAnnotationClick}
+        role="button"
+        tabIndex={0}
+      >
         <span className="material-symbols-outlined">sticky_note_2</span>
       </sup>
     );
@@ -784,7 +804,8 @@ function renderChapterContent(
                   className={verseDecoratorClassName}
                   style={verseDecoratorStyle}
                 >
-                  {segIndex === 0 && renderVerseNumberOrIcon(value.number)}
+                  {segIndex === 0 &&
+                    renderVerseNumberOrIcon(value.number, verse)}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -817,7 +838,7 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    renderVerseNumberOrIcon(value.number)}
+                    renderVerseNumberOrIcon(value.number, verse)}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -853,7 +874,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {renderVerseNumberOrIcon(value.number)}
+          {renderVerseNumberOrIcon(value.number, verse)}
           {value.content.map((part, index) =>
             renderInlineContent(
               part,
@@ -1053,7 +1074,8 @@ function renderStaticChapterContent(
     [],
     [],
     [],
-    scriptureElements
+    scriptureElements,
+    () => {}
   );
 }
 
@@ -1127,6 +1149,11 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  onAnnotationVerseClick: (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => void;
   /**
    * True while this is the chapter the reader has *left* — shown dimmed until
    * the chapter they navigated to arrives.
@@ -1148,6 +1175,7 @@ function ChapterContent(props: ChapterContentProps) {
     selectVersesFromTextSelection,
     justConvertedSelectionRef,
     scriptureElements,
+    onAnnotationVerseClick,
   } = props;
 
   const currentChapter = chapterData.value;
@@ -1445,7 +1473,8 @@ function ChapterContent(props: ChapterContentProps) {
         highlights.value.highlights,
         decorations.value,
         chapterAnnotations,
-        scriptureElements
+        scriptureElements,
+        onAnnotationVerseClick
       )}
     </div>
   );
@@ -1509,6 +1538,43 @@ export function BibleReader(props: BibleReaderProps) {
   );
 
   const isMobile = state?.app.isMobile.value ?? false;
+
+  // Clicking an annotated verse number selects the verse (like clicking its
+  // text does) and jumps straight to its note: expands and scrolls to it in
+  // the mobile verse toolbar, or opens/scrolls the Discover pane on desktop,
+  // where that toolbar isn't used.
+  const handleAnnotationVerseClick = (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => {
+    // The <sup> sits inside the verse's own clickable <span>; stop the tap
+    // here so selectVerse (a toggle) doesn't run twice and immediately undo
+    // itself.
+    event.stopPropagation();
+    selectVerse(verse, event.clientX, event.clientY);
+    if (!state) {
+      return;
+    }
+
+    if (isMobile) {
+      readingState.pendingAnnotationScrollVerse.value = verseNumber;
+      return;
+    }
+
+    // Set the target before (maybe) opening: if Discover is already open,
+    // openDiscover() would just toggle it *closed* — only open when it isn't
+    // already showing, and let the effect in AnnotationsSection react to the
+    // target either way.
+    state.discover.scrollToVerse.value = {
+      bookId: verse.bookId,
+      chapterNumber: verse.chapterNumber,
+      verseNumber,
+    };
+    if (!state.discover.isDiscoverOpen.value) {
+      state.app.openDiscover();
+    }
+  };
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
   // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
@@ -1799,6 +1865,7 @@ export function BibleReader(props: BibleReaderProps) {
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
+              onAnnotationVerseClick={handleAnnotationVerseClick}
             />
           </Suspense>
         ))}

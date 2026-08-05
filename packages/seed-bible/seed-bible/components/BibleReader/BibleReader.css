@@ -595,6 +595,11 @@
   border: 1px solid var(--sb-verse-font-color);
   border-radius: 4px;
   padding: 2px;
+  cursor: pointer;
+}
+
+.sb-verse-annotation-icon {
+  cursor: pointer;
 }
 
 .sb-verse-number .material-symbols-outlined {
