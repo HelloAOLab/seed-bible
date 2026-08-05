@@ -502,14 +502,14 @@ export function ChatView(props: ChatViewProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const isFirstRenderRef = useRef(true);
   const wasAtBottomRef = useRef(true);
-  // Mobile-only: blink a fake caret until the user first accesses the input
-  // during this open of chat. Resets the next time chat is opened/mounted;
-  // stays hidden after blur within the same open.
-  const showMobileInputHint = useSignal(false);
-
-  const dismissInputHint = () => {
-    showMobileInputHint.value = false;
-  };
+  // Mobile-only: while the field is blurred and empty, blink a fake caret
+  // as a "you can type here" hint. Hidden the moment the field is focused
+  // or has text, and reappears on blur if the field is empty again.
+  const isInputFocused = useSignal(false);
+  const showMobileInputHint =
+    state.app.isMobile.value &&
+    !isInputFocused.value &&
+    draft.value.length === 0;
 
   const activeParticipants = chat.participants.value.filter(
     (participant) => participant.isActive
@@ -595,10 +595,9 @@ export function ChatView(props: ChatViewProps) {
 
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
-    // Show a CSS blinking caret instead as a subtle “you can type here” hint
-    // for this open of chat only.
+    // The blinking hint caret (`showMobileInputHint` above) stands in for
+    // the real caret until the user taps in.
     if (state.app.isMobile.value) {
-      showMobileInputHint.value = true;
       return;
     }
     inputRef.current?.focus();
@@ -966,7 +965,7 @@ export function ChatView(props: ChatViewProps) {
         <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
           <div
             className={
-              showMobileInputHint.value
+              showMobileInputHint
                 ? "sb-chat-view-input-wrap sb-chat-view-input-wrap--hint"
                 : "sb-chat-view-input-wrap"
             }
@@ -984,7 +983,6 @@ export function ChatView(props: ChatViewProps) {
               })}
               value={draft.value}
               onInput={(event) => {
-                dismissInputHint();
                 const input = event.currentTarget as HTMLInputElement;
                 draft.value = input.value;
                 cursorPosition.value =
@@ -992,16 +990,15 @@ export function ChatView(props: ChatViewProps) {
                 chat.setTypingStatus(input.value.trim().length > 0);
               }}
               onKeyDown={handleMentionKeyDown}
-              onPointerDown={dismissInputHint}
               onClick={handleInputPositionUpdate}
               onKeyUp={handleInputPositionUpdate}
               onSelect={handleInputPositionUpdate}
               onFocus={(event) => {
-                // Hide the type-hint for this chat open once the field is used.
-                dismissInputHint();
+                isInputFocused.value = true;
                 handleInputPositionUpdate(event);
               }}
               onBlur={() => {
+                isInputFocused.value = false;
                 chat.setTypingStatus(false);
               }}
               aria-autocomplete="list"
