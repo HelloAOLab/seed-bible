@@ -812,14 +812,14 @@ const SideBarChapters = (props: {
     }
 
     const shouldCenter = centerOnOpenPendingRef.current;
+    // Consume immediately rather than inside the timeout below: if a second
+    // effect run (e.g. expanding another book) lands before the timeout
+    // fires, cleanup clears the timeout without ever running its callback,
+    // so a deferred reset would leak `shouldCenter: true` into that next,
+    // non-opening pass.
+    centerOnOpenPendingRef.current = false;
 
     const timeout = window.setTimeout(() => {
-      // Consume the open-center pass for this open, even if the target is
-      // missing, so later book expands while open never re-center.
-      if (shouldCenter) {
-        centerOnOpenPendingRef.current = false;
-      }
-
       const bookTab = document.getElementById(`booktab-${openBookId}`);
       const booksItem = bookTab?.closest(".books-item");
       if (!bookTab || !booksItem) return;
