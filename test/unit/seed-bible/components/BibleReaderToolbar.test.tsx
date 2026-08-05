@@ -876,12 +876,28 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     }
   });
 
-  function mockAnnotationsForChapter(annotations: Annotation[]) {
+  // `selectionAnnotations` now lives on the reading state itself (see
+  // `BibleReadingManager.tsx`): it captures `getAnnotationsForChapter` off
+  // an `AnnotationsManager` reference the reading state closed over at
+  // construction time — reassigning `state.annotations` to a new object (a
+  // spread copy) wouldn't reach that closure, so the method is mutated
+  // in place on the existing object instead. The chapter was already
+  // navigated to during `createTestSeedBibleState` in `beforeEach`, before
+  // this mock exists, so swapping the method alone has no effect until
+  // something re-runs `applyPosition` — re-selecting the same translation/
+  // book/chapter does that unconditionally (see `selectTranslationAndChapter`),
+  // which is what re-captures this mock.
+  async function mockAnnotationsForChapter(annotations: Annotation[]) {
+    const { readingState, chapter } = getFirstVerse();
     const annotationsSignal = signal(annotations);
-    state.annotations = {
-      ...state.annotations,
-      getAnnotationsForChapter: vi.fn(() => annotationsSignal),
-    };
+    state.annotations.getAnnotationsForChapter = vi.fn(() => annotationsSignal);
+    await act(async () => {
+      await readingState.selectTranslationAndChapter(
+        chapter.translation.id,
+        chapter.book.id,
+        chapter.chapter.number
+      );
+    });
   }
 
   function getFirstVerse() {
@@ -962,7 +978,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
 
   it("hides the annotation while collapsed and shows it once the sheet is expanded", async () => {
     const { chapter, firstVerse } = getFirstVerse();
-    mockAnnotationsForChapter([
+    await mockAnnotationsForChapter([
       {
         id: "a1",
         bookId: chapter.book.id,
@@ -992,7 +1008,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     // The default verse toolbar tools already overflow one row on their own
     // in this environment, so this asserts the weaker but still meaningful
     // claim: with an annotation present, the sheet has something to open.
-    mockAnnotationsForChapter([
+    await mockAnnotationsForChapter([
       {
         id: "a1",
         bookId: chapter.book.id,
@@ -1009,7 +1025,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
 
   it("excludes a whole-chapter annotation (no verse targeting) from the expanded sheet", async () => {
     const { chapter } = getFirstVerse();
-    mockAnnotationsForChapter([
+    await mockAnnotationsForChapter([
       {
         id: "a1",
         bookId: chapter.book.id,
@@ -1028,7 +1044,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
 
   it("groups annotations by verse range, like the Discover pane", async () => {
     const { chapter, firstVerse } = getFirstVerse();
-    mockAnnotationsForChapter([
+    await mockAnnotationsForChapter([
       {
         id: "a1",
         bookId: chapter.book.id,

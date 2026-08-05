@@ -43,6 +43,11 @@ import type {
   ReadingExtensionRuntime,
   ReadingNavigationOutcome,
 } from "../managers/BibleReadingExtensionManager";
+import {
+  annotationVerseNumbers,
+  type Annotation,
+  type AnnotationsManager,
+} from "../managers/AnnotationsManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -206,6 +211,14 @@ export interface BibleReadingState {
   decorations: ReadonlySignal<VerseDecoration[]>;
   /** Current multi-verse selection in the active chapter. */
   selectedVerses: Signal<BibleSelectedVerse[]>;
+  /**
+   * Annotations covering any of the currently selected verses, scoped to the
+   * active chapter. A whole-chapter annotation (no verse targeting) never
+   * matches here, since `annotationVerseNumbers` resolves it to `[]`. Empty
+   * when this reading state was created without an `AnnotationsManager`
+   * (e.g. a shared session's reading state).
+   */
+  selectionAnnotations: ReadonlySignal<Annotation[]>;
   /** Currently selected footnote with resolved verse/chapter context. */
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
   /**
@@ -1131,7 +1144,15 @@ export function createBibleReadingState(
   i18nManager: I18nManager,
   options: InitialBibleReadingOptions = {},
   discoverManager?: DiscoverManager,
-  readingExtensionManager?: BibleReadingExtensionManager
+  readingExtensionManager?: BibleReadingExtensionManager,
+  /**
+   * Lazily resolved rather than passed directly: `AnnotationsManager` itself
+   * depends on `TabsManager`, which is what constructs the *first* tab's
+   * reading state — a direct reference would be a construction-order cycle.
+   * By the time anything actually reads `selectionAnnotations.value`, the
+   * caller's `AnnotationsManager` already exists.
+   */
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -1201,6 +1222,19 @@ export function createBibleReadingState(
   const highlights = computed<ChapterHighlights>(
     () => activeChapterHighlights.value.value
   );
+  const activeChapterAnnotations = signal<ReadonlySignal<Annotation[]>>(
+    signal<Annotation[]>([])
+  );
+  const chapterAnnotations = computed<Annotation[]>(
+    () => activeChapterAnnotations.value.value
+  );
+  const selectionAnnotations = computed<Annotation[]>(() => {
+    const verseNumbers = selectedVerses.value.map((v) => v.verse.number);
+    if (verseNumbers.length === 0) return [];
+    return chapterAnnotations.value.filter((annotation) =>
+      annotationVerseNumbers(annotation).some((n) => verseNumbers.includes(n))
+    );
+  });
   const decorations = signal<VerseDecoration[]>([]);
   const decorationRemovalTimers = new Map<
     string,
@@ -1923,6 +1957,13 @@ export function createBibleReadingState(
         next.bookId,
         next.chapterNumber
       );
+      const annotationsManager = getAnnotationsManager?.();
+      activeChapterAnnotations.value = annotationsManager
+        ? annotationsManager.getAnnotationsForChapter(
+            next.bookId,
+            next.chapterNumber
+          )
+        : signal<Annotation[]>([]);
 
       if (options?.content) {
         // Supersede any request already in the air before committing, so a
@@ -2939,6 +2980,7 @@ export function createBibleReadingState(
     highlights,
     decorations,
     selectedVerses,
+    selectionAnnotations,
     selectedFootnote,
     loading,
     error,

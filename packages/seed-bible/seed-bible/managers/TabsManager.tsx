@@ -27,6 +27,7 @@ import {
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { LoginManager } from "../managers/LoginManager";
+import type { AnnotationsManager } from "../managers/AnnotationsManager";
 import { getProfileConfigValue } from "../managers/ProfileConfigSync";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
@@ -216,7 +217,8 @@ export function createInitialTabs(
   i18nManager: I18nManager,
   options: InitialTabsOptions,
   discoverManager?: DiscoverManager,
-  readingExtensionManager?: BibleReadingExtensionManager
+  readingExtensionManager?: BibleReadingExtensionManager,
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): ReaderTab[] {
   const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
@@ -234,7 +236,8 @@ export function createInitialTabs(
         scrollToVerse: highlightedVerses[0] ?? undefined,
       },
       discoverManager,
-      readingExtensionManager
+      readingExtensionManager,
+      getAnnotationsManager
     ),
     sharedSession: null,
     sharedChat: null,
@@ -343,7 +346,14 @@ export function createTabs(
   i18nManager: I18nManager,
   login: LoginManager,
   discoverManager?: DiscoverManager,
-  readingExtensionManager?: BibleReadingExtensionManager
+  readingExtensionManager?: BibleReadingExtensionManager,
+  /**
+   * Lazily resolved — see `createBibleReadingState`'s parameter of the same
+   * name. `AnnotationsManager` depends on this very `TabsManager`, so it
+   * can't exist yet when the first tab below is created; the caller passes a
+   * getter that resolves once its own `AnnotationsManager` does.
+   */
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -396,7 +406,8 @@ export function createTabs(
         ),
       },
       discoverManager,
-      readingExtensionManager
+      readingExtensionManager,
+      getAnnotationsManager
     )
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
@@ -813,7 +824,8 @@ export function createTabs(
           i18nManager,
           initialReadingOptions,
           discoverManager,
-          readingExtensionManager
+          readingExtensionManager,
+          getAnnotationsManager
         ),
       sharedSession,
       sharedChat,

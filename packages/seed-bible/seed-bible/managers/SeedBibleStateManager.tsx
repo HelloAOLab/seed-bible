@@ -444,7 +444,8 @@ export function createSeedBibleState(
     i18n,
     login,
     discover,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(

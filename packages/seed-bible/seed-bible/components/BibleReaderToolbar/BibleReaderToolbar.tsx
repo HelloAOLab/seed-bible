@@ -28,7 +28,6 @@ import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
-  annotationVerseNumbers,
   groupAnnotationsByVerseRange,
   type AnnotationGroup,
 } from "../../managers/AnnotationsManager";
@@ -1071,22 +1070,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   // Annotations covering any of the currently selected verses — shown
-  // read-only in the mobile verse sheet once it's expanded. A whole-chapter
-  // annotation (no verse targeting) never matches here, since
-  // `annotationVerseNumbers` resolves it to `[]`.
-  const selectionAnnotations = useComputed(() => {
-    const rs = readingState.value;
-    const bookId = rs?.bookId.value;
-    const chapterNumber = rs?.chapterNumber.value;
-    if (!rs || !bookId || !chapterNumber) return [];
-    const verseNumbers = rs.selectedVerses.value.map((v) => v.verse.number);
-    if (verseNumbers.length === 0) return [];
-    return props.state.annotations
-      .getAnnotationsForChapter(bookId, chapterNumber)
-      .value.filter((annotation) =>
-        annotationVerseNumbers(annotation).some((n) => verseNumbers.includes(n))
-      );
-  });
+  // read-only in the mobile verse sheet once it's expanded. Computed by the
+  // reading state itself (see `BibleReadingManager.tsx`), which already
+  // tracks both the active chapter's annotations and the live selection.
+  const selectionAnnotations = useComputed(
+    () => readingState.value?.selectionAnnotations.value ?? []
+  );
 
   // Reset picker and the mobile sheet's expanded state when selection clears.
   // The drag offsets go too: a sheet dismissed by dragging it down would
