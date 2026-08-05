@@ -33,6 +33,11 @@ import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import {
+  annotationVerseNumbers,
+  type Annotation,
+  type AnnotationsManager,
+} from "../../managers/AnnotationsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
@@ -521,6 +526,7 @@ function renderChapterContent(
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
   highlights: ChapterHighlight[],
   decorations: VerseDecoration[],
+  chapterAnnotations: Annotation[],
   scriptureElements: ScriptureElementsBehavior
 ) {
   if (!chapterData) {
@@ -618,6 +624,39 @@ function renderChapterContent(
     return highlight.colorId;
   };
 
+  const getVerseAnnotations = (verseNumber: number): Annotation[] =>
+    chapterAnnotations.filter((annotation) =>
+      annotationVerseNumbers(annotation).includes(verseNumber)
+    );
+
+  // Renders a verse's number when shown, boxed if the verse has a covering
+  // annotation; when verse numbers are hidden, an annotated verse still shows
+  // a `sticky_note_2` icon in that spot so the indicator survives the setting.
+  const renderVerseNumberOrIcon = (verseNumber: number) => {
+    const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
+    if (scriptureElements.showVerseNumbers) {
+      return (
+        <sup
+          className={
+            hasAnnotation
+              ? "sb-verse-number sb-verse-number-annotated"
+              : "sb-verse-number"
+          }
+        >
+          {verseNumber}
+        </sup>
+      );
+    }
+    if (!hasAnnotation) {
+      return null;
+    }
+    return (
+      <sup className="sb-verse-number sb-verse-annotation-icon">
+        <span className="material-symbols-outlined">sticky_note_2</span>
+      </sup>
+    );
+  };
+
   // Renders a single verse's `<span class="sb-verse">`. The highlight background
   // is never painted here — an enclosing run wrapper (below) carries it and the
   // ribbon layer draws it behind the text. Verse decorations still apply here.
@@ -691,9 +730,7 @@ function renderChapterContent(
                   className={verseDecoratorClassName}
                   style={verseDecoratorStyle}
                 >
-                  {segIndex === 0 && scriptureElements.showVerseNumbers && (
-                    <sup className="sb-verse-number">{value.number}</sup>
-                  )}
+                  {segIndex === 0 && renderVerseNumberOrIcon(value.number)}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -726,9 +763,7 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    scriptureElements.showVerseNumbers && (
-                      <sup className="sb-verse-number">{value.number}</sup>
-                    )}
+                    renderVerseNumberOrIcon(value.number)}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -764,9 +799,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {scriptureElements.showVerseNumbers && (
-            <sup className="sb-verse-number">{value.number}</sup>
-          )}
+          {renderVerseNumberOrIcon(value.number)}
           {value.content.map((part, index) =>
             renderInlineContent(
               part,
@@ -965,6 +998,7 @@ function renderStaticChapterContent(
     () => {},
     [],
     [],
+    [],
     scriptureElements
   );
 }
@@ -1029,6 +1063,7 @@ interface ChapterContentProps {
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
+  annotations?: AnnotationsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1053,12 +1088,22 @@ function ChapterContent(props: ChapterContentProps) {
     selectedVerses,
     highlights,
     decorations,
+    annotations,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
     justConvertedSelectionRef,
     scriptureElements,
   } = props;
+
+  const currentChapter = chapterData.value;
+  const chapterAnnotations =
+    currentChapter && annotations
+      ? annotations.getAnnotationsForChapter(
+          currentChapter.book.id,
+          currentChapter.chapter.number
+        ).value
+      : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [ribbons, setRibbons] = useState<Ribbon[]>([]);
@@ -1345,6 +1390,7 @@ function ChapterContent(props: ChapterContentProps) {
         (noteId) => selectFootnote(noteId),
         highlights.value.highlights,
         decorations.value,
+        chapterAnnotations,
         scriptureElements
       )}
     </div>
@@ -1695,6 +1741,7 @@ export function BibleReader(props: BibleReaderProps) {
               justConvertedSelectionRef={justConvertedSelectionRef}
               highlights={highlights}
               decorations={decorations}
+              annotations={state?.annotations}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}

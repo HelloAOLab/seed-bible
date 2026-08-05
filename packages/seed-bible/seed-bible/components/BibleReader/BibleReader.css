@@ -566,6 +566,16 @@
   opacity: 0.7;
 }
 
+.sb-verse-number-annotated {
+  border: 1px solid var(--sb-verse-font-color);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.sb-verse-number .material-symbols-outlined {
+  font-size: 1em;
+}
+
 .sb-poem-line-1 {
   margin-left: 0;
   display: inline;
