@@ -257,6 +257,9 @@ function createMobileState(): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    annotations: {
+      getAnnotationsForChapter: vi.fn(() => signal([])),
+    },
   } as any as SeedBibleState;
 }
 
