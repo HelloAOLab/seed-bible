@@ -13,6 +13,7 @@ import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import {
   handleGridKeyNav,
+  handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
 import {
@@ -667,6 +668,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Verse toolbar highlight picker state (declared early so position clamping
   // can account for the picker's taller fallback height before measure).
   const isHighlightPickerOpen = useSignal(false);
+  // Mobile color-strip hint: shown when the picker opens, cleared after the
+  // first horizontal swipe, and reset the next time the picker is opened.
+  // Component-local only — not persisted across sessions/reloads.
+  const showHighlightColorSwipeHint = useSignal(true);
+  const colorSwatchesRef = useRef<HTMLDivElement | null>(null);
   // Measured height of the floating desktop verse toolbar. The toolbar uses
   // `transform: translate(-50%, -100%)`, so `top` is the bottom edge — we need
   // the real height to keep that bottom edge low enough that the top edge
@@ -737,6 +743,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     isVerseToolbarVisible.value,
     isHighlightPickerOpen.value,
   ]);
+
+  // When the mobile color picker opens, reset the strip to the start so the
+  // "Swipe to see more" hint is meaningful for this open session.
+  useEffect(() => {
+    if (!isHighlightPickerOpen.value || !isSmallScreen.value) return;
+    const el = colorSwatchesRef.current;
+    if (!el) return;
+    el.scrollLeft = 0;
+  }, [isHighlightPickerOpen.value, isSmallScreen.value]);
 
   // Final on-screen position after drag, clamped so the taller picker can't be
   // dragged (or open) past the top/bottom of the viewport either.
@@ -1601,12 +1616,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 type="button"
                 className="sb-verse-toolbar-close"
                 onClick={() => {
+                  // In highlight-picker mode, close just leaves the picker so the
+                  // user can return to verse actions without losing the selection.
+                  if (isHighlightPickerOpen.value) {
+                    isHighlightPickerOpen.value = false;
+                    return;
+                  }
                   readingState.value?.clearSelectedVerses();
                 }}
-                aria-label={t("close", { defaultValue: "Close" })}
-                title={t("close", { defaultValue: "Close" })}
+                aria-label={
+                  isHighlightPickerOpen.value
+                    ? t("back", { defaultValue: "Back" })
+                    : t("close", { defaultValue: "Close" })
+                }
+                title={
+                  isHighlightPickerOpen.value
+                    ? t("back", { defaultValue: "Back" })
+                    : t("close", { defaultValue: "Close" })
+                }
               >
-                <span className="material-symbols-outlined">close</span>
+                <span className="material-symbols-outlined">
+                  {isHighlightPickerOpen.value ? "arrow_back" : "close"}
+                </span>
               </button>
             </>
           )}
@@ -1618,7 +1649,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   : ""
               }`}
             >
-              {isHighlightPickerOpen.value && (
+              {/* Desktop keeps a back chevron next to the reference; mobile
+                  matches YouVersion with a centered title only. */}
+              {isHighlightPickerOpen.value && !isSmallScreen.value && (
                 <button
                   type="button"
                   className="sb-verse-toolbar-back"
@@ -1650,17 +1683,36 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 if (event.key === "Escape") {
                   event.preventDefault();
                   isHighlightPickerOpen.value = false;
+                  return;
+                }
+                if (isSmallScreen.value) {
+                  handleHorizontalListKeyNav(event, event.currentTarget);
                 }
               }}
             >
               <div
+                ref={colorSwatchesRef}
                 className="sb-verse-toolbar-swatches"
                 role="group"
                 aria-label={t("highlight-colors", {
                   defaultValue: "Highlight colors",
                 })}
+                onScroll={() => {
+                  if (!isSmallScreen.value) return;
+                  const el = colorSwatchesRef.current;
+                  if (!el) return;
+                  // Any meaningful horizontal swipe dismisses the hint for this
+                  // open session of the picker.
+                  if (el.scrollLeft > 4) {
+                    showHighlightColorSwipeHint.value = false;
+                  }
+                }}
                 onKeyDown={(event) => {
-                  handleGridKeyNav(event, event.currentTarget);
+                  if (isSmallScreen.value) {
+                    handleHorizontalListKeyNav(event, event.currentTarget);
+                  } else {
+                    handleGridKeyNav(event, event.currentTarget);
+                  }
                 }}
               >
                 {DEFAULT_HIGHLIGHT_IDS.map((colorId) => (
@@ -1714,25 +1766,45 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     />
                   </button>
                 ))}
+
+                {/* On mobile the "+" lives inside the scroll strip so custom
+                    colors and defaults stay one continuous thumb-scroll row. */}
+                {isSmallScreen.value && (
+                  <button
+                    type="button"
+                    className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
+                    onClick={() => {
+                      colorInputRef.current?.click();
+                    }}
+                    aria-label={t("add-custom-color", {
+                      defaultValue: "Add custom color",
+                    })}
+                    title={t("add-color", { defaultValue: "Add color" })}
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                  </button>
+                )}
               </div>
 
               <div className="sb-verse-toolbar-picker-actions">
-                <button
-                  type="button"
-                  className="sb-verse-toolbar-plus"
-                  onClick={() => {
-                    colorInputRef.current?.click();
-                  }}
-                  aria-label={t("add-custom-color", {
-                    defaultValue: "Add custom color",
-                  })}
-                  title={t("add-color", { defaultValue: "Add color" })}
-                >
-                  <span className="material-symbols-outlined">add</span>
-                  <span className="sb-verse-toolbar-action-text">
-                    {t("add", { defaultValue: "Add" })}
-                  </span>
-                </button>
+                {!isSmallScreen.value && (
+                  <button
+                    type="button"
+                    className="sb-verse-toolbar-plus"
+                    onClick={() => {
+                      colorInputRef.current?.click();
+                    }}
+                    aria-label={t("add-custom-color", {
+                      defaultValue: "Add custom color",
+                    })}
+                    title={t("add-color", { defaultValue: "Add color" })}
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                    <span className="sb-verse-toolbar-action-text">
+                      {t("add", { defaultValue: "Add" })}
+                    </span>
+                  </button>
+                )}
                 <input
                   ref={colorInputRef}
                   type="color"
@@ -1778,7 +1850,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   })}
                   title={t("clear", { defaultValue: "Clear" })}
                 >
-                  <span className="material-symbols-outlined">ink_eraser</span>
+                  <span className="material-symbols-outlined">
+                    {isSmallScreen.value ? "close" : "ink_eraser"}
+                  </span>
                   <span className="sb-verse-toolbar-action-text">
                     {t("clear", { defaultValue: "Clear" })}
                   </span>
@@ -1912,6 +1986,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
                       onClick={() => {
                         isHighlightPickerOpen.value = true;
+                        showHighlightColorSwipeHint.value = true;
                       }}
                       aria-label={t("highlight-selection", {
                         defaultValue: "Highlight selection",
@@ -2075,16 +2150,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               })()}
             </div>
           )}
-          {isSmallScreen.value && (
-            <div className="sb-verse-toolbar-swipe-hint" aria-hidden="true">
-              <span className="material-symbols-outlined">
-                keyboard_double_arrow_up
-              </span>
-              <span>
-                {t("swipe-up-more", { defaultValue: "Swipe up to view more" })}
-              </span>
-            </div>
-          )}
+          {isSmallScreen.value &&
+            isHighlightPickerOpen.value &&
+            showHighlightColorSwipeHint.value && (
+              <div
+                className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
+                aria-hidden="true"
+              >
+                <span className="material-symbols-outlined">
+                  keyboard_double_arrow_right
+                </span>
+                <span>
+                  {t("swipe-to-see-more", {
+                    defaultValue: "Swipe to see more",
+                  })}
+                </span>
+              </div>
+            )}
         </div>
       )}
     </>
