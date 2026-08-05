@@ -569,7 +569,7 @@
 .sb-verse-number-annotated {
   border: 1px solid var(--sb-verse-font-color);
   border-radius: 4px;
-  padding: 4px;
+  padding: 2px;
 }
 
 .sb-verse-number .material-symbols-outlined {

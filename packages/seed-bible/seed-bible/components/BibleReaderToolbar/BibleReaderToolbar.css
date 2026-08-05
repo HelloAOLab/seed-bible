@@ -1081,6 +1081,31 @@
   min-width: 4.5rem;
 }
 
+/* Forces the annotation list onto its own full-width line below any overflow
+   action cards, inside the same measured/animated overflow row. */
+.sb-verse-toolbar-annotations {
+  flex: 0 0 100%;
+  & > h4 {
+    margin: 0.25rem 0 0.5rem;
+  }
+}
+
+.sb-verse-toolbar-annotation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-verse-toolbar-annotation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-radius: 8px;
+}
+
 /* While dragging, height and transform follow the pointer directly; easing
    towards the finger would feel like lag. The animations come back on release,
    which is what carries the sheet the rest of the way to its resting position. */

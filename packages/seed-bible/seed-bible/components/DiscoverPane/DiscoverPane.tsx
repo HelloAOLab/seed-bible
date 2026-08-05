@@ -481,7 +481,7 @@ function annotationLocationLabel(
 }
 
 /** Renders an annotation's sanitized HTML body as a preview snippet. */
-function AnnotationPreview({ html }: { html: string }) {
+export function AnnotationPreview({ html }: { html: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (ref.current) {
@@ -587,7 +587,7 @@ function getAnnotationUpdatedTimeFormatter(
 }
 
 /** A comment annotation's author name plus its last-updated time. */
-function AnnotationCommentMeta(props: {
+export function AnnotationCommentMeta(props: {
   annotation: Annotation;
   login: LoginManager;
   t: ReturnType<typeof useI18n>["t"];

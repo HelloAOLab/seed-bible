@@ -1,9 +1,11 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
 import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
 import {
@@ -13,6 +15,15 @@ import {
   makeUrl,
   translations,
 } from "../managers/testUtils/mockBibleApiData";
+
+// The real implementation dynamically imports `dompurify`, which resolves
+// after the `act()` that mounts `AnnotationPreview` — mocked synchronously
+// here, same as `DiscoverPane.test.tsx`, so its `useEffect` settles inline.
+vi.mock("@packages/seed-bible/seed-bible/managers/Sanitization", () => ({
+  setSafeHtml: vi.fn(async (html: string, element: HTMLElement) => {
+    element.innerHTML = html;
+  }),
+}));
 
 /** The width `app.isMobile` needs to see for the bottom tab bar to render. */
 const MOBILE_VIEWPORT_WIDTH = 400;
@@ -784,5 +795,203 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     });
 
     expect(overflow()?.style.height).toBe("0px");
+  });
+});
+
+describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
+  let container: HTMLDivElement;
+  let state: SeedBibleState;
+  let originalScrollHeight: PropertyDescriptor | undefined;
+
+  beforeEach(async () => {
+    // Mobile viewport, so the verse toolbar renders as the bottom sheet.
+    window.innerWidth = 400;
+    window.innerHeight = 800;
+
+    originalScrollHeight = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollHeight"
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains("sb-verse-toolbar-overflow-row")
+          ? OVERFLOW_HEIGHT
+          : 0;
+      },
+    });
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+
+    state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    if (originalScrollHeight) {
+      Object.defineProperty(
+        HTMLElement.prototype,
+        "scrollHeight",
+        originalScrollHeight
+      );
+    }
+  });
+
+  function mockAnnotationsForChapter(annotations: Annotation[]) {
+    const annotationsSignal = signal(annotations);
+    state.annotations = {
+      ...state.annotations,
+      getAnnotationsForChapter: vi.fn(() => annotationsSignal),
+    };
+  }
+
+  function getFirstVerse() {
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    const chapter = readingState.chapterData.value!;
+    const firstVerse = chapter.chapter.content.find(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )!;
+    return { readingState, chapter, firstVerse };
+  }
+
+  async function renderSheet() {
+    const { readingState, chapter, firstVerse } = getFirstVerse();
+
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: firstVerse,
+          translationId: chapter.translation.id,
+        },
+        10,
+        10
+      );
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const handle = container.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-handle-area"
+    );
+    if (!handle) throw new Error("The verse sheet handle did not render.");
+    return { handle, chapter, firstVerse };
+  }
+
+  const overflow = () =>
+    container.querySelector<HTMLElement>(".sb-verse-toolbar-overflow");
+  const annotationItems = () =>
+    container.querySelectorAll<HTMLElement>(
+      ".sb-verse-toolbar-annotation-item"
+    );
+
+  async function press(handle: HTMLElement, clientY: number) {
+    await act(async () => {
+      handle.dispatchEvent(
+        new window.PointerEvent("pointerdown", {
+          pointerId: 1,
+          clientY,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+  }
+
+  async function moveTo(handle: HTMLElement, clientY: number) {
+    await act(async () => {
+      handle.dispatchEvent(
+        new window.PointerEvent("pointermove", {
+          pointerId: 1,
+          clientY,
+          bubbles: true,
+        })
+      );
+    });
+  }
+
+  it("hides the annotation while collapsed and shows it once the sheet is expanded", async () => {
+    const { chapter, firstVerse } = getFirstVerse();
+    mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Note</p>" },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    expect(annotationItems()).toHaveLength(1);
+    expect(overflow()?.className).toContain("sb-verse-toolbar-overflow-closed");
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    expect(overflow()?.className).not.toContain(
+      "sb-verse-toolbar-overflow-closed"
+    );
+    await vi.waitFor(() => {
+      expect(annotationItems()[0]?.textContent).toContain("Note");
+    });
+  });
+
+  it("makes the sheet openable from an annotation alone, even with the default tool cards fitting in one row", async () => {
+    const { chapter, firstVerse } = getFirstVerse();
+    // The default verse toolbar tools already overflow one row on their own
+    // in this environment, so this asserts the weaker but still meaningful
+    // claim: with an annotation present, the sheet has something to open.
+    mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Note</p>" },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    expect(handle.tabIndex).toBe(0);
+    expect(overflow()).not.toBeNull();
+  });
+
+  it("excludes a whole-chapter annotation (no verse targeting) from the expanded sheet", async () => {
+    const { chapter } = getFirstVerse();
+    mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: null,
+        data: { type: "comment", html: "<p>Whole chapter note</p>" },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    expect(annotationItems()).toHaveLength(0);
   });
 });

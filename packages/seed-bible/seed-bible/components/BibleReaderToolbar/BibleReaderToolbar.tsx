@@ -27,6 +27,11 @@ import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bo
 import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
+import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
+import {
+  AnnotationPreview,
+  AnnotationCommentMeta,
+} from "../DiscoverPane/DiscoverPane";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -993,6 +998,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return `${bookName} ${chapter}:${ranges.join(",")}`;
   });
 
+  // Annotations covering any of the currently selected verses — shown
+  // read-only in the mobile verse sheet once it's expanded. A whole-chapter
+  // annotation (no verse targeting) never matches here, since
+  // `annotationVerseNumbers` resolves it to `[]`.
+  const selectionAnnotations = useComputed(() => {
+    const rs = readingState.value;
+    const bookId = rs?.bookId.value;
+    const chapterNumber = rs?.chapterNumber.value;
+    if (!rs || !bookId || !chapterNumber) return [];
+    const verseNumbers = rs.selectedVerses.value.map((v) => v.verse.number);
+    if (verseNumbers.length === 0) return [];
+    return props.state.annotations
+      .getAnnotationsForChapter(bookId, chapterNumber)
+      .value.filter((annotation) =>
+        annotationVerseNumbers(annotation).some((n) => verseNumbers.includes(n))
+      );
+  });
+
   // Reset picker and the mobile sheet's expanded state when selection clears.
   // The drag offsets go too: a sheet dismissed by dragging it down would
   // otherwise come back for the next selection still pushed off the screen.
@@ -1083,7 +1106,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
   }, [isMoreMenuOpen.value]);
 
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   // Opens the Today screen. If the `today-screen` extension isn't installed
   // yet, install it (the same path Settings uses — this persists the install)
@@ -2154,7 +2177,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // Keeping the collapsed sheet to a single row is what makes it
                 // short by default.
                 const COLLAPSED_COUNT = 4;
-                const hasOverflow = actionCards.length > COLLAPSED_COUNT;
+                // Annotations on the selection also make the sheet openable,
+                // even when there aren't enough tool cards to overflow on
+                // their own — otherwise there'd be nothing to drag/tap open
+                // to see them.
+                const hasOverflow =
+                  actionCards.length > COLLAPSED_COUNT ||
+                  selectionAnnotations.value.length > 0;
                 const primaryCards = hasOverflow
                   ? actionCards.slice(0, COLLAPSED_COUNT)
                   : actionCards;
@@ -2190,6 +2219,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           ref={measureVerseSheetOverflow}
                         >
                           {overflowCards}
+                          {selectionAnnotations.value.length > 0 && (
+                            <div className="sb-verse-toolbar-annotations">
+                              <h4>Notes</h4>
+                              <ul className="sb-verse-toolbar-annotation-list">
+                                {selectionAnnotations.value.map(
+                                  (annotation) => (
+                                    <li
+                                      key={annotation.id}
+                                      className="sb-verse-toolbar-annotation-item"
+                                    >
+                                      {annotation.data.type === "comment" && (
+                                        <AnnotationPreview
+                                          html={annotation.data.html}
+                                        />
+                                      )}
+                                      <AnnotationCommentMeta
+                                        annotation={annotation}
+                                        login={props.state.login}
+                                        t={t}
+                                        language={language}
+                                      />
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
