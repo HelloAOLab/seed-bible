@@ -434,6 +434,5 @@
   "remove": "Kaldırmak",
   "signed-out-message": "Oturumunuz kapatıldı. Lütfen tekrar giriş yapın.",
   "account-suspended-message": "Hesabınız askıya alındı.",
-  "loading-chapter": "Bölüm yükleniyor…",
-  "swipe-to-see-more": "Daha fazlasını görmek için kaydırın"
+  "loading-chapter": "Bölüm yükleniyor…"
 }

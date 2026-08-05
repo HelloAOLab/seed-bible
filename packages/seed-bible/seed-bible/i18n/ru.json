@@ -434,6 +434,5 @@
   "remove": "Удалять",
   "signed-out-message": "Вы вышли из системы. Пожалуйста, войдите снова.",
   "account-suspended-message": "Ваш аккаунт заблокирован.",
-  "loading-chapter": "Загрузка главы…",
-  "swipe-to-see-more": "Проведите пальцем, чтобы посмотреть больше"
+  "loading-chapter": "Загрузка главы…"
 }

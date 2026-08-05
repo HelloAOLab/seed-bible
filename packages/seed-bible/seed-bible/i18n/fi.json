@@ -434,6 +434,5 @@
   "remove": "Poistaa",
   "signed-out-message": "Sinut on kirjattu ulos. Kirjaudu uudelleen sisään.",
   "account-suspended-message": "Tilisi on jäädytetty.",
-  "loading-chapter": "Lukua ladataan…",
-  "swipe-to-see-more": "Pyyhkäise nähdäksesi lisää"
+  "loading-chapter": "Lukua ladataan…"
 }

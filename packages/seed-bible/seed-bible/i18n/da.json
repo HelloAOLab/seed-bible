@@ -434,6 +434,5 @@
   "remove": "Fjerne",
   "signed-out-message": "Du er blevet logget ud. Log venligst ind igen.",
   "account-suspended-message": "Din konto er blevet suspenderet.",
-  "loading-chapter": "Indlæser kapitel…",
-  "swipe-to-see-more": "Stryg for at se mere"
+  "loading-chapter": "Indlæser kapitel…"
 }
