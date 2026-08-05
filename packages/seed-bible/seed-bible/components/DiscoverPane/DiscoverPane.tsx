@@ -467,7 +467,7 @@ function annotationBookName(
 }
 
 /** Formats an annotation's book/chapter/verse targeting, e.g. "Genesis 3:3-5,7". */
-function annotationLocationLabel(
+export function annotationLocationLabel(
   annotation: Annotation,
   tabs: TabsManager
 ): string {

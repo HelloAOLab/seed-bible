@@ -901,7 +901,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     container.querySelector<HTMLElement>(".sb-verse-toolbar-overflow");
   const annotationItems = () =>
     container.querySelectorAll<HTMLElement>(
-      ".sb-verse-toolbar-annotation-item"
+      ".sb-verse-toolbar-annotations .sb-annotation-item"
     );
 
   async function press(handle: HTMLElement, clientY: number) {
@@ -993,5 +993,42 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     await moveTo(handle, 460);
 
     expect(annotationItems()).toHaveLength(0);
+  });
+
+  it("groups annotations by verse range, like the Discover pane", async () => {
+    const { chapter, firstVerse } = getFirstVerse();
+    mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: { type: "comment", html: "<p>Just this verse</p>" },
+      },
+      {
+        id: "a2",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        endVerseNumber: firstVerse.number + 1,
+        data: { type: "comment", html: "<p>A short range</p>" },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    const groupTitles = Array.from(
+      container.querySelectorAll(
+        ".sb-verse-toolbar-annotations .sb-annotation-group-header-title"
+      )
+    ).map((el) => el.textContent);
+    expect(groupTitles).toHaveLength(2);
+
+    await vi.waitFor(() => {
+      expect(annotationItems()[0]?.textContent).toContain("Just this verse");
+      expect(annotationItems()[1]?.textContent).toContain("A short range");
+    });
   });
 });

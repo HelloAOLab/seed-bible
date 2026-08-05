@@ -1081,29 +1081,23 @@
   min-width: 4.5rem;
 }
 
-/* Forces the annotation list onto its own full-width line below any overflow
-   action cards, inside the same measured/animated overflow row. */
+/* Forces the annotation groups onto their own full-width line below any
+   overflow action cards, inside the same measured/animated overflow row.
+   Each group/item below reuses DiscoverPane's `.sb-annotation-group*`/
+   `.sb-annotation-item*` classes (its CSS loads automatically here since this
+   file imports `AnnotationPreview`/`AnnotationCommentMeta` from that module)
+   so the grouped display matches the Discover pane's look exactly. */
 .sb-verse-toolbar-annotations {
   flex: 0 0 100%;
-  & > h4 {
-    margin: 0.25rem 0 0.5rem;
-  }
-}
-
-.sb-verse-toolbar-annotation-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.sb-verse-toolbar-annotation-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  border-radius: 8px;
+/* Read-only here — no click-to-navigate, no edit/delete menu — so the
+   pointer cursor DiscoverPane's clickable row uses isn't appropriate. */
+.sb-verse-toolbar-annotations .sb-annotation-item {
+  cursor: default;
 }
 
 /* While dragging, height and transform follow the pointer directly; easing

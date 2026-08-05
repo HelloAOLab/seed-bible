@@ -27,11 +27,18 @@ import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bo
 import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
-import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
+import {
+  annotationVerseNumbers,
+  groupAnnotationsByVerseRange,
+  type AnnotationGroup,
+} from "../../managers/AnnotationsManager";
 import {
   AnnotationPreview,
   AnnotationCommentMeta,
+  annotationLocationLabel,
 } from "../DiscoverPane/DiscoverPane";
+import type { TabsManager } from "../../managers/TabsManager";
+import type { LoginManager } from "../../managers/LoginManager";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -398,6 +405,71 @@ function applyHighlightWithSession(
   // }
 
   broadcastDecorationToSession(session, rs, details);
+}
+
+/**
+ * One verse-range group of annotations in the mobile verse sheet's expanded
+ * overflow area — mirrors `DiscoverPane`'s grouped annotation list (same
+ * header/list classes, same collapsible header), but read-only: no
+ * navigate-on-click, no edit/delete menu. A standalone component (rather than
+ * inlined in a `.map()`) so each group's `expanded` signal is its own hook
+ * instance, keyed by group below.
+ */
+function VerseToolbarAnnotationGroup(props: {
+  group: AnnotationGroup;
+  tabs: TabsManager;
+  login: LoginManager;
+}) {
+  const { group, tabs, login } = props;
+  const { t, language } = useI18n();
+  const expanded = useSignal(true);
+  const label = annotationLocationLabel(group.annotations[0]!, tabs);
+
+  return (
+    <div className="sb-annotation-group">
+      <button
+        type="button"
+        className="sb-annotation-group-header"
+        aria-expanded={expanded.value}
+        aria-label={
+          expanded.value
+            ? t("annotation-group-collapse", {
+                defaultValue: "Collapse group",
+              })
+            : t("annotation-group-expand", { defaultValue: "Expand group" })
+        }
+        onClick={() => (expanded.value = !expanded.value)}
+      >
+        <span className="sb-annotation-group-header-title">{label}</span>
+        <MaterialIcon
+          className={`sb-annotation-group-header-icon${
+            expanded.value ? "" : " sb-annotation-group-header-icon--collapsed"
+          }`}
+        >
+          expand_more
+        </MaterialIcon>
+      </button>
+      {expanded.value ? (
+        <ul className="sb-annotation-group-list">
+          {group.annotations.map((annotation) => (
+            <li key={annotation.id} className="sb-annotation-item" dir="auto">
+              <div className="sb-annotation-item-main">
+                {annotation.data.type === "comment" && (
+                  <AnnotationPreview html={annotation.data.html} />
+                )}
+                <AnnotationCommentMeta
+                  annotation={annotation}
+                  login={login}
+                  t={t}
+                  language={language}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
 }
 
 interface BibleReaderToolbarProps {
@@ -1106,7 +1178,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     };
   }, [isMoreMenuOpen.value]);
 
-  const { t, language } = useI18n();
+  const { t } = useI18n();
 
   // Opens the Today screen. If the `today-screen` extension isn't installed
   // yet, install it (the same path Settings uses — this persists the install)
@@ -2221,29 +2293,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           {overflowCards}
                           {selectionAnnotations.value.length > 0 && (
                             <div className="sb-verse-toolbar-annotations">
-                              <h4>Notes</h4>
-                              <ul className="sb-verse-toolbar-annotation-list">
-                                {selectionAnnotations.value.map(
-                                  (annotation) => (
-                                    <li
-                                      key={annotation.id}
-                                      className="sb-verse-toolbar-annotation-item"
-                                    >
-                                      {annotation.data.type === "comment" && (
-                                        <AnnotationPreview
-                                          html={annotation.data.html}
-                                        />
-                                      )}
-                                      <AnnotationCommentMeta
-                                        annotation={annotation}
-                                        login={props.state.login}
-                                        t={t}
-                                        language={language}
-                                      />
-                                    </li>
-                                  )
-                                )}
-                              </ul>
+                              {groupAnnotationsByVerseRange(
+                                selectionAnnotations.value
+                              ).map((group) => (
+                                <VerseToolbarAnnotationGroup
+                                  key={
+                                    group.annotations[0]?.id ??
+                                    `${group.startVerseNumber}-${group.endVerseNumber}`
+                                  }
+                                  group={group}
+                                  tabs={tabs}
+                                  login={props.state.login}
+                                />
+                              ))}
                             </div>
                           )}
                         </div>
