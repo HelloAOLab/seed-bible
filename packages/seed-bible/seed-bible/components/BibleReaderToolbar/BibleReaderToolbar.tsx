@@ -2328,6 +2328,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               <div
                 className="sb-verse-toolbar-swipe-hint"
                 aria-hidden="true"
+                onClick={() => {
+                  isVerseSheetExpanded.value = true;
+                }}
                 style={{
                   // Fades in step with the drag, so the hint gets out of the way
                   // as the sheet opens rather than blinking off at the end.

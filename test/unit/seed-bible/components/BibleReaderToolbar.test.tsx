@@ -612,6 +612,19 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(container.querySelector(".sb-verse-toolbar-more-toggle")).toBeNull();
   });
 
+  it("expands the sheet when the swipe-up hint itself is clicked", async () => {
+    await renderSheet();
+
+    expect(overflow()?.style.height).toBe("0px");
+
+    await act(async () => {
+      hint()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+    expect(hint()).toBeNull();
+  });
+
   it("keeps the closed drawer's actions out of the tab order", async () => {
     const handle = await renderSheet();
 

@@ -1166,6 +1166,10 @@
   font-size: 0.75rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  /* Tapping the hint also expands the sheet, as a shortcut alongside the
+     drag/tap handle above it (which remains the accessible control — this
+     text stays `aria-hidden`). */
+  cursor: pointer;
 }
 
 .sb-verse-toolbar-swipe-hint .material-symbols-outlined {
