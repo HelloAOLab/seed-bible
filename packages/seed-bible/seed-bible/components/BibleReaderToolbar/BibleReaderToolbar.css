@@ -1166,9 +1166,12 @@
   font-size: 0.75rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-  /* Tapping the hint also expands the sheet, as a shortcut alongside the
-     drag/tap handle above it (which remains the accessible control — this
-     text stays `aria-hidden`). */
+  /* Tapping/dragging the hint also expands the sheet, as a shortcut alongside
+     the drag/tap handle above it (which remains the accessible control — this
+     text stays `aria-hidden`). `touch-action: none` is required here too —
+     without it the browser turns an upward drag into a page scroll after the
+     first pixel, same as the handle above it. */
+  touch-action: none;
   cursor: pointer;
 }
 

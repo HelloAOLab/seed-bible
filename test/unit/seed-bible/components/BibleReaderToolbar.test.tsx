@@ -612,17 +612,35 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(container.querySelector(".sb-verse-toolbar-more-toggle")).toBeNull();
   });
 
-  it("expands the sheet when the swipe-up hint itself is clicked", async () => {
+  it("expands the sheet when the swipe-up hint is tapped", async () => {
     await renderSheet();
+    const hintEl = hint()!;
 
     expect(overflow()?.style.height).toBe("0px");
 
-    await act(async () => {
-      hint()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+    await press(hintEl, 500);
+    await release(hintEl, 500);
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
     expect(hint()).toBeNull();
+  });
+
+  it("opens the drawer by the distance the finger has travelled when dragging the swipe-up hint", async () => {
+    await renderSheet();
+    const hintEl = hint()!;
+
+    await press(hintEl, 500);
+    await moveTo(hintEl, 460);
+
+    // Same drag-tracks-the-finger behavior as the handle itself.
+    expect(overflow()?.style.height).toBe("40px");
+    expect(sheet()?.className).toContain("sb-verse-sheet-dragging");
+
+    await moveTo(hintEl, 420);
+    expect(overflow()?.style.height).toBe("80px");
+
+    await release(hintEl, 420);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
   });
 
   it("keeps the closed drawer's actions out of the tab order", async () => {

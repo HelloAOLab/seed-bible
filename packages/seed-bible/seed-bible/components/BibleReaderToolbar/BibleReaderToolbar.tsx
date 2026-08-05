@@ -2328,9 +2328,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               <div
                 className="sb-verse-toolbar-swipe-hint"
                 aria-hidden="true"
-                onClick={() => {
-                  isVerseSheetExpanded.value = true;
-                }}
+                // Same drag/tap gesture as the handle above it — a tap expands,
+                // and dragging tracks the finger the same way. The handle
+                // remains the sole *accessible* control (this stays
+                // `aria-hidden`), but pointer/touch users get a bigger target.
+                onPointerDown={handleVerseSheetHandlePointerDown}
+                onPointerMove={handleVerseSheetHandlePointerMove}
+                onPointerUp={handleVerseSheetHandlePointerUp}
+                onPointerCancel={handleVerseSheetHandlePointerCancel}
                 style={{
                   // Fades in step with the drag, so the hint gets out of the way
                   // as the sheet opens rather than blinking off at the end.
