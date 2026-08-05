@@ -778,8 +778,22 @@ const SideBarChapters = (props: {
     openBookId && openBookId === currentBookId.value
       ? currentChapterNumber.value
       : null;
+  // Center the current chapter only on the closed→open transition. Expanding
+  // another book while the selector stays open should keep develop's gentler
+  // "scroll into view if needed" behavior. The pending flag survives effect
+  // cleanups (e.g. openBookId updating right after open) until the open
+  // center scroll actually runs.
+  const wasSelectorOpenRef = useRef(false);
+  const centerOnOpenPendingRef = useRef(false);
 
   useEffect(() => {
+    if (isOpen.value && !wasSelectorOpenRef.current) {
+      centerOnOpenPendingRef.current = true;
+    } else if (!isOpen.value) {
+      centerOnOpenPendingRef.current = false;
+    }
+    wasSelectorOpenRef.current = isOpen.value;
+
     if (!openBookId || !isOpen.value) return;
 
     // Ensure the Psalm book-group containing the current chapter is expanded
@@ -797,7 +811,15 @@ const SideBarChapters = (props: {
       }
     }
 
+    const shouldCenter = centerOnOpenPendingRef.current;
+
     const timeout = window.setTimeout(() => {
+      // Consume the open-center pass for this open, even if the target is
+      // missing, so later book expands while open never re-center.
+      if (shouldCenter) {
+        centerOnOpenPendingRef.current = false;
+      }
+
       const bookTab = document.getElementById(`booktab-${openBookId}`);
       const booksItem = bookTab?.closest(".books-item");
       if (!bookTab || !booksItem) return;
@@ -834,19 +856,22 @@ const SideBarChapters = (props: {
       const scrollTargetInto = (scroller: HTMLElement) => {
         const scrollerRect = scroller.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
-        // Prefer centering so neighboring chapters stay in view. `scrollTo`
-        // clamps to the scroll range, so near the start/end the chapter sits
-        // as close to center as possible without leaving empty space.
-        // For a tall fallback (e.g. full chapter grid) only pin the top —
-        // centering would hide the book title above the grid.
+        // On first open, center so neighboring chapters stay in view.
+        // `scrollTo` clamps to the scroll range, so near the start/end the
+        // chapter sits as close to center as possible without empty space.
+        // While browsing expanded books, only nudge when clipped (develop).
+        // Tall targets only chase the top — centering a full chapter grid
+        // would scroll past the book title above it.
         const targetFits = targetRect.height <= scrollerRect.height;
         let delta = 0;
-        if (targetFits) {
+        if (shouldCenter && targetFits) {
           const targetCenter = targetRect.top + targetRect.height / 2;
           const scrollerCenter = scrollerRect.top + scrollerRect.height / 2;
           delta = targetCenter - scrollerCenter;
         } else if (targetRect.top < scrollerRect.top) {
           delta = -(scrollerRect.top - targetRect.top + 8);
+        } else if (targetFits && targetRect.bottom > scrollerRect.bottom) {
+          delta = targetRect.bottom - scrollerRect.bottom + 8;
         }
         if (Math.abs(delta) > 1) {
           // `behavior: "auto"` overrides `.sidebar-results { scroll-behavior:
