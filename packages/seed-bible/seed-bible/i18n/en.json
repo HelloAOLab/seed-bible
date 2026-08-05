@@ -249,7 +249,7 @@
   "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard",
   "copied-translation-share-link": "Copied translation share link",
   "less": "Less",
-  "swipe-up-more": "Swipe up to view more",
+  "swipe-up-more": "Swipe up to see more",
   "plans": "Plans",
   "reading-plans": "Reading plans",
   "create-reading-plan": "Create reading plan",
@@ -452,5 +452,7 @@
   "reload": "Reload",
   "loading-picture-editor": "Loading the picture editor…",
   "notes": "Notes",
-  "note": "Note"
+  "note": "Note",
+  "show-more-verse-actions": "Show more actions",
+  "show-fewer-verse-actions": "Show fewer actions"
 }

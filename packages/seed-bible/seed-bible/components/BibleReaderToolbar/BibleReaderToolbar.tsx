@@ -559,9 +559,56 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
-  // Whether the mobile verse sheet shows its overflow actions (the "More" /
-  // "Less" toggle). Collapsed by default; reset whenever the selection clears.
+  // Whether the mobile verse sheet is showing its overflow actions. Collapsed by
+  // default; reset whenever the selection clears. Reached by dragging the grab
+  // handle up, or tapping it.
   const isVerseSheetExpanded = useSignal(false);
+
+  /**
+   * Natural height of the sheet's overflow row, measured from the DOM.
+   *
+   * The reveal is animated as an explicit pixel height (`height: auto` can't be
+   * transitioned and can't track a finger), so the target has to be measured
+   * rather than assumed.
+   */
+  const verseSheetOverflowHeight = useSignal(0);
+
+  /**
+   * How much of the overflow row is showing *right now*, in pixels, while a drag
+   * is in progress. Null when no drag is active, which hands the height back to
+   * the expanded/collapsed state so it can animate to its resting position.
+   */
+  const verseSheetDragReveal = useSignal<number | null>(null);
+
+  /**
+   * How far the whole sheet is pushed down by a dismiss drag, in pixels. Only a
+   * downward drag on an already-collapsed sheet moves this; releasing either
+   * dismisses the selection or springs it back to 0.
+   */
+  const verseSheetDismissOffset = useSignal(0);
+
+  /** True while a finger is on the handle, so the settle animations stand down. */
+  const isVerseSheetDragging = useComputed(
+    () => verseSheetDragReveal.value !== null
+  );
+
+  /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
+  const hasVerseSheetOverflow = useComputed(
+    () => verseSheetOverflowHeight.value > 0
+  );
+
+  /**
+   * The overflow row's height as rendered: tracking the finger mid-drag,
+   * otherwise the resting height for the current expanded state (which the CSS
+   * transition animates towards).
+   */
+  const verseSheetRevealHeight = useComputed(() =>
+    verseSheetDragReveal.value !== null
+      ? verseSheetDragReveal.value
+      : isVerseSheetExpanded.value
+        ? verseSheetOverflowHeight.value
+        : 0
+  );
 
   // True when the sidebar drawer is open showing the tabs/bookmarks view
   // (not the settings view) with the bookmark filter active.
@@ -729,6 +776,134 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     verseToolbarDrag.current = null;
   };
 
+  /**
+   * Dragging the mobile verse sheet's grab handle.
+   *
+   * The sheet follows the finger rather than snapping at a threshold: dragging up
+   * grows the overflow row a pixel at a time, dragging back down shrinks it, and
+   * dragging down on an already-collapsed sheet slides the whole sheet toward the
+   * bottom of the screen to dismiss it. Releasing settles to whichever resting
+   * position the gesture ended up nearest, so a half-finished drag animates the
+   * rest of the way instead of being abandoned.
+   *
+   * A press that barely moves is a tap, and toggles.
+   */
+  const VERSE_SHEET_TAP_SLOP = 6;
+  /** How far the sheet must be pushed down before releasing dismisses it. */
+  const VERSE_SHEET_DISMISS_THRESHOLD = 64;
+  const verseSheetDrag = useRef<{
+    pointerId: number;
+    startY: number;
+    startExpanded: boolean;
+    /** Overflow height showing when the drag began: full when expanded, else 0. */
+    startReveal: number;
+    /** Furthest the pointer has travelled, used to tell a tap from a drag. */
+    maxTravel: number;
+  } | null>(null);
+
+  /** The overflow row, measured so the reveal has a pixel target to animate to. */
+  const measureVerseSheetOverflow = (element: HTMLElement | null) => {
+    if (!element) return;
+    verseSheetOverflowHeight.value = element.scrollHeight;
+  };
+
+  const endVerseSheetDrag = (event: PointerEvent): void => {
+    const handle = event.currentTarget as HTMLElement;
+    handle.releasePointerCapture?.(event.pointerId);
+    verseSheetDrag.current = null;
+    verseSheetDragReveal.value = null;
+    verseSheetDismissOffset.value = 0;
+  };
+
+  const handleVerseSheetHandlePointerDown = (event: PointerEvent) => {
+    const handle = event.currentTarget as HTMLElement;
+    handle.setPointerCapture?.(event.pointerId);
+    const expanded = isVerseSheetExpanded.value;
+    verseSheetDrag.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startExpanded: expanded,
+      startReveal: expanded ? verseSheetOverflowHeight.value : 0,
+      maxTravel: 0,
+    };
+    // Take over the height from the expanded/collapsed state so the first move
+    // continues from where the sheet is now rather than jumping.
+    verseSheetDragReveal.value = expanded ? verseSheetOverflowHeight.value : 0;
+    // Keep the drag from also scrolling the chapter behind the sheet.
+    event.preventDefault();
+  };
+
+  const handleVerseSheetHandlePointerMove = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dy = event.clientY - drag.startY;
+    drag.maxTravel = Math.max(drag.maxTravel, Math.abs(dy));
+
+    const overflowHeight = verseSheetOverflowHeight.value;
+    // Up is negative, so subtracting `dy` grows the reveal as the finger rises.
+    const reveal = Math.min(overflowHeight, Math.max(0, drag.startReveal - dy));
+    verseSheetDragReveal.value = reveal;
+
+    // Only start sliding the sheet away once there is no overflow left to close:
+    // a downward drag first puts the sheet back to collapsed, and only carries on
+    // into a dismiss if it began there.
+    verseSheetDismissOffset.value =
+      reveal === 0 && dy > 0 && drag.startReveal === 0 ? dy : 0;
+  };
+
+  const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dismissOffset = verseSheetDismissOffset.value;
+    const reveal = verseSheetDragReveal.value ?? drag.startReveal;
+    const overflowHeight = verseSheetOverflowHeight.value;
+    endVerseSheetDrag(event);
+
+    if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) {
+      // A tap on the handle is the keyboard-free way to toggle, and the only
+      // affordance left now that the sheet has no "More" card.
+      if (overflowHeight > 0) {
+        isVerseSheetExpanded.value = !drag.startExpanded;
+      }
+      return;
+    }
+
+    if (dismissOffset >= VERSE_SHEET_DISMISS_THRESHOLD) {
+      readingState.value?.clearSelectedVerses();
+      return;
+    }
+
+    // Settle to whichever end the drag finished nearest. Using the midpoint
+    // rather than a fixed threshold means the sheet always ends up where the
+    // finger left it pointing, in either direction.
+    isVerseSheetExpanded.value =
+      overflowHeight > 0 && reveal >= overflowHeight / 2;
+  };
+
+  const handleVerseSheetHandlePointerCancel = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    endVerseSheetDrag(event);
+    // An interrupted gesture shouldn't leave the sheet half-committed.
+    isVerseSheetExpanded.value = drag.startExpanded;
+  };
+
+  const handleVerseSheetHandleKeyDown = (event: KeyboardEvent) => {
+    if (verseSheetOverflowHeight.value <= 0) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      isVerseSheetExpanded.value = !isVerseSheetExpanded.value;
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      isVerseSheetExpanded.value = true;
+    } else if (event.key === "ArrowDown" || event.key === "Escape") {
+      event.preventDefault();
+      isVerseSheetExpanded.value = false;
+    }
+  };
+
   // Verse toolbar highlight picker state
   const isHighlightPickerOpen = useSignal(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
@@ -819,10 +994,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   // Reset picker and the mobile sheet's expanded state when selection clears.
+  // The drag offsets go too: a sheet dismissed by dragging it down would
+  // otherwise come back for the next selection still pushed off the screen.
   useEffect(() => {
     if (!hasVerseSelection.value) {
       isHighlightPickerOpen.value = false;
       isVerseSheetExpanded.value = false;
+      verseSheetDragReveal.value = null;
+      verseSheetDismissOffset.value = 0;
     }
   }, [hasVerseSelection.value]);
 
@@ -1516,10 +1695,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
       {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <div
-          className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
+          className={`sb-verse-toolbar${
+            isSmallScreen.value
+              ? ` sb-verse-toolbar-mobile${
+                  // Suppresses the settle animations, so the sheet tracks the
+                  // finger exactly instead of easing towards it.
+                  isVerseSheetDragging.value ? " sb-verse-sheet-dragging" : ""
+                }`
+              : " sb-verse-toolbar-draggable"
+          }`}
           style={
             isSmallScreen.value
-              ? undefined
+              ? {
+                  transform: verseSheetDismissOffset.value
+                    ? `translateY(${verseSheetDismissOffset.value}px)`
+                    : undefined,
+                }
               : {
                   left: `${floatingX.value + verseToolbarOffset.value.dx}px`,
                   top: `${floatingY.value + verseToolbarOffset.value.dy}px`,
@@ -1540,7 +1731,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value && (
             <>
-              <div className="sb-verse-toolbar-handle" aria-hidden="true" />
+              {/* The pill itself is only a few pixels tall, so the drag gesture
+                  lives on a taller wrapper that's comfortable to grab with a
+                  thumb. It carries the button role and keyboard handling too:
+                  the sheet has no "More" card any more, so this is the only
+                  control that opens the overflow row. */}
+              <div
+                className="sb-verse-toolbar-handle-area"
+                role="button"
+                tabIndex={hasVerseSheetOverflow.value ? 0 : -1}
+                aria-expanded={isVerseSheetExpanded.value}
+                aria-label={
+                  isVerseSheetExpanded.value
+                    ? t("show-fewer-verse-actions", {
+                        defaultValue: "Show fewer actions",
+                      })
+                    : t("show-more-verse-actions", {
+                        defaultValue: "Show more actions",
+                      })
+                }
+                onPointerDown={handleVerseSheetHandlePointerDown}
+                onPointerMove={handleVerseSheetHandlePointerMove}
+                onPointerUp={handleVerseSheetHandlePointerUp}
+                onPointerCancel={handleVerseSheetHandlePointerCancel}
+                onKeyDown={handleVerseSheetHandleKeyDown}
+              >
+                <div className="sb-verse-toolbar-handle" />
+              </div>
               <button
                 type="button"
                 className="sb-verse-toolbar-close"
@@ -1923,87 +2140,99 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   );
                 }
 
-                // Mobile sheet: a card grid. Show the first few actions plus a
-                // "More" toggle; the rest reveal under a "Less" toggle. The X
-                // in the corner handles dismissal, so the Cancel tool is
-                // dropped here.
+                // Mobile sheet: a card grid. The first row of actions is always
+                // showing; the rest live in an overflow row that the grab handle
+                // drags open. The X in the corner handles dismissal, so the
+                // Cancel tool is dropped here.
                 const actionCards = [
                   highlightCard,
                   bookmarkCard,
                   ...nonCancel.map(renderTool),
                 ].filter(Boolean);
 
+                // One full row of cards, matching the four-per-row grid below.
+                // Keeping the collapsed sheet to a single row is what makes it
+                // short by default.
                 const COLLAPSED_COUNT = 4;
-                const needsToggle = actionCards.length > COLLAPSED_COUNT;
-                const primaryCards = needsToggle
+                const hasOverflow = actionCards.length > COLLAPSED_COUNT;
+                const primaryCards = hasOverflow
                   ? actionCards.slice(0, COLLAPSED_COUNT)
                   : actionCards;
-                const overflowCards = needsToggle
+                const overflowCards = hasOverflow
                   ? actionCards.slice(COLLAPSED_COUNT)
                   : [];
 
                 return (
                   <>
                     {primaryCards}
-                    {needsToggle && (
+                    {hasOverflow && (
+                      // Height rather than display: the row has to be in the
+                      // layout at its full size for the drag to reveal it a pixel
+                      // at a time, so it is clipped instead of removed.
                       <div
-                        key="more-less"
-                        className="sb-verse-toolbar-action-item"
+                        key="overflow"
+                        // While fully closed the row is `visibility: hidden`, not
+                        // merely clipped — otherwise its buttons stay in the tab
+                        // order and the screen-reader tree while invisible. The
+                        // handle above is the disclosure control that brings them
+                        // back, which is why it carries `aria-expanded`.
+                        className={`sb-verse-toolbar-overflow${
+                          verseSheetRevealHeight.value === 0
+                            ? " sb-verse-toolbar-overflow-closed"
+                            : ""
+                        }`}
+                        style={{
+                          height: `${verseSheetRevealHeight.value}px`,
+                        }}
                       >
-                        <button
-                          type="button"
-                          className={`sb-verse-toolbar-action sb-verse-toolbar-more-toggle${
-                            isVerseSheetExpanded.value
-                              ? " sb-verse-toolbar-more-toggle-active"
-                              : ""
-                          }`}
-                          onClick={() => {
-                            isVerseSheetExpanded.value =
-                              !isVerseSheetExpanded.value;
-                          }}
-                          aria-expanded={isVerseSheetExpanded.value}
-                          aria-label={
-                            isVerseSheetExpanded.value
-                              ? t("less", { defaultValue: "Less" })
-                              : t("more", { defaultValue: "More" })
-                          }
-                          title={
-                            isVerseSheetExpanded.value
-                              ? t("less", { defaultValue: "Less" })
-                              : t("more", { defaultValue: "More" })
-                          }
+                        <div
+                          className="sb-verse-toolbar-overflow-row"
+                          ref={measureVerseSheetOverflow}
                         >
-                          <span className="sb-verse-toolbar-action-icon">
-                            <span className="material-symbols-outlined">
-                              {isVerseSheetExpanded.value
-                                ? "keyboard_arrow_up"
-                                : "more_horiz"}
-                            </span>
-                          </span>
-                          <span className="sb-verse-toolbar-action-label">
-                            {isVerseSheetExpanded.value
-                              ? t("less", { defaultValue: "Less" })
-                              : t("more", { defaultValue: "More" })}
-                          </span>
-                        </button>
+                          {overflowCards}
+                        </div>
                       </div>
                     )}
-                    {isVerseSheetExpanded.value && overflowCards}
                   </>
                 );
               })()}
             </div>
           )}
-          {isSmallScreen.value && (
-            <div className="sb-verse-toolbar-swipe-hint" aria-hidden="true">
-              <span className="material-symbols-outlined">
-                keyboard_double_arrow_up
-              </span>
-              <span>
-                {t("swipe-up-more", { defaultValue: "Swipe up to view more" })}
-              </span>
-            </div>
-          )}
+          {/* Replaces the old "More" card: a line of text at the foot of the
+              sheet naming the gesture, instead of a button occupying a whole
+              card slot. Only while there is something left to reveal, and it
+              fades out as the sheet opens. Hidden from assistive tech because
+              the gesture it describes isn't available to them — the handle
+              itself carries the accessible toggle. */}
+          {isSmallScreen.value &&
+            hasVerseSheetOverflow.value &&
+            !isVerseSheetExpanded.value && (
+              <div
+                className="sb-verse-toolbar-swipe-hint"
+                aria-hidden="true"
+                style={{
+                  // Fades in step with the drag, so the hint gets out of the way
+                  // as the sheet opens rather than blinking off at the end.
+                  opacity: verseSheetOverflowHeight.value
+                    ? 1 -
+                      Math.min(
+                        1,
+                        verseSheetRevealHeight.value /
+                          verseSheetOverflowHeight.value
+                      )
+                    : 1,
+                }}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  keyboard_double_arrow_up
+                </span>
+                <span>
+                  {t("swipe-up-more", {
+                    defaultValue: "Swipe up to see more",
+                  })}
+                </span>
+              </div>
+            )}
         </div>
       )}
     </>
