@@ -215,7 +215,7 @@ export const bootstrapExtension = () => {
   }
   const getDimension = () => DIMENSION;
 
-  // // 1. Instantiating mappers
+  // 1. Instantiating mappers
 
   const pieceMapper = new PieceMapper();
   const stackTestamentMapper = new StackTestamentMapper();
