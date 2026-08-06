@@ -7,12 +7,8 @@ interface LabelDataStoreProps {
   labelDataSet?: Set<InfoLabelData>;
 }
 
-export class LabelDataStore
-  implements
-    SectionSelectionDataStorePort,
-    PieceActivityDataStorePort,
-    LabelDataRepositoryPort
-{
+// prettier-ignore
+export class LabelDataStore implements SectionSelectionDataStorePort, PieceActivityDataStorePort, LabelDataRepositoryPort {
   #labelDataSet: NonNullable<LabelDataStoreProps["labelDataSet"]>;
 
   constructor({ labelDataSet = new Set() }: LabelDataStoreProps) {
