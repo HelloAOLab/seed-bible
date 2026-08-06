@@ -422,7 +422,8 @@ export class PieceHighlightService implements PieceHighlighterPort {
           !!data &&
           data.getParentId("stackBibleId") === bibleId &&
           !data.isOnTheGround &&
-          data.highlightState !== HighlightStates.Unhighlighting
+          (data.highlightState !== HighlightStates.Unhighlighting ||
+            this.isUnhighlightScheduled(piece))
         );
       }
     );

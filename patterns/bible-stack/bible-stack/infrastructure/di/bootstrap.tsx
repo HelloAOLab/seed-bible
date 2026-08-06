@@ -1157,6 +1157,7 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
     sectionSelectionServicePort: sectionSelectionService,
     sequenceStateServicePort: sequenceStateService,
+    tourGuideServicePort: tourGuideService,
   });
   const labelInteractionService = new LabelInteractionService({
     labelDataRepositoryPort: labelDataStore,
