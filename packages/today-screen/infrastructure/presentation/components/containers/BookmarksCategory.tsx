@@ -1,3 +1,5 @@
+import { useBookmarksCategory } from "../../hooks/useBookmarksCategory";
+
 export interface BookmarkProps {
   text: string;
   handleClick: () => void;
@@ -56,10 +58,11 @@ const Bookmark = ({
 };
 
 export const BookmarksCategory = ({ label, bookmarksData }: Props) => {
+  const { containerRef } = useBookmarksCategory();
   return (
     <div>
       <h5 className={"bookmarks-section-label"}>{label}</h5>
-      <div className={"bookmarks-section-container"}>
+      <div className={"bookmarks-section-container"} ref={containerRef}>
         {bookmarksData.map(({ key, ...rest }) => {
           return <Bookmark key={key} {...rest} />;
         })}

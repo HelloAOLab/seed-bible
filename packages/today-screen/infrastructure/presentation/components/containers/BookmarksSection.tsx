@@ -1,5 +1,4 @@
 import { useBookmarksSection } from "../../hooks/useBookmarksSection";
-import { Divider } from "../ui/Divider";
 import { TitledSection } from "../ui/TitledSection";
 import { BookmarksCategory, type BookmarkData } from "./BookmarksCategory";
 
@@ -13,18 +12,14 @@ export const BookmarksSection = () => {
     <TitledSection title={label.value} buttonData={moreButtonData.value}>
       <div className={"bookmarks-section"} ref={containerRef}>
         {Array.from(categorizedBookmarks.value.entries()).map(
-          ([category, bookmarksData], index) => {
-            const elements = [
+          ([category, bookmarksData]) => {
+            return (
               <BookmarksCategory
                 key={category}
                 label={`${category}:`}
                 bookmarksData={bookmarksData}
-              />,
-            ];
-            if (index > 0) {
-              elements.unshift(<Divider />);
-            }
-            return elements;
+              />
+            );
           }
         )}
       </div>

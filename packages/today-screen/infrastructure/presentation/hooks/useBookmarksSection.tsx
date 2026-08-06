@@ -28,6 +28,7 @@ export const useBookmarksSection: UseBookmarksSection = () => {
     translate,
     getTranslationBooks,
     showBookmarksList,
+    isMobile,
   } = useTodayContext();
   const translateSignal = useSignal(translate);
   useEffect(() => {
@@ -124,7 +125,7 @@ export const useBookmarksSection: UseBookmarksSection = () => {
   }, [categorizedBookmarks.value]);
 
   const moreButtonData = useComputed<MoreButtonData | undefined>(() => {
-    if (!isOverflowing.value) {
+    if (!isOverflowing.value || isMobile.value) {
       return undefined;
     }
     return {

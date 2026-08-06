@@ -347,6 +347,7 @@
   font-size: 0.85rem;
   text-decoration: underline;
   text-underline-offset: 4px;
+  cursor: pointer;
 }
 
 .today-container .search-container {
@@ -930,6 +931,9 @@
 
   .today-container .bookmarks-section .bookmarks-section-container {
     gap: 0.3rem;
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+    scrollbar-width: none;
   }
   .today-container .search-container .book-selector-button {
     font-size: 0.85rem;

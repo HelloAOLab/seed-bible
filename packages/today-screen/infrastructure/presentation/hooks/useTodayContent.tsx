@@ -24,6 +24,10 @@ export const useTodayContent: UseTodayContent = () => {
 
   const dividedSectionsIds = useMemo<DividedSection[]>(() => {
     const sectionsData: DividedSection[] = [];
+
+    if (showBookmarks) {
+      sectionsData.push("bookmarks");
+    }
     if (showSearch) {
       sectionsData.push("search");
     }

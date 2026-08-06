@@ -234,10 +234,11 @@ export const bootstrapExtension = () => {
               config={{
                 isBookmarksListOpen: context.bookmarks.isFilterActive.value,
                 showBookmarksList: () => {
-                  context.sidebar.openSidebar();
-                  if (context.app.isMobile.value) {
-                    context.bookmarks.openedFromToolbar.value = true;
-                  }
+                  // context.sidebar.openSidebar();
+                  // if (context.app.isMobile.value) {
+                  //   context.bookmarks.openedFromToolbar.value = true;
+                  // }
+                  context.sidebar.isSidebarCollapsed.value = false;
                   context.bookmarks.isFilterActive.value = true;
                 },
                 isMobile: context.app.isMobile,

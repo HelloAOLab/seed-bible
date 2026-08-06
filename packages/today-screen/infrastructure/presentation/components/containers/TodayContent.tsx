@@ -8,23 +8,26 @@ import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
 import { BookmarksSection } from "./BookmarksSection";
 
-export type DividedSection = "search" | "recommendations" | "social";
+export type DividedSection =
+  | "search"
+  | "recommendations"
+  | "social"
+  | "bookmarks";
 
 const sectionComponentMap: Record<DividedSection, () => preact.JSX.Element> = {
   recommendations: RecommendationsSection,
   search: SearchSection,
   social: SocialSection,
+  bookmarks: BookmarksSection,
 };
 
 export const TodayContent = () => {
-  const { dividedSectionsIds, showResumeReading, showBookmarks } =
-    useTodayContent();
+  const { dividedSectionsIds, showResumeReading } = useTodayContent();
 
   return (
     <div className="today-content">
       <Header />
       {showResumeReading && <ResumeReadingSection />}
-      {showBookmarks && <BookmarksSection />}
       {dividedSectionsIds.map((id, index) => {
         const isLastItem = index === dividedSectionsIds.length - 1;
         const Section = sectionComponentMap[id];
