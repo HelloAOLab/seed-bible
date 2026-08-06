@@ -5,6 +5,7 @@
  * thisBot.DisplayInitialAwaitAnimation();
  */
 
+// @ts-expect-error TODO: Regular bot listen tags must be deleted
 if (thisBot.masks.isInAwaitAnimation) return;
 
 setTagMask(thisBot, "isInAwaitAnimation", true);

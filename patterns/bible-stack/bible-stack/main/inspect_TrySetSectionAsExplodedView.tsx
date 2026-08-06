@@ -5,78 +5,78 @@
  * @example
  * shout("TrySetSectionAsExplodedView", {section: someSection});
  */
-import { BibleVisualizationStates } from "bibleVizUtils.models.canvas";
-import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
-import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
-import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
-import { seedBiblePresenceProvider } from "bibleVizUtils.services.index";
+// import { BibleVisualizationStates } from "bibleVizUtils.models.canvas";
+// import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+// import type { StackSectionData } from "bibleVizUtils.models.entities.StackSectionData";
+// import type { StackBibleData } from "bibleVizUtils.models.entities.StackBibleData";
+// import type { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+// import { seedBiblePresenceProvider } from "bibleVizUtils.services.index";
 
-const {
-  section,
-  setBibleAnimating = true,
-  speedMultiplier,
-  isInstantaneous,
-}: {
-  section: Bot;
-  setBibleAnimating?: boolean;
-  speedMultiplier: number;
-  isInstantaneous: boolean;
-} = that;
+// const {
+//   section,
+//   setBibleAnimating = true,
+//   speedMultiplier,
+//   isInstantaneous,
+// }: {
+//   section: Bot;
+//   setBibleAnimating?: boolean;
+//   speedMultiplier: number;
+//   isInstantaneous: boolean;
+// } = that;
 
-if (thisBot.masks.isBibleAnimating && setBibleAnimating) return false;
+// if (thisBot.masks.isBibleAnimating && setBibleAnimating) return false;
 
-const sectionData = await (thisBot.GetPieceData({
-  piece: section,
-}) as Promise<StackSectionData | undefined>);
+// const sectionData = await (thisBot.GetPieceData({
+//   piece: section,
+// }) as Promise<StackSectionData | undefined>);
 
-if (!sectionData) {
-  throw new Error("sectionData not found at TrySetSectionAsExplodedView");
-}
+// if (!sectionData) {
+//   throw new Error("sectionData not found at TrySetSectionAsExplodedView");
+// }
 
-const { bibleData, testamentData } =
-  await (thisBot.GetDataChainFromParentDataIds({
-    parentDataIds: sectionData.parentDataIds,
-  }) as Promise<{
-    bibleData: StackBibleData | undefined;
-    testamentData: StackTestamentData | undefined;
-  }>);
+// const { bibleData, testamentData } =
+//   await (thisBot.GetDataChainFromParentDataIds({
+//     parentDataIds: sectionData.parentDataIds,
+//   }) as Promise<{
+//     bibleData: StackBibleData | undefined;
+//     testamentData: StackTestamentData | undefined;
+//   }>);
 
-if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
+// if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
 
-if (
-  testamentData ||
-  (bibleData &&
-    bibleData.currentStackVizState === BibleVisualizationStates.Regular)
-) {
-  const previousExplodedViewSectionData: StackSectionData | undefined =
-    await thisBot.GetPreviousExplodedViewSectionData({
-      bibleData,
-      testamentData,
-    });
-  if (previousExplodedViewSectionData) {
-    previousExplodedViewSectionData.implode();
-  }
-}
-sectionData.explode();
-thisBot.vars.lastInteractedStackSectionData = sectionData;
-await thisBot.UpdateStacks({ speedMultiplier, isInstantaneous });
+// if (
+//   testamentData ||
+//   (bibleData &&
+//     bibleData.currentStackVizState === BibleVisualizationStates.Regular)
+// ) {
+//   const previousExplodedViewSectionData: StackSectionData | undefined =
+//     await thisBot.GetPreviousExplodedViewSectionData({
+//       bibleData,
+//       testamentData,
+//     });
+//   if (previousExplodedViewSectionData) {
+//     previousExplodedViewSectionData.implode();
+//   }
+// }
+// sectionData.explode();
+// thisBot.vars.lastInteractedStackSectionData = sectionData;
+// await thisBot.UpdateStacks({ speedMultiplier, isInstantaneous });
 
-if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
-thisBot.UpdateStackPiecesActivityNotification();
+// if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
+// thisBot.UpdateStackPiecesActivityNotification();
 
-const activeTab = seedBiblePresenceProvider.getActiveTab();
+// const activeTab = seedBiblePresenceProvider.getActiveTab();
 
-if (activeTab) {
-  const activeBook = sectionData.childrenData.flat().find((bookData) => {
-    return (
-      bookData.getPieceInfoProperty("commonName") === activeTab.data.book &&
-      bookData.isActivelySelected()
-    );
-  });
+// if (activeTab) {
+//   const activeBook = sectionData.childrenData.flat().find((bookData) => {
+//     return (
+//       bookData.getPieceInfoProperty("commonName") === activeTab.data.book &&
+//       bookData.isActivelySelected()
+//     );
+//   });
 
-  if (activeBook)
-    thisBot.UpdateStackTabsVisualization({
-      source: "OnStackBookSelectionComplete",
-    });
-}
+//   if (activeBook)
+//     thisBot.UpdateStackTabsVisualization({
+//       source: "OnStackBookSelectionComplete",
+//     });
+// }

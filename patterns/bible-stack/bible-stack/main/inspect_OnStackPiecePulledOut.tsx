@@ -5,5 +5,5 @@
  * shout("OnStackPiecePulledOut");
  */
 
-thisBot.PlaySound({ soundName: "StackPiecePulledOut" });
-return thisBot.UpdateStacks();
+// thisBot.PlaySound({ soundName: "StackPiecePulledOut" });
+// return thisBot.UpdateStacks();

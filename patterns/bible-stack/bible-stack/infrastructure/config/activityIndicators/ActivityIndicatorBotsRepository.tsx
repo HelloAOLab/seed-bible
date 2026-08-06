@@ -18,7 +18,7 @@ export class ActivityIndicatorBotsRepository {
     pieceDataId: ActivityIndicatorBot["tags"]["ownerDataId"]
   ): ActivityIndicatorBot[] {
     return getBots(
-      byTagConstructor("isActivityIndicator", true),
+      byTagConstructor("type", "ActivityIndicator"),
       byTagConstructor("ownerDataId", pieceDataId),
       byTagConstructor("isInUse", true)
     ) as ActivityIndicatorBot[];
@@ -27,7 +27,7 @@ export class ActivityIndicatorBotsRepository {
     pieceId: ActivityIndicatorBot["tags"]["ownerBotId"]
   ): ActivityIndicatorBot[] {
     return getBots(
-      byTagConstructor("isActivityIndicator", true),
+      byTagConstructor("type", "ActivityIndicator"),
       byTagConstructor("ownerBotId", pieceId),
       byTagConstructor("isInUse", true)
     ) as ActivityIndicatorBot[];

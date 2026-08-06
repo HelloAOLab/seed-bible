@@ -12,13 +12,13 @@
  * verse.Hide({verseIndex: 2, dimension: 'home', delayBetweenAnimations: 100, duration: 0.5})
  */
 
-const { verseIndex, dimension, delayBetweenAnimations, duration } = that;
-const easing = { type: "elastic", mode: "in" };
-const delay = verseIndex * delayBetweenAnimations;
-await os.sleep(delay);
-await animateTag(thisBot, "scaleZ", {
-  toValue: 0,
-  duration,
-  easing,
-});
-setTagMask(thisBot, dimension, false);
+// const { verseIndex, dimension, delayBetweenAnimations, duration } = that;
+// const easing = { type: "elastic", mode: "in" };
+// const delay = verseIndex * delayBetweenAnimations;
+// await os.sleep(delay);
+// await animateTag(thisBot, "scaleZ", {
+//   toValue: 0,
+//   duration,
+//   easing,
+// });
+// setTagMask(thisBot, dimension, false);

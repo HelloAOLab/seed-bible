@@ -8,16 +8,16 @@
  * thisBot.EnqueueChapter({queuedChapterData: someQueuedChapterData, data: someBookData})
  */
 
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
-import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
-import type { QueuedChapterData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+// import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
+// import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
+// import type { QueuedChapterData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
 
-const {
-  queuedChapterData,
-  data,
-}: {
-  queuedChapterData: QueuedChapterData;
-  data: StackBookData | StackSectionBookData;
-} = that;
+// const {
+//   queuedChapterData,
+//   data,
+// }: {
+//   queuedChapterData: QueuedChapterData;
+//   data: StackBookData | StackSectionBookData;
+// } = that;
 
-data.setQueuedChapterData(queuedChapterData.chapterData);
+// data.setQueuedChapterData(queuedChapterData.chapterData);

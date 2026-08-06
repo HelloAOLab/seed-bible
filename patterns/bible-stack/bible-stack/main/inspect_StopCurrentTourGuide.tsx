@@ -5,9 +5,9 @@
  * shout("StopCurrentTourGuide");
  */
 
-os.focusOn(null);
-if (thisBot.vars.currentTourGuideData) {
-  clearInterval(thisBot.vars.currentTourGuideData.intervalId);
-  thisBot.vars.currentTourGuideData.promiseReject();
-  thisBot.vars.currentTourGuideData = null;
-}
+// os.focusOn(null);
+// if (thisBot.vars.currentTourGuideData) {
+//   clearInterval(thisBot.vars.currentTourGuideData.intervalId);
+//   thisBot.vars.currentTourGuideData.promiseReject();
+//   thisBot.vars.currentTourGuideData = null;
+// }

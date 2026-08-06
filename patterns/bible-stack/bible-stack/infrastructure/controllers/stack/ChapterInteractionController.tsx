@@ -4,11 +4,7 @@ import type { ChapterDragServicePort } from "../../../application/ports/in/Scrip
 import type { ChapterDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
 import type { ChapterDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
 import type { ChapterSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
-import type {
-  BotListenerParametersMap,
-  DraggingEvent,
-  DropEvent,
-} from "../../models/casualos";
+import type { DraggingEvent, DropEvent } from "../../models/casualos";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
 
@@ -49,17 +45,10 @@ export class ChapterInteractionController {
     this.#dropServicePort = dropServicePort;
   }
 
-  handleChapterClick({
-    chapter,
-    interaction,
-  }: {
-    chapter: ChapterBot;
-    interaction: BotListenerParametersMap<ChapterBot>["onClick"]["modality"];
-  }) {
+  handleChapterClick({ chapter }: { chapter: ChapterBot }) {
     const piece = this.#pieceMapperPort.toDomain(chapter);
     this.#chapterInteractionServicePort.handleChapterSelection({
       chapter: piece,
-      interaction: interaction === "mouse" ? "Precise" : "Coarse",
     });
   }
 

@@ -4,13 +4,13 @@
  * shout("OnCameraRotationChanged");
  */
 
-if (
-  !thisBot.tags.isBaseStackCover &&
-  thisBot.tags.isInUse &&
-  thisBot.tags.isUpperCover
-) {
-  const bibleData = BibleStackManager.GetBibleDataById({
-    stackBibleId: thisBot.tags.stackBibleId,
-  });
-  if (bibleData.currentState === BibleStates.Open) thisBot.SetOpacity();
-}
+// if (
+//   !thisBot.tags.isBaseStackCover &&
+//   thisBot.tags.isInUse &&
+//   thisBot.tags.isUpperCover
+// ) {
+//   const bibleData = BibleStackManager.GetBibleDataById({
+//     stackBibleId: thisBot.tags.stackBibleId,
+//   });
+//   if (bibleData.currentState === BibleStates.Open) thisBot.SetOpacity();
+// }

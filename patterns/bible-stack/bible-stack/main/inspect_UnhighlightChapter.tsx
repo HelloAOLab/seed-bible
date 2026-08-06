@@ -12,30 +12,30 @@
  * thisBot.UnhighlightChapter({ parentData: someData, chapterData: someChapterData });
  */
 
-import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
-import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
+// import { StackBookData } from "bibleVizUtils.models.entities.StackBookData";
+// import { StackSectionBookData } from "bibleVizUtils.models.entities.StackSectionBookData";
 
-const {
-  parentData,
-}: {
-  parentData: StackBookData | StackSectionBookData;
-} = that;
+// const {
+//   parentData,
+// }: {
+//   parentData: StackBookData | StackSectionBookData;
+// } = that;
 
-const previousHighlightedChapterData =
-  parentData.piece?.vars.previousHighlightedChapterData;
+// const previousHighlightedChapterData =
+//   parentData.piece?.vars.previousHighlightedChapterData;
 
-if (
-  previousHighlightedChapterData &&
-  previousHighlightedChapterData.isActive &&
-  !previousHighlightedChapterData.chapterTransformer.masks.isUnhighlighting &&
-  previousHighlightedChapterData.chapterTransformer.tags.isInUse &&
-  (previousHighlightedChapterData.chapterTransformer.masks.isHighlighted ||
-    previousHighlightedChapterData.chapterTransformer.masks.isHighlighting) &&
-  !previousHighlightedChapterData.chapterTransformer.masks.isSelecting &&
-  !previousHighlightedChapterData.chapterTransformer.masks.isSelected
-) {
-  previousHighlightedChapterData.chapterTransformer.Unhighlight({
-    chapterData: previousHighlightedChapterData,
-  });
-  parentData.piece.vars.previousHighlightedChapterData = null;
-}
+// if (
+//   previousHighlightedChapterData &&
+//   previousHighlightedChapterData.isActive &&
+//   !previousHighlightedChapterData.chapterTransformer.masks.isUnhighlighting &&
+//   previousHighlightedChapterData.chapterTransformer.tags.isInUse &&
+//   (previousHighlightedChapterData.chapterTransformer.masks.isHighlighted ||
+//     previousHighlightedChapterData.chapterTransformer.masks.isHighlighting) &&
+//   !previousHighlightedChapterData.chapterTransformer.masks.isSelecting &&
+//   !previousHighlightedChapterData.chapterTransformer.masks.isSelected
+// ) {
+//   previousHighlightedChapterData.chapterTransformer.Unhighlight({
+//     chapterData: previousHighlightedChapterData,
+//   });
+//   parentData.piece.vars.previousHighlightedChapterData = null;
+// }

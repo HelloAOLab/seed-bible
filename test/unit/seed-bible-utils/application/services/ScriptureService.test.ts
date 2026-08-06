@@ -16,6 +16,8 @@ const makeSubset = (
   author: "unknown",
   chaptersVerseCount: [10],
   numberOfChapters: 10,
+  startIndex: 0,
+  endIndex: 9,
   relativeDateRange: { min: 0, max: 0 },
   path: {
     arrangementName: "default",

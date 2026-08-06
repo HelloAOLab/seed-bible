@@ -10,46 +10,46 @@
  * shout("OnTestamentSelectionAnimationComplete", {testamentData: someTestamentData, speedMultiplier: 2});
  */
 
-import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
-import { BiblePieces } from "bibleVizUtils.models.canvas";
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
-import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+// import { StackTestamentData } from "bibleVizUtils.models.entities.StackTestamentData";
+// import { BiblePieces } from "bibleVizUtils.models.canvas";
+// import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+// import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
-const {
-  testamentData,
-  speedMultiplier = 1,
-  isInstantaneous = false,
-}: {
-  testamentData: StackTestamentData;
-  speedMultiplier?: number;
-  isInstantaneous?: boolean;
-} = that;
-// const updateStacksTime =  await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
-const animations: Promise<void>[] = [];
-if (!isInstantaneous) {
-  for (const sectionData of testamentData.getReversedChildren()) {
-    animations.push(
-      thisBot.TryHighlightPiece({
-        speedMultiplier,
-        isInstantaneous,
-        piece: sectionData.piece,
-        highlightRequestSource: CanvasInteractions.Transition,
-        unhighlightDelay: 2000,
-        typeOfPiece: BiblePieces.StackSection,
-      })
-    );
-    await os.sleep(
-      isInstantaneous
-        ? 0
-        : (((BibleVizDataRepository.getStackAnimationDuration("Highlight") /
-            3) *
-            2) /
-            speedMultiplier) *
-            1000
-    );
-  }
-  await Promise.all(animations);
-}
-setTagMask(thisBot, "isBibleAnimating", false);
-thisBot.UpdateStackPiecesActivityNotification();
-return true;
+// const {
+//   testamentData,
+//   speedMultiplier = 1,
+//   isInstantaneous = false,
+// }: {
+//   testamentData: StackTestamentData;
+//   speedMultiplier?: number;
+//   isInstantaneous?: boolean;
+// } = that;
+// // const updateStacksTime =  await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
+// const animations: Promise<void>[] = [];
+// if (!isInstantaneous) {
+//   for (const sectionData of testamentData.getReversedChildren()) {
+//     animations.push(
+//       thisBot.TryHighlightPiece({
+//         speedMultiplier,
+//         isInstantaneous,
+//         piece: sectionData.piece,
+//         highlightRequestSource: CanvasInteractions.Transition,
+//         unhighlightDelay: 2000,
+//         typeOfPiece: BiblePieces.StackSection,
+//       })
+//     );
+//     await os.sleep(
+//       isInstantaneous
+//         ? 0
+//         : (((BibleVizDataRepository.getStackAnimationDuration("Highlight") /
+//             3) *
+//             2) /
+//             speedMultiplier) *
+//             1000
+//     );
+//   }
+//   await Promise.all(animations);
+// }
+// setTagMask(thisBot, "isBibleAnimating", false);
+// thisBot.UpdateStackPiecesActivityNotification();
+// return true;

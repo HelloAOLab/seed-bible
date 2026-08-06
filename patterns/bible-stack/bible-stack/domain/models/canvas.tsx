@@ -33,6 +33,8 @@ export interface Piece<T extends BiblePiece = BiblePiece> {
   type: T;
 }
 
+export type PieceUnion<T extends BiblePiece> = T extends any ? Piece<T> : never;
+
 export interface PieceState {
   positionX: number;
   positionY: number;

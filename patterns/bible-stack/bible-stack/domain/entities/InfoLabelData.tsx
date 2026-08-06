@@ -1,5 +1,15 @@
-import type { Piece, ActivityIndicator, SectionShadow } from "../models/canvas";
+import type {
+  Piece,
+  PieceUnion,
+  ActivityIndicator,
+  SectionShadow,
+} from "../models/canvas";
 import type { LabelPosition } from "../models/label";
+import type { StackLabelableBiblePiece } from "../models/pieceLifecycle";
+
+type LabelOwner =
+  | PieceUnion<Exclude<StackLabelableBiblePiece, "StackSectionShadow">>
+  | SectionShadow;
 
 interface InfoLabelDataProps {
   id: string;
@@ -8,13 +18,7 @@ interface InfoLabelDataProps {
   label: Piece<"InfoLabelText">;
   date?: Piece<"InfoLabelDate">;
   activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
-  owner:
-    | Piece<"StackTestament">
-    | Piece<"StackSection">
-    | Piece<"StackSectionBook">
-    | Piece<"StackBook">
-    | Piece<"StackChapter">
-    | SectionShadow;
+  owner: Piece<StackLabelableBiblePiece> | SectionShadow;
   positioning: LabelPosition;
 }
 
@@ -25,7 +29,7 @@ export class InfoLabelData {
   #label: InfoLabelDataProps["label"];
   #activityIndicators: NonNullable<InfoLabelDataProps["activityIndicators"]>;
   #date: InfoLabelDataProps["date"];
-  #owner: InfoLabelDataProps["owner"];
+  #owner: LabelOwner;
   #positioning: InfoLabelDataProps["positioning"];
   #isHiding: boolean = false;
 
@@ -45,7 +49,7 @@ export class InfoLabelData {
     this.#label = label;
     this.#activityIndicators = activityIndicators;
     this.#date = date;
-    this.#owner = owner;
+    this.#owner = owner as LabelOwner;
     this.#positioning = positioning;
   }
 

@@ -4,7 +4,7 @@ import type {
   LabelTranslucencyMode,
   ShowSequencePacing,
 } from "../../domain/models/label";
-import type { Piece, BiblePiece } from "../../domain/models/canvas";
+import type { Piece } from "../../domain/models/canvas";
 import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 import type {
   LabelAdapterPort,
@@ -15,8 +15,9 @@ import type {
   LabelFeedbackAdapterPort,
 } from "../ports/out/PieceLabel";
 import type { LabelDateFormatGetterPort } from "../ports/in/LabelDate";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
-export interface LabelStrategy<P extends Piece> {
+export interface LabelStrategy<P extends Piece<StackLabelableBiblePiece>> {
   getLabel: (piece: P) => string;
   getDate?: undefined | ((piece: P) => string | undefined);
   getColor: (piece: P) => string;
@@ -26,11 +27,11 @@ export interface LabelStrategy<P extends Piece> {
   makesAttentionFeedback: (piece: P) => boolean;
 }
 
-export type LabelPropertiesStrategies<T extends BiblePiece> = {
+export type LabelPropertiesStrategies<T extends StackLabelableBiblePiece> = {
   [K in T]: LabelStrategy<Piece<K>>;
 };
 
-export interface PieceLabelServiceParams<T extends BiblePiece> {
+export interface PieceLabelServiceParams<T extends StackLabelableBiblePiece> {
   labelAdapterPort: LabelAdapterPort;
   labelDataStorePort: LabelDataStorePort;
   indicatorsUpdaterPort: IndicatorsUpdaterPort;
@@ -42,7 +43,7 @@ export interface PieceLabelServiceParams<T extends BiblePiece> {
 }
 
 export class PieceLabelService<
-  T extends BiblePiece,
+  T extends StackLabelableBiblePiece,
 > implements PieceLabelServicePort<T> {
   #labelAdapterPort: PieceLabelServiceParams<T>["labelAdapterPort"];
   #labelDataStorePort: PieceLabelServiceParams<T>["labelDataStorePort"];

@@ -6,4 +6,4 @@
  * shout("OnSectionShadowInteracted", {sectionShadow: someBot, typeOfInteraction: CanvasInteractions.Tap});
  */
 
-thisBot.HandleSectionShadowInteraction(that);
+// thisBot.HandleSectionShadowInteraction(that);

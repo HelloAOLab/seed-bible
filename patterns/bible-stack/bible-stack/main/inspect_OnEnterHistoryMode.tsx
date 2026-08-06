@@ -1,1 +1,1 @@
-thisBot.UpdateHistoryModePieces();
+// thisBot.UpdateHistoryModePieces();

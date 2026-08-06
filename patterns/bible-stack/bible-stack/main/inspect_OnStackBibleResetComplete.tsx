@@ -8,32 +8,32 @@
  * shout("OnStackBibleResetComplete", {bibleData: someBibleData})
  */
 
-import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackBibleData";
-import { BiblePieces } from "bibleVizUtils.models.canvas";
-import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
+// import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/models/entities/StackBibleData";
+// import { BiblePieces } from "bibleVizUtils.models.canvas";
+// import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
+// import { CanvasInteractions } from "bibleVizUtils.models.canvas";
 
-const {
-  bibleData,
-}: {
-  bibleData: StackBibleData;
-} = that;
-const sectionsToHighlight: Bot[] = [];
+// const {
+//   bibleData,
+// }: {
+//   bibleData: StackBibleData;
+// } = that;
+// const sectionsToHighlight: Bot[] = [];
 
-for (const testamentData of bibleData.childrenData) {
-  testamentData.childrenData.forEach((sectionData) => {
-    if (sectionData.piece) sectionsToHighlight.push(sectionData.piece);
-  });
-}
-sectionsToHighlight.reverse();
-await os.sleep(500);
-for (const section of sectionsToHighlight) {
-  thisBot.TryHighlightPiece({
-    piece: section,
-    highlightRequestSource: CanvasInteractions.Transition,
-    unhighlightDelay: 2000,
-    typeOfPiece: BiblePieces.StackSection,
-  });
-  await os.sleep(100);
-}
-setTagMask(thisBot, "isBibleAnimating", false);
+// for (const testamentData of bibleData.childrenData) {
+//   testamentData.childrenData.forEach((sectionData) => {
+//     if (sectionData.piece) sectionsToHighlight.push(sectionData.piece);
+//   });
+// }
+// sectionsToHighlight.reverse();
+// await os.sleep(500);
+// for (const section of sectionsToHighlight) {
+//   thisBot.TryHighlightPiece({
+//     piece: section,
+//     highlightRequestSource: CanvasInteractions.Transition,
+//     unhighlightDelay: 2000,
+//     typeOfPiece: BiblePieces.StackSection,
+//   });
+//   await os.sleep(100);
+// }
+// setTagMask(thisBot, "isBibleAnimating", false);

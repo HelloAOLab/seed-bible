@@ -1,5 +1,4 @@
 import { BiblePieces } from "../../domain/models/canvas";
-import type { ActivityIndicator } from "../../domain/models/canvas";
 import type {
   Cursor,
   Form,
@@ -10,7 +9,6 @@ import type {
 } from "./casualos";
 import type { HexString, Point2D } from "../../domain/models/commonTypes";
 import type { ActivityContainer } from "../../domain/models/activity";
-import type { Vector3 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 
 type TBiblePiece = typeof BiblePieces;
@@ -251,6 +249,8 @@ export interface InfoLabelTailTags extends PieceBotTags<"InfoLabelTail"> {
 
 export type InfoLabelTailBot = TypedBot<InfoLabelTailTags>;
 
+// TODO: Locate indicatorType at the indicatorBot's visual state
+// eslint-disable-next-line
 export interface RegularActivityIndicatorTags extends ActivityIndicatorTags {
   // indicatorType: "regular";
 }

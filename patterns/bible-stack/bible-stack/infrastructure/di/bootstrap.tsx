@@ -646,6 +646,8 @@ export const bootstrapExtension = () => {
     layoutConfigProviderPort: layoutConfigProvider,
     piecesConigProvider: piecesConfigProvider,
   });
+  // TODO: Wire sound effects
+  // eslint-disable-next-line
   const audioAdapter = new AudioAdapter({
     audioConfigProvider: audioConfigProvider,
   });
@@ -1305,7 +1307,6 @@ export const bootstrapExtension = () => {
       case "StackChapter":
         chapterInteractionController.handleChapterClick({
           chapter: bot as ChapterBot,
-          interaction: params.modality,
         });
         break;
       case "StackCover":

@@ -75,12 +75,14 @@ const labelPositionStrategy: PositionStrategyType = ({
       `ActivityIndicatorsAdapter: labelTextBot not found at labelPositionStrategy`
     );
   }
+  // @ts-expect-error TODO: Locate initialPosition at the labelTextBot's visual state
   const piecePosition = labelTextBot.tags.initialPosition;
   if (!piecePosition) {
     throw new Error(
       `ActivityIndicatorsAdapter: piecePosition not defined at labelPositionStrategy`
     );
   }
+  // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
   if (indicatorBot.tags.index === undefined) {
     throw new Error(
       `ActivityIndicatorsAdapter: indicatorBot.tags.index not defined at labelPositionStrategy`
@@ -92,14 +94,18 @@ const labelPositionStrategy: PositionStrategyType = ({
       pieceScales.x / 2 +
       configProviderPort.getVisualConfig("LabelScales").x / 2 +
       offset.x +
+      // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
       indicatorBot.tags.index * step.x,
     piecePosition.y + pieceScales.y / 2,
     piecePosition.z +
       pieceScales.z +
       offset.z +
+      // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
       indicatorBot.tags.index *
         (step.z *
+          // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
           (indicatorBot.tags.indicatorType === "extraContent" ? 2 : 1)) +
+      // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
       (indicatorBot.tags.indicatorType === "extraContent" ? step.z : 0)
   );
   return position;
@@ -115,6 +121,7 @@ const createPositionGroundedStrategy = (type: "chapter" | "book") => {
     const ownerPosition = getBotPosition(ownerBot, dimension);
     const ownerScales = GetBotScales(ownerBot);
 
+    // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
     if (indicatorBot.tags.index === undefined) {
       throw new Error(
         `ActivityIndicatorsAdapter: indicatorBot.tags.index not defined at createPositionGroundedStrategy`
@@ -142,6 +149,7 @@ const createPositionGroundedStrategy = (type: "chapter" | "book") => {
         ownerScales.x / 2 +
         configProviderPort.getVisualConfig("GroundedScales").x / 2 +
         offset.x +
+        // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
         indicatorBot.tags.index * step.x,
       ownerPosition.y +
         ownerScales.y / 2 -
@@ -345,6 +353,7 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
             mod = {
               color: color ?? "#ffffff",
               [dimension]: true,
+              // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
               indicatorType: "regular",
               scaleX: indicatorScales.x,
               scaleY: indicatorScales.y,
@@ -365,6 +374,7 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
             mod = {
               color: "#ffffff",
               [dimension]: true,
+              // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
               indicatorType: "extraContent",
               label,
               scaleX: extraContentScales.x,
@@ -382,6 +392,7 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
             mod = {
               color: "#000000",
               [dimension]: true,
+              // @ts-expect-error TODO: Locate indicatorType at the indicatorBot's visual state
               indicatorType: "extraBackground",
               scaleX: extraBackgroundScales.x,
               scaleY: extraBackgroundScales.y,
@@ -395,6 +406,7 @@ export class ActivityIndicatorsAdapter implements PieceActivityIndicatorsAdapter
           break;
       }
 
+      // @ts-expect-error TODO: Use ApplyStrictMod
       applyMod(indicatorBot, mod);
       indicatorBotList.push(indicatorBot);
     }
