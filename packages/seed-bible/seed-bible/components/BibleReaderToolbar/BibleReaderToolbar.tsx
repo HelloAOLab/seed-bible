@@ -12,6 +12,7 @@ import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import {
+  handleGridKeyNav,
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
@@ -27,8 +28,16 @@ import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bo
 import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
+import { DEFAULT_HIGHLIGHT_IDS } from "../../managers/ThemeManager";
 
-const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
+/**
+ * Breathing room between the reader's last content and the bottom chrome, in
+ * pixels. The measurement in `--sb-reader-bottom-inset` is exact occlusion —
+ * how many pixels of toolbar / nav / verse sheet cover the viewport bottom —
+ * so without this the trailing element (translation license line, the
+ * "Powered by" row) ends flush against the toolbar's top edge.
+ */
+const BOTTOM_CHROME_GAP_PX = 48;
 
 /**
  * Spawns a Material-style ripple inside the pressed button: a circle centered on
@@ -428,6 +437,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   }
 
   const viewportWidth = props.state.app.viewportWidth;
+  const viewportHeight = props.state.app.viewportHeight;
 
   const tools = useComputed(() => {
     const resolved = toolsManager.getToolbarTools({
@@ -446,9 +456,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
-      openChat: sidebar.openChatPanel,
+      openChat: sidebar.toggleChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
+      modals: props.state.modals,
+      app: props.state.app,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -509,6 +521,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openChat: sidebar.openChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
+      modals: props.state.modals,
+      app: props.state.app,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -528,9 +542,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
   const isSmallScreen = props.state.app.isMobile;
-  const shouldReplaceDefaultToolbar = useComputed(
-    () => isSmallScreen.value && hasVerseSelection.value
-  );
   // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
   // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
   // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
@@ -540,7 +551,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (pane) => pane.placement === "fullscreen" || isSmallScreen.value
     )
   );
+  // The verse toolbar belongs to the reader, so it's suspended (not dismissed)
+  // while a pane covers the reader — otherwise it floats on top of the pane and
+  // hides most of it. The selection itself is kept, so the toolbar comes back
+  // exactly as it was once the pane is closed.
+  const isVerseToolbarVisible = useComputed(
+    () => hasVerseSelection.value && !isFullscreenPaneVisible.value
+  );
+  const shouldReplaceDefaultToolbar = useComputed(
+    () => isSmallScreen.value && isVerseToolbarVisible.value
+  );
   const isMoreMenuOpen = useSignal(false);
+  // The mobile More button, so dismissing its menu with Escape can hand focus
+  // back to it instead of dropping it on the removed popover.
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  // Bottom chrome elements whose measured height drives
+  // `--sb-reader-bottom-inset` on the document (chapter padding clears them).
+  const toolbarWrapRef = useRef<HTMLDivElement>(null);
+  const verseToolbarRef = useRef<HTMLDivElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
   // Whether the mobile verse sheet shows its overflow actions (the "More" /
@@ -650,6 +678,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const uiScale = useComputed(
     () => UI_SIZE_SCALE_MAP[settings.settings.value.uiSize]
   );
+  // Verse toolbar highlight picker state (declared early so position clamping
+  // can account for the picker's taller fallback height before measure).
+  const isHighlightPickerOpen = useSignal(false);
+  // Mobile color-strip hint: shown when the picker opens, cleared after the
+  // first horizontal swipe, and reset the next time the picker is opened.
+  // Component-local only — not persisted across sessions/reloads.
+  const showHighlightColorSwipeHint = useSignal(true);
+  const colorSwatchesRef = useRef<HTMLDivElement | null>(null);
+  // Measured height of the floating desktop verse toolbar. Uses the same
+  // `verseToolbarRef` already attached for `--sb-reader-bottom-inset` measuring.
+  // The toolbar uses `transform: translate(-50%, -100%)`, so `top` is the bottom
+  // edge — we need the real height so the taller color picker stays on-screen.
+  const verseToolbarHeight = useSignal(0);
+
   const floatingX = useComputed(() => {
     const inset = 84 * uiScale.value;
     return Math.min(
@@ -658,8 +700,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     );
   });
   const floatingY = useComputed(() => {
-    const inset = 64 * uiScale.value;
-    return Math.max((floatingAnchor.value?.y ?? 0) - inset, inset);
+    const scale = uiScale.value;
+    // Prefer sitting just above the selection anchor.
+    const preferredY = (floatingAnchor.value?.y ?? 0) - 16 * scale;
+    // Fallback heights before ResizeObserver measures (avoids a clip flash).
+    const measured = verseToolbarHeight.value;
+    const fallback = (isHighlightPickerOpen.value ? 200 : 88) * scale;
+    const height = measured > 0 ? measured : fallback;
+    // Bottom of the toolbar is at `top`; top of toolbar is at `top - height`.
+    // Keep a small viewport inset so nothing is flush with the browser chrome.
+    const topInset = 8 * scale;
+    const bottomInset = 8 * scale;
+    const minY = topInset + height;
+    const maxY = Math.max(minY, viewportHeight.value - bottomInset);
+    return Math.min(Math.max(preferredY, minY), maxY);
   });
 
   // Drag-to-move offset applied on top of the anchor-computed position.
@@ -679,6 +733,60 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     lastSelectedAtRef.current = currentSelectedAt;
     verseToolbarOffset.value = { dx: 0, dy: 0 };
   }
+
+  // Keep the measured height current as the picker expands/collapses.
+  useEffect(() => {
+    if (isSmallScreen.value || !isVerseToolbarVisible.value) {
+      verseToolbarHeight.value = 0;
+      return;
+    }
+    const el = verseToolbarRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      verseToolbarHeight.value = el.offsetHeight;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    isSmallScreen.value,
+    isVerseToolbarVisible.value,
+    isHighlightPickerOpen.value,
+  ]);
+
+  // When the mobile color picker opens, reset the strip to the start so the
+  // "Swipe to see more" hint is meaningful for this open session.
+  useEffect(() => {
+    if (!isHighlightPickerOpen.value || !isSmallScreen.value) return;
+    const el = colorSwatchesRef.current;
+    if (!el) return;
+    el.scrollLeft = 0;
+  }, [isHighlightPickerOpen.value, isSmallScreen.value]);
+
+  // Final on-screen position after drag, clamped so the taller picker can't be
+  // dragged (or open) past the top/bottom of the viewport either.
+  const clampedToolbarTop = useComputed(() => {
+    const scale = uiScale.value;
+    const topInset = 8 * scale;
+    const bottomInset = 8 * scale;
+    const measured = verseToolbarHeight.value;
+    const fallback = (isHighlightPickerOpen.value ? 200 : 88) * scale;
+    const height = measured > 0 ? measured : fallback;
+    const minY = topInset + height;
+    const maxY = Math.max(minY, viewportHeight.value - bottomInset);
+    const y = floatingY.value + verseToolbarOffset.value.dy;
+    return Math.min(Math.max(y, minY), maxY);
+  });
+  const clampedToolbarLeft = useComputed(() => {
+    const inset = 84 * uiScale.value;
+    const x = floatingX.value + verseToolbarOffset.value.dx;
+    return Math.min(
+      Math.max(x, inset),
+      Math.max(inset, viewportWidth.value - inset)
+    );
+  });
 
   const handleVerseToolbarPointerDown = (event: PointerEvent) => {
     if (isSmallScreen.value) return;
@@ -713,8 +821,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     verseToolbarDrag.current = null;
   };
 
-  // Verse toolbar highlight picker state
-  const isHighlightPickerOpen = useSignal(false);
   const colorInputRef = useRef<HTMLInputElement | null>(null);
   const customColorCommitTimeoutRef = useRef<number | null>(null);
   const customHighlightColors = useComputed(
@@ -810,10 +916,123 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   }, [hasVerseSelection.value]);
 
-  // Clicking anywhere outside the chapter content or the verse toolbar
-  // dismisses the verse selection (and therefore the toolbar).
+  // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
+  // chapter content / end-of-chapter controls clear it when the toolbar grows
+  // (mobile verse sheet "More", floating nav appearing, UI scale, etc.).
+  //
+  // The observers are built once and only re-pointed when the open chrome
+  // changes (see the effect below) — rebuilding them per signal change churned
+  // allocations and re-fired ResizeObserver's initial callback each time.
+  const reobserveInsetRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
-    if (!hasVerseSelection.value) return;
+    const root = document.documentElement;
+    if (typeof ResizeObserver === "undefined") return;
+
+    let frame = 0;
+    let lastValue = "";
+
+    // `--sb-reader-bottom-inset` is inherited by the whole document, so writing
+    // it invalidates style for every element in the chapter. Most measures
+    // produce the value we already wrote (a re-point, a child mutation, an
+    // observer's initial callback), so only write on a real change.
+    const write = (chromePx: number) => {
+      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
+      if (next === lastValue) return;
+      lastValue = next;
+      root.style.setProperty("--sb-reader-bottom-inset", next);
+    };
+
+    const measure = () => {
+      const verse = verseToolbarRef.current;
+      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
+        write(verse.offsetHeight);
+        return;
+      }
+
+      const wrap = toolbarWrapRef.current;
+      const toolbar = wrap?.querySelector(".sb-reader-toolbar");
+      if (!(toolbar instanceof HTMLElement)) return;
+
+      let insetPx = toolbar.offsetHeight;
+      const nav = wrap?.querySelector(".sb-reader-floating-nav");
+      if (nav instanceof HTMLElement) {
+        insetPx += nav.offsetHeight;
+      } else {
+        // Desktop: toolbar floats above the viewport bottom.
+        const bottom = parseFloat(getComputedStyle(toolbar).bottom);
+        if (!Number.isNaN(bottom)) insetPx += bottom;
+      }
+
+      write(insetPx);
+    };
+
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+
+    const observer = new ResizeObserver(scheduleMeasure);
+    const mutationObserver =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(() => reobserve())
+        : null;
+
+    const reobserve = () => {
+      observer.disconnect();
+      mutationObserver?.disconnect();
+
+      const verse = verseToolbarRef.current;
+      const wrap = toolbarWrapRef.current;
+
+      if (verse?.classList.contains("sb-verse-toolbar-mobile")) {
+        observer.observe(verse);
+      } else if (wrap) {
+        observer.observe(wrap);
+        const toolbar = wrap.querySelector(".sb-reader-toolbar");
+        const nav = wrap.querySelector(".sb-reader-floating-nav");
+        if (toolbar instanceof HTMLElement) observer.observe(toolbar);
+        if (nav instanceof HTMLElement) observer.observe(nav);
+        mutationObserver?.observe(wrap, { childList: true });
+      }
+
+      scheduleMeasure();
+    };
+
+    reobserveInsetRef.current = reobserve;
+    reobserve();
+
+    return () => {
+      reobserveInsetRef.current = null;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      mutationObserver?.disconnect();
+      // Drop the runtime override so the CSS fallback in base.css takes over.
+      root.style.removeProperty("--sb-reader-bottom-inset");
+    };
+  }, []);
+
+  // Re-point the observers at whichever chrome is now open. Cheap enough to run
+  // on every one of these — `reobserve` only re-registers and schedules a
+  // measure, and the measure no-ops unless the height actually moved.
+  useEffect(() => {
+    reobserveInsetRef.current?.();
+  }, [
+    shouldReplaceDefaultToolbar.value,
+    isVerseToolbarVisible.value,
+    isVerseSheetExpanded.value,
+    isHighlightPickerOpen.value,
+    isSmallScreen.value,
+    activeMobileTab.value,
+  ]);
+
+  // Clicking anywhere outside the chapter content or the verse toolbar
+  // dismisses the verse selection (and therefore the toolbar). Only while the
+  // toolbar is actually showing — with a pane covering the reader every tap
+  // lands "outside", which would silently throw the selection away behind the
+  // pane instead of restoring the toolbar when the pane closes.
+  useEffect(() => {
+    if (!isVerseToolbarVisible.value) return;
 
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
@@ -827,7 +1046,55 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return () => {
       document.removeEventListener("pointerdown", handleDocumentPointerDown);
     };
-  }, [hasVerseSelection.value]);
+  }, [isVerseToolbarVisible.value]);
+
+  // Tapping anywhere outside the mobile More menu closes it. Deliberately done
+  // with a document listener rather than a backdrop element so the tap still
+  // reaches whatever was tapped — selecting a verse or hitting a top quick
+  // toolbar button works normally while the menu is open, it just also
+  // dismisses the menu. Capture phase so we still see the tap even if the
+  // target stops propagation.
+  //
+  // `pointerdown` (rather than `click`) means a touch-scroll that starts while
+  // the menu is open also dismisses it, since a scroll gesture begins with a
+  // pointerdown. That is intended: it matches how dropdowns usually behave, and
+  // dismissing as the gesture starts feels more responsive than waiting for it
+  // to finish. Scrolling the menu's own list is unaffected — those touches land
+  // inside the anchor and return early below.
+  useEffect(() => {
+    if (!isMoreMenuOpen.value) return;
+
+    const handleDocumentPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      // The anchor wraps both the More button and the popover, so this covers
+      // taps on either. The button's own click handler does the toggling.
+      if (target?.closest(".sb-reader-toolbar-more-anchor")) return;
+      isMoreMenuOpen.value = false;
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        isMoreMenuOpen.value = false;
+        // Escape is a keyboard dismissal, so send focus back to the button that
+        // opened the menu — otherwise it is left on the now-unmounted popover and
+        // the next Tab starts over from the top of the document. Only for
+        // Escape: after an outside tap the user is already interacting
+        // somewhere else, and pulling focus back would fight them.
+        moreButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown, true);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handleDocumentPointerDown,
+        true
+      );
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMoreMenuOpen.value]);
 
   const { t } = useI18n();
 
@@ -917,14 +1184,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
+  /**
+   * Display name for a book id, resolved from the current translation's
+   * catalog.
+   *
+   * The catalog covers every book and tracks the reader's position the instant
+   * it moves; the loaded chapter only ever describes one book, and during a
+   * fast skim it describes the one the reader has already left. Falls back to
+   * the chapter only while that translation's catalog is still downloading, and
+   * only when it happens to be the book being asked about.
+   */
+  const resolveBookName = (id: string | null | undefined): string => {
+    if (!id) {
+      return "";
+    }
+    const state = readingState.value;
+    const loadedBook = state?.chapterData.value?.book;
+    const book =
+      state?.translationBooks.value?.books.find((b) => b.id === id) ??
+      (loadedBook?.id === id ? loadedBook : null);
+    return book?.name ?? book?.commonName ?? id;
+  };
+
   const getReaderNavLabel = () => {
     return (
       <>
-        <div>
-          {readingState.value?.chapterData.value?.book.name ??
-            readingState.value?.bookId.value ??
-            " "}
-        </div>
+        <div>{resolveBookName(readingState.value?.bookId.value) || " "}</div>
         <div>{readingState.value?.chapterNumber.value}</div>
       </>
     );
@@ -933,10 +1218,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const getPlayingNavLabel = (playing: PlayingState) => {
     const currentItem = playing.currentItem.value;
     if (currentItem) {
-      const label = playlistItemLabel(currentItem, t, (bookId: string) => {
-        const book = readingState.value?.chapterData.value?.book;
-        return book?.name ?? book?.commonName ?? bookId;
-      });
+      const label = playlistItemLabel(currentItem, t, resolveBookName);
       return (
         <>
           <div>{label}</div>
@@ -951,6 +1233,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     <>
       {!shouldReplaceDefaultToolbar.value && (
         <div
+          ref={toolbarWrapRef}
           className="sb-reader-toolbar-wrap"
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
@@ -1206,10 +1489,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
                     <button
                       type="button"
+                      ref={moreButtonRef}
                       onClick={() => {
-                        // Opening the More menu should dismiss the
-                        // tabs/bookmarks drawer if it's open.
+                        // Opening the More menu should dismiss whatever else is
+                        // covering the reader — the search bar, the chat panel,
+                        // the settings view, or the tabs/bookmarks drawer — the
+                        // same way the other bottom tabs do. Extension panes are
+                        // left alone, since those are opened *from* this menu.
                         if (!isMoreMenuOpen.value) {
+                          sidebar.closeSearchPanel();
+                          sidebar.closeChatPanel();
+                          sidebar.closeSettings();
                           sidebar.closeSidebar();
                         }
                         isMoreMenuOpen.value = !isMoreMenuOpen.value;
@@ -1417,15 +1707,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         </div>
       )}
 
-      {hasVerseSelection.value && verseToolbarTools.value.length > 0 && (
+      {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <div
+          ref={verseToolbarRef}
           className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
           style={
             isSmallScreen.value
               ? undefined
               : {
-                  left: `${floatingX.value + verseToolbarOffset.value.dx}px`,
-                  top: `${floatingY.value + verseToolbarOffset.value.dy}px`,
+                  left: `${clampedToolbarLeft.value}px`,
+                  top: `${clampedToolbarTop.value}px`,
                 }
           }
           onPointerDown={
@@ -1448,22 +1739,63 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 type="button"
                 className="sb-verse-toolbar-close"
                 onClick={() => {
+                  // In highlight-picker mode, close just leaves the picker so the
+                  // user can return to verse actions without losing the selection.
+                  if (isHighlightPickerOpen.value) {
+                    isHighlightPickerOpen.value = false;
+                    return;
+                  }
                   readingState.value?.clearSelectedVerses();
                 }}
-                aria-label={t("close", { defaultValue: "Close" })}
-                title={t("close", { defaultValue: "Close" })}
+                aria-label={
+                  isHighlightPickerOpen.value
+                    ? t("back", { defaultValue: "Back" })
+                    : t("close", { defaultValue: "Close" })
+                }
+                title={
+                  isHighlightPickerOpen.value
+                    ? t("back", { defaultValue: "Back" })
+                    : t("close", { defaultValue: "Close" })
+                }
               >
-                <span className="material-symbols-outlined">close</span>
+                <span className="material-symbols-outlined">
+                  {isHighlightPickerOpen.value ? "arrow_back" : "close"}
+                </span>
               </button>
             </>
           )}
           {(isHighlightPickerOpen.value || isSmallScreen.value) && (
             <div
-              className="sb-verse-toolbar-ref"
-              aria-live="polite"
-              title={selectedVersesReference.value}
+              className={`sb-verse-toolbar-ref${
+                isHighlightPickerOpen.value
+                  ? " sb-verse-toolbar-ref-with-back"
+                  : ""
+              }`}
             >
-              {selectedVersesReference.value}
+              {/* Desktop keeps a back chevron next to the reference; mobile
+                  matches YouVersion with a centered title only. */}
+              {isHighlightPickerOpen.value && !isSmallScreen.value && (
+                <button
+                  type="button"
+                  className="sb-verse-toolbar-back"
+                  onClick={() => {
+                    isHighlightPickerOpen.value = false;
+                  }}
+                  aria-label={t("back", { defaultValue: "Back" })}
+                  title={t("back", { defaultValue: "Back" })}
+                >
+                  <span className="material-symbols-outlined">
+                    chevron_left
+                  </span>
+                </button>
+              )}
+              <span
+                className="sb-verse-toolbar-ref-text"
+                aria-live="polite"
+                title={selectedVersesReference.value}
+              >
+                {selectedVersesReference.value}
+              </span>
             </div>
           )}
           {isHighlightPickerOpen.value ? (
@@ -1476,136 +1808,179 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   isHighlightPickerOpen.value = false;
                   return;
                 }
-                handleHorizontalListKeyNav(event, event.currentTarget);
+                if (isSmallScreen.value) {
+                  handleHorizontalListKeyNav(event, event.currentTarget);
+                }
               }}
             >
-              <button
-                type="button"
-                className="sb-verse-toolbar-back"
-                onClick={() => {
-                  isHighlightPickerOpen.value = false;
-                }}
-                aria-label={t("back", { defaultValue: "Back" })}
-                title={t("back", { defaultValue: "Back" })}
-              >
-                <span className="material-symbols-outlined">chevron_left</span>
-              </button>
-
-              {DEFAULT_HIGHLIGHT_COLOR_IDS.map((colorId) => (
-                <button
-                  key={colorId}
-                  type="button"
-                  className="sb-verse-toolbar-color-button"
-                  onClick={() => {
-                    const rs = readingState.value;
-                    if (!rs) return;
-                    applyHighlightWithSession(rs, sessionState.value, {
-                      colorId,
-                    });
-                  }}
-                  aria-label={`Highlight ${colorId}`}
-                  title={colorId}
-                >
-                  <span
-                    className="sb-verse-toolbar-color"
-                    style={{
-                      background: `var(--sb-highlight-${colorId}-color)`,
-                    }}
-                  />
-                </button>
-              ))}
-
-              {customHighlightColors.value.map((hex) => (
-                <button
-                  key={hex}
-                  type="button"
-                  className="sb-verse-toolbar-color-button"
-                  onClick={() => {
-                    const rs = readingState.value;
-                    if (!rs) return;
-                    applyHighlightWithSession(rs, sessionState.value, {
-                      colorId: "yellow",
-                      customColor: hex,
-                      customFontColor: getContrastTextColor(hex),
-                    });
-                  }}
-                  onContextMenu={(event: MouseEvent) => {
-                    event.preventDefault();
-                    settings.removeCustomHighlightColor(hex);
-                  }}
-                  aria-label={`Highlight ${hex}`}
-                  title={`${hex} — right-click to remove`}
-                >
-                  <span
-                    className="sb-verse-toolbar-color"
-                    style={{ background: hex }}
-                  />
-                </button>
-              ))}
-
-              <button
-                type="button"
-                className="sb-verse-toolbar-plus"
-                onClick={() => {
-                  colorInputRef.current?.click();
-                }}
-                aria-label={t("add-custom-color", {
-                  defaultValue: "Add custom color",
+              <div
+                ref={colorSwatchesRef}
+                className="sb-verse-toolbar-swatches"
+                role="group"
+                aria-label={t("highlight-colors", {
+                  defaultValue: "Highlight colors",
                 })}
-                title={t("add-color", { defaultValue: "Add color" })}
-              >
-                <span className="material-symbols-outlined">add</span>
-                <span className="sb-verse-toolbar-action-text">
-                  {t("add", { defaultValue: "Add" })}
-                </span>
-              </button>
-              <input
-                ref={colorInputRef}
-                type="color"
-                className="sb-verse-toolbar-color-input"
-                onChange={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  commitCustomColor(target.value);
-                }}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  commitCustomColor(target.value);
-                }}
-              />
-
-              <button
-                type="button"
-                className="sb-verse-toolbar-clear"
-                disabled={!hasAnyHighlighted.value}
-                onClick={() => {
-                  const rs = readingState.value;
-                  if (!rs) return;
-                  if (
-                    sessionState.value &&
-                    sessionState.value.userCanDecorate(
-                      sessionState.value.localSessionId.value
-                    )
-                  ) {
-                    // Clean up the shared decoration first so the removal
-                    // propagates to other clients even if the local
-                    // unhighlight is a no-op (e.g. user isn't logged in
-                    // with HighlightsManager but the session had a
-                    // decoration broadcast earlier).
-                    removeSharedHighlightsFromSelection(sessionState.value, rs);
-                  } else {
-                    rs.unhighlightSelectedVerses();
+                onScroll={() => {
+                  if (!isSmallScreen.value) return;
+                  const el = colorSwatchesRef.current;
+                  if (!el) return;
+                  // Any meaningful horizontal swipe dismisses the hint for this
+                  // open session of the picker.
+                  if (el.scrollLeft > 4) {
+                    showHighlightColorSwipeHint.value = false;
                   }
                 }}
-                aria-label={t("clear-highlight", {
-                  defaultValue: "Clear highlight",
-                })}
-                title={t("clear", { defaultValue: "Clear" })}
+                onKeyDown={(event) => {
+                  if (isSmallScreen.value) {
+                    handleHorizontalListKeyNav(event, event.currentTarget);
+                  } else {
+                    handleGridKeyNav(event, event.currentTarget);
+                  }
+                }}
               >
-                <span className="material-symbols-outlined">ink_eraser</span>
-                <span className="sb-verse-toolbar-action-text">
-                  {t("clear", { defaultValue: "Clear" })}
-                </span>
-              </button>
+                {DEFAULT_HIGHLIGHT_IDS.map((colorId) => (
+                  <button
+                    key={colorId}
+                    type="button"
+                    className="sb-verse-toolbar-color-button"
+                    onClick={() => {
+                      const rs = readingState.value;
+                      if (!rs) return;
+                      applyHighlightWithSession(rs, sessionState.value, {
+                        colorId,
+                      });
+                    }}
+                    aria-label={`Highlight ${colorId}`}
+                    title={colorId}
+                  >
+                    <span
+                      className="sb-verse-toolbar-color"
+                      style={{
+                        background: `var(--sb-highlight-${colorId}-color)`,
+                      }}
+                    />
+                  </button>
+                ))}
+
+                {customHighlightColors.value.map((hex) => (
+                  <button
+                    key={hex}
+                    type="button"
+                    className="sb-verse-toolbar-color-button"
+                    onClick={() => {
+                      const rs = readingState.value;
+                      if (!rs) return;
+                      applyHighlightWithSession(rs, sessionState.value, {
+                        colorId: "yellow",
+                        customColor: hex,
+                        customFontColor: getContrastTextColor(hex),
+                      });
+                    }}
+                    onContextMenu={(event: MouseEvent) => {
+                      event.preventDefault();
+                      settings.removeCustomHighlightColor(hex);
+                    }}
+                    aria-label={`Highlight ${hex}`}
+                    title={`${hex} — right-click to remove`}
+                  >
+                    <span
+                      className="sb-verse-toolbar-color"
+                      style={{ background: hex }}
+                    />
+                  </button>
+                ))}
+
+                {/* On mobile the "+" lives inside the scroll strip so custom
+                    colors and defaults stay one continuous thumb-scroll row. */}
+                {isSmallScreen.value && (
+                  <button
+                    type="button"
+                    className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
+                    onClick={() => {
+                      colorInputRef.current?.click();
+                    }}
+                    aria-label={t("add-custom-color", {
+                      defaultValue: "Add custom color",
+                    })}
+                    title={t("add-color", { defaultValue: "Add color" })}
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="sb-verse-toolbar-picker-actions">
+                {!isSmallScreen.value && (
+                  <button
+                    type="button"
+                    className="sb-verse-toolbar-plus"
+                    onClick={() => {
+                      colorInputRef.current?.click();
+                    }}
+                    aria-label={t("add-custom-color", {
+                      defaultValue: "Add custom color",
+                    })}
+                    title={t("add-color", { defaultValue: "Add color" })}
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                    <span className="sb-verse-toolbar-action-text">
+                      {t("add", { defaultValue: "Add" })}
+                    </span>
+                  </button>
+                )}
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  className="sb-verse-toolbar-color-input"
+                  onChange={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    commitCustomColor(target.value);
+                  }}
+                  onInput={(event: Event) => {
+                    const target = event.currentTarget as HTMLInputElement;
+                    commitCustomColor(target.value);
+                  }}
+                />
+
+                <button
+                  type="button"
+                  className="sb-verse-toolbar-clear"
+                  disabled={!hasAnyHighlighted.value}
+                  onClick={() => {
+                    const rs = readingState.value;
+                    if (!rs) return;
+                    if (
+                      sessionState.value &&
+                      sessionState.value.userCanDecorate(
+                        sessionState.value.localSessionId.value
+                      )
+                    ) {
+                      // Clean up the shared decoration first so the removal
+                      // propagates to other clients even if the local
+                      // unhighlight is a no-op (e.g. user isn't logged in
+                      // with HighlightsManager but the session had a
+                      // decoration broadcast earlier).
+                      removeSharedHighlightsFromSelection(
+                        sessionState.value,
+                        rs
+                      );
+                    } else {
+                      rs.unhighlightSelectedVerses();
+                    }
+                  }}
+                  aria-label={t("clear-highlight", {
+                    defaultValue: "Clear highlight",
+                  })}
+                  title={t("clear", { defaultValue: "Clear" })}
+                >
+                  <span className="material-symbols-outlined">
+                    {isSmallScreen.value ? "close" : "ink_eraser"}
+                  </span>
+                  <span className="sb-verse-toolbar-action-text">
+                    {t("clear", { defaultValue: "Clear" })}
+                  </span>
+                </button>
+              </div>
             </div>
           ) : (
             <div
@@ -1734,6 +2109,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
                       onClick={() => {
                         isHighlightPickerOpen.value = true;
+                        showHighlightColorSwipeHint.value = true;
                       }}
                       aria-label={t("highlight-selection", {
                         defaultValue: "Highlight selection",
@@ -1836,7 +2212,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ...nonCancel.map(renderTool),
                 ].filter(Boolean);
 
-                const COLLAPSED_COUNT = 3;
+                const COLLAPSED_COUNT = 4;
                 const needsToggle = actionCards.length > COLLAPSED_COUNT;
                 const primaryCards = needsToggle
                   ? actionCards.slice(0, COLLAPSED_COUNT)
@@ -1897,16 +2273,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               })()}
             </div>
           )}
-          {isSmallScreen.value && (
-            <div className="sb-verse-toolbar-swipe-hint" aria-hidden="true">
-              <span className="material-symbols-outlined">
-                keyboard_double_arrow_up
-              </span>
-              <span>
-                {t("swipe-up-more", { defaultValue: "Swipe up to view more" })}
-              </span>
-            </div>
-          )}
+          {isSmallScreen.value &&
+            isHighlightPickerOpen.value &&
+            showHighlightColorSwipeHint.value && (
+              <div
+                className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
+                aria-hidden="true"
+              >
+                <span className="material-symbols-outlined">
+                  keyboard_double_arrow_right
+                </span>
+                <span>
+                  {t("swipe-to-see-more", {
+                    defaultValue: "Swipe to see more",
+                  })}
+                </span>
+              </div>
+            )}
         </div>
       )}
     </>

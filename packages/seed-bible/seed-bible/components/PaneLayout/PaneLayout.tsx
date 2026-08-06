@@ -231,7 +231,13 @@ interface FullscreenPaneProps {
  * On desktop this leaves the sidebar docked beside it, visible and
  * interactable. On mobile the sidebar is a hidden drawer, so the content row
  * spans the whole viewport and the pane fills the screen as before — with the
- * bottom toolbar still floating above it (see BibleReaderToolbar).
+ * bottom toolbar still visible below it (BibleReaderToolbar keeps the bottom bar
+ * on screen and suspends the taller verse toolbar; PaneLayout.css reserves the
+ * bottom bar's height).
+ *
+ * All of the pane's geometry (`position`, `inset`, `z-index`) lives in
+ * PaneLayout.css rather than an inline style, so the mobile bottom inset there
+ * can override it.
  *
  * Only one pane can fill the screen at a time — opening a fullscreen pane
  * closes every other pane (see PanesManager) — so there is never a side or
@@ -245,14 +251,6 @@ export function FullscreenPane(props: FullscreenPaneProps) {
     <div
       className="sb-pane-shell sb-pane-shell-detached"
       data-placement="fullscreen"
-      style={{
-        position: "absolute",
-        top: "0px",
-        left: "0px",
-        right: "0px",
-        bottom: "0px",
-        zIndex: 35,
-      }}
       onPointerDown={() => app.selectPane(pane.id)}
     >
       <PaneHeader

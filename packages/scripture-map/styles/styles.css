@@ -15,7 +15,7 @@
 }
 
 .scripture-map-wrapper *:not(.material-symbols-outlined) {
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 /* .scripture-map-wrapper > * {
@@ -500,6 +500,16 @@
   flex-wrap: wrap;
 }
 
+.testament-content .scripture-map-books-container-masonry {
+  display: block;
+  position: relative;
+}
+
+.scripture-map-books-container.scripture-map-books-container-masonry
+  .book-container {
+  width: max-content;
+}
+
 .scripture-map-books-container .book-container {
   display: flex;
   flex-direction: column;
@@ -810,7 +820,7 @@
 }
 
 .tooltip *:not(.material-symbols-outlined) {
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 .tooltip.tooltip-up {

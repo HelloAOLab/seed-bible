@@ -7,7 +7,12 @@ import { safeLocalStorage } from "../app/ssrEnv";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import { type BibleReadingState } from "../managers/BibleReadingManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
-import type { TabsManager } from "../managers/TabsManager";
+import {
+  PROFILE_TRANSLATION_ID,
+  type TabsManager,
+} from "../managers/TabsManager";
+import type { LoginManager } from "../managers/LoginManager";
+import { saveProfileConfigValue } from "../managers/ProfileConfigSync";
 import type {
   BookOrientation,
   SettingsManager,
@@ -142,6 +147,17 @@ export interface BibleSelectorState {
   selectTranslation: (translationId: string) => Promise<void>;
 
   /**
+   * Explicit user pick from the translation list in the selector UI. Behaves
+   * like `selectTranslation`, but also persists the choice to the user's
+   * profile so it's restored the next time they open the app. Programmatic
+   * translation changes (selector sync on open, language-driven translation
+   * switch, custom translation URL addition) should keep using
+   * `selectTranslation` instead, since those aren't a deliberate pick from
+   * the list.
+   */
+  pickTranslation: (translationId: string) => Promise<void>;
+
+  /**
    * Applies chapter selection to the bound slot/tab and closes selector.
    * Creates a new tab if needed when the bound slot has no tab content,
    * or when `forceNewTab` is true.
@@ -158,11 +174,7 @@ export interface BibleSelectorState {
   highLightedButtonsID: Signal<Record<number, boolean>>;
   currentPsalms: Signal<BibleSelectorPsalmsGroups[]>;
   selectedTestamentData: Signal<TranslationBook[] | null>;
-  handleChapterClick: (props: {
-    index: number;
-    book: TranslationBook;
-    cht?: number;
-  }) => void;
+  handleChapterClick: (props: { book: TranslationBook }) => void;
   calcChapterPos: (index: number, separator: number) => number;
   isBook: (book: BibleSelectorBookItem) => book is TranslationBook;
   ghostArray: (
@@ -180,6 +192,11 @@ export interface BibleSelectorState {
     translation: Translation;
     position: { x: number; y: number };
   } | null>;
+  /**
+   * The translation whose offline download the user is being asked to confirm
+   * removing, or null when no confirmation is pending.
+   */
+  pendingOfflineDelete: Signal<Translation | null>;
   inputValue: Signal<string>;
   filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   handleTranslationAddition: () => void;
@@ -234,7 +251,8 @@ export function createBibleSelectorState(
   settings: SettingsManager,
   sidebar: SidebarManager,
   bookmarks: BookmarksManager,
-  navigation: NavigationManager
+  navigation: NavigationManager,
+  login: LoginManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const slot = signal<TabSlot | null>(null);
@@ -499,6 +517,20 @@ export function createBibleSelectorState(
     await handleTranslationSelect(nextTranslationId);
   };
 
+  // The only entry point that should persist to the profile: a deliberate
+  // click on a translation in the selector's list (BibleSelector.tsx). Other
+  // callers of `selectTranslation` (selector-open sync, language-driven
+  // translation switch, custom translation URL addition) are programmatic,
+  // not a user pick, and stay unpersisted.
+  const pickTranslation = async (nextTranslationId: string) => {
+    await selectTranslation(nextTranslationId);
+    void saveProfileConfigValue(
+      login,
+      PROFILE_TRANSLATION_ID,
+      nextTranslationId
+    );
+  };
+
   const languageQuery = signal<string>("");
 
   const selectedTestament = signal<number>(2);
@@ -601,6 +633,8 @@ export function createBibleSelectorState(
     position: { x: number; y: number };
   } | null>(null);
 
+  const pendingOfflineDelete = signal<Translation | null>(null);
+
   const inputValue = signal<string>("");
 
   const selectedTestamentData = computed<TranslationBook[]>(() => {
@@ -669,21 +703,72 @@ export function createBibleSelectorState(
     }
   };
 
-  const handleChapterClick = (props: {
-    index: number;
-    book: TranslationBook;
-    cht?: number;
-  }): void => {
-    const { index, book, cht = 0 } = props;
-    if (bookData?.value?.id === book.id) {
+  /**
+   * Maps `expandedBookId` onto the SideBarBooks accordion signals
+   * (`bookData` / `lastBookClicked` / `chT`) so the open book is actually
+   * expanded in the grid. Returns false when the book isn't in the current
+   * filtered testament list (e.g. search hid it).
+   */
+  const applyExpandedBookToSidebar = (bookId: string | null): boolean => {
+    if (!bookId) {
+      lastBookClicked.value = -1;
       bookData.value = null;
       chT.value = 0;
-      lastBookClicked.value = -1;
-    } else {
-      bookData.value = book;
-      chT.value = cht;
-      lastBookClicked.value = index;
+      return true;
     }
+
+    const { oldTestament, newTestament, apocrypha } = groupedBooks.value;
+    const lst = localSelectedTestament.value;
+
+    const findIn = (
+      books: TranslationBook[],
+      testamentHint = 0
+    ): { book: TranslationBook; index: number; cht: number } | null => {
+      const index = books.findIndex((book) => book.id === bookId);
+      const book = index >= 0 ? books[index] : undefined;
+      if (!book) return null;
+      return { book, index, cht: testamentHint };
+    };
+
+    let match: { book: TranslationBook; index: number; cht: number } | null =
+      null;
+    if (lst === 0) {
+      match = findIn(oldTestament);
+    } else if (lst === 1) {
+      match = findIn(newTestament);
+    } else if (lst === 3) {
+      match = findIn(apocrypha);
+    } else {
+      // All Books view: OT/NT/AP grids render together, so each needs its own
+      // hint (0/1/2) — that's how a book's chapter panel opens under the
+      // right grid instead of colliding with a different testament's.
+      // Single-testament views above never pass a chapterHint at render time,
+      // so `cht` is inert there; the default 0 is just a placeholder.
+      match =
+        findIn(oldTestament, 0) ??
+        findIn(newTestament, 1) ??
+        findIn(apocrypha, 2);
+    }
+
+    if (!match) {
+      lastBookClicked.value = -1;
+      bookData.value = null;
+      chT.value = 0;
+      return false;
+    }
+
+    bookData.value = match.book;
+    lastBookClicked.value = match.index;
+    chT.value = match.cht;
+    return true;
+  };
+
+  // Delegates the toggle to `setExpandedBook` — the `applyExpandedBookToSidebar`
+  // effect above is the single place that derives `bookData` / `lastBookClicked`
+  // / `chT` from `expandedBookId`, so writing those signals here too would just
+  // be a second, immediately-overwritten source of truth.
+  const handleChapterClick = (props: { book: TranslationBook }): void => {
+    setExpandedBook(props.book.id);
   };
 
   const calcChapterPos = (index: number, separator: number): number =>
@@ -733,19 +818,44 @@ export function createBibleSelectorState(
     }
   });
 
+  // Keep the chapter accordion in sync with expandedBookId while open.
+  // localSelectedTestament / groupedBooks are dependencies so a testament
+  // filter or search that still includes the book re-applies the correct index.
   effect(() => {
+    if (!isOpen.value) return;
+    const bookId = expandedBookId.value;
+    // Touch filtered lists so testament/search changes re-run this effect.
+    void localSelectedTestament.value;
+    void groupedBooks.value;
+    applyExpandedBookToSidebar(bookId);
+  });
+
+  // When search narrows to a single book, expand it. Do not clear expansion
+  // when multiple books are visible — that used to wipe the current book on open.
+  effect(() => {
+    if (!isOpen.value) return;
     const bd = selectedTestamentData.value;
     if (bd && bd.length === 1 && bd[0]) {
-      lastBookClicked.value = 0;
-      bookData.value = bd[0];
-      chT.value = bd[0].order > 39 ? 1 : 0;
-    } else {
-      lastBookClicked.value = -1;
-      bookData.value = null;
-      chT.value = 0;
+      expandedBookId.value = bd[0].id;
     }
   });
 
+  // Mark the reading-position chapter while its book is expanded.
+  effect(() => {
+    if (!isOpen.value) return;
+    const chapter = currentChapterNumber.value;
+    const readingBookId = currentBookId.value;
+    const expandedId = bookData.value?.id ?? null;
+    if (
+      chapter != null &&
+      readingBookId != null &&
+      expandedId === readingBookId
+    ) {
+      highLightedButtonsID.value = { [chapter]: true };
+    } else {
+      highLightedButtonsID.value = {};
+    }
+  });
   effect(() => {
     const st = selectedTestament.value;
     const bd = selectedTranslationBooks.value?.books;
@@ -955,6 +1065,7 @@ export function createBibleSelectorState(
     setSearch,
     setExpandedBook,
     selectTranslation,
+    pickTranslation,
     selectChapter: handleChapterSelect,
     selectedTestament,
     apocryphaAvailable,
@@ -978,6 +1089,7 @@ export function createBibleSelectorState(
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
+    pendingOfflineDelete,
     inputValue,
     filteredApiTranslations,
     handleTranslationAddition,

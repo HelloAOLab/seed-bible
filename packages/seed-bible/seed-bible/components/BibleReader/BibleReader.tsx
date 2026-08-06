@@ -3,8 +3,14 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import type { JSX } from "preact";
-import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
+import { Fragment, type JSX, type RefObject } from "preact";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useState,
+} from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
   adjacentInlineRect,
@@ -33,7 +39,13 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
-import { SelfAvatarVisual, getSelfDisplayName } from "../Tabs/Tabs";
+import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import {
+  SelfAvatarVisual,
+  getSelfDisplayName,
+  openBookmarkCategoryModal,
+} from "../Tabs/Tabs";
+import { VerseReferenceText } from "../../app/verseReferenceLink";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -45,8 +57,8 @@ interface ReaderBookmarkButtonProps {
 /**
  * Toggle for the chapter currently shown in the reader. Sits in the top-right
  * of the chapter content area: filled + orange when the chapter is saved,
- * outlined when not. The per-tab-row bookmark button was removed in favor of
- * this single control because only one chapter is ever in view at a time.
+ * outlined when not. Opens the category picker to save into an existing or
+ * new folder; when already bookmarked, removes the chapter-level bookmark.
  */
 function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
   const { state, translationId, bookId, chapterNumber } = props;
@@ -63,12 +75,22 @@ function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
         isBookmarked ? " sb-bible-reader-bookmark-button-active" : ""
       }`}
       onClick={() => {
-        if (!canBookmark) return;
-        void state.bookmarks.toggleBookmarkAtLocation(
+        if (!canBookmark || !translationId || !bookId || !chapterNumber) {
+          return;
+        }
+        if (isBookmarked) {
+          void state.bookmarks.removeBookmarkForLocation(
+            translationId,
+            bookId,
+            chapterNumber
+          );
+          return;
+        }
+        openBookmarkCategoryModal(state, {
           translationId,
           bookId,
-          chapterNumber
-        );
+          chapterNumber,
+        });
       }}
       disabled={!canBookmark}
       aria-pressed={isBookmarked}
@@ -772,6 +794,21 @@ function renderChapterContent(
   const entries = chapterData.chapter.content;
   const nodes: (JSX.Element | null)[] = [];
 
+  // Verse text carries no leading/trailing spaces of its own — with numbers on,
+  // the number's own margins are what keep one verse off the back of the
+  // previous one. Hide the numbers and adjacent verses collide
+  // ("...had your fill.Do not work..."), so emit a real space between them.
+  // It sits between the verse spans rather than inside one, so highlight
+  // ribbons and verse selection still stop at a verse's own glyphs, and it
+  // collapses away at a line break like any other space.
+  const needsVerseSpacing = !scriptureElements.showVerseNumbers;
+  let previousWasVerse = false;
+
+  // Keyed so the separator is a first-class sibling of the keyed verses it sits
+  // between, rather than an unkeyed string mixed in among them. A fragment adds
+  // nothing to the DOM — what renders is the bare text node either way.
+  const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
+
   for (let i = 0; i < entries.length; ) {
     const entry = entries[i];
 
@@ -795,12 +832,14 @@ function renderChapterContent(
           {heading}
         </h3>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (entry.type === "line_break") {
       nodes.push(<div key={`break-${i}`} className="sb-line-break" />);
+      previousWasVerse = false;
       i += 1;
       continue;
     }
@@ -820,6 +859,7 @@ function renderChapterContent(
           )}
         </p>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
@@ -829,6 +869,11 @@ function renderChapterContent(
         ? getVerseHighlight(entry.number)
         : null;
       const colorKey = getHighlightColorKey(highlight);
+
+      if (needsVerseSpacing && previousWasVerse) {
+        nodes.push(verseSeparator(`space-${i}`));
+      }
+      previousWasVerse = true;
 
       if (colorKey === null) {
         nodes.push(renderVerseNode(entry, i));
@@ -887,9 +932,17 @@ function renderChapterContent(
           data-highlight-fill={presentation.fill ?? undefined}
           data-highlight-key={runKey}
         >
-          {runIndices.map((idx) =>
-            renderVerseNode(entries[idx] as ChapterVerse, idx)
-          )}
+          {runIndices.flatMap((idx, runIndex) => {
+            const verseNode = renderVerseNode(
+              entries[idx] as ChapterVerse,
+              idx
+            );
+            // Same separator as between top-level verses; inside a run it falls
+            // within the ribbon, which is correct — the whole run is one fill.
+            return needsVerseSpacing && runIndex > 0
+              ? [verseSeparator(`space-${idx}`), verseNode]
+              : [verseNode];
+          })}
         </span>
       );
       i = j;
@@ -923,8 +976,11 @@ export interface BibleReaderMobileChromeProps {
   onOpenMobileSettings: () => void;
   onCloseMobileSettings: () => void;
   onOpenAllSettings: () => void;
-  swipeViewportRefCallback: (el: HTMLDivElement | null) => void;
-  swipeTrackRefCallback: (el: HTMLDivElement | null) => void;
+  // Plain refs: these only need `.current` filled in, which Preact does for a
+  // ref object on its own.
+  swipeViewportRef: RefObject<HTMLDivElement>;
+  swipeTrackRef: RefObject<HTMLDivElement>;
+  // A callback because it feeds component state, not just a ref.
   currentScrollerRefCallback: (el: HTMLDivElement | null) => void;
 }
 
@@ -958,9 +1014,49 @@ interface Ribbon {
 }
 const RIBBON_FADE_MS = 250;
 
+/**
+ * How long the chapter the reader has left stays on screen, dimmed, before the
+ * placeholder takes over.
+ *
+ * Swapping to the placeholder the instant you navigate reads as a flicker on a
+ * fast connection, where the new text lands in well under this. Dimming costs
+ * nothing and moves nothing, so it carries the common case; the placeholder is
+ * only for waits long enough that dimmed text starts to look stuck.
+ *
+ * Does not apply on a cold start — with no chapter on screen there is nothing
+ * to dim, so the placeholder shows straight away.
+ */
+export const CHAPTER_SKELETON_DELAY_MS = 500;
+
+/**
+ * Bar widths for the chapter loading placeholder, one array per paragraph.
+ *
+ * Hand-picked rather than random so the placeholder is identical on every
+ * render — a fresh set each time would shimmer *and* reflow — and so it reads
+ * as ragged prose rather than a block.
+ *
+ * Deliberately more paragraphs than the tallest reading pane needs. The two
+ * failure modes are not symmetric: falling short leaves visible dead space
+ * below the bars, while overshooting spills below the fold where nobody sees
+ * it (the pane scrolls internally, and scroll position resets on every chapter
+ * change). Tuning the fill is editing this one array — no measurement, and no
+ * reflow on a placeholder that remounts on every navigation.
+ */
+const CHAPTER_SKELETON_PARAGRAPHS = [
+  ["97%", "92%", "99%", "88%", "71%"],
+  ["94%", "99%", "90%", "96%", "58%"],
+  ["99%", "89%", "95%", "93%", "77%"],
+  ["91%", "98%", "87%", "96%", "64%"],
+  ["96%", "93%", "99%", "85%", "80%"],
+  ["98%", "90%", "94%", "97%", "52%"],
+  ["93%", "99%", "91%", "88%", "74%"],
+  ["95%", "96%", "98%", "89%", "68%"],
+] as const;
+
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
+  initialChapterLoadSettled: ReadonlySignal<boolean>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
@@ -973,12 +1069,18 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  /**
+   * True while this is the chapter the reader has *left* — shown dimmed until
+   * the chapter they navigated to arrives.
+   */
+  isStale?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
   const {
     chapterData,
     chapterDataPromise,
+    initialChapterLoadSettled,
     selectedVerses,
     highlights,
     decorations,
@@ -1212,7 +1314,13 @@ function ChapterContent(props: ChapterContentProps) {
   }, []);
 
   if (chapterData.value === null) {
-    throw chapterDataPromise;
+    if (!initialChapterLoadSettled.value) {
+      throw chapterDataPromise;
+    }
+    // The load finished and produced nothing. Rendering the error branch above
+    // is the caller's job; throwing the (now-resolved) promise again would just
+    // suspend and resume forever.
+    return null;
   }
 
   const containerClasses = decorations.value
@@ -1228,7 +1336,9 @@ function ChapterContent(props: ChapterContentProps) {
   return (
     <div
       ref={contentRef}
-      className={`sb-chapter-content ${containerClasses}`}
+      className={`sb-chapter-content${
+        props.isStale ? " sb-chapter-content-stale" : ""
+      } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
@@ -1293,6 +1403,7 @@ export function BibleReader(props: BibleReaderProps) {
     highlights,
     decorations,
     loading,
+    isChapterContentStale,
     error,
     selectVerse,
     clearSelectedVerses,
@@ -1300,7 +1411,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  if (!chapterData.value && import.meta.env.SSR) {
+  if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
   }
 
@@ -1308,6 +1419,18 @@ export function BibleReader(props: BibleReaderProps) {
     () =>
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
+  );
+  // The requested book wasn't found in this translation's book list — a
+  // genuinely unrecognized book/name, or one absent from this specific
+  // translation. `loadInitialData` deliberately stops rather than silently
+  // substituting a different book's content once loading settles.
+  const bookNotFound = computed(
+    () =>
+      !loading.value &&
+      !error.value &&
+      translationBooks.value !== null &&
+      bookId.value !== null &&
+      currentBook.value === null
   );
   const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
@@ -1323,8 +1446,35 @@ export function BibleReader(props: BibleReaderProps) {
   // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
   const readerFontSizeClass = `sb-font-size-${(
-    state?.config?.config.value.fontSize ?? "M"
+    state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
+
+  // Hard-gated off under SSR, which is what keeps both the dimming and the
+  // placeholder out of the served HTML. Rendering the placeholder server-side
+  // would strip the scripture out of the document — for a Bible reader that is
+  // an SEO regression, not a cosmetic one. The reader suspends on
+  // `chapterDataPromise` there instead, so by render time there is either
+  // content or a settled failure.
+  const isContentStale = !import.meta.env.SSR && isChapterContentStale.value;
+  // Held back by `CHAPTER_SKELETON_DELAY_MS` so a fast navigation shows only
+  // dimmed text, never a flash of placeholder. Skipped when there is no chapter
+  // on screen to dim — a cold start would otherwise sit blank for the delay.
+  const [isWaitLong, setIsWaitLong] = useState(false);
+  useEffect(() => {
+    if (!isContentStale) {
+      setIsWaitLong(false);
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setIsWaitLong(true),
+      CHAPTER_SKELETON_DELAY_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [isContentStale]);
+
+  const showChapterSkeleton =
+    isContentStale && (chapterData.value === null || isWaitLong);
+  const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
@@ -1428,6 +1578,43 @@ export function BibleReader(props: BibleReaderProps) {
     </h2>
   );
 
+  /**
+   * Placeholder shown in place of the verses while the chapter the reader has
+   * navigated to is still downloading. Without it, a fast skim shows the *old*
+   * chapter's text under the new chapter's title, which reads as though the
+   * navigation silently failed.
+   */
+  const renderChapterSkeleton = () => (
+    <SkeletonContainer
+      label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
+      className="sb-chapter-content sb-chapter-skeleton"
+    >
+      <Skeleton shape="block" width="42%" />
+      {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
+        <div className="sb-chapter-skeleton-paragraph" key={paragraph}>
+          {widths.map((width, line) => (
+            <Skeleton shape="line" key={line} width={width} />
+          ))}
+        </div>
+      ))}
+    </SkeletonContainer>
+  );
+
+  // Keep the failure state on screen while a retry is in flight — `retryLoad()`
+  // clears `error` as it starts, so without this the panel would flash back to
+  // the (still empty) chapter body before the new request settles.
+  const [retrying, setRetrying] = useState(false);
+  const retryChapterLoad = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await readingState.retryLoad();
+    } finally {
+      setRetrying(false);
+    }
+  };
+  const showLoadError = (!!error.value && !loading.value) || retrying;
+
   const renderMainContent = () => (
     <>
       {isMobile &&
@@ -1436,36 +1623,117 @@ export function BibleReader(props: BibleReaderProps) {
           chapterNumber.value ?? ""
         )}
 
-      {error.value && !loading.value && (
-        <p className="sb-reader-error">{error.value}</p>
-      )}
-
-      {!error.value && (
-        <Suspense
-          fallback={
-            <p>
-              {t("no-chapter-content-found", {
-                defaultValue: "No chapter content found.",
+      {bookNotFound.value && (
+        <div className="sb-reader-not-found">
+          <span
+            className="material-symbols-outlined sb-reader-not-found-icon"
+            aria-hidden="true"
+          >
+            search_off
+          </span>
+          <p className="sb-reader-not-found-title">
+            {t("book-not-found-title", { defaultValue: "Book not found" })}
+          </p>
+          <p className="sb-reader-not-found-body">
+            {t("book-not-found-message", {
+              defaultValue:
+                "We couldn't find that book in {{translationName}}.",
+              translationName:
+                translation.value?.name ?? translationId.value ?? "",
+            })}
+          </p>
+          {translationBooks.value?.books[0] && (
+            <button
+              type="button"
+              className="sb-reader-not-found-action"
+              onClick={() => {
+                const firstBook = translationBooks.value!.books[0]!;
+                void readingState.selectChapter(
+                  firstBook.id,
+                  firstBook.firstChapterNumber ?? 1
+                );
+              }}
+            >
+              {t("book-not-found-action", {
+                defaultValue: "Go to {{bookName}} {{chapterNumber}}",
+                bookName: translationBooks.value.books[0].name,
+                chapterNumber:
+                  translationBooks.value.books[0].firstChapterNumber ?? 1,
               })}
-            </p>
-          }
-        >
-          <ChapterContent
-            chapterData={chapterData}
-            chapterDataPromise={readingState.chapterDataPromise}
-            selectedVerses={selectedVerses}
-            selectVersesFromTextSelection={selectVersesFromTextSelection}
-            justConvertedSelectionRef={justConvertedSelectionRef}
-            highlights={highlights}
-            decorations={decorations}
-            selectVerse={selectVerse}
-            selectFootnote={selectFootnote}
-            scriptureElements={scriptureElements}
-          />
-        </Suspense>
+            </button>
+          )}
+        </div>
       )}
 
-      {!availableTranslations.value && !error.value && (
+      {showLoadError && (
+        <div className="sb-reader-error" role="alert">
+          <span
+            className="material-symbols-outlined sb-reader-error-icon"
+            aria-hidden="true"
+          >
+            cloud_off
+          </span>
+          <h2 className="sb-reader-error-title">
+            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
+          </h2>
+          <p className="sb-reader-error-message">
+            {t("chapter-unavailable-description", {
+              defaultValue:
+                "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-reader-error-retry"
+            onClick={() => void retryChapterLoad()}
+            disabled={retrying}
+            aria-busy={retrying}
+          >
+            {retrying && (
+              <span
+                className="material-symbols-outlined sb-reader-error-retry-spinner"
+                aria-hidden="true"
+              >
+                progress_activity
+              </span>
+            )}
+            {t("reload", { defaultValue: "Reload" })}
+          </button>
+        </div>
+      )}
+
+      {!showLoadError &&
+        !bookNotFound.value &&
+        (showChapterSkeleton ? (
+          renderChapterSkeleton()
+        ) : (
+          <Suspense
+            fallback={
+              <p>
+                {t("no-chapter-content-found", {
+                  defaultValue: "No chapter content found.",
+                })}
+              </p>
+            }
+          >
+            <ChapterContent
+              isStale={dimStaleChapter}
+              chapterData={chapterData}
+              chapterDataPromise={readingState.chapterDataPromise}
+              initialChapterLoadSettled={readingState.initialChapterLoadSettled}
+              selectedVerses={selectedVerses}
+              selectVersesFromTextSelection={selectVersesFromTextSelection}
+              justConvertedSelectionRef={justConvertedSelectionRef}
+              highlights={highlights}
+              decorations={decorations}
+              selectVerse={selectVerse}
+              selectFootnote={selectFootnote}
+              scriptureElements={scriptureElements}
+            />
+          </Suspense>
+        ))}
+
+      {!availableTranslations.value && !showLoadError && (
         <p>
           {t("no-translations-available", {
             defaultValue: "No translations available.",
@@ -1473,7 +1741,7 @@ export function BibleReader(props: BibleReaderProps) {
         </p>
       )}
 
-      {!error.value && translationLicenseNotice.value.length > 0 && (
+      {!showLoadError && translationLicenseNotice.value.length > 0 && (
         <>
           <p className="sb-translation-license-notice">
             {translationLicenseNotice.value}
@@ -1582,11 +1850,11 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
 
           <div
-            ref={mobileChrome?.swipeViewportRefCallback}
+            ref={mobileChrome?.swipeViewportRef}
             className="sb-reader-swipe-viewport"
           >
             <div
-              ref={mobileChrome?.swipeTrackRefCallback}
+              ref={mobileChrome?.swipeTrackRef}
               className="sb-reader-swipe-track"
             >
               <div
@@ -1720,7 +1988,13 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
 
             <div className="sb-footnote-modal-content">
-              {selectedFootnote.value.note.text}
+              <VerseReferenceText
+                text={selectedFootnote.value.note.text}
+                onReferenceClick={(ref) => {
+                  selectFootnote(null);
+                  void state?.app.openVerseReference(ref);
+                }}
+              />
             </div>
           </div>
         </div>

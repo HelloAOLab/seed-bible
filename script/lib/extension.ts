@@ -13,7 +13,7 @@ import * as z from "zod/v4";
 // const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
 const headers = {
-  Origin: "https://auth.ao.bot",
+  Origin: "https://auth.seedbible.org",
 };
 
 /**
@@ -371,8 +371,8 @@ export async function upload(
   execSync(`casualos minify-aux "${filePath}"`, { stdio: "ignore" });
 
   const programOptions: string[] = [
-    `--endpoint "https://api.ao.bot"`,
-    `--origin "https://auth.ao.bot"`,
+    `--endpoint "https://auth.seedbible.org"`,
+    `--origin "https://auth.seedbible.org"`,
   ];
   if (options.sessionKey) {
     programOptions.push(`--session-key "${options.sessionKey}"`);
@@ -428,7 +428,7 @@ export async function uploadAll(options: {
 
   const { createRecordsClient } =
     await import("@casual-simulation/aux-records/RecordsClient.js");
-  const client = createRecordsClient("https://api.ao.bot");
+  const client = createRecordsClient("https://auth.seedbible.org");
 
   if (options.sessionKey) {
     client.sessionKey = options.sessionKey;

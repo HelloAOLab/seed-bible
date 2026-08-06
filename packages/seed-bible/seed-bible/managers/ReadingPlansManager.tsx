@@ -3,7 +3,12 @@ import { PlaylistItem } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { omit } from "es-toolkit";
-import { DateTime } from "luxon";
+import {
+  addCivilDays,
+  civilDateInZone,
+  civilDaysBetween,
+  type CivilDate,
+} from "./civilDate";
 import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
 
@@ -352,7 +357,7 @@ export function dateForSession(
   startedAtMs: number,
   sessionIndex: number,
   timeZone?: string | null
-): ReturnType<typeof DateTime.fromMillis> | null {
+): CivilDate | null {
   if (sessionIndex < 0) {
     return null;
   }
@@ -361,16 +366,14 @@ export function dateForSession(
   if (period === 0) {
     return null;
   }
-  const start = DateTime.fromMillis(startedAtMs, {
-    zone: timeZone ?? undefined,
-  }).startOf("day");
+  const start = civilDateInZone(startedAtMs, timeZone);
   const fullCycles = Math.floor(sessionIndex / period);
   let remaining = sessionIndex % period;
   let dayOffset = fullCycles * pattern.length;
   for (let i = 0; i < pattern.length; i++) {
     const sessions = pattern[i]!;
     if (remaining < sessions) {
-      return start.plus({ days: dayOffset });
+      return addCivilDays(start, dayOffset);
     }
     remaining -= sessions;
     dayOffset++;
@@ -394,13 +397,9 @@ export function sessionsForDate(
   if (period === 0) {
     return [];
   }
-  const start = DateTime.fromMillis(startedAtMs, {
-    zone: timeZone ?? undefined,
-  }).startOf("day");
-  const target = DateTime.fromMillis(dateMs, {
-    zone: timeZone ?? undefined,
-  }).startOf("day");
-  const dayOffset = Math.round(target.diff(start, "days").days);
+  const start = civilDateInZone(startedAtMs, timeZone);
+  const target = civilDateInZone(dateMs, timeZone);
+  const dayOffset = civilDaysBetween(start, target);
   if (dayOffset < 0) {
     return [];
   }
@@ -623,8 +622,8 @@ export interface CalendarSession {
 /** A single day on which one or more sessions are due. */
 export interface CalendarReadingDay {
   type: "reading";
-  /** Local midnight of the day, in the plan progress's time zone. */
-  date: ReturnType<typeof DateTime.fromMillis>;
+  /** The calendar date, as seen in the plan progress's time zone. */
+  date: CivilDate;
   /** Whole-day offset from the start date. */
   dayOffset: number;
   sessions: CalendarSession[];
@@ -641,10 +640,10 @@ export interface CalendarReadingDay {
 /** A contiguous run of skipped (non-reading) days. */
 export interface CalendarSkipRange {
   type: "skip";
-  /** Local midnight of the first skipped day. */
-  startDate: ReturnType<typeof DateTime.fromMillis>;
-  /** Local midnight of the last (inclusive) skipped day. */
-  endDate: ReturnType<typeof DateTime.fromMillis>;
+  /** The first skipped day, as seen in the plan progress's time zone. */
+  startDate: CivilDate;
+  /** The last (inclusive) skipped day, in the same time zone. */
+  endDate: CivilDate;
   startDayOffset: number;
   days: number;
   /** True when `nowMs` falls within this range (in the plan's time zone). */
@@ -678,12 +677,10 @@ export function getReadingCalendar(
     return entries; // never reads — cannot schedule (avoids an infinite loop)
   }
 
-  const zone = progress.timeZone ?? undefined;
-  const start = DateTime.fromMillis(progress.startedAtMs, { zone }).startOf(
-    "day"
-  );
-  const today = DateTime.fromMillis(nowMs, { zone }).startOf("day");
-  const todayOffset = Math.round(today.diff(start, "days").days);
+  const zone = progress.timeZone;
+  const start = civilDateInZone(progress.startedAtMs, zone);
+  const today = civilDateInZone(nowMs, zone);
+  const todayOffset = civilDaysBetween(start, today);
 
   const progressBySession = new Map(
     progress.sessions.map((s) => [s.sessionId, s])
@@ -699,8 +696,8 @@ export function getReadingCalendar(
     }
     entries.push({
       type: "skip",
-      startDate: start.plus({ days: pendingSkipStart }),
-      endDate: start.plus({ days: endExclusive - 1 }),
+      startDate: addCivilDays(start, pendingSkipStart),
+      endDate: addCivilDays(start, endExclusive - 1),
       startDayOffset: pendingSkipStart,
       days: endExclusive - pendingSkipStart,
       containsNow:
@@ -748,7 +745,7 @@ export function getReadingCalendar(
         : null;
       entries.push({
         type: "reading",
-        date: start.plus({ days: dayOffset }),
+        date: addCivilDays(start, dayOffset),
         dayOffset,
         sessions,
         startSessionIndex,
