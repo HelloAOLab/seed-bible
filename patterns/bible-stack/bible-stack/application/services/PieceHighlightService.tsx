@@ -235,7 +235,11 @@ export class PieceHighlightService implements PieceHighlighterPort {
 
     switch (source) {
       case HighlightRequestSources.UserFocus:
-        if (!data.isFocused) {
+        if (
+          !data.isFocused &&
+          data.type !== "StackBook" &&
+          data.type !== "StackSectionBook"
+        ) {
           this.tryUnhighlightPiece({
             piece,
             source: "UserFocus",
@@ -448,6 +452,11 @@ export class PieceHighlightService implements PieceHighlighterPort {
       this.#schedulerAdapterPort.clear(timerId);
       this.#scheduledUnhighlightsMap.delete(piece.id);
     }
+  }
+
+  forgetPiece(piece: Piece): void {
+    this.clearScheduledUnhighlight(piece);
+    this.#highlightedPiecesIds.delete(piece.id);
   }
 
   clearScheduledUnhighlights(): void {

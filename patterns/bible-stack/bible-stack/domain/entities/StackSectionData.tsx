@@ -38,6 +38,7 @@ export class StackSectionData extends StackPieceData<
   #isInExplodedView: DataParams["isInExplodedView"];
   #isInsideTestament: DataParams["isInsideTestament"];
   #shadow: SectionShadow | undefined;
+  #shadowNeedsReveal: boolean = false;
 
   constructor({
     childrenData = [],
@@ -105,7 +106,22 @@ export class StackSectionData extends StackPieceData<
       shadow = this.#shadow;
       this.#shadow = undefined;
     }
+    this.#shadowNeedsReveal = false;
     return shadow;
+  }
+  /**
+   * Marks the shadow as freshly spawned, so its first render places it at its
+   * final pose and only fades its opacity in (instead of animating position and
+   * scale from the pooled default). Consumed by the section stack renderer.
+   */
+  markShadowForReveal() {
+    this.#shadowNeedsReveal = true;
+  }
+  get shadowNeedsReveal() {
+    return this.#shadowNeedsReveal;
+  }
+  consumeShadowReveal() {
+    this.#shadowNeedsReveal = false;
   }
   tryReplaceBook(currBook: StackBookData, newBook: StackBookData): boolean {
     for (const bookGroup of this.childrenData) {
@@ -221,17 +237,9 @@ export class StackSectionData extends StackPieceData<
   }
 
   getHighlightedChildren(): StackBookData[] {
-    const highlighted: StackBookData[] = [];
-
-    for (const children of this.childrenData) {
-      if (children instanceof StackPieceData) {
-        for (const bookData of children) {
-          if (bookData.highlightState === "Highlighted") {
-            highlighted.push(bookData);
-          }
-        }
-      }
-    }
+    const highlighted: StackBookData[] = this.childrenData
+      .flat()
+      .filter((bookData) => bookData.highlightState === "Highlighted");
 
     return highlighted;
   }

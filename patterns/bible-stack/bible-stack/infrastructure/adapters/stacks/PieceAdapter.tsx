@@ -71,9 +71,9 @@ export class PieceAdapter implements BooksPieceAdapterPort, DragPieceAdapterPort
       throw new Error(`PieceAdapter: pieceBot not found at updatePosition`);
     }
     const dimension = this.#dimensionProviderPort.getDimension();
-    setTagMask(pieceBot, dimension + "X", position.x);
-    setTagMask(pieceBot, dimension + "Y", position.y);
-    setTagMask(pieceBot, dimension + "Z", position.z);
+    SetStrictTag(pieceBot, dimension + "X" as keyof PieceBotTags, position.x);
+    SetStrictTag(pieceBot, dimension + "Y" as keyof PieceBotTags, position.y);
+    SetStrictTag(pieceBot, dimension + "Z" as keyof PieceBotTags, position.z);
   };
 
   isPieceBeingUsed(piece: Piece): boolean {

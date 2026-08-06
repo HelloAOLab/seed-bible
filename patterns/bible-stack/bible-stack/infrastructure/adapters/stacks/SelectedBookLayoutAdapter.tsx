@@ -30,7 +30,11 @@ export class SelectedBookLayoutAdapter {
   computeLayout(
     data: StackBookData | StackSectionBookData
   ): SelectedBookLayout {
-    if (data.selectionState !== "Selected" || !data.piece) {
+    if (
+      (data.selectionState !== "Selected" &&
+        data.selectionState !== "Selecting") ||
+      !data.piece
+    ) {
       return {};
     }
 
@@ -49,8 +53,8 @@ export class SelectedBookLayoutAdapter {
       case "StackSectionBook": {
         scaleX = this.#sectionBookVisualStateRegistryPort.getStateProperty({
           piece: data.piece,
-          property: "initialScaleX",
-        });
+          property: "unhoveredScales",
+        }).x;
         chaptersCount = data.pieceBookInfo.numberOfChapters;
         break;
       }

@@ -133,6 +133,16 @@ export class PieceStateService {
       );
     }
 
+    // const bookId = data.type === "StackBook" ? data.getPieceInfoProperty("bookId") : data.getPieceBookInfoProperty("bookId")
+
+    // if(bookId === "GEN") {
+    //   console.log(`[Debug] PieceStateService.handleBookStateChanged hasTransformChanged`, {
+    //     selectionState: data.selectionState,
+    //     currentShape: data.currentShape,
+    //     isShowingChapters: data.isShowingChapters,
+    //   })
+    // }
+
     this.#labelPositionUpdaterPort.updateLabelPosition(piece);
     if (
       data.selectionState === "Selected" &&

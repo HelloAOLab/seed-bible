@@ -51,10 +51,7 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getDataById({
-    id: piece.id,
-    type: piece.type,
-  });
+  const data = dataRegistryPort.getPieceData(piece);
   if (!data) {
     throw new Error(
       "PieceActvityService: data not found at testamentActivityStrategy"
@@ -69,11 +66,13 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
 const sectionActivityStrategy: ActivityStrategyType<
   "StackSection" | "StackSectionShadow"
 > = (piece, dataRegistryPort) => {
-  const id = piece.type === "StackSection" ? piece.id : piece.sectionDataId;
-  const data = dataRegistryPort.getDataById({
-    id,
-    type: "StackSection",
-  });
+  const data =
+    piece.type === "StackSection"
+      ? dataRegistryPort.getPieceData(piece)
+      : dataRegistryPort.getDataById({
+          type: "StackSection",
+          id: piece.sectionDataId,
+        });
 
   if (!data) {
     throw new Error(
@@ -90,10 +89,7 @@ const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getDataById({
-    id: piece.id,
-    type: piece.type,
-  });
+  const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
     throw new Error(
@@ -110,10 +106,7 @@ const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getDataById({
-    id: piece.id,
-    type: piece.type,
-  });
+  const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
     throw new Error(
@@ -130,10 +123,7 @@ const chapterActivityStrategy: ActivityStrategyType<"StackChapter"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getDataById({
-    id: piece.id,
-    type: piece.type,
-  });
+  const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
     throw new Error(
@@ -183,10 +173,7 @@ const pieceIndicatorsStrategy: IndicatorsStrategyType<"StackChapter"> = ({
   piece,
   dataRegistryPort,
 }) => {
-  const pieceData = dataRegistryPort.getDataById({
-    type: piece.type,
-    id: piece.id,
-  });
+  const pieceData = dataRegistryPort.getPieceData(piece);
 
   if (!pieceData) return [];
 

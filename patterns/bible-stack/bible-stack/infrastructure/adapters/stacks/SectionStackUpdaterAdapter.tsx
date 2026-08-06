@@ -14,7 +14,7 @@ import type { SectionBot } from "../../models/stack";
 import type { PieceBot } from "../../models/casualos";
 import type { Scales } from "../../functions/layout";
 import type { Piece } from "../../../domain/models/canvas";
-import type {
+import {
   SetStrictTag,
   ApplyStrictMod,
   AnimateStrictTag,
@@ -29,9 +29,6 @@ interface AdapterParams {
   bookStackUpdaterAdapter: BookStackUpdaterAdapter;
   visualStateRegistry: VisualStateRegistry;
   getBotScales: (bot: PieceBot) => Scales;
-  setStrictTag: typeof SetStrictTag;
-  applyStrictMod: typeof ApplyStrictMod;
-  animateStrictTag: typeof AnimateStrictTag;
   loggerPort: LoggerPort;
 }
 
@@ -77,9 +74,6 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
   #bookStackUpdaterAdapter: AdapterParams["bookStackUpdaterAdapter"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
   #getBotScales: AdapterParams["getBotScales"];
-  #setStrictTag: AdapterParams["setStrictTag"];
-  #applyStrictMod: AdapterParams["applyStrictMod"];
-  #animateStrictTag: AdapterParams["animateStrictTag"];
   #loggerPort: AdapterParams["loggerPort"];
 
   constructor({
@@ -91,9 +85,6 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
     bookStackUpdaterAdapter,
     visualStateRegistry,
     getBotScales,
-    setStrictTag,
-    applyStrictMod,
-    animateStrictTag,
     loggerPort,
   }: AdapterParams) {
     this.#getDimension = getDimension;
@@ -104,9 +95,6 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
     this.#bookStackUpdaterAdapter = bookStackUpdaterAdapter;
     this.#visualStateRegistry = visualStateRegistry;
     this.#getBotScales = getBotScales;
-    this.#setStrictTag = setStrictTag;
-    this.#applyStrictMod = applyStrictMod;
-    this.#animateStrictTag = animateStrictTag;
     this.#loggerPort = loggerPort;
   }
 
@@ -395,48 +383,52 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
 
       if (isInstantaneous) {
         if (setScaleX)
-          this.#setStrictTag(sectionBot, "scaleX", sectionDesiredScales.x);
+          SetStrictTag(sectionBot, "scaleX", sectionDesiredScales.x);
         if (setScaleY)
-          this.#setStrictTag(sectionBot, "scaleY", sectionDesiredScales.y);
+          SetStrictTag(sectionBot, "scaleY", sectionDesiredScales.y);
         if (setScaleZ)
-          this.#setStrictTag(sectionBot, "scaleZ", sectionDesiredScales.z);
+          SetStrictTag(sectionBot, "scaleZ", sectionDesiredScales.z);
         if (setFormOpacity)
-          this.#setStrictTag(sectionBot, "formOpacity", unhoveredFormOpacity);
+          SetStrictTag(sectionBot, "formOpacity", unhoveredFormOpacity);
       } else {
         if (setScaleX)
           computedAnimations.push(
-            this.#animateStrictTag(sectionBot, "scaleX", {
+            AnimateStrictTag(sectionBot, "scaleX", {
               fromValue: sectionCurrentScales.x,
               toValue: sectionDesiredScales.x,
               duration,
               easing,
+              tagMaskSpace: false,
             })
           );
         if (setScaleY)
           computedAnimations.push(
-            this.#animateStrictTag(sectionBot, "scaleY", {
+            AnimateStrictTag(sectionBot, "scaleY", {
               fromValue: sectionCurrentScales.y,
               toValue: sectionDesiredScales.y,
               duration,
               easing,
+              tagMaskSpace: false,
             })
           );
         if (setScaleZ)
           computedAnimations.push(
-            this.#animateStrictTag(sectionBot, "scaleZ", {
+            AnimateStrictTag(sectionBot, "scaleZ", {
               fromValue: sectionCurrentScales.z,
               toValue: sectionDesiredScales.z,
               duration,
               easing,
+              tagMaskSpace: false,
             })
           );
         if (setFormOpacity)
           computedAnimations.push(
-            this.#animateStrictTag(sectionBot, "formOpacity", {
+            AnimateStrictTag(sectionBot, "formOpacity", {
               fromValue: sectionBot.tags.formOpacity,
               toValue: unhoveredFormOpacity,
               duration,
               easing,
+              tagMaskSpace: false,
             })
           );
       }
@@ -447,17 +439,17 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
         value: nextPositionZ,
       });
       if (isInstantaneous) {
-        this.#setStrictTag(
+        SetStrictTag(
           sectionBot,
           (dimension + "Z") as keyof typeof sectionBot.tags,
           nextPositionZ
         );
       } else {
         computedAnimations.push(
-          this.#animateStrictTag(
+          AnimateStrictTag(
             sectionBot,
             (dimension + "Z") as keyof typeof sectionBot.tags,
-            { toValue: nextPositionZ, duration, easing }
+            { toValue: nextPositionZ, duration, easing, tagMaskSpace: false }
           )
         );
       }
@@ -616,66 +608,87 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
     );
 
     // Identity tags are idempotent; re-applying keeps the highlight colour fresh.
-    this.#applyStrictMod(shadowBot, {
+    ApplyStrictMod(shadowBot, {
       transformer: sectionBot.tags.transformer,
       color: data.paintColor ?? data.pieceInfo.color,
       sectionName: data.pieceInfo.name,
       sectionDataId: data.id,
     });
-    this.#setStrictTag(
-      shadowBot,
-      dimension as keyof typeof shadowBot.tags,
-      true
-    );
-    this.#setStrictTag(
+    SetStrictTag(shadowBot, dimension as keyof typeof shadowBot.tags, true);
+    SetStrictTag(
       shadowBot,
       (dimension + "X") as keyof typeof shadowBot.tags,
       sectionPosition.x
     );
-    this.#setStrictTag(
+    SetStrictTag(
       shadowBot,
       (dimension + "Y") as keyof typeof shadowBot.tags,
       sectionPosition.y
     );
 
     if (isInstantaneous) {
-      this.#setStrictTag(
+      SetStrictTag(
         shadowBot,
         (dimension + "Z") as keyof typeof shadowBot.tags,
         bounds.sectionShadowDesiredPositionZ
       );
-      this.#setStrictTag(shadowBot, "scaleX", targetScaleX);
-      this.#setStrictTag(shadowBot, "scaleY", targetScaleY);
-      this.#setStrictTag(shadowBot, "scaleZ", bounds.z);
-      this.#setStrictTag(shadowBot, "formOpacity", formOpacity);
-    } else {
-      const shadowScales = this.#getBotScales(shadowBot);
+      SetStrictTag(shadowBot, "scaleX", targetScaleX);
+      SetStrictTag(shadowBot, "scaleY", targetScaleY);
+      SetStrictTag(shadowBot, "scaleZ", bounds.z);
+      SetStrictTag(shadowBot, "formOpacity", formOpacity);
+    } else if (data.shadowNeedsReveal) {
+      // First appearance: place the shadow at its final pose immediately and
+      // fade only its opacity in, so it doesn't slide/resize into place from
+      // the pooled default.
+      SetStrictTag(
+        shadowBot,
+        (dimension + "Z") as keyof typeof shadowBot.tags,
+        bounds.sectionShadowDesiredPositionZ
+      );
+      SetStrictTag(shadowBot, "scaleX", targetScaleX);
+      SetStrictTag(shadowBot, "scaleY", targetScaleY);
+      SetStrictTag(shadowBot, "scaleZ", bounds.z);
       computedAnimations.push(
-        this.#animateStrictTag(shadowBot, "scaleX", {
-          fromValue: shadowScales.x,
-          toValue: targetScaleX,
-          duration,
-          easing,
-        }),
-        this.#animateStrictTag(shadowBot, "scaleY", {
-          fromValue: shadowScales.y,
-          toValue: targetScaleY,
-          duration,
-          easing,
-        }),
-        this.#animateStrictTag(shadowBot, "scaleZ", {
-          fromValue: shadowScales.z,
-          toValue: bounds.z,
-          duration,
-          easing,
-        }),
-        this.#animateStrictTag(shadowBot, "formOpacity", {
+        AnimateStrictTag(shadowBot, "formOpacity", {
           fromValue: shadowBot.tags.formOpacity,
           toValue: formOpacity,
           duration,
           easing,
+          tagMaskSpace: false,
+        })
+      );
+    } else {
+      const shadowScales = this.#getBotScales(shadowBot);
+      computedAnimations.push(
+        AnimateStrictTag(shadowBot, "scaleX", {
+          fromValue: shadowScales.x,
+          toValue: targetScaleX,
+          duration,
+          easing,
+          tagMaskSpace: false,
         }),
-        this.#animateStrictTag(
+        AnimateStrictTag(shadowBot, "scaleY", {
+          fromValue: shadowScales.y,
+          toValue: targetScaleY,
+          duration,
+          easing,
+          tagMaskSpace: false,
+        }),
+        AnimateStrictTag(shadowBot, "scaleZ", {
+          fromValue: shadowScales.z,
+          toValue: bounds.z,
+          duration,
+          easing,
+          tagMaskSpace: false,
+        }),
+        AnimateStrictTag(shadowBot, "formOpacity", {
+          fromValue: shadowBot.tags.formOpacity,
+          toValue: formOpacity,
+          duration,
+          easing,
+          tagMaskSpace: false,
+        }),
+        AnimateStrictTag(
           shadowBot,
           (dimension + "Z") as keyof typeof shadowBot.tags,
           {
@@ -683,11 +696,13 @@ export class SectionStackUpdaterAdapter implements SectionStackUpdaterPort {
             toValue: bounds.sectionShadowDesiredPositionZ,
             duration,
             easing,
+            tagMaskSpace: false,
           }
         )
       );
     }
 
-    this.#setStrictTag(shadowBot, "pointable", activeBooksCount === 0);
+    data.consumeShadowReveal();
+    SetStrictTag(shadowBot, "pointable", activeBooksCount === 0);
   }
 }

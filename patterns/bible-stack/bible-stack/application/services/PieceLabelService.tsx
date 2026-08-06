@@ -22,8 +22,8 @@ export interface LabelStrategy<P extends Piece> {
   getColor: (piece: P) => string;
   getLabelColor: (piece: P) => string;
   getLabelPositioning: (piece: P) => LabelPosition;
-  isInteractable: boolean;
-  makesAttentionFeedback: boolean;
+  isInteractable: (piece: P) => boolean;
+  makesAttentionFeedback: (piece: P) => boolean;
 }
 
 export type LabelPropertiesStrategies<T extends BiblePiece> = {
@@ -101,9 +101,9 @@ export class PieceLabelService<
     const date = strategy.getDate?.(piece);
     const color = strategy.getColor(piece);
     const labelColor = strategy.getLabelColor(piece);
-    const makesAttentionFeedback = strategy.makesAttentionFeedback;
+    const makesAttentionFeedback = strategy.makesAttentionFeedback(piece);
     const labelPositioning = strategy.getLabelPositioning(piece);
-    const isInteractable = strategy.isInteractable;
+    const isInteractable = strategy.isInteractable(piece);
     const dateFormat = this.#dateFormatGetterPort.dateFormat;
 
     const {
@@ -136,7 +136,8 @@ export class PieceLabelService<
 
     this.#indicatorsUpdaterPort.updateIndicators(labelData);
     this.#labelDataStorePort.addLabelData(labelData);
-    this.#labelAnimationAdapterPort.displayAttentionFeedback(labelData);
+    if (makesAttentionFeedback)
+      this.#labelAnimationAdapterPort.displayAttentionFeedback(labelData);
     await this.#labelAnimationAdapterPort.displayShowFeedback({
       data: labelData,
       pacing,

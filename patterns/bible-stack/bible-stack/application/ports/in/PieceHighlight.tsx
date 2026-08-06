@@ -49,4 +49,9 @@ export interface PieceHighlighterPort {
   }) => void; // TODO: Change this to use a particular interface for the intensity. Leave LabelTranslucencyMode to the label only.
   clearScheduledUnhighlights(): void;
   clearHighlightedPieces(): void;
+  forgetPiece(piece: Piece): void;
+  unhighlightBiblePieces(
+    bibleId: string,
+    pacing?: HighlightPacing
+  ): Promise<void>;
 }

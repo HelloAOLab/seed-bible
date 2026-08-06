@@ -1,6 +1,5 @@
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
-import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import { BibleVisualizationStates } from "../../domain/models/canvas";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
@@ -9,7 +8,6 @@ import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { ExplodedViewEventPort } from "../ports/out/ExplodedView";
 
 interface ServiceParams {
-  sequenceStateServicePort: SequenceStateServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   stackUpdateServicePort: StackUpdateServicePort;
   pieceActivityServicePort: PieceActivityServicePort;
@@ -18,20 +16,17 @@ interface ServiceParams {
 
 export class ExplodedViewService implements ExplodedViewServicePort {
   #currentExplodedSection: StackSectionData | undefined;
-  #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
   #pieceActivityServicePort: ServiceParams["pieceActivityServicePort"];
   #bibleStackEventPort: ServiceParams["bibleStackEventPort"];
 
   constructor({
-    sequenceStateServicePort,
     pieceHierarchyServicePort,
     stackUpdateServicePort,
     pieceActivityServicePort,
     bibleStackEventPort,
   }: ServiceParams) {
-    this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
     this.#pieceActivityServicePort = pieceActivityServicePort;
@@ -53,8 +48,6 @@ export class ExplodedViewService implements ExplodedViewServicePort {
     data: StackSectionData;
     pacing?: StackUpdatePacing;
   }): Promise<void> {
-    if (this.#sequenceStateServicePort.isThereAnOngoingSequence()) return;
-
     const { bibleData, testamentData } =
       this.#pieceHierarchyServicePort.getParentDataChain(
         data.parentDataIds ?? {}

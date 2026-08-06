@@ -1,5 +1,6 @@
 import type { PieceDataRepositoryPort as BasePieceDataRepositoryPort } from "./pieces";
 import type { PieceLabelServicePort as BasePieceLabelServicePort } from "./in/PieceLabel";
+import type { PieceHighlighterPort as BasePieceHighlighterPort } from "./in/PieceHighlight";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 import type {
   BookBot,
@@ -39,6 +40,11 @@ export type PieceDataRepositoryPort = Pick<
 export type PieceLabelServicePort = Pick<
   BasePieceLabelServicePort<StackLabelableBiblePiece>,
   "hideLabel" | "showLabel"
+>;
+
+export type PieceHighlightServicePort = Pick<
+  BasePieceHighlighterPort,
+  "forgetPiece"
 >;
 
 export interface StackPieceLifecycleAdapterPort {

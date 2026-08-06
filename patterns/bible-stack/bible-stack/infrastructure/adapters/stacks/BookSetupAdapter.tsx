@@ -159,9 +159,9 @@ export class BookSetupAdapter {
     const additionalHover = this.#stackConfigProvider.getStackPieceMeasurement(
       "AditionalBookScaleOnHover"
     );
-    const explodedShadowPadding = this.#stackConfigProvider.getStackSpacing(
-      "ExplodedViewSectionShadowPadding"
-    );
+    const sectionPadding = sectionData.isOnTheGround
+      ? this.#stackConfigProvider.getStackSpacing("SectionShadowPadding")
+      : this.#stackConfigProvider.getStackSpacing("ExplodedViewSectionPadding");
 
     // --- computed scale + position -----------------------------------------
     const desiredScaleZ = this.#bookStackLayoutAdapter.computeBookDesiredScaleZ(
@@ -179,8 +179,41 @@ export class BookSetupAdapter {
     const groupScales = this.#isGroupBook(bookData)
       ? this.#computeGroupScales(level, bookData)
       : undefined;
-    const initialScaleX = groupScales?.x ?? bookScales.x;
-    const initialScaleY = groupScales?.y ?? bookScales.y;
+
+    const sectionInitialScaleX = this.#visualStateRegistry.getStateProperty({
+      piece: sectionData.piece,
+      property: "initialScaleX",
+    });
+    const sectionInitialScaleY = this.#visualStateRegistry.getStateProperty({
+      piece: sectionData.piece,
+      property: "initialScaleY",
+    });
+
+    const implodedScales = {
+      x: groupScales?.x ?? bookScales.x,
+      y: groupScales?.y ?? bookScales.y,
+      z: desiredScaleZ,
+    };
+
+    const explodedScaleX =
+      explodedViewCustomScale && sectionInitialScaleX
+        ? explodedViewCustomScale.x * sectionInitialScaleX
+        : implodedScales.x;
+    const explodedScaleY =
+      explodedViewCustomScale && sectionInitialScaleY
+        ? explodedViewCustomScale.y * sectionInitialScaleY
+        : implodedScales.y;
+    const explodedScales = {
+      x: explodedScaleX,
+      y: explodedScaleY,
+      z: desiredScaleZ,
+    };
+
+    const hoveredScales = {
+      x: explodedScales.x + additionalHover,
+      y: explodedScales.y + additionalHover,
+      z: explodedScales.z + additionalHover,
+    };
 
     // --- colors (level gradient) -------------------------------------------
     const levelIndex = levels.indexOf(level);
@@ -208,19 +241,17 @@ export class BookSetupAdapter {
 
     const desiredPositionZ =
       sectionDesiredPositionZ +
+      sectionPadding +
       explodedViewPosition.z * sectionDesiredExplodedViewScaleZ -
-      desiredScaleZ / 2 +
-      (sectionData.isOnTheGround ? explodedShadowPadding : 0);
+      desiredScaleZ / 2;
 
     // --- register the book's visual state ----------------------------------
     this.#visualStateRegistry.registerState({
       piece,
       state: {
-        initialScaleX,
-        initialScaleY,
-        initialScaleZ: desiredScaleZ,
-        hoveredScaleX: initialScaleX + additionalHover,
-        hoveredScaleY: initialScaleY + additionalHover,
+        implodedScales,
+        explodedScales,
+        hoveredScales,
         hoveredFormOpacity: 1,
         unhoveredFormOpacity: 1,
         orginalColor: levelColor,
@@ -253,13 +284,13 @@ export class BookSetupAdapter {
       scaleX: 0.1,
       scaleY: 0.1,
       scaleZ: 0.1,
-      formOpacity: 1,
       color: bookColor,
       strokeColor: "clear",
       [dimension]: true,
       [dimension + "X"]: sectionPosition.x,
       [dimension + "Y"]: sectionPosition.y,
       [dimension + "Z"]: initialPositionZ,
+      transformer: sectionBot.tags.transformer,
     });
   }
 

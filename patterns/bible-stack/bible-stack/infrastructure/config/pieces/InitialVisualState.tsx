@@ -8,10 +8,13 @@ export const INITIAL_VISUAL_STATE_MAP: {
   [BiblePieces.StackTestament]: {},
   [BiblePieces.StackSection]: {
     hoveredFormOpacity: 1,
-    unhoveredFormOpacity: 0.5,
+    unhoveredFormOpacity: 0.7,
   },
   [BiblePieces.StackBook]: {},
-  [BiblePieces.StackSectionBook]: {},
+  [BiblePieces.StackSectionBook]: {
+    hoveredFormOpacity: 1,
+    unhoveredFormOpacity: 0.7,
+  },
   [BiblePieces.StackChapter]: {
     selectedColor: "#f8c471",
     highlightedColor: "#ffffff",
@@ -25,4 +28,9 @@ export const INITIAL_VISUAL_STATE_MAP: {
     initialColor: INITIAL_CONFIG_MAP.Verse.color,
   },
   [BiblePieces.StackTransformer]: {},
+  [BiblePieces.InfoLabelDate]: {},
+  [BiblePieces.InfoLabelTail]: {},
+  [BiblePieces.InfoLabelText]: {},
+  [BiblePieces.InfoLabelTransformer]: {},
+  [BiblePieces.ActivityIndicator]: {},
 } as const;

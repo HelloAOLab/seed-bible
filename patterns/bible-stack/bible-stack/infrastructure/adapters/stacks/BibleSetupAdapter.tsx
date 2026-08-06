@@ -188,14 +188,14 @@ const positionUpdateThreshold = 50;
 
 if(!thisBot.masks.lastPositionUpdateTime || os.localTime > (thisBot.masks.lastPositionUpdateTime + positionUpdateThreshold))
 {
-    setTagMask(thisBot, 'lastPositionUpdateTime', os.localTime);
+    setTag(thisBot, 'lastPositionUpdateTime', os.localTime);
     const positionDifference = new Vector2(that.to.x - that.from.x, that.to.y - that.from.y)
     const transformer = getBot(byID(thisBot.tags.transformer));
     const transformerPosition = getBotPosition(transformer, dimension);
     const newPosition = new Vector2(transformerPosition.x + positionDifference.x, transformerPosition.y + positionDifference.y);
     const transformerChildren = getBots(byTag('transformer', transformer.id));
-    setTagMask(transformer, dimension + 'X', newPosition.x);
-    setTagMask(transformer, dimension + 'Y', newPosition.y);
+    setTag(transformer, dimension + 'X', newPosition.x);
+    setTag(transformer, dimension + 'Y', newPosition.y);
     whisper(transformerChildren, 'onBotChanged', {force: true});
 }`,
     };

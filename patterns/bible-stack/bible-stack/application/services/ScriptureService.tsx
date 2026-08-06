@@ -85,15 +85,7 @@ export class ScriptureService implements ScripturePort {
       for (const testament of this.#arrangement.testaments) {
         for (const sectionInfo of testament.sections) {
           for (const book of sectionInfo.books) {
-            const bookInfo = this.#dataRepositoryPort.getBookStaticInfo(
-              book.bookId
-            );
-            if (!bookInfo) {
-              throw new Error(
-                "ScriptureService: bookInfo not found at getBiggerChapter"
-              );
-            }
-            const { chaptersVerseCount } = bookInfo;
+            const { chaptersVerseCount } = book;
             for (let i = 0; i < chaptersVerseCount.length; i++) {
               currentCount = chaptersVerseCount[i]!;
               if (currentCount > this.#biggerChapter!) {

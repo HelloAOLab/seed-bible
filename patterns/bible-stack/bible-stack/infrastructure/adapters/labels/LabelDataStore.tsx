@@ -1,13 +1,17 @@
 import { InfoLabelData } from "../../../domain/entities/InfoLabelData";
 import type { LabelDataStorePort as SectionSelectionDataStorePort } from "../../../application/ports/out/SectionSelection";
 import type { LabelDataStorePort as PieceActivityDataStorePort } from "../../../application/ports/out/PieceActivity";
+import type { LabelDataRepositoryPort } from "../../../application/ports/out/LabelInteraction";
 
 interface LabelDataStoreProps {
   labelDataSet?: Set<InfoLabelData>;
 }
 
 export class LabelDataStore
-  implements SectionSelectionDataStorePort, PieceActivityDataStorePort
+  implements
+    SectionSelectionDataStorePort,
+    PieceActivityDataStorePort,
+    LabelDataRepositoryPort
 {
   #labelDataSet: NonNullable<LabelDataStoreProps["labelDataSet"]>;
 

@@ -176,6 +176,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
           toValue: 0,
           duration: duration / 2,
           easing,
+          tagMaskSpace: false,
         }).then(() => {
           SetStrictTag(chapterBot, "labelPosition", "top");
           SetStrictTag(chapterBot, "label", labelText);
@@ -183,6 +184,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
             toValue: 1,
             duration: duration / 2,
             easing,
+            tagMaskSpace: false,
           });
         }),
         AnimateStrictTag(chapterBot, {
@@ -198,6 +200,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
           },
           duration,
           easing,
+          tagMaskSpace: false,
         }),
       ];
       await Promise.all(expandSequence);
@@ -316,6 +319,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
         },
         duration,
         easing,
+        tagMaskSpace: false,
       }),
     ];
     await Promise.all(expandSequence);
@@ -406,6 +410,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
         toValue: 0,
         duration: duration / 2,
         easing,
+        tagMaskSpace: false,
       }).then(() => {
         SetStrictTag(chapterBot, "labelPosition", "front");
         SetStrictTag(
@@ -417,6 +422,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
           toValue: 1,
           duration: duration / 2,
           easing,
+          tagMaskSpace: false,
         });
       }),
       AnimateStrictTag(chapterBot, {
@@ -441,6 +447,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
         },
         duration,
         easing,
+        tagMaskSpace: false,
       }),
     ];
     await Promise.all(shrinkAnimations);
@@ -494,6 +501,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
         },
         duration,
         easing,
+        tagMaskSpace: false,
       }),
     ];
     await Promise.all(shrinkAnimations);

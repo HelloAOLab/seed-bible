@@ -2,21 +2,25 @@ import type { StackTestamentData } from "../../domain/entities/StackTestamentDat
 import type { PieceSelectionSource } from "../../domain/models/canvas";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type {
+  AwaiterPort,
+  LabelSequenceConfigProviderPort,
   TestamentSelectionAdapterPort,
   TestamentSelectionEventPort,
-  TestamentSelectionPieceHighlighterPort,
 } from "../ports/out/TestamentSelection";
 import type { SectionSpawnerPort } from "../ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 // import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
+import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 
 interface ServiceParams {
   testamentSelectionAdapterPort: TestamentSelectionAdapterPort;
   testamentSelectionEventPort: TestamentSelectionEventPort;
-  pieceHighlighterPort: TestamentSelectionPieceHighlighterPort;
+  pieceHighlighterPort: PieceHighlighterPort;
   sectionSpawnerPort: SectionSpawnerPort;
   stackUpdateServicePort: StackUpdateServicePort;
+  awaiterPort: AwaiterPort;
+  labelSequenceConfigProviderPort: LabelSequenceConfigProviderPort;
   // pieceLifecycleServicePort: PieceLifecycleServicePort;
 }
 
@@ -26,6 +30,8 @@ export class TestamentSelectionService implements TestamentSelectionPort {
   #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
   #sectionSpawnerPort: ServiceParams["sectionSpawnerPort"];
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
+  #awaiterPort: ServiceParams["awaiterPort"];
+  #labelSequenceConfigProviderPort: ServiceParams["labelSequenceConfigProviderPort"];
   // #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
 
   constructor({
@@ -34,6 +40,8 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     pieceHighlighterPort,
     sectionSpawnerPort,
     stackUpdateServicePort,
+    awaiterPort,
+    labelSequenceConfigProviderPort,
     // pieceLifecycleServicePort,
   }: ServiceParams) {
     this.#testamentSelectionAdapterPort = testamentSelectionAdapterPort;
@@ -41,19 +49,14 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     this.#pieceHighlighterPort = pieceHighlighterPort;
     this.#sectionSpawnerPort = sectionSpawnerPort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
+    this.#awaiterPort = awaiterPort;
+    this.#labelSequenceConfigProviderPort = labelSequenceConfigProviderPort;
     // this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
   }
 
-  /**
-   * Splits the testament into sections and spawns + attaches each one so the
-   * adapter can lay them out. Mirrors SectionSelectionService.#prepareSelection.
-   */
   async #prepareSelection(data: StackTestamentData): Promise<void> {
     this.#testamentSelectionEventPort.emit("OnTestamentBeginSelect", { data });
 
-    // Unhighlight anything still highlighted in this bible before the testament
-    // splits into sections (runs as a transition, so it isn't blocked by the
-    // ongoing selection sequence). Label removal is owned by the unhighlight.
     const bibleId = data.getParentId("stackBibleId");
     if (data.isInsideBible && bibleId) {
       await this.#pieceHighlighterPort.unhighlightBiblePieces(bibleId);
@@ -81,7 +84,43 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     }
   }
 
-  #finalizeSelection(data: StackTestamentData): void {
+  async #finalizeSelection(
+    data: StackTestamentData,
+    pacing: StackUpdatePacing = "Regular"
+  ): Promise<void> {
+    for (const sectionData of data.childrenData) {
+      sectionData.becomeHighlightable();
+    }
+    const animations: Promise<void>[] = [];
+    if (pacing === "Instant") return;
+
+    for (const sectionData of data.getReversedChildren()) {
+      if (!sectionData.piece) {
+        throw new Error(
+          "TestamentSelectionService: sectionData.piece not found at finalizeSelection"
+        );
+      }
+      animations.push(
+        this.#pieceHighlighterPort.tryHighlightPiece({
+          piece: sectionData.piece,
+          source: "Transition",
+          scheduledUnhighlightData: {
+            delay: 2000,
+            pacing,
+          },
+          pacing,
+        })
+      );
+      await this.#awaiterPort.sleep(
+        (this.#labelSequenceConfigProviderPort.getShowSequenceDurationSeconds(
+          pacing
+        ) /
+          3) *
+          2 *
+          1000
+      );
+    }
+    await Promise.all(animations);
     this.#testamentSelectionEventPort.emit("OnTestamentEndSelect", { data });
   }
 
@@ -109,7 +148,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
       pacing
     );
 
-    this.#finalizeSelection(data);
+    await this.#finalizeSelection(data);
   }
 
   async deselect(/*data: StackTestamentData*/): Promise<void> {

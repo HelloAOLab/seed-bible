@@ -1,4 +1,14 @@
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
+
+const DURATIONS: Record<StackUpdatePacing, number> = {
+  Fast: 0.25,
+  Regular: 0.5,
+  Slow: 1,
+  Instant: 0,
+} as const;
+
+const BOOK_ENTRANCE_STAGGER_MS = 50;
 
 export class SectionSelectionConfigProvider {
   getDesiredScale(): number {
@@ -7,14 +17,14 @@ export class SectionSelectionConfigProvider {
   getDesiredFormOpacity(): number {
     return 1;
   }
-  getDuration(): number {
-    return 0.5;
+  getDuration(pacing: StackUpdatePacing = "Regular"): number {
+    return DURATIONS[pacing];
   }
   getEasing(): Easing {
     return { type: "sinusoidal", mode: "inout" };
   }
-  getBookEntranceStaggerMs(): number {
-    return 50;
+  getBookEntranceStaggerMs(pacing: StackUpdatePacing = "Regular"): number {
+    return pacing === "Instant" ? 0 : BOOK_ENTRANCE_STAGGER_MS;
   }
   getWiggleRotationKeyframes(): number[] {
     return [-0.05235988, 0.1308997, -0.05235988, 0];

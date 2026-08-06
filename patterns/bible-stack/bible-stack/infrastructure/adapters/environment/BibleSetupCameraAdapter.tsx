@@ -14,6 +14,10 @@ export class BibleSetupCameraAdapter implements CameraAdapterPort {
   }
 
   focusOn(position: WorldPosition) {
-    this.#cameraAdapterPort.focusOn(position, "bibleSetup");
+    return this.#cameraAdapterPort.focusOn(position, "bibleSetup");
+  }
+
+  cancelFocus() {
+    this.#cameraAdapterPort.cancelFocus();
   }
 }

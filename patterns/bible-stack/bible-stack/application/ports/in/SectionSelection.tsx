@@ -8,5 +8,5 @@ export interface SectionSelectionServicePort {
     source: PieceSelectionSource;
     pacing?: StackPresenceNavigationPacing;
   }) => Promise<void>;
-  deselect: (data: StackSectionData) => void;
+  deselect: (data: StackSectionData) => Promise<void>;
 }

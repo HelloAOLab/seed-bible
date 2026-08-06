@@ -19,7 +19,12 @@ import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMappe
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
 import { BibleTypes, type Piece } from "../../../domain/models/canvas";
-import { ApplyStrictMod, GetBotScales } from "../../functions/casualos";
+import {
+  AnimateStrictTag,
+  ApplyStrictMod,
+  GetBotScales,
+  SetStrictTag,
+} from "../../functions/casualos";
 import type { StackPresenceNavigationPacing } from "../../../domain/models/userPresence";
 import type { StackCover, StackCrossLine } from "../../../domain/models/pieces";
 import type {
@@ -36,7 +41,7 @@ import type { PieceAdapter } from "../stacks/PieceAdapter";
 import type { SectionInfoMapper } from "../../mappers/SectionInfoMapper";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
 import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
-import type { BookInfoMapper } from "../../mappers/BookInfoMapper";
+import type { PieceBotTags } from "../../models/casualos";
 
 interface BibleSequenceAdapterParams {
   configProviderPort: SequenceConfigProvider;
@@ -57,7 +62,6 @@ interface BibleSequenceAdapterParams {
   sectionInfoMapperPort: SectionInfoMapper;
   layoutConfigProviderPort: LayoutConfigProvider;
   piecesConigProvider: PiecesConfigProvider;
-  bookInfoMapperPort: BookInfoMapper;
 }
 
 export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
@@ -75,7 +79,6 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
   #sectionInfoMapperPort: BibleSequenceAdapterParams["sectionInfoMapperPort"];
   #layoutConfigProviderPort: BibleSequenceAdapterParams["layoutConfigProviderPort"];
   #piecesConigProvider: BibleSequenceAdapterParams["piecesConigProvider"];
-  #bookInfoMapperPort: BibleSequenceAdapterParams["bookInfoMapperPort"];
 
   constructor({
     configProviderPort,
@@ -92,7 +95,6 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     sectionInfoMapperPort,
     layoutConfigProviderPort,
     piecesConigProvider,
-    bookInfoMapperPort,
   }: BibleSequenceAdapterParams) {
     this.#configProviderPort = configProviderPort;
     this.#dimensionProviderPort = dimensionProviderPort;
@@ -108,7 +110,6 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
     this.#sectionInfoMapperPort = sectionInfoMapperPort;
     this.#layoutConfigProviderPort = layoutConfigProviderPort;
     this.#piecesConigProvider = piecesConigProvider;
-    this.#bookInfoMapperPort = bookInfoMapperPort;
   }
 
   async displayCrackOpenBibleSequence(
@@ -285,32 +286,40 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
         value: positionZ,
       });
       animations.push(
-        animateTag(testamentBot, dimension + "Z", {
-          toValue: positionZ,
-          duration: animationDuration,
-          easing: animationEasing,
-        })
+        AnimateStrictTag(
+          testamentBot,
+          (dimension + "Z") as keyof PieceBotTags,
+          {
+            toValue: positionZ,
+            duration: animationDuration,
+            easing: animationEasing,
+            tagMaskSpace: false,
+          }
+        )
       );
     }
 
     animations.push(
-      animateTag(leftCoverBot, "scaleZ", {
+      AnimateStrictTag(leftCoverBot, "scaleZ", {
         toValue: 0,
         duration: animationDuration,
         easing: animationEasing,
+        tagMaskSpace: false,
       }),
-      animateTag(upperCoverBot, dimension + "Z", {
+      AnimateStrictTag(upperCoverBot, (dimension + "Z") as keyof PieceBotTags, {
         toValue: upperCoverPositionZ,
         duration: animationDuration,
         easing: animationEasing,
+        tagMaskSpace: false,
       }),
-      animateTag(
+      AnimateStrictTag(
         [crossVerticalLineBot, crossHorizontalLineBot],
-        dimension + "Z",
+        (dimension + "Z") as keyof PieceBotTags,
         {
           toValue: crossPositionZ,
           duration: animationDuration,
           easing: animationEasing,
+          tagMaskSpace: false,
         }
       )
     );
@@ -332,17 +341,17 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
       return bot;
     });
 
-    setTagMask(
+    SetStrictTag(
       testamentBots,
       "draggable",
       bibleData.bibleType === BibleTypes.Default ? arePiecesDraggable : false
     );
-    setTagMask(
+    SetStrictTag(
       [crossVerticalLineBot, crossHorizontalLineBot],
       "pointable",
       bibleData.bibleType === BibleTypes.Default
     );
-    setTag(leftCoverBot, dimension, false);
+    SetStrictTag(leftCoverBot, dimension as keyof PieceBotTags, false);
   }
 
   async displayCloseBibleSequence({
@@ -404,7 +413,7 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
         ...botsToCollapse.map((bot) => {
           const piecePosition = getBotPosition(bot, dimension);
           const pieceScales = GetBotScales(bot);
-          return animateTag(bot, {
+          return AnimateStrictTag(bot, {
             fromValue: {
               [dimension + "Z"]: piecePosition.z,
               scaleZ: pieceScales.z,
@@ -415,21 +424,32 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
             },
             duration,
             easing,
+            tagMaskSpace: false,
           });
         }),
         upperCoverBot
-          ? animateTag(upperCoverBot, dimension + "Z", {
-              toValue: upperCoverClosedPositionZ,
-              duration,
-              easing,
-            })
+          ? AnimateStrictTag(
+              upperCoverBot,
+              (dimension + "Z") as keyof PieceBotTags,
+              {
+                toValue: upperCoverClosedPositionZ,
+                duration,
+                easing,
+                tagMaskSpace: false,
+              }
+            )
           : Promise.resolve(),
         verticalLineBot && horizontalLineBot
-          ? animateTag([verticalLineBot, horizontalLineBot], dimension + "Z", {
-              toValue: crossClosedPositionZ,
-              duration,
-              easing,
-            })
+          ? AnimateStrictTag(
+              [verticalLineBot, horizontalLineBot],
+              (dimension + "Z") as keyof PieceBotTags,
+              {
+                toValue: crossClosedPositionZ,
+                duration,
+                easing,
+                tagMaskSpace: false,
+              }
+            )
           : Promise.resolve(),
       ]);
 
@@ -631,14 +651,14 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
               const sectionMod: Partial<BookTags> = {
                 ...baseTags,
               };
-              const infraInfo = this.#bookInfoMapperPort.toInfrastructure(
-                sectionData.pieceBookInfo
-              );
-              const explodedViewPosition = infraInfo.explodedViewPosition ?? {
-                x: 0,
-                y: 0,
-                z: 0,
-              };
+              const sectionScales =
+                this.#layoutConfigProviderPort.getStackPieceMeasurement(
+                  "SectionScales"
+                );
+              const additionalScaleOnHover =
+                this.#layoutConfigProviderPort.getStackPieceMeasurement(
+                  "SectionAditionalScaleOnHover"
+                );
               const bookScales =
                 this.#layoutConfigProviderPort.getStackPieceMeasurement(
                   "BookScales"
@@ -646,14 +666,28 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
               this.#visualStateRegistryPort.registerState({
                 piece: sectionData.piece,
                 state: {
-                  ...baseVisualState,
+                  orginalColor: sectionData.getPieceInfoProperty("color"),
+                  initialColor: sectionData.getPieceInfoProperty("color"),
+                  labelTextColor: GetDarkerColor(
+                    sectionData.getPieceInfoProperty("color")
+                  ),
+                  desiredScaleZ,
+                  desiredPositionZ: nextPositionZ,
                   hoveredFormOpacity: 1,
                   unhoveredFormOpacity: 1,
                   chapterColumns: 0,
                   chapterRows: 0,
-                  explodedViewSelectedScaleZ: 0,
-                  explodedViewPosition,
                   singleBooksScales: { x: bookScales.x, y: bookScales.y },
+                  unhoveredScales: {
+                    x: sectionScales.x,
+                    y: sectionScales.y,
+                    z: desiredScaleZ,
+                  },
+                  hoveredScales: {
+                    x: sectionScales.x + additionalScaleOnHover,
+                    y: sectionScales.y + additionalScaleOnHover,
+                    z: desiredScaleZ,
+                  },
                 },
               });
               ApplyStrictMod(sectionBot, sectionMod);
@@ -661,9 +695,9 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
             break;
         }
         if (sectionBot) {
-          setTagMask(sectionBot, "formOpacity", 0.7);
+          SetStrictTag(sectionBot, "formOpacity", 0.7);
           resizeAnimations.push(
-            animateTag(sectionBot, {
+            AnimateStrictTag(sectionBot, {
               fromValue: {
                 [dimension + "Z"]: initialPositionZ,
                 scaleZ: sectionInitialScaleZ,
@@ -674,6 +708,7 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
               },
               duration,
               easing,
+              tagMaskSpace: false,
             })
           );
         }
@@ -721,16 +756,22 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
       this.#layoutConfigProviderPort.getStackSpacing("BetweenSections") -
       crossVerticalLineScales.z / 2;
     resizeAnimations.push(
-      animateTag(upperCoverBot, dimension + "Z", {
+      AnimateStrictTag(upperCoverBot, (dimension + "Z") as keyof PieceBotTags, {
         toValue: nextPositionZ,
         duration,
         easing: easing,
+        tagMaskSpace: false,
       }),
-      animateTag([verticalLineBot, horizontalLineBot], dimension + "Z", {
-        toValue: crossOpenedPositionZ,
-        duration,
-        easing: easing,
-      })
+      AnimateStrictTag(
+        [verticalLineBot, horizontalLineBot],
+        (dimension + "Z") as keyof PieceBotTags,
+        {
+          toValue: crossOpenedPositionZ,
+          duration,
+          easing: easing,
+          tagMaskSpace: false,
+        }
+      )
     );
 
     await Promise.allSettled(resizeAnimations);

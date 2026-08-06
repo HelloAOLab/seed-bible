@@ -20,8 +20,6 @@ export class ExperienceAdapter implements ExperienceAdapterPort {
   }
 
   displayExperience() {
-    const targetDimension =
-      this.#experienceConfigProviderPort.getTargetDimension();
     this.#environmentAdapterPort.changePortalCameraType(
       this.#experienceConfigProviderPort.getTargetPortalCameraType()
     );
@@ -29,7 +27,6 @@ export class ExperienceAdapter implements ExperienceAdapterPort {
       this.#experienceConfigProviderPort.getTargetPortalZoomableMin()
     );
 
-    this.#environmentAdapterPort.setGridPortal(targetDimension);
     this.#environmentAdapterPort.clearMapPortal();
     this.#environmentAdapterPort.clearMiniGridPortal();
     this.#environmentAdapterPort.clearMiniMapPortal();

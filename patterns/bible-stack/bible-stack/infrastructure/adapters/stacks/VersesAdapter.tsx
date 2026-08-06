@@ -37,6 +37,7 @@ export class VersesAdapter {
       toValue: 0,
       duration,
       easing,
+      tagMaskSpace: false,
     });
     SetStrictTag(verseBot, dimension as keyof VerseBotTags, false);
   }

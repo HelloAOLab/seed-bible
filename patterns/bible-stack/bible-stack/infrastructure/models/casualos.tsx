@@ -100,6 +100,7 @@ export interface PieceBotTags<T extends BiblePiece = BiblePiece> {
   scaleY?: number;
   scaleZ?: number;
   formOpacity?: number;
+  formRenderOrder?: number;
   // [dimension: string]: unknown;
 }
 

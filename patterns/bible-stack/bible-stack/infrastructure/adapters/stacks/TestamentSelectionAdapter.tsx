@@ -16,7 +16,6 @@ import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { TestamentSelectionConfigProvider } from "../../config/testamentSelection/TestamentSelectionConfigProvider";
 import { GetDarkerColor } from "../../../domain/functions/colors";
 import type { SectionInfoMapper } from "../../mappers/SectionInfoMapper";
-import type { BookInfoMapper } from "../../mappers/BookInfoMapper";
 import type { PieceBotTags } from "../../models/casualos";
 import type { Piece } from "../../../domain/models/canvas";
 import { StackSectionData } from "../../../domain/entities/StackSectionData";
@@ -29,6 +28,7 @@ import type { BibleDataRepository } from "./BibleDataRepository";
 import type { PieceDataRepository } from "./PieceDataRepository";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { PieceAdapter } from "./PieceAdapter";
+import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
 
 interface AdapterParams {
   getDimension(): string;
@@ -39,13 +39,13 @@ interface AdapterParams {
   visualStateRegistry: VisualStateRegistry;
   selectionConfigProvider: TestamentSelectionConfigProvider;
   sectionInfoMapper: SectionInfoMapper;
-  bookInfoMapper: BookInfoMapper;
   cameraAdapterPort: CameraAdapterPort;
   renderOrderAdapterPort: RenderOrderAdapterPort;
   bibleDataRepository: BibleDataRepository;
   pieceDataRepository: PieceDataRepository;
   pieceMapper: PieceMapper;
   pieceAdapter: PieceAdapter;
+  piecesConfigProviderPort: PiecesConfigProvider;
 }
 
 /** A spawned section's target depth/position, resolved before the testament grows. */
@@ -64,13 +64,13 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
   #selectionConfigProvider: AdapterParams["selectionConfigProvider"];
   #sectionInfoMapper: AdapterParams["sectionInfoMapper"];
-  #bookInfoMapper: AdapterParams["bookInfoMapper"];
   #cameraAdapterPort: AdapterParams["cameraAdapterPort"];
   #renderOrderAdapterPort: AdapterParams["renderOrderAdapterPort"];
   #bibleDataRepository: AdapterParams["bibleDataRepository"];
   #pieceDataRepository: AdapterParams["pieceDataRepository"];
   #pieceMapper: AdapterParams["pieceMapper"];
   #pieceAdapter: AdapterParams["pieceAdapter"];
+  #piecesConfigProviderPort: AdapterParams["piecesConfigProviderPort"];
 
   constructor({
     getDimension,
@@ -81,13 +81,13 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
     visualStateRegistry,
     selectionConfigProvider,
     sectionInfoMapper,
-    bookInfoMapper,
     cameraAdapterPort,
     renderOrderAdapterPort,
     bibleDataRepository,
     pieceDataRepository,
     pieceMapper,
     pieceAdapter,
+    piecesConfigProviderPort,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#testamentMapper = testamentMapper;
@@ -97,13 +97,13 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
     this.#visualStateRegistry = visualStateRegistry;
     this.#selectionConfigProvider = selectionConfigProvider;
     this.#sectionInfoMapper = sectionInfoMapper;
-    this.#bookInfoMapper = bookInfoMapper;
     this.#cameraAdapterPort = cameraAdapterPort;
     this.#renderOrderAdapterPort = renderOrderAdapterPort;
     this.#bibleDataRepository = bibleDataRepository;
     this.#pieceDataRepository = pieceDataRepository;
     this.#pieceMapper = pieceMapper;
     this.#pieceAdapter = pieceAdapter;
+    this.#piecesConfigProviderPort = piecesConfigProviderPort;
   }
 
   /**
@@ -177,9 +177,22 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
         scaleY: sectionScales.y,
         scaleZ: sectionInitialScaleZ,
         color,
-        labelOpacity: 0,
-        formOpacity: 0.7,
+        labelOpacity:
+          sectionData.type === "StackSection"
+            ? this.#piecesConfigProviderPort.getInitialConfig("StackSection")
+                .labelOpacity
+            : this.#piecesConfigProviderPort.getInitialConfig(
+                "StackSectionBook"
+              ).labelOpacity,
+        formOpacity:
+          sectionData.type === "StackSection"
+            ? this.#piecesConfigProviderPort.getInitialConfig("StackSection")
+                .formOpacity
+            : this.#piecesConfigProviderPort.getInitialConfig(
+                "StackSectionBook"
+              ).formOpacity,
         draggable: testamentBot.tags.draggable,
+        transformer: testamentBot.tags.transformer,
       };
 
       if (sectionData.type === "StackSection") {
@@ -204,8 +217,14 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
             initialScaleZ: desiredScaleZ,
             hoveredScaleX: sectionScales.x + additionalScaleOnHover,
             hoveredScaleY: sectionScales.y + additionalScaleOnHover,
-            hoveredFormOpacity: 1,
-            unhoveredFormOpacity: 0.7,
+            hoveredFormOpacity:
+              this.#piecesConfigProviderPort.getInitialVisualState(
+                "StackSection"
+              ).hoveredFormOpacity! ?? 1,
+            unhoveredFormOpacity:
+              this.#piecesConfigProviderPort.getInitialVisualState(
+                "StackSection"
+              ).unhoveredFormOpacity ?? 0,
             orginalColor: sectionData.getPieceInfoProperty("color"),
             initialColor: sectionData.getPieceInfoProperty("color"),
             labelTextColor: GetDarkerColor(
@@ -231,26 +250,19 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
 
         ApplyStrictMod(sectionBot, mod);
 
-        const infraBookInfo = this.#bookInfoMapper.toInfrastructure(
-          sectionData.pieceBookInfo
-        );
-        const explodedViewPosition = infraBookInfo.explodedViewPosition ?? {
-          x: 0,
-          y: 0,
-          z: 0,
-        };
         const bookScales =
           this.#configProvider.getStackPieceMeasurement("BookScales");
         this.#visualStateRegistry.registerState({
           piece,
           state: {
-            initialScaleX: sectionScales.x,
-            initialScaleY: sectionScales.y,
-            initialScaleZ: desiredScaleZ,
-            hoveredScaleX: sectionScales.x + additionalScaleOnHover,
-            hoveredScaleY: sectionScales.y + additionalScaleOnHover,
-            hoveredFormOpacity: 1,
-            unhoveredFormOpacity: 1,
+            hoveredFormOpacity:
+              this.#piecesConfigProviderPort.getInitialVisualState(
+                "StackSectionBook"
+              ).hoveredFormOpacity ?? 1,
+            unhoveredFormOpacity:
+              this.#piecesConfigProviderPort.getInitialVisualState(
+                "StackSectionBook"
+              ).unhoveredFormOpacity ?? 0,
             orginalColor: sectionData.getPieceInfoProperty("color"),
             initialColor: sectionData.getPieceInfoProperty("color"),
             labelTextColor: GetDarkerColor(
@@ -260,9 +272,17 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
             desiredPositionZ: sectionDesiredPositionZ,
             chapterColumns: 0,
             chapterRows: 0,
-            explodedViewSelectedScaleZ: 0,
-            explodedViewPosition,
             singleBooksScales: { x: bookScales.x, y: bookScales.y },
+            unhoveredScales: {
+              x: sectionScales.x,
+              y: sectionScales.y,
+              z: desiredScaleZ,
+            },
+            hoveredScales: {
+              x: sectionScales.x + additionalScaleOnHover,
+              y: sectionScales.y + additionalScaleOnHover,
+              z: desiredScaleZ,
+            },
           },
         });
 
@@ -292,6 +312,7 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
         toValue: testamentDesiredScaleZ,
         duration: animationsDuration,
         easing: animationsEasing,
+        tagMaskSpace: false,
       }),
     ];
 
@@ -341,6 +362,7 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
             toValue: pieceDesiredPositionZ,
             duration: animationsDuration,
             easing: animationsEasing,
+            tagMaskSpace: false,
           })
         );
       }
@@ -373,6 +395,7 @@ export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort 
       },
       duration: animationsDuration,
       easing: animationsEasing,
+      tagMaskSpace: false,
     });
     SetStrictTag(testamentBot, "color", "clear");
     SetStrictTag(testamentBot, "pointable", false);

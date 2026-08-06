@@ -14,6 +14,7 @@ import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { BookSpawnerPort } from "../ports/in/PieceSpawn";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
+import type { TourGuideServicePort } from "../ports/in/TourGuide";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
@@ -26,6 +27,7 @@ interface ServiceParams {
   explodedViewServicePort: ExplodedViewServicePort;
   sectionSelectionEventPort: SectionSelectionEventPort;
   bookSpawnerPort: BookSpawnerPort;
+  tourGuideServicePort: TourGuideServicePort;
 }
 
 export class SectionSelectionService implements SectionSelectionServicePort {
@@ -39,6 +41,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
   #explodedViewServicePort: ServiceParams["explodedViewServicePort"];
   #sectionSelectionEventPort: ServiceParams["sectionSelectionEventPort"];
   #bookSpawnerPort: ServiceParams["bookSpawnerPort"];
+  #tourGuideServicePort: ServiceParams["tourGuideServicePort"];
   #selectionNameRegistry: Set<string> = new Set();
 
   constructor({
@@ -52,6 +55,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     explodedViewServicePort,
     sectionSelectionEventPort,
     bookSpawnerPort,
+    tourGuideServicePort,
   }: ServiceParams) {
     this.#labelDataStorePort = labelDataStorePort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
@@ -63,10 +67,18 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     this.#explodedViewServicePort = explodedViewServicePort;
     this.#sectionSelectionEventPort = sectionSelectionEventPort;
     this.#bookSpawnerPort = bookSpawnerPort;
+    this.#tourGuideServicePort = tourGuideServicePort;
   }
 
   async #prepareSelection(data: StackSectionData): Promise<void> {
+    if (!data.piece) {
+      throw new Error(
+        "SectionSelectionService: data.piece not defined at prepareSelection."
+      );
+    }
     this.#sectionSelectionEventPort.emit("OnSectionBeginSelect", { data });
+
+    this.#pieceLabelServicePort.hideLabel(data.piece, "Instant");
 
     // Implode the previously-exploded section before exploding this one.
     const previous = this.#explodedViewServicePort.currentExplodedSection;
@@ -100,6 +112,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
           })
         );
       }
+
       await Promise.all(unhighlights);
     }
 
@@ -123,6 +136,9 @@ export class SectionSelectionService implements SectionSelectionServicePort {
   }
 
   #finalizeSelection(data: StackSectionData): void {
+    for (const bookData of data.getActiveBooks()) {
+      bookData.becomeHighlightable();
+    }
     if (data.shadow) {
       this.#pieceLabelServicePort.showLabel({
         piece: data.shadow,
@@ -139,7 +155,9 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     source: PieceSelectionSource;
     pacing?: StackPresenceNavigationPacing;
   }): Promise<void> {
-    this.#selectionNameRegistry.add(data.getPieceInfoProperty("name"));
+    const name = data.getPieceInfoProperty("name");
+    const isFirstSelection = !this.hasSectionEverBeenSelected(name);
+    this.#selectionNameRegistry.add(name);
 
     await this.#prepareSelection(data);
 
@@ -151,6 +169,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
       id: data.id,
       type: data.type,
     };
+
     await this.#stackUpdateServicePort.updateStack(
       stack.id,
       stack.type,
@@ -158,6 +177,8 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     );
 
     this.#finalizeSelection(data);
+
+    if (isFirstSelection) this.#tourGuideServicePort.beginTourGuide(data);
   }
 
   async deselect(data: StackSectionData): Promise<void> {
@@ -188,7 +209,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
           this.#pieceHighlighterPort.tryUnhighlightPiece({
             piece: book,
             source: "Transition",
-            pacing: "Regular",
+            pacing: "Fast",
           })
         );
       }
@@ -198,7 +219,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     if (selectedBooksData.length > 0) {
       await this.#bookSelectionServicePort.deselectBooks(
         selectedBooksData,
-        "Regular"
+        "Fast"
       );
     }
 

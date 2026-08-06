@@ -1,6 +1,7 @@
 import type { Vector3 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import { BiblePieces } from "../../domain/models/canvas";
 import type { HexString } from "../../domain/models/commonTypes";
+import type { Scales } from "../functions/layout";
 
 export interface BibleTransformerState {
   initialPositionZ: number;
@@ -29,16 +30,25 @@ export interface SectionVisualState extends BaseScripturePieceVisualState {
   customColorRange?: number;
 }
 
-export interface BaseBookVisualState extends BaseScripturePieceVisualState {
+export interface BaseBookVisualState extends Pick<
+  BaseScripturePieceVisualState,
+  | "orginalColor"
+  | "hoveredFormOpacity"
+  | "unhoveredFormOpacity"
+  | "initialColor"
+  | "labelTextColor"
+  | "desiredScaleZ"
+  | "desiredPositionZ"
+> {
   chapterColumns: number;
   chapterRows: number;
-  explodedViewSelectedScaleZ: number;
-  explodedViewPosition: { x: number; y: number; z: number };
   singleBooksScales: { x: number; y: number };
-  explodedViewCustomScale?: { x: number; y: number };
+  hoveredScales: Scales;
 }
 
-export type SectionBookVisualState = BaseBookVisualState;
+export interface SectionBookVisualState extends BaseBookVisualState {
+  unhoveredScales: Scales;
+}
 
 export interface SectionShadowVisualState {
   desiredPositionZ: number;
@@ -46,7 +56,13 @@ export interface SectionShadowVisualState {
 }
 
 export interface BookVisualState extends BaseBookVisualState {
+  explodedViewSelectedScaleZ: number;
+  explodedViewPosition: { x: number; y: number; z: number };
   increasedIntensityStrokeColor: HexString;
+  explodedViewCustomScale?: { x: number; y: number };
+  implodedScales: Scales;
+  explodedScales: Scales;
+  hoveredScales: Scales;
 }
 
 export interface ChapterVisualState extends Pick<

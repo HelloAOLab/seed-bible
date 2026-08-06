@@ -14,7 +14,7 @@ import type { LayoutConfigProvider as StackConfigProvider } from "../../config/l
 import type { SectionStackUpdaterAdapter } from "./SectionStackUpdaterAdapter";
 import type { BookStackUpdaterAdapter } from "./BookStackUpdaterAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
-import type { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
+import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -25,8 +25,6 @@ interface AdapterParams {
   sectionStackUpdaterAdapter: SectionStackUpdaterAdapter;
   bookStackUpdaterAdapter: BookStackUpdaterAdapter;
   visualStateRegistry: VisualStateRegistry;
-  setStrictTag: typeof SetStrictTag;
-  animateStrictTag: typeof AnimateStrictTag;
   loggerPort: LoggerPort;
 }
 
@@ -52,8 +50,6 @@ export class TestamentStackUpdaterAdapter implements TestamentStackUpdaterPort {
   #sectionStackUpdaterAdapter: AdapterParams["sectionStackUpdaterAdapter"];
   #bookStackUpdaterAdapter: AdapterParams["bookStackUpdaterAdapter"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
-  #setStrictTag: AdapterParams["setStrictTag"];
-  #animateStrictTag: AdapterParams["animateStrictTag"];
   #loggerPort: AdapterParams["loggerPort"];
 
   constructor({
@@ -65,8 +61,6 @@ export class TestamentStackUpdaterAdapter implements TestamentStackUpdaterPort {
     sectionStackUpdaterAdapter,
     bookStackUpdaterAdapter,
     visualStateRegistry,
-    setStrictTag,
-    animateStrictTag,
     loggerPort,
   }: AdapterParams) {
     this.#getDimension = getDimension;
@@ -77,8 +71,6 @@ export class TestamentStackUpdaterAdapter implements TestamentStackUpdaterPort {
     this.#sectionStackUpdaterAdapter = sectionStackUpdaterAdapter;
     this.#bookStackUpdaterAdapter = bookStackUpdaterAdapter;
     this.#visualStateRegistry = visualStateRegistry;
-    this.#setStrictTag = setStrictTag;
-    this.#animateStrictTag = animateStrictTag;
     this.#loggerPort = loggerPort;
   }
 
@@ -289,18 +281,19 @@ export class TestamentStackUpdaterAdapter implements TestamentStackUpdaterPort {
         value: nextPositionZ,
       });
       if (isInstantaneous) {
-        this.#setStrictTag(
+        SetStrictTag(
           bot,
           (dimension + "Z") as keyof typeof bot.tags,
           nextPositionZ
         );
       } else {
         computedAnimations.push(
-          this.#animateStrictTag(
-            bot,
-            (dimension + "Z") as keyof typeof bot.tags,
-            { toValue: nextPositionZ, duration, easing }
-          )
+          AnimateStrictTag(bot, (dimension + "Z") as keyof typeof bot.tags, {
+            toValue: nextPositionZ,
+            duration,
+            easing,
+            tagMaskSpace: false,
+          })
         );
       }
       nextPositionZ += this.#visualStateRegistry.getStateProperty({

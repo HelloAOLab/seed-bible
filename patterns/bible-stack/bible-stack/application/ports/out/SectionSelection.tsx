@@ -6,13 +6,17 @@ import type {
   ShowSequencePacing,
 } from "../../../domain/models/label";
 import type { BibleStackEvents } from "../../../domain/models/events";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
 
 export interface LabelDataStorePort {
   getDataByOwnerId(id: string): InfoLabelData | undefined;
 }
 
 export interface SectionSelectionAdapterPort {
-  select: (data: StackSectionData) => Promise<void>;
+  select: (
+    data: StackSectionData,
+    pacing?: StackUpdatePacing | undefined
+  ) => Promise<void>;
   deselect: (data: StackSectionData) => Promise<void>;
 }
 
@@ -32,7 +36,7 @@ export interface PieceLabelServicePort {
     pacing?: ShowSequencePacing;
   }) => void;
   hideLabel: (
-    piece: Piece<"StackSectionShadow">,
+    piece: Piece<"StackSectionShadow" | "StackSection">,
     pacing?: ShowSequencePacing
   ) => Promise<void>;
   changeIntensity: (

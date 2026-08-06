@@ -12,7 +12,7 @@ import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvi
 import { CrossPositions } from "../../../domain/models/canvas";
 import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { TestamentStackUpdaterAdapter } from "./TestamentStackUpdaterAdapter";
-import type { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
+import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import type { CrossLineTags } from "../../models/stack";
 
 interface AdapterParams {
@@ -24,8 +24,6 @@ interface AdapterParams {
   layoutConfigProvider: LayoutConfigProvider;
   loggerPort: LoggerPort;
   testamentStackUpdaterAdapter: TestamentStackUpdaterAdapter;
-  setStrictTag: typeof SetStrictTag;
-  animateStrictTag: typeof AnimateStrictTag;
 }
 
 export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
@@ -37,8 +35,6 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
   #stackConfigProvider: AdapterParams["layoutConfigProvider"];
   #loggerPort: AdapterParams["loggerPort"];
   #testamentStackUpdaterAdapter: AdapterParams["testamentStackUpdaterAdapter"];
-  #setStrictTag: AdapterParams["setStrictTag"];
-  #animateStrictTag: AdapterParams["animateStrictTag"];
 
   constructor({
     getDimension,
@@ -49,8 +45,6 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
     layoutConfigProvider: stackConfigProvider,
     loggerPort,
     testamentStackUpdaterAdapter,
-    setStrictTag,
-    animateStrictTag,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#stackUpdateConfigProvider = stackUpdateConfigProvider;
@@ -60,8 +54,6 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
     this.#stackConfigProvider = stackConfigProvider;
     this.#loggerPort = loggerPort;
     this.#testamentStackUpdaterAdapter = testamentStackUpdaterAdapter;
-    this.#setStrictTag = setStrictTag;
-    this.#animateStrictTag = animateStrictTag;
   }
 
   async update({
@@ -154,31 +146,33 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
 
     if (currentCrossPosition !== targetCrossPosition) {
       if (pacing === "Instant") {
-        this.#setStrictTag(crossVerticalLineBot, "formOpacity", 1);
-        this.#setStrictTag(crossHorizontalLineBot, "formOpacity", 1);
+        SetStrictTag(crossVerticalLineBot, "formOpacity", 1);
+        SetStrictTag(crossHorizontalLineBot, "formOpacity", 1);
       } else {
         animations.push(
-          this.#animateStrictTag(
+          AnimateStrictTag(
             [crossVerticalLineBot, crossHorizontalLineBot],
             "formOpacity",
             {
               toValue: 0,
               duration: duration / 2,
               easing,
+              tagMaskSpace: false,
             }
           ).then(() => {
-            this.#setStrictTag(
+            SetStrictTag(
               [crossVerticalLineBot, crossHorizontalLineBot],
               (dimension + "Z") as keyof CrossLineTags,
               crossNewPositionZ
             );
-            return this.#animateStrictTag(
+            return AnimateStrictTag(
               [crossVerticalLineBot, crossHorizontalLineBot],
               "formOpacity",
               {
                 toValue: 1,
                 duration: duration / 2,
                 easing,
+                tagMaskSpace: false,
               }
             );
           })
@@ -187,13 +181,14 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
     } else {
       if (pacing !== "Instant") {
         animations.push(
-          this.#animateStrictTag(
+          AnimateStrictTag(
             [crossVerticalLineBot, crossHorizontalLineBot],
             (dimension + "Z") as keyof CrossLineTags,
             {
               toValue: crossNewPositionZ!,
               duration,
               easing,
+              tagMaskSpace: false,
             }
           )
         );
@@ -201,25 +196,26 @@ export class BibleStackUpdaterAdapter implements BibleStackUpdaterAdapterPort {
     }
 
     if (pacing === "Instant") {
-      this.#setStrictTag(
+      SetStrictTag(
         [crossVerticalLineBot, crossHorizontalLineBot],
         (dimension + "Z") as keyof CrossLineTags,
         crossNewPositionZ!
       );
-      this.#setStrictTag(
+      SetStrictTag(
         upperCoverBot,
         (dimension + "Z") as keyof typeof upperCoverBot.tags,
         isBibleEmpty ? initialPositionZ : nextPositionZ
       );
     } else {
       animations.push(
-        this.#animateStrictTag(
+        AnimateStrictTag(
           upperCoverBot,
           (dimension + "Z") as keyof typeof upperCoverBot.tags,
           {
             toValue: isBibleEmpty ? initialPositionZ : nextPositionZ,
             duration,
             easing,
+            tagMaskSpace: false,
           }
         )
       );

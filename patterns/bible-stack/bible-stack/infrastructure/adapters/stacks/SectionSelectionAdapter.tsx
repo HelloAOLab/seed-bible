@@ -5,7 +5,9 @@ import {
 } from "../../functions/casualos";
 import type { SectionSelectionConfigProvider } from "../../config/sectionSelection/SectionSelectionConfigProvider";
 import type { SectionSelectionAdapterPort } from "../../../application/ports/out/SectionSelection";
-import type { StackSectionData } from "../../../domain/entities/StackSectionData";
+import { StackSectionData } from "../../../domain/entities/StackSectionData";
+import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
+import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
 import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { SectionBot, SectionTags } from "../../models/stack";
@@ -16,6 +18,13 @@ import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { BookSetupAdapter } from "./BookSetupAdapter";
 import type { BookStackLayoutAdapter } from "./BookStackLayoutAdapter";
+import type { StackUpdatePacing } from "../../../domain/models/stacks";
+import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
+import type { BibleDataRepository } from "./BibleDataRepository";
+import type { PieceDataRepository } from "./PieceDataRepository";
+import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { Piece } from "../../../domain/models/canvas";
+import type { PieceBotTags } from "../../models/casualos";
 
 interface AdapterParams {
   getDimension(): string;
@@ -27,6 +36,10 @@ interface AdapterParams {
   bookSetupAdapter: BookSetupAdapter;
   bookMapper: StackBookMapper;
   bookStackLayoutAdapter: BookStackLayoutAdapter;
+  cameraAdapterPort: CameraAdapterPort;
+  bibleDataRepository: BibleDataRepository;
+  pieceDataRepository: PieceDataRepository;
+  pieceMapper: PieceMapper;
 }
 
 export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
@@ -39,6 +52,10 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
   #bookSetupAdapter: AdapterParams["bookSetupAdapter"];
   #bookMapper: AdapterParams["bookMapper"];
   #bookStackLayoutAdapter: AdapterParams["bookStackLayoutAdapter"];
+  #cameraAdapterPort: AdapterParams["cameraAdapterPort"];
+  #bibleDataRepository: AdapterParams["bibleDataRepository"];
+  #pieceDataRepository: AdapterParams["pieceDataRepository"];
+  #pieceMapper: AdapterParams["pieceMapper"];
 
   constructor({
     getDimension,
@@ -50,6 +67,10 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
     bookSetupAdapter,
     bookMapper,
     bookStackLayoutAdapter,
+    cameraAdapterPort,
+    bibleDataRepository,
+    pieceDataRepository,
+    pieceMapper,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#selectionConfigProvider = selectionConfigProvider;
@@ -60,14 +81,23 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
     this.#bookSetupAdapter = bookSetupAdapter;
     this.#bookMapper = bookMapper;
     this.#bookStackLayoutAdapter = bookStackLayoutAdapter;
+    this.#cameraAdapterPort = cameraAdapterPort;
+    this.#bibleDataRepository = bibleDataRepository;
+    this.#pieceDataRepository = pieceDataRepository;
+    this.#pieceMapper = pieceMapper;
   }
 
   /**
    * The inverse of `deselect`: the section "explodes" — a quick rotation
    * wiggle, then it rises to its exploded Z and expands its depth while
    * fading out, handing the surface over to the books that take its place.
+   * Concurrently the camera focuses on the section and every piece stacked
+   * above it lifts to make room for the growth.
    */
-  async select(data: StackSectionData): Promise<void> {
+  async select(
+    data: StackSectionData,
+    pacing: StackUpdatePacing = "Regular"
+  ): Promise<void> {
     if (!data.piece) {
       throw new Error(
         "SectionSelectionAdapter: data.piece not defined at select"
@@ -81,10 +111,11 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
     }
 
     const dimension = this.#getDimension();
-    const duration = this.#selectionConfigProvider.getDuration();
+    const duration = this.#selectionConfigProvider.getDuration(pacing);
     const easing = this.#selectionConfigProvider.getEasing();
 
     const sectionPosition = getBotPosition(sectionBot, dimension);
+    const currentScaleZ = GetBotScales(sectionBot).z;
     const desiredExplodedViewScaleZ =
       this.#visualStateRegistry.getStateProperty({
         piece: data.piece,
@@ -111,67 +142,251 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
             toValue,
             duration: wiggleDuration,
             easing: index === 0 ? sineIn : sineOut,
+            tagMaskSpace: false,
           })
         ),
       Promise.resolve()
     );
 
-    // const focusOnRotation = { x: 1.01229, y: 0.5 };
-    // const sectionPosition = getBotPosition(section, dimension);
-    // let fixedPosition = new Vector3(
-    //   sectionPosition.x,
-    //   sectionPosition.y,
-    //   sectionNewPositionZ + section.tags.desiredExplodedViewScaleZ / 2
-    // );
-    // if (sectionData.getParentId("stackBibleId")) {
-    //   const transformerPosition = getBotPosition(
-    //     section.links.transformerLink,
-    //     dimension
-    //   );
-    //   fixedPosition = fixedPosition.add(transformerPosition);
-    // }
-    // const desiredFocusOnPosition = GetCamRotationFocusPoint({
-    //   theta: focusOnRotation.y,
-    //   phi: focusOnRotation.x,
-    //   botPosition: fixedPosition,
-    // });
-
-    await Promise.all([
+    const firstAnimations: Array<Promise<void>> = [
       wiggle,
       AnimateStrictTag(sectionBot, zTag, {
         fromValue: sectionPosition.z,
         toValue: sectionNewPositionZ,
         duration,
         easing,
+        tagMaskSpace: false,
       }),
       AnimateStrictTag(sectionBot, "scaleZ", {
-        fromValue: GetBotScales(sectionBot).z,
+        fromValue: currentScaleZ,
         toValue: desiredExplodedViewScaleZ,
         duration,
         easing,
+        tagMaskSpace: false,
       }),
-      // os.focusOn(
-      //     { x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y },
-      //     {
-      //         duration: cameraFocusDuration,
-      //         easing: { type: "sinusoidal", mode: "inout" },
-      //         rotation: focusOnRotation,
-      //         zoom: 8,
-      //     }
-      // ),
-    ]);
+    ];
+
+    this.#focusCameraOnSection(
+      data,
+      sectionBot,
+      {
+        x: sectionPosition.x,
+        y: sectionPosition.y,
+        z: sectionNewPositionZ + desiredExplodedViewScaleZ / 2,
+      },
+      dimension
+    );
+
+    // Lift every piece above the section by the extra depth it will occupy.
+    const liftDelta =
+      desiredExplodedViewScaleZ - currentScaleZ + explodedPadding * 2;
+    const piecesAbove = this.#getPiecesAboveSection(
+      data,
+      sectionPosition.z,
+      dimension
+    );
+    for (const pieceAbove of piecesAbove) {
+      const bot = this.#pieceMapper.toInfrastructure(pieceAbove);
+      if (!bot) {
+        throw new Error("SectionSelectionAdapter: bot not found at select.");
+      }
+      const pieceDesiredPositionZ =
+        getBotPosition(bot, dimension).z + liftDelta;
+      this.#tryRegisterDesiredPositionZ(pieceAbove, pieceDesiredPositionZ);
+      firstAnimations.push(
+        AnimateStrictTag(bot, (dimension + "Z") as keyof PieceBotTags, {
+          toValue: pieceDesiredPositionZ,
+          duration,
+          easing,
+          tagMaskSpace: false,
+        })
+      );
+    }
+
+    await Promise.all(firstAnimations);
 
     await AnimateStrictTag(sectionBot, "formOpacity", {
       fromValue: sectionBot.tags.formOpacity,
       toValue: 0,
       duration,
       easing: sineOut,
+      tagMaskSpace: false,
     });
 
     SetStrictTag(sectionBot, "color", "clear");
     SetStrictTag(sectionBot, "pointable", false);
 
-    await this.#cascadeBooks(data, sectionBot);
+    await this.#cascadeBooks(data, sectionBot, pacing);
+  }
+
+  /**
+   * Focuses the camera on the exploding section. When the section belongs to a
+   * bible its position is relative to the bible transformer, so the focus point
+   * is offset by the transformer's world position.
+   */
+  #focusCameraOnSection(
+    data: StackSectionData,
+    sectionBot: SectionBot,
+    focusPosition: { x: number; y: number; z: number },
+    dimension: string
+  ): void {
+    const bibleId = data.getParentId("stackBibleId");
+    if (bibleId) {
+      const transformerId = sectionBot.tags.transformer;
+      if (transformerId) {
+        const transformerBot = getBot(byID(transformerId));
+        if (transformerBot) {
+          const transformerPosition = getBotPosition(transformerBot, dimension);
+          focusPosition.x += transformerPosition.x;
+          focusPosition.y += transformerPosition.y;
+          focusPosition.z += transformerPosition.z;
+        }
+      }
+    }
+    this.#cameraAdapterPort.focusOn(focusPosition, "sectionSelection");
+  }
+
+  /**
+   * Collects every active piece stacked above the exploding section: section
+   * shadows sitting higher, the bible's upper cover and cross lines when above,
+   * the sibling sections higher in the same testament, and every active piece
+   * of the testaments stacked above.
+   */
+  #getPiecesAboveSection(
+    data: StackSectionData,
+    sectionPositionZ: number,
+    dimension: string
+  ): Piece[] {
+    const pieces: Piece[] = [];
+
+    const bibleId = data.getParentId("stackBibleId");
+    const bibleData = bibleId
+      ? this.#bibleDataRepository.getBibleDataById(bibleId)
+      : undefined;
+    const testamentData = this.#getContainingTestament(data, bibleData);
+
+    // Section shadows sitting above the exploding section.
+    const scopeSections = bibleData
+      ? bibleData.getAllSectionsData()
+      : (testamentData?.childrenData ?? []);
+    for (const sectionData of scopeSections) {
+      if (!(sectionData instanceof StackSectionData)) continue;
+      const shadow = sectionData.shadow;
+      if (shadow && this.#isPieceAbove(shadow, sectionPositionZ, dimension)) {
+        pieces.push(shadow);
+      }
+    }
+
+    // Static bible pieces above (only within a full bible).
+    if (bibleData) {
+      const upperCover = bibleData.getStaticPiece("upperCover");
+      if (upperCover) pieces.push(upperCover);
+
+      const verticalLine = bibleData.getStaticPiece("crossVerticalLine");
+      const horizontalLine = bibleData.getStaticPiece("crossHorizontalLine");
+      for (const crossLine of [verticalLine, horizontalLine]) {
+        if (
+          crossLine &&
+          this.#isPieceAbove(crossLine, sectionPositionZ, dimension)
+        ) {
+          pieces.push(crossLine);
+        }
+      }
+    }
+
+    // Sibling sections higher in the same testament.
+    if (testamentData) {
+      const sectionIndex = testamentData.childrenData.indexOf(data);
+      if (sectionIndex >= 0) {
+        for (const sibling of testamentData.childrenData.slice(
+          sectionIndex + 1
+        )) {
+          this.#pushActiveSectionPieces(sibling, pieces);
+        }
+      }
+    }
+
+    // Every active piece of the testaments stacked above.
+    if (bibleData && testamentData) {
+      const testaments = bibleData.childrenData;
+      for (const higherTestament of testaments.slice(
+        data.getTestamentIndex() + 1
+      )) {
+        this.#pushActiveTestamentPieces(higherTestament, pieces);
+      }
+    }
+
+    return pieces;
+  }
+
+  #getContainingTestament(
+    data: StackSectionData,
+    bibleData: ReturnType<BibleDataRepository["getBibleDataById"]>
+  ): StackTestamentData | undefined {
+    if (bibleData) {
+      return bibleData.childrenData[data.getTestamentIndex()];
+    }
+    const testamentId = data.getParentId("stackTestamentId");
+    if (!testamentId) return undefined;
+    return this.#pieceDataRepository
+      .getAllTestaments()
+      .find((testamentData) => testamentData.id === testamentId);
+  }
+
+  #pushActiveSectionPieces(
+    sectionData: StackSectionData | StackSectionBookData,
+    pieces: Piece[]
+  ): void {
+    if (
+      sectionData instanceof StackSectionData &&
+      sectionData.isSplitIntoBooks
+    ) {
+      for (const bookData of sectionData.childrenData.flat()) {
+        if (bookData.isActive && bookData.piece) pieces.push(bookData.piece);
+      }
+    } else if (sectionData.isActive && sectionData.piece) {
+      pieces.push(sectionData.piece);
+    }
+  }
+
+  #pushActiveTestamentPieces(
+    testamentData: StackTestamentData,
+    pieces: Piece[]
+  ): void {
+    if (testamentData.isSplitIntoSections) {
+      for (const sectionData of testamentData.childrenData) {
+        this.#pushActiveSectionPieces(sectionData, pieces);
+      }
+    } else if (testamentData.isActive && testamentData.piece) {
+      pieces.push(testamentData.piece);
+    }
+  }
+
+  #tryRegisterDesiredPositionZ(piece: Piece, desiredPositionZ: number): void {
+    if (
+      piece.type === "StackTestament" ||
+      piece.type === "StackSection" ||
+      piece.type === "StackSectionBook" ||
+      piece.type === "StackBook"
+    ) {
+      this.#visualStateRegistry.registerStateProperty({
+        piece: piece as Piece<
+          "StackTestament" | "StackSection" | "StackSectionBook" | "StackBook"
+        >,
+        property: "desiredPositionZ",
+        value: desiredPositionZ,
+      });
+    }
+  }
+
+  #isPieceAbove(
+    piece: Piece,
+    sectionPositionZ: number,
+    dimension: string
+  ): boolean {
+    const bot = this.#pieceMapper.toInfrastructure(piece);
+    if (!bot) return false;
+    return getBotPosition(bot, dimension).z > sectionPositionZ;
   }
 
   /**
@@ -181,12 +396,14 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
    */
   async #cascadeBooks(
     data: StackSectionData,
-    sectionBot: SectionBot
+    sectionBot: SectionBot,
+    pacing: StackUpdatePacing
   ): Promise<void> {
     const dimension = this.#getDimension();
-    const duration = this.#selectionConfigProvider.getDuration();
+    const duration = this.#selectionConfigProvider.getDuration(pacing);
     const easing = this.#selectionConfigProvider.getEasing();
-    const staggerMs = this.#selectionConfigProvider.getBookEntranceStaggerMs();
+    const staggerMs =
+      this.#selectionConfigProvider.getBookEntranceStaggerMs(pacing);
 
     if (!data.piece) return;
     const sectionInitialScaleX = this.#visualStateRegistry.getStateProperty({
@@ -250,21 +467,9 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
       piece,
       property: "explodedViewPosition",
     });
-    const explodedViewCustomScale = this.#visualStateRegistry.getStateProperty({
+    const explodedScales = this.#visualStateRegistry.getStateProperty({
       piece,
-      property: "explodedViewCustomScale",
-    });
-    const initialScaleX = this.#visualStateRegistry.getStateProperty({
-      piece,
-      property: "initialScaleX",
-    });
-    const initialScaleY = this.#visualStateRegistry.getStateProperty({
-      piece,
-      property: "initialScaleY",
-    });
-    const initialScaleZ = this.#visualStateRegistry.getStateProperty({
-      piece,
-      property: "initialScaleZ",
+      property: "explodedScales",
     });
     const desiredPositionZ = this.#visualStateRegistry.getStateProperty({
       piece,
@@ -280,12 +485,8 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
       { x: sectionInitialScaleX, y: sectionInitialScaleY },
       { x: sectionPosition.x, y: sectionPosition.y }
     );
-    const targetScaleX = explodedViewCustomScale
-      ? explodedViewCustomScale.x * sectionInitialScaleX
-      : initialScaleX;
-    const targetScaleY = explodedViewCustomScale
-      ? explodedViewCustomScale.y * sectionInitialScaleY
-      : initialScaleY;
+    const targetScaleX = explodedScales.x;
+    const targetScaleY = explodedScales.y;
 
     const bookPosition = getBotPosition(bot, dimension);
     const bookScales = GetBotScales(bot);
@@ -306,11 +507,12 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
         [dimension + "Z"]: desiredPositionZ,
         scaleX: targetScaleX,
         scaleY: targetScaleY,
-        scaleZ: initialScaleZ,
+        scaleZ: explodedScales.z,
         formOpacity: unhoveredFormOpacity,
       },
       duration,
       easing,
+      tagMaskSpace: false,
     });
 
     SetStrictTag(bot, "pointable", true);
@@ -383,14 +585,7 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
     SetStrictTag(sectionBot, "scaleX", sectionInitialScales.x);
     SetStrictTag(sectionBot, "scaleY", sectionInitialScales.y);
     SetStrictTag(sectionBot, "scaleZ", sectionInitialScales.z);
-    SetStrictTag(
-      sectionBot,
-      "color",
-      // BibleVizUtils.Data.masks.isInHistoryMode
-      //     ? BibleVizUtils.Functions.GetHistoryColor({ piece: data.piece })
-      //     : (data.highlightColor ?? data.pieceInfo.color)
-      data.paintColor ?? data.pieceInfo.color
-    );
+    SetStrictTag(sectionBot, "color", data.paintColor ?? data.pieceInfo.color);
     SetStrictTag(sectionBot, "pointable", true);
 
     await AnimateStrictTag(sectionBot, {
@@ -410,6 +605,7 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
       },
       duration,
       easing,
+      tagMaskSpace: false,
     });
   }
 }

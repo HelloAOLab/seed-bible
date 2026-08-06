@@ -48,13 +48,15 @@ export class TestamentStackUpdaterService implements UpdaterServicePort {
   async finalizeTestament(data: StackTestamentData): Promise<void> {
     if (!data.isSplitIntoSections || data.isEmpty()) return;
 
-    for (const child of data.getActiveSections()) {
-      if (child.type === "StackSection") {
-        await this.#sectionUpdaterPort.finalizeSection(child);
-      } else {
-        await this.#bookStackUpdaterPort.finalizeBook(child);
-      }
-    }
+    await Promise.all(
+      data.getActiveSections().map((child) => {
+        if (child.type === "StackSection") {
+          return this.#sectionUpdaterPort.finalizeSection(child);
+        } else {
+          return this.#bookStackUpdaterPort.finalizeBook(child);
+        }
+      })
+    );
   }
 
   async update({

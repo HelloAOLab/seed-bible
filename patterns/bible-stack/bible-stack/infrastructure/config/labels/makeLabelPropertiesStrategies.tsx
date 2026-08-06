@@ -78,8 +78,8 @@ export const makeLabelPropertiesStrategies = ({
       }
       return data.isOnTheGround ? "Top" : "LeftSided";
     },
-    isInteractable: true,
-    makesAttentionFeedback: false,
+    isInteractable: () => true,
+    makesAttentionFeedback: () => false,
   },
   [BiblePieces.StackSection]: {
     getLabel: (piece: Piece<"StackSection">) => {
@@ -105,14 +105,14 @@ export const makeLabelPropertiesStrategies = ({
       }
       return CapitalizeFirstLetter(name.split("-").join(" "));
     },
-    getColor: (piece: Piece<"StackSection">) => {
-      const data = pieceDataRepository.getPieceData(piece);
-      if (!data) {
-        throw new Error(
-          `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-        );
-      }
-      return data.getPieceInfoProperty("color");
+    getColor: () => {
+      // const data = pieceDataRepository.getPieceData(piece);
+      // if (!data) {
+      //   throw new Error(
+      //     `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
+      //   );
+      // }
+      return "#FFFFFF";
     },
     getLabelColor: (piece: Piece<"StackSection">) => {
       const data = pieceDataRepository.getPieceData(piece);
@@ -135,8 +135,8 @@ export const makeLabelPropertiesStrategies = ({
       }
       return data.isOnTheGround ? "Top" : "LeftSided";
     },
-    makesAttentionFeedback: true,
-    isInteractable: true,
+    makesAttentionFeedback: () => true,
+    isInteractable: () => true,
   },
   [BiblePieces.StackSectionShadow]: {
     getLabel: (piece: Piece<"StackSectionShadow">) => {
@@ -203,8 +203,8 @@ export const makeLabelPropertiesStrategies = ({
       }
       return "RightSidedCorner";
     },
-    isInteractable: true,
-    makesAttentionFeedback: false,
+    isInteractable: () => true,
+    makesAttentionFeedback: () => false,
   },
   [BiblePieces.StackSectionBook]: {
     getLabel: (piece: Piece<"StackSectionBook">) => {
@@ -248,13 +248,13 @@ export const makeLabelPropertiesStrategies = ({
           `BibleStack bootstrap: data not found at getColor at pieceLabelService`
         );
       }
-      if (data.selectionState === "Selected") {
-        return visualStateRegistry.getStateProperty({
-          piece,
-          property: "labelTextColor",
-        });
+      if (data.selectionState === "Idle") {
+        return "#ffffff";
       }
-      return "#ffffff";
+      return visualStateRegistry.getStateProperty({
+        piece,
+        property: "labelTextColor",
+      });
     },
     getLabelColor: (piece: Piece<"StackSectionBook">) => {
       const data = pieceDataRepository.getPieceData(piece);
@@ -263,13 +263,13 @@ export const makeLabelPropertiesStrategies = ({
           `BibleStack bootstrap: data not found at getLabelColor at pieceLabelService`
         );
       }
-      if (data.selectionState === "Selected") {
-        return "#ffffff";
+      if (data.selectionState === "Idle") {
+        return visualStateRegistry.getStateProperty({
+          piece,
+          property: "labelTextColor",
+        });
       }
-      return visualStateRegistry.getStateProperty({
-        piece,
-        property: "labelTextColor",
-      });
+      return "#ffffff";
     },
     getLabelPositioning: (piece: Piece<"StackSectionBook">) => {
       const data = pieceDataRepository.getPieceData(piece);
@@ -280,8 +280,11 @@ export const makeLabelPropertiesStrategies = ({
       }
       return data.isOnTheGround ? "Top" : "LeftSided";
     },
-    isInteractable: true,
-    makesAttentionFeedback: true,
+    isInteractable: () => true,
+    makesAttentionFeedback: (piece: Piece<"StackSectionBook">) => {
+      const data = pieceDataRepository.getPieceData(piece);
+      return data?.selectionState === "Idle";
+    },
   },
   [BiblePieces.StackBook]: {
     getLabel: (piece: Piece<"StackBook">) => {
@@ -325,13 +328,13 @@ export const makeLabelPropertiesStrategies = ({
           `BibleStack bootstrap: data not found at getColor at pieceLabelService`
         );
       }
-      if (data.selectionState === "Selected") {
-        return visualStateRegistry.getStateProperty({
-          piece,
-          property: "labelTextColor",
-        });
+      if (data.selectionState === "Idle") {
+        return "#ffffff";
       }
-      return "#ffffff";
+      return visualStateRegistry.getStateProperty({
+        piece,
+        property: "labelTextColor",
+      });
     },
     getLabelColor: (piece: Piece<"StackBook">) => {
       const data = pieceDataRepository.getPieceData(piece);
@@ -340,13 +343,13 @@ export const makeLabelPropertiesStrategies = ({
           `BibleStack bootstrap: data not found at getLabelColor at pieceLabelService`
         );
       }
-      if (data.selectionState === "Selected") {
-        return "#ffffff";
+      if (data.selectionState === "Idle") {
+        return visualStateRegistry.getStateProperty({
+          piece,
+          property: "labelTextColor",
+        });
       }
-      return visualStateRegistry.getStateProperty({
-        piece,
-        property: "labelTextColor",
-      });
+      return "#ffffff";
     },
     getLabelPositioning: (piece: Piece<"StackBook">) => {
       const data = pieceDataRepository.getPieceData(piece);
@@ -357,8 +360,11 @@ export const makeLabelPropertiesStrategies = ({
       }
       return data.isOnTheGround ? "Top" : "LeftSided";
     },
-    isInteractable: true,
-    makesAttentionFeedback: true,
+    isInteractable: () => true,
+    makesAttentionFeedback: (piece: Piece<"StackBook">) => {
+      const data = pieceDataRepository.getPieceData(piece);
+      return data?.selectionState === "Idle";
+    },
   },
   [BiblePieces.StackChapter]: {
     getLabel: (piece: Piece<"StackChapter">) => {
@@ -387,7 +393,7 @@ export const makeLabelPropertiesStrategies = ({
       }
       return data.isOnTheGround ? "Top" : "LeftSided";
     },
-    isInteractable: false,
-    makesAttentionFeedback: false,
+    isInteractable: () => false,
+    makesAttentionFeedback: () => false,
   },
 });

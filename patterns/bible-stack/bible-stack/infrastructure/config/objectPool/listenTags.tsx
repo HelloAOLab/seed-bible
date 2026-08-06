@@ -60,4 +60,6 @@ export const LISTEN_TAGS: {
   VersesBundle: ["onClick", "onPointerEnter", "onPointerExit"],
   Verse: ["onClick"],
   StackCover: ["onClick"],
+  InfoLabelTail: ["onClick"],
+  InfoLabelText: ["onClick"],
 };

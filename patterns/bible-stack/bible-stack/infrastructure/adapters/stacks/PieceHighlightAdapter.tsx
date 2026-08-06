@@ -8,7 +8,11 @@ import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMappe
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { StackChapterMapper } from "../../mappers/StackChapterMapper";
 import type { TestamentBot, SectionBot, BookBot } from "../../models/stack";
-import { GetBotScales } from "../../functions/casualos";
+import {
+  AnimateStrictTag,
+  GetBotScales,
+  SetStrictTag,
+} from "../../functions/casualos";
 import type { HighlightConfigProvider } from "../../config/highlight/HighlightConfigProvider";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 
@@ -127,17 +131,18 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
             piece,
             property: "highlightedColor",
           });
-          setTagMask(bot, "color", color); // TODO: Implement color lerping
+          SetStrictTag(bot, "color", color); // TODO: Implement color lerping
         }
         if (chapterData.isSelected && chapterData.isOnTheGround) {
           const scaleZ = this.#visualStatePort.getStateProperty({
             piece,
             property: "highlightedScaleZ",
           });
-          await animateTag(bot, "scaleZ", {
+          await AnimateStrictTag(bot, "scaleZ", {
             toValue: scaleZ,
             duration,
             easing,
+            tagMaskSpace: false,
           });
         }
       }
@@ -212,13 +217,14 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
           }),
           scaleX: this.#visualStatePort.getStateProperty({
             piece,
-            property: "hoveredScaleX",
-          }),
+            property: "hoveredScales",
+          }).x,
           scaleY: this.#visualStatePort.getStateProperty({
             piece,
-            property: "hoveredScaleY",
-          }),
+            property: "hoveredScales",
+          }).y,
         };
+
         break;
       }
       case BiblePieces.StackBook: {
@@ -238,19 +244,25 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
           }),
           scaleX: this.#visualStatePort.getStateProperty({
             piece,
-            property: "hoveredScaleX",
-          }),
+            property: "hoveredScales",
+          }).x,
           scaleY: this.#visualStatePort.getStateProperty({
             piece,
-            property: "hoveredScaleY",
-          }),
+            property: "hoveredScales",
+          }).y,
         };
         break;
       }
     }
 
     if (!bot) return;
-    await animateTag(bot, { fromValue, toValue, duration, easing });
+    await AnimateStrictTag(bot, {
+      fromValue,
+      toValue,
+      duration,
+      easing,
+      tagMaskSpace: false,
+    });
   }
 
   async rehighlight(
@@ -276,12 +288,12 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     const toValue: AnimatableValues = {
       scaleX: this.#visualStatePort.getStateProperty({
         piece,
-        property: "hoveredScaleX",
-      }),
+        property: "hoveredScales",
+      }).x,
       scaleY: this.#visualStatePort.getStateProperty({
         piece,
-        property: "hoveredScaleY",
-      }),
+        property: "hoveredScales",
+      }).y,
     };
     if (bookData.selectionState !== "Selected") {
       fromValue.formOpacity = bookBot.tags.formOpacity;
@@ -290,7 +302,13 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
         property: "hoveredFormOpacity",
       });
     }
-    await animateTag(bookBot, { fromValue, toValue, duration, easing });
+    await AnimateStrictTag(bookBot, {
+      fromValue,
+      toValue,
+      duration,
+      easing,
+      tagMaskSpace: false,
+    });
   }
 
   async unhighlight(
@@ -316,17 +334,18 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
             piece,
             property: "initialColor",
           });
-          setTagMask(bot, "color", color); // TODO: Implement color lerping
+          SetStrictTag(bot, "color", color); // TODO: Implement color lerping
         }
         if (chapterData.isSelected && chapterData.isOnTheGround) {
           const scaleZ = this.#visualStatePort.getStateProperty({
             piece,
             property: "expandedScaleZ",
           });
-          await animateTag(bot, "scaleZ", {
+          await AnimateStrictTag(bot, "scaleZ", {
             toValue: scaleZ,
             duration,
             easing,
+            tagMaskSpace: false,
           });
         }
       }
@@ -401,13 +420,14 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
           }),
           scaleX: this.#visualStatePort.getStateProperty({
             piece,
-            property: "initialScaleX",
-          }),
+            property: "unhoveredScales",
+          }).x,
           scaleY: this.#visualStatePort.getStateProperty({
             piece,
-            property: "initialScaleY",
-          }),
+            property: "unhoveredScales",
+          }).y,
         };
+
         break;
       }
       case BiblePieces.StackBook: {
@@ -427,19 +447,25 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
           }),
           scaleX: this.#visualStatePort.getStateProperty({
             piece,
-            property: "initialScaleX",
-          }),
+            property: "explodedScales",
+          }).x,
           scaleY: this.#visualStatePort.getStateProperty({
             piece,
-            property: "initialScaleY",
-          }),
+            property: "explodedScales",
+          }).y,
         };
         break;
       }
     }
 
     if (!bot) return;
-    await animateTag(bot, { fromValue, toValue, duration, easing });
+    await AnimateStrictTag(bot, {
+      fromValue,
+      toValue,
+      duration,
+      easing,
+      tagMaskSpace: false,
+    });
   }
 
   increaseIntensity(piece: StackPieceUnion): void {
@@ -450,13 +476,13 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
       piece,
       property: "increasedIntensityStrokeColor",
     });
-    setTagMask(bot, "strokeColor", strokeColor);
+    SetStrictTag(bot, "strokeColor", strokeColor);
   }
 
   decreaseIntensity(piece: StackPieceUnion): void {
     if (piece.type !== BiblePieces.StackBook) return;
     const bot = this.#bookMapperPort.toInfrastructure(piece);
     if (!bot) return;
-    setTagMask(bot, "strokeColor", "clear");
+    SetStrictTag(bot, "strokeColor", "clear");
   }
 }

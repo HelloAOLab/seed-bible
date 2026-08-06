@@ -46,6 +46,11 @@ export class SectionStackUpdaterService implements UpdaterServicePort {
         data.id
       );
       data.attachShadow(shadowDomain);
+      data.markShadowForReveal();
+    }
+
+    if (!data.isInExplodedView) {
+      this.#pieceLabelServicePort.hideLabel(data.shadow!);
     }
 
     // A split section owns the pre-flight of its books: prepare each before the
@@ -63,9 +68,11 @@ export class SectionStackUpdaterService implements UpdaterServicePort {
   async finalizeSection(data: StackSectionData): Promise<void> {
     // Mirror of prepareSection: a split section finalizes its books afterwards.
     if (data.isSplitIntoBooks) {
-      for (const book of data.getActiveBooks()) {
-        await this.#bookStackUpdaterPort.finalizeBook(book);
-      }
+      await Promise.all(
+        data.getActiveBooks().map((book) => {
+          return this.#bookStackUpdaterPort.finalizeBook(book);
+        })
+      );
     }
 
     const shadow = data.shadow;

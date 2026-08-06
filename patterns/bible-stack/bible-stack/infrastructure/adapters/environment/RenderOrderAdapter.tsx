@@ -1,4 +1,7 @@
-import { DistanceBetweenBotAndCamera } from "../../functions/casualos";
+import {
+  DistanceBetweenBotAndCamera,
+  SetStrictTag,
+} from "../../functions/casualos";
 import type { Piece } from "../../../domain/models/canvas";
 import type { PieceBot, PieceBotTags } from "../../models/casualos";
 
@@ -66,7 +69,7 @@ export class RenderOrderAdapter {
 
     let i = -1;
     for (const bot of newOrder) {
-      setTagMask(bot, "formRenderOrder", i);
+      SetStrictTag(bot, "formRenderOrder", i);
       i--;
     }
   }

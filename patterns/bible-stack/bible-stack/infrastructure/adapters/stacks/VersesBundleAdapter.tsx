@@ -58,6 +58,7 @@ export class VersesBundleAdapter implements VersesBundleAdapterPort {
       }),
       duration,
       easing,
+      tagMaskSpace: false,
     });
   }
   async hide({
@@ -134,6 +135,7 @@ export class VersesBundleAdapter implements VersesBundleAdapterPort {
       toValue: 0,
       duration,
       easing,
+      tagMaskSpace: false,
     });
     SetStrictTag(bundleBot, dimension as keyof VersesBundleTags, false);
   }

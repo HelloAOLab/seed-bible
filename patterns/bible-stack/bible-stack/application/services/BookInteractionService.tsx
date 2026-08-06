@@ -101,7 +101,7 @@ export class BookInteractionService implements BookInteractionServicePort {
         bookData.parentDataIds as StackParentDataIds
       );
 
-    if (bibleData?.currentState !== BibleStates.Open) {
+    if (bibleData && bibleData.currentState !== BibleStates.Open) {
       return;
     }
 
@@ -195,7 +195,7 @@ export class BookInteractionService implements BookInteractionServicePort {
       );
 
     if (
-      bibleData?.currentState !== BibleStates.Open ||
+      (bibleData && bibleData.currentState !== BibleStates.Open) ||
       (this.#tourGuideServicePort.isThereAnOngoingTourGuide() &&
         this.#tourGuideServicePort.ongoingTourGuideSectionData?.id ===
           sectionData?.id)
@@ -351,7 +351,7 @@ export class BookInteractionService implements BookInteractionServicePort {
       );
 
     if (
-      bibleData?.currentState !== BibleStates.Open ||
+      (bibleData && bibleData.currentState !== BibleStates.Open) ||
       bookData.selectionState === "Selected" ||
       (this.#tourGuideServicePort.isThereAnOngoingTourGuide() &&
         this.#tourGuideServicePort.ongoingTourGuideSectionData?.id ===

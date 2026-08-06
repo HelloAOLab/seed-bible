@@ -13,17 +13,18 @@ import type { BookShapeAdapter } from "./BookShapeAdapter";
 import type { SelectedBookLayoutAdapter } from "./SelectedBookLayoutAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { LayoutConfigProvider as StackConfigProvider } from "../../config/layout/LayoutConfigProvider";
+import type { BookSetupConfigProvider } from "../../config/bookSetup/BookSetupConfigProvider";
+import type { LayoutConfigurations } from "../../config/bookSetup/layouts";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
 import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { BookBot } from "../../models/stack";
-import type { BookLayout } from "../../../domain/models/canvas";
 import { BookShapes } from "../../../domain/models/canvas";
 import { SelectionStates } from "../../../domain/models/selection";
 // import { FindPreviousValidGroupBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/scripture";
-import type { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
+import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import { FindPreviousValidGroupBookData } from "../../functions/arrangement";
 
 type BookEntity = StackBookData | StackSectionBookData;
@@ -39,8 +40,7 @@ interface AdapterParams {
   bookShapeAdapter: BookShapeAdapter;
   selectedBookLayoutAdapter: SelectedBookLayoutAdapter;
   visualStateRegistry: VisualStateRegistry;
-  setStrictTag: typeof SetStrictTag;
-  animateStrictTag: typeof AnimateStrictTag;
+  bookSetupConfigProvider: BookSetupConfigProvider;
   loggerPort: LoggerPort;
 }
 
@@ -94,8 +94,7 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
   #bookShapeAdapter: AdapterParams["bookShapeAdapter"];
   #selectedBookLayoutAdapter: AdapterParams["selectedBookLayoutAdapter"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
-  #setStrictTag: AdapterParams["setStrictTag"];
-  #animateStrictTag: AdapterParams["animateStrictTag"];
+  #bookSetupConfigProvider: AdapterParams["bookSetupConfigProvider"];
   #loggerPort: AdapterParams["loggerPort"];
 
   constructor({
@@ -109,8 +108,7 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
     bookShapeAdapter,
     selectedBookLayoutAdapter,
     visualStateRegistry,
-    setStrictTag,
-    animateStrictTag,
+    bookSetupConfigProvider,
     loggerPort,
   }: AdapterParams) {
     this.#getDimension = getDimension;
@@ -123,8 +121,7 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
     this.#bookShapeAdapter = bookShapeAdapter;
     this.#selectedBookLayoutAdapter = selectedBookLayoutAdapter;
     this.#visualStateRegistry = visualStateRegistry;
-    this.#setStrictTag = setStrictTag;
-    this.#animateStrictTag = animateStrictTag;
+    this.#bookSetupConfigProvider = bookSetupConfigProvider;
     this.#loggerPort = loggerPort;
   }
 
@@ -212,10 +209,13 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
     }
 
     const isInstantaneous = pacing === "Instant";
-    const isSelected = data.selectionState === SelectionStates.Selected;
+    const isSelected =
+      data.selectionState === SelectionStates.Selected ||
+      data.selectionState === SelectionStates.Selecting;
     const isInExplodedView = sectionData?.isInExplodedView ?? false;
     const layout = this.#selectedBookLayoutAdapter.computeLayout(data);
     const selectedBookHeight = layout.height;
+
     const sectionInitialScale = this.#getSectionInitialScale(sectionData);
 
     const computedAnimations: Array<Promise<void>> = [];
@@ -249,7 +249,7 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
           value: selectedBookHeight,
         });
       }
-      this.#setStrictTag(bot, "pointable", !!sectionData && !isInExplodedView);
+      SetStrictTag(bot, "pointable", !!sectionData && !isInExplodedView);
       // NOTE: chapter hide/show is orchestrated by BookStackUpdaterService.
       computedAnimations.push(
         this.#bookShapeAdapter
@@ -371,15 +371,14 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
         x: Math.abs(desiredPositionX - initialDesiredPositionX),
         y: Math.abs(desiredPositionY - initialDesiredPositionY),
       };
-      const initialScaleX = this.#visualStateRegistry.getStateProperty({
+      const implodedScales = this.#visualStateRegistry.getStateProperty({
         piece,
-        property: "initialScaleX",
+        property: "implodedScales",
       });
-      const initialScaleY = this.#visualStateRegistry.getStateProperty({
-        piece,
-        property: "initialScaleY",
-      });
-      halfInitialBookScales = { x: initialScaleX / 2, y: initialScaleY / 2 };
+      halfInitialBookScales = {
+        x: implodedScales.x / 2,
+        y: implodedScales.y / 2,
+      };
     }
 
     // --- Persist position + animate -----------------------------------------
@@ -442,7 +441,9 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
     }
 
     const isInstantaneous = pacing === "Instant";
-    const isSelected = data.selectionState === SelectionStates.Selected;
+    const isSelected =
+      data.selectionState === SelectionStates.Selected ||
+      data.selectionState === SelectionStates.Selecting;
     const layout = this.#selectedBookLayoutAdapter.computeLayout(data);
     const selectedBookHeight = layout.height;
     const computedAnimations: Array<Promise<void>> = [];
@@ -475,14 +476,14 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
           .then(() => {})
       );
     } else {
-      const initialScaleZ = this.#visualStateRegistry.getStateProperty({
+      const unhoveredScaleZ = this.#visualStateRegistry.getStateProperty({
         piece,
-        property: "initialScaleZ",
-      });
+        property: "unhoveredScales",
+      }).z;
       this.#visualStateRegistry.registerStateProperty({
         piece,
         property: "desiredScaleZ",
-        value: initialScaleZ,
+        value: unhoveredScaleZ,
       });
       computedAnimations.push(
         this.#bookShapeAdapter
@@ -530,30 +531,33 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
     easing: Easing
   ): Array<Promise<void>> {
     if (isInstantaneous) {
-      this.#setStrictTag(bot, (dimension + "X") as keyof typeof bot.tags, x);
-      this.#setStrictTag(bot, (dimension + "Y") as keyof typeof bot.tags, y);
-      this.#setStrictTag(bot, (dimension + "Z") as keyof typeof bot.tags, z);
+      SetStrictTag(bot, (dimension + "X") as keyof typeof bot.tags, x);
+      SetStrictTag(bot, (dimension + "Y") as keyof typeof bot.tags, y);
+      SetStrictTag(bot, (dimension + "Z") as keyof typeof bot.tags, z);
       return [];
     }
     const bookPosition = getBotPosition(bot, dimension);
     return [
-      this.#animateStrictTag(bot, (dimension + "X") as keyof typeof bot.tags, {
+      AnimateStrictTag(bot, (dimension + "X") as keyof typeof bot.tags, {
         fromValue: bookPosition.x,
         toValue: x,
         duration,
         easing,
+        tagMaskSpace: false,
       }),
-      this.#animateStrictTag(bot, (dimension + "Y") as keyof typeof bot.tags, {
+      AnimateStrictTag(bot, (dimension + "Y") as keyof typeof bot.tags, {
         fromValue: bookPosition.y,
         toValue: y,
         duration,
         easing,
+        tagMaskSpace: false,
       }),
-      this.#animateStrictTag(bot, (dimension + "Z") as keyof typeof bot.tags, {
+      AnimateStrictTag(bot, (dimension + "Z") as keyof typeof bot.tags, {
         fromValue: bookPosition.z,
         toValue: z,
         duration,
         easing,
+        tagMaskSpace: false,
       }),
     ];
   }
@@ -591,12 +595,9 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
     bookDataIndex: number;
     dimension: string;
   }): { x: number; y: number } | undefined {
-    // The per-book group layout (x/y spans) still comes from the legacy runtime
-    // shout (kept raw, like other below-book runtime calls). bookDataArr is the
-    // book's level, so its length/index match the legacy `level`/`level.indexOf`.
-    const layouts = thisBot.GetLayoutForBooksGroup({
-      amountOfBooks: bookDataArr.length,
-    }) as BookLayout[] | undefined;
+    const layouts = this.#bookSetupConfigProvider.getLayout(
+      bookDataArr.length as LayoutConfigurations
+    );
     const bookLayout = layouts?.[bookDataIndex];
     if (!bookLayout || !sectionData.piece) return undefined;
 

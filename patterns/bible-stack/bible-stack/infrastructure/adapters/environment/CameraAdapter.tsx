@@ -15,7 +15,11 @@ export class CameraAdapter implements CameraAdapterPort {
     this.#sequenceConfigProviderPort = sequenceConfigProviderPort;
   }
 
-  focusOn(position: WorldPosition, animationKey: FocusOnAnimationKey) {
+  focusOn(
+    position: WorldPosition,
+    animationKey: FocusOnAnimationKey,
+    overrides?: { duration?: number; zoom?: number }
+  ) {
     const config =
       this.#sequenceConfigProviderPort.getFocusOnAnimationConfig(animationKey);
     const easing = { type: config.easingType, mode: config.easingMode };
@@ -29,14 +33,18 @@ export class CameraAdapter implements CameraAdapterPort {
       phi: rotation.x,
       botPosition: fixedPosition,
     });
-    os.focusOn(
+    return os.focusOn(
       { x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y },
       {
-        duration: config.duration,
+        duration: overrides?.duration ?? config.duration,
         easing,
         rotation,
-        zoom: config.zoom,
+        zoom: overrides?.zoom ?? config.zoom,
       }
     );
+  }
+
+  cancelFocus() {
+    (os.focusOn as unknown as (botOrPosition: null) => Promise<void>)(null);
   }
 }

@@ -34,12 +34,14 @@ export const bootstrapExtension = () => {
           // pattern itself (they're large and overflowed the iframe URL). Only
           // the book names — which are language-dependent — travel through the
           // pattern's configBot tags.
+          const dimension = "stack";
           context.panes.openPane({
             type: "detached",
-            gridPortal: "grid",
+            gridPortal: dimension,
             pattern: bibleStackPattern,
             inst: uuid(),
             query: {
+              dimension,
               bookNames: JSON.stringify(Object.fromEntries(bookNames.value)),
               language: context.i18n.language.value,
             },

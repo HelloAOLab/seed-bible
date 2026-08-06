@@ -14,7 +14,7 @@ const SECTION_INITIAL_SCALE_Z = 0.1;
 
 const DESIRED_SCALE = 1.1;
 
-const DESIRED_FORM_OPACITY = 1;
+const DESIRED_FORM_OPACITY = 0;
 
 export class TestamentSelectionConfigProvider {
   getDuration<K extends StackUpdatePacing>(pacing: K): (typeof DURATIONS)[K] {

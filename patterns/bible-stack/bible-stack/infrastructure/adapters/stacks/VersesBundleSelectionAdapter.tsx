@@ -2,6 +2,7 @@ import type { Piece } from "../../../domain/models/canvas";
 import type { VersesBundleSelectionAdapterPort } from "../../../application/ports/out/VersesBundleSelection";
 import type { VersesBundleConfigProvider } from "../../config/versesBundleSelection/VersesBundleConfigProvider";
 import {
+  AnimateStrictTag,
   ApplyStrictMod,
   GetBotScales,
   SetStrictTag,
@@ -123,7 +124,7 @@ export class VersesBundleSelectionAdapter implements VersesBundleSelectionAdapte
       }
     }
 
-    await animateTag(bundleBot, {
+    await AnimateStrictTag(bundleBot, {
       fromValue: {
         scaleZ: bundleScales.z,
         labelOpacity: bundleBot.tags.labelOpacity,
@@ -134,8 +135,9 @@ export class VersesBundleSelectionAdapter implements VersesBundleSelectionAdapte
       },
       duration: duration / 2,
       easing: firstSequenceEasing,
+      tagMaskSpace: false,
     });
-    await animateTag(bundleBot, {
+    await AnimateStrictTag(bundleBot, {
       fromValue: {
         scaleX: bundleScales.x,
         scaleY: bundleScales.y,
@@ -146,6 +148,7 @@ export class VersesBundleSelectionAdapter implements VersesBundleSelectionAdapte
       },
       duration: duration / 2,
       easing: secondSequenceEasing,
+      tagMaskSpace: false,
     });
     SetStrictTag(bundleBot, dimension as keyof VersesBundleBot["tags"], false);
   }

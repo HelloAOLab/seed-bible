@@ -12,9 +12,10 @@ import type {
   ActivityNotificationTags,
 } from "../../models/stack";
 import type { BibleStackObjectPoolerMap } from "../../models/objectPooler";
-import { GetBotScales } from "../../functions/casualos";
+import { GetBotScales, SetStrictTag } from "../../functions/casualos";
 import type { PieceMapperPort } from "../../mappers/PieceMapper";
 import type { ObjectPooler } from "../environment/ObjectPooler";
+import type { PieceBotTags } from "../../models/casualos";
 
 interface DimensionProviderPort {
   getDimension(): string;
@@ -171,19 +172,19 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       ownerBotPosition.z + ownerBotScales.z + notificationBot.tags.offset
     ).add(transformerPosition);
 
-    setTagMask(
+    SetStrictTag(
       notificationBot,
-      dimension + "X",
+      (dimension + "X") as keyof PieceBotTags,
       activityNotificationDesiredPosition.x
     );
-    setTagMask(
+    SetStrictTag(
       notificationBot,
-      dimension + "Y",
+      (dimension + "Y") as keyof PieceBotTags,
       activityNotificationDesiredPosition.y
     );
-    setTagMask(
+    SetStrictTag(
       notificationBot,
-      dimension + "Z",
+      (dimension + "Z") as keyof PieceBotTags,
       activityNotificationDesiredPosition.z
     );
   }

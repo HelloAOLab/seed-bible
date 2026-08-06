@@ -13,7 +13,7 @@ import type {
 } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
 import type { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
-import type { PieceBot, TypedBot } from "../../models/casualos";
+import type { PieceBot, PieceBotTags, TypedBot } from "../../models/casualos";
 import type {
   ActivityIndicatorBot,
   InfoLabelDateBot,
@@ -94,6 +94,7 @@ const shakeForwardConstructor = ({
     },
     duration: duration / 4,
     easing,
+    tagMaskSpace: false,
   });
 };
 
@@ -123,6 +124,7 @@ const shakeBackwardConstructor = ({
     },
     duration: duration / 4,
     easing,
+    tagMaskSpace: false,
   });
 };
 
@@ -242,9 +244,21 @@ export class LabelFeedbackAdapter {
         );
       }
 
-      setTagMask(pieceBot, dimension + "X", initialPosition.x);
-      setTagMask(pieceBot, dimension + "Y", initialPosition.y);
-      setTagMask(pieceBot, dimension + "Z", initialPosition.z);
+      SetStrictTag(
+        pieceBot,
+        (dimension + "X") as keyof PieceBotTags,
+        initialPosition.x
+      );
+      SetStrictTag(
+        pieceBot,
+        (dimension + "Y") as keyof PieceBotTags,
+        initialPosition.y
+      );
+      SetStrictTag(
+        pieceBot,
+        (dimension + "Z") as keyof PieceBotTags,
+        initialPosition.z
+      );
 
       await shakeForwardConstructor({
         pieceBot,
@@ -407,6 +421,7 @@ export class LabelFeedbackAdapter {
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
         AnimateStrictTag(activityIndicators, "labelOpacity", {
           toValue: 0,
@@ -415,6 +430,7 @@ export class LabelFeedbackAdapter {
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
         AnimateStrictTag(botsToAnimateLabelOpacity, "labelOpacity", {
           toValue: 0,
@@ -423,6 +439,7 @@ export class LabelFeedbackAdapter {
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
       ]);
     } catch (error) {
@@ -468,6 +485,7 @@ export class LabelFeedbackAdapter {
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
         AnimateStrictTag(activityIndicators, "labelOpacity", {
           toValue: opacity,
@@ -476,6 +494,7 @@ export class LabelFeedbackAdapter {
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
         AnimateStrictTag(botsToAnimateLabelOpacity, "labelOpacity", {
           toValue: opacity,
@@ -484,6 +503,7 @@ export class LabelFeedbackAdapter {
             this.#labelFeedbackConfigProviderPort.getShowAnimationConfig(
               "easing"
             ),
+          tagMaskSpace: false,
         }),
       ]);
     } catch (error) {

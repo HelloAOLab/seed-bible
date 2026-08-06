@@ -2,7 +2,6 @@ import type { PortalCameraType } from "@casual-simulation/aux-common";
 import type { ExperienceConfigProviderPort } from "../../../application/ports/experience";
 import type { WorldPosition } from "../../../domain/models/spatial";
 
-const TARGET_DIMENSION = "stack";
 const TARGET_PORTAL_CAMERA_TYPE: PortalCameraType = "orthographic";
 const TARGET_PORTAL_ZOOMABLE_MIN = 5;
 const APP_TITLE = "Stack";
@@ -13,9 +12,6 @@ const ININITAL_BIBLE_CREATION_DELAY = 500;
 const BIBLE_CREATION_POSITION = { x: 0, y: 0, z: 0 };
 
 export class ExperienceConfigProvider implements ExperienceConfigProviderPort {
-  getTargetDimension(): string {
-    return TARGET_DIMENSION;
-  }
   getTargetPortalCameraType(): PortalCameraType {
     return TARGET_PORTAL_CAMERA_TYPE;
   }

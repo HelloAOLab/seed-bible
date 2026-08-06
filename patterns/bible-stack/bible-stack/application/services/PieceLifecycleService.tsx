@@ -13,6 +13,7 @@ import type {
   IdGeneratorPort,
   ScriptureServicePort,
   VersesBundleDataRepositoryPort,
+  PieceHighlightServicePort,
 } from "../ports/pieceLifecycle";
 import type {
   ChapterCreationParams,
@@ -44,6 +45,7 @@ interface PieceLifecycleServiceProps {
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
   verseDataRepositoryPort: VerseDataRepositoryPort;
   configProviderPort: PieceLifecycleConfigProviderPort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
 }
 
 export class PieceLifecycleService implements PieceLifecycleServicePort {
@@ -57,6 +59,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
   #versesBundleDataRepositoryPort: PieceLifecycleServiceProps["versesBundleDataRepositoryPort"];
   #verseDataRepositoryPort: PieceLifecycleServiceProps["verseDataRepositoryPort"];
   #configProviderPort: PieceLifecycleServiceProps["configProviderPort"];
+  #pieceHighlightServicePort: PieceLifecycleServiceProps["pieceHighlightServicePort"];
 
   constructor({
     pieceDataRepositoryPort,
@@ -69,6 +72,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     versesBundleDataRepositoryPort,
     verseDataRepositoryPort,
     configProviderPort,
+    pieceHighlightServicePort,
   }: PieceLifecycleServiceProps) {
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceLabelServicePort = pieceLabelServicePort;
@@ -80,6 +84,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     this.#versesBundleDataRepositoryPort = versesBundleDataRepositoryPort;
     this.#verseDataRepositoryPort = verseDataRepositoryPort;
     this.#configProviderPort = configProviderPort;
+    this.#pieceHighlightServicePort = pieceHighlightServicePort;
   }
 
   createTestament({
@@ -653,22 +658,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
   }
 
   async clearPiece(piece: Piece) {
-    // TODO: Create a PieceHighlightService, add the logic for highlight and unhighlight delay store and management and replace the following references
-
-    const { unhighlightDelayInfo } = await thisBot.GetUnhighlightDelayInfo({
-      piece,
-    });
-    if (unhighlightDelayInfo) {
-      await thisBot.ClearUnhighlightDelay({
-        unhighlightDelayInfo,
-      });
-    }
-
-    const isHighlighted = await thisBot.IsBiblePieceHighlighted({ piece });
-
-    if (isHighlighted) {
-      await thisBot.RemovePieceFromHighlightedList({ piece });
-    }
+    this.#pieceHighlightServicePort.forgetPiece(piece);
     this.#stackPieceLifecycleAdapterPort.despawn(piece);
   }
 }

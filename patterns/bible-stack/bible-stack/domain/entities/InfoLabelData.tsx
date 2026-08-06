@@ -1,4 +1,4 @@
-import type { Piece, ActivityIndicator } from "../models/canvas";
+import type { Piece, ActivityIndicator, SectionShadow } from "../models/canvas";
 import type { LabelPosition } from "../models/label";
 
 interface InfoLabelDataProps {
@@ -8,7 +8,13 @@ interface InfoLabelDataProps {
   label: Piece<"InfoLabelText">;
   date?: Piece<"InfoLabelDate">;
   activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
-  owner: Piece;
+  owner:
+    | Piece<"StackTestament">
+    | Piece<"StackSection">
+    | Piece<"StackSectionBook">
+    | Piece<"StackBook">
+    | Piece<"StackChapter">
+    | SectionShadow;
   positioning: LabelPosition;
 }
 

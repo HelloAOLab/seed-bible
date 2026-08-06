@@ -105,13 +105,14 @@ export class LabelAdapter implements LabelAdapterPort {
     if (!pieceBot) {
       throw new Error(`LabelAdapter: pieceBot not found at spawnLabelForPiece`);
     }
-    const { scaleY } = GetDialogBotScaleY({
+    const scaleYConfig = {
       scaleXLimit: this.#labelConfigProviderPort.getMeasurement("ScaleXLimit"),
       line: label,
       paddingX: this.#labelConfigProviderPort.getMeasurement("PaddingX"),
       paddingY: this.#labelConfigProviderPort.getMeasurement("PaddingY"),
       font: this.#labelConfigProviderPort.getFontData("Roboto"),
-    });
+    };
+    const { scaleY } = GetDialogBotScaleY(scaleYConfig);
     const infoLabelScales = {
       x: this.#labelConfigProviderPort.getMeasurement("ScaleXLimit"),
       y: scaleY,

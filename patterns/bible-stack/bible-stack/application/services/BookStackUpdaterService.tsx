@@ -66,9 +66,15 @@ export class BookStackUpdaterService implements UpdaterServicePort {
         (command.data.selectionState === "Selected" &&
           command.sectionData &&
           !command.sectionData.isInExplodedView) ||
-        command.data.selectionState === "Idle"
+        command.data.selectionState === "Deselecting"
       ) {
         this.#bookChaptersManagementServicePort.hideChapters(command.data);
+        if (!command.data.piece) {
+          throw new Error(
+            "BookStackUpdaterService: command.data.piece not defined at prepareRegularBook"
+          );
+        }
+        this.#pieceLabelServicePort.hideLabel(command.data.piece);
       }
     }
   }
@@ -76,9 +82,15 @@ export class BookStackUpdaterService implements UpdaterServicePort {
   #prepareSectionBook(command: PrepareSectionBookCommand) {
     if (
       command.data.isShowingChapters &&
-      command.data.selectionState === "Idle"
+      command.data.selectionState === "Deselecting"
     ) {
       this.#bookChaptersManagementServicePort.hideChapters(command.data);
+      if (!command.data.piece) {
+        throw new Error(
+          "BookStackUpdaterService: command.data.piece not defined at prepareRegularBook"
+        );
+      }
+      this.#pieceLabelServicePort.hideLabel(command.data.piece);
     }
   }
 
@@ -90,22 +102,18 @@ export class BookStackUpdaterService implements UpdaterServicePort {
     const isSelectedShape = data.currentShape === BookShapes.Selected;
     if (isSelectedShape) {
       this.#bookChaptersManagementServicePort.showChapters(data);
-    }
 
-    const piece = data.piece;
-    if (!piece) return;
+      const piece = data.piece;
+      if (!piece) return;
 
-    try {
-      if (isSelectedShape) {
+      try {
         await this.#pieceLabelServicePort.showLabel({
           piece,
           translucencyMode: "Solid",
         });
-      } else {
-        await this.#pieceLabelServicePort.hideLabel(piece);
+      } catch {
+        // No label currently attached to the book — nothing to toggle.
       }
-    } catch {
-      // No label currently attached to the book — nothing to toggle.
     }
   }
 

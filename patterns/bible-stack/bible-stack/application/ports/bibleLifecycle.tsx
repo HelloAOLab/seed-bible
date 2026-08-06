@@ -78,7 +78,12 @@ export interface StackPieceLifecycleAdapterPort {
 }
 
 export interface CameraAdapterPort {
-  focusOn(position: WorldPosition, animationKey: FocusOnAnimationKey): void;
+  focusOn(
+    position: WorldPosition,
+    animationKey: FocusOnAnimationKey,
+    overrides?: { duration?: number; zoom?: number }
+  ): Promise<void>;
+  cancelFocus(): void;
 }
 
 export interface BibleLifecycleServicePort {
