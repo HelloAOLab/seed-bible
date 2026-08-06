@@ -9,6 +9,7 @@ export const Sounds = {
   PushElementToParent: "PushElementToParent",
   SelectTestament: "SelectTestament",
   SelectBible: "SelectBible",
+  ResetBible: "ResetBible",
   HighlightElement: "HighlightElement",
   EjectBook: "EjectBook",
   Law: "Law",
@@ -68,6 +69,8 @@ export const soundsMap: Record<Sound, string | string[]> = {
   SelectBible:
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/6948b3a81488353bd0882fcd6ec4b0dc087f17f0379ac59a5f3356bda15c05bf.wav",
   // SelectBible: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/a30986eaa67a9fc7ebdf1dbda795f0a33989602598b80383f7c3ff8ef753e356.mpga",
+  ResetBible:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/a30986eaa67a9fc7ebdf1dbda795f0a33989602598b80383f7c3ff8ef753e356.mpga",
   HighlightElement:
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/bc57b4b273b35e9b772510589af353fab6e6fe13946922e002c722f0c82f2ad4.mpga",
   EjectBook:

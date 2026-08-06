@@ -2,6 +2,7 @@ import type { StackSectionData } from "../../../domain/entities/StackSectionData
 import type { TourGuieAdapterPort } from "../../../application/ports/tourGuide";
 import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type { PieceHighlighterPort } from "../../../application/ports/in/PieceHighlight";
+import type { AudioAdapter } from "../audio/AudioAdapter";
 import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { SectionBot } from "../../models/stack";
@@ -16,6 +17,7 @@ interface AdapterParams {
   visualStateRegistry: VisualStateRegistry;
   cameraAdapterPort: CameraAdapterPort;
   pieceHighlighterPort: PieceHighlighterPort;
+  audioAdapter: AudioAdapter;
   tourGuideConfigProvider: TourGuideConfigProvider;
   loggerPort: LoggerPort;
 }
@@ -33,6 +35,7 @@ export class TourGuideAdapter implements TourGuieAdapterPort {
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
   #cameraAdapterPort: AdapterParams["cameraAdapterPort"];
   #pieceHighlighterPort: AdapterParams["pieceHighlighterPort"];
+  #audioAdapter: AdapterParams["audioAdapter"];
   #tourGuideConfigProvider: AdapterParams["tourGuideConfigProvider"];
   #loggerPort: AdapterParams["loggerPort"];
 
@@ -45,6 +48,7 @@ export class TourGuideAdapter implements TourGuieAdapterPort {
     visualStateRegistry,
     cameraAdapterPort,
     pieceHighlighterPort,
+    audioAdapter,
     tourGuideConfigProvider,
     loggerPort,
   }: AdapterParams) {
@@ -53,6 +57,7 @@ export class TourGuideAdapter implements TourGuieAdapterPort {
     this.#visualStateRegistry = visualStateRegistry;
     this.#cameraAdapterPort = cameraAdapterPort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
+    this.#audioAdapter = audioAdapter;
     this.#tourGuideConfigProvider = tourGuideConfigProvider;
     this.#loggerPort = loggerPort;
   }
@@ -124,8 +129,11 @@ export class TourGuideAdapter implements TourGuieAdapterPort {
             pacing: this.#tourGuideConfigProvider.getBookHighlightPacing(),
           });
         }
-        // TODO(audio-hook): reproducir la narración del libro `index` de
-        // `books.length` (dataset 2D del legacy `tourGuideStringsSounds`).
+        const sound = this.#tourGuideConfigProvider.getSound(
+          books.length,
+          index
+        );
+        if (sound) this.#audioAdapter.playSound(sound);
         index++;
         if (index >= books.length) this.#complete();
       }, delay);

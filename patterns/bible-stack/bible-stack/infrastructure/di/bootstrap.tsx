@@ -646,8 +646,6 @@ export const bootstrapExtension = () => {
     layoutConfigProviderPort: layoutConfigProvider,
     piecesConigProvider: piecesConfigProvider,
   });
-  // TODO: Wire sound effects
-  // eslint-disable-next-line
   const audioAdapter = new AudioAdapter({
     audioConfigProvider: audioConfigProvider,
   });
@@ -872,6 +870,7 @@ export const bootstrapExtension = () => {
     visualStateRegistry: visualStateRegistry,
     cameraAdapterPort: cameraAdapter,
     pieceHighlighterPort: pieceHighlightService,
+    audioAdapter: audioAdapter,
     tourGuideConfigProvider: tourGuideConfigProvider,
     loggerPort: loggerAdapter,
   });
@@ -1279,6 +1278,33 @@ export const bootstrapExtension = () => {
     stackPresenceNavigationService.handleSectionExploded(payload)
   );
 
+  bibleStackEventManager.subscribe("OnSectionBeginSelect", () =>
+    audioAdapter.playSound("SectionOpen")
+  );
+
+  bibleStackEventManager.subscribe("OnBookEndSelect", () =>
+    audioAdapter.playSound("BookSelect")
+  );
+
+  bibleStackEventManager.subscribe("OnBibleResetSequenceStart", () =>
+    audioAdapter.playSound("ResetBible")
+  );
+
+  bibleStackEventManager.subscribe("OnStackPieceDrop", () =>
+    audioAdapter.playSound("StackPieceDrop")
+  );
+
+  bibleStackEventManager.subscribe("OnStackPiecePulledOut", () =>
+    audioAdapter.playSound("StackPiecePulledOut")
+  );
+
+  bibleStackEventManager.subscribe(
+    "OnBibleCreationBegin",
+    ({ hasABibleEverBeenCreated }) => {
+      if (!hasABibleEverBeenCreated) audioAdapter.playSound("BibleOpenSound");
+    }
+  );
+
   listenTagEventBus.subscribe("onBotChanged", ({ bot, params }) => {
     botStateController.handleStateChanged(bot, params.tags);
   });
@@ -1534,4 +1560,6 @@ export const bootstrapExtension = () => {
   // 7. Disposers
 
   experienceService.displayExperience();
+
+  audioAdapter.bufferSounds();
 };
