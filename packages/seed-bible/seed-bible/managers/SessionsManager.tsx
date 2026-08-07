@@ -374,6 +374,7 @@ function toSessionDecorationInput(
     endIndex: decoration.endIndex,
     className: decoration.className,
     style: decoration.style,
+    highlight: decoration.highlight,
     removeAfterMs: decoration.removeAfterMs,
     preserveOnChapterChange: decoration.preserveOnChapterChange,
     translationId: decoration.translationId,

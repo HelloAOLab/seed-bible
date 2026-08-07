@@ -899,6 +899,56 @@ describe("SessionsManager", () => {
     expect(session.readingState.decorations.value).toEqual([remoteDecoration]);
   });
 
+  it("applies a shared decoration's highlight to the reading state", async () => {
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    // `toSessionDecorationInput` copies fields one at a time, so a decoration
+    // field that isn't listed there reaches nobody.
+    const remoteDecoration: VerseDecoration = {
+      id: "shared-highlight:GEN:1:3",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [3],
+      highlight: { colorId: "green" },
+    };
+
+    mockDecorationsMap = createMockSharedMap({
+      [JSON.stringify(["conn-other", "shared-highlight:GEN:1:3"])]:
+        remoteDecoration,
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      if (name === "decorations") {
+        return mockDecorationsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() => session.readingState.decorations.value.length === 1);
+
+    expect(session.readingState.decorations.value[0]?.highlight).toEqual({
+      colorId: "green",
+    });
+  });
+
   it("applies removeAfterMs from shared decorations", async () => {
     mockMap = createMockSharedMap({
       translationId: "BSB",

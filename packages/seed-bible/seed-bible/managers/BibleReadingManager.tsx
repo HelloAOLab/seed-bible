@@ -126,6 +126,8 @@ export interface VerseDecoration {
   containerClassName?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+  /** Renders the decorated verses as a highlight. See `VerseDecorationInput`. */
+  highlight?: Omit<ChapterHighlight, "verse">;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
   removeAfterMs?: number;
 
@@ -149,6 +151,20 @@ export interface VerseDecorationInput {
 
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+
+  /**
+   * Renders the decorated verses as a highlight, drawn by the same SVG ribbon
+   * layer as the reader's own highlights — so a preset `colorId` resolves
+   * against each viewer's active theme rather than a colour baked in here.
+   *
+   * Prefer this over hand-writing `className`/`style`: the reader paints
+   * highlight backgrounds in the ribbon layer, not in CSS, so a
+   * `sb-highlight-<id>` class alone sets only the font colour.
+   *
+   * Takes precedence over a saved highlight on the same verse.
+   */
+  highlight?: Omit<ChapterHighlight, "verse">;
+
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
   removeAfterMs?: number;
 
