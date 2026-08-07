@@ -175,6 +175,7 @@ import { CanvasInteractionController } from "../controllers/casualos/CanvasInter
 import { BookInteractionController } from "../controllers/stack/BookInteractionController";
 import { ChapterInteractionController } from "../controllers/stack/ChapterInteractionController";
 import { CoverInteractionController } from "../controllers/stack/CoverInteractionController";
+import { CoverInteractionService } from "../../application/services/CoverInteractionService";
 import { SectionInteractionController } from "../controllers/stack/SectionInteractionController";
 import { TestamentInteractionController } from "../controllers/stack/TestamentInteractionController";
 import { VerseInteractionController } from "../controllers/stack/VerseInteractionController";
@@ -1182,9 +1183,14 @@ export const bootstrapExtension = () => {
   const canvasInteractionController = new CanvasInteractionController({
     spatialNavigationPort: spatialNavigationService,
   });
-  const coverInteractionController = new CoverInteractionController({
-    bibleSequenceServicePort: bibleSequenceService,
+  const coverInteractionService = new CoverInteractionService({
     bibleDataRepositoryPort: bibleDataRepository,
+    bibleSequenceServicePort: bibleSequenceService,
+    sequenceStateServicePort: sequenceStateService,
+  });
+  const coverInteractionController = new CoverInteractionController({
+    coverInteractionServicePort: coverInteractionService,
+    coverMapper: stackCoverMapper,
   });
   const testamentInteractionController = new TestamentInteractionController({
     testamentInteractionServicePort: testamentInteractionService,

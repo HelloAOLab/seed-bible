@@ -1,35 +1,23 @@
-import type { BibleSequenceServicePort } from "../../../application/ports/in/BibleSequence";
-import type { BibleDataRepository } from "../../adapters/stacks/BibleDataRepository";
+import type { CoverInteractionServicePort } from "../../../application/ports/in/CoverInteraction";
+import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import type { CoverBot } from "../../models/stack";
 
 interface ControllerParams {
-  bibleSequenceServicePort: BibleSequenceServicePort;
-  bibleDataRepositoryPort: BibleDataRepository;
+  coverInteractionServicePort: CoverInteractionServicePort;
+  coverMapper: StackCoverMapper;
 }
 
 export class CoverInteractionController {
-  #bibleSequenceServicePort: ControllerParams["bibleSequenceServicePort"];
-  #bibleDataRepositoryPort: ControllerParams["bibleDataRepositoryPort"];
+  #coverInteractionServicePort: ControllerParams["coverInteractionServicePort"];
+  #coverMapper: ControllerParams["coverMapper"];
 
-  constructor({
-    bibleSequenceServicePort,
-    bibleDataRepositoryPort,
-  }: ControllerParams) {
-    this.#bibleSequenceServicePort = bibleSequenceServicePort;
-    this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
+  constructor({ coverInteractionServicePort, coverMapper }: ControllerParams) {
+    this.#coverInteractionServicePort = coverInteractionServicePort;
+    this.#coverMapper = coverMapper;
   }
 
   handleCoverClick(cover: CoverBot) {
-    const bibleId = cover.tags.stackBibleId;
-    const bibleData = this.#bibleDataRepositoryPort.getBibleDataById(bibleId);
-    if (!bibleData) {
-      throw new Error(
-        "CoverInteractionController: bibleData not found at handleCoverClick"
-      );
-    }
-    this.#bibleSequenceServicePort.resetBible({
-      bibleData,
-      pacing: "Regular",
-    });
+    const coverData = this.#coverMapper.toDomain(cover);
+    this.#coverInteractionServicePort.handleCoverClick(coverData);
   }
 }
