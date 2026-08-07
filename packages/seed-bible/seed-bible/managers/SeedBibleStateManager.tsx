@@ -9,6 +9,7 @@ import {
 import {
   bibleLanguageToUiLocale,
   uiLocaleForDefaultTranslation,
+  type BibleReadingState,
 } from "../managers/BibleReadingManager";
 import {
   buildReadingPath,
@@ -75,6 +76,7 @@ import {
   isSessionHost,
   type BibleReadingSession,
   type SessionsManager,
+  type SessionStartPosition,
 } from "../managers/SessionsManager";
 import {
   createAnnotationsManager,
@@ -215,7 +217,10 @@ export interface AppState {
   selectPane: (paneId: string) => void;
   /** Closes any pane filling the reader. */
   closeFullscreenPanes: () => void;
-  /** Creates a shared reading session and opens it in a new tab. */
+  /**
+   * Creates a shared reading session and opens it in a new tab, starting from
+   * the active tab's translation, book and chapter.
+   */
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
@@ -401,6 +406,17 @@ export interface CreateSeedBibleStateOptions {
    * IndexedDB; tests pass an in-memory store, and null disables the feature.
    */
   offlineStore?: OfflineTranslationStore | null;
+}
+
+/** Where a shared session started from this reading surface should open. */
+function getSessionStartPosition(
+  readingState: BibleReadingState
+): SessionStartPosition {
+  return {
+    initialTranslationId: readingState.translationId.value,
+    initialBookId: readingState.bookId.value,
+    initialChapterNumber: readingState.chapterNumber.value,
+  };
 }
 
 export function createSeedBibleState(
@@ -1303,7 +1319,13 @@ export function createSeedBibleState(
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
-    const session = await sessions.createSession();
+    // Start the session where the user is reading, not at the default book.
+    const activeReadingState = selectedTab.value?.readingState ?? null;
+    const session = await sessions.createSession(
+      activeReadingState
+        ? getSessionStartPosition(activeReadingState)
+        : undefined
+    );
     if (typeof posthog !== "undefined" && posthog) {
       posthog.capture("create_session", {
         sessionId: session.id,

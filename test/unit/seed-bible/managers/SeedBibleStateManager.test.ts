@@ -460,6 +460,27 @@ describe("createSeedBibleState", () => {
     );
   });
 
+  it("regression #1589: createSharedSession() starts the session where the active tab is reading", async () => {
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    // Two tabs on different chapters, so a session that read the position off
+    // the wrong tab can't look correct by accident.
+    const state = await createStateWithTwoTabs();
+    const activeTab = state.tabs.tabs.value[1]!;
+    await activeTab.readingState.selectTranslationAndChapter("AAB", "EXO", 2);
+    state.app.selectTab(activeTab.id);
+    mockSessionsManager.createSession.mockResolvedValue(
+      createMockSharedSession("session-position")
+    );
+
+    await state.app.createSharedSession();
+
+    expect(mockSessionsManager.createSession).toHaveBeenCalledWith({
+      initialTranslationId: "AAB",
+      initialBookId: "EXO",
+      initialChapterNumber: 2,
+    });
+  });
+
   it("createSharedSession() captures a create_session posthog event", async () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
