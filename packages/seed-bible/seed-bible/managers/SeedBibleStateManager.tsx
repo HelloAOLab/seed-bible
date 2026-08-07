@@ -16,6 +16,11 @@ import {
   hasReadingUrlPosition,
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
+import {
+  META_DESCRIPTION_MAX_GRAPHEMES,
+  buildChapterExcerpt,
+  truncateForMeta,
+} from "../managers/ChapterText";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
@@ -145,6 +150,14 @@ export const MOBILE_BREAKPOINT = 480;
  * components/Tabs/Tabs.css by hand.
  */
 export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
+
+/**
+ * Fallback `<meta name="description">` for pages with no chapter to quote —
+ * the site root, and the three cases where a chapter never arrives (an upstream
+ * failure, a book absent from the translation, or the SSR load timeout).
+ */
+const APP_META_DESCRIPTION =
+  "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -430,7 +443,6 @@ export function createSeedBibleState(
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
   });
-  const branding = options.config?.branding;
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
@@ -946,29 +958,37 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    const getDescription = () => {
-      if (!selectedTab.value) {
-        return t("seed-bible", {
-          defaultValue: "Seed Bible",
-        });
-      }
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+    if (!chapter) {
+      return t("app-meta-description", {
+        defaultValue: APP_META_DESCRIPTION,
+      });
+    }
 
-      const chapter = selectedTab.value.readingState.chapterData.value;
-      if (!chapter) {
-        return t("seed-bible", {
-          defaultValue: "Seed Bible",
-        });
-      }
-
+    const excerpt = buildChapterExcerpt(
+      chapter.chapter.content,
+      META_DESCRIPTION_MAX_GRAPHEMES
+    );
+    if (!excerpt) {
       return t("seed-bible-description", {
         bookName: chapter.book.name,
         chapterNumber: chapter.chapter.number,
-        appName: branding?.appName ?? "Seed Bible",
         defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
       });
-    };
+    }
 
-    return getDescription();
+    const composed = t("chapter-meta-description", {
+      bookName: chapter.book.name,
+      chapterNumber: chapter.chapter.number,
+      translationName: chapter.translation.shortName,
+      excerpt,
+      defaultValue:
+        "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
+    });
+
+    // The whole composed string is what has to fit, not just the excerpt: book
+    // names vary in length and a translated template may reorder its parts.
+    return truncateForMeta(composed, META_DESCRIPTION_MAX_GRAPHEMES);
   });
 
   const siteName = computed(() => {
