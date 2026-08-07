@@ -225,19 +225,6 @@ function createMockSharedSession(id: string) {
   } as any;
 }
 
-function selectedVerse(
-  bookId: string,
-  chapterNumber: number,
-  verseNumber: number
-) {
-  return {
-    bookId,
-    chapterNumber,
-    translationId: "AAB",
-    verse: { type: "verse", number: verseNumber, content: [] },
-  } as any;
-}
-
 async function createStateWithOptions(
   options: CreateTestSeedBibleStateOptions
 ) {
