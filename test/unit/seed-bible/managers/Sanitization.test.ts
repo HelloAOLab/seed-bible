@@ -72,10 +72,7 @@ describe("Sanitization", () => {
     });
 
     it("neutralizes javascript: URLs in href", async () => {
-      const result = await sanitize(
-        // eslint-disable-next-line no-script-url
-        '<a href="javascript:alert(1)">bad</a>'
-      );
+      const result = await sanitize('<a href="javascript:alert(1)">bad</a>');
       expect(result).not.toContain("javascript:");
       expect(result).toContain("bad");
     });

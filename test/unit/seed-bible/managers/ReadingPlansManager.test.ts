@@ -542,7 +542,6 @@ describe("createReadingPlansManager", () => {
   };
 
   const metadataOf = (plan: ReadingPlan) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { sessions: _sessions, ...metadata } = plan;
     return metadata;
   };
