@@ -222,3 +222,13 @@ export function buildReadingUrl(params: {
 
   return url;
 }
+
+/**
+ * Whether `url` points at a specific reading position (the canonical
+ * `/{lang}/{translationId}/{book}/{chapter}` path). No query-param fallback
+ * needed — `entry-ssr.tsx` already redirects legacy `?book=`/`?chapter=`
+ * URLs onto the canonical path before the app ever sees them.
+ */
+export function hasReadingUrlPosition(url: URL, basePath: string): boolean {
+  return parseReadingPath(url.pathname, basePath) !== null;
+}
