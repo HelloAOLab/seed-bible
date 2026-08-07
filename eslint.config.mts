@@ -120,6 +120,8 @@ export default defineConfig([
         "warn",
         {
           destructuring: "all",
+          // Allows a closure to read a `let` before its one assignment.
+          ignoreReadBeforeAssign: true,
         },
       ],
       "no-useless-escape": "off",
