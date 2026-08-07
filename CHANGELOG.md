@@ -6,11 +6,14 @@
 
 ### 🔧 Changed
 
+- Scripture Map packs books in a masonry layout by height, keeping left-to-right book order while removing empty gaps under shorter books. ([#1392](https://github.com/HelloAOLab/seed-bible/issues/1392))
 - Serve HTML and proxied assets gzip-compressed when the browser supports it, and stop the reader's initial font requests from blocking rendering by loading them without the render-blocking stylesheet, both PageSpeed wins. ([#1570](https://github.com/HelloAOLab/seed-bible/pull/1570))
 - Use paths instead of query parameters for better SEO. ([#1547](https://github.com/HelloAOLab/seed-bible/pull/1547))
 
 ### 🐛 Fixed
 
+- Fix starting a shared session dropping you back at Genesis 1 instead of opening at the chapter you were already reading, in your translation. ([#1601](https://github.com/HelloAOLab/seed-bible/pull/1601))
+- Put a space between verses when verse numbers are turned off, so one verse no longer runs straight into the end of the previous one ("...had your fill.Do not work..." now reads "...had your fill. Do not work..."). ([#1538](https://github.com/HelloAOLab/seed-bible/pull/1538))
 - Fix highlights from a previous account staying visible on already-visited chapters after signing out and into a different one, instead of updating to the signed-in account immediately. ([#1587](https://github.com/HelloAOLab/seed-bible/pull/1587))
 - Fix a highlight added as your session was ending being saved to whichever account signed in next, overwriting that account's highlights for the chapter. ([#1587](https://github.com/HelloAOLab/seed-bible/pull/1587))
 

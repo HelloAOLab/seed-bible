@@ -434,6 +434,75 @@ describe("SessionsManager", () => {
     });
   });
 
+  it("createSession(startPosition) builds the session's reader at that position", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession({
+      initialTranslationId: "BSB",
+      initialBookId: "LUK",
+      initialChapterNumber: 21,
+    });
+
+    // Seeded at construction rather than navigated to afterwards, so the
+    // session's reader never loads the default book first.
+    expect(createBibleReadingState).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      {
+        initialTranslationId: "BSB",
+        initialBookId: "LUK",
+        initialChapterNumber: 21,
+        isShared: true,
+      },
+      undefined,
+      undefined
+    );
+  });
+
+  it("createSession(startPosition) publishes the start position without waiting for the publish debounce", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession({
+      initialTranslationId: "BSB",
+      initialBookId: "LUK",
+      initialChapterNumber: 21,
+    });
+
+    // Deliberately no `flushPublishDebounce()`: until the map holds a position
+    // there is nothing for a joiner to load, so they would settle on the
+    // default book and publish that back over the host.
+    expect(mockMap.set).toHaveBeenCalledWith("translationId", "BSB");
+    expect(mockMap.set).toHaveBeenCalledWith("bookId", "LUK");
+    expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 21);
+  });
+
+  it("createSession() without a start position leaves the shared position empty", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession();
+
+    expect(mockMap.set).not.toHaveBeenCalled();
+  });
+
   it("joinSession(id) loads and returns a session with the given ID", async () => {
     const manager = createSessionsManager(
       os,

@@ -9,8 +9,13 @@ import {
 import {
   bibleLanguageToUiLocale,
   uiLocaleForDefaultTranslation,
+  type BibleReadingState,
 } from "../managers/BibleReadingManager";
-import { buildReadingPath } from "../managers/ReadingUrlPath";
+import {
+  buildReadingPath,
+  hasReadingUrlPosition,
+  parseReadingPath,
+} from "../managers/ReadingUrlPath";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
@@ -71,6 +76,7 @@ import {
   isSessionHost,
   type BibleReadingSession,
   type SessionsManager,
+  type SessionStartPosition,
 } from "../managers/SessionsManager";
 import {
   createAnnotationsManager,
@@ -211,7 +217,10 @@ export interface AppState {
   selectPane: (paneId: string) => void;
   /** Closes any pane filling the reader. */
   closeFullscreenPanes: () => void;
-  /** Creates a shared reading session and opens it in a new tab. */
+  /**
+   * Creates a shared reading session and opens it in a new tab, starting from
+   * the active tab's translation, book and chapter.
+   */
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
@@ -397,6 +406,17 @@ export interface CreateSeedBibleStateOptions {
    * IndexedDB; tests pass an in-memory store, and null disables the feature.
    */
   offlineStore?: OfflineTranslationStore | null;
+}
+
+/** Where a shared session started from this reading surface should open. */
+function getSessionStartPosition(
+  readingState: BibleReadingState
+): SessionStartPosition {
+  return {
+    initialTranslationId: readingState.translationId.value,
+    initialBookId: readingState.bookId.value,
+    initialChapterNumber: readingState.chapterNumber.value,
+  };
 }
 
 export function createSeedBibleState(
@@ -609,8 +629,9 @@ export function createSeedBibleState(
     i18n,
     readingExtensions
   );
-  // Close any fullscreen pane when the book/chapter params change, so
-  // navigating reveals the reader (every navigation path writes these params).
+  // Close any fullscreen pane when the book/chapter in the URL path changes,
+  // so navigating reveals the reader (every navigation path writes this
+  // position into the path — see `commitSelectedTabToUrl` in TabsManager).
   // The first location only sets a baseline, so load-time init doesn't close a
   // pane auto-opened for the same load (e.g. Today via `?today=open`).
   //
@@ -629,13 +650,12 @@ export function createSeedBibleState(
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
-    const book = url.searchParams.get("book");
-    const chapter = url.searchParams.get("chapter");
-    if (!book || !chapter) {
+    const parsed = parseReadingPath(url.pathname, navigation.basePath);
+    if (!parsed) {
       return;
     }
 
-    const location = `${book}|${chapter}`;
+    const location = `${parsed.bookId ?? parsed.rawBookSegment}|${parsed.chapter}`;
     const previous = lastReadingLocation;
     lastReadingLocation = location;
 
@@ -656,9 +676,7 @@ export function createSeedBibleState(
     initialUrlParams.get("today") !== null
       ? initialUrlParams.get("today") === "open"
       : !(
-          initialUrlParams.has("book") ||
-          initialUrlParams.has("chapter") ||
-          initialUrlParams.has("verse") ||
+          hasReadingUrlPosition(navigation.initialUrl, navigation.basePath) ||
           initialUrlParams.has("sessionId")
         );
 
@@ -1301,7 +1319,13 @@ export function createSeedBibleState(
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
-    const session = await sessions.createSession();
+    // Start the session where the user is reading, not at the default book.
+    const activeReadingState = selectedTab.value?.readingState ?? null;
+    const session = await sessions.createSession(
+      activeReadingState
+        ? getSessionStartPosition(activeReadingState)
+        : undefined
+    );
     if (typeof posthog !== "undefined" && posthog) {
       posthog.capture("create_session", {
         sessionId: session.id,
@@ -1641,12 +1665,47 @@ export function createSeedBibleState(
 
   // Settings UI language changes also select the nearest available Bible
   // translation (preferred ID → same language in catalog → LANG_META.fallback
-  // → English), using existing tabs + selector state.
+  // → English), using existing tabs + selector state. Keep the user on the
+  // same book/chapter/verse when the new translation has that book.
   i18n.setBibleTranslationApplicator(
     async (translation) => {
       const tab = selectedTab.value;
       if (tab) {
-        await tab.readingState.selectTranslation(translation.id);
+        const currentBookId = tab.readingState.bookId.peek();
+        const currentChapterNumber = tab.readingState.chapterNumber.peek();
+        const currentVerse =
+          tab.readingState.selectedVerses
+            .peek()
+            .find(
+              (verse) =>
+                verse.bookId === currentBookId &&
+                verse.chapterNumber === currentChapterNumber
+            )?.verse.number ??
+          tab.readingState.scrollToVerse.peek() ??
+          undefined;
+
+        let matchingBook: { id: string } | undefined;
+        try {
+          const books = await data.getTranslationBooks(translation.id);
+          matchingBook = currentBookId
+            ? books.books.find((book) => book.id === currentBookId)
+            : undefined;
+        } catch {
+          // Catalog isn't cached yet and the fetch failed — fall through to
+          // selectTranslation, which handles its own errors the way this
+          // path did before position preservation was added.
+        }
+
+        if (matchingBook && currentChapterNumber != null) {
+          await tab.readingState.selectTranslationAndChapter(
+            translation.id,
+            matchingBook.id,
+            currentChapterNumber,
+            currentVerse != null ? { scrollToVerse: currentVerse } : undefined
+          );
+        } else {
+          await tab.readingState.selectTranslation(translation.id);
+        }
       }
       await selector.selectTranslation(translation.id);
     },

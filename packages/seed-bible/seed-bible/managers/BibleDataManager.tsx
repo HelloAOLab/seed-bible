@@ -314,8 +314,9 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
   // Book name patterns:
   //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
   //   [A-Za-z][A-Za-z0-9]* — word starting with a letter, e.g. "GEN", "John", "Kings"
+  //   (?:\s+[Oo][Ff]\s+[A-Za-z][A-Za-z0-9]*)? — optional "of …" for "Song of Solomon"
   const pattern =
-    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
+    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*(?:\s+[Oo][Ff]\s+[A-Za-z][A-Za-z0-9]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
@@ -328,16 +329,35 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
       rangeEndStr,
     ] = match;
 
-    if (!bookStr || !chapterStr) continue;
+    // Rejected candidates must retry one character later. Otherwise a false
+    // hit like "See 1" consumes the leading digit of "1 Corinthians" and the
+    // real numbered-book reference is never found.
+    const retryFromNextChar = () => {
+      pattern.lastIndex = match!.index + 1;
+    };
+
+    if (!bookStr || !chapterStr) {
+      retryFromNextChar();
+      continue;
+    }
 
     const bookId = getBookId(bookStr);
-    if (!bookId) continue;
+    if (!bookId) {
+      retryFromNextChar();
+      continue;
+    }
 
     const chapter = parseInt(chapterStr);
-    if (isNaN(chapter)) continue;
+    if (isNaN(chapter)) {
+      retryFromNextChar();
+      continue;
+    }
 
     const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-    if (verse !== undefined && isNaN(verse)) continue;
+    if (verse !== undefined && isNaN(verse)) {
+      retryFromNextChar();
+      continue;
+    }
 
     let endChapter: number | undefined;
     let endVerse: number | undefined;
@@ -426,6 +446,7 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["sng", "SNG"],
   ["song", "SNG"],
   ["songofsolomon", "SNG"],
+  ["songofsongs", "SNG"],
   ["isa", "ISA"],
   ["isaiah", "ISA"],
   ["jer", "JER"],
@@ -567,6 +588,7 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
  * both "Song of Solomon" and the URL slug "song-of-solomon" resolve.
  */
 export function getBookId(book: string): BookId | null {
+  const hadSpaces = /\s/.test(book.trim());
   const bookLower = book.toLowerCase().replaceAll(/[\s-]+/g, "");
 
   const id = BOOK_ID_MAP.get(bookLower);
@@ -574,9 +596,15 @@ export function getBookId(book: string): BookId | null {
     return id;
   }
 
-  for (const [key, id] of BOOK_ID_MAP) {
-    if (bookLower.startsWith(key)) {
-      return id;
+  // Loose prefix fallback is for single-token inputs (e.g. "Leviticus" → lev)
+  // and numbered-book abbreviations (e.g. "1 chron" → 1ch). Multi-word phrases
+  // that aren't numbered — like "Song of Moses" — must match a book name
+  // exactly, or not at all.
+  if (!hadSpaces || /^\d/.test(bookLower)) {
+    for (const [key, mappedId] of BOOK_ID_MAP) {
+      if (bookLower.startsWith(key)) {
+        return mappedId;
+      }
     }
   }
 
