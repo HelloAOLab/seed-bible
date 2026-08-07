@@ -757,6 +757,67 @@ describe("createBibleReadingState", () => {
     expect(state.hasNext.value).toBe(true);
   });
 
+  it("names the adjacent chapters, crossing book boundaries", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/AAB/GEN/2.json")]: createResponse(
+        makeChapter(aabBooks, "GEN", 2)
+      ),
+    });
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.nextChapterPosition.value).toEqual({
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 2,
+    });
+    // First chapter of the first book — there is nothing before it.
+    expect(state.previousChapterPosition.value).toBeNull();
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.previousChapterPosition.value).toEqual({
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+  });
+
+  it("returns null for the adjacent chapter at the end of the canon", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/AAB/MAT/28.json")]: createResponse(
+        makeChapter(aabBooks, "MAT", 28)
+      ),
+    });
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    await state.selectChapter("MAT", 28);
+
+    // Matthew is the last book in this catalog. The chapter payload still
+    // carries a `nextChapterApiLink`, which is exactly why the link cannot be
+    // derived from it — it says a chapter exists without saying which.
+    expect(state.chapterData.value?.nextChapterApiLink).toBeTruthy();
+    expect(state.nextChapterPosition.value).toBeNull();
+  });
+
+  it("returns null for the adjacent chapter while the catalog is missing", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    expect(state.nextChapterPosition.value).not.toBeNull();
+
+    // No catalog for this translation, so the target is only discoverable by
+    // fetching it. `hasNext` still says yes (it falls back to the chapter's
+    // links), but nothing can name an address yet.
+    state.translationId.value = "NIV";
+
+    expect(state.translationBooks.value).toBeNull();
+    expect(state.hasNext.value).toBe(true);
+    expect(state.nextChapterPosition.value).toBeNull();
+  });
+
   it("tracks the catalog of whichever translation is selected", async () => {
     setWebResponses({
       ...createReadingManagerResponseMap(),
@@ -2850,6 +2911,39 @@ describe("createBibleReadingState", () => {
 
       expect(navigateNext).toHaveBeenCalledTimes(1);
       expect(state.chapterNumber.value).toBe(1);
+    });
+
+    it("stops naming the adjacent chapter once an extension owns that direction", async () => {
+      setWebResponses({
+        ...createReadingManagerResponseMap(),
+        [makeExampleUrl("/api/AAB/GEN/2.json")]: createResponse(
+          makeChapter(aabBooks, "GEN", 2)
+        ),
+      });
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "handled" }),
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      await state.selectChapter("GEN", 2);
+      expect(state.nextChapterPosition.value).not.toBeNull();
+
+      state.enableExtension("x");
+
+      // The extension may send "next" anywhere, so no honest address exists
+      // and that control falls back to a button. Only the direction the
+      // extension claimed is affected — "previous" still names its target.
+      expect(state.nextChapterPosition.value).toBeNull();
+      expect(state.previousChapterPosition.value).toEqual({
+        translationId: "AAB",
+        bookId: "GEN",
+        chapterNumber: 1,
+      });
     });
 
     it("navigateNext returning 'navigate' goes to the chosen chapter", async () => {

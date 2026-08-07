@@ -3,12 +3,19 @@ import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
+  bibleLanguageToUiLocale,
   DEFAULT_BOOK_ID,
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
   type BibleSelectedVerse,
+  type ReadingPosition,
 } from "../managers/BibleReadingManager";
-import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import {
+  buildReadingPath,
+  buildReadingUrl,
+  DEFAULT_UI_LANGUAGE,
+} from "../managers/ReadingUrlPath";
+import type { NavigationManager } from "../managers/NavigationManager";
 import type { BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
@@ -38,6 +45,8 @@ type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
 type ToolPredicateResult = boolean | ReadonlySignal<boolean>;
 type ToolPredicate<TContext> = (context: TContext) => ToolPredicateResult;
+type ToolHrefResult = string | null | ReadonlySignal<string | null>;
+type ToolHref<TContext> = (context: TContext) => ToolHrefResult;
 type ToolPriority<TContext> = number | ((context: TContext) => number);
 export type TranslatableTitle =
   | string
@@ -176,6 +185,14 @@ export interface BibleToolContext {
    * shared-session actions (create/share the live session) should guard on it.
    */
   app?: AppState;
+
+  /**
+   * Navigation manager, for tools that build their own links. Only
+   * `basePath` is needed today, and unlike `readInjectedConfig()` it is
+   * correct during SSR (that one returns defaults when there is no document),
+   * which is exactly when the chapter links have to be right.
+   */
+  navigation?: NavigationManager;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -187,6 +204,15 @@ export interface BibleReaderToolbarTool extends ResolvedBibleTool {
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
   onSelect: () => void;
+
+  /**
+   * The address this tool leads to, when it has one, so it can render as a
+   * real link rather than a button. Null for tools that only act.
+   *
+   * Activation still goes through `onSelect` — see `ToolActionElement`.
+   */
+  href: ReadonlySignal<string | null>;
+
   /** Optional context-menu items for this tool. */
   getItems?: () => ResolvedBibleToolItem[];
 
@@ -212,6 +238,16 @@ export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
   onSelect?: (context: BibleToolContext) => void;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
   getItems?: (context: BibleToolContext) => ManagedBibleToolbarToolItem[];
+
+  /**
+   * Optional address this tool navigates to (string, signal, or null).
+   *
+   * Supplying it makes the tool render as a real `<a href>` rather than a
+   * `<button>`, which is what lets a crawler follow it and a reader
+   * middle-click it. Clicking still runs `onSelect`, so a tool with a href
+   * must behave identically whether activated by click or by keyboard.
+   */
+  getHref?: ToolHref<BibleToolContext>;
 
   /**
    * Whether the label for this tool should be hidden.
@@ -442,6 +478,27 @@ function resolveToolPredicate<TContext>(
   return result;
 }
 
+/**
+ * Resolves a tool's optional `getHref` to a signal. Null — the default —
+ * means the tool has no address and renders as a plain button.
+ */
+function resolveToolHref<TContext>(
+  href: ToolHref<TContext> | undefined,
+  context: TContext
+): ReadonlySignal<string | null> {
+  const result = href?.(context);
+
+  if (typeof result === "undefined" || result === null) {
+    return computed(() => null);
+  }
+
+  if (typeof result === "string") {
+    return computed(() => result);
+  }
+
+  return result;
+}
+
 function resolveToolPriority<TContext>(
   priority: ToolPriority<TContext>,
   context: TContext
@@ -451,6 +508,43 @@ function resolveToolPriority<TContext>(
   }
 
   return priority(context);
+}
+
+/**
+ * The address of a chapter, for the prev/next chapter links.
+ *
+ * Built the same way as `canonicalUrl` in `SeedBibleStateManager` — same
+ * language derivation, four-segment path, no query string — so every link
+ * points straight at the target's canonical URL. Two things fall out of that:
+ * a crawler never follows a link only to be told by `<link rel="canonical">`
+ * that the real address is elsewhere, and `?verse=`, which describes the
+ * chapter being left rather than the one being opened, is dropped.
+ *
+ * The language follows the *translation*, not the interface, for the reason
+ * given at `canonicalUrl`: the same scripture read with a different UI
+ * language is still the same page.
+ */
+function chapterToolHref(
+  context: BibleToolContext,
+  position: ReadingPosition | null
+): string | null {
+  if (!position) {
+    return null;
+  }
+
+  const language =
+    bibleLanguageToUiLocale(context.readingState.translation.value?.language) ??
+    uiLocaleForDefaultTranslation(position.translationId) ??
+    DEFAULT_UI_LANGUAGE;
+
+  const path = buildReadingPath({
+    language,
+    translationId: position.translationId,
+    bookId: position.bookId as BookId,
+    chapter: position.chapterNumber,
+  });
+
+  return `${context.navigation?.basePath ?? ""}${path}`;
 }
 
 function MenuIcon() {
@@ -608,6 +702,13 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       // text request, so pressing again mid-load is exactly what should work.
       isDisabled: (context) => !context.readingState.hasPrevious.value,
       isVisible: (context) => !context.playlists?.playing?.value,
+      getHref: (context) =>
+        computed(() =>
+          chapterToolHref(
+            context,
+            context.readingState.previousChapterPosition.value
+          )
+        ),
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
       },
@@ -747,6 +848,13 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       // See `previous-chapter`: in-flight text must not block moving on.
       isDisabled: (context) => !context.readingState.hasNext.value,
       isVisible: (context) => !context.playlists?.playing?.value,
+      getHref: (context) =>
+        computed(() =>
+          chapterToolHref(
+            context,
+            context.readingState.nextChapterPosition.value
+          )
+        ),
       onSelect: (context) => {
         context.readingState.loadNextChapter();
       },
@@ -1162,6 +1270,7 @@ export function createBibleToolsManager(): ToolsManager {
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
       visible: resolveToolPredicate(tool.isVisible, context, true),
+      href: resolveToolHref(tool.getHref, context),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
       isControllable: tool.isControllable ?? true,

@@ -11,6 +11,7 @@ import { highlightContainsVerse } from "../../managers/HighlightsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
+import { ToolActionElement } from "../ToolActionElement";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
@@ -434,6 +435,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
+  // Server only: wait for the first chapter load to settle before rendering.
+  //
+  // This toolbar sits outside the reader's own Suspense boundary, so
+  // `renderToStringAsync` would otherwise render it in the first synchronous
+  // pass — before the book catalog has arrived, when the chapter tools cannot
+  // yet name where they lead. The result was a chapter page whose prev/next
+  // arrows server-rendered disabled, with no links out of it for a crawler to
+  // follow. `chapterDataPromise` never rejects, and the deadline behind it
+  // bounds the wait.
+  if (
+    import.meta.env.SSR &&
+    !readingState.value.initialChapterLoadSettled.value
+  ) {
+    throw readingState.value.chapterDataPromise;
+  }
+
   const viewportWidth = props.state.app.viewportWidth;
   const viewportHeight = props.state.app.viewportHeight;
 
@@ -459,6 +476,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      navigation: props.state.navigation,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -521,6 +539,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      navigation: props.state.navigation,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -1315,16 +1334,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ) : (
                         prev &&
                         PrevIcon && (
-                          <button
-                            type="button"
+                          <ToolActionElement
+                            href={prev.href.value}
                             disabled={prev.disabled.value}
-                            onClick={prev.onSelect}
+                            onActivate={prev.onSelect}
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
-                            aria-label={translateTitle(t, prev.title)}
+                            ariaLabel={translateTitle(t, prev.title)}
                           >
                             <PrevIcon />
-                          </button>
+                          </ToolActionElement>
                         )
                       )}
 
@@ -1366,16 +1385,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ) : (
                         next &&
                         NextIcon && (
-                          <button
-                            type="button"
+                          <ToolActionElement
+                            href={next.href.value}
                             disabled={next.disabled.value}
-                            onClick={next.onSelect}
+                            onActivate={next.onSelect}
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
-                            aria-label={translateTitle(t, next.title)}
+                            ariaLabel={translateTitle(t, next.title)}
                           >
                             <NextIcon />
-                          </button>
+                          </ToolActionElement>
                         )
                       )}
                     </div>
@@ -1602,9 +1621,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     key={tool.id}
                     className={`sb-reader-toolbar-item${hideLabel ? " sb-reader-toolbar-item-arrow" : ""}`}
                   >
-                    <button
+                    <ToolActionElement
+                      // A tool that opens a menu stays a button: the href
+                      // would advertise a destination the click never goes to.
+                      href={hasMenuItems ? null : tool.href.value}
                       disabled={tool.disabled.value}
-                      onClick={() => {
+                      onActivate={() => {
                         if (hasMenuItems) {
                           selectedToolbarToolId.value =
                             selectedToolbarToolId.value === tool.id
@@ -1617,7 +1639,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         tool.onSelect();
                       }}
                       className="sb-reader-toolbar-button"
-                      aria-label={label}
+                      ariaLabel={label}
                     >
                       <ToolIcon />
                       {hideLabel ? (
@@ -1647,7 +1669,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           })}
                         />
                       )}
-                    </button>
+                    </ToolActionElement>
                     {hasMenuItems &&
                       selectedToolbarToolId.value === tool.id && (
                         <div

@@ -364,6 +364,22 @@ export interface BibleReadingState {
    * `previousChapterApiLink`.
    */
   hasPrevious: ReadonlySignal<boolean>;
+
+  /**
+   * Where "next" actually leads, for anything that needs to *name* the
+   * destination rather than just move there — chapter links, most of all.
+   *
+   * Null whenever the destination can't be named honestly: at the end of the
+   * canon, before the book catalog has loaded (the target is only discoverable
+   * by fetching, see `navigateByChapterLink`), or when an enabled reading
+   * extension owns this direction and may send it somewhere else entirely.
+   * Callers should fall back to plain `loadNextChapter()` in those cases.
+   */
+  nextChapterPosition: ReadonlySignal<ReadingPosition | null>;
+
+  /** Where "previous" leads. See {@link nextChapterPosition}. */
+  previousChapterPosition: ReadonlySignal<ReadingPosition | null>;
+
   /** Streaming discovered cross references for the current chapter, grouped by provider. */
   discoveredCrossReferences: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
@@ -1174,6 +1190,13 @@ export function createBibleReadingState(
    * rather than repeatedly.
    */
   const initialChapterLoadSettled = signal<boolean>(false);
+  /**
+   * Latches true once the book catalog has arrived (or given up trying), so
+   * server rendering can wait for it. Starts true on the client, where nothing
+   * suspends on it — a browser fills the chapter links in as soon as the
+   * catalog lands, with no render to block.
+   */
+  const initialCatalogSettled = signal<boolean>(!import.meta.env.SSR);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
@@ -1245,6 +1268,7 @@ export function createBibleReadingState(
   const initialChapterLoadTimer = import.meta.env.SSR
     ? setTimeout(() => {
         initialChapterLoadSettled.value = true;
+        initialCatalogSettled.value = true;
       }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
     : null;
   const clearInitialChapterLoadTimer = () => {
@@ -1254,13 +1278,30 @@ export function createBibleReadingState(
   };
   effectDisposers.push(clearInitialChapterLoadTimer);
 
+  // Latches once the book catalog has landed. Server-side only: the chapter
+  // links in the toolbar can only name their target once the catalog says
+  // where the current book ends, and the catalog is fetched on a separate,
+  // deliberately un-awaited request (see `requestContent`). Without this the
+  // server would race it and usually win, rendering a chapter page with no
+  // links out of it — which is precisely what a crawler needs.
+  //
+  // Costs close to nothing: that request is issued before the chapter's own
+  // and returns the smaller payload, so it is normally already home.
+  effectDisposers.push(
+    effect(() => {
+      if (translationBooks.value) {
+        initialCatalogSettled.value = true;
+      }
+    })
+  );
+
   // Resolves — never rejects. A rejected promise thrown during
   // `renderToStringAsync` surfaces as a render exception and takes down the
   // whole document; resolving lets the already-rendered error branch explain
-  // what went wrong instead. Depends only on the latch, so it settles once.
+  // what went wrong instead. Depends only on the latches, so it settles once.
   effectDisposers.push(
     effect(() => {
-      if (!initialChapterLoadSettled.value) {
+      if (!initialChapterLoadSettled.value || !initialCatalogSettled.value) {
         return;
       }
       clearInitialChapterLoadTimer();
@@ -2598,8 +2639,10 @@ export function createBibleReadingState(
       endRequest();
       // Terminal either way. Without this a failed first load leaves anything
       // suspended on `chapterDataPromise` waiting forever — which on the server
-      // means the HTTP request never completes.
+      // means the HTTP request never completes. Both latches, because this path
+      // is also where a catalog that never arrives gives up.
       initialChapterLoadSettled.value = true;
+      initialCatalogSettled.value = true;
     }
   };
 
@@ -2905,6 +2948,56 @@ export function createBibleReadingState(
     )
   );
 
+  /**
+   * The adjacent position, but only when it can be named with certainty.
+   *
+   * Stricter than `resolveAvailability` on purpose: that one only needs to
+   * answer "can we move?", and both of its fallbacks are fine for that. Here
+   * the answer has to be an actual book and chapter, so neither fallback
+   * applies. An extension that owns the direction may navigate anywhere (or
+   * refuse), and the chapter's `next/previousChapterApiLink` says a chapter
+   * exists without saying which one — that only comes back from fetching it.
+   */
+  const resolveAdjacentPosition = (
+    owns: (instance: ReadingExtensionInstance) => boolean,
+    step: (
+      books: TranslationBooks,
+      position: ReadingPosition
+    ) => ReadingPosition | null
+  ): ReadingPosition | null => {
+    for (const runtime of orderedEnabledRuntimes.value) {
+      if (owns(runtime.instance)) {
+        return null;
+      }
+    }
+
+    const books = translationBooks.value;
+    const currentBookId = bookId.value;
+    if (!books || !currentBookId) {
+      return null;
+    }
+
+    return step(books, {
+      translationId: translationId.value,
+      bookId: currentBookId,
+      chapterNumber: chapterNumber.value,
+    });
+  };
+
+  const nextChapterPosition = computed<ReadingPosition | null>(() =>
+    resolveAdjacentPosition(
+      (instance) => !!instance.hasNext || !!instance.navigateNext,
+      nextPosition
+    )
+  );
+
+  const previousChapterPosition = computed<ReadingPosition | null>(() =>
+    resolveAdjacentPosition(
+      (instance) => !!instance.hasPrevious || !!instance.navigatePrevious,
+      previousPosition
+    )
+  );
+
   loadInitialData();
 
   readingStateRef = {
@@ -2943,6 +3036,8 @@ export function createBibleReadingState(
     loadNextChapter,
     hasNext,
     hasPrevious,
+    nextChapterPosition,
+    previousChapterPosition,
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,

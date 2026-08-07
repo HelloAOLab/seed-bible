@@ -698,3 +698,116 @@ describe("BibleReaderToolbar mobile More menu", () => {
     expect(menu()).toBeNull();
   });
 });
+
+describe("BibleReaderToolbar chapter navigation links", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    // Desktop viewport, so the labelled toolbar renders rather than the mobile
+    // floating nav.
+    window.innerWidth = 1200;
+    window.innerHeight = 900;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function chapterLinks(root: ParentNode) {
+    return Array.from(root.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href")
+    );
+  }
+
+  it("renders the chapter controls as real links", async () => {
+    const state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const next = container.querySelector(
+      'a[aria-label="Next Chapter"]'
+    ) as HTMLAnchorElement | null;
+
+    expect(next).not.toBeNull();
+    expect(next?.getAttribute("href")).toBe("/en/AAB/genesis/2");
+
+    // Genesis 1 is the start of the catalog, so "previous" has nowhere to go
+    // and stays a disabled button rather than becoming a link to nothing.
+    expect(
+      container.querySelector('a[aria-label="Previous Chapter"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('button[aria-label="Previous Chapter"]')
+    ).not.toBeNull();
+  });
+
+  it("puts the chapter links in the server-rendered HTML", async () => {
+    // The point of the whole feature: a crawler fetching a chapter page has to
+    // find a followable link to the next chapter in the markup it is served.
+    //
+    // The toolbar sits outside the reader's Suspense boundary, so without the
+    // SSR suspend it renders in the first synchronous pass — before the book
+    // catalog names where "next" leads — and the arrows serialize as disabled
+    // buttons with no links out of the page.
+    const { renderToStringAsync } = await import("preact-render-to-string");
+    const { Suspense } = await import("preact/compat");
+
+    // Set before the state is built: the catalog gate is armed at construction
+    // time, and the toolbar's suspend is server-only.
+    import.meta.env.SSR = true;
+
+    // Deliberately not `createTestSeedBibleState` — that awaits the initial
+    // load, which would hide the race this test exists to pin down. The helper
+    // above has already installed the fetch mock and initialized i18n.
+    const { createSeedBibleState } =
+      await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
+    const warm = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+    // Same origin as jsdom's document: `TabsManager` echoes the reading
+    // position back into the URL on mount, and jsdom rejects a cross-origin
+    // `replaceState`. A real server render has no `window` at all, so that
+    // write is a no-op there.
+    const state = createSeedBibleState({
+      initialHref: `${window.location.origin}/en/AAB/genesis/1`,
+    });
+
+    try {
+      await state.i18n.ready;
+
+      const html = await renderToStringAsync(
+        <TestHost state={state}>
+          <Suspense fallback={null}>
+            <BibleReaderToolbar state={state} />
+          </Suspense>
+        </TestHost>
+      );
+
+      const parsed = new DOMParser().parseFromString(html, "text/html");
+      expect(chapterLinks(parsed)).toContain("/en/AAB/genesis/2");
+    } finally {
+      delete import.meta.env.SSR;
+      for (const tab of state.tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
+      state.navigation.dispose();
+      void warm;
+    }
+  });
+});
