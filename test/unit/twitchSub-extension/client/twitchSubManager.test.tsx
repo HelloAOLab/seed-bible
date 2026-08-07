@@ -108,13 +108,10 @@ describe("CreateTwitchSubState", () => {
   let websocketCtorMock: Mock<any>;
   let errorSpy: Mock;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let fetchMock: Mock;
-
   beforeEach(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
-    fetchMock = vi.spyOn(window, "fetch").mockImplementation(
+    vi.spyOn(window, "fetch").mockImplementation(
       async () =>
         ({
           json: async () => ({
