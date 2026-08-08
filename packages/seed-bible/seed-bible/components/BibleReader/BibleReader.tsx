@@ -1881,6 +1881,7 @@ export function BibleReader(props: BibleReaderProps) {
               playlists={state.playlists}
               features={state.features}
               className="sb-quick-toolbar-mobile-header"
+              excludeToolIds={["ext_audioReader-play"]}
             />
             {!state.playlists.playing.value && (
               <ReaderBookmarkButton

@@ -106,8 +106,11 @@ export default function initAudioReaderExtension() {
   registerExtension({
     id: "ext_audioReader",
     init: function* (context: SeedBibleState) {
-      // The play/pause control lives in the reader's top quick toolbar,
-      // beside the bookmark button. It only shows for chapters with audio.
+      // The play/pause control lives in the reader's top quick toolbar on
+      // desktop, and in the mobile floating nav pill on small screens (see
+      // BibleReaderToolbar's audioPlayTool). QuickToolbar's mobile-header
+      // instance excludes this tool by id so it isn't shown twice there.
+      // It only shows for chapters with audio.
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
         priority: 250,
@@ -120,7 +123,6 @@ export default function initAudioReaderExtension() {
         isVisible: (ctx) =>
           computed(
             () =>
-              !ctx.playlists.isMobile.value &&
               !ctx.playlists.playing.value &&
               chapterAudioUrl(ctx.readingState) !== null
           ),

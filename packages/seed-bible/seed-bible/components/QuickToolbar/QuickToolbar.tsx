@@ -15,6 +15,12 @@ interface QuickToolbarProps {
   features: FeaturesManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
+  /**
+   * Tool ids to omit from this instance, for tools that already have a
+   * dedicated home elsewhere (e.g. the audio-reader play button lives in
+   * the mobile floating nav pill instead of the mobile header toolbar).
+   */
+  excludeToolIds?: string[];
 }
 
 /**
@@ -34,7 +40,9 @@ export function QuickToolbar(props: QuickToolbarProps) {
     playlists,
     features: props.features,
   });
-  const visibleTools = tools.filter((tool) => tool.visible.value);
+  const visibleTools = tools.filter(
+    (tool) => tool.visible.value && !props.excludeToolIds?.includes(tool.id)
+  );
 
   if (visibleTools.length === 0) {
     return null;
