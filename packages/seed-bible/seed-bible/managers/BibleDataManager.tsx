@@ -4,6 +4,7 @@ import {
   FreeUseBibleAPI,
   type ApiRequestOptions,
   type Translation,
+  type TranslationBook,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
@@ -235,13 +236,56 @@ export interface VerseRefMatch {
   end: number;
 }
 
+/** Normalizes a book name for comparison: lowercased, whitespace collapsed. */
+function normalizeBookName(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * Resolves a typed book name to a {@link BookId}.
+ *
+ * When `books` is provided, localized common/name/id matches are tried first
+ * (exact, then a unique prefix), so e.g. spa_onbv "Esdras" maps to EZR. Falls
+ * back to the English name / USFM id map via {@link getBookId}.
+ */
+function resolveBookId(book: string, books?: TranslationBook[]): BookId | null {
+  if (books?.length) {
+    const target = normalizeBookName(book);
+    const exact = books.find(
+      (b) =>
+        normalizeBookName(b.commonName) === target ||
+        normalizeBookName(b.name) === target ||
+        normalizeBookName(b.id) === target
+    );
+    if (exact) {
+      return exact.id as BookId;
+    }
+
+    const prefixes = books.filter(
+      (b) =>
+        normalizeBookName(b.commonName).startsWith(target) ||
+        normalizeBookName(b.name).startsWith(target)
+    );
+    if (prefixes.length === 1) {
+      return prefixes[0]!.id as BookId;
+    }
+  }
+
+  return getBookId(book);
+}
+
 /**
  * Parses the given verse reference.
  * Formatted like "GEN 1:1".
  *
  * @param text The reference to parse.
+ * @param books Optional current-translation books; searched before English
+ * names / book ids so localized labels (e.g. "Esdras") resolve correctly.
  */
-export function parseVerseReference(text: string): VerseRef | null {
+export function parseVerseReference(
+  text: string,
+  books?: TranslationBook[]
+): VerseRef | null {
   // Formats supported:
   //   GEN 1          – chapter only
   //   GEN 1:1        – chapter + verse
@@ -296,7 +340,7 @@ export function parseVerseReference(text: string): VerseRef | null {
       : undefined;
 
   return {
-    book: (getBookId(book) ?? book) as BookId,
+    book: (resolveBookId(book, books) ?? book) as BookId,
     chapter,
     verse,
     content,
@@ -308,8 +352,14 @@ export function parseVerseReference(text: string): VerseRef | null {
 /**
  * Finds and parses all verse references in the given text, returning each
  * with its character offsets (start inclusive, end exclusive).
+ *
+ * @param books Optional current-translation books; searched before English
+ * names / book ids so localized labels resolve correctly.
  */
-export function parseVerseReferences(text: string): VerseRefMatch[] {
+export function parseVerseReferences(
+  text: string,
+  books?: TranslationBook[]
+): VerseRefMatch[] {
   const results: VerseRefMatch[] = [];
   // Book name patterns:
   //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
@@ -341,7 +391,7 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
       continue;
     }
 
-    const bookId = getBookId(bookStr);
+    const bookId = resolveBookId(bookStr, books);
     if (!bookId) {
       retryFromNextChar();
       continue;

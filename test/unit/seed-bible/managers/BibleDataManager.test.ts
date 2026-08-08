@@ -10,7 +10,10 @@ import {
   type BibleDataManager,
   type BookId,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
-import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import {
+  FreeUseBibleAPI,
+  type TranslationBook,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   EXAMPLE_API_ENDPOINT,
@@ -690,6 +693,38 @@ describe("all 66 Protestant-canon books", () => {
         );
       }
     );
+  });
+
+  it("matches localized book names from the provided translation first", () => {
+    const spaBooks = [
+      {
+        id: "EZR",
+        name: "Esdras",
+        commonName: "Esdras",
+        title: null,
+        order: 15,
+        numberOfChapters: 10,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 280,
+      },
+    ] as TranslationBook[];
+
+    expect(parseVerseReference("Esdras 3", spaBooks)).toEqual({
+      book: "EZR",
+      chapter: 3,
+    });
+    expect(
+      parseVerseReferences("Lee Esdras 3 primero", spaBooks)
+    ).toContainEqual(
+      expect.objectContaining({
+        ref: { book: "EZR", chapter: 3 },
+      })
+    );
+    // English still works when books are provided.
+    expect(parseVerseReference("Ezra 3", spaBooks)).toEqual({
+      book: "EZR",
+      chapter: 3,
+    });
   });
 });
 

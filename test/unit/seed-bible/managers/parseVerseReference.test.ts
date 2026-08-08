@@ -271,4 +271,48 @@ describe("parseVerseReferences", () => {
     expect(parseVerseReferences("Phil 1", BOOKS)).toHaveLength(2);
     expect(parseVerseReference("Phil 1", BOOKS)).toBeNull();
   });
+
+  it("matches localized book names from the provided translation first", () => {
+    // spa_onbv-style names: Esdras is Ezra (EZR).
+    const spaBooks: TranslationBook[] = [
+      book("EZR", "Esdras", "Esdras", 10),
+      book("NEH", "Nehemías", "Nehemías", 13),
+    ];
+    expect(parseVerseReference("Esdras 3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+    });
+    expect(parseVerseReferences("Esdras 3", spaBooks)).toEqual([
+      { bookId: "EZR", chapter: 3 },
+    ]);
+  });
+
+  it("falls back to English / book id when books are omitted", () => {
+    expect(parseVerseReference("John 3:16")).toEqual({
+      bookId: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
+    expect(parseVerseReference("GEN 1:1")).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 1,
+    });
+    expect(parseVerseReferences("Esdras 3")).toEqual([]);
+  });
+
+  it("falls back to English when the localized list has no match", () => {
+    const spaBooks: TranslationBook[] = [book("EZR", "Esdras", "Esdras", 10)];
+    // "John" is not in the spa list, but English still matches.
+    expect(parseVerseReference("John 3:16", spaBooks)).toEqual({
+      bookId: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
+    // English "Ezra" also resolves via getBookId, then reuses spa metadata.
+    expect(parseVerseReference("Ezra 3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+    });
+  });
 });

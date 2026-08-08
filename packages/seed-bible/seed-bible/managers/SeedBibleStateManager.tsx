@@ -22,6 +22,7 @@ import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
+  type TranslationBook,
 } from "../managers/FreeUseBibleAPI";
 import { createPanes } from "../managers/PanesManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
@@ -452,7 +453,11 @@ export function createSeedBibleState(
   i18n.setLanguagePersister(settings.persistLanguage);
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
-  const chats = createChatsManager(login, i18n);
+  // Filled once tabs exist so local chat can resolve localized book names.
+  const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
+    undefined
+  );
+  const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
   const readingExtensions = createBibleReadingExtensionManager();
@@ -595,6 +600,12 @@ export function createSeedBibleState(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
+
+  // Keep local-chat scripture parsing in sync with the open reading tab.
+  effect(() => {
+    selectedTabTranslationBooks.value =
+      selectedTab.value?.readingState.translationBooks.value?.books;
+  });
 
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
   const isSSR = import.meta.env.SSR as boolean;
