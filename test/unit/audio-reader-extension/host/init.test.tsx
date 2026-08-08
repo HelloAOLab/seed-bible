@@ -11,8 +11,10 @@ function createContext(overrides: {
   return {
     readingState: {
       chapterData: signal(
+        // An audio-less chapter carries an empty map, not null — the API type
+        // makes `thisChapterAudioLinks` non-nullable.
         overrides.hasAudio === false
-          ? { thisChapterAudioLinks: null }
+          ? { thisChapterAudioLinks: {} }
           : { thisChapterAudioLinks: { reader: "https://example.com/a.mp3" } }
       ),
     } as any,
