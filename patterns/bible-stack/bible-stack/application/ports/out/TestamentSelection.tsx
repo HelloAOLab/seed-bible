@@ -1,4 +1,5 @@
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
+import type { Piece } from "../../../domain/models/canvas";
 import type { BibleStackEvents } from "../../../domain/models/events";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 
@@ -25,4 +26,8 @@ export interface AwaiterPort {
 
 export interface LabelSequenceConfigProviderPort {
   getShowSequenceDurationSeconds(pacing: StackUpdatePacing): number;
+}
+
+export interface PieceAdapterPort {
+  makeInteractable(piece: Piece): void;
 }

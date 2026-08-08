@@ -61,7 +61,6 @@ export interface PoolData<K = string, P extends PieceBot = PieceBot> {
   key: K;
   prefab: P;
   customTags: CustomTags<P>;
-  cleanupCustomTags?: CustomTags<P>;
   listeners?: PieceListeners<P>;
   size: number;
 }

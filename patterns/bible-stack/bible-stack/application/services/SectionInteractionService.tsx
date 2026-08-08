@@ -102,6 +102,13 @@ export class SectionInteractionService implements SectionInteractionServicePort 
 
     const { sectionData } = result;
 
+    if (
+      sectionData.highlightState === "Highlighting" ||
+      sectionData.highlightState === "Unhighlighting"
+    ) {
+      return;
+    }
+
     if (this.#paintPort.isActive) {
       this.#paintPort.paint(sectionData);
     } else {

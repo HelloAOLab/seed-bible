@@ -6,7 +6,7 @@ export const OpenBibleAnimationDurations: Record<
   number
 > = {
   [StackPresenceNavigationPacings.Regular]: 1,
-  [StackPresenceNavigationPacings.Double]: 2,
+  [StackPresenceNavigationPacings.Double]: 0.5,
 } as const;
 
 export const OpenBibleAnimationEasing = {

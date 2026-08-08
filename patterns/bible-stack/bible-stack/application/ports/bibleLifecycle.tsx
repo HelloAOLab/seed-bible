@@ -162,6 +162,7 @@ export interface LabelDataRepositoryPort {
 
 export interface PieceAdapterPort {
   makeNonInteractable(piece: Piece): void;
+  makeInteractable(piece: Piece): void;
   isPieceBeingUsed(piece: Piece): boolean;
 }
 

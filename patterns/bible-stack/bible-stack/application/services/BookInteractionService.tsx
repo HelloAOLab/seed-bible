@@ -105,6 +105,19 @@ export class BookInteractionService implements BookInteractionServicePort {
       return;
     }
 
+    if (bookData.selectionState !== "Selected") {
+      if (this.#tourGuideServicePort.isThereAnOngoingTourGuide()) {
+        if (
+          sectionData?.piece &&
+          this.#tourGuideServicePort.ongoingTourGuideSectionData?.id ===
+            sectionData.id
+        ) {
+          this.#tourGuideServicePort.stopTourGuide();
+          return;
+        }
+      }
+    }
+
     if (this.#paintPort.isActive) {
       this.#paintPort.paint(bookData);
     } else {
@@ -112,28 +125,18 @@ export class BookInteractionService implements BookInteractionServicePort {
         case SelectionModalities.Precise:
           {
             if (bookData.selectionState !== "Selected") {
-              if (this.#tourGuideServicePort.isThereAnOngoingTourGuide()) {
-                if (
-                  sectionData?.piece &&
-                  this.#tourGuideServicePort.ongoingTourGuideSectionData?.id ===
-                    sectionData.id
-                ) {
-                  this.#tourGuideServicePort.stopTourGuide();
-                }
+              if (bookData.highlightState === "Highlighted") {
+                this.#sequenceStateServicePort.executeAsSequence(() =>
+                  this.#bookSelectionServicePort.selectBook({
+                    data: bookData,
+                    source: PieceSelectionSources.UserSelection,
+                  })
+                );
               } else {
-                if (bookData.highlightState === "Highlighted") {
-                  this.#sequenceStateServicePort.executeAsSequence(() =>
-                    this.#bookSelectionServicePort.selectBook({
-                      data: bookData,
-                      source: PieceSelectionSources.UserSelection,
-                    })
-                  );
-                } else {
-                  this.#pieceHighlightServicePort.tryHighlightPiece({
-                    piece: book,
-                    source: HighlightRequestSources.UserSelection,
-                  });
-                }
+                this.#pieceHighlightServicePort.tryHighlightPiece({
+                  piece: book,
+                  source: HighlightRequestSources.UserSelection,
+                });
               }
             }
           }

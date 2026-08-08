@@ -6,6 +6,7 @@ import type {
   LabelSequenceConfigProviderPort,
   TestamentSelectionAdapterPort,
   TestamentSelectionEventPort,
+  PieceAdapterPort,
 } from "../ports/out/TestamentSelection";
 import type { SectionSpawnerPort } from "../ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
@@ -21,6 +22,7 @@ interface ServiceParams {
   stackUpdateServicePort: StackUpdateServicePort;
   awaiterPort: AwaiterPort;
   labelSequenceConfigProviderPort: LabelSequenceConfigProviderPort;
+  pieceAdapterPort: PieceAdapterPort;
   // pieceLifecycleServicePort: PieceLifecycleServicePort;
 }
 
@@ -32,6 +34,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
   #awaiterPort: ServiceParams["awaiterPort"];
   #labelSequenceConfigProviderPort: ServiceParams["labelSequenceConfigProviderPort"];
+  #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   // #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
 
   constructor({
@@ -42,6 +45,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     stackUpdateServicePort,
     awaiterPort,
     labelSequenceConfigProviderPort,
+    pieceAdapterPort,
     // pieceLifecycleServicePort,
   }: ServiceParams) {
     this.#testamentSelectionAdapterPort = testamentSelectionAdapterPort;
@@ -51,6 +55,7 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     this.#stackUpdateServicePort = stackUpdateServicePort;
     this.#awaiterPort = awaiterPort;
     this.#labelSequenceConfigProviderPort = labelSequenceConfigProviderPort;
+    this.#pieceAdapterPort = pieceAdapterPort;
     // this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
   }
 
@@ -121,6 +126,11 @@ export class TestamentSelectionService implements TestamentSelectionPort {
       );
     }
     await Promise.all(animations);
+
+    data.childrenData.forEach((sectionData) => {
+      this.#pieceAdapterPort.makeInteractable(sectionData.piece!);
+    });
+
     this.#testamentSelectionEventPort.emit("OnTestamentEndSelect", { data });
   }
 

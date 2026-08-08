@@ -324,27 +324,24 @@ export class PieceHighlightService implements PieceHighlighterPort {
       return;
     }
 
-    const prevState = data.highlightState;
-    const isUnhighlightScheduled = this.isUnhighlightScheduled(piece);
+    const isRunning = data.highlightState === HighlightStates.Unhighlighting;
+    const isScheduled = this.isUnhighlightScheduled(piece);
 
-    if (prevState === HighlightStates.Unhighlighting) {
-      if (source !== UnhighlightRequestSources.Transition) {
+    if (source !== UnhighlightRequestSources.Transition) {
+      if (isRunning || isScheduled) {
         return;
-      }
-      this.#pieceHighlightAdapterPort.interruptSequence(piece);
-      if (isUnhighlightScheduled) {
-        this.clearScheduledUnhighlight(piece);
       }
     } else {
-      const transitioned = data.changeHighlightState(
-        HighlightEvents.RequestUnhighlight
-      );
-      if (!transitioned) {
-        return;
+      if (isRunning) {
+        this.#pieceHighlightAdapterPort.interruptSequence(piece);
       }
-      if (isUnhighlightScheduled) {
+      if (isScheduled) {
         this.clearScheduledUnhighlight(piece);
       }
+    }
+
+    if (data.highlightState === HighlightStates.Idle) {
+      return;
     }
 
     if (delay) {
@@ -369,6 +366,10 @@ export class PieceHighlightService implements PieceHighlighterPort {
     data: AnyStackData,
     pacing: HighlightPacing
   ): Promise<void> {
+    if (data.highlightState === HighlightStates.Idle) {
+      return;
+    }
+    data.changeHighlightState(HighlightEvents.RequestUnhighlight);
     this.#pieceHighlightAdapterPort.interruptSequence(piece);
     await Promise.all([
       this.#pieceHighlightAdapterPort.unhighlight(piece, pacing),
@@ -422,8 +423,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
           !!data &&
           data.getParentId("stackBibleId") === bibleId &&
           !data.isOnTheGround &&
-          (data.highlightState !== HighlightStates.Unhighlighting ||
-            this.isUnhighlightScheduled(piece))
+          data.highlightState !== HighlightStates.Unhighlighting
         );
       }
     );

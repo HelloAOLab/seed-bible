@@ -1,4 +1,6 @@
+import type { BaseEventManager } from "../../../application/services/BaseEventManager";
 import type { TypedBot, PieceBotTags } from "../../models/casualos";
+import type { BibleStackInfrastructureEvents } from "../../models/events";
 import type { PoolData, Pool } from "../../models/objectPooler";
 
 export type ObjectPoolerConfig<
@@ -11,15 +13,21 @@ export interface DimensionGetter {
   getDimension: () => string;
 }
 
+interface AdapterParams<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
+  dimensionGetter: {
+    getDimension: () => string;
+  };
+  poolsData: ObjectPoolerConfig<P>;
+  eventManager: BaseEventManager<BibleStackInfrastructureEvents>;
+}
+
 export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #poolDictionary: Map<keyof P, any>;
-  #dimensionGetter: DimensionGetter;
+  #dimensionGetter: AdapterParams<P>["dimensionGetter"];
+  #eventManager: AdapterParams<P>["eventManager"];
 
-  constructor(
-    poolsData: ObjectPoolerConfig<P>,
-    dimensionGetter: DimensionGetter
-  ) {
+  constructor({ poolsData, dimensionGetter, eventManager }: AdapterParams<P>) {
     const poolDataList = Object.values(
       poolsData
     ) as ObjectPoolerConfig<P>[keyof P][];
@@ -30,6 +38,7 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     );
     this.#poolDictionary = dictionary;
     this.#dimensionGetter = dimensionGetter;
+    this.#eventManager = eventManager;
   }
 
   #createPool<K extends keyof P>(poolData: PoolData<K, P[K]>): Pool<K, P[K]> {
@@ -46,12 +55,7 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     const object = create(poolData.prefab, {
       space: "tempLocal",
     }) as P[K];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (object.tags as any).type = poolData.key;
-    for (const [tag, value] of Object.entries(poolData.customTags)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (object.tags as any)[tag] = value;
-    }
+    this.#applyDefaultTags(object, poolData);
     // Attach listeners last: the setup above runs before they exist (so it
     // never triggers them), and every object — eager or on-demand — gets them.
     for (const [tag, callback] of Object.entries(poolData.listeners ?? {})) {
@@ -59,6 +63,18 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
       os.addBotListener(object, tag, callback as any);
     }
     return object;
+  }
+
+  #applyDefaultTags<K extends keyof P>(
+    object: P[K],
+    poolData: PoolData<K, P[K]>
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (object.tags as any).type = poolData.key;
+    for (const [tag, value] of Object.entries(poolData.customTags)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (object.tags as any)[tag] = value;
+    }
   }
   getObject<K extends keyof P>(key: K): P[K] {
     const pool = this.#poolDictionary.get(key) as Pool<K, P[K]>;
@@ -95,19 +111,14 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     if (inUseObject) {
       clearTagMasks(inUseObject);
       clearAnimations(inUseObject);
-      const cleanupTagsData = pool.poolData.cleanupCustomTags;
-      if (cleanupTagsData) {
-        for (const [tag, value] of Object.entries(cleanupTagsData)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (inUseObject.tags as any)[tag] = value;
-        }
-      }
+      this.#applyDefaultTags(inUseObject, pool.poolData);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (inUseObject.tags as any)[dimension] = false;
       inUseObject.tags.isInUse = false;
       const idx = pool.inUseObjects.indexOf(inUseObject);
       pool.inUseObjects.splice(idx, 1);
       pool.objectPool.push(inUseObject);
+      this.#eventManager.emit("OnPieceBotReleased", { pieceBot: inUseObject });
     }
   }
   releaseObjects<K extends keyof P>(objects: P[K][], key: K) {

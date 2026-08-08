@@ -200,6 +200,7 @@ import { BibleModeSequenceAdapter } from "../adapters/sequences/BibleModeSequenc
 import { LabelInteractionController } from "../controllers/stack/LabelInteractionController";
 import { LabelInteractionService } from "../../application/services/InteractionLabelService";
 import { SectionShadowInteractionService } from "../../application/services/SectionShadowInteractionService";
+import type { BibleStackInfrastructureEvents } from "../models/events";
 
 let initialized = false;
 
@@ -277,6 +278,8 @@ export const bootstrapExtension = () => {
 
   const scripturePiecesStateService = new ScripturePiecesStateService();
 
+  const infrastructureEventManager =
+    new BaseEventManager<BibleStackInfrastructureEvents>();
   const listenTagEventBus = new ListenTagEventManager();
 
   function makeListeners<K extends BiblePiece>(
@@ -307,9 +310,9 @@ export const bootstrapExtension = () => {
       size,
     };
   }
-
-  const objectPooler = new ObjectPooler<BibleStackObjectPoolerMap>(
-    {
+  const visualStateRegistry = new VisualStateRegistry();
+  const objectPooler = new ObjectPooler<BibleStackObjectPoolerMap>({
+    poolsData: {
       [BiblePieces.StackTestament]: makePoolData(
         BiblePieces.StackTestament,
         testamentPrefab,
@@ -397,15 +400,15 @@ export const bootstrapExtension = () => {
         8
       ),
     },
-    {
+    dimensionGetter: {
       getDimension: getDimension,
-    }
-  );
+    },
+    eventManager: infrastructureEventManager,
+  });
   const bibleDataRepository = new BibleDataRepository();
   const pieceDataRepository = new PieceDataRepository();
   const versesBundleRepository = new VersesBundleRepository();
   const verseRepository = new VerseRepository();
-  const visualStateRegistry = new VisualStateRegistry();
   const interactionRegistry = new InteractionRegistry();
 
   // The scripture arrangement and per-book static info are bundled inside the
@@ -978,6 +981,7 @@ export const bootstrapExtension = () => {
       getShowSequenceDurationSeconds: (pacing) =>
         labelsConfigProvider.getShowAnimationDuration(pacing),
     },
+    pieceAdapterPort: pieceAdapter,
   });
 
   const bookSelectionService = new BookSelectionService({
@@ -1560,6 +1564,31 @@ export const bootstrapExtension = () => {
   os.addBotListener(entrypointBot, "onGridUp", () =>
     canvasInteractionController.handleOnGridUp()
   );
+
+  infrastructureEventManager.subscribe("OnPieceBotReleased", ({ pieceBot }) => {
+    switch (pieceBot.tags.type) {
+      case BiblePieces.StackTransformer:
+      case BiblePieces.StackTestament:
+      case BiblePieces.StackSection:
+      case BiblePieces.StackSectionShadow:
+      case BiblePieces.StackSectionBook:
+      case BiblePieces.StackBook:
+      case BiblePieces.StackChapter:
+      case BiblePieces.VersesBundle:
+      case BiblePieces.Verse:
+      case BiblePieces.InfoLabelTransformer:
+      case BiblePieces.InfoLabelDate:
+      case BiblePieces.InfoLabelText:
+      case BiblePieces.InfoLabelTail:
+      case BiblePieces.ActivityIndicator:
+        visualStateRegistry.clearState({
+          piece: { type: pieceBot.tags.type, id: pieceBot.id },
+        });
+        break;
+      default:
+        break;
+    }
+  });
 
   // TODO: Add an onBotChanged event listener to the configBot to listen to camera rotation changes.
   // call to an environment or camera controller to update all the activity notifications.

@@ -1,4 +1,5 @@
 import type { StackCover } from "../../domain/models/pieces";
+import { StackPresenceNavigationPacings } from "../../domain/models/userPresence";
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { CoverInteractionServicePort } from "../ports/in/CoverInteraction";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
@@ -37,7 +38,7 @@ export class CoverInteractionService implements CoverInteractionServicePort {
     this.#sequenceStateServicePort.executeAsSequence(() =>
       this.#bibleSequenceServicePort.resetBible({
         bibleData,
-        pacing: "Regular",
+        pacing: StackPresenceNavigationPacings.Double,
       })
     );
   }

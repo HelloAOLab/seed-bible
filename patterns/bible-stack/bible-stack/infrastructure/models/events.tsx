@@ -13,3 +13,10 @@ export type ListenTagEventMap = {
     params: BotListenerParametersMap<PieceBot>[K];
   };
 };
+
+export interface BibleStackInfrastructureEvents {
+  OnPieceBotReleased: { pieceBot: PieceBot };
+}
+
+export type BibleStackInfrastructureEvent =
+  keyof BibleStackInfrastructureEvents;

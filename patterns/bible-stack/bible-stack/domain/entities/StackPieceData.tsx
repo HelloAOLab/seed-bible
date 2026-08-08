@@ -201,6 +201,9 @@ export class StackPieceData<
   get highlightState() {
     return this.#highlightState;
   }
+  resetHighlightState() {
+    this.#highlightState = HighlightStates.Idle;
+  }
   get highlightIntensity() {
     return this.#highlightIntensity;
   }
@@ -378,6 +381,9 @@ export class StackPieceData<
     this.#lastInteractionSource = undefined;
   }
   override resetHierarchy(clearPiece: boolean = true): Piece[] {
+    this.resetSelectionState();
+    this.resetHighlightState();
+
     const piecesToRelease: Piece[] = [];
 
     if (this.piece && clearPiece) {

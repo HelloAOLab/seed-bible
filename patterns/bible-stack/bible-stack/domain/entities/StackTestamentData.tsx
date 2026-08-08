@@ -86,13 +86,13 @@ export class StackTestamentData extends StackPieceData<
     return this.creationParams.testamentIndex;
   }
   override resetHierarchy(
-    clearPiece: boolean = true,
-    split: boolean = false
+    clearPiece: boolean = true
+    // split: boolean = false
   ): Piece[] {
-    this.resetSelectionState();
-    if (split) {
-      this.changeSelectionState(SelectionEvents.RequestSelect);
-    }
+    // this.resetSelectionState();
+    // if (split) {
+    //   this.changeSelectionState(SelectionEvents.RequestSelect);
+    // }
     return super.resetHierarchy(clearPiece);
   }
   tryExplodeSplitSections(): boolean {

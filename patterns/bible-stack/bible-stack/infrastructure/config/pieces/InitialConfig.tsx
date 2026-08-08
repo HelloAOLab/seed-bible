@@ -34,6 +34,7 @@ export const INITIAL_CONFIG_MAP: {
     formAddress:
       "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/5686459242af8261bbab101a8d2c7ceaab6ef8ffcf0f96fe62c622d0322c6c30.webp",
     // strokeWidth: 1,
+    pointable: false,
   },
   [BiblePieces.StackBook]: {
     draggable: false,
@@ -49,6 +50,7 @@ export const INITIAL_CONFIG_MAP: {
     formAddress:
       "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/5686459242af8261bbab101a8d2c7ceaab6ef8ffcf0f96fe62c622d0322c6c30.webp",
     strokeWidth: 2,
+    pointable: false,
   },
   [BiblePieces.StackSectionBook]: {
     draggable: false,
@@ -64,6 +66,7 @@ export const INITIAL_CONFIG_MAP: {
     formAddress:
       "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/5686459242af8261bbab101a8d2c7ceaab6ef8ffcf0f96fe62c622d0322c6c30.webp",
     strokeWidth: 2,
+    pointable: false,
   },
   [BiblePieces.StackChapter]: {
     draggable: true,

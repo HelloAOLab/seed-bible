@@ -147,7 +147,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     const books = booksData.flatMap((data) => (data.piece ? [data.piece] : []));
     const sectionShadows = sectionsData.flatMap((data) =>
       data.type === "StackSection" && data.shadow
-        ? [data.detachShadow() as Piece<"StackSectionShadow">]
+        ? [data.shadow as Piece<"StackSectionShadow">]
         : []
     );
     const selectedBooks: (Piece<"StackSectionBook"> | Piece<"StackBook">)[] = [
@@ -309,6 +309,16 @@ export class BibleSequenceService implements BibleSequenceServicePort {
 
     bibleData.changeVizState(BibleVisualizationStates.Regular);
 
+    bibleData.childrenData.forEach((testamentData) => {
+      const selecting = testamentData.changeSelectionState("RequestSelect");
+      if (!selecting) {
+        throw new Error(
+          "BibleSequenceService: testamentData should be selecting now."
+        );
+      }
+      testamentData.changeSelectionState("SequenceComplete");
+    });
+
     for (const sectionData of bibleData.getAllSectionsData()) {
       if (sectionData.type === "StackSection") {
         sectionData.setPiece(
@@ -354,6 +364,45 @@ export class BibleSequenceService implements BibleSequenceServicePort {
           : []
       );
     this.#renderOrderAdapterPort.setSortedRenderOrder(activePieces);
+
+    const sectionsToHighlight: (
+      | Piece<"StackSection">
+      | Piece<"StackSectionBook">
+    )[] = [];
+
+    for (const testamentData of bibleData.childrenData) {
+      testamentData.childrenData.forEach((sectionData) => {
+        if (sectionData.piece) sectionsToHighlight.push(sectionData.piece);
+      });
+    }
+    sectionsToHighlight.reverse();
+    const highlights: Promise<void>[] = [];
+    await this.#awaiterPort.sleep(500);
+
+    for (const section of sectionsToHighlight) {
+      highlights.push(
+        this.#pieceHighlightServicePort.tryHighlightPiece({
+          piece: section,
+          source: "Transition",
+          scheduledUnhighlightData: {
+            delay: 2000,
+            pacing: "Regular",
+          },
+        })
+      );
+      await this.#awaiterPort.sleep(100);
+    }
+
+    await Promise.all(highlights);
+
+    for (const sectionData of bibleData.getAllSectionsData()) {
+      if (!sectionData.piece) {
+        throw new Error(
+          "BibleSequenceService: sectionData.piece not defined at openBible"
+        );
+      }
+      this.#pieceAdapterPort.makeInteractable(sectionData.piece);
+    }
 
     this.#eventPort.emit("OnBibleOpenSequenceEnd", { bibleData });
 

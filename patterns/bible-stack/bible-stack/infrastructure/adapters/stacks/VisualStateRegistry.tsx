@@ -75,4 +75,11 @@ export class VisualStateRegistry {
     const value = state[property];
     return value;
   }
+
+  clearState<K extends keyof VisualStateMap>({ piece }: { piece: Piece<K> }) {
+    const map = this.#statesMap[piece.type];
+    if (map) {
+      map.delete(piece.id);
+    }
+  }
 }

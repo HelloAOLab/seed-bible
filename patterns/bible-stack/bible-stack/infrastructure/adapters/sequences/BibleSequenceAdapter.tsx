@@ -663,6 +663,10 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
                 this.#layoutConfigProviderPort.getStackPieceMeasurement(
                   "BookScales"
                 );
+              const initialVisualState =
+                this.#piecesConigProvider.getInitialVisualState(
+                  sectionData.type
+                );
               this.#visualStateRegistryPort.registerState({
                 piece: sectionData.piece,
                 state: {
@@ -673,8 +677,10 @@ export class BibleSequenceAdapter implements BibleSequenceAdapterPort {
                   ),
                   desiredScaleZ,
                   desiredPositionZ: nextPositionZ,
-                  hoveredFormOpacity: 1,
-                  unhoveredFormOpacity: 1,
+                  hoveredFormOpacity:
+                    initialVisualState.hoveredFormOpacity ?? 1,
+                  unhoveredFormOpacity:
+                    initialVisualState.unhoveredFormOpacity ?? 1,
                   chapterColumns: 0,
                   chapterRows: 0,
                   singleBooksScales: { x: bookScales.x, y: bookScales.y },

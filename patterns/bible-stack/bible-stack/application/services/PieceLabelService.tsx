@@ -85,10 +85,15 @@ export class PieceLabelService<
   }): Promise<void> {
     const existingLabelData = this.getPieceLabel(piece);
     if (existingLabelData) {
-      await this.#labelAnimationAdapterPort.displayShowFeedback({
-        data: existingLabelData,
-        pacing,
-      });
+      existingLabelData.endHiding();
+      try {
+        await this.#labelAnimationAdapterPort.displayShowFeedback({
+          data: existingLabelData,
+          pacing,
+        });
+      } catch (error) {
+        console.error(error);
+      }
       return;
     }
 
@@ -139,10 +144,14 @@ export class PieceLabelService<
     this.#labelDataStorePort.addLabelData(labelData);
     if (makesAttentionFeedback)
       this.#labelAnimationAdapterPort.displayAttentionFeedback(labelData);
-    await this.#labelAnimationAdapterPort.displayShowFeedback({
-      data: labelData,
-      pacing,
-    });
+    try {
+      await this.#labelAnimationAdapterPort.displayShowFeedback({
+        data: labelData,
+        pacing,
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async changeIntensity(
@@ -175,18 +184,25 @@ export class PieceLabelService<
     }
 
     labelData.beginHiding();
-    await this.#labelAnimationAdapterPort.displayHideFeedback({
-      data: labelData,
-      pacing,
-    });
-    labelData.endHiding();
-    const activityIndicators = labelData.clearActivityIndicators();
-    if (activityIndicators) {
-      this.#activityIndicatorsAdapterPort.hideIndicators(activityIndicators);
+    try {
+      await this.#labelAnimationAdapterPort.displayHideFeedback({
+        data: labelData,
+        pacing,
+      });
+      if (!labelData.isHiding) {
+        return;
+      }
+      labelData.endHiding();
+      const activityIndicators = labelData.clearActivityIndicators();
+      if (activityIndicators) {
+        this.#activityIndicatorsAdapterPort.hideIndicators(activityIndicators);
+      }
+      this.#labelAnimationAdapterPort.stopAttentionFeedback(labelData);
+      this.#labelAdapterPort.despawnLabel(labelData);
+      this.#labelDataStorePort.removeLabelData(labelData);
+    } catch (error) {
+      console.error(error);
     }
-    this.#labelAnimationAdapterPort.stopAttentionFeedback(labelData);
-    this.#labelAdapterPort.despawnLabel(labelData);
-    this.#labelDataStorePort.removeLabelData(labelData);
   }
 
   getPieceLabel(piece: Piece<T>) {
