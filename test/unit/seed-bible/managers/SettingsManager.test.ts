@@ -1,9 +1,6 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import {
-  createSettings,
-  type SettingsManager,
-} from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import { createSettings } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
   createLoginManager,
   type LoginManager,

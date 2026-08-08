@@ -2,6 +2,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   buildReadingPath,
   buildReadingUrl,
+  hasReadingUrlPosition,
   parseReadingPath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 
@@ -304,5 +305,40 @@ describe("buildReadingUrl", () => {
       expect(url.pathname).toBe("/en/AAB/genesis/1");
       expect(url.pathname.split("/").filter(Boolean)).toHaveLength(4);
     });
+  });
+});
+
+describe("hasReadingUrlPosition", () => {
+  const at = (href: string) => new URL(href);
+
+  it("is true for the 4-segment canonical path", () => {
+    expect(
+      hasReadingUrlPosition(at("https://seedbible.org/en/AAB/john/3"), "")
+    ).toBe(true);
+  });
+
+  it("is true for the 3-segment path (default language implied)", () => {
+    expect(
+      hasReadingUrlPosition(at("https://seedbible.org/AAB/john/3"), "")
+    ).toBe(true);
+  });
+
+  it("is false for a bare root", () => {
+    expect(hasReadingUrlPosition(at("https://seedbible.org/"), "")).toBe(false);
+  });
+
+  it("is false for legacy query params with no path — those never reach app code, since entry-ssr.tsx redirects them onto the canonical path first", () => {
+    expect(
+      hasReadingUrlPosition(at("https://seedbible.org/?book=GEN&chapter=1"), "")
+    ).toBe(false);
+  });
+
+  it("strips the deployment basePath before checking", () => {
+    expect(
+      hasReadingUrlPosition(
+        at("https://seedbible.org/b/some-branch/AAB/john/3"),
+        "/b/some-branch"
+      )
+    ).toBe(true);
   });
 });
