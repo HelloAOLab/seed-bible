@@ -109,10 +109,10 @@ export default function initAudioReaderExtension() {
       // The play/pause control lives in the reader's top quick toolbar on
       // desktop, and in the mobile floating nav pill on small screens (see
       // BibleReaderToolbar's audioPlayTool, which identifies itself via
-      // `surface: "floating-nav"`). It's kept out of the *toolbar* surface
-      // on mobile since the floating pill is its mobile home there; other
-      // surfaces (or callers that don't specify one) aren't restricted.
-      // It only shows for chapters with audio.
+      // `surface: "mobile-navigation-bar"`). It's kept out of the
+      // quick-toolbar surface on mobile since the floating pill is its
+      // mobile home there; other surfaces (or callers that don't specify
+      // one) aren't restricted. It only shows for chapters with audio.
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
         priority: 250,
@@ -127,7 +127,7 @@ export default function initAudioReaderExtension() {
             () =>
               !ctx.playlists.playing.value &&
               chapterAudioUrl(ctx.readingState) !== null &&
-              (ctx.surface !== "toolbar" || !ctx.playlists.isMobile.value)
+              (ctx.surface !== "quick-toolbar" || !ctx.playlists.isMobile.value)
           ),
         onSelect: (ctx) => {
           const url = chapterAudioUrl(ctx.readingState);

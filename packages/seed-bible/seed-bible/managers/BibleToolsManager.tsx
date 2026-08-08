@@ -344,13 +344,13 @@ export interface QuickToolContext {
   window?: WindowContext | null;
 
   /**
-   * Which quick-toolbar surface is asking for tools, for tools whose
-   * `isVisible` differs by where they'd render (e.g. a tool that has a
-   * dedicated mobile home elsewhere and should stay out of the header
-   * toolbar there). Defaults to "toolbar" semantics when omitted, since
-   * that's the original/primary quick-toolbar consumer.
+   * Which surface is asking for tools, for tools whose `isVisible` differs
+   * by where they'd render (e.g. a tool that has a dedicated mobile home
+   * elsewhere and should stay out of the header toolbar there). Defaults to
+   * "quick-toolbar" semantics when omitted, since that's the
+   * original/primary consumer.
    */
-  surface?: "toolbar" | "floating-nav";
+  surface?: "quick-toolbar" | "mobile-navigation-bar";
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
