@@ -108,8 +108,10 @@ export default function initAudioReaderExtension() {
     init: function* (context: SeedBibleState) {
       // The play/pause control lives in the reader's top quick toolbar on
       // desktop, and in the mobile floating nav pill on small screens (see
-      // BibleReaderToolbar's audioPlayTool). QuickToolbar's mobile-header
-      // instance excludes this tool by id so it isn't shown twice there.
+      // BibleReaderToolbar's audioPlayTool, which identifies itself via
+      // `surface: "floating-nav"`). It's kept out of the *toolbar* surface
+      // on mobile since the floating pill is its mobile home there; other
+      // surfaces (or callers that don't specify one) aren't restricted.
       // It only shows for chapters with audio.
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
@@ -124,7 +126,8 @@ export default function initAudioReaderExtension() {
           computed(
             () =>
               !ctx.playlists.playing.value &&
-              chapterAudioUrl(ctx.readingState) !== null
+              chapterAudioUrl(ctx.readingState) !== null &&
+              (ctx.surface !== "toolbar" || !ctx.playlists.isMobile.value)
           ),
         onSelect: (ctx) => {
           const url = chapterAudioUrl(ctx.readingState);

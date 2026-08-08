@@ -342,6 +342,15 @@ export interface QuickToolContext {
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
+
+  /**
+   * Which quick-toolbar surface is asking for tools, for tools whose
+   * `isVisible` differs by where they'd render (e.g. a tool that has a
+   * dedicated mobile home elsewhere and should stay out of the header
+   * toolbar there). Defaults to "toolbar" semantics when omitted, since
+   * that's the original/primary quick-toolbar consumer.
+   */
+  surface?: "toolbar" | "floating-nav";
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
