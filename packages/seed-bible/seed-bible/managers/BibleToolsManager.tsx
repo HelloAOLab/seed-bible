@@ -343,13 +343,7 @@ export interface QuickToolContext {
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
 
-  /**
-   * Which surface is asking for tools, for tools whose `isVisible` differs
-   * by where they'd render (e.g. a tool that has a dedicated mobile home
-   * elsewhere and should stay out of the header toolbar there). Defaults to
-   * "quick-toolbar" semantics when omitted, since that's the
-   * original/primary consumer.
-   */
+  /** Which surface is asking, for tools whose visibility depends on it. */
   surface?: "quick-toolbar" | "mobile-navigation-bar";
 }
 
