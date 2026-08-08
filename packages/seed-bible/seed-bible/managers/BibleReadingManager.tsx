@@ -344,10 +344,10 @@ export interface BibleReadingState {
   selectChapter: (book: string, chapter: number) => Promise<void>;
 
   /** Loads the previous chapter relative to `chapterData` when available. */
-  loadPreviousChapter: () => Promise<void>;
+  loadPreviousChapter: (options?: ReadingNavigationOptions) => Promise<void>;
 
   /** Loads the next chapter relative to `chapterData` when available. */
-  loadNextChapter: () => Promise<void>;
+  loadNextChapter: (options?: ReadingNavigationOptions) => Promise<void>;
 
   /**
    * True when a next chapter is available to navigate to. Reflects the
@@ -2277,7 +2277,8 @@ export function createBibleReadingState(
    */
   const navigateByChapterLink = async (
     direction: "next" | "previous",
-    from: ReadingPosition
+    from: ReadingPosition,
+    options?: ReadingNavigationOptions
   ) => {
     const chapter = chapterData.peek();
     // Links from a chapter the reader has already left would send them
@@ -2289,7 +2290,7 @@ export function createBibleReadingState(
     // Recorded here, not at the top of `navigateAdjacent`: the hooks already
     // ran and declined to act, so a retry must resume from this fetch rather
     // than ask them again.
-    lastLoadAttempt = () => navigateByChapterLink(direction, from);
+    lastLoadAttempt = () => navigateByChapterLink(direction, from, options);
 
     beginRequest();
     // Captured, not bumped: superseding here would strand the request already
@@ -2309,7 +2310,7 @@ export function createBibleReadingState(
           bookId: adjacent.book.id,
           chapterNumber: adjacent.chapter.number,
         },
-        { content: adjacent }
+        { content: adjacent, replace: options?.replace }
       );
     } catch (err) {
       if (disposed || generation !== loadGeneration) {
@@ -2322,13 +2323,16 @@ export function createBibleReadingState(
     }
   };
 
-  const navigateAdjacent = async (direction: "next" | "previous") => {
+  const navigateAdjacent = async (
+    direction: "next" | "previous",
+    options?: ReadingNavigationOptions
+  ) => {
     const hookOutcome = runNavigationHooks(direction);
     const outcome =
       hookOutcome instanceof Promise ? await hookOutcome : hookOutcome;
 
     if (outcome.type === "handled") {
-      emitNavigate({ replace: false });
+      emitNavigate({ replace: options?.replace ?? false });
       return;
     }
     if (outcome.type === "prevent") {
@@ -2343,7 +2347,7 @@ export function createBibleReadingState(
           bookId: chapter.book.id,
           chapterNumber: chapter.chapter.number,
         },
-        { content: chapter }
+        { content: chapter, replace: options?.replace }
       );
       return;
     }
@@ -2354,7 +2358,7 @@ export function createBibleReadingState(
     }
     const books = dataManager.getCachedTranslationBooks(from.translationId);
     if (!books) {
-      await navigateByChapterLink(direction, from);
+      await navigateByChapterLink(direction, from, options);
       return;
     }
 
@@ -2372,14 +2376,15 @@ export function createBibleReadingState(
     // ask them again — just re-apply the same target, which is what makes the
     // loader retry its fetch.
     lastLoadAttempt = () => {
-      applyPosition(target);
+      applyPosition(target, { replace: options?.replace });
       return whenContentSettled(target);
     };
-    applyPosition(target);
+    applyPosition(target, { replace: options?.replace });
     await whenContentSettled(target);
   };
 
-  const loadPreviousChapter = () => navigateAdjacent("previous");
+  const loadPreviousChapter = (options?: ReadingNavigationOptions) =>
+    navigateAdjacent("previous", options);
 
   const selectTranslation = async (translation: string) => {
     lastLoadAttempt = () => selectTranslation(translation);
@@ -2500,7 +2505,8 @@ export function createBibleReadingState(
     await whenContentSettled(target);
   };
 
-  const loadNextChapter = () => navigateAdjacent("next");
+  const loadNextChapter = (options?: ReadingNavigationOptions) =>
+    navigateAdjacent("next", options);
 
   const loadInitialData = async () => {
     lastLoadAttempt = loadInitialData;

@@ -50,6 +50,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
   const isMobile = state?.app.isMobile.value ?? false;
+  const navigation = state?.navigation;
 
   const swipeViewportRef = useRef<HTMLDivElement | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
@@ -391,6 +392,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+
       const rtl = isRtl();
       const hasNext = readingState.hasNext.value;
       const hasPrev = readingState.hasPrevious.value;
@@ -419,6 +424,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
     };
 
+    const readingNavigationOptions = { replace: !!navigation };
+
     /**
      * Finishes a swipe past the threshold: slide to the neighbouring panel,
      * navigate, and recentre only once the new text is on screen. That panel is
@@ -434,6 +441,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       track.style.transition = `transform ${SWIPE_ANIMATION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`;
       track.style.transform = landingTransform;
       readingState.clearSelectedVerses();
+
+      if (navigation) {
+        navigation.push(navigation.currentUrl.peek());
+      }
 
       window.clearTimeout(swipeCommitTimer.current);
 
@@ -493,11 +504,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       if (shouldLoadNext && hasNext) {
         commitSwipe(track, `translateX(${sign * PANEL_PCT * 2}%)`, () =>
-          readingState.loadNextChapter()
+          readingState.loadNextChapter(readingNavigationOptions)
         );
       } else if (shouldLoadPrev && hasPrev) {
         commitSwipe(track, "translateX(0%)", () =>
-          readingState.loadPreviousChapter()
+          readingState.loadPreviousChapter(readingNavigationOptions)
         );
       } else {
         track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
@@ -506,7 +517,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
 
     viewport.addEventListener("touchstart", onTouchStart, { passive: true });
-    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
@@ -519,7 +530,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
     };
-  }, [isMobile, readingState]);
+  }, [isMobile, readingState, navigation]);
 
   // Keyboard chapter navigation for the selected slot. Left/Right move between
   // chapters (respecting text direction, like the swipe gesture and toolbar

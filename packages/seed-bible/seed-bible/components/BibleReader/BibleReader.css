@@ -315,6 +315,7 @@
   flex: 1 1 auto;
   position: relative;
   overflow: hidden;
+  touch-action: pan-y;
   width: 100%;
   min-height: 0;
 }
@@ -347,7 +348,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
   scrollbar-width: none;
 }
 
