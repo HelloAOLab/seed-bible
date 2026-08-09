@@ -1,149 +1,120 @@
-import { useMemo, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import type { SeedBibleState, Translation } from "seed-bible/managers";
-import { MaterialIcon } from "seed-bible/components";
+import {
+  filterTranslationGroups,
+  groupTranslationsByLanguage,
+} from "seed-bible/managers";
+import { MaterialIcon, TranslationList } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
-import { addId, type CompareState } from "./compareState";
+import { addId, removeId, type CompareState } from "./compareState";
 
-interface LanguageGroup {
-  language: string;
-  languageName: string;
-  translations: Translation[];
-}
-
-function languageLabel(translation: Translation): string {
-  return (
-    translation.languageEnglishName ||
-    translation.languageName ||
-    translation.language
-  );
-}
-
-/** Matches the fields the Bible selector's own translation search matches on. */
-function matchesQuery(translation: Translation, query: string): boolean {
-  if (!query) {
-    return true;
-  }
-  return [
-    translation.shortName,
-    translation.name,
-    translation.englishName,
-    languageLabel(translation),
-  ].some((field) => field?.toLowerCase().includes(query));
-}
-
-function groupByLanguage(translations: Translation[]): LanguageGroup[] {
-  const groups = new Map<string, LanguageGroup>();
-
-  for (const translation of translations) {
-    const existing = groups.get(translation.language);
-    if (existing) {
-      existing.translations.push(translation);
-      continue;
-    }
-    groups.set(translation.language, {
-      language: translation.language,
-      languageName: languageLabel(translation),
-      translations: [translation],
-    });
-  }
-
-  return [...groups.values()].sort((a, b) =>
-    a.languageName.localeCompare(b.languageName)
-  );
-}
+/** How many more language groups each "load more" reveals. */
+const PAGE_SIZE = 50;
 
 /**
- * Searchable list of every available translation.
+ * Add translations to the comparison.
  *
- * The translation being read is *not* disabled here even though it always shows
- * in the comparison — adding it is how a reader keeps it around after switching
- * the reader to something else.
+ * Renders the same `TranslationList` the reader's translation modal uses, so
+ * grouping, search and the complete/popular/all filter behave identically. Two
+ * deliberate differences: this list is multi-select (a comparison is a set, so
+ * picking toggles and you leave with the back arrow rather than the list
+ * closing on the first pick), and it omits the reader's per-row offline and
+ * share controls.
+ *
+ * The catalog filter is read from the reader's own `showAllLanguages` — it is
+ * one user preference for how much of the catalog to show, so changing it here
+ * changes it there too. The search text stays local, so the two surfaces don't
+ * overwrite each other's query.
  */
 export function TranslationPicker(props: {
   context: SeedBibleState;
   state: CompareState;
-  onDone: () => void;
 }) {
-  const { context, state, onDone } = props;
+  const { context, state } = props;
   const { t } = useI18n("compare-extension");
   const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(PAGE_SIZE);
 
+  const { showAllLanguages } = context.selector;
   const translations = context.bibleData.availableTranslations.value;
   const selected = state.selectedTranslationIds.value;
   const currentTranslationId = state.currentTranslationId.value;
 
-  const groups = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return groupByLanguage(
-      translations.filter((translation) =>
-        matchesQuery(translation, normalized)
-      )
-    );
-  }, [translations, query]);
+  const allGroups = groupTranslationsByLanguage(translations);
+  const groups = filterTranslationGroups({
+    groups: allGroups,
+    query,
+    viewMode: showAllLanguages.value,
+    limit,
+    selectedTranslation:
+      translations.find(
+        (translation) => translation.id === currentTranslationId
+      ) ?? null,
+  });
 
-  const add = (translationId: string) => {
-    state.setSelectedTranslationIds(addId(selected, translationId));
-    onDone();
+  const toggle = (translation: Translation) => {
+    state.setSelectedTranslationIds(
+      selected.includes(translation.id)
+        ? removeId(selected, translation.id)
+        : addId(selected, translation.id)
+    );
   };
 
   return (
     <div className="sb-compare-picker">
-      <input
-        type="search"
-        className="sb-settings-text-input sb-compare-search"
-        value={query}
-        dir="auto"
-        placeholder={t("search-translations", {
-          defaultValue: "Search translations",
-        })}
-        aria-label={t("search-translations", {
-          defaultValue: "Search translations",
-        })}
-        onInput={(event: Event) => {
-          setQuery((event.currentTarget as HTMLInputElement).value);
+      <div className="searchbar flex-align-center sb-compare-search">
+        <span className="material-symbols-outlined search-icon">search</span>
+        <input
+          type="search"
+          className="flex-1"
+          value={query}
+          dir="auto"
+          placeholder={t("search-translations", {
+            defaultValue: "Search translations",
+          })}
+          aria-label={t("search-translations", {
+            defaultValue: "Search translations",
+          })}
+          onInput={(event: Event) => {
+            setQuery((event.currentTarget as HTMLInputElement).value);
+          }}
+        />
+      </div>
+
+      <TranslationList
+        groups={groups}
+        query={query}
+        viewMode={showAllLanguages.value}
+        // The translation being read is always part of the comparison, so it
+        // reads as chosen here even though it is never saved.
+        selectedTranslationIds={
+          currentTranslationId && !selected.includes(currentTranslationId)
+            ? [...selected, currentTranslationId]
+            : selected
+        }
+        expandedLanguage={
+          translations
+            .find((translation) => translation.id === currentTranslationId)
+            ?.language?.toLowerCase() ?? null
+        }
+        onPick={toggle}
+        onShowAllTranslations={() => {
+          showAllLanguages.value = "all";
         }}
+        canLoadMore={limit < allGroups.length && groups.length >= PAGE_SIZE}
+        onLoadMore={() => setLimit((current) => current + PAGE_SIZE)}
       />
 
-      {groups.map((group) => (
-        <section key={group.language} className="sb-discover-section">
-          <h3 className="sb-discover-section-title" dir="auto">
-            {group.languageName}
-          </h3>
-          <ul className="sb-discover-list">
-            {group.translations.map((translation) => {
-              const isSelected = selected.includes(translation.id);
-              return (
-                <li
-                  key={translation.id}
-                  className="sb-discover-item sb-discover-item--row"
-                >
-                  <button
-                    type="button"
-                    className="sb-discover-item-button sb-compare-picker-option"
-                    disabled={isSelected}
-                    onClick={() => add(translation.id)}
-                  >
-                    <span className="sb-compare-block-abbreviation" dir="auto">
-                      {translation.shortName}
-                    </span>
-                    <span className="sb-discover-item-title" dir="auto">
-                      {translation.name}
-                    </span>
-                    {translation.id === currentTranslationId && (
-                      <span className="sb-compare-picker-note">
-                        {t("currently-reading", {
-                          defaultValue: "Currently reading",
-                        })}
-                      </span>
-                    )}
-                    {isSelected && <MaterialIcon>check</MaterialIcon>}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ))}
+      <button
+        type="button"
+        className="sb-compare-picker-done"
+        onClick={() => {
+          state.view.value = state.addReturnTo.value;
+        }}
+      >
+        <MaterialIcon>check</MaterialIcon>
+        {t("done", { defaultValue: "Done" })}
+      </button>
     </div>
   );
 }

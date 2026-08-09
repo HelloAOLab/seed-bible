@@ -23,4 +23,5 @@ export * from "./SidebarManager";
 export * from "./TabsManager";
 export * from "./TabsLayoutManager";
 export * from "./ThemeManager";
+export * from "./translationGrouping";
 export * from "./TutorialManager";

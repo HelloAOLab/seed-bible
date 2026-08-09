@@ -49,7 +49,14 @@ function TranslationBlockHeader(props: {
   const { t } = useI18n("compare-extension");
 
   return (
-    <div className="sb-compare-block-header">
+    // The header takes the translation's own direction, so an RTL translation
+    // mirrors it: abbreviation on the right, full name on the left. The DOM
+    // order is unchanged — `space-between` and `text-align: end` resolve
+    // against `dir`, so the reversal falls out of the same markup.
+    <div
+      className="sb-compare-block-header"
+      dir={translation?.textDirection ?? "auto"}
+    >
       <span className="sb-compare-block-abbreviation" dir="auto">
         {translation?.shortName ?? translationId}
       </span>
@@ -142,7 +149,10 @@ function TranslationBlock(props: {
             })}
           </p>
         ) : (
-          <p className="sb-compare-block-text" dir="auto">
+          <p
+            className="sb-compare-block-text"
+            dir={translation?.textDirection ?? "auto"}
+          >
             {verses.map((verse) => (
               <span key={verse.number} className="sb-compare-verse">
                 <span className="sb-compare-verse-number">{verse.number}</span>{" "}

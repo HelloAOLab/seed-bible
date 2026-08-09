@@ -105,15 +105,7 @@ export function ComparePane(props: {
   }
 
   if (view === "add") {
-    return (
-      <TranslationPicker
-        context={context}
-        state={state}
-        onDone={() => {
-          state.view.value = state.addReturnTo.value;
-        }}
-      />
-    );
+    return <TranslationPicker context={context} state={state} />;
   }
 
   return (

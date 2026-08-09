@@ -805,9 +805,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
     expect(labels.some((l) => l?.includes("english"))).toBe(true);
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
@@ -840,7 +844,9 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
     // The English group (matching selected translation's language) should be auto-expanded
     const translationOptions = Array.from(
@@ -1071,7 +1077,9 @@ describe("BibleSelector translation selector", () => {
 
     await waitFor(() => selectorState.languageQuery.value === "spanish");
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
     expect(labels.some((l) => l?.includes("english"))).toBe(false);
@@ -1148,7 +1156,9 @@ describe("BibleSelector translation selector", () => {
 
     await waitFor(() => selectorState.languageQuery.value === "espanol");
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
     expect(labels.some((l) => l?.includes("english"))).toBe(false);
@@ -1352,9 +1362,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
 
     // English group is visible because it contains at least one complete translation
@@ -1393,9 +1407,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
 
     expect(labels.some((l) => l?.includes("english"))).toBe(true);
@@ -1432,9 +1450,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
 
     // English is a popular language and should be visible

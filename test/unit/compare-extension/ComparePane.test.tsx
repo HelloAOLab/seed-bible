@@ -41,13 +41,23 @@ function chapterWith(verses: ChapterVerse[]): TranslationBookChapter {
   } as unknown as TranslationBookChapter;
 }
 
-function translation(id: string, shortName: string, name: string): Translation {
+function translation(
+  id: string,
+  shortName: string,
+  name: string,
+  overrides: Partial<Translation> = {}
+): Translation {
   return {
     id,
     shortName,
     name,
     englishName: name,
     language: "eng",
+    languageEnglishName: "English",
+    languageName: "English",
+    numberOfBooks: 66,
+    textDirection: "ltr",
+    ...overrides,
   } as Translation;
 }
 
@@ -76,12 +86,21 @@ function createHarness(options?: {
         translation("eng_kjv", "KJV", "King James Version"),
         translation("eng_bsb", "BSB", "Berean Standard Bible"),
         translation("eng_web", "WEB", "World English Bible"),
+        translation("heb_mod", "HMT", "Hebrew Modern Translation", {
+          language: "heb",
+          languageEnglishName: "Hebrew",
+          languageName: "עברית",
+          textDirection: "rtl",
+        }),
       ]),
       getTranslationBookChapter: (translationId: string) =>
         Promise.resolve(
           options?.chapters?.[translationId] ??
             chapterWith([verse(1, "In the beginning was the Word")])
         ),
+    },
+    selector: {
+      showAllLanguages: signal<"complete" | "all" | "popular">("all"),
     },
   } as unknown as SeedBibleState;
 
@@ -176,6 +195,39 @@ describe("ComparePane", () => {
 
     const text = container.querySelector(".sb-compare-block-text")!.textContent;
     expect(text).toContain("In the beginning was the Word");
+  });
+
+  it("mirrors the header for an RTL translation so the abbreviation sits on the right", async () => {
+    const { context, state } = createHarness({ savedIds: ["heb_mod"] });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    const headers = container.querySelectorAll(".sb-compare-block-header");
+    // The LTR translation being read comes first, the RTL one second.
+    expect(headers[0]!.getAttribute("dir")).toBe("ltr");
+    expect(headers[1]!.getAttribute("dir")).toBe("rtl");
+
+    // DOM order is unchanged; `dir` is what reverses the visual order.
+    expect(
+      headers[1]!.firstElementChild!.classList.contains(
+        "sb-compare-block-abbreviation"
+      )
+    ).toBe(true);
+
+    const rtlText = container.querySelectorAll(".sb-compare-block-text")[1]!;
+    expect(rtlText.getAttribute("dir")).toBe("rtl");
   });
 
   it("puts the translation being read first, exactly once, even when it is saved", async () => {
@@ -289,6 +341,99 @@ describe("ComparePane", () => {
     });
 
     expect(state.view.value).toBe("compare");
+  });
+});
+
+describe("Compare translation picker", () => {
+  const containers: HTMLDivElement[] = [];
+  const states: CompareState[] = [];
+
+  afterEach(() => {
+    for (const container of containers.splice(0)) {
+      render(null, container);
+      container.remove();
+    }
+    for (const state of states.splice(0)) {
+      state.dispose();
+    }
+  });
+
+  function mountPicker(savedIds: string[] = []) {
+    const { context, state } = createHarness({ savedIds });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([]);
+    state.view.value = "add";
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    return { context, state, container, node };
+  }
+
+  it("renders the same language-grouped list the reader's selector uses", () => {
+    const { container } = mountPicker();
+
+    expect(container.querySelector(".sb-translation-list")).not.toBeNull();
+    const languages = [
+      ...container.querySelectorAll(".sb-translation-list-language"),
+    ].map((element) => element.textContent);
+    expect(languages.some((label) => label?.includes("English"))).toBe(true);
+    expect(languages.some((label) => label?.includes("עברית"))).toBe(true);
+  });
+
+  it("expands the language of the translation being read", () => {
+    const { container } = mountPicker();
+
+    // English is the reading language, so its translations are already listed.
+    const rows = [
+      ...container.querySelectorAll(".translation-description"),
+    ].map((element) => element.textContent);
+    expect(rows).toContain("King James Version (KJV)");
+    expect(rows).not.toContain("Hebrew Modern Translation (HMT)");
+  });
+
+  it("toggles a translation in and out of the comparison", () => {
+    const { state, container, node } = mountPicker();
+
+    const pick = (label: string) =>
+      [...container.querySelectorAll(".translation-option")].find((row) =>
+        row.textContent?.includes(label)
+      ) as HTMLElement;
+
+    act(() => {
+      pick("Berean Standard Bible").click();
+    });
+    expect(state.selectedTranslationIds.value).toEqual(["eng_bsb"]);
+
+    act(() => {
+      render(node, container);
+    });
+    act(() => {
+      pick("Berean Standard Bible").click();
+    });
+    expect(state.selectedTranslationIds.value).toEqual([]);
+  });
+
+  it("shows the translation being read as already chosen", () => {
+    const { container } = mountPicker();
+
+    const kjvRow = [...container.querySelectorAll(".translation-option")].find(
+      (row) => row.textContent?.includes("King James Version")
+    )!;
+    // The tick replaces the completion ring for a chosen translation.
+    expect(kjvRow.querySelector(".emptyCircle")).toBeNull();
+  });
+
+  it("returns to where it was opened from", () => {
+    const { state, container } = mountPicker();
+    state.addReturnTo.value = "settings";
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-compare-picker-done")!
+        .click();
+    });
+
+    expect(state.view.value).toBe("settings");
   });
 });
 
