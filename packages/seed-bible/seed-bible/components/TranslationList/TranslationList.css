@@ -23,8 +23,18 @@
   border-radius: 0.375rem;
 }
 
-.sb-translation-list-language:hover {
-  background: #f5f5f5;
+/* Hover is behind `hover: hover` because a touch device keeps the hover state
+   applied after a tap until you tap elsewhere — an un-guarded rule leaves the
+   row stuck in its highlighted colour. `:active` gives the press feedback that
+   replaces it on touch. */
+@media (hover: hover) {
+  .sb-translation-list-language:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-translation-list-language:active {
+  background: var(--sb-divider-color);
 }
 
 .sb-translation-list-chevron {
@@ -77,8 +87,14 @@
   cursor: pointer;
 }
 
-.sb-translation-list-load-more:hover {
-  background: #f5f5f5;
+@media (hover: hover) {
+  .sb-translation-list-load-more:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-translation-list-load-more:active {
+  background: var(--sb-divider-color);
 }
 
 .sb-translation-list-load-more-count {
