@@ -281,11 +281,21 @@ export function CreateTwitchSubState(
                     ])
                   : Number(highlight.verse),
                 {
-                  style: {
-                    color: highlight.customFontColor || "inherit",
-                    backgroundColor: highlight.customColor || null,
+                  // `sb-highlight-<id>` only sets a font colour — the reader
+                  // paints highlight backgrounds in its SVG ribbon layer, so
+                  // hand-rolling the CSS here stopped showing anything. Handing
+                  // over the colour lets the reader draw it, as an outline
+                  // (it isn't the reader's own highlight) resolved against
+                  // whichever theme they're using.
+                  highlight: {
+                    colorId: highlight.color,
+                    ...(highlight.customColor
+                      ? { customColor: highlight.customColor }
+                      : {}),
+                    ...(highlight.customFontColor
+                      ? { customFontColor: highlight.customFontColor }
+                      : {}),
                   },
-                  className: `sb-highlight-${highlight.color}`,
                   preserveOnChapterChange: true,
                 }
               );

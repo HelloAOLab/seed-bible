@@ -69,6 +69,26 @@ export interface LoginManager {
   profile: Signal<UserProfile | null>;
 
   /**
+   * A locally-cached copy of the current user's last confirmed profile, persisted to
+   * `localStorage` and read back immediately when the app loads — before the network
+   * fetch backing `profile` has resolved. Display-only: it exists so the UI has
+   * something to show instantly instead of blank/loading. It is NOT a substitute for
+   * `profile` when deciding whether it's safe to write — writes must keep gating on
+   * `profile`, which stays null until the network genuinely confirms it. Reset to null
+   * on logout and on switching accounts; an explicit logout also erases the stored
+   * copy (of every account) from the device, so nothing personal outlives the session.
+   */
+  cachedProfile: Signal<UserProfile | null>;
+
+  /**
+   * A device-only (not tied to any account) config bag for use before/without login.
+   * `saveProfileConfigValue` writes here when there is no authenticated user. The first
+   * time a brand-new account (one with no existing profile record) logs in, this is
+   * adopted as the starting `profile.config` and then cleared.
+   */
+  localConfig: Signal<Record<string, unknown>>;
+
+  /**
    * The promise that resolves with the user's profile information once it has loaded.
    * Null if the user is not logged in.
    */
@@ -158,6 +178,127 @@ export const userProfileSchema = z.object({
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
 
+const PROFILE_CACHE_KEY_PREFIX = "sb-profile-cache-";
+const LOCAL_CONFIG_STORAGE_KEY = "sb-profile-config-local";
+// Sanity caps for the anonymous local config store. Every real key it holds
+// today (font size, theme id, book orientation, etc.) is tiny, so these are
+// generous — they exist to reject corrupt/tampered-with storage, not to
+// constrain legitimate use. This matters because a brand-new account's
+// first login adopts this data verbatim into its profile (see
+// `getUserProfile`'s `data_not_found` branch) — unlike `readCachedProfile`,
+// there's no fixed schema to validate this free-form bag against, so a
+// size/shape sanity check is the next best thing to keep corrupt data from
+// becoming durable account state.
+const MAX_LOCAL_CONFIG_JSON_LENGTH = 50_000;
+const MAX_LOCAL_CONFIG_KEYS = 100;
+
+function readCachedProfile(userId: string): UserProfile | null {
+  if (typeof localStorage === "undefined") {
+    return null;
+  }
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY_PREFIX + userId);
+    if (!raw) {
+      return null;
+    }
+    const parsed = userProfileSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    // Ignore malformed/unavailable storage; fall back to no cached profile.
+    return null;
+  }
+}
+
+function writeCachedProfile(userId: string, profile: UserProfile): void {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+  try {
+    localStorage.setItem(
+      PROFILE_CACHE_KEY_PREFIX + userId,
+      JSON.stringify(profile)
+    );
+  } catch {
+    // Best-effort; the profile record on the server is the durable source of truth.
+  }
+}
+
+/**
+ * Removes every cached profile on this device.
+ *
+ * Called on explicit sign-out. Clearing only the departing account's entry
+ * would be enough to stop `cachedProfile` from showing it again, but the
+ * point is that "Sign out" shouldn't leave a readable name/location/picture
+ * behind on a shared machine — and entries belonging to accounts that
+ * switched away without a full logout would otherwise never be cleaned up
+ * (nothing evicts them, so they accumulate one per account, indefinitely).
+ * Dropping all of them costs nothing: only one account can be signed in per
+ * browser, and this is purely a display cache that the next successful
+ * profile load rewrites.
+ */
+function clearCachedProfiles(): void {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+  try {
+    // Collect first, then remove — removing while walking by index shifts the
+    // remaining entries and would skip some of them.
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(PROFILE_CACHE_KEY_PREFIX)) {
+        keys.push(key);
+      }
+    }
+    for (const key of keys) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // Best-effort; storage may be unavailable (private mode, blocked).
+  }
+}
+
+function readLocalConfig(): Record<string, unknown> {
+  if (typeof localStorage === "undefined") {
+    return {};
+  }
+  try {
+    const raw = localStorage.getItem(LOCAL_CONFIG_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    if (raw.length > MAX_LOCAL_CONFIG_JSON_LENGTH) {
+      console.warn(
+        "[LoginManager] Ignoring oversized local config store; treating as corrupt"
+      );
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      Object.keys(parsed).length <= MAX_LOCAL_CONFIG_KEYS
+    ) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Ignore malformed/unavailable storage; fall back to an empty cache.
+  }
+  return {};
+}
+
+function writeLocalConfig(config: Record<string, unknown>): void {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+  try {
+    localStorage.setItem(LOCAL_CONFIG_STORAGE_KEY, JSON.stringify(config));
+  } catch {
+    // Best-effort; this is a device-local convenience cache.
+  }
+}
+
 export function createLoginManager({
   os,
 }: {
@@ -185,6 +326,12 @@ export function createLoginManager({
    * profile because `userId` becomes null.
    */
   const clearSession = () => {
+    // Wipe the on-disk profile cache before dropping the session. The effect
+    // below already nulls the `cachedProfile` signal once `userId` goes null,
+    // but that only clears what's in memory — the stored copy would otherwise
+    // outlive the session with the user's name, location, description and
+    // picture URL still readable on the device.
+    clearCachedProfiles();
     batch(() => {
       sessionKey.value = null;
       connectionKey.value = null;
@@ -299,6 +446,8 @@ export function createLoginManager({
 
   // const userId = os.userId;
   const profile = signal<UserProfile | null>(null);
+  const cachedProfile = signal<UserProfile | null>(null);
+  const localConfig = signal<Record<string, unknown>>(readLocalConfig());
   const isProfileLoading = signal(false);
   const isSavingProfile = signal(false);
   // Counts profile writes currently in flight so overlapping writes (e.g. a
@@ -310,6 +459,26 @@ export function createLoginManager({
   // switch can never leave the previous account's profile in place (which a
   // later write would then merge into the new account's record).
   let profileUserId: string | null = null;
+  // Tracks which account `cachedProfile.value` currently belongs to. Kept
+  // separate from `profileUserId` (which is only set once a load *succeeds*)
+  // so a switch that happens while the previous account's load is still
+  // pending — or after it failed — is still caught: gating on "is
+  // `cachedProfile` null" isn't enough once a value has been assigned.
+  let cachedProfileUserId: string | null = null;
+
+  // Persist `localConfig` on every change. Skip the effect's first,
+  // unconditional run — `localConfig` was just seeded from `readLocalConfig()`
+  // above, so writing it back immediately would just re-serialize the exact
+  // data that was read a moment ago.
+  let isFirstLocalConfigWrite = true;
+  effect(() => {
+    const config = localConfig.value;
+    if (isFirstLocalConfigWrite) {
+      isFirstLocalConfigWrite = false;
+      return;
+    }
+    writeLocalConfig(config);
+  });
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const data = await os.getData(userId, "profile");
@@ -320,9 +489,33 @@ export function createLoginManager({
         // default is the correct, authoritative answer here — the user can
         // start filling it in and writes should be allowed.
         console.log("[LoginManager] No profile data found for user:", userId);
-        return {
-          name: "",
-        };
+
+        const seededConfig = localConfig.value;
+        const hasSeededConfig = Object.keys(seededConfig).length > 0;
+        const seedProfile: UserProfile = hasSeededConfig
+          ? { name: "", config: seededConfig }
+          : { name: "" };
+
+        if (hasSeededConfig) {
+          // This device has config saved from anonymous use (e.g. font size,
+          // theme) and this is the first time this brand-new account has
+          // logged in. Adopt it as the account's starting profile so those
+          // choices aren't lost when the user signs up.
+          try {
+            await updateUserProfile(userId, seedProfile);
+            // Adoption succeeded and is now durable on the account — clear the
+            // local store so it can't later be silently adopted by a
+            // different account created on the same (possibly shared) device.
+            localConfig.value = {};
+          } catch (err) {
+            console.warn(
+              "[LoginManager] Failed to persist locally-saved config to new account; leaving it in the local store to retry on next login",
+              err
+            );
+          }
+        }
+
+        return seedProfile;
       }
 
       // Any other failure (server error, `not_authorized`, network blip — all
@@ -347,6 +540,17 @@ export function createLoginManager({
       console.warn("Failed to parse user profile data:", parsed.error);
       throw new Error("[LoginManager] Stored profile failed validation");
     }
+
+    // This account already has a real profile, so no adoption happened —
+    // but any leftover anonymous local config must still be consumed here.
+    // Otherwise it would sit around and could later be silently adopted by a
+    // different, unrelated account signing up on this same (possibly
+    // shared) device — the exact leak the brand-new-account adoption/clear
+    // above exists to prevent, just via this other path.
+    if (Object.keys(localConfig.value).length > 0) {
+      localConfig.value = {};
+    }
+
     return parsed.data;
   };
 
@@ -571,6 +775,10 @@ export function createLoginManager({
     if (!userId.value) {
       profile.value = null;
       profileUserId = null;
+      // Logging out drops the per-account cache too — the next display falls
+      // back to `localConfig`/anonymous defaults, never a stale account's data.
+      cachedProfile.value = null;
+      cachedProfileUserId = null;
       isProfileLoading.value = false;
       return;
     }
@@ -582,6 +790,7 @@ export function createLoginManager({
     if (profileUserId !== null && profileUserId !== userId.value) {
       profile.value = null;
       profileUserId = null;
+      cachedProfile.value = null;
     }
 
     if (typeof posthog !== "undefined" && posthog) {
@@ -593,6 +802,20 @@ export function createLoginManager({
     }
 
     const loadingForUserId = userId.value;
+
+    // Show the last-known cached profile for this account immediately, while
+    // the network load below is still in flight. This is display-only —
+    // `profile`/`profileUserId` (what writes gate on) are untouched here.
+    // Keyed on `cachedProfileUserId` rather than "is `cachedProfile` null" —
+    // gating on nullness alone would miss a switch that happens while the
+    // previous account's load is still pending, or after it failed, since
+    // `cachedProfile` would already hold a (now-stale) non-null value from
+    // that previous account.
+    if (cachedProfileUserId !== loadingForUserId) {
+      cachedProfile.value = readCachedProfile(loadingForUserId);
+      cachedProfileUserId = loadingForUserId;
+    }
+
     isProfileLoading.value = true;
     const loadPromise = getUserProfile(loadingForUserId)
       .then((p) => {
@@ -602,6 +825,9 @@ export function createLoginManager({
         if (userId.value === loadingForUserId) {
           profile.value = p;
           profileUserId = loadingForUserId;
+          cachedProfile.value = p;
+          cachedProfileUserId = loadingForUserId;
+          writeCachedProfile(loadingForUserId, p);
         }
         return p;
       })
@@ -683,6 +909,8 @@ export function createLoginManager({
       ...newData,
     };
     profile.value = nextProfile;
+    cachedProfile.value = nextProfile;
+    writeCachedProfile(userId.value, nextProfile);
 
     // The signal update above is optimistic; the write below is what actually
     // persists it. Track it so the UI can show a "Saving…" indicator, and
@@ -750,6 +978,8 @@ export function createLoginManager({
     authBot: userInfo,
     sessionEnded,
     profile,
+    cachedProfile,
+    localConfig,
     // Exposed as a getter so external readers see the promise assigned by the
     // profile-loading effect below. A plain property would capture the value
     // at construction time (null), which stays null after a fresh login and

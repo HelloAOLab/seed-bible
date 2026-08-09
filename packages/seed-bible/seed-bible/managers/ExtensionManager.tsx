@@ -2,7 +2,7 @@ import { effect, signal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { LoginManager } from "../managers/LoginManager";
-import { addTranslations } from "../i18n/I18nManager";
+import { addTranslations, i18n } from "../i18n/I18nManager";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   getProfileConfigValue,
@@ -137,6 +137,15 @@ export interface ExtensionModule {
   default: ExtensionEntryPoint;
 }
 
+/**
+ * The `title`/`description` every extension in a set offers in one language,
+ * keyed by extension id. Extensions with nothing for that language are absent.
+ */
+export type ExtensionListTranslations = Record<
+  string,
+  { title: string; description: string }
+>;
+
 export interface ExtensionSet {
   /**
    * The ID of this extension set.
@@ -147,6 +156,19 @@ export interface ExtensionSet {
    * The extensions included in this set.
    */
   extensions: Extension[];
+
+  /**
+   * Loads the extensions list's `title`/`description` for one language, keyed
+   * by language code. Bundled sets (see `vite-plugin-extensions.ts`) supply
+   * this so only the reader's own language is downloaded — inlining all 77 in
+   * `meta.translations` cost 138 KB in the entry chunk. Optional: sets whose
+   * `meta.translations` is already populated (uploaded extensions fetched over
+   * the network) don't need it.
+   */
+  loadListTranslations?: Record<
+    string,
+    () => Promise<ExtensionListTranslations>
+  >;
 }
 
 export interface ExtensionListEntry {
@@ -888,9 +910,71 @@ export function createExtensionManager(
     extensionsSignal.value = computeExtensions();
   };
 
+  // Fetching list strings is a client-only concern, for two reasons. The
+  // Settings extensions list is never server-rendered and English is already
+  // inline as the fallback, so there is nothing for the server to gain. More
+  // importantly `i18n` is the process-wide i18next singleton while this factory
+  // runs once per SSR request (`entry-ssr.tsx` → `createSeedBibleState` →
+  // here), so on the server both the listener below and the fetch would be
+  // per-request writes to state shared by every request — the listener in
+  // particular would accumulate for the life of the process.
+  const fetchesListTranslations = !import.meta.env.SSR;
+
+  // Sets whose list strings are fetched per language, kept so a later language
+  // change can re-fetch for the new one. Nothing removes from this today
+  // because there is no path that untracks a set; if one is added, it should
+  // delete from here too, or the handler below will keep re-fetching for sets
+  // that no longer matter.
+  const setsWithListTranslations = new Set<ExtensionSet>();
+
+  /**
+   * Registers the extensions list's `title`/`description` for one language.
+   *
+   * Sets that ship their strings inline (uploaded extensions) already had them
+   * registered by the caller; this only covers sets that defer them to a
+   * per-language chunk. A set with nothing for `language` is skipped, leaving
+   * the list to fall back to each extension's id, which is what
+   * `SettingsPage` already renders via `defaultValue`.
+   */
+  const loadListTranslationsForLanguage = async (
+    set: ExtensionSet,
+    language: string
+  ): Promise<void> => {
+    const load = set.loadListTranslations?.[language];
+    if (!load) {
+      return;
+    }
+    try {
+      const translations = await load();
+      for (const [extensionId, translation] of Object.entries(translations)) {
+        addTranslations(extensionId, { [language]: translation });
+      }
+      refreshExtensionsSignal();
+    } catch (err) {
+      // A missing chunk must not take the Settings page down with it — the
+      // list still renders, just with ids instead of titles.
+      console.error(
+        `Failed to load extension list translations for '${language}'.`,
+        err
+      );
+    }
+  };
+
+  if (fetchesListTranslations) {
+    i18n.on("languageChanged", (language: string) => {
+      for (const set of setsWithListTranslations) {
+        void loadListTranslationsForLanguage(set, language);
+      }
+    });
+  }
+
   const trackExtensionSet = (set: ExtensionSet) => {
     for (const extension of set.extensions) {
       knownExtensionsById.set(extension.meta.id, extension);
+    }
+    if (fetchesListTranslations && set.loadListTranslations) {
+      setsWithListTranslations.add(set);
+      void loadListTranslationsForLanguage(set, i18n.language);
     }
     refreshExtensionsSignal();
   };

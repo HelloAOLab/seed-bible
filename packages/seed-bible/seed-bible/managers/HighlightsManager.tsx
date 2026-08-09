@@ -1,6 +1,12 @@
 import * as z from "zod/v4";
 import type { LoginManager } from "../managers/LoginManager";
-import { signal, type Signal } from "@preact/signals";
+import {
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 
 /**
@@ -263,15 +269,18 @@ function normalizeHighlights(
  */
 export interface HighlightsManager {
   /**
-   * Gets a reactive signal for one chapter's highlights.
+   * Gets a reactive view of one chapter's highlights for the signed-in account.
    *
-   * If unauthenticated, returns an empty signal value.
+   * The view tracks the signed-in account: if the account changes, the view
+   * updates to that account's highlights (loading them if needed) without
+   * the caller having to call this again. If unauthenticated, the view reads
+   * as empty.
    */
   getChapterHighlights: (
     translationId: string,
     bookId: string,
     chapterNumber: number
-  ) => Signal<ChapterHighlights>;
+  ) => ReadonlySignal<ChapterHighlights>;
 
   /**
    * Replaces and persists highlights for a chapter.
@@ -339,101 +348,206 @@ const emptyChapterHighlights: ChapterHighlights = {
   highlights: [],
 };
 
+type ChapterHighlightsEntry = {
+  /** Account these highlights belong to. */
+  userId: string;
+  /** Latest known highlights for this account + chapter. */
+  data: Signal<ChapterHighlights>;
+  /** True once a load or a save has put real highlights in `data`. */
+  settled: boolean;
+  /** In-flight load, shared by concurrent readers and mutators. */
+  load: Promise<void> | null;
+};
+
+function entryKey(userId: string, address: string): string {
+  return `${userId} ${address}`;
+}
+
 /**
  * Creates the highlights manager.
  *
  * Behavior summary:
- * - Caches chapter highlights in reactive signals.
- * - Loads chapter data lazily on first access per address.
+ * - Caches chapter highlights in reactive signals, keyed by account and
+ *   chapter address. Keying by account is what keeps one user's highlights
+ *   from ever being served to another after switching accounts, since a
+ *   response for one account can only ever land on that account's own entry.
+ * - Loads chapter data lazily on first access per account + address.
+ * - Returned views track the signed-in account, so switching accounts
+ *   updates every view in place without callers re-requesting them.
  * - Normalizes overlapping highlight ranges to deterministic output.
- * - Persists highlights under user-scoped storage keys.
+ * - Persists highlights under user-scoped storage keys, writing to the account
+ *   a mutation read from rather than to whoever is signed in by the time the
+ *   write starts.
  */
 export function createHighlightsManager(
   os: CasualOSManager,
   login: LoginManager
 ): HighlightsManager {
-  // Cache highlights by chapter address in reactive signals.
-  const highlightsCache = new Map<string, Signal<ChapterHighlights>>();
-  const inFlightLoads = new Map<string, Promise<void>>();
-  const loadedAddresses = new Set<string>();
+  // Cached highlights, keyed by account + chapter address.
+  const entries = new Map<string, ChapterHighlightsEntry>();
+  // Identity-stable per-chapter views handed to callers, keyed by address.
+  // Never pruned on account switch (unlike `entries`): evicting a view would
+  // mint a new computed on the next call, breaking that identity for callers
+  // still holding the old one.
+  const views = new Map<string, ReadonlySignal<ChapterHighlights>>();
 
-  const getOrCreateChapterHighlightsSignal = (
+  const getOrCreateEntry = (
+    userId: string,
     address: string
-  ): Signal<ChapterHighlights> => {
-    let chapterHighlights = highlightsCache.get(address);
-    if (!chapterHighlights) {
-      chapterHighlights = signal<ChapterHighlights>(emptyChapterHighlights);
-      highlightsCache.set(address, chapterHighlights);
+  ): ChapterHighlightsEntry => {
+    const key = entryKey(userId, address);
+    let entry = entries.get(key);
+    if (!entry) {
+      entry = {
+        userId,
+        data: signal<ChapterHighlights>(emptyChapterHighlights),
+        settled: false,
+        load: null,
+      };
+      entries.set(key, entry);
     }
-
-    return chapterHighlights;
-  };
-
-  const awaitChapterLoad = async (address: string): Promise<void> => {
-    const inFlightLoad = inFlightLoads.get(address);
-    if (inFlightLoad) {
-      await inFlightLoad;
-    }
+    return entry;
   };
 
   const loadChapterHighlights = async (
     userId: string,
     address: string,
-    chapterHighlightsSignal: Signal<ChapterHighlights>
+    entry: ChapterHighlightsEntry
   ): Promise<void> => {
     const data = await os.getData(userId, address);
 
+    // Anything that settled the entry while this request was in the air holds
+    // newer highlights than this response does.
+    if (entry.settled) {
+      return;
+    }
+
     if (!data || !data.success || !data.data) {
-      chapterHighlightsSignal.value = emptyChapterHighlights;
-      loadedAddresses.add(address);
+      entry.data.value = emptyChapterHighlights;
+      entry.settled = true;
       return;
     }
 
     const parsed = chapterHighlightsSchema.safeParse(data.data);
     if (!parsed.success) {
       console.warn("Failed to parse chapter highlights:", parsed.error);
-      chapterHighlightsSignal.value = emptyChapterHighlights;
-      loadedAddresses.add(address);
+      entry.data.value = emptyChapterHighlights;
+      entry.settled = true;
       return;
     }
 
-    chapterHighlightsSignal.value = {
+    entry.data.value = {
       highlights: normalizeHighlights(parsed.data.highlights),
     };
-    loadedAddresses.add(address);
+    entry.settled = true;
   };
+
+  // Starts (or awaits an existing) load for an entry. Does not write any
+  // signal synchronously: this is called during computed evaluation, and a
+  // computed must not have side effects visible before its own value settles.
+  const ensureLoaded = (
+    userId: string,
+    address: string,
+    entry: ChapterHighlightsEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadChapterHighlights(userId, address, entry).finally(() => {
+        entry.load = null;
+      });
+    }
+    return entry.load;
+  };
+
+  const getOrCreateView = (
+    address: string
+  ): ReadonlySignal<ChapterHighlights> => {
+    let view = views.get(address);
+    if (!view) {
+      view = computed(() => {
+        const userId = login.userId.value; // the dependency that keeps this view following the signed-in account
+        if (!userId) {
+          return emptyChapterHighlights;
+        }
+        const entry = getOrCreateEntry(userId, address);
+        void ensureLoaded(userId, address, entry);
+        return entry.data.value;
+      });
+      views.set(address, view);
+    }
+    return view;
+  };
+
+  // Drops every cached entry that no longer belongs to the signed-in
+  // account, so signing back in re-reads from the server instead of serving
+  // a stale entry left over from a previous session as that same account.
+  let cachedUserId: string | null | undefined;
+  effect(() => {
+    const userId = login.userId.value;
+    if (userId === cachedUserId) {
+      return;
+    }
+    cachedUserId = userId;
+    for (const [key, entry] of entries) {
+      if (entry.userId !== userId) {
+        entries.delete(key);
+      }
+    }
+  });
 
   const getChapterHighlights = (
     translationId: string,
     bookId: string,
     chapterNumber: number
-  ): Signal<ChapterHighlights> => {
+  ): ReadonlySignal<ChapterHighlights> => {
     const address = createChapterHighlightsAddress(
       translationId,
       bookId,
       chapterNumber
     );
-    const chapterHighlightsSignal = getOrCreateChapterHighlightsSignal(address);
+    const view = getOrCreateView(address);
 
-    const userId = login.userId.value;
-    if (!userId) {
-      chapterHighlightsSignal.value = emptyChapterHighlights;
-      loadedAddresses.delete(address);
-      return chapterHighlightsSignal;
+    // Kick the load eagerly so callers see fresh data as soon as possible,
+    // without subscribing this call site to account changes (the view
+    // itself carries that dependency for whoever reads it).
+    const userId = login.userId.peek();
+    if (userId) {
+      const entry = getOrCreateEntry(userId, address);
+      void ensureLoaded(userId, address, entry);
     }
 
-    if (!loadedAddresses.has(address) && !inFlightLoads.has(address)) {
-      const loadPromise = loadChapterHighlights(
-        userId,
-        address,
-        chapterHighlightsSignal
-      ).finally(() => {
-        inFlightLoads.delete(address);
-      });
-      inFlightLoads.set(address, loadPromise);
-    }
+    return view;
+  };
 
-    return chapterHighlightsSignal;
+  // Writes a chapter's highlights for the account the entry belongs to, rather
+  // than for whoever happens to be signed in when the write starts. Callers
+  // that merged into existing highlights resolved an account to read from, and
+  // the write has to go to that same account: an account switch part-way
+  // through a mutation would otherwise store one account's highlights in
+  // another account's record.
+  const writeChapterHighlights = async (
+    entry: ChapterHighlightsEntry,
+    address: string,
+    translationId: string,
+    highlights: ChapterHighlight[]
+  ): Promise<void> => {
+    const normalized = normalizeHighlights(highlights);
+
+    // Optimistically update local state before waiting for persistence.
+    entry.data.value = {
+      highlights: normalized,
+    };
+    entry.settled = true;
+
+    const payload = chapterHighlightsSchema.parse({
+      highlights: normalized,
+    });
+
+    await os.recordData(entry.userId, address, payload, {
+      marker: `publicRead:highlights/${translationId}`,
+    });
   };
 
   const saveChapterHighlights = async (
@@ -447,32 +561,54 @@ export function createHighlightsManager(
       bookId,
       chapterNumber
     );
-    const chapterHighlightsSignal = getOrCreateChapterHighlightsSignal(address);
-    const normalized = normalizeHighlights(highlights);
 
-    // Optimistically update local state before waiting for persistence.
-    chapterHighlightsSignal.value = {
-      highlights: normalized,
-    };
-    loadedAddresses.add(address);
-
-    if (!login.userId.value) {
+    // Settling the account has to stay above the write: `login()` opens a
+    // modal, and `writeChapterHighlights` applies the highlight optimistically.
+    // Writing first left the highlight on screen behind the modal looking
+    // saved, then quietly not saving when the prompt was dismissed.
+    let userId = login.userId.value;
+    if (!userId) {
       await login.login();
+      userId = login.userId.value;
     }
-
-    const userId = login.userId.value;
     if (!userId) {
       console.warn("Unable to save highlights: user is not authenticated.");
       return;
     }
 
-    const payload = chapterHighlightsSchema.parse({
-      highlights: normalized,
-    });
+    await writeChapterHighlights(
+      getOrCreateEntry(userId, address),
+      address,
+      translationId,
+      highlights
+    );
+  };
 
-    await os.recordData(userId, address, payload, {
-      marker: `publicRead:highlights/${translationId}`,
-    });
+  // Resolves the signed-in account (attempting login if needed) and returns
+  // that account's entry for a chapter with its highlights loaded, or null if
+  // the account could not be resolved. Used by mutations that merge into
+  // existing highlights
+  // rather than replace them: reading highlights while signed out would be
+  // empty, and saving would then replace the signed-in account's real data
+  // instead of merging into it. The entry also carries the account the merged
+  // result must be written back to, so pass it to `writeChapterHighlights`
+  // rather than resolving the account a second time.
+  const resolveEntryToMutate = async (
+    address: string
+  ): Promise<ChapterHighlightsEntry | null> => {
+    let userId = login.userId.value;
+    if (!userId) {
+      await login.login();
+      userId = login.userId.value;
+    }
+    if (!userId) {
+      console.warn("Unable to save highlights: user is not authenticated.");
+      return null;
+    }
+
+    const entry = getOrCreateEntry(userId, address);
+    await ensureLoaded(userId, address, entry);
+    return entry;
   };
 
   const highlightVerse = async (
@@ -510,16 +646,19 @@ export function createHighlightsManager(
       return;
     }
 
-    const current = getChapterHighlights(translationId, bookId, chapterNumber);
     const address = createChapterHighlightsAddress(
       translationId,
       bookId,
       chapterNumber
     );
-    await awaitChapterLoad(address);
+
+    const entry = await resolveEntryToMutate(address);
+    if (!entry) {
+      return;
+    }
 
     const targetRanges = rangesFromVerseNumbers(deduplicatedVerseNumbers);
-    let updated = current.value.highlights.map(toRangeHighlight);
+    let updated = entry.data.value.highlights.map(toRangeHighlight);
 
     for (const range of targetRanges) {
       updated = removeRangeFromHighlights(updated, range);
@@ -532,10 +671,10 @@ export function createHighlightsManager(
       });
     }
 
-    await saveChapterHighlights(
+    await writeChapterHighlights(
+      entry,
+      address,
       translationId,
-      bookId,
-      chapterNumber,
       mergeHighlights(updated).map(fromRangeHighlight)
     );
   };
@@ -569,25 +708,49 @@ export function createHighlightsManager(
       return;
     }
 
-    const current = getChapterHighlights(translationId, bookId, chapterNumber);
     const address = createChapterHighlightsAddress(
       translationId,
       bookId,
       chapterNumber
     );
-    await awaitChapterLoad(address);
+
+    // Resolves the account like `resolveEntryToMutate`, but never prompts: a
+    // signed-out user has no saved highlights, so there is nothing to remove
+    // and a login modal would buy nothing. Clearing a session's broadcast
+    // highlight hits this — it lives in the shared document, not in anybody's
+    // records.
+    //
+    // Resolved once, before the load is awaited, and reused for the write
+    // below, so an account switch mid-load can't send one account's highlights
+    // to another's record (#1564).
+    const userId = login.userId.peek();
+    if (!userId) {
+      return;
+    }
+
+    const entry = getOrCreateEntry(userId, address);
+    await ensureLoaded(userId, address, entry);
+
+    const coversAnyVerse = deduplicatedVerseNumbers.some((verseNumber) =>
+      entry.data.value.highlights.some((highlight) =>
+        highlightContainsVerse(highlight, verseNumber)
+      )
+    );
+    if (!coversAnyVerse) {
+      return;
+    }
 
     const targetRanges = rangesFromVerseNumbers(deduplicatedVerseNumbers);
-    let updated = current.value.highlights.map(toRangeHighlight);
+    let updated = entry.data.value.highlights.map(toRangeHighlight);
 
     for (const range of targetRanges) {
       updated = removeRangeFromHighlights(updated, range);
     }
 
-    await saveChapterHighlights(
+    await writeChapterHighlights(
+      entry,
+      address,
       translationId,
-      bookId,
-      chapterNumber,
       mergeHighlights(updated).map(fromRangeHighlight)
     );
   };

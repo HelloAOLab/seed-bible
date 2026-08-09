@@ -11,6 +11,7 @@ import {
   type BibleToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
@@ -107,8 +108,11 @@ describe("getShareUrl", () => {
 
     const url = getShareUrl(readingState as any);
 
+    // The position goes in the path. Handing out `?translation=&book=&chapter=`
+    // would produce a link that opens whatever the *path* says instead, since
+    // the path is what the app reads first.
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1%2C3"
+      "https://example.test/en/NIV/genesis/1?verse=1%2C3"
     );
   });
 
@@ -151,7 +155,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1-3"
+      "https://example.test/en/NIV/genesis/1?verse=1-3"
     );
   });
 
@@ -172,9 +176,31 @@ describe("getShareUrl", () => {
 
     const url = getShareUrl(readingState as any);
 
-    expect(url.toString()).toBe(
-      "https://example.test/reader?translation=AAB&book=GEN&chapter=1"
+    // The language segment is always present — the 3-segment form is only a
+    // redirect entry point, never something to hand out.
+    expect(url.toString()).toBe("https://example.test/en/AAB/genesis/1");
+  });
+
+  it("keeps the reading position out of the query string entirely", () => {
+    const url = getShareUrl(createShareUrlReadingState() as any);
+
+    for (const stale of ["translation", "translationId", "book", "chapter"]) {
+      expect(url.searchParams.has(stale)).toBe(false);
+    }
+  });
+
+  it("preserves the language the reader is already on", () => {
+    jsdom.reconfigure({ url: "https://example.test/es/spa_onbv/john/3" });
+
+    const url = getShareUrl(
+      createShareUrlReadingState({
+        translation: signal({ id: "spa_onbv" }) as any,
+        bookId: signal("JHN") as any,
+        chapterNumber: signal(3) as any,
+      }) as any
     );
+
+    expect(url.toString()).toBe("https://example.test/es/spa_onbv/john/3");
   });
 });
 
@@ -598,7 +624,7 @@ describe("createBibleToolsManager", () => {
       await tool?.onSelect();
 
       expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(
-        "In the beginning I am the light God created. (Genesis 1:1)\n\nPoetry A Poetry B (Genesis 1:2)"
+        "In the beginning I am the light God created. Poetry A Poetry B (Genesis 1:1-2)"
       );
     });
 
@@ -628,6 +654,254 @@ describe("createBibleToolsManager", () => {
           text: expect.not.stringContaining("(PSA 2:2)"),
         })
       );
+    });
+  });
+  describe("formatSelectedVerses", () => {
+    function createReadingState(
+      selectedVerses: any[],
+      overrides?: Partial<BibleReadingState>
+    ) {
+      return {
+        selectedVerses: signal(selectedVerses),
+        chapterData: signal({
+          book: {
+            id: "GEN",
+            name: "Genesis",
+          },
+        } as BibleReadingState["chapterData"]["value"]),
+        translation: signal({
+          shortName: "NIV",
+        }),
+        ...overrides,
+      } as BibleReadingState;
+    }
+
+    it("formats a single verse with the reference at the end", () => {
+      const state = createReadingState([
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          verse: {
+            type: "verse",
+            number: 1,
+            content: [
+              "In the beginning God created the heavens and the earth.",
+            ],
+          },
+        },
+      ]);
+
+      expect(formatSelectedVerses(state)).toBe(
+        "In the beginning God created the heavens and the earth. (Genesis 1:1 NIV)"
+      );
+    });
+
+    it("formats three consecutive verses with one reference", () => {
+      const state = createReadingState([
+        {
+          bookId: "GEN",
+          chapterNumber: 2,
+          verse: {
+            type: "verse",
+            number: 4,
+            content: [
+              "This is the account of the heavens and the earth when they were created.",
+            ],
+          },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 2,
+          verse: {
+            type: "verse",
+            number: 5,
+            content: [
+              "Now no shrub of the field had yet appeared on the earth.",
+            ],
+          },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 2,
+          verse: {
+            type: "verse",
+            number: 6,
+            content: [
+              "But springs welled up from the earth and watered the whole surface of the ground.",
+            ],
+          },
+        },
+      ]);
+
+      expect(formatSelectedVerses(state)).toBe(
+        "This is the account of the heavens and the earth when they were created. Now no shrub of the field had yet appeared on the earth. But springs welled up from the earth and watered the whole surface of the ground. (Genesis 2:4-6 NIV)"
+      );
+    });
+
+    it("formats non-consecutive verses into separate groups", () => {
+      const state = createReadingState([
+        {
+          bookId: "GEN",
+          chapterNumber: 2,
+          verse: {
+            type: "verse",
+            number: 4,
+            content: [
+              "This is the account of the heavens and the earth when they were created.",
+            ],
+          },
+        },
+        {
+          bookId: "GEN",
+          chapterNumber: 2,
+          verse: {
+            type: "verse",
+            number: 8,
+            content: [
+              "And the LORD God planted a garden in Eden, in the east, where He placed the man He had formed.",
+            ],
+          },
+        },
+      ]);
+
+      expect(formatSelectedVerses(state)).toBe(
+        "This is the account of the heavens and the earth when they were created. (Genesis 2:4 NIV)\n\nAnd the LORD God planted a garden in Eden, in the east, where He placed the man He had formed. (Genesis 2:8 NIV)"
+      );
+    });
+
+    it("formats poem lines like regular text", () => {
+      const state = createReadingState(
+        [
+          {
+            bookId: "PSA",
+            chapterNumber: 23,
+            verse: {
+              type: "verse",
+              number: 1,
+              content: [
+                { text: "The LORD is my shepherd,", poem: 1 },
+                { lineBreak: true },
+                { text: "I shall not want.", poem: 2 },
+              ],
+            },
+          },
+        ],
+        {
+          chapterData: signal({
+            book: {
+              id: "PSA",
+              name: "Psalms",
+            },
+          } as BibleReadingState["chapterData"]["value"]),
+        }
+      );
+
+      expect(formatSelectedVerses(state)).toBe(
+        "The LORD is my shepherd, I shall not want. (Psalms 23:1 NIV)"
+      );
+    });
+
+    it("does not introduce extra or missing spaces for poem lines", () => {
+      const state = createReadingState(
+        [
+          {
+            bookId: "PSA",
+            chapterNumber: 1,
+            verse: {
+              type: "verse",
+              number: 1,
+              content: [
+                "Blessed ",
+                { text: "is the man", poem: 1 },
+                { lineBreak: true },
+                { text: "who walks not.", poem: 2 },
+              ],
+            },
+          },
+        ],
+        {
+          chapterData: signal({
+            book: {
+              id: "PSA",
+              name: "Psalms",
+            },
+          } as BibleReadingState["chapterData"]["value"]),
+        }
+      );
+
+      expect(formatSelectedVerses(state)).toBe(
+        "Blessed is the man who walks not. (Psalms 1:1 NIV)"
+      );
+    });
+
+    it("formats non-English text correctly", () => {
+      const state = createReadingState(
+        [
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verse: {
+              type: "verse",
+              number: 1,
+              content: ["En el principio creó Dios los cielos y la tierra."],
+            },
+          },
+        ],
+        {
+          chapterData: signal({
+            book: {
+              id: "GEN",
+              name: "Génesis",
+            },
+          } as BibleReadingState["chapterData"]["value"]),
+          translation: signal({
+            shortName: "NIV",
+          } as BibleReadingState["translation"]["value"]),
+        }
+      );
+
+      expect(formatSelectedVerses(state)).toBe(
+        "En el principio creó Dios los cielos y la tierra. (Génesis 1:1 NIV)"
+      );
+    });
+
+    it("formats RTL languages correctly", () => {
+      const state = createReadingState(
+        [
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verse: {
+              type: "verse",
+              number: 1,
+              content: [
+                "فِي الْبَدْءِ خَلَقَ اللَّهُ السَّمَاوَاتِ وَالْأَرْضَ.",
+              ],
+            },
+          },
+        ],
+        {
+          chapterData: signal({
+            book: {
+              id: "GEN",
+              name: "التكوين",
+            },
+          } as BibleReadingState["chapterData"]["value"]),
+          translation: signal({
+            shortName: "NIV",
+          } as BibleReadingState["translation"]["value"]),
+        }
+      );
+
+      expect(formatSelectedVerses(state)).toBe(
+        "فِي الْبَدْءِ خَلَقَ اللَّهُ السَّمَاوَاتِ وَالْأَرْضَ. (التكوين 1:1 NIV)"
+      );
+    });
+
+    it("returns an empty string when there are no selected verses", () => {
+      const state = createReadingState([]);
+
+      expect(formatSelectedVerses(state)).toBe("");
     });
   });
 

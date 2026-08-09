@@ -265,6 +265,24 @@ describe("createBibleReadingState", () => {
     expect(state.translationId.value).toBe("AAB");
   });
 
+  it("does not silently substitute a different book when the requested book isn't in the translation's book list", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager(), {
+      initialBookId: "NOTABOOK",
+      initialChapterNumber: 1,
+    });
+    await waitForInitialLoad(state);
+
+    // Left exactly as requested — not silently corrected to GEN (the
+    // translation's first book) — so the UI can detect "book not found"
+    // instead of showing substitute content at the wrong URL.
+    expect(state.bookId.value).toBe("NOTABOOK");
+    expect(state.chapterNumber.value).toBe(1);
+    expect(state.error.value).toBeNull();
+    expect(state.translationBooks.value).not.toBeNull();
+    expect(state.chapterData.value).toBeNull();
+  });
+
   it("loads highlights for the current chapter during initial load", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
@@ -2281,6 +2299,60 @@ describe("createBibleReadingState", () => {
     });
   });
 
+  it("retryLoad() repeats the chapter selection that failed", async () => {
+    const responses = createReadingManagerResponseMap();
+    const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+    const chapterResponse = responses[chapterUrl]!;
+    responses[chapterUrl] = createResponse(
+      { error: true },
+      500,
+      "Server Error"
+    );
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    await state.selectChapter("GEN", 2);
+    expect(state.error.value).not.toBeNull();
+    // The position moves optimistically even though the fetch failed; only the
+    // content is left stale (still chapter 1) until a retry succeeds.
+    expect(state.chapterNumber.value).toBe(2);
+    expect(state.chapterData.value?.chapter.number).toBe(1);
+
+    // Network recovers, then the user presses Reload.
+    responses[chapterUrl] = chapterResponse;
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.chapterNumber.value).toBe(2);
+    expect(state.chapterData.value?.chapter.number).toBe(2);
+  });
+
+  it("retryLoad() repeats the initial load when that is what failed", async () => {
+    const responses = createReadingManagerResponseMap();
+    const translationsUrl = makeExampleUrl("/api/available_translations.json");
+    const translationsResponse = responses[translationsUrl]!;
+    responses[translationsUrl] = createResponse(
+      { error: true },
+      500,
+      "Server Error"
+    );
+
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.error.value).not.toBeNull();
+    expect(state.chapterData.value).toBeNull();
+
+    responses[translationsUrl] = translationsResponse;
+    await state.retryLoad();
+
+    expect(state.error.value).toBeNull();
+    expect(state.chapterData.value?.chapter.number).toBe(1);
+  });
+
   describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {
     function createDiscoverManagerMock(
       responses: DiscoverProviderResults[][] = []
@@ -2904,6 +2976,118 @@ describe("createBibleReadingState", () => {
       expect(state.loading.value).toBe(false);
     });
 
+    it("retryLoad() does not run the navigation hooks a second time", async () => {
+      const responses = createReadingManagerResponseMap();
+      const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+      const chapterResponse = responses[chapterUrl]!;
+      responses[chapterUrl] = createResponse({ error: true }, 500, "Error");
+      setWebResponses(responses);
+
+      const manager = createBibleReadingExtensionManager();
+      const navigateNext = vi.fn().mockResolvedValue({ type: "default" });
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({ navigateNext }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      await state.loadNextChapter();
+      expect(navigateNext).toHaveBeenCalledTimes(1);
+      expect(state.error.value).not.toBeNull();
+
+      responses[chapterUrl] = chapterResponse;
+      await state.retryLoad();
+
+      // A hook may act on the reader rather than just answer a question, so a
+      // retry has to resume from the fetch, not from the top of the navigation.
+      expect(navigateNext).toHaveBeenCalledTimes(1);
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.error.value).toBeNull();
+    });
+
+    it("retryLoad() still loads when a hook would now block the navigation", async () => {
+      const responses = createReadingManagerResponseMap();
+      const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+      const chapterResponse = responses[chapterUrl]!;
+      responses[chapterUrl] = createResponse({ error: true }, 500, "Error");
+      setWebResponses(responses);
+
+      const manager = createBibleReadingExtensionManager();
+      let calls = 0;
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => {
+            calls += 1;
+            // Lets the first navigation through, then blocks — an extension's
+            // answer can depend on state that changed in the meantime.
+            return calls === 1 ? { type: "default" } : { type: "prevent" };
+          },
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      await state.loadNextChapter();
+      expect(state.error.value).not.toBeNull();
+
+      responses[chapterUrl] = chapterResponse;
+      await state.retryLoad();
+
+      // Re-asking the hooks would have returned "prevent" here, which bails out
+      // before clearing the error and would leave the failure panel up with
+      // nothing having happened.
+      expect(state.error.value).toBeNull();
+      expect(state.chapterNumber.value).toBe(2);
+    });
+
+    it("retryLoad() replays the chapter a playlist-style hook loaded, without advancing it", async () => {
+      const responses = createReadingManagerResponseMap();
+      const chapterUrl = makeExampleUrl("/api/AAB/GEN/2.json");
+      const chapterResponse = responses[chapterUrl]!;
+      responses[chapterUrl] = createResponse({ error: true }, 500, "Error");
+      setWebResponses(responses);
+
+      const manager = createBibleReadingExtensionManager();
+      let step = 0;
+      let stateRef: BibleReadingState | null = null;
+      manager.registerReadingExtension({
+        id: "playlist",
+        activate: (): ReadingExtensionInstance => ({
+          // The shape PlaylistManager uses: advance the step, drive the load
+          // itself, then report the navigation as blocked.
+          navigateNext: async () => {
+            step += 1;
+            await stateRef!.selectTranslationAndChapter("AAB", "GEN", 1 + step);
+            return { type: "prevent" };
+          },
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      stateRef = state;
+      await waitForInitialLoad(state);
+      state.enableExtension("playlist");
+
+      await state.loadNextChapter();
+      expect(step).toBe(1);
+      expect(state.error.value).not.toBeNull();
+
+      responses[chapterUrl] = chapterResponse;
+      await state.retryLoad();
+
+      // Reload retries the chapter the playlist moved to; it must not advance
+      // the playlist to the step after it.
+      expect(step).toBe(1);
+      expect(state.chapterNumber.value).toBe(2);
+      expect(state.error.value).toBeNull();
+    });
+
     it("resolves navigation hooks by priority (higher first wins)", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const chapterThree = makeChapter(aabBooks, "GEN", 3);
@@ -3257,7 +3441,7 @@ describe("createBibleReadingState", () => {
       expect(listener).toHaveBeenCalledWith({ replace: true });
     });
 
-    it("falls back to a real book when the URL names one the translation lacks", async () => {
+    it("does not fire onNavigate when the URL names a book the translation lacks", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const state = createBibleReadingState(createDataManager(), {
         initialTranslationId: "AAB",
@@ -3269,14 +3453,14 @@ describe("createBibleReadingState", () => {
       state.onNavigate(listener);
 
       await waitForInitialLoad(state);
-      await waitFor(() => !state.isChapterContentStale.value);
 
-      expect(state.bookId.value).toBe("GEN");
+      // No silent substitution to a real book — bookId/chapterNumber stay
+      // exactly as requested so the UI can detect "book not found", and
+      // since nothing was corrected, no navigation event fires.
+      expect(state.bookId.value).toBe("ZZZ");
       expect(state.chapterNumber.value).toBe(1);
-      // The bogus book's request fails, but the corrected position's content
-      // clears it, so the reader is not left looking at an error.
       expect(state.error.value).toBeNull();
-      expect(listener).toHaveBeenCalledWith({ replace: true });
+      expect(listener).not.toHaveBeenCalled();
     });
 
     it("does not fire when the navigation is driven from the URL (updateUrl: false)", async () => {

@@ -7,7 +7,19 @@
  * splitting URL sets across the 50,000-per-file sitemap limit — can be verified
  * without hitting the network.
  */
-import { UI_TO_BIBLE_LANGUAGE_CODES } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import {
+  DEFAULT_UI_LANGUAGE,
+  buildReadingPath,
+} from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
+import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+
+// Re-exported rather than defined here: the app's `canonicalUrl` needs the
+// same Bible-language -> UI-locale mapping, and if the two ever drifted the
+// sitemap would advertise URLs whose own pages point somewhere else.
+export {
+  buildBibleLanguageToUiLocale,
+  bibleLanguageToUiLocale,
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 
 /**
  * The largest number of `<url>` (or `<sitemap>`) entries a single sitemap file
@@ -17,47 +29,6 @@ import { UI_TO_BIBLE_LANGUAGE_CODES } from "@packages/seed-bible/seed-bible/mana
  */
 export const MAX_URLS_PER_SITEMAP = 50000;
 
-/**
- * Builds the inverse of `UI_TO_BIBLE_LANGUAGE_CODES`: a map from a Bible-API
- * language code (ISO 639-3, e.g. "spa") to the single UI locale that should
- * wrap it (e.g. "es").
- *
- * Some UI locales share a Bible language (e.g. `he`/`iw` both map to `heb`,
- * `fil`/`tl` to `tgl`, `no`/`nb` to `nob`/`nor`). Ties are broken by insertion
- * order in `UI_TO_BIBLE_LANGUAGE_CODES`: the first locale listed for a code
- * wins, which is the canonical two-letter code (`he` over `iw`, `fil` over
- * `tl`, `no` over `nb`).
- */
-export function buildBibleLanguageToUiLocale(): Map<string, string> {
-  const map = new Map<string, string>();
-
-  for (const [ui, codes] of Object.entries(UI_TO_BIBLE_LANGUAGE_CODES)) {
-    for (const code of codes) {
-      const key = code.toLowerCase();
-      if (!map.has(key)) {
-        map.set(key, ui);
-      }
-    }
-  }
-
-  return map;
-}
-
-const BIBLE_LANGUAGE_TO_UI_LOCALE = buildBibleLanguageToUiLocale();
-
-/**
- * Resolves the UI locale that maps to a translation's Bible language, or `null`
- * when no supported UI locale covers that language.
- */
-export function bibleLanguageToUiLocale(
-  bibleLanguage: string | null | undefined
-): string | null {
-  if (!bibleLanguage) {
-    return null;
-  }
-  return BIBLE_LANGUAGE_TO_UI_LOCALE.get(bibleLanguage.toLowerCase()) ?? null;
-}
-
 export interface ChapterUrlParams {
   /** Translation ID as it appears in the `translation` query param. */
   translationId: string;
@@ -65,12 +36,17 @@ export interface ChapterUrlParams {
   bookId: string;
   /** 1-based chapter number. */
   chapter: number;
-  /** UI locale for the `lang` query param; omitted when null/undefined. */
+  /**
+   * UI locale for the language path segment. Falls back to
+   * `DEFAULT_UI_LANGUAGE` when null/undefined — the segment is always
+   * present, so a translation whose language maps to no supported UI locale
+   * still gets a URL that doesn't redirect.
+   */
   uiLocale?: string | null;
 }
 
 /**
- * Produces the value for the `translation` query param, mirroring the app's
+ * Produces the translation identifier used in the URL, mirroring the app's
  * `BibleDataManager.buildTranslationId`: the bare translation ID when the
  * catalog endpoint is the app's default endpoint, otherwise the full
  * `…/api/{id}/books.json` URL. Keeping this in lock-step with the app ensures
@@ -94,21 +70,26 @@ export function buildTranslationParam(
 /**
  * Builds a canonical reader URL for a chapter. This mirrors the app's own
  * `SeedBibleStateManager.canonicalUrl` (the on-page source of truth for the
- * shape):
- *   `<origin>/?translation=<id>&book=<BOOK>&chapter=<n>[&lang=<locale>]`
+ * shape) by going through the same `buildReadingPath`:
+ *   `<origin>/<locale>/<translationId>/<book-slug>/<n>`
+ *
+ * The language segment is always spelled out — a 3-segment URL omitting it is
+ * a redirect entry point, not a destination (see `legacyReadingUrlRedirect`
+ * in `entry-ssr.tsx`). Listing the short form here would make every sitemap
+ * entry a redirect that disagrees with the destination page's own
+ * `rel=canonical`.
  */
 export function buildChapterUrl(
   origin: string,
   params: ChapterUrlParams
 ): string {
-  const url = new URL("/", ensureTrailingSlash(origin));
-  url.searchParams.set("translation", params.translationId);
-  url.searchParams.set("book", params.bookId);
-  url.searchParams.set("chapter", String(params.chapter));
-  if (params.uiLocale) {
-    url.searchParams.set("lang", params.uiLocale);
-  }
-  return url.toString();
+  const readingPath = buildReadingPath({
+    language: params.uiLocale || DEFAULT_UI_LANGUAGE,
+    translationId: params.translationId,
+    bookId: params.bookId as BookId,
+    chapter: params.chapter,
+  });
+  return new URL(readingPath, ensureTrailingSlash(origin)).toString();
 }
 
 export interface BookChapters {

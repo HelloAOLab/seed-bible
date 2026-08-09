@@ -336,7 +336,9 @@
 }
 .sb-bible-reader-mobile
   .sb-reader-swipe-panel:has(.sb-translation-license-notice) {
-  padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  /* Trailing chrome clearance when a license line is the last content —
+     chapter content drops its own inset in that case (see below). */
+  padding-bottom: var(--sb-reader-bottom-inset);
 }
 
 .sb-reader-swipe-panel {
@@ -410,7 +412,7 @@
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
 
-  padding-bottom: 8.125rem;
+  padding-bottom: var(--sb-reader-bottom-inset);
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
      Short enough to read as immediate rather than as an animation. */
@@ -421,6 +423,14 @@
      page background. */
   position: relative;
   isolation: isolate;
+}
+
+/* When a translation license notice follows the chapter, only the trailing
+   element reserves the bottom-chrome inset (mobile swipe panel padding, or
+   BelowReaderToolbar on desktop). Keep a small content gap here instead of a
+   second full inset, which stacked badly with a tall mobile verse sheet. */
+.sb-bible-reader:has(.sb-translation-license-notice) .sb-chapter-content {
+  padding-bottom: 1.5rem;
 }
 
 /* The highlight ribbons are drawn here, behind the text: an SVG overlay sized to
@@ -453,6 +463,22 @@
   .sb-highlight-ribbon-enter {
     opacity: 0;
   }
+}
+
+/* A highlight arriving from a shared session (or an extension) is outlined
+   rather than solid, so it reads as somebody else's mark laid over the page
+   instead of one of the reader's own. The reader's highlight is still there
+   underneath and returns to solid when the broadcast goes away. Same colour on
+   the stroke — only the amount of fill differs — so the colour still says who
+   picked what. One opacity serves both themes; the presets are light enough in
+   light mode and dark enough in dark mode to read at the same strength. */
+.sb-highlight-ribbon-broadcast {
+  fill-opacity: 0.5;
+  stroke-width: 2;
+  transition:
+    opacity 0.25s ease,
+    fill 0.25s ease,
+    stroke 0.25s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -559,7 +585,13 @@
   white-space: nowrap;
   vertical-align: middle;
   /* Phase 2 (UI-scaling): gutters in em so they track the reader glyph knob.
-     Color/opacity adopted from develop. */
+     Color/opacity adopted from develop.
+     The leading gutter is the only thing separating a verse number from the
+     end of the previous verse — verse text carries no spaces of its own — so
+     dropping it mashes them together ("...had your fill.²Do not work..."). It
+     has no bearing on the numbers-off case this fix is about: no number is
+     rendered then, which is why the space is inserted in the markup instead
+     (see `needsVerseSpacing` in BibleReader.tsx). */
   margin-inline-start: 0.625em;
   margin-inline-end: 0.3125em;
   color: inherit;
@@ -582,8 +614,144 @@
   font-style: var(--sb-verse-words-of-jesus-font-style);
 }
 
+/* Chapter-load failure state: centred in the reader body, in the reader's own
+   ink rather than an alarming red. Sized in rem so it tracks the UI scale, not
+   the reader glyph knob. */
 .sb-reader-error {
-  color: red;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  /* Fixed rather than a percentage: the reader body is auto-height on desktop,
+     so a percentage min-height would collapse to nothing there. */
+  min-height: 15rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--sb-font-color);
+}
+
+.sb-reader-error-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
+.sb-reader-error-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.sb-reader-error-message {
+  margin: 0;
+  max-width: 26rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-reader-error-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.625rem 1.5rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    background-color 0.2s ease;
+}
+
+.sb-reader-error-retry:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
+}
+
+.sb-reader-error-retry:active {
+  transform: translateY(1px);
+}
+
+.sb-reader-error-retry:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sb-reader-error-retry-spinner {
+  font-size: 1.125rem;
+  line-height: 1;
+  animation: sb-reader-error-retry-spin 0.9s linear infinite;
+}
+
+@keyframes sb-reader-error-retry-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-reader-error-retry-spinner {
+    animation: none;
+  }
+}
+
+.sb-reader-not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+}
+
+.sb-reader-not-found-icon {
+  font-size: 2.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  margin-bottom: 0.25rem;
+}
+
+.sb-reader-not-found-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--sb-font-color);
+}
+
+.sb-reader-not-found-body {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-reader-not-found-action {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--sb-font-family);
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  transition:
+    filter 0.15s ease,
+    background 0.15s ease;
+}
+
+.sb-reader-not-found-action:hover {
+  filter: brightness(0.96);
 }
 
 /* The chapter the reader has navigated away from, still on screen while the one

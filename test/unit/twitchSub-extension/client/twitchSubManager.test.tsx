@@ -108,13 +108,10 @@ describe("CreateTwitchSubState", () => {
   let websocketCtorMock: Mock<any>;
   let errorSpy: Mock;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let fetchMock: Mock;
-
   beforeEach(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
-    fetchMock = vi.spyOn(window, "fetch").mockImplementation(
+    vi.spyOn(window, "fetch").mockImplementation(
       async () =>
         ({
           json: async () => ({
@@ -445,21 +442,20 @@ describe("CreateTwitchSubState", () => {
       }),
     });
 
+    // The reader draws these itself now. Handing it the colour rather than CSS
+    // means a preset resolves against each viewer's theme, and it renders as an
+    // outline — a chat highlight isn't the reader's own.
     expect(decorateVerses).toHaveBeenCalledTimes(2);
     expect(decorateVerses).toHaveBeenNthCalledWith(1, "ROM", 8, 5, {
-      style: {
-        color: "inherit",
-        backgroundColor: null,
-      },
-      className: "sb-highlight-yellow",
+      highlight: { colorId: "yellow" },
       preserveOnChapterChange: true,
     });
     expect(decorateVerses).toHaveBeenNthCalledWith(2, "ROM", 8, [10, 11, 12], {
-      style: {
-        color: "#111111",
-        backgroundColor: "#ffeeaa",
+      highlight: {
+        colorId: "red",
+        customColor: "#ffeeaa",
+        customFontColor: "#111111",
       },
-      className: "sb-highlight-red",
       preserveOnChapterChange: true,
     });
   });

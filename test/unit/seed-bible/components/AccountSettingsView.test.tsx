@@ -30,6 +30,8 @@ function createMockState(
     login: {
       userId: signal<string | null>("user-1"),
       profile: signal<UserProfile | null>(profile),
+      cachedProfile: signal<UserProfile | null>(null),
+      localConfig: signal<Record<string, unknown>>({}),
       isProfileLoading: signal<boolean>(isProfileLoading),
       isSavingProfile: signal<boolean>(false),
       updateProfile,

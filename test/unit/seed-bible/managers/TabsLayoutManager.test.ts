@@ -60,6 +60,15 @@ function createHighlightsManagerMock() {
   };
 }
 
+function createLoginManagerMock() {
+  return {
+    userId: signal<string | null>(null),
+    profile: signal(null),
+    profilePromise: null,
+    updateProfile: vi.fn(),
+  };
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -112,7 +121,8 @@ async function createManagers(
     createDataManager(),
     createHighlightsManagerMock() as any,
     {} as any,
-    createI18nManager(navigation, ["en"])
+    createI18nManager(navigation, ["en"]),
+    createLoginManagerMock() as any
   );
   await waitForTabsToLoad(tabsManager.tabs.value);
   const initialSelectedTabId = tabsManager.selectedTabId.value;

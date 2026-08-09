@@ -3,7 +3,7 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import type { JSX } from "preact";
+import { Fragment, type JSX, type RefObject } from "preact";
 import {
   Suspense,
   useEffect,
@@ -179,6 +179,16 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
+}
+
+/**
+ * A highlight resolved for one verse, plus where it came from. `broadcast` is
+ * true for a highlight carried by a decoration — a session peer's, or an
+ * extension's — as opposed to one the reader saved themselves.
+ */
+interface ResolvedHighlight {
+  highlight: ChapterHighlight;
+  broadcast: boolean;
 }
 
 function hasContentTargeting(decoration: VerseDecoration): boolean {
@@ -527,18 +537,71 @@ function renderChapterContent(
     return null;
   }
 
-  const getVerseHighlight = (verseNumber: number): ChapterHighlight | null => {
+  const getVerseDecorations = (verseNumber: number) => {
+    return decorations.filter(
+      (decoration) =>
+        (!decoration.translationId ||
+          decoration.translationId === chapterData.translation.id) &&
+        decoration.bookId === chapterData.book.id &&
+        decoration.chapterNumber === chapterData.chapter.number &&
+        decoration.verses.includes(verseNumber)
+    );
+  };
+
+  // Decorations asking to be drawn as highlights (`decoration.highlight`),
+  // flattened to one entry per verse. Content-targeted decorations are skipped:
+  // the ribbon layer works per verse-run and can't paint a text fragment.
+  // Later decorations win, matching how their CSS is layered below.
+  const decorationHighlights = new Map<number, ChapterHighlight>();
+  for (const decoration of decorations) {
+    if (!decoration.highlight || hasContentTargeting(decoration)) {
+      continue;
+    }
+    if (
+      (decoration.translationId &&
+        decoration.translationId !== chapterData.translation.id) ||
+      decoration.bookId !== chapterData.book.id ||
+      decoration.chapterNumber !== chapterData.chapter.number
+    ) {
+      continue;
+    }
+    for (const verseNumber of decoration.verses) {
+      decorationHighlights.set(verseNumber, {
+        ...decoration.highlight,
+        verse: verseNumber,
+      });
+    }
+  }
+
+  // `showHighlights` hides the reader's *saved* highlights. Decoration
+  // highlights are a live signal from a session peer or an extension, so they
+  // stay visible either way — as they did when they were plain CSS.
+  //
+  // `broadcast` distinguishes the two for rendering: a decoration highlight is
+  // drawn as an outline, a saved one as a solid ribbon. A broadcast covers the
+  // reader's own highlight rather than replacing it, so the outline is what
+  // says "this isn't yours, and yours is still underneath".
+  const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    const decorated = decorationHighlights.get(verseNumber);
+    if (decorated) {
+      return { highlight: decorated, broadcast: true };
+    }
+
+    if (!scriptureElements.showHighlights) {
+      return null;
+    }
+
     for (const highlight of highlights) {
       if (typeof highlight.verse === "number") {
         if (highlight.verse === verseNumber) {
-          return highlight;
+          return { highlight, broadcast: false };
         }
         continue;
       }
 
       const [start, end] = highlight.verse;
       if (verseNumber >= start && verseNumber <= end) {
-        return highlight;
+        return { highlight, broadcast: false };
       }
     }
 
@@ -549,27 +612,43 @@ function renderChapterContent(
   // ChapterContent), so a highlighted run's wrapper paints no background itself.
   // It only carries the readable font color and a `fill` (a CSS-var reference for
   // preset colors, or the custom hex) that the layer reads back off the DOM.
-  const getHighlightPresentation = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  const getHighlightPresentation = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return {
         className: "",
         style: undefined as JSX.CSSProperties | undefined,
         fill: null as string | null,
+        broadcast: false,
       };
     }
 
-    if (highlight.customColor && highlight.customFontColor) {
+    const { highlight, broadcast } = resolved;
+
+    // A custom colour stands on its own — the font colour is optional and the
+    // text inherits when it's absent. Requiring both meant a highlight with
+    // only a custom colour silently rendered as its preset instead.
+    if (highlight.customColor) {
       return {
         className: "sb-highlight",
-        style: { color: highlight.customFontColor } as JSX.CSSProperties,
+        style: highlight.customFontColor
+          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
+          : undefined,
         fill: highlight.customColor,
+        broadcast,
       };
     }
 
+    // The `transparent` fallback matters: a colorId with no matching theme
+    // variable would otherwise make `fill` invalid at computed-value time, and
+    // `fill` inherits down to its initial value of black — a solid black bar
+    // behind the verse. Colour ids don't all come from our own picker (an
+    // extension can pass one through from a chat message), so an unrecognised
+    // one has to fail invisible.
     return {
       className: `sb-highlight sb-highlight-${highlight.colorId}`,
       style: undefined as JSX.CSSProperties | undefined,
-      fill: `var(--sb-highlight-${highlight.colorId}-color)`,
+      fill: `var(--sb-highlight-${highlight.colorId}-color, transparent)`,
+      broadcast,
     };
   };
 
@@ -597,25 +676,18 @@ function renderChapterContent(
     );
   };
 
-  const getVerseDecorations = (verseNumber: number) => {
-    return decorations.filter(
-      (decoration) =>
-        (!decoration.translationId ||
-          decoration.translationId === chapterData.translation.id) &&
-        decoration.bookId === chapterData.book.id &&
-        decoration.chapterNumber === chapterData.chapter.number &&
-        decoration.verses.includes(verseNumber)
-    );
-  };
-
-  const getHighlightColorKey = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  // Also keys on `broadcast`, so a broadcast highlight never merges into one run
+  // with a saved highlight of the same colour — they draw differently.
+  const getHighlightColorKey = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return null;
     }
-    if (highlight.customColor && highlight.customFontColor) {
-      return `custom:${highlight.customColor}:${highlight.customFontColor}`;
+    const { highlight, broadcast } = resolved;
+    const prefix = broadcast ? "broadcast:" : "";
+    if (highlight.customColor) {
+      return `${prefix}custom:${highlight.customColor}:${highlight.customFontColor ?? ""}`;
     }
-    return highlight.colorId;
+    return `${prefix}${highlight.colorId}`;
   };
 
   // Renders a single verse's `<span class="sb-verse">`. The highlight background
@@ -794,6 +866,21 @@ function renderChapterContent(
   const entries = chapterData.chapter.content;
   const nodes: (JSX.Element | null)[] = [];
 
+  // Verse text carries no leading/trailing spaces of its own — with numbers on,
+  // the number's own margins are what keep one verse off the back of the
+  // previous one. Hide the numbers and adjacent verses collide
+  // ("...had your fill.Do not work..."), so emit a real space between them.
+  // It sits between the verse spans rather than inside one, so highlight
+  // ribbons and verse selection still stop at a verse's own glyphs, and it
+  // collapses away at a line break like any other space.
+  const needsVerseSpacing = !scriptureElements.showVerseNumbers;
+  let previousWasVerse = false;
+
+  // Keyed so the separator is a first-class sibling of the keyed verses it sits
+  // between, rather than an unkeyed string mixed in among them. A fragment adds
+  // nothing to the DOM — what renders is the bare text node either way.
+  const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
+
   for (let i = 0; i < entries.length; ) {
     const entry = entries[i];
 
@@ -817,12 +904,14 @@ function renderChapterContent(
           {heading}
         </h3>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (entry.type === "line_break") {
       nodes.push(<div key={`break-${i}`} className="sb-line-break" />);
+      previousWasVerse = false;
       i += 1;
       continue;
     }
@@ -842,15 +931,19 @@ function renderChapterContent(
           )}
         </p>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (isVerseEntry(entry)) {
-      const highlight = scriptureElements.showHighlights
-        ? getVerseHighlight(entry.number)
-        : null;
+      const highlight = getVerseHighlight(entry.number);
       const colorKey = getHighlightColorKey(highlight);
+
+      if (needsVerseSpacing && previousWasVerse) {
+        nodes.push(verseSeparator(`space-${i}`));
+      }
+      previousWasVerse = true;
 
       if (colorKey === null) {
         nodes.push(renderVerseNode(entry, i));
@@ -876,11 +969,7 @@ function renderChapterContent(
           if (!isVerseEntry(next)) {
             break;
           }
-          const nextKey = getHighlightColorKey(
-            scriptureElements.showHighlights
-              ? getVerseHighlight(next.number)
-              : null
-          );
+          const nextKey = getHighlightColorKey(getVerseHighlight(next.number));
           const nextIsPoetry = splitVerseIntoSegments(next.content).some(
             (s) => s.type === "poetry"
           );
@@ -908,10 +997,19 @@ function renderChapterContent(
           style={presentation.style}
           data-highlight-fill={presentation.fill ?? undefined}
           data-highlight-key={runKey}
+          data-highlight-broadcast={presentation.broadcast ? "true" : undefined}
         >
-          {runIndices.map((idx) =>
-            renderVerseNode(entries[idx] as ChapterVerse, idx)
-          )}
+          {runIndices.flatMap((idx, runIndex) => {
+            const verseNode = renderVerseNode(
+              entries[idx] as ChapterVerse,
+              idx
+            );
+            // Same separator as between top-level verses; inside a run it falls
+            // within the ribbon, which is correct — the whole run is one fill.
+            return needsVerseSpacing && runIndex > 0
+              ? [verseSeparator(`space-${idx}`), verseNode]
+              : [verseNode];
+          })}
         </span>
       );
       i = j;
@@ -945,8 +1043,11 @@ export interface BibleReaderMobileChromeProps {
   onOpenMobileSettings: () => void;
   onCloseMobileSettings: () => void;
   onOpenAllSettings: () => void;
-  swipeViewportRefCallback: (el: HTMLDivElement | null) => void;
-  swipeTrackRefCallback: (el: HTMLDivElement | null) => void;
+  // Plain refs: these only need `.current` filled in, which Preact does for a
+  // ref object on its own.
+  swipeViewportRef: RefObject<HTMLDivElement>;
+  swipeTrackRef: RefObject<HTMLDivElement>;
+  // A callback because it feeds component state, not just a ref.
   currentScrollerRefCallback: (el: HTMLDivElement | null) => void;
 }
 
@@ -973,6 +1074,7 @@ interface Ribbon {
   key: string;
   d: string;
   fill: string;
+  broadcast: boolean;
   first: number;
   last: number;
   enter: boolean;
@@ -992,7 +1094,7 @@ const RIBBON_FADE_MS = 250;
  * Does not apply on a cold start — with no chapter on screen there is nothing
  * to dim, so the placeholder shows straight away.
  */
-const CHAPTER_SKELETON_DELAY_MS = 500;
+export const CHAPTER_SKELETON_DELAY_MS = 500;
 
 /**
  * Bar widths for the chapter loading placeholder, one array per paragraph.
@@ -1127,6 +1229,7 @@ function ChapterContent(props: ChapterContentProps) {
         el,
         key: el.getAttribute("data-highlight-key") || `i${index}`,
         fill: el.getAttribute("data-highlight-fill") ?? "",
+        broadcast: el.getAttribute("data-highlight-broadcast") === "true",
         lines: collectLineRects(el, box.left, box.top),
         leadPad: padX,
         trailPad: padX,
@@ -1158,6 +1261,7 @@ function ChapterContent(props: ChapterContentProps) {
       key: string;
       d: string;
       fill: string;
+      broadcast: boolean;
       first: number;
       last: number;
     }> = [];
@@ -1177,6 +1281,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: `${chapterId}:${run.key}`,
         d,
         fill: run.fill,
+        broadcast: run.broadcast,
         first,
         last,
       });
@@ -1221,6 +1326,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: r.key,
         d: r.d,
         fill: r.fill,
+        broadcast: r.broadcast,
         first: r.first,
         last: r.last,
         enter,
@@ -1314,14 +1420,19 @@ function ChapterContent(props: ChapterContentProps) {
         {ribbons.map((ribbon) => (
           <path
             key={ribbon.key}
-            className={
-              ribbon.enter
-                ? "sb-highlight-ribbon sb-highlight-ribbon-enter"
-                : "sb-highlight-ribbon"
-            }
+            className={[
+              "sb-highlight-ribbon",
+              ribbon.enter ? "sb-highlight-ribbon-enter" : "",
+              ribbon.broadcast ? "sb-highlight-ribbon-broadcast" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             d={ribbon.d}
             style={{
               fill: ribbon.fill,
+              // Same colour on the stroke; the class decides how much of the
+              // fill shows through.
+              stroke: ribbon.broadcast ? ribbon.fill : undefined,
               opacity: ribbon.exiting ? 0 : undefined,
             }}
           />
@@ -1386,6 +1497,18 @@ export function BibleReader(props: BibleReaderProps) {
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
   );
+  // The requested book wasn't found in this translation's book list — a
+  // genuinely unrecognized book/name, or one absent from this specific
+  // translation. `loadInitialData` deliberately stops rather than silently
+  // substituting a different book's content once loading settles.
+  const bookNotFound = computed(
+    () =>
+      !loading.value &&
+      !error.value &&
+      translationBooks.value !== null &&
+      bookId.value !== null &&
+      currentBook.value === null
+  );
   const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
@@ -1400,7 +1523,7 @@ export function BibleReader(props: BibleReaderProps) {
   // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
   const readerFontSizeClass = `sb-font-size-${(
-    state?.config?.config.value.fontSize ?? "M"
+    state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
 
   // Hard-gated off under SSR, which is what keeps both the dimming and the
@@ -1554,6 +1677,21 @@ export function BibleReader(props: BibleReaderProps) {
     </SkeletonContainer>
   );
 
+  // Keep the failure state on screen while a retry is in flight — `retryLoad()`
+  // clears `error` as it starts, so without this the panel would flash back to
+  // the (still empty) chapter body before the new request settles.
+  const [retrying, setRetrying] = useState(false);
+  const retryChapterLoad = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await readingState.retryLoad();
+    } finally {
+      setRetrying(false);
+    }
+  };
+  const showLoadError = (!!error.value && !loading.value) || retrying;
+
   const renderMainContent = () => (
     <>
       {isMobile &&
@@ -1562,11 +1700,87 @@ export function BibleReader(props: BibleReaderProps) {
           chapterNumber.value ?? ""
         )}
 
-      {error.value && !loading.value && (
-        <p className="sb-reader-error">{error.value}</p>
+      {bookNotFound.value && (
+        <div className="sb-reader-not-found">
+          <span
+            className="material-symbols-outlined sb-reader-not-found-icon"
+            aria-hidden="true"
+          >
+            search_off
+          </span>
+          <p className="sb-reader-not-found-title">
+            {t("book-not-found-title", { defaultValue: "Book not found" })}
+          </p>
+          <p className="sb-reader-not-found-body">
+            {t("book-not-found-message", {
+              defaultValue:
+                "We couldn't find that book in {{translationName}}.",
+              translationName:
+                translation.value?.name ?? translationId.value ?? "",
+            })}
+          </p>
+          {translationBooks.value?.books[0] && (
+            <button
+              type="button"
+              className="sb-reader-not-found-action"
+              onClick={() => {
+                const firstBook = translationBooks.value!.books[0]!;
+                void readingState.selectChapter(
+                  firstBook.id,
+                  firstBook.firstChapterNumber ?? 1
+                );
+              }}
+            >
+              {t("book-not-found-action", {
+                defaultValue: "Go to {{bookName}} {{chapterNumber}}",
+                bookName: translationBooks.value.books[0].name,
+                chapterNumber:
+                  translationBooks.value.books[0].firstChapterNumber ?? 1,
+              })}
+            </button>
+          )}
+        </div>
       )}
 
-      {!error.value &&
+      {showLoadError && (
+        <div className="sb-reader-error" role="alert">
+          <span
+            className="material-symbols-outlined sb-reader-error-icon"
+            aria-hidden="true"
+          >
+            cloud_off
+          </span>
+          <h2 className="sb-reader-error-title">
+            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
+          </h2>
+          <p className="sb-reader-error-message">
+            {t("chapter-unavailable-description", {
+              defaultValue:
+                "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-reader-error-retry"
+            onClick={() => void retryChapterLoad()}
+            disabled={retrying}
+            aria-busy={retrying}
+          >
+            {retrying && (
+              <span
+                className="material-symbols-outlined sb-reader-error-retry-spinner"
+                aria-hidden="true"
+              >
+                progress_activity
+              </span>
+            )}
+            {t("reload", { defaultValue: "Reload" })}
+          </button>
+        </div>
+      )}
+
+      {!showLoadError &&
+        !bookNotFound.value &&
         (showChapterSkeleton ? (
           renderChapterSkeleton()
         ) : (
@@ -1596,7 +1810,7 @@ export function BibleReader(props: BibleReaderProps) {
           </Suspense>
         ))}
 
-      {!availableTranslations.value && !error.value && (
+      {!availableTranslations.value && !showLoadError && (
         <p>
           {t("no-translations-available", {
             defaultValue: "No translations available.",
@@ -1604,7 +1818,7 @@ export function BibleReader(props: BibleReaderProps) {
         </p>
       )}
 
-      {!error.value && translationLicenseNotice.value.length > 0 && (
+      {!showLoadError && translationLicenseNotice.value.length > 0 && (
         <>
           <p className="sb-translation-license-notice">
             {translationLicenseNotice.value}
@@ -1713,11 +1927,11 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
 
           <div
-            ref={mobileChrome?.swipeViewportRefCallback}
+            ref={mobileChrome?.swipeViewportRef}
             className="sb-reader-swipe-viewport"
           >
             <div
-              ref={mobileChrome?.swipeTrackRefCallback}
+              ref={mobileChrome?.swipeTrackRef}
               className="sb-reader-swipe-track"
             >
               <div

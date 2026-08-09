@@ -126,6 +126,8 @@ export interface VerseDecoration {
   containerClassName?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+  /** Renders the decorated verses as a highlight. See `VerseDecorationInput`. */
+  highlight?: Omit<ChapterHighlight, "verse">;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
   removeAfterMs?: number;
 
@@ -149,6 +151,20 @@ export interface VerseDecorationInput {
 
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
+
+  /**
+   * Renders the decorated verses as a highlight, drawn by the same SVG ribbon
+   * layer as the reader's own highlights — so a preset `colorId` resolves
+   * against each viewer's active theme rather than a colour baked in here.
+   *
+   * Prefer this over hand-writing `className`/`style`: the reader paints
+   * highlight backgrounds in the ribbon layer, not in CSS, so a
+   * `sb-highlight-<id>` class alone sets only the font colour.
+   *
+   * Takes precedence over a saved highlight on the same verse.
+   */
+  highlight?: Omit<ChapterHighlight, "verse">;
+
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
   removeAfterMs?: number;
 
@@ -222,6 +238,13 @@ export interface BibleReadingState {
   isChapterContentStale: ReadonlySignal<boolean>;
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
+  /**
+   * Re-runs the most recent load operation — initial load, translation/book/
+   * chapter selection, or next/previous navigation — so a failed load can be
+   * retried without the user losing their place. Falls back to reloading the
+   * initial data when no load has been attempted yet.
+   */
+  retryLoad: () => Promise<void>;
   /**
    * Resolves once the first chapter load reaches a terminal outcome: content
    * arrived, the load failed, or (during SSR only) it exceeded a deadline.
@@ -537,6 +560,76 @@ export const UI_TO_BIBLE_LANGUAGE_CODES: Record<string, string[]> = {
   lo: ["lao"],
   mn: ["mon", "khk"],
 };
+
+/**
+ * Builds the inverse of `UI_TO_BIBLE_LANGUAGE_CODES`: a map from a Bible-API
+ * language code (ISO 639-3, e.g. "spa") to the single UI locale that should
+ * wrap it (e.g. "es").
+ *
+ * Some UI locales share a Bible language (e.g. `he`/`iw` both map to `heb`,
+ * `fil`/`tl` to `tgl`, `no`/`nb` to `nob`/`nor`). Ties are broken by insertion
+ * order in `UI_TO_BIBLE_LANGUAGE_CODES`: the first locale listed for a code
+ * wins, which is the canonical two-letter code (`he` over `iw`, `fil` over
+ * `tl`, `no` over `nb`).
+ */
+export function buildBibleLanguageToUiLocale(): Map<string, string> {
+  const map = new Map<string, string>();
+
+  for (const [ui, codes] of Object.entries(UI_TO_BIBLE_LANGUAGE_CODES)) {
+    for (const code of codes) {
+      const key = code.toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, ui);
+      }
+    }
+  }
+
+  return map;
+}
+
+const BIBLE_LANGUAGE_TO_UI_LOCALE = buildBibleLanguageToUiLocale();
+
+/**
+ * Resolves the UI locale that maps to a translation's Bible language, or
+ * `null` when no supported UI locale covers that language.
+ *
+ * Shared by the sitemap generator (`script/lib/sitemap.ts`) and the app's own
+ * `canonicalUrl`, which must agree on the language segment or the sitemap
+ * would advertise URLs whose pages disown them.
+ */
+export function bibleLanguageToUiLocale(
+  bibleLanguage: string | null | undefined
+): string | null {
+  if (!bibleLanguage) {
+    return null;
+  }
+  return BIBLE_LANGUAGE_TO_UI_LOCALE.get(bibleLanguage.toLowerCase()) ?? null;
+}
+
+const UI_LOCALE_BY_DEFAULT_TRANSLATION_ID = new Map<string, string>(
+  Array.from(DEFAULT_TRANSLATIONS_BY_LANGUAGE, ([ui, translation]) => [
+    translation.id,
+    ui,
+  ])
+);
+
+/**
+ * The UI locale a translation is the hardcoded default for, or `null` if it
+ * isn't one.
+ *
+ * A static lookup, unlike `bibleLanguageToUiLocale`, which needs the
+ * translation's `language` from the catalog. That matters on the server, where
+ * the catalog may not have arrived (or may have failed) but the URL still names
+ * a translation we need a canonical language for.
+ */
+export function uiLocaleForDefaultTranslation(
+  translationId: string | null | undefined
+): string | null {
+  if (!translationId) {
+    return null;
+  }
+  return UI_LOCALE_BY_DEFAULT_TRANSLATION_ID.get(translationId) ?? null;
+}
 
 function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
@@ -1083,7 +1176,7 @@ export function createBibleReadingState(
   const initialChapterLoadSettled = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
-  const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
+  const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
     signal<ChapterHighlights>({
       highlights: [],
     })
@@ -2152,6 +2245,15 @@ export function createBibleReadingState(
   };
 
   /**
+   * The load that is currently in flight (or was the last one to run), kept so
+   * `retryLoad()` can repeat exactly what failed. Every direct navigation entry
+   * point records itself here — except the navigation-hook step of
+   * next/previous navigation, so that retrying never re-runs a hook that may
+   * have already acted (see `navigateAdjacent`).
+   */
+  let lastLoadAttempt: (() => Promise<void>) | null = null;
+
+  /**
    * Moves one chapter forward or back.
    *
    * The position write is synchronous — no `await` runs before it in the common
@@ -2183,6 +2285,11 @@ export function createBibleReadingState(
     if (!chapterMatchesPosition(chapter, from) || !chapter) {
       return;
     }
+
+    // Recorded here, not at the top of `navigateAdjacent`: the hooks already
+    // ran and declined to act, so a retry must resume from this fetch rather
+    // than ask them again.
+    lastLoadAttempt = () => navigateByChapterLink(direction, from);
 
     beginRequest();
     // Captured, not bumped: superseding here would strand the request already
@@ -2260,6 +2367,14 @@ export function createBibleReadingState(
       return;
     }
 
+    // Recorded here, not at the top of `navigateAdjacent`, for the same reason
+    // as `navigateByChapterLink`: the hooks already ran, so retrying must not
+    // ask them again — just re-apply the same target, which is what makes the
+    // loader retry its fetch.
+    lastLoadAttempt = () => {
+      applyPosition(target);
+      return whenContentSettled(target);
+    };
     applyPosition(target);
     await whenContentSettled(target);
   };
@@ -2267,6 +2382,7 @@ export function createBibleReadingState(
   const loadPreviousChapter = () => navigateAdjacent("previous");
 
   const selectTranslation = async (translation: string) => {
+    lastLoadAttempt = () => selectTranslation(translation);
     beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(translation);
@@ -2312,6 +2428,7 @@ export function createBibleReadingState(
       return;
     }
 
+    lastLoadAttempt = () => selectBook(book);
     const target: ReadingPosition = {
       translationId: activeTranslationId,
       bookId: book,
@@ -2327,6 +2444,13 @@ export function createBibleReadingState(
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
   ) => {
+    lastLoadAttempt = () =>
+      selectTranslationAndChapter(
+        nextTranslationIdOrUrl,
+        nextBookId,
+        nextChapterNumber,
+        options
+      );
     beginRequest();
     try {
       const nextTranslationId = await resolveTranslationInput(
@@ -2366,6 +2490,7 @@ export function createBibleReadingState(
   };
 
   const selectChapter = async (book: string, chapter: number) => {
+    lastLoadAttempt = () => selectChapter(book, chapter);
     const target: ReadingPosition = {
       translationId: translationId.peek(),
       bookId: book,
@@ -2378,6 +2503,7 @@ export function createBibleReadingState(
   const loadNextChapter = () => navigateAdjacent("next");
 
   const loadInitialData = async () => {
+    lastLoadAttempt = loadInitialData;
     beginRequest();
     error.value = null;
 
@@ -2416,8 +2542,28 @@ export function createBibleReadingState(
 
       const requestedBookId = bookId.value;
       const selectedBook = requestedBookId
-        ? (books.books.find((book) => book.id === requestedBookId) ?? firstBook)
+        ? books.books.find((book) => book.id === requestedBookId)
         : firstBook;
+
+      if (!selectedBook) {
+        // The requested book isn't in this translation's book list — either
+        // a genuinely unrecognized book/name, or a book simply absent from
+        // this specific translation. Don't silently substitute a different
+        // book's content at this URL: leave bookId/chapterNumber exactly as
+        // requested so the UI can detect "book not found" (BibleReader's
+        // `currentBook` lookup naturally comes back null) and offer to load
+        // the translation's first book instead.
+        //
+        // The reactive content-loading effect fires off the raw position
+        // signals as soon as they exist, before this catalog-backed check
+        // completes — so a bad book id may already have a doomed request in
+        // flight (or land later with a fetch error). Bump the generation and
+        // abort it so that request's `error.value` write never lands.
+        loadGeneration += 1;
+        abortOpenContentRequest();
+        error.value = null;
+        return;
+      }
 
       const target: ReadingPosition = {
         translationId: nextTranslationId,
@@ -2455,6 +2601,10 @@ export function createBibleReadingState(
       // means the HTTP request never completes.
       initialChapterLoadSettled.value = true;
     }
+  };
+
+  const retryLoad = async () => {
+    await (lastLoadAttempt ?? loadInitialData)();
   };
 
   const selectFootnote = (noteId: number | null) => {
@@ -2775,6 +2925,7 @@ export function createBibleReadingState(
     selectedFootnote,
     loading,
     error,
+    retryLoad,
     scrollPosition,
     scrollToVerse,
     selectVerse,
