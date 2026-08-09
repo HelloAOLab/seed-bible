@@ -382,6 +382,7 @@ describe("render() server-rendered meta tags", () => {
     "<!doctype html><html><head>",
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
+    '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -468,6 +469,21 @@ describe("render() server-rendered meta tags", () => {
     )?.[1];
     expect(injected).toBeDefined();
     expect(JSON.parse(injected as string)).toMatchObject(config);
+  });
+
+  it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<string, unknown>;
+    const urls = Object.keys(seedData);
+    // The render fetches (at least) the chapter it displays — everything
+    // else the client would otherwise refetch on top of that.
+    expect(urls.some((url) => url.includes("/AAB/GEN/1.json"))).toBe(true);
   });
 
   // The review's complaint about the sitemap was not just that its URLs

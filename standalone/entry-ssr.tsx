@@ -43,6 +43,9 @@ export interface RenderOptions {
    * Should have the following placeholders:
    * - `<!--APP_HTML-->` where the app's rendered HTML should be injected.
    * - `<!--CONFIG_JSON-->` where the JSON-serialized config should be injected (for hydration).
+   * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
+   *   should be injected, so the client can seed its own API cache with data
+   *   the server already fetched instead of re-fetching it.
    * - `<!--META-->` where any additional meta tags should be injected (optional).
    *
    * The host server loads this from disk at startup and passes it to the render function on each request, allowing it to be customized or overridden per request if needed.
@@ -426,11 +429,18 @@ export async function render(
   );
 
   const configJson = escapeForScript(JSON.stringify(config));
+  // Snapshotted after the render above settles, so it includes every
+  // response the render actually fetched (translations, book catalog,
+  // chapter content) — that's what lets the client skip re-fetching them.
+  const seedJson = escapeForScript(
+    JSON.stringify(state.bibleData.api.snapshotResponseCache())
+  );
 
   return {
     html: options.html
       .replace("<!-- META -->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
       .replace("<!-- CONFIG_JSON -->", configJson)
+      .replace("<!-- SEED_JSON -->", seedJson)
       .replace("<!-- APP_HTML -->", appHtml),
     ...(notFound ? { notFound: true as const } : {}),
   };
