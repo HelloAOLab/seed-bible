@@ -98,6 +98,22 @@ export interface FilterTranslationGroupsOptions {
   popularLanguages?: string[];
 }
 
+export interface FilteredTranslationGroups {
+  /** The page of language groups to render, after sorting and the limit. */
+  groups: TranslationLanguageGroup[];
+  /**
+   * How many groups matched the search and view mode *before* the limit was
+   * applied — i.e. how many the reader could reach by paging.
+   *
+   * This is what "show more" must be judged against, not the size of the whole
+   * catalog. Most languages have no complete translation, so in "complete" mode
+   * the catalog's ~1000 languages collapse to a little over a hundred; comparing
+   * the limit to the catalog total left a "show more" control on screen that
+   * could never reveal anything.
+   */
+  totalMatching: number;
+}
+
 /**
  * Applies the picker's search, view-mode and limit rules to the language
  * groups, sorting the selected translation's language to the top.
@@ -107,7 +123,7 @@ export interface FilterTranslationGroupsOptions {
  */
 export function filterTranslationGroups(
   options: FilterTranslationGroupsOptions
-): TranslationLanguageGroup[] {
+): FilteredTranslationGroups {
   const {
     groups,
     query,
@@ -252,13 +268,18 @@ export function filterTranslationGroups(
     return a.language.localeCompare(b.language);
   };
 
+  // Everything that matches, before the limit — the denominator for paging.
+  const matching =
+    query !== ""
+      ? filterByMode(filterByQuery(groups, query.toLowerCase()))
+      : filterByMode(groups);
+
   // Slice-then-sort when searching, sort-then-slice otherwise: preserved from
   // the reader's original filter so result sets stay identical.
-  if (query !== "") {
-    const lowercaseQuery = query.toLowerCase();
-    const queryFiltered = filterByQuery(groups, lowercaseQuery);
-    return filterByMode(queryFiltered).slice(0, limit).sort(sortFn);
-  }
+  const paged =
+    query !== ""
+      ? matching.slice(0, limit).sort(sortFn)
+      : [...matching].sort(sortFn).slice(0, limit);
 
-  return filterByMode(groups).sort(sortFn).slice(0, limit);
+  return { groups: paged, totalMatching: matching.length };
 }

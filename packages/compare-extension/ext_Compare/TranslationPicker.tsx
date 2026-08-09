@@ -41,7 +41,7 @@ export function TranslationPicker(props: {
   const currentTranslationId = state.currentTranslationId.value;
 
   const allGroups = groupTranslationsByLanguage(translations);
-  const groups = filterTranslationGroups({
+  const { groups, totalMatching } = filterTranslationGroups({
     groups: allGroups,
     query,
     viewMode: showAllLanguages.value,
@@ -101,8 +101,11 @@ export function TranslationPicker(props: {
         onShowAllTranslations={() => {
           showAllLanguages.value = "all";
         }}
-        canLoadMore={limit < allGroups.length && groups.length >= PAGE_SIZE}
-        totalGroupCount={allGroups.length}
+        // Against what the current filter actually matches, not the whole
+        // catalog — most languages have no complete translation, so the
+        // catalog total would leave a control that reveals nothing.
+        canLoadMore={limit < totalMatching}
+        totalGroupCount={totalMatching}
         onLoadMore={() => setLimit((current) => current + PAGE_SIZE)}
       />
 

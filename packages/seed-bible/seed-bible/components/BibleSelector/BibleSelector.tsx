@@ -1291,12 +1291,12 @@ const TranslationModal = (props: {
     selectingTranslation,
     showCustomTranslation,
     allowedTranslationLimit,
-    apiTranslations,
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
     pendingOfflineDelete,
     filteredApiTranslations,
+    matchingTranslationGroupCount,
     selectedTranslation,
     pickTranslation,
     setOpen,
@@ -1311,14 +1311,14 @@ const TranslationModal = (props: {
     void bibleDataManager.offline.checkForUpdates();
   }, []);
 
-  // Helper function to check if should show load more button
+  // Judged against how many groups actually match the current search and view
+  // mode, not the size of the whole catalog: in "complete" mode most of the
+  // catalog's languages have no complete translation, so comparing against the
+  // catalog total left a control on screen that could not reveal anything.
   const shouldShowLoadMoreButton = (
-    filteredCount: number,
     allowedLimit: number,
-    totalCount: number
-  ): boolean => {
-    return allowedLimit < totalCount && filteredCount >= 50;
-  };
+    matchingCount: number
+  ): boolean => allowedLimit < matchingCount;
 
   // The list itself is the shared `TranslationList`, so the reader and the
   // Compare pane group, search and render translations the same way. Only the
@@ -1341,11 +1341,10 @@ const TranslationModal = (props: {
         showAllLanguages.value = "all";
       }}
       canLoadMore={shouldShowLoadMoreButton(
-        filteredApiTranslations.value.length,
         allowedTranslationLimit.value,
-        apiTranslations.value.length
+        matchingTranslationGroupCount.value
       )}
-      totalGroupCount={apiTranslations.value.length}
+      totalGroupCount={matchingTranslationGroupCount.value}
       onLoadMore={() => {
         allowedTranslationLimit.value = allowedTranslationLimit.value + 50;
       }}

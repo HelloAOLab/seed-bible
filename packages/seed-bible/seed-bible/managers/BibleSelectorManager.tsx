@@ -199,6 +199,14 @@ export interface BibleSelectorState {
   pendingOfflineDelete: Signal<Translation | null>;
   inputValue: Signal<string>;
   filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
+
+  /**
+   * How many language groups match the current search and view mode before the
+   * `allowedTranslationLimit` page size is applied. What "show more" is judged
+   * against — the unfiltered catalog total would keep the control on screen
+   * long after paging can reveal anything.
+   */
+  matchingTranslationGroupCount: ReadonlySignal<number>;
   handleTranslationAddition: () => void;
   openTabs: () => void;
   bookmarks: BookmarksManager;
@@ -835,16 +843,23 @@ export function createBibleSelectorState(
     }
   });
 
+  const pagedApiTranslations = computed(() =>
+    filterTranslationGroups({
+      groups: apiTranslations.value,
+      query: languageQuery.value,
+      viewMode: showAllLanguages.value,
+      limit: allowedTranslationLimit.value,
+      selectedTranslation: selectedTranslation.value,
+      popularLanguages: defaultTranslations.value,
+    })
+  );
+
   const filteredApiTranslations = computed<Array<TranslationLanguageGroup>>(
-    () =>
-      filterTranslationGroups({
-        groups: apiTranslations.value,
-        query: languageQuery.value,
-        viewMode: showAllLanguages.value,
-        limit: allowedTranslationLimit.value,
-        selectedTranslation: selectedTranslation.value,
-        popularLanguages: defaultTranslations.value,
-      })
+    () => pagedApiTranslations.value.groups
+  );
+
+  const matchingTranslationGroupCount = computed(
+    () => pagedApiTranslations.value.totalMatching
   );
 
   effect(() => {
@@ -902,6 +917,7 @@ export function createBibleSelectorState(
     pendingOfflineDelete,
     inputValue,
     filteredApiTranslations,
+    matchingTranslationGroupCount,
     handleTranslationAddition,
     openTabs,
     bookmarks,
