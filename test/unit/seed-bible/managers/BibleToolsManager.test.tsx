@@ -333,6 +333,34 @@ describe("createBibleToolsManager", () => {
       tools.find((tool) => tool.id === CUSTOM_TOOL_ID)?.visible.value
     ).toBe(false);
   });
+  it("omits tools listed in disabledToolbarTools", () => {
+    const manager = createBibleToolsManager({
+      ...testBranding,
+      disabledToolbarTools: ["open-search", "share"],
+    });
+
+    const context = createContext();
+    const ids = manager.getToolbarTools(context).map((tool) => tool.id);
+
+    expect(ids).not.toContain("open-search");
+    expect(ids).not.toContain("share");
+    expect(ids).toContain("previous-chapter");
+  });
+
+  it("keeps all default tools when disabledToolbarTools is empty", () => {
+    const context = createContext();
+
+    const withNone = createBibleToolsManager(testBranding);
+    const withSome = createBibleToolsManager({
+      ...testBranding,
+      disabledToolbarTools: ["open-search"],
+    });
+
+    const withoutDisabled = withNone.getToolbarTools(context);
+    const withDisabled = withSome.getToolbarTools(context);
+
+    expect(withoutDisabled.length).toBe(withDisabled.length + 1);
+  });
 
   it("registerVerseToolbarTool() registers a verse toolbar tool", () => {
     const manager = createBibleToolsManager(testBranding);

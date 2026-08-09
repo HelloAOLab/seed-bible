@@ -477,7 +477,7 @@ export function createSeedBibleState(
     navigation,
     login
   );
-  const tools = createBibleToolsManager(branding!);
+  const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
   const sessions = createSessionsManager(

@@ -1128,7 +1128,7 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
  *   then return tools sorted by ascending priority.
  */
 export function createBibleToolsManager(
-  branding: BrandingConfig
+  branding?: BrandingConfig
 ): ToolsManager {
   const toolbarTools = signal<ManagedBibleToolbarTool[]>(
     getDefaultToolbarTools(branding)
