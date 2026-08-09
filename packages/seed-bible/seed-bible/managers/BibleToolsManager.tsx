@@ -10,6 +10,7 @@ import {
 } from "../managers/BibleReadingManager";
 import { buildReadingUrl } from "../managers/ReadingUrlPath";
 import type { BookId } from "../managers/BibleDataManager";
+import type { ChapterVerse } from "../managers/FreeUseBibleAPI";
 import { readInjectedConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
@@ -1060,9 +1061,14 @@ function formatVerseRanges(verseNumbers: number[]): string {
   return start === end ? `${start}` : `${start}-${end}`;
 }
 
-/** Extracts and normalizes the plain text content of a single selected verse. */
-function extractVerseText(verse: BibleSelectedVerse): string {
-  return verse.verse.content
+/**
+ * Extracts and normalizes the plain text of a verse's content parts, dropping
+ * anything without text of its own (footnote references, line breaks).
+ */
+export function extractVerseContentText(
+  content: ChapterVerse["content"]
+): string {
+  return content
     .map((part) => {
       if (typeof part === "string") return part;
 
@@ -1076,6 +1082,11 @@ function extractVerseText(verse: BibleSelectedVerse): string {
     .replace(/\s+/g, " ")
     .replace(/\s+([,.;:!?’”)\]])/g, "$1")
     .trim();
+}
+
+/** Extracts and normalizes the plain text content of a single selected verse. */
+function extractVerseText(verse: BibleSelectedVerse): string {
+  return extractVerseContentText(verse.verse.content);
 }
 
 /**

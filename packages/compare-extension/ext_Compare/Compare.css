@@ -1,0 +1,240 @@
+/* Compare pane. The surrounding shell (docking, background, mobile-fullscreen)
+   comes from the managed side pane (`SidePane`/`PaneLayout`), so this only lays
+   out the content column and the pinned Add Translation bar.
+
+   The reorder list deliberately reuses the `.sb-discover-*` classes from
+   `DiscoverPane.css` (always in the main bundle) so it matches the playlist
+   editor exactly rather than drifting from it. */
+
+.sb-compare-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--sb-font-color);
+}
+
+/* Only this scrolls, so the Add Translation bar below stays put. */
+.sb-compare-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.sb-compare-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-compare-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+}
+
+/* Abbreviation on the left, full translation name on the right. */
+.sb-compare-block-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+.sb-compare-block-abbreviation {
+  flex: 0 0 auto;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sb-compare-block-name {
+  flex: 1;
+  min-width: 0;
+  text-align: end;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-compare-block-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-compare-block-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.sb-compare-verse-number {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: super;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-compare-block-message {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-compare-retry {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-compare-retry:hover {
+  background: var(--sb-divider-color);
+}
+
+/* Anchored to the bottom of the pane, always reachable while the list scrolls. */
+.sb-compare-add-bar {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-top: 1px solid var(--sb-divider-color);
+  background: var(--sb-background);
+}
+
+.sb-compare-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-compare-add-button:hover {
+  opacity: 0.9;
+}
+
+/* The label keeps its width; the reference is what truncates when the header
+   runs out of room. */
+.sb-compare-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.sb-compare-title {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sb-compare-reference {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-compare-settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  cursor: pointer;
+}
+
+.sb-compare-settings-button:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-font-color);
+}
+
+.sb-compare-settings-label {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* The current translation's row: pinned, no drag handle. */
+.sb-compare-settings-pinned {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-compare-settings-pin {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-compare-picker-note {
+  flex: 0 0 auto;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-compare-picker {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px;
+  gap: 8px;
+  color: var(--sb-font-color);
+}
+
+.sb-compare-search {
+  width: 100%;
+}
+
+.sb-compare-picker-option {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-compare-picker-option:disabled {
+  cursor: default;
+  opacity: 0.55;
+}

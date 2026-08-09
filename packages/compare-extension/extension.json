@@ -1,0 +1,23 @@
+{
+  "id": "compare-extension",
+  "autoinstall": true,
+  "translations": {
+    "en": {
+      "title": "Compare",
+      "description": "Compare the verses you select against the same verses in any other translation.",
+      "compare": "Compare",
+      "back": "Back",
+      "compare-settings": "Compare settings",
+      "add-translation": "Add translation",
+      "remove-translation": "Remove translation",
+      "drag-to-reorder-translation": "Drag to reorder",
+      "loading-comparison": "Loading comparison",
+      "verse-not-available": "These verses are not available in this translation.",
+      "comparison-load-failed": "Could not load this translation.",
+      "retry": "Retry",
+      "search-translations": "Search translations",
+      "no-translations-selected": "No translations added yet.",
+      "currently-reading": "Currently reading"
+    }
+  }
+}
