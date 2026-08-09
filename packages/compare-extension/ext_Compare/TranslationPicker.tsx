@@ -102,6 +102,7 @@ export function TranslationPicker(props: {
           showAllLanguages.value = "all";
         }}
         canLoadMore={limit < allGroups.length && groups.length >= PAGE_SIZE}
+        totalGroupCount={allGroups.length}
         onLoadMore={() => setLimit((current) => current + PAGE_SIZE)}
       />
 

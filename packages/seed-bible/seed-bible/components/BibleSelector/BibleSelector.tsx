@@ -1345,6 +1345,7 @@ const TranslationModal = (props: {
         allowedTranslationLimit.value,
         apiTranslations.value.length
       )}
+      totalGroupCount={apiTranslations.value.length}
       onLoadMore={() => {
         allowedTranslationLimit.value = allowedTranslationLimit.value + 50;
       }}

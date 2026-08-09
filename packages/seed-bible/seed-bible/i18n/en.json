@@ -182,6 +182,8 @@
   "custom-translations": "Custom translations",
   "no-translation-results-found": "No results found. Would you like to expand your search to include partially complete translations as well?",
   "show-all-translations": "Show all translations",
+  "show-more-languages": "Show more languages",
+  "showing-languages-count": "Showing {{shown}} of {{total}}",
   "search-books": "Search books...",
   "no-results-found": "No results found.",
   "information-about-this-translation": "Information about this translation",

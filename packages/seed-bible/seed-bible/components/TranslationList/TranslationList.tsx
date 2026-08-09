@@ -31,6 +31,11 @@ export interface TranslationListProps {
   /** Whether more language groups exist beyond the current limit. */
   canLoadMore?: boolean;
   /**
+   * How many language groups exist in total, shown alongside the load-more
+   * control so the cap is visible rather than implied.
+   */
+  totalGroupCount?: number;
+  /**
    * Language whose group starts expanded (typically the chosen translation's).
    * A group is also auto-expanded while searching, or when it is the only one.
    */
@@ -63,6 +68,7 @@ export function TranslationList(props: TranslationListProps) {
     onShowAllTranslations,
     onLoadMore,
     canLoadMore = false,
+    totalGroupCount,
     expandedLanguage = null,
     renderActions,
     onShowInfo,
@@ -122,14 +128,33 @@ export function TranslationList(props: TranslationListProps) {
         />
       ))}
       {canLoadMore && onLoadMore && (
-        <div
-          className="sb-translation-list-language flex-between sb-translation-list-load-more"
+        // Spelled out rather than a bare chevron: the same glyph means
+        // "expand this section" on every row above, so an unlabelled one here
+        // reads as a stray control instead of "there are more languages".
+        <button
+          type="button"
+          className="sb-translation-list-load-more"
           onClick={onLoadMore}
         >
-          <span className="material-symbols-outlined sb-translation-list-chevron">
+          <span className="sb-translation-list-load-more-label">
+            {t("show-more-languages", { defaultValue: "Show more languages" })}
+          </span>
+          {typeof totalGroupCount === "number" && (
+            <span className="sb-translation-list-load-more-count">
+              {t("showing-languages-count", {
+                defaultValue: "Showing {{shown}} of {{total}}",
+                shown: groups.length,
+                total: totalGroupCount,
+              })}
+            </span>
+          )}
+          <span
+            className="material-symbols-outlined sb-translation-list-chevron"
+            aria-hidden="true"
+          >
             expand_more
           </span>
-        </div>
+        </button>
       )}
     </div>
   );
