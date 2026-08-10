@@ -160,6 +160,49 @@ export function TranslationList(props: TranslationListProps) {
   );
 }
 
+/** Books in the Protestant canon, the whole a translation is measured against. */
+const CANON_BOOK_COUNT = 66;
+
+/**
+ * Ring showing how much of the canon a translation covers: the filled arc is
+ * its share of the 66 books.
+ *
+ * It carries its own label, because a bare ring tells you nothing about what is
+ * being measured — and told assistive tech nothing at all.
+ */
+function TranslationCompletion(props: {
+  translation: Translation;
+  /** Render the space but not the ring, keeping rows aligned across modes. */
+  blank?: boolean;
+}) {
+  const { translation, blank = false } = props;
+  const { t } = useI18n();
+
+  if (blank) {
+    return <span className="sb-translation-completion" aria-hidden="true" />;
+  }
+
+  const included = Math.min(translation.numberOfBooks, CANON_BOOK_COUNT);
+  const percent = Math.ceil((included / CANON_BOOK_COUNT) * 100);
+  const label = t("translation-book-coverage", {
+    defaultValue: "{{included}} of {{total}} books",
+    included,
+    total: CANON_BOOK_COUNT,
+  });
+
+  return (
+    <span
+      className="sb-translation-completion sb-translation-completion--ring"
+      // The percentage is the only thing that varies; the colours live in CSS
+      // so they can follow the theme.
+      style={{ "--sb-completion-percent": percent }}
+      role="img"
+      aria-label={label}
+      title={label}
+    />
+  );
+}
+
 function TranslationLanguageSection(props: {
   group: TranslationLanguageGroup;
   query: string;
@@ -254,10 +297,6 @@ function TranslationLanguageSection(props: {
         <div style={{ margin: "0.3125rem 0.3125rem" }}>
           {sortedTranslations.map((value) => {
             const isSelected = selectedTranslationIds.includes(value.id);
-            const completionPercentage = Math.ceil(
-              (value.numberOfBooks / 66) * 100
-            );
-            const rotation = (completionPercentage / 100) * 360;
 
             return (
               <div
@@ -273,15 +312,14 @@ function TranslationLanguageSection(props: {
                 <span className="translation-title inline-flex-start-center-gap-sm">
                   {isSelected ? (
                     <TickIcon height={15} width={15} />
-                  ) : viewMode === "all" || viewMode === "popular" ? (
-                    <span
-                      className="emptyCircle"
-                      style={{
-                        background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--sb-primary-color) ${completionPercentage}%, #eee 0) border-box`,
-                      }}
-                    ></span>
                   ) : (
-                    <span className="emptyCircle"></span>
+                    // Only meaningful outside "complete" mode, where every
+                    // translation is a full canon by definition — but the
+                    // blank still renders, so rows stay aligned across modes.
+                    <TranslationCompletion
+                      translation={value}
+                      blank={viewMode === "complete"}
+                    />
                   )}
                   <span className="translation-description">{`${value.name} (${value.shortName})`}</span>
                   {value?.licenseNotice && onShowInfo && (

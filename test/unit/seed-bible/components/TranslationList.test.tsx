@@ -217,3 +217,85 @@ describe("TranslationViewModeMenu", () => {
     expect(onChange).toHaveBeenCalledWith("all");
   });
 });
+
+describe("TranslationList canon-coverage ring", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function mountWith(
+    books: number,
+    viewMode: "complete" | "all" | "popular" = "all",
+    selectedTranslationIds: string[] = []
+  ) {
+    const partial = translations(1).map((entry) => ({
+      ...entry,
+      numberOfBooks: books,
+    }));
+    act(() => {
+      render(
+        <TranslationList
+          groups={groupTranslationsByLanguage(partial)}
+          query=""
+          viewMode={viewMode}
+          selectedTranslationIds={selectedTranslationIds}
+          onPick={() => undefined}
+          onShowAllTranslations={() => undefined}
+        />,
+        container
+      );
+    });
+    return container.querySelector<HTMLSpanElement>(
+      ".sb-translation-completion"
+    )!;
+  }
+
+  it("fills the arc in proportion to the books the translation has", () => {
+    const ring = mountWith(33);
+
+    expect(ring.classList.contains("sb-translation-completion--ring")).toBe(
+      true
+    );
+    // 33 of 66 books.
+    expect(ring.style.getPropertyValue("--sb-completion-percent")).toBe("50");
+  });
+
+  it("carries a label saying what it measures", () => {
+    const ring = mountWith(27);
+
+    expect(ring.getAttribute("role")).toBe("img");
+    expect(ring.getAttribute("aria-label")).toBe("27 of 66 books");
+    expect(ring.getAttribute("title")).toBe("27 of 66 books");
+  });
+
+  it("does not claim more than a full canon", () => {
+    const ring = mountWith(80);
+
+    expect(ring.style.getPropertyValue("--sb-completion-percent")).toBe("100");
+    expect(ring.getAttribute("aria-label")).toBe("66 of 66 books");
+  });
+
+  it("renders a silent blank in complete mode, keeping rows aligned", () => {
+    const ring = mountWith(66, "complete");
+
+    expect(ring.classList.contains("sb-translation-completion--ring")).toBe(
+      false
+    );
+    expect(ring.getAttribute("aria-hidden")).toBe("true");
+    expect(ring.getAttribute("aria-label")).toBeNull();
+  });
+
+  it("gives way to the tick once a translation is chosen", () => {
+    mountWith(33, "all", ["t0"]);
+
+    expect(container.querySelector(".sb-translation-completion")).toBeNull();
+  });
+});

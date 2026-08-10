@@ -35,8 +35,14 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
+      t: (key: string, options?: Record<string, unknown>) => {
+        let text = (options?.defaultValue as string | undefined) ?? key;
+        for (const [name, value] of Object.entries(options ?? {})) {
+          if (name === "defaultValue") continue;
+          text = text.replaceAll(`{{${name}}}`, String(value));
+        }
+        return text;
+      },
     }),
   };
 });
@@ -1465,7 +1471,7 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("klingon"))).toBe(false);
   });
 
-  it("displays percentage complete indicator circles with conic-gradient in all and popular modes but not in complete mode", async () => {
+  it("shows a canon-coverage ring in all and popular modes but not in complete mode", async () => {
     const { selectorState, bibleDataManager, state } =
       await createSelectorFixture();
 
@@ -1482,7 +1488,10 @@ describe("BibleSelector translation selector", () => {
       );
     });
 
-    // "all" mode: incomplete non-selected translation shows circle with conic-gradient
+    const ring = () =>
+      container.querySelector<HTMLElement>(".sb-translation-completion");
+
+    // "all" mode: a partial translation shows how much of the canon it covers.
     act(() => {
       setAvailableTranslations(
         [makeTranslation("INC", "English", 27)],
@@ -1493,28 +1502,29 @@ describe("BibleSelector translation selector", () => {
       selectorState.languageQuery.value = "inc";
     });
 
-    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+    await waitFor(() => Boolean(ring()));
 
-    const circleAll = container.querySelector(
-      ".emptyCircle"
-    ) as HTMLElement | null;
-    expect(circleAll).not.toBeNull();
-    expect(circleAll?.style.background).toContain("conic-gradient");
+    expect(ring()!.classList.contains("sb-translation-completion--ring")).toBe(
+      true
+    );
+    expect(ring()!.style.getPropertyValue("--sb-completion-percent")).toBe(
+      "41"
+    );
+    expect(ring()!.getAttribute("aria-label")).toBe("27 of 66 books");
 
-    // "popular" mode: same incomplete translation (english is a popular language)
+    // "popular" mode: same, since English is a popular language.
     act(() => {
       selectorState.showAllLanguages.value = "popular";
     });
 
-    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+    await waitFor(() => Boolean(ring()));
 
-    const circlePopular = container.querySelector(
-      ".emptyCircle"
-    ) as HTMLElement | null;
-    expect(circlePopular).not.toBeNull();
-    expect(circlePopular?.style.background).toContain("conic-gradient");
+    expect(ring()!.classList.contains("sb-translation-completion--ring")).toBe(
+      true
+    );
 
-    // "complete" mode: only complete translations shown; their circles have no conic-gradient
+    // "complete" mode: everything shown is a full canon, so the ring would say
+    // nothing — a silent blank holds the space instead.
     act(() => {
       setAvailableTranslations(
         [makeTranslation("BSB", "English", 66)],
@@ -1524,13 +1534,12 @@ describe("BibleSelector translation selector", () => {
       selectorState.languageQuery.value = "bsb";
     });
 
-    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+    await waitFor(() => Boolean(ring()));
 
-    const circleComplete = container.querySelector(
-      ".emptyCircle"
-    ) as HTMLElement | null;
-    expect(circleComplete).not.toBeNull();
-    expect(circleComplete?.style.background).not.toContain("conic-gradient");
+    expect(ring()!.classList.contains("sb-translation-completion--ring")).toBe(
+      false
+    );
+    expect(ring()!.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("entering a custom translation URL and clicking Import loads the translations", async () => {
