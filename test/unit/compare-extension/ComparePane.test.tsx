@@ -497,11 +497,14 @@ describe("CompareSettings", () => {
     expect(pinned.classList.contains("sb-compare-settings-pinned")).toBe(true);
     expect(pinned.querySelector(".sb-discover-item-drag-handle")).toBeNull();
     // Not in the saved list, so there is nothing to remove.
-    expect(pinned.querySelector(".sb-discover-item-menu")).toBeNull();
+    expect(pinned.querySelector(".sb-discover-item-delete")).toBeNull();
 
     for (const row of [rows[1]!, rows[2]!]) {
       expect(row.querySelector(".sb-discover-item-drag-handle")).not.toBeNull();
-      expect(row.querySelector(".sb-discover-item-menu")).not.toBeNull();
+      const remove = row.querySelector(".sb-discover-item-delete")!;
+      expect(remove).not.toBeNull();
+      // Same trash-can affordance the playlist editor uses.
+      expect(remove.textContent).toBe("delete");
     }
   });
 
@@ -517,11 +520,11 @@ describe("CompareSettings", () => {
     containers.push(container);
 
     const pinned = container.querySelector(".sb-compare-settings-pinned")!;
-    expect(pinned.querySelector(".sb-discover-item-menu")).not.toBeNull();
+    expect(pinned.querySelector(".sb-discover-item-delete")).not.toBeNull();
 
     act(() => {
       pinned
-        .querySelector<HTMLButtonElement>(".sb-discover-item-menu")!
+        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
         .click();
     });
 
@@ -543,7 +546,7 @@ describe("CompareSettings", () => {
     const rows = container.querySelectorAll(".sb-discover-item");
     act(() => {
       rows[1]!
-        .querySelector<HTMLButtonElement>(".sb-discover-item-menu")!
+        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
         .click();
     });
 

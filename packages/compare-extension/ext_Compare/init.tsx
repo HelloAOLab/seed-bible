@@ -15,7 +15,7 @@ import {
 } from "./compareState";
 
 function CompareIcon() {
-  return <MaterialIcon>compare_arrows</MaterialIcon>;
+  return <MaterialIcon>text_compare</MaterialIcon>;
 }
 
 /**

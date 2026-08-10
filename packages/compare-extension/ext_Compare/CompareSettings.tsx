@@ -96,17 +96,19 @@ export function CompareSettings(props: {
     state.setSelectedTranslationIds(removeId(savedIds, id));
   };
 
+  // `sb-discover-item-delete` is the playlist editor's own remove button: a
+  // bare icon with no background or border until hovered.
   const renderRemoveButton = (entry: CompareOrderEntry) => (
     <button
       type="button"
-      className="sb-discover-item-menu"
+      className="sb-discover-item-delete"
       aria-label={t("remove-translation", {
         defaultValue: "Remove translation",
       })}
       title={t("remove-translation", { defaultValue: "Remove translation" })}
       onClick={() => remove(entry.id)}
     >
-      <MaterialIcon>close</MaterialIcon>
+      <MaterialIcon>delete</MaterialIcon>
     </button>
   );
 
