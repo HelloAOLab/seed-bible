@@ -1214,9 +1214,13 @@ describe("DiscoverPane", () => {
           ?.textContent
       ).toBe("Jordan Rivera");
     });
+    const expectedUpdated = new Intl.DateTimeFormat("en", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(Date.UTC(2026, 0, 5, 10, 30)));
     expect(
       container.querySelector(".sb-annotation-comment-updated")?.textContent
-    ).toBe("| Jan 5, 2026, 5:30 AM");
+    ).toBe(`| ${expectedUpdated}`);
   });
 
   it("shows the comment's avatar resolved from their profile picture, before the name", async () => {
