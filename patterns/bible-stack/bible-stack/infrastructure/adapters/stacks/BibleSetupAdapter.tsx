@@ -180,10 +180,10 @@ export class BibleSetupAdapter implements BibleSetupAdapterPort {
       scaleY: coverScales.y,
       scaleZ: coverScales.z,
       transformer: bibleData.getStaticPieceId("bibleTransformer"),
-      draggable: true,
       pointable: bibleType === BibleTypes.Default,
       onDrag: `@os.enableCustomDragging();`,
-      onDragging: `@const dimension = os.getCurrentDimension();
+      onDragging: `@if(!this.tags.draggable) return;
+const dimension = os.getCurrentDimension();
 const positionUpdateThreshold = 50;
 
 if(!thisBot.masks.lastPositionUpdateTime || os.localTime > (thisBot.masks.lastPositionUpdateTime + positionUpdateThreshold))
@@ -249,8 +249,6 @@ if(!thisBot.masks.lastPositionUpdateTime || os.localTime > (thisBot.masks.lastPo
         [dimension + "X"]: testamentsPosition.x,
         [dimension + "Y"]: testamentsPosition.y,
         [dimension + "Z"]: testamentsPosition.z,
-        formOpacity: 1,
-        scale: 1,
         color: fixedColor,
         scaleX: testamentScales.x,
         scaleY: testamentScales.y,
