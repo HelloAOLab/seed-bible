@@ -434,6 +434,75 @@ describe("SessionsManager", () => {
     });
   });
 
+  it("createSession(startPosition) builds the session's reader at that position", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession({
+      initialTranslationId: "BSB",
+      initialBookId: "LUK",
+      initialChapterNumber: 21,
+    });
+
+    // Seeded at construction rather than navigated to afterwards, so the
+    // session's reader never loads the default book first.
+    expect(createBibleReadingState).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      {
+        initialTranslationId: "BSB",
+        initialBookId: "LUK",
+        initialChapterNumber: 21,
+        isShared: true,
+      },
+      undefined,
+      undefined
+    );
+  });
+
+  it("createSession(startPosition) publishes the start position without waiting for the publish debounce", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession({
+      initialTranslationId: "BSB",
+      initialBookId: "LUK",
+      initialChapterNumber: 21,
+    });
+
+    // Deliberately no `flushPublishDebounce()`: until the map holds a position
+    // there is nothing for a joiner to load, so they would settle on the
+    // default book and publish that back over the host.
+    expect(mockMap.set).toHaveBeenCalledWith("translationId", "BSB");
+    expect(mockMap.set).toHaveBeenCalledWith("bookId", "LUK");
+    expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 21);
+  });
+
+  it("createSession() without a start position leaves the shared position empty", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession();
+
+    expect(mockMap.set).not.toHaveBeenCalled();
+  });
+
   it("joinSession(id) loads and returns a session with the given ID", async () => {
     const manager = createSessionsManager(
       os,
@@ -828,6 +897,56 @@ describe("SessionsManager", () => {
     await waitFor(() => session.readingState.decorations.value.length === 1);
 
     expect(session.readingState.decorations.value).toEqual([remoteDecoration]);
+  });
+
+  it("applies a shared decoration's highlight to the reading state", async () => {
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    // `toSessionDecorationInput` copies fields one at a time, so a decoration
+    // field that isn't listed there reaches nobody.
+    const remoteDecoration: VerseDecoration = {
+      id: "shared-highlight:GEN:1:3",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [3],
+      highlight: { colorId: "green" },
+    };
+
+    mockDecorationsMap = createMockSharedMap({
+      [JSON.stringify(["conn-other", "shared-highlight:GEN:1:3"])]:
+        remoteDecoration,
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      if (name === "decorations") {
+        return mockDecorationsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() => session.readingState.decorations.value.length === 1);
+
+    expect(session.readingState.decorations.value[0]?.highlight).toEqual({
+      colorId: "green",
+    });
   });
 
   it("applies removeAfterMs from shared decorations", async () => {

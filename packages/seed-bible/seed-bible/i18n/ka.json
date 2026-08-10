@@ -434,5 +434,10 @@
   "remove": "წაშლა",
   "signed-out-message": "თქვენ გამოხვედით სისტემიდან. გთხოვთ, ხელახლა შეხვიდეთ სისტემაში.",
   "account-suspended-message": "თქვენი ანგარიში შეჩერებულია.",
-  "loading-chapter": "თავი იტვირთება…"
+  "loading-chapter": "თავი იტვირთება…",
+  "book-not-found-title": "წიგნი ვერ მოიძებნა",
+  "book-not-found-message": "ეს წიგნი {{translationName}} -ში ვერ ვიპოვეთ.",
+  "book-not-found-action": "გადადით {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "სურათის რედაქტორის ჩატვირთვა…",
+  "swipe-to-see-more": "მეტის სანახავად გადაფურცლეთ"
 }

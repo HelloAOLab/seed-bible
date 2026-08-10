@@ -335,7 +335,7 @@
 }
 
 .testament-title {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   font-weight: 700;
   font-size: 1.125rem;
   line-height: 1.1;
@@ -423,7 +423,7 @@
     border-color 0.2s,
     box-shadow 0.2s;
   margin-right: 0;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   color: var(--sb-font-color);
 }
 
@@ -462,7 +462,7 @@
   border: none;
   outline: none;
   font-size: 0.875rem;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   background: transparent;
   color: var(--sb-font-color);
 }
@@ -518,13 +518,13 @@
   margin-top: 0.3125rem;
   font-weight: normal;
   color: var(--sb-font-color);
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 .custom-translation-container {
   width: 100%;
   padding: 0.625rem;
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 .custom-tr-api {
@@ -598,14 +598,14 @@
   width: 25%;
   font-weight: bold;
   font-size: 0.875rem;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
 }
 
 .sidebar-selected-title {
   font-size: 0.875rem;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   flex: 1;
   overflow: hidden;
   font-weight: 500;
@@ -615,7 +615,7 @@
   font-weight: normal;
   font-size: 0.875rem;
   width: 100%;
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 .psalms-btn {
@@ -626,7 +626,7 @@
   font-size: 0.875rem;
   grid-column: 1 / -1;
   border: none;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   text-align: left;
 }
 
@@ -744,7 +744,7 @@
   font-size: 0.9375rem;
   font-weight: 500;
   padding: 0.625rem 0.75rem;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   color: var(--sb-font-color);
   text-transform: capitalize;
 }
@@ -1053,6 +1053,9 @@
   padding: 0.125rem;
   cursor: pointer;
 }
+.close-icon {
+  cursor: pointer;
+}
 
 .emptyCircle {
   display: inline-block;
@@ -1070,7 +1073,7 @@
   height: 18.75rem;
   overflow-y: auto;
   scrollbar-width: none;
-  font-family: "Satoshi";
+  font-family: system-ui, sans-serif;
 }
 
 .item {

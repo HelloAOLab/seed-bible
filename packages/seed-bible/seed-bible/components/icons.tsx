@@ -1,3 +1,5 @@
+import { useAppConfig } from "../app/appConfig";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const SplitScreenIcon = ({ size = 24 }) => {
   const scale = size / 24;
@@ -49,6 +51,20 @@ export function SeedBibleIcon({
   size = 32,
   ...props
 }: { size?: number; [key: string]: any } = {}) {
+  const { branding } = useAppConfig();
+
+  if (branding?.icon) {
+    return (
+      <img
+        src={branding.icon}
+        alt={branding.appName}
+        width={size}
+        height={size}
+        {...props}
+      />
+    );
+  }
+
   return (
     <svg
       version="1.2"

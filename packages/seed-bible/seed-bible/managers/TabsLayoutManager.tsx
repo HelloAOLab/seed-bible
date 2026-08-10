@@ -6,6 +6,10 @@ import {
   type Signal,
 } from "@preact/signals";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
+import {
+  normalizeStoredTabsState,
+  readStoredTabsState,
+} from "./TabsPersistence";
 
 /** Supported tab slot layout presets. */
 export type TabSlotLayoutId =
@@ -204,10 +208,14 @@ export interface TabsLayoutManager {
  * Creates the tabs layout manager.
  *
  * Behavior:
- * - Initializes with one slot bound to the selected tab.
+ * - Initializes with one slot bound to the selected tab, or rebuilds the slot
+ *   arrangement persisted by the previous visit when one is stored.
  * - Synchronizes slot tab references as the tabs list changes.
  * - Disposes slot-only tab clones once no slot references them.
- * - Forces `layout` to `"single"` whenever `panelsEnabled` is false.
+ * - Forces `layout` to `"single"` whenever `panelsEnabled` is false — but only
+ *   for layouts chosen through `setLayout`/`openTabInNewSlot`/`closeSlot`. A
+ *   *restored* layout is kept intact regardless, and clamped for rendering
+ *   only; see the note on `canRestoreLayout` below.
  */
 export function createTabsLayout(
   tabsManager: TabsManager,
@@ -236,12 +244,95 @@ export function createTabsLayout(
     selectedSlotId.value = nextSlots[0]?.id ?? null;
   };
 
-  const initialTab =
+  const selectedTab =
     tabsManager.tabs.value.find(
       (tab) => tab.id === tabsManager.selectedTabId.value
     ) ?? null;
-  slots.value = [createSlot(initialTab)];
-  selectedSlotId.value = slots.value[0]?.id ?? null;
+
+  // Remove hidden slot-only clones (restored by TabsManager to back split
+  // panes) whose id no longer occupies any slot, so their reading states don't
+  // leak. Used by both restore paths below.
+  const removeUnreferencedSlotOnlyTabs = (referencedIds: Set<string>) => {
+    const orphanIds = tabsManager.tabs.value
+      .filter((tab) => tab.slotOnly && !referencedIds.has(tab.id))
+      .map((tab) => tab.id);
+    for (const id of orphanIds) {
+      tabsManager.removeTab(id);
+    }
+  };
+
+  const storedState = normalizeStoredTabsState(readStoredTabsState());
+  // Deliberately NOT gated on `panelsEnabled`. A stored split is restored into
+  // the manager even when panels are disabled, and the *rendered* view is
+  // clamped to a single slot by `effectiveSlots`/`effectiveSlotLayout` in
+  // SeedBibleStateManager — the same split-preserving treatment a mobile
+  // viewport already gets, and what the layout menu in `Sidebar` already
+  // assumes. Gating here instead would collapse the layout AND let the
+  // persistence effect write the collapsed version straight back, so a split
+  // built with panels on would be lost for good the first time the app opened
+  // with them off. It would also race the config: this runs synchronously at
+  // construction, while `panelsEnabled` derives from the profile config, which
+  // resolves later — so an early read can be the wrong answer.
+  const canRestoreLayout =
+    !!storedState &&
+    storedState.slotTabIds.length > 0 &&
+    getLayoutSlotCount(storedState.layout) === storedState.slotTabIds.length;
+
+  if (canRestoreLayout && storedState) {
+    const findTab = (id: string | null) =>
+      id === null
+        ? null
+        : (tabsManager.tabs.value.find((tab) => tab.id === id) ?? null);
+
+    const restoredSlots = storedState.slotTabIds.map((id) =>
+      createSlot(findTab(id))
+    );
+
+    const selectedIndex =
+      storedState.selectedSlotIndex !== null &&
+      storedState.selectedSlotIndex >= 0 &&
+      storedState.selectedSlotIndex < restoredSlots.length
+        ? storedState.selectedSlotIndex
+        : 0;
+
+    // If reconcile appended a brand-new selected tab, it occupies no restored
+    // slot. Drop it into the selected slot so it is actually visible, mirroring
+    // the normal select-a-tab -> setSelectedSlotTab behavior.
+    const isSelectedShown = restoredSlots.some(
+      (slot) => slot.tab?.id === selectedTab?.id
+    );
+    if (selectedTab && !isSelectedShown && restoredSlots[selectedIndex]) {
+      restoredSlots[selectedIndex] = {
+        ...restoredSlots[selectedIndex]!,
+        tab: selectedTab,
+      };
+    }
+
+    slots.value = restoredSlots;
+    // A single restored slot is always "single" (the only 1-slot preset); this
+    // also neutralizes a corrupt stored id, which resolves to a 1-slot count.
+    // For >1 slots the guard above already proved `layout` is a real preset.
+    layout.value = restoredSlots.length === 1 ? "single" : storedState.layout;
+    selectedSlotId.value =
+      restoredSlots[selectedIndex]?.id ?? restoredSlots[0]?.id ?? null;
+
+    removeUnreferencedSlotOnlyTabs(
+      new Set(
+        restoredSlots
+          .map((slot) => slot.tab?.id)
+          .filter((id): id is string => typeof id === "string")
+      )
+    );
+  } else {
+    slots.value = [createSlot(selectedTab)];
+    selectedSlotId.value = slots.value[0]?.id ?? null;
+
+    // Without a restored multi-slot layout, any hidden clones from storage are
+    // dead weight — keep only the tab now bound to the single slot.
+    removeUnreferencedSlotOnlyTabs(
+      new Set(selectedTab ? [selectedTab.id] : [])
+    );
+  }
 
   const tabMap = computed(
     () => new Map(tabsManager.tabs.value.map((tab) => [tab.id, tab]))

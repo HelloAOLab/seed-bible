@@ -11,6 +11,10 @@ import {
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { Translation } from "../managers/FreeUseBibleAPI";
+import {
+  DEFAULT_UI_LANGUAGE,
+  parseReadingPath,
+} from "../managers/ReadingUrlPath";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -97,10 +101,43 @@ export function getInitialLanguage(acceptedLanguages: string[]): string {
     }
   }
 
-  return getLanguage(navigatorLanguages()[0]) ?? "en";
+  return getLanguage(navigatorLanguages()[0]) ?? DEFAULT_UI_LANGUAGE;
 }
 
-export function getUrlLanguage(url: URL): string | null {
+/**
+ * Picks the visitor's most-preferred UI language, out of an `Accept-Language`
+ * header's ordered list of tags, that this app actually ships a locale for.
+ * Returns null when none of the visitor's preferences match a supported
+ * language — the caller should keep whatever it already had rather than
+ * guess.
+ */
+export function getPreferredSupportedLanguage(
+  acceptedLanguages: string[]
+): string | null {
+  for (const tag of acceptedLanguages) {
+    const language = getLanguage(tag);
+    if (language && availableLanguages.includes(language)) {
+      return language;
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolves the UI language a URL implies. A valid reading path (e.g.
+ * "/es/spa_onbv/john/3") takes priority: an explicit `{lang}` segment wins,
+ * and an omitted one canonically means `DEFAULT_UI_LANGUAGE` — that's the
+ * meaning of the 3-segment "fully default" form, not "detect from the
+ * browser" (browser-based detection only applies to a bare `/` with no
+ * reading path at all, via `getInitialLanguage`). Falls back to the legacy
+ * `?lang=` query param for a non-reading-path URL.
+ */
+export function getUrlLanguage(url: URL, basePath: string): string | null {
+  const parsed = parseReadingPath(url.pathname, basePath);
+  if (parsed) {
+    return parsed.language ?? DEFAULT_UI_LANGUAGE;
+  }
+
   const urlLang = url.searchParams.get("lang");
   if (urlLang) {
     return urlLang;
@@ -129,7 +166,8 @@ export function createI18nManager(
   // Computed at module load. During SSR `location`/`navigator` are absent, so
   // this falls back to "en"; the client re-derives the real language from the
   // URL/navigator at hydration.
-  const defaultLanguage: string = getUrlLanguage(url) ?? initialLanguage;
+  const defaultLanguage: string =
+    getUrlLanguage(url, navigation.basePath) ?? initialLanguage;
 
   // Resolves once the detected language's translations are loaded. SSR and the
   // client entry await this before rendering so the first paint is in the right
@@ -157,7 +195,7 @@ export function createI18nManager(
 
     ready = i18n.init({
       lng: defaultLanguage,
-      fallbackLng: "en",
+      fallbackLng: DEFAULT_UI_LANGUAGE,
       ns: ["seed-bible"],
       // Required so the backend is still consulted for languages beyond the
       // bundled resources below.
@@ -178,28 +216,14 @@ export function createI18nManager(
     language.value = lng;
   });
 
-  navigation.syncSignalsToUrl({
-    lang: {
-      get value() {
-        if (language.value !== initialLanguage) {
-          return language.value;
-        }
-        return null;
-      },
-      set value(newValue: string | null) {
-        // Invoked when the URL's `?lang=` changes on its own — deep links and
-        // browser back/forward. Route through `i18n.changeLanguage` so the
-        // actual translations reload; the `languageChanged` listener above then
-        // moves the `language` signal to match. Assigning the signal directly
-        // here would desync `i18n.language` (and therefore every `t()` call)
-        // from the URL.
-        const next = newValue ?? defaultLanguage;
-        if (next !== i18n.language) {
-          void i18n.changeLanguage(next);
-        }
-      },
-    },
-  });
+  // URL <-> language sync (both directions) is owned by `TabsManager`, not
+  // here: the language segment is part of the same coordinated reading path
+  // as translation/book/chapter (e.g. "/es/spa_onbv/john/3"), so a single
+  // writer needs to own the whole path instead of this manager independently
+  // touching the URL. `TabsManager.syncSelectedTabFromUrl` calls
+  // `changeLanguage` directly when an external URL change implies a
+  // different language; the `commitSelectedTabToUrl` effect there writes the
+  // language segment back out.
 
   const isRtl = computed(() => isRightToLeftLanguage(language.value));
 

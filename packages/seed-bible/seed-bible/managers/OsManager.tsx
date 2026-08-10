@@ -1,10 +1,8 @@
-import { RemoteYjsSharedDocument } from "@casual-simulation/aux-common/documents/RemoteYjsSharedDocument";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
 import { SocketManager as WebsocketManager } from "@casual-simulation/websocket";
 import { WebsocketConnectionClient } from "@casual-simulation/aux-websocket";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
-import axios from "axios";
 import { isArrayBuffer } from "es-toolkit";
 import { v4 as uuid } from "uuid";
 import type { RecordFileFailure } from "@casual-simulation/aux-records";
@@ -64,7 +62,9 @@ const UNSAFE_HEADERS = new Set([
   "host",
 ]);
 
-export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
+export function CasualOSManager(
+  endpoint: string = "https://auth.seedbible.org"
+) {
   const rawClient = createRecordsClient(endpoint);
   const connectionId = uuid();
   let currentWakeLock: WakeLockSentinel | null = null;
@@ -127,7 +127,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
 
   function getInstClient(): InstRecordsClient {
     if (!instRecordsClient) {
-      const url = new URL("wss://auth.ao.bot");
+      const url = new URL("wss://auth.seedbible.org");
       const manager = new WebsocketManager(url);
       manager.init();
       const client = new WebsocketConnectionClient(manager.socket);
@@ -223,6 +223,12 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
   ): Promise<SharedDocument> {
     const client = getInstClient();
     const authSource = getAuthSource();
+    // Shared documents are the only thing in the app that needs Yjs (~77 KB
+    // with lib0), and they only come into play for multiplayer sessions — so
+    // the module is fetched here rather than at boot. This function is already
+    // async and already waits on a network sync, so the extra await is free.
+    const { RemoteYjsSharedDocument } =
+      await import("@casual-simulation/aux-common/documents/RemoteYjsSharedDocument");
     const doc = new RemoteYjsSharedDocument(client, authSource, {
       recordName,
       inst,
@@ -412,7 +418,10 @@ export async function uploadFile(
   markers: string[] = ["publicRead"],
   providedMimeType?: string
 ) {
-  let encodedData: Uint8Array;
+  // Pinned to `ArrayBuffer` (rather than the default `ArrayBufferLike`) so it
+  // satisfies `fetch`'s `BodyInit` when uploaded below. All three branches
+  // already produce a plain-ArrayBuffer-backed view.
+  let encodedData: Uint8Array<ArrayBuffer>;
   let mimeType: string;
   if (isArrayBuffer(data)) {
     encodedData = new Uint8Array(data);
@@ -457,15 +466,16 @@ export async function uploadFile(
       delete headers[header];
     }
 
-    const uploadResult = await axios.request({
-      method: method.toLowerCase(),
-      url: url,
-      headers: headers,
-      data: encodedData,
+    const uploadResult = await fetch(url, {
+      method,
+      headers,
+      body: encodedData,
     });
 
-    if (uploadResult.status < 200 || uploadResult.status >= 300) {
-      throw new Error("Failed to upload file.");
+    if (!uploadResult.ok) {
+      throw new Error(
+        `Failed to upload file. (${uploadResult.status} ${uploadResult.statusText})`
+      );
     } else {
       console.log("Successfully uploaded AUX file.");
     }

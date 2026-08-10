@@ -108,8 +108,11 @@ describe("getShareUrl", () => {
 
     const url = getShareUrl(readingState as any);
 
+    // The position goes in the path. Handing out `?translation=&book=&chapter=`
+    // would produce a link that opens whatever the *path* says instead, since
+    // the path is what the app reads first.
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1%2C3"
+      "https://example.test/en/NIV/genesis/1?verse=1%2C3"
     );
   });
 
@@ -152,7 +155,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1-3"
+      "https://example.test/en/NIV/genesis/1?verse=1-3"
     );
   });
 
@@ -173,9 +176,31 @@ describe("getShareUrl", () => {
 
     const url = getShareUrl(readingState as any);
 
-    expect(url.toString()).toBe(
-      "https://example.test/reader?translation=AAB&book=GEN&chapter=1"
+    // The language segment is always present — the 3-segment form is only a
+    // redirect entry point, never something to hand out.
+    expect(url.toString()).toBe("https://example.test/en/AAB/genesis/1");
+  });
+
+  it("keeps the reading position out of the query string entirely", () => {
+    const url = getShareUrl(createShareUrlReadingState() as any);
+
+    for (const stale of ["translation", "translationId", "book", "chapter"]) {
+      expect(url.searchParams.has(stale)).toBe(false);
+    }
+  });
+
+  it("preserves the language the reader is already on", () => {
+    jsdom.reconfigure({ url: "https://example.test/es/spa_onbv/john/3" });
+
+    const url = getShareUrl(
+      createShareUrlReadingState({
+        translation: signal({ id: "spa_onbv" }) as any,
+        bookId: signal("JHN") as any,
+        chapterNumber: signal(3) as any,
+      }) as any
     );
+
+    expect(url.toString()).toBe("https://example.test/es/spa_onbv/john/3");
   });
 });
 

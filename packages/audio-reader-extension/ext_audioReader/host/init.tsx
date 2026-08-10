@@ -1,6 +1,6 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import type { BibleReadingState } from "seed-bible/managers";
+import type { BibleReadingState, QuickToolContext } from "seed-bible/managers";
 
 /** Drives the icon swap between play and pause. Shared across the tool. */
 const isPlaying = signal(false);
@@ -37,6 +37,18 @@ function chapterAudioUrl(readingState: BibleReadingState): string | null {
   const links = readingState.chapterData.value?.thisChapterAudioLinks;
   if (!links) return null;
   return Object.values(links).find((url) => !!url) ?? null;
+}
+
+/**
+ * Hidden from the quick toolbar on mobile since the mobile nav bar
+ * (BibleReaderToolbar) is its home there.
+ */
+export function isAudioPlayToolVisible(ctx: QuickToolContext): boolean {
+  return (
+    !ctx.playlists.playing.value &&
+    chapterAudioUrl(ctx.readingState) !== null &&
+    (ctx.surface !== "quick-toolbar" || !ctx.playlists.isMobile.value)
+  );
 }
 
 function PlayIcon() {
@@ -106,8 +118,6 @@ export default function initAudioReaderExtension() {
   registerExtension({
     id: "ext_audioReader",
     init: function* (context: SeedBibleState) {
-      // The play/pause control lives in the reader's top quick toolbar,
-      // beside the bookmark button. It only shows for chapters with audio.
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
         priority: 250,
@@ -117,13 +127,7 @@ export default function initAudioReaderExtension() {
           ns: "ext_audioReader",
         },
         icon: () => (isPlaying.value ? <PauseIcon /> : <PlayIcon />),
-        isVisible: (ctx) =>
-          computed(
-            () =>
-              !ctx.playlists.isMobile.value &&
-              !ctx.playlists.playing.value &&
-              chapterAudioUrl(ctx.readingState) !== null
-          ),
+        isVisible: (ctx) => computed(() => isAudioPlayToolVisible(ctx)),
         onSelect: (ctx) => {
           const url = chapterAudioUrl(ctx.readingState);
           if (!url) {

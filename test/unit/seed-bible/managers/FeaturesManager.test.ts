@@ -47,7 +47,7 @@ function makeFakePostHog(initialFlags: Record<string, boolean | undefined>) {
       flags[key] = value;
     },
     pushFlagsUpdate() {
-      let f = [];
+      const f = [];
       for (const [key, value] of Object.entries(flags)) {
         if (value) {
           f.push(key);

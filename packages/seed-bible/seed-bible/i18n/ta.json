@@ -434,5 +434,10 @@
   "remove": "அகற்று",
   "signed-out-message": "உங்கள் உள்நுழைவு நீக்கப்பட்டுவிட்டது. தயவுசெய்து மீண்டும் உள்நுழையவும்.",
   "account-suspended-message": "உங்கள் கணக்கு முடக்கப்பட்டுள்ளது.",
-  "loading-chapter": "அத்தியாயம் ஏற்றப்படுகிறது…"
+  "loading-chapter": "அத்தியாயம் ஏற்றப்படுகிறது…",
+  "book-not-found-title": "புத்தகம் காணப்படவில்லை",
+  "book-not-found-message": "{{translationName}} இல் அந்தப் புத்தகத்தை எங்களால் கண்டுபிடிக்க முடியவில்லை.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} க்குச் செல்லவும்",
+  "loading-picture-editor": "படத் திருத்தி ஏற்றப்படுகிறது…",
+  "swipe-to-see-more": "மேலும் பார்க்க ஸ்வைப் செய்யவும்"
 }

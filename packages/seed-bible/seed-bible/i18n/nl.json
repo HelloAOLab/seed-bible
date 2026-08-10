@@ -434,5 +434,10 @@
   "remove": "Verwijderen",
   "signed-out-message": "Je bent uitgelogd. Log opnieuw in.",
   "account-suspended-message": "Je account is geblokkeerd.",
-  "loading-chapter": "Hoofdstuk laden…"
+  "loading-chapter": "Hoofdstuk laden…",
+  "book-not-found-title": "Boek niet gevonden",
+  "book-not-found-message": "We konden dat boek niet vinden in {{translationName}} .",
+  "book-not-found-action": "Ga naar {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "De foto-editor wordt geladen…",
+  "swipe-to-see-more": "Veeg om meer te zien"
 }

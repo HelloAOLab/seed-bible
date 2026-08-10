@@ -434,5 +434,10 @@
   "remove": "ਹਟਾਓ",
   "signed-out-message": "ਤੁਹਾਨੂੰ ਸਾਈਨ ਆਊਟ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਸਾਈਨ ਇਨ ਕਰੋ।",
   "account-suspended-message": "ਤੁਹਾਡਾ ਖਾਤਾ ਮੁਅੱਤਲ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ।",
-  "loading-chapter": "ਅਧਿਆਇ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ..."
+  "loading-chapter": "ਅਧਿਆਇ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
+  "book-not-found-title": "ਕਿਤਾਬ ਨਹੀਂ ਮਿਲੀ",
+  "book-not-found-message": "ਸਾਨੂੰ ਉਹ ਕਿਤਾਬ {{translationName}} ਵਿੱਚ ਨਹੀਂ ਮਿਲੀ।",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} ਤੇ ਜਾਓ।",
+  "loading-picture-editor": "ਤਸਵੀਰ ਸੰਪਾਦਕ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
+  "swipe-to-see-more": "ਹੋਰ ਦੇਖਣ ਲਈ ਸਵਾਈਪ ਕਰੋ"
 }
