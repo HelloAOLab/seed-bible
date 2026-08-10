@@ -124,13 +124,13 @@ export function ComparePane(props: {
             </MaterialIcon>
             <p className="sb-compare-empty-title">
               {t("nothing-to-compare-title", {
-                defaultValue: "Nothing to compare yet",
+                defaultValue: "No translations to compare yet",
               })}
             </p>
             <p className="sb-compare-empty-hint">
               {t("nothing-to-compare-hint", {
                 defaultValue:
-                  "Add a translation to see these verses alongside the one you're reading.",
+                  "Add translations to compare the selected verses with",
               })}
             </p>
           </div>

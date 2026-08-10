@@ -313,8 +313,10 @@ describe("ComparePane", () => {
     expect(container.querySelectorAll(".sb-compare-block")).toHaveLength(1);
     const empty = container.querySelector(".sb-compare-empty")!;
     expect(empty).not.toBeNull();
-    expect(empty.textContent).toContain("Nothing to compare yet");
-    expect(empty.textContent).toContain("Add a translation");
+    expect(empty.textContent).toContain("No translations to compare yet");
+    expect(empty.textContent).toContain(
+      "Add translations to compare the selected verses with"
+    );
     // It sits in the scrolling area, not below the Add Translation bar.
     expect(empty.closest(".sb-compare-scroll")).not.toBeNull();
   });

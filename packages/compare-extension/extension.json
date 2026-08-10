@@ -19,8 +19,8 @@
       "search-translations": "Search translations",
       "filter-translations": "Filter translations",
       "no-translations-selected": "No translations added yet.",
-      "nothing-to-compare-title": "Nothing to compare yet",
-      "nothing-to-compare-hint": "Add a translation to see these verses alongside the one you're reading.",
+      "nothing-to-compare-title": "No translations to compare yet",
+      "nothing-to-compare-hint": "Add translations to compare the selected verses with",
       "currently-reading": "Currently reading"
     }
   }
