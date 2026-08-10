@@ -391,8 +391,17 @@ export function createCompareState(context: SeedBibleState): CompareState {
       login.localConfig.value[COMPARE_TRANSLATIONS_KEY]
   );
 
-  const selectedTranslationIds = computed(() =>
-    parseCompareTranslationIds(rawSelectedTranslationIds.value)
+  // Toggling several translations in a row (add/remove in the picker) used to
+  // fire one profile-save network request per click, which then stacked up
+  // and made the whole burst slow to settle. This holds the not-yet-persisted
+  // value so the UI (ticks, chips) updates instantly while the actual write
+  // below is debounced into a single request for the whole burst.
+  const pendingSelectedTranslationIds = signal<string[] | null>(null);
+
+  const selectedTranslationIds = computed(
+    () =>
+      pendingSelectedTranslationIds.value ??
+      parseCompareTranslationIds(rawSelectedTranslationIds.value)
   );
 
   const order = computed(() =>
@@ -402,8 +411,36 @@ export function createCompareState(context: SeedBibleState): CompareState {
     )
   );
 
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const flushSelectedTranslationIdsSave = () => {
+    if (saveTimer === null) {
+      return;
+    }
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    const ids = pendingSelectedTranslationIds.peek();
+    if (ids === null) {
+      return;
+    }
+    void saveProfileConfigValue(login, COMPARE_TRANSLATIONS_KEY, ids).then(
+      () => {
+        // Only the write this call scheduled should clear the pending value —
+        // a newer toggle may have already armed its own timer for a different
+        // array by the time this one's request resolves.
+        if (pendingSelectedTranslationIds.peek() === ids) {
+          pendingSelectedTranslationIds.value = null;
+        }
+      }
+    );
+  };
+
   const setSelectedTranslationIds = (ids: string[]) => {
-    void saveProfileConfigValue(login, COMPARE_TRANSLATIONS_KEY, ids);
+    pendingSelectedTranslationIds.value = ids;
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+    }
+    saveTimer = setTimeout(flushSelectedTranslationIdsSave, 500);
   };
 
   const setChapterState = (key: string, state: CompareChapterState) => {
@@ -573,7 +610,10 @@ export function createCompareState(context: SeedBibleState): CompareState {
     if (login.userId.value && login.isProfileLoading.value) {
       return;
     }
-    if (rawSelectedTranslationIds.value !== undefined) {
+    if (
+      pendingSelectedTranslationIds.value !== null ||
+      rawSelectedTranslationIds.value !== undefined
+    ) {
       return;
     }
     const defaults = defaultSelectionForLanguage(
@@ -588,6 +628,10 @@ export function createCompareState(context: SeedBibleState): CompareState {
   const dispose = () => {
     disposeLoadChapters();
     disposeDefaultSelection();
+    // A toggle right before the pane closes would otherwise lose its debounced
+    // save entirely — it only exists as a timer callback that's about to be
+    // cancelled with nothing else to run it.
+    flushSelectedTranslationIdsSave();
   };
 
   return {

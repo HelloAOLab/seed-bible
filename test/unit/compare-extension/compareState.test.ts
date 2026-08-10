@@ -273,11 +273,23 @@ describe("versesFromChapter", () => {
 });
 
 describe("createCompareState persistence", () => {
-  it("saves to the device-local store when logged out", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("saves to the device-local store when logged out", async () => {
+    vi.useFakeTimers();
     const { context, login } = createTestContext();
     const state = createCompareState(context);
 
     state.setSelectedTranslationIds(["a", "b"]);
+
+    // The write is debounced, so it isn't there yet — but the UI-facing value
+    // already is, from the not-yet-persisted pending value.
+    expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toBeUndefined();
+    expect(state.selectedTranslationIds.value).toEqual(["a", "b"]);
+
+    await vi.advanceTimersByTimeAsync(500);
 
     expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual([
       "a",
@@ -287,7 +299,8 @@ describe("createCompareState persistence", () => {
     state.dispose();
   });
 
-  it("saves to the profile when logged in", () => {
+  it("saves to the profile when logged in", async () => {
+    vi.useFakeTimers();
     const login = createTestLogin({
       userId: "user-1",
       profile: { name: "Reader" },
@@ -296,6 +309,7 @@ describe("createCompareState persistence", () => {
     const state = createCompareState(context);
 
     state.setSelectedTranslationIds(["a"]);
+    await vi.advanceTimersByTimeAsync(500);
 
     expect(
       (login.profile.value?.config as Record<string, unknown>)[
@@ -304,6 +318,40 @@ describe("createCompareState persistence", () => {
     ).toEqual(["a"]);
     expect(state.selectedTranslationIds.value).toEqual(["a"]);
     state.dispose();
+  });
+
+  it("coalesces a rapid burst of toggles into a single write", async () => {
+    vi.useFakeTimers();
+    const { context, login } = createTestContext();
+    const state = createCompareState(context);
+    const saveSpy = vi.spyOn(login.localConfig, "value", "set");
+
+    state.setSelectedTranslationIds(["a"]);
+    await vi.advanceTimersByTimeAsync(100);
+    state.setSelectedTranslationIds(["a", "b"]);
+    await vi.advanceTimersByTimeAsync(100);
+    state.setSelectedTranslationIds(["a", "b", "c"]);
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(saveSpy).toHaveBeenCalledTimes(1);
+    expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+    state.dispose();
+  });
+
+  it("flushes a pending save on dispose instead of losing it", () => {
+    const { context, login } = createTestContext();
+    const state = createCompareState(context);
+
+    state.setSelectedTranslationIds(["a"]);
+    // Closing the pane right after a toggle, before the debounce would have
+    // fired on its own.
+    state.dispose();
+
+    expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual(["a"]);
   });
 
   it("prefers the profile over the device-local copy", () => {
@@ -376,6 +424,10 @@ describe("defaultSelectionForLanguage", () => {
 });
 
 describe("createCompareState first-run default", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const translations = [
     translation("eng_kjv", "eng"),
     translation("eng_niv", "eng"),
@@ -389,7 +441,8 @@ describe("createCompareState first-run default", () => {
     } as unknown as BibleReadingState;
   };
 
-  it("populates every sibling-language translation the first time Compare opens", () => {
+  it("populates every sibling-language translation the first time Compare opens", async () => {
+    vi.useFakeTimers();
     const { context, login } = createTestContext({
       availableTranslations: translations,
     });
@@ -399,7 +452,12 @@ describe("createCompareState first-run default", () => {
 
     openOn(state);
 
+    // The default applies to the UI-facing value right away; the write that
+    // persists it is debounced like any other change to the saved set.
     expect(state.selectedTranslationIds.value).toEqual(["eng_niv", "eng_esv"]);
+
+    await vi.advanceTimersByTimeAsync(500);
+
     expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual([
       "eng_niv",
       "eng_esv",
@@ -440,12 +498,17 @@ describe("createCompareState first-run default", () => {
     // Still loading: nothing decided or written yet.
     expect(state.selectedTranslationIds.value).toEqual([]);
 
-    // The real profile arrives with a different, already-saved set.
-    login.isProfileLoading.value = false;
+    // The real profile arrives with a different, already-saved set. Mirrors
+    // LoginManager's actual sequencing: `profile` resolves inside `.then()`,
+    // strictly before `.finally()` clears `isProfileLoading` — never the
+    // other way around, so the effect never observes "loading just turned
+    // false, but the profile update from the same resolution hasn't reached
+    // `profile.value` yet."
     login.profile.value = {
       name: "Reader",
       config: { [COMPARE_TRANSLATIONS_KEY]: ["remote"] },
     };
+    login.isProfileLoading.value = false;
 
     expect(state.selectedTranslationIds.value).toEqual(["remote"]);
     state.dispose();
