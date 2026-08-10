@@ -423,6 +423,34 @@ describe("Compare translation picker", () => {
     expect(kjvRow.querySelector(".emptyCircle")).toBeNull();
   });
 
+  it("offers the catalog filter, so it is not stuck on complete translations", () => {
+    const { context, container } = mountPicker();
+
+    expect(context.selector.showAllLanguages.value).toBe("all");
+    expect(container.querySelector(".sb-compare-filters-menu")).toBeNull();
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-compare-filters-button")!
+        .click();
+    });
+
+    const options = [
+      ...container.querySelectorAll<HTMLButtonElement>(
+        ".sb-translation-view-mode-option"
+      ),
+    ];
+    expect(options).toHaveLength(3);
+
+    act(() => {
+      options[2]!.click();
+    });
+
+    expect(context.selector.showAllLanguages.value).toBe("popular");
+    // Choosing a filter closes the menu.
+    expect(container.querySelector(".sb-compare-filters-menu")).toBeNull();
+  });
+
   it("returns to where it was opened from", () => {
     const { state, container } = mountPicker();
     state.addReturnTo.value = "settings";

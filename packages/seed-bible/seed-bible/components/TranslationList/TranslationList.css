@@ -143,3 +143,42 @@
     height: calc(100% - 1.25rem);
   }
 }
+
+/* ─── View-mode (catalog filter) menu ─────────────────────────────────────── */
+
+.sb-translation-view-mode-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The original markup coloured the selected row with `--addButtonIcon` and the
+   rest with `--text3`, neither of which is defined anywhere — so the states
+   were indistinguishable apart from the tick. These use real theme tokens. */
+.sb-translation-view-mode-option {
+  display: flex;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-translation-view-mode-option--selected {
+  color: var(--sb-primary-color);
+}
+
+@media (hover: hover) {
+  .sb-translation-view-mode-option:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-translation-view-mode-option:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-translation-view-mode-bullet {
+  border: 1px solid var(--sb-divider-color);
+}

@@ -217,10 +217,57 @@
   color: var(--sb-font-color);
 }
 
+/* Search input and catalog filter share a row; the filter's menu is anchored
+   to it. */
+.sb-compare-picker-search-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Override the modal-oriented width the reader's `.searchbar` carries — in the
-   pane it spans the full column. */
+   pane it takes whatever the filter button leaves. */
 .sb-compare-picker .sb-compare-search {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.sb-compare-filters-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-compare-filters-button:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-compare-filters-button:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-compare-filters-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 10;
+  min-width: 12.5rem;
+  padding: 0.3125rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.5rem;
+  background: var(--sb-menu-background, var(--sb-background));
+  box-shadow: 0 4px 12px var(--sb-shadow-color);
 }
 
 /* The shared list has a fixed height suited to the reader's modal; in the pane

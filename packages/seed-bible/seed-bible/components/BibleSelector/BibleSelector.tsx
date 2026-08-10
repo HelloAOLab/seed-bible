@@ -7,7 +7,6 @@ import {
 import { useI18n } from "../../i18n/I18nManager";
 import {
   FiltersIcon,
-  SelectedIcon,
   AddIcon,
   MinusIcon,
   ShareIcon,
@@ -15,6 +14,7 @@ import {
 } from "../../components/icons";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { TranslationList } from "../TranslationList/TranslationList";
+import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
 import { computed } from "@preact/signals";
 import type { JSX } from "preact";
 import type { BibleDataManager, BookId } from "../../managers/BibleDataManager";
@@ -1616,100 +1616,15 @@ const TranslationSettings = (props: {
 }) => {
   const { bibleSelectorState } = props;
   const { showAllLanguages, showTranslationSettings } = bibleSelectorState;
-  const { t } = useI18n();
   return (
     <div className="modal translationSettingsModal">
-      <div
-        class="translation-option flex-between-center-gap-md"
-        onClick={() => {
-          showAllLanguages.value = "complete";
+      <TranslationViewModeMenu
+        viewMode={showAllLanguages.value}
+        onChange={(mode) => {
+          showAllLanguages.value = mode;
           showTranslationSettings.value = false;
         }}
-      >
-        <span
-          class="translation-title inline-flex-start-center-gap-sm"
-          style={{
-            color:
-              showAllLanguages.value === "complete"
-                ? "var(--addButtonIcon)"
-                : "var(--text3)",
-          }}
-        >
-          {showAllLanguages.value === "complete" ? (
-            <SelectedIcon height={17} width={17} />
-          ) : (
-            <span
-              class="emptyCircle"
-              style={{ border: "1px solid #ccc" }}
-            ></span>
-          )}
-          <span class="translation-description">
-            {t("complete-translations", {
-              defaultValue: "Complete translations",
-            })}
-          </span>
-        </span>
-      </div>
-      <div
-        class="translation-option flex-between-center-gap-md"
-        onClick={() => {
-          showAllLanguages.value = "all";
-          showTranslationSettings.value = false;
-        }}
-      >
-        <span
-          class="translation-title inline-flex-start-center-gap-sm"
-          style={{
-            color:
-              showAllLanguages.value === "all"
-                ? "var(--addButtonIcon)"
-                : "var(--text3)",
-          }}
-        >
-          {showAllLanguages.value === "all" ? (
-            <SelectedIcon height={17} width={17} />
-          ) : (
-            <span
-              class="emptyCircle"
-              style={{ border: "1px solid #ccc" }}
-            ></span>
-          )}
-          <span class="translation-description">
-            {t("all-translations", { defaultValue: "All translations" })}
-          </span>
-        </span>
-      </div>
-      <div
-        class="translation-option flex-between-center-gap-md"
-        onClick={() => {
-          showAllLanguages.value = "popular";
-          showTranslationSettings.value = false;
-        }}
-      >
-        <span
-          class="translation-title inline-flex-start-center-gap-sm"
-          style={{
-            color:
-              showAllLanguages.value === "popular"
-                ? "var(--addButtonIcon)"
-                : "var(--text3)",
-          }}
-        >
-          {showAllLanguages.value === "popular" ? (
-            <SelectedIcon height={17} width={17} />
-          ) : (
-            <span
-              class="emptyCircle"
-              style={{ border: "1px solid #ccc" }}
-            ></span>
-          )}
-          <span class="translation-description">
-            {t("popular-translations", {
-              defaultValue: "Popular translations",
-            })}
-          </span>
-        </span>
-      </div>
+      />
     </div>
   );
 };

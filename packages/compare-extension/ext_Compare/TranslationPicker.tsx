@@ -4,7 +4,12 @@ import {
   filterTranslationGroups,
   groupTranslationsByLanguage,
 } from "seed-bible/managers";
-import { MaterialIcon, TranslationList } from "seed-bible/components";
+import {
+  FiltersIcon,
+  MaterialIcon,
+  TranslationList,
+  TranslationViewModeMenu,
+} from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { addId, removeId, type CompareState } from "./compareState";
 
@@ -21,10 +26,11 @@ const PAGE_SIZE = 50;
  * closing on the first pick), and it omits the reader's per-row offline and
  * share controls.
  *
- * The catalog filter is read from the reader's own `showAllLanguages` — it is
- * one user preference for how much of the catalog to show, so changing it here
- * changes it there too. The search text stays local, so the two surfaces don't
- * overwrite each other's query.
+ * The catalog filter is the reader's own `showAllLanguages` — one user
+ * preference for how much of the catalog to show — and this pane has the same
+ * control for it, so a reader who wants partial translations here is not stuck
+ * with whatever the reader's modal was last set to. The search text stays
+ * local, so the two surfaces don't overwrite each other's query.
  */
 export function TranslationPicker(props: {
   context: SeedBibleState;
@@ -34,6 +40,7 @@ export function TranslationPicker(props: {
   const { t } = useI18n("compare-extension");
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(PAGE_SIZE);
+  const [showFilters, setShowFilters] = useState(false);
 
   const { showAllLanguages } = context.selector;
   const translations = context.bibleData.availableTranslations.value;
@@ -62,23 +69,53 @@ export function TranslationPicker(props: {
 
   return (
     <div className="sb-compare-picker">
-      <div className="searchbar flex-align-center sb-compare-search">
-        <span className="material-symbols-outlined search-icon">search</span>
-        <input
-          type="search"
-          className="flex-1"
-          value={query}
-          dir="auto"
-          placeholder={t("search-translations", {
-            defaultValue: "Search translations",
+      <div className="sb-compare-picker-search-row">
+        <div className="searchbar flex-align-center sb-compare-search">
+          <span className="material-symbols-outlined search-icon">search</span>
+          <input
+            type="search"
+            className="flex-1"
+            value={query}
+            dir="auto"
+            placeholder={t("search-translations", {
+              defaultValue: "Search translations",
+            })}
+            aria-label={t("search-translations", {
+              defaultValue: "Search translations",
+            })}
+            onInput={(event: Event) => {
+              setQuery((event.currentTarget as HTMLInputElement).value);
+            }}
+          />
+        </div>
+        <button
+          type="button"
+          className="sb-compare-filters-button"
+          aria-label={t("filter-translations", {
+            defaultValue: "Filter translations",
           })}
-          aria-label={t("search-translations", {
-            defaultValue: "Search translations",
+          title={t("filter-translations", {
+            defaultValue: "Filter translations",
           })}
-          onInput={(event: Event) => {
-            setQuery((event.currentTarget as HTMLInputElement).value);
-          }}
-        />
+          aria-expanded={showFilters}
+          onClick={() => setShowFilters((open) => !open)}
+        >
+          <FiltersIcon />
+        </button>
+        {showFilters && (
+          <div className="sb-compare-filters-menu">
+            <TranslationViewModeMenu
+              viewMode={showAllLanguages.value}
+              onChange={(mode) => {
+                showAllLanguages.value = mode;
+                setShowFilters(false);
+                // A narrower or wider catalog is a different list; start it
+                // from the first page rather than mid-way through the old one.
+                setLimit(PAGE_SIZE);
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <TranslationList

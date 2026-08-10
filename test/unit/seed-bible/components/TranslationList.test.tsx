@@ -25,6 +25,8 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 
 const { TranslationList } =
   await import("@packages/seed-bible/seed-bible/components/TranslationList/TranslationList");
+const { TranslationViewModeMenu } =
+  await import("@packages/seed-bible/seed-bible/components/TranslationList/TranslationViewModeMenu");
 
 function translations(count: number): Translation[] {
   return Array.from(
@@ -144,5 +146,74 @@ describe("TranslationList load-more control", () => {
     expect(
       container.querySelector(".sb-translation-list-load-more")
     ).toBeNull();
+  });
+});
+
+describe("TranslationViewModeMenu", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function mountMenu(
+    viewMode: "complete" | "all" | "popular",
+    onChange = vi.fn()
+  ) {
+    act(() => {
+      render(
+        <TranslationViewModeMenu viewMode={viewMode} onChange={onChange} />,
+        container
+      );
+    });
+    return onChange;
+  }
+
+  const options = () => [
+    ...container.querySelectorAll<HTMLButtonElement>(
+      ".sb-translation-view-mode-option"
+    ),
+  ];
+
+  it("offers the three catalog filters as radio menu items", () => {
+    mountMenu("complete");
+
+    expect(options().map((option) => option.textContent)).toEqual([
+      "Complete translations",
+      "All translations",
+      "Popular translations",
+    ]);
+    for (const option of options()) {
+      expect(option.getAttribute("role")).toBe("menuitemradio");
+    }
+  });
+
+  it("marks the active filter as checked", () => {
+    mountMenu("popular");
+
+    expect(
+      options().map((option) => option.getAttribute("aria-checked"))
+    ).toEqual(["false", "false", "true"]);
+    expect(
+      options()[2]!.classList.contains(
+        "sb-translation-view-mode-option--selected"
+      )
+    ).toBe(true);
+  });
+
+  it("reports the chosen filter", () => {
+    const onChange = mountMenu("complete");
+
+    act(() => {
+      options()[1]!.click();
+    });
+
+    expect(onChange).toHaveBeenCalledWith("all");
   });
 });

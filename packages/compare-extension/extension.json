@@ -17,6 +17,7 @@
       "comparison-load-failed": "Could not load this translation.",
       "retry": "Retry",
       "search-translations": "Search translations",
+      "filter-translations": "Filter translations",
       "no-translations-selected": "No translations added yet.",
       "currently-reading": "Currently reading"
     }
