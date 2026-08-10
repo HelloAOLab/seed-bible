@@ -2,6 +2,8 @@ import "./Tabs.css";
 import { useSignal } from "@preact/signals";
 import {
   DEFAULT_BOOKMARK_CATEGORY,
+  bookmarkBelongsToCategory,
+  getBookmarkCategories,
   type BookmarkVerse,
 } from "../../managers/BookmarksManager";
 import type { ReaderTab } from "../../managers/TabsManager";
@@ -1266,7 +1268,7 @@ function TabRow(props: TabRowProps) {
 }
 
 /**
- * Location targeted by the "Add to bookmark category" modal. Either a whole
+ * Location targeted by the bookmark folder picker modal. Either a whole
  * chapter (no `verse`) or a verse / verse range pinned within a chapter.
  */
 export interface BookmarkLocation {
@@ -1326,88 +1328,124 @@ async function createSharedSessionAndCopyLink(
 
 /**
  * Modal body shown when the user triggers "Bookmark" from a tab menu, the
- * sidebar tab row, the verse toolbar, or "Move to folder" from a bookmark's
- * kebab menu. Lets the user pick which folder the bookmark lands in. Folder
- * creation only happens here — there is no inline "+ New folder" button in
- * the sidebar list anymore.
+ * sidebar tab row, the verse toolbar, or "Edit bookmark" from a bookmark's
+ * kebab menu. Lets the user pick any number of folders the bookmark belongs
+ * to (checkboxes). Folder creation only happens here — there is no inline
+ * "+ New folder" button in the sidebar list anymore.
  *
- * In move mode the bookmark's current folder is filtered out so the list only
- * offers other destinations (or "Move to new" when none remain).
+ * "Add to new" creates an empty category immediately (no bookmark yet), selects
+ * it, and returns to multi-select so the user can keep choosing folders before
+ * Save. In edit mode (`bookmarkId` set) existing membership is pre-checked.
  */
 function BookmarkCategoryPickerContent(props: {
   state: SeedBibleState;
   location: BookmarkLocation;
   onClose: () => void;
-  mode?: "add" | "move";
+  mode?: "add" | "edit";
   bookmarkId?: string;
-  excludeCategory?: string;
 }) {
-  const {
-    state,
-    location,
-    onClose,
-    mode = "add",
-    bookmarkId,
-    excludeCategory,
-  } = props;
+  const { state, location, onClose, mode = "add", bookmarkId } = props;
   const { bookmarks } = state;
   const { t } = useI18n();
-  const isMove = mode === "move";
-  const categories = bookmarks.categories.value.filter(
-    (category) => category.name !== excludeCategory
-  );
+  const isEdit = mode === "edit";
+  const categories = bookmarks.categories.value;
 
-  const initialCategory = categories[0]?.name ?? "";
-  const selectedCategory = useSignal<string>(initialCategory);
+  const existingBookmark =
+    isEdit && bookmarkId
+      ? bookmarks.bookmarks.value.find((bookmark) => bookmark.id === bookmarkId)
+      : undefined;
+  const initialSelection = existingBookmark
+    ? getBookmarkCategories(existingBookmark.category)
+    : categories.some((category) => category.name === DEFAULT_BOOKMARK_CATEGORY)
+      ? [DEFAULT_BOOKMARK_CATEGORY]
+      : categories[0]?.name
+        ? [categories[0].name]
+        : [];
+
+  const selectedCategories = useSignal<string[]>(initialSelection);
   const isAddingNew = useSignal<boolean>(categories.length === 0);
   const newCategoryName = useSignal<string>("");
   const isSaving = useSignal<boolean>(false);
-  const savingToNewCategory = useSignal<string | null>(null);
+  const isCreatingCategory = useSignal<boolean>(false);
 
   const trimmedNew = newCategoryName.value.trim();
   const newCategoryCollides =
     trimmedNew.length > 0 &&
     bookmarks.categories.value.some((category) => category.name === trimmedNew);
-  const canSave = isAddingNew.value
-    ? trimmedNew.length > 0 && !newCategoryCollides
-    : selectedCategory.value.length > 0;
+  const canCreateNew =
+    isAddingNew.value &&
+    trimmedNew.length > 0 &&
+    !newCategoryCollides &&
+    !isCreatingCategory.value &&
+    !isSaving.value;
+  // Save always uses the checkbox selection only — finishing a new folder is
+  // a separate step so the user can still multi-select after creating one.
+  const canSave =
+    selectedCategories.value.length > 0 &&
+    !isSaving.value &&
+    !isCreatingCategory.value;
 
-  const pendingCategoryName = savingToNewCategory.value;
-  const displayCategories =
-    pendingCategoryName &&
-    !categories.some((category) => category.name === pendingCategoryName)
-      ? [...categories, { name: pendingCategoryName }]
-      : categories;
+  const toggleCategory = (name: string) => {
+    if (isSaving.value || isCreatingCategory.value) return;
+    const current = selectedCategories.value;
+    if (current.includes(name)) {
+      selectedCategories.value = current.filter(
+        (categoryName) => categoryName !== name
+      );
+    } else {
+      selectedCategories.value = [...current, name];
+    }
+  };
+
+  /**
+   * Creates an empty folder, checks it in the multi-select list, and exits the
+   * "add new" input so the user can keep picking (or add more folders) before
+   * saving the bookmark itself.
+   */
+  const handleCreateNewCategory = async () => {
+    if (!canCreateNew) return;
+
+    isCreatingCategory.value = true;
+    try {
+      await bookmarks.createCategory(trimmedNew);
+      if (!selectedCategories.value.includes(trimmedNew)) {
+        selectedCategories.value = [...selectedCategories.value, trimmedNew];
+      }
+      isAddingNew.value = false;
+      newCategoryName.value = "";
+    } finally {
+      isCreatingCategory.value = false;
+    }
+  };
 
   const handleSave = async () => {
-    if (isSaving.value) return;
+    if (!canSave) return;
 
-    let category = selectedCategory.value;
-    if (isAddingNew.value) {
-      if (!trimmedNew || newCategoryCollides) return;
-      savingToNewCategory.value = trimmedNew;
-      isAddingNew.value = false;
-      selectedCategory.value = trimmedNew;
-      category = trimmedNew;
-    } else if (!category) {
-      return;
-    }
+    const nextSelection = [...selectedCategories.value];
+    if (nextSelection.length === 0) return;
 
     isSaving.value = true;
     try {
-      if (isMove) {
-        if (!bookmarkId) return;
-        await bookmarks.moveBookmark(bookmarkId, category);
-      } else {
-        if (savingToNewCategory.value) {
-          await bookmarks.createCategory(category);
+      // Folders from "Add to new" are already persisted empty; this covers
+      // any selection edge case where a name is not yet in the list.
+      for (const name of nextSelection) {
+        if (
+          !bookmarks.categories.value.some((category) => category.name === name)
+        ) {
+          await bookmarks.createCategory(name);
         }
+      }
+
+      if (isEdit) {
+        if (!bookmarkId) return;
+        await bookmarks.setBookmarkCategories(bookmarkId, nextSelection);
+      } else {
         await bookmarks.addBookmark(
           location.translationId,
           location.bookId,
           location.chapterNumber,
           {
-            category,
+            category: nextSelection,
             ...(location.verse !== undefined ? { verse: location.verse } : {}),
           }
         );
@@ -1418,34 +1456,33 @@ function BookmarkCategoryPickerContent(props: {
     }
   };
 
+  const isBusy = isSaving.value || isCreatingCategory.value;
+
   return (
     <div className="sb-bookmark-picker">
-      <div className="sb-bookmark-picker-categories" role="radiogroup">
-        {displayCategories.map((category) => {
-          const isSelected =
-            !isAddingNew.value && selectedCategory.value === category.name;
+      <div className="sb-bookmark-picker-categories" role="group">
+        {categories.map((category) => {
+          const isSelected = selectedCategories.value.includes(category.name);
           return (
             <button
               key={category.name}
               type="button"
-              role="radio"
+              role="checkbox"
               aria-checked={isSelected}
-              disabled={isSaving.value}
+              disabled={isBusy}
               className={`sb-bookmark-picker-category${
                 isSelected ? " sb-bookmark-picker-category-selected" : ""
               }`}
               onClick={() => {
-                if (isSaving.value) return;
-                isAddingNew.value = false;
-                selectedCategory.value = category.name;
+                toggleCategory(category.name);
               }}
             >
               <span className="sb-bookmark-picker-category-name">
                 {category.name}
               </span>
               <span
-                className={`sb-bookmark-picker-radio${
-                  isSelected ? " sb-bookmark-picker-radio-checked" : ""
+                className={`sb-bookmark-picker-checkbox${
+                  isSelected ? " sb-bookmark-picker-checkbox-checked" : ""
                 }`}
                 aria-hidden="true"
               />
@@ -1454,7 +1491,7 @@ function BookmarkCategoryPickerContent(props: {
         })}
       </div>
 
-      {!isSaving.value && (
+      {!isBusy && (
         <>
           <div className="sb-bookmark-picker-divider" role="separator" />
 
@@ -1474,7 +1511,7 @@ function BookmarkCategoryPickerContent(props: {
                 onKeyDown={(event: KeyboardEvent) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    void handleSave();
+                    void handleCreateNewCategory();
                   } else if (event.key === "Escape") {
                     event.preventDefault();
                     if (categories.length === 0) {
@@ -1506,29 +1543,40 @@ function BookmarkCategoryPickerContent(props: {
               <span className="material-symbols-outlined" aria-hidden="true">
                 add
               </span>
-              <span>
-                {isMove
-                  ? t("move-to-new", { defaultValue: "Move to new" })
-                  : t("add-to-new", { defaultValue: "Add to new" })}
-              </span>
+              <span>{t("add-to-new", { defaultValue: "Add to new" })}</span>
             </button>
           )}
         </>
       )}
 
       <div className="sb-bookmark-picker-actions">
-        <button
-          type="button"
-          className="sb-bookmark-picker-save"
-          disabled={!canSave || isSaving.value}
-          onClick={() => {
-            void handleSave();
-          }}
-        >
-          {isSaving.value
-            ? t("saving", { defaultValue: "Saving…" })
-            : t("save", { defaultValue: "Save" })}
-        </button>
+        {isAddingNew.value ? (
+          <button
+            type="button"
+            className="sb-bookmark-picker-save"
+            disabled={!canCreateNew}
+            onClick={() => {
+              void handleCreateNewCategory();
+            }}
+          >
+            {isCreatingCategory.value
+              ? t("creating", { defaultValue: "Creating…" })
+              : t("create-folder", { defaultValue: "Create folder" })}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="sb-bookmark-picker-save"
+            disabled={!canSave}
+            onClick={() => {
+              void handleSave();
+            }}
+          >
+            {isSaving.value
+              ? t("saving", { defaultValue: "Saving…" })
+              : t("save", { defaultValue: "Save" })}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1539,16 +1587,15 @@ function BookmarkCategoryPickerContent(props: {
  * so the verse toolbar (in BibleReaderToolbar) and the chapter bookmark
  * button (in BibleReader) can open it with the same UX as the sidebar.
  *
- * Pass `mode: "move"` with `bookmarkId` / `excludeCategory` to relocate an
- * existing bookmark — the current folder is hidden from the list.
+ * Pass `mode: "edit"` with `bookmarkId` to change which folders an existing
+ * bookmark belongs to (any number of categories).
  */
 export function openBookmarkCategoryModal(
   state: SeedBibleState,
   location: BookmarkLocation,
   options?: {
-    mode?: "add" | "move";
+    mode?: "add" | "edit";
     bookmarkId?: string;
-    excludeCategory?: string;
   }
 ) {
   const mode = options?.mode ?? "add";
@@ -1559,28 +1606,21 @@ export function openBookmarkCategoryModal(
         ? `${location.verse[0]}-${location.verse[1]}`
         : String(location.verse);
   const modalId =
-    mode === "move" && options?.bookmarkId
-      ? `bookmark-move-${options.bookmarkId}`
+    mode === "edit" && options?.bookmarkId
+      ? `bookmark-edit-${options.bookmarkId}`
       : `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
   state.modals.openModal({
     id: modalId,
-    title:
-      mode === "move"
-        ? {
-            key: "move-to-bookmark-category",
-            defaultValue: "Move to bookmark category",
-          }
-        : {
-            key: "add-to-bookmark-category",
-            defaultValue: "Add to bookmark category",
-          },
+    title: {
+      key: "edit-bookmark",
+      defaultValue: "Edit bookmark",
+    },
     content: () => (
       <BookmarkCategoryPickerContent
         state={state}
         location={location}
         mode={mode}
         bookmarkId={options?.bookmarkId}
-        excludeCategory={options?.excludeCategory}
         onClose={() => state.modals.closeModal(modalId)}
       />
     ),
@@ -1699,7 +1739,9 @@ function BookmarksSection(props: BookmarksSectionProps) {
   return (
     <div className="sb-bookmarks-section">
       {categories.map((category) => {
-        const items = allBookmarks.filter((b) => b.category === category.name);
+        const items = allBookmarks.filter((b) =>
+          bookmarkBelongsToCategory(b, category.name)
+        );
         const isExpanded = expanded.has(category.name);
         const isRenaming = renamingCategory.value === category.name;
 
@@ -1873,15 +1915,14 @@ function BookmarksSection(props: BookmarksSectionProps) {
                                     : {}),
                                 },
                                 {
-                                  mode: "move",
+                                  mode: "edit",
                                   bookmarkId: bookmark.id,
-                                  excludeCategory: bookmark.category,
                                 }
                               );
                             }}
                           >
-                            {t("move-bookmark", {
-                              defaultValue: "Move to folder",
+                            {t("edit-bookmark", {
+                              defaultValue: "Edit bookmark",
                             })}
                           </ContextMenuItem>
                           <ContextMenuItem

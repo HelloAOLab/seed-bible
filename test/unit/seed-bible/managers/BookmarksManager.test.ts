@@ -1,6 +1,9 @@
 import {
+  bookmarkBelongsToCategory,
   createBookmarksManager,
   DEFAULT_BOOKMARK_CATEGORY,
+  getBookmarkCategories,
+  serializeBookmarkCategories,
   type Bookmark,
 } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
@@ -114,6 +117,14 @@ describe("BookmarksManager", () => {
             createdAt: 2,
             category: "Favorites",
           },
+          {
+            id: "multi-1",
+            translationId: "BSB",
+            bookId: "LEV",
+            chapterNumber: 3,
+            createdAt: 3,
+            category: ["Favorites", "To Study"],
+          },
         ],
       },
     });
@@ -131,10 +142,18 @@ describe("BookmarksManager", () => {
         createdAt: 2,
         category: "Favorites",
       }),
+      createBookmark({
+        id: "multi-1",
+        bookId: "LEV",
+        chapterNumber: 3,
+        createdAt: 3,
+        category: ["Favorites", "To Study"],
+      }),
     ]);
     expect(manager.categories.value).toEqual([
       { name: DEFAULT_BOOKMARK_CATEGORY },
       { name: "Favorites" },
+      { name: "To Study" },
     ]);
   });
 
@@ -168,6 +187,24 @@ describe("BookmarksManager", () => {
 
     expect(manager.bookmarks.value).toHaveLength(1);
     expect(recordDataMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("adds a bookmark to multiple categories", async () => {
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.addBookmark("BSB", "GEN", 1, {
+      category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites"],
+    });
+
+    expect(manager.bookmarks.value[0]?.category).toEqual([
+      DEFAULT_BOOKMARK_CATEGORY,
+      "Favorites",
+    ]);
+    expect(manager.categories.value).toEqual([
+      { name: DEFAULT_BOOKMARK_CATEGORY },
+      { name: "Favorites" },
+    ]);
   });
 
   it("attempts login before adding when unauthenticated", async () => {
@@ -272,19 +309,29 @@ describe("BookmarksManager", () => {
         bookmarks: [
           createBookmark({ id: "cat-1", category: "To Study" }),
           createBookmark({ id: "cat-2", bookId: "EXO", category: "To Study" }),
+          createBookmark({
+            id: "multi-1",
+            bookId: "LEV",
+            category: ["To Study", "Favorites"],
+          }),
         ],
-        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }, { name: "To Study" }],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "To Study" },
+          { name: "Favorites" },
+        ],
       },
     });
 
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    await manager.createCategory("  Favorites  ");
+    await manager.createCategory("  Later  ");
     expect(manager.categories.value).toEqual([
       { name: DEFAULT_BOOKMARK_CATEGORY },
       { name: "To Study" },
       { name: "Favorites" },
+      { name: "Later" },
     ]);
 
     await manager.renameCategory("To Study", "Deep Study");
@@ -292,13 +339,21 @@ describe("BookmarksManager", () => {
       { name: DEFAULT_BOOKMARK_CATEGORY },
       { name: "Deep Study" },
       { name: "Favorites" },
+      { name: "Later" },
     ]);
     expect(
-      manager.bookmarks.value.every((b) => b.category !== "To Study")
+      manager.bookmarks.value.every(
+        (b) => !getBookmarkCategories(b.category).includes("To Study")
+      )
     ).toBe(true);
     expect(
-      manager.bookmarks.value.filter((b) => b.category === "Deep Study").length
-    ).toBe(2);
+      manager.bookmarks.value.filter((b) =>
+        getBookmarkCategories(b.category).includes("Deep Study")
+      ).length
+    ).toBe(3);
+    expect(
+      manager.bookmarks.value.find((b) => b.id === "multi-1")?.category
+    ).toEqual(["Deep Study", "Favorites"]);
 
     await manager.deleteCategory(DEFAULT_BOOKMARK_CATEGORY);
     expect(
@@ -309,11 +364,19 @@ describe("BookmarksManager", () => {
     expect(manager.categories.value).toEqual([
       { name: DEFAULT_BOOKMARK_CATEGORY },
       { name: "Favorites" },
+      { name: "Later" },
     ]);
-    expect(manager.bookmarks.value).toEqual([]);
+    // Sole-membership bookmarks are removed; multi-folder keeps remaining.
+    expect(manager.bookmarks.value).toEqual([
+      createBookmark({
+        id: "multi-1",
+        bookId: "LEV",
+        category: "Favorites",
+      }),
+    ]);
   });
 
-  it("moves a bookmark into another category and creates the category when needed", async () => {
+  it("sets bookmark categories, creating missing folders as needed", async () => {
     getDataMock.mockResolvedValue({
       success: true,
       data: {
@@ -330,18 +393,21 @@ describe("BookmarksManager", () => {
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    await manager.moveBookmark("move-1", "Favorites");
+    await manager.setBookmarkCategories("move-1", "Favorites");
     expect(manager.bookmarks.value[0]?.category).toBe("Favorites");
     expect(manager.expandedCategories.value.has("Favorites")).toBe(true);
 
-    await manager.moveBookmark("move-1", "Favorites");
+    await manager.setBookmarkCategories("move-1", "Favorites");
     expect(recordDataMock).toHaveBeenCalledTimes(1);
 
-    await manager.moveBookmark("missing", "Favorites");
+    await manager.setBookmarkCategories("missing", "Favorites");
     expect(recordDataMock).toHaveBeenCalledTimes(1);
 
-    await manager.moveBookmark("move-1", "  Later  ");
-    expect(manager.bookmarks.value[0]?.category).toBe("Later");
+    await manager.setBookmarkCategories("move-1", ["Favorites", "  Later  "]);
+    expect(manager.bookmarks.value[0]?.category).toEqual([
+      "Favorites",
+      "Later",
+    ]);
     expect(manager.categories.value.some((c) => c.name === "Later")).toBe(true);
     expect(manager.expandedCategories.value.has("Later")).toBe(true);
   });
@@ -364,5 +430,146 @@ describe("BookmarksManager", () => {
     expect(
       manager.expandedCategories.value.has(DEFAULT_BOOKMARK_CATEGORY)
     ).toBe(true);
+  });
+
+  it("creates an empty category without assigning any bookmarks", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [createBookmark({ id: "existing" })],
+        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    const beforeBookmarks = manager.bookmarks.value;
+    await manager.createCategory("Empty Folder");
+
+    expect(manager.categories.value).toEqual([
+      { name: DEFAULT_BOOKMARK_CATEGORY },
+      { name: "Empty Folder" },
+    ]);
+    // Folder is empty — existing bookmarks are untouched.
+    expect(manager.bookmarks.value).toEqual(beforeBookmarks);
+    expect(
+      manager.bookmarks.value.every(
+        (b) => !getBookmarkCategories(b.category).includes("Empty Folder")
+      )
+    ).toBe(true);
+    expect(manager.expandedCategories.value.has("Empty Folder")).toBe(true);
+  });
+
+  it("create-then-save flow: empty folder first, bookmark membership only on save", async () => {
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    // Mirrors the modal: "Create folder" only adds an empty category.
+    await manager.createCategory("Study Later");
+    expect(manager.bookmarks.value).toEqual([]);
+    expect(manager.categories.value).toEqual([
+      { name: DEFAULT_BOOKMARK_CATEGORY },
+      { name: "Study Later" },
+    ]);
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+    // "Save" assigns the new bookmark to the selected folders.
+    await manager.addBookmark("BSB", "GEN", 1, {
+      category: [DEFAULT_BOOKMARK_CATEGORY, "Study Later"],
+    });
+
+    expect(manager.bookmarks.value).toHaveLength(1);
+    expect(manager.bookmarks.value[0]?.category).toEqual([
+      DEFAULT_BOOKMARK_CATEGORY,
+      "Study Later",
+    ]);
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("edit-after-create-folder flow updates membership without dropping others", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [
+          createBookmark({
+            id: "edit-1",
+            category: DEFAULT_BOOKMARK_CATEGORY,
+          }),
+        ],
+        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.createCategory("Favorites");
+    expect(manager.bookmarks.value[0]?.category).toBe(
+      DEFAULT_BOOKMARK_CATEGORY
+    );
+
+    await manager.setBookmarkCategories("edit-1", [
+      DEFAULT_BOOKMARK_CATEGORY,
+      "Favorites",
+    ]);
+    expect(manager.bookmarks.value[0]?.category).toEqual([
+      DEFAULT_BOOKMARK_CATEGORY,
+      "Favorites",
+    ]);
+
+    // No-op when the same set is reapplied (order-insensitive).
+    await manager.setBookmarkCategories("edit-1", [
+      "Favorites",
+      DEFAULT_BOOKMARK_CATEGORY,
+    ]);
+    // createCategory + first setBookmarkCategories = 2 persists; no-op skips a third.
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("serializes single membership as a string and multi as an array", () => {
+    expect(serializeBookmarkCategories(["Favorites"])).toBe("Favorites");
+    expect(serializeBookmarkCategories(["A", "B"])).toEqual(["A", "B"]);
+    expect(serializeBookmarkCategories(["A", " A ", "B", ""])).toEqual([
+      "A",
+      "B",
+    ]);
+    expect(serializeBookmarkCategories([])).toBe(DEFAULT_BOOKMARK_CATEGORY);
+    expect(getBookmarkCategories("Favorites")).toEqual(["Favorites"]);
+    expect(getBookmarkCategories(["A", "B"])).toEqual(["A", "B"]);
+
+    const multi = createBookmark({ category: ["A", "B"] });
+    const single = createBookmark({ category: "A" });
+    expect(bookmarkBelongsToCategory(multi, "A")).toBe(true);
+    expect(bookmarkBelongsToCategory(multi, "C")).toBe(false);
+    expect(bookmarkBelongsToCategory(single, "A")).toBe(true);
+    expect(bookmarkBelongsToCategory(single, "B")).toBe(false);
+  });
+
+  it("collapses multi-category membership back to a string when only one remains", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [
+          createBookmark({
+            id: "collapse-1",
+            category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites"],
+          }),
+        ],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "Favorites" },
+        ],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.setBookmarkCategories("collapse-1", ["Favorites"]);
+    expect(manager.bookmarks.value[0]?.category).toBe("Favorites");
+
+    await manager.deleteCategory("Favorites");
+    expect(manager.bookmarks.value).toEqual([]);
   });
 });

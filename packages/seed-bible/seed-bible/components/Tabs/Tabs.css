@@ -437,28 +437,34 @@
   font-weight: 500;
 }
 
-.sb-bookmark-picker-radio {
+.sb-bookmark-picker-checkbox {
   width: 1.125rem;
   height: 1.125rem;
-  border-radius: 50%;
+  border-radius: 0.2rem;
   border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
   flex-shrink: 0;
   position: relative;
+  box-sizing: border-box;
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease;
 }
 
-.sb-bookmark-picker-radio-checked {
+.sb-bookmark-picker-checkbox-checked {
   border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
 }
 
-.sb-bookmark-picker-radio-checked::after {
+.sb-bookmark-picker-checkbox-checked::after {
   content: "";
   position: absolute;
-  inset: 0.1875rem;
-  border-radius: 50%;
-  background: var(--sb-primary-color);
+  left: 0.25rem;
+  top: 0.0625rem;
+  width: 0.3125rem;
+  height: 0.5625rem;
+  border: solid var(--sb-primary-font-color);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .sb-bookmark-picker-divider {
