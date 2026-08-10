@@ -113,73 +113,80 @@ export function CompareSettings(props: {
   );
 
   return (
-    <div className="sb-discover-pane sb-compare-settings">
-      <ul className="sb-discover-list">
-        {pinned && (
-          <li className="sb-discover-item sb-discover-item--row sb-compare-settings-pinned">
-            <span className="sb-compare-settings-pin">
-              <MaterialIcon>auto_stories</MaterialIcon>
-            </span>
-            <span className="sb-compare-settings-label">
-              <TranslationLabel
-                translation={findTranslation(pinned.id)}
-                id={pinned.id}
-              />
-              <span className="sb-compare-picker-note">
-                {t("currently-reading", { defaultValue: "Currently reading" })}
+    <div className="sb-compare-settings-shell">
+      <div className="sb-discover-pane sb-compare-settings">
+        <ul className="sb-discover-list">
+          {pinned && (
+            <li className="sb-discover-item sb-discover-item--row sb-compare-settings-pinned">
+              <span className="sb-compare-settings-pin">
+                <MaterialIcon>auto_stories</MaterialIcon>
               </span>
-            </span>
-            {pinned.savedIndex >= 0 && renderRemoveButton(pinned)}
-          </li>
-        )}
+              <span className="sb-compare-settings-label">
+                <TranslationLabel
+                  translation={findTranslation(pinned.id)}
+                  id={pinned.id}
+                />
+                <span className="sb-compare-picker-note">
+                  {t("currently-reading", {
+                    defaultValue: "Currently reading",
+                  })}
+                </span>
+              </span>
+              {pinned.savedIndex >= 0 && renderRemoveButton(pinned)}
+            </li>
+          )}
 
-        {draggable.map((entry, index) => (
-          <li
-            key={entry.id}
-            className={
-              "sb-discover-item sb-discover-item--row" + getRowClassName(index)
-            }
-          >
-            <button
-              type="button"
-              className="sb-discover-item-drag-handle"
-              aria-label={t("drag-to-reorder-translation", {
-                defaultValue: "Drag to reorder",
-              })}
-              {...getHandleProps(index)}
+          {draggable.map((entry, index) => (
+            <li
+              key={entry.id}
+              className={
+                "sb-discover-item sb-discover-item--row" +
+                getRowClassName(index)
+              }
             >
-              <MaterialIcon>drag_indicator</MaterialIcon>
-            </button>
-            <span className="sb-compare-settings-label">
-              <TranslationLabel
-                translation={findTranslation(entry.id)}
-                id={entry.id}
-              />
-            </span>
-            {renderRemoveButton(entry)}
-          </li>
-        ))}
-      </ul>
+              <button
+                type="button"
+                className="sb-discover-item-drag-handle"
+                aria-label={t("drag-to-reorder-translation", {
+                  defaultValue: "Drag to reorder",
+                })}
+                {...getHandleProps(index)}
+              >
+                <MaterialIcon>drag_indicator</MaterialIcon>
+              </button>
+              <span className="sb-compare-settings-label">
+                <TranslationLabel
+                  translation={findTranslation(entry.id)}
+                  id={entry.id}
+                />
+              </span>
+              {renderRemoveButton(entry)}
+            </li>
+          ))}
+        </ul>
 
-      {draggable.length === 0 && (
-        <p className="sb-discover-empty">
-          {t("no-translations-selected", {
-            defaultValue: "No translations added yet.",
-          })}
-        </p>
-      )}
+        {draggable.length === 0 && (
+          <p className="sb-discover-empty">
+            {t("no-translations-selected", {
+              defaultValue: "No translations added yet.",
+            })}
+          </p>
+        )}
+      </div>
 
-      <button
-        type="button"
-        className="sb-compare-add-button"
-        onClick={() => {
-          state.addReturnTo.value = "settings";
-          state.view.value = "add";
-        }}
-      >
-        <MaterialIcon>add</MaterialIcon>
-        {t("add-translation", { defaultValue: "Add translation" })}
-      </button>
+      <div className="sb-compare-add-bar">
+        <button
+          type="button"
+          className="sb-compare-add-button"
+          onClick={() => {
+            state.addReturnTo.value = "settings";
+            state.view.value = "add";
+          }}
+        >
+          <MaterialIcon>add</MaterialIcon>
+          {t("add-translation", { defaultValue: "Add translation" })}
+        </button>
+      </div>
     </div>
   );
 }

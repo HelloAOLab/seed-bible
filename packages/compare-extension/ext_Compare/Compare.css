@@ -238,6 +238,23 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
+/* Pins Add Translation to the bottom instead of scrolling with the list,
+   matching the main Compare screen. */
+.sb-compare-settings-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* `.sb-discover-pane` is now a flex child, not the full-height scroller. */
+.sb-compare-settings.sb-discover-pane {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 12px;
+}
+
 .sb-compare-settings-button {
   display: inline-flex;
   align-items: center;
