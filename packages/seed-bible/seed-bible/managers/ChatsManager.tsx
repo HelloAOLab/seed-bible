@@ -1402,7 +1402,9 @@ function createSharedChatSession(
   };
 
   const parsedMessages = computed<ParsedChatTextMessage[]>(() => {
-    const books = session.readingState.translationBooks.value?.books;
+    // Test doubles and partial session mocks may omit reading state; fall back
+    // to English-only resolution via getBookId when books are unavailable.
+    const books = session.readingState?.translationBooks?.value?.books;
     return messages.value
       .filter((m): m is TextChatMessage => m.type === "text")
       .map((m) =>

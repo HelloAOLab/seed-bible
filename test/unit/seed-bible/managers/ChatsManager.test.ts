@@ -218,6 +218,10 @@ function createSharedSessionMock(options?: {
     connectedUsers,
     allUsers,
     currentUser,
+    // Shared chat parses verse refs against the session's books when available.
+    readingState: {
+      translationBooks: signal(null),
+    },
   } as unknown as BibleReadingSession;
 
   return {
