@@ -10,6 +10,7 @@ import type {
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type {
   ChapterVerse,
+  Translation,
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
@@ -17,6 +18,7 @@ import {
   chapterCacheKey,
   COMPARE_TRANSLATIONS_KEY,
   createCompareState,
+  defaultSelectionForLanguage,
   formatSnapshotReference,
   formatVerseNumberRanges,
   parseCompareTranslationIds,
@@ -37,12 +39,14 @@ function createTestLogin(initial?: {
   userId?: string | null;
   profile?: UserProfile | null;
   localConfig?: Record<string, unknown>;
+  isProfileLoading?: boolean;
 }): LoginManager {
   const userId = signal<string | null>(initial?.userId ?? null);
   const profile = signal<UserProfile | null>(initial?.profile ?? null);
   const localConfig = signal<Record<string, unknown>>(
     initial?.localConfig ?? {}
   );
+  const isProfileLoading = signal(initial?.isProfileLoading ?? false);
   const updateProfile = (newData: Partial<UserProfile>) => {
     profile.value = {
       ...(profile.value ?? { name: "" }),
@@ -53,6 +57,7 @@ function createTestLogin(initial?: {
     userId,
     profile,
     localConfig,
+    isProfileLoading,
     profilePromise: null,
     updateProfile,
   } as unknown as LoginManager;
@@ -83,6 +88,7 @@ function chapterWith(verses: ChapterVerse[]): TranslationBookChapter {
 
 function createTestContext(options?: {
   login?: LoginManager;
+  availableTranslations?: unknown[];
   getTranslationBookChapter?: (
     translationId: string,
     book: string,
@@ -93,13 +99,17 @@ function createTestContext(options?: {
   const context = {
     login,
     bibleData: {
-      availableTranslations: signal([]),
+      availableTranslations: signal(options?.availableTranslations ?? []),
       getTranslationBookChapter:
         options?.getTranslationBookChapter ??
         (() => Promise.resolve(chapterWith([]))),
     },
   } as unknown as SeedBibleState;
   return { context, login };
+}
+
+function translation(id: string, language: string): Translation {
+  return { id, language } as unknown as Translation;
 }
 
 const flushPromises = async () => {
@@ -338,6 +348,140 @@ describe("createCompareState persistence", () => {
     expect(state.order.value.map((entry) => entry.id)).toEqual(["eng_kjv"]);
     expect(state.selectedTranslationIds.value).toEqual([]);
     expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toBeUndefined();
+    state.dispose();
+  });
+});
+
+describe("defaultSelectionForLanguage", () => {
+  const translations = [
+    translation("eng_kjv", "eng"),
+    translation("eng_niv", "eng"),
+    translation("spa_rvr", "spa"),
+  ];
+
+  it("returns every other translation in the same language", () => {
+    expect(defaultSelectionForLanguage(translations, "eng_kjv")).toEqual([
+      "eng_niv",
+    ]);
+  });
+
+  it("is empty when the current translation isn't found", () => {
+    expect(defaultSelectionForLanguage(translations, "xyz")).toEqual([]);
+    expect(defaultSelectionForLanguage(translations, null)).toEqual([]);
+  });
+
+  it("is empty when no sibling translation shares the language", () => {
+    expect(defaultSelectionForLanguage(translations, "spa_rvr")).toEqual([]);
+  });
+});
+
+describe("createCompareState first-run default", () => {
+  const translations = [
+    translation("eng_kjv", "eng"),
+    translation("eng_niv", "eng"),
+    translation("eng_esv", "eng"),
+    translation("spa_rvr", "spa"),
+  ];
+
+  const openOn = (state: ReturnType<typeof createCompareState>) => {
+    state.sourceReadingState.value = {
+      translationId: signal("eng_kjv"),
+    } as unknown as BibleReadingState;
+  };
+
+  it("populates every sibling-language translation the first time Compare opens", () => {
+    const { context, login } = createTestContext({
+      availableTranslations: translations,
+    });
+    const state = createCompareState(context);
+
+    expect(state.selectedTranslationIds.value).toEqual([]);
+
+    openOn(state);
+
+    expect(state.selectedTranslationIds.value).toEqual(["eng_niv", "eng_esv"]);
+    expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual([
+      "eng_niv",
+      "eng_esv",
+    ]);
+    state.dispose();
+  });
+
+  it("leaves an explicitly saved empty selection alone", () => {
+    const login = createTestLogin({
+      localConfig: { [COMPARE_TRANSLATIONS_KEY]: [] },
+    });
+    const { context } = createTestContext({
+      login,
+      availableTranslations: translations,
+    });
+    const state = createCompareState(context);
+
+    openOn(state);
+
+    expect(state.selectedTranslationIds.value).toEqual([]);
+    expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual([]);
+    state.dispose();
+  });
+
+  it("does not clobber a remote set while the profile is still loading", () => {
+    const login = createTestLogin({
+      userId: "user-1",
+      isProfileLoading: true,
+    });
+    const { context } = createTestContext({
+      login,
+      availableTranslations: translations,
+    });
+    const state = createCompareState(context);
+
+    openOn(state);
+
+    // Still loading: nothing decided or written yet.
+    expect(state.selectedTranslationIds.value).toEqual([]);
+
+    // The real profile arrives with a different, already-saved set.
+    login.isProfileLoading.value = false;
+    login.profile.value = {
+      name: "Reader",
+      config: { [COMPARE_TRANSLATIONS_KEY]: ["remote"] },
+    };
+
+    expect(state.selectedTranslationIds.value).toEqual(["remote"]);
+    state.dispose();
+  });
+
+  it("applies the default once a pending profile load resolves with nothing saved", () => {
+    const login = createTestLogin({
+      userId: "user-1",
+      isProfileLoading: true,
+    });
+    const { context } = createTestContext({
+      login,
+      availableTranslations: translations,
+    });
+    const state = createCompareState(context);
+
+    openOn(state);
+    login.isProfileLoading.value = false;
+    login.profile.value = { name: "Reader" };
+
+    expect(state.selectedTranslationIds.value).toEqual(["eng_niv", "eng_esv"]);
+    state.dispose();
+  });
+
+  it("does not re-apply the default after the user changes the selection", () => {
+    const { context } = createTestContext({
+      availableTranslations: translations,
+    });
+    const state = createCompareState(context);
+    openOn(state);
+
+    expect(state.selectedTranslationIds.value).toEqual(["eng_niv", "eng_esv"]);
+
+    state.setSelectedTranslationIds(["eng_niv"]);
+
+    expect(state.selectedTranslationIds.value).toEqual(["eng_niv"]);
     state.dispose();
   });
 });

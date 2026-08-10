@@ -504,7 +504,10 @@ describe("ComparePane", () => {
   });
 
   it("explains the empty pane when nothing has been added to compare against", async () => {
-    const { context, state } = createHarness();
+    // An explicitly empty saved set, not an unset one — an unset preference
+    // now auto-populates with sibling-language translations (see
+    // compareState.test.ts), so it would no longer exercise this empty state.
+    const { context, state } = createHarness({ savedIds: [] });
     states.push(state);
     state.snapshot.value = snapshotSelection([
       {

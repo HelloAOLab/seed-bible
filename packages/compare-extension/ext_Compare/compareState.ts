@@ -14,6 +14,7 @@ import {
   type ChapterVerse,
   type LoginManager,
   type SeedBibleState,
+  type Translation,
   type TranslationBookChapter,
 } from "seed-bible/managers";
 
@@ -178,6 +179,32 @@ export function resolveCompareOrder(
     },
     ...saved.filter((entry) => entry.id !== currentTranslationId),
   ];
+}
+
+/**
+ * Every other translation in the same language as `currentTranslationId` —
+ * the default comparison set for someone who has never saved one of their
+ * own. Excludes the current translation itself: it is always part of the
+ * comparison while it's being read (see `resolveCompareOrder`), so saving it
+ * too would just be redundant.
+ */
+export function defaultSelectionForLanguage(
+  translations: Translation[],
+  currentTranslationId: string | null
+): string[] {
+  const current = translations.find(
+    (translation) => translation.id === currentTranslationId
+  );
+  if (!current) {
+    return [];
+  }
+  return translations
+    .filter(
+      (translation) =>
+        translation.id !== current.id &&
+        translation.language === current.language
+    )
+    .map((translation) => translation.id);
 }
 
 /** Collapses ascending verse numbers into ranges, e.g. `[1,2,3,7]` -> `"1-3, 7"`. */
@@ -353,11 +380,19 @@ export function createCompareState(context: SeedBibleState): CompareState {
     () => sourceReadingState.value?.translationId.value ?? null
   );
 
-  const selectedTranslationIds = computed(() =>
-    parseCompareTranslationIds(
+  // Kept separate from the parsed value below so "never saved anything" can
+  // be told apart from "explicitly saved an empty list" — the latter is still
+  // a preference (the user cleared it on purpose) and must not be overwritten
+  // by the first-run default (see the effect near the bottom of this
+  // function).
+  const rawSelectedTranslationIds = computed(
+    () =>
       getProfileConfigValue(login.profile.value, COMPARE_TRANSLATIONS_KEY) ??
-        login.localConfig.value[COMPARE_TRANSLATIONS_KEY]
-    )
+      login.localConfig.value[COMPARE_TRANSLATIONS_KEY]
+  );
+
+  const selectedTranslationIds = computed(() =>
+    parseCompareTranslationIds(rawSelectedTranslationIds.value)
   );
 
   const order = computed(() =>
@@ -521,9 +556,39 @@ export function createCompareState(context: SeedBibleState): CompareState {
   // changes — opening the pane on new verses, or adding a translation. Reads
   // `chapters` only through `peek()` (inside `loadChapters`), so writing the
   // cache here cannot re-enter this effect.
-  const dispose = effect(() => {
+  const disposeLoadChapters = effect(() => {
     loadChapters(snapshot.value, order.value);
   });
+
+  // Populates the saved set the first time Compare is opened with no
+  // preference of its own. Waits out a pending profile load rather than
+  // deciding from a stale/loading read — deciding early and writing once the
+  // real profile arrives could clobber a different list already saved on
+  // another device (see `saveProfileConfigValues`'s own load guard). Once a
+  // write lands, `rawSelectedTranslationIds` reflects it and this stops.
+  const disposeDefaultSelection = effect(() => {
+    if (!sourceReadingState.value) {
+      return;
+    }
+    if (login.userId.value && login.isProfileLoading.value) {
+      return;
+    }
+    if (rawSelectedTranslationIds.value !== undefined) {
+      return;
+    }
+    const defaults = defaultSelectionForLanguage(
+      context.bibleData.availableTranslations.value,
+      currentTranslationId.value
+    );
+    if (defaults.length > 0) {
+      setSelectedTranslationIds(defaults);
+    }
+  });
+
+  const dispose = () => {
+    disposeLoadChapters();
+    disposeDefaultSelection();
+  };
 
   return {
     view,
