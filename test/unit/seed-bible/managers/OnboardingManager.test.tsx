@@ -57,4 +57,15 @@ describe("createOnboardingManager", () => {
     expect(onboarding.installAvailable.value).toBe(false);
     expect(onboarding.installed.value).toBe(true);
   });
+
+  it("does not treat a leftover localStorage install flag as still installed", () => {
+    // Pre-fix sticky flag: after PWA uninstall this key can remain on the
+    // origin even though the user is back in a normal browser tab.
+    window.localStorage.setItem("sb-app-installed", "true");
+
+    const onboarding = createOnboardingManager(createLogin());
+
+    expect(onboarding.installed.value).toBe(false);
+    expect(onboarding.installAvailable.value).toBe(true);
+  });
 });
