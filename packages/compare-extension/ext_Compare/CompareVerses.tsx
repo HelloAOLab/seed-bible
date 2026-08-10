@@ -151,12 +151,22 @@ function TranslationBlock(props: {
     );
   }
 
+  // Keyed by chapter, not just verse number — a selection spanning two
+  // chapters (e.g. John 1:51 + John 2:1) would otherwise put two verses under
+  // the same key.
   const verses = snapshot.groups.flatMap((group, index) => {
     const chapter = chapterStates[index];
     if (chapter?.status !== "loaded") {
       return [];
     }
-    return versesFromChapter(chapter.chapter, group.verseNumbers);
+    const chapterKey = chapterCacheKey(
+      entry.id,
+      group.bookId,
+      group.chapterNumber
+    );
+    return versesFromChapter(chapter.chapter, group.verseNumbers).map(
+      (verse) => ({ verse, key: `${chapterKey}|${verse.number}` })
+    );
   });
 
   return (
@@ -182,8 +192,8 @@ function TranslationBlock(props: {
             className="sb-compare-block-text"
             dir={translation?.textDirection ?? "auto"}
           >
-            {verses.map((verse) => (
-              <span key={verse.number} className="sb-compare-verse">
+            {verses.map(({ verse, key }) => (
+              <span key={key} className="sb-compare-verse">
                 <span className="sb-compare-verse-number">{verse.number}</span>{" "}
                 {extractVerseContentText(verse.content)}{" "}
               </span>
