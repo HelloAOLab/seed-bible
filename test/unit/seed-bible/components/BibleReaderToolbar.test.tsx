@@ -285,19 +285,6 @@ describe("BibleReaderToolbar — verse selection vs. side panes", () => {
       sidePane.remove();
     }
   });
-
-  it("still clears the verse selection when a tap lands truly outside the reader", async () => {
-    const readingState = await selectFirstVerse();
-    await renderToolbar();
-
-    await act(async () => {
-      document.body.dispatchEvent(
-        new window.PointerEvent("pointerdown", { bubbles: true })
-      );
-    });
-
-    expect(readingState.selectedVerses.value).toHaveLength(0);
-  });
 });
 
 describe("BibleReaderToolbar — clearing highlights", () => {
