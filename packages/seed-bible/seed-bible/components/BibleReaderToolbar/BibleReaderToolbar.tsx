@@ -447,7 +447,6 @@ function VerseToolbarAnnotationGroup(props: {
     annotations,
     modals,
     toast,
-    openDiscover,
     onReferenceClick,
   } = props;
   const { t, language } = useI18n();
