@@ -182,11 +182,22 @@ export function resolveCompareOrder(
 }
 
 /**
- * Every other translation in the same language as `currentTranslationId` —
- * the default comparison set for someone who has never saved one of their
- * own. Excludes the current translation itself: it is always part of the
- * comparison while it's being read (see `resolveCompareOrder`), so saving it
- * too would just be redundant.
+ * Curated defaults for languages whose catalog is too large for "every
+ * sibling" to be a sane default, keyed by `Translation.language`. Matched by
+ * `shortName` rather than `id`, since `id`'s format varies by source (see
+ * script/lib/sitemap.ts) but `shortName` is the stable, recognizable
+ * abbreviation. Add a language here if it ever needs the same treatment.
+ */
+const CURATED_DEFAULT_SHORT_NAMES: Record<string, string[]> = {
+  eng: ["AAB", "BSB", "KJAV", "NASB95"],
+};
+
+/**
+ * The default comparison set for someone who has never saved one of their
+ * own: the curated list above where one exists, otherwise every other
+ * translation sharing the language. Excludes the current translation itself
+ * either way — it's always part of the comparison while being read (see
+ * `resolveCompareOrder`), so saving it too would be redundant.
  */
 export function defaultSelectionForLanguage(
   translations: Translation[],
@@ -198,6 +209,23 @@ export function defaultSelectionForLanguage(
   if (!current) {
     return [];
   }
+
+  const curatedShortNames = CURATED_DEFAULT_SHORT_NAMES[current.language];
+  if (curatedShortNames) {
+    return curatedShortNames
+      .map((shortName) =>
+        translations.find(
+          (translation) =>
+            translation.id !== current.id &&
+            translation.shortName.toUpperCase() === shortName
+        )
+      )
+      .filter(
+        (translation): translation is Translation => translation !== undefined
+      )
+      .map((translation) => translation.id);
+  }
+
   return translations
     .filter(
       (translation) =>

@@ -108,8 +108,12 @@ function createTestContext(options?: {
   return { context, login };
 }
 
-function translation(id: string, language: string): Translation {
-  return { id, language } as unknown as Translation;
+function translation(
+  id: string,
+  language: string,
+  shortName: string = id
+): Translation {
+  return { id, language, shortName } as unknown as Translation;
 }
 
 const flushPromises = async () => {
@@ -402,14 +406,14 @@ describe("createCompareState persistence", () => {
 
 describe("defaultSelectionForLanguage", () => {
   const translations = [
-    translation("eng_kjv", "eng"),
-    translation("eng_niv", "eng"),
+    translation("fra_lsg", "fra"),
+    translation("fra_bds", "fra"),
     translation("spa_rvr", "spa"),
   ];
 
   it("returns every other translation in the same language", () => {
-    expect(defaultSelectionForLanguage(translations, "eng_kjv")).toEqual([
-      "eng_niv",
+    expect(defaultSelectionForLanguage(translations, "fra_lsg")).toEqual([
+      "fra_bds",
     ]);
   });
 
@@ -421,6 +425,43 @@ describe("defaultSelectionForLanguage", () => {
   it("is empty when no sibling translation shares the language", () => {
     expect(defaultSelectionForLanguage(translations, "spa_rvr")).toEqual([]);
   });
+
+  describe("for English", () => {
+    const englishTranslations = [
+      translation("eng_aab", "eng", "AAB"),
+      translation("eng_bsb", "eng", "BSB"),
+      translation("eng_kjav", "eng", "KJAV"),
+      translation("eng_nasb95", "eng", "NASB95"),
+      // Not curated — should be excluded, unlike the "every sibling" default.
+      translation("eng_web", "eng", "WEB"),
+    ];
+
+    it("returns the curated list, in order, instead of every English translation", () => {
+      expect(
+        defaultSelectionForLanguage(englishTranslations, "eng_aab")
+      ).toEqual(["eng_bsb", "eng_kjav", "eng_nasb95"]);
+    });
+
+    it("matches curated short names case-insensitively", () => {
+      const mixedCase = [
+        translation("eng_aab", "eng", "aab"),
+        translation("eng_bsb", "eng", "Bsb"),
+      ];
+      expect(defaultSelectionForLanguage(mixedCase, "eng_aab")).toEqual([
+        "eng_bsb",
+      ]);
+    });
+
+    it("skips a curated entry the catalog doesn't have", () => {
+      const missingKjav = englishTranslations.filter(
+        (t) => t.shortName !== "KJAV"
+      );
+      expect(defaultSelectionForLanguage(missingKjav, "eng_aab")).toEqual([
+        "eng_bsb",
+        "eng_nasb95",
+      ]);
+    });
+  });
 });
 
 describe("createCompareState first-run default", () => {
@@ -429,15 +470,15 @@ describe("createCompareState first-run default", () => {
   });
 
   const translations = [
-    translation("eng_kjv", "eng"),
-    translation("eng_niv", "eng"),
-    translation("eng_esv", "eng"),
-    translation("spa_rvr", "spa"),
+    translation("spa_a", "spa"),
+    translation("spa_b", "spa"),
+    translation("spa_c", "spa"),
+    translation("fra_x", "fra"),
   ];
 
   const openOn = (state: ReturnType<typeof createCompareState>) => {
     state.sourceReadingState.value = {
-      translationId: signal("eng_kjv"),
+      translationId: signal("spa_a"),
     } as unknown as BibleReadingState;
   };
 
@@ -454,13 +495,46 @@ describe("createCompareState first-run default", () => {
 
     // The default applies to the UI-facing value right away; the write that
     // persists it is debounced like any other change to the saved set.
-    expect(state.selectedTranslationIds.value).toEqual(["eng_niv", "eng_esv"]);
+    expect(state.selectedTranslationIds.value).toEqual(["spa_b", "spa_c"]);
 
     await vi.advanceTimersByTimeAsync(500);
 
     expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual([
-      "eng_niv",
-      "eng_esv",
+      "spa_b",
+      "spa_c",
+    ]);
+    state.dispose();
+  });
+
+  it("uses the curated English defaults instead of every English translation", async () => {
+    vi.useFakeTimers();
+    const englishTranslations = [
+      translation("eng_aab", "eng", "AAB"),
+      translation("eng_bsb", "eng", "BSB"),
+      translation("eng_kjav", "eng", "KJAV"),
+      translation("eng_nasb95", "eng", "NASB95"),
+      translation("eng_web", "eng", "WEB"),
+    ];
+    const { context, login } = createTestContext({
+      availableTranslations: englishTranslations,
+    });
+    const state = createCompareState(context);
+    state.sourceReadingState.value = {
+      translationId: signal("eng_aab"),
+    } as unknown as BibleReadingState;
+
+    expect(state.selectedTranslationIds.value).toEqual([
+      "eng_bsb",
+      "eng_kjav",
+      "eng_nasb95",
+    ]);
+
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual([
+      "eng_bsb",
+      "eng_kjav",
+      "eng_nasb95",
     ]);
     state.dispose();
   });
@@ -529,7 +603,7 @@ describe("createCompareState first-run default", () => {
     login.isProfileLoading.value = false;
     login.profile.value = { name: "Reader" };
 
-    expect(state.selectedTranslationIds.value).toEqual(["eng_niv", "eng_esv"]);
+    expect(state.selectedTranslationIds.value).toEqual(["spa_b", "spa_c"]);
     state.dispose();
   });
 
@@ -540,11 +614,11 @@ describe("createCompareState first-run default", () => {
     const state = createCompareState(context);
     openOn(state);
 
-    expect(state.selectedTranslationIds.value).toEqual(["eng_niv", "eng_esv"]);
+    expect(state.selectedTranslationIds.value).toEqual(["spa_b", "spa_c"]);
 
-    state.setSelectedTranslationIds(["eng_niv"]);
+    state.setSelectedTranslationIds(["spa_b"]);
 
-    expect(state.selectedTranslationIds.value).toEqual(["eng_niv"]);
+    expect(state.selectedTranslationIds.value).toEqual(["spa_b"]);
     state.dispose();
   });
 });
