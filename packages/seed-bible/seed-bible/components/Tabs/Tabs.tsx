@@ -1333,9 +1333,10 @@ async function createSharedSessionAndCopyLink(
  * to (checkboxes). Folder creation only happens here — there is no inline
  * "+ New folder" button in the sidebar list anymore.
  *
- * "Add to new" creates an empty category immediately (no bookmark yet), selects
- * it, and returns to multi-select so the user can keep choosing folders before
- * Save. In edit mode (`bookmarkId` set) existing membership is pre-checked.
+ * "Add to new" only stages a folder name in local state (checked in the list).
+ * New folders are persisted when the user hits Save — abandoning the modal
+ * creates nothing. In edit mode (`bookmarkId` set) existing membership is
+ * pre-checked.
  */
 function BookmarkCategoryPickerContent(props: {
   state: SeedBibleState;
@@ -1366,27 +1367,32 @@ function BookmarkCategoryPickerContent(props: {
   const isAddingNew = useSignal<boolean>(categories.length === 0);
   const newCategoryName = useSignal<string>("");
   const isSaving = useSignal<boolean>(false);
-  const isCreatingCategory = useSignal<boolean>(false);
+  /** Folder names staged via "Add to new" — not yet written to storage. */
+  const pendingNewCategories = useSignal<string[]>([]);
 
   const trimmedNew = newCategoryName.value.trim();
   const newCategoryCollides =
     trimmedNew.length > 0 &&
-    bookmarks.categories.value.some((category) => category.name === trimmedNew);
-  const canCreateNew =
+    (categories.some((category) => category.name === trimmedNew) ||
+      pendingNewCategories.value.includes(trimmedNew));
+  const canStageNew =
     isAddingNew.value &&
     trimmedNew.length > 0 &&
     !newCategoryCollides &&
-    !isCreatingCategory.value &&
     !isSaving.value;
-  // Save always uses the checkbox selection only — finishing a new folder is
-  // a separate step so the user can still multi-select after creating one.
-  const canSave =
-    selectedCategories.value.length > 0 &&
-    !isSaving.value &&
-    !isCreatingCategory.value;
+  const canSave = selectedCategories.value.length > 0 && !isSaving.value;
+
+  const displayCategories = (() => {
+    const names = new Set(categories.map((category) => category.name));
+    const extras = pendingNewCategories.value.filter(
+      (name) => !names.has(name)
+    );
+    if (extras.length === 0) return categories;
+    return [...categories, ...extras.map((name) => ({ name }))];
+  })();
 
   const toggleCategory = (name: string) => {
-    if (isSaving.value || isCreatingCategory.value) return;
+    if (isSaving.value) return;
     const current = selectedCategories.value;
     if (current.includes(name)) {
       selectedCategories.value = current.filter(
@@ -1398,24 +1404,20 @@ function BookmarkCategoryPickerContent(props: {
   };
 
   /**
-   * Creates an empty folder, checks it in the multi-select list, and exits the
-   * "add new" input so the user can keep picking (or add more folders) before
-   * saving the bookmark itself.
+   * Stages a new folder name in the multi-select list without persisting.
+   * Persistence happens only inside handleSave so cancelling the modal leaves
+   * no orphan folders.
    */
-  const handleCreateNewCategory = async () => {
-    if (!canCreateNew) return;
-
-    isCreatingCategory.value = true;
-    try {
-      await bookmarks.createCategory(trimmedNew);
-      if (!selectedCategories.value.includes(trimmedNew)) {
-        selectedCategories.value = [...selectedCategories.value, trimmedNew];
-      }
-      isAddingNew.value = false;
-      newCategoryName.value = "";
-    } finally {
-      isCreatingCategory.value = false;
+  const handleStageNewCategory = () => {
+    if (!canStageNew) return;
+    if (!pendingNewCategories.value.includes(trimmedNew)) {
+      pendingNewCategories.value = [...pendingNewCategories.value, trimmedNew];
     }
+    if (!selectedCategories.value.includes(trimmedNew)) {
+      selectedCategories.value = [...selectedCategories.value, trimmedNew];
+    }
+    isAddingNew.value = false;
+    newCategoryName.value = "";
   };
 
   const handleSave = async () => {
@@ -1426,16 +1428,9 @@ function BookmarkCategoryPickerContent(props: {
 
     isSaving.value = true;
     try {
-      // Folders from "Add to new" are already persisted empty; this covers
-      // any selection edge case where a name is not yet in the list.
-      for (const name of nextSelection) {
-        if (
-          !bookmarks.categories.value.some((category) => category.name === name)
-        ) {
-          await bookmarks.createCategory(name);
-        }
-      }
-
+      // New staged folder names are created as part of addBookmark /
+      // setBookmarkCategories (ensureCategory) — nothing is written if the
+      // user closes the modal without saving.
       if (isEdit) {
         if (!bookmarkId) return;
         await bookmarks.setBookmarkCategories(bookmarkId, nextSelection);
@@ -1456,12 +1451,10 @@ function BookmarkCategoryPickerContent(props: {
     }
   };
 
-  const isBusy = isSaving.value || isCreatingCategory.value;
-
   return (
     <div className="sb-bookmark-picker">
       <div className="sb-bookmark-picker-categories" role="group">
-        {categories.map((category) => {
+        {displayCategories.map((category) => {
           const isSelected = selectedCategories.value.includes(category.name);
           return (
             <button
@@ -1469,7 +1462,7 @@ function BookmarkCategoryPickerContent(props: {
               type="button"
               role="checkbox"
               aria-checked={isSelected}
-              disabled={isBusy}
+              disabled={isSaving.value}
               className={`sb-bookmark-picker-category${
                 isSelected ? " sb-bookmark-picker-category-selected" : ""
               }`}
@@ -1491,7 +1484,7 @@ function BookmarkCategoryPickerContent(props: {
         })}
       </div>
 
-      {!isBusy && (
+      {!isSaving.value && (
         <>
           <div className="sb-bookmark-picker-divider" role="separator" />
 
@@ -1511,10 +1504,13 @@ function BookmarkCategoryPickerContent(props: {
                 onKeyDown={(event: KeyboardEvent) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    void handleCreateNewCategory();
+                    handleStageNewCategory();
                   } else if (event.key === "Escape") {
                     event.preventDefault();
-                    if (categories.length === 0) {
+                    if (
+                      categories.length === 0 &&
+                      pendingNewCategories.value.length === 0
+                    ) {
                       onClose();
                       return;
                     }
@@ -1550,33 +1546,30 @@ function BookmarkCategoryPickerContent(props: {
       )}
 
       <div className="sb-bookmark-picker-actions">
-        {isAddingNew.value ? (
+        {isAddingNew.value && (
           <button
             type="button"
-            className="sb-bookmark-picker-save"
-            disabled={!canCreateNew}
+            className="sb-bookmark-picker-stage-folder"
+            disabled={!canStageNew}
             onClick={() => {
-              void handleCreateNewCategory();
+              handleStageNewCategory();
             }}
           >
-            {isCreatingCategory.value
-              ? t("creating", { defaultValue: "Creating…" })
-              : t("create-folder", { defaultValue: "Create folder" })}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="sb-bookmark-picker-save"
-            disabled={!canSave}
-            onClick={() => {
-              void handleSave();
-            }}
-          >
-            {isSaving.value
-              ? t("saving", { defaultValue: "Saving…" })
-              : t("save", { defaultValue: "Save" })}
+            {t("create-folder", { defaultValue: "Create folder" })}
           </button>
         )}
+        <button
+          type="button"
+          className="sb-bookmark-picker-save"
+          disabled={!canSave}
+          onClick={() => {
+            void handleSave();
+          }}
+        >
+          {isSaving.value
+            ? t("saving", { defaultValue: "Saving…" })
+            : t("save", { defaultValue: "Save" })}
+        </button>
       </div>
     </div>
   );
@@ -1611,10 +1604,16 @@ export function openBookmarkCategoryModal(
       : `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
   state.modals.openModal({
     id: modalId,
-    title: {
-      key: "edit-bookmark",
-      defaultValue: "Edit bookmark",
-    },
+    title:
+      mode === "edit"
+        ? {
+            key: "edit-bookmark",
+            defaultValue: "Edit bookmark",
+          }
+        : {
+            key: "add-bookmark-modal",
+            defaultValue: "Add bookmark",
+          },
     content: () => (
       <BookmarkCategoryPickerContent
         state={state}

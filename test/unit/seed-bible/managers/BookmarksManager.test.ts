@@ -461,20 +461,12 @@ describe("BookmarksManager", () => {
     expect(manager.expandedCategories.value.has("Empty Folder")).toBe(true);
   });
 
-  it("create-then-save flow: empty folder first, bookmark membership only on save", async () => {
+  it("persists new categories only when the bookmark is saved", async () => {
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    // Mirrors the modal: "Create folder" only adds an empty category.
-    await manager.createCategory("Study Later");
-    expect(manager.bookmarks.value).toEqual([]);
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Study Later" },
-    ]);
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
-
-    // "Save" assigns the new bookmark to the selected folders.
+    // Modal stages new folder names in local state; nothing is written until Save.
+    // On Save, addBookmark creates missing folders in the same persist as the bookmark.
     await manager.addBookmark("BSB", "GEN", 1, {
       category: [DEFAULT_BOOKMARK_CATEGORY, "Study Later"],
     });
@@ -484,10 +476,15 @@ describe("BookmarksManager", () => {
       DEFAULT_BOOKMARK_CATEGORY,
       "Study Later",
     ]);
-    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    expect(manager.categories.value).toEqual([
+      { name: DEFAULT_BOOKMARK_CATEGORY },
+      { name: "Study Later" },
+    ]);
+    // Single persist — no orphan empty folder written first.
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
   });
 
-  it("edit-after-create-folder flow updates membership without dropping others", async () => {
+  it("setBookmarkCategories creates missing folders in the same write", async () => {
     getDataMock.mockResolvedValue({
       success: true,
       data: {
@@ -504,11 +501,6 @@ describe("BookmarksManager", () => {
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    await manager.createCategory("Favorites");
-    expect(manager.bookmarks.value[0]?.category).toBe(
-      DEFAULT_BOOKMARK_CATEGORY
-    );
-
     await manager.setBookmarkCategories("edit-1", [
       DEFAULT_BOOKMARK_CATEGORY,
       "Favorites",
@@ -517,14 +509,17 @@ describe("BookmarksManager", () => {
       DEFAULT_BOOKMARK_CATEGORY,
       "Favorites",
     ]);
+    expect(manager.categories.value.some((c) => c.name === "Favorites")).toBe(
+      true
+    );
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
 
     // No-op when the same set is reapplied (order-insensitive).
     await manager.setBookmarkCategories("edit-1", [
       "Favorites",
       DEFAULT_BOOKMARK_CATEGORY,
     ]);
-    // createCategory + first setBookmarkCategories = 2 persists; no-op skips a third.
-    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
   });
 
   it("serializes single membership as a string and multi as an array", () => {
