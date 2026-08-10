@@ -2,7 +2,6 @@ import "./ReadingPlansPane.css";
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 import { signal } from "@preact/signals";
-import { DateTime } from "luxon";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -395,7 +394,8 @@ function ReadingPlansList(props: ReadingPlansListProps) {
       if (progress && full) {
         summary = summarizeCalendar(
           getReadingCalendar(full, progress, nowMs),
-          nowMs
+          nowMs,
+          progress.timeZone
         );
         state =
           summary.totalDays > 0 && summary.doneDays === summary.totalDays
@@ -687,12 +687,13 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                             {finishedMs != null
                               ? `${t("reading-plan-finished", {
                                   defaultValue: "Finished {{date}}",
-                                  date: DateTime.fromMillis(
-                                    finishedMs
-                                  ).toLocaleString({
-                                    month: "short",
-                                    day: "numeric",
-                                  }),
+                                  date: new Date(finishedMs).toLocaleDateString(
+                                    undefined,
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                    }
+                                  ),
                                 })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
                               : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
                           </span>
@@ -780,7 +781,7 @@ function ActivePlanCard(props: {
             {startedMs != null
               ? ` · ${t("reading-plan-started-on", {
                   defaultValue: "started {{date}}",
-                  date: DateTime.fromMillis(startedMs).toLocaleString({
+                  date: new Date(startedMs).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                   }),

@@ -7,6 +7,7 @@ import {
   addCivilDays,
   civilDateInZone,
   civilDaysBetween,
+  civilToDayNumber,
   type CivilDate,
 } from "./civilDate";
 import { CasualOSManager } from "./OsManager";
@@ -1267,23 +1268,22 @@ export interface CalendarSummary {
  * Summarizes a reading calendar (from `getReadingCalendar`) into the stats the
  * plans list and detail views show: totals, streak, how far behind, and the
  * next day to read. Pure — `nowMs` is passed so it stays deterministic.
+ *
+ * `timeZone` must be the same zone the calendar days were built in (the
+ * progress's time zone). Using the device zone instead would put the
+ * behind/streak boundary a day out for anyone reading a plan anchored to a
+ * zone other than their own.
  */
 export function summarizeCalendar(
   entries: ReadingCalendarEntry[],
-  nowMs: number
+  nowMs: number,
+  timeZone?: string | null
 ): CalendarSummary {
   const readingDays = entries.filter(
     (entry): entry is CalendarReadingDay => entry.type === "reading"
   );
   const totalDays = readingDays.length;
-  // Resolve "today" in the same zone the calendar days were built in (the
-  // progress's time zone). Using the device zone instead would put the
-  // behind/streak boundary a day out for anyone reading a plan anchored to a
-  // zone other than their own.
-  const zone = readingDays[0]?.date.zone;
-  const nowStart = DateTime.fromMillis(nowMs, zone ? { zone } : undefined)
-    .startOf("day")
-    .toMillis();
+  const todayNumber = civilToDayNumber(civilDateInZone(nowMs, timeZone));
 
   let doneDays = 0;
   let behind = 0;
@@ -1291,14 +1291,15 @@ export function summarizeCalendar(
     if (day.completedAtMs != null) {
       doneDays++;
     }
-    const isStrictlyPast = !day.containsNow && day.date.toMillis() < nowStart;
+    const isStrictlyPast =
+      !day.containsNow && civilToDayNumber(day.date) < todayNumber;
     if (isStrictlyPast && day.completedAtMs == null) {
       behind++;
     }
   }
 
   const dueDays = readingDays.filter(
-    (day) => day.containsNow || day.date.toMillis() <= nowStart
+    (day) => day.containsNow || civilToDayNumber(day.date) <= todayNumber
   );
   let streak = 0;
   for (let i = dueDays.length - 1; i >= 0; i--) {

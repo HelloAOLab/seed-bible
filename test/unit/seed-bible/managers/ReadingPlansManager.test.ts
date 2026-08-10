@@ -796,7 +796,7 @@ describe("cadenceDurationDays", () => {
 });
 
 describe("summarizeCalendar", () => {
-  const ZONED_START = DateTime.fromISO("2026-06-17T00:00:00", { zone: ZONE });
+  const ZONED_START: CivilDate = { year: 2026, month: 6, day: 17 };
 
   /**
    * A daily calendar of `total` reading days starting at `ZONED_START`, with
@@ -811,7 +811,7 @@ describe("summarizeCalendar", () => {
   ): ReadingCalendarEntry[] =>
     Array.from({ length: total }, (_, dayOffset): CalendarReadingDay => {
       const isDone = done.includes(dayOffset);
-      const date = ZONED_START.plus({ days: dayOffset });
+      const date = addCivilDays(ZONED_START, dayOffset);
       return {
         type: "reading",
         date,
@@ -819,13 +819,13 @@ describe("summarizeCalendar", () => {
         sessions: [],
         startSessionIndex: dayOffset,
         endSessionIndex: dayOffset,
-        completedAtMs: isDone ? date.plus({ hours: 8 }).toMillis() : null,
+        completedAtMs: isDone ? msAt(date, 8) : null,
         containsNow: dayOffset === nowOffset,
       };
     });
 
   const nowAt = (dayOffset: number, hours = 9) =>
-    ZONED_START.plus({ days: dayOffset, hours }).toMillis();
+    msAt(addCivilDays(ZONED_START, dayOffset), hours);
 
   const cases: {
     name: string;
@@ -896,7 +896,8 @@ describe("summarizeCalendar", () => {
   it.each(cases)("$name", ({ total, done, nowOffset, streak, behind }) => {
     const summary = summarizeCalendar(
       calendar(total, done, nowOffset),
-      nowAt(nowOffset)
+      nowAt(nowOffset),
+      ZONE
     );
     expect(summary.streak).toBe(streak);
     expect(summary.behind).toBe(behind);
@@ -905,7 +906,7 @@ describe("summarizeCalendar", () => {
   });
 
   it("reports today, the next unread day, and the last day", () => {
-    const summary = summarizeCalendar(calendar(5, [0, 1], 2), nowAt(2));
+    const summary = summarizeCalendar(calendar(5, [0, 1], 2), nowAt(2), ZONE);
 
     expect(summary.today?.dayOffset).toBe(2);
     expect(summary.next?.dayOffset).toBe(2);
@@ -914,7 +915,11 @@ describe("summarizeCalendar", () => {
   });
 
   it("has no next day once every day is complete", () => {
-    const summary = summarizeCalendar(calendar(3, [0, 1, 2], 2), nowAt(2));
+    const summary = summarizeCalendar(
+      calendar(3, [0, 1, 2], 2),
+      nowAt(2),
+      ZONE
+    );
 
     expect(summary.next).toBeNull();
     expect(summary.nextDayNumber).toBeNull();
@@ -925,15 +930,17 @@ describe("summarizeCalendar", () => {
     const skip: CalendarSkipRange = {
       type: "skip",
       startDate: ZONED_START,
-      endDate: ZONED_START.plus({ days: 1 }),
+      endDate: addCivilDays(ZONED_START, 1),
       startDayOffset: 0,
       days: 2,
       containsNow: false,
     };
     const mixed = [skip, ...calendar(1, [0], 0)];
 
-    expect(summarizeCalendar(mixed, nowAt(0)).readingDays).toHaveLength(1);
-    expect(summarizeCalendar([], nowAt(0))).toMatchObject({
+    expect(summarizeCalendar(mixed, nowAt(0), ZONE).readingDays).toHaveLength(
+      1
+    );
+    expect(summarizeCalendar([], nowAt(0), ZONE)).toMatchObject({
       totalDays: 0,
       doneDays: 0,
       streak: 0,
@@ -949,13 +956,11 @@ describe("summarizeCalendar", () => {
     // A plan anchored to Tokyo, read by a device in Los Angeles. At this
     // instant it is still the 17th in LA but already the 18th in Tokyo, so
     // day 0 (the 17th, incomplete) is strictly past and counts as behind.
-    const tokyoStart = DateTime.fromISO("2026-06-17T00:00:00", {
-      zone: "Asia/Tokyo",
-    });
+    const tokyoStart: CivilDate = { year: 2026, month: 6, day: 17 };
     const days: ReadingCalendarEntry[] = [0, 1].map(
       (dayOffset): CalendarReadingDay => ({
         type: "reading",
-        date: tokyoStart.plus({ days: dayOffset }),
+        date: addCivilDays(tokyoStart, dayOffset),
         dayOffset,
         sessions: [],
         startSessionIndex: dayOffset,
@@ -964,12 +969,11 @@ describe("summarizeCalendar", () => {
         containsNow: dayOffset === 1,
       })
     );
-    const nowMs = tokyoStart.plus({ days: 1, hours: 9 }).toMillis();
+    // 2026-06-18T09:00 in Tokyo (UTC+9) is 2026-06-18T00:00 UTC.
+    const nowMs = Date.UTC(2026, 5, 18, 0, 0, 0);
 
-    expect(
-      DateTime.fromMillis(nowMs, { zone: "America/Los_Angeles" }).day
-    ).toBe(17);
-    expect(summarizeCalendar(days, nowMs).behind).toBe(1);
+    expect(civilDateInZone(nowMs, "America/Los_Angeles").day).toBe(17);
+    expect(summarizeCalendar(days, nowMs, "Asia/Tokyo").behind).toBe(1);
   });
 });
 

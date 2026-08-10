@@ -1,6 +1,5 @@
 import "./ReadingPlanDetail.css";
 import { useState } from "preact/hooks";
-import { DateTime } from "luxon";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -61,7 +60,7 @@ interface ReadingPlanDetailProps {
 }
 
 function formatShortDate(ms: number): string {
-  return DateTime.fromMillis(ms).toLocaleString({
+  return new Date(ms).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   });
@@ -268,7 +267,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     );
   }
 
-  const summary = summarizeCalendar(calendar, Date.now());
+  const summary = summarizeCalendar(calendar, Date.now(), progress.timeZone);
   const { readingDays, totalDays, doneDays, streak } = summary;
   const planComplete = totalDays > 0 && doneDays === totalDays;
   // A self-paced read has an order but no schedule, so it's counted in sessions
