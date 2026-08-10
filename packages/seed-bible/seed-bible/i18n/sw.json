@@ -434,5 +434,10 @@
   "remove": "Ondoa",
   "signed-out-message": "Umetoka kwenye akaunti. Tafadhali ingia tena.",
   "account-suspended-message": "Akaunti yako imesimamishwa.",
-  "loading-chapter": "Inapakia sura…"
+  "loading-chapter": "Inapakia sura…",
+  "book-not-found-title": "Kitabu hakijapatikana",
+  "book-not-found-message": "Hatukuweza kupata kitabu hicho katika {{translationName}} .",
+  "book-not-found-action": "Nenda kwenye {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Inapakia kihariri picha…",
+  "swipe-to-see-more": "Telezesha kidole ili kuona zaidi"
 }

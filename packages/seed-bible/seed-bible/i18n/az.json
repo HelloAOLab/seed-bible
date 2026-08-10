@@ -434,5 +434,10 @@
   "remove": "Sil",
   "signed-out-message": "Hesabdan çıxdınız. Zəhmət olmasa, yenidən daxil olun.",
   "account-suspended-message": "Hesabınız dayandırılıb.",
-  "loading-chapter": "Fəsil yüklənir…"
+  "loading-chapter": "Fəsil yüklənir…",
+  "book-not-found-title": "Kitab tapılmadı",
+  "book-not-found-message": "Həmin kitabı {{translationName}} dilində tapa bilmədik.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} səhifəsinə keçin",
+  "loading-picture-editor": "Şəkil redaktoru yüklənir...",
+  "swipe-to-see-more": "Daha çox görmək üçün sürüşdürün"
 }

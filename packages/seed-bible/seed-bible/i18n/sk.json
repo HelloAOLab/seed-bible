@@ -434,5 +434,10 @@
   "remove": "Odstrániť",
   "signed-out-message": "Boli ste odhlásený/á. Prihláste sa znova.",
   "account-suspended-message": "Váš účet bol pozastavený.",
-  "loading-chapter": "Načítava sa kapitola…"
+  "loading-chapter": "Načítava sa kapitola…",
+  "book-not-found-title": "Kniha sa nenašla",
+  "book-not-found-message": "Túto knihu sme v jazyku {{translationName}} nenašli.",
+  "book-not-found-action": "Prejsť na {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Načítava sa editor obrázkov…",
+  "swipe-to-see-more": "Prejdením prstom zobrazíte viac"
 }

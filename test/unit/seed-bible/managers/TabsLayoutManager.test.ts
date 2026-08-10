@@ -29,6 +29,10 @@ beforeEach(() => {
 
 afterEach(() => {
   logSpy.mockRestore();
+  // Clear persisted tab state and any query params written by the tab/URL sync
+  // effects so a restore test can't leak into the next test.
+  window.localStorage.clear();
+  window.history.replaceState(null, "", window.location.pathname);
   globalThis.fetch = originalFetch;
 });
 
@@ -90,9 +94,27 @@ async function createManagers(
   options: {
     extraTabs?: number;
     panelsEnabled?: ReadonlySignal<boolean>;
+    /**
+     * Seeds `localStorage["sb-tabs-state"]` before the managers read it, so the
+     * restore path runs instead of the default single-tab path. Deliberately
+     * untyped: these tests also feed it corrupt blobs that `PersistedTabsState`
+     * would reject.
+     */
+    storedTabsState?: unknown;
+    /** URL to open the app with, e.g. "/?translation=NIV&book=MAT&chapter=1". */
+    url?: string;
   } = {}
 ) {
   setWebResponses(createExampleManagerResponseMap());
+  if (options.storedTabsState !== undefined) {
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify(options.storedTabsState)
+    );
+  }
+  // NavigationManager freezes `initialUrl` at construction and TabsManager
+  // reconciles against that snapshot, so the URL must be in place first.
+  window.history.replaceState(null, "", options.url ?? "/");
   const navigation = createNavigationManager();
   const tabsManager = createTabs(
     navigation,
@@ -129,6 +151,193 @@ describe("createTabsLayout", () => {
     expect(tabsLayout.selectedSlotId.value).toBe(
       tabsLayout.slots.value[0]?.id ?? null
     );
+  });
+
+  describe("restoring a stored layout", () => {
+    // Only chapters mocked by createExampleManagerResponseMap can be used here
+    // (AAB GEN 1, AAB EXO 2, NIV MAT 1) — the fetch mock throws on anything else.
+    const GEN_1 = {
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    };
+    const EXO_2 = {
+      translationId: "AAB",
+      bookId: "EXO",
+      chapterNumber: 2,
+    };
+    const MAT_1 = {
+      translationId: "NIV",
+      bookId: "MAT",
+      chapterNumber: 1,
+    };
+
+    it("rebuilds the stored slots, layout preset, and selected slot", async () => {
+      const { tabsManager, tabsLayout } = await createManagers({
+        storedTabsState: {
+          version: 1,
+          tabs: [
+            { id: "tab-1", ...GEN_1 },
+            { id: "tab-2", ...EXO_2 },
+          ],
+          selectedTabId: "tab-2",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 1,
+        },
+      });
+
+      expect(tabsLayout.layout.value).toBe("split-2v");
+      expect(tabsLayout.slots.value.map((slot) => slot.tab?.id)).toEqual([
+        "tab-1",
+        "tab-2",
+      ]);
+      // The stored selectedSlotIndex (1) picks the second slot, not the first.
+      expect(tabsLayout.selectedSlotId.value).toBe(
+        tabsLayout.slots.value[1]!.id
+      );
+      expect(tabsManager.selectedTabId.value).toBe("tab-2");
+    });
+
+    it("falls back to a single slot when the stored layout's slot count disagrees with slotTabIds", async () => {
+      const { tabsManager, tabsLayout } = await createManagers({
+        storedTabsState: {
+          version: 1,
+          tabs: [
+            { id: "tab-1", ...GEN_1 },
+            { id: "tab-2", ...EXO_2 },
+            { id: "tab-3", ...MAT_1, slotOnly: true },
+          ],
+          selectedTabId: "tab-1",
+          // Corrupt: "split-2v" has two slots but only one slot was stored.
+          layout: "split-2v",
+          slotTabIds: ["tab-1"],
+          selectedSlotIndex: 0,
+        },
+      });
+
+      expect(tabsLayout.layout.value).toBe("single");
+      expect(tabsLayout.slots.value).toHaveLength(1);
+      expect(tabsLayout.slots.value[0]!.tab?.id).toBe("tab-1");
+      // Only the layout falls back — the stored visible tabs still restore.
+      // The hidden clone does not: with no split to back, it would be an
+      // invisible tab holding a live reading state forever.
+      expect(tabsManager.tabs.value.map((tab) => tab.id)).toEqual([
+        "tab-1",
+        "tab-2",
+      ]);
+    });
+
+    it("treats an unrecognized stored layout id as a single slot", async () => {
+      const { tabsLayout } = await createManagers({
+        storedTabsState: {
+          version: 1,
+          tabs: [{ id: "tab-1", ...GEN_1 }],
+          selectedTabId: "tab-1",
+          // Not a real preset. The stored-state validator only checks that
+          // `layout` is a string, so this reaches the restore path: the
+          // unknown id resolves to a slot count of 1, which matches the single
+          // stored slot, and the layout id is then normalized to "single".
+          layout: "not-a-real-layout",
+          slotTabIds: ["tab-1"],
+          selectedSlotIndex: 0,
+        },
+      });
+
+      expect(tabsLayout.layout.value).toBe("single");
+      expect(tabsLayout.slots.value).toHaveLength(1);
+      expect(tabsLayout.slots.value[0]!.tab?.id).toBe("tab-1");
+    });
+
+    it("keeps a restored split intact when panels are disabled, leaving the clamp to the view layer", async () => {
+      const { tabsManager, tabsLayout } = await createManagers({
+        panelsEnabled: signal(false),
+        storedTabsState: {
+          version: 1,
+          tabs: [
+            { id: "tab-1", ...GEN_1 },
+            { id: "tab-2", ...EXO_2, slotOnly: true },
+          ],
+          selectedTabId: "tab-1",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 0,
+        },
+      });
+
+      // Collapsing here would be written straight back by the persistence
+      // effect, permanently destroying a split the user built with panels on.
+      // SeedBibleStateManager's effectiveSlots/effectiveSlotLayout render a
+      // single pane instead, so the split survives to be shown again when
+      // panels come back.
+      expect(tabsLayout.layout.value).toBe("split-2v");
+      expect(tabsLayout.slots.value.map((slot) => slot.tab?.id)).toEqual([
+        "tab-1",
+        "tab-2",
+      ]);
+      // The hidden clone backing the second pane has to stay alive with it.
+      expect(tabsManager.tabs.value.map((tab) => tab.id)).toEqual([
+        "tab-1",
+        "tab-2",
+      ]);
+    });
+
+    it("keeps a restored slot-only clone a slot references and drops one nothing references", async () => {
+      const { tabsManager, tabsLayout } = await createManagers({
+        storedTabsState: {
+          version: 1,
+          tabs: [
+            { id: "tab-1", ...GEN_1 },
+            { id: "tab-2", ...EXO_2, slotOnly: true },
+            // Stale: no slot points at this one.
+            { id: "tab-3", ...MAT_1, slotOnly: true },
+          ],
+          selectedTabId: "tab-1",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 0,
+        },
+      });
+
+      expect(tabsLayout.slots.value.map((slot) => slot.tab?.id)).toEqual([
+        "tab-1",
+        "tab-2",
+      ]);
+      expect(tabsManager.tabs.value.map((tab) => tab.id)).toEqual([
+        "tab-1",
+        "tab-2",
+      ]);
+    });
+
+    it("shows a tab appended by a deep link in the restored selected slot", async () => {
+      const { tabsManager, tabsLayout } = await createManagers({
+        url: "/?translation=NIV&book=MAT&chapter=1",
+        storedTabsState: {
+          version: 1,
+          tabs: [
+            { id: "tab-1", ...GEN_1 },
+            { id: "tab-2", ...EXO_2 },
+          ],
+          selectedTabId: "tab-1",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 1,
+        },
+      });
+
+      // No stored tab is on NIV and there is more than one visible tab, so
+      // reconcile appends tab-3 for the link. It occupies none of the restored
+      // slots, so it has to take over the restored selected slot (the second)
+      // — otherwise the tab the user just followed a link to would be invisible.
+      expect(tabsManager.selectedTabId.value).toBe("tab-3");
+      expect(tabsLayout.slots.value.map((slot) => slot.tab?.id)).toEqual([
+        "tab-1",
+        "tab-3",
+      ]);
+      expect(tabsLayout.selectedSlotId.value).toBe(
+        tabsLayout.slots.value[1]!.id
+      );
+    });
   });
 
   describe("setLayout", () => {

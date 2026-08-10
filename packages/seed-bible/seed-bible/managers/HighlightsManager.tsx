@@ -562,6 +562,10 @@ export function createHighlightsManager(
       chapterNumber
     );
 
+    // Settling the account has to stay above the write: `login()` opens a
+    // modal, and `writeChapterHighlights` applies the highlight optimistically.
+    // Writing first left the highlight on screen behind the modal looking
+    // saved, then quietly not saving when the prompt was dismissed.
     let userId = login.userId.value;
     if (!userId) {
       await login.login();
@@ -710,8 +714,29 @@ export function createHighlightsManager(
       chapterNumber
     );
 
-    const entry = await resolveEntryToMutate(address);
-    if (!entry) {
+    // Resolves the account like `resolveEntryToMutate`, but never prompts: a
+    // signed-out user has no saved highlights, so there is nothing to remove
+    // and a login modal would buy nothing. Clearing a session's broadcast
+    // highlight hits this — it lives in the shared document, not in anybody's
+    // records.
+    //
+    // Resolved once, before the load is awaited, and reused for the write
+    // below, so an account switch mid-load can't send one account's highlights
+    // to another's record (#1564).
+    const userId = login.userId.peek();
+    if (!userId) {
+      return;
+    }
+
+    const entry = getOrCreateEntry(userId, address);
+    await ensureLoaded(userId, address, entry);
+
+    const coversAnyVerse = deduplicatedVerseNumbers.some((verseNumber) =>
+      entry.data.value.highlights.some((highlight) =>
+        highlightContainsVerse(highlight, verseNumber)
+      )
+    );
+    if (!coversAnyVerse) {
       return;
     }
 

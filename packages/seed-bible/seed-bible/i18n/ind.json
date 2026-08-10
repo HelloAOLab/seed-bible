@@ -434,5 +434,10 @@
   "remove": "Menghapus",
   "signed-out-message": "Anda telah keluar. Silakan masuk kembali.",
   "account-suspended-message": "Akun Anda telah ditangguhkan.",
-  "loading-chapter": "Memuat bab…"
+  "loading-chapter": "Memuat bab…",
+  "book-not-found-title": "Buku tidak ditemukan",
+  "book-not-found-message": "Kami tidak dapat menemukan buku itu di {{translationName}} .",
+  "book-not-found-action": "Buka {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Sedang memuat editor gambar…",
+  "swipe-to-see-more": "Geser untuk melihat selengkapnya"
 }

@@ -491,6 +491,206 @@ describe("parseVerseReferences()", () => {
       ]
     );
   });
+
+  it("should find numbered books when preceded by other words", () => {
+    expect(parseVerseReferences("See 1 Corinthians 13:4 for love")).toEqual([
+      {
+        ref: { book: "1CO", chapter: 13, verse: 4 },
+        start: 4,
+        end: 22,
+      },
+    ]);
+    expect(parseVerseReferences("See 2 Corinthians 5:17")).toEqual([
+      {
+        ref: { book: "2CO", chapter: 5, verse: 17 },
+        start: 4,
+        end: 22,
+      },
+    ]);
+    expect(parseVerseReferences("See 1 John 3:16 and 1 Kings 1:1")).toEqual([
+      {
+        ref: { book: "1JN", chapter: 3, verse: 16 },
+        start: 4,
+        end: 15,
+      },
+      {
+        ref: { book: "1KI", chapter: 1, verse: 1 },
+        start: 20,
+        end: 31,
+      },
+    ]);
+    expect(parseVerseReferences("See 1CO 1:2")).toEqual([
+      {
+        ref: { book: "1CO", chapter: 1, verse: 2 },
+        start: 4,
+        end: 11,
+      },
+    ]);
+  });
+
+  it("should not treat 'Song of …' phrases as Song of Solomon", () => {
+    expect(parseVerseReferences("the Song of Moses 2:1")).toEqual([]);
+    expect(parseVerseReferences("See Song of Mary 1:46")).toEqual([]);
+    expect(getBookId("song of moses")).toBeNull();
+    expect(getBookId("Song of Mary")).toBeNull();
+  });
+
+  it("should accept title-cased 'Of' in Song of Solomon", () => {
+    expect(parseVerseReferences("Song Of Solomon 2:1")).toContainEqual(
+      expect.objectContaining({
+        ref: expect.objectContaining({ book: "SNG", chapter: 2, verse: 1 }),
+      })
+    );
+  });
+});
+
+/**
+ * All 66 Protestant-canon books with their USFM IDs and common English names.
+ */
+const PROTESTANT_CANON: ReadonlyArray<{ id: BookId; name: string }> = [
+  { id: "GEN", name: "Genesis" },
+  { id: "EXO", name: "Exodus" },
+  { id: "LEV", name: "Leviticus" },
+  { id: "NUM", name: "Numbers" },
+  { id: "DEU", name: "Deuteronomy" },
+  { id: "JOS", name: "Joshua" },
+  { id: "JDG", name: "Judges" },
+  { id: "RUT", name: "Ruth" },
+  { id: "1SA", name: "1 Samuel" },
+  { id: "2SA", name: "2 Samuel" },
+  { id: "1KI", name: "1 Kings" },
+  { id: "2KI", name: "2 Kings" },
+  { id: "1CH", name: "1 Chronicles" },
+  { id: "2CH", name: "2 Chronicles" },
+  { id: "EZR", name: "Ezra" },
+  { id: "NEH", name: "Nehemiah" },
+  { id: "EST", name: "Esther" },
+  { id: "JOB", name: "Job" },
+  { id: "PSA", name: "Psalms" },
+  { id: "PRO", name: "Proverbs" },
+  { id: "ECC", name: "Ecclesiastes" },
+  { id: "SNG", name: "Song of Solomon" },
+  { id: "ISA", name: "Isaiah" },
+  { id: "JER", name: "Jeremiah" },
+  { id: "LAM", name: "Lamentations" },
+  { id: "EZK", name: "Ezekiel" },
+  { id: "DAN", name: "Daniel" },
+  { id: "HOS", name: "Hosea" },
+  { id: "JOL", name: "Joel" },
+  { id: "AMO", name: "Amos" },
+  { id: "OBA", name: "Obadiah" },
+  { id: "JON", name: "Jonah" },
+  { id: "MIC", name: "Micah" },
+  { id: "NAM", name: "Nahum" },
+  { id: "HAB", name: "Habakkuk" },
+  { id: "ZEP", name: "Zephaniah" },
+  { id: "HAG", name: "Haggai" },
+  { id: "ZEC", name: "Zechariah" },
+  { id: "MAL", name: "Malachi" },
+  { id: "MAT", name: "Matthew" },
+  { id: "MRK", name: "Mark" },
+  { id: "LUK", name: "Luke" },
+  { id: "JHN", name: "John" },
+  { id: "ACT", name: "Acts" },
+  { id: "ROM", name: "Romans" },
+  { id: "1CO", name: "1 Corinthians" },
+  { id: "2CO", name: "2 Corinthians" },
+  { id: "GAL", name: "Galatians" },
+  { id: "EPH", name: "Ephesians" },
+  { id: "PHP", name: "Philippians" },
+  { id: "COL", name: "Colossians" },
+  { id: "1TH", name: "1 Thessalonians" },
+  { id: "2TH", name: "2 Thessalonians" },
+  { id: "1TI", name: "1 Timothy" },
+  { id: "2TI", name: "2 Timothy" },
+  { id: "TIT", name: "Titus" },
+  { id: "PHM", name: "Philemon" },
+  { id: "HEB", name: "Hebrews" },
+  { id: "JAS", name: "James" },
+  { id: "1PE", name: "1 Peter" },
+  { id: "2PE", name: "2 Peter" },
+  { id: "1JN", name: "1 John" },
+  { id: "2JN", name: "2 John" },
+  { id: "3JN", name: "3 John" },
+  { id: "JUD", name: "Jude" },
+  { id: "REV", name: "Revelation" },
+];
+
+describe("all 66 Protestant-canon books", () => {
+  it("lists exactly 66 books with unique IDs", () => {
+    expect(PROTESTANT_CANON).toHaveLength(66);
+    expect(new Set(PROTESTANT_CANON.map((b) => b.id)).size).toBe(66);
+  });
+
+  describe("getBookId()", () => {
+    it.each(PROTESTANT_CANON)("resolves book ID $id", ({ id }) => {
+      expect(getBookId(id)).toBe(id);
+    });
+
+    it.each(PROTESTANT_CANON)(
+      "resolves English name $name → $id",
+      ({ id, name }) => {
+        expect(getBookId(name)).toBe(id);
+      }
+    );
+  });
+
+  describe("parseVerseReference() by book ID", () => {
+    it.each(PROTESTANT_CANON)("parses standalone $id 1:1", ({ id }) => {
+      expect(parseVerseReference(`${id} 1:1`)).toEqual(
+        expect.objectContaining({ book: id, chapter: 1, verse: 1 })
+      );
+    });
+  });
+
+  describe("parseVerseReference() by English name", () => {
+    it.each(PROTESTANT_CANON)("parses standalone $name 1:1", ({ id, name }) => {
+      expect(parseVerseReference(`${name} 1:1`)).toEqual(
+        expect.objectContaining({ book: id, chapter: 1, verse: 1 })
+      );
+    });
+  });
+
+  describe("parseVerseReferences() by book ID", () => {
+    it.each(PROTESTANT_CANON)("finds standalone $id 1:1", ({ id }) => {
+      expect(parseVerseReferences(`${id} 1:1`)).toContainEqual(
+        expect.objectContaining({
+          ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
+        })
+      );
+    });
+
+    it.each(PROTESTANT_CANON)("finds mid-sentence $id 1:1", ({ id }) => {
+      expect(parseVerseReferences(`See ${id} 1:1 for context`)).toContainEqual(
+        expect.objectContaining({
+          ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
+        })
+      );
+    });
+  });
+
+  describe("parseVerseReferences() by English name", () => {
+    it.each(PROTESTANT_CANON)("finds standalone $name 1:1", ({ id, name }) => {
+      expect(parseVerseReferences(`${name} 1:1`)).toContainEqual(
+        expect.objectContaining({
+          ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
+        })
+      );
+    });
+
+    it.each(PROTESTANT_CANON)(
+      "finds mid-sentence $name 1:1",
+      ({ id, name }) => {
+        expect(
+          parseVerseReferences(`See ${name} 1:1 for context`)
+        ).toContainEqual(
+          expect.objectContaining({
+            ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
+          })
+        );
+      }
+    );
+  });
 });
 
 describe("getBookId()", () => {

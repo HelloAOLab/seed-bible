@@ -434,5 +434,10 @@
   "remove": "Видалити",
   "signed-out-message": "Ви вийшли. Будь ласка, увійдіть знову.",
   "account-suspended-message": "Ваш обліковий запис призупинено.",
-  "loading-chapter": "Завантаження розділу…"
+  "loading-chapter": "Завантаження розділу…",
+  "book-not-found-title": "Книгу не знайдено",
+  "book-not-found-message": "Нам не вдалося знайти цю книгу такою мовою: {{translationName}} .",
+  "book-not-found-action": "Перейти до {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Завантаження редактора зображень…",
+  "swipe-to-see-more": "Проведіть пальцем, щоб побачити більше"
 }

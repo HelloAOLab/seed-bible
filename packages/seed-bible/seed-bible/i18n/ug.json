@@ -434,5 +434,10 @@
   "remove": "چىقىرىۋېتىش",
   "signed-out-message": "سىز چىقىپ كەتتىڭىز. قايتا كىرىڭ.",
   "account-suspended-message": "ھېساباتىڭىز توختىتىلدى.",
-  "loading-chapter": "باب يۈكلەنمەكتە…"
+  "loading-chapter": "باب يۈكلەنمەكتە…",
+  "book-not-found-title": "كىتاب تېپىلمىدى",
+  "book-not-found-message": "بىز ئۇ كىتابنى {{translationName}} دىن تاپالمىدۇق.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} گە كىرىڭ",
+  "loading-picture-editor": "رەسىم تەھرىرلىگۈچ يۈكلەنمەكتە…",
+  "swipe-to-see-more": "كۆپرەك كۆرۈش ئۈچۈن سۈرۈڭ"
 }

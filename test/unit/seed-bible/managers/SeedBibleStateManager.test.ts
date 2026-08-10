@@ -1,12 +1,116 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type {
+  Translation,
+  TranslationBooks,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
+import {
+  aabBooks,
+  createResponse,
+  makeChapter,
+  makeUrl,
+  nivBooks,
+  translations,
+} from "./testUtils/mockBibleApiData";
 import { batch, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
+
+// App defaults to the private API; shared mock maps target the free-use host.
+const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
+
+const SPA_TRANSLATION: Translation = {
+  id: "spa_onbv",
+  name: "Open Nueva Biblia Viva",
+  englishName: "Open Nueva Biblia Viva",
+  website: "https://example.com",
+  licenseUrl: "https://example.com/license",
+  shortName: "ONBV",
+  language: "spa",
+  textDirection: "ltr",
+  availableFormats: ["json"],
+  listOfBooksApiLink: "/api/spa_onbv/books.json",
+  numberOfBooks: 66,
+  totalNumberOfChapters: 1189,
+  totalNumberOfVerses: 31102,
+};
+
+const HIN_TRANSLATION: Translation = {
+  id: "hin_cvb",
+  name: "Hindi Contemporary Version",
+  englishName: "Hindi Contemporary Version",
+  website: "https://example.com",
+  licenseUrl: "https://example.com/license",
+  shortName: "CVB",
+  language: "hin",
+  textDirection: "ltr",
+  availableFormats: ["json"],
+  listOfBooksApiLink: "/api/hin_cvb/books.json",
+  numberOfBooks: 66,
+  totalNumberOfChapters: 1189,
+  totalNumberOfVerses: 31102,
+};
+
+function booksForTranslation(
+  base: TranslationBooks,
+  translation: Translation
+): TranslationBooks {
+  return {
+    translation,
+    books: base.books.map((book) => ({
+      ...book,
+      firstChapterApiLink: `/api/${translation.id}/${book.id}/${book.firstChapterNumber ?? 1}.json`,
+      lastChapterApiLink: `/api/${translation.id}/${book.id}/${book.lastChapterNumber}.json`,
+    })),
+  };
+}
+
+function privateUrl(path: string): string {
+  return makeUrl(path, PRIVATE_API_ENDPOINT);
+}
+
+function createLanguageSwitchResponses(options?: {
+  spaBooks?: TranslationBooks;
+}): Record<string, ReturnType<typeof createResponse>> {
+  const spaBooks =
+    options?.spaBooks ?? booksForTranslation(aabBooks, SPA_TRANSLATION);
+  const hinBooks = booksForTranslation(aabBooks, HIN_TRANSLATION);
+
+  return {
+    [privateUrl("/api/available_translations.json")]: createResponse({
+      translations: [
+        ...translations.translations,
+        SPA_TRANSLATION,
+        HIN_TRANSLATION,
+      ],
+    }),
+    [privateUrl("/api/AAB/books.json")]: createResponse(aabBooks),
+    [privateUrl("/api/AAB/GEN/1.json")]: createResponse(
+      makeChapter(aabBooks, "GEN", 1)
+    ),
+    [privateUrl("/api/AAB/EXO/2.json")]: createResponse(
+      makeChapter(aabBooks, "EXO", 2)
+    ),
+    [privateUrl("/api/spa_onbv/books.json")]: createResponse(spaBooks),
+    [privateUrl("/api/spa_onbv/GEN/1.json")]: createResponse(
+      makeChapter(spaBooks, "GEN", 1)
+    ),
+    [privateUrl("/api/spa_onbv/EXO/2.json")]: createResponse(
+      makeChapter(spaBooks, "EXO", 2)
+    ),
+    [privateUrl("/api/spa_onbv/MAT/1.json")]: createResponse(
+      makeChapter(spaBooks, "MAT", 1)
+    ),
+    [privateUrl("/api/hin_cvb/books.json")]: createResponse(hinBooks),
+    [privateUrl("/api/hin_cvb/EXO/2.json")]: createResponse(
+      makeChapter(hinBooks, "EXO", 2)
+    ),
+  };
+}
 
 const mockSaveReadingHistory = vi.fn();
 const mockHighlightsManager = {
@@ -356,6 +460,27 @@ describe("createSeedBibleState", () => {
     );
   });
 
+  it("regression #1589: createSharedSession() starts the session where the active tab is reading", async () => {
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    // Two tabs on different chapters, so a session that read the position off
+    // the wrong tab can't look correct by accident.
+    const state = await createStateWithTwoTabs();
+    const activeTab = state.tabs.tabs.value[1]!;
+    await activeTab.readingState.selectTranslationAndChapter("AAB", "EXO", 2);
+    state.app.selectTab(activeTab.id);
+    mockSessionsManager.createSession.mockResolvedValue(
+      createMockSharedSession("session-position")
+    );
+
+    await state.app.createSharedSession();
+
+    expect(mockSessionsManager.createSession).toHaveBeenCalledWith({
+      initialTranslationId: "AAB",
+      initialBookId: "EXO",
+      initialChapterNumber: 2,
+    });
+  });
+
   it("createSharedSession() captures a create_session posthog event", async () => {
     const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
@@ -534,6 +659,25 @@ describe("createSeedBibleState", () => {
     expect(state.panes.selectedPaneId.value).toBe(pane.id);
     expect(state.tabs.selectedTabId.value).toBe(previousSelectedTabId);
     expect(state.selector.isOpen.value).toBe(false);
+  });
+
+  it("closes a fullscreen pane when navigating to a new chapter", async () => {
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    state.panes.openPane({
+      placement: "fullscreen",
+      title: "Fullscreen Pane",
+      component: () => null,
+    });
+    expect(state.panes.panes.value).toHaveLength(1);
+
+    await readingState.selectChapter("EXO", 2);
+    await waitFor(() => readingState.bookId.value === "EXO");
+
+    expect(state.panes.panes.value).toHaveLength(0);
   });
 
   describe("mobile tab slot restrictions", () => {
@@ -1134,6 +1278,253 @@ describe("createSeedBibleState", () => {
       expect(state.app.title.value).toBe(
         `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
+    });
+  });
+
+  describe("tab state persistence", () => {
+    interface StoredTabsState {
+      tabs: { id: string; slotOnly?: boolean }[];
+      selectedTabId: string;
+      layout: string;
+      slotTabIds: (string | null)[];
+      selectedSlotIndex: number | null;
+    }
+
+    const readStoredTabs = (): StoredTabsState =>
+      JSON.parse(localStorage.getItem("sb-tabs-state") ?? "null");
+
+    // SettingsManager reads the anonymous, device-only config store
+    // (`login.localConfig`) from this key, so writing it before a bootstrap is
+    // how a test simulates opening the app with panels off/on.
+    const setPanelsDisabled = (disablePanels: boolean) =>
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ disablePanels })
+      );
+
+    const openSecondPane = async (state: SeedBibleState) => {
+      const slot = state.tabsLayout.openTabInNewSlot(
+        state.tabsLayout.slots.value[0]!.tab!.id
+      );
+      const clone = state.tabs.tabs.value.find(
+        (tab) => tab.id === slot?.tab?.id
+      )!;
+      await waitForInitialLoad(clone.readingState, 1000);
+    };
+
+    it("stores the split layout together with the hidden clone backing it", async () => {
+      const state = await createState();
+
+      await openSecondPane(state);
+
+      const stored = readStoredTabs();
+      expect(stored.layout).toBe("split-2v");
+      expect(stored.slotTabIds).toHaveLength(2);
+      expect(stored.slotTabIds.every((id) => typeof id === "string")).toBe(
+        true
+      );
+      // The second pane is backed by a hidden clone. Without it in `tabs`, the
+      // restored pane would resolve to no tab and come back empty.
+      expect(stored.tabs.filter((tab) => tab.slotOnly)).toHaveLength(1);
+    });
+
+    it("keeps a stored split through a load with panels disabled", async () => {
+      // 1. Build a two-pane split with panels enabled.
+      const withPanels = await createState();
+      await openSecondPane(withPanels);
+      expect(readStoredTabs().slotTabIds).toHaveLength(2);
+
+      // 2. Reload with panels disabled.
+      setPanelsDisabled(true);
+      const panelsOff = await createState();
+      expect(panelsOff.app.panelsEnabled.value).toBe(false);
+
+      // The rendered view collapses to a single pane...
+      expect(panelsOff.app.effectiveSlotLayout.value).toBe("single");
+      expect(panelsOff.app.effectiveSlots.value).toHaveLength(1);
+      // ...but the layout manager still holds the split, so that is what the
+      // persistence effect writes back. Collapsing it here instead would
+      // overwrite storage with a single pane and destroy the split for good.
+      expect(panelsOff.tabsLayout.layout.value).toBe("split-2v");
+      expect(panelsOff.tabsLayout.slots.value).toHaveLength(2);
+      expect(readStoredTabs().slotTabIds).toHaveLength(2);
+
+      // 3. Re-enable panels and reload: the split renders again.
+      setPanelsDisabled(false);
+      const panelsBackOn = await createState();
+      expect(panelsBackOn.app.panelsEnabled.value).toBe(true);
+      expect(panelsBackOn.app.effectiveSlotLayout.value).toBe("split-2v");
+      expect(panelsBackOn.app.effectiveSlots.value).toHaveLength(2);
+      expect(
+        panelsBackOn.app.effectiveSlots.value.map((slot) => slot.tab?.id)
+      ).toEqual(readStoredTabs().slotTabIds);
+    });
+  });
+
+  describe("UI language Bible translation switch", () => {
+    beforeEach(async () => {
+      // Language changes share the process-wide i18n instance; reset so each
+      // case starts from English defaults rather than the prior test's locale.
+      const i18nMod = await import("i18next");
+      if (i18nMod.default.isInitialized && i18nMod.default.language !== "en") {
+        await i18nMod.default.changeLanguage("en");
+      }
+    });
+
+    it("keeps the current book and chapter when the new translation has that book", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+    });
+
+    it("passes the selected verse through when switching translation", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      const chapter = readingState.chapterData.value!;
+      const verseEntry = chapter.chapter.content.find(
+        (entry) =>
+          !!entry &&
+          typeof entry === "object" &&
+          (entry as { type?: string }).type === "verse" &&
+          (entry as { number?: number }).number === 2
+      );
+      expect(verseEntry).toBeTruthy();
+
+      readingState.selectVerse(
+        {
+          bookId: "EXO",
+          chapterNumber: 2,
+          verse: verseEntry as (typeof chapter.chapter.content)[number] & {
+            type: "verse";
+            number: number;
+          },
+          translationId: "AAB",
+        },
+        0,
+        0
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+
+      const selectTranslationAndChapterSpy = vi.spyOn(
+        readingState,
+        "selectTranslationAndChapter"
+      );
+
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(selectTranslationAndChapterSpy).toHaveBeenCalledWith(
+        "spa_onbv",
+        "EXO",
+        2,
+        { scrollToVerse: 2 }
+      );
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+    });
+
+    it("falls back to the first book when the new translation lacks the current book", async () => {
+      const spaMatOnly = booksForTranslation(nivBooks, SPA_TRANSLATION);
+      const state = await createStateWithOptions({
+        responses: {
+          ...createLanguageSwitchResponses({ spaBooks: spaMatOnly }),
+          [privateUrl("/api/AAB/EXO/1.json")]: createResponse(
+            makeChapter(aabBooks, "EXO", 1)
+          ),
+        },
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      // Start on a book spa_onbv does not contain.
+      await readingState.selectTranslationAndChapter("AAB", "EXO", 1);
+      await waitForInitialLoad(readingState, 1000);
+      expect(readingState.translationId.value).toBe("AAB");
+      expect(readingState.bookId.value).toBe("EXO");
+
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("MAT");
+      expect(readingState.chapterNumber.value).toBe(1);
+    });
+
+    it("falls back to selectTranslation when the book catalog prefetch fails", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      const selectTranslationSpy = vi.spyOn(readingState, "selectTranslation");
+      const selectTranslationAndChapterSpy = vi.spyOn(
+        readingState,
+        "selectTranslationAndChapter"
+      );
+      // First call is the applicator's position-preserving prefetch; later
+      // calls (from selectTranslation) should use the real catalog again.
+      vi.spyOn(state.bibleData, "getTranslationBooks").mockRejectedValueOnce(
+        new Error("network down")
+      );
+
+      await expect(
+        state.i18n.requestLanguageChange("es")
+      ).resolves.toBeUndefined();
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(selectTranslationAndChapterSpy).not.toHaveBeenCalled();
+      expect(selectTranslationSpy).toHaveBeenCalledWith("spa_onbv");
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      // Degraded path: first book of the new translation, not EXO 2.
+      expect(readingState.bookId.value).toBe("GEN");
+      expect(readingState.chapterNumber.value).toBe(1);
+    });
+
+    it("keeps the current book and chapter when confirming a nearest-translation fallback", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      // Gujarati has no Bible text; nearest is Hindi (hin_cvb).
+      await state.i18n.requestLanguageChange("gu");
+      expect(state.i18n.languageFallbackPrompt.value).toEqual({
+        requestedLanguage: "gu",
+        fallbackLanguage: "hi",
+        fallbackTranslation: { id: "hin_cvb", language: "hin" },
+      });
+
+      await state.i18n.confirmLanguageFallback();
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(readingState.translationId.value).toBe("hin_cvb");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
     });
   });
 });

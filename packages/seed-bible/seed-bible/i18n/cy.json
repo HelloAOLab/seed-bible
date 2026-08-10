@@ -434,5 +434,10 @@
   "remove": "Tynnu",
   "signed-out-message": "Rydych chi wedi allgofnodi. Mewngofnodwch eto.",
   "account-suspended-message": "Mae eich cyfrif wedi cael ei atal.",
-  "loading-chapter": "Wrthi'n llwytho pennod…"
+  "loading-chapter": "Wrthi'n llwytho pennod…",
+  "book-not-found-title": "Ni chanfuwyd y llyfr",
+  "book-not-found-message": "Ni allem ddod o hyd i'r llyfr hwnnw yn {{translationName}} .",
+  "book-not-found-action": "Ewch i {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Wrthi'n llwytho'r golygydd lluniau…",
+  "swipe-to-see-more": "Sweipiwch i weld mwy"
 }

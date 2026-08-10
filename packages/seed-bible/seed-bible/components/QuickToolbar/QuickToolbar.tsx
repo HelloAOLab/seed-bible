@@ -33,6 +33,7 @@ export function QuickToolbar(props: QuickToolbarProps) {
     readingState,
     playlists,
     features: props.features,
+    surface: "quick-toolbar",
   });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 

@@ -124,7 +124,6 @@ describe("useReadingHistoryProvider", () => {
       render(<TestComponent />, container);
     });
     for (let i = 0; i < 4; i++) {
-      // eslint-disable-next-line no-await-in-loop
       await act(async () => {
         await Promise.resolve();
         await new Promise((resolve) => setTimeout(resolve, 0));

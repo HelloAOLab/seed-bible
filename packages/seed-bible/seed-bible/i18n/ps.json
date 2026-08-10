@@ -434,5 +434,10 @@
   "remove": "لرې کړئ",
   "signed-out-message": "ته ننوتل شوی یې. مهرباني وکړئ بیا ننوتل وکړئ.",
   "account-suspended-message": "ستاسو حساب ځنډول شوی دی.",
-  "loading-chapter": "څپرکی پورته کیږي…"
+  "loading-chapter": "څپرکی پورته کیږي…",
+  "book-not-found-title": "کتاب ونه موندل شو",
+  "book-not-found-message": "موږ دا کتاب په {{translationName}} کې ونه موند.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} ته لاړ شئ",
+  "loading-picture-editor": "د انځور ایډیټر پورته کول…",
+  "swipe-to-see-more": "د نورو لیدلو لپاره سوائپ وکړئ"
 }

@@ -414,10 +414,16 @@ export interface ThemeHighlightColor {
 export interface BibleThemeHighlightColors {
   yellow: ThemeHighlightColor;
   green: ThemeHighlightColor;
+  cyan: ThemeHighlightColor;
   blue: ThemeHighlightColor;
+  red: ThemeHighlightColor;
+  magenta: ThemeHighlightColor;
   pink: ThemeHighlightColor;
   purple: ThemeHighlightColor;
   orange: ThemeHighlightColor;
+  cream: ThemeHighlightColor;
+  gray: ThemeHighlightColor;
+  tan: ThemeHighlightColor;
 
   [colorId: string]: ThemeHighlightColor;
 }
@@ -590,8 +596,23 @@ const LIGHT_THEME: BibleTheme = {
       fontColor: "#333",
       wordsOfJesusFontColor: "#e07b4c",
     },
+    cyan: {
+      color: "#80deea",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
     blue: {
       color: "#90caf9",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    red: {
+      color: "#ef9a9a",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#c62828",
+    },
+    magenta: {
+      color: "#ea80fc",
       fontColor: "#333",
       wordsOfJesusFontColor: "#e07b4c",
     },
@@ -607,6 +628,21 @@ const LIGHT_THEME: BibleTheme = {
     },
     orange: {
       color: "#ffcc80",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    cream: {
+      color: "#fff8e1",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    gray: {
+      color: "#cfd8dc",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    tan: {
+      color: "#e0c9a6",
       fontColor: "#333",
       wordsOfJesusFontColor: "#e07b4c",
     },
@@ -742,8 +778,23 @@ const DARK_THEME: BibleTheme = {
       fontColor: "#ffffff",
       wordsOfJesusFontColor: "#ff9e80",
     },
+    cyan: {
+      color: "#1a6b73",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
     blue: {
       color: "#2f5f9e",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    red: {
+      color: "#8e3a3a",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    magenta: {
+      color: "#7a2f6e",
       fontColor: "#ffffff",
       wordsOfJesusFontColor: "#ff9e80",
     },
@@ -759,6 +810,21 @@ const DARK_THEME: BibleTheme = {
     },
     orange: {
       color: "#98551c",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    cream: {
+      color: "#6b6040",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    gray: {
+      color: "#4a4a4a",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    tan: {
+      color: "#6d4c33",
       fontColor: "#ffffff",
       wordsOfJesusFontColor: "#ff9e80",
     },
@@ -878,10 +944,16 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
 export const DEFAULT_HIGHLIGHT_IDS = [
   "yellow",
   "green",
+  "cyan",
   "blue",
+  "red",
+  "magenta",
   "pink",
   "purple",
   "orange",
+  "cream",
+  "gray",
+  "tan",
 ] as const;
 
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];

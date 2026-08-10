@@ -434,5 +434,10 @@
   "remove": "ኣወግድ",
   "signed-out-message": "ተፈሪምካ ኣለኻ። በጃኹም እንደገና እቶ።",
   "account-suspended-message": "ኣካውንትኩም ተኣጊዱ ኣሎ።",
-  "loading-chapter": "ምዕራፍ ይጽዕን ኣሎ..."
+  "loading-chapter": "ምዕራፍ ይጽዕን ኣሎ...",
+  "book-not-found-title": "መጽሓፍ ኣይተረኽበን።",
+  "book-not-found-message": "እታ መጽሓፍ ኣብ {{translationName}} ክንረኽባ ኣይከኣልናን።",
+  "book-not-found-action": "ናብ {{bookName}} {{chapterNumber}} ኪድ።",
+  "loading-picture-editor": "ናይ ስእሊ ኣርታዒ ኣብ ምጽዓን...",
+  "swipe-to-see-more": "ንዝያዳ ንምርኣይ ስዋይፕ ግበር"
 }

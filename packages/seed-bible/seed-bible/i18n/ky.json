@@ -434,5 +434,10 @@
   "remove": "Алып салуу",
   "signed-out-message": "Сиз аккаунтуңуздан чыктыңыз. Кайрадан кириңиз.",
   "account-suspended-message": "Аккаунтуңуз убактылуу токтотулду.",
-  "loading-chapter": "Бөлүм жүктөлүүдө…"
+  "loading-chapter": "Бөлүм жүктөлүүдө…",
+  "book-not-found-title": "Китеп табылган жок",
+  "book-not-found-message": "Биз ал китепти {{translationName}} дан таба алган жокпуз.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} бөлүмүнө өтүңүз",
+  "loading-picture-editor": "Сүрөт редактору жүктөлүүдө…",
+  "swipe-to-see-more": "Көбүрөөк көрүү үчүн сүрүңүз"
 }

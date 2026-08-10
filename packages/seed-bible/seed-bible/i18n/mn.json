@@ -434,5 +434,10 @@
   "remove": "Хасах",
   "signed-out-message": "Та гарсан байна. Дахин нэвтэрнэ үү.",
   "account-suspended-message": "Таны бүртгэлийг түдгэлзүүлсэн.",
-  "loading-chapter": "Бүлгийг ачаалж байна…"
+  "loading-chapter": "Бүлгийг ачаалж байна…",
+  "book-not-found-title": "Ном олдсонгүй",
+  "book-not-found-message": "Бид тэр номыг {{translationName}} дотроос олж чадсангүй.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} руу очно уу",
+  "loading-picture-editor": "Зураг засварлагчийг ачаалж байна...",
+  "swipe-to-see-more": "Дэлгэрэнгүйг харахын тулд шударна уу"
 }

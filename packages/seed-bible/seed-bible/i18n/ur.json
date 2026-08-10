@@ -434,5 +434,10 @@
   "remove": "ہٹا دیں۔",
   "signed-out-message": "آپ کو سائن آؤٹ کر دیا گیا ہے۔ براہ کرم دوبارہ سائن ان کریں۔",
   "account-suspended-message": "آپ کا اکاؤنٹ معطل کر دیا گیا ہے۔",
-  "loading-chapter": "باب لوڈ ہو رہا ہے…"
+  "loading-chapter": "باب لوڈ ہو رہا ہے…",
+  "book-not-found-title": "کتاب نہیں ملی",
+  "book-not-found-message": "ہمیں وہ کتاب {{translationName}} میں نہیں مل سکی۔",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} پر جائیں",
+  "loading-picture-editor": "تصویری ایڈیٹر لوڈ ہو رہا ہے…",
+  "swipe-to-see-more": "مزید دیکھنے کے لیے سوائپ کریں۔"
 }
