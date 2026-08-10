@@ -31,11 +31,27 @@ export const META_DESCRIPTION_MAX_GRAPHEMES = 155;
 const MIN_WORD_BOUNDARY_RATIO = 0.6;
 
 /**
- * Scripts that don't put spaces between words. A space joining two verses
- * reads as a defect in these, so they get joined flush.
+ * Scripts that don't put spaces between words. A space in front of one of these
+ * reads as a defect, so they get joined flush.
  */
 const NO_LEADING_SPACE =
   /^[\p{sc=Han}\p{sc=Hiragana}\p{sc=Katakana}\p{sc=Thai}\p{sc=Lao}\p{sc=Khmer}\p{sc=Myanmar}\u3000-\u303F\uFF00-\uFFEF]/u;
+
+/**
+ * Appends `next` to `text`, inserting a space only where the script wants one.
+ *
+ * Used for both the parts within a verse and the joins between verses. Both need
+ * it: a verse's content array is split by every footnote reference, inline
+ * heading, line break and `wordsOfJesus` span, and red-letter Gospel text splits
+ * constantly \u2014 so joining a Chinese verse's own parts with a space is just as
+ * wrong as doing it between two verses.
+ */
+function appendText(text: string, next: string): string {
+  if (!text) {
+    return next;
+  }
+  return NO_LEADING_SPACE.test(next) ? text + next : `${text} ${next}`;
+}
 
 /** Trailing characters that read wrong immediately before an ellipsis. */
 const TRAILING_SEPARATORS = /[\s\p{Pd},;:،؛、，]+$/u;
@@ -71,7 +87,8 @@ function getWordSegmenter(): Intl.Segmenter {
   return wordSegmenter;
 }
 
-function countGraphemes(text: string): number {
+/** Counts what a reader sees as one character. */
+export function countGraphemes(text: string): number {
   return [...getGraphemeSegmenter().segment(text)].length;
 }
 
@@ -84,19 +101,21 @@ function countGraphemes(text: string): number {
 export function extractContentText(
   parts: readonly ChapterVerse["content"][number][]
 ): string {
-  return parts
-    .map((part) => {
-      if (typeof part === "string") {
-        return part;
-      }
+  let text = "";
+  for (const part of parts) {
+    let value = "";
+    if (typeof part === "string") {
+      value = part;
+    } else if (part && typeof part === "object" && "text" in part) {
+      value = part.text;
+    }
 
-      if (part && typeof part === "object" && "text" in part) {
-        return part.text;
-      }
+    if (value) {
+      text = appendText(text, value);
+    }
+  }
 
-      return "";
-    })
-    .join(" ")
+  return text
     .replace(/\s+/g, " ")
     .replace(/\s+([,.;:!?’”)\]])/g, "$1")
     .trim();
@@ -136,11 +155,7 @@ export function buildChapterExcerpt(
       continue;
     }
 
-    if (!excerpt) {
-      excerpt = text;
-    } else {
-      excerpt += NO_LEADING_SPACE.test(text) ? text : ` ${text}`;
-    }
+    excerpt = appendText(excerpt, text);
 
     if (countGraphemes(excerpt) >= minGraphemes) {
       break;

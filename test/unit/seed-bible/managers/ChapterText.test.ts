@@ -65,6 +65,32 @@ describe("extractContentText", () => {
   it("returns an empty string for content with nothing quotable", () => {
     expect(extractContentText([{ lineBreak: true }, { noteId: 1 }])).toBe("");
   });
+
+  // A verse's content array is split by every footnote reference, inline
+  // heading, line break and words-of-Jesus span, so a space-less script hits
+  // this constantly — red-letter Gospel text most of all.
+  it("does not insert a space between parts of a space-less script", () => {
+    expect(
+      extractContentText(["起初神创造天地", { noteId: 1 }, "地是空虚混沌"])
+    ).toBe("起初神创造天地地是空虚混沌");
+
+    expect(
+      extractContentText([
+        "起初神创造天地",
+        { text: "地是空虚混沌", wordsOfJesus: true },
+      ])
+    ).toBe("起初神创造天地地是空虚混沌");
+
+    expect(
+      extractContentText(["ในเริ่มแรก", { lineBreak: true }, "นั้นพระเจ้า"])
+    ).toBe("ในเริ่มแรกนั้นพระเจ้า");
+  });
+
+  it("still spaces parts of a space-separated script", () => {
+    expect(
+      extractContentText(["In the beginning", { noteId: 1 }, "God created"])
+    ).toBe("In the beginning God created");
+  });
 });
 
 describe("buildChapterExcerpt", () => {

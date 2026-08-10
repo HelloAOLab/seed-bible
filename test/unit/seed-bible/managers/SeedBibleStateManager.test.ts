@@ -1393,6 +1393,61 @@ describe("createSeedBibleState", () => {
         "Read Genesis 1 in the Seed Bible"
       );
     });
+
+    // Book names come from each translation's own catalog, not a fixed short
+    // label, so this branch has no inherent length ceiling either.
+    it("bounds the reference-only fallback for a very long book name", async () => {
+      const state = await createState();
+      const longBookName =
+        "The First Book of Moses Commonly Called Genesis Together With Extended Introductory Commentary And Translator Notes For The Attentive Reader Of Scripture";
+
+      setSelectedTabChapter(state, "genesis", longBookName, 1, "BSB", "ltr", {
+        content: [{ type: "line_break" }],
+        shortName: "BSB",
+      });
+
+      const description = state.app.description.value;
+
+      expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      expect(description.endsWith("…")).toBe(true);
+    });
+
+    // Only observable with a reordered template: with the citation charged
+    // against the budget up front, the excerpt absorbs the cut. Truncating the
+    // composed string alone would chop the citation off the end instead.
+    it("cuts scripture, not the citation, when the template ends with the citation", async () => {
+      const state = await createState();
+      const i18next = (await import("i18next")).default;
+      const EN_DEFAULT =
+        "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}";
+
+      i18next.addResource(
+        "en",
+        "seed-bible",
+        "chapter-meta-description",
+        "「{{excerpt}}」— {{bookName}} {{chapterNumber}} ({{translationName}})"
+      );
+
+      try {
+        setSelectedTabChapter(state, "genesis", "Genesis", 1, "Berean", "ltr", {
+          content: GENESIS_1,
+          shortName: "BSB",
+        });
+
+        const description = state.app.description.value;
+
+        expect(description).toContain("— Genesis 1 (BSB)");
+        expect(description.endsWith("(BSB)")).toBe(true);
+        expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      } finally {
+        i18next.addResource(
+          "en",
+          "seed-bible",
+          "chapter-meta-description",
+          EN_DEFAULT
+        );
+      }
+    });
   });
 
   describe("tab state persistence", () => {

@@ -19,6 +19,7 @@ import {
 import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
+  countGraphemes,
   truncateForMeta,
 } from "../managers/ChapterText";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
@@ -1024,35 +1025,57 @@ export function createSeedBibleState(
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
-      return t("app-meta-description", {
-        defaultValue: APP_META_DESCRIPTION,
-      });
+      // Truncated like every other branch: this key is translatable, and a
+      // translation is free to be longer than the English default.
+      return truncateForMeta(
+        t("app-meta-description", { defaultValue: APP_META_DESCRIPTION }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
     }
+
+    // Used whenever there is no scripture to quote — an empty chapter payload,
+    // or a reference so long it leaves no room for any.
+    const referenceOnly = () =>
+      truncateForMeta(
+        t("seed-bible-description", {
+          bookName: chapter.book.name,
+          chapterNumber: chapter.chapter.number,
+          defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
 
     const excerpt = buildChapterExcerpt(
       chapter.chapter.content,
       META_DESCRIPTION_MAX_GRAPHEMES
     );
     if (!excerpt) {
-      return t("seed-bible-description", {
-        bookName: chapter.book.name,
-        chapterNumber: chapter.chapter.number,
-        defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
-      });
+      return referenceOnly();
     }
 
-    const composed = t("chapter-meta-description", {
-      bookName: chapter.book.name,
-      chapterNumber: chapter.chapter.number,
-      translationName: chapter.translation.shortName,
-      excerpt,
-      defaultValue:
-        "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
-    });
+    const compose = (scripture: string) =>
+      t("chapter-meta-description", {
+        bookName: chapter.book.name,
+        chapterNumber: chapter.chapter.number,
+        translationName: chapter.translation.shortName,
+        excerpt: scripture,
+        defaultValue:
+          "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
+      });
 
-    // The whole composed string is what has to fit, not just the excerpt: book
-    // names vary in length and a translated template may reorder its parts.
-    return truncateForMeta(composed, META_DESCRIPTION_MAX_GRAPHEMES);
+    // Charge the citation against the budget first, so what gets cut is always
+    // scripture. Truncating only the composed string would instead chop the
+    // citation off the end for any locale whose template puts it last.
+    const scriptureBudget =
+      META_DESCRIPTION_MAX_GRAPHEMES - countGraphemes(compose(""));
+    const fitted =
+      scriptureBudget > 0 ? truncateForMeta(excerpt, scriptureBudget) : "";
+    if (!fitted) {
+      return referenceOnly();
+    }
+
+    // Backstop for a template whose own literal text overruns the budget.
+    return truncateForMeta(compose(fitted), META_DESCRIPTION_MAX_GRAPHEMES);
   });
 
   const siteName = computed(() => {
