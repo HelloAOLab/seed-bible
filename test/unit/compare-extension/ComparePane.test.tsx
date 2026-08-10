@@ -678,14 +678,45 @@ describe("Compare translation picker", () => {
     expect(state.selectedTranslationIds.value).toEqual([]);
   });
 
-  it("shows the translation being read as already chosen", () => {
+  it("shows the translation being read as unchosen until it is saved", () => {
     const { container } = mountPicker();
 
     const kjvRow = [...container.querySelectorAll(".translation-option")].find(
       (row) => row.textContent?.includes("King James Version")
     )!;
-    // The tick replaces the completion ring for a chosen translation.
-    expect(kjvRow.querySelector(".emptyCircle")).toBeNull();
+    // It's always compared regardless, but ticking it here before it's saved
+    // would leave a click with nothing to visibly change.
+    expect(kjvRow.querySelector(".sb-translation-completion")).not.toBeNull();
+  });
+
+  it("ticks the translation being read once its row is clicked, and saves it", () => {
+    const { state, container, node } = mountPicker();
+
+    const kjvRow = () =>
+      [...container.querySelectorAll(".translation-option")].find((row) =>
+        row.textContent?.includes("King James Version")
+      ) as HTMLElement;
+
+    act(() => {
+      kjvRow().click();
+    });
+    expect(state.selectedTranslationIds.value).toEqual(["eng_kjv"]);
+
+    act(() => {
+      render(node, container);
+    });
+    // The click now has a visible result: the ring is replaced by the tick.
+    expect(kjvRow().querySelector(".sb-translation-completion")).toBeNull();
+
+    act(() => {
+      kjvRow().click();
+    });
+    expect(state.selectedTranslationIds.value).toEqual([]);
+
+    act(() => {
+      render(node, container);
+    });
+    expect(kjvRow().querySelector(".sb-translation-completion")).not.toBeNull();
   });
 
   it("offers the catalog filter, so it is not stuck on complete translations", () => {

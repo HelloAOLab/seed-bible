@@ -221,6 +221,7 @@ export function defaultSelectionForLanguage(
         translations.find(
           (translation) =>
             translation.id !== current.id &&
+            translation.language === current.language &&
             translation.shortName.toUpperCase() === shortName
         )
       )

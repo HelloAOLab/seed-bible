@@ -449,6 +449,10 @@ describe("defaultSelectionForLanguage", () => {
   describe("for English", () => {
     const englishTranslations = [
       translation("eng_aab", "eng", "AAB"),
+      // Sorts before the real BSB, and shares its short name — a translation
+      // in another language must not be picked over the English one just
+      // because it happens to be earlier in the catalog.
+      translation("spa_bsb", "spa", "BSB"),
       translation("eng_bsb", "eng", "BSB"),
       translation("eng_kjav", "eng", "KJAV"),
       translation("eng_nasb95", "eng", "NASB95"),
@@ -460,6 +464,14 @@ describe("defaultSelectionForLanguage", () => {
       expect(
         defaultSelectionForLanguage(englishTranslations, "eng_aab")
       ).toEqual(["eng_bsb", "eng_kjav", "eng_nasb95"]);
+    });
+
+    it("does not match a curated short name in another language", () => {
+      const spanishOnly = [
+        translation("eng_aab", "eng", "AAB"),
+        translation("spa_bsb", "spa", "BSB"),
+      ];
+      expect(defaultSelectionForLanguage(spanishOnly, "eng_aab")).toEqual([]);
     });
 
     it("matches curated short names case-insensitively", () => {

@@ -196,13 +196,11 @@ export function TranslationPicker(props: {
         groups={groups}
         query={query}
         viewMode={showAllLanguages.value}
-        // The translation being read is always part of the comparison, so it
-        // reads as chosen here even though it is never saved.
-        selectedTranslationIds={
-          currentTranslationId && !selected.includes(currentTranslationId)
-            ? [...selected, currentTranslationId]
-            : selected
-        }
+        // Ticked only once actually saved — same as the chip above. The
+        // translation being read is always compared regardless, but showing
+        // it ticked before it's saved would give a click on its row nothing
+        // to visibly change, even though it silently writes to the saved list.
+        selectedTranslationIds={selected}
         expandedLanguage={
           translations
             .find((translation) => translation.id === currentTranslationId)
