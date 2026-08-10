@@ -23,9 +23,6 @@ export const COMPARE_TRANSLATIONS_KEY = "compareTranslations";
 /** Stable id for the Compare side pane. */
 export const COMPARE_PANE_ID = "compare-pane";
 
-/** The i18n namespace registered from this extension's `extension.json`. */
-export const COMPARE_NS = "compare-extension";
-
 /**
  * How long the rest of the chapter stays faded after arriving from Compare.
  * Matches the reader's `diminish-in-out` animation, so the decoration is
