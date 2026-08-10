@@ -165,10 +165,11 @@
   background: var(--sb-divider-color);
 }
 
-/* Anchored to the bottom of the pane, always reachable while the list scrolls. */
+/* Bottom padding matches `.sb-compare-picker`'s padding, so "Add translation"
+   and "Done" line up when switching screens. */
 .sb-compare-add-bar {
   flex: 0 0 auto;
-  padding: 8px 12px;
+  padding: 8px 12px 12px;
 }
 
 .sb-compare-add-button {
@@ -190,10 +191,9 @@
   opacity: 0.9;
 }
 
-/* The floating reader toolbar is fixed and centered on the whole app width,
-   so on desktop it can drift over this pane and cover the button below.
-   Mobile doesn't need this: panes render fullscreen there and already inset
-   for the toolbar. */
+/* On desktop the floating reader toolbar can drift over this pane and cover
+   the button below; reserve clearance for it. Mobile panes render fullscreen
+   and already inset for the toolbar, so they don't need this. */
 @media (min-width: 481px) {
   .sb-compare-add-bar {
     padding-bottom: calc(
@@ -202,10 +202,11 @@
     );
   }
 
+  /* Minus the 0.75rem buffer above: `.sb-compare-picker`'s own bottom padding
+     already supplies it. */
   .sb-compare-picker-done {
     margin-bottom: calc(
-      var(--sb-reader-toolbar-bottom) + var(--sb-reader-toolbar-button-height) +
-        0.75rem
+      var(--sb-reader-toolbar-bottom) + var(--sb-reader-toolbar-button-height)
     );
   }
 }
