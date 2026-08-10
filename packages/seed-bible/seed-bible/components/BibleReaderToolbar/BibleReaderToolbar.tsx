@@ -31,15 +31,22 @@ import {
   annotationVerseNumbers,
   groupAnnotationsByVerseRange,
   type AnnotationGroup,
+  type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import {
   AnnotationPreview,
   AnnotationCommentMeta,
   annotationLocationLabel,
+  openDeleteAnnotationConfirm,
 } from "../DiscoverPane/DiscoverPane";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import type { LoginManager } from "../../managers/LoginManager";
+import type { ModalManager } from "../../managers/ModalManager";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -411,19 +418,32 @@ function applyHighlightWithSession(
 /**
  * One verse-range group of annotations in the mobile verse sheet's expanded
  * overflow area — mirrors `DiscoverPane`'s grouped annotation list (same
- * header/list classes, same collapsible header), but read-only: no
- * navigate-on-click, no edit/delete menu. A standalone component (rather than
- * inlined in a `.map()`) so each group's `expanded` signal is its own hook
- * instance, keyed by group below.
+ * header/list classes, same collapsible header, same edit/delete menu). A
+ * standalone component (rather than inlined in a `.map()`) so each group's
+ * `expanded` signal is its own hook instance, keyed by group below.
  */
 function VerseToolbarAnnotationGroup(props: {
   id: string;
   group: AnnotationGroup;
   tabs: TabsManager;
   login: LoginManager;
+  annotations: AnnotationsManager;
+  modals: ModalManager;
+  toast: SeedBibleState["app"]["toast"];
+  openDiscover: () => void;
   onReferenceClick?: (ref: VerseRef) => void;
 }) {
-  const { id, group, tabs, login, onReferenceClick } = props;
+  const {
+    id,
+    group,
+    tabs,
+    login,
+    annotations,
+    modals,
+    toast,
+    openDiscover,
+    onReferenceClick,
+  } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
@@ -470,6 +490,40 @@ function VerseToolbarAnnotationGroup(props: {
                   language={language}
                 />
               </div>
+              <ContextMenuWithButton
+                buttonClassName="sb-annotation-item-menu"
+                aria-label={t("annotation-options", {
+                  defaultValue: "Annotation options",
+                })}
+              >
+                <ContextMenuItem
+                  onClick={() => {
+                    console.log("Editing annotation", annotation);
+                    annotations.editAnnotation(annotation);
+                  }}
+                >
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    edit
+                  </MaterialIcon>
+                  {t("edit-annotation", { defaultValue: "Edit" })}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  className="sb-context-menu-item--danger"
+                  onClick={() => {
+                    openDeleteAnnotationConfirm(
+                      modals,
+                      annotations,
+                      annotation,
+                      toast
+                    );
+                  }}
+                >
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    delete
+                  </MaterialIcon>
+                  {t("delete-annotation", { defaultValue: "Delete" })}
+                </ContextMenuItem>
+              </ContextMenuWithButton>
             </li>
           ))}
         </ul>
@@ -1149,6 +1203,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // attached — clicks inside that pane (composing an annotation, say) are
   // also excluded so they can't clear a selection the pane's own content is
   // actively using (e.g. the annotation title/target derived from it).
+  //
+  // The annotation item's three-dot menu (`ContextMenuWithButton`) is
+  // portaled to `document.body`, so a click on it — or on one of its
+  // Edit/Delete items — doesn't land inside `.sb-verse-toolbar` in the DOM
+  // tree even though it's visually part of the toolbar. Excluding
+  // `.sb-context-menu` (the portaled popup) keeps that click from reading as
+  // "outside" and clearing the selection out from under the still-open menu.
+  // Same story for `.sb-footnote-modal-overlay` — the delete-confirmation
+  // modal Delete opens renders as a sibling of the toolbar at the app root
+  // (`ModalHost`), so without this, confirming or cancelling that dialog
+  // would also clear the selection out from under it.
   useEffect(() => {
     if (!isVerseToolbarVisible.value) return;
 
@@ -1159,6 +1224,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (target.closest(".sb-verse-toolbar")) return;
       if (target.closest(".sb-pane-side-shell")) return;
       if (target.closest(".sb-pane-shell")) return;
+      if (target.closest(".sb-context-menu")) return;
+      if (target.closest(".sb-footnote-modal-overlay")) return;
       readingState.value?.clearSelectedVerses();
     };
 
@@ -2344,6 +2411,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     group={group}
                                     tabs={tabs}
                                     login={props.state.login}
+                                    annotations={props.state.annotations}
+                                    modals={props.state.modals}
+                                    toast={props.state.app.toast}
+                                    openDiscover={props.state.app.openDiscover}
                                     onReferenceClick={
                                       props.state.app.openVerseReference
                                     }

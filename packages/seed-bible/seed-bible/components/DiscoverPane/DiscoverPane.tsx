@@ -977,7 +977,7 @@ function ConfirmDeleteAnnotationModalContent(props: {
 }
 
 /** Opens the delete-annotation confirmation modal. */
-function openDeleteAnnotationConfirm(
+export function openDeleteAnnotationConfirm(
   modals: ModalManager,
   annotations: AnnotationsManager,
   annotation: Annotation,

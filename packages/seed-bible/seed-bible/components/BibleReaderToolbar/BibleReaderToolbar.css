@@ -1094,8 +1094,10 @@
   gap: 0.5rem;
 }
 
-/* Read-only here — no click-to-navigate, no edit/delete menu — so the
-   pointer cursor DiscoverPane's clickable row uses isn't appropriate. */
+/* No click-to-navigate here (unlike DiscoverPane's row, which jumps to the
+   verse on click) — the row itself isn't a button, so the pointer cursor
+   DiscoverPane's clickable row uses isn't appropriate. The edit/delete menu
+   button inside still gets its own cursor via `.sb-context-menu-button`. */
 .sb-verse-toolbar-annotations .sb-annotation-item {
   cursor: default;
 }
