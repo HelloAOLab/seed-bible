@@ -385,6 +385,12 @@ export interface CompareState {
    * translation already being read.
    */
   readTranslation: (translationId: string) => void;
+  /**
+   * Clears the frozen snapshot and reading-state reference. Call this from
+   * the pane's `onClose`, so the auto-loading effect stops reacting to the
+   * reader's translation changes once the pane isn't visible.
+   */
+  reset: () => void;
   /** Tears down the auto-loading effect. */
   dispose: () => void;
 }
@@ -673,6 +679,11 @@ export function createCompareState(context: SeedBibleState): CompareState {
     }
   });
 
+  const reset = () => {
+    snapshot.value = null;
+    sourceReadingState.value = null;
+  };
+
   const dispose = () => {
     disposeLoadChapters();
     disposeDefaultSelection();
@@ -695,6 +706,7 @@ export function createCompareState(context: SeedBibleState): CompareState {
     loadChapters,
     retryTranslation,
     readTranslation,
+    reset,
     dispose,
   };
 }

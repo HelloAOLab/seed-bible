@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 import type { SeedBibleState, Translation } from "seed-bible/managers";
 import {
   filterTranslationGroups,
@@ -115,17 +115,34 @@ export function TranslationPicker(props: {
   const selected = state.selectedTranslationIds.value;
   const currentTranslationId = state.currentTranslationId.value;
 
-  const allGroups = groupTranslationsByLanguage(translations);
-  const { groups, totalMatching } = filterTranslationGroups({
-    groups: allGroups,
-    query,
-    viewMode: showAllLanguages.value,
-    limit,
-    selectedTranslation:
-      translations.find(
-        (translation) => translation.id === currentTranslationId
-      ) ?? null,
-  });
+  // Without memoizing, every keystroke in the search box (and every
+  // unrelated re-render) redid the grouping and filtering pass over the
+  // whole catalog.
+  const allGroups = useMemo(
+    () => groupTranslationsByLanguage(translations),
+    [translations]
+  );
+  const { groups, totalMatching } = useMemo(
+    () =>
+      filterTranslationGroups({
+        groups: allGroups,
+        query,
+        viewMode: showAllLanguages.value,
+        limit,
+        selectedTranslation:
+          translations.find(
+            (translation) => translation.id === currentTranslationId
+          ) ?? null,
+      }),
+    [
+      allGroups,
+      query,
+      showAllLanguages.value,
+      limit,
+      translations,
+      currentTranslationId,
+    ]
+  );
 
   const toggle = (translation: Translation) => {
     state.setSelectedTranslationIds(

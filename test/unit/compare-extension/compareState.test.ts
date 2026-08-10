@@ -730,6 +730,36 @@ describe("createCompareState loading", () => {
     expect(getTranslationBookChapter).toHaveBeenCalledTimes(2);
     state.dispose();
   });
+
+  it("stops fetching for the reader's later translation switches once reset", async () => {
+    const getTranslationBookChapter = vi
+      .fn()
+      .mockResolvedValue(chapterWith([verse(1, "one")]));
+    const { context } = createTestContext({ getTranslationBookChapter });
+    const state = createCompareState(context);
+    const readingState = {
+      translationId: signal("eng_kjv"),
+    } as unknown as BibleReadingState;
+    state.sourceReadingState.value = readingState;
+
+    state.snapshot.value = snapshotSelection([selectedVerse("JHN", 1, 1)]);
+    await flushPromises();
+    expect(getTranslationBookChapter).toHaveBeenCalledTimes(1);
+
+    state.reset();
+    expect(state.snapshot.value).toBeNull();
+    expect(state.sourceReadingState.value).toBeNull();
+
+    // The reader switches translations elsewhere in the app — the same
+    // signal the effect used to be subscribed to, mutated directly since the
+    // pane no longer holds a reference to this reading state at all.
+    readingState.translationId.value = "eng_bsb";
+    await flushPromises();
+
+    // No new fetch — the effect no longer reacts to this reading state.
+    expect(getTranslationBookChapter).toHaveBeenCalledTimes(1);
+    state.dispose();
+  });
 });
 
 describe("selectedVersesForChapter", () => {

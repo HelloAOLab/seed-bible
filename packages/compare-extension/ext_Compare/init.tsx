@@ -46,6 +46,7 @@ function openComparePane(
     header: () => <ComparePaneHeader state={state} />,
     icon: CompareIcon,
     component: () => <ComparePane context={context} state={state} />,
+    onClose: () => state.reset(),
   });
 }
 

@@ -63,12 +63,13 @@
 .sb-translation-list-expand-button {
   display: flex;
   background: var(--sb-primary-color);
-  padding: 0.3125rem;
+  padding: 0.3125rem 1rem;
   border-radius: 0.3125rem;
   border: none;
   outline: none;
-  color: var(--sb-font-color);
+  color: var(--sb-primary-font-color);
   width: max-content;
+  cursor: pointer;
 }
 
 .sb-translation-list-load-more {

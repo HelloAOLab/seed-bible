@@ -103,7 +103,7 @@ export function TranslationList(props: TranslationListProps) {
     }
 
     return (
-      <div className="sb-translation-list">
+      <div className="sb-translation-list sb-translation-list-empty">
         <span>
           {t("no-results-found", { defaultValue: "No results found." })}
         </span>
