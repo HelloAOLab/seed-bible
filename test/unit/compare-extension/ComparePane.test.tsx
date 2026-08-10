@@ -129,6 +129,8 @@ function createHarness(options?: {
       } as unknown as TranslationBookChapter;
     });
 
+  const decorateVerses = vi.fn().mockReturnValue("decoration-1");
+
   const state = createCompareState(context);
   state.sourceReadingState.value = {
     translationId: signal("eng_kjv"),
@@ -138,6 +140,7 @@ function createHarness(options?: {
     chapterData,
     selectedVerses,
     selectTranslationAndChapter,
+    decorateVerses,
   } as unknown as BibleReadingState;
 
   return {
@@ -146,6 +149,7 @@ function createHarness(options?: {
     login,
     selectTranslationAndChapter,
     selectedVerses,
+    decorateVerses,
   };
 }
 
@@ -434,6 +438,47 @@ describe("ComparePane", () => {
         chapterNumber: 1,
       },
     ]);
+  });
+
+  it("fades the rest of the chapter so the compared verses stand out on arrival", async () => {
+    const { context, state, decorateVerses } = createHarness({
+      savedIds: ["eng_bsb"],
+    });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(2, "y"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-compare-block-header--switch")!
+        .click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // Same decoration search results, playlists and `?verse=` links use.
+    expect(decorateVerses).toHaveBeenCalledWith("JHN", 1, [1, 2], {
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
+      removeAfterMs: 3000,
+    });
   });
 
   it("leaves the translation being read as plain, unclickable text", async () => {

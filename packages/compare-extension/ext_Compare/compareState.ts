@@ -26,6 +26,13 @@ export const COMPARE_PANE_ID = "compare-pane";
 /** The i18n namespace registered from this extension's `extension.json`. */
 export const COMPARE_NS = "compare-extension";
 
+/**
+ * How long the rest of the chapter stays faded after arriving from Compare.
+ * Matches the reader's `diminish-in-out` animation, so the decoration is
+ * removed exactly as the fade finishes rather than part-way through it.
+ */
+export const DIMINISH_DURATION_MS = 3000;
+
 /** One contiguous chapter's worth of the verses the reader had selected. */
 export interface CompareSnapshotGroup {
   bookId: string;
@@ -484,12 +491,30 @@ export function createCompareState(context: SeedBibleState): CompareState {
         if (!chapter || chapter.translation.id !== translationId) {
           return;
         }
-        readingState.selectedVerses.value = selectedVersesForChapter({
+        const selected = selectedVersesForChapter({
           chapter,
           group,
           translationId,
           anchor: viewportCentre(),
         });
+        readingState.selectedVerses.value = selected;
+
+        // Briefly fade the rest of the chapter so the verses that were being
+        // compared stand out on arrival — the same decoration search results,
+        // playlists and `?verse=` links use. Decorated verses are the ones
+        // excluded from the fade, so this targets the arrivals, not the rest.
+        if (selected.length > 0) {
+          readingState.decorateVerses(
+            group.bookId,
+            group.chapterNumber,
+            selected.map((entry) => entry.verse.number),
+            {
+              className: "sb-verse-decoration-diminish",
+              containerClassName: "sb-chapter-decoration-diminish",
+              removeAfterMs: DIMINISH_DURATION_MS,
+            }
+          );
+        }
       })
       .catch((error: unknown) => {
         console.error(
