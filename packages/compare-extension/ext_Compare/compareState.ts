@@ -149,6 +149,10 @@ export function removeId(ids: string[], id: string): string[] {
   return ids.filter((entry) => entry !== id);
 }
 
+function sameIds(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((id, index) => id === b[index]);
+}
+
 /**
  * The order translations are rendered in: the one being read is always first and
  * appears exactly once, followed by the saved list in the order the user set.
@@ -451,16 +455,31 @@ export function createCompareState(context: SeedBibleState): CompareState {
     if (ids === null) {
       return;
     }
-    void saveProfileConfigValue(login, COMPARE_TRANSLATIONS_KEY, ids).then(
-      () => {
+    void saveProfileConfigValue(login, COMPARE_TRANSLATIONS_KEY, ids)
+      .then(() => {
         // Only the write this call scheduled should clear the pending value —
         // a newer toggle may have already armed its own timer for a different
         // array by the time this one's request resolves.
-        if (pendingSelectedTranslationIds.peek() === ids) {
+        if (pendingSelectedTranslationIds.peek() !== ids) {
+          return;
+        }
+        // `saveProfileConfigValue` resolves without writing when the profile
+        // hasn't loaded, so the stored value is what confirms the write landed.
+        // Clearing regardless would drop the user's toggles back to whatever
+        // was stored before, and — with nothing stored — leave the first-run
+        // default effect re-arming this timer for the rest of the session.
+        if (
+          sameIds(
+            parseCompareTranslationIds(rawSelectedTranslationIds.peek()),
+            ids
+          )
+        ) {
           pendingSelectedTranslationIds.value = null;
         }
-      }
-    );
+      })
+      .catch((error: unknown) => {
+        console.error("Compare: failed to save the comparison set.", error);
+      });
   };
 
   const setSelectedTranslationIds = (ids: string[]) => {

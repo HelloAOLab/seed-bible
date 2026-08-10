@@ -358,6 +358,26 @@ describe("createCompareState persistence", () => {
     expect(login.localConfig.value[COMPARE_TRANSLATIONS_KEY]).toEqual(["a"]);
   });
 
+  it("keeps the selection on screen when the write cannot land", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    // Logged in, but the profile fetch failed: `LoginManager` leaves `profile`
+    // null with nothing still in flight, and `saveProfileConfigValues` refuses
+    // to write into that window rather than clobber the account.
+    const login = createTestLogin({ userId: "user-1" });
+    const { context } = createTestContext({ login });
+    const state = createCompareState(context);
+
+    state.setSelectedTranslationIds(["a"]);
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(login.profile.value).toBeNull();
+    // Nothing was stored, so the optimistic value has to stay — dropping it
+    // would silently undo the toggles the user just made.
+    expect(state.selectedTranslationIds.value).toEqual(["a"]);
+    state.dispose();
+  });
+
   it("prefers the profile over the device-local copy", () => {
     const login = createTestLogin({
       userId: "user-1",
@@ -604,6 +624,30 @@ describe("createCompareState first-run default", () => {
     login.profile.value = { name: "Reader" };
 
     expect(state.selectedTranslationIds.value).toEqual(["spa_b", "spa_c"]);
+    state.dispose();
+  });
+
+  it("stops after one attempt when the default cannot be written", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const login = createTestLogin({ userId: "user-1" });
+    const { context } = createTestContext({
+      login,
+      availableTranslations: translations,
+    });
+    const state = createCompareState(context);
+
+    openOn(state);
+
+    expect(state.selectedTranslationIds.value).toEqual(["spa_b", "spa_c"]);
+
+    // Ten debounce windows. The save no-ops every time (the profile never
+    // loaded), so if the pending value were cleared anyway the default would
+    // re-apply and re-arm the timer on every one of them.
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(state.selectedTranslationIds.value).toEqual(["spa_b", "spa_c"]);
+    expect(vi.getTimerCount()).toBe(0);
     state.dispose();
   });
 
