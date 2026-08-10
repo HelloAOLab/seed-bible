@@ -169,8 +169,6 @@
 .sb-compare-add-bar {
   flex: 0 0 auto;
   padding: 8px 12px;
-  border-top: 1px solid var(--sb-divider-color);
-  background: var(--sb-background);
 }
 
 .sb-compare-add-button {
@@ -190,6 +188,26 @@
 
 .sb-compare-add-button:hover {
   opacity: 0.9;
+}
+
+/* The floating reader toolbar is fixed and centered on the whole app width,
+   so on desktop it can drift over this pane and cover the button below.
+   Mobile doesn't need this: panes render fullscreen there and already inset
+   for the toolbar. */
+@media (min-width: 481px) {
+  .sb-compare-add-bar {
+    padding-bottom: calc(
+      var(--sb-reader-toolbar-bottom) + var(--sb-reader-toolbar-button-height) +
+        0.75rem
+    );
+  }
+
+  .sb-compare-picker-done {
+    margin-bottom: calc(
+      var(--sb-reader-toolbar-bottom) + var(--sb-reader-toolbar-button-height) +
+        0.75rem
+    );
+  }
 }
 
 /* The label keeps its width; the reference is what truncates when the header
