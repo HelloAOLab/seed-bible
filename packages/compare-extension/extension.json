@@ -21,7 +21,8 @@
       "no-translations-selected": "No translations added yet.",
       "nothing-to-compare-title": "No translations to compare yet",
       "nothing-to-compare-hint": "Add translations to compare the selected verses with",
-      "currently-reading": "Currently reading"
+      "currently-reading": "Currently reading",
+      "read-translation": "Read {{translation}}"
     }
   }
 }

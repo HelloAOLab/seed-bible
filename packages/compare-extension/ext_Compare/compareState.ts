@@ -7,6 +7,7 @@ import {
 } from "@preact/signals";
 import {
   getProfileConfigValue,
+  PROFILE_TRANSLATION_ID,
   saveProfileConfigValue,
   type BibleReadingState,
   type BibleSelectedVerse,
@@ -276,6 +277,11 @@ export interface CompareState {
   ) => void;
   /** Re-fetches one translation's chapter after a failure. */
   retryTranslation: (translationId: string) => void;
+  /**
+   * Switches the reader to a translation and closes the pane. No-ops for the
+   * translation already being read.
+   */
+  readTranslation: (translationId: string) => void;
   /** Tears down the auto-loading effect. */
   dispose: () => void;
 }
@@ -390,6 +396,39 @@ export function createCompareState(context: SeedBibleState): CompareState {
     }
   };
 
+  /**
+   * Move the reader onto one of the compared translations.
+   *
+   * Uses `selectTranslationAndChapter` rather than `selectTranslation` so the
+   * reader keeps its place — the plain version jumps to the translation's first
+   * book. Persists the pick the same way the reader's own translation list does,
+   * so it survives a reload instead of snapping back on the next visit.
+   */
+  const readTranslation = (translationId: string) => {
+    const readingState = sourceReadingState.peek();
+    if (!readingState || translationId === readingState.translationId.peek()) {
+      return;
+    }
+
+    // Where the reader is now, not where the snapshot was taken — it may have
+    // moved on since Compare was opened, and a switch shouldn't drag it back.
+    const firstGroup = snapshot.peek()?.groups[0];
+    const bookId = readingState.bookId.peek() ?? firstGroup?.bookId;
+    if (!bookId) {
+      return;
+    }
+    const chapterNumber =
+      readingState.chapterNumber.peek() ?? firstGroup?.chapterNumber ?? 1;
+
+    void readingState.selectTranslationAndChapter(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+    void saveProfileConfigValue(login, PROFILE_TRANSLATION_ID, translationId);
+    context.panes.closePane(COMPARE_PANE_ID);
+  };
+
   // Fetch whatever the current snapshot and order need, whenever either
   // changes — opening the pane on new verses, or adding a translation. Reads
   // `chapters` only through `peek()` (inside `loadChapters`), so writing the
@@ -410,6 +449,7 @@ export function createCompareState(context: SeedBibleState): CompareState {
     setSelectedTranslationIds,
     loadChapters,
     retryTranslation,
+    readTranslation,
     dispose,
   };
 }

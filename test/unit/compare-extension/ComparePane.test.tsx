@@ -17,8 +17,14 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string, options?: Record<string, unknown>) =>
-        (options?.defaultValue as string | undefined) ?? key,
+      t: (key: string, options?: Record<string, unknown>) => {
+        let text = (options?.defaultValue as string | undefined) ?? key;
+        for (const [name, value] of Object.entries(options ?? {})) {
+          if (name === "defaultValue") continue;
+          text = text.replaceAll(`{{${name}}}`, String(value));
+        }
+        return text;
+      },
       language: "en",
     }),
   };
@@ -102,15 +108,20 @@ function createHarness(options?: {
     selector: {
       showAllLanguages: signal<"complete" | "all" | "popular">("all"),
     },
+    panes: { closePane: vi.fn() },
   } as unknown as SeedBibleState;
 
+  const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
   const state = createCompareState(context);
   state.sourceReadingState.value = {
     translationId: signal("eng_kjv"),
+    bookId: signal("JHN"),
+    chapterNumber: signal(3),
     translationBooks: signal({ books: [{ id: "JHN", name: "John" }] }),
+    selectTranslationAndChapter,
   } as unknown as BibleReadingState;
 
-  return { context, state, login };
+  return { context, state, login, selectTranslationAndChapter };
 }
 
 function mount(node: preact.ComponentChild) {
@@ -289,6 +300,70 @@ describe("ComparePane", () => {
     expect(messages).toEqual([
       "These verses are not available in this translation.",
     ]);
+  });
+
+  it("switches the reader to a compared translation and closes the pane", async () => {
+    const { context, state, login, selectTranslationAndChapter } =
+      createHarness({ savedIds: ["eng_bsb"] });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    const switchable = container.querySelectorAll<HTMLButtonElement>(
+      ".sb-compare-block-header--switch"
+    );
+    // Only the compared translation is switchable; the one being read is not.
+    expect(switchable).toHaveLength(1);
+    expect(switchable[0]!.getAttribute("aria-label")).toBe(
+      "Read Berean Standard Bible"
+    );
+
+    act(() => {
+      switchable[0]!.click();
+    });
+
+    // Keeps the reader's place rather than jumping to the first book.
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith(
+      "eng_bsb",
+      "JHN",
+      3
+    );
+    // Persisted the same way the reader's own translation list does.
+    expect(login.localConfig.value.translationId).toBe("eng_bsb");
+    expect(context.panes.closePane).toHaveBeenCalled();
+  });
+
+  it("leaves the translation being read as plain, unclickable text", async () => {
+    const { context, state } = createHarness({ savedIds: ["eng_bsb"] });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    const headers = container.querySelectorAll(".sb-compare-block-header");
+    expect(headers[0]!.tagName).toBe("DIV");
+    expect(headers[1]!.tagName).toBe("BUTTON");
   });
 
   it("explains the empty pane when nothing has been added to compare against", async () => {

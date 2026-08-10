@@ -44,31 +44,58 @@ function TranslationBlockHeader(props: {
   translation: Translation | null;
   translationId: string;
   isCurrent: boolean;
+  onRead: (translationId: string) => void;
 }) {
-  const { translation, translationId, isCurrent } = props;
+  const { translation, translationId, isCurrent, onRead } = props;
   const { t } = useI18n("compare-extension");
 
-  return (
-    // The header takes the translation's own direction, so an RTL translation
-    // mirrors it: abbreviation on the right, full name on the left. The DOM
-    // order is unchanged — `space-between` and `text-align: end` resolve
-    // against `dir`, so the reversal falls out of the same markup.
-    <div
-      className="sb-compare-block-header"
-      dir={translation?.textDirection ?? "auto"}
-    >
+  const name = translation?.name ?? translation?.englishName ?? "";
+  const label = t("read-translation", {
+    defaultValue: "Read {{translation}}",
+    translation: name || translationId,
+  });
+
+  const content = (
+    <>
       <span className="sb-compare-block-abbreviation" dir="auto">
         {translation?.shortName ?? translationId}
       </span>
       <span className="sb-compare-block-name" dir="auto">
-        {translation?.name ?? translation?.englishName ?? ""}
+        {name}
       </span>
-      {isCurrent && (
+    </>
+  );
+
+  // The header takes the translation's own direction, so an RTL translation
+  // mirrors it: abbreviation on the right, full name on the left. The DOM
+  // order is unchanged — `space-between` and `text-align: end` resolve
+  // against `dir`, so the reversal falls out of the same markup.
+  const dir = translation?.textDirection ?? "auto";
+
+  // The one being read is already the reader's translation, so there is
+  // nowhere for it to switch to — it stays plain text.
+  if (isCurrent) {
+    return (
+      <div className="sb-compare-block-header" dir={dir}>
+        {content}
         <span className="sr-only">
           {t("currently-reading", { defaultValue: "Currently reading" })}
         </span>
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="sb-compare-block-header sb-compare-block-header--switch"
+      dir={dir}
+      aria-label={label}
+      title={label}
+      onClick={() => onRead(translationId)}
+    >
+      {content}
+    </button>
   );
 }
 
@@ -104,6 +131,7 @@ function TranslationBlock(props: {
           translation={translation}
           translationId={entry.id}
           isCurrent={entry.isCurrent}
+          onRead={state.readTranslation}
         />
         <div className="sb-compare-block-body">
           <p className="sb-compare-block-message">
@@ -137,6 +165,7 @@ function TranslationBlock(props: {
         translation={translation}
         translationId={entry.id}
         isCurrent={entry.isCurrent}
+        onRead={state.readTranslation}
       />
       <div className="sb-compare-block-body">
         {verses.length === 0 ? (
