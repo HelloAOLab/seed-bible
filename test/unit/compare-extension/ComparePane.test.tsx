@@ -291,6 +291,54 @@ describe("ComparePane", () => {
     ]);
   });
 
+  it("explains the empty pane when nothing has been added to compare against", async () => {
+    const { context, state } = createHarness();
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    // The translation being read is the only block, so there is nothing to
+    // compare it against.
+    expect(container.querySelectorAll(".sb-compare-block")).toHaveLength(1);
+    const empty = container.querySelector(".sb-compare-empty")!;
+    expect(empty).not.toBeNull();
+    expect(empty.textContent).toContain("Nothing to compare yet");
+    expect(empty.textContent).toContain("Add a translation");
+    // It sits in the scrolling area, not below the Add Translation bar.
+    expect(empty.closest(".sb-compare-scroll")).not.toBeNull();
+  });
+
+  it("drops the empty note once a translation is added", async () => {
+    const { context, state } = createHarness({ savedIds: ["eng_bsb"] });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    expect(container.querySelector(".sb-compare-empty")).toBeNull();
+  });
+
   it("keeps an Add Translation button anchored below the scrolling list", () => {
     const { context, state } = createHarness();
     states.push(state);

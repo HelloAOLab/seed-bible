@@ -108,10 +108,33 @@ export function ComparePane(props: {
     return <TranslationPicker context={context} state={state} />;
   }
 
+  // Only the translation being read is showing, so there is nothing to compare
+  // it against yet. Says so, rather than leaving the pane looking broken.
+  const hasNothingToCompareWith =
+    state.selectedTranslationIds.value.length === 0;
+
   return (
     <div className="sb-compare-pane">
       <div className="sb-compare-scroll">
         <CompareVerses context={context} state={state} />
+        {hasNothingToCompareWith && (
+          <div className="sb-compare-empty">
+            <MaterialIcon className="sb-compare-empty-icon">
+              text_compare
+            </MaterialIcon>
+            <p className="sb-compare-empty-title">
+              {t("nothing-to-compare-title", {
+                defaultValue: "Nothing to compare yet",
+              })}
+            </p>
+            <p className="sb-compare-empty-hint">
+              {t("nothing-to-compare-hint", {
+                defaultValue:
+                  "Add a translation to see these verses alongside the one you're reading.",
+              })}
+            </p>
+          </div>
+        )}
       </div>
       <div className="sb-compare-add-bar">
         <button
