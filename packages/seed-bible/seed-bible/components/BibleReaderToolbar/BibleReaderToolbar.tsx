@@ -2745,6 +2745,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               the gesture it describes isn't available to them — the handle
               itself carries the accessible toggle. */}
           {isSmallScreen.value &&
+            !isHighlightPickerOpen.value &&
             hasVerseSheetOverflow.value &&
             !isVerseSheetExpanded.value && (
               <div

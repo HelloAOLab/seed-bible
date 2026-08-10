@@ -1199,7 +1199,7 @@
    the "More" card, naming the handle gesture without spending a card slot on a
    button. Only rendered while the sheet is collapsed and has an overflow row. */
 .sb-verse-toolbar-swipe-hint {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
