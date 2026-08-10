@@ -177,12 +177,23 @@
   color: var(--sb-font-color);
 }
 
+/* Centred rather than baseline-aligned: a long translation name wraps to two
+   lines, and baseline alignment pinned the abbreviation and the "currently
+   reading" note to the first of them, leaving them floating above the rest of
+   the row. Centring lines them up with each other and with the row's remove
+   button. */
 .sb-compare-settings-label {
   display: flex;
   flex: 1;
   min-width: 0;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
+}
+
+/* Let the name take the slack so the note stays at the end of the row. */
+.sb-compare-settings-label .sb-discover-item-title {
+  flex: 1;
+  min-width: 0;
 }
 
 /* The current translation's row: pinned, no drag handle. */
