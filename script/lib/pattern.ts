@@ -19,7 +19,7 @@ const { createRecordsClient } = createRequire(import.meta.url)(
 
 const recordName = "aoBot";
 const headers = {
-  Origin: "https://auth.ao.bot",
+  Origin: "https://auth.seedbible.org",
 };
 
 /**
@@ -31,7 +31,7 @@ export async function downloadPattern(
   name: string,
   version?: number
 ): Promise<StoredAux | null> {
-  const client = createRecordsClient("https://api.ao.bot");
+  const client = createRecordsClient("https://auth.seedbible.org");
 
   const result: any = await client.getData(
     {
@@ -137,7 +137,7 @@ export async function uploadPattern(
   telegramBotToken?: string,
   telegramChatId?: string
 ) {
-  const client = createRecordsClient("https://api.ao.bot");
+  const client = createRecordsClient("https://auth.seedbible.org");
 
   client.sessionKey = sessionKey;
 

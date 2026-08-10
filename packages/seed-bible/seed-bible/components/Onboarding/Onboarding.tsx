@@ -5,6 +5,7 @@ import { LANG_META } from "../../i18n/languageMeta";
 import { InstallAppsIcon, SafariIcon } from "../../components/icons";
 import type { OnboardingManager } from "../../managers/OnboardingManager";
 import type { CasualOSManager } from "../../managers/OsManager";
+import { useAppConfig } from "../../app/appConfig";
 
 /**
  * First-run onboarding modal: a device-aware prompt to install the app / add it
@@ -139,6 +140,7 @@ function InstallContent({
   toast: (message: string) => void;
 }) {
   const { t } = useI18n();
+  const { branding } = useAppConfig();
   const { platform } = onboarding;
   const isIos = platform === "ios";
   const isDesktop = platform === "pc";
@@ -186,6 +188,7 @@ function InstallContent({
 
       <p className="sb-onboarding-body">
         {t("onboarding.installBodyPre", {
+          appName: branding?.appName ?? "Seed Bible",
           defaultValue: "Add Seed Bible to your ",
         })}
         <strong>{target}</strong>

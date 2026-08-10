@@ -957,28 +957,32 @@ export function createPlaylistManager(
         },
         // Navigation hooks are unconditional now that playback state is synced:
         // any participant can drive next/previous and it propagates via `data`.
+        // These return synchronously when they decline to intervene. Chapter
+        // navigation writes its new position before the first `await`, so an
+        // `async` hook here would put a microtask in front of every press —
+        // enough for two quick presses to compute the same target.
         // At the ends of the queue these fall through to `default` rather than
         // `prevent`, so the reader keeps navigating chapter by chapter once the
         // queue is exhausted instead of going dead (see `hasNext` above).
-        navigateNext: async () => {
+        navigateNext: () => {
           if (
             playingState.queue.value.length === 0 ||
             !playingState.hasNext.value
           ) {
             return { type: "default" };
           }
-          await playingState.next();
-          return { type: "prevent" };
+          return playingState.next().then(() => ({ type: "prevent" }) as const);
         },
-        navigatePrevious: async () => {
+        navigatePrevious: () => {
           if (
             playingState.queue.value.length === 0 ||
             !playingState.hasPrevious.value
           ) {
             return { type: "default" };
           }
-          await playingState.previous();
-          return { type: "prevent" };
+          return playingState
+            .previous()
+            .then(() => ({ type: "prevent" }) as const);
         },
         // Keeps the mobile swipe preview honest: while playing, the next chapter
         // is the queue's next scripture step, not the chapter that happens to

@@ -72,7 +72,7 @@ describe("Sidebar collapsed layout", () => {
 
   async function createState(options?: CreateTestSeedBibleStateOptions) {
     const state = await createTestSeedBibleState(options);
-    state.config.setDisablePanels(false);
+    state.settings.setDisablePanels(false);
     return state;
   }
 

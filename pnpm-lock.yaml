@@ -102,12 +102,13 @@ catalogs:
     uuid:
       specifier: ^13.0.0
       version: 13.0.0
-    zod:
-      specifier: 4.4.3
-      version: 4.4.3
 
 overrides:
   prosemirror-model: 1.25.9
+  prosemirror-transform: 1.12.0
+  prosemirror-view: 1.42.0
+  zod: 4.4.3
+  chromium-bidi>zod: 3.25.76
 
 patchedDependencies:
   '@casual-simulation/aux-records': b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e
@@ -142,9 +143,6 @@ importers:
       imagetracerjs:
         specifier: ^1.2.6
         version: 1.2.6
-      luxon:
-        specifier: 'catalog:'
-        version: 3.7.2
       opentype.js:
         specifier: ^1.3.4
         version: 1.3.4
@@ -164,7 +162,7 @@ importers:
         specifier: 'catalog:'
         version: 3.0.5(@babel/runtime@7.29.2)
       zod:
-        specifier: 'catalog:'
+        specifier: 4.4.3
         version: 4.4.3
     devDependencies:
       '@babel/core':
@@ -365,6 +363,24 @@ importers:
       vitest:
         specifier: ^4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@29.1.1)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
+      workbox-cacheable-response:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-core:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-expiration:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-precaching:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-routing:
+        specifier: 7.4.1
+        version: 7.4.1
+      workbox-strategies:
+        specifier: 7.4.1
+        version: 7.4.1
 
   packages/apologist-extension:
     dependencies:
@@ -467,9 +483,6 @@ importers:
       i18next:
         specifier: 'catalog:'
         version: 26.2.0(typescript@6.0.3)
-      luxon:
-        specifier: 'catalog:'
-        version: 3.7.2
       preact:
         specifier: 'catalog:'
         version: 10.29.2
@@ -492,7 +505,7 @@ importers:
         specifier: 'catalog:'
         version: 3.0.5(@babel/runtime@7.29.2)
       zod:
-        specifier: 'catalog:'
+        specifier: 4.4.3
         version: 4.4.3
 
   packages/seed-bible-refresh-example-extension:
@@ -594,7 +607,7 @@ packages:
     resolution: {integrity: sha512-l653JFC83wCglH8H83t1xpgDurCyPyslYW1maPRdCsfuNuGbLvQjQ81sWd3Go3LWRm0jNspzAhuqAYV8r9joSw==}
     hasBin: true
     peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
+      zod: 4.4.3
     peerDependenciesMeta:
       zod:
         optional: true
@@ -5768,7 +5781,7 @@ packages:
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
-      zod: ^3.23.8
+      zod: 4.4.3
     peerDependenciesMeta:
       ws:
         optional: true
@@ -6019,14 +6032,8 @@ packages:
   prosemirror-tables@1.8.5:
     resolution: {integrity: sha512-V/0cDCsHKHe/tfWkeCmthNUcEp1IVO3p6vwN8XtwE9PZQLAZJigbw3QoraAdfJPir4NKJtNvOB8oYGKRl+t0Dw==}
 
-  prosemirror-transform@1.11.0:
-    resolution: {integrity: sha512-4I7Ce4KpygXb9bkiPS3hTEk4dSHorfRw8uI0pE8IhxlK2GXsqv5tIA7JUSxtSu7u8APVOTtbUBxTmnHIxVkIJw==}
-
   prosemirror-transform@1.12.0:
     resolution: {integrity: sha512-GxboyN4AMIsoHNtz5uf2r2Ru551i5hWeCMD6E2Ib4Eogqoub0NflniaBPVQ4MrGE5yZ8JV9tUHg9qcZTTrcN4w==}
-
-  prosemirror-view@1.41.5:
-    resolution: {integrity: sha512-UDQbIPnDrjE8tqUBbPmCOZgtd75htE6W3r0JCmY9bL6W1iemDM37MZEKC49d+tdQ0v/CKx4gjxLoLsfkD2NiZA==}
 
   prosemirror-view@1.42.0:
     resolution: {integrity: sha512-N54DF3OXNWDuP81G1kbfCys8ZzIjuL1VnvJ2mk5STSu/fNxWIcX/EutQLA3s9KR/2wVhgDi4hzBB/1fINVxk0A==}
@@ -7203,19 +7210,16 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
-  zod@4.1.12:
-    resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
-
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
 
-  '@anthropic-ai/sdk@0.92.0(zod@4.1.12)':
+  '@anthropic-ai/sdk@0.92.0(zod@4.4.3)':
     dependencies:
       json-schema-to-ts: 3.1.1
     optionalDependencies:
-      zod: 4.1.12
+      zod: 4.4.3
 
   '@apideck/better-ajv-errors@0.3.7(ajv@8.17.1)':
     dependencies:
@@ -8337,11 +8341,11 @@ snapshots:
       three: 0.182.0
       uuid: 10.0.0
       yjs: 13.6.8
-      zod: 4.1.12
+      zod: 4.4.3
 
   '@casual-simulation/aux-records@4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
-      '@anthropic-ai/sdk': 0.92.0(zod@4.1.12)
+      '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
       '@casual-simulation/aux-common': 4.2.3
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
@@ -8363,7 +8367,7 @@ snapshots:
       livekit-server-sdk: 2.7.2
       luxon: 3.4.4
       mime: 2.4.6
-      openai: 4.89.0(ws@8.19.0)(zod@4.1.12)
+      openai: 4.89.0(ws@8.19.0)(zod@4.4.3)
       openid-client: 5.6.1
       preact: 10.28.4
       preact-render-to-string: 6.6.3(preact@10.28.4)
@@ -8372,7 +8376,7 @@ snapshots:
       typesense: 3.0.5(@babel/runtime@7.29.2)
       uuid: 10.0.0
       yjs: 13.6.8
-      zod: 4.1.12
+      zod: 4.4.3
     transitivePeerDependencies:
       - '@babel/runtime'
       - bufferutil
@@ -10957,7 +10961,7 @@ snapshots:
       simple-git: 3.30.0
       tweetnacl: 1.0.3
       uuid: 10.0.0
-      zod: 4.1.12
+      zod: 4.4.3
     transitivePeerDependencies:
       - '@babel/runtime'
       - bufferutil
@@ -13181,7 +13185,7 @@ snapshots:
       is-inside-container: 1.0.0
       is-wsl: 3.1.0
 
-  openai@4.89.0(ws@8.19.0)(zod@4.1.12):
+  openai@4.89.0(ws@8.19.0)(zod@4.4.3):
     dependencies:
       '@types/node': 18.19.130
       '@types/node-fetch': 2.6.13
@@ -13192,7 +13196,7 @@ snapshots:
       node-fetch: 2.7.0
     optionalDependencies:
       ws: 8.19.0
-      zod: 4.1.12
+      zod: 4.4.3
     transitivePeerDependencies:
       - encoding
 
@@ -13401,38 +13405,38 @@ snapshots:
 
   prosemirror-changeset@2.3.1:
     dependencies:
-      prosemirror-transform: 1.11.0
+      prosemirror-transform: 1.12.0
 
   prosemirror-commands@1.7.1:
     dependencies:
       prosemirror-model: 1.25.9
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
+      prosemirror-transform: 1.12.0
 
   prosemirror-dropcursor@1.8.2:
     dependencies:
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
-      prosemirror-view: 1.41.5
+      prosemirror-transform: 1.12.0
+      prosemirror-view: 1.42.0
 
   prosemirror-gapcursor@1.4.0:
     dependencies:
       prosemirror-keymap: 1.2.3
       prosemirror-model: 1.25.9
       prosemirror-state: 1.4.4
-      prosemirror-view: 1.41.5
+      prosemirror-view: 1.42.0
 
   prosemirror-history@1.5.0:
     dependencies:
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
-      prosemirror-view: 1.41.5
+      prosemirror-transform: 1.12.0
+      prosemirror-view: 1.42.0
       rope-sequence: 1.3.4
 
   prosemirror-inputrules@1.5.1:
     dependencies:
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
+      prosemirror-transform: 1.12.0
 
   prosemirror-keymap@1.2.3:
     dependencies:
@@ -13447,41 +13451,31 @@ snapshots:
     dependencies:
       prosemirror-model: 1.25.9
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
+      prosemirror-transform: 1.12.0
 
   prosemirror-state@1.4.4:
     dependencies:
       prosemirror-model: 1.25.9
-      prosemirror-transform: 1.11.0
-      prosemirror-view: 1.41.5
+      prosemirror-transform: 1.12.0
+      prosemirror-view: 1.42.0
 
   prosemirror-tables@1.8.5:
     dependencies:
       prosemirror-keymap: 1.2.3
       prosemirror-model: 1.25.9
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
-      prosemirror-view: 1.41.5
-
-  prosemirror-transform@1.11.0:
-    dependencies:
-      prosemirror-model: 1.25.9
+      prosemirror-transform: 1.12.0
+      prosemirror-view: 1.42.0
 
   prosemirror-transform@1.12.0:
     dependencies:
       prosemirror-model: 1.25.9
 
-  prosemirror-view@1.41.5:
-    dependencies:
-      prosemirror-model: 1.25.9
-      prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
-
   prosemirror-view@1.42.0:
     dependencies:
       prosemirror-model: 1.25.9
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.11.0
+      prosemirror-transform: 1.12.0
 
   proto3-json-serializer@3.0.4:
     dependencies:
@@ -14845,7 +14839,5 @@ snapshots:
   zimmerframe@1.1.4: {}
 
   zod@3.25.76: {}
-
-  zod@4.1.12: {}
 
   zod@4.4.3: {}

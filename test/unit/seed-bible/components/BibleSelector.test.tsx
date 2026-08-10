@@ -12,14 +12,20 @@ import {
 import {
   createDefaultManagerResponseMap,
   createResponse,
+  createStreamingResponse,
   makeUrl,
   makeExampleUrl,
   EXAMPLE_API_ENDPOINT,
   makeChapter,
+  makeCompleteTranslation,
   createDefaultSelectorManagerResponseMap,
   aabBooks,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
+import {
+  createInMemoryTranslationStore,
+  type OfflineTranslationStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -85,7 +91,7 @@ describe("BibleSelector", () => {
   beforeEach(() => {
     // The mocked Bible API responses are keyed to the free-use endpoint, so
     // opt into it via the URL (the app otherwise defaults to the private one).
-    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
 
     // The data manager persists per-translation endpoints to localStorage;
     // clear it so state does not leak between tests.
@@ -732,7 +738,7 @@ describe("BibleSelector translation selector", () => {
   beforeEach(() => {
     // The mocked Bible API responses are keyed to the free-use endpoint, so
     // opt into it via the URL (the app otherwise defaults to the private one).
-    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
 
     // The data manager persists per-translation endpoints to localStorage;
     // clear it so state does not leak between tests.
@@ -1614,7 +1620,7 @@ describe("BibleSelector sharing translations", () => {
   let setClipboard: Mock;
 
   beforeEach(() => {
-    jsdom.reconfigure({ url: "https://ao.bot/somepage" });
+    jsdom.reconfigure({ url: "https://seedbible.org/somepage" });
 
     // Clear persisted per-translation endpoints so state does not leak in
     // from earlier tests (which would mark default-endpoint translations as
@@ -1688,7 +1694,7 @@ describe("BibleSelector sharing translations", () => {
     return { selectorState, bibleDataManager };
   }
 
-  it("clicking share on a default-endpoint translation copies a URL with just the translation ID", async () => {
+  it("clicking share on a default-endpoint translation copies a URL naming it in the path", async () => {
     await openTranslationModalWithGroup("AAB", "English");
 
     const shareButton = container.querySelector(
@@ -1703,8 +1709,33 @@ describe("BibleSelector sharing translations", () => {
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
-    expect(copiedUrl.hostname).toBe("ao.bot");
-    expect(copiedUrl.searchParams.get("translation")).toBe("AAB");
+    expect(copiedUrl.hostname).toBe("seedbible.org");
+    expect(copiedUrl.pathname).toBe("/en/AAB/genesis/1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
+  });
+
+  it("shares the chosen translation, not the one the sharer is reading", async () => {
+    // The regression itself. Every other case here starts from a page whose
+    // path names no translation, where setting `?translation=` happened to
+    // work — so only this one actually pits the query against the path, which
+    // is what the old link did and lost: the recipient opened NIV.
+    jsdom.reconfigure({ url: "https://seedbible.org/en/NIV/exodus/2" });
+
+    await openTranslationModalWithGroup("AAB", "English");
+
+    act(() => {
+      container
+        .querySelector(".share-btn")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => setClipboard.mock.calls.length > 0);
+
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
+    // AAB, the translation whose row was clicked — and the reader's position
+    // is carried over rather than reset.
+    expect(copiedUrl.pathname).toBe("/en/AAB/exodus/2");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
 
   it("clicking share on a non-default-endpoint translation copies a URL with the full books.json URL", async () => {
@@ -1723,10 +1754,202 @@ describe("BibleSelector sharing translations", () => {
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
-    expect(copiedUrl.hostname).toBe("ao.bot");
-    const translationParam = copiedUrl.searchParams.get("translation")!;
-    expect(translationParam).toContain("example.test");
-    expect(translationParam).toContain("CST");
-    expect(translationParam).toContain("books.json");
+    expect(copiedUrl.hostname).toBe("seedbible.org");
+    // The whole books.json URL is one path segment, so its slashes stay
+    // encoded rather than splitting the path into extra segments.
+    const [, language, translationSegment, book, chapter] =
+      copiedUrl.pathname.split("/");
+    expect(language).toBe("en");
+    expect(decodeURIComponent(translationSegment!)).toContain("example.test");
+    expect(decodeURIComponent(translationSegment!)).toContain("CST");
+    expect(decodeURIComponent(translationSegment!)).toContain("books.json");
+    expect(book).toBe("genesis");
+    expect(chapter).toBe("1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
+  });
+});
+
+describe("BibleSelector offline downloads", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
+    localStorage.clear();
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  /**
+   * Opens the translation list with the AAB group expanded, backed by an
+   * in-memory download store (jsdom has no IndexedDB, so without one the
+   * download controls correctly render nothing).
+   */
+  async function openTranslationList(
+    options: { offlineStore?: OfflineTranslationStore | null } = {}
+  ) {
+    const store =
+      options.offlineStore === undefined
+        ? createInMemoryTranslationStore()
+        : options.offlineStore;
+
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultSelectorManagerResponseMap(),
+        [makeUrl("/api/AAB/complete.json")]: createStreamingResponse(
+          makeCompleteTranslation(aabBooks, 2, { sha256: "hash-one" })
+        ),
+      },
+      offlineStore: store,
+    });
+
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    await state.selector.setOpen(true, slot);
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={state.selector}
+          bibleDataManager={state.bibleData}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      state.selector.showAllLanguages.value = "all";
+      state.selector.selectingTranslation.value = true;
+      state.selector.languageQuery.value = "aab";
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translation-option"))
+    );
+
+    return { state, store };
+  }
+
+  function offlineButton(modifier?: string): HTMLButtonElement | null {
+    return container.querySelector(
+      modifier ? `.sb-offline-btn.${modifier}` : ".sb-offline-btn"
+    );
+  }
+
+  it("renders nothing when the device can't store downloads", async () => {
+    await openTranslationList({ offlineStore: null });
+
+    expect(container.querySelector(".translation-option")).not.toBeNull();
+    expect(offlineButton()).toBeNull();
+  });
+
+  it("downloads the translation when the download button is clicked", async () => {
+    const { state, store } = await openTranslationList();
+
+    const button = offlineButton();
+    expect(button?.title).toBe("Download for offline use");
+
+    act(() => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => state.bibleData.offline.isDownloaded("AAB"));
+
+    expect(await store!.getChapter("AAB", "GEN", 1)).not.toBeNull();
+    // The button now offers to remove the download instead.
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+    expect(offlineButton("downloaded")?.title).toContain("Available offline");
+  });
+
+  it("asks for confirmation before removing a download, and removes it on confirm", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+
+    act(() => {
+      offlineButton("downloaded")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translationDeleteModal"))
+    );
+    // Still downloaded — the confirmation alone must not delete anything.
+    expect(state.bibleData.offline.isDownloaded("AAB")).toBe(true);
+
+    act(() => {
+      container
+        .querySelector(".sb-offline-delete-confirm")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => !state.bibleData.offline.isDownloaded("AAB"));
+    expect(container.querySelector(".translationDeleteModal")).toBeNull();
+  });
+
+  it("keeps the download when the confirmation is cancelled", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+
+    act(() => {
+      offlineButton("downloaded")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() =>
+      Boolean(container.querySelector(".translationDeleteModal"))
+    );
+
+    act(() => {
+      container
+        .querySelector(".sb-offline-delete-cancel")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => !container.querySelector(".translationDeleteModal"));
+    expect(state.bibleData.offline.isDownloaded("AAB")).toBe(true);
+  });
+
+  it("offers an update button once the API reports a newer version", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+    expect(offlineButton("update")).toBeNull();
+
+    // The API now publishes a different hash for the same translation.
+    act(() => {
+      state.bibleData.availableTranslations.value =
+        state.bibleData.availableTranslations.value.map((translation) =>
+          translation.id === "AAB"
+            ? { ...translation, sha256: "hash-two" }
+            : translation
+        );
+    });
+
+    await waitFor(() => Boolean(offlineButton("update")));
+    expect(offlineButton("update")?.title).toContain("newer version");
   });
 });
