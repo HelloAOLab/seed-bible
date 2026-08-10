@@ -434,5 +434,10 @@
   "remove": "നീക്കം ചെയ്യുക",
   "signed-out-message": "നിങ്ങൾ സൈൻ ഔട്ട് ചെയ്‌തു. വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.",
   "account-suspended-message": "നിങ്ങളുടെ അക്കൗണ്ട് താൽക്കാലികമായി നിർത്തിവച്ചിരിക്കുന്നു.",
-  "loading-chapter": "ചാപ്റ്റർ ലോഡ് ചെയ്യുന്നു…"
+  "loading-chapter": "ചാപ്റ്റർ ലോഡ് ചെയ്യുന്നു…",
+  "book-not-found-title": "പുസ്തകം കണ്ടെത്തിയില്ല.",
+  "book-not-found-message": "{{translationName}} എന്നതിൽ ആ പുസ്തകം ഞങ്ങൾക്ക് കണ്ടെത്താൻ കഴിഞ്ഞില്ല.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} എന്നതിലേക്ക് പോകുക",
+  "loading-picture-editor": "ചിത്ര എഡിറ്റർ ലോഡ് ചെയ്യുന്നു…",
+  "swipe-to-see-more": "കൂടുതൽ കാണാൻ സ്വൈപ്പ് ചെയ്യുക"
 }

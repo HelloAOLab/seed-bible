@@ -434,5 +434,10 @@
   "remove": "Kolongola",
   "signed-out-message": "Ba signer yo libanda. Svp bo kota lisusu.",
   "account-suspended-message": "Compte na yo ekangami.",
-  "loading-chapter": "Chargement ya mokapo..."
+  "loading-chapter": "Chargement ya mokapo...",
+  "book-not-found-title": "Buku ezwami te",
+  "book-not-found-message": "Tozwaki buku wana te na {{translationName}} .",
+  "book-not-found-action": "Kende na {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Ko charger éditeur ya bilili...",
+  "swipe-to-see-more": "Swipe mpo na komona makambo mosusu"
 }

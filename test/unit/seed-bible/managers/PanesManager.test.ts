@@ -623,7 +623,7 @@ describe("createPanes", () => {
 
       const dispose = effect(() => {
         // `trigger` is the effect's only intended dependency.
-        trigger.value;
+        void trigger.value;
         runs++;
         panes.openPane({
           id: "effect-pane",

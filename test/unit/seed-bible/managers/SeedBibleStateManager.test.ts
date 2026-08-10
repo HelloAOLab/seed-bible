@@ -1395,6 +1395,86 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("tab state persistence", () => {
+    interface StoredTabsState {
+      tabs: { id: string; slotOnly?: boolean }[];
+      selectedTabId: string;
+      layout: string;
+      slotTabIds: (string | null)[];
+      selectedSlotIndex: number | null;
+    }
+
+    const readStoredTabs = (): StoredTabsState =>
+      JSON.parse(localStorage.getItem("sb-tabs-state") ?? "null");
+
+    // SettingsManager reads the anonymous, device-only config store
+    // (`login.localConfig`) from this key, so writing it before a bootstrap is
+    // how a test simulates opening the app with panels off/on.
+    const setPanelsDisabled = (disablePanels: boolean) =>
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ disablePanels })
+      );
+
+    const openSecondPane = async (state: SeedBibleState) => {
+      const slot = state.tabsLayout.openTabInNewSlot(
+        state.tabsLayout.slots.value[0]!.tab!.id
+      );
+      const clone = state.tabs.tabs.value.find(
+        (tab) => tab.id === slot?.tab?.id
+      )!;
+      await waitForInitialLoad(clone.readingState, 1000);
+    };
+
+    it("stores the split layout together with the hidden clone backing it", async () => {
+      const state = await createState();
+
+      await openSecondPane(state);
+
+      const stored = readStoredTabs();
+      expect(stored.layout).toBe("split-2v");
+      expect(stored.slotTabIds).toHaveLength(2);
+      expect(stored.slotTabIds.every((id) => typeof id === "string")).toBe(
+        true
+      );
+      // The second pane is backed by a hidden clone. Without it in `tabs`, the
+      // restored pane would resolve to no tab and come back empty.
+      expect(stored.tabs.filter((tab) => tab.slotOnly)).toHaveLength(1);
+    });
+
+    it("keeps a stored split through a load with panels disabled", async () => {
+      // 1. Build a two-pane split with panels enabled.
+      const withPanels = await createState();
+      await openSecondPane(withPanels);
+      expect(readStoredTabs().slotTabIds).toHaveLength(2);
+
+      // 2. Reload with panels disabled.
+      setPanelsDisabled(true);
+      const panelsOff = await createState();
+      expect(panelsOff.app.panelsEnabled.value).toBe(false);
+
+      // The rendered view collapses to a single pane...
+      expect(panelsOff.app.effectiveSlotLayout.value).toBe("single");
+      expect(panelsOff.app.effectiveSlots.value).toHaveLength(1);
+      // ...but the layout manager still holds the split, so that is what the
+      // persistence effect writes back. Collapsing it here instead would
+      // overwrite storage with a single pane and destroy the split for good.
+      expect(panelsOff.tabsLayout.layout.value).toBe("split-2v");
+      expect(panelsOff.tabsLayout.slots.value).toHaveLength(2);
+      expect(readStoredTabs().slotTabIds).toHaveLength(2);
+
+      // 3. Re-enable panels and reload: the split renders again.
+      setPanelsDisabled(false);
+      const panelsBackOn = await createState();
+      expect(panelsBackOn.app.panelsEnabled.value).toBe(true);
+      expect(panelsBackOn.app.effectiveSlotLayout.value).toBe("split-2v");
+      expect(panelsBackOn.app.effectiveSlots.value).toHaveLength(2);
+      expect(
+        panelsBackOn.app.effectiveSlots.value.map((slot) => slot.tab?.id)
+      ).toEqual(readStoredTabs().slotTabIds);
+    });
+  });
+
   describe("UI language Bible translation switch", () => {
     beforeEach(async () => {
       // Language changes share the process-wide i18n instance; reset so each

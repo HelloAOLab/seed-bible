@@ -434,5 +434,10 @@
   "remove": "Отстрани",
   "signed-out-message": "Одјавени сте. Најавете се повторно.",
   "account-suspended-message": "Вашата сметка е суспендирана.",
-  "loading-chapter": "Се вчитува поглавјето…"
+  "loading-chapter": "Се вчитува поглавјето…",
+  "book-not-found-title": "Книгата не е пронајдена",
+  "book-not-found-message": "Не можевме да ја најдеме таа книга во {{translationName}} .",
+  "book-not-found-action": "Оди на {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Се вчитува уредникот на слики…",
+  "swipe-to-see-more": "Повлечете за да видите повеќе"
 }

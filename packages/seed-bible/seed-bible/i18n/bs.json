@@ -434,5 +434,10 @@
   "remove": "Ukloni",
   "signed-out-message": "Odjavljeni ste. Molimo vas da se ponovo prijavite.",
   "account-suspended-message": "Vaš račun je suspendovan.",
-  "loading-chapter": "Učitavanje poglavlja…"
+  "loading-chapter": "Učitavanje poglavlja…",
+  "book-not-found-title": "Knjiga nije pronađena",
+  "book-not-found-message": "Nismo mogli pronaći tu knjigu na jeziku {{translationName}} .",
+  "book-not-found-action": "Idi na {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Učitavanje uređivača slika…",
+  "swipe-to-see-more": "Prevucite da vidite više"
 }

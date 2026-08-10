@@ -627,9 +627,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const openSelectorTool = useComputed(
     () => tools.value.find((tool) => tool.id === "open-selector") ?? null
   );
-  // The audio-reader extension's play/pause control, surfaced inside the
-  // mobile floating nav pill. Null when the extension isn't installed; its
-  // `visible` is only true on chapters that actually have audio.
+  // The audio-reader extension's play/pause control, surfaced here instead
+  // of the quick toolbar on mobile.
   const audioPlayTool = useComputed(
     () =>
       toolsManager
@@ -637,6 +636,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           readingState: readingState.value!,
           playlists: props.state.playlists,
           features: props.state.features,
+          surface: "mobile-navigation-bar",
         })
         .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );

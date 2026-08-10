@@ -434,5 +434,10 @@
   "remove": "Verwyder",
   "signed-out-message": "Jy is uitgeteken. Meld asseblief weer aan.",
   "account-suspended-message": "Jou rekening is opgeskort.",
-  "loading-chapter": "Laai hoofstuk…"
+  "loading-chapter": "Laai hoofstuk…",
+  "book-not-found-title": "Boek nie gevind nie",
+  "book-not-found-message": "Ons kon nie daardie boek in {{translationName}} vind nie.",
+  "book-not-found-action": "Gaan na {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Laai die prentredigeerder…",
+  "swipe-to-see-more": "Swiep om meer te sien"
 }

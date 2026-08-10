@@ -311,7 +311,15 @@ describe("BibleReader", () => {
   });
 
   afterEach(() => {
-    // render(null, container);
+    // Detaching the container is not enough: the tree stays mounted, so its
+    // effect cleanups never run and a late async update (the reader's skeleton
+    // timer, an un-awaited retry) still diffs into a document that Vitest has
+    // since torn down — an unhandled "document is not defined" rejection.
+    // Unmounting clears the component's parent DOM, which makes preact drop
+    // those updates instead.
+    act(() => {
+      render(null, container);
+    });
     container.remove();
   });
 

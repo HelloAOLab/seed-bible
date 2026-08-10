@@ -343,6 +343,9 @@ export interface QuickToolContext {
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
+
+  /** Which surface is asking, for tools whose visibility depends on it. */
+  surface: "quick-toolbar" | "mobile-navigation-bar";
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */

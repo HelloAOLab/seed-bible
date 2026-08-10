@@ -39,7 +39,7 @@ beforeEach(() => {
 
 describe("constructor", () => {
   it("creates a DebouncerService with a 500 ms delay", () => {
-    const { service } = makeController();
+    makeController();
     const [, delay] = (DebouncerService as Mock).mock.calls.at(-1)!;
     expect(delay).toBe(500);
   });

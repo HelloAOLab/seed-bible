@@ -434,5 +434,10 @@
   "remove": "取り除く",
   "signed-out-message": "ログアウトしました。再度ログインしてください。",
   "account-suspended-message": "あなたのアカウントは停止されました。",
-  "loading-chapter": "チャプターを読み込んでいます…"
+  "loading-chapter": "チャプターを読み込んでいます…",
+  "book-not-found-title": "書籍が見つかりません",
+  "book-not-found-message": "{{translationName}}ではその本を見つけることができませんでした。",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}}へ移動してください。",
+  "loading-picture-editor": "画像エディタを読み込んでいます…",
+  "swipe-to-see-more": "スワイプしてさらに表示"
 }

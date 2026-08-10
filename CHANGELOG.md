@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Remember your open tabs, which one you were reading, and your pane layout across a refresh or a later visit, instead of reopening at Genesis 1 with a single tab. Opening a link to a specific passage still takes you there — it reuses a matching tab when you have one rather than piling up duplicates. A split layout is kept even if you open the app somewhere panes are turned off, so it comes back when they are on again.
+
 ### 🔧 Changed
 
 - Scripture Map packs books in a masonry layout by height, keeping left-to-right book order while removing empty gaps under shorter books. ([#1392](https://github.com/HelloAOLab/seed-bible/issues/1392))

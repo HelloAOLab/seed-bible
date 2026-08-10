@@ -434,5 +434,10 @@
   "remove": "Olib tashlash",
   "signed-out-message": "Siz tizimdan chiqdingiz. Iltimos, qaytadan kiring.",
   "account-suspended-message": "Hisobingiz bloklandi.",
-  "loading-chapter": "Bob yuklanmoqda…"
+  "loading-chapter": "Bob yuklanmoqda…",
+  "book-not-found-title": "Kitob topilmadi",
+  "book-not-found-message": "Biz bu kitobni {{translationName}} da topa olmadik.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} ga o'ting",
+  "loading-picture-editor": "Rasm muharriri yuklanmoqda…",
+  "swipe-to-see-more": "Batafsil ma'lumot olish uchun suring"
 }
