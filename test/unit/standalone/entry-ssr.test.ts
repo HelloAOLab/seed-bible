@@ -394,6 +394,10 @@ describe("render() server-rendered meta tags", () => {
     // cross-origin. Matching the origin lets those writes land harmlessly —
     // the assertions below read the returned HTML, not `window.location`.
     jsdom.reconfigure({ url: "http://ssr.local/" });
+    // Same jsdom caveat for stored tab state: real SSR has no `localStorage`,
+    // so nothing is restored, but under jsdom one render's persisted tabs would
+    // otherwise decide where the next render opens.
+    localStorage.clear();
     originalFetch = globalThis.fetch;
     // `?useFreeBibleAPI=true` points the app at the endpoint this map is keyed
     // on (see `getDefaultAPIEndpoint`), so no network is touched.

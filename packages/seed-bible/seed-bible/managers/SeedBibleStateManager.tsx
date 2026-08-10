@@ -37,6 +37,10 @@ import { createSidebar } from "../managers/SidebarManager";
 import { createTabs } from "../managers/TabsManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import {
+  writeStoredTabsState,
+  type PersistedTab,
+} from "../managers/TabsPersistence";
+import {
   generateThemeCssVariables,
   createTheme,
   generateThemeCssClasses,
@@ -919,6 +923,66 @@ export function createSeedBibleState(
       tabsLayout.setSelectedSlotTab(tab.id);
     }
   });
+
+  // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
+  // selected tab, the layout preset, and the slot arrangement) to localStorage
+  // so TabsManager/TabsLayoutManager can restore it on the next refresh or
+  // revisit. Session-backed tabs are skipped — they rejoin via `?sessionId=`
+  // (see setupInitialSession). Client-only: there is no localStorage in SSR.
+  if (typeof window !== "undefined") {
+    let lastSerialized: string | null = null;
+
+    const buildPersistedTabs = (): PersistedTab[] =>
+      tabs.tabs.value
+        .filter((tab) => !tab.sharedSession)
+        .map((tab) => {
+          const persisted: PersistedTab = {
+            id: tab.id,
+            translationId: tab.readingState.translationId.value,
+            bookId: tab.readingState.bookId.value,
+            chapterNumber: tab.readingState.chapterNumber.value,
+          };
+          if (tab.slotOnly) {
+            persisted.slotOnly = true;
+          }
+          return persisted;
+        });
+
+    effect(() => {
+      const persistedTabs = buildPersistedTabs();
+      const persistableIds = new Set(persistedTabs.map((tab) => tab.id));
+
+      const currentSlots = tabsLayout.slots.value;
+      const slotTabIds = currentSlots.map((slot) =>
+        slot.tab && persistableIds.has(slot.tab.id) ? slot.tab.id : null
+      );
+      const selectedSlotIndex = currentSlots.findIndex(
+        (slot) => slot.id === tabsLayout.selectedSlotId.value
+      );
+
+      const currentSelectedTabId = tabs.selectedTabId.value;
+      const selectedTabId = persistableIds.has(currentSelectedTabId)
+        ? currentSelectedTabId
+        : (persistedTabs[0]?.id ?? "");
+
+      const nextState = {
+        tabs: persistedTabs,
+        selectedTabId,
+        layout: tabsLayout.layout.value,
+        slotTabIds,
+        selectedSlotIndex: selectedSlotIndex >= 0 ? selectedSlotIndex : null,
+      };
+
+      // Position signals change often during navigation; skip writes that would
+      // not change what is stored.
+      const serialized = JSON.stringify(nextState);
+      if (serialized === lastSerialized) {
+        return;
+      }
+      lastSerialized = serialized;
+      writeStoredTabsState(nextState);
+    });
+  }
 
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
