@@ -7,7 +7,6 @@ import {
   ComparePaneTitle,
 } from "./ComparePane";
 import {
-  COMPARE_NS,
   COMPARE_PANE_ID,
   createCompareState,
   snapshotSelection,
@@ -52,7 +51,7 @@ function openComparePane(
 
 export default function initCompareExtension() {
   registerExtension({
-    id: COMPARE_NS,
+    id: "compare-extension",
     init: function* (context: SeedBibleState) {
       const state = createCompareState(context);
 
@@ -64,8 +63,6 @@ export default function initCompareExtension() {
         title: {
           key: "compare",
           defaultValue: "Compare",
-          // Literal rather than `COMPARE_NS`: the i18n lint rule resolves the
-          // namespace statically and can't follow a constant.
           ns: "compare-extension",
         },
         icon: CompareIcon,
