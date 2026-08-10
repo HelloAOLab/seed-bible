@@ -434,5 +434,10 @@
   "remove": "Noņemt",
   "signed-out-message": "Jūs esat izrakstījies. Lūdzu, pierakstieties vēlreiz.",
   "account-suspended-message": "Jūsu konta darbība ir apturēta.",
-  "loading-chapter": "Notiek nodaļas ielāde…"
+  "loading-chapter": "Notiek nodaļas ielāde…",
+  "book-not-found-title": "Grāmata nav atrasta",
+  "book-not-found-message": "Mēs nevarējām atrast šo grāmatu valodā {{translationName}} .",
+  "book-not-found-action": "Dodieties uz {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Notiek attēlu redaktora ielāde…",
+  "swipe-to-see-more": "Pavelciet, lai redzētu vairāk"
 }

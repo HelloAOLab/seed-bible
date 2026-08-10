@@ -434,5 +434,10 @@
   "remove": "काढून टाका",
   "signed-out-message": "तुमची लॉग आउट झाली आहे. कृपया पुन्हा लॉग इन करा.",
   "account-suspended-message": "तुमचे खाते निलंबित करण्यात आले आहे.",
-  "loading-chapter": "अध्याय लोड होत आहे…"
+  "loading-chapter": "अध्याय लोड होत आहे…",
+  "book-not-found-title": "पुस्तक सापडले नाही",
+  "book-not-found-message": "आम्हाला ते पुस्तक {{translationName}} मध्ये सापडले नाही.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} वर जा",
+  "loading-picture-editor": "चित्र संपादक लोड होत आहे…",
+  "swipe-to-see-more": "अधिक पाहण्यासाठी स्वाइप करा"
 }

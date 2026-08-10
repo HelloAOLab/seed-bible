@@ -434,5 +434,10 @@
   "remove": "Pašalinti",
   "signed-out-message": "Buvote atsijungę. Prisijunkite dar kartą.",
   "account-suspended-message": "Jūsų paskyra buvo sustabdyta.",
-  "loading-chapter": "Kraunamas skyrius…"
+  "loading-chapter": "Kraunamas skyrius…",
+  "book-not-found-title": "Knyga nerasta",
+  "book-not-found-message": "Nepavyko rasti tos knygos {{translationName}} kalba.",
+  "book-not-found-action": "Eikite į {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Kraunamas paveikslėlių redaktorius…",
+  "swipe-to-see-more": "Braukite, kad pamatytumėte daugiau"
 }

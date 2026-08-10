@@ -434,5 +434,10 @@
   "remove": "제거하다",
   "signed-out-message": "로그아웃되었습니다. 다시 로그인해 주세요.",
   "account-suspended-message": "귀하의 계정이 정지되었습니다.",
-  "loading-chapter": "챕터를 불러오는 중…"
+  "loading-chapter": "챕터를 불러오는 중…",
+  "book-not-found-title": "책을 찾을 수 없습니다",
+  "book-not-found-message": "{{translationName}} 에서 해당 책을 찾을 수 없었습니다.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} 로 이동하세요",
+  "loading-picture-editor": "사진 편집기를 불러오는 중…",
+  "swipe-to-see-more": "더 보려면 스와이프하세요"
 }

@@ -434,5 +434,10 @@
   "remove": "Kaldırmak",
   "signed-out-message": "Oturumunuz kapatıldı. Lütfen tekrar giriş yapın.",
   "account-suspended-message": "Hesabınız askıya alındı.",
-  "loading-chapter": "Bölüm yükleniyor…"
+  "loading-chapter": "Bölüm yükleniyor…",
+  "book-not-found-title": "Kitap bulunamadı.",
+  "book-not-found-message": "Bu kitabı {{translationName}} adresinde bulamadık.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} a gidin.",
+  "loading-picture-editor": "Resim düzenleyici yükleniyor…",
+  "swipe-to-see-more": "Daha fazlasını görmek için kaydırın."
 }

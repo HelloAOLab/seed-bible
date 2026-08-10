@@ -434,5 +434,10 @@
   "remove": "निकालना",
   "signed-out-message": "आप लॉग आउट हो गए हैं। कृपया दोबारा लॉग इन करें।",
   "account-suspended-message": "आपके खाते को निलंबित कर दिया गया है।",
-  "loading-chapter": "अध्याय लोड हो रहा है…"
+  "loading-chapter": "अध्याय लोड हो रहा है…",
+  "book-not-found-title": "पुस्तक नहीं मिली",
+  "book-not-found-message": "हमें वह पुस्तक {{translationName}} में नहीं मिली।",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} पर जाएं",
+  "loading-picture-editor": "पिक्चर एडिटर लोड हो रहा है…",
+  "swipe-to-see-more": "अधिक देखने के लिए स्वाइप करें"
 }

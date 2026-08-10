@@ -434,5 +434,10 @@
   "remove": "Elimina",
   "signed-out-message": "Ați fost deconectat(ă). Vă rugăm să vă conectați din nou.",
   "account-suspended-message": "Contul dumneavoastră a fost suspendat.",
-  "loading-chapter": "Se încarcă capitolul…"
+  "loading-chapter": "Se încarcă capitolul…",
+  "book-not-found-title": "Cartea nu a fost găsită",
+  "book-not-found-message": "Nu am găsit cartea respectivă în {{translationName}} .",
+  "book-not-found-action": "Accesați {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Se încarcă editorul de imagini…",
+  "swipe-to-see-more": "Glisează pentru a vedea mai multe"
 }

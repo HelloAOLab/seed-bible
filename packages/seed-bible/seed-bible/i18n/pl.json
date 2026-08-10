@@ -434,5 +434,10 @@
   "remove": "Usunąć",
   "signed-out-message": "Zostałeś wylogowany. Zaloguj się ponownie.",
   "account-suspended-message": "Twoje konto zostało zawieszone.",
-  "loading-chapter": "Ładowanie rozdziału…"
+  "loading-chapter": "Ładowanie rozdziału…",
+  "book-not-found-title": "Książka nie znaleziona",
+  "book-not-found-message": "Nie znaleźliśmy tej książki w {{translationName}} .",
+  "book-not-found-action": "Przejdź do {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Ładowanie edytora obrazów…",
+  "swipe-to-see-more": "Przesuń, aby zobaczyć więcej"
 }
