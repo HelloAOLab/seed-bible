@@ -93,7 +93,12 @@ export function CompareSettings(props: {
     translations.find((translation) => translation.id === id) ?? null;
 
   const remove = (id: string) => {
-    state.setSelectedTranslationIds(removeId(savedIds, id));
+    state.setSelectedTranslationIds(removeId(ids, id));
+    // A remove click during an in-progress drag has just persisted the
+    // draft-aware order minus `id` — clear the draft so the pointerup that
+    // eventually lands doesn't commit the stale, pre-removal draft over it.
+    draftRef.current = null;
+    setDraftIds(null);
   };
 
   // `sb-discover-item-delete` is the playlist editor's own remove button: a

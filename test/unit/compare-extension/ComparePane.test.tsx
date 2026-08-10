@@ -80,6 +80,14 @@ function createTestLogin(localConfig: Record<string, unknown> = {}) {
 function createHarness(options?: {
   savedIds?: string[];
   chapters?: Record<string, TranslationBookChapter>;
+  // Takes precedence over `chapters` — for tests that need the chapter
+  // returned to depend on the book/chapter requested, not just the
+  // translation.
+  getTranslationBookChapter?: (
+    translationId: string,
+    book: string,
+    chapterNumber: number
+  ) => Promise<TranslationBookChapter>;
 }) {
   const login = createTestLogin(
     options?.savedIds ? { [COMPARE_TRANSLATIONS_KEY]: options.savedIds } : {}
@@ -99,11 +107,13 @@ function createHarness(options?: {
           textDirection: "rtl",
         }),
       ]),
-      getTranslationBookChapter: (translationId: string) =>
-        Promise.resolve(
-          options?.chapters?.[translationId] ??
-            chapterWith([verse(1, "In the beginning was the Word")])
-        ),
+      getTranslationBookChapter:
+        options?.getTranslationBookChapter ??
+        ((translationId: string) =>
+          Promise.resolve(
+            options?.chapters?.[translationId] ??
+              chapterWith([verse(1, "In the beginning was the Word")])
+          )),
     },
     selector: {
       showAllLanguages: signal<"complete" | "all" | "popular">("all"),
@@ -301,6 +311,49 @@ describe("ComparePane", () => {
       "eng_kjv",
       "eng_web",
     ]);
+  });
+
+  it("renders both chapters' verse 1 when the selection spans two chapters", async () => {
+    // Both groups pick verse 1 — same verse number, different chapters —
+    // which used to collide under the same Preact key.
+    const { context, state } = createHarness({
+      savedIds: ["eng_bsb"],
+      getTranslationBookChapter: (_translationId, _book, chapterNumber) =>
+        Promise.resolve(
+          chapterWith([
+            verse(
+              1,
+              chapterNumber === 1 ? "first chapter text" : "second chapter text"
+            ),
+          ])
+        ),
+    });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+      {
+        bookId: "JHN",
+        chapterNumber: 2,
+        verse: verse(1, "y"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    const block = container.querySelector(".sb-compare-block")!;
+    const text = block.querySelector(".sb-compare-block-text")!.textContent;
+    expect(text).toContain("first chapter text");
+    expect(text).toContain("second chapter text");
+    expect(block.querySelectorAll(".sb-compare-verse")).toHaveLength(2);
   });
 
   it("falls back to a message when the verses are missing from a translation", async () => {
@@ -556,6 +609,30 @@ describe("ComparePane", () => {
     expect(container.querySelector(".sb-compare-empty")).toBeNull();
   });
 
+  it("still explains the empty pane when the only saved id is the translation being read", async () => {
+    // Reachable from the picker: clicking the current translation's own row
+    // or chip saves it explicitly. `order` collapses it back down to the same
+    // single, already-pinned block, so there is still nothing to compare.
+    const { context, state } = createHarness({ savedIds: ["eng_kjv"] });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    expect(container.querySelectorAll(".sb-compare-block")).toHaveLength(1);
+    expect(container.querySelector(".sb-compare-empty")).not.toBeNull();
+  });
+
   it("keeps an Add Translation button anchored below the scrolling list", () => {
     const { context, state } = createHarness();
     states.push(state);
@@ -764,6 +841,16 @@ describe("Compare translation picker", () => {
 describe("CompareSettings", () => {
   const containers: HTMLDivElement[] = [];
   const states: CompareState[] = [];
+  const ROW_HEIGHT = 40;
+  let offsetHeightSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    // jsdom doesn't lay out real geometry — stub every row's rendered height
+    // so the drag math in `useDragReorder` has something to divide by.
+    offsetHeightSpy = vi
+      .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
+      .mockReturnValue(ROW_HEIGHT);
+  });
 
   afterEach(() => {
     for (const container of containers.splice(0)) {
@@ -773,6 +860,7 @@ describe("CompareSettings", () => {
     for (const state of states.splice(0)) {
       state.dispose();
     }
+    offsetHeightSpy.mockRestore();
   });
 
   it("pins the current translation without a drag handle and lists the rest as draggable", () => {
@@ -847,5 +935,104 @@ describe("CompareSettings", () => {
     });
 
     expect(state.selectedTranslationIds.value).toEqual(["eng_web"]);
+  });
+
+  it("removes from the reordered list during an in-progress drag, not the pre-drag order", () => {
+    const { context, state } = createHarness({
+      savedIds: ["eng_bsb", "eng_web", "heb_mod"],
+    });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([]);
+    state.view.value = "settings";
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+
+    const handle = (index: number) =>
+      container.querySelectorAll<HTMLButtonElement>(
+        ".sb-discover-item-drag-handle"
+      )[index]!;
+
+    // Drag the first row (eng_bsb) down two slots, past eng_web and heb_mod,
+    // without ever releasing the pointer.
+    act(() => {
+      handle(0).dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerId: 1,
+          clientY: 0,
+        })
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", { pointerId: 1, clientY: 90 })
+      );
+    });
+    act(() => {
+      render(node, container);
+    });
+
+    // Rows now read eng_web, heb_mod, eng_bsb — remove the middle one mid-drag.
+    const rows = container.querySelectorAll(".sb-discover-item");
+    act(() => {
+      rows[2]!
+        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
+        .click();
+    });
+
+    // The reorder survives the removal — eng_web ends up first, not eng_bsb
+    // (its position in the untouched, pre-drag saved list).
+    expect(state.selectedTranslationIds.value).toEqual(["eng_web", "eng_bsb"]);
+  });
+
+  it("does not resurrect the removed translation once the interrupted drag's pointerup lands", () => {
+    const { context, state } = createHarness({
+      savedIds: ["eng_bsb", "eng_web", "heb_mod"],
+    });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([]);
+    state.view.value = "settings";
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+
+    const handle = (index: number) =>
+      container.querySelectorAll<HTMLButtonElement>(
+        ".sb-discover-item-drag-handle"
+      )[index]!;
+
+    act(() => {
+      handle(0).dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerId: 1,
+          clientY: 0,
+        })
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", { pointerId: 1, clientY: 90 })
+      );
+    });
+    act(() => {
+      render(node, container);
+    });
+
+    act(() => {
+      container
+        .querySelectorAll(".sb-discover-item")[2]!
+        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
+        .click();
+    });
+
+    // The drag that was in progress when the removal committed finally ends —
+    // this must not resurrect the translation just removed.
+    act(() => {
+      window.dispatchEvent(
+        new PointerEvent("pointerup", { pointerId: 1, clientY: 90 })
+      );
+    });
+
+    expect(state.selectedTranslationIds.value).toEqual(["eng_web", "eng_bsb"]);
   });
 });

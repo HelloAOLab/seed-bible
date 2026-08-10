@@ -47,9 +47,9 @@
 
 .sb-translation-list-separator {
   text-align: center;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--sb-divider-color);
   height: 0px;
-  background-color: #fff;
+  background-color: transparent;
 }
 
 .sb-translation-list-empty {

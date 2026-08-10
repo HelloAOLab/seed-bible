@@ -108,10 +108,12 @@ export function ComparePane(props: {
     return <TranslationPicker context={context} state={state} />;
   }
 
-  // Only the translation being read is showing, so there is nothing to compare
-  // it against yet. Says so, rather than leaving the pane looking broken.
-  const hasNothingToCompareWith =
-    state.selectedTranslationIds.value.length === 0;
+  // Only one block is rendering, so there is nothing to compare it against
+  // yet. Says so, rather than leaving the pane looking broken. Checked
+  // against the rendered order, not the saved list's length — the saved list
+  // can hold just the translation being read (reachable from the picker),
+  // which `order` collapses back down to that same single block.
+  const hasNothingToCompareWith = state.order.value.length <= 1;
 
   return (
     <div className="sb-compare-pane">
