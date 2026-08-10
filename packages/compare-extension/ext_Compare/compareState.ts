@@ -23,13 +23,6 @@ export const COMPARE_TRANSLATIONS_KEY = "compareTranslations";
 /** Stable id for the Compare side pane. */
 export const COMPARE_PANE_ID = "compare-pane";
 
-/**
- * How long the rest of the chapter stays faded after arriving from Compare.
- * Matches the reader's `diminish-in-out` animation, so the decoration is
- * removed exactly as the fade finishes rather than part-way through it.
- */
-export const DIMINISH_DURATION_MS = 3000;
-
 /** One contiguous chapter's worth of the verses the reader had selected. */
 export interface CompareSnapshotGroup {
   bookId: string;
@@ -508,7 +501,7 @@ export function createCompareState(context: SeedBibleState): CompareState {
             {
               className: "sb-verse-decoration-diminish",
               containerClassName: "sb-chapter-decoration-diminish",
-              removeAfterMs: DIMINISH_DURATION_MS,
+              removeAfterMs: 3000,
             }
           );
         }
