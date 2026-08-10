@@ -6,6 +6,8 @@ import type {
   Annotation,
   AnnotationsManager,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -104,6 +106,43 @@ function createMockAnnotationsManager(editing: Annotation | null) {
   return { annotations, saveEditingAnnotation, cancelEditingAnnotation };
 }
 
+function createChapterVerse(number: number, text: string) {
+  return { type: "verse", number, content: [text] };
+}
+
+function createChapterData(
+  overrides: { bookId?: string; chapterNumber?: number; verses?: number[] } = {}
+): TranslationBookChapter {
+  const { bookId = "GEN", chapterNumber = 1, verses = [1, 2, 3] } = overrides;
+  return {
+    translation: { id: "engwebp" },
+    book: { id: bookId, name: "Genesis", commonName: "Genesis" },
+    chapter: {
+      number: chapterNumber,
+      content: verses.map((n) => createChapterVerse(n, `Verse ${n} text.`)),
+      footnotes: [],
+    },
+  } as unknown as TranslationBookChapter;
+}
+
+function createMockTabsManager(
+  chapterData: TranslationBookChapter | null = null
+): TabsManager {
+  return {
+    tabs: signal(
+      chapterData
+        ? [
+            {
+              id: "tab-1",
+              readingState: { chapterData: signal(chapterData) },
+            },
+          ]
+        : []
+    ),
+    selectedTabId: signal("tab-1"),
+  } as unknown as TabsManager;
+}
+
 describe("CreateAnnotationForm", () => {
   let container: HTMLDivElement;
 
@@ -122,9 +161,13 @@ describe("CreateAnnotationForm", () => {
 
   it("renders nothing when there is no annotation being edited", async () => {
     const { annotations } = createMockAnnotationsManager(null);
+    const tabs = createMockTabsManager();
 
     await act(async () => {
-      render(<CreateAnnotationForm annotations={annotations} />, container);
+      render(
+        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        container
+      );
       await flushLazyLoad();
     });
 
@@ -133,9 +176,13 @@ describe("CreateAnnotationForm", () => {
 
   it("disables Save while the editor is empty, and enables it once typed", async () => {
     const { annotations } = createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
 
     await act(async () => {
-      render(<CreateAnnotationForm annotations={annotations} />, container);
+      render(
+        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        container
+      );
       await flushLazyLoad();
     });
 
@@ -153,9 +200,13 @@ describe("CreateAnnotationForm", () => {
   it("Save writes the sanitized HTML into the draft, then saves", async () => {
     const { annotations, saveEditingAnnotation } =
       createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
 
     await act(async () => {
-      render(<CreateAnnotationForm annotations={annotations} />, container);
+      render(
+        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        container
+      );
       await flushLazyLoad();
     });
 
@@ -181,9 +232,13 @@ describe("CreateAnnotationForm", () => {
   it("Cancel calls cancelEditingAnnotation", async () => {
     const { annotations, cancelEditingAnnotation } =
       createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
 
     await act(async () => {
-      render(<CreateAnnotationForm annotations={annotations} />, container);
+      render(
+        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        container
+      );
       await flushLazyLoad();
     });
 
@@ -195,5 +250,64 @@ describe("CreateAnnotationForm", () => {
     });
 
     expect(cancelEditingAnnotation).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the verse reference and quoted text when the annotated chapter is open in a tab", async () => {
+    const { annotations } = createMockAnnotationsManager(
+      createAnnotation({ verseNumbers: [2, 3] })
+    );
+    const tabs = createMockTabsManager(createChapterData());
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    const reference = container.querySelector(
+      ".sb-annotation-verse-quote-reference"
+    );
+    const text = container.querySelector(".sb-annotation-verse-quote-text");
+    expect(reference?.textContent).toBe("Genesis 1:2-3");
+    expect(text?.textContent).toBe("Verse 2 text. Verse 3 text.");
+  });
+
+  it("shows the reference only when no open tab has the annotated chapter loaded", async () => {
+    const { annotations } = createMockAnnotationsManager(
+      createAnnotation({ verseNumbers: [2, 3] })
+    );
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    const reference = container.querySelector(
+      ".sb-annotation-verse-quote-reference"
+    );
+    const text = container.querySelector(".sb-annotation-verse-quote-text");
+    expect(reference?.textContent).toBe("GEN 1:2-3");
+    expect(text).toBeNull();
+  });
+
+  it("renders no quote box for a whole-chapter annotation", async () => {
+    const { annotations } = createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager(createChapterData());
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    expect(container.querySelector(".sb-annotation-verse-quote")).toBeNull();
   });
 });

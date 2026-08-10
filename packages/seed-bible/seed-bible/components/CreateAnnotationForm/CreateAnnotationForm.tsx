@@ -3,7 +3,15 @@ import { lazy, Suspense } from "preact/compat";
 import { useRef, useState } from "preact/hooks";
 import type { Editor } from "@tiptap/core";
 import { useI18n } from "../../i18n/I18nManager";
-import type { AnnotationsManager } from "../../managers/AnnotationsManager";
+import {
+  annotationVerseNumbers,
+  findAnnotationChapterData,
+  formatAnnotationVerseNumbers,
+  type AnnotationsManager,
+} from "../../managers/AnnotationsManager";
+import { extractVerseText } from "../../managers/BibleToolsManager";
+import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
+import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
@@ -12,11 +20,12 @@ const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
 
 interface CreateAnnotationFormProps {
   annotations: AnnotationsManager;
+  tabs: TabsManager;
 }
 
 /** Create/edit-annotation screen shown inside the discover pane. */
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
-  const { annotations } = props;
+  const { annotations, tabs } = props;
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
   const editing = annotations.editingAnnotation.value;
@@ -28,6 +37,32 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   if (!editing) {
     return null;
   }
+
+  const verseNumbers = annotationVerseNumbers(editing);
+  const chapterData =
+    verseNumbers.length > 0 ? findAnnotationChapterData(editing, tabs) : null;
+  const bookName =
+    chapterData?.book.name ?? chapterData?.book.commonName ?? editing.bookId;
+  const verseReference =
+    verseNumbers.length > 0
+      ? `${bookName} ${editing.chapterNumber}:${formatAnnotationVerseNumbers(verseNumbers)}`
+      : null;
+  const verseQuoteText = chapterData
+    ? chapterData.chapter.content
+        .filter(
+          (c): c is ChapterVerse =>
+            c.type === "verse" && verseNumbers.includes(c.number)
+        )
+        .map((verse) =>
+          extractVerseText({
+            bookId: editing.bookId,
+            chapterNumber: editing.chapterNumber,
+            verse,
+            translationId: chapterData.translation.id,
+          })
+        )
+        .join(" ")
+    : null;
 
   const doSave = async () => {
     const editor = editorRef.current;
@@ -53,6 +88,17 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
 
   return (
     <div className="sb-discover-pane">
+      {verseReference ? (
+        <div className="sb-annotation-verse-quote">
+          <p className="sb-annotation-verse-quote-reference">
+            {verseReference}
+          </p>
+          {verseQuoteText ? (
+            <p className="sb-annotation-verse-quote-text">{verseQuoteText}</p>
+          ) : null}
+        </div>
+      ) : null}
+
       <Suspense
         fallback={
           <div

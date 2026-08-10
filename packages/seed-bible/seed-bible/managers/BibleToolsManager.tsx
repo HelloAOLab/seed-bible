@@ -1075,7 +1075,7 @@ function formatVerseRanges(verseNumbers: number[]): string {
 }
 
 /** Extracts and normalizes the plain text content of a single selected verse. */
-function extractVerseText(verse: BibleSelectedVerse): string {
+export function extractVerseText(verse: BibleSelectedVerse): string {
   return verse.verse.content
     .map((part) => {
       if (typeof part === "string") return part;

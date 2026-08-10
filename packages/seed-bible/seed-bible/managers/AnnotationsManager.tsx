@@ -11,6 +11,7 @@ import type { LoginManager } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
+import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 
 export interface AnnotationQuery {
   recordName?: string;
@@ -141,6 +142,27 @@ export function annotationVerseNumbers(
  * Formats verse numbers into a compact label, grouping consecutive runs:
  * `[3, 4, 5]` -> `"3-5"`, `[3, 4, 5, 7]` -> `"3-5,7"`, `[7]` -> `"7"`.
  */
+/**
+ * Finds the chapter data for an annotation's book/chapter, searching every
+ * open tab's currently loaded chapter. Returns null if the annotated chapter
+ * isn't loaded in any open tab (e.g. editing a note for a chapter the user
+ * has since navigated away from).
+ */
+export function findAnnotationChapterData(
+  annotation: Pick<Annotation, "bookId" | "chapterNumber">,
+  tabs: TabsManager
+): TranslationBookChapter | null {
+  return (
+    tabs.tabs.value
+      .map((tab) => tab.readingState.chapterData.value)
+      .find(
+        (c) =>
+          c?.book.id === annotation.bookId &&
+          c?.chapter.number === annotation.chapterNumber
+      ) ?? null
+  );
+}
+
 export function formatAnnotationVerseNumbers(verseNumbers: number[]): string {
   const sorted = Array.from(new Set(verseNumbers)).sort((a, b) => a - b);
   const groups: string[] = [];
