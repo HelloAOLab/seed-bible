@@ -13,6 +13,7 @@ import {
   type OfflineTranslationsManager,
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
+import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 
 /** How a set of translations should be folded into the known-translations list. */
 export interface MergeTranslationsOptions {
@@ -236,38 +237,22 @@ export interface VerseRefMatch {
   end: number;
 }
 
-/** Normalizes a book name for comparison: lowercased, whitespace collapsed. */
-function normalizeBookName(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 /**
- * Resolves a typed book name to a {@link BookId}.
+ * Resolves a typed book name to a {@link BookId} for free-text scanning and
+ * single-string refs in chat / footnotes.
  *
- * When `books` is provided, localized common/name/id matches are tried first
- * (exact, then a unique prefix), so e.g. spa_onbv "Esdras" maps to EZR. Falls
- * back to the English name / USFM id map via {@link getBookId}.
+ * When `books` is provided, only an exact match on localized common name, name,
+ * or id is tried (e.g. spa_onbv "Esdras" → EZR). Deliberate prefix abbreviations
+ * are intentionally not used here — short ordinary words like "Is" / "So" would
+ * otherwise become false-positive Isaiah / Song of Solomon links. Falls back to
+ * the English name / USFM id map via {@link getBookId}, which is already
+ * conservative about prefixes.
  */
 function resolveBookId(book: string, books?: TranslationBook[]): BookId | null {
   if (books?.length) {
-    const target = normalizeBookName(book);
-    const exact = books.find(
-      (b) =>
-        normalizeBookName(b.commonName) === target ||
-        normalizeBookName(b.name) === target ||
-        normalizeBookName(b.id) === target
-    );
+    const exact = exactTranslationBook(normalizeBookName(book), books);
     if (exact) {
       return exact.id as BookId;
-    }
-
-    const prefixes = books.filter(
-      (b) =>
-        normalizeBookName(b.commonName).startsWith(target) ||
-        normalizeBookName(b.name).startsWith(target)
-    );
-    if (prefixes.length === 1) {
-      return prefixes[0]!.id as BookId;
     }
   }
 
@@ -292,8 +277,9 @@ export function parseVerseReference(
   //   GEN 5-7        – chapter range (hyphen, en dash, or em dash)
   //   GEN 5:16-19    – verse range within one chapter
   //   GEN 1:1-2:10   – cross-chapter verse range
+  // Book names may include non-ASCII letters (e.g. Spanish "Génesis").
   const match = text.match(
-    /^\s*([0-9A-Za-z\s]+)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/
+    /^\s*((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+\p{L}[\p{L}\p{N}]*)*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/u
   );
 
   if (!match) {
@@ -354,19 +340,22 @@ export function parseVerseReference(
  * with its character offsets (start inclusive, end exclusive).
  *
  * @param books Optional current-translation books; searched before English
- * names / book ids so localized labels resolve correctly.
+ * names / book ids so localized labels resolve correctly. Matching is exact
+ * (plus conservative English ids via {@link getBookId}); free-text scanning
+ * does not apply unique-prefix expansion of short tokens.
  */
 export function parseVerseReferences(
   text: string,
   books?: TranslationBook[]
 ): VerseRefMatch[] {
   const results: VerseRefMatch[] = [];
-  // Book name patterns:
+  // Book name patterns (Unicode-aware so accented names like "Génesis" match):
   //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
-  //   [A-Za-z][A-Za-z0-9]* — word starting with a letter, e.g. "GEN", "John", "Kings"
-  //   (?:\s+[Oo][Ff]\s+[A-Za-z][A-Za-z0-9]*)? — optional "of …" for "Song of Solomon"
+  //   \p{L}[\p{L}\p{N}]* — word starting with a letter in any script
+  //   (?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)? — optional "of …" for "Song of Solomon"
+  // Word boundary: not preceded by a letter/digit (ASCII \b alone fails for non-ASCII).
   const pattern =
-    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*(?:\s+[Oo][Ff]\s+[A-Za-z][A-Za-z0-9]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
+    /(?<![\p{L}\p{N}])((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/gu;
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {

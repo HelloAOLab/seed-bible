@@ -698,6 +698,26 @@ describe("all 66 Protestant-canon books", () => {
   describe("with localized translation books", () => {
     const spaBooks = [
       {
+        id: "GEN",
+        name: "Génesis",
+        commonName: "Génesis",
+        title: null,
+        order: 1,
+        numberOfChapters: 50,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 1533,
+      },
+      {
+        id: "EXO",
+        name: "Éxodo",
+        commonName: "Éxodo",
+        title: null,
+        order: 2,
+        numberOfChapters: 40,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 1213,
+      },
+      {
         id: "EZR",
         name: "Esdras",
         commonName: "Esdras",
@@ -706,6 +726,16 @@ describe("all 66 Protestant-canon books", () => {
         numberOfChapters: 10,
         firstChapterNumber: 1,
         totalNumberOfVerses: 280,
+      },
+      {
+        id: "NEH",
+        name: "Nehemías",
+        commonName: "Nehemías",
+        title: null,
+        order: 16,
+        numberOfChapters: 13,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 406,
       },
       {
         id: "1CO",
@@ -786,6 +816,31 @@ describe("all 66 Protestant-canon books", () => {
       );
     });
 
+    it("matches accented localized book names in the prose scanner", () => {
+      expect(parseVerseReferences("Génesis 3", spaBooks)).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "GEN", chapter: 3 },
+        })
+      );
+      expect(
+        parseVerseReferences("Lee Éxodo 2 conmigo", spaBooks)
+      ).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "EXO", chapter: 2 },
+        })
+      );
+      expect(parseVerseReferences("Ver Nehemías 1:5", spaBooks)).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "NEH", chapter: 1, verse: 5 },
+        })
+      );
+      expect(parseVerseReference("Génesis 3:1", spaBooks)).toEqual({
+        book: "GEN",
+        chapter: 3,
+        verse: 1,
+      });
+    });
+
     it("matches localized names case-insensitively", () => {
       expect(parseVerseReference("esdras 3", spaBooks)).toEqual({
         book: "EZR",
@@ -798,22 +853,39 @@ describe("all 66 Protestant-canon books", () => {
       });
     });
 
-    it("matches a unique localized prefix", () => {
-      expect(parseVerseReference("Esd 3", spaBooks)).toEqual({
-        book: "EZR",
-        chapter: 3,
-      });
-      expect(parseVerseReference("Filip 2", spaBooks)).toEqual({
-        book: "PHP",
-        chapter: 2,
-      });
+    it("does not unique-prefix expand short tokens when scanning prose", () => {
+      // Prefix matching belongs in the deliberate single-reference parser, not
+      // free-text scanning — otherwise "Is 3" becomes Isaiah, "So 3" Song, etc.
+      expect(parseVerseReferences("See Esd 3 for context", spaBooks)).toEqual(
+        []
+      );
       expect(
         parseVerseReferences("See Filip 2:1 for context", spaBooks)
+      ).toEqual([]);
+      // Exact full names still match.
+      expect(
+        parseVerseReferences("See Filipenses 2:1 for context", spaBooks)
       ).toContainEqual(
         expect.objectContaining({
           ref: { book: "PHP", chapter: 2, verse: 1 },
         })
       );
+    });
+
+    it("does not treat ordinary short English words as book abbreviations", () => {
+      // These match unique English prefixes only if we reintroduce "name starts
+      // with token" matching — they must stay unlinked in chat/footnotes.
+      const ordinary = [
+        "Is 3 enough for everyone?",
+        "So 3 people showed up",
+        "Am 3 sure about this",
+        "Ho 1 waited",
+        "Ru 2 left early",
+      ];
+      for (const text of ordinary) {
+        expect(parseVerseReferences(text, spaBooks)).toEqual([]);
+        expect(parseVerseReferences(text)).toEqual([]);
+      }
     });
 
     it("matches numbered localized book names", () => {

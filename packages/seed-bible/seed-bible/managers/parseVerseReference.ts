@@ -1,11 +1,11 @@
 import { getBookId } from "./BibleDataManager";
+import {
+  exactTranslationBook,
+  normalizeBookName,
+  prefixTranslationBooks,
+} from "./bookNameMatch";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 import type { VerseRef } from "./PlaylistManager";
-
-/** Normalizes a book name for comparison: lowercased, whitespace collapsed. */
-function normalize(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
 
 /** Whether the given chapter number falls within the book's chapter range. */
 export function bookHasChapter(
@@ -15,33 +15,6 @@ export function bookHasChapter(
   const first = book.firstChapterNumber;
   const last = first + book.numberOfChapters - 1;
   return chapter >= first && chapter <= last;
-}
-
-/** Exact (case-insensitive) match on the book's common name, name, or id. */
-function exactBook(
-  target: string,
-  books: TranslationBook[]
-): TranslationBook | null {
-  return (
-    books.find(
-      (b) =>
-        normalize(b.commonName) === target ||
-        normalize(b.name) === target ||
-        normalize(b.id) === target
-    ) ?? null
-  );
-}
-
-/** All books whose common name or name starts with the target. */
-function prefixBooks(
-  target: string,
-  books: TranslationBook[]
-): TranslationBook[] {
-  return books.filter(
-    (b) =>
-      normalize(b.commonName).startsWith(target) ||
-      normalize(b.name).startsWith(target)
-  );
 }
 
 /**
@@ -147,13 +120,13 @@ export function parseVerseReferences(
   const chapter = Number(chapterStr);
   const isBareNumber = !verseStr && !endChapterStr && !endVerseStr;
 
-  const target = normalize(bookName);
+  const target = normalizeBookName(bookName);
   let nameMatches: TranslationBook[] = [];
   if (books?.length) {
-    const exact = exactBook(target, books);
+    const exact = exactTranslationBook(target, books);
     // An exact match resolves to a single book; otherwise every prefix match is a
     // candidate to be narrowed by chapter below.
-    nameMatches = exact ? [exact] : prefixBooks(target, books);
+    nameMatches = exact ? [exact] : prefixTranslationBooks(target, books);
   }
 
   if (nameMatches.length === 0) {
