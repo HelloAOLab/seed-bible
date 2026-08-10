@@ -438,7 +438,8 @@ export function createTabs(
             : undefined,
       },
       discoverManager,
-      readingExtensionManager
+      readingExtensionManager,
+      getAnnotationsManager
     );
 
     if (isSelected && highlightedVerses.length > 0 && descriptor.bookId) {
