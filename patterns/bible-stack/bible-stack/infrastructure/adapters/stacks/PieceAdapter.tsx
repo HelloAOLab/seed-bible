@@ -30,7 +30,10 @@ export class PieceAdapter implements BooksPieceAdapterPort, DragPieceAdapterPort
 
   isPieceAnchored: (piece: Piece) => boolean = (piece) => {
     const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
-    return !!pieceBot?.tags.draggable;
+    if(!pieceBot) {
+      throw new Error("PieceAdapter: pieceBot not found at isPieceAnchored.");
+    }
+    return !pieceBot.tags.draggable;
   };
   anchorPiece(piece: Piece) {
     const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);

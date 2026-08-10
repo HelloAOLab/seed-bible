@@ -1390,7 +1390,6 @@ export const bootstrapExtension = () => {
       default:
         break;
     }
-    os.enableCustomDragging();
   });
 
   listenTagEventBus.subscribe("onDragging", ({ bot, params }) => {

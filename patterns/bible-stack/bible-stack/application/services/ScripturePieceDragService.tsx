@@ -37,7 +37,7 @@ type PieceConditionGetter = (params: {
   piece: Piece;
 }) => boolean;
 
-const bookConditionGetter: PieceConditionGetter = ({
+const baseConditionGetter: PieceConditionGetter = ({
   pieceAdapterPort,
   piece,
 }) => {
@@ -47,7 +47,11 @@ const bookConditionGetter: PieceConditionGetter = ({
 const pieceConditionStrategy: Partial<
   Record<BiblePiece, PieceConditionGetter>
 > = {
-  [BiblePieces.StackBook]: bookConditionGetter,
+  [BiblePieces.StackTestament]: baseConditionGetter,
+  [BiblePieces.StackSection]: baseConditionGetter,
+  [BiblePieces.StackSectionBook]: baseConditionGetter,
+  [BiblePieces.StackBook]: baseConditionGetter,
+  [BiblePieces.StackChapter]: baseConditionGetter,
 };
 
 // prettier-ignore
