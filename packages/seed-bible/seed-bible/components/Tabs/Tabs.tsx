@@ -1020,10 +1020,7 @@ function TabRow(props: TabRowProps) {
   };
 
   return (
-    <div
-      className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}
-      dir={tab.readingState.translation.value?.textDirection ?? "auto"}
-    >
+    <div className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}>
       <button
         onClick={() => {
           closeContextMenus();
@@ -1032,7 +1029,13 @@ function TabRow(props: TabRowProps) {
         }}
         className={`sb-tab-button`}
       >
-        <div className="sb-tab-main-content">
+        {/* Only the label takes the translation's direction — the row itself
+            stays in the UI direction, or an English translation would pin the
+            whole card to LTR inside an otherwise RTL sidebar. */}
+        <div
+          className="sb-tab-main-content"
+          dir={tab.readingState.translation.value?.textDirection ?? "auto"}
+        >
           <span className="sb-tab-main-title">{title}</span>
           <span className="sb-tab-main-sep" aria-hidden="true">
             •

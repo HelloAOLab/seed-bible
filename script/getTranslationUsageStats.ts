@@ -214,6 +214,26 @@ function getToolTitleTranslationKey(node: Node): {
 }
 
 /**
+ * Tutorial steps carry their translation keys as `titleKey`/`bodyKey` data and
+ * the tour component resolves them at render time, so there is no literal
+ * `t("...")` call to find. Read them off the step objects instead.
+ */
+function getTutorialStepTranslationKeys(node: Node): string[] {
+  if (!node.isKind(SyntaxKind.ObjectLiteralExpression)) {
+    return [];
+  }
+
+  const keys: string[] = [];
+  for (const propertyName of ["titleKey", "bodyKey"]) {
+    const key = getObjectPropertyStaticString(node, propertyName);
+    if (key) {
+      keys.push(key);
+    }
+  }
+  return keys;
+}
+
+/**
  * Parses the TypeScript project and returns usage stats for t("...") translation calls.
  * Keys are formatted as "ns:key" when a namespace can be determined.
  */
@@ -273,6 +293,17 @@ export function getTranslationUsageStats(
     for (const node of sourceFile.getDescendantsOfKind(
       SyntaxKind.ObjectLiteralExpression
     )) {
+      for (const key of getTutorialStepTranslationKeys(node)) {
+        totalTranslationCalls += 1;
+        recordTranslationUsage(
+          usage,
+          translationKeysByNamespace,
+          key,
+          null,
+          filePath
+        );
+      }
+
       const titleTranslation = getToolTitleTranslationKey(node);
       if (!titleTranslation) {
         continue;
