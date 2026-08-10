@@ -111,17 +111,42 @@ function createHarness(options?: {
     panes: { closePane: vi.fn() },
   } as unknown as SeedBibleState;
 
-  const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+  // Mirrors the real reading state closely enough for the switch path: loading
+  // a chapter clears the selection and publishes the new `chapterData`.
+  const chapterData = signal<TranslationBookChapter | null>(null);
+  const selectedVerses = signal<unknown[]>([]);
+  const selectTranslationAndChapter = vi
+    .fn()
+    .mockImplementation(async (translationId: string) => {
+      selectedVerses.value = [];
+      chapterData.value = {
+        translation: { id: translationId },
+        chapter: {
+          number: 1,
+          content: [verse(1, "switched text"), verse(2, "second verse")],
+          footnotes: [],
+        },
+      } as unknown as TranslationBookChapter;
+    });
+
   const state = createCompareState(context);
   state.sourceReadingState.value = {
     translationId: signal("eng_kjv"),
     bookId: signal("JHN"),
     chapterNumber: signal(3),
     translationBooks: signal({ books: [{ id: "JHN", name: "John" }] }),
+    chapterData,
+    selectedVerses,
     selectTranslationAndChapter,
   } as unknown as BibleReadingState;
 
-  return { context, state, login, selectTranslationAndChapter };
+  return {
+    context,
+    state,
+    login,
+    selectTranslationAndChapter,
+    selectedVerses,
+  };
 }
 
 function mount(node: preact.ComponentChild) {
@@ -333,15 +358,82 @@ describe("ComparePane", () => {
       switchable[0]!.click();
     });
 
-    // Keeps the reader's place rather than jumping to the first book.
+    // Goes to the verses the pane was showing (John 1:1), not the reader's
+    // current chapter, and asks the reader to centre the first of them.
     expect(selectTranslationAndChapter).toHaveBeenCalledWith(
       "eng_bsb",
       "JHN",
-      3
+      1,
+      { scrollToVerse: 1 }
     );
     // Persisted the same way the reader's own translation list does.
     expect(login.localConfig.value.translationId).toBe("eng_bsb");
     expect(context.panes.closePane).toHaveBeenCalled();
+  });
+
+  it("reselects the compared verses in the translation it switched to", async () => {
+    const { context, state, selectedVerses } = createHarness({
+      savedIds: ["eng_bsb"],
+    });
+    states.push(state);
+    state.snapshot.value = snapshotSelection([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "x"),
+        translationId: "eng_kjv",
+      },
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(2, "y"),
+        translationId: "eng_kjv",
+      },
+    ]);
+
+    const node = <ComparePane context={context} state={state} />;
+    const container = mount(node);
+    containers.push(container);
+    await settle(container, node);
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-compare-block-header--switch")!
+        .click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // The same two verses, but the new translation's text.
+    expect(
+      selectedVerses.value.map((entry) => {
+        const selected = entry as {
+          verse: ChapterVerse;
+          translationId: string;
+          bookId: string;
+          chapterNumber: number;
+        };
+        return {
+          number: selected.verse.number,
+          translationId: selected.translationId,
+          bookId: selected.bookId,
+          chapterNumber: selected.chapterNumber,
+        };
+      })
+    ).toEqual([
+      {
+        number: 1,
+        translationId: "eng_bsb",
+        bookId: "JHN",
+        chapterNumber: 1,
+      },
+      {
+        number: 2,
+        translationId: "eng_bsb",
+        bookId: "JHN",
+        chapterNumber: 1,
+      },
+    ]);
   });
 
   it("leaves the translation being read as plain, unclickable text", async () => {

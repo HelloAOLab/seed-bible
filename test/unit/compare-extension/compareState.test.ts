@@ -23,6 +23,7 @@ import {
   removeId,
   reorderIds,
   resolveCompareOrder,
+  selectedVersesForChapter,
   snapshotSelection,
   versesFromChapter,
 } from "@packages/compare-extension/ext_Compare/compareState";
@@ -391,5 +392,75 @@ describe("createCompareState loading", () => {
     state.retryTranslation("eng_kjv");
     expect(getTranslationBookChapter).toHaveBeenCalledTimes(2);
     state.dispose();
+  });
+});
+
+describe("selectedVersesForChapter", () => {
+  const group = { bookId: "JHN", chapterNumber: 1, verseNumbers: [1, 2] };
+
+  it("rebuilds the selection from the new translation's own verses", () => {
+    const chapter = chapterWith([verse(1, "first"), verse(2, "second")]);
+
+    const selected = selectedVersesForChapter({
+      chapter,
+      group,
+      translationId: "eng_bsb",
+      now: 1234,
+    });
+
+    expect(selected).toEqual([
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(1, "first"),
+        translationId: "eng_bsb",
+        selectedAt: 1234,
+      },
+      {
+        bookId: "JHN",
+        chapterNumber: 1,
+        verse: verse(2, "second"),
+        translationId: "eng_bsb",
+        selectedAt: 1234,
+      },
+    ]);
+  });
+
+  it("narrows the selection when a verse is missing from the translation", () => {
+    const chapter = chapterWith([verse(1, "only this one")]);
+
+    const selected = selectedVersesForChapter({
+      chapter,
+      group,
+      translationId: "eng_bsb",
+    });
+
+    expect(selected.map((entry) => entry.verse.number)).toEqual([1]);
+  });
+
+  it("anchors the verse toolbar when given a position", () => {
+    const chapter = chapterWith([verse(1, "first")]);
+
+    const [selected] = selectedVersesForChapter({
+      chapter,
+      group,
+      translationId: "eng_bsb",
+      anchor: { x: 400, y: 300 },
+    });
+
+    expect(selected).toMatchObject({ selectionX: 400, selectionY: 300 });
+  });
+
+  it("leaves the anchor off when there is no position to give", () => {
+    const chapter = chapterWith([verse(1, "first")]);
+
+    const [selected] = selectedVersesForChapter({
+      chapter,
+      group,
+      translationId: "eng_bsb",
+    });
+
+    expect(selected).not.toHaveProperty("selectionX");
+    expect(selected).not.toHaveProperty("selectionY");
   });
 });

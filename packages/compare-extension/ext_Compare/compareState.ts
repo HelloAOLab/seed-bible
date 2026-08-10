@@ -226,6 +226,40 @@ export function formatSnapshotReference(
     .join("; ");
 }
 
+/**
+ * Builds the selection to restore after switching translations: the compared
+ * verses, as they exist in the new translation.
+ *
+ * Verse numbers absent from the new translation are dropped rather than faked,
+ * so a versification difference narrows the selection instead of breaking it.
+ * `selectedAt` and the anchor coordinates match what `selectVerse` records, so
+ * the verse toolbar positions itself the same way it would after a real tap.
+ */
+export function selectedVersesForChapter(options: {
+  chapter: TranslationBookChapter;
+  group: CompareSnapshotGroup;
+  translationId: string;
+  anchor?: { x: number; y: number } | null;
+  now?: number;
+}): BibleSelectedVerse[] {
+  const {
+    chapter,
+    group,
+    translationId,
+    anchor = null,
+    now = Date.now(),
+  } = options;
+
+  return versesFromChapter(chapter, group.verseNumbers).map((verse) => ({
+    bookId: group.bookId,
+    chapterNumber: group.chapterNumber,
+    verse,
+    translationId,
+    selectedAt: now,
+    ...(anchor ? { selectionX: anchor.x, selectionY: anchor.y } : {}),
+  }));
+}
+
 /** Cache key for one translation's copy of one chapter. */
 export function chapterCacheKey(
   translationId: string,
@@ -249,6 +283,18 @@ export function versesFromChapter(
   return verseNumbers
     .map((number) => byNumber.get(number))
     .filter((verse): verse is ChapterVerse => !!verse);
+}
+
+/**
+ * Where the verse toolbar should anchor itself for a selection the reader did
+ * not click: the middle of the viewport, which is where `scrollToVerse` puts
+ * the first selected verse. Null outside a browser.
+ */
+function viewportCentre(): { x: number; y: number } | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 }
 
 export interface CompareState {
@@ -410,21 +456,48 @@ export function createCompareState(context: SeedBibleState): CompareState {
       return;
     }
 
-    // Where the reader is now, not where the snapshot was taken — it may have
-    // moved on since Compare was opened, and a switch shouldn't drag it back.
-    const firstGroup = snapshot.peek()?.groups[0];
-    const bookId = readingState.bookId.peek() ?? firstGroup?.bookId;
+    // Go to the verses the pane is showing, not wherever the reader has since
+    // wandered — the header being clicked belongs to a block of specific
+    // verses, so "read this translation" means read *these* verses in it.
+    const group = snapshot.peek()?.groups[0];
+    const bookId = group?.bookId ?? readingState.bookId.peek();
     if (!bookId) {
       return;
     }
     const chapterNumber =
-      readingState.chapterNumber.peek() ?? firstGroup?.chapterNumber ?? 1;
+      group?.chapterNumber ?? readingState.chapterNumber.peek() ?? 1;
+    const firstVerse = group?.verseNumbers[0];
 
-    void readingState.selectTranslationAndChapter(
-      translationId,
-      bookId,
-      chapterNumber
-    );
+    // `scrollToVerse` is the reader's own deep-link mechanism; TabsLayout
+    // centres the verse in the viewport once the chapter renders.
+    void readingState
+      .selectTranslationAndChapter(translationId, bookId, chapterNumber, {
+        ...(firstVerse !== undefined ? { scrollToVerse: firstVerse } : {}),
+      })
+      .then(() => {
+        if (!group) {
+          return;
+        }
+        // Loading a chapter clears the selection, so this has to run after the
+        // load settles rather than alongside it.
+        const chapter = readingState.chapterData.peek();
+        if (!chapter || chapter.translation.id !== translationId) {
+          return;
+        }
+        readingState.selectedVerses.value = selectedVersesForChapter({
+          chapter,
+          group,
+          translationId,
+          anchor: viewportCentre(),
+        });
+      })
+      .catch((error: unknown) => {
+        console.error(
+          `Compare: failed to switch the reader to '${translationId}'.`,
+          error
+        );
+      });
+
     void saveProfileConfigValue(login, PROFILE_TRANSLATION_ID, translationId);
     context.panes.closePane(COMPARE_PANE_ID);
   };
