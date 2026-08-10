@@ -11,7 +11,75 @@ import {
   TranslationViewModeMenu,
 } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
-import { addId, removeId, type CompareState } from "./compareState";
+import {
+  addId,
+  removeId,
+  type CompareOrderEntry,
+  type CompareState,
+} from "./compareState";
+
+/**
+ * Chips for every translation already in the comparison, shown above the
+ * search row. Sourced from `state.order`, same as `CompareSettings`. The
+ * current translation only gets a remove icon once it's also saved
+ * (`savedIndex >= 0`) — until then, clicking it adds rather than removes.
+ */
+function SelectedTranslations(props: {
+  translations: Translation[];
+  order: CompareOrderEntry[];
+  onToggle: (translation: Translation) => void;
+}) {
+  const { translations, order, onToggle } = props;
+  const { t } = useI18n("compare-extension");
+
+  const entries = order
+    .map((entry) => ({
+      entry,
+      translation:
+        translations.find((translation) => translation.id === entry.id) ?? null,
+    }))
+    .filter(
+      (item): item is { entry: CompareOrderEntry; translation: Translation } =>
+        item.translation !== null
+    );
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="sb-compare-picker-selected">
+      <span className="sb-compare-picker-note">
+        {t("selected-translations", { defaultValue: "Selected" })}
+      </span>
+      <div className="sb-compare-picker-selected-list">
+        {entries.map(({ entry, translation }) => {
+          const removable = !entry.isCurrent || entry.savedIndex >= 0;
+          const removeLabel = t("remove-translation", {
+            defaultValue: "Remove translation",
+          });
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              className="sb-compare-picker-selected-chip"
+              aria-label={translation.name}
+              title={removable ? removeLabel : translation.name}
+              onClick={() => onToggle(translation)}
+            >
+              <span className="sb-compare-block-abbreviation" dir="auto">
+                {translation.shortName}
+              </span>
+              {removable && (
+                <MaterialIcon aria-hidden="true">close</MaterialIcon>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /** How many more language groups each "load more" reveals. */
 const PAGE_SIZE = 50;
@@ -69,6 +137,12 @@ export function TranslationPicker(props: {
 
   return (
     <div className="sb-compare-picker">
+      <SelectedTranslations
+        translations={translations}
+        order={state.order.value}
+        onToggle={toggle}
+      />
+
       <div className="sb-compare-picker-search-row">
         <div className="searchbar flex-align-center sb-compare-search">
           <span className="material-symbols-outlined search-icon">search</span>

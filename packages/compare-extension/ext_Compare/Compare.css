@@ -306,6 +306,49 @@
   color: var(--sb-font-color);
 }
 
+/* Translations already in the comparison. */
+.sb-compare-picker-selected {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Scrolls past ~3.5 rows so a long comparison doesn't push the rest down. */
+.sb-compare-picker-selected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 7rem;
+  overflow-y: auto;
+}
+
+.sb-compare-picker-selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-compare-picker-selected-chip:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-compare-picker-selected-chip:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-compare-picker-selected-chip .material-symbols-outlined {
+  font-size: 1rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
 /* Search input and catalog filter share a row; the filter's menu is anchored
    to it. */
 .sb-compare-picker-search-row {
