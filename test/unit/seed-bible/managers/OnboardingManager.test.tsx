@@ -68,4 +68,26 @@ describe("createOnboardingManager", () => {
     expect(onboarding.installed.value).toBe(false);
     expect(onboarding.installAvailable.value).toBe(true);
   });
+
+  it("treats a standalone (installed-PWA) session as installed", () => {
+    // jsdom has no matchMedia by default, so without this stub every test
+    // only covers the browser-tab (not-installed) branch.
+    const matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+    vi.stubGlobal("matchMedia", matchMedia);
+
+    try {
+      const onboarding = createOnboardingManager(createLogin());
+
+      expect(matchMedia).toHaveBeenCalledWith("(display-mode: standalone)");
+      expect(onboarding.standalone).toBe(true);
+      expect(onboarding.installed.value).toBe(true);
+      expect(onboarding.installAvailable.value).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
