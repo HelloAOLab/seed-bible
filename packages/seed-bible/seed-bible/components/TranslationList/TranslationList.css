@@ -136,18 +136,16 @@
   border-radius: 50%;
 }
 
-/* Canon-coverage ring. Bigger and thicker than the old 15px/2px circle so the
-   arc is actually readable — at the old size the interior swamped the ring and
-   it read as a dot. Colours are theme tokens: the interior used to be a
+/* Canon-coverage ring. Colours are theme tokens: the interior used to be a
    hardcoded `white` and the unfilled track `#eee`, which turned the whole thing
    into a bright blob in dark mode. */
 .sb-translation-completion {
   flex: 0 0 auto;
   display: inline-block;
   box-sizing: border-box;
-  height: 1.125rem;
-  width: 1.125rem;
-  border: 3px solid transparent;
+  height: 0.9375rem;
+  width: 0.9375rem;
+  border: 2px solid transparent;
   border-radius: 50%;
 }
 
