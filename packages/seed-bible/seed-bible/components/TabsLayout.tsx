@@ -3,7 +3,11 @@ import {
   CHAPTER_SKELETON_DELAY_MS,
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
-import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
+import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
+import type {
+  ApiRequestOptions,
+  TranslationBookChapter,
+} from "../managers/FreeUseBibleAPI";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
@@ -233,6 +237,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   }, [scroller, isMobile, readingState]);
 
   const currentChapterValue = readingState.chapterData.value;
+  // Reading `.value` here subscribes this component to playback position, which
+  // the swipe previews below depend on (the queue decides the neighbour).
+  const playbackStep =
+    state?.playlists?.playing.value?.currentIndex.value ?? null;
 
   useEffect(() => {
     if (!isMobile || !state) {
@@ -254,38 +262,40 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     // dropped once every caller that can walk away has — so cancellation would
     // be inert on mobile, which is where it matters most.
     const controller = new AbortController();
-    const prefetchOptions = { signal: controller.signal };
+    const prefetchOptions: ApiRequestOptions = { signal: controller.signal };
 
-    if (readingState.hasPrevious.value) {
-      state.bibleData
-        .getPreviousChapter(chapterData, prefetchOptions)
+    // `getAdjacentChapter` — not `bibleData.getNextChapter` — because an enabled
+    // reading extension can redirect where next/previous actually go. While a
+    // reading plan session or playlist is playing, the next chapter is the
+    // queue's next step, which for a session spanning two books is not the
+    // chapter that follows this one. Previewing the canonical neighbour made the
+    // swipe animate in one chapter and then land on another.
+    const loadPreview = (
+      direction: "next" | "previous",
+      set: (chapter: TranslationBookChapter | null) => void
+    ) => {
+      readingState
+        .getAdjacentChapter(direction, prefetchOptions)
         .then((result) => {
           if (!cancelled) {
-            setPrevChapterPreview(result ?? null);
+            set(result ?? null);
           }
         })
         .catch(() => {
           if (!cancelled) {
-            setPrevChapterPreview(null);
+            set(null);
           }
         });
+    };
+
+    if (readingState.hasPrevious.value) {
+      loadPreview("previous", setPrevChapterPreview);
     } else {
       setPrevChapterPreview(null);
     }
 
     if (readingState.hasNext.value) {
-      state.bibleData
-        .getNextChapter(chapterData, prefetchOptions)
-        .then((result) => {
-          if (!cancelled) {
-            setNextChapterPreview(result ?? null);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setNextChapterPreview(null);
-          }
-        });
+      loadPreview("next", setNextChapterPreview);
     } else {
       setNextChapterPreview(null);
     }
@@ -300,6 +310,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     currentChapterValue?.translation.id,
     currentChapterValue?.book.id,
     currentChapterValue?.chapter.number,
+    // While playing, the neighbour depends on the queue position too — without
+    // this the preview would keep showing the step the reader has left behind.
+    playbackStep,
   ]);
 
   useEffect(() => {
@@ -617,8 +630,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }, 50);
   };
 
+  // On mobile the reader's chapter panel is the scroll container, so the card
+  // goes inside it (via `belowContent`) and is reached by scrolling to the end
+  // of the passage. On desktop the pane itself scrolls, so it stays a sibling
+  // rendered after the reader.
+  const belongsCard = (
+    <ReadingPlanBelongsCard state={state} readingState={readingState} />
+  );
+
   const mobileChrome = isMobile
     ? {
+        belowContent: belongsCard,
         isScrolled,
         prevChapterPreview,
         nextChapterPreview,
@@ -652,6 +674,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         mobileChrome={mobileChrome}
         sharedSession={tab.sharedSession}
       />
+      {!isMobile && belongsCard}
       {!isMobile && (
         <BelowReaderToolbar
           toolsManager={state.tools}
