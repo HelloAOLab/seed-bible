@@ -12,12 +12,24 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <link rel="icon" href="./standalone/img/favicon.ico" />
-    <link rel="apple-touch-icon" href="./standalone/img/apple-touch-icon.png" />
+    <link rel="icon" href="/standalone/img/favicon.ico" />
+    <link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://assets.seedbible.org" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin="anonymous"
+    />
+    <link rel="preconnect" href="https://vmfnri.helloao.org" />
+    <link rel="dns-prefetch" href="https://i.seedbible.org" />
+    <link rel="dns-prefetch" href="https://auth.seedbible.org" />
     <meta property="og:type" content="website" />
+    <!-- `content` is rewritten at build time to the emitted asset's absolute
+         URL — see script/lib/vite-plugin-html-meta-assets.ts. -->
     <meta
       property="og:image"
-      content="./standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"
+      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"
     />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
@@ -33,7 +45,7 @@
       }
     </style>
     <!-- META -->
-    <script type="application/json">
+    <script type="application/json" id="app-config">
       <!-- CONFIG_JSON -->
     </script>
   </head>
@@ -41,6 +53,6 @@
     <div id="app">
       <!-- APP_HTML -->
     </div>
-    <script type="module" src="./standalone/index.tsx"></script>
+    <script type="module" src="/standalone/index.tsx"></script>
   </body>
 </html>

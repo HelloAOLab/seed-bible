@@ -105,7 +105,10 @@ jobs:
 
       - name: Generate build size report
         run: |
-          ARGS=(report --head size-head.json --out size-report.md --threshold-kb 300)
+          # 50 KB rather than 300: the eager vendor chunk is now ~230 KB, so a
+          # 300 KB allowance would let it more than double without comment. A
+          # single mistakenly-eager import is the failure mode worth catching.
+          ARGS=(report --head size-head.json --out size-report.md --threshold-kb 50)
           if [ -f size-base.json ]; then
             ARGS+=(--base size-base.json)
           elif [ "${{ github.event_name }}" = "pull_request" ]; then

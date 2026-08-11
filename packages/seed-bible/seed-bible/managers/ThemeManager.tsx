@@ -414,10 +414,16 @@ export interface ThemeHighlightColor {
 export interface BibleThemeHighlightColors {
   yellow: ThemeHighlightColor;
   green: ThemeHighlightColor;
+  cyan: ThemeHighlightColor;
   blue: ThemeHighlightColor;
+  red: ThemeHighlightColor;
+  magenta: ThemeHighlightColor;
   pink: ThemeHighlightColor;
   purple: ThemeHighlightColor;
   orange: ThemeHighlightColor;
+  cream: ThemeHighlightColor;
+  gray: ThemeHighlightColor;
+  tan: ThemeHighlightColor;
 
   [colorId: string]: ThemeHighlightColor;
 }
@@ -497,7 +503,7 @@ const LIGHT_THEME: BibleTheme = {
     bookSelectorFontFamily: "inherit",
     bookSelectorFontColor: "#333",
 
-    fontFamily: "Satoshi, system-ui, sans-serif",
+    fontFamily: "system-ui, sans-serif",
     fontColor: "#333",
 
     bookTitleFontFamily: "Newsreader, serif",
@@ -566,7 +572,7 @@ const LIGHT_THEME: BibleTheme = {
     toolbarIconInvert: "0",
 
     readerToolbarFontColor: "#333",
-    readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
+    readerToolbarFontFamily: "system-ui, sans-serif",
 
     dividerColor: "rgba(0, 0, 0, 0.12)",
     shadowColor: "rgba(0, 0, 0, 0.14)",
@@ -590,8 +596,23 @@ const LIGHT_THEME: BibleTheme = {
       fontColor: "#333",
       wordsOfJesusFontColor: "#e07b4c",
     },
+    cyan: {
+      color: "#80deea",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
     blue: {
       color: "#90caf9",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    red: {
+      color: "#ef9a9a",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#c62828",
+    },
+    magenta: {
+      color: "#ea80fc",
       fontColor: "#333",
       wordsOfJesusFontColor: "#e07b4c",
     },
@@ -607,6 +628,21 @@ const LIGHT_THEME: BibleTheme = {
     },
     orange: {
       color: "#ffcc80",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    cream: {
+      color: "#fff8e1",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    gray: {
+      color: "#cfd8dc",
+      fontColor: "#333",
+      wordsOfJesusFontColor: "#e07b4c",
+    },
+    tan: {
+      color: "#e0c9a6",
       fontColor: "#333",
       wordsOfJesusFontColor: "#e07b4c",
     },
@@ -642,7 +678,7 @@ const DARK_THEME: BibleTheme = {
     bookSelectorFontFamily: "inherit",
     bookSelectorFontColor: "#e6e6e6",
 
-    fontFamily: "Satoshi, system-ui, sans-serif",
+    fontFamily: "system-ui, sans-serif",
     fontColor: "#e6e6e6",
 
     bookTitleFontFamily: "Newsreader, serif",
@@ -709,7 +745,7 @@ const DARK_THEME: BibleTheme = {
     toolbarIconInvert: "1",
 
     readerToolbarFontColor: "#e6e6e6",
-    readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
+    readerToolbarFontFamily: "system-ui, sans-serif",
 
     dividerColor: "rgba(255, 255, 255, 0.1)",
     shadowColor: "rgba(0, 0, 0, 0.6)",
@@ -742,8 +778,23 @@ const DARK_THEME: BibleTheme = {
       fontColor: "#ffffff",
       wordsOfJesusFontColor: "#ff9e80",
     },
+    cyan: {
+      color: "#1a6b73",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
     blue: {
       color: "#2f5f9e",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    red: {
+      color: "#8e3a3a",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    magenta: {
+      color: "#7a2f6e",
       fontColor: "#ffffff",
       wordsOfJesusFontColor: "#ff9e80",
     },
@@ -759,6 +810,21 @@ const DARK_THEME: BibleTheme = {
     },
     orange: {
       color: "#98551c",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    cream: {
+      color: "#6b6040",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    gray: {
+      color: "#4a4a4a",
+      fontColor: "#ffffff",
+      wordsOfJesusFontColor: "#ff9e80",
+    },
+    tan: {
+      color: "#6d4c33",
       fontColor: "#ffffff",
       wordsOfJesusFontColor: "#ff9e80",
     },
@@ -878,10 +944,16 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
 export const DEFAULT_HIGHLIGHT_IDS = [
   "yellow",
   "green",
+  "cyan",
   "blue",
+  "red",
+  "magenta",
   "pink",
   "purple",
   "orange",
+  "cream",
+  "gray",
+  "tan",
 ] as const;
 
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
@@ -963,117 +1035,6 @@ export interface ThemeManager {
   resetHighlightColor: (colorId: string) => void;
   resetAllHighlightColors: () => void;
 }
-
-// const SEPIA_THEME: BibleTheme = {
-//   id: "sepia",
-//   name: "Sepia",
-//   variables: {
-//     primaryColor: "#b5803d",
-//     primaryFontColor: "#fff8ec",
-//     secondaryColor: "#e8d9b8",
-//     secondaryFontColor: "#5b4636",
-//     tertiaryColor: "#ede1c7",
-//     background: "#f4ecd8",
-//     sidebarBackground: "#f0e6cf",
-//     sidebarFontFamily: "inherit",
-//     sidebarFontColor: "#5b4636",
-//     readerBackground: "#faf3e0",
-//     readerFontFamily: "inherit",
-//     readerFontColor: "#5b4636",
-//     bookSelectorBackground: "#f4ecd8",
-//     bookSelectorFontFamily: "inherit",
-//     bookSelectorFontColor: "#5b4636",
-//     fontFamily: "Satoshi, system-ui, sans-serif",
-//     fontColor: "#5b4636",
-//     bookTitleFontFamily: "Newsreader, serif",
-//     bookTitleFontColor: "#5b4636",
-//     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-//     chapterHeadingFontColor: "#7a5c3d",
-//     chapterHeadingFontStyle: "italic",
-//     verseFontFamily: "Newsreader, serif",
-//     verseFontColor: "#4a3828",
-//     verseCursor: "pointer",
-//     selectedVerseFontFamily: "inherit",
-//     selectedVerseFontColor: "inherit",
-//     selectedVerseBackgroundColor: "inherit",
-//     selectedVerseTextDecoration: "underline",
-//     selectedVerseTextDecorationColor: "currentColor",
-//     hebrewSubtitleFontFamily: "Newsreader, serif",
-//     hebrewSubtitleFontColor: "#7a5c3d",
-//     hebrewSubtitleFontStyle: "italic",
-//     readerToolbarBottom: "18px",
-//     readerToolbarGap: "10px",
-//     readerToolbarPadding: "8px 20px",
-//     readerToolbarBorderRadius: "22px",
-//     readerToolbarBackground: "#faf3e0",
-//     readerToolbarBorder: "1px solid #00000020",
-//     readerToolbarBoxShadow: "0 26px 10px #0000001a",
-//     readerToolbarZIndex: "99",
-//     readerToolbarHeight: "50px",
-//     readerToolbarFloatingButtonTop: "-68px",
-//     readerToolbarFloatingButtonWidth: "48px",
-//     readerToolbarFloatingButtonHeight: "48px",
-//     readerToolbarFloatingButtonBorder: "1px solid #00000020",
-//     readerToolbarFloatingButtonBorderRadius: "999px",
-//     readerToolbarFloatingButtonBackground: "#faf3e0",
-//     readerToolbarFloatingButtonFontColor: "#5b4636",
-//     readerToolbarFloatingButtonBoxShadow: "0 10px 24px #0000001a",
-//     verseToolbarGap: "10px",
-//     verseToolbarPadding: "8px 16px",
-//     verseToolbarBorderRadius: "10px",
-//     verseToolbarBorder: "1px solid #00000020",
-//     verseToolbarBoxShadow: "0 26px 10px #0000001a",
-//     verseToolbarZIndex: "100",
-//     verseToolbarMinHeight: "50px",
-//     readerToolbarMobileLayoutHeight: "70px",
-//     readerToolbarMobileLayoutPadding: "10px 14px",
-//     readerToolbarMobileLayoutGap: "8px",
-//     readerToolbarMobileLayoutItemSize: "44px",
-//     readerToolbarMobileLayoutCenterButtonSize: "52px",
-//     readerToolbarMobileLayoutButtonBorderRadius: "999px",
-//     readerToolbarFloatingButtonSideOffset: "16px",
-//     verseToolbarToolsGap: "10px",
-//     verseToolbarMobileBottom: "18px",
-//     tabBorder: "1px solid transparent",
-//     tabBackground: "inherit",
-//     tabFontColor: "inherit",
-//     selectedTabBorder: "1px solid var(--sb-primary-color)",
-//     selectedTabBackground: "var(--sb-secondary-color)",
-//     selectedTabFontColor: "var(--sb-primary-color)",
-//   },
-//   highlightColors: {
-//     yellow: {
-//       color: "#f6e58d",
-//       fontColor: "#5b4636",
-//       wordsOfJesusFontColor: "#b5803d",
-//     },
-//     green: {
-//       color: "#c5d3a8",
-//       fontColor: "#5b4636",
-//       wordsOfJesusFontColor: "#b5803d",
-//     },
-//     blue: {
-//       color: "#a8c5d3",
-//       fontColor: "#5b4636",
-//       wordsOfJesusFontColor: "#b5803d",
-//     },
-//     pink: {
-//       color: "#e3a8b5",
-//       fontColor: "#5b4636",
-//       wordsOfJesusFontColor: "#b5803d",
-//     },
-//     purple: {
-//       color: "#c2a8d3",
-//       fontColor: "#5b4636",
-//       wordsOfJesusFontColor: "#b5803d",
-//     },
-//     orange: {
-//       color: "#e3b88a",
-//       fontColor: "#5b4636",
-//       wordsOfJesusFontColor: "#b5803d",
-//     },
-//   },
-// };
 
 export function createTheme(settings: SettingsManager): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);

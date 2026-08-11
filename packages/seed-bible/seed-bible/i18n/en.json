@@ -442,5 +442,12 @@
   "loading-chapter": "Loading chapter…",
   "chapter-unavailable": "Chapter unavailable",
   "chapter-unavailable-description": "We were unable to load the data for this chapter. Please check your internet connection and try again.",
-  "reload": "Reload"
+  "reload": "Reload",
+  "book-not-found-title": "Book not found",
+  "book-not-found-message": "We couldn't find that book in {{translationName}}.",
+  "book-not-found-action": "Go to {{bookName}} {{chapterNumber}}",
+  "chapter-meta-description": "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
+  "app-meta-description": "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.",
+  "loading-picture-editor": "Loading the picture editor…",
+  "swipe-to-see-more": "Swipe to see more"
 }
