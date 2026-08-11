@@ -695,6 +695,7 @@ describe("createPlaylistManager", () => {
           "deletePlaylistItem",
           "updatePlaylistItem",
           "updatePlaylistMetadata",
+          "getPlaylistState",
         ].sort()
       );
     });
@@ -756,6 +757,52 @@ describe("createPlaylistManager", () => {
 
       await getTool("deletePlaylistItem").function({ index: 0 });
       expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("getPlaylistState reflects the current live contents of the playlist being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await getTool("insertPlaylistItem").function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      await getTool("updatePlaylistMetadata").function({
+        title: "My AI Playlist",
+        description: "Made with AI",
+      });
+
+      const state = JSON.parse(
+        (await getTool("getPlaylistState").function({})) as string
+      );
+      expect(state).toEqual({
+        title: "My AI Playlist",
+        description: "Made with AI",
+        items: [
+          {
+            type: "link",
+            bibleVerse: null,
+            link: { title: null, url: "https://example.com" },
+            html: null,
+          },
+        ],
+      });
+    });
+
+    it("getPlaylistState reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const getPlaylistState = getTool("getPlaylistState");
+      manager.cancelEditingPlaylist();
+
+      await expect(getPlaylistState.function({})).resolves.toBe(
+        "error: no playlist is currently being edited"
+      );
     });
 
     it("insertPlaylistItem inserts each AI item type at the given index", async () => {
@@ -947,6 +994,23 @@ describe("createPlaylistManager", () => {
         })
       ).resolves.toBe("error: no playlist is currently being edited");
     });
+  });
+
+  it("startPlaying returns null when there is no active tab to play on", async () => {
+    const tabs = {
+      tabs: signal([]),
+      selectedTabId: signal(""),
+    } as unknown as TabsArg;
+    const manager = makeManager("user-1", tabs);
+    await flush();
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "<p>hi</p>" }],
+    });
+
+    const result = manager.startPlaying(playlist);
+
+    expect(result).toBeNull();
+    expect(manager.playing.value).toBeNull();
   });
 
   it("startPlaying prefers always uses the selected tab", async () => {

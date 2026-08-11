@@ -1194,14 +1194,36 @@ export function createPlaylistManager(
       },
     });
 
+    const getPlaylistStateTool = generateFunctionTool({
+      name: "getPlaylistState",
+      description:
+        "Returns the current, live contents of the playlist being edited (title, description, and items). Always call this to check the playlist's actual state instead of relying on anything said earlier in the conversation — earlier tool results may no longer be accurate (e.g. if the user undid or discarded a change).",
+      parameters: z.object({}),
+      function: async () => {
+        const current = editingPlaylist.value;
+        if (!current) {
+          return "error: no playlist is currently being edited";
+        }
+        return JSON.stringify(buildGeneratedPlaylist(current));
+      },
+    });
+
     return [
       updatePlaylistTool.tool,
       insertPlaylistItemTool.tool,
       updatePlaylistItemTool.tool,
       deletePlaylistItemTool.tool,
       movePlaylistItemTool.tool,
+      getPlaylistStateTool.tool,
     ];
   };
+
+  /** Converts a `Playlist` into the AI-facing `GeneratedPlaylist` shape. */
+  const buildGeneratedPlaylist = (playlist: Playlist): GeneratedPlaylist => ({
+    title: playlist.title ?? null,
+    description: playlist.description ?? null,
+    items: playlist.items.map((i) => convertToAiPlaylistItem(i)),
+  });
 
   // While a playlist is open in the editor, expose the playlist-editing tools
   // to every AI chat via `ChatsManager`, so an AI participant can add/update/
@@ -1214,20 +1236,17 @@ export function createPlaylistManager(
       return;
     }
 
-    const generatedPlaylist: GeneratedPlaylist = {
-      title: editingPlaylist.value?.title ?? null,
-      description: editingPlaylist.value?.description ?? null,
-      items:
-        editingPlaylist.value?.items.map((i) => convertToAiPlaylistItem(i)) ??
-        [],
-    };
+    const generatedPlaylist = buildGeneratedPlaylist(editingPlaylist.value);
+    const playlistLabel = editingPlaylist.value.title
+      ? `"${editingPlaylist.value.title}"`
+      : "this untitled playlist";
     chats.addContext({
       id: PLAYLIST_EDITOR_CHAT_CONTEXT_ID,
       label: {
         key: "playlist-editor",
         defaultValue: "Playlist Editor",
       },
-      instructions: `The user is currently creating or editing a Bible reading playlist. Use the provided tools to add, update, or remove playlist items, and to update the playlist's title and description, as the user asks. Playlist: ${JSON.stringify(generatedPlaylist)}`,
+      instructions: `The user is currently creating or editing a Bible reading playlist (${playlistLabel}). Use the provided tools to add, update, or remove playlist items, and to update the playlist's title and description, as the user asks. These tools ONLY ever apply to this one open playlist — never use them to satisfy a request for a different or additional playlist; if the user asks to create or edit some other playlist while this one is still open, tell them to close this editor first instead of reusing these tools on the wrong playlist. The snapshot below reflects the playlist's live, current state as of this message, and supersedes anything said earlier in the conversation (e.g. an item that was removed and then restored by cancelling); call getPlaylistState first if you need to confirm the current contents before answering a question about them. Playlist: ${JSON.stringify(generatedPlaylist)}`,
       tools: getEditPlaylistTools(),
     });
   });

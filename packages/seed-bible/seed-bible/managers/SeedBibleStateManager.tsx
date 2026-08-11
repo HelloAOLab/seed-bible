@@ -1526,7 +1526,7 @@ export function createSeedBibleState(
     const playPlaylist = generateFunctionTool({
       name: "playPlaylist",
       description:
-        "Starts playing the given playlist. Useful for giving the user a tour of verses/chapters to read.",
+        "Starts playing the given playlist. Useful for giving the user a tour of verses/chapters to read. Each call starts a brand-new, independent, one-off playlist that has no relationship to any playlist discussed earlier in this conversation (including one currently open in the playlist editor) — it is never used to modify an existing playlist.",
       parameters: GeneratedPlaylistSchema,
       function: async (args) => {
         let items: PlaylistItemData[];
@@ -1543,7 +1543,10 @@ export function createSeedBibleState(
           items,
         };
 
-        playlists.startPlaying(playlist);
+        const playingState = playlists.startPlaying(playlist);
+        if (!playingState) {
+          return "error: could not start playback — no active reading tab to play on";
+        }
 
         return "success";
       },
