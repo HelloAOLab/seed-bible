@@ -104,6 +104,10 @@ function parseStoredEntry(value: unknown): StoredRegistryEntry | null {
  * only sessions hosted by someone the user follows. Without that filter this
  * manager would notify every user about every session in the app, which is why
  * it was previously disabled.
+ *
+ * The registry is only opened (a live WebSocket) once the user is signed in
+ * and follows at least one account — with no follows, every entry would be
+ * filtered out anyway, so there's nothing to gain from connecting.
  */
 export function createInvitationsManager(
   os: CasualOSManager,
@@ -264,21 +268,28 @@ export function createInvitationsManager(
   // Re-filter when the signed-in account or the follow list changes, so
   // following someone who is already hosting surfaces their session right away
   // (and unfollowing hides it) without waiting for the next registry change.
+  //
+  // This is also what opens the registry document in the first place — but
+  // only once the user is signed in AND follows at least one account. With no
+  // follows, `applyEntries` would filter every entry out anyway, so there is
+  // nothing to gain from connecting; every signed-out/no-follows case (which
+  // includes most tests and most anonymous visits) never opens a live
+  // WebSocket at all. Opening is one-way: once connected, it stays connected
+  // rather than disconnecting again if the follow list empties out.
   const stopAuthEffect = effect(() => {
-    // Access both so this effect re-runs on login/logout and on follow changes.
-    void login.userId.value;
-    void follows.following.value;
+    const userId = login.userId.value;
+    const hasFollows = follows.following.value.length > 0;
     if (registryMap) {
       applyEntries(readStoredEntries());
+    } else if (
+      typeof window !== "undefined" &&
+      userId &&
+      hasFollows &&
+      isEnabled()
+    ) {
+      void openRegistry();
     }
   });
-
-  // Opening the registry doesn't require being logged in — discoverability is
-  // read-only until the user actually joins something. It does require the
-  // feature to be on, and a browser: the shared document is a live WebSocket.
-  if (typeof window !== "undefined") {
-    void openRegistry();
-  }
 
   const publishSession = async (
     session: BibleReadingSession
