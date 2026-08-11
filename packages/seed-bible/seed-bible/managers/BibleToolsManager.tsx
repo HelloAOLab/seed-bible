@@ -11,7 +11,6 @@ import {
 import { buildReadingUrl } from "../managers/ReadingUrlPath";
 import { extractContentText } from "../managers/ChapterText";
 import type { BookId } from "../managers/BibleDataManager";
-import type { ChapterVerse } from "../managers/FreeUseBibleAPI";
 import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
@@ -1068,21 +1067,6 @@ function formatVerseRanges(verseNumbers: number[]): string {
 }
 
 /**
- * Extracts and normalizes the plain text of a verse's content parts, dropping
- * anything without text of its own (footnote references, line breaks).
- */
-export function extractVerseContentText(
-  content: ChapterVerse["content"]
-): string {
-  return extractContentText(content);
-}
-
-/** Extracts and normalizes the plain text content of a single selected verse. */
-function extractVerseText(verse: BibleSelectedVerse): string {
-  return extractVerseContentText(verse.verse.content);
-}
-
-/**
  * Formats the selected verses from the reading state into a human-readable string.
  * @param readingState The reading state containing the selected verses to format.
  * @returns A string representing the formatted selected verses.
@@ -1101,7 +1085,9 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
 
   return groups
     .map((group) => {
-      const text = group.map((verse) => extractVerseText(verse)).join(" ");
+      const text = group
+        .map((verse) => extractContentText(verse.verse.content))
+        .join(" ");
 
       const range = formatVerseRanges(group.map((v) => v.verse.number));
 

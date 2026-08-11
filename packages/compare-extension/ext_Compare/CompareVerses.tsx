@@ -1,7 +1,7 @@
 import {
-  extractVerseContentText,
   type SeedBibleState,
   type Translation,
+  extractContentText,
 } from "seed-bible/managers";
 import { Skeleton, SkeletonContainer } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
@@ -13,6 +13,7 @@ import {
   type CompareSnapshot,
   type CompareState,
 } from "./compareState";
+// import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
 
 /**
  * Placeholder line widths, as percentages. Fixed rather than random so a
@@ -195,7 +196,7 @@ function TranslationBlock(props: {
             {verses.map(({ verse, key }) => (
               <span key={key} className="sb-compare-verse">
                 <span className="sb-compare-verse-number">{verse.number}</span>{" "}
-                {extractVerseContentText(verse.content)}{" "}
+                {extractContentText(verse.content)}{" "}
               </span>
             ))}
           </p>
