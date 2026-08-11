@@ -213,6 +213,7 @@ function createMockAnnotations(
     editingAnnotation?: Annotation | null;
     annotationsForChapter?: Annotation[];
     deleteAnnotationAndRefreshImpl?: () => Promise<void>;
+    pendingSyncCount?: number;
   } = {}
 ): MockAnnotationsResult {
   const createNewAnnotation = vi.fn();
@@ -234,6 +235,11 @@ function createMockAnnotations(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    // The pane shows how much is waiting to sync, so this has to be present.
+    sync: {
+      pendingCount: signal(overrides.pendingSyncCount ?? 0),
+      conflicts: signal([]),
+    },
   } as unknown as AnnotationsManager;
 
   return {
@@ -739,6 +745,42 @@ describe("DiscoverPane", () => {
       container.querySelectorAll(".sb-discover-empty")
     ).map((el) => el.textContent);
     expect(emptyStates).toContain("You have no annotations");
+  });
+
+  it("says how many changes are waiting to sync, and stays quiet when none are", () => {
+    function renderWith(pendingSyncCount: number): string | null {
+      const { playlists } = createMockPlaylists();
+      const { annotations } = createMockAnnotations({ pendingSyncCount });
+      const tab = createMockTab();
+      const state = createMockState();
+      const target = document.createElement("div");
+      document.body.appendChild(target);
+
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={createMockTabs(tab)}
+            playlists={playlists}
+            annotations={annotations}
+            modals={createModalManager()}
+            state={state}
+            toast={state.app.toast}
+          />,
+          target
+        );
+      });
+
+      const text =
+        target.querySelector(".sb-annotations-pending-sync")?.textContent ??
+        null;
+      render(null, target);
+      target.remove();
+      return text;
+    }
+
+    expect(renderWith(0)).toBeNull();
+    expect(renderWith(1)).toBe("1 change waiting to sync");
+    expect(renderWith(3)).toBe("3 changes waiting to sync");
   });
 
   it("lists annotations with a book/chapter/verse location label and a sanitized preview", () => {

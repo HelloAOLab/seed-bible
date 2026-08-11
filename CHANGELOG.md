@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
+- Ask which version to keep when a note changed in two places at once — edited on your phone while your laptop was offline, say. Previously whichever change was saved last silently replaced the other. Now the two versions are shown side by side with when each was written, and you choose: keep yours, keep the other one, or keep both (yours is saved as a second note, so nothing you wrote is thrown away). Nothing is overwritten until you decide.
 - Remember your open tabs, which one you were reading, and your pane layout across a refresh or a later visit, instead of reopening at Genesis 1 with a single tab. Opening a link to a specific passage still takes you there — it reuses a matching tab when you have one rather than piling up duplicates. A split layout is kept even if you open the app somewhere panes are turned off, so it comes back when they are on again.
 
 ### 🔧 Changed
