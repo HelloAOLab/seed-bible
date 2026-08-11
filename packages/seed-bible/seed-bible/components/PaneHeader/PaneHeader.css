@@ -15,6 +15,21 @@
   user-select: none;
 }
 
+/* Caller-provided content at the very start of the header, before the icon and
+   title — e.g. a pane's own back button. */
+.sb-pane-header-leading {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+/* A pane may offer leading content only on some of its screens (the plans pane
+   shows a back button everywhere except its top-level list). Collapse the slot
+   when it renders nothing, so the header's gap doesn't leave a hole. */
+.sb-pane-header-leading:empty {
+  display: none;
+}
+
 .sb-pane-header-title {
   flex: 1 1 auto;
   min-width: 0;

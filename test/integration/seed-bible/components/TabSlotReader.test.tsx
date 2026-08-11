@@ -17,6 +17,7 @@ import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/man
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { Mock } from "vitest";
 import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
+import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 type ReaderFixture = {
   slot: TabSlot;
@@ -44,6 +45,14 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
     }),
   };
 });
+const testBranding: BrandingConfig = {
+  appName: "Test App",
+  shortName: "Test",
+  logo: "",
+  icon: "",
+  websiteUrl: "https://example.com",
+  disabledToolbarTools: [],
+};
 
 function createFixture(): ReaderFixture {
   const chapterData = signal<TranslationBookChapter | null>({
@@ -146,6 +155,7 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     defaultTranslation: { id: "BSB", language: "en" },
@@ -225,7 +235,7 @@ function createMobileState(): SeedBibleState {
     os: {
       connectionId: "test-connection",
     },
-    tools: createBibleToolsManager(),
+    tools: createBibleToolsManager(testBranding),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
@@ -255,7 +265,7 @@ function createDesktopState(): SeedBibleState {
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
     },
-    tools: createBibleToolsManager(),
+    tools: createBibleToolsManager(testBranding),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,

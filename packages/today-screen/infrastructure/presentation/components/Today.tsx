@@ -159,6 +159,9 @@ export interface TodayConfig {
     rawVerseText: string
   ) => string;
   useHorizontalScroll: UseHorizontalScroll;
+  isMobile: Signal<boolean>;
+  isBookmarksListOpen: boolean;
+  showBookmarksList: () => void;
 }
 
 type TodayProps = {
