@@ -11,7 +11,7 @@ import {
 import { buildReadingUrl } from "../managers/ReadingUrlPath";
 import { extractContentText } from "../managers/ChapterText";
 import type { BookId } from "../managers/BibleDataManager";
-import { readInjectedConfig } from "../app/appConfig";
+import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
@@ -583,8 +583,10 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
   ];
 }
 
-function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
-  return [
+function getDefaultToolbarTools(
+  branding?: BrandingConfig
+): ManagedBibleToolbarTool[] {
+  const tools: ManagedBibleToolbarTool[] = [
     {
       id: "stop-playing",
       priority: -1,
@@ -776,6 +778,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isControllable: false,
     },
   ];
+  return tools.filter(
+    (tool) => !branding?.disabledToolbarTools?.includes(tool.id)
+  );
 }
 
 function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
@@ -1110,9 +1115,11 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
  * - Getter methods resolve predicates and priorities for the provided context,
  *   then return tools sorted by ascending priority.
  */
-export function createBibleToolsManager(): ToolsManager {
+export function createBibleToolsManager(
+  branding?: BrandingConfig
+): ToolsManager {
   const toolbarTools = signal<ManagedBibleToolbarTool[]>(
-    getDefaultToolbarTools()
+    getDefaultToolbarTools(branding)
   );
   const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
     getDefaultVerseToolbarTools()
