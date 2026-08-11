@@ -44,6 +44,8 @@ describe("useBookmarksSection", () => {
       bookmarks?: ReturnType<typeof signal<FakeBookmark[]>>;
       translate?: Mock;
       getTranslationBooks?: Mock;
+      isMobile?: ReturnType<typeof signal<boolean>>;
+      showBookmarksList?: Mock;
     } = {}
   ) {
     const ctx = {
@@ -53,6 +55,8 @@ describe("useBookmarksSection", () => {
       translate: options.translate ?? vi.fn((key: string) => key),
       getTranslationBooks:
         options.getTranslationBooks ?? vi.fn(async () => books([])),
+      isMobile: options.isMobile ?? signal(false),
+      showBookmarksList: options.showBookmarksList ?? vi.fn(),
     };
     (useTodayContext as Mock).mockReturnValue(ctx);
     return ctx;
