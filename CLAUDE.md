@@ -23,17 +23,6 @@ This applies to all prose responses — summaries, explanations, and trade-off d
 
 This project requires **pnpm v10+**. Do not use npm or yarn.
 
-### Dev REPL commands (after `pnpm dev`)
-
-```bash
-.save [name]     Save simulation state to filesystem
-.reload          Hot reload from disk
-.system          Open system portal
-.download        Download .aux file
-run(script)      Execute an AUX script in the simulation
-shout(name, arg) Trigger a shout event
-```
-
 ## Common Commands
 
 ```bash
@@ -85,8 +74,15 @@ Separate packages that `export default` a function which, when called, calls `re
 
 ### Tests (`test/`)
 
-- Unit tests in `test/unit/` mirror the package structure
-- Integration tests in `test/integration/`
+Unit tests in `test/unit/` mirror the package structure; integration tests live in `test/integration/`. Test real-world behavior, not implementation details:
+
+- Assert on observable behavior (rendered output, returned data, persisted state, emitted events), not internals like whether a helper was called.
+- Mock only at the real boundary — `OsManager`/CasualOS SDK calls — not sibling managers or internal helpers; mocking deeper just verifies your mocks agree with each other.
+- Don't test the framework — that a signal updates or a component re-renders is Preact's job; test what your code does with that state.
+- Cover error paths and edge cases, not just the happy path — a failed record call, an empty result, a signed-out user are where the real bugs hide.
+- Keep tests independent: no shared mutable fixtures, no dependence on run order.
+- Avoid fixed-duration sleeps for async work (a debounce, a fetch) — poll a condition with a timeout instead, as the `waitForCondition` helpers in several manager tests already do. A zero-delay flush of the microtask queue is fine; a hardcoded "wait 250ms and hope" is not.
+- Regression tests must fail on the pre-fix code — revert the fix locally, confirm red, then restore it. A regression test that passes either way isn't testing anything.
 
 ### Build System
 
@@ -106,7 +102,9 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **TypeScript**: Strict mode is on (`strict`, `noImplicitAny`, `strictNullChecks`). No `any` unless unavoidable.
 
-**Comments**: Keep them terse. Only add a comment when the _why_ isn't obvious from the code itself (a non-obvious constraint, a workaround, a subtle invariant). Don't restate what the code already shows, and don't narrate the change or task that produced it (that belongs in the commit message or PR description, not the file).
+**Comments**: Only add comments when the _why_ or _how_ isn't obvious from the code itself (a non-obvious constraint, a workaround, a subtle invariant). Don't restate what the code already shows, and don't narrate the change or task that produced it (that belongs in the commit message or PR description, not the file).
+
+**Duplication**: Before writing new logic, do a quick grep for an existing helper in the same manager/component or obvious nearby domain — reuse or extend a close match rather than writing a parallel version. Keep the check light (a grep or two, not an audit); if nothing turns up, write the new code. Once the same logic lands in a third file, extract a shared helper — copies drift, and fixes reach some but not others. But only extract real shared concepts: code that's merely similar is better left duplicated than forced into one abstraction.
 
 **Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.
 

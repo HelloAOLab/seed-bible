@@ -16,6 +16,7 @@ export interface BrandingConfig {
   logo: string;
   icon: string;
   websiteUrl: string;
+  disabledToolbarTools?: string[];
 }
 export interface AppConfig {
   /**
