@@ -7,31 +7,98 @@ const bonfireSessionStartResponseSchema = z.object({
   }),
 });
 
-const bonfireChatResponseSchema = z.object({
-  session_id: z.string(),
-  message: z.object({
-    id: z.string(),
-    role: z.string(),
-    content: z.string(),
-  }),
-  sources: z.array(z.unknown()).optional(),
-  usage: z
-    .object({
-      input_tokens: z.number(),
-      output_tokens: z.number(),
-      cost_usd: z.number(),
-    })
-    .optional(),
-  quota: z
-    .object({
-      org_limit: z.number(),
-      org_used: z.number(),
-      org_remaining: z.number(),
-      org_used_pct: z.number(),
-      request_interaction_cost: z.number(),
-    })
-    .optional(),
+const bonfireMessageDeltaEventSchema = z.object({
+  delta: z.string(),
 });
+
+/**
+ * Reads a Bonfire `session/chat` SSE stream — lines of `event: <name>`
+ * followed by `data: <json>` — and yields each event's name and parsed
+ * payload.
+ */
+async function* parseBonfireEventStream(
+  response: Response
+): AsyncGenerator<{ event: string; data: unknown }> {
+  if (!response.body) {
+    throw new Error("Bonfire chat response has no readable body.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let eventName: string | null = null;
+
+  const consumeLine = (
+    line: string
+  ): { event: string; data: unknown } | null => {
+    if (line.startsWith("event:")) {
+      eventName = line.slice("event:".length).trim();
+      return null;
+    }
+    if (line.startsWith("data:") && eventName) {
+      const payload = line.slice("data:".length).trim();
+      const event = eventName;
+      eventName = null;
+      return payload ? { event, data: JSON.parse(payload) } : null;
+    }
+    return null;
+  };
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        const parsed = consumeLine(buffer.trim());
+        if (parsed) {
+          yield parsed;
+        }
+        return;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+
+        if (!line) {
+          continue;
+        }
+
+        const parsed = consumeLine(line);
+        if (parsed) {
+          yield parsed;
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/**
+ * Turns a Bonfire `session/chat` SSE response into a stream of text deltas
+ * for {@link StreamingTextChatMessageOptions}. The narration
+ * (`agent.run.*`), `sources`, `usage`, `quota`, and `message.done` events are
+ * ignored since nothing here consumes them yet.
+ */
+async function* streamBonfireMessageDeltas(
+  response: Response
+): AsyncGenerator<string> {
+  if (!response.ok) {
+    throw new Error(
+      `Bonfire chat request failed with status ${response.status}`
+    );
+  }
+
+  for await (const { event, data } of parseBonfireEventStream(response)) {
+    if (event !== "message.delta") {
+      continue;
+    }
+    yield bonfireMessageDeltaEventSchema.parse(data).delta;
+  }
+}
 
 export interface BonfireOptions {
   /** The organization ID for the Bonfire API. */
@@ -152,24 +219,16 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}. Keep responses tweet-length. Your responses should be in the same language as the user's messages.`,
+            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}.  Your responses should be in the same language as the user's messages.`,
           }),
           headers,
         }
       );
 
-      const data = bonfireChatResponseSchema.parse(await response.json());
-
-      const message = data.message;
-
-      if (message) {
-        return {
-          type: "text",
-          text: message.content,
-        };
-      }
-
-      return null;
+      return {
+        type: "text",
+        text: streamBonfireMessageDeltas(response),
+      };
     },
   });
 }
