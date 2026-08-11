@@ -219,7 +219,7 @@ export function* registerBonfireChatProvider(
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
-            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}.  Your responses should be in the same language as the user's messages.`,
+            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}`,
           }),
           headers,
         }
