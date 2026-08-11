@@ -751,13 +751,13 @@ function getDefaultToolbarTools(
                 context.playlists?.startPlaying(
                   {
                     id: plan.address,
-                    recordName: plan.recordName,
-                    authorUserId: plan.authorUserId,
+                    // recordName: plan.recordName,
+                    // authorUserId: plan.authorUserId,
                     title: plan.title,
                     description: plan.description,
                     items,
-                    createdAtMs: plan.createdAtMs,
-                    updatedAtMs: plan.updatedAtMs,
+                    // createdAtMs: plan.createdAtMs,
+                    // updatedAtMs: plan.updatedAtMs,
                   },
                   startIndex
                 );
