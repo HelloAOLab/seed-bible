@@ -2,14 +2,10 @@ import { type Piece } from "../../domain/models/canvas";
 import type {
   ChapterDataRepositoryPort,
   ChapterNavigationServicePort,
-  // ChapterSelectionServicePort,
   UserPresenceServicePort,
 } from "../ports/chapters";
 import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
-import type {
-  // PieceHighlightServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
+import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import {
   HighlightRequestSources,
