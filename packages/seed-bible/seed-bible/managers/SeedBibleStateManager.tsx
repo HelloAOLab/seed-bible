@@ -448,6 +448,7 @@ export function createSeedBibleState(
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
   });
+  const branding = options.config?.branding;
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
