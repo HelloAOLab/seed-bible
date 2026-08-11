@@ -46,8 +46,8 @@ function createSeedBibleStateMock() {
   const readingState = {
     selectTranslationAndChapter,
   };
-  const selectedPane = {
-    id: "pane-1",
+  const selectedSlot = {
+    id: "slot-1",
     tab: {
       readingState,
     },
@@ -70,6 +70,7 @@ function createSeedBibleStateMock() {
         bookId: "GEN",
         chapterNumber: 1,
       }),
+      isMobile: signal(false),
     },
     bibleData: {
       api: {
@@ -77,11 +78,11 @@ function createSeedBibleStateMock() {
         getAvailableTranslations: vi.fn().mockResolvedValue(undefined),
       },
     },
-    panes: {
-      panes: signal([selectedPane]),
-      selectedPaneId: signal("pane-1"),
-      selectPane: vi.fn(),
-      openInPane: vi.fn(),
+    tabsLayout: {
+      slots: signal([selectedSlot]),
+      selectedSlotId: signal("slot-1"),
+      selectSlot: vi.fn(),
+      openTabInSlot: vi.fn(),
     },
     tabs: {
       selectedTabId,
@@ -107,12 +108,10 @@ describe("CreateTwitchSubState", () => {
   let websocketCtorMock: Mock<any>;
   let errorSpy: Mock;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let fetchMock: Mock;
-
   beforeEach(() => {
     window.localStorage.clear();
-    fetchMock = vi.spyOn(window, "fetch").mockImplementation(
+    window.sessionStorage.clear();
+    vi.spyOn(window, "fetch").mockImplementation(
       async () =>
         ({
           json: async () => ({
@@ -137,7 +136,7 @@ describe("CreateTwitchSubState", () => {
     vi.restoreAllMocks();
   });
 
-  it("loads config from URL state into localStorage", async () => {
+  it("loads config from URL state into sessionStorage", async () => {
     const statePayload = makeBase64(
       JSON.stringify({
         broadcaster_id: "broadcaster-1",
@@ -151,14 +150,20 @@ describe("CreateTwitchSubState", () => {
       url: `https://example.com/#access_token=token-1&state=${encodeURIComponent(statePayload)}`,
     });
 
-    const { seedBibleState } = createSeedBibleStateMock();
+    const { seedBibleState, selectTranslationAndChapter } =
+      createSeedBibleStateMock();
     CreateTwitchSubState(seedBibleState as any);
 
-    await waitFor(() => !!window.localStorage.getItem("twitchSubConfig"));
+    await waitFor(() => selectTranslationAndChapter.mock.calls.length >= 1);
+
+    // The book/chapter/translation from the URL are applied to the reader...
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith("ESV", "JHN", 3);
 
     const stored = JSON.parse(
-      window.localStorage.getItem("twitchSubConfig") as string
+      window.sessionStorage.getItem("twitchSubConfig") as string
     );
+    // ...and then consumed (nulled) in the persisted config so they aren't
+    // re-applied on the next load, while the connection details are kept.
     expect(stored).toMatchObject({
       botUserId: "bot-user-1",
       accessToken: "token-1",
@@ -166,16 +171,16 @@ describe("CreateTwitchSubState", () => {
       broadcasterId: "broadcaster-1",
       eventSubWebsocketUrl: "wss://eventsub.wss.twitch.tv/ws",
       channelId: "channel-1",
-      bookId: "JHN",
-      chapter: "3",
-      translation: "ESV",
+      bookId: null,
+      chapter: null,
+      translation: null,
     });
 
     // expect(goToURLMock).toHaveBeenCalledWith("https://example.com/");
   });
 
   it("opens a websocket connection to the eventsub websocket URL", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",
@@ -200,7 +205,7 @@ describe("CreateTwitchSubState", () => {
   });
 
   it("updates the selected pane to config translation, book, and chapter", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",
@@ -221,12 +226,12 @@ describe("CreateTwitchSubState", () => {
 
     await waitFor(() => selectTranslationAndChapter.mock.calls.length >= 1);
 
-    expect(seedBibleState.panes.selectPane).toHaveBeenCalledWith("pane-1");
+    expect(seedBibleState.tabsLayout.selectSlot).toHaveBeenCalledWith("slot-1");
     expect(selectTranslationAndChapter).toHaveBeenCalledWith("KJV", "LUK", 4);
   });
 
   it("responds to bookChanged websocket events", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",
@@ -266,7 +271,7 @@ describe("CreateTwitchSubState", () => {
   });
 
   it("does not change translation when followTranslation or translationEnabled are false", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",
@@ -325,7 +330,7 @@ describe("CreateTwitchSubState", () => {
   });
 
   it("uses incoming book and chapter when chapterFollowEnabled is true", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",
@@ -367,7 +372,7 @@ describe("CreateTwitchSubState", () => {
   });
 
   it("keeps current book and chapter when chapterFollowEnabled is false", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",
@@ -409,7 +414,7 @@ describe("CreateTwitchSubState", () => {
   });
 
   it("responds to highlightsChanged websocket events", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",
@@ -437,27 +442,26 @@ describe("CreateTwitchSubState", () => {
       }),
     });
 
+    // The reader draws these itself now. Handing it the colour rather than CSS
+    // means a preset resolves against each viewer's theme, and it renders as an
+    // outline — a chat highlight isn't the reader's own.
     expect(decorateVerses).toHaveBeenCalledTimes(2);
     expect(decorateVerses).toHaveBeenNthCalledWith(1, "ROM", 8, 5, {
-      style: {
-        color: "inherit",
-        backgroundColor: null,
-      },
-      className: "sb-highlight-yellow",
+      highlight: { colorId: "yellow" },
       preserveOnChapterChange: true,
     });
     expect(decorateVerses).toHaveBeenNthCalledWith(2, "ROM", 8, [10, 11, 12], {
-      style: {
-        color: "#111111",
-        backgroundColor: "#ffeeaa",
+      highlight: {
+        colorId: "red",
+        customColor: "#ffeeaa",
+        customFontColor: "#111111",
       },
-      className: "sb-highlight-red",
       preserveOnChapterChange: true,
     });
   });
 
   it("ignores highlightsChanged events when highlight follow is disabled", async () => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubConfig",
       JSON.stringify({
         botUserId: "bot-user-1",

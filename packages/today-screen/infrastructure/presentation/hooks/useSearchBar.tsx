@@ -28,7 +28,8 @@ type UseSearchBar = () => {
 const DEBOUNCE_MS = 180;
 
 export const useSearchBar: UseSearchBar = () => {
-  const { searchVerses, addTab, translate, MaterialIcon } = useTodayContext();
+  const { searchVerses, addTab, closeToday, translate, MaterialIcon } =
+    useTodayContext();
 
   const query = useSignal("");
   const results = useSignal<VerseSearchResult[]>([]);
@@ -109,6 +110,7 @@ export const useSearchBar: UseSearchBar = () => {
     );
     runSearch("");
     isOpen.value = false;
+    closeToday();
   };
 
   return {

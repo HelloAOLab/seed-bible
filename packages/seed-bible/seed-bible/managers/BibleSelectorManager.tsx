@@ -6,8 +6,20 @@ import type {
 import { safeLocalStorage } from "../app/ssrEnv";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import { type BibleReadingState } from "../managers/BibleReadingManager";
-import type { Pane, PanesManager } from "../managers/PanesManager";
-import type { TabsManager } from "../managers/TabsManager";
+import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
+import {
+  PROFILE_TRANSLATION_ID,
+  type TabsManager,
+} from "../managers/TabsManager";
+import type { LoginManager } from "../managers/LoginManager";
+import { saveProfileConfigValue } from "../managers/ProfileConfigSync";
+import {
+  DEFAULT_POPULAR_LANGUAGES,
+  filterTranslationGroups,
+  groupTranslationsByLanguage,
+  type TranslationLanguageGroup,
+  type TranslationViewMode,
+} from "../managers/translationGrouping";
 import type {
   BookOrientation,
   SettingsManager,
@@ -27,15 +39,15 @@ type SidebarManager = ReturnType<typeof createSidebar>;
 
 /** Optional options used when opening the selector. */
 export interface BibleSelectorOptions {
-  /** Pane context to bind selector actions to. */
-  pane?: Pane;
+  /** Slot context to bind selector actions to. */
+  slot?: TabSlot;
 }
 
 /** Options passed to `setOpen` to control selector behavior on open. */
 export interface BibleSelectorSetOpenOptions {
   /**
    * When true, the next chapter selection always creates a new tab and binds
-   * it to the target pane, even if the pane already has a tab.
+   * it to the target slot, even if the slot already has a tab.
    * Cleared automatically when the selector closes.
    */
   forNewTab?: boolean;
@@ -43,13 +55,6 @@ export interface BibleSelectorSetOpenOptions {
 
 export interface GhostBook {
   ghost?: boolean;
-}
-
-export interface TranslationLanguageGroup {
-  language: string;
-  languageEnglishName: string;
-  languageName: string;
-  translations: Translation[];
 }
 
 export type BibleSelectorBookItem = TranslationBook | GhostBook;
@@ -64,21 +69,21 @@ export type BibleSelectorPsalmsGroups =
 /**
  * Reactive state + actions for the Bible selector overlay.
  *
- * The selector is pane-aware: chapter selections are applied to the bound pane
- * (or a new tab may be created if the pane has no tab content yet).
+ * The selector is slot-aware: chapter selections are applied to the bound
+ * slot (or a new tab may be created if the slot has no tab content yet).
  */
 export interface BibleSelectorState {
   /** Whether the selector overlay is currently open. */
   isOpen: Signal<boolean>;
-  /** Pane currently targeted by selector actions. */
-  pane: Signal<Pane | null>;
-  /** Reading state for the active pane (null when pane has no tab). */
+  /** Slot currently targeted by selector actions. */
+  slot: Signal<TabSlot | null>;
+  /** Reading state for the active slot (null when slot has no tab). */
   readingState: ReadonlySignal<BibleReadingState | null>;
-  /** Active pane translation ID snapshot. */
+  /** Active slot translation ID snapshot. */
   currentTranslationId: ReadonlySignal<string | null>;
-  /** Active pane book ID snapshot. */
+  /** Active slot book ID snapshot. */
   currentBookId: ReadonlySignal<string | null>;
-  /** Active pane chapter number snapshot. */
+  /** Active slot chapter number snapshot. */
   currentChapterNumber: ReadonlySignal<number | null>;
 
   /** Current book-arrangement orientation (used for section labelling). */
@@ -111,26 +116,26 @@ export interface BibleSelectorState {
 
   /**
    * True while the selector is in "create a new tab" mode — chapter
-   * selections create a brand new tab and bind it to the target pane
-   * instead of reusing the pane's existing tab.
+   * selections create a brand new tab and bind it to the target slot
+   * instead of reusing the slot's existing tab.
    */
   forceNewTab: Signal<boolean>;
 
-  /** All panes available as targets for the selector. */
-  availablePanes: ReadonlySignal<Pane[]>;
+  /** All slots available as targets for the selector. */
+  availableSlots: ReadonlySignal<TabSlot[]>;
 
   /**
    * Opens/closes selector.
-   * When opening, optionally rebinds selector to a pane and synchronizes data.
+   * When opening, optionally rebinds selector to a slot and synchronizes data.
    */
   setOpen: (
     open: boolean,
-    pane?: Pane,
+    slot?: TabSlot,
     options?: BibleSelectorSetOpenOptions
   ) => Promise<void>;
 
-  /** Switches the target pane while the selector is open. */
-  setTargetPane: (paneId: string) => void;
+  /** Switches the target slot while the selector is open. */
+  setTargetSlot: (slotId: string) => void;
 
   /** Sets the current selector search query. */
   setSearch: (value: string) => void;
@@ -142,8 +147,19 @@ export interface BibleSelectorState {
   selectTranslation: (translationId: string) => Promise<void>;
 
   /**
-   * Applies chapter selection to the bound pane/tab and closes selector.
-   * Creates a new tab if needed when the bound pane has no tab content,
+   * Explicit user pick from the translation list in the selector UI. Behaves
+   * like `selectTranslation`, but also persists the choice to the user's
+   * profile so it's restored the next time they open the app. Programmatic
+   * translation changes (selector sync on open, language-driven translation
+   * switch, custom translation URL addition) should keep using
+   * `selectTranslation` instead, since those aren't a deliberate pick from
+   * the list.
+   */
+  pickTranslation: (translationId: string) => Promise<void>;
+
+  /**
+   * Applies chapter selection to the bound slot/tab and closes selector.
+   * Creates a new tab if needed when the bound slot has no tab content,
    * or when `forceNewTab` is true.
    */
   selectChapter: (bookId: string, chapterNumber: number) => void;
@@ -158,11 +174,7 @@ export interface BibleSelectorState {
   highLightedButtonsID: Signal<Record<number, boolean>>;
   currentPsalms: Signal<BibleSelectorPsalmsGroups[]>;
   selectedTestamentData: Signal<TranslationBook[] | null>;
-  handleChapterClick: (props: {
-    index: number;
-    book: TranslationBook;
-    cht?: number;
-  }) => void;
+  handleChapterClick: (props: { book: TranslationBook }) => void;
   calcChapterPos: (index: number, separator: number) => number;
   isBook: (book: BibleSelectorBookItem) => book is TranslationBook;
   ghostArray: (
@@ -174,14 +186,27 @@ export interface BibleSelectorState {
   showCustomTranslation: Signal<boolean>;
   allowedTranslationLimit: Signal<number>;
   apiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
-  showAllLanguages: Signal<"complete" | "all" | "popular">;
+  showAllLanguages: Signal<TranslationViewMode>;
   showTranslationSettings: Signal<boolean>;
   showTranslationInfo: Signal<{
     translation: Translation;
     position: { x: number; y: number };
   } | null>;
+  /**
+   * The translation whose offline download the user is being asked to confirm
+   * removing, or null when no confirmation is pending.
+   */
+  pendingOfflineDelete: Signal<Translation | null>;
   inputValue: Signal<string>;
   filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
+
+  /**
+   * How many language groups match the current search and view mode before the
+   * `allowedTranslationLimit` page size is applied. What "show more" is judged
+   * against — the unfiltered catalog total would keep the control on screen
+   * long after paging can reveal anything.
+   */
+  matchingTranslationGroupCount: ReadonlySignal<number>;
   handleTranslationAddition: () => void;
   openTabs: () => void;
   bookmarks: BookmarksManager;
@@ -220,31 +245,32 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
  * Creates the Bible selector manager.
  *
  * Behavior summary:
- * - Maintains selector open/close state and pane binding.
- * - Synchronizes selector translation/book context from active pane reading state.
+ * - Maintains selector open/close state and slot binding.
+ * - Synchronizes selector translation/book context from active slot reading state.
  * - Mirrors open/close state to the `?selector=open` URL param via the
  *   NavigationManager, giving back-button / shareable-URL support.
  * - Computes responsive Old/New Testament rows based on viewport width.
- * - Routes chapter selection into the bound pane/tab reading state.
+ * - Routes chapter selection into the bound slot/tab reading state.
  */
 export function createBibleSelectorState(
   dataManager: BibleDataManager,
   tabsManager: TabsManager,
-  panesManager: PanesManager,
+  tabsLayoutManager: TabsLayoutManager,
   settings: SettingsManager,
   sidebar: SidebarManager,
   bookmarks: BookmarksManager,
-  navigation: NavigationManager
+  navigation: NavigationManager,
+  login: LoginManager
 ): BibleSelectorState {
   const isOpen = signal(false);
-  const pane = signal<Pane | null>(null);
+  const slot = signal<TabSlot | null>(null);
   const forceNewTab = signal(false);
   const showApocryphaInfo = signal(false);
-  const availablePanes = computed(() => panesManager.panes.value);
+  const availableSlots = computed(() => tabsLayoutManager.slots.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
   );
-  const readingState = computed(() => pane.value?.tab?.readingState ?? null);
+  const readingState = computed(() => slot.value?.tab?.readingState ?? null);
   const currentTranslationId = computed(
     () => readingState.value?.translationId.value ?? null
   );
@@ -270,7 +296,7 @@ export function createBibleSelectorState(
   );
   const expandedBookId = signal<string | null>(null);
 
-  const syncStateFromPane = async () => {
+  const syncStateFromSlot = async () => {
     loading.value = true;
     error.value = null;
 
@@ -281,9 +307,9 @@ export function createBibleSelectorState(
 
       const nextTranslationId =
         readingState.value?.translationId.value ??
-        // Find the first pane with a translation ID in its reading state
-        panesManager.panes.value.find(
-          (p) => p.tab?.readingState.translationId.value
+        // Find the first slot with a translation ID in its reading state
+        tabsLayoutManager.slots.value.find(
+          (s) => s.tab?.readingState.translationId.value
         )?.tab?.readingState.translationId.value ??
         // Fall back to default translation or first available translation
         dataManager.availableTranslations.value.find(
@@ -307,7 +333,7 @@ export function createBibleSelectorState(
           ? err.message
           : "Failed to load selector translation data.";
       if (typeof process === "object" && process.env.NODE_ENV === "test") {
-        console.error("Error syncing Bible selector state from pane:", err);
+        console.error("Error syncing Bible selector state from slot:", err);
       }
     } finally {
       loading.value = false;
@@ -316,24 +342,24 @@ export function createBibleSelectorState(
 
   const setOpen = async (
     open: boolean,
-    nextPane?: Pane,
+    nextSlot?: TabSlot,
     options?: BibleSelectorSetOpenOptions
   ) => {
     if (open) {
-      if (nextPane) {
-        pane.value = nextPane;
+      if (nextSlot) {
+        slot.value = nextSlot;
       }
 
-      const effectivePane = nextPane ?? pane.value;
-      if (!effectivePane) {
-        console.warn("No pane available to open Bible selector with.");
+      const effectiveSlot = nextSlot ?? slot.value;
+      if (!effectiveSlot) {
+        console.warn("No slot available to open Bible selector with.");
         return;
       }
 
-      pane.value = effectivePane;
+      slot.value = effectiveSlot;
       forceNewTab.value = options?.forNewTab === true;
 
-      await syncStateFromPane();
+      await syncStateFromSlot();
     } else {
       forceNewTab.value = false;
     }
@@ -341,13 +367,13 @@ export function createBibleSelectorState(
     isOpen.value = open;
   };
 
-  const setTargetPane = (paneId: string) => {
-    const nextPane =
-      panesManager.panes.value.find((p) => p.id === paneId) ?? null;
-    if (!nextPane) {
+  const setTargetSlot = (slotId: string) => {
+    const nextSlot =
+      tabsLayoutManager.slots.value.find((s) => s.id === slotId) ?? null;
+    if (!nextSlot) {
       return;
     }
-    pane.value = nextPane;
+    slot.value = nextSlot;
   };
 
   const openTabs = () => {
@@ -361,6 +387,9 @@ export function createBibleSelectorState(
     // the selector and opening the drawer is just two query-param updates — no
     // direct history manipulation, and no back-navigation racing the push.
     void setOpen(false);
+    // Reached from the book selector, so the tabs header should show a Back
+    // arrow that returns here (not a plain Close).
+    sidebar.tabsOpenedFromToolbar.value = false;
     sidebar.openSidebar();
   };
 
@@ -368,7 +397,7 @@ export function createBibleSelectorState(
   // browser back/forward buttons (and shared/bookmarked URLs) drive it, the
   // same way SidebarManager binds `sidebar`. The setter routes through
   // `setOpen` rather than writing `isOpen` directly so opening still binds the
-  // pane and loads translation data via `syncStateFromPane()`.
+  // slot and loads translation data via `syncStateFromSlot()`.
   navigation.syncSignalsToUrl({
     selector: {
       get value() {
@@ -406,7 +435,7 @@ export function createBibleSelectorState(
     selectedBookId: string,
     chapter: number
   ) => {
-    if (!pane.value) {
+    if (!slot.value) {
       return;
     }
 
@@ -416,11 +445,11 @@ export function createBibleSelectorState(
       return;
     }
 
-    // Ensure selected-tab synchronization targets this pane, not a stale selection.
-    panesManager.selectPane(pane.value.id);
+    // Ensure selected-tab synchronization targets this slot, not a stale selection.
+    tabsLayoutManager.selectSlot(slot.value.id);
 
-    if (pane.value.tab && !forceNewTab.value) {
-      await pane.value.tab.readingState.selectTranslationAndChapter(
+    if (slot.value.tab && !forceNewTab.value) {
+      await slot.value.tab.readingState.selectTranslationAndChapter(
         selectedTranslationId.value,
         selectedBookId,
         chapter
@@ -434,9 +463,7 @@ export function createBibleSelectorState(
       initialBookId: selectedBookId,
       initialChapterNumber: chapter,
     });
-    panesManager.openInPane(pane.value.id, {
-      tabId: newTab.id,
-    });
+    tabsLayoutManager.openTabInSlot(slot.value.id, newTab.id);
     setOpen(false);
   };
 
@@ -498,57 +525,31 @@ export function createBibleSelectorState(
     await handleTranslationSelect(nextTranslationId);
   };
 
+  // The only entry point that should persist to the profile: a deliberate
+  // click on a translation in the selector's list (BibleSelector.tsx). Other
+  // callers of `selectTranslation` (selector-open sync, language-driven
+  // translation switch, custom translation URL addition) are programmatic,
+  // not a user pick, and stay unpersisted.
+  const pickTranslation = async (nextTranslationId: string) => {
+    await selectTranslation(nextTranslationId);
+    void saveProfileConfigValue(
+      login,
+      PROFILE_TRANSLATION_ID,
+      nextTranslationId
+    );
+  };
+
   const languageQuery = signal<string>("");
 
   const selectedTestament = signal<number>(2);
 
   const apocryphaAvailable = signal<boolean>(false);
 
-  const defaultTranslations = signal<string[]>([
-    "eng",
-    "spa",
-    "arb",
-    "hin",
-    "heb",
-    "grc",
-  ]);
+  const defaultTranslations = signal<string[]>([...DEFAULT_POPULAR_LANGUAGES]);
 
-  const apiTranslations = computed<Array<TranslationLanguageGroup>>(() => {
-    const normalized = availableTranslations.value.map((item: Translation) => ({
-      ...item,
-      languageEnglishName:
-        item?.languageEnglishName || item.languageName || item.language,
-    }));
-    const grouped = new Map<string, TranslationLanguageGroup>();
-
-    normalized.forEach((translation: Translation) => {
-      const languageCode = translation.language;
-      const existing = grouped.get(languageCode);
-
-      if (existing) {
-        if (
-          !existing.translations.some(
-            (existingTranslation) => existingTranslation.id === translation.id
-          )
-        ) {
-          existing.translations.push(translation);
-        }
-        return;
-      }
-
-      grouped.set(languageCode, {
-        language: languageCode,
-        languageEnglishName: translation.languageEnglishName || languageCode,
-        languageName:
-          translation.languageName ||
-          translation.languageEnglishName ||
-          languageCode,
-        translations: [translation],
-      });
-    });
-
-    return Array.from(grouped.values());
-  });
+  const apiTranslations = computed<Array<TranslationLanguageGroup>>(() =>
+    groupTranslationsByLanguage(availableTranslations.value)
+  );
 
   const allowedTranslationLimit = signal<number>(50);
 
@@ -585,12 +586,10 @@ export function createBibleSelectorState(
 
   // ─── TranslationModal State ───────────────────────────────────────────────────
 
-  const showAllLanguages = signal<"complete" | "all" | "popular">(
-    (safeLocalStorage.getItem("showAllLanguages") as
-      | "complete"
-      | "all"
-      | "popular"
-      | null) || "complete"
+  const showAllLanguages = signal<TranslationViewMode>(
+    (safeLocalStorage.getItem(
+      "showAllLanguages"
+    ) as TranslationViewMode | null) || "complete"
   );
 
   const showTranslationSettings = signal<boolean>(false);
@@ -599,6 +598,8 @@ export function createBibleSelectorState(
     translation: Translation;
     position: { x: number; y: number };
   } | null>(null);
+
+  const pendingOfflineDelete = signal<Translation | null>(null);
 
   const inputValue = signal<string>("");
 
@@ -668,21 +669,72 @@ export function createBibleSelectorState(
     }
   };
 
-  const handleChapterClick = (props: {
-    index: number;
-    book: TranslationBook;
-    cht?: number;
-  }): void => {
-    const { index, book, cht = 0 } = props;
-    if (bookData?.value?.id === book.id) {
+  /**
+   * Maps `expandedBookId` onto the SideBarBooks accordion signals
+   * (`bookData` / `lastBookClicked` / `chT`) so the open book is actually
+   * expanded in the grid. Returns false when the book isn't in the current
+   * filtered testament list (e.g. search hid it).
+   */
+  const applyExpandedBookToSidebar = (bookId: string | null): boolean => {
+    if (!bookId) {
+      lastBookClicked.value = -1;
       bookData.value = null;
       chT.value = 0;
-      lastBookClicked.value = -1;
-    } else {
-      bookData.value = book;
-      chT.value = cht;
-      lastBookClicked.value = index;
+      return true;
     }
+
+    const { oldTestament, newTestament, apocrypha } = groupedBooks.value;
+    const lst = localSelectedTestament.value;
+
+    const findIn = (
+      books: TranslationBook[],
+      testamentHint = 0
+    ): { book: TranslationBook; index: number; cht: number } | null => {
+      const index = books.findIndex((book) => book.id === bookId);
+      const book = index >= 0 ? books[index] : undefined;
+      if (!book) return null;
+      return { book, index, cht: testamentHint };
+    };
+
+    let match: { book: TranslationBook; index: number; cht: number } | null =
+      null;
+    if (lst === 0) {
+      match = findIn(oldTestament);
+    } else if (lst === 1) {
+      match = findIn(newTestament);
+    } else if (lst === 3) {
+      match = findIn(apocrypha);
+    } else {
+      // All Books view: OT/NT/AP grids render together, so each needs its own
+      // hint (0/1/2) — that's how a book's chapter panel opens under the
+      // right grid instead of colliding with a different testament's.
+      // Single-testament views above never pass a chapterHint at render time,
+      // so `cht` is inert there; the default 0 is just a placeholder.
+      match =
+        findIn(oldTestament, 0) ??
+        findIn(newTestament, 1) ??
+        findIn(apocrypha, 2);
+    }
+
+    if (!match) {
+      lastBookClicked.value = -1;
+      bookData.value = null;
+      chT.value = 0;
+      return false;
+    }
+
+    bookData.value = match.book;
+    lastBookClicked.value = match.index;
+    chT.value = match.cht;
+    return true;
+  };
+
+  // Delegates the toggle to `setExpandedBook` — the `applyExpandedBookToSidebar`
+  // effect above is the single place that derives `bookData` / `lastBookClicked`
+  // / `chT` from `expandedBookId`, so writing those signals here too would just
+  // be a second, immediately-overwritten source of truth.
+  const handleChapterClick = (props: { book: TranslationBook }): void => {
+    setExpandedBook(props.book.id);
   };
 
   const calcChapterPos = (index: number, separator: number): number =>
@@ -732,19 +784,44 @@ export function createBibleSelectorState(
     }
   });
 
+  // Keep the chapter accordion in sync with expandedBookId while open.
+  // localSelectedTestament / groupedBooks are dependencies so a testament
+  // filter or search that still includes the book re-applies the correct index.
   effect(() => {
+    if (!isOpen.value) return;
+    const bookId = expandedBookId.value;
+    // Touch filtered lists so testament/search changes re-run this effect.
+    void localSelectedTestament.value;
+    void groupedBooks.value;
+    applyExpandedBookToSidebar(bookId);
+  });
+
+  // When search narrows to a single book, expand it. Do not clear expansion
+  // when multiple books are visible — that used to wipe the current book on open.
+  effect(() => {
+    if (!isOpen.value) return;
     const bd = selectedTestamentData.value;
     if (bd && bd.length === 1 && bd[0]) {
-      lastBookClicked.value = 0;
-      bookData.value = bd[0];
-      chT.value = bd[0].order > 39 ? 1 : 0;
-    } else {
-      lastBookClicked.value = -1;
-      bookData.value = null;
-      chT.value = 0;
+      expandedBookId.value = bd[0].id;
     }
   });
 
+  // Mark the reading-position chapter while its book is expanded.
+  effect(() => {
+    if (!isOpen.value) return;
+    const chapter = currentChapterNumber.value;
+    const readingBookId = currentBookId.value;
+    const expandedId = bookData.value?.id ?? null;
+    if (
+      chapter != null &&
+      readingBookId != null &&
+      expandedId === readingBookId
+    ) {
+      highLightedButtonsID.value = { [chapter]: true };
+    } else {
+      highLightedButtonsID.value = {};
+    }
+  });
   effect(() => {
     const st = selectedTestament.value;
     const bd = selectedTranslationBooks.value?.books;
@@ -766,164 +843,23 @@ export function createBibleSelectorState(
     }
   });
 
+  const pagedApiTranslations = computed(() =>
+    filterTranslationGroups({
+      groups: apiTranslations.value,
+      query: languageQuery.value,
+      viewMode: showAllLanguages.value,
+      limit: allowedTranslationLimit.value,
+      selectedTranslation: selectedTranslation.value,
+      popularLanguages: defaultTranslations.value,
+    })
+  );
+
   const filteredApiTranslations = computed<Array<TranslationLanguageGroup>>(
-    () => {
-      const lq = languageQuery.value;
-      const apiTr = apiTranslations.value;
-      const limit = allowedTranslationLimit.value;
-      const selTr = selectedTranslation.value;
-      const sal = showAllLanguages.value;
-      const dtr = defaultTranslations.value;
-      const selectedLanguageCode = selTr?.language?.toLowerCase();
-      const selectedLanguageName = selTr?.languageEnglishName?.toLowerCase();
+    () => pagedApiTranslations.value.groups
+  );
 
-      const filterByMode = (
-        groups: TranslationLanguageGroup[]
-      ): TranslationLanguageGroup[] => {
-        if (sal === "all") {
-          return groups.map((group) => ({
-            ...group,
-            translations: [...group.translations],
-          }));
-        }
-
-        const next: TranslationLanguageGroup[] = [];
-
-        groups.forEach((group) => {
-          if (
-            sal === "popular" &&
-            !dtr.includes(group.language) &&
-            !group.translations.some((translation) =>
-              dtr.includes(translation.language)
-            )
-          ) {
-            return;
-          }
-
-          if (sal === "complete") {
-            const filteredTranslations = group.translations.filter(
-              (translation) =>
-                !(
-                  translation.numberOfBooks < 66 && translation.id !== selTr?.id
-                )
-            );
-
-            if (filteredTranslations.length > 0) {
-              next.push({
-                ...group,
-                translations: filteredTranslations,
-              });
-            }
-
-            return;
-          }
-
-          next.push({
-            ...group,
-            translations: [...group.translations],
-          });
-        });
-
-        return next;
-      };
-
-      const filterByQuery = (
-        groups: TranslationLanguageGroup[],
-        lowercaseQuery: string
-      ): TranslationLanguageGroup[] => {
-        const next: TranslationLanguageGroup[] = [];
-
-        groups.forEach((group) => {
-          const languageMatch =
-            group.language.toLowerCase().includes(lowercaseQuery) ||
-            group.languageEnglishName.toLowerCase().includes(lowercaseQuery) ||
-            group.languageName.toLowerCase().includes(lowercaseQuery) ||
-            group.translations.some((translation) => {
-              const languageEnglishName =
-                translation.languageEnglishName?.toLowerCase() ||
-                translation.englishName.toLowerCase();
-              const languageName = translation.languageName?.toLowerCase();
-
-              return (
-                languageEnglishName.includes(lowercaseQuery) ||
-                Boolean(languageName?.includes(lowercaseQuery))
-              );
-            });
-
-          if (languageMatch) {
-            next.push({
-              ...group,
-              translations: [...group.translations],
-            });
-            return;
-          }
-
-          const matchedTranslations = group.translations.filter(
-            (translation) => {
-              const shortName = translation.shortName.toLowerCase();
-
-              if (
-                shortName.includes(lowercaseQuery) ||
-                translation?.name?.toLowerCase().includes(lowercaseQuery) ||
-                translation?.languageEnglishName
-                  ?.toLowerCase()
-                  .includes(lowercaseQuery) ||
-                translation?.languageName
-                  ?.toLowerCase()
-                  .includes(lowercaseQuery)
-              ) {
-                return true;
-              }
-
-              return false;
-            }
-          );
-
-          if (matchedTranslations.length > 0) {
-            next.push({
-              ...group,
-              translations: matchedTranslations,
-            });
-          }
-        });
-
-        return next;
-      };
-
-      const sortFn = (
-        a: TranslationLanguageGroup,
-        b: TranslationLanguageGroup
-      ): number => {
-        if (
-          a.language === selectedLanguageCode ||
-          a.language.toLowerCase() === selectedLanguageName
-        ) {
-          return -1;
-        }
-
-        if (
-          b.language === selectedLanguageCode ||
-          b.language.toLowerCase() === selectedLanguageName
-        ) {
-          return 1;
-        }
-
-        return a.language.localeCompare(b.language);
-      };
-
-      const allGroups = apiTr;
-
-      if (lq !== "") {
-        const lowercaseQuery = lq.toLowerCase();
-        const queryFiltered = filterByQuery(allGroups, lowercaseQuery);
-        const modeFiltered = filterByMode(queryFiltered);
-
-        return modeFiltered.slice(0, limit).sort(sortFn);
-      } else {
-        const modeFiltered = filterByMode(allGroups);
-        return modeFiltered.sort(sortFn).slice(0, limit);
-      }
-    }
+  const matchingTranslationGroupCount = computed(
+    () => pagedApiTranslations.value.totalMatching
   );
 
   effect(() => {
@@ -932,7 +868,7 @@ export function createBibleSelectorState(
 
   return {
     isOpen,
-    pane,
+    slot,
     readingState,
     groupedBooks,
     availableTranslations,
@@ -948,12 +884,13 @@ export function createBibleSelectorState(
     selectedTranslationBooks,
     expandedBookId,
     forceNewTab,
-    availablePanes,
+    availableSlots,
     setOpen,
-    setTargetPane,
+    setTargetSlot,
     setSearch,
     setExpandedBook,
     selectTranslation,
+    pickTranslation,
     selectChapter: handleChapterSelect,
     selectedTestament,
     apocryphaAvailable,
@@ -977,8 +914,10 @@ export function createBibleSelectorState(
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
+    pendingOfflineDelete,
     inputValue,
     filteredApiTranslations,
+    matchingTranslationGroupCount,
     handleTranslationAddition,
     openTabs,
     bookmarks,

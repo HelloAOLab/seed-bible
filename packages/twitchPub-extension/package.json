@@ -13,9 +13,11 @@
   },
   "keywords": [],
   "dependencies": {
-    "seed-bible": "workspace:*",
-    "preact": "catalog:",
+    "@seed-bible/ai-transcript-extension": "workspace:*",
     "base64-js": "catalog:",
+    "preact": "catalog:",
+    "qrcode": "^1.5.4",
+    "seed-bible": "workspace:*",
     "uuid": "catalog:"
   },
   "author": "",

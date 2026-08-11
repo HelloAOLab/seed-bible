@@ -1,19 +1,21 @@
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
-import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout";
+import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
+import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
   type SelectedFootnote,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
-import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import { vi, type Mock } from "vitest";
+import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
+import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -27,12 +29,26 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
     }),
   };
 });
-
+const testBranding: BrandingConfig = {
+  appName: "Test App",
+  shortName: "Test",
+  logo: "",
+  icon: "",
+  websiteUrl: "https://example.com",
+  disabledToolbarTools: [],
+};
 type ReaderFixture = {
-  pane: Pane;
+  slot: TabSlot;
   selectorState: BibleSelectorState;
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
+  /**
+   * Forces `isChapterContentStale` on or off. Set it to `true` to express
+   * "the reader has moved on but the new chapter's text hasn't arrived" —
+   * chapter data is still loaded, just for the wrong position, which is not
+   * something `chapterData` alone can say.
+   */
+  contentStale: Signal<boolean | null>;
   highlights: Signal<BibleReadingState["highlights"]["value"]>;
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
@@ -128,6 +144,7 @@ function createFixture(): ReaderFixture {
   const currentTranslation = computed(
     () => chapterData.value?.translation ?? null
   );
+  const contentStale = signal<boolean | null>(null);
 
   const readingState = {
     translationId: signal("BSB"),
@@ -149,6 +166,7 @@ function createFixture(): ReaderFixture {
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
     error: signal<string | null>(null),
+    retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
     highlightSelectedVerses: vi.fn(async () => undefined),
@@ -161,25 +179,49 @@ function createFixture(): ReaderFixture {
     selectChapter: vi.fn(async () => undefined),
     loadPreviousChapter: vi.fn(async () => undefined),
     loadNextChapter: vi.fn(async () => undefined),
+    hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
+    hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
+    initialChapterLoadSettled: signal(true),
+    isChapterContentStale: computed(
+      () => contentStale.value ?? chapterData.value === null
+    ),
     defaultTranslation: { id: "BSB", language: "en" },
+    discoveredContent: signal([]),
+    discoveredCrossReferences: signal([]),
+    discoveredStudyNotes: signal([]),
+    disableExtension: vi.fn(async () => undefined),
+    enableExtension: vi.fn(async () => undefined),
+    isShared: signal(false),
+    dispose: vi.fn(async () => undefined),
+    enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
+    isExtensionEnabled: vi.fn(() => false),
+    getUrlQueryParams: vi.fn(() => ({})),
+    onNavigate: vi.fn(() => () => {}),
+    shortSubTitle: signal<string>("shortSubTitle"),
+    shortTitle: signal<string>("shortTitle"),
+    subTitle: signal<string>("subTitle"),
+    title: signal<string>("title"),
   } as BibleReadingState;
 
   const selectorState = {
     setOpen,
   } as any as BibleSelectorState;
 
-  const pane = {
-    id: "pane-1",
-  } as Pane;
+  const slot: TabSlot = {
+    id: "slot-1",
+    tab: null,
+  };
 
   return {
-    pane,
+    slot,
     selectorState,
     readingState,
     chapterData,
+    contentStale,
     highlights,
     decorations,
     selectedVerses,
@@ -202,12 +244,26 @@ function createMobileState(): SeedBibleState {
     sidebar: {
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
+      openSettingsToView: vi.fn(),
     },
     bookmarks: {
       isLocationBookmarked: vi.fn(() => false),
       toggleBookmarkAtLocation: vi.fn(async () => {}),
     },
-    tools: createBibleToolsManager(),
+    login: {
+      userId: signal<string | null>(null),
+      profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+    },
+    os: {
+      connectionId: "test-connection",
+    },
+    tools: createBibleToolsManager(testBranding),
+    playlists: {
+      playing: signal(null),
+    },
+    features: {
+      isFeatureEnabled: vi.fn(() => signal(true)),
+    },
   } as any as SeedBibleState;
 }
 
@@ -225,13 +281,13 @@ function dispatchTouch(
 }
 
 function renderMobileReader(
-  fixture: Pick<ReaderFixture, "pane" | "selectorState" | "readingState">,
+  fixture: Pick<ReaderFixture, "slot" | "selectorState" | "readingState">,
   state: SeedBibleState,
   container: HTMLDivElement
 ) {
   act(() => {
     render(
-      <PaneReader
+      <TabSlotReader
         tab={{
           id: "tab-1",
           title: "Tab 1",
@@ -240,8 +296,7 @@ function renderMobileReader(
           sharedChat: null,
         }}
         state={state}
-        pane={fixture.pane}
-        displayBelowReaderToolbar={false}
+        slot={fixture.slot}
       />,
       container
     );
@@ -265,17 +320,25 @@ describe("BibleReader", () => {
   });
 
   afterEach(() => {
-    // render(null, container);
+    // Detaching the container is not enough: the tree stays mounted, so its
+    // effect cleanups never run and a late async update (the reader's skeleton
+    // timer, an un-awaited retry) still diffs into a document that Vitest has
+    // since torn down — an unhandled "document is not defined" rejection.
+    // Unmounting clears the component's parent DOM, which makes preact drop
+    // those updates instead.
+    act(() => {
+      render(null, container);
+    });
     container.remove();
   });
 
   it("opens the selector when the title is clicked", () => {
-    const { pane, selectorState, readingState, setOpen } = createFixture();
+    const { slot, selectorState, readingState, setOpen } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -290,16 +353,137 @@ describe("BibleReader", () => {
       title?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(setOpen).toHaveBeenCalledWith(true, pane);
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
   });
 
-  it("updates the displayed book name when the current book changes", () => {
-    const { pane, selectorState, readingState } = createFixture();
+  it("shows a not-found state and lets the user jump to the translation's first book when the requested book isn't in the book list", () => {
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // The fixture's book (GEN) matches its own translationBooks list, so no
+    // not-found state initially.
+    expect(container.querySelector(".sb-reader-not-found")).toBeNull();
+
+    act(() => {
+      readingState.bookId.value = "NOTABOOK";
+    });
+
+    expect(container.querySelector(".sb-reader-not-found")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-reader-not-found-icon")?.textContent
+    ).toBe("search_off");
+    // The chapter content Suspense/ChapterContent shouldn't render alongside
+    // the not-found state.
+    expect(container.querySelector(".sb-chapter-content")).toBeNull();
+
+    const action = container.querySelector(
+      ".sb-reader-not-found-action"
+    ) as HTMLButtonElement | null;
+    expect(action).not.toBeNull();
+
+    act(() => {
+      action?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // The fixture's translationBooks list has one book (GEN, chapter 1).
+    expect(readingState.selectChapter).toHaveBeenCalledWith("GEN", 1);
+  });
+
+  it("shows a retryable failure state when the chapter fails to load", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const errorPanel = container.querySelector(".sb-reader-error");
+    expect(errorPanel).not.toBeNull();
+    expect(errorPanel?.textContent).toContain("Chapter unavailable");
+    // The raw failure message is never surfaced to the reader.
+    expect(errorPanel?.textContent).not.toContain("Failed to fetch");
+    expect(container.querySelector(".sb-chapter-content")).toBeNull();
+
+    const reload = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-error-retry"
+    );
+    expect(reload).not.toBeNull();
+
+    act(() => {
+      reload?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(readingState.retryLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the failure state visible while a retry is in flight", async () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.error.value = "Failed to fetch";
+
+    let resolveRetry: (() => void) | undefined;
+    (readingState.retryLoad as Mock).mockImplementation(() => {
+      // Mirror the manager: the retry clears `error` as it starts.
+      readingState.error.value = null;
+      return new Promise<void>((resolve) => {
+        resolveRetry = resolve;
+      });
+    });
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-reader-error-retry")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.querySelector(".sb-reader-error")).not.toBeNull();
+    expect(
+      container.querySelector<HTMLButtonElement>(".sb-reader-error-retry")
+        ?.disabled
+    ).toBe(true);
+
+    await act(async () => {
+      resolveRetry?.();
+    });
+
+    expect(container.querySelector(".sb-reader-error")).toBeNull();
+    expect(container.querySelector(".sb-chapter-content")).not.toBeNull();
+  });
+
+  it("updates the displayed book name when the current book changes", () => {
+    const { slot, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -363,7 +547,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={first.pane}
+          currentSlot={first.slot}
           selectorState={first.selectorState}
           readingState={first.readingState}
         />,
@@ -378,7 +562,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={second.pane}
+          currentSlot={second.slot}
           selectorState={second.selectorState}
           readingState={second.readingState}
         />,
@@ -391,13 +575,134 @@ describe("BibleReader", () => {
     );
   });
 
-  it("clicking a verse selects it with event coordinates", () => {
-    const { pane, selectorState, readingState, selectVerse } = createFixture();
+  it("dims the previous chapter's verses when navigation starts, without flashing the placeholder", () => {
+    const { slot, selectorState, readingState, contentStale } = createFixture();
+    contentStale.value = true;
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Most navigations resolve well inside the placeholder delay, so this is
+    // what a reader normally sees: the old text, dimmed, and nothing moving.
+    expect(container.querySelector(".sb-chapter-content-stale")).not.toBeNull();
+    expect(container.querySelector(".sb-verse")).not.toBeNull();
+    expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+  });
+
+  it("replaces the dimmed verses with the placeholder once the wait gets long", () => {
+    vi.useFakeTimers();
+    try {
+      const { slot, selectorState, readingState, contentStale } =
+        createFixture();
+      contentStale.value = true;
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+
+      act(() => {
+        vi.advanceTimersByTime(600);
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).not.toBeNull();
+      // Chapter data is still loaded, just for the position the reader left —
+      // those verses must not be on screen under the new chapter's title.
+      expect(readingState.chapterData.value).not.toBeNull();
+      expect(container.querySelector(".sb-verse")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows the placeholder immediately on a cold start, with no text to dim", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    chapterData.value = null;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Waiting out the delay here would leave the reader looking at an empty
+    // pane, since there is no previous chapter to dim.
+    expect(container.querySelector(".sb-chapter-skeleton")).not.toBeNull();
+  });
+
+  it("shows the verses, not the placeholder, once content matches the position", () => {
+    const { slot, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+    expect(container.querySelector(".sb-verse")).not.toBeNull();
+  });
+
+  it("never renders the loading placeholder server-side", () => {
+    // The placeholder would replace the verses in the served HTML, costing a
+    // Bible reader its indexable scripture text.
+    const { slot, selectorState, readingState, contentStale } = createFixture();
+    contentStale.value = true;
+
+    try {
+      import.meta.env.SSR = true;
+
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+          />,
+          container
+        );
+      });
+
+      expect(container.querySelector(".sb-chapter-skeleton")).toBeNull();
+      expect(container.querySelector(".sb-verse")).not.toBeNull();
+    } finally {
+      delete import.meta.env.SSR;
+    }
+  });
+
+  it("clicking a verse selects it with event coordinates", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -432,13 +737,13 @@ describe("BibleReader", () => {
   });
 
   it("clicking a footnote button opens the matching note", () => {
-    const { pane, selectorState, readingState, selectFootnote, selectVerse } =
+    const { slot, selectorState, readingState, selectFootnote, selectVerse } =
       createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -466,7 +771,7 @@ describe("BibleReader", () => {
   });
 
   it("marks selected and poetry verses with their CSS classes", () => {
-    const { pane, selectorState, readingState, selectedVerses } =
+    const { slot, selectorState, readingState, selectedVerses } =
       createFixture();
 
     selectedVerses.value = [
@@ -485,7 +790,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -498,8 +803,8 @@ describe("BibleReader", () => {
     expect(poetryVerse?.classList.contains("sb-verse-selected")).toBe(true);
   });
 
-  it("applies sb-highlight-{colorId} class for color-id highlights", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+  it("marks a color-id highlight on a wrapper with data-highlight-fill", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
       highlights: [
@@ -513,7 +818,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -521,20 +826,122 @@ describe("BibleReader", () => {
       );
     });
 
-    const verses = container.querySelectorAll(".sb-verse");
-    const firstVerse = verses[0] as HTMLElement | undefined;
-    expect(firstVerse).toBeDefined();
-    const firstDecorator = firstVerse?.querySelector(
+    // The highlight lives on a wrapper whose fill the ribbon layer reads; the
+    // verse's own decorator stays clear (the layer paints the color behind it).
+    const wrapper = container.querySelector(
+      ".sb-highlight-yellow"
+    ) as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe(
+      "var(--sb-highlight-yellow-color, transparent)"
+    );
+    const firstDecorator = container.querySelector(
       ".sb-verse-decorator"
     ) as HTMLElement | null;
-    expect(firstDecorator).not.toBeNull();
     expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      true
+      false
     );
   });
 
-  it("applies inline custom highlight colors when highlight uses a custom color", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+  it("merges contiguous same-color prose verses into one highlight ribbon", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "yellow" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // A single wrapper carries the highlight for the whole run — not the
+    // per-verse decorators — so the two verses paint one continuous ribbon.
+    const highlightEls = container.querySelectorAll(".sb-highlight-yellow");
+    expect(highlightEls.length).toBe(1);
+    const wrapper = highlightEls[0] as HTMLElement;
+    expect(wrapper.classList.contains("sb-verse-decorator")).toBe(false);
+    expect(wrapper.getAttribute("data-highlight-fill")).toBe(
+      "var(--sb-highlight-yellow-color, transparent)"
+    );
+    expect(wrapper.querySelectorAll(".sb-verse").length).toBe(2);
+    // The verses' own decorators stay transparent (no highlight of their own).
+    const decorators = wrapper.querySelectorAll(".sb-verse-decorator");
+    expect(decorators.length).toBe(2);
+    decorators.forEach((decorator) =>
+      expect(decorator.classList.contains("sb-highlight-yellow")).toBe(false)
+    );
+  });
+
+  it("does not merge adjacent verses highlighted with different colors", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "green" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Different colors don't share a ribbon: each verse gets its own wrapper.
+    const yellowWrapper = container.querySelector(
+      ".sb-highlight-yellow"
+    ) as HTMLElement | null;
+    const greenWrapper = container.querySelector(
+      ".sb-highlight-green"
+    ) as HTMLElement | null;
+    expect(yellowWrapper).not.toBeNull();
+    expect(greenWrapper).not.toBeNull();
+    expect(yellowWrapper?.querySelectorAll(".sb-verse").length).toBe(1);
+    expect(greenWrapper?.querySelectorAll(".sb-verse").length).toBe(1);
+  });
+
+  it("carries a custom highlight color as the wrapper fill and font color", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
       highlights: [
@@ -550,7 +957,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -558,27 +965,29 @@ describe("BibleReader", () => {
       );
     });
 
-    const verses = container.querySelectorAll(".sb-verse");
-    const firstVerse = verses[0] as HTMLElement | undefined;
-    expect(firstVerse).toBeDefined();
-    const firstDecorator = firstVerse?.querySelector(
+    // Custom color -> the wrapper carries the raw hex as its fill (for the layer)
+    // and the custom font color as inline color; it paints no background itself.
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe("#123456");
+    expect(wrapper?.style.color).toBe("rgb(171, 205, 239)");
+    expect(wrapper?.style.backgroundColor).toBe("");
+    // The decorator itself has no highlight.
+    const firstDecorator = container.querySelector(
       ".sb-verse-decorator"
     ) as HTMLElement | null;
-    expect(firstDecorator).not.toBeNull();
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      false
-    );
-    expect(firstDecorator?.style.backgroundColor).toBe("rgb(18, 52, 86)");
-    expect(firstDecorator?.style.color).toBe("rgb(171, 205, 239)");
+    expect(firstDecorator?.style.backgroundColor).toBe("");
   });
 
   it("reacts to highlight signal changes for the current chapter", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -586,14 +995,7 @@ describe("BibleReader", () => {
       );
     });
 
-    let verses = container.querySelectorAll(".sb-verse");
-    let firstVerse = verses[0] as HTMLElement | undefined;
-    let firstDecorator = firstVerse?.querySelector(
-      ".sb-verse-decorator"
-    ) as HTMLElement | null;
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      false
-    );
+    expect(container.querySelector(".sb-highlight-yellow")).toBeNull();
 
     act(() => {
       highlights.value = {
@@ -606,18 +1008,11 @@ describe("BibleReader", () => {
       };
     });
 
-    verses = container.querySelectorAll(".sb-verse");
-    firstVerse = verses[0] as HTMLElement | undefined;
-    firstDecorator = firstVerse?.querySelector(
-      ".sb-verse-decorator"
-    ) as HTMLElement | null;
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      true
-    );
+    expect(container.querySelector(".sb-highlight-yellow")).not.toBeNull();
   });
 
-  it("applies verse decorations and lets decoration styles override highlight styles", () => {
-    const { pane, selectorState, readingState, highlights, decorations } =
+  it("applies verse decorations on the decorator while the highlight sits on the wrapper", () => {
+    const { slot, selectorState, readingState, highlights, decorations } =
       createFixture();
 
     highlights.value = {
@@ -648,7 +1043,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -667,13 +1062,384 @@ describe("BibleReader", () => {
     expect(firstDecorator?.classList.contains("sb-extra-decoration")).toBe(
       true
     );
-    expect(firstDecorator?.style.backgroundColor).toBe("rgb(18, 52, 86)");
+    // Decoration styles apply to the decorator; the highlight background is not
+    // here (it is the wrapper's fill), so only decoration styles show.
+    expect(firstDecorator?.style.backgroundColor).toBe("");
     expect(firstDecorator?.style.color).toBe("rgb(255, 0, 0)");
     expect(firstDecorator?.style.borderBottom).toBe("2px solid blue");
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe("#123456");
+  });
+
+  it("draws a decoration carrying a preset highlight through the ribbon layer", () => {
+    const { slot, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:1",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        highlight: { colorId: "yellow" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // The fill stays a CSS-var reference so each viewer resolves it against
+    // their own theme, rather than a color baked in by whoever broadcast it.
+    const wrapper = container.querySelector(
+      ".sb-highlight-yellow"
+    ) as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe(
+      "var(--sb-highlight-yellow-color, transparent)"
+    );
+  });
+
+  it("draws a decoration carrying a custom highlight color through the ribbon layer", () => {
+    const { slot, selectorState, readingState, decorations } = createFixture();
+
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:1",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        highlight: {
+          colorId: "yellow",
+          customColor: "#123456",
+          customFontColor: "#abcdef",
+        },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe("#123456");
+    expect(wrapper?.style.color).toBe("rgb(171, 205, 239)");
+  });
+
+  it("merges contiguous verses sharing a decoration highlight into one ribbon", () => {
+    const { slot, selectorState, readingState, decorations, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:1",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        highlight: { colorId: "green" },
+      },
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // One wrapper spanning both verses, so the layer draws a single continuous
+    // ribbon rather than two abutting shapes.
+    const wrappers = container.querySelectorAll("[data-highlight-fill]");
+    expect(wrappers.length).toBe(1);
+    expect(wrappers[0]?.getAttribute("data-highlight-key")).toBe("1-2");
+  });
+
+  it("uses a custom highlight color even when no font color comes with it", () => {
+    const { slot, selectorState, readingState, highlights } = createFixture();
+
+    // The font color is optional in the schema; requiring it meant a highlight
+    // like this silently fell back to rendering as its preset color.
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow", customColor: "#123456" }],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe("#123456");
+    expect(wrapper?.style.color).toBe("");
+  });
+
+  it("marks a decoration highlight as a broadcast and leaves a saved one unmarked", () => {
+    const { slot, selectorState, readingState, highlights, decorations } =
+      createFixture();
+
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // The ribbon layer reads this off the DOM to decide outline vs solid.
+    const wrappers = Array.from(
+      container.querySelectorAll("[data-highlight-fill]")
+    );
+    const marks = wrappers.map((w) => [
+      w.getAttribute("data-highlight-fill"),
+      w.getAttribute("data-highlight-broadcast"),
+    ]);
+    expect(marks).toEqual([
+      ["var(--sb-highlight-yellow-color, transparent)", null],
+      ["var(--sb-highlight-green-color, transparent)", "true"],
+    ]);
+  });
+
+  it("does not merge a broadcast and a saved highlight of the same color into one run", () => {
+    const {
+      slot,
+      selectorState,
+      readingState,
+      highlights,
+      decorations,
+      chapterData,
+    } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "green" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Same color, but one draws solid and the other outlined — merging them into
+    // a single continuous ribbon would paint both the same way.
+    const wrappers = Array.from(
+      container.querySelectorAll("[data-highlight-fill]")
+    );
+    expect(wrappers.length).toBe(2);
+    expect(
+      wrappers.map((w) => w.getAttribute("data-highlight-broadcast"))
+    ).toEqual([null, "true"]);
+  });
+
+  it("lets a decoration highlight win over a saved highlight on the same verse", () => {
+    const { slot, selectorState, readingState, highlights, decorations } =
+      createFixture();
+
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:1",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe(
+      "var(--sb-highlight-green-color, transparent)"
+    );
+    expect(wrapper?.classList.contains("sb-highlight-yellow")).toBe(false);
+  });
+
+  it("keeps decoration highlights visible when showHighlights is off", () => {
+    const { slot, selectorState, readingState, highlights, decorations } =
+      createFixture();
+
+    // The setting hides the reader's own saved highlights; a session peer's
+    // broadcast is a live signal and stays on screen.
+    highlights.value = {
+      highlights: [{ verse: 1, colorId: "yellow" }],
+    };
+    decorations.value = [
+      {
+        id: "shared-highlight:GEN:1:2",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [2],
+        highlight: { colorId: "green" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: true,
+            showFootnotes: true,
+            showHighlights: false,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const wrappers = Array.from(
+      container.querySelectorAll("[data-highlight-fill]")
+    );
+    expect(wrappers.map((w) => w.getAttribute("data-highlight-fill"))).toEqual([
+      "var(--sb-highlight-green-color, transparent)",
+    ]);
+  });
+
+  it("ignores a decoration highlight that targets text inside a verse", () => {
+    const { slot, selectorState, readingState, decorations } = createFixture();
+
+    // The ribbon layer works per verse-run, so a fragment-targeted highlight
+    // can't be drawn as one — it must not swallow the whole verse instead.
+    decorations.value = [
+      {
+        id: "decoration-1",
+        translationId: "BSB",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verses: [1],
+        targetContent: "beginning",
+        highlight: { colorId: "yellow" },
+      },
+    ];
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector("[data-highlight-fill]")).toBeNull();
   });
 
   it("displays decorations for any translation when decoration translationId is null", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -689,7 +1455,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -711,7 +1477,7 @@ describe("BibleReader", () => {
   });
 
   it("displays multiple decorations on a single verse", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -741,7 +1507,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -764,7 +1530,7 @@ describe("BibleReader", () => {
   });
 
   it("merges decoration classes together for a single verse", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -788,7 +1554,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -813,7 +1579,7 @@ describe("BibleReader", () => {
   });
 
   it("displays decorations and highlights together for a single verse", () => {
-    const { pane, selectorState, readingState, highlights, decorations } =
+    const { slot, selectorState, readingState, highlights, decorations } =
       createFixture();
 
     highlights.value = {
@@ -838,7 +1604,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -854,21 +1620,23 @@ describe("BibleReader", () => {
     ) as HTMLElement | null;
 
     expect(firstDecorator).not.toBeNull();
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      true
-    );
+    // Decoration on the decorator, highlight on the enclosing wrapper.
     expect(
       firstDecorator?.classList.contains("sb-decoration-with-highlight")
     ).toBe(true);
+    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
+      false
+    );
+    expect(container.querySelector(".sb-highlight-yellow")).not.toBeNull();
   });
 
   it("wraps inline verse groups in a verse decorator span", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -891,12 +1659,12 @@ describe("BibleReader", () => {
   });
 
   it("wraps poetry lines in verse decorator spans", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -922,7 +1690,7 @@ describe("BibleReader", () => {
   });
 
   it("applies targetContent decorations only to the matching text", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -942,7 +1710,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -971,7 +1739,7 @@ describe("BibleReader", () => {
   });
 
   it("applies targetContent only within start/end indexes", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -990,7 +1758,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1006,7 +1774,7 @@ describe("BibleReader", () => {
   });
 
   it("applies start/end-only decoration to just that index range", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -1024,7 +1792,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1048,12 +1816,12 @@ describe("BibleReader", () => {
   });
 
   it("renders chapter content parts and inline markers", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1098,12 +1866,12 @@ describe("BibleReader", () => {
   });
 
   it("hides chapter headings when scriptureElements.showHeadings is false", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1122,12 +1890,12 @@ describe("BibleReader", () => {
   });
 
   it("hides verse numbers when scriptureElements.showVerseNumbers is false", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1145,8 +1913,131 @@ describe("BibleReader", () => {
     expect(container.querySelector(".sb-verse-number")).toBeNull();
   });
 
+  it("separates adjacent verses with a space when verse numbers are hidden", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse."] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: false,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const content = container.querySelector(".sb-chapter-content");
+    expect(content?.textContent).toContain("First verse. Second verse.");
+    // The space sits between the verse spans, so each verse still covers only
+    // its own text (highlight ribbons and selection stop at the last glyph).
+    const verses = container.querySelectorAll(".sb-verse");
+    expect(verses[0]?.textContent).toBe("First verse.");
+    expect(verses[1]?.textContent).toBe("Second verse.");
+  });
+
+  it("does not add a separating space when verse numbers are shown", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse."] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // No separating text node: with numbers on, the gap either side of the
+    // number comes from `.sb-verse-number`'s inline margins in
+    // BibleReader.css, which `textContent` can't see. So the run-together
+    // string below is the correct markup, NOT a mashed-up rendering — adding a
+    // literal space here would double the gap. What has to hold is that the
+    // number is actually rendered, since it is the thing carrying the margins.
+    const content = container.querySelector(".sb-chapter-content");
+    expect(content?.textContent).toContain("First verse.2Second verse.");
+    expect(container.querySelectorAll(".sb-verse-number")).toHaveLength(2);
+  });
+
+  it("separates verses inside one highlight run when verse numbers are hidden", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse."] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "yellow" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: false,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const wrapper = container.querySelector(
+      ".sb-highlight-yellow"
+    ) as HTMLElement | null;
+    expect(wrapper?.textContent).toBe("First verse. Second verse.");
+  });
+
   it("hides inline footnote buttons and the footnote modal when scriptureElements.showFootnotes is false", () => {
-    const { pane, selectorState, readingState, selectedFootnote, chapterData } =
+    const { slot, selectorState, readingState, selectedFootnote, chapterData } =
       createFixture();
 
     selectedFootnote.value = {
@@ -1162,7 +2053,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1182,7 +2073,7 @@ describe("BibleReader", () => {
   });
 
   it("hides highlight classes/styles when scriptureElements.showHighlights is false", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
       highlights: [
@@ -1198,7 +2089,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1224,15 +2115,17 @@ describe("BibleReader", () => {
     expect(firstDecorator?.className).not.toContain("sb-highlight-");
     expect(firstDecorator?.style.backgroundColor).toBe("");
     expect(firstDecorator?.style.color).toBe("");
+    // No highlight wrapper is emitted at all when highlights are hidden.
+    expect(container.querySelector("[data-highlight-fill]")).toBeNull();
   });
 
   it("omits sb-words-of-jesus class when scriptureElements.showRedLettering is false", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1251,12 +2144,12 @@ describe("BibleReader", () => {
   });
 
   it("applies sb-words-of-jesus class when scriptureElements.showRedLettering is true", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1278,7 +2171,7 @@ describe("BibleReader", () => {
 
   it("renders an open footnote modal and closes it", () => {
     const {
-      pane,
+      slot,
       selectorState,
       readingState,
       selectedFootnote,
@@ -1299,7 +2192,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1326,8 +2219,82 @@ describe("BibleReader", () => {
     expect(selectFootnote).toHaveBeenCalledWith(null);
   });
 
+  it("makes scripture references in footnote text clickable", () => {
+    const {
+      slot,
+      selectorState,
+      readingState,
+      selectedFootnote,
+      selectFootnote,
+      chapterData,
+    } = createFixture();
+    const openVerseReference = vi.fn(async () => undefined);
+    const state = {
+      app: {
+        isMobile: signal(false),
+        openVerseReference,
+      },
+      tools: createBibleToolsManager(testBranding),
+      playlists: {
+        playing: signal(null),
+      },
+      features: {
+        isFeatureEnabled: vi.fn(() => true),
+      },
+      bookmarks: {
+        isLocationBookmarked: vi.fn(() => false),
+      },
+    } as any as SeedBibleState;
+
+    selectedFootnote.value = {
+      chapter: chapterData.value!,
+      verse: {
+        type: "verse",
+        number: 1,
+        content: ["Text"],
+      },
+      note: {
+        noteId: 7,
+        text: "See also John 3:16 and Hab.3.8-15.",
+        caller: "+",
+      },
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const links = Array.from(
+      container.querySelectorAll(".sb-verse-reference-link")
+    ) as HTMLAnchorElement[];
+    expect(links).toHaveLength(2);
+    expect(links[0]?.textContent).toBe("John 3:16");
+    expect(links[1]?.textContent).toBe("Hab.3.8-15");
+
+    act(() => {
+      links[0]?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+    });
+
+    expect(selectFootnote).toHaveBeenCalledWith(null);
+    expect(openVerseReference).toHaveBeenCalledWith({
+      book: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
+  });
+
   it("shows translation license notice and website when licenseNotice is present", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
 
     chapterData.value = {
       ...chapterData.value!,
@@ -1341,7 +2308,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1366,7 +2333,7 @@ describe("BibleReader", () => {
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1375,7 +2342,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1394,7 +2361,7 @@ describe("BibleReader", () => {
   });
 
   it("sets the scroller scrollTop from readingState.scrollPosition", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1404,7 +2371,7 @@ describe("BibleReader", () => {
     };
     readingState.scrollPosition.value = 123;
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1414,7 +2381,7 @@ describe("BibleReader", () => {
   });
 
   it("scrolls a requested verse into view when readingState.scrollToVerse is set", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1439,7 +2406,7 @@ describe("BibleReader", () => {
 
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );
@@ -1459,7 +2426,7 @@ describe("BibleReader", () => {
   });
 
   it("does not update readingState.scrollPosition when reading state points at a different chapter", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1468,7 +2435,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1489,7 +2456,7 @@ describe("BibleReader", () => {
   });
 
   it("registers the scroll listener as passive", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1512,7 +2479,7 @@ describe("BibleReader", () => {
 
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );
@@ -1531,7 +2498,7 @@ describe("BibleReader", () => {
   });
 
   it("applies and removes the mobile hidden-header class based on scroll direction and threshold", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1540,7 +2507,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1578,8 +2545,90 @@ describe("BibleReader", () => {
     ).toBe(false);
   });
 
+  it("re-shows the mobile header when the reader reaches the bottom of the chapter", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const scroller = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement | null;
+    expect(scroller).not.toBeNull();
+
+    // jsdom reports 0 for layout metrics, so give the scroller real dimensions
+    // that describe a chapter taller than its viewport (600px content, 300px
+    // visible) — enough that the reveal logic has something to measure against.
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      value: 600,
+    });
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 300,
+    });
+
+    const mobileHeaderSelector = ".sb-bible-reader-mobile-header";
+    const isHeaderHidden = () =>
+      container
+        .querySelector(mobileHeaderSelector)
+        ?.classList.contains("sb-bible-reader-mobile-header-hidden");
+
+    // Scrolling down mid-chapter hides the header.
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 150;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+    expect(isHeaderHidden()).toBe(true);
+
+    // Scrolling further down to the very bottom (scrollTop + clientHeight
+    // reaches scrollHeight) re-shows the header even though the direction is
+    // still downward.
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 300;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+    expect(isHeaderHidden()).toBe(false);
+  });
+
+  it("renders the book name and chapter number as a heading at the top of the mobile content", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const title = container.querySelector(
+      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title"
+    );
+    expect(title).not.toBeNull();
+    expect(title?.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+    expect(title?.querySelector(".sb-bible-reader-chapter")?.textContent).toBe(
+      "1"
+    );
+  });
+
   it("swiping left on mobile loads the next chapter", async () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1591,7 +2640,7 @@ describe("BibleReader", () => {
     vi.useFakeTimers();
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );
@@ -1622,7 +2671,7 @@ describe("BibleReader", () => {
   });
 
   it("swiping right on mobile loads the previous chapter", async () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1634,7 +2683,7 @@ describe("BibleReader", () => {
     vi.useFakeTimers();
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );

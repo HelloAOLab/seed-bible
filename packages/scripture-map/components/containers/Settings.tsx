@@ -11,6 +11,7 @@ import { useScriptureMapContext } from "../../contexts/ScriptureMap/ScriptureMap
 import type { ReadingHistoryTimelineFooterData } from "../../../seed-bible-utils/infrastructure/models/seedBible";
 
 import { useRef } from "preact/hooks";
+import { createPortal } from "preact/compat";
 
 export type BaseSettingsOptionProps = {
   callback: () => void;
@@ -80,9 +81,6 @@ export interface SettingsYearselectorOptionProps {
   onClick: () => void;
   content: number;
 }
-
-const SETTINGS_ICON =
-  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
 
 const Option = (props: SettingsOptionProps) => {
   const { MaterialIcon } = useScriptureMapContext();
@@ -234,6 +232,7 @@ const ReadingHistoryTimelineSection = ({
 };
 
 export const Settings = () => {
+  const { settingsHeaderSlot } = useScriptureMapContext();
   const {
     settingsClass,
     settingsButtonRef,
@@ -249,7 +248,6 @@ export const Settings = () => {
     legendSquaresData,
     yearSelectorLabelTextContent,
     yearSelectorOptionsData,
-    title,
     optionsTitle,
     optionsDescription,
     lessText,
@@ -258,29 +256,26 @@ export const Settings = () => {
 
   return (
     <div className={settingsClass}>
-      <div className="settings-title scripture-title">
-        <span class="material-symbols-outlined">splitscreen_portrait</span>
-        <span className="scripture-title">{title}</span>
-      </div>
-
-      <div
-        className="header-button settings-button"
-        ref={settingsButtonRef}
-        onClick={handleSettingsButtonClick}
-      >
-        <img src={SETTINGS_ICON} alt="SETTINGS_ICON" className="coloredIcon" />
-        {showOptions && (
-          <SettingsOptions
-            setShowOptions={setShowOptions}
-            settingsButtonRef={settingsButtonRef}
-            optionsData={optionsData}
-            optionsTitle={optionsTitle}
-            optionsDescription={optionsDescription}
-          />
+      {settingsHeaderSlot.value &&
+        createPortal(
+          <div
+            className="header-button settings-button"
+            ref={settingsButtonRef}
+            onClick={handleSettingsButtonClick}
+          >
+            <span className="material-symbols-outlined">more_vert</span>
+            {showOptions && (
+              <SettingsOptions
+                setShowOptions={setShowOptions}
+                settingsButtonRef={settingsButtonRef}
+                optionsData={optionsData}
+                optionsTitle={optionsTitle}
+                optionsDescription={optionsDescription}
+              />
+            )}
+          </div>,
+          settingsHeaderSlot.value
         )}
-      </div>
-
-      <span className={"horizontal-divider"}></span>
 
       {mode === ScriptureMapModes.Project && project && (
         <>

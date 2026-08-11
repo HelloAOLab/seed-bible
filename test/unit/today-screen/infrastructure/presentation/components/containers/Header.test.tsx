@@ -56,9 +56,12 @@ describe("Header", () => {
     return container.querySelector<HTMLDivElement>(".today-header");
   }
 
-  function buttons() {
-    return header()!.querySelectorAll<HTMLButtonElement>("button");
-  }
+  // The notification/settings action buttons are currently commented out in
+  // the Header component, so their tests are disabled to match. Restore both
+  // together if the buttons come back.
+  // function buttons() {
+  //   return header()!.querySelectorAll<HTMLButtonElement>("button");
+  // }
 
   describe("content", () => {
     it("renders the date in the header's direct span", () => {
@@ -75,39 +78,39 @@ describe("Header", () => {
       );
     });
 
-    it("renders the notification icon in the first button", () => {
-      setup({ notificationIcon: "bell" });
-      expect(buttons()[0]!.querySelector(".material-icon")!.textContent).toBe(
-        "bell"
-      );
-    });
+    // it("renders the notification icon in the first button", () => {
+    //   setup({ notificationIcon: "bell" });
+    //   expect(buttons()[0]!.querySelector(".material-icon")!.textContent).toBe(
+    //     "bell"
+    //   );
+    // });
 
-    it("renders the settings icon in the second button", () => {
-      setup({ settingsIcon: "gear" });
-      expect(buttons()[1]!.querySelector(".material-icon")!.textContent).toBe(
-        "gear"
-      );
-    });
+    // it("renders the settings icon in the second button", () => {
+    //   setup({ settingsIcon: "gear" });
+    //   expect(buttons()[1]!.querySelector(".material-icon")!.textContent).toBe(
+    //     "gear"
+    //   );
+    // });
 
-    it("renders exactly two action buttons", () => {
-      setup();
-      expect(buttons()).toHaveLength(2);
-    });
+    // it("renders exactly two action buttons", () => {
+    //   setup();
+    //   expect(buttons()).toHaveLength(2);
+    // });
   });
 
-  describe("interaction", () => {
-    it("calls handleNotificationClick when the first button is clicked", () => {
-      const result = setup();
-      act(() => buttons()[0]!.click());
-      expect(result.handleNotificationClick).toHaveBeenCalledTimes(1);
-      expect(result.handleSettingsClick).not.toHaveBeenCalled();
-    });
+  // describe("interaction", () => {
+  //   it("calls handleNotificationClick when the first button is clicked", () => {
+  //     const result = setup();
+  //     act(() => buttons()[0]!.click());
+  //     expect(result.handleNotificationClick).toHaveBeenCalledTimes(1);
+  //     expect(result.handleSettingsClick).not.toHaveBeenCalled();
+  //   });
 
-    it("calls handleSettingsClick when the second button is clicked", () => {
-      const result = setup();
-      act(() => buttons()[1]!.click());
-      expect(result.handleSettingsClick).toHaveBeenCalledTimes(1);
-      expect(result.handleNotificationClick).not.toHaveBeenCalled();
-    });
-  });
+  //   it("calls handleSettingsClick when the second button is clicked", () => {
+  //     const result = setup();
+  //     act(() => buttons()[1]!.click());
+  //     expect(result.handleSettingsClick).toHaveBeenCalledTimes(1);
+  //     expect(result.handleNotificationClick).not.toHaveBeenCalled();
+  //   });
+  // });
 });

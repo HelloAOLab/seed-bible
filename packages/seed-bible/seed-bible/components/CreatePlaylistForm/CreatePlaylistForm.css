@@ -1,0 +1,32 @@
+/* Clickable item label that opens the item for editing. */
+.sb-discover-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* Stretch to fill the row's full height (not just the label's own line),
+   * absorbing the row's own padding so more of the row is clickable. Only
+   * the leading edge (and top/bottom) extend into the row's padding — the
+   * trailing edge stays put so the negative margin can't encroach on the
+   * sibling delete button or the gap before it. */
+  align-self: stretch;
+  padding-block: 8px;
+  padding-inline-start: 10px;
+  margin-block: -8px;
+  margin-inline-start: -10px;
+}
+
+.sb-discover-item--editing {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-discover-item--editing .sb-discover-item-title {
+  color: var(--sb-primary-color);
+}

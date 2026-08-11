@@ -1,18 +1,22 @@
+import { TwitchIcon, AppIcon } from "./icons";
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { CreateTwitchPubState } from "./twitchPubManager";
 import initializeTwitchBot from "./initializeTwitchBot";
-import { closeInterface } from "./closeInterface";
-import { openInterface } from "./openInterface";
+import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import App from "./App";
+import TwitchHeader from "./header";
 
 export default function initTwitchPubExtension() {
   registerExtension({
     id: "ext_twitchPub",
     init: function* (context: SeedBibleState) {
+      const transcriptionManager = createTranscriptionManager(context);
       const twitchPubState = CreateTwitchPubState({
         toast: context.app.toast,
+        seedBibleState: context,
+        transcriptionManager,
       });
-
       // register a new tool
       yield context.tools.registerToolbarTool({
         id: "ext_twitchPub",
@@ -21,27 +25,54 @@ export default function initTwitchPubExtension() {
           defaultValue: "Twitch Panel",
           ns: "ext_twitchPub",
         },
-        icon: () => (
-          <img
-            src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1774035767/Vector_6_if8usw.svg"
-            style={{
-              width: "24px",
-              height: "24px",
-              objectFit: "contain",
-            }}
-          />
-        ),
+        icon: () => <AppIcon style={{ width: "24px", height: "24px" }} />,
         onSelect: () => {
-          if (!twitchPubState.interfaceEnabled.value) {
-            twitchPubState.interfaceEnabled.value = true;
-            openInterface({ state: twitchPubState, context });
-          } else {
-            twitchPubState.interfaceEnabled.value = false;
-            closeInterface();
-          }
+          twitchPubState.interfaceEnabled.value =
+            !twitchPubState.interfaceEnabled.value;
         },
         priority: 950,
       });
+
+      yield effect(() => {
+        if (
+          !twitchPubState.interfaceEnabled.value &&
+          twitchPubState.currentPane.value
+        ) {
+          context.panes.closePane(twitchPubState.currentPane.value.id);
+          twitchPubState.currentPane.value = null;
+          transcriptionManager.stopLive();
+        } else if (
+          twitchPubState.interfaceEnabled.value &&
+          !twitchPubState.currentPane.value
+        ) {
+          twitchPubState.currentPane.value = context.panes.openPane({
+            placement: "floating",
+            component: () => {
+              return <App state={twitchPubState} i18n={context.i18n} />;
+            },
+            title: "Twitch",
+            header: () => <TwitchHeader state={twitchPubState} />,
+            icon: () => (
+              <TwitchIcon style={{ width: "24px", height: "24px" }} />
+            ),
+            onClose: () => {
+              twitchPubState.interfaceEnabled.value = false;
+            },
+          });
+        }
+      });
+
+      // On teardown, close the pane if it's open and stop any live
+      // transcription so nothing is left rendered or running after the
+      // extension is uninstalled. Runs after the effect above is disposed, so
+      // closing the pane can't re-trigger it.
+      yield () => {
+        if (twitchPubState.currentPane.value) {
+          context.panes.closePane(twitchPubState.currentPane.value.id);
+          twitchPubState.currentPane.value = null;
+        }
+        transcriptionManager.stopLive();
+      };
 
       yield effect(() => {
         if (context.app.currentReadingState.value) {

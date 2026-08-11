@@ -1,5 +1,3 @@
-# Kal will review everything that doesn't match by default
+# Kal/Ryan will review everything that doesn't match by default
 * @KallynGowdy
-
-# Mazen and Kal can review everything related to the Seed Bible
-packages/seed-bible/* @mazenemad @KallynGowdy
+* @Blitzy

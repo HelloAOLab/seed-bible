@@ -1,0 +1,110 @@
+/* Profile picture upload modal (rendered inside the shared modal chrome) */
+.sb-photo-modal {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-photo-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.sb-photo-choice-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-photo-choice-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+}
+
+.sb-photo-choice-button .material-symbols-outlined {
+  color: var(--sb-primary-color);
+}
+
+.sb-photo-crop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sb-photo-crop-title {
+  margin: 0;
+  align-self: flex-start;
+  font-family: var(--sb-font-family);
+  color: var(--sb-font-color);
+}
+
+.sb-photo-crop-canvas {
+  touch-action: none;
+  max-width: 100%;
+}
+
+.sb-photo-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+}
+
+.sb-photo-crop-zoom input[type="range"] {
+  flex: 1;
+}
+
+.sb-photo-crop-zoom .material-symbols-outlined {
+  color: var(--sb-font-color);
+}
+
+.sb-photo-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  width: 100%;
+}
+
+.sb-photo-modal-button {
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-photo-modal-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-photo-modal-button-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-reader-background);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-photo-modal-button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
+}
+
+.sb-photo-modal-button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

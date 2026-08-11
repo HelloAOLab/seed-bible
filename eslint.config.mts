@@ -63,7 +63,21 @@ export default defineConfig([
       "css/no-important": "warn",
       "css/no-empty-blocks": "warn",
       "css/use-baseline": "warn",
-      "css/no-invalid-properties": "warn",
+      // `--sb-*` tokens live in base.css/ThemeManager, not each file, so the
+      // per-file rule can't resolve them — allow unknown vars to avoid noise.
+      "css/no-invalid-properties": ["warn", { allowUnknownVariables: true }],
+    },
+  },
+  {
+    // The Seed Bible reader's co-located component CSS (split out of the former
+    // app/main.css) intentionally uses not-yet-baseline features; the original
+    // monolith disabled this rule at the top of the file, so keep it off here.
+    files: [
+      "packages/seed-bible/seed-bible/components/**/*.css",
+      "packages/seed-bible/seed-bible/app/styles/**/*.css",
+    ],
+    rules: {
+      "css/use-baseline": "off",
     },
   },
   {
@@ -79,6 +93,7 @@ export default defineConfig([
     files: [
       "packages/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
       "script/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
+      "test/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
     ],
 
     rules: {
@@ -86,7 +101,14 @@ export default defineConfig([
       "no-constant-binary-expression": "error",
       "no-constant-condition": "error",
       "@typescript-eslint/no-unused-expressions": "error",
-      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
       "@typescript-eslint/no-explicit-any": "error",
       "no-empty": "error",
       "no-prototype-builtins": "error",
@@ -98,6 +120,8 @@ export default defineConfig([
         "warn",
         {
           destructuring: "all",
+          // Allows a closure to read a `let` before its one assignment.
+          ignoreReadBeforeAssign: true,
         },
       ],
       "no-useless-escape": "off",
@@ -186,7 +210,12 @@ export default defineConfig([
   },
   {
     files: ["test/**/*.{js,mjs,cjs,ts,tsx,jsx,css}"],
-
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.vitest,
+      },
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
     },

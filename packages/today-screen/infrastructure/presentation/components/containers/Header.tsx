@@ -5,11 +5,11 @@ export const Header = () => {
     date,
     greeting,
     name,
-    MaterialIcon,
-    notificationIcon,
-    settingsIcon,
-    handleNotificationClick,
-    handleSettingsClick,
+    // MaterialIcon,
+    // notificationIcon,
+    // settingsIcon,
+    // handleNotificationClick,
+    // handleSettingsClick,
   } = useHeader();
 
   return (
@@ -18,12 +18,12 @@ export const Header = () => {
       <h1>
         {greeting}, <span>{name}!</span>
       </h1>
-      <button onClick={handleNotificationClick}>
+      {/* <button onClick={handleNotificationClick}>
         <MaterialIcon>{notificationIcon}</MaterialIcon>
-      </button>
-      <button onClick={handleSettingsClick}>
+      </button> */}
+      {/* <button onClick={handleSettingsClick}>
         <MaterialIcon>{settingsIcon}</MaterialIcon>
-      </button>
+      </button> */}
     </div>
   );
 };

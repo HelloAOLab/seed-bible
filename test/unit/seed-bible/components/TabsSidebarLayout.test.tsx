@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs";
+import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
@@ -72,7 +72,7 @@ describe("Sidebar collapsed layout", () => {
 
   async function createState(options?: CreateTestSeedBibleStateOptions) {
     const state = await createTestSeedBibleState(options);
-    state.config.setDisablePanels(false);
+    state.settings.setDisablePanels(false);
     return state;
   }
 

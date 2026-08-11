@@ -1,0 +1,27 @@
+.sb-playlist-add-mode-select {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-playlist-add-mode-select:hover {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-playlist-item-input {
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* Cancel button shown while editing an existing item. */
+.sb-playlist-cancel-edit {
+  margin-top: 8px;
+}

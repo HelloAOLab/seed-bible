@@ -67,6 +67,17 @@ export interface Translation {
   textDirection: "ltr" | "rtl";
 
   /**
+   * The SHA-256 hash of the translation's entire contents.
+   *
+   * Two translations with the same hash contain identical text, so comparing a
+   * locally downloaded copy's hash against the one in
+   * `available_translations.json` is how we detect that a download is stale.
+   *
+   * Null or undefined if the API did not report a hash.
+   */
+  sha256?: string;
+
+  /**
    * The available list of formats.
    */
   availableFormats: ("json" | "usfm")[];
@@ -75,6 +86,14 @@ export interface Translation {
    * The API link for the list of available books for this translation.
    */
   listOfBooksApiLink: string;
+
+  /**
+   * The API link for the entire translation (every book and chapter) in a
+   * single file. Used to download a translation for offline reading.
+   *
+   * Null or undefined if the API does not offer a complete download.
+   */
+  completeTranslationApiLink?: string;
 
   /**
    * The number of books that are contained in this translation.
@@ -249,7 +268,7 @@ export interface TranslationBookChapter {
   chapter: ChapterData;
 }
 
-interface ChapterData {
+export interface ChapterData {
   /**
    * The number of the chapter.
    */
@@ -450,6 +469,114 @@ export interface TranslationBookChapterAudioLinks {
    * The reader for the chapter and the URL link to the audio file.
    */
   [reader: string]: string;
+}
+
+/**
+ * An entire translation — every book and every chapter — as returned by the
+ * `api/{translation}/complete.json` endpoint.
+ *
+ * This is the shape used to download a translation for offline reading. It is
+ * not the same shape as the per-chapter endpoint: chapters are nested inside
+ * their book, and the cross-chapter navigation links (`nextChapterApiLink` and
+ * friends) are absent because everything is already present in the one file.
+ */
+export interface CompleteTranslation {
+  /**
+   * The translation information.
+   */
+  translation: Translation;
+
+  /**
+   * Every book in the translation, in canonical order, with its chapters.
+   */
+  books: CompleteTranslationBook[];
+}
+
+export interface CompleteTranslationBook {
+  /**
+   * The ID of the book.
+   */
+  id: string;
+
+  /**
+   * The name that the translation provided for the book.
+   */
+  name: string;
+
+  /**
+   * The common name for the book.
+   */
+  commonName: string;
+
+  /**
+   * The title of the book, or null/undefined when the translation didn't
+   * provide one.
+   */
+  title?: string | null;
+
+  /**
+   * The numerical order of the book in the translation.
+   */
+  order: number;
+
+  /**
+   * The number of chapters that the book contains.
+   */
+  numberOfChapters: number;
+
+  /**
+   * The number of verses that the book contains.
+   */
+  totalNumberOfVerses: number;
+
+  /**
+   * Whether the book is an apocryphal book.
+   * Omitted if the book is canonical.
+   */
+  isApocryphal?: boolean;
+
+  /**
+   * Every chapter in the book, in order.
+   */
+  chapters: CompleteTranslationChapter[];
+}
+
+export interface CompleteTranslationChapter {
+  /**
+   * The number of verses that the chapter contains.
+   */
+  numberOfVerses: number;
+
+  /**
+   * The links to different audio versions for the chapter.
+   */
+  thisChapterAudioLinks: TranslationBookChapterAudioLinks;
+
+  /**
+   * The information for the chapter.
+   */
+  chapter: ChapterData;
+}
+
+/**
+ * Options for downloading an entire translation.
+ */
+export interface GetCompleteTranslationOptions {
+  /**
+   * The API endpoint to download from. Defaults to the API's own endpoint.
+   */
+  endpoint?: string;
+
+  /**
+   * Signal used to abort an in-flight download.
+   */
+  signal?: AbortSignal;
+
+  /**
+   * Called as bytes arrive. `totalBytes` is null when the server didn't report
+   * a `Content-Length`.
+   */
+  onProgress?: (receivedBytes: number, totalBytes: number | null) => void;
 }
 
 export interface AvailableCommentaries {
@@ -1013,31 +1140,75 @@ export function getDefaultAPIEndpoint(url: URL): string {
     : PRIVATE_API_ENDPOINT;
 }
 
+/** The conventional path to a translation's complete-download file. */
+function completeTranslationPath(translationId: string): string {
+  return `api/${encodeURIComponent(translationId)}/complete.json`;
+}
+
+/**
+ * Options accepted by every `FreeUseBibleAPI` request method. `signal` lets a
+ * caller cancel its own in-flight request (e.g. when the user navigates
+ * again before a previous request resolved). See `_getJson` for how this
+ * interacts with the shared response cache.
+ */
+export interface ApiRequestOptions {
+  signal?: AbortSignal;
+  refresh?: boolean;
+}
+
+/** Per-URL bookkeeping for an in-flight request shared by multiple callers. */
+interface PendingRequestSubscription {
+  /** Owns the actual `fetch()` call — never a caller's own signal. */
+  controller: AbortController;
+  /**
+   * Number of callers still relying on this request, including ones that
+   * passed no `signal` (and so can never voluntarily walk away — their
+   * presence permanently keeps this above zero until the request settles
+   * naturally). Only reaches zero once every caller who *could* cancel has
+   * done so, at which point the real request is safe to cancel too.
+   */
+  subscriberCount: number;
+}
+
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
+  private _requestSubscriptions = new Map<string, PendingRequestSubscription>();
 
   constructor(endpoint: string) {
     this.endpoint = endpoint;
   }
 
+  /**
+   * Gets the translations the API offers.
+   *
+   * @param endpoint The endpoint to read from. Defaults to this API's endpoint.
+   * @param options Pass `refresh: true` to discard the cached response and hit
+   * the network again. Needed when the caller cares about values that change
+   * over time — notably each translation's `sha256`, which is how a downloaded
+   * copy is found to be out of date.
+   */
   async getAvailableTranslations(
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<AvailableTranslations> {
     return this._getJson<AvailableTranslations>(
       "api/available_translations.json",
-      endpoint
+      endpoint,
+      options
     );
   }
 
   async getTranslationBooks(
     translation: string,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBooks> {
     const encodedTranslation = encodeURIComponent(translation);
     return this._getJson<TranslationBooks>(
       `api/${encodedTranslation}/books.json`,
-      endpoint
+      endpoint,
+      options
     );
   }
 
@@ -1045,51 +1216,147 @@ export class FreeUseBibleAPI {
     translation: string,
     book: string,
     chapter: number | string,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter> {
     const encodedTranslation = encodeURIComponent(translation);
     const encodedBook = encodeURIComponent(book);
     const encodedChapter = encodeURIComponent(String(chapter));
     return this._getJson<TranslationBookChapter>(
       `api/${encodedTranslation}/${encodedBook}/${encodedChapter}.json`,
-      endpoint
+      endpoint,
+      options
     );
+  }
+
+  /**
+   * Downloads an entire translation in one request.
+   *
+   * Unlike the other methods this deliberately skips the response cache — the
+   * payload is several megabytes, so holding it forever would be a large,
+   * permanent memory cost for something the caller immediately writes to disk.
+   *
+   * @param translation The translation to download. Passing the full
+   * {@link Translation} uses the API-provided `completeTranslationApiLink`;
+   * passing just an ID falls back to the conventional path.
+   * @param options Endpoint override, abort signal, and progress callback.
+   */
+  async getCompleteTranslation(
+    translation: string | Translation,
+    options?: GetCompleteTranslationOptions
+  ): Promise<CompleteTranslation> {
+    const path =
+      typeof translation === "string"
+        ? completeTranslationPath(translation)
+        : (translation.completeTranslationApiLink ??
+          completeTranslationPath(translation.id));
+    const url = this._buildUrl(path, options?.endpoint);
+
+    const response = await fetch(url, { signal: options?.signal });
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(
+        `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const onProgress = options?.onProgress;
+    const body = response.body;
+    if (!onProgress || !body) {
+      return (await response.json()) as CompleteTranslation;
+    }
+
+    // `Content-Length` counts the bytes on the wire, which for a compressed
+    // response is fewer than the bytes the reader hands back. Callers therefore
+    // treat the total as an estimate and clamp their own progress display.
+    const contentLength = Number(response.headers.get("content-length"));
+    const totalBytes =
+      Number.isFinite(contentLength) && contentLength > 0
+        ? contentLength
+        : null;
+
+    // Each chunk is decoded as it arrives and then dropped, rather than keeping
+    // every chunk and joining them into one big buffer at the end. A complete
+    // translation is several megabytes, and this feature is aimed at low-end
+    // phones on poor connections — the buffer-then-decode version held the raw
+    // bytes, the merged copy, and the decoded text all at once, roughly four
+    // times the payload at peak, which is enough to run a cheap device out of
+    // memory. `stream: true` is what makes per-chunk decoding safe: it holds back
+    // a partial character split across a chunk boundary instead of corrupting it.
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+    let receivedBytes = 0;
+
+    onProgress(0, totalBytes);
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      if (value) {
+        text += decoder.decode(value, { stream: true });
+        receivedBytes += value.byteLength;
+        onProgress(receivedBytes, totalBytes);
+      }
+    }
+    text += decoder.decode();
+
+    return JSON.parse(text) as CompleteTranslation;
   }
 
   async getNextChapter(
     chapter: TranslationBookChapter,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter | null> {
     if (!chapter.nextChapterApiLink) {
       return null;
     }
     return this._getJson<TranslationBookChapter>(
       chapter.nextChapterApiLink,
-      endpoint
+      endpoint,
+      options
     );
   }
 
   async getPreviousChapter(
     chapter: TranslationBookChapter,
-    endpoint?: string
+    endpoint?: string,
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter | null> {
     if (!chapter.previousChapterApiLink) {
       return null;
     }
     return this._getJson<TranslationBookChapter>(
       chapter.previousChapterApiLink,
-      endpoint
+      endpoint,
+      options
     );
   }
 
-  private _getJson<T>(path: string, endpoint?: string): Promise<T> {
+  private _getJson<T>(
+    path: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<T> {
     const url = this._buildUrl(path, endpoint);
+    if (options?.refresh) {
+      this._responseCache.delete(url);
+    }
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
-      return existing;
+      return this._subscribeToRequest(url, existing, options?.signal);
     }
 
-    const request: Promise<T> = fetch(url)
+    // Own controller for the real fetch — deliberately never a caller's own
+    // signal, so one caller aborting can't tear down the network request
+    // other callers sharing this URL are still relying on. It's only
+    // aborted once every subscriber has walked away (see
+    // `_subscribeToRequest`).
+    const controller = new AbortController();
+    this._requestSubscriptions.set(url, { controller, subscriberCount: 0 });
+
+    const request: Promise<T> = fetch(url, { signal: controller.signal })
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
           throw new Error(
@@ -1101,10 +1368,95 @@ export class FreeUseBibleAPI {
       .catch((error) => {
         this._responseCache.delete(url);
         throw error;
+      })
+      .finally(() => {
+        this._requestSubscriptions.delete(url);
       });
 
     this._responseCache.set(url, request);
-    return request;
+    return this._subscribeToRequest(url, request, options?.signal);
+  }
+
+  /**
+   * Hands a caller its own view of a shared in-flight request. A caller with
+   * no `signal` (or one requesting an already-settled response) just gets
+   * the shared promise directly. A caller with a `signal` gets a wrapper
+   * promise that rejects the moment *its own* signal aborts — without
+   * affecting any other subscriber — and, only once every subscriber has
+   * done the same, aborts the real underlying request.
+   */
+  private _subscribeToRequest<T>(
+    url: string,
+    sharedPromise: Promise<T>,
+    signal?: AbortSignal
+  ): Promise<T> {
+    const subscription = this._requestSubscriptions.get(url);
+    if (!subscription) {
+      // Already settled — nothing left to subscribe to or cancel.
+      return sharedPromise;
+    }
+
+    subscription.subscriberCount++;
+
+    if (!signal) {
+      return sharedPromise;
+    }
+
+    return new Promise<T>((resolve, reject) => {
+      let settled = false;
+
+      const onAbort = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        subscription.subscriberCount--;
+        if (subscription.subscriberCount <= 0) {
+          // Reaching zero means every caller that *could* walk away has, so
+          // nobody is waiting on this request any more and it is safe to
+          // cancel. Drop it from both maps first, synchronously: the rejection
+          // — and the cache eviction that rides on it — only land a microtask
+          // later, and a caller arriving in between would otherwise be handed
+          // this doomed promise and inherit an abort it never asked for.
+          // Reachable by navigating back to a chapter whose request was just
+          // superseded. Both deletes are idempotent with the ones in
+          // `_getJson`.
+          this._requestSubscriptions.delete(url);
+          this._responseCache.delete(url);
+          subscription.controller.abort();
+        }
+        reject(this._abortError());
+      };
+
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+      signal.addEventListener("abort", onAbort, { once: true });
+
+      sharedPromise.then(
+        (value) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          signal.removeEventListener("abort", onAbort);
+          resolve(value);
+        },
+        (error) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          signal.removeEventListener("abort", onAbort);
+          reject(error);
+        }
+      );
+    });
+  }
+
+  private _abortError(): DOMException {
+    return new DOMException("The operation was aborted.", "AbortError");
   }
 
   private _buildUrl(path: string, endpoint?: string): string {

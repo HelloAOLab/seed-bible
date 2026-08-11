@@ -1,0 +1,45 @@
+{
+  "name": "@seed-bible/ai-transcript-extension",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "exports": {
+    "./transcriptionManager": {
+      "import": "./ext_AI_Transcript/main/transcriptionManager.tsx"
+    },
+    "./explicit": {
+      "import": "./ext_AI_Transcript/main/explicit.tsx"
+    },
+    "./transcribe": {
+      "import": "./ext_AI_Transcript/main/transcribe.tsx"
+    },
+    "./highlight": {
+      "import": "./ext_AI_Transcript/main/highlight.tsx"
+    },
+    "./infer": {
+      "import": "./ext_AI_Transcript/main/infer.tsx"
+    },
+    "./types": {
+      "import": "./ext_AI_Transcript/main/types.tsx"
+    },
+    "./osis": {
+      "import": "./ext_AI_Transcript/main/osis.tsx"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "base64-js": "catalog:",
+    "bible-passage-reference-parser": "^3.2.0",
+    "preact": "catalog:",
+    "seed-bible": "workspace:*",
+    "uuid": "catalog:"
+  },
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

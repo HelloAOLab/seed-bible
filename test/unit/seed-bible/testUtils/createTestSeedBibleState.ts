@@ -7,6 +7,7 @@ import {
   createDefaultManagerResponseMap,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
+import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
 // the glob backend in I18nManager. Without this, `changeLanguage("ar")` (etc.)
@@ -30,6 +31,11 @@ type TestGlobalScope = typeof globalThis;
 export interface CreateTestSeedBibleStateOptions {
   responses?: WebResponseMap;
   timeoutMs?: number;
+  /**
+   * Where offline translation downloads are stored. jsdom has no IndexedDB, so
+   * pass an in-memory store to exercise anything that depends on downloads.
+   */
+  offlineStore?: OfflineTranslationStore | null;
 }
 
 export async function waitFor(
@@ -125,6 +131,38 @@ async function ensureI18nInitialized(): Promise<void> {
   });
 }
 
+// Every state built here attaches to the one `window` the whole test file
+// shares: history listeners, and wrappers around `pushState`/`replaceState`.
+// The app builds a single state per page load and never has to undo that, but a
+// test file builds dozens. Left attached, each past state keeps reacting to the
+// URL and writing its own stale reading position back into it — so a later test
+// navigating to Exodus 2 gets quietly dragged back to whichever chapter an
+// earlier test was parked on. Tearing them down between tests keeps each test
+// alone with the URL.
+const liveTestStates: SeedBibleState[] = [];
+
+// Registered at import time, which scopes it to the importing test file — every
+// file using this helper gets the cleanup without opting in.
+if (typeof afterEach === "function") {
+  afterEach(() => {
+    // Newest first: each manager wraps the history methods of the one before
+    // it, and a manager only restores its wrapper while it is the outermost
+    // layer. LIFO unwinds the stack exactly; creation order would strand the
+    // older manager's (inert) wrapper underneath whenever a test builds two.
+    for (const state of liveTestStates.splice(0).reverse()) {
+      state.navigation.dispose();
+    }
+    // The reading position lives in the URL path, so it outlives the listeners
+    // that wrote it: without this the next test starts on whatever chapter —
+    // and in whatever translation — this one finished on. Root-relative, so it
+    // stays on the current origin (tests move jsdom between origins, and a
+    // cross-origin `replaceState` is a SecurityError).
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", "/");
+    }
+  });
+}
+
 export async function createTestSeedBibleState(
   options: CreateTestSeedBibleStateOptions = {}
 ): Promise<SeedBibleState> {
@@ -136,8 +174,13 @@ export async function createTestSeedBibleState(
 
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
-  const state = createSeedBibleState();
+  const state = createSeedBibleState({ offlineStore: options.offlineStore });
+  liveTestStates.push(state);
+  // Tabs first: awaiting anything else here would let asynchronously-created
+  // tabs (e.g. an auto-joined shared session) appear before this runs, and those
+  // tabs' reading states are mocked without a `loading` signal.
   await waitForTabsToLoad(state, timeoutMs);
+  await state.bibleData.offline.ready;
 
   return state;
 }

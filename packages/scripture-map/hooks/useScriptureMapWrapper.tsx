@@ -27,7 +27,7 @@ export const useScriptureMapWrapper: UseScriptureMapWrapper = () => {
       "--chapter-height": `${chapterHeight}px`,
       "--book-max-columns":
         layoutConfigProvider.getLayoutMeasurement("BookMaxColumns"),
-      paddingBottom: isMobile ? "40px" : "16px",
+      paddingBottom: isMobile ? "2.5rem" : "1rem",
     };
   }, [
     scaleFactor,

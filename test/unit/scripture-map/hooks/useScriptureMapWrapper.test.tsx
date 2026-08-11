@@ -94,16 +94,16 @@ describe("useScriptureMapWrapper", () => {
     expect(result.current.style["--chapter-height"]).toBe("20px");
   });
 
-  it("sets paddingBottom to 40px when isMobile is true", () => {
+  it("sets paddingBottom to 2.5rem when isMobile is true", () => {
     (useScriptureMapContext as Mock).mockReturnValue(
       makeContext({ isMobile: true })
     );
     const result = setup();
-    expect(result.current.style.paddingBottom).toBe("40px");
+    expect(result.current.style.paddingBottom).toBe("2.5rem");
   });
 
-  it("sets paddingBottom to 16px when isMobile is false", () => {
+  it("sets paddingBottom to 1rem when isMobile is false", () => {
     const result = setup();
-    expect(result.current.style.paddingBottom).toBe("16px");
+    expect(result.current.style.paddingBottom).toBe("1rem");
   });
 });

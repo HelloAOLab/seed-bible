@@ -1,4 +1,3 @@
-import App from "./App";
 import { TwitchIcon } from "./icons";
 import { initializeTwitchWS } from "./initializeTwitchWS";
 import { signal, effect, type Signal } from "@preact/signals";
@@ -7,6 +6,7 @@ import { type SeedBibleState } from "seed-bible";
 import { toByteArray } from "base64-js";
 import { render } from "preact";
 import type { NavigationManager } from "seed-bible/managers";
+import type { Pane } from "seed-bible/managers";
 
 function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
   if (typeof value === "boolean") {
@@ -25,18 +25,20 @@ export function CreateTwitchSubState(
 ): TwitchSubInterface {
   const clientId = "cfjslv2429r70ek579iogr02vecn6d";
   const eventSubWebsocketUrl = "wss://eventsub.wss.twitch.tv/ws";
+  const currentPane = signal<Pane | null>(null);
 
   const wsPaused = signal(
     getBooleanMaskValue(
-      window.localStorage.getItem("twitchWebsocketClientPaused"),
+      window.sessionStorage.getItem("twitchWebsocketClientPaused"),
       false
     )
   );
-  const savedSettings = window.localStorage.getItem("twitchSubSettings")
-    ? JSON.parse(window.localStorage.getItem("twitchSubSettings") || "{}")
+  const savedSettings = window.sessionStorage.getItem("twitchSubSettings")
+    ? JSON.parse(window.sessionStorage.getItem("twitchSubSettings") || "{}")
     : {
         translationEnabled: true,
         highlightEnabled: true,
+        refFollowEnabled: true,
         chapterFollowEnabled: true,
       };
   const settings = signal({
@@ -44,6 +46,7 @@ export function CreateTwitchSubState(
       savedSettings.translationEnabled ?? true
     ),
     highlightEnabled: signal<boolean>(savedSettings.highlightEnabled ?? true),
+    refFollowEnabled: signal<boolean>(savedSettings.refFollowEnabled ?? true),
     chapterFollowEnabled: signal<boolean>(
       savedSettings.chapterFollowEnabled ?? true
     ),
@@ -95,6 +98,7 @@ export function CreateTwitchSubState(
         settings,
         handleWSEvents,
         settingsOpened,
+        currentPane,
       });
     }
   });
@@ -114,24 +118,76 @@ export function CreateTwitchSubState(
       config.value.bookId.value = null;
       config.value.chapter.value = null;
       config.value.translation.value = null;
-      window.localStorage.setItem(
+      window.sessionStorage.setItem(
         "twitchSubConfig",
         JSON.stringify(config.value)
       );
     }
   });
 
-  effect(() => {
-    if (
-      websocketSessionID.value &&
-      webSocketClient.value &&
-      seedBibleState.app.currentReadingState.value
-    ) {
-      addTwitchIcon({ wsPaused, settingsOpened });
-    }
-  });
+  async function highlightRefVerse(
+    seedBibleState: SeedBibleState,
+    bookData: {
+      book: string;
+      chapter: number;
+      verse: number;
+    },
+    interval = 5000
+  ): Promise<void> {
+    const { book, chapter, verse } = bookData;
 
-  const handleWSEvents = async (config: { type: string; payload: string }) => {
+    const selectedTabId = seedBibleState.tabs.selectedTabId;
+    let selectedTab = seedBibleState.tabs.tabs.value.find(
+      (tab) => tab.id === selectedTabId.value
+    );
+
+    const currentReadingState = seedBibleState.app.currentReadingState.value;
+
+    if (selectedTab && book) {
+      const { bookId, chapterNumber } = selectedTab.readingState;
+
+      if (bookId.value !== book || chapterNumber.value !== Number(chapter)) {
+        const existingTab = seedBibleState.tabs.tabs.value.find(
+          (tab) =>
+            tab.readingState.bookId.value === book &&
+            tab.readingState.chapterNumber.value === Number(chapter)
+        );
+        if (existingTab) {
+          seedBibleState.app.selectTab(existingTab.id);
+          selectedTab = existingTab;
+        } else {
+          const newTab = seedBibleState.tabs.addTab(undefined, {
+            initialTranslationId: currentReadingState?.translationId || "ABB",
+            initialBookId: book,
+            initialChapterNumber: Number(chapter),
+          });
+          seedBibleState.app.selectTab(newTab.id);
+          selectedTab = newTab;
+        }
+      }
+
+      await selectedTab.readingState.selectTranslationAndChapter(
+        currentReadingState?.translationId || "ABB",
+        book,
+        Number(chapter) || 1,
+        verse ? { scrollToVerse: Number(verse) } : {}
+      );
+      if (verse && chapter) {
+        selectedTab.readingState.decorateVerses(
+          book,
+          Number(chapter),
+          Number(verse),
+          {
+            className: "sb-verse-decoration-highlight",
+            removeAfterMs: interval,
+          }
+        );
+      }
+    }
+  }
+
+  async function handleWSEvents(config: { type: string; payload: string }) {
+    console.log(config);
     if (!wsPaused.value && websocketSessionID.value && webSocketClient.value) {
       switch (config.type) {
         case "bookChanged": {
@@ -225,59 +281,62 @@ export function CreateTwitchSubState(
                     ])
                   : Number(highlight.verse),
                 {
-                  style: {
-                    color: highlight.customFontColor || "inherit",
-                    backgroundColor: highlight.customColor || null,
+                  // `sb-highlight-<id>` only sets a font colour — the reader
+                  // paints highlight backgrounds in its SVG ribbon layer, so
+                  // hand-rolling the CSS here stopped showing anything. Handing
+                  // over the colour lets the reader draw it, as an outline
+                  // (it isn't the reader's own highlight) resolved against
+                  // whichever theme they're using.
+                  highlight: {
+                    colorId: highlight.color,
+                    ...(highlight.customColor
+                      ? { customColor: highlight.customColor }
+                      : {}),
+                    ...(highlight.customFontColor
+                      ? { customFontColor: highlight.customFontColor }
+                      : {}),
                   },
-                  className: `sb-highlight-${highlight.color}`,
                   preserveOnChapterChange: true,
                 }
               );
             });
           }
+          break;
+        }
+        case "refHighlight": {
+          if (!settings.value.refFollowEnabled.value) {
+            console.log(
+              "Reference follow is disabled, ignoring refHighlight event"
+            );
+            return;
+          }
+          const { bookId, chapter, verse } = JSON.parse(config.payload) as {
+            bookId: string;
+            chapter: number;
+            verse: number;
+          };
+          seedBibleState.app.toast(
+            `Highlighting ${bookId} ${chapter}:${verse || ""}`
+          );
+          highlightRefVerse(seedBibleState, { book: bookId, chapter, verse });
+          break;
         }
       }
     }
-  };
+  }
 
   effect(() => {
-    if (settingsOpened.value) {
-      if (document.getElementById("twitchSub-container")) return;
-
-      const container = document.createElement("div");
-      container.id = "twitchSub-container";
-      container.className = "twitchSub";
-      document.body.appendChild(container);
-
-      render(
-        <App
-          wsPaused={wsPaused}
-          settingsOpened={settingsOpened}
-          settings={settings}
-          i18n={seedBibleState.i18n}
-        />,
-        container
-      );
-    } else {
-      const container = document.getElementById("twitchSub-container");
-      if (container) {
-        render(null, container);
-        container.remove();
-      }
-    }
-  });
-
-  effect(() => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchWebsocketClientPaused",
       wsPaused.value.toString()
     );
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubSettings",
       JSON.stringify({
         translationEnabled: settings.value.translationEnabled.value,
         highlightEnabled: settings.value.highlightEnabled.value,
         chapterFollowEnabled: settings.value.chapterFollowEnabled.value,
+        refFollowEnabled: settings.value.refFollowEnabled.value,
       })
     );
   });
@@ -290,6 +349,7 @@ export function CreateTwitchSubState(
     wsPaused,
     handleWSEvents,
     settingsOpened,
+    currentPane,
   };
 }
 
@@ -302,12 +362,15 @@ async function getConfig({
   eventSubWebsocketUrl: string;
   navigation: NavigationManager;
 }) {
-  const stored = window.localStorage.getItem("twitchSubConfig");
+  const stored = window.sessionStorage.getItem("twitchSubConfig");
   if (stored) {
     try {
       return JSON.parse(stored);
     } catch (e) {
-      console.error("Failed to parse Twitch Sub config from localStorage:", e);
+      console.error(
+        "Failed to parse Twitch Sub config from session storage:",
+        e
+      );
       return null;
     }
   }
@@ -358,7 +421,7 @@ async function getConfig({
     chapter,
     translation,
   };
-  window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
+  window.sessionStorage.setItem("twitchSubConfig", JSON.stringify(config));
 
   if (typeof posthog !== "undefined") {
     posthog.capture("twitch_sub_client_joined", {});
@@ -368,7 +431,7 @@ async function getConfig({
   if (urlWithoutHash) {
     navigation.replace(urlWithoutHash);
   }
-  return null;
+  return config;
 }
 
 async function openBookAndChapter(
@@ -377,23 +440,23 @@ async function openBookAndChapter(
   bookId: string,
   chapter: string
 ) {
-  const selectedPane = seedBibleState.panes.panes.value.find(
-    (pane) => pane.id === seedBibleState.panes.selectedPaneId.value
+  const selectedSlot = seedBibleState.tabsLayout.slots.value.find(
+    (slot) => slot.id === seedBibleState.tabsLayout.selectedSlotId.value
   );
-  if (!selectedPane) {
+  if (!selectedSlot) {
     console.error(
-      "No pane found with id:",
-      seedBibleState.panes.selectedPaneId.value
+      "No slot found with id:",
+      seedBibleState.tabsLayout.selectedSlotId.value
     );
     return;
   }
 
-  seedBibleState.panes.selectPane(selectedPane.id);
+  seedBibleState.tabsLayout.selectSlot(selectedSlot.id);
 
-  let readingState = selectedPane.tab?.readingState;
+  let readingState = selectedSlot.tab?.readingState;
   if (!readingState) {
     const newTab = seedBibleState.tabs.addTab();
-    seedBibleState.panes.openInPane(selectedPane.id, { tabId: newTab.id });
+    seedBibleState.tabsLayout.openTabInSlot(selectedSlot.id, newTab.id);
     readingState = newTab.readingState;
   }
 
@@ -404,16 +467,18 @@ async function openBookAndChapter(
   );
 }
 
-function addTwitchIcon({
+export async function addTwitchIcon({
   wsPaused,
   settingsOpened,
+  isMobile,
 }: {
   wsPaused: Signal<boolean>;
   settingsOpened: Signal<boolean>;
+  isMobile: boolean;
 }) {
-  const container =
-    document.getElementsByClassName("sb-bible-reader-title")[0] ??
-    document.getElementsByClassName("sb-bible-reader-mobile-header-title")[0];
+  const container = !isMobile
+    ? document.getElementsByClassName("sb-bible-reader-title")[0]
+    : document.getElementsByClassName("sb-bible-reader-mobile-header-title")[0];
   if (!container) {
     console.error("Could not find container to add Twitch icon to");
     return;
@@ -427,8 +492,8 @@ function addTwitchIcon({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: ${isMobile ? "24px" : "30px"};
+    height: ${isMobile ? "24px" : "30px"};
     margin-left: 12px;
     border-radius: 50%;
     box-shadow: ${
@@ -444,7 +509,10 @@ function addTwitchIcon({
   };
 
   container.appendChild(icon);
-  render(<TwitchIcon width={20} height={20} />, icon);
+  render(
+    <TwitchIcon width={isMobile ? 16 : 20} height={isMobile ? 16 : 20} />,
+    icon
+  );
 }
 
 function expandRange(range: [number, number]): number[] {

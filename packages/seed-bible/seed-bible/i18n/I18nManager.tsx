@@ -6,6 +6,15 @@ import { navigatorLanguages } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
+import {
+  getNearestBibleTranslationForUiLanguage,
+  type TranslationWithLanguage,
+} from "../managers/BibleReadingManager";
+import type { Translation } from "../managers/FreeUseBibleAPI";
+import {
+  DEFAULT_UI_LANGUAGE,
+  parseReadingPath,
+} from "../managers/ReadingUrlPath";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -92,16 +101,59 @@ export function getInitialLanguage(acceptedLanguages: string[]): string {
     }
   }
 
-  return getLanguage(navigatorLanguages()[0]) ?? "en";
+  return getLanguage(navigatorLanguages()[0]) ?? DEFAULT_UI_LANGUAGE;
 }
 
-export function getUrlLanguage(url: URL): string | null {
+/**
+ * Picks the visitor's most-preferred UI language, out of an `Accept-Language`
+ * header's ordered list of tags, that this app actually ships a locale for.
+ * Returns null when none of the visitor's preferences match a supported
+ * language — the caller should keep whatever it already had rather than
+ * guess.
+ */
+export function getPreferredSupportedLanguage(
+  acceptedLanguages: string[]
+): string | null {
+  for (const tag of acceptedLanguages) {
+    const language = getLanguage(tag);
+    if (language && availableLanguages.includes(language)) {
+      return language;
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolves the UI language a URL implies. A valid reading path (e.g.
+ * "/es/spa_onbv/john/3") takes priority: an explicit `{lang}` segment wins,
+ * and an omitted one canonically means `DEFAULT_UI_LANGUAGE` — that's the
+ * meaning of the 3-segment "fully default" form, not "detect from the
+ * browser" (browser-based detection only applies to a bare `/` with no
+ * reading path at all, via `getInitialLanguage`). Falls back to the legacy
+ * `?lang=` query param for a non-reading-path URL.
+ */
+export function getUrlLanguage(url: URL, basePath: string): string | null {
+  const parsed = parseReadingPath(url.pathname, basePath);
+  if (parsed) {
+    return parsed.language ?? DEFAULT_UI_LANGUAGE;
+  }
+
   const urlLang = url.searchParams.get("lang");
   if (urlLang) {
     return urlLang;
   }
   return null;
 }
+
+/**
+ * Shown when the UI language has no direct Bible text and we would switch the
+ * reader to a nearest available translation (e.g. Gujarati → Hindi).
+ */
+export type LanguageFallbackPrompt = {
+  requestedLanguage: string;
+  fallbackLanguage: string;
+  fallbackTranslation: TranslationWithLanguage;
+};
 
 export function createI18nManager(
   navigation: NavigationManager,
@@ -114,7 +166,8 @@ export function createI18nManager(
   // Computed at module load. During SSR `location`/`navigator` are absent, so
   // this falls back to "en"; the client re-derives the real language from the
   // URL/navigator at hydration.
-  const defaultLanguage: string = getUrlLanguage(url) ?? initialLanguage;
+  const defaultLanguage: string =
+    getUrlLanguage(url, navigation.basePath) ?? initialLanguage;
 
   // Resolves once the detected language's translations are loaded. SSR and the
   // client entry await this before rendering so the first paint is in the right
@@ -142,7 +195,7 @@ export function createI18nManager(
 
     ready = i18n.init({
       lng: defaultLanguage,
-      fallbackLng: "en",
+      fallbackLng: DEFAULT_UI_LANGUAGE,
       ns: ["seed-bible"],
       // Required so the backend is still consulted for languages beyond the
       // bundled resources below.
@@ -163,26 +216,126 @@ export function createI18nManager(
     language.value = lng;
   });
 
-  navigation.syncSignalsToUrl({
-    lang: {
-      get value() {
-        if (language.value !== initialLanguage) {
-          return language.value;
-        }
-        return null;
-      },
-      set value(newValue: string | null) {
-        language.value = newValue ?? defaultLanguage;
-      },
-    },
-  });
+  // URL <-> language sync (both directions) is owned by `TabsManager`, not
+  // here: the language segment is part of the same coordinated reading path
+  // as translation/book/chapter (e.g. "/es/spa_onbv/john/3"), so a single
+  // writer needs to own the whole path instead of this manager independently
+  // touching the URL. `TabsManager.syncSelectedTabFromUrl` calls
+  // `changeLanguage` directly when an external URL change implies a
+  // different language; the `commitSelectedTabToUrl` effect there writes the
+  // language segment back out.
 
   const isRtl = computed(() => isRightToLeftLanguage(language.value));
+
+  const languageFallbackPrompt = signal<LanguageFallbackPrompt | null>(null);
+
+  /**
+   * Wired by SeedBibleState so UI language changes also select the nearest
+   * available Bible translation. Direct matches apply silently; fallback
+   * suggestions (e.g. Gujarati → Hindi) show a warning modal first.
+   */
+  let applyBibleTranslation:
+    | ((translation: TranslationWithLanguage) => Promise<void>)
+    | null = null;
+  let getAvailableTranslations: (() => readonly Translation[] | null) | null =
+    null;
+  let ensureTranslationsLoaded:
+    | (() => Promise<readonly Translation[] | null>)
+    | null = null;
+
+  const setBibleTranslationApplicator = (
+    applicator:
+      | ((translation: TranslationWithLanguage) => Promise<void>)
+      | null,
+    getTranslations: (() => readonly Translation[] | null) | null = null,
+    loadTranslations:
+      | (() => Promise<readonly Translation[] | null>)
+      | null = null
+  ) => {
+    applyBibleTranslation = applicator;
+    getAvailableTranslations = getTranslations;
+    ensureTranslationsLoaded = loadTranslations;
+  };
+
+  /**
+   * Wired by SeedBibleState to persist the user's chosen UI language (e.g. to
+   * their profile). Invoked ONLY for selector-driven changes via
+   * `requestLanguageChange` — never for URL-driven changes (deep links,
+   * browser back/forward) or profile-applied changes, so opening a shared
+   * `?lang=` link updates the view without overwriting the account's saved
+   * language.
+   */
+  let persistLanguage: ((language: string) => void) | null = null;
+  const setLanguagePersister = (
+    persister: ((language: string) => void) | null
+  ) => {
+    persistLanguage = persister;
+  };
+
+  const changeLanguage = i18n.changeLanguage.bind(i18n);
+
+  const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
+    let available = getAvailableTranslations?.() ?? null;
+    if (!available?.length && ensureTranslationsLoaded) {
+      available = (await ensureTranslationsLoaded()) ?? null;
+    }
+
+    const nearest = getNearestBibleTranslationForUiLanguage(
+      uiLanguage,
+      available
+    );
+
+    // Direct support: apply silently. Nearest suggestion: ask first.
+    if (nearest.usedFallback) {
+      languageFallbackPrompt.value = {
+        requestedLanguage: uiLanguage,
+        fallbackLanguage: nearest.resolvedUiLanguage,
+        fallbackTranslation: nearest.translation,
+      };
+      return;
+    }
+
+    languageFallbackPrompt.value = null;
+    if (!applyBibleTranslation) {
+      return;
+    }
+    await applyBibleTranslation(nearest.translation);
+  };
+
+  const requestLanguageChange = async (nextLanguage: string) => {
+    if (nextLanguage !== language.value) {
+      await changeLanguage(nextLanguage);
+    }
+    // Persist the user's explicit selection. Only selector-driven changes reach
+    // this function; URL-driven changes go through the `syncSignalsToUrl`
+    // setter above and are deliberately left un-persisted.
+    persistLanguage?.(nextLanguage);
+    await applyBibleTranslationForUiLanguage(nextLanguage);
+  };
+
+  const confirmLanguageFallback = async () => {
+    const prompt = languageFallbackPrompt.value;
+    if (!prompt) {
+      return;
+    }
+    languageFallbackPrompt.value = null;
+    await applyBibleTranslation?.(prompt.fallbackTranslation);
+  };
+
+  const cancelLanguageFallback = () => {
+    languageFallbackPrompt.value = null;
+  };
 
   return {
     i18n,
     t: i18n.t.bind(i18n),
-    changeLanguage: i18n.changeLanguage.bind(i18n),
+    changeLanguage,
+    requestLanguageChange,
+    confirmLanguageFallback,
+    cancelLanguageFallback,
+    setBibleTranslationApplicator,
+    setLanguagePersister,
+    languageFallbackPrompt,
     defaultLanguage,
     availableLanguages,
     language,
@@ -255,7 +408,7 @@ export function useI18n(ns?: string) {
   const isRtl = isRightToLeftLanguage(i18nManager.language.value);
 
   const setLanguage = async (language: string) => {
-    await i18n.changeLanguage(language);
+    await i18nManager.requestLanguageChange(language);
   };
 
   const translate = ns
@@ -271,6 +424,10 @@ export function useI18n(ns?: string) {
       isRtl,
       availableLanguages,
       setLanguage,
+      requestLanguageChange: i18nManager.requestLanguageChange,
+      confirmLanguageFallback: i18nManager.confirmLanguageFallback,
+      cancelLanguageFallback: i18nManager.cancelLanguageFallback,
+      languageFallbackPrompt: i18nManager.languageFallbackPrompt,
       i18n: i18n,
     }),
     [t, i18n.language]

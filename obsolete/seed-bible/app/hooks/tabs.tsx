@@ -195,7 +195,6 @@ export function TabsProvider({ children }) {
         if (currentSpace) {
           const allTabs = currentSpace.tabs;
           const tabIndex = allTabs.findIndex((tab) => tab?.id === tabId);
-
           if (tabIndex !== -1) {
             if (allTabs.length > 1) {
               // If it's the last tab in the list, select the previous one; otherwise select the next one

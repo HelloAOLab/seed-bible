@@ -845,5 +845,6 @@
   "begin": "Begin",
   "saveWithAttachment": "Save with Attachment",
   "saveWithoutAttachments": "Save without attachments",
-  "discardChanges": "Discard Changes"
+  "discardChanges": "Discard Changes",
+  "failed-to-load-playlist": "Failed to load playlist"
 }

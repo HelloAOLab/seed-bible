@@ -391,6 +391,5 @@
       "description": "Isandiso esengeza izindawo namamephu ku-Seed Bible.",
       "show-location-place": "Bonisa i- {{place}} kumephu"
     }
-  },
-  "autoinstall": true
+  }
 }

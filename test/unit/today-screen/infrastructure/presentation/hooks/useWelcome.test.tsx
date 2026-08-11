@@ -30,6 +30,7 @@ describe("useWelcome", () => {
   let container: HTMLDivElement;
   let openBookSelector: Mock;
   let addTab: Mock;
+  let closeToday: Mock;
   let getVerseText: Mock;
   let getDefaultTranslation: Mock;
   let getHighlightedWelcomeVerse: Mock;
@@ -40,6 +41,7 @@ describe("useWelcome", () => {
     document.body.appendChild(container);
     openBookSelector = vi.fn();
     addTab = vi.fn();
+    closeToday = vi.fn();
     getVerseText = vi.fn(async () => "raw verse");
     getDefaultTranslation = vi.fn(() => "DEF");
     getHighlightedWelcomeVerse = vi.fn(
@@ -73,6 +75,7 @@ describe("useWelcome", () => {
       openBookSelector,
       MaterialIcon,
       addTab,
+      closeToday,
       theme: { variables: { readerFontColor: "#112233" } },
     });
     const result = { current: null as unknown as Result };
@@ -111,12 +114,10 @@ describe("useWelcome", () => {
   });
 
   describe("static content", () => {
-    it("translates the selector, button, and footer texts", () => {
+    it("translates the selector and button texts", () => {
       const result = setup();
       expect(result.current.selectorText).toBe("open-bible");
       expect(result.current.startButtonText).toBe("read-first-chapter");
-      expect(result.current.footerTitle).toBe("everything-begins-small");
-      expect(result.current.footerContent).toBe("no-rush");
       expect(result.current.startButtonIcon).toBe("arrow_right_alt");
     });
 
@@ -129,8 +130,8 @@ describe("useWelcome", () => {
     it("builds the seed-bible icon style from the theme", () => {
       const result = setup();
       expect(result.current.seedBibleIconStyle).toEqual({
-        width: "20px",
-        height: "20px",
+        width: "1.25rem",
+        height: "1.25rem",
         backgroundColor: "#112233",
       });
     });
@@ -206,6 +207,12 @@ describe("useWelcome", () => {
       const result = setup();
       act(() => result.current.handleStartButtonClick());
       expect(addTab).toHaveBeenCalledWith("GEN", 1, "KJV");
+    });
+
+    it("closes the Today screen", () => {
+      const result = setup();
+      act(() => result.current.handleStartButtonClick());
+      expect(closeToday).toHaveBeenCalledTimes(1);
     });
 
     it("falls back through the default translation then empty string", () => {

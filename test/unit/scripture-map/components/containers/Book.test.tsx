@@ -67,14 +67,15 @@ function makeHookResult(overrides: Record<string, unknown> = {}) {
     chaptersData: [],
     bookTitle: "GEN",
     bookClass: "book",
-    bookCoverClass: "book-cover",
+    bookPagesClass: "book-cover",
     handleBookClick: vi.fn(),
     handleBookHeaderPointerDown: vi.fn(),
     handleBookHeaderPointerUp: vi.fn(),
     handleBookHeaderClick: vi.fn(),
     handleBookCoverPointerEnter: vi.fn(),
     handleBookCoverPointerLeave: vi.fn(),
-    bookCoverStyle: {},
+    bookPagesStyle: {},
+    bookCoverFrontStyle: {},
     isReadingHistoryEnabled: false,
     isUserPresenceEnabled: false,
     ...overrides,
@@ -123,20 +124,44 @@ describe("Book", () => {
       expect(container.querySelector(".book-id")?.textContent).toBe("Genesis");
     });
 
-    it("renders the book cover div with bookCoverClass", () => {
-      (useBook as Mock).mockReturnValue(
-        makeHookResult({ bookCoverClass: "book-cover open" })
-      );
+    it("renders the pages grid (.book-cover) and the flip cover overlay", () => {
       setup();
-      expect(container.querySelector(".book-cover.open")).not.toBeNull();
+      expect(container.querySelector(".book-cover")).not.toBeNull();
+      expect(container.querySelector(".book-cover-front")).not.toBeNull();
     });
 
-    it("applies bookCoverStyle to the cover div", () => {
+    it("applies bookPagesClass to the pages grid (carries the presence border)", () => {
       (useBook as Mock).mockReturnValue(
-        makeHookResult({ bookCoverStyle: { background: "#abc123" } })
+        makeHookResult({ bookPagesClass: "book-cover show-user-presence" })
       );
       setup();
-      const cover = container.querySelector<HTMLElement>(".book-cover");
+      expect(
+        container.querySelector(".book-cover.show-user-presence")
+      ).not.toBeNull();
+    });
+
+    it("renders a rotating caret in the header", () => {
+      setup();
+      expect(
+        container.querySelector(".book-header .book-caret")
+      ).not.toBeNull();
+    });
+
+    it("applies bookPagesStyle to the pages grid", () => {
+      (useBook as Mock).mockReturnValue(
+        makeHookResult({ bookPagesStyle: { background: "#abc123" } })
+      );
+      setup();
+      const pages = container.querySelector<HTMLElement>(".book-cover");
+      expect(pages?.style.background).toBe("rgb(171, 193, 35)");
+    });
+
+    it("applies bookCoverFrontStyle to the flip cover overlay", () => {
+      (useBook as Mock).mockReturnValue(
+        makeHookResult({ bookCoverFrontStyle: { background: "#abc123" } })
+      );
+      setup();
+      const cover = container.querySelector<HTMLElement>(".book-cover-front");
       expect(cover?.style.background).toBe("rgb(171, 193, 35)");
     });
   });
@@ -160,7 +185,7 @@ describe("Book", () => {
   });
 
   describe("chapters rendering", () => {
-    it("renders Chapter components when showChapters is true", () => {
+    it("renders a Chapter for each chaptersData entry", () => {
       (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: true,
@@ -177,7 +202,23 @@ describe("Book", () => {
       ).toHaveLength(3);
     });
 
-    it("does not render Chapter components when showChapters is false", () => {
+    it("renders chapters even when closed (they stay mounted behind the cover)", () => {
+      (useBook as Mock).mockReturnValue(
+        makeHookResult({
+          showChapters: false,
+          chaptersData: [
+            { key: "GEN-0", bookId: "GEN", index: 0 } as never,
+            { key: "GEN-1", bookId: "GEN", index: 1 } as never,
+          ],
+        })
+      );
+      setup();
+      expect(
+        container.querySelectorAll("[data-testid='chapter']")
+      ).toHaveLength(2);
+    });
+
+    it("renders no Chapter components when chaptersData is empty", () => {
       setup();
       expect(
         container.querySelectorAll("[data-testid='chapter']")
@@ -281,10 +322,10 @@ describe("Book", () => {
       expect(tooltip?.getAttribute("data-offset-y")).toBe("6");
     });
 
-    it("renders null in cover when showChapters is false and conditions not met", () => {
+    it("renders an empty cover overlay when showChapters is false and conditions not met", () => {
       setup();
-      const cover = container.querySelector(".book-cover");
-      expect(cover?.childElementCount).toBe(0);
+      const coverFront = container.querySelector(".book-cover-front");
+      expect(coverFront?.childElementCount).toBe(0);
     });
   });
 

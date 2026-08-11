@@ -11,10 +11,58 @@ import type { ArrangementInfo } from "../../../seed-bible-utils/domain/models/ar
 import type { UserPresence } from "../../../seed-bible-utils/domain/models/userPresence";
 import type { ScriptureMapConfig } from "../../components/ScriptureMap";
 import type { UserData } from "../../../seed-bible-utils/domain/models/userPresence";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "../../../seed-bible/seed-bible/managers/ProfileConfigSync";
 
 import { computed } from "@preact/signals";
 
 import { useState, useCallback, useMemo, useEffect } from "preact/hooks";
+
+const PROFILE_OPEN_BOOK_OVERRIDES = "scriptureMapOpenBooks";
+const PROFILE_SHOWING_ALL_CHAPTERS = "scriptureMapShowingAllChapters";
+
+/** Individual books the user has explicitly opened/closed, keyed by book id. Books with no entry fall back to `showingAllChapters`. */
+function parseOpenBookOverrides(value: unknown): Record<string, boolean> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const result: Record<string, boolean> = {};
+  for (const [bookId, open] of Object.entries(
+    value as Record<string, unknown>
+  )) {
+    if (typeof open === "boolean") {
+      result[bookId] = open;
+    }
+  }
+  return result;
+}
+
+function parseShowingAllChapters(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+/** Whether at least one book in the arrangement is currently open, considering per-book overrides. */
+function computeAnyBookOpen(
+  arrangement: ArrangementInfo | undefined,
+  openBookOverrides: Record<string, boolean>,
+  showingAllChapters: boolean
+): boolean {
+  if (!arrangement) return showingAllChapters;
+
+  for (const testament of arrangement.testaments) {
+    for (const section of testament.sections) {
+      for (const book of section.books) {
+        if (openBookOverrides[book.bookId] ?? showingAllChapters) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
 
 type UseScriptureMapProvider = (
   config: ScriptureMapConfig
@@ -225,8 +273,24 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
   }, []);
 
   const [scaleFactor, setScaleFactor] = useState<number>(initialScaleFactor);
-  const [showingAllChapters, setShowingAllChapters] = useState<boolean>(
-    initialShowingAllChapters
+  const [showingAllChapters, setShowingAllChapters] = useState<boolean>(() =>
+    parseShowingAllChapters(
+      getProfileConfigValue(
+        seedBibleState.login.profile.value,
+        PROFILE_SHOWING_ALL_CHAPTERS
+      ),
+      initialShowingAllChapters
+    )
+  );
+  const [openBookOverrides, setOpenBookOverrides] = useState<
+    Record<string, boolean>
+  >(() =>
+    parseOpenBookOverrides(
+      getProfileConfigValue(
+        seedBibleState.login.profile.value,
+        PROFILE_OPEN_BOOK_OVERRIDES
+      )
+    )
   );
   const [showingBooksColors, setShowingBooksColors] = useState<boolean>(true);
   const [showTestamentLabels, setShowTestamentLabels] = useState<boolean>(
@@ -293,9 +357,68 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     setShowSectionLabels((prev) => !prev);
   }, []);
 
+  // Re-derive from the profile once it finishes its async load (or on
+  // login/logout), so a slow profile fetch doesn't leave books stuck on the
+  // pre-login default.
+  useEffect(() => {
+    setOpenBookOverrides(
+      parseOpenBookOverrides(
+        getProfileConfigValue(
+          seedBibleState.login.profile.value,
+          PROFILE_OPEN_BOOK_OVERRIDES
+        )
+      )
+    );
+    setShowingAllChapters(
+      parseShowingAllChapters(
+        getProfileConfigValue(
+          seedBibleState.login.profile.value,
+          PROFILE_SHOWING_ALL_CHAPTERS
+        ),
+        initialShowingAllChapters
+      )
+    );
+  }, [seedBibleState.login.profile.value, initialShowingAllChapters]);
+
+  const anyBookOpen = useMemo<boolean>(
+    () =>
+      computeAnyBookOpen(arrangement, openBookOverrides, showingAllChapters),
+    [arrangement, openBookOverrides, showingAllChapters]
+  );
+
+  const setBookOpen = useCallback<(bookId: string, open: boolean) => void>(
+    (bookId, open) => {
+      setOpenBookOverrides((prev) => {
+        if (prev[bookId] === open) return prev;
+        const next = { ...prev, [bookId]: open };
+        saveProfileConfigValue(
+          seedBibleState.login,
+          PROFILE_OPEN_BOOK_OVERRIDES,
+          next
+        );
+        return next;
+      });
+    },
+    [seedBibleState.login]
+  );
+
   const handleShowAllChaptersToggle = useCallback<() => void>(() => {
-    setShowingAllChapters((prev) => !prev);
-  }, []);
+    const next = !anyBookOpen;
+    setShowingAllChapters(next);
+    saveProfileConfigValue(
+      seedBibleState.login,
+      PROFILE_SHOWING_ALL_CHAPTERS,
+      next
+    );
+    // A bulk open/close-all replaces any per-book overrides, matching what
+    // already happens in-session (each Book resyncs to showingAllChapters).
+    setOpenBookOverrides({});
+    saveProfileConfigValue(
+      seedBibleState.login,
+      PROFILE_OPEN_BOOK_OVERRIDES,
+      {}
+    );
+  }, [seedBibleState.login, anyBookOpen]);
 
   const handleProjectFilterOptionClick = useCallback<
     (key: "all" | ProjectChapterStateType) => void
@@ -364,6 +487,9 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
       arrangement,
       showingAllChapters,
       setShowingAllChapters,
+      openBookOverrides,
+      setBookOpen,
+      anyBookOpen,
       isUserPresenceEnabled,
       setIsUserPresenceEnabled,
       isReadingHistoryEnabled,
@@ -405,6 +531,9 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     arrangement,
     showingAllChapters,
     setShowingAllChapters,
+    openBookOverrides,
+    setBookOpen,
+    anyBookOpen,
     isUserPresenceEnabled,
     setIsUserPresenceEnabled,
     isReadingHistoryEnabled,

@@ -1,0 +1,40 @@
+/* Mobile "open panel over split view" warning modal body. */
+.sb-split-panel-warning-message {
+  margin: 0 0 1.25rem 0;
+}
+
+.sb-split-panel-warning-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.sb-split-panel-warning-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.625rem;
+  font-family: var(--sb-font-family);
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--sb-secondary-color);
+}
+
+.sb-split-panel-warning-button-secondary {
+  background: transparent;
+  color: var(--sb-font-color);
+}
+
+.sb-split-panel-warning-button-secondary:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
+}
+
+.sb-split-panel-warning-button-primary {
+  background: var(--sb-primary-color);
+  color: #fff;
+  border-color: var(--sb-primary-color);
+}
+
+.sb-split-panel-warning-button-primary:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
+}

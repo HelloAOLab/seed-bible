@@ -1,4 +1,5 @@
 import { type Signal } from "@preact/signals";
+import type { Pane } from "seed-bible/managers";
 
 // ── Twitch EventSub WebSocket message interfaces ──────────────────────────────
 
@@ -121,6 +122,7 @@ export interface TwitchSubInterface {
   settings: Signal<{
     translationEnabled: Signal<boolean>;
     highlightEnabled: Signal<boolean>;
+    refFollowEnabled: Signal<boolean>;
     chapterFollowEnabled: Signal<boolean>;
   }>;
   config: Signal<{
@@ -138,4 +140,5 @@ export interface TwitchSubInterface {
   webSocketClient: Signal<WebSocket | null>;
   handleWSEvents: (config: { type: string; payload: string }) => void;
   settingsOpened: Signal<boolean>;
+  currentPane: Signal<Pane | null>;
 }

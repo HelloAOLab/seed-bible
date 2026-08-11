@@ -2,14 +2,12 @@
 
 exports[`ThemeManager CSS helpers > generateThemeCssClasses > generates a highlight class for each highlight color 1`] = `
 ".sb-highlight-yellow {
-background-color: var(--sb-highlight-yellow-color);
 color: var(--sb-highlight-yellow-font-color);
 &.sb-words-of-jesus { 
 color: var(--sb-highlight-yellow-words-of-jesus-font-color);
 }
  }
 .sb-highlight-mint {
-background-color: var(--sb-highlight-mint-color);
 color: var(--sb-highlight-mint-font-color);
 &.sb-words-of-jesus { 
 color: var(--sb-highlight-mint-words-of-jesus-font-color);

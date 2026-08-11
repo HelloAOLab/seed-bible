@@ -1,11 +1,19 @@
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
+  type InitialBibleReadingOptions,
   type VerseDecoration,
   type VerseDecorationInput,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { BibleReadingExtensionManager } from "../managers/BibleReadingExtensionManager";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
@@ -69,6 +77,22 @@ interface SessionData {
   scrollToVerse: number | null;
 }
 
+/**
+ * Where a new session should begin reading.
+ *
+ * Seeded into the session's reading state at construction rather than
+ * navigated to afterwards, so the reader never loads the default book first —
+ * see `addTab`'s `initialReadingOptions` for the same reasoning.
+ *
+ * Chapter-level deliberately: a `scrollToVerse` seeded here does not survive
+ * to the rendered session tab, which opens at the top of the chapter either
+ * way, so it is left out rather than carried as a setting that does nothing.
+ */
+export type SessionStartPosition = Pick<
+  InitialBibleReadingOptions,
+  "initialTranslationId" | "initialBookId" | "initialChapterNumber"
+>;
+
 export interface SessionOptions {
   allowedNavigators: string[] | null;
   allowedDecorators: string[] | null;
@@ -128,6 +152,21 @@ type SessionOptionValue = SessionOptions[keyof SessionOptions];
 type SessionDecorationValue = VerseDecoration;
 
 /**
+ * The shape each enabled reading extension publishes into the session's
+ * `reading_extensions` map, keyed by extension id: whether it is enabled plus
+ * the extension's custom (JSON-serializable) data.
+ */
+interface SessionExtensionValue {
+  enabled: boolean;
+  data: unknown;
+}
+
+/** Structural equality for reading-extension data (JSON-serializable values). */
+function extensionDataMatches(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
+
+/**
  * The shape each client publishes into the session's `user_profiles` map
  * to broadcast their current identity. The connection's `userId` is
  * frozen on the wire at connect time and never re-emitted on login/logout,
@@ -177,6 +216,19 @@ function sharedUserProfileEntriesMatch(
     JSON.stringify(left.profile) === JSON.stringify(right.profile)
   );
 }
+
+/**
+ * How long to wait after a local navigation before publishing it to peers.
+ *
+ * Navigation is instant and unthrottled, so skimming ten chapters fires ten
+ * position changes in about a second. Publishing each one would put ten
+ * transactions into the shared document — which never shrinks — and hand every
+ * peer ten chapters to load, nine of which are already obsolete on arrival.
+ * A trailing debounce turns the whole gesture into a single write of where the
+ * reader actually landed. Short enough that a normal one-chapter step still
+ * feels immediate to everyone else.
+ */
+const PUBLISH_DEBOUNCE_MS = 150;
 
 const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   allowedNavigators: null,
@@ -322,6 +374,7 @@ function toSessionDecorationInput(
     endIndex: decoration.endIndex,
     className: decoration.className,
     style: decoration.style,
+    highlight: decoration.highlight,
     removeAfterMs: decoration.removeAfterMs,
     preserveOnChapterChange: decoration.preserveOnChapterChange,
     translationId: decoration.translationId,
@@ -350,22 +403,30 @@ function applySessionDataToReadingState(
   >,
   sessionData: SessionData
 ) {
-  if (readingState.translationId.value !== sessionData.translationId) {
-    readingState.translationId.value =
-      sessionData.translationId ?? readingState.translationId.value;
-  }
-  if (readingState.bookId.value !== sessionData.bookId) {
-    readingState.bookId.value = sessionData.bookId;
-  }
-  if (
-    sessionData.chapterNumber !== null &&
-    readingState.chapterNumber.value !== sessionData.chapterNumber
-  ) {
-    readingState.chapterNumber.value = sessionData.chapterNumber;
-  }
-  if (readingState.scrollToVerse.value !== sessionData.scrollToVerse) {
-    readingState.scrollToVerse.value = sessionData.scrollToVerse;
-  }
+  // Batched because the reading state's content loader watches all three
+  // position signals. Written one at a time, an incomplete remote update runs
+  // the loader up to three times for a single change — briefly asking for
+  // combinations like the new translation with the old book and chapter, and
+  // starting and cancelling a request for each.
+  batch(() => {
+    if (readingState.translationId.value !== sessionData.translationId) {
+      readingState.translationId.value =
+        sessionData.translationId ?? readingState.translationId.peek();
+    }
+    if (readingState.bookId.value !== sessionData.bookId) {
+      readingState.bookId.value =
+        sessionData.bookId ?? readingState.bookId.peek();
+    }
+    if (
+      sessionData.chapterNumber !== null &&
+      readingState.chapterNumber.value !== sessionData.chapterNumber
+    ) {
+      readingState.chapterNumber.value = sessionData.chapterNumber;
+    }
+    if (readingState.scrollToVerse.value !== sessionData.scrollToVerse) {
+      readingState.scrollToVerse.value = sessionData.scrollToVerse;
+    }
+  });
 }
 
 function canLoadSessionData(sessionData: SessionData): sessionData is {
@@ -536,19 +597,31 @@ async function createBibleReadingSession(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
+  readingExtensionManager: BibleReadingExtensionManager | undefined,
   id: string,
-  defaultOptions?: SessionOptions
+  defaultOptions?: SessionOptions,
+  startPosition?: SessionStartPosition
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(
     dataManager,
     highlightsManager,
-    i18nManager
+    i18nManager,
+    // `isShared` last: a caller's start position must not be able to turn a
+    // session's reading state back into an unshared one.
+    { ...startPosition, isShared: true },
+    undefined,
+    readingExtensionManager
   );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
+  // Enabled reading extensions and their custom data, keyed by extension id.
+  // Enabling an extension (and editing its data) propagates to every
+  // participant, who auto-enables it when the extension is registered locally.
+  const extensionsMap =
+    document.getMap<SessionExtensionValue>("reading_extensions");
   // Per-connection identity broadcast. The OS doesn't re-emit
   // remoteClients events when a peer logs in or out, so without this map
   // joiners would forever see the userId/profile each peer had at connect
@@ -602,10 +675,17 @@ async function createBibleReadingSession(
 
   let applyingRemoteState = false;
   let lastLocallyWrittenState: SessionData | null = null;
-  let syncVersion = 0;
+  /** The remote position currently being applied to the local reader. */
   let pendingRemoteTarget: SessionData | null = null;
+  /** The newest remote position we have been told about but not applied yet. */
+  let pendingRemoteSync: SessionData | null = null;
+  /** Non-null while `queueRemoteSync`'s drain loop is running. */
+  let remoteSyncDrain: Promise<void> | null = null;
+  /** Armed while a local navigation is waiting to be published to peers. */
+  let publishTimer: ReturnType<typeof setTimeout> | null = null;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
+  let applyingRemoteExtensions = false;
 
   const userCanNavigate = (sessionId: string): boolean => {
     // Hosts and co-hosts may always navigate, even when restricted.
@@ -814,10 +894,11 @@ async function createBibleReadingSession(
     };
   };
 
-  const syncReadingStateFromSessionData = async (
-    rawSessionData: SessionData,
-    version: number
-  ) => {
+  /**
+   * Moves the local reader to one remote position. Never runs concurrently with
+   * itself — see `queueRemoteSync`, which owns the scheduling.
+   */
+  const applyRemoteSessionData = async (rawSessionData: SessionData) => {
     const sessionData = toEffectiveSessionData(rawSessionData);
     if (!canLoadSessionData(sessionData)) {
       applyingRemoteState = true;
@@ -842,7 +923,9 @@ async function createBibleReadingSession(
         options
       );
     } catch (error) {
-      if (version !== syncVersion) {
+      // A newer target is already queued, so this failure is moot — reporting
+      // it would show an error for a chapter we are no longer going to.
+      if (pendingRemoteSync) {
         return;
       }
       readingState.error.value =
@@ -850,22 +933,64 @@ async function createBibleReadingSession(
           ? error.message
           : "Failed to sync shared reading session.";
     } finally {
-      if (version === syncVersion) {
+      if (pendingRemoteTarget === sessionData) {
         pendingRemoteTarget = null;
-      }
-    }
-
-    if (version !== syncVersion) {
-      const latestSessionData = getSessionDataFromMap(stateMap);
-      if (canLoadSessionData(toEffectiveSessionData(latestSessionData))) {
-        const nextVersion = ++syncVersion;
-        void syncReadingStateFromSessionData(latestSessionData, nextVersion);
       }
     }
   };
 
+  /**
+   * Points the reader at a remote position, coalescing anything that arrives
+   * while an earlier one is still being applied.
+   *
+   * Only ever one application in flight, always toward the newest position we
+   * know about: a peer skimming ten chapters costs us one chapter load, not
+   * ten, and the chapters they passed through are never rendered or published.
+   *
+   * This replaced a version-counter scheme that ran one application per change
+   * event and had each superseded one relaunch itself on completion. Two
+   * overlapping events were enough to make that self-sustaining — each
+   * completion invalidated the other and spawned a replacement — which froze
+   * the tab and grew the heap until it crashed. There is deliberately no retry
+   * here: the loop below continues only while genuinely newer data exists.
+   */
+  const queueRemoteSync = (sessionData: SessionData): Promise<void> => {
+    pendingRemoteSync = sessionData;
+    if (!remoteSyncDrain) {
+      remoteSyncDrain = (async () => {
+        try {
+          while (pendingRemoteSync) {
+            const next = pendingRemoteSync;
+            pendingRemoteSync = null;
+            await applyRemoteSessionData(next);
+          }
+        } finally {
+          remoteSyncDrain = null;
+        }
+      })();
+    }
+    return remoteSyncDrain;
+  };
+
   const initialSessionData = getSessionDataFromMap(stateMap);
-  await syncReadingStateFromSessionData(initialSessionData, ++syncVersion);
+  await queueRemoteSync(initialSessionData);
+
+  // Publish where the session starts immediately, instead of leaving it to the
+  // local publish debounce below: until the map holds a position there is
+  // nothing for a joiner to load, so they settle on the default book and
+  // publish *that* — pulling the host off the chapter they started from.
+  //
+  // Written after the initial sync above on purpose. Seeded any earlier, that
+  // sync would read our own position back out of the map and re-navigate the
+  // reader to the chapter it is already on, pushing a history entry for it.
+  if (startPosition?.initialBookId && !toStringOrNull(stateMap.get("bookId"))) {
+    document.transact(() => {
+      stateMap.set("translationId", startPosition.initialTranslationId ?? null);
+      stateMap.set("bookId", startPosition.initialBookId ?? null);
+      stateMap.set("chapterNumber", startPosition.initialChapterNumber ?? null);
+    });
+  }
+
   syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
@@ -879,8 +1004,7 @@ async function createBibleReadingSession(
       return;
     }
 
-    const version = ++syncVersion;
-    void syncReadingStateFromSessionData(nextSessionData, version);
+    void queueRemoteSync(nextSessionData);
   });
 
   const optionsSubscription = optionsMap.changes.subscribe(() => {
@@ -948,41 +1072,71 @@ async function createBibleReadingSession(
 
   void syncConnectedUsers(++remoteClientsVersion);
 
-  const stopSync = effect(() => {
-    if (applyingRemoteState) {
-      return;
-    }
-
-    if (!userCanNavigate(localSessionId.value)) {
-      return;
-    }
-
+  /**
+   * The local position that ought to be published, or null when the shared map
+   * already agrees with us (or we aren't allowed to publish at all).
+   *
+   * Reads the position signals, so calling this inside `stopSync` is what makes
+   * that effect track local navigation. It is also called again at flush time
+   * so a debounced burst publishes where the reader actually ended up rather
+   * than where they were when the timer was armed.
+   */
+  const resolveSessionDataToPublish = (): SessionData | null => {
+    // Read every signal this decision depends on before any early return.
+    // `effect` rebuilds its dependency list from whatever the run touched, so a
+    // run that bailed out before reading anything would leave `stopSync` with
+    // no dependencies at all — silently ending local sync for the rest of the
+    // session. Reachable via the `applyingRemoteState` guard below, which is
+    // held while a peer's partial position is written straight to the signals.
     const rawNextSessionData = getSessionDataSnapshot(readingState);
+    const shareTranslation = options.value.shareTranslation;
+    const canNavigate = userCanNavigate(localSessionId.value);
+
+    if (applyingRemoteState || !canNavigate) {
+      return null;
+    }
+
     const currentSessionData = getSessionDataFromMap(stateMap);
 
     // When the translation isn't shared, never publish our translationId —
     // mask it with whatever is already in the shared map so a local
     // translation change neither counts as a change nor gets written.
-    const nextSessionData = options.value.shareTranslation
+    const nextSessionData = shareTranslation
       ? rawNextSessionData
       : {
           ...rawNextSessionData,
           translationId: currentSessionData.translationId,
         };
 
+    // Our own echo of the remote position we are in the middle of applying.
     if (
       pendingRemoteTarget &&
       sessionDataMatches(nextSessionData, pendingRemoteTarget)
     ) {
-      return;
+      return null;
     }
 
     if (sessionDataMatches(nextSessionData, currentSessionData)) {
-      return;
+      return null;
     }
 
-    // Any local change invalidates currently running remote sync operations.
-    syncVersion += 1;
+    return nextSessionData;
+  };
+
+  const publishLocalSessionData = () => {
+    const nextSessionData = resolveSessionDataToPublish();
+    if (!nextSessionData) {
+      return;
+    }
+    const currentSessionData = getSessionDataFromMap(stateMap);
+
+    // Reaching here means a local navigation survived the debounce and every
+    // guard, so it beats any remote position still waiting to be applied —
+    // otherwise the drain would pull the reader straight back off the chapter
+    // they just chose. Deliberately not done in `stopSync`: mid-navigation the
+    // position signals pass through states that match nothing, and discarding
+    // a peer's target on one of those would lose it for good.
+    pendingRemoteSync = null;
 
     lastLocallyWrittenState = nextSessionData;
     document.transact(() => {
@@ -999,6 +1153,35 @@ async function createBibleReadingSession(
         stateMap.set("scrollToVerse", nextSessionData.scrollToVerse);
       }
     });
+  };
+
+  const schedulePublish = () => {
+    if (publishTimer !== null) {
+      clearTimeout(publishTimer);
+    }
+    publishTimer = setTimeout(() => {
+      publishTimer = null;
+      publishLocalSessionData();
+    }, PUBLISH_DEBOUNCE_MS);
+  };
+
+  const flushPendingPublish = () => {
+    if (publishTimer === null) {
+      return;
+    }
+    clearTimeout(publishTimer);
+    publishTimer = null;
+    publishLocalSessionData();
+  };
+
+  const stopSync = effect(() => {
+    // Tracks the local position through `resolveSessionDataToPublish`. The
+    // decision to publish is re-made at flush time against the settled
+    // position, so a false positive here only costs an armed timer.
+    if (!resolveSessionDataToPublish()) {
+      return;
+    }
+    schedulePublish();
   });
 
   const stopDecorationSync = effect(() => {
@@ -1071,6 +1254,108 @@ async function createBibleReadingSession(
       }
     });
   });
+
+  // --- Reading-extension sync ---------------------------------------------
+  // Only wired when a reading-extension registry is available (always so in the
+  // app; omitted in some unit tests). When present, the enabled-extension set
+  // and each extension's data converge across all participants.
+  let stopExtensionSync: (() => void) | null = null;
+  let extensionsSubscription: { unsubscribe: () => void } | null = null;
+
+  if (readingExtensionManager) {
+    const registry = readingExtensionManager;
+
+    // Applies the shared enabled-extension set + data onto the local reading
+    // state. Extensions the local client hasn't registered are skipped.
+    const syncExtensionsFromSession = () => {
+      applyingRemoteExtensions = true;
+      try {
+        const remoteEntries = new Map<string, SessionExtensionValue>();
+        extensionsMap.forEach((value, key) => {
+          remoteEntries.set(key, value);
+        });
+
+        for (const [extensionId, value] of remoteEntries) {
+          if (!value || value.enabled === false) {
+            continue;
+          }
+          if (!registry.getReadingExtension(extensionId)) {
+            continue;
+          }
+          readingState.enableExtension(extensionId, value.data);
+        }
+
+        // Disable locally-enabled extensions no longer in the shared set.
+        for (const runtime of readingState.enabledExtensions.value) {
+          const remote = remoteEntries.get(runtime.id);
+          if (!remote || remote.enabled === false) {
+            readingState.disableExtension(runtime.id);
+          }
+        }
+      } finally {
+        applyingRemoteExtensions = false;
+      }
+    };
+
+    syncExtensionsFromSession();
+
+    // Mirror the local enabled-extension set + each extension's data into the
+    // shared map so every participant converges. Reading `runtime.data.value`
+    // here means data edits also propagate.
+    stopExtensionSync = effect(() => {
+      const snapshot = readingState.enabledExtensions.value.map((runtime) => ({
+        id: runtime.id,
+        data: runtime.data.value,
+      }));
+
+      if (applyingRemoteExtensions) {
+        return;
+      }
+
+      // Extension data (e.g. playlist queue/step) drives navigation just like
+      // ordinary chapter navigation, so it's gated by the same "only host can
+      // navigate" restriction as `stopSync` above — otherwise a restricted
+      // participant could still advance a playlist for everyone.
+      if (!userCanNavigate(localSessionId.value)) {
+        return;
+      }
+
+      const localIds = new Set(snapshot.map((entry) => entry.id));
+
+      const keysToDelete: string[] = [];
+      extensionsMap.forEach((_value, key) => {
+        if (!localIds.has(key)) {
+          keysToDelete.push(key);
+        }
+      });
+
+      const entriesToUpsert = snapshot.filter((entry) => {
+        const existing = extensionsMap.get(entry.id);
+        return (
+          !existing ||
+          existing.enabled !== true ||
+          !extensionDataMatches(existing.data, entry.data)
+        );
+      });
+
+      if (keysToDelete.length === 0 && entriesToUpsert.length === 0) {
+        return;
+      }
+
+      document.transact(() => {
+        for (const key of keysToDelete) {
+          extensionsMap.delete(key);
+        }
+        for (const entry of entriesToUpsert) {
+          extensionsMap.set(entry.id, { enabled: true, data: entry.data });
+        }
+      });
+    });
+
+    extensionsSubscription = extensionsMap.changes.subscribe(() => {
+      syncExtensionsFromSession();
+    });
+  }
 
   const updateOptions = (newOptions: Partial<SessionOptions>) => {
     const currentOptions = getSessionOptionsFromMap(optionsMap);
@@ -1194,13 +1479,18 @@ async function createBibleReadingSession(
   };
 
   const dispose = () => {
+    // Publish where the reader ended up before tearing down, so closing a tab
+    // mid-skim doesn't leave peers on a chapter we already left.
+    flushPendingPublish();
     mapSubscription.unsubscribe();
     optionsSubscription.unsubscribe();
     decorationsSubscription.unsubscribe();
+    extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
+    stopExtensionSync?.();
     stopBroadcastLocalIdentity();
     // Drop our identity entry so peers' lookup for this connection no
     // longer resolves once we're gone.
@@ -1242,7 +1532,16 @@ async function createBibleReadingSession(
 }
 
 export interface SessionsManager {
-  createSession: () => Promise<BibleReadingSession>;
+  /**
+   * Creates a session.
+   *
+   * @param startPosition Where the session should open. Defaults to the
+   * reading state's own default position (the first book of the default
+   * translation) when omitted.
+   */
+  createSession: (
+    startPosition?: SessionStartPosition
+  ) => Promise<BibleReadingSession>;
   joinSession: (id: string) => Promise<BibleReadingSession>;
 }
 
@@ -1251,9 +1550,10 @@ export function createSessionsManager(
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): SessionsManager {
-  const createSession = async () => {
+  const createSession = async (startPosition?: SessionStartPosition) => {
     const id = createSessionId();
     // Claim host at create time so the settings UI knows which connected
     // user is allowed to change session-wide toggles.
@@ -1264,8 +1564,10 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      readingExtensionManager,
       id,
-      { ...DEFAULT_SESSION_OPTIONS, hostUserId }
+      { ...DEFAULT_SESSION_OPTIONS, hostUserId },
+      startPosition
     );
   };
 
@@ -1276,6 +1578,7 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      readingExtensionManager,
       id
     );
   };

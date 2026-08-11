@@ -1,12 +1,19 @@
-import { MaterialIcon, SeedBibleIcon } from "../components/icons";
+import { MaterialIcon, SeedBibleIcon, StopIcon } from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
+  uiLocaleForDefaultTranslation,
   type BibleReadingState,
+  type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
-import type { Pane, PanesManager } from "../managers/PanesManager";
+import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import { extractContentText } from "../managers/ChapterText";
+import type { BookId } from "../managers/BibleDataManager";
+import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
+import type { PanesManager } from "../managers/PanesManager";
+import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
   formatVerseSelection,
   type TabsManager,
@@ -15,6 +22,24 @@ import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
+import type { ModalManager } from "./ModalManager";
+import type { AppState } from "./SeedBibleStateManager";
+import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
+import {
+  ReadingPlansPane,
+  ReadingPlansPaneActions,
+  ReadingPlansPaneIcon,
+  ReadingPlansPaneLeading,
+  ReadingPlansPaneTitle,
+} from "../components/ReadingPlansPane/ReadingPlansPane";
+import type { PlaylistManager } from "./PlaylistManager";
+import { i18n, useI18n } from "../i18n";
+import {
+  FEATURE_KEY_READING_PLANS,
+  type FeaturesManager,
+} from "./FeaturesManager";
+import { playlistItemLabel } from "../components/playlistItemLabel";
+import { ShareModal } from "../components/ShareModal/shareModal";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -122,6 +147,8 @@ export interface BibleToolContext {
   tabs: TabsManager;
   /** Panes manager for pane-level actions/selection context. */
   panesManager: PanesManager;
+  /** Tabs layout manager for slot-level actions/selection context. */
+  tabsLayoutManager: TabsLayoutManager;
 
   /**
    * Chats manager for chat-related actions.
@@ -136,12 +163,31 @@ export interface BibleToolContext {
   openSearch: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
+  /** Opens the discover panel */
+  openDiscover?: () => void;
   /** Shows a transient toast message at the bottom of the screen. */
   toast: (message: string) => void;
+  /** Reading plans manager, for opening the plans pane. */
+  readingPlans?: ReadingPlansManager;
+  /** Playlist manager */
+  playlists?: PlaylistManager;
+
+  /** Features manager */
+  features: FeaturesManager;
+
+  /** Modals manager */
+  modals?: ModalManager;
+
+  /**
+   * App-level state. Optional like the other managers above; tools that need
+   * shared-session actions (create/share the live session) should guard on it.
+   */
+  app?: AppState;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
 export interface BibleReaderToolbarTool extends ResolvedBibleTool {
+  isControllable: boolean;
   /** Disabled state signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility state signal resolved for current context. */
@@ -150,6 +196,12 @@ export interface BibleReaderToolbarTool extends ResolvedBibleTool {
   onSelect: () => void;
   /** Optional context-menu items for this tool. */
   getItems?: () => ResolvedBibleToolItem[];
+
+  /**
+   * Whether the label for this tool should be hidden.
+   * Defaults to false.
+   */
+  hideLabel?: boolean;
 }
 
 export type ManagedBibleToolbarToolItem =
@@ -157,6 +209,8 @@ export type ManagedBibleToolbarToolItem =
 
 /** Registerable reader toolbar tool definition. */
 export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
+  /** Whether the tool is controllable by the user. */
+  isControllable?: boolean;
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<BibleToolContext>;
   /** Optional visibility predicate (boolean or signal). */
@@ -165,6 +219,12 @@ export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
   onSelect?: (context: BibleToolContext) => void;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
   getItems?: (context: BibleToolContext) => ManagedBibleToolbarToolItem[];
+
+  /**
+   * Whether the label for this tool should be hidden.
+   * Defaults to false.
+   */
+  hideLabel?: boolean;
 }
 
 /** Fully resolved verse toolbar tool ready for rendering. */
@@ -194,22 +254,22 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext
   getItems?: (context: BibleToolContext) => ManagedBibleVerseToolbarToolItem[];
 }
 
-/** Runtime context passed to empty-pane tool surface. */
-export interface EmptyPaneToolContext {
-  /** Bible selector state for opening in empty panes. */
+/** Runtime context passed to empty-slot tool surface. */
+export interface EmptySlotToolContext {
+  /** Bible selector state for opening in empty slots. */
   selectorState: BibleSelectorState;
-  /** Pane currently receiving empty-pane actions. */
-  currentPane: Pane;
-  /** Panes manager for pane-level operations. */
-  panesManager: PanesManager;
+  /** Slot currently receiving empty-slot actions. */
+  currentSlot: TabSlot;
+  /** Tabs layout manager for slot-level operations. */
+  tabsLayoutManager: TabsLayoutManager;
   /** Tabs manager for cross-tab interactions. */
   tabs: TabsManager;
   /** Optional window metrics for responsive behavior. */
   window?: WindowContext | null;
 }
 
-/** Fully resolved empty-pane tool ready for rendering. */
-export interface BibleEmptyPaneTool extends ResolvedBibleTool {
+/** Fully resolved empty-slot tool ready for rendering. */
+export interface BibleEmptySlotTool extends ResolvedBibleTool {
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -220,19 +280,19 @@ export interface BibleEmptyPaneTool extends ResolvedBibleTool {
   getItems?: () => ResolvedBibleToolItem[];
 }
 
-export type ManagedBibleEmptyPaneToolItem =
-  ManagedBibleToolItem<EmptyPaneToolContext>;
+export type ManagedBibleEmptySlotToolItem =
+  ManagedBibleToolItem<EmptySlotToolContext>;
 
-/** Registerable empty-pane tool definition. */
-export interface ManagedBibleEmptyPaneTool extends BibleTool<EmptyPaneToolContext> {
+/** Registerable empty-slot tool definition. */
+export interface ManagedBibleEmptySlotTool extends BibleTool<EmptySlotToolContext> {
   /** Optional disabled predicate (boolean or signal). */
-  isDisabled?: ToolPredicate<EmptyPaneToolContext>;
+  isDisabled?: ToolPredicate<EmptySlotToolContext>;
   /** Optional visibility predicate (boolean or signal). */
-  isVisible?: ToolPredicate<EmptyPaneToolContext>;
+  isVisible?: ToolPredicate<EmptySlotToolContext>;
   /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
-  onSelect?: (context: EmptyPaneToolContext) => void;
+  onSelect?: (context: EmptySlotToolContext) => void;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
-  getItems?: (context: EmptyPaneToolContext) => ManagedBibleEmptyPaneToolItem[];
+  getItems?: (context: EmptySlotToolContext) => ManagedBibleEmptySlotToolItem[];
 }
 
 /** Fully resolved below-reader tool ready for rendering. */
@@ -249,8 +309,8 @@ export interface BibleBelowReaderToolbarTool extends ResolvedBibleTool {
 
 /** Runtime context for below-reader tool surface. */
 export interface BibleBelowReaderToolContext extends BibleToolContext {
-  /** Pane containing the active reader. */
-  currentPane: Pane;
+  /** Slot containing the active reader. */
+  currentSlot: TabSlot;
 }
 
 /** Registerable below-reader tool definition. */
@@ -279,12 +339,25 @@ export type ManagedBibleBelowReaderToolbarToolItem =
 export interface QuickToolContext {
   /** Active reading state for the current reader surface. */
   readingState: BibleReadingState;
+
+  /**
+   * Playlist manager state.
+   */
+  playlists: PlaylistManager;
+
+  features: FeaturesManager;
+
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
+
+  /** Which surface is asking, for tools whose visibility depends on it. */
+  surface: "quick-toolbar" | "mobile-navigation-bar";
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
 export interface BibleQuickToolbarTool extends ResolvedBibleTool {
+  /** Optional class name for custom styling. */
+  className?: string;
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -300,6 +373,9 @@ export type ManagedBibleQuickToolbarToolItem =
 
 /** Registerable quick toolbar tool definition. */
 export interface ManagedBibleQuickToolbarTool extends BibleTool<QuickToolContext> {
+  /** Optional class name for custom styling. */
+  className?: string;
+
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<QuickToolContext>;
   /** Optional visibility predicate (boolean or signal). */
@@ -314,7 +390,7 @@ function validateToolActions(
   tool:
     | ManagedBibleToolbarTool
     | ManagedBibleVerseToolbarTool
-    | ManagedBibleEmptyPaneTool
+    | ManagedBibleEmptySlotTool
     | ManagedBibleBelowReaderToolbarTool
     | ManagedBibleQuickToolbarTool
 ) {
@@ -403,6 +479,14 @@ function ChevronRightIcon() {
   return <MaterialIcon>chevron_right</MaterialIcon>;
 }
 
+function NextItemIcon() {
+  return <MaterialIcon>skip_next</MaterialIcon>;
+}
+
+function PreviousItemIcon() {
+  return <MaterialIcon>skip_previous</MaterialIcon>;
+}
+
 function CopyVerseIcon() {
   return <MaterialIcon>content_copy</MaterialIcon>;
 }
@@ -419,7 +503,7 @@ function OpenInSelectorIcon() {
   return <MaterialIcon>menu_book</MaterialIcon>;
 }
 
-function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
+function getDefaultEmptySlotToolbarTools(): ManagedBibleEmptySlotTool[] {
   return [
     {
       id: "open-in-selector",
@@ -427,7 +511,7 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       title: { key: "books", defaultValue: "Books" },
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
-        context.selectorState.setOpen(true, context.currentPane);
+        context.selectorState.setOpen(true, context.currentSlot);
       },
     },
   ];
@@ -450,11 +534,81 @@ function getDefaultBelowReaderToolbarTools(): ManagedBibleBelowReaderToolbarTool
   ];
 }
 
-function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
+function NowPlayingIcon({
+  playlists,
+  readingState,
+}: {
+  playlists: PlaylistManager;
+  readingState: BibleReadingState;
+}) {
+  const { t } = useI18n();
+  const currentlyPlaying = playlists.playing.value;
+  if (!currentlyPlaying) return null;
+  const currentPlaylist = currentlyPlaying.playlists.value[0];
+  const currentItem = currentlyPlaying.currentItem.value;
+
+  const books = readingState.translationBooks.value;
+  const resolveBookName = (bookId: string): string => {
+    const book = books?.books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
+
+  const title =
+    currentPlaylist?.title ??
+    t("untitled-playlist", { defaultValue: "Untitled playlist" });
+  return (
+    <span className="sb-now-playing-icon">
+      <h4 className="sb-now-playing-icon-title">{title}</h4>
+      {currentItem && (
+        <span>{playlistItemLabel(currentItem, t, resolveBookName)}</span>
+      )}
+    </span>
+  );
+}
+
+function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
   return [
+    {
+      id: "current-playlist",
+      priority: 0,
+      title: {
+        key: "current-playlist",
+        defaultValue: "Current Playlist",
+      },
+      className: "sb-quick-toolbar-current-playlist",
+      icon: (c) => (
+        <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
+      ),
+      isVisible: (c) =>
+        !!c.playlists.playing.value?.playlists.value.length &&
+        c.playlists.isMobile.value,
+      onSelect: (c) => {
+        c.playlists.view.value = "play_playlist";
+      },
+    },
+  ];
+}
+
+function getDefaultToolbarTools(
+  branding?: BrandingConfig
+): ManagedBibleToolbarTool[] {
+  const tools: ManagedBibleToolbarTool[] = [
+    {
+      id: "stop-playing",
+      priority: -1,
+      hideLabel: true,
+      title: { key: "stop", defaultValue: "Stop" },
+      icon: () => <StopIcon />,
+      isVisible: (context) => !!context.playlists?.playing?.value,
+      onSelect: (context) => {
+        context.playlists?.stopPlaying();
+      },
+      isControllable: false,
+    },
     {
       id: "previous-chapter",
       priority: 0,
+      hideLabel: true,
       title: { key: "previous-chapter", defaultValue: "Previous Chapter" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
@@ -462,12 +616,33 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronLeftIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.chapterData.value?.previousChapterApiLink ||
-        context.readingState.loading.value,
+      // Deliberately not gated on `loading`: navigation no longer waits on the
+      // text request, so pressing again mid-load is exactly what should work.
+      isDisabled: (context) => !context.readingState.hasPrevious.value,
+      isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
       },
+      isControllable: false,
+    },
+    {
+      id: "previous-item",
+      priority: 0,
+      hideLabel: true,
+      title: { key: "previous", defaultValue: "Previous" },
+      icon: (context) =>
+        context.readingState.translation.value?.textDirection === "rtl" ? (
+          <NextItemIcon />
+        ) : (
+          <PreviousItemIcon />
+        ),
+      isDisabled: (context) =>
+        !context.playlists?.playing?.value?.hasPrevious.value,
+      isVisible: (context) => !!context.playlists?.playing?.value,
+      onSelect: (context) => {
+        context.playlists?.playing.value?.previous();
+      },
+      isControllable: false,
     },
     {
       id: "open-sidebar",
@@ -479,24 +654,25 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       onSelect: (context) => {
         context.openSidebar?.();
       },
+      isControllable: false,
     },
     {
       id: "open-selector",
       priority: 100,
       title: { key: "books", defaultValue: "Books" },
       icon: OpenSelectorIcon,
-      isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
-        const currentPane =
-          context.panesManager.panes.value.find(
-            (pane) => pane.id === context.panesManager.selectedPaneId.value
+        const currentSlot =
+          context.tabsLayoutManager.slots.value.find(
+            (slot) => slot.id === context.tabsLayoutManager.selectedSlotId.value
           ) ?? null;
-        if (!currentPane) {
+        if (!currentSlot) {
           return;
         }
 
-        context.selectorState.setOpen(true, currentPane);
+        context.selectorState.setOpen(true, currentSlot);
       },
+      isControllable: false,
     },
     {
       id: "open-search",
@@ -524,8 +700,100 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       },
     },
     {
+      id: "open-plans",
+      priority: 115,
+      title: { key: "plans", defaultValue: "Plans" },
+      icon: () => <MaterialIcon>menu_book</MaterialIcon>,
+      isVisible: (context) =>
+        !!context.readingPlans &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
+      onSelect: (context) => {
+        const readingPlans = context.readingPlans;
+        if (!readingPlans) {
+          return;
+        }
+        const readingState = context.readingState;
+        context.panesManager.openPane({
+          id: "reading-plans-pane",
+          placement: "side",
+
+          // The pane's own header carries the plans chrome: a back button when
+          // the user has drilled into a plan or the create wizard, the plan's
+          // name as the title, and the new-plan button.
+          title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
+          icon: () => <ReadingPlansPaneIcon />,
+          leading: () => (
+            <ReadingPlansPaneLeading readingPlans={readingPlans} />
+          ),
+          header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
+          component: () => (
+            <ReadingPlansPane
+              readingPlans={readingPlans}
+              books={readingState.translationBooks.value?.books ?? []}
+              modals={context.modals}
+              // Tapping a scripture reading takes the user to it. Without this
+              // a plan can only be ticked off, never actually read from.
+              onOpenScripture={async (ref, translationId) => {
+                await readingState.selectTranslationAndChapter(
+                  translationId ?? readingState.translationId.peek(),
+                  ref.bookId,
+                  ref.chapter,
+                  { scrollToVerse: ref.verse }
+                );
+              }}
+              // A day of a plan is a run of readings, which is exactly what the
+              // playlist queue already steps through — so it is handed straight
+              // to `startPlaying` rather than growing a second set of next/back
+              // controls here. The synthetic playlist borrows the plan's own
+              // record name and address so playback is identifiable; it isn't a
+              // real playlist record, so a shared/reloaded URL won't resume it.
+              onPlayReadings={(plan, items, startIndex) => {
+                context.playlists?.startPlaying(
+                  {
+                    id: plan.address,
+                    recordName: plan.recordName,
+                    authorUserId: plan.authorUserId,
+                    title: plan.title,
+                    description: plan.description,
+                    items,
+                    createdAtMs: plan.createdAtMs,
+                    updatedAtMs: plan.updatedAtMs,
+                  },
+                  startIndex
+                );
+              }}
+            />
+          ),
+        });
+      },
+    },
+    {
+      id: "open-discover",
+      priority: 120,
+      title: { key: "discover", defaultValue: "Discover" },
+      icon: () => <MaterialIcon>explore</MaterialIcon>,
+      isVisible: (context) => !!context.openDiscover,
+      onSelect: (context) => {
+        if (!context.openDiscover) {
+          return;
+        }
+        context.openDiscover();
+      },
+    },
+    {
+      id: "share",
+      priority: 130,
+      title: { key: "share", defaultValue: "Share" },
+      icon: () => <MaterialIcon>share</MaterialIcon>,
+      isVisible: (context) => !!context.modals && !!context.app,
+      onSelect: (context) => {
+        openShareModal(context, getShareUrl(context.readingState));
+      },
+    },
+    {
       id: "next-chapter",
       priority: 1000,
+      hideLabel: true,
       title: { key: "next-chapter", defaultValue: "Next Chapter" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
@@ -533,18 +801,129 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronRightIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.chapterData.value?.nextChapterApiLink ||
-        context.readingState.loading.value,
+      // See `previous-chapter`: in-flight text must not block moving on.
+      isDisabled: (context) => !context.readingState.hasNext.value,
+      isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadNextChapter();
       },
+      isControllable: false,
+    },
+    {
+      id: "next-item",
+      priority: 1000,
+      hideLabel: true,
+      title: { key: "next", defaultValue: "Next" },
+      icon: (context) =>
+        context.readingState.translation.value?.textDirection === "rtl" ? (
+          <PreviousItemIcon />
+        ) : (
+          <NextItemIcon />
+        ),
+      isDisabled: (context) =>
+        !context.playlists?.playing?.value?.hasNext.value,
+      isVisible: (context) => !!context.playlists?.playing?.value,
+      onSelect: (context) => {
+        context.playlists?.playing.value?.next();
+      },
+      isControllable: false,
     },
   ];
+  return tools.filter(
+    (tool) => !branding?.disabledToolbarTools?.includes(tool.id)
+  );
 }
 
 function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
   return [
+    {
+      id: "add-to-playlist",
+      priority: 100,
+      title: { key: "add-to-playlist", defaultValue: "Add to Playlist" },
+      icon: () => <MaterialIcon>playlist_add</MaterialIcon>,
+      isVisible: (context) => !!context.playlists?.editingPlaylist.value,
+      onSelect: async (context) => {
+        const playlist = context.playlists?.editingPlaylist.value;
+        if (!playlist) return;
+
+        context.playlists!.editingPlaylist.value = {
+          ...playlist,
+          items: [
+            ...playlist.items,
+            ...context.readingState.selectedVerses.value.map((verse) => ({
+              type: "bible-verse" as const,
+              ref: {
+                bookId: verse.bookId,
+                chapter: verse.chapterNumber,
+                verse: verse.verse.number,
+              },
+            })),
+          ],
+        };
+
+        context.readingState.clearSelectedVerses();
+      },
+    },
+    {
+      id: "add-to-reading-plan",
+      priority: 150,
+      title: { key: "add-to-reading-plan", defaultValue: "Add to plan" },
+      icon: () => <MaterialIcon>library_add</MaterialIcon>,
+      // Only offered while a plan is actually being authored — it adds to that
+      // draft, so with no draft there is nowhere for the passage to go. Mirrors
+      // how "Add to Playlist" follows `editingPlaylist`.
+      isVisible: (context) =>
+        !!context.readingPlans?.editingReadingPlan.value &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
+        context.readingState.selectedVerses.value.length > 0,
+      onSelect: async (context) => {
+        const readingPlans = context.readingPlans;
+        const draft = readingPlans?.editingReadingPlan.value;
+        if (!readingPlans || !draft) {
+          return;
+        }
+        const verses = context.readingState.selectedVerses.value;
+        if (verses.length === 0) {
+          return;
+        }
+        // Collapse the selection into one reading spanning its first → last
+        // verse. A selection can cross a chapter boundary, so order by
+        // (chapter, verse) rather than verse number alone and record the span
+        // with endChapter/endVerse.
+        const first = verses[0]!;
+        const ordered = verses
+          .filter((v) => v.bookId === first.bookId)
+          .sort(
+            (a, b) =>
+              a.chapterNumber - b.chapterNumber ||
+              a.verse.number - b.verse.number
+          );
+        const start = ordered[0]!;
+        const end = ordered[ordered.length - 1]!;
+        const spansChapters = end.chapterNumber !== start.chapterNumber;
+
+        readingPlans.addReadingToEditingPlan({
+          type: "bible-verse",
+          ref: {
+            bookId: start.bookId,
+            chapter: start.chapterNumber,
+            verse: start.verse.number,
+            ...(spansChapters
+              ? { endChapter: end.chapterNumber, endVerse: end.verse.number }
+              : end.verse.number !== start.verse.number
+                ? { endVerse: end.verse.number }
+                : {}),
+          },
+        });
+        context.toast(
+          i18n.t("added-to-reading-plan-session", {
+            defaultValue: "Added to session {{session}}",
+            session: draft.selectedSessionIndex + 1,
+          })
+        );
+        context.readingState.clearSelectedVerses();
+      },
+    },
     {
       id: "copy-verse",
       priority: 200,
@@ -559,7 +938,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 
         try {
           navigator.clipboard.writeText(verseTexts);
-          context.toast("Copied!");
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }
@@ -574,19 +953,11 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
-
-        let verseTexts = formatSelectedVerses(context.readingState);
-
-        const url = getShareUrl(context.readingState);
-
-        verseTexts += `\n\n${url.toString()}`;
-
-        navigator.share({
-          title:
-            "Bible Verse" +
-            (context.readingState.selectedVerses.value.length > 1 ? "s" : ""),
-          text: verseTexts,
-        });
+        openShareModal(
+          context,
+          getShareUrl(context.readingState),
+          formatSelectedVerses(context.readingState)
+        );
       },
     },
     {
@@ -610,6 +981,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 export interface ToolMetadata {
   id: string;
   title: TranslatableTitle;
+  isControllable?: boolean;
 }
 
 /**
@@ -642,14 +1014,14 @@ export interface ToolsManager {
   /** Lists verse toolbar tool metadata without resolving any context. */
   listVerseToolbarTools: () => ToolMetadata[];
 
-  /** Registers an empty-pane tool and returns an unregister callback. */
-  registerEmptyPaneTool: (tool: ManagedBibleEmptyPaneTool) => () => void;
+  /** Registers an empty-slot tool and returns an unregister callback. */
+  registerEmptySlotTool: (tool: ManagedBibleEmptySlotTool) => () => void;
 
-  /** Unregisters an empty-pane tool by ID. */
-  unregisterEmptyPaneTool: (toolId: string) => void;
+  /** Unregisters an empty-slot tool by ID. */
+  unregisterEmptySlotTool: (toolId: string) => void;
 
-  /** Resolves/sorts empty-pane tools for the given context. */
-  getEmptyPaneTools: (context: EmptyPaneToolContext) => BibleEmptyPaneTool[];
+  /** Resolves/sorts empty-slot tools for the given context. */
+  getEmptySlotTools: (context: EmptySlotToolContext) => BibleEmptySlotTool[];
 
   /** Registers a below-reader tool and returns an unregister callback. */
   registerBelowReaderTool: (
@@ -683,25 +1055,41 @@ export interface ToolsManager {
  * @returns A URL object representing the sharable link for the current reading state.
  */
 export function getShareUrl(readingState: BibleReadingState) {
-  const url = new URL(window.location.href);
-  url.search = "";
+  const current = new URL(window.location.href);
+  current.search = "";
   // if (configBot.tags.pattern) {
   //   url.searchParams.set("pattern", configBot.tags.pattern);
   // }
   const translation =
     readingState.translation.value?.id ?? readingState.defaultTranslation.id;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
-  url.searchParams.set("translation", translation);
-  url.searchParams.set("book", bookId);
+  const chapter = readingState.chapterNumber.value;
+  const { basePath } = readInjectedConfig();
+  // Written into the path rather than as `?translation=&book=&chapter=`, so a
+  // shared link is the canonical URL for the passage instead of one that
+  // redirects to it.
+  const url = buildReadingUrl({
+    currentUrl: current,
+    basePath,
+    translationId: translation,
+    bookId: bookId as BookId,
+    chapter,
+    fallbackLanguage: uiLocaleForDefaultTranslation(translation) ?? undefined,
+  });
 
   if (readingState.selectedVerses.value.length > 0) {
     const verses = readingState.selectedVerses.value
-      .filter((v) => v.bookId === bookId && v.translationId === translation)
+      .filter(
+        (v) =>
+          v.bookId === bookId &&
+          v.chapterNumber === chapter &&
+          v.translationId === translation
+      )
       .map((v) => v.verse.number);
     if (verses.length > 0) {
       const formatted = formatVerseSelection(verses);
       if (formatted) {
-        url.search += `&verse=${formatted}`;
+        url.searchParams.set("verse", formatted);
       }
     }
   }
@@ -709,22 +1097,120 @@ export function getShareUrl(readingState: BibleReadingState) {
 }
 
 /**
+ * Opens the unified share sheet for a reading surface. Shared by the verse
+ * toolbar's "Share" tool and the reader toolbar's "Share" tool so both open the
+ * exact same modal. `shareText` is only passed by the verse flow (the selected
+ * verses' text) for the native share sheet; the reader flow shares a link only.
+ * The session comes from `context.sharedSession` — the tool's own reading
+ * surface — never from global app state, so a background surface can't be
+ * shared by mistake.
+ */
+function openShareModal(
+  context: BibleToolContext,
+  shareUrl: URL,
+  shareText?: string
+) {
+  const modals = context.modals;
+  const app = context.app;
+  if (!modals || !app) return;
+
+  const modalId = modals.openModal({
+    title: { key: "share-sheet-title", defaultValue: "Share" },
+    content: () => (
+      <ShareModal
+        app={app}
+        session={context.sharedSession}
+        onClose={() => modals.closeModal(modalId)}
+        onShareLink={() => {
+          navigator.clipboard.writeText(shareUrl.toString());
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
+          modals.closeModal(modalId);
+        }}
+        onShareVia={() => {
+          void navigator.share?.({
+            title: document.title,
+            ...(shareText ? { text: shareText } : {}),
+            url: shareUrl.toString(),
+          });
+          modals.closeModal(modalId);
+        }}
+      />
+    ),
+  });
+}
+
+/** Splits verses into groups of consecutive verse numbers. */
+function groupConsecutiveVerses(verses: BibleSelectedVerse[]) {
+  const groups: BibleSelectedVerse[][] = [];
+  let current: BibleSelectedVerse[] = [];
+
+  for (const verse of verses) {
+    if (
+      current.length === 0 ||
+      verse.verse.number === current[current.length - 1]!.verse.number + 1
+    ) {
+      current.push(verse);
+    } else {
+      groups.push(current);
+      current = [verse];
+    }
+  }
+
+  if (current.length) {
+    groups.push(current);
+  }
+
+  return groups;
+}
+
+/**
+ * Formats a single contiguous run of verse numbers, e.g. `12` or `12-17`.
+ * Assumes `verseNumbers` is already sorted and contiguous, which holds for
+ * every caller since it only ever receives a group from `groupConsecutiveVerses`.
+ */
+function formatVerseRanges(verseNumbers: number[]): string {
+  if (verseNumbers.length === 0) return "";
+
+  const start = verseNumbers[0]!;
+  const end = verseNumbers[verseNumbers.length - 1]!;
+
+  return start === end ? `${start}` : `${start}-${end}`;
+}
+
+/**
  * Formats the selected verses from the reading state into a human-readable string.
  * @param readingState The reading state containing the selected verses to format.
  * @returns A string representing the formatted selected verses.
  */
-function formatSelectedVerses(readingState: BibleReadingState) {
-  return readingState.selectedVerses.value
-    .map((verse) => {
-      const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
-      return `${verse.verse.content
-        .map((part) => {
-          if (typeof part === "string") return part;
-          if (part && typeof part === "object" && "text" in part)
-            return (part as { text: string }).text;
-          return "";
-        })
-        .join("")} (${verseReference})`;
+export function formatSelectedVerses(readingState: BibleReadingState) {
+  const verses = readingState.selectedVerses.value;
+
+  if (verses.length === 0) return "";
+
+  const bookName =
+    readingState.chapterData.value?.book.name ?? verses[0]!.bookId;
+
+  const translation = readingState.translation?.value?.shortName ?? "";
+
+  const groups = groupConsecutiveVerses(verses);
+
+  return groups
+    .map((group) => {
+      const text = group
+        .map((verse) => extractContentText(verse.verse.content))
+        .join(" ");
+
+      const range = formatVerseRanges(group.map((v) => v.verse.number));
+
+      const reference = [
+        bookName,
+        `${group[0]!.chapterNumber}:${range}`,
+        translation,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return `${text} (${reference})`;
     })
     .join("\n\n");
 }
@@ -737,20 +1223,24 @@ function formatSelectedVerses(readingState: BibleReadingState) {
  * - Getter methods resolve predicates and priorities for the provided context,
  *   then return tools sorted by ascending priority.
  */
-export function createBibleToolsManager(): ToolsManager {
+export function createBibleToolsManager(
+  branding?: BrandingConfig
+): ToolsManager {
   const toolbarTools = signal<ManagedBibleToolbarTool[]>(
-    getDefaultToolbarTools()
+    getDefaultToolbarTools(branding)
   );
   const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
     getDefaultVerseToolbarTools()
   );
-  const emptyPaneTools = signal<ManagedBibleEmptyPaneTool[]>(
-    getDefaultEmptyPaneToolbarTools()
+  const emptySlotTools = signal<ManagedBibleEmptySlotTool[]>(
+    getDefaultEmptySlotToolbarTools()
   );
   const belowReaderTools = signal<ManagedBibleBelowReaderToolbarTool[]>(
     getDefaultBelowReaderToolbarTools()
   );
-  const quickTools = signal<ManagedBibleQuickToolbarTool[]>([]);
+  const quickTools = signal<ManagedBibleQuickToolbarTool[]>(
+    getDefaultQuickToolbarTools()
+  );
 
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
     validateToolActions(tool);
@@ -780,13 +1270,19 @@ export function createBibleToolsManager(): ToolsManager {
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
+      isControllable: tool.isControllable ?? true,
+      hideLabel: tool.hideLabel ?? false,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
   };
 
   const listToolbarTools = (): ToolMetadata[] =>
-    toolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
+    toolbarTools.value.map((tool) => ({
+      id: tool.id,
+      title: tool.title,
+      isControllable: tool.isControllable ?? true,
+    }));
 
   const registerVerseToolbarTool = (tool: ManagedBibleVerseToolbarTool) => {
     validateToolActions(tool);
@@ -824,26 +1320,26 @@ export function createBibleToolsManager(): ToolsManager {
   const listVerseToolbarTools = (): ToolMetadata[] =>
     verseToolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
 
-  const registerEmptyPaneTool = (tool: ManagedBibleEmptyPaneTool) => {
+  const registerEmptySlotTool = (tool: ManagedBibleEmptySlotTool) => {
     validateToolActions(tool);
-    const nextTools = emptyPaneTools.value.filter(
+    const nextTools = emptySlotTools.value.filter(
       (entry) => entry.id !== tool.id
     );
-    emptyPaneTools.value = [...nextTools, tool];
+    emptySlotTools.value = [...nextTools, tool];
 
     return () => {
-      unregisterEmptyPaneTool(tool.id);
+      unregisterEmptySlotTool(tool.id);
     };
   };
 
-  const unregisterEmptyPaneTool = (toolId: string) => {
-    emptyPaneTools.value = emptyPaneTools.value.filter(
+  const unregisterEmptySlotTool = (toolId: string) => {
+    emptySlotTools.value = emptySlotTools.value.filter(
       (tool) => tool.id !== toolId
     );
   };
 
-  const getEmptyPaneTools = (context: EmptyPaneToolContext) => {
-    const tools = emptyPaneTools.value.map((tool) => ({
+  const getEmptySlotTools = (context: EmptySlotToolContext) => {
+    const tools = emptySlotTools.value.map((tool) => ({
       id: tool.id,
       priority: resolveToolPriority(tool.priority, context),
       title: tool.title,
@@ -916,6 +1412,7 @@ export function createBibleToolsManager(): ToolsManager {
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
+      className: tool.className,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
@@ -933,9 +1430,9 @@ export function createBibleToolsManager(): ToolsManager {
     unregisterVerseToolbarTool,
     getVerseToolbarTools,
     listVerseToolbarTools,
-    registerEmptyPaneTool,
-    unregisterEmptyPaneTool,
-    getEmptyPaneTools,
+    registerEmptySlotTool,
+    unregisterEmptySlotTool,
+    getEmptySlotTools,
     registerBelowReaderTool,
     unregisterBelowReaderTool,
     getBelowReaderTools,

@@ -1,0 +1,39 @@
+.sb-play-playlist-content-link-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Wraps the iframe/video so it can grow to fill the enlarged modal (see the
+ * `:has(.sb-play-playlist-content-embed)` override in BibleReader.css). */
+.sb-play-playlist-content-embed {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.sb-play-playlist-content-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+  background: var(--sb-divider-color);
+}
+
+.sb-play-playlist-content-video {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: #000;
+}
+
+.sb-play-playlist-content-link {
+  font-size: 13px;
+  color: var(--sb-primary-color);
+  overflow-wrap: anywhere;
+}
+
+.sb-play-playlist-open-button {
+  align-self: flex-start;
+  text-decoration: none;
+}

@@ -1,0 +1,255 @@
+/* Login modal -------------------------------------------------------------- */
+
+.sb-login-modal {
+  width: min(26.25rem, 100%);
+  max-height: min(40rem, calc(100dvh - 2rem));
+}
+
+.sb-login-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem 0.75rem;
+  overflow: auto;
+}
+
+.sb-login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.sb-login-logo {
+  height: 2.5rem;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.sb-login-title {
+  margin: 0;
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--sb-chapter-heading-font-color);
+}
+
+.sb-login-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sb-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sb-login-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-login-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+  cursor: pointer;
+}
+
+.sb-login-terms-checkbox {
+  margin: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  accent-color: var(--sb-primary-color);
+  cursor: pointer;
+}
+
+.sb-login-terms-text {
+  flex: 1;
+}
+
+.sb-login-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+}
+
+.sb-login-link:hover {
+  filter: brightness(1.1);
+}
+
+.sb-login-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.8125rem;
+}
+
+.sb-login-legal .sb-login-link {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  text-decoration: none;
+}
+
+.sb-login-legal .sb-login-link:hover {
+  text-decoration: underline;
+}
+
+.sb-login-input {
+  width: 100%;
+}
+
+.sb-login-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #dc2626;
+}
+
+.sb-login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.sb-login-submit {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.sb-login-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.sb-login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-secondary {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* "Change email address" link rendered as a button in the code-step header. */
+.sb-login-change-email {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 0.25rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sb-login-change-email:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Code input with an inline "Resend code" button on the right. */
+.sb-login-code-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.sb-login-code-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-login-resend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 0 0.5rem;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.sb-login-resend:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.sb-login-resend:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-resend-icon {
+  font-size: 1.125rem;
+}
+
+/* Side-by-side Cancel / Confirm buttons on the code step. */
+.sb-login-actions-row {
+  flex-direction: row;
+}
+
+.sb-login-actions-row .sb-login-submit,
+.sb-login-actions-row .sb-login-secondary {
+  width: auto;
+  flex: 1;
+}
+
+.sb-login-actions-row .sb-login-secondary {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-actions-row .sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+}

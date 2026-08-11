@@ -29,6 +29,9 @@ export function createSidebar(options: CreateSidebarOptions) {
   ) as RequestedSettingsView | null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
+  // True when the mobile tabs drawer was opened directly from the bottom
+  // toolbar (rather than from the book selector).
+  const tabsOpenedFromToolbar = signal(false);
   const requestedSettingsView = signal<RequestedSettingsView>(initialView);
   const isSettingsOpen = computed(() => requestedSettingsView.value !== null);
 
@@ -166,6 +169,7 @@ export function createSidebar(options: CreateSidebarOptions) {
     isSettingsOpen,
     isSidebarCollapsed,
     isMobileOpen,
+    tabsOpenedFromToolbar,
     requestedSettingsView,
     toggleSettings,
     openSettings,

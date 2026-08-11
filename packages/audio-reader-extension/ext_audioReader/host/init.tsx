@@ -1,6 +1,6 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import type { BibleReadingState } from "seed-bible/managers";
+import type { BibleReadingState, QuickToolContext } from "seed-bible/managers";
 
 /** Drives the icon swap between play and pause. Shared across the tool. */
 const isPlaying = signal(false);
@@ -39,6 +39,18 @@ function chapterAudioUrl(readingState: BibleReadingState): string | null {
   return Object.values(links).find((url) => !!url) ?? null;
 }
 
+/**
+ * Hidden from the quick toolbar on mobile since the mobile nav bar
+ * (BibleReaderToolbar) is its home there.
+ */
+export function isAudioPlayToolVisible(ctx: QuickToolContext): boolean {
+  return (
+    !ctx.playlists.playing.value &&
+    chapterAudioUrl(ctx.readingState) !== null &&
+    (ctx.surface !== "quick-toolbar" || !ctx.playlists.isMobile.value)
+  );
+}
+
 function PlayIcon() {
   return (
     <svg
@@ -48,8 +60,18 @@ function PlayIcon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx={18} cy={18} r={18} fill="#D36433" />
-      <path d="M14 25V11L25 18L14 25Z" fill="white" />
+      <circle
+        cx={18}
+        cy={18}
+        r={18}
+        fill="#e07b4c"
+        style={{ fill: "var(--sb-primary-color, #e07b4c)" }}
+      />
+      <path
+        d="M14 25V11L25 18L14 25Z"
+        fill="#fff"
+        style={{ fill: "var(--sb-primary-font-color, #fff)" }}
+      />
     </svg>
   );
 }
@@ -63,9 +85,31 @@ function PauseIcon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx={18} cy={18} r={18} fill="#D36433" />
-      <rect x={13} y={11} width={3.5} height={14} rx={1} fill="white" />
-      <rect x={19.5} y={11} width={3.5} height={14} rx={1} fill="white" />
+      <circle
+        cx={18}
+        cy={18}
+        r={18}
+        fill="#e07b4c"
+        style={{ fill: "var(--sb-primary-color, #e07b4c)" }}
+      />
+      <rect
+        x={13}
+        y={11}
+        width={3.5}
+        height={14}
+        rx={1}
+        fill="#fff"
+        style={{ fill: "var(--sb-primary-font-color, #fff)" }}
+      />
+      <rect
+        x={19.5}
+        y={11}
+        width={3.5}
+        height={14}
+        rx={1}
+        fill="#fff"
+        style={{ fill: "var(--sb-primary-font-color, #fff)" }}
+      />
     </svg>
   );
 }
@@ -74,8 +118,6 @@ export default function initAudioReaderExtension() {
   registerExtension({
     id: "ext_audioReader",
     init: function* (context: SeedBibleState) {
-      // The play/pause control lives in the reader's top quick toolbar,
-      // beside the bookmark button. It only shows for chapters with audio.
       yield context.tools.registerQuickTool({
         id: "ext_audioReader-play",
         priority: 250,
@@ -85,8 +127,7 @@ export default function initAudioReaderExtension() {
           ns: "ext_audioReader",
         },
         icon: () => (isPlaying.value ? <PauseIcon /> : <PlayIcon />),
-        isVisible: (ctx) =>
-          computed(() => chapterAudioUrl(ctx.readingState) !== null),
+        isVisible: (ctx) => computed(() => isAudioPlayToolVisible(ctx)),
         onSelect: (ctx) => {
           const url = chapterAudioUrl(ctx.readingState);
           if (!url) {

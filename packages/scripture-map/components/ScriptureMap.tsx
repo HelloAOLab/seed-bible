@@ -134,6 +134,13 @@ export interface ScriptureMapConfig {
   }) => preact.JSX.Element;
   ReadingHistoryTimeline: ReadingHistoryTimelineComponent;
   userId: string | undefined;
+  /**
+   * DOM node rendered by the pane's `header` slot (see `PanesManager.openPane`)
+   * that the settings button portals into, so the button keeps this
+   * context's state while its DOM output renders in the pane header instead
+   * of the settings panel.
+   */
+  settingsHeaderSlot: Signal<HTMLElement | null>;
 }
 
 type ScriptureMapProps = {

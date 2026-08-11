@@ -74,7 +74,7 @@ const UserPresenceTooltipContent = ({
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              fontSize: "12px",
+              fontSize: "0.75rem",
               zIndex: "3",
               fontWeight: "600",
             }}

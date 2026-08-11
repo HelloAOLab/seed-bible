@@ -8,6 +8,7 @@ const sendMessage = async ({
   userAccessToken,
   clientId,
   encriptMessage = true,
+  onAuthError,
 }: {
   message: string;
   to_user?: string;
@@ -16,6 +17,7 @@ const sendMessage = async ({
   userAccessToken: string;
   clientId: string;
   encriptMessage?: boolean;
+  onAuthError?: () => void;
 }) => {
   if (!senderId || !message || !userAccessToken || !clientId || !broadcasterId)
     return;
@@ -38,6 +40,13 @@ const sendMessage = async ({
         "Content-Type": "application/json",
       },
     });
+
+    // A 401 means the user access token has expired or been revoked.
+    if (response.status === 401) {
+      console.error("Twitch access token expired");
+      onAuthError?.();
+      return;
+    }
 
     const data = await response.json();
 

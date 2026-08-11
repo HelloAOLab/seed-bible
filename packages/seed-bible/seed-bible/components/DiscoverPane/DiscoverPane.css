@@ -1,0 +1,201 @@
+/* Content column for the discover sub-view. The surrounding shell (docking,
+   background, mobile-fullscreen) is provided by the managed side pane
+   (`SidePane`/`PaneLayout`), so this only lays out the scrolling content. */
+.sb-discover-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px;
+  gap: 8px;
+  color: var(--sb-font-color);
+  padding-bottom: 250px;
+}
+
+/* Back-button + title row shown in the pane header while viewing/editing a
+   playlist (see `DiscoverPaneTitle`). Fills the header's title slot; the title
+   text (or edit input) flexes and truncates so the back button stays visible. */
+.sb-discover-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.sb-discover-title-row .sb-discover-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-discover-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sb-discover-create {
+  padding: 6px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-discover-create:hover {
+  opacity: 0.9;
+}
+
+/*
+ * List/item primitives below back the "discover list" markup pattern (a
+ * `.sb-discover-list` of `.sb-discover-item`s) rendered by this file's own
+ * playlist/cross-reference/study-note/content sections. CreatePlaylistForm
+ * and PlayPlaylistView reuse the same classes for their own item lists.
+ */
+.sb-discover-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-discover-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+}
+
+.sb-discover-item--row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-playlist-item {
+  cursor: pointer;
+}
+
+.sb-discover-item-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-discover-item-edit,
+.sb-discover-item-play,
+.sb-discover-item-share,
+.sb-discover-item-delete {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-discover-item-edit:hover,
+.sb-discover-item-play:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-font-color);
+}
+
+.sb-discover-item-delete:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-discover-item--row .sb-discover-item-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-discover-item-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Leading type icon in a row (e.g. playlist item type). */
+.sb-discover-item-icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+/*
+ * Drag-to-reorder handle + drag-state classes. Only the playlist editor's
+ * Items list and the playback Queue list render these — no other
+ * `.sb-discover-item` consumer (playlists list, cross-references, study
+ * notes, reading plans) does, so this is inert everywhere else.
+ */
+.sb-discover-item-drag-handle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: grab;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  /* Stop the browser's own scroll gesture from stealing a vertical drag. */
+  touch-action: none;
+}
+
+.sb-discover-item-drag-handle:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-font-color);
+}
+
+.sb-discover-item--dragging {
+  opacity: 0.6;
+}
+
+.sb-discover-item-description {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-discover-item-content {
+  font-size: 0.8125rem;
+  margin-top: 4px;
+}
+
+.sb-confirm-delete {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 17.5rem;
+  color: var(--sb-font-color);
+}
+
+.sb-confirm-delete-message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sb-confirm-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

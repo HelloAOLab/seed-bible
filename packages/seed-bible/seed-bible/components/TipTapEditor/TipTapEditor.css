@@ -1,0 +1,44 @@
+/* Formatting toolbar rendered above the editable area (see TipTapEditor). */
+.sb-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+.sb-editor-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sb-editor-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  cursor: pointer;
+}
+
+.sb-editor-toolbar-button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-editor-toolbar-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-editor-toolbar-button--active {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+  color: var(--sb-primary-color);
+}

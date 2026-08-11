@@ -1,9 +1,9 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector";
+import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector/BibleSelector";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   createTestSeedBibleState,
@@ -12,14 +12,20 @@ import {
 import {
   createDefaultManagerResponseMap,
   createResponse,
+  createStreamingResponse,
   makeUrl,
   makeExampleUrl,
   EXAMPLE_API_ENDPOINT,
   makeChapter,
+  makeCompleteTranslation,
   createDefaultSelectorManagerResponseMap,
   aabBooks,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
+import {
+  createInMemoryTranslationStore,
+  type OfflineTranslationStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -29,8 +35,14 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
+      t: (key: string, options?: Record<string, unknown>) => {
+        let text = (options?.defaultValue as string | undefined) ?? key;
+        for (const [name, value] of Object.entries(options ?? {})) {
+          if (name === "defaultValue") continue;
+          text = text.replaceAll(`{{${name}}}`, String(value));
+        }
+        return text;
+      },
     }),
   };
 });
@@ -39,7 +51,7 @@ type SelectorFixture = {
   state: SeedBibleState;
   selectorState: BibleSelectorState;
   bibleDataManager: SeedBibleState["bibleData"];
-  pane: Pane;
+  slot: TabSlot;
   selectChapter: Mock;
   setSearch: Mock;
 };
@@ -60,20 +72,20 @@ async function createSelectorFixture(
       ...options.responses,
     },
   });
-  const pane = state.panes.panes.value[0] as Pane;
-  if (!pane) {
-    throw new Error("Expected an initial pane.");
+  const slot = state.tabsLayout.slots.value[0] as TabSlot;
+  if (!slot) {
+    throw new Error("Expected an initial slot.");
   }
 
   if (options.open !== false) {
-    await state.selector.setOpen(true, pane);
+    await state.selector.setOpen(true, slot);
   }
 
   return {
     state,
     selectorState: state.selector,
     bibleDataManager: state.bibleData,
-    pane,
+    slot,
     selectChapter: vi.spyOn(state.selector, "selectChapter"),
     setSearch: vi.spyOn(state.selector, "setSearch"),
   };
@@ -85,7 +97,7 @@ describe("BibleSelector", () => {
   beforeEach(() => {
     // The mocked Bible API responses are keyed to the free-use endpoint, so
     // opt into it via the URL (the app otherwise defaults to the private one).
-    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
 
     // The data manager persists per-translation endpoints to localStorage;
     // clear it so state does not leak between tests.
@@ -140,6 +152,50 @@ describe("BibleSelector", () => {
     });
 
     expect(container.querySelector(".sb-selector-overlay.open")).not.toBeNull();
+  });
+
+  it("auto-expands the current book and highlights the current chapter on open", async () => {
+    const { selectorState, bibleDataManager, state, slot } =
+      await createSelectorFixture({ open: false });
+
+    await slot.tab!.readingState.selectChapter("EXO", 2);
+    await selectorState.setOpen(true, slot);
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => selectorState.bookData.value?.id === "EXO");
+    await waitFor(() =>
+      Boolean(container.querySelector("#booktab-EXO.sidebar-selected-itm"))
+    );
+    await waitFor(() =>
+      Boolean(container.querySelector("#chapter-btn-2.chapter-btn-current"))
+    );
+
+    expect(selectorState.expandedBookId.value).toBe("EXO");
+    expect(
+      container
+        .querySelector("#booktab-EXO")
+        ?.classList.contains("sidebar-selected-itm")
+    ).toBe(true);
+    expect(
+      container
+        .querySelector("#chapter-btn-2")
+        ?.classList.contains("chapter-btn-current")
+    ).toBe(true);
+    expect(
+      container.querySelector("#chapter-btn-2 .sidebar-chapter-itm.highlight")
+    ).not.toBeNull();
   });
 
   it("sets dir to match selected translation text direction", async () => {
@@ -225,17 +281,23 @@ describe("BibleSelector", () => {
       );
     });
 
+    // Current reading position (GEN) is auto-expanded on open — only click
+    // the book row when chapters are not already visible.
     await waitFor(() => Boolean(container.querySelector("#booktab-GEN")));
 
-    const genesisButton = Array.from(
-      container.querySelectorAll("#booktab-GEN")
-    )[0] as HTMLDivElement | undefined;
+    if (selectorState.bookData.value?.id !== "GEN") {
+      const genesisButton = Array.from(
+        container.querySelectorAll("#booktab-GEN")
+      )[0] as HTMLDivElement | undefined;
 
-    expect(genesisButton).toBeDefined();
+      expect(genesisButton).toBeDefined();
 
-    act(() => {
-      genesisButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+      act(() => {
+        genesisButton?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+    }
 
     await waitFor(() =>
       Array.from(container.querySelectorAll(".chapter-btn")).some(
@@ -387,11 +449,11 @@ describe("BibleSelector", () => {
     };
 
     const state = await createTestSeedBibleState({ responses });
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) {
-      throw new Error("Expected an initial pane.");
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) {
+      throw new Error("Expected an initial slot.");
     }
-    await state.selector.setOpen(true, pane);
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
@@ -438,11 +500,11 @@ describe("BibleSelector", () => {
       await Promise.resolve();
     });
 
-    await waitFor(() => pane.tab?.readingState.bookId.value === "GEN");
-    await waitFor(() => pane.tab?.readingState.chapterNumber.value === 10);
+    await waitFor(() => slot.tab?.readingState.bookId.value === "GEN");
+    await waitFor(() => slot.tab?.readingState.chapterNumber.value === 10);
 
-    expect(pane.tab?.readingState.bookId.value).toBe("GEN");
-    expect(pane.tab?.readingState.chapterNumber.value).toBe(10);
+    expect(slot.tab?.readingState.bookId.value).toBe("GEN");
+    expect(slot.tab?.readingState.chapterNumber.value).toBe(10);
     expect(selectorState.isOpen.value).toBe(false);
   });
 
@@ -465,11 +527,11 @@ describe("BibleSelector", () => {
 
     for (const testCase of cases) {
       const state = await createTestSeedBibleState({ responses });
-      const pane = state.panes.panes.value[0] as Pane;
-      if (!pane) {
-        throw new Error("Expected an initial pane.");
+      const slot = state.tabsLayout.slots.value[0] as TabSlot;
+      if (!slot) {
+        throw new Error("Expected an initial slot.");
       }
-      await state.selector.setOpen(true, pane);
+      await state.selector.setOpen(true, slot);
 
       const { selectorState, bibleDataManager } = {
         selectorState: state.selector,
@@ -521,12 +583,12 @@ describe("BibleSelector", () => {
       });
 
       await waitFor(
-        () => pane.tab?.readingState.bookId.value === testCase.expectedBookId
+        () => slot.tab?.readingState.bookId.value === testCase.expectedBookId
       );
-      await waitFor(() => pane.tab?.readingState.chapterNumber.value === 1);
+      await waitFor(() => slot.tab?.readingState.chapterNumber.value === 1);
 
-      expect(pane.tab?.readingState.bookId.value).toBe(testCase.expectedBookId);
-      expect(pane.tab?.readingState.chapterNumber.value).toBe(1);
+      expect(slot.tab?.readingState.bookId.value).toBe(testCase.expectedBookId);
+      expect(slot.tab?.readingState.chapterNumber.value).toBe(1);
       expect(selectorState.isOpen.value).toBe(false);
 
       render(null, container);
@@ -561,11 +623,11 @@ describe("BibleSelector", () => {
     };
 
     const state = await createTestSeedBibleState({ responses });
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) {
-      throw new Error("Expected an initial pane.");
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) {
+      throw new Error("Expected an initial slot.");
     }
-    await state.selector.setOpen(true, pane);
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
@@ -682,7 +744,7 @@ describe("BibleSelector translation selector", () => {
   beforeEach(() => {
     // The mocked Bible API responses are keyed to the free-use endpoint, so
     // opt into it via the URL (the app otherwise defaults to the private one).
-    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
 
     // The data manager persists per-translation endpoints to localStorage;
     // clear it so state does not leak between tests.
@@ -749,9 +811,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
     expect(labels.some((l) => l?.includes("english"))).toBe(true);
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
@@ -784,7 +850,9 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
     // The English group (matching selected translation's language) should be auto-expanded
     const translationOptions = Array.from(
@@ -858,6 +926,9 @@ describe("BibleSelector translation selector", () => {
       }
       translationSearchInput.value = "international";
       translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
+      translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
     });
@@ -928,6 +999,9 @@ describe("BibleSelector translation selector", () => {
         return;
       }
       translationSearchInput.value = "rvr";
+      translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
       translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
@@ -1000,13 +1074,18 @@ describe("BibleSelector translation selector", () => {
       }
       translationSearchInput.value = "spanish";
       translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
+      translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
     });
 
     await waitFor(() => selectorState.languageQuery.value === "spanish");
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
     expect(labels.some((l) => l?.includes("english"))).toBe(false);
@@ -1074,30 +1153,35 @@ describe("BibleSelector translation selector", () => {
       }
       translationSearchInput.value = "espanol";
       translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
+      translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
     });
 
     await waitFor(() => selectorState.languageQuery.value === "espanol");
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
     expect(labels.some((l) => l?.includes("spanish"))).toBe(true);
     expect(labels.some((l) => l?.includes("english"))).toBe(false);
   });
 
   it("selecting a translation selects the current book/chapter in that translation and closes the selector", async () => {
-    const { selectorState, bibleDataManager, pane, state } =
+    const { selectorState, bibleDataManager, slot, state } =
       await createSelectorFixture();
 
-    await pane.tab!.readingState.selectChapter("EXO", 2);
+    await slot.tab!.readingState.selectChapter("EXO", 2);
 
-    expect(pane.tab?.readingState.translationId.value).toBe("AAB");
+    expect(slot.tab?.readingState.translationId.value).toBe("AAB");
 
-    const initialBookId = pane.tab?.readingState.bookId.value;
+    const initialBookId = slot.tab?.readingState.bookId.value;
     expect(initialBookId).toBe("EXO");
 
-    const initialChapter = pane.tab?.readingState.chapterNumber.value;
+    const initialChapter = slot.tab?.readingState.chapterNumber.value;
     expect(initialChapter).toBe(2);
 
     act(() => {
@@ -1137,14 +1221,14 @@ describe("BibleSelector translation selector", () => {
 
     await waitFor(() => selectorState.selectedTranslationId.value === "BSB");
 
-    await waitFor(() => pane.tab?.readingState.translationId.value === "BSB");
+    await waitFor(() => slot.tab?.readingState.translationId.value === "BSB");
     await waitFor(() => selectorState.isOpen.value === false);
 
     expect(selectorState.selectingTranslation.value).toBe(false);
     expect(selectorState.isOpen.value).toBe(false);
-    expect(pane.tab?.readingState.translationId.value).toBe("BSB");
-    expect(pane.tab?.readingState.bookId.value).toBe(initialBookId);
-    expect(pane.tab?.readingState.chapterNumber.value).toBe(initialChapter);
+    expect(slot.tab?.readingState.translationId.value).toBe("BSB");
+    expect(slot.tab?.readingState.bookId.value).toBe(initialBookId);
+    expect(slot.tab?.readingState.chapterNumber.value).toBe(initialChapter);
   });
 
   it("selecting a translation falls back to the first book and its first available chapter when the current book is unavailable", async () => {
@@ -1193,13 +1277,13 @@ describe("BibleSelector translation selector", () => {
       },
     });
 
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) {
-      throw new Error("Expected an initial pane.");
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) {
+      throw new Error("Expected an initial slot.");
     }
 
-    await pane.tab!.readingState.selectChapter("EXO", 2);
-    await state.selector.setOpen(true, pane);
+    await slot.tab!.readingState.selectChapter("EXO", 2);
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
@@ -1242,16 +1326,16 @@ describe("BibleSelector translation selector", () => {
     });
 
     await waitFor(() => selectorState.selectedTranslationId.value === "ALT");
-    await waitFor(() => pane.tab?.readingState.translationId.value === "ALT");
-    await waitFor(() => pane.tab?.readingState.bookId.value === "MAT");
-    await waitFor(() => pane.tab?.readingState.chapterNumber.value === 3);
+    await waitFor(() => slot.tab?.readingState.translationId.value === "ALT");
+    await waitFor(() => slot.tab?.readingState.bookId.value === "MAT");
+    await waitFor(() => slot.tab?.readingState.chapterNumber.value === 3);
     await waitFor(() => selectorState.isOpen.value === false);
 
     expect(selectorState.selectingTranslation.value).toBe(false);
     expect(selectorState.isOpen.value).toBe(false);
-    expect(pane.tab?.readingState.translationId.value).toBe("ALT");
-    expect(pane.tab?.readingState.bookId.value).toBe("MAT");
-    expect(pane.tab?.readingState.chapterNumber.value).toBe(3);
+    expect(slot.tab?.readingState.translationId.value).toBe("ALT");
+    expect(slot.tab?.readingState.bookId.value).toBe("MAT");
+    expect(slot.tab?.readingState.chapterNumber.value).toBe(3);
   });
 
   it("displays only complete translations when in complete mode", async () => {
@@ -1284,9 +1368,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
 
     // English group is visible because it contains at least one complete translation
@@ -1325,9 +1413,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
 
     expect(labels.some((l) => l?.includes("english"))).toBe(true);
@@ -1364,9 +1456,13 @@ describe("BibleSelector translation selector", () => {
       selectorState.selectingTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector(".language-list")));
+    await waitFor(() =>
+      Boolean(container.querySelector(".sb-translation-list"))
+    );
 
-    const items = Array.from(container.querySelectorAll(".item"));
+    const items = Array.from(
+      container.querySelectorAll(".sb-translation-list-language")
+    );
     const labels = items.map((el) => el.textContent?.trim().toLowerCase());
 
     // English is a popular language and should be visible
@@ -1375,7 +1471,7 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("klingon"))).toBe(false);
   });
 
-  it("displays percentage complete indicator circles with conic-gradient in all and popular modes but not in complete mode", async () => {
+  it("shows a canon-coverage ring in all and popular modes but not in complete mode", async () => {
     const { selectorState, bibleDataManager, state } =
       await createSelectorFixture();
 
@@ -1392,7 +1488,10 @@ describe("BibleSelector translation selector", () => {
       );
     });
 
-    // "all" mode: incomplete non-selected translation shows circle with conic-gradient
+    const ring = () =>
+      container.querySelector<HTMLElement>(".sb-translation-completion");
+
+    // "all" mode: a partial translation shows how much of the canon it covers.
     act(() => {
       setAvailableTranslations(
         [makeTranslation("INC", "English", 27)],
@@ -1403,28 +1502,29 @@ describe("BibleSelector translation selector", () => {
       selectorState.languageQuery.value = "inc";
     });
 
-    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+    await waitFor(() => Boolean(ring()));
 
-    const circleAll = container.querySelector(
-      ".emptyCircle"
-    ) as HTMLElement | null;
-    expect(circleAll).not.toBeNull();
-    expect(circleAll?.style.background).toContain("conic-gradient");
+    expect(ring()!.classList.contains("sb-translation-completion--ring")).toBe(
+      true
+    );
+    expect(ring()!.style.getPropertyValue("--sb-completion-percent")).toBe(
+      "41"
+    );
+    expect(ring()!.getAttribute("aria-label")).toBe("27 of 66 books");
 
-    // "popular" mode: same incomplete translation (english is a popular language)
+    // "popular" mode: same, since English is a popular language.
     act(() => {
       selectorState.showAllLanguages.value = "popular";
     });
 
-    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+    await waitFor(() => Boolean(ring()));
 
-    const circlePopular = container.querySelector(
-      ".emptyCircle"
-    ) as HTMLElement | null;
-    expect(circlePopular).not.toBeNull();
-    expect(circlePopular?.style.background).toContain("conic-gradient");
+    expect(ring()!.classList.contains("sb-translation-completion--ring")).toBe(
+      true
+    );
 
-    // "complete" mode: only complete translations shown; their circles have no conic-gradient
+    // "complete" mode: everything shown is a full canon, so the ring would say
+    // nothing — a silent blank holds the space instead.
     act(() => {
       setAvailableTranslations(
         [makeTranslation("BSB", "English", 66)],
@@ -1434,13 +1534,12 @@ describe("BibleSelector translation selector", () => {
       selectorState.languageQuery.value = "bsb";
     });
 
-    await waitFor(() => Boolean(container.querySelector(".emptyCircle")));
+    await waitFor(() => Boolean(ring()));
 
-    const circleComplete = container.querySelector(
-      ".emptyCircle"
-    ) as HTMLElement | null;
-    expect(circleComplete).not.toBeNull();
-    expect(circleComplete?.style.background).not.toContain("conic-gradient");
+    expect(ring()!.classList.contains("sb-translation-completion--ring")).toBe(
+      false
+    );
+    expect(ring()!.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("entering a custom translation URL and clicking Import loads the translations", async () => {
@@ -1457,9 +1556,9 @@ describe("BibleSelector translation selector", () => {
     };
 
     const state = await createTestSeedBibleState({ responses });
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) throw new Error("Expected an initial pane.");
-    await state.selector.setOpen(true, pane);
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) throw new Error("Expected an initial slot.");
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
@@ -1494,6 +1593,7 @@ describe("BibleSelector translation selector", () => {
 
     act(() => {
       urlInput.value = EXAMPLE_API_ENDPOINT;
+      urlInput.dispatchEvent(new Event("input", { bubbles: true }));
       urlInput.dispatchEvent(new Event("change", { bubbles: true }));
     });
 
@@ -1551,7 +1651,7 @@ describe("BibleSelector sharing translations", () => {
   let setClipboard: Mock;
 
   beforeEach(() => {
-    jsdom.reconfigure({ url: "https://ao.bot/somepage" });
+    jsdom.reconfigure({ url: "https://seedbible.org/somepage" });
 
     // Clear persisted per-translation endpoints so state does not leak in
     // from earlier tests (which would mark default-endpoint translations as
@@ -1625,7 +1725,7 @@ describe("BibleSelector sharing translations", () => {
     return { selectorState, bibleDataManager };
   }
 
-  it("clicking share on a default-endpoint translation copies a URL with just the translation ID", async () => {
+  it("clicking share on a default-endpoint translation copies a URL naming it in the path", async () => {
     await openTranslationModalWithGroup("AAB", "English");
 
     const shareButton = container.querySelector(
@@ -1640,8 +1740,33 @@ describe("BibleSelector sharing translations", () => {
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
-    expect(copiedUrl.hostname).toBe("ao.bot");
-    expect(copiedUrl.searchParams.get("translation")).toBe("AAB");
+    expect(copiedUrl.hostname).toBe("seedbible.org");
+    expect(copiedUrl.pathname).toBe("/en/AAB/genesis/1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
+  });
+
+  it("shares the chosen translation, not the one the sharer is reading", async () => {
+    // The regression itself. Every other case here starts from a page whose
+    // path names no translation, where setting `?translation=` happened to
+    // work — so only this one actually pits the query against the path, which
+    // is what the old link did and lost: the recipient opened NIV.
+    jsdom.reconfigure({ url: "https://seedbible.org/en/NIV/exodus/2" });
+
+    await openTranslationModalWithGroup("AAB", "English");
+
+    act(() => {
+      container
+        .querySelector(".share-btn")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => setClipboard.mock.calls.length > 0);
+
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
+    // AAB, the translation whose row was clicked — and the reader's position
+    // is carried over rather than reset.
+    expect(copiedUrl.pathname).toBe("/en/AAB/exodus/2");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
   });
 
   it("clicking share on a non-default-endpoint translation copies a URL with the full books.json URL", async () => {
@@ -1660,10 +1785,202 @@ describe("BibleSelector sharing translations", () => {
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
     const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
-    expect(copiedUrl.hostname).toBe("ao.bot");
-    const translationParam = copiedUrl.searchParams.get("translation")!;
-    expect(translationParam).toContain("example.test");
-    expect(translationParam).toContain("CST");
-    expect(translationParam).toContain("books.json");
+    expect(copiedUrl.hostname).toBe("seedbible.org");
+    // The whole books.json URL is one path segment, so its slashes stay
+    // encoded rather than splitting the path into extra segments.
+    const [, language, translationSegment, book, chapter] =
+      copiedUrl.pathname.split("/");
+    expect(language).toBe("en");
+    expect(decodeURIComponent(translationSegment!)).toContain("example.test");
+    expect(decodeURIComponent(translationSegment!)).toContain("CST");
+    expect(decodeURIComponent(translationSegment!)).toContain("books.json");
+    expect(book).toBe("genesis");
+    expect(chapter).toBe("1");
+    expect(copiedUrl.searchParams.has("translation")).toBe(false);
+  });
+});
+
+describe("BibleSelector offline downloads", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    jsdom.reconfigure({ url: "https://seedbible.org/?useFreeBibleAPI" });
+    localStorage.clear();
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  /**
+   * Opens the translation list with the AAB group expanded, backed by an
+   * in-memory download store (jsdom has no IndexedDB, so without one the
+   * download controls correctly render nothing).
+   */
+  async function openTranslationList(
+    options: { offlineStore?: OfflineTranslationStore | null } = {}
+  ) {
+    const store =
+      options.offlineStore === undefined
+        ? createInMemoryTranslationStore()
+        : options.offlineStore;
+
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultSelectorManagerResponseMap(),
+        [makeUrl("/api/AAB/complete.json")]: createStreamingResponse(
+          makeCompleteTranslation(aabBooks, 2, { sha256: "hash-one" })
+        ),
+      },
+      offlineStore: store,
+    });
+
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    await state.selector.setOpen(true, slot);
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={state.selector}
+          bibleDataManager={state.bibleData}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      state.selector.showAllLanguages.value = "all";
+      state.selector.selectingTranslation.value = true;
+      state.selector.languageQuery.value = "aab";
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translation-option"))
+    );
+
+    return { state, store };
+  }
+
+  function offlineButton(modifier?: string): HTMLButtonElement | null {
+    return container.querySelector(
+      modifier ? `.sb-offline-btn.${modifier}` : ".sb-offline-btn"
+    );
+  }
+
+  it("renders nothing when the device can't store downloads", async () => {
+    await openTranslationList({ offlineStore: null });
+
+    expect(container.querySelector(".translation-option")).not.toBeNull();
+    expect(offlineButton()).toBeNull();
+  });
+
+  it("downloads the translation when the download button is clicked", async () => {
+    const { state, store } = await openTranslationList();
+
+    const button = offlineButton();
+    expect(button?.title).toBe("Download for offline use");
+
+    act(() => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => state.bibleData.offline.isDownloaded("AAB"));
+
+    expect(await store!.getChapter("AAB", "GEN", 1)).not.toBeNull();
+    // The button now offers to remove the download instead.
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+    expect(offlineButton("downloaded")?.title).toContain("Available offline");
+  });
+
+  it("asks for confirmation before removing a download, and removes it on confirm", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+
+    act(() => {
+      offlineButton("downloaded")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translationDeleteModal"))
+    );
+    // Still downloaded — the confirmation alone must not delete anything.
+    expect(state.bibleData.offline.isDownloaded("AAB")).toBe(true);
+
+    act(() => {
+      container
+        .querySelector(".sb-offline-delete-confirm")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => !state.bibleData.offline.isDownloaded("AAB"));
+    expect(container.querySelector(".translationDeleteModal")).toBeNull();
+  });
+
+  it("keeps the download when the confirmation is cancelled", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+
+    act(() => {
+      offlineButton("downloaded")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() =>
+      Boolean(container.querySelector(".translationDeleteModal"))
+    );
+
+    act(() => {
+      container
+        .querySelector(".sb-offline-delete-cancel")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => !container.querySelector(".translationDeleteModal"));
+    expect(state.bibleData.offline.isDownloaded("AAB")).toBe(true);
+  });
+
+  it("offers an update button once the API reports a newer version", async () => {
+    const { state } = await openTranslationList();
+
+    act(() => {
+      offlineButton()?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    await waitFor(() => Boolean(offlineButton("downloaded")));
+    expect(offlineButton("update")).toBeNull();
+
+    // The API now publishes a different hash for the same translation.
+    act(() => {
+      state.bibleData.availableTranslations.value =
+        state.bibleData.availableTranslations.value.map((translation) =>
+          translation.id === "AAB"
+            ? { ...translation, sha256: "hash-two" }
+            : translation
+        );
+    });
+
+    await waitFor(() => Boolean(offlineButton("update")));
+    expect(offlineButton("update")?.title).toContain("newer version");
   });
 });

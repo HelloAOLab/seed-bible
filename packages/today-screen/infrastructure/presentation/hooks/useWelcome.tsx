@@ -21,8 +21,6 @@ type UseWelcome = () => {
   startButtonText: string;
   startButtonIcon: string;
   handleStartButtonClick: () => void;
-  footerTitle: string;
-  footerContent: string;
   seedBibleIconStyle: React.CSSProperties;
 };
 
@@ -40,6 +38,7 @@ export const useWelcome: UseWelcome = () => {
     openBookSelector,
     MaterialIcon,
     addTab,
+    closeToday,
     theme,
   } = useTodayContext();
 
@@ -79,26 +78,24 @@ export const useWelcome: UseWelcome = () => {
     };
   }, [lastTranslationId.value]);
 
-  const { selectorText, startButtonText, footerTitle, footerContent } =
-    useMemo(() => {
-      return {
-        selectorText: translate("open-bible"),
-        startButtonText: translate("read-first-chapter"),
-        footerTitle: translate("everything-begins-small"),
-        footerContent: translate("no-rush"),
-      };
-    }, [translate]);
+  const { selectorText, startButtonText } = useMemo(() => {
+    return {
+      selectorText: translate("open-bible"),
+      startButtonText: translate("read-first-chapter"),
+    };
+  }, [translate]);
 
   const handleStartButtonClick = useCallback(() => {
     const defaultTranslation = getDefaultTranslation();
     const translationId = lastTranslationId.value ?? defaultTranslation ?? "";
     addTab("GEN", 1, translationId);
-  }, [addTab, getDefaultTranslation, lastTranslationId.value]);
+    closeToday();
+  }, [addTab, closeToday, getDefaultTranslation, lastTranslationId.value]);
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {
-      width: "20px",
-      height: "20px",
+      width: "1.25rem",
+      height: "1.25rem",
       backgroundColor: theme.variables.readerFontColor,
     };
   }, [theme]);
@@ -113,8 +110,6 @@ export const useWelcome: UseWelcome = () => {
     startButtonText,
     startButtonIcon: STRAT_BUTTON_ICON,
     handleStartButtonClick,
-    footerTitle,
-    footerContent,
     seedBibleIconStyle,
   };
 };

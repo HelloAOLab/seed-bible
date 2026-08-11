@@ -1,20 +1,23 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon } from "@packages/seed-bible/seed-bible/components";
+import {
+  Skeleton,
+  SkeletonContainer,
+} from "@packages/seed-bible/seed-bible/components/Skeleton/Skeleton";
 import { Today } from "../presentation/components/Today";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import { TodayReadingHistoryService } from "@packages/today-screen/application/services/TodayReadingHistoryService";
-import { FakeSubscribedUsersProvider } from "../adapters/fake/FakeSubscribedUsersProvider";
-import type {
-  FilteredReading,
-  UserLastReading,
-} from "@packages/today-screen/domain/models/readingHistory";
+import { SubscribedUsersProvider } from "../adapters/subscriptions/SubscribedUsersProvider";
+import type { FilteredReading } from "@packages/today-screen/domain/models/readingHistory";
+import { createReadingHistoryState } from "./createReadingHistoryState";
 import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/seedBible";
 import { getReadingHistoryEvents } from "@packages/seed-bible/seed-bible/managers";
 import { getDefaultTranslationForLanguage } from "@packages/seed-bible/seed-bible/managers";
 import type { VerseSearchResult } from "@packages/today-screen/domain/models/search";
 import { ReadingHistoryConfigProvider } from "../config/readingHistory/readingHistoryConfigProvider";
 import { getHighlightedWelcomeVerse } from "../config/translations/welcomeVerseMap";
+import { hasReadingUrlPosition } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 
 export interface TodayScreenAPI {
   open: () => void;
@@ -47,31 +50,21 @@ export const bootstrapExtension = () => {
         CapitalizeFirstLetter,
         readingHistoryService,
         useHorizontalScroll,
+        ColorParser,
       } = dependenciesMap[
         seedBibleUtilsId
       ] as DependenciesMap[typeof seedBibleUtilsId];
 
-      const fakeSubscribedUsersProvider = new FakeSubscribedUsersProvider(
-        sessionProvider
-      );
+      const subscribedUsersProvider = new SubscribedUsersProvider();
+      // sessionProvider
 
-      const fakeGetReadingHistoryEvents = (
+      const localGetReadingHistoryEvents = (
         recordName: string,
         startTime: number,
         endTime: number
       ) => {
-        if (
-          context.login.userId.value &&
-          recordName === context.login.userId.value
-        ) {
-          return getReadingHistoryEvents(
-            context.os,
-            recordName,
-            startTime,
-            endTime
-          );
-        }
-        return fakeSubscribedUsersProvider.getReadingHistoryEvents(
+        return getReadingHistoryEvents(
+          context.os,
           recordName,
           startTime,
           endTime
@@ -80,12 +73,31 @@ export const bootstrapExtension = () => {
 
       const todayReadingHistoryService = new TodayReadingHistoryService({
         readingEventsProviderPort: {
-          getReadingHistoryEvents: fakeGetReadingHistoryEvents,
+          getReadingHistoryEvents: localGetReadingHistoryEvents,
         },
-        usersIdProviderPort: fakeSubscribedUsersProvider,
+        usersIdProviderPort: {
+          getUsersIds: () => {
+            if (context.login.userId.value) {
+              return [
+                context.login.userId.value,
+                ...subscribedUsersProvider.getUsersIds(),
+              ];
+            }
+            return [];
+          },
+        },
       });
 
-      const userLastReading = signal<UserLastReading>(undefined);
+      // Three-state reading-history gate (loading | empty | ready). Derived
+      // from `userId` (known synchronously at startup) so a returning user
+      // never flashes the Welcome page while their history loads.
+      const { readingHistory, dispose: disposeReadingHistory } =
+        createReadingHistoryState({
+          userId: context.login.userId,
+          refetchTrigger: context.app.currentReadingState,
+          getUserLastReading: (userId, range) =>
+            todayReadingHistoryService.getUserLastReading(userId, range),
+        });
 
       /**
        * Fetches the community reading for one exact period. The presentation
@@ -168,33 +180,6 @@ export const bootstrapExtension = () => {
           .trim();
       };
 
-      const cleanupUserLastReading = effect(() => {
-        const userId = context.login.userId.value;
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        context.app.currentReadingState.value;
-
-        if (!userId) {
-          userLastReading.value = undefined;
-          return;
-        }
-
-        const now = Math.floor(Date.now() / 1000);
-        const oneYearAgo = now - 365 * 24 * 60 * 60;
-
-        void todayReadingHistoryService
-          .getUserLastReading(userId, { from: oneYearAgo, to: now })
-          .then((result) => {
-            userLastReading.value = result;
-          })
-          .catch((err) => {
-            console.error(
-              "[Debug] [today-screen] getUserLastReading failed for userId",
-              userId,
-              err
-            );
-          });
-      });
-
       const lastTranslationBooks = signal<{
         books: Array<{
           id: string;
@@ -234,22 +219,46 @@ export const bootstrapExtension = () => {
 
       const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
 
+      const TODAY_PANE_ID = "today-screen-pane";
+
       /**
-       * Opens the Today screen in the currently selected pane. Extracted so it
-       * can be reused both by the toolbar tool and exposed as the extension's
-       * public API (`getExtensionExports("today-screen").open`).
+       * Renders the Today screen as a fullscreen pane. This is the "apply the
+       * open state to the UI" half of the flow: opening is driven through the
+       * `?today=open` URL param (see `isTodayOpen` below), and the reconciling
+       * effect calls this when the state turns on.
        */
-      const openToday = () => {
+      const renderTodayPane = () => {
         const component = () => {
           const { t, language } = useI18n();
           return (
             <Today
               config={{
+                isBookmarksListOpen: context.bookmarks.isFilterActive.value,
+                showBookmarksList: () => {
+                  context.sidebar.isSidebarCollapsed.value = false;
+                  context.bookmarks.isFilterActive.value = true;
+                },
+                isMobile: context.app.isMobile,
+                ColorParser,
                 MaterialIcon,
+                Skeleton,
+                SkeletonContainer,
                 language,
                 username: context.login.profile.value?.name,
                 userId: context.login.userId.value ?? undefined,
-                userLastReading,
+                userProfile: context.login.userId.value
+                  ? {
+                      name: context.login.profile.value?.name ?? "Guest",
+                      pictureUrl: context.login.profile.value?.pictureUrl,
+                      color: sessionProvider.getUserColorById(
+                        context.login.userId.value
+                      ),
+                      icon: sessionProvider.getUserIconById(
+                        context.login.userId.value
+                      ),
+                    }
+                  : undefined,
+                readingHistory,
                 getCommunityReading,
                 translate: (key, options) =>
                   t(key, {
@@ -273,15 +282,19 @@ export const bootstrapExtension = () => {
                   // decoration (same pattern as the reader's search panel).
                   if (verse !== undefined) {
                     tab.readingState.decorateVerses(bookId, chapter, verse, {
-                      className: "sb-verse-decoration-search-result",
+                      className: "sb-verse-decoration-diminish",
+                      containerClassName: "sb-chapter-decoration-diminish",
                       removeAfterMs: 3000,
                     });
                   }
-                  const paneId = context.panes.selectedPaneId.value;
-                  if (paneId) {
-                    context.panes.openInPane(paneId, { tabId: tab.id });
+                  const slotId = context.tabsLayout.selectedSlotId.value;
+                  if (slotId) {
+                    context.tabsLayout.openTabInSlot(slotId, tab.id);
                   }
                   context.app.selectTab(tab.id);
+                },
+                closeToday: () => {
+                  isTodayOpen.value = false;
                 },
                 getDefaultTranslation: () => {
                   const readingState = context.app.currentReadingState.value;
@@ -296,21 +309,21 @@ export const bootstrapExtension = () => {
                 getVerseText,
                 lastTranslationId,
                 openBookSelector: () => {
-                  const pane =
-                    context.panes.panes.value.find(
-                      (p) => p.id === context.panes.selectedPaneId.value
+                  const slot =
+                    context.tabsLayout.slots.value.find(
+                      (s) => s.id === context.tabsLayout.selectedSlotId.value
                     ) ?? null;
-                  if (pane) {
-                    context.selector.setOpen(true, pane);
+                  if (slot) {
+                    context.selector.setOpen(true, slot);
                   }
                 },
                 translationBooks: lastTranslationBooks,
                 translationBooksMap,
-                subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
-                subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
+                subscribedUsersProfileProvider: subscribedUsersProvider,
+                subscribedUsersIdsProvider: subscribedUsersProvider,
                 ReadingHistoryTimeline,
                 getDayRangeSeconds,
-                getReadingHistoryEvents: fakeGetReadingHistoryEvents,
+                getReadingHistoryEvents: localGetReadingHistoryEvents,
                 GetPastDateInfo,
                 CapitalizeFirstLetter,
                 theme: context.theme.currentTheme.value,
@@ -335,25 +348,93 @@ export const bootstrapExtension = () => {
           );
         };
 
-        const paneId = context.panes.selectedPaneId.value;
-        if (paneId) {
-          context.tabs.selectTab("");
-          context.panes.openInPane(paneId, { component });
-        }
+        // Custom components can no longer take over a tab slot — Today opens
+        // as a fullscreen pane instead.
+        context.panes.openPane({
+          id: TODAY_PANE_ID,
+          placement: "fullscreen",
+          title: () => {
+            const { t } = useI18n();
+            return t("today", {
+              ns: "today-screen",
+              defaultValue: "Today",
+            });
+          },
+          component,
+        });
       };
 
-      // yield context.tools.registerToolbarTool({
-      //   id: "today",
-      //   priority: 0,
-      //   title: "Today",
-      //   icon: Icon,
-      //   onSelect: openToday,
-      // });
+      // Today opens automatically on a cold load (no explicit `?today=`
+      // param) as long as the URL isn't already pointing somewhere specific —
+      // a book/chapter deep link (the canonical
+      // `/{lang}/{translationId}/{book}/{chapter}` path), or a shared-session
+      // invite (`?sessionId=`). An explicit `?today=` param always wins
+      // either way, matching the deep-linkable modals in
+      // SeedBibleStateManager.
+      //
+      // This must read `initialUrl` (the URL as first loaded), not the live
+      // `currentUrl`: TabsManager echoes the reader's current book/chapter
+      // back into the URL as soon as it initializes (so links are always
+      // shareable), which happens well before extensions finish loading. By
+      // the time this code runs, a cold load with no reading position would
+      // already show the default book/chapter in the live URL's path —
+      // indistinguishable from a real deep link unless we look at the URL
+      // from before that echo.
+      const initialUrl = context.navigation.initialUrl;
+      const initialUrlParams = initialUrl.searchParams;
+      const hasCompetingDeepLink =
+        hasReadingUrlPosition(initialUrl, context.navigation.basePath) ||
+        initialUrlParams.has("sessionId");
+      const requestedToday = initialUrlParams.get("today");
+      const isTodayOpen = signal(
+        requestedToday !== null
+          ? requestedToday === "open"
+          : !hasCompetingDeepLink
+      );
+
+      const cleanupTodayUrlSync = context.navigation.syncSignalsToUrl({
+        today: {
+          get value() {
+            return isTodayOpen.value ? "open" : null;
+          },
+          set value(newValue) {
+            isTodayOpen.value = newValue === "open";
+          },
+        },
+      });
+
+      const cleanupRenderTodayPane = effect(() => {
+        const shouldBeOpen = isTodayOpen.value;
+        const paneIsOpen = context.panes.panes
+          .peek()
+          .some((pane) => pane.id === TODAY_PANE_ID);
+        if (shouldBeOpen && !paneIsOpen) {
+          renderTodayPane();
+        } else if (!shouldBeOpen && paneIsOpen) {
+          context.panes.closePane(TODAY_PANE_ID);
+        }
+      });
+
+      const cleanupTodayPaneClosed = effect(() => {
+        const paneIsOpen = context.panes.panes.value.some(
+          (pane) => pane.id === TODAY_PANE_ID
+        );
+        if (!paneIsOpen && isTodayOpen.peek()) {
+          isTodayOpen.value = false;
+        }
+      });
+
+      const openToday = () => {
+        isTodayOpen.value = true;
+      };
 
       yield () => {
-        cleanupUserLastReading();
+        disposeReadingHistory();
         cleanupTranslationBooks();
         cleanupTranslationId();
+        cleanupTodayUrlSync();
+        cleanupRenderTodayPane();
+        cleanupTodayPaneClosed();
       };
 
       // Public API: lets the host app (or other extensions) open the Today

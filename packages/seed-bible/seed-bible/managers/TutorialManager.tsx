@@ -1,11 +1,14 @@
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
-import type { OnboardingManager } from "../managers/OnboardingManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { PanesManager } from "../managers/PanesManager";
+import { createSidebar } from "../managers/SidebarManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
+
+type SidebarManager = ReturnType<typeof createSidebar>;
 
 const TUTORIAL_SEEN_KEY = "sb-tutorial-seen";
 const TUTORIAL_OPTED_OUT_KEY = "sb-tutorial-opted-out";
@@ -337,15 +340,18 @@ export interface TutorialManager {
 }
 
 /**
- * Drives the guided coachmark tour. Auto-starts once for new users after the
- * welcome/install onboarding has finished, and can be replayed from Settings.
- * Completion is recorded on the user's profile (backend) plus a local cache.
+ * Drives the guided coachmark tour. Offers itself once for new users once the
+ * reader is open to a chapter and visible (no fullscreen pane covering it),
+ * and can be replayed from Settings. Completion is recorded on the user's
+ * profile (backend) plus a local cache.
  */
 export function createTutorialManager(
   login: LoginManager,
-  onboarding: OnboardingManager,
+  readerVisible: ReadonlySignal<boolean>,
   selector: BibleSelectorState,
   isMobile: ReadonlySignal<boolean>,
+  panes: PanesManager,
+  sidebar: SidebarManager,
   joinedViaSessionLink = false
 ): TutorialManager {
   const running = signal<boolean>(false);
@@ -518,6 +524,17 @@ export function createTutorialManager(
   };
 
   const start = () => {
+    // Close whatever overlapping UI is up first — coach marks target the
+    // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
+    // open sidebar panel left up would hide the very elements being
+    // highlighted. Mirrors the teardown `BibleReaderToolbar` does before
+    // showing reader UI over the Today screen.
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    sidebar.closeSidebar();
+    panes.closeAll();
+
     // Pick the step set for the current viewport before showing the tour.
     mode.value = isMobile.value ? "onboarding-mobile" : "onboarding-desktop";
     activeSteps.value = isMobile.value
@@ -612,12 +629,12 @@ export function createTutorialManager(
     }
   };
 
-  // Offer the tour once for new users, but only after the welcome/install
-  // onboarding is out of the way, and (when logged in) after the profile has
-  // loaded — otherwise a returning user could see the offer flash before their
-  // recorded completion arrives. Rather than launching the tour unannounced we
-  // surface the offer card; accepting it starts the tour. One-shot via
-  // `autoStartChecked`.
+  // Offer the tour once for new users, but only once the reader is open to a
+  // chapter and visible — no fullscreen pane (e.g. Today) covering it — and
+  // (when logged in) after the profile has loaded, otherwise a returning user
+  // could see the offer flash before their recorded completion arrives.
+  // Rather than launching the tour unannounced we surface the offer card;
+  // accepting it starts the tour. One-shot via `autoStartChecked`.
   let autoStartChecked = false;
   effect(() => {
     if (autoStartChecked || running.value) {
@@ -629,7 +646,7 @@ export function createTutorialManager(
     if (joinedViaSessionLink) {
       return;
     }
-    if (onboarding.step.value !== "done") {
+    if (!readerVisible.value) {
       return;
     }
     if (login.userId.value && login.profile.value === null) {

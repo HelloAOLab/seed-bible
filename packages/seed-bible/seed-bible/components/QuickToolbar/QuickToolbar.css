@@ -1,0 +1,83 @@
+/* Quick toolbar: compact row of extension-registered chapter actions
+   shown at the top of the reader, beside the bookmark button. */
+.sb-quick-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Desktop: sits in the header's action cluster, just left of the bookmark
+   button. Flow layout (not absolute) so it pushes the title instead of
+   overlapping it. */
+.sb-quick-toolbar-reader {
+  flex-shrink: 0;
+}
+
+.sb-quick-toolbar-mobile-header {
+  flex-shrink: 0;
+}
+
+.sb-quick-toolbar-item {
+  position: relative;
+  display: inline-flex;
+}
+
+.sb-quick-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-quick-toolbar-button:hover:not(:disabled) {
+  transform: scale(1.08);
+  color: var(--sb-font-color);
+}
+
+.sb-quick-toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Chrome icon-buttons render their icons as <svg> (inline or icon components)
+   with fixed px width/height attributes, which ignore the UI Size knob.
+   (Material Symbols glyphs are handled by the base rule near the top of this
+   file; SVGs are sized by width/height, not font-size, so they need explicit
+   rem sizing here.) CSS width/height overrides the SVG's px attributes; the rem
+   values equal each icon's current px ÷ 16, so these are no-ops at size M. */
+.sb-quick-toolbar-button svg {
+  display: block;
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
+.sb-quick-toolbar-current-playlist {
+  > .sb-quick-toolbar-button {
+    width: fit-content;
+    height: fit-content;
+  }
+}
+
+.sb-now-playing-icon {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.35rem;
+}
+
+.sb-now-playing-icon-title {
+  margin: 0;
+}
