@@ -2,6 +2,7 @@ import {
   BiblePieces,
   BibleStates,
   type Piece,
+  type PieceDataMap,
 } from "../../domain/models/canvas";
 import {
   HighlightEvents,
@@ -405,13 +406,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
     intensity,
     pacing = "Regular",
   }: {
-    piece: Piece<
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-    >;
+    piece: Piece<keyof PieceDataMap>;
     intensity: LabelTranslucencyMode;
     pacing?: HighlightPacing;
   }): void {

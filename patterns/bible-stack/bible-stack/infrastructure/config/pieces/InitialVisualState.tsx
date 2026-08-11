@@ -10,7 +10,9 @@ export const INITIAL_VISUAL_STATE_MAP: {
     hoveredFormOpacity: 1,
     unhoveredFormOpacity: 0.7,
   },
-  [BiblePieces.StackBook]: {},
+  [BiblePieces.StackBook]: {
+    increasedIntensityStrokeColor: "#ffffff",
+  },
   [BiblePieces.StackSectionBook]: {
     hoveredFormOpacity: 1,
     unhoveredFormOpacity: 0.7,

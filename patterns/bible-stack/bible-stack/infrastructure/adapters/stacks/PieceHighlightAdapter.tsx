@@ -228,32 +228,39 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
 
         break;
       }
-      case BiblePieces.StackBook: {
-        const bookBot = this.#bookMapperPort.toInfrastructure(piece);
-        if (!bookBot) return;
-        bot = bookBot;
-        const scales = GetBotScales(bookBot);
-        fromValue = {
-          formOpacity: bookBot.tags.formOpacity,
-          scaleX: scales.x,
-          scaleY: scales.y,
-        };
-        toValue = {
-          formOpacity: this.#visualStatePort.getStateProperty({
-            piece,
-            property: "hoveredFormOpacity",
-          }),
-          scaleX: this.#visualStatePort.getStateProperty({
-            piece,
-            property: "hoveredScales",
-          }).x,
-          scaleY: this.#visualStatePort.getStateProperty({
-            piece,
-            property: "hoveredScales",
-          }).y,
-        };
+      case BiblePieces.StackBook:
+        {
+          const bookBot = this.#bookMapperPort.toInfrastructure(piece);
+          if (!bookBot) return;
+          bot = bookBot;
+          const scales = GetBotScales(bookBot);
+          fromValue = {
+            formOpacity: bookBot.tags.formOpacity,
+            scaleX: scales.x,
+            scaleY: scales.y,
+          };
+          toValue = {
+            formOpacity: this.#visualStatePort.getStateProperty({
+              piece,
+              property: "hoveredFormOpacity",
+            }),
+            scaleX: this.#visualStatePort.getStateProperty({
+              piece,
+              property: "hoveredScales",
+            }).x,
+            scaleY: this.#visualStatePort.getStateProperty({
+              piece,
+              property: "hoveredScales",
+            }).y,
+          };
+
+          const strokeColor = this.#visualStatePort.getStateProperty({
+            piece: piece,
+            property: "increasedIntensityStrokeColor",
+          });
+          SetStrictTag(bookBot, "strokeColor", strokeColor);
+        }
         break;
-      }
     }
 
     if (!bot) return;
@@ -304,6 +311,13 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
         property: "hoveredFormOpacity",
       });
     }
+
+    const strokeColor = this.#visualStatePort.getStateProperty({
+      piece: piece,
+      property: "increasedIntensityStrokeColor",
+    });
+    SetStrictTag(bookBot, "strokeColor", strokeColor);
+
     await AnimateStrictTag(bookBot, {
       fromValue,
       toValue,
@@ -434,32 +448,34 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
 
         break;
       }
-      case BiblePieces.StackBook: {
-        const bookBot = this.#bookMapperPort.toInfrastructure(piece);
-        if (!bookBot) return;
-        bot = bookBot;
-        const scales = GetBotScales(bookBot);
-        fromValue = {
-          formOpacity: bookBot.tags.formOpacity,
-          scaleX: scales.x,
-          scaleY: scales.y,
-        };
-        toValue = {
-          formOpacity: this.#visualStatePort.getStateProperty({
-            piece,
-            property: "unhoveredFormOpacity",
-          }),
-          scaleX: this.#visualStatePort.getStateProperty({
-            piece,
-            property: "explodedScales",
-          }).x,
-          scaleY: this.#visualStatePort.getStateProperty({
-            piece,
-            property: "explodedScales",
-          }).y,
-        };
+      case BiblePieces.StackBook:
+        {
+          const bookBot = this.#bookMapperPort.toInfrastructure(piece);
+          if (!bookBot) return;
+          bot = bookBot;
+          const scales = GetBotScales(bookBot);
+          fromValue = {
+            formOpacity: bookBot.tags.formOpacity,
+            scaleX: scales.x,
+            scaleY: scales.y,
+          };
+          toValue = {
+            formOpacity: this.#visualStatePort.getStateProperty({
+              piece,
+              property: "unhoveredFormOpacity",
+            }),
+            scaleX: this.#visualStatePort.getStateProperty({
+              piece,
+              property: "explodedScales",
+            }).x,
+            scaleY: this.#visualStatePort.getStateProperty({
+              piece,
+              property: "explodedScales",
+            }).y,
+          };
+          SetStrictTag(bookBot, "strokeColor", "clear");
+        }
         break;
-      }
     }
 
     if (!bot) return;

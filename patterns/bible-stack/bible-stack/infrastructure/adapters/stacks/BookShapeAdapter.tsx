@@ -195,7 +195,7 @@ export class BookShapeAdapter {
         }
         if (
           data.selectionState !== SelectionStates.Selected &&
-          !bot.masks.isHighlighted
+          data.highlightState !== "Highlighted"
         ) {
           this.#setStrictTag(bot, "strokeColor", "clear");
         }

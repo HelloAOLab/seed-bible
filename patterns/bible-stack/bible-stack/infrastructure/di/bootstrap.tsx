@@ -506,6 +506,7 @@ export const bootstrapExtension = () => {
     loggerPort: loggerAdapter,
     layoutConfigProvider: layoutConfigProvider,
     bookInfoMapper: bookInfoMapper,
+    piecesConfigProvider,
   });
 
   // Stack updaters are wired bottom-up (book -> section -> testament -> bible)
@@ -1315,6 +1316,10 @@ export const bootstrapExtension = () => {
   bibleStackEventManager.subscribe("OnStackPiecePulledOut", () =>
     audioAdapter.playSound("StackPiecePulledOut")
   );
+
+  bibleStackEventManager.subscribe("OnTestamentBeginSelect", () => {
+    audioAdapter.playSound("TestamentOpen");
+  });
 
   bibleStackEventManager.subscribe(
     "OnBibleCreationBegin",

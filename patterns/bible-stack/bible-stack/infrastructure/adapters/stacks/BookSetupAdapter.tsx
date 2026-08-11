@@ -14,9 +14,9 @@ import type { LayoutConfigurations } from "../../config/bookSetup/layouts";
 import type { HexString } from "../../../domain/models/commonTypes";
 import {
   GetChildrenLevelColors,
-  GetDarkerColor,
   HexToRgb,
 } from "../../../domain/functions/colors";
+import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -28,6 +28,7 @@ interface AdapterParams {
   layoutConfigProvider: LayoutConfigProvider;
   bookSetupConfigProvider: BookSetupConfigProvider;
   loggerPort: LoggerPort;
+  piecesConfigProvider: PiecesConfigProvider;
 }
 
 /**
@@ -50,6 +51,7 @@ export class BookSetupAdapter {
   #stackConfigProvider: AdapterParams["layoutConfigProvider"];
   #bookSetupConfigProvider: AdapterParams["bookSetupConfigProvider"];
   #loggerPort: AdapterParams["loggerPort"];
+  #piecesConfigProvider: AdapterParams["piecesConfigProvider"];
 
   constructor({
     getDimension,
@@ -61,6 +63,7 @@ export class BookSetupAdapter {
     layoutConfigProvider: stackConfigProvider,
     bookSetupConfigProvider,
     loggerPort,
+    piecesConfigProvider,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#bookMapper = bookMapper;
@@ -71,6 +74,7 @@ export class BookSetupAdapter {
     this.#stackConfigProvider = stackConfigProvider;
     this.#bookSetupConfigProvider = bookSetupConfigProvider;
     this.#loggerPort = loggerPort;
+    this.#piecesConfigProvider = piecesConfigProvider;
   }
 
   /**
@@ -237,7 +241,6 @@ export class BookSetupAdapter {
       bookData.pieceInfo.customLabelColor ??
       levelsColors[Math.round(levelsColors.length * 0.4) - 1] ??
       levelColor;
-    const increasedIntensityStrokeColor = GetDarkerColor(levelColor);
 
     const desiredPositionZ =
       sectionDesiredPositionZ +
@@ -271,7 +274,9 @@ export class BookSetupAdapter {
         explodedViewCustomScale: explodedViewCustomScale
           ? { x: explodedViewCustomScale.x, y: explodedViewCustomScale.y }
           : undefined,
-        increasedIntensityStrokeColor,
+        increasedIntensityStrokeColor:
+          this.#piecesConfigProvider.getInitialVisualState("StackBook")
+            .increasedIntensityStrokeColor ?? "#ffffff",
       },
     });
 
