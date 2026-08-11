@@ -615,7 +615,7 @@ const annotationUpdatedTimeFormatterCache = new Map<
   Intl.DateTimeFormat
 >();
 
-function getAnnotationUpdatedTimeFormatter(
+export function getAnnotationUpdatedTimeFormatter(
   language: string
 ): Intl.DateTimeFormat {
   let formatter = annotationUpdatedTimeFormatterCache.get(language);
@@ -898,9 +898,26 @@ function AnnotationsSection(props: {
     chapterNumber
   ).value;
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
+  const pending = annotations.sync.pendingCount.value;
 
   return (
     <DiscoverSection title={title}>
+      {pending > 0 ? (
+        <p className="sb-annotations-pending-sync">
+          {t(
+            pending === 1
+              ? "annotations-pending-sync"
+              : "annotations-pending-sync-plural",
+            {
+              defaultValue:
+                pending === 1
+                  ? "{{count}} change waiting to sync"
+                  : "{{count}} changes waiting to sync",
+              count: pending,
+            }
+          )}
+        </p>
+      ) : null}
       {groups.length === 0 ? (
         <DiscoverEmpty
           text={t("discover-annotations-empty", {
