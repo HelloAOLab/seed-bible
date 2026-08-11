@@ -1,4 +1,7 @@
-import { MaterialIcon } from "@packages/seed-bible/seed-bible/components";
+import {
+  MaterialIcon,
+  PortalComponent,
+} from "@packages/seed-bible/seed-bible/components";
 import {
   registerExtension,
   type SeedBibleState,
@@ -30,21 +33,27 @@ export const bootstrapExtension = () => {
 
       context.tools.registerBelowReaderTool({
         onSelect: () => {
-          // The arrangement and per-book static info are bundled inside the
-          // pattern itself (they're large and overflowed the iframe URL). Only
-          // the book names — which are language-dependent — travel through the
-          // pattern's configBot tags.
           const dimension = "stack";
+          const inst = uuid();
           context.panes.openPane({
-            type: "detached",
-            gridPortal: dimension,
-            pattern: bibleStackPattern,
-            inst: uuid(),
-            query: {
-              dimension,
-              bookNames: JSON.stringify(Object.fromEntries(bookNames.value)),
-              language: context.i18n.language.value,
-            },
+            placement: "floating",
+            title: "bible-stack",
+            icon: Icon,
+            component: () => (
+              <PortalComponent
+                portal={dimension}
+                portalType="grid"
+                inst={inst}
+                pattern={bibleStackPattern}
+                query={{
+                  dimension,
+                  bookNames: JSON.stringify(
+                    Object.fromEntries(bookNames.value)
+                  ),
+                  language: context.i18n.language.value,
+                }}
+              />
+            ),
           });
         },
         id: "bible-stack",
