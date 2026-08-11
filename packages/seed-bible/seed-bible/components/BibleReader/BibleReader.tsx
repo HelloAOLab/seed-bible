@@ -3,12 +3,20 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import type { JSX } from "preact";
-import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
+import { Fragment, type JSX, type RefObject } from "preact";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useState,
+} from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
+  adjacentInlineRect,
   buildRibbonPath,
   collectLineRects,
+  type RibbonRect,
   RIBBON_RADIUS_EM,
   RIBBON_PAD_X_EM,
 } from "../../app/highlightRibbon";
@@ -31,7 +39,13 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
-import { SelfAvatarVisual, getSelfDisplayName } from "../Tabs/Tabs";
+import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import {
+  SelfAvatarVisual,
+  getSelfDisplayName,
+  openBookmarkCategoryModal,
+} from "../Tabs/Tabs";
+import { VerseReferenceText } from "../../app/verseReferenceLink";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -43,8 +57,8 @@ interface ReaderBookmarkButtonProps {
 /**
  * Toggle for the chapter currently shown in the reader. Sits in the top-right
  * of the chapter content area: filled + orange when the chapter is saved,
- * outlined when not. The per-tab-row bookmark button was removed in favor of
- * this single control because only one chapter is ever in view at a time.
+ * outlined when not. Opens the category picker to save into an existing or
+ * new folder; when already bookmarked, removes the chapter-level bookmark.
  */
 function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
   const { state, translationId, bookId, chapterNumber } = props;
@@ -61,12 +75,22 @@ function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
         isBookmarked ? " sb-bible-reader-bookmark-button-active" : ""
       }`}
       onClick={() => {
-        if (!canBookmark) return;
-        void state.bookmarks.toggleBookmarkAtLocation(
+        if (!canBookmark || !translationId || !bookId || !chapterNumber) {
+          return;
+        }
+        if (isBookmarked) {
+          void state.bookmarks.removeBookmarkForLocation(
+            translationId,
+            bookId,
+            chapterNumber
+          );
+          return;
+        }
+        openBookmarkCategoryModal(state, {
           translationId,
           bookId,
-          chapterNumber
-        );
+          chapterNumber,
+        });
       }}
       disabled={!canBookmark}
       aria-pressed={isBookmarked}
@@ -155,6 +179,16 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
+}
+
+/**
+ * A highlight resolved for one verse, plus where it came from. `broadcast` is
+ * true for a highlight carried by a decoration — a session peer's, or an
+ * extension's — as opposed to one the reader saved themselves.
+ */
+interface ResolvedHighlight {
+  highlight: ChapterHighlight;
+  broadcast: boolean;
 }
 
 function hasContentTargeting(decoration: VerseDecoration): boolean {
@@ -503,18 +537,71 @@ function renderChapterContent(
     return null;
   }
 
-  const getVerseHighlight = (verseNumber: number): ChapterHighlight | null => {
+  const getVerseDecorations = (verseNumber: number) => {
+    return decorations.filter(
+      (decoration) =>
+        (!decoration.translationId ||
+          decoration.translationId === chapterData.translation.id) &&
+        decoration.bookId === chapterData.book.id &&
+        decoration.chapterNumber === chapterData.chapter.number &&
+        decoration.verses.includes(verseNumber)
+    );
+  };
+
+  // Decorations asking to be drawn as highlights (`decoration.highlight`),
+  // flattened to one entry per verse. Content-targeted decorations are skipped:
+  // the ribbon layer works per verse-run and can't paint a text fragment.
+  // Later decorations win, matching how their CSS is layered below.
+  const decorationHighlights = new Map<number, ChapterHighlight>();
+  for (const decoration of decorations) {
+    if (!decoration.highlight || hasContentTargeting(decoration)) {
+      continue;
+    }
+    if (
+      (decoration.translationId &&
+        decoration.translationId !== chapterData.translation.id) ||
+      decoration.bookId !== chapterData.book.id ||
+      decoration.chapterNumber !== chapterData.chapter.number
+    ) {
+      continue;
+    }
+    for (const verseNumber of decoration.verses) {
+      decorationHighlights.set(verseNumber, {
+        ...decoration.highlight,
+        verse: verseNumber,
+      });
+    }
+  }
+
+  // `showHighlights` hides the reader's *saved* highlights. Decoration
+  // highlights are a live signal from a session peer or an extension, so they
+  // stay visible either way — as they did when they were plain CSS.
+  //
+  // `broadcast` distinguishes the two for rendering: a decoration highlight is
+  // drawn as an outline, a saved one as a solid ribbon. A broadcast covers the
+  // reader's own highlight rather than replacing it, so the outline is what
+  // says "this isn't yours, and yours is still underneath".
+  const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    const decorated = decorationHighlights.get(verseNumber);
+    if (decorated) {
+      return { highlight: decorated, broadcast: true };
+    }
+
+    if (!scriptureElements.showHighlights) {
+      return null;
+    }
+
     for (const highlight of highlights) {
       if (typeof highlight.verse === "number") {
         if (highlight.verse === verseNumber) {
-          return highlight;
+          return { highlight, broadcast: false };
         }
         continue;
       }
 
       const [start, end] = highlight.verse;
       if (verseNumber >= start && verseNumber <= end) {
-        return highlight;
+        return { highlight, broadcast: false };
       }
     }
 
@@ -525,27 +612,43 @@ function renderChapterContent(
   // ChapterContent), so a highlighted run's wrapper paints no background itself.
   // It only carries the readable font color and a `fill` (a CSS-var reference for
   // preset colors, or the custom hex) that the layer reads back off the DOM.
-  const getHighlightPresentation = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  const getHighlightPresentation = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return {
         className: "",
         style: undefined as JSX.CSSProperties | undefined,
         fill: null as string | null,
+        broadcast: false,
       };
     }
 
-    if (highlight.customColor && highlight.customFontColor) {
+    const { highlight, broadcast } = resolved;
+
+    // A custom colour stands on its own — the font colour is optional and the
+    // text inherits when it's absent. Requiring both meant a highlight with
+    // only a custom colour silently rendered as its preset instead.
+    if (highlight.customColor) {
       return {
         className: "sb-highlight",
-        style: { color: highlight.customFontColor } as JSX.CSSProperties,
+        style: highlight.customFontColor
+          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
+          : undefined,
         fill: highlight.customColor,
+        broadcast,
       };
     }
 
+    // The `transparent` fallback matters: a colorId with no matching theme
+    // variable would otherwise make `fill` invalid at computed-value time, and
+    // `fill` inherits down to its initial value of black — a solid black bar
+    // behind the verse. Colour ids don't all come from our own picker (an
+    // extension can pass one through from a chat message), so an unrecognised
+    // one has to fail invisible.
     return {
       className: `sb-highlight sb-highlight-${highlight.colorId}`,
       style: undefined as JSX.CSSProperties | undefined,
-      fill: `var(--sb-highlight-${highlight.colorId}-color)`,
+      fill: `var(--sb-highlight-${highlight.colorId}-color, transparent)`,
+      broadcast,
     };
   };
 
@@ -573,25 +676,18 @@ function renderChapterContent(
     );
   };
 
-  const getVerseDecorations = (verseNumber: number) => {
-    return decorations.filter(
-      (decoration) =>
-        (!decoration.translationId ||
-          decoration.translationId === chapterData.translation.id) &&
-        decoration.bookId === chapterData.book.id &&
-        decoration.chapterNumber === chapterData.chapter.number &&
-        decoration.verses.includes(verseNumber)
-    );
-  };
-
-  const getHighlightColorKey = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  // Also keys on `broadcast`, so a broadcast highlight never merges into one run
+  // with a saved highlight of the same colour — they draw differently.
+  const getHighlightColorKey = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return null;
     }
-    if (highlight.customColor && highlight.customFontColor) {
-      return `custom:${highlight.customColor}:${highlight.customFontColor}`;
+    const { highlight, broadcast } = resolved;
+    const prefix = broadcast ? "broadcast:" : "";
+    if (highlight.customColor) {
+      return `${prefix}custom:${highlight.customColor}:${highlight.customFontColor ?? ""}`;
     }
-    return highlight.colorId;
+    return `${prefix}${highlight.colorId}`;
   };
 
   // Renders a single verse's `<span class="sb-verse">`. The highlight background
@@ -770,6 +866,21 @@ function renderChapterContent(
   const entries = chapterData.chapter.content;
   const nodes: (JSX.Element | null)[] = [];
 
+  // Verse text carries no leading/trailing spaces of its own — with numbers on,
+  // the number's own margins are what keep one verse off the back of the
+  // previous one. Hide the numbers and adjacent verses collide
+  // ("...had your fill.Do not work..."), so emit a real space between them.
+  // It sits between the verse spans rather than inside one, so highlight
+  // ribbons and verse selection still stop at a verse's own glyphs, and it
+  // collapses away at a line break like any other space.
+  const needsVerseSpacing = !scriptureElements.showVerseNumbers;
+  let previousWasVerse = false;
+
+  // Keyed so the separator is a first-class sibling of the keyed verses it sits
+  // between, rather than an unkeyed string mixed in among them. A fragment adds
+  // nothing to the DOM — what renders is the bare text node either way.
+  const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
+
   for (let i = 0; i < entries.length; ) {
     const entry = entries[i];
 
@@ -793,12 +904,14 @@ function renderChapterContent(
           {heading}
         </h3>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (entry.type === "line_break") {
       nodes.push(<div key={`break-${i}`} className="sb-line-break" />);
+      previousWasVerse = false;
       i += 1;
       continue;
     }
@@ -818,15 +931,19 @@ function renderChapterContent(
           )}
         </p>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (isVerseEntry(entry)) {
-      const highlight = scriptureElements.showHighlights
-        ? getVerseHighlight(entry.number)
-        : null;
+      const highlight = getVerseHighlight(entry.number);
       const colorKey = getHighlightColorKey(highlight);
+
+      if (needsVerseSpacing && previousWasVerse) {
+        nodes.push(verseSeparator(`space-${i}`));
+      }
+      previousWasVerse = true;
 
       if (colorKey === null) {
         nodes.push(renderVerseNode(entry, i));
@@ -852,11 +969,7 @@ function renderChapterContent(
           if (!isVerseEntry(next)) {
             break;
           }
-          const nextKey = getHighlightColorKey(
-            scriptureElements.showHighlights
-              ? getVerseHighlight(next.number)
-              : null
-          );
+          const nextKey = getHighlightColorKey(getVerseHighlight(next.number));
           const nextIsPoetry = splitVerseIntoSegments(next.content).some(
             (s) => s.type === "poetry"
           );
@@ -884,10 +997,19 @@ function renderChapterContent(
           style={presentation.style}
           data-highlight-fill={presentation.fill ?? undefined}
           data-highlight-key={runKey}
+          data-highlight-broadcast={presentation.broadcast ? "true" : undefined}
         >
-          {runIndices.map((idx) =>
-            renderVerseNode(entries[idx] as ChapterVerse, idx)
-          )}
+          {runIndices.flatMap((idx, runIndex) => {
+            const verseNode = renderVerseNode(
+              entries[idx] as ChapterVerse,
+              idx
+            );
+            // Same separator as between top-level verses; inside a run it falls
+            // within the ribbon, which is correct — the whole run is one fill.
+            return needsVerseSpacing && runIndex > 0
+              ? [verseSeparator(`space-${idx}`), verseNode]
+              : [verseNode];
+          })}
         </span>
       );
       i = j;
@@ -921,8 +1043,11 @@ export interface BibleReaderMobileChromeProps {
   onOpenMobileSettings: () => void;
   onCloseMobileSettings: () => void;
   onOpenAllSettings: () => void;
-  swipeViewportRefCallback: (el: HTMLDivElement | null) => void;
-  swipeTrackRefCallback: (el: HTMLDivElement | null) => void;
+  // Plain refs: these only need `.current` filled in, which Preact does for a
+  // ref object on its own.
+  swipeViewportRef: RefObject<HTMLDivElement>;
+  swipeTrackRef: RefObject<HTMLDivElement>;
+  // A callback because it feeds component state, not just a ref.
   currentScrollerRefCallback: (el: HTMLDivElement | null) => void;
 }
 
@@ -949,6 +1074,7 @@ interface Ribbon {
   key: string;
   d: string;
   fill: string;
+  broadcast: boolean;
   first: number;
   last: number;
   enter: boolean;
@@ -956,9 +1082,49 @@ interface Ribbon {
 }
 const RIBBON_FADE_MS = 250;
 
+/**
+ * How long the chapter the reader has left stays on screen, dimmed, before the
+ * placeholder takes over.
+ *
+ * Swapping to the placeholder the instant you navigate reads as a flicker on a
+ * fast connection, where the new text lands in well under this. Dimming costs
+ * nothing and moves nothing, so it carries the common case; the placeholder is
+ * only for waits long enough that dimmed text starts to look stuck.
+ *
+ * Does not apply on a cold start — with no chapter on screen there is nothing
+ * to dim, so the placeholder shows straight away.
+ */
+export const CHAPTER_SKELETON_DELAY_MS = 500;
+
+/**
+ * Bar widths for the chapter loading placeholder, one array per paragraph.
+ *
+ * Hand-picked rather than random so the placeholder is identical on every
+ * render — a fresh set each time would shimmer *and* reflow — and so it reads
+ * as ragged prose rather than a block.
+ *
+ * Deliberately more paragraphs than the tallest reading pane needs. The two
+ * failure modes are not symmetric: falling short leaves visible dead space
+ * below the bars, while overshooting spills below the fold where nobody sees
+ * it (the pane scrolls internally, and scroll position resets on every chapter
+ * change). Tuning the fill is editing this one array — no measurement, and no
+ * reflow on a placeholder that remounts on every navigation.
+ */
+const CHAPTER_SKELETON_PARAGRAPHS = [
+  ["97%", "92%", "99%", "88%", "71%"],
+  ["94%", "99%", "90%", "96%", "58%"],
+  ["99%", "89%", "95%", "93%", "77%"],
+  ["91%", "98%", "87%", "96%", "64%"],
+  ["96%", "93%", "99%", "85%", "80%"],
+  ["98%", "90%", "94%", "97%", "52%"],
+  ["93%", "99%", "91%", "88%", "74%"],
+  ["95%", "96%", "98%", "89%", "68%"],
+] as const;
+
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
+  initialChapterLoadSettled: ReadonlySignal<boolean>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
@@ -971,12 +1137,18 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  /**
+   * True while this is the chapter the reader has *left* — shown dimmed until
+   * the chapter they navigated to arrives.
+   */
+  isStale?: boolean;
 }
 
 function ChapterContent(props: ChapterContentProps) {
   const {
     chapterData,
     chapterDataPromise,
+    initialChapterLoadSettled,
     selectedVerses,
     highlights,
     decorations,
@@ -1048,55 +1220,48 @@ function ChapterContent(props: ChapterContentProps) {
     const rtl = style.direction === "rtl";
 
     // Phase 1: measure every highlighted run's per-line geometry. `leadPad` /
-    // `trailPad` default to padX and may be dropped to 0 below where two colors
-    // abut horizontally.
+    // `trailPad` default to padX and may be dropped to 0 below where the run's
+    // edge sits alongside another verse's text on the same line.
     const runs = Array.from(
       content.querySelectorAll<HTMLElement>("[data-highlight-fill]")
     )
       .map((el, index) => ({
+        el,
         key: el.getAttribute("data-highlight-key") || `i${index}`,
         fill: el.getAttribute("data-highlight-fill") ?? "",
+        broadcast: el.getAttribute("data-highlight-broadcast") === "true",
         lines: collectLineRects(el, box.left, box.top),
         leadPad: padX,
         trailPad: padX,
       }))
       .filter((run) => run.fill !== "" && run.lines.length > 0);
 
-    // Phase 2: where two different-colored runs sit side by side on the same
-    // visual line (e.g. "...garden, ³but about..."), their facing pads would eat
-    // the small gap the verse-number margin leaves and the colors would nearly
-    // touch (and, when they overlap, the rounded ends read as points). Drop the
-    // pad on just those two facing edges — the earlier run's trailing edge (where
-    // it ends) and the later run's leading edge (where the next starts) — so that
-    // margin reads as a clean gutter. In RTL the earlier run sits to the right of
-    // the later one, so the gap is measured on the mirrored sides. Only
-    // consecutive runs that actually abut (a sub-em gap, not an unhighlighted
-    // verse between them) are trimmed.
-    const abutMax = fontSize; // ~1em: covers the verse-number margin, far under a verse's width
-    for (let k = 1; k < runs.length; k++) {
-      const prev = runs[k - 1]!;
-      const cur = runs[k]!;
-      if (prev.fill === cur.fill) continue;
-      const prevLast = prev.lines[prev.lines.length - 1]!;
-      const curFirst = cur.lines[0]!;
-      const sharesLine =
-        curFirst.top < prevLast.bottom - 2 &&
-        prevLast.top < curFirst.bottom - 2;
-      // Reading-order gap between where `prev` ends and `cur` begins: in LTR that
-      // is prev's right edge to cur's left edge; in RTL it mirrors.
-      const gap = rtl
-        ? prevLast.left - curFirst.right
-        : curFirst.left - prevLast.right;
-      if (sharesLine && gap >= 0 && gap < abutMax) {
-        prev.trailPad = 0;
-        cur.leadPad = 0;
-      }
+    // Phase 2: where a run begins or ends mid-line — with another verse's text
+    // right beside it on the same visual line — its horizontal pad would reach
+    // over into that text. This happens whenever a highlighted verse starts (or
+    // ends) partway along a line, whether the neighbour is a plain unhighlighted
+    // verse ("...had your fill. ²⁷Do not work...") or a differently-colored
+    // highlight abutting on the same line. Drop the pad on just that facing edge
+    // so the ribbon stops at its own glyphs and leaves the verse-number margin as
+    // a clean gutter. Every edge that faces a line break or the page margin keeps
+    // its pad. `adjacentInlineRect` reports the neighbouring text on each side;
+    // lead/trail map to the correct physical edge for RTL inside buildRibbonPath.
+    const sharesLine = (r: RibbonRect, line: RibbonRect) =>
+      r.top < line.bottom - 2 && r.bottom > line.top + 2;
+    for (const run of runs) {
+      const first = run.lines[0]!;
+      const last = run.lines[run.lines.length - 1]!;
+      const before = adjacentInlineRect(run.el, "before", box.left, box.top);
+      const after = adjacentInlineRect(run.el, "after", box.left, box.top);
+      if (before && sharesLine(before, first)) run.leadPad = 0;
+      if (after && sharesLine(after, last)) run.trailPad = 0;
     }
 
     const next: Array<{
       key: string;
       d: string;
       fill: string;
+      broadcast: boolean;
       first: number;
       last: number;
     }> = [];
@@ -1116,6 +1281,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: `${chapterId}:${run.key}`,
         d,
         fill: run.fill,
+        broadcast: run.broadcast,
         first,
         last,
       });
@@ -1160,6 +1326,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: r.key,
         d: r.d,
         fill: r.fill,
+        broadcast: r.broadcast,
         first: r.first,
         last: r.last,
         enter,
@@ -1219,13 +1386,31 @@ function ChapterContent(props: ChapterContentProps) {
   }, []);
 
   if (chapterData.value === null) {
-    throw chapterDataPromise;
+    if (!initialChapterLoadSettled.value) {
+      throw chapterDataPromise;
+    }
+    // The load finished and produced nothing. Rendering the error branch above
+    // is the caller's job; throwing the (now-resolved) promise again would just
+    // suspend and resume forever.
+    return null;
   }
+
+  const containerClasses = decorations.value
+    .filter(
+      (d) =>
+        d.containerClassName &&
+        d.bookId === chapterData.value?.book.id &&
+        d.chapterNumber === chapterData.value?.chapter.number
+    )
+    .map((d) => d.containerClassName)
+    .join(" ");
 
   return (
     <div
       ref={contentRef}
-      className="sb-chapter-content"
+      className={`sb-chapter-content${
+        props.isStale ? " sb-chapter-content-stale" : ""
+      } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
@@ -1235,14 +1420,19 @@ function ChapterContent(props: ChapterContentProps) {
         {ribbons.map((ribbon) => (
           <path
             key={ribbon.key}
-            className={
-              ribbon.enter
-                ? "sb-highlight-ribbon sb-highlight-ribbon-enter"
-                : "sb-highlight-ribbon"
-            }
+            className={[
+              "sb-highlight-ribbon",
+              ribbon.enter ? "sb-highlight-ribbon-enter" : "",
+              ribbon.broadcast ? "sb-highlight-ribbon-broadcast" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             d={ribbon.d}
             style={{
               fill: ribbon.fill,
+              // Same colour on the stroke; the class decides how much of the
+              // fill shows through.
+              stroke: ribbon.broadcast ? ribbon.fill : undefined,
               opacity: ribbon.exiting ? 0 : undefined,
             }}
           />
@@ -1290,6 +1480,7 @@ export function BibleReader(props: BibleReaderProps) {
     highlights,
     decorations,
     loading,
+    isChapterContentStale,
     error,
     selectVerse,
     clearSelectedVerses,
@@ -1297,7 +1488,7 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  if (!chapterData.value && import.meta.env.SSR) {
+  if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
   }
 
@@ -1305,6 +1496,18 @@ export function BibleReader(props: BibleReaderProps) {
     () =>
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
+  );
+  // The requested book wasn't found in this translation's book list — a
+  // genuinely unrecognized book/name, or one absent from this specific
+  // translation. `loadInitialData` deliberately stops rather than silently
+  // substituting a different book's content once loading settles.
+  const bookNotFound = computed(
+    () =>
+      !loading.value &&
+      !error.value &&
+      translationBooks.value !== null &&
+      bookId.value !== null &&
+      currentBook.value === null
   );
   const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
@@ -1320,8 +1523,35 @@ export function BibleReader(props: BibleReaderProps) {
   // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
   const readerFontSizeClass = `sb-font-size-${(
-    state?.config?.config.value.fontSize ?? "M"
+    state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
+
+  // Hard-gated off under SSR, which is what keeps both the dimming and the
+  // placeholder out of the served HTML. Rendering the placeholder server-side
+  // would strip the scripture out of the document — for a Bible reader that is
+  // an SEO regression, not a cosmetic one. The reader suspends on
+  // `chapterDataPromise` there instead, so by render time there is either
+  // content or a settled failure.
+  const isContentStale = !import.meta.env.SSR && isChapterContentStale.value;
+  // Held back by `CHAPTER_SKELETON_DELAY_MS` so a fast navigation shows only
+  // dimmed text, never a flash of placeholder. Skipped when there is no chapter
+  // on screen to dim — a cold start would otherwise sit blank for the delay.
+  const [isWaitLong, setIsWaitLong] = useState(false);
+  useEffect(() => {
+    if (!isContentStale) {
+      setIsWaitLong(false);
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setIsWaitLong(true),
+      CHAPTER_SKELETON_DELAY_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [isContentStale]);
+
+  const showChapterSkeleton =
+    isContentStale && (chapterData.value === null || isWaitLong);
+  const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
@@ -1425,6 +1655,43 @@ export function BibleReader(props: BibleReaderProps) {
     </h2>
   );
 
+  /**
+   * Placeholder shown in place of the verses while the chapter the reader has
+   * navigated to is still downloading. Without it, a fast skim shows the *old*
+   * chapter's text under the new chapter's title, which reads as though the
+   * navigation silently failed.
+   */
+  const renderChapterSkeleton = () => (
+    <SkeletonContainer
+      label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
+      className="sb-chapter-content sb-chapter-skeleton"
+    >
+      <Skeleton shape="block" width="42%" />
+      {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
+        <div className="sb-chapter-skeleton-paragraph" key={paragraph}>
+          {widths.map((width, line) => (
+            <Skeleton shape="line" key={line} width={width} />
+          ))}
+        </div>
+      ))}
+    </SkeletonContainer>
+  );
+
+  // Keep the failure state on screen while a retry is in flight — `retryLoad()`
+  // clears `error` as it starts, so without this the panel would flash back to
+  // the (still empty) chapter body before the new request settles.
+  const [retrying, setRetrying] = useState(false);
+  const retryChapterLoad = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await readingState.retryLoad();
+    } finally {
+      setRetrying(false);
+    }
+  };
+  const showLoadError = (!!error.value && !loading.value) || retrying;
+
   const renderMainContent = () => (
     <>
       {isMobile &&
@@ -1433,36 +1700,117 @@ export function BibleReader(props: BibleReaderProps) {
           chapterNumber.value ?? ""
         )}
 
-      {error.value && !loading.value && (
-        <p className="sb-reader-error">{error.value}</p>
-      )}
-
-      {!error.value && (
-        <Suspense
-          fallback={
-            <p>
-              {t("no-chapter-content-found", {
-                defaultValue: "No chapter content found.",
+      {bookNotFound.value && (
+        <div className="sb-reader-not-found">
+          <span
+            className="material-symbols-outlined sb-reader-not-found-icon"
+            aria-hidden="true"
+          >
+            search_off
+          </span>
+          <p className="sb-reader-not-found-title">
+            {t("book-not-found-title", { defaultValue: "Book not found" })}
+          </p>
+          <p className="sb-reader-not-found-body">
+            {t("book-not-found-message", {
+              defaultValue:
+                "We couldn't find that book in {{translationName}}.",
+              translationName:
+                translation.value?.name ?? translationId.value ?? "",
+            })}
+          </p>
+          {translationBooks.value?.books[0] && (
+            <button
+              type="button"
+              className="sb-reader-not-found-action"
+              onClick={() => {
+                const firstBook = translationBooks.value!.books[0]!;
+                void readingState.selectChapter(
+                  firstBook.id,
+                  firstBook.firstChapterNumber ?? 1
+                );
+              }}
+            >
+              {t("book-not-found-action", {
+                defaultValue: "Go to {{bookName}} {{chapterNumber}}",
+                bookName: translationBooks.value.books[0].name,
+                chapterNumber:
+                  translationBooks.value.books[0].firstChapterNumber ?? 1,
               })}
-            </p>
-          }
-        >
-          <ChapterContent
-            chapterData={chapterData}
-            chapterDataPromise={readingState.chapterDataPromise}
-            selectedVerses={selectedVerses}
-            selectVersesFromTextSelection={selectVersesFromTextSelection}
-            justConvertedSelectionRef={justConvertedSelectionRef}
-            highlights={highlights}
-            decorations={decorations}
-            selectVerse={selectVerse}
-            selectFootnote={selectFootnote}
-            scriptureElements={scriptureElements}
-          />
-        </Suspense>
+            </button>
+          )}
+        </div>
       )}
 
-      {!availableTranslations.value && !error.value && (
+      {showLoadError && (
+        <div className="sb-reader-error" role="alert">
+          <span
+            className="material-symbols-outlined sb-reader-error-icon"
+            aria-hidden="true"
+          >
+            cloud_off
+          </span>
+          <h2 className="sb-reader-error-title">
+            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
+          </h2>
+          <p className="sb-reader-error-message">
+            {t("chapter-unavailable-description", {
+              defaultValue:
+                "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-reader-error-retry"
+            onClick={() => void retryChapterLoad()}
+            disabled={retrying}
+            aria-busy={retrying}
+          >
+            {retrying && (
+              <span
+                className="material-symbols-outlined sb-reader-error-retry-spinner"
+                aria-hidden="true"
+              >
+                progress_activity
+              </span>
+            )}
+            {t("reload", { defaultValue: "Reload" })}
+          </button>
+        </div>
+      )}
+
+      {!showLoadError &&
+        !bookNotFound.value &&
+        (showChapterSkeleton ? (
+          renderChapterSkeleton()
+        ) : (
+          <Suspense
+            fallback={
+              <p>
+                {t("no-chapter-content-found", {
+                  defaultValue: "No chapter content found.",
+                })}
+              </p>
+            }
+          >
+            <ChapterContent
+              isStale={dimStaleChapter}
+              chapterData={chapterData}
+              chapterDataPromise={readingState.chapterDataPromise}
+              initialChapterLoadSettled={readingState.initialChapterLoadSettled}
+              selectedVerses={selectedVerses}
+              selectVersesFromTextSelection={selectVersesFromTextSelection}
+              justConvertedSelectionRef={justConvertedSelectionRef}
+              highlights={highlights}
+              decorations={decorations}
+              selectVerse={selectVerse}
+              selectFootnote={selectFootnote}
+              scriptureElements={scriptureElements}
+            />
+          </Suspense>
+        ))}
+
+      {!availableTranslations.value && !showLoadError && (
         <p>
           {t("no-translations-available", {
             defaultValue: "No translations available.",
@@ -1470,7 +1818,7 @@ export function BibleReader(props: BibleReaderProps) {
         </p>
       )}
 
-      {!error.value && translationLicenseNotice.value.length > 0 && (
+      {!showLoadError && translationLicenseNotice.value.length > 0 && (
         <>
           <p className="sb-translation-license-notice">
             {translationLicenseNotice.value}
@@ -1579,11 +1927,11 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
 
           <div
-            ref={mobileChrome?.swipeViewportRefCallback}
+            ref={mobileChrome?.swipeViewportRef}
             className="sb-reader-swipe-viewport"
           >
             <div
-              ref={mobileChrome?.swipeTrackRefCallback}
+              ref={mobileChrome?.swipeTrackRef}
               className="sb-reader-swipe-track"
             >
               <div
@@ -1717,7 +2065,13 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
 
             <div className="sb-footnote-modal-content">
-              {selectedFootnote.value.note.text}
+              <VerseReferenceText
+                text={selectedFootnote.value.note.text}
+                onReferenceClick={(ref) => {
+                  selectFootnote(null);
+                  void state?.app.openVerseReference(ref);
+                }}
+              />
             </div>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import "./SettingsPage.css";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { TextSize } from "../../managers/ConfigManager";
 import {
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
@@ -13,6 +12,7 @@ import {
   type TextAlignment,
   type TextSectionConfig,
   type TextSectionId,
+  type TextSize,
   type UISize,
 } from "../../managers/SettingsManager";
 import {
@@ -21,7 +21,18 @@ import {
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
 import { download, translateTitle } from "../../app/utils";
-import { ProfilePictureModalContent } from "../../components/ProfilePictureModal/ProfilePictureModal";
+// The picture editor pulls in `react-avatar-editor`, and it is only reachable
+// through the "Update picture" button — so it is fetched on that click rather
+// than at boot, the same way TextItemInput defers TipTap.
+const ProfilePictureModalContent = lazy(() =>
+  import("../../components/ProfilePictureModal/ProfilePictureModal").then(
+    (m) => ({ default: m.ProfilePictureModalContent })
+  )
+);
+import {
+  Skeleton,
+  SkeletonContainer,
+} from "../../components/Skeleton/Skeleton";
 import { ExtensionInitalizer } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -37,6 +48,7 @@ import {
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
 import { useRef } from "preact/hooks";
+import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
@@ -157,12 +169,68 @@ function SettingsHero(props: {
   );
 }
 
+/**
+ * Placeholder shown while the user's profile is still being fetched. It mirrors
+ * the real form's layout (avatar, three fields, the ID row and the save button)
+ * with shimmering blocks, so on a slow connection the user can see the page is
+ * still loading instead of a deceptively empty, editable form.
+ */
+function AccountSettingsSkeleton() {
+  const { t } = useI18n();
+  return (
+    <SkeletonContainer
+      label={t("loading-profile", { defaultValue: "Loading your profile…" })}
+      className="sb-account-settings-layout"
+    >
+      <div className="sb-account-picture-row" aria-hidden="true">
+        <Skeleton shape="circle" width="3.875rem" height="3.875rem" />
+        <Skeleton shape="button" width="8.5rem" height="2.75rem" />
+      </div>
+
+      {[0, 1, 2].map((row) => (
+        <div key={row} className="sb-settings-field-row" aria-hidden="true">
+          <Skeleton shape="line" width="40%" />
+          <Skeleton
+            width="100%"
+            height={row === 1 ? "6.25rem" : "3rem"}
+            radius="0.625rem"
+          />
+        </div>
+      ))}
+
+      <div className="sb-settings-field-row" aria-hidden="true">
+        <Skeleton shape="line" width="40%" />
+        <Skeleton width="100%" height="3rem" radius="0.625rem" />
+      </div>
+
+      <div className="sb-settings-actions" aria-hidden="true">
+        <Skeleton width="100%" height="3.25rem" radius="0.375rem" />
+      </div>
+    </SkeletonContainer>
+  );
+}
+
 function AccountSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { login } = state;
   const { t } = useI18n();
   const isLoggedIn = useComputed(() => login.userId.value !== null);
-  const profile = useComputed(() => login.profile.value);
+  const profile = useComputed(
+    () => login.profile.value ?? login.cachedProfile.value
+  );
+  // `profile` above can be showing a cached value while `login.profile` (the
+  // network-confirmed one `updateProfile` actually writes against) is still
+  // null — Save must not let the user believe an edit was saved in that
+  // window.
+  const isProfileLoaded = useComputed(() => login.profile.value !== null);
+  // Show the loading skeleton only while a fetch is in flight *and* we have
+  // no profile (cached or confirmed) to display yet. If we already hold a
+  // profile — from the localStorage cache, or a background re-fetch — keep
+  // showing the real form rather than flashing a skeleton over data the user
+  // can already read and edit.
+  const isProfileLoading = useComputed(
+    () => login.isProfileLoading.value && profile.value === null
+  );
 
   const newName = useSignal<string | null>(null);
   const name = useComputed(() => newName.value ?? profile.value?.name ?? "");
@@ -176,9 +244,15 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   );
   const pictureUrl = useComputed(() => profile.value?.pictureUrl ?? "");
   const isUploadingPicture = useSignal(false);
+  const isSaving = useComputed(() => login.isSavingProfile.value);
   const uidCopied = useSignal(false);
 
   const handleSave = () => {
+    if (!isProfileLoaded.value) {
+      // `updateProfile` would silently no-op here (profile not confirmed
+      // yet) — refuse instead of clearing the user's in-progress edits below.
+      return;
+    }
     login.updateProfile({
       name: name.value,
       location: location.value || null,
@@ -194,20 +268,32 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     const modalId = state.modals.openModal({
       title: { key: "update-picture", defaultValue: "Update picture" },
       content: () => (
-        <ProfilePictureModalContent
-          onClose={() => state.modals.closeModal(modalId)}
-          onUpload={async (file) => {
-            isUploadingPicture.value = true;
-            try {
-              await login.uploadProfilePicture(file);
-            } catch (error) {
-              console.error("Failed to upload profile picture.", error);
-              throw error;
-            } finally {
-              isUploadingPicture.value = false;
-            }
-          }}
-        />
+        <Suspense
+          fallback={
+            <SkeletonContainer
+              label={t("loading-picture-editor", {
+                defaultValue: "Loading the picture editor…",
+              })}
+            >
+              <Skeleton width="100%" height="16rem" radius="0.625rem" />
+            </SkeletonContainer>
+          }
+        >
+          <ProfilePictureModalContent
+            onClose={() => state.modals.closeModal(modalId)}
+            onUpload={async (file) => {
+              isUploadingPicture.value = true;
+              try {
+                await login.uploadProfilePicture(file);
+              } catch (error) {
+                console.error("Failed to upload profile picture.", error);
+                throw error;
+              } finally {
+                isUploadingPicture.value = false;
+              }
+            }}
+          />
+        </Suspense>
       ),
     });
   };
@@ -239,7 +325,9 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
-        {isLoggedIn.value ? (
+        {isLoggedIn.value && isProfileLoading.value ? (
+          <AccountSettingsSkeleton />
+        ) : isLoggedIn.value ? (
           <div className="sb-account-settings-layout">
             <p className="sb-account-settings-intro">
               {t("account-settings-intro", {
@@ -388,8 +476,26 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
               <button
                 className="sb-settings-save-button sb-account-save-button"
                 onClick={handleSave}
+                disabled={!isProfileLoaded.value || isSaving.value}
+                aria-busy={isSaving.value}
               >
-                {t("save-changes", { defaultValue: "Save changes" })}
+                {!isProfileLoaded.value ? (
+                  t("loading-profile", {
+                    defaultValue: "Loading your profile…",
+                  })
+                ) : isSaving.value ? (
+                  <span className="sb-account-save-saving">
+                    <span
+                      className="material-symbols-outlined sb-account-save-spinner"
+                      aria-hidden="true"
+                    >
+                      progress_activity
+                    </span>
+                    {t("saving", { defaultValue: "Saving…" })}
+                  </span>
+                ) : (
+                  t("save-changes", { defaultValue: "Save changes" })
+                )}
               </button>
             </div>
 
@@ -521,10 +627,10 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
 
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { config, setFontSize } = state.config;
-  const selectedFontSize = config.value.fontSize;
   const settings = state.settings;
+  const { setFontSize } = settings;
   const current = settings.settings.value;
+  const selectedFontSize = current.fontSize;
   const isMobile = state.app.isMobile.value;
 
   const verseConfig = settings.settings.value.textConfig.verse;
@@ -1846,6 +1952,43 @@ function AllSettingsView(props: { state: SeedBibleState }) {
   );
 }
 
+function SettingsVersionFooter() {
+  const { t } = useI18n();
+  const copied = useSignal(false);
+
+  const onCopy = () => {
+    navigator.clipboard
+      ?.writeText(`v${__APP_VERSION__} (${__GIT_COMMIT__})`)
+      .then(() => {
+        copied.value = true;
+        setTimeout(() => {
+          copied.value = false;
+        }, 1500);
+      })
+      .catch(() => {
+        // Clipboard write was denied/unsupported — leave the label unchanged
+        // rather than falsely reporting success.
+      });
+  };
+
+  return (
+    <button
+      type="button"
+      className="sb-settings-version"
+      onClick={onCopy}
+      title={t("copy", { defaultValue: "Copy" })}
+    >
+      {copied.value
+        ? t("copied", { defaultValue: "Copied" })
+        : t("app-version", {
+            version: __APP_VERSION__,
+            commit: __GIT_COMMIT__.slice(0, 7),
+            defaultValue: "v{{version}} · {{commit}}",
+          })}
+    </button>
+  );
+}
+
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
@@ -2150,6 +2293,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
             </div>
           </li>
         </ul>
+        <SettingsVersionFooter />
       </section>
     </div>
   );

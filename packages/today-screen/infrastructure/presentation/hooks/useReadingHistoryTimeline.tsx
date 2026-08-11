@@ -47,6 +47,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     theme,
     readingHistoryService,
     useHorizontalScroll,
+    ColorParser,
   } = useTodayContext();
   const { selectYear, selectDay, year, timespan, userFilters } =
     useSocialSectionContext();
@@ -267,6 +268,18 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
 
     let shouldReassign = false;
     const fullColorTimeSeconds = yearlySummaryUsersCount * SEC_PER_HOUR; // 1 hour per selected user
+
+    const backgroundRgb = ColorParser(
+      theme.variables.readerBackground ?? "#FFFFFF",
+      "arrayRGB"
+    );
+    const baseColor = theme.variables.dividerColor
+      ? ColorParser(theme.variables.dividerColor, "longHex", backgroundRgb)
+      : "#dfdede";
+    const userColor = theme.variables.primaryColor
+      ? ColorParser(theme.variables.primaryColor, "longHex", backgroundRgb)
+      : "#D2691E";
+
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
         if (week === weeksCount - 1 && day > timelineRange.endDate.getDay())
@@ -279,16 +292,13 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         const prevColor = prevItemsColorMapRef.current.get(key);
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
-          const colorData = {
-            baseColor:
-              theme.variables.readerToolbarFloatingButtonBackground ??
-              "#dfdede",
+          color = readingHistoryService.getColorByReadingTime({
+            baseColor,
             step,
             readingTimeSeconds: summary.totalTimeSpentReading,
             fullColorTimeSeconds,
-            userColor: theme.variables.secondaryColor,
-          };
-          color = readingHistoryService.getColorByReadingTime(colorData);
+            userColor,
+          });
         }
 
         if (!shouldReassign && prevColor !== color) shouldReassign = true;

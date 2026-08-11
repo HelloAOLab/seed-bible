@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   createI18nManager,
+  getPreferredSupportedLanguage,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -49,6 +50,7 @@ describe("I18nManager getInitialLanguage()", () => {
     nav = {
       currentUrl,
       initialUrl: currentUrl.peek(),
+      basePath: "",
       syncSignalsToUrl: vi.fn(),
       go: vi.fn(),
       replace: vi.fn(),
@@ -56,6 +58,8 @@ describe("I18nManager getInitialLanguage()", () => {
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
       updateQueryParams: vi.fn(),
+      updatePathAndQueryParams: vi.fn(),
+      dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ssrLanguages);
   });
@@ -139,6 +143,34 @@ describe("I18nManager getInitialLanguage()", () => {
   });
 });
 
+describe("getPreferredSupportedLanguage", () => {
+  it("returns the first Accept-Language entry that matches a supported locale", () => {
+    expect(getPreferredSupportedLanguage(["fr-FR", "es-ES"])).toBe("fr");
+  });
+
+  it("skips unsupported entries ahead of a supported one", () => {
+    expect(getPreferredSupportedLanguage(["xx-XX", "de-DE", "fr-FR"])).toBe(
+      "de"
+    );
+  });
+
+  it("matches a language-only tag with no region subtag", () => {
+    expect(getPreferredSupportedLanguage(["es"])).toBe("es");
+  });
+
+  it.each(supportedLanguages)("recognizes %s as supported", (language) => {
+    expect(getPreferredSupportedLanguage([language])).toBe(language);
+  });
+
+  it("returns null when nothing in the list is supported", () => {
+    expect(getPreferredSupportedLanguage(["xx-XX", "yy-YY"])).toBeNull();
+  });
+
+  it("returns null for an empty list (no Accept-Language header)", () => {
+    expect(getPreferredSupportedLanguage([])).toBeNull();
+  });
+});
+
 describe("I18nManager language fallback prompt", () => {
   let nav: NavigationManager;
   let manager: I18nManager;
@@ -149,13 +181,16 @@ describe("I18nManager language fallback prompt", () => {
     nav = {
       currentUrl,
       initialUrl: currentUrl.peek(),
+      basePath: "",
       syncSignalsToUrl: vi.fn(),
       go: vi.fn(),
       replace: vi.fn(),
       push: vi.fn(),
       updateQueryParam: vi.fn(),
       updateQueryParams: vi.fn(),
+      updatePathAndQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
+      dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
     manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
@@ -198,30 +233,14 @@ describe("I18nManager URL <-> language sync", () => {
     });
   });
 
-  // Regression for #1443: the `?lang=` query param is the source of truth for
-  // the UI language. When it changes on its own (deep link, browser
-  // back/forward), the actual i18next translations must reload — not just the
-  // `language` signal — otherwise `t()` keeps returning the old language.
-  it("reloads i18n when ?lang= changes in the URL", async () => {
-    const nav = createNavigationManager({ initialHref: window.location.href });
-    const manager = createI18nManager(nav, ["en"]);
-    await manager.ready;
-    expect(manager.i18n.language).toBe("en");
-
-    window.history.pushState({}, "", "/?lang=de");
-
-    const start = Date.now();
-    while (manager.i18n.language !== "de" && Date.now() - start < 1000) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
-
-    expect(manager.i18n.language).toBe("de");
-    expect(manager.language.value).toBe("de");
-  });
-
-  // Selecting a UI language writes `?lang=` to the URL (primary), and the
-  // signal reflects the new language.
-  it("writes ?lang= when the UI language is changed", async () => {
+  // URL <-> language sync (both directions) moved to TabsManager: the
+  // language segment is part of the same coordinated reading path as
+  // translation/book/chapter (e.g. "/es/spa_onbv/john/3"), so a single
+  // writer owns the whole path instead of this manager independently
+  // touching the URL. The equivalent coverage of the old regression (#1443:
+  // an external `lang` change must reload i18next, not just the signal) now
+  // lives in TabsManager.test.ts, alongside the write-side test.
+  it("does not write to the URL directly when the UI language changes", async () => {
     const nav = createNavigationManager({ initialHref: window.location.href });
     const manager = createI18nManager(nav, ["en"]);
     await manager.ready;
@@ -230,6 +249,7 @@ describe("I18nManager URL <-> language sync", () => {
     await manager.requestLanguageChange("fr");
 
     expect(manager.language.value).toBe("fr");
-    expect(nav.currentUrl.value.searchParams.get("lang")).toBe("fr");
+    expect(nav.currentUrl.value.search).toBe("");
+    expect(nav.currentUrl.value.pathname).toBe("/");
   });
 });

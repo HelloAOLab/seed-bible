@@ -140,7 +140,9 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   const { actualView } = playlists;
 
   if (actualView.value === "create_playlist") {
-    return <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
+    return (
+      <CreatePlaylistForm playlists={playlists} tabs={tabs} modals={modals} />
+    );
   }
 
   if (actualView.value === "play_playlist") {

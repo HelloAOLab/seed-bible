@@ -2,11 +2,12 @@ import { effect, signal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { LoginManager } from "../managers/LoginManager";
-import { addTranslations } from "../i18n/I18nManager";
+import { addTranslations, i18n } from "../i18n/I18nManager";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
+  saveProfileConfigValues,
 } from "./ProfileConfigSync";
 import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
@@ -136,6 +137,15 @@ export interface ExtensionModule {
   default: ExtensionEntryPoint;
 }
 
+/**
+ * The `title`/`description` every extension in a set offers in one language,
+ * keyed by extension id. Extensions with nothing for that language are absent.
+ */
+export type ExtensionListTranslations = Record<
+  string,
+  { title: string; description: string }
+>;
+
 export interface ExtensionSet {
   /**
    * The ID of this extension set.
@@ -146,6 +156,19 @@ export interface ExtensionSet {
    * The extensions included in this set.
    */
   extensions: Extension[];
+
+  /**
+   * Loads the extensions list's `title`/`description` for one language, keyed
+   * by language code. Bundled sets (see `vite-plugin-extensions.ts`) supply
+   * this so only the reader's own language is downloaded — inlining all 77 in
+   * `meta.translations` cost 138 KB in the entry chunk. Optional: sets whose
+   * `meta.translations` is already populated (uploaded extensions fetched over
+   * the network) don't need it.
+   */
+  loadListTranslations?: Record<
+    string,
+    () => Promise<ExtensionListTranslations>
+  >;
 }
 
 export interface ExtensionListEntry {
@@ -391,6 +414,156 @@ function isExtensionModule(value: unknown): value is ExtensionModule {
   );
 }
 
+/**
+ * Per-store metadata for the installed-extensions ID list: when each
+ * currently-installed extension was installed, and when this store's ID list
+ * was last mutated (an install or uninstall). Used by
+ * `mergeInstalledExtensionIds` to tell "this ID is missing because it was
+ * never installed here" apart from "this ID is missing because it was
+ * uninstalled elsewhere after this store last had it" (see #1454) — a plain
+ * union of the two ID sets can't distinguish those, so an uninstall on one
+ * device would keep getting undone by a stale copy on another.
+ */
+export interface InstalledExtensionsMeta {
+  installedAtMs: Record<string, number>;
+  updatedAtMs: number;
+}
+
+export const emptyExtensionsMeta = (): InstalledExtensionsMeta => ({
+  installedAtMs: {},
+  updatedAtMs: 0,
+});
+
+export const parseExtensionsMeta = (
+  value: unknown
+): InstalledExtensionsMeta => {
+  if (
+    value &&
+    typeof value === "object" &&
+    typeof (value as Partial<InstalledExtensionsMeta>).updatedAtMs ===
+      "number" &&
+    typeof (value as Partial<InstalledExtensionsMeta>).installedAtMs ===
+      "object"
+  ) {
+    const raw = (value as InstalledExtensionsMeta).installedAtMs;
+    const installedAtMs: Record<string, number> = {};
+    for (const [id, ts] of Object.entries(raw)) {
+      if (typeof ts === "number") {
+        installedAtMs[id] = ts;
+      }
+    }
+    return {
+      installedAtMs,
+      updatedAtMs: (value as InstalledExtensionsMeta).updatedAtMs,
+    };
+  }
+  return emptyExtensionsMeta();
+};
+
+export interface InstalledExtensionsStoreState {
+  ids: Set<string>;
+  meta: InstalledExtensionsMeta;
+}
+
+export interface MergedInstalledExtensions {
+  ids: Set<string>;
+  localMeta: InstalledExtensionsMeta;
+  profileMeta: InstalledExtensionsMeta;
+}
+
+/**
+ * Merges the installed-extension IDs saved in local storage with the ones
+ * saved in the user's synced profile config.
+ *
+ * A plain union of the two ID sets (the previous behavior) can't tell "never
+ * installed here" apart from "uninstalled elsewhere since this store last had
+ * it" — so an uninstall on one device kept getting silently undone by a stale
+ * copy of the ID on another (#1454). Instead, for an ID that's only on one
+ * side, this compares that side's recorded install time for the ID against
+ * the *other* side's `updatedAtMs` (the last time that store's ID list was
+ * mutated, by any add or remove): if the other side was updated more
+ * recently than this ID was installed, and still doesn't have it, that's
+ * treated as an inferred deletion rather than reinstalled.
+ *
+ * An ID with no recorded install time (e.g. installed before this metadata
+ * existed) is treated as installed "just now" for this comparison rather than
+ * "long ago" — since `updatedAtMs` is a single scalar per store (bumped by
+ * *any* add/remove, not per-extension), treating an unknown install time as
+ * old could cause an unrelated, more recent change on the other side to
+ * wrongly look like this specific ID was deleted there. This falls back to
+ * today's safe adopt-it behavior for such IDs until they're installed or
+ * uninstalled again post-fix, which gives them a real timestamp.
+ */
+export function mergeInstalledExtensionIds(
+  local: InstalledExtensionsStoreState,
+  profile: InstalledExtensionsStoreState,
+  nowMs: number
+): MergedInstalledExtensions {
+  const resultIds = new Set<string>();
+  const localMeta: InstalledExtensionsMeta = {
+    installedAtMs: { ...local.meta.installedAtMs },
+    updatedAtMs: local.meta.updatedAtMs,
+  };
+  const profileMeta: InstalledExtensionsMeta = {
+    installedAtMs: { ...profile.meta.installedAtMs },
+    updatedAtMs: profile.meta.updatedAtMs,
+  };
+
+  const allIds = new Set([...local.ids, ...profile.ids]);
+  for (const id of allIds) {
+    const inLocal = local.ids.has(id);
+    const inProfile = profile.ids.has(id);
+
+    if (inLocal && inProfile) {
+      resultIds.add(id);
+      continue;
+    }
+
+    if (inLocal && !inProfile) {
+      const installedAt = local.meta.installedAtMs[id] ?? Infinity;
+      const profileIsNewer =
+        profile.meta.updatedAtMs > 0 && profile.meta.updatedAtMs >= installedAt;
+      if (profileIsNewer) {
+        // The profile was updated (and still doesn't have this ID) after it
+        // was installed locally — infer it was uninstalled elsewhere.
+        delete localMeta.installedAtMs[id];
+        localMeta.updatedAtMs = nowMs;
+        continue;
+      }
+      // The profile hasn't caught up yet — adopt the local install into it.
+      resultIds.add(id);
+      profileMeta.installedAtMs[id] = Number.isFinite(installedAt)
+        ? installedAt
+        : nowMs;
+      profileMeta.updatedAtMs = nowMs;
+      continue;
+    }
+
+    if (!inLocal && inProfile) {
+      const installedAt = profile.meta.installedAtMs[id] ?? Infinity;
+      const localIsNewer =
+        local.meta.updatedAtMs > 0 && local.meta.updatedAtMs >= installedAt;
+      if (localIsNewer) {
+        delete profileMeta.installedAtMs[id];
+        profileMeta.updatedAtMs = nowMs;
+        continue;
+      }
+      resultIds.add(id);
+      localMeta.installedAtMs[id] = Number.isFinite(installedAt)
+        ? installedAt
+        : nowMs;
+      localMeta.updatedAtMs = nowMs;
+      continue;
+    }
+  }
+
+  return { ids: resultIds, localMeta, profileMeta };
+}
+
+function setsEqual<T>(a: Set<T>, b: Set<T>): boolean {
+  return a.size === b.size && [...a].every((value) => b.has(value));
+}
+
 export function createExtensionManager(
   login: LoginManager,
   options: ExtensionManagerOptions = {}
@@ -446,6 +619,66 @@ export function createExtensionManager(
    */
   const INSTALLED_EXTENSIONS_CONFIG_KEY = "installedExtensions";
 
+  const INSTALLED_EXTENSIONS_META_STORAGE_KEY = "sb-installed-extensions-meta";
+
+  /** Reads the installed-extensions sync metadata from local storage. */
+  const readPersistedExtensionsMeta = (): InstalledExtensionsMeta => {
+    try {
+      const raw = safeLocalStorage.getItem(
+        INSTALLED_EXTENSIONS_META_STORAGE_KEY
+      );
+      if (!raw) {
+        return emptyExtensionsMeta();
+      }
+      return parseExtensionsMeta(JSON.parse(raw));
+    } catch (err) {
+      console.error(
+        "Failed to read persisted installed-extensions metadata:",
+        err
+      );
+      return emptyExtensionsMeta();
+    }
+  };
+
+  /** Writes the given installed-extensions sync metadata to local storage. */
+  const writePersistedExtensionsMeta = (meta: InstalledExtensionsMeta) => {
+    try {
+      safeLocalStorage.setItem(
+        INSTALLED_EXTENSIONS_META_STORAGE_KEY,
+        JSON.stringify(meta)
+      );
+    } catch (err) {
+      console.error("Failed to persist installed-extensions metadata:", err);
+    }
+  };
+
+  const INSTALLED_EXTENSIONS_META_CONFIG_KEY = "installedExtensionsMeta";
+
+  /** Reads the installed-extensions sync metadata from the user's profile config. */
+  const readProfileExtensionsMeta = (): InstalledExtensionsMeta =>
+    parseExtensionsMeta(
+      getProfileConfigValue(
+        login.profile.value,
+        INSTALLED_EXTENSIONS_META_CONFIG_KEY
+      )
+    );
+
+  /**
+   * Writes the given installed-extension IDs and their sync metadata to the
+   * user's profile config in a single write (one `login.updateProfile`
+   * call), rather than one write per key — the two always change together,
+   * so there's no reason for them to reach the server as separate writes.
+   */
+  const writeProfileExtensionState = (
+    ids: Set<string>,
+    meta: InstalledExtensionsMeta
+  ) => {
+    saveProfileConfigValues(login, {
+      [INSTALLED_EXTENSIONS_CONFIG_KEY]: [...ids],
+      [INSTALLED_EXTENSIONS_META_CONFIG_KEY]: meta,
+    });
+  };
+
   /**
    * Waits for an in-flight profile load to settle, if the user is logged in
    * and the profile hasn't resolved yet. Without this, a read of
@@ -480,15 +713,6 @@ export function createExtensionManager(
       return new Set(value.filter((id) => typeof id === "string"));
     }
     return new Set();
-  };
-
-  /**
-   * Writes the given set of installed extension IDs to the user's profile config.
-   * No-ops when logged out or when the value is unchanged (handled by
-   * saveProfileConfigValue).
-   */
-  const writeProfileExtensionIds = (ids: Set<string>) => {
-    saveProfileConfigValue(login, INSTALLED_EXTENSIONS_CONFIG_KEY, [...ids]);
   };
 
   /**
@@ -559,10 +783,15 @@ export function createExtensionManager(
 
   /** Records that the extension with the given ID has been installed. */
   const persistInstalledExtensionId = (id: string): void | Promise<void> => {
+    const now = Date.now();
     const ids = readPersistedExtensionIds();
     if (!ids.has(id)) {
       ids.add(id);
       writePersistedExtensionIds(ids);
+      const localMeta = readPersistedExtensionsMeta();
+      localMeta.installedAtMs[id] = now;
+      localMeta.updatedAtMs = now;
+      writePersistedExtensionsMeta(localMeta);
     }
 
     // Mirror the install into the user's profile config so it follows them
@@ -572,7 +801,10 @@ export function createExtensionManager(
       const profileIds = readProfileExtensionIds();
       if (!profileIds.has(id)) {
         profileIds.add(id);
-        writeProfileExtensionIds(profileIds);
+        const profileMeta = readProfileExtensionsMeta();
+        profileMeta.installedAtMs[id] = now;
+        profileMeta.updatedAtMs = now;
+        writeProfileExtensionState(profileIds, profileMeta);
       }
     };
 
@@ -591,15 +823,23 @@ export function createExtensionManager(
 
   /** Removes the extension with the given ID from the persisted set. */
   const forgetInstalledExtensionId = (id: string): void | Promise<void> => {
+    const now = Date.now();
     const ids = readPersistedExtensionIds();
     if (ids.delete(id)) {
       writePersistedExtensionIds(ids);
+      const localMeta = readPersistedExtensionsMeta();
+      delete localMeta.installedAtMs[id];
+      localMeta.updatedAtMs = now;
+      writePersistedExtensionsMeta(localMeta);
     }
 
     const forgetFromProfile = () => {
       const profileIds = readProfileExtensionIds();
       if (profileIds.delete(id)) {
-        writeProfileExtensionIds(profileIds);
+        const profileMeta = readProfileExtensionsMeta();
+        delete profileMeta.installedAtMs[id];
+        profileMeta.updatedAtMs = now;
+        writeProfileExtensionState(profileIds, profileMeta);
       }
     };
 
@@ -670,9 +910,71 @@ export function createExtensionManager(
     extensionsSignal.value = computeExtensions();
   };
 
+  // Fetching list strings is a client-only concern, for two reasons. The
+  // Settings extensions list is never server-rendered and English is already
+  // inline as the fallback, so there is nothing for the server to gain. More
+  // importantly `i18n` is the process-wide i18next singleton while this factory
+  // runs once per SSR request (`entry-ssr.tsx` → `createSeedBibleState` →
+  // here), so on the server both the listener below and the fetch would be
+  // per-request writes to state shared by every request — the listener in
+  // particular would accumulate for the life of the process.
+  const fetchesListTranslations = !import.meta.env.SSR;
+
+  // Sets whose list strings are fetched per language, kept so a later language
+  // change can re-fetch for the new one. Nothing removes from this today
+  // because there is no path that untracks a set; if one is added, it should
+  // delete from here too, or the handler below will keep re-fetching for sets
+  // that no longer matter.
+  const setsWithListTranslations = new Set<ExtensionSet>();
+
+  /**
+   * Registers the extensions list's `title`/`description` for one language.
+   *
+   * Sets that ship their strings inline (uploaded extensions) already had them
+   * registered by the caller; this only covers sets that defer them to a
+   * per-language chunk. A set with nothing for `language` is skipped, leaving
+   * the list to fall back to each extension's id, which is what
+   * `SettingsPage` already renders via `defaultValue`.
+   */
+  const loadListTranslationsForLanguage = async (
+    set: ExtensionSet,
+    language: string
+  ): Promise<void> => {
+    const load = set.loadListTranslations?.[language];
+    if (!load) {
+      return;
+    }
+    try {
+      const translations = await load();
+      for (const [extensionId, translation] of Object.entries(translations)) {
+        addTranslations(extensionId, { [language]: translation });
+      }
+      refreshExtensionsSignal();
+    } catch (err) {
+      // A missing chunk must not take the Settings page down with it — the
+      // list still renders, just with ids instead of titles.
+      console.error(
+        `Failed to load extension list translations for '${language}'.`,
+        err
+      );
+    }
+  };
+
+  if (fetchesListTranslations) {
+    i18n.on("languageChanged", (language: string) => {
+      for (const set of setsWithListTranslations) {
+        void loadListTranslationsForLanguage(set, language);
+      }
+    });
+  }
+
   const trackExtensionSet = (set: ExtensionSet) => {
     for (const extension of set.extensions) {
       knownExtensionsById.set(extension.meta.id, extension);
+    }
+    if (fetchesListTranslations && set.loadListTranslations) {
+      setsWithListTranslations.add(set);
+      void loadListTranslationsForLanguage(set, i18n.language);
     }
     refreshExtensionsSignal();
   };
@@ -896,27 +1198,39 @@ export function createExtensionManager(
   };
 
   /**
-   * Loads the extensions that the user previously installed. The saved set is
-   * the union of the IDs persisted in local storage and the IDs stored in the
-   * logged-in user's profile config — so extensions installed while logged out
-   * are adopted into the account, and extensions installed on another device are
-   * installed here. The merged set is written back to both stores. Extensions
-   * that are already installed are skipped, and IDs that are not part of any
-   * known extension set are left in storage (a later build may reintroduce them)
-   * but skipped for now.
+   * Loads the extensions that the user previously installed. The saved set
+   * merges the IDs persisted in local storage with the IDs stored in the
+   * logged-in user's profile config via `mergeInstalledExtensionIds` — so
+   * extensions installed while logged out are adopted into the account,
+   * extensions installed on another device are installed here, and an
+   * extension uninstalled on another device (which already reached the
+   * profile) is not resurrected by a stale local copy, or vice versa (#1454).
+   * The merged set and its sync metadata are written back to whichever
+   * store(s) changed. Extensions that are already installed are skipped, and
+   * IDs that are not part of any known extension set are left in storage (a
+   * later build may reintroduce them) but skipped for now.
    */
   const loadSavedExtensions = async () => {
     await awaitProfileLoaded();
     const localIds = readPersistedExtensionIds();
     const profileIds = readProfileExtensionIds();
-    const savedIds = new Set([...localIds, ...profileIds]);
+    const localMeta = readPersistedExtensionsMeta();
+    const profileMeta = readProfileExtensionsMeta();
 
-    // Write the merged set back to both stores so the two stay in sync.
-    if (savedIds.size !== localIds.size) {
+    const merged = mergeInstalledExtensionIds(
+      { ids: localIds, meta: localMeta },
+      { ids: profileIds, meta: profileMeta },
+      Date.now()
+    );
+    const savedIds = merged.ids;
+
+    // Write back to whichever store(s) the merge actually changed.
+    if (!setsEqual(localIds, savedIds)) {
       writePersistedExtensionIds(savedIds);
+      writePersistedExtensionsMeta(merged.localMeta);
     }
-    if (savedIds.size !== profileIds.size) {
-      writeProfileExtensionIds(savedIds);
+    if (!setsEqual(profileIds, savedIds)) {
+      writeProfileExtensionState(savedIds, merged.profileMeta);
     }
 
     const promises: Promise<boolean>[] = [];

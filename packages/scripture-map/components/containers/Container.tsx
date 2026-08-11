@@ -21,7 +21,7 @@ export const Container = memo(() => {
       <div className="scripture-map-container">
         <div className="testament-container">
           <div className="testament-content">
-            <BooksContainer>
+            <BooksContainer masonry>
               {testamentContainersData.map((data) => (
                 <TestamentProvider
                   key={data.key}

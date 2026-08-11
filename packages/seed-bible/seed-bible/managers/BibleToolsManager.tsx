@@ -4,8 +4,14 @@ import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
+  uiLocaleForDefaultTranslation,
   type BibleReadingState,
+  type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
+import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import { extractContentText } from "../managers/ChapterText";
+import type { BookId } from "../managers/BibleDataManager";
+import { readInjectedConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
@@ -16,15 +22,18 @@ import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
+import type { ModalManager } from "./ModalManager";
+import type { AppState } from "./SeedBibleStateManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
-import { useI18n } from "../i18n";
+import { i18n, useI18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
+import { ShareModal } from "../components/ShareModal/shareModal";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -159,6 +168,15 @@ export interface BibleToolContext {
 
   /** Features manager */
   features: FeaturesManager;
+
+  /** Modals manager */
+  modals?: ModalManager;
+
+  /**
+   * App-level state. Optional like the other managers above; tools that need
+   * shared-session actions (create/share the live session) should guard on it.
+   */
+  app?: AppState;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -325,6 +343,9 @@ export interface QuickToolContext {
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
+
+  /** Which surface is asking, for tools whose visibility depends on it. */
+  surface: "quick-toolbar" | "mobile-navigation-bar";
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
@@ -587,9 +608,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronLeftIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.chapterData.value?.previousChapterApiLink ||
-        context.readingState.loading.value,
+      // Deliberately not gated on `loading`: navigation no longer waits on the
+      // text request, so pressing again mid-load is exactly what should work.
+      isDisabled: (context) => !context.readingState.hasPrevious.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
@@ -632,7 +653,6 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 100,
       title: { key: "books", defaultValue: "Books" },
       icon: OpenSelectorIcon,
-      isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
         const currentSlot =
           context.tabsLayoutManager.slots.value.find(
@@ -678,7 +698,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>menu_book</MaterialIcon>,
       isVisible: (context) =>
         !!context.readingPlans &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS),
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
         const readingPlans = context.readingPlans;
         if (!readingPlans) {
@@ -708,6 +728,16 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       },
     },
     {
+      id: "share",
+      priority: 130,
+      title: { key: "share", defaultValue: "Share" },
+      icon: () => <MaterialIcon>share</MaterialIcon>,
+      isVisible: (context) => !!context.modals && !!context.app,
+      onSelect: (context) => {
+        openShareModal(context, getShareUrl(context.readingState));
+      },
+    },
+    {
       id: "next-chapter",
       priority: 1000,
       hideLabel: true,
@@ -718,9 +748,8 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         ) : (
           <ChevronRightIcon />
         ),
-      isDisabled: (context) =>
-        !context.readingState.chapterData.value?.nextChapterApiLink ||
-        context.readingState.loading.value,
+      // See `previous-chapter`: in-flight text must not block moving on.
+      isDisabled: (context) => !context.readingState.hasNext.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadNextChapter();
@@ -793,7 +822,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 
         try {
           navigator.clipboard.writeText(verseTexts);
-          context.toast("Copied!");
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }
@@ -808,19 +837,11 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
-
-        let verseTexts = formatSelectedVerses(context.readingState);
-
-        const url = getShareUrl(context.readingState);
-
-        verseTexts += `\n\n${url.toString()}`;
-
-        navigator.share({
-          title:
-            "Bible Verse" +
-            (context.readingState.selectedVerses.value.length > 1 ? "s" : ""),
-          text: verseTexts,
-        });
+        openShareModal(
+          context,
+          getShareUrl(context.readingState),
+          formatSelectedVerses(context.readingState)
+        );
       },
     },
     {
@@ -918,25 +939,41 @@ export interface ToolsManager {
  * @returns A URL object representing the sharable link for the current reading state.
  */
 export function getShareUrl(readingState: BibleReadingState) {
-  const url = new URL(window.location.href);
-  url.search = "";
+  const current = new URL(window.location.href);
+  current.search = "";
   // if (configBot.tags.pattern) {
   //   url.searchParams.set("pattern", configBot.tags.pattern);
   // }
   const translation =
     readingState.translation.value?.id ?? readingState.defaultTranslation.id;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
-  url.searchParams.set("translation", translation);
-  url.searchParams.set("book", bookId);
+  const chapter = readingState.chapterNumber.value;
+  const { basePath } = readInjectedConfig();
+  // Written into the path rather than as `?translation=&book=&chapter=`, so a
+  // shared link is the canonical URL for the passage instead of one that
+  // redirects to it.
+  const url = buildReadingUrl({
+    currentUrl: current,
+    basePath,
+    translationId: translation,
+    bookId: bookId as BookId,
+    chapter,
+    fallbackLanguage: uiLocaleForDefaultTranslation(translation) ?? undefined,
+  });
 
   if (readingState.selectedVerses.value.length > 0) {
     const verses = readingState.selectedVerses.value
-      .filter((v) => v.bookId === bookId && v.translationId === translation)
+      .filter(
+        (v) =>
+          v.bookId === bookId &&
+          v.chapterNumber === chapter &&
+          v.translationId === translation
+      )
       .map((v) => v.verse.number);
     if (verses.length > 0) {
       const formatted = formatVerseSelection(verses);
       if (formatted) {
-        url.search += `&verse=${formatted}`;
+        url.searchParams.set("verse", formatted);
       }
     }
   }
@@ -944,24 +981,123 @@ export function getShareUrl(readingState: BibleReadingState) {
 }
 
 /**
+ * Opens the unified share sheet for a reading surface. Shared by the verse
+ * toolbar's "Share" tool and the reader toolbar's "Share" tool so both open the
+ * exact same modal. `shareText` is only passed by the verse flow (the selected
+ * verses' text) for the native share sheet; the reader flow shares a link only.
+ * The session comes from `context.sharedSession` — the tool's own reading
+ * surface — never from global app state, so a background surface can't be
+ * shared by mistake.
+ */
+function openShareModal(
+  context: BibleToolContext,
+  shareUrl: URL,
+  shareText?: string
+) {
+  const modals = context.modals;
+  const app = context.app;
+  if (!modals || !app) return;
+
+  const modalId = modals.openModal({
+    title: { key: "share-sheet-title", defaultValue: "Share" },
+    content: () => (
+      <ShareModal
+        app={app}
+        session={context.sharedSession}
+        onClose={() => modals.closeModal(modalId)}
+        onShareLink={() => {
+          navigator.clipboard.writeText(shareUrl.toString());
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
+          modals.closeModal(modalId);
+        }}
+        onShareVia={() => {
+          void navigator.share?.({
+            title: document.title,
+            ...(shareText ? { text: shareText } : {}),
+            url: shareUrl.toString(),
+          });
+          modals.closeModal(modalId);
+        }}
+      />
+    ),
+  });
+}
+
+/** Splits verses into groups of consecutive verse numbers. */
+function groupConsecutiveVerses(verses: BibleSelectedVerse[]) {
+  const groups: BibleSelectedVerse[][] = [];
+  let current: BibleSelectedVerse[] = [];
+
+  for (const verse of verses) {
+    if (
+      current.length === 0 ||
+      verse.verse.number === current[current.length - 1]!.verse.number + 1
+    ) {
+      current.push(verse);
+    } else {
+      groups.push(current);
+      current = [verse];
+    }
+  }
+
+  if (current.length) {
+    groups.push(current);
+  }
+
+  return groups;
+}
+
+/**
+ * Formats a single contiguous run of verse numbers, e.g. `12` or `12-17`.
+ * Assumes `verseNumbers` is already sorted and contiguous, which holds for
+ * every caller since it only ever receives a group from `groupConsecutiveVerses`.
+ */
+function formatVerseRanges(verseNumbers: number[]): string {
+  if (verseNumbers.length === 0) return "";
+
+  const start = verseNumbers[0]!;
+  const end = verseNumbers[verseNumbers.length - 1]!;
+
+  return start === end ? `${start}` : `${start}-${end}`;
+}
+
+/** Extracts and normalizes the plain text content of a single selected verse. */
+function extractVerseText(verse: BibleSelectedVerse): string {
+  return extractContentText(verse.verse.content);
+}
+
+/**
  * Formats the selected verses from the reading state into a human-readable string.
  * @param readingState The reading state containing the selected verses to format.
  * @returns A string representing the formatted selected verses.
  */
-function formatSelectedVerses(readingState: BibleReadingState) {
-  // When you copy the verse book is always open
-  const bookName = readingState.chapterData.value?.book.name;
-  return readingState.selectedVerses.value
-    .map((verse) => {
-      const verseReference = `${bookName ?? verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
-      return `${verse.verse.content
-        .map((part) => {
-          if (typeof part === "string") return part;
-          if (part && typeof part === "object" && "text" in part)
-            return (part as { text: string }).text;
-          return "";
-        })
-        .join("")} (${verseReference})`;
+export function formatSelectedVerses(readingState: BibleReadingState) {
+  const verses = readingState.selectedVerses.value;
+
+  if (verses.length === 0) return "";
+
+  const bookName =
+    readingState.chapterData.value?.book.name ?? verses[0]!.bookId;
+
+  const translation = readingState.translation?.value?.shortName ?? "";
+
+  const groups = groupConsecutiveVerses(verses);
+
+  return groups
+    .map((group) => {
+      const text = group.map((verse) => extractVerseText(verse)).join(" ");
+
+      const range = formatVerseRanges(group.map((v) => v.verse.number));
+
+      const reference = [
+        bookName,
+        `${group[0]!.chapterNumber}:${range}`,
+        translation,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return `${text} (${reference})`;
     })
     .join("\n\n");
 }

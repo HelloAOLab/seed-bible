@@ -25,9 +25,8 @@ import type {
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { useEffect, useRef } from "preact/hooks";
-import { translateTitle } from "../../app/utils";
+import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
-import { DateTime } from "luxon";
 import { ChatParticipantsIcon } from "../icons";
 
 interface SearchResult {
@@ -124,8 +123,7 @@ function ChatListRelativeDateTime({ timeMs }: { timeMs: number }) {
   }, []);
 
   void refreshTick.value;
-  const date = DateTime.fromMillis(timeMs).setLocale(language);
-  return <span>{date.toRelative()}</span>;
+  return <span>{formatRelativeTime(timeMs, language)}</span>;
 }
 
 function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
@@ -349,7 +347,8 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
         result.chapterNumber,
         result.verseNumber,
         {
-          className: "sb-verse-decoration-search-result",
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
           removeAfterMs: 3000,
         }
       );
@@ -734,6 +733,11 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       if (!target) return;
       if (target.closest(".sb-floating-chat-panel")) return;
       if (target.closest(".sb-reader-toolbar")) return;
+      // Context menus (e.g. the "new chat" provider list) are portaled to
+      // <body>, so they live outside `.sb-floating-chat-panel` in the DOM even
+      // though they're part of this panel's UI. Ignore taps inside them so
+      // picking a provider doesn't close the panel out from under the click.
+      if (target.closest(".sb-context-menu")) return;
       sidebar.closeChatPanel();
     };
 
@@ -780,7 +784,16 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           </button>
         ) : null}
 
-        {selectedChat && <ChatListAvatarCluster chat={selectedChat} />}
+        {selectedChat ? (
+          <ChatListAvatarCluster chat={selectedChat} />
+        ) : (
+          <span
+            className="material-symbols-outlined sb-floating-chat-header-icon"
+            aria-hidden="true"
+          >
+            chat_bubble_outline
+          </span>
+        )}
         <p className="sb-floating-chat-header-title">
           {selectedChat
             ? getChatTitle(selectedChat, t)
@@ -867,6 +880,20 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             )}
           </ContextMenuWithButton>
         ) : null}
+
+        <button
+          type="button"
+          className="sb-floating-chat-header-close"
+          onClick={() => {
+            sidebar.closeChatPanel();
+          }}
+          aria-label={t("close", { defaultValue: "Close" })}
+          title={t("close", { defaultValue: "Close" })}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            close
+          </span>
+        </button>
       </header>
 
       {selectedChat ? (

@@ -45,13 +45,17 @@ describe("useTodayContainer", () => {
   });
 
   function setup(options: {
-    userId?: string | undefined;
-    lastReading?: { bookId: string; chapter: number } | undefined;
+    status: "loading" | "empty" | "ready";
+    lastReading?: { bookId: string; chapter: number };
   }) {
-    (useTodayContext as Mock).mockReturnValue({
-      userId: options.userId,
-      userLastReading: signal(options.lastReading),
-    });
+    const readingHistory =
+      options.status === "ready"
+        ? signal({
+            status: "ready" as const,
+            lastReading: options.lastReading ?? { bookId: "JHN", chapter: 3 },
+          })
+        : signal({ status: options.status });
+    (useTodayContext as Mock).mockReturnValue({ readingHistory });
     const result = { current: null as unknown as Result };
     function TestComponent() {
       result.current = useTodayContainer();
@@ -61,24 +65,21 @@ describe("useTodayContainer", () => {
     return result;
   }
 
-  it("shows Welcome (safe-centered) when there is no user", () => {
-    const result = setup({
-      userId: undefined,
-      lastReading: { bookId: "GEN", chapter: 1 },
-    });
+  it("shows Welcome (safe-centered) when history is empty", () => {
+    const result = setup({ status: "empty" });
     expect(result.current.Component).toBe(Welcome);
     expect(result.current.style).toEqual({ alignItems: "safe center" });
   });
 
-  it("shows Welcome when the user has no last reading", () => {
-    const result = setup({ userId: "user-1", lastReading: undefined });
-    expect(result.current.Component).toBe(Welcome);
-    expect(result.current.style).toEqual({ alignItems: "safe center" });
+  it("shows TodayContent (top-aligned) while history is loading", () => {
+    const result = setup({ status: "loading" });
+    expect(result.current.Component).toBe(TodayContent);
+    expect(result.current.style).toEqual({ alignItems: "flex-start" });
   });
 
-  it("shows TodayContent (top-aligned) when the user has a last reading", () => {
+  it("shows TodayContent (top-aligned) when history is ready", () => {
     const result = setup({
-      userId: "user-1",
+      status: "ready",
       lastReading: { bookId: "JHN", chapter: 3 },
     });
     expect(result.current.Component).toBe(TodayContent);

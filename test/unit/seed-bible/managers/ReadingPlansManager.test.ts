@@ -25,7 +25,13 @@ import {
   type CalendarSkipRange,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import { signal } from "@preact/signals";
-import { DateTime } from "luxon";
+import {
+  addCivilDays,
+  civilDateInZone,
+  civilDateToISO,
+  civilDaysBetween,
+  type CivilDate,
+} from "@packages/seed-bible/seed-bible/managers/civilDate";
 import type { Mock } from "vitest";
 
 // An arbitrary mid-week start instant to exercise "start any time".
@@ -98,9 +104,12 @@ function makeProgress(
 // Resolve day boundaries in a fixed zone so the schedule math is deterministic
 // regardless of the machine's local time zone.
 const ZONE = "utc";
-const START_DAY = DateTime.fromMillis(START_MS, { zone: ZONE }).startOf("day");
-const dayOffsetOf = (date: ReturnType<typeof DateTime.fromMillis>) =>
-  Math.round(date.diff(START_DAY, "days").days);
+const START_DAY = civilDateInZone(START_MS, ZONE);
+const dayOffsetOf = (date: CivilDate) => civilDaysBetween(START_DAY, date);
+// The instant `hours` into `date`. Valid because ZONE above is UTC, so a
+// calendar date and a UTC timestamp line up exactly.
+const msAt = (date: CivilDate, hours = 0) =>
+  Date.UTC(date.year, date.month - 1, date.day, hours);
 
 describe("ReadingPlansManager schemas", () => {
   it("parses a large plan with multiple cadence options", () => {
@@ -238,7 +247,7 @@ describe("schedule math", () => {
         expect(date).not.toBeNull();
         expect(dayOffsetOf(date!)).toBe(slot.dayOffset);
         expect(
-          sessionsForDate(c.cadence, START_MS, date!.toMillis(), ZONE)
+          sessionsForDate(c.cadence, START_MS, msAt(date!), ZONE)
         ).toContain(sessionIndex);
       });
     });
@@ -310,7 +319,7 @@ describe("getReadingCalendar", () => {
   ) => makeProgress({ customCadence: cadence, timeZone: ZONE, ...overrides });
 
   const nowAtOffset = (days: number, hours = 5) =>
-    START_DAY.plus({ days, hours }).toMillis();
+    msAt(addCivilDays(START_DAY, days), hours);
 
   const asReading = (e: ReadingCalendarEntry): CalendarReadingDay => {
     expect(e.type).toBe("reading");
@@ -533,7 +542,6 @@ describe("createReadingPlansManager", () => {
   };
 
   const metadataOf = (plan: ReadingPlan) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { sessions: _sessions, ...metadata } = plan;
     return metadata;
   };
@@ -1434,5 +1442,98 @@ describe("createReadingPlan", () => {
     expect(plan.description).toBe("A custom plan");
     expect(plan.cadenceOptions).toEqual(cadenceOptions);
     expect(plan.defaultCadenceId).toBe("weekly"); // first provided option
+  });
+});
+
+describe("time-zone-aware day boundaries", () => {
+  const DAILY: Cadence = { segments: [{ type: "read", days: 1 }] };
+
+  // Plans schedule by calendar day, not by elapsed milliseconds, so a run of
+  // days that crosses a clock change must still be one day apart. Doing this
+  // arithmetic on timestamps would drift by an hour each way.
+  it("counts a spring-forward day as one day (America/New_York)", () => {
+    // 2026-03-08 is when US clocks jump forward, making the local day 23h long.
+    const startMs = Date.UTC(2026, 2, 6, 17, 0, 0); // 2026-03-06 12:00 EST
+    const zone = "America/New_York";
+
+    const dates = [0, 1, 2, 3, 4].map(
+      (i) => dateForSession(DAILY, startMs, i, zone)!
+    );
+
+    expect(dates.map((d) => civilDateToISO(d))).toEqual([
+      "2026-03-06",
+      "2026-03-07",
+      "2026-03-08",
+      "2026-03-09",
+      "2026-03-10",
+    ]);
+  });
+
+  it("counts a fall-back day as one day (America/New_York)", () => {
+    // 2026-11-01 is when US clocks go back, making the local day 25h long.
+    const startMs = Date.UTC(2026, 9, 30, 16, 0, 0); // 2026-10-30 12:00 EDT
+    const zone = "America/New_York";
+
+    const dates = [0, 1, 2, 3, 4].map(
+      (i) => dateForSession(DAILY, startMs, i, zone)!
+    );
+
+    expect(dates.map((d) => civilDateToISO(d))).toEqual([
+      "2026-10-30",
+      "2026-10-31",
+      "2026-11-01",
+      "2026-11-02",
+      "2026-11-03",
+    ]);
+  });
+
+  it("resolves the day in the plan's zone, not the machine's", () => {
+    // 2026-06-17 03:30 UTC is still the 16th in New York and already the 17th
+    // in Kolkata (UTC+05:30) — a zone whose offset is not a whole hour.
+    const ms = Date.UTC(2026, 5, 17, 3, 30, 0);
+
+    expect(civilDateToISO(civilDateInZone(ms, "America/New_York"))).toBe(
+      "2026-06-16"
+    );
+    expect(civilDateToISO(civilDateInZone(ms, "Asia/Kolkata"))).toBe(
+      "2026-06-17"
+    );
+    expect(civilDateToISO(civilDateInZone(ms, "utc"))).toBe("2026-06-17");
+  });
+
+  it("keeps sessionsForDate the inverse of dateForSession across a DST change", () => {
+    const startMs = Date.UTC(2026, 2, 6, 17, 0, 0);
+    const zone = "America/New_York";
+
+    for (let i = 0; i < 6; i++) {
+      const date = dateForSession(DAILY, startMs, i, zone)!;
+      // Midday local time on that date, in both offsets the week spans.
+      const middayMs = Date.UTC(date.year, date.month - 1, date.day, 16, 0, 0);
+      expect(sessionsForDate(DAILY, startMs, middayMs, zone)).toContain(i);
+    }
+  });
+
+  it("advances the calendar correctly across a month and a leap day", () => {
+    expect(
+      civilDateToISO(addCivilDays({ year: 2028, month: 2, day: 28 }, 1))
+    ).toBe("2028-02-29");
+    expect(
+      civilDateToISO(addCivilDays({ year: 2026, month: 2, day: 28 }, 1))
+    ).toBe("2026-03-01");
+    expect(
+      civilDateToISO(addCivilDays({ year: 2026, month: 12, day: 31 }, 1))
+    ).toBe("2027-01-01");
+    expect(
+      civilDaysBetween(
+        { year: 2026, month: 1, day: 1 },
+        { year: 2027, month: 1, day: 1 }
+      )
+    ).toBe(365);
+    expect(
+      civilDaysBetween(
+        { year: 2028, month: 1, day: 1 },
+        { year: 2029, month: 1, day: 1 }
+      )
+    ).toBe(366);
   });
 });

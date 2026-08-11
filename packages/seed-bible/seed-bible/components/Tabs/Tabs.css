@@ -20,10 +20,6 @@
   flex-shrink: 0;
   position: relative;
   user-select: none;
-  /* The sidebar itself doesn't scroll — the header, search box, and bottom
-     actions stay pinned. Only the tab list (.sb-sidebar-tab-list) scrolls when
-     the tabs overflow the visible height. */
-  overflow: hidden;
   min-height: 0;
 }
 
@@ -525,7 +521,11 @@
   margin-top: 0.25rem;
 }
 
-.sb-bookmark-picker-cancel,
+.sb-bookmark-picker-category:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .sb-bookmark-picker-save {
   min-width: 5.25rem;
   height: 2.25rem;
@@ -540,19 +540,6 @@
     background-color 0.15s ease,
     color 0.15s ease,
     opacity 0.15s ease;
-}
-
-.sb-bookmark-picker-cancel {
-  background: transparent;
-  color: var(--sb-font-color);
-  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
-}
-
-.sb-bookmark-picker-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-}
-
-.sb-bookmark-picker-save {
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   border-color: var(--sb-primary-color);
@@ -595,7 +582,17 @@
   gap: 0.625rem;
   min-height: 0;
   flex: 1;
-  padding: 5px;
+  padding: 0.3125rem;
+}
+@media (max-width: 480px) {
+  .sb-sidebar-settings-view {
+    padding: 0.3125rem 0.75rem;
+  }
+}
+@media (max-width: 480px) {
+  .sb-sidebar-settings-view {
+    padding: 5px 12px;
+  }
 }
 
 .sb-sidebar-settings-close-button {
@@ -1093,9 +1090,6 @@
 }
 
 .sb-tab-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.375rem);
   min-width: 13.125rem;
   padding: 0.375rem;
   border: 1px solid var(--sb-secondary-color);
@@ -1219,7 +1213,6 @@
   .sb-panes-layout .sb-pane-shell {
     grid-column: auto !important;
     grid-row: auto !important;
-    border-top: 1px solid var(--sb-primary-color) !important;
   }
 
   .sb-pane-resize-handle,

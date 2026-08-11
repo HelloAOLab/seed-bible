@@ -1,20 +1,23 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon } from "@packages/seed-bible/seed-bible/components";
+import {
+  Skeleton,
+  SkeletonContainer,
+} from "@packages/seed-bible/seed-bible/components/Skeleton/Skeleton";
 import { Today } from "../presentation/components/Today";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import { TodayReadingHistoryService } from "@packages/today-screen/application/services/TodayReadingHistoryService";
 import { SubscribedUsersProvider } from "../adapters/subscriptions/SubscribedUsersProvider";
-import type {
-  FilteredReading,
-  UserLastReading,
-} from "@packages/today-screen/domain/models/readingHistory";
+import type { FilteredReading } from "@packages/today-screen/domain/models/readingHistory";
+import { createReadingHistoryState } from "./createReadingHistoryState";
 import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/seedBible";
 import { getReadingHistoryEvents } from "@packages/seed-bible/seed-bible/managers";
 import { getDefaultTranslationForLanguage } from "@packages/seed-bible/seed-bible/managers";
 import type { VerseSearchResult } from "@packages/today-screen/domain/models/search";
 import { ReadingHistoryConfigProvider } from "../config/readingHistory/readingHistoryConfigProvider";
 import { getHighlightedWelcomeVerse } from "../config/translations/welcomeVerseMap";
+import { hasReadingUrlPosition } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 
 export interface TodayScreenAPI {
   open: () => void;
@@ -47,6 +50,7 @@ export const bootstrapExtension = () => {
         CapitalizeFirstLetter,
         readingHistoryService,
         useHorizontalScroll,
+        ColorParser,
       } = dependenciesMap[
         seedBibleUtilsId
       ] as DependenciesMap[typeof seedBibleUtilsId];
@@ -84,7 +88,16 @@ export const bootstrapExtension = () => {
         },
       });
 
-      const userLastReading = signal<UserLastReading>(undefined);
+      // Three-state reading-history gate (loading | empty | ready). Derived
+      // from `userId` (known synchronously at startup) so a returning user
+      // never flashes the Welcome page while their history loads.
+      const { readingHistory, dispose: disposeReadingHistory } =
+        createReadingHistoryState({
+          userId: context.login.userId,
+          refetchTrigger: context.app.currentReadingState,
+          getUserLastReading: (userId, range) =>
+            todayReadingHistoryService.getUserLastReading(userId, range),
+        });
 
       /**
        * Fetches the community reading for one exact period. The presentation
@@ -167,33 +180,6 @@ export const bootstrapExtension = () => {
           .trim();
       };
 
-      const cleanupUserLastReading = effect(() => {
-        const userId = context.login.userId.value;
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        context.app.currentReadingState.value;
-
-        if (!userId) {
-          userLastReading.value = undefined;
-          return;
-        }
-
-        const now = Math.floor(Date.now() / 1000);
-        const oneYearAgo = now - 365 * 24 * 60 * 60;
-
-        void todayReadingHistoryService
-          .getUserLastReading(userId, { from: oneYearAgo, to: now })
-          .then((result) => {
-            userLastReading.value = result;
-          })
-          .catch((err) => {
-            console.error(
-              "[Debug] [today-screen] getUserLastReading failed for userId",
-              userId,
-              err
-            );
-          });
-      });
-
       const lastTranslationBooks = signal<{
         books: Array<{
           id: string;
@@ -247,7 +233,10 @@ export const bootstrapExtension = () => {
           return (
             <Today
               config={{
+                ColorParser,
                 MaterialIcon,
+                Skeleton,
+                SkeletonContainer,
                 language,
                 username: context.login.profile.value?.name,
                 userId: context.login.userId.value ?? undefined,
@@ -263,7 +252,7 @@ export const bootstrapExtension = () => {
                       ),
                     }
                   : undefined,
-                userLastReading,
+                readingHistory,
                 getCommunityReading,
                 translate: (key, options) =>
                   t(key, {
@@ -287,7 +276,8 @@ export const bootstrapExtension = () => {
                   // decoration (same pattern as the reader's search panel).
                   if (verse !== undefined) {
                     tab.readingState.decorateVerses(bookId, chapter, verse, {
-                      className: "sb-verse-decoration-search-result",
+                      className: "sb-verse-decoration-diminish",
+                      containerClassName: "sb-chapter-decoration-diminish",
                       removeAfterMs: 3000,
                     });
                   }
@@ -370,22 +360,24 @@ export const bootstrapExtension = () => {
 
       // Today opens automatically on a cold load (no explicit `?today=`
       // param) as long as the URL isn't already pointing somewhere specific —
-      // a book/chapter/verse deep link, or a shared-session invite
-      // (`?sessionId=`). An explicit `?today=` param always wins either way,
-      // matching the deep-linkable modals in SeedBibleStateManager.
+      // a book/chapter deep link (the canonical
+      // `/{lang}/{translationId}/{book}/{chapter}` path), or a shared-session
+      // invite (`?sessionId=`). An explicit `?today=` param always wins
+      // either way, matching the deep-linkable modals in
+      // SeedBibleStateManager.
       //
       // This must read `initialUrl` (the URL as first loaded), not the live
       // `currentUrl`: TabsManager echoes the reader's current book/chapter
       // back into the URL as soon as it initializes (so links are always
       // shareable), which happens well before extensions finish loading. By
-      // the time this code runs, a cold load with no book/chapter param would
-      // already show `?book=GEN&chapter=1` in the live URL — indistinguishable
-      // from a real deep link unless we look at the URL from before that echo.
-      const initialUrlParams = context.navigation.initialUrl.searchParams;
+      // the time this code runs, a cold load with no reading position would
+      // already show the default book/chapter in the live URL's path —
+      // indistinguishable from a real deep link unless we look at the URL
+      // from before that echo.
+      const initialUrl = context.navigation.initialUrl;
+      const initialUrlParams = initialUrl.searchParams;
       const hasCompetingDeepLink =
-        initialUrlParams.has("book") ||
-        initialUrlParams.has("chapter") ||
-        initialUrlParams.has("verse") ||
+        hasReadingUrlPosition(initialUrl, context.navigation.basePath) ||
         initialUrlParams.has("sessionId");
       const requestedToday = initialUrlParams.get("today");
       const isTodayOpen = signal(
@@ -431,7 +423,7 @@ export const bootstrapExtension = () => {
       };
 
       yield () => {
-        cleanupUserLastReading();
+        disposeReadingHistory();
         cleanupTranslationBooks();
         cleanupTranslationId();
         cleanupTodayUrlSync();

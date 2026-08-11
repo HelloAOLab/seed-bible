@@ -1,12 +1,19 @@
 import "./PlaylistItemInput.css";
-import { useState } from "preact/hooks";
+import { useImperativeHandle, useRef, useState } from "preact/hooks";
+import { forwardRef } from "preact/compat";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
-import { ScriptureItemInput } from "../ScriptureItemInput/ScriptureItemInput";
-import { TextItemInput } from "../TextItemInput/TextItemInput";
-import { LinkItemInput } from "../LinkItemInput";
+import {
+  ScriptureItemInput,
+  type ScriptureItemInputHandle,
+} from "../ScriptureItemInput/ScriptureItemInput";
+import {
+  TextItemInput,
+  type TextItemInputHandle,
+} from "../TextItemInput/TextItemInput";
+import { LinkItemInput, type LinkItemInputHandle } from "../LinkItemInput";
 
 interface PlaylistItemInputProps {
   books: TranslationBook[];
@@ -44,6 +51,20 @@ const MODE_BY_TYPE: Record<PlaylistItemData["type"], AddMode> = {
   link: "link",
 };
 
+/** Imperative handle so a parent can check for / commit an in-progress draft. */
+export interface PlaylistItemInputHandle {
+  /** Whether the currently-mounted mode has an in-progress, un-added draft. */
+  isDirty: () => boolean;
+  /** Submits the currently-mounted mode's input, same as clicking "Add".
+   * Returns whether it actually added an item. */
+  commit: () => boolean | Promise<boolean>;
+}
+
+type LeafHandle =
+  | ScriptureItemInputHandle
+  | TextItemInputHandle
+  | LinkItemInputHandle;
+
 /**
  * Input section for adding an item to the currently-edited playlist, or editing
  * an existing one when `editItem` is set. Owns only the selected mode; each mode
@@ -52,7 +73,10 @@ const MODE_BY_TYPE: Record<PlaylistItemData["type"], AddMode> = {
  * unmounts the previous one, so its state resets naturally. When editing, the
  * parent should remount this via `key` so the sub-input seeds fresh values.
  */
-export function PlaylistItemInput(props: PlaylistItemInputProps) {
+export const PlaylistItemInput = forwardRef<
+  PlaylistItemInputHandle,
+  PlaylistItemInputProps
+>(function PlaylistItemInput(props, ref) {
   const { books, onAdd, editItem, editScriptureText, onUpdate, onCancelEdit } =
     props;
   const { t } = useI18n();
@@ -62,6 +86,19 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
   const [mode, setMode] = useState<AddMode>(
     editItem ? MODE_BY_TYPE[editItem.type] : "scripture"
   );
+  // Only one mode is ever mounted at a time, so a single ref always points at
+  // whichever leaf input is currently rendered. A callback ref (rather than
+  // passing the ref object directly) sidesteps each leaf's stricter,
+  // component-specific `Ref<...Handle>` prop type.
+  const leafRef = useRef<LeafHandle | null>(null);
+  const assignLeafRef = (instance: LeafHandle | null) => {
+    leafRef.current = instance;
+  };
+
+  useImperativeHandle(ref, () => ({
+    isDirty: () => leafRef.current?.isDirty() ?? false,
+    commit: () => leafRef.current?.commit() ?? false,
+  }));
 
   const submit = isEditing && onUpdate ? onUpdate : onAdd;
   const submitLabel = isEditing
@@ -95,6 +132,7 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
 
       {mode === "scripture" ? (
         <ScriptureItemInput
+          ref={assignLeafRef}
           books={books}
           onAdd={submit}
           initialValue={editScriptureText}
@@ -102,12 +140,14 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
         />
       ) : mode === "text" ? (
         <TextItemInput
+          ref={assignLeafRef}
           onAdd={submit}
           initialItem={editItem?.type === "html" ? editItem : undefined}
           submitLabel={submitLabel}
         />
       ) : (
         <LinkItemInput
+          ref={assignLeafRef}
           onAdd={submit}
           initialItem={editItem?.type === "link" ? editItem : undefined}
           submitLabel={submitLabel}
@@ -125,4 +165,4 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
       ) : null}
     </DiscoverSection>
   );
-}
+});
