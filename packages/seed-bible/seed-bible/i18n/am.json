@@ -434,5 +434,10 @@
   "remove": "አስወግድ",
   "signed-out-message": "ዘግተው ወጥተዋል። እባክዎ እንደገና ይግቡ።",
   "account-suspended-message": "መለያዎ ታግዷል።",
-  "loading-chapter": "ምዕራፍ በመጫን ላይ…"
+  "loading-chapter": "ምዕራፍ በመጫን ላይ…",
+  "book-not-found-title": "መጽሐፍ አልተገኘም",
+  "book-not-found-message": "ያንን መጽሐፍ በ {{translationName}} ውስጥ ማግኘት አልቻልንም።",
+  "book-not-found-action": "ወደ {{bookName}} {{chapterNumber}} ይሂዱ",
+  "loading-picture-editor": "የስዕል አርታዒውን በመጫን ላይ…",
+  "swipe-to-see-more": "ተጨማሪ ለማየት ያንሸራትቱ"
 }

@@ -434,5 +434,10 @@
   "remove": "消除",
   "signed-out-message": "您已登出，请重新登录。",
   "account-suspended-message": "您的账户已被暂停。",
-  "loading-chapter": "正在加载章节…"
+  "loading-chapter": "正在加载章节…",
+  "book-not-found-title": "未找到书籍",
+  "book-not-found-message": "我们在{{translationName}}中找不到那本书。",
+  "book-not-found-action": "前往{{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "正在加载图片编辑器……",
+  "swipe-to-see-more": "滑动查看更多"
 }

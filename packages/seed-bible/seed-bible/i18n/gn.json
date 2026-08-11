@@ -434,5 +434,10 @@
   "remove": "Pe'a",
   "signed-out-message": "Nde reñefirma va'ekue. Eike jey.",
   "account-suspended-message": "Nde cuenta oñesuspendema.",
-  "loading-chapter": "Ojekargávo capítulo..."
+  "loading-chapter": "Ojekargávo capítulo...",
+  "book-not-found-title": "Aranduka ndojejuhúi",
+  "book-not-found-message": "Ndorojuhúi upe aranduka {{translationName}} -pe.",
+  "book-not-found-action": "Eike {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Ojekargávo ta'ãngamýi mohendaha...",
+  "swipe-to-see-more": "Emboguejy ehechave hag̃ua"
 }

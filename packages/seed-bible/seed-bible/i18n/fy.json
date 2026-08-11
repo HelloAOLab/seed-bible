@@ -434,5 +434,10 @@
   "remove": "Ferwiderje",
   "signed-out-message": "Jo binne útlogd. Meld jo asjebleaft opnij oan.",
   "account-suspended-message": "Dyn akkount is skorst.",
-  "loading-chapter": "Haadstik laden…"
+  "loading-chapter": "Haadstik laden…",
+  "book-not-found-title": "Boek net fûn",
+  "book-not-found-message": "Wy koenen dat boek net fine yn {{translationName}} .",
+  "book-not-found-action": "Gean nei {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "De ôfbyldingseditor laden…",
+  "swipe-to-see-more": "Swipe om mear te sjen"
 }

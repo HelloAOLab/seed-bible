@@ -434,5 +434,10 @@
   "remove": "Alisin",
   "signed-out-message": "Naka-sign out ka na. Mag-sign in muli.",
   "account-suspended-message": "Nasuspinde na ang iyong account.",
-  "loading-chapter": "Naglo-load ng kabanata…"
+  "loading-chapter": "Naglo-load ng kabanata…",
+  "book-not-found-title": "Hindi natagpuan ang libro",
+  "book-not-found-message": "Hindi namin mahanap ang aklat na iyon sa {{translationName}} .",
+  "book-not-found-action": "Pumunta sa {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Nilo-load ang editor ng larawan…",
+  "swipe-to-see-more": "Mag-swipe para makakita ng higit pa"
 }
