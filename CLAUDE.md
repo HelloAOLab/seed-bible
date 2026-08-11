@@ -88,11 +88,12 @@ Separate packages that `export default` a function which, when called, calls `re
 Unit tests in `test/unit/` mirror the package structure; integration tests live in `test/integration/`. Test real-world behavior, not implementation details:
 
 - Assert on observable behavior (rendered output, returned data, persisted state, emitted events), not internals like whether a helper was called.
-- Mock only at the real boundary — `OsManager`/CasualOS SDK calls — not sibling managers or internal helpers.
-- Don't test the framework. Trust Preact and `@preact/signals`; test what your code does with that state, not that a signal updates or a component re-renders.
+- Mock only at the real boundary — `OsManager`/CasualOS SDK calls — not sibling managers or internal helpers; mocking deeper just verifies your mocks agree with each other.
+- Don't test the framework — that a signal updates or a component re-renders is Preact's job; test what your code does with that state.
+- Cover error paths and edge cases, not just the happy path — a failed record call, an empty result, a signed-out user are where the real bugs hide.
 - Keep tests independent: no shared mutable fixtures, no dependence on run order.
 - Avoid fixed-duration sleeps for async work (a debounce, a fetch) — poll a condition with a timeout instead, as the `waitForCondition` helpers in several manager tests already do. A zero-delay flush of the microtask queue is fine; a hardcoded "wait 250ms and hope" is not.
-- Regression tests should fail on the pre-fix code — revert the fix locally, confirm red, then restore it. A regression test that passes either way isn't testing anything.
+- Regression tests must fail on the pre-fix code — revert the fix locally, confirm red, then restore it. A regression test that passes either way isn't testing anything.
 
 ### Build System
 
@@ -114,7 +115,7 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **Comments**: Only add comments when the _why_ or _how_ isn't obvious from the code itself (a non-obvious constraint, a workaround, a subtle invariant). Don't restate what the code already shows, and don't narrate the change or task that produced it (that belongs in the commit message or PR description, not the file).
 
-**Duplication**: Before writing new logic, do a quick check for an existing helper in the same manager/component or obvious nearby domain (grep for likely names, skim the relevant manager). Reuse or extend a close match instead of writing a parallel version. This is a light check, not an audit — a couple minutes of looking is enough; if nothing turns up, write the new code rather than searching further.
+**Duplication**: Before writing new logic, do a quick grep for an existing helper in the same manager/component or obvious nearby domain — reuse or extend a close match rather than writing a parallel version. Keep the check light (a grep or two, not an audit); if nothing turns up, write the new code. Once the same logic lands in a third file, extract a shared helper — copies drift, and fixes reach some but not others. But only extract real shared concepts: code that's merely similar is better left duplicated than forced into one abstraction.
 
 **Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.
 
