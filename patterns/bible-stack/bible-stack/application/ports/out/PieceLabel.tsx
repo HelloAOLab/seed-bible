@@ -8,6 +8,7 @@ import type {
   ShowSequencePacing,
 } from "../../../domain/models/label";
 import type { StackLabelableBiblePiece } from "../../../domain/models/pieceLifecycle";
+import type { StackPieceDataMap } from "../pieces";
 import type { ActivityContainer, ShowIndicatorsCommand } from "./PieceActivity";
 
 export type SpawnLabel = (params: {
@@ -97,4 +98,15 @@ export interface LabelFeedbackAdapterPort {
     translucencyMode: LabelTranslucencyMode;
     pacing: ShowSequencePacing;
   }): Promise<void>;
+}
+
+export interface PieceDataRepositoryPort {
+  getPieceData<K extends keyof StackPieceDataMap>(
+    piece: Piece<K>
+  ): StackPieceDataMap[K] | undefined;
+
+  getDataById: <K extends keyof StackPieceDataMap>(params: {
+    type: K;
+    id: StackPieceDataMap[K]["id"];
+  }) => StackPieceDataMap[K] | undefined;
 }

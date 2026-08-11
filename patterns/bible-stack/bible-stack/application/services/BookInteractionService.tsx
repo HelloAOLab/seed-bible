@@ -31,6 +31,8 @@ import type { BookInteractionConfigProviderPort } from "../ports/out/BookInterac
 import { BookInteractionDelays } from "../ports/out/BookInteraction";
 import type { PaintPort } from "../ports/in/Paint";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
+import { HighlightStates } from "../../domain/models/highlight";
+import { SelectionStates } from "../../domain/models/selection";
 
 interface ServiceParams {
   bookDataRepositoryPort: BookDataRepositoryPort;
@@ -253,7 +255,7 @@ export class BookInteractionService implements BookInteractionServicePort {
                   if (bookToUnhighlight) {
                     this.#pieceHighlightServicePort.tryUnhighlightPiece({
                       piece: bookToUnhighlight,
-                      source: HighlightRequestSources.UserFocus,
+                      source: HighlightRequestSources.Transition,
                       pacing: HighlightPacings.Regular,
                     });
                   }
@@ -268,17 +270,19 @@ export class BookInteractionService implements BookInteractionServicePort {
                       .filter((currentSectionData) => {
                         return (
                           currentSectionData.type !== "StackSectionBook" &&
-                          currentSectionData != sectionData &&
+                          currentSectionData.id != sectionData?.id &&
                           currentSectionData.isActive &&
-                          currentSectionData.isSplitIntoBooks
+                          currentSectionData.selectionState ===
+                            SelectionStates.Selected
                         );
                       }) as StackSectionData[])
                   : (testamentData.childrenData.filter((currentSectionData) => {
                       return (
                         currentSectionData.type !== "StackSectionBook" &&
-                        currentSectionData != sectionData &&
+                        currentSectionData.id != sectionData?.id &&
                         currentSectionData.isActive &&
-                        currentSectionData.isSplitIntoBooks
+                        currentSectionData.selectionState ===
+                          SelectionStates.Selected
                       );
                     }) as StackSectionData[]);
                 const unhighlightDelay =
@@ -295,27 +299,28 @@ export class BookInteractionService implements BookInteractionServicePort {
                       currentBookData.isActive &&
                       currentBookData.getParentId("stackBibleId") &&
                       currentBookData.piece &&
-                      currentBookData.highlightState === "Highlighted" &&
-                      currentBookData.labelTranslucency ===
+                      currentBookData.highlightState ===
+                        HighlightStates.Highlighted &&
+                      currentBookData.highlightIntensity ===
                         LabelTranslucencyModes.Solid
                     );
                   })
                   .map((currentBookData) => {
                     return currentBookData.piece;
                   });
-                for (const bookToDecreateHighlight of booksToDecreaseHighlight) {
-                  if (bookToDecreateHighlight) {
+                for (const bookToDecreaseHighlight of booksToDecreaseHighlight) {
+                  if (bookToDecreaseHighlight) {
                     this.#pieceHighlightServicePort.changeHighlightIntensity({
-                      piece: bookToDecreateHighlight,
+                      piece: bookToDecreaseHighlight,
                       intensity: LabelTranslucencyModes.Faded,
                     });
                     if (
                       !this.#pieceHighlightServicePort.isUnhighlightScheduled(
-                        bookToDecreateHighlight
+                        bookToDecreaseHighlight
                       )
                     ) {
                       this.#pieceHighlightServicePort.tryUnhighlightPiece({
-                        piece: bookToDecreateHighlight,
+                        piece: bookToDecreaseHighlight,
                         source: HighlightRequestSources.UserFocus,
                         pacing: HighlightPacings.Regular,
                         delay: unhighlightDelay,

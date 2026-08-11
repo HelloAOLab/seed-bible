@@ -152,7 +152,7 @@ export class BibleModeService implements BibleModeServicePort {
     if (callUpdateStacks)
       await this.#bibleStackUpdaterPort.update({
         data: bibleData,
-        pacing: "Regular",
+        pacing: "Fast",
       });
 
     let plan = bibleData.getExplodeAnimationPlan();
@@ -184,6 +184,7 @@ export class BibleModeService implements BibleModeServicePort {
           }
           return this.#explodedViewServicePort.explodeSection({
             data: sectionData,
+            pacing: "Fast",
           });
         })
       );
@@ -205,6 +206,7 @@ export class BibleModeService implements BibleModeServicePort {
                 data: sectionData,
                 source: "Unknown",
                 makeTourGuide: false,
+                pacing: "Double",
               });
             }
             break;
@@ -221,6 +223,7 @@ export class BibleModeService implements BibleModeServicePort {
               await this.#testamentSelectionServicePort.select({
                 data: testamentData,
                 source: "Unknown",
+                pacing: "Fast",
               });
             }
             break;

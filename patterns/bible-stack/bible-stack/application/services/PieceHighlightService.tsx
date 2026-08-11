@@ -30,7 +30,10 @@ import {
   HighlightRequestSources,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import type { LabelTranslucencyMode } from "../../domain/models/label";
+import {
+  LabelTranslucencyModes,
+  type LabelTranslucencyMode,
+} from "../../domain/models/label";
 
 interface PieceHighlightServiceParams {
   eventPort: PieceHighlightEventPort;
@@ -117,7 +120,6 @@ export class PieceHighlightService implements PieceHighlighterPort {
     pacing?: HighlightPacing;
   }): Promise<void> {
     const data = this.#pieceDataRepositoryPort.getPieceData(piece);
-
     if (!data) {
       throw new Error(
         "PieceHighlightService: data not found at tryHighlightPiece."
@@ -146,12 +148,18 @@ export class PieceHighlightService implements PieceHighlighterPort {
     if (!transitioned) {
       if (isUnhighlightScheduled) {
         if (data.type === BiblePieces.StackBook) {
-          this.changeHighlightIntensity({ piece, intensity: "Solid", pacing });
+          this.changeHighlightIntensity({
+            piece,
+            intensity: LabelTranslucencyModes.Solid,
+            pacing,
+          });
         }
         this.clearScheduledUnhighlight(piece);
       }
       return;
     }
+
+    data.changeHighlightIntensity(LabelTranslucencyModes.Solid);
 
     this.#highlightedPiecesIds.set(piece.id, piece);
     // TODO: Wire this event to the interaction registry and add this piece to the last interacted of its type
@@ -410,7 +418,7 @@ export class PieceHighlightService implements PieceHighlighterPort {
     const data = this.#pieceDataRepositoryPort.getPieceData(piece);
     const changed = data?.changeHighlightIntensity(intensity);
     if (!changed) return;
-    if (intensity === "Solid") {
+    if (intensity === LabelTranslucencyModes.Solid) {
       this.#pieceHighlightAdapterPort.increaseIntensity(piece, pacing);
     } else {
       this.#pieceHighlightAdapterPort.decreaseIntensity(piece);

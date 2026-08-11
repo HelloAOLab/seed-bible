@@ -6,7 +6,6 @@ import type {
   BiblePiece,
   Piece,
 } from "../models/canvas";
-import type { LabelTranslucencyMode } from "../models/label";
 
 interface BaseDataParams<
   TPieceInfo,
@@ -42,7 +41,6 @@ export abstract class StackBookBaseData<
   #currentSelectedChapterData: StackChapterData | undefined;
   #isInsideTestament: boolean | undefined;
   #previousHighlightedChapterData: StackChapterData | undefined;
-  #labelTranslucency: LabelTranslucencyMode | undefined = undefined;
   #isShowingChapters: boolean = false;
 
   constructor({
@@ -86,16 +84,6 @@ export abstract class StackBookBaseData<
   }
   hideChapters() {
     this.#isShowingChapters = false;
-  }
-
-  get labelTranslucency() {
-    return this.#labelTranslucency;
-  }
-  changeLabelTranslucency(translucency: LabelTranslucencyMode) {
-    this.#labelTranslucency = translucency;
-  }
-  clearLabelTranslucency() {
-    this.#labelTranslucency = undefined;
   }
 
   get currentShape() {
