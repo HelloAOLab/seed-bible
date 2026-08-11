@@ -434,5 +434,10 @@
   "remove": "يزيل",
   "signed-out-message": "تم تسجيل خروجك. يرجى تسجيل الدخول مرة أخرى.",
   "account-suspended-message": "تم تعليق حسابك.",
-  "loading-chapter": "جارٍ تحميل الفصل…"
+  "loading-chapter": "جارٍ تحميل الفصل…",
+  "book-not-found-title": "الكتاب غير موجود",
+  "book-not-found-message": "لم نتمكن من العثور على ذلك الكتاب في {{translationName}} .",
+  "book-not-found-action": "انتقل إلى {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "جارٍ تحميل محرر الصور…",
+  "swipe-to-see-more": "اسحب لرؤية المزيد"
 }

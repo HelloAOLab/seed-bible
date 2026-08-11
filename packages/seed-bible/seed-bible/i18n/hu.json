@@ -434,5 +434,10 @@
   "remove": "Eltávolítás",
   "signed-out-message": "Kijelentkeztél. Kérjük, jelentkezz be újra.",
   "account-suspended-message": "Fiókját felfüggesztettük.",
-  "loading-chapter": "Fejezet betöltése…"
+  "loading-chapter": "Fejezet betöltése…",
+  "book-not-found-title": "A könyv nem található",
+  "book-not-found-message": "Nem találtuk meg a könyvet a {{translationName}} nyelven.",
+  "book-not-found-action": "Ugrás a {{bookName}} {{chapterNumber}} fejezetre",
+  "loading-picture-editor": "A képszerkesztő betöltése…",
+  "swipe-to-see-more": "Húzza el a továbbiak megtekintéséhez"
 }

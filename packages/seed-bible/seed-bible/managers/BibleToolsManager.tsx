@@ -9,8 +9,9 @@ import {
   type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
 import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import { extractContentText } from "../managers/ChapterText";
 import type { BookId } from "../managers/BibleDataManager";
-import { readInjectedConfig } from "../app/appConfig";
+import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
@@ -342,6 +343,9 @@ export interface QuickToolContext {
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
+
+  /** Which surface is asking, for tools whose visibility depends on it. */
+  surface: "quick-toolbar" | "mobile-navigation-bar";
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
@@ -579,8 +583,10 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
   ];
 }
 
-function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
-  return [
+function getDefaultToolbarTools(
+  branding?: BrandingConfig
+): ManagedBibleToolbarTool[] {
+  const tools: ManagedBibleToolbarTool[] = [
     {
       id: "stop-playing",
       priority: -1,
@@ -772,6 +778,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isControllable: false,
     },
   ];
+  return tools.filter(
+    (tool) => !branding?.disabledToolbarTools?.includes(tool.id)
+  );
 }
 
 function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
@@ -1059,20 +1068,7 @@ function formatVerseRanges(verseNumbers: number[]): string {
 
 /** Extracts and normalizes the plain text content of a single selected verse. */
 function extractVerseText(verse: BibleSelectedVerse): string {
-  return verse.verse.content
-    .map((part) => {
-      if (typeof part === "string") return part;
-
-      if (part && typeof part === "object" && "text" in part) {
-        return (part as { text: string }).text;
-      }
-
-      return "";
-    })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .replace(/\s+([,.;:!?’”)\]])/g, "$1")
-    .trim();
+  return extractContentText(verse.verse.content);
 }
 
 /**
@@ -1119,9 +1115,11 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
  * - Getter methods resolve predicates and priorities for the provided context,
  *   then return tools sorted by ascending priority.
  */
-export function createBibleToolsManager(): ToolsManager {
+export function createBibleToolsManager(
+  branding?: BrandingConfig
+): ToolsManager {
   const toolbarTools = signal<ManagedBibleToolbarTool[]>(
-    getDefaultToolbarTools()
+    getDefaultToolbarTools(branding)
   );
   const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
     getDefaultVerseToolbarTools()

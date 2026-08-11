@@ -434,5 +434,10 @@
   "remove": "Αφαιρώ",
   "signed-out-message": "Έχετε αποσυνδεθεί. Συνδεθείτε ξανά.",
   "account-suspended-message": "Ο λογαριασμός σας έχει ανασταλεί.",
-  "loading-chapter": "Φόρτωση κεφαλαίου…"
+  "loading-chapter": "Φόρτωση κεφαλαίου…",
+  "book-not-found-title": "Το βιβλίο δεν βρέθηκε",
+  "book-not-found-message": "Δεν μπορέσαμε να βρούμε αυτό το βιβλίο στο {{translationName}} .",
+  "book-not-found-action": "Μετάβαση στο {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Φόρτωση του προγράμματος επεξεργασίας εικόνων…",
+  "swipe-to-see-more": "Σύρετε για να δείτε περισσότερα"
 }

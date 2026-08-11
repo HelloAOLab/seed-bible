@@ -434,5 +434,10 @@
   "remove": "Elimina",
   "signed-out-message": "Has tancat la sessió. Torna a iniciar-la.",
   "account-suspended-message": "El vostre compte ha estat suspès.",
-  "loading-chapter": "S'està carregant el capítol…"
+  "loading-chapter": "S'està carregant el capítol…",
+  "book-not-found-title": "Llibre no trobat",
+  "book-not-found-message": "No hem pogut trobar aquest llibre a {{translationName}} .",
+  "book-not-found-action": "Ves a {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "S'està carregant l'editor d'imatges…",
+  "swipe-to-see-more": "Llisca per veure'n més"
 }

@@ -434,5 +434,10 @@
   "remove": "ລຶບອອກ",
   "signed-out-message": "ທ່ານໄດ້ອອກຈາກລະບົບແລ້ວ. ກະລຸນາເຂົ້າສູ່ລະບົບອີກຄັ້ງ.",
   "account-suspended-message": "ບັນຊີຂອງທ່ານໄດ້ຖືກລະງັບແລ້ວ.",
-  "loading-chapter": "ກຳລັງໂຫຼດບົດ…"
+  "loading-chapter": "ກຳລັງໂຫຼດບົດ…",
+  "book-not-found-title": "ບໍ່ພົບປຶ້ມ",
+  "book-not-found-message": "ພວກເຮົາບໍ່ສາມາດຊອກຫາປຶ້ມຫົວນັ້ນໃນ {{translationName}} ໄດ້.",
+  "book-not-found-action": "ໄປທີ່ {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "ກຳລັງໂຫຼດໂປຣແກຣມແກ້ໄຂຮູບພາບ…",
+  "swipe-to-see-more": "ປັດເພື່ອເບິ່ງເພີ່ມເຕີມ"
 }

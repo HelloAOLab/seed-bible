@@ -9,8 +9,19 @@ import {
 import {
   bibleLanguageToUiLocale,
   uiLocaleForDefaultTranslation,
+  type BibleReadingState,
 } from "../managers/BibleReadingManager";
-import { buildReadingPath } from "../managers/ReadingUrlPath";
+import {
+  buildReadingPath,
+  hasReadingUrlPosition,
+  parseReadingPath,
+} from "../managers/ReadingUrlPath";
+import {
+  META_DESCRIPTION_MAX_GRAPHEMES,
+  buildChapterExcerpt,
+  countGraphemes,
+  truncateForMeta,
+} from "../managers/ChapterText";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
@@ -31,6 +42,10 @@ import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
 import { createTabs } from "../managers/TabsManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
+import {
+  writeStoredTabsState,
+  type PersistedTab,
+} from "../managers/TabsPersistence";
 import {
   generateThemeCssVariables,
   createTheme,
@@ -71,6 +86,7 @@ import {
   isSessionHost,
   type BibleReadingSession,
   type SessionsManager,
+  type SessionStartPosition,
 } from "../managers/SessionsManager";
 import {
   createAnnotationsManager,
@@ -139,6 +155,14 @@ export const MOBILE_BREAKPOINT = 480;
  * components/Tabs/Tabs.css by hand.
  */
 export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
+
+/**
+ * Fallback `<meta name="description">` for pages with no chapter to quote —
+ * the site root, and the three cases where a chapter never arrives (an upstream
+ * failure, a book absent from the translation, or the SSR load timeout).
+ */
+const APP_META_DESCRIPTION =
+  "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -211,7 +235,10 @@ export interface AppState {
   selectPane: (paneId: string) => void;
   /** Closes any pane filling the reader. */
   closeFullscreenPanes: () => void;
-  /** Creates a shared reading session and opens it in a new tab. */
+  /**
+   * Creates a shared reading session and opens it in a new tab, starting from
+   * the active tab's translation, book and chapter.
+   */
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
@@ -399,6 +426,17 @@ export interface CreateSeedBibleStateOptions {
   offlineStore?: OfflineTranslationStore | null;
 }
 
+/** Where a shared session started from this reading surface should open. */
+function getSessionStartPosition(
+  readingState: BibleReadingState
+): SessionStartPosition {
+  return {
+    initialTranslationId: readingState.translationId.value,
+    initialBookId: readingState.bookId.value,
+    initialChapterNumber: readingState.chapterNumber.value,
+  };
+}
+
 export function createSeedBibleState(
   options: CreateSeedBibleStateOptions = {}
 ): SeedBibleState {
@@ -457,7 +495,7 @@ export function createSeedBibleState(
     navigation,
     login
   );
-  const tools = createBibleToolsManager();
+  const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
   const sessions = createSessionsManager(
@@ -609,8 +647,9 @@ export function createSeedBibleState(
     i18n,
     readingExtensions
   );
-  // Close any fullscreen pane when the book/chapter params change, so
-  // navigating reveals the reader (every navigation path writes these params).
+  // Close any fullscreen pane when the book/chapter in the URL path changes,
+  // so navigating reveals the reader (every navigation path writes this
+  // position into the path — see `commitSelectedTabToUrl` in TabsManager).
   // The first location only sets a baseline, so load-time init doesn't close a
   // pane auto-opened for the same load (e.g. Today via `?today=open`).
   //
@@ -629,13 +668,12 @@ export function createSeedBibleState(
   let lastReadingLocation: string | null = null;
   effect(() => {
     const url = navigation.currentUrl.value;
-    const book = url.searchParams.get("book");
-    const chapter = url.searchParams.get("chapter");
-    if (!book || !chapter) {
+    const parsed = parseReadingPath(url.pathname, navigation.basePath);
+    if (!parsed) {
       return;
     }
 
-    const location = `${book}|${chapter}`;
+    const location = `${parsed.bookId ?? parsed.rawBookSegment}|${parsed.chapter}`;
     const previous = lastReadingLocation;
     lastReadingLocation = location;
 
@@ -656,9 +694,7 @@ export function createSeedBibleState(
     initialUrlParams.get("today") !== null
       ? initialUrlParams.get("today") === "open"
       : !(
-          initialUrlParams.has("book") ||
-          initialUrlParams.has("chapter") ||
-          initialUrlParams.has("verse") ||
+          hasReadingUrlPosition(navigation.initialUrl, navigation.basePath) ||
           initialUrlParams.has("sessionId")
         );
 
@@ -902,6 +938,66 @@ export function createSeedBibleState(
     }
   });
 
+  // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
+  // selected tab, the layout preset, and the slot arrangement) to localStorage
+  // so TabsManager/TabsLayoutManager can restore it on the next refresh or
+  // revisit. Session-backed tabs are skipped — they rejoin via `?sessionId=`
+  // (see setupInitialSession). Client-only: there is no localStorage in SSR.
+  if (typeof window !== "undefined") {
+    let lastSerialized: string | null = null;
+
+    const buildPersistedTabs = (): PersistedTab[] =>
+      tabs.tabs.value
+        .filter((tab) => !tab.sharedSession)
+        .map((tab) => {
+          const persisted: PersistedTab = {
+            id: tab.id,
+            translationId: tab.readingState.translationId.value,
+            bookId: tab.readingState.bookId.value,
+            chapterNumber: tab.readingState.chapterNumber.value,
+          };
+          if (tab.slotOnly) {
+            persisted.slotOnly = true;
+          }
+          return persisted;
+        });
+
+    effect(() => {
+      const persistedTabs = buildPersistedTabs();
+      const persistableIds = new Set(persistedTabs.map((tab) => tab.id));
+
+      const currentSlots = tabsLayout.slots.value;
+      const slotTabIds = currentSlots.map((slot) =>
+        slot.tab && persistableIds.has(slot.tab.id) ? slot.tab.id : null
+      );
+      const selectedSlotIndex = currentSlots.findIndex(
+        (slot) => slot.id === tabsLayout.selectedSlotId.value
+      );
+
+      const currentSelectedTabId = tabs.selectedTabId.value;
+      const selectedTabId = persistableIds.has(currentSelectedTabId)
+        ? currentSelectedTabId
+        : (persistedTabs[0]?.id ?? "");
+
+      const nextState = {
+        tabs: persistedTabs,
+        selectedTabId,
+        layout: tabsLayout.layout.value,
+        slotTabIds,
+        selectedSlotIndex: selectedSlotIndex >= 0 ? selectedSlotIndex : null,
+      };
+
+      // Position signals change often during navigation; skip writes that would
+      // not change what is stored.
+      const serialized = JSON.stringify(nextState);
+      if (serialized === lastSerialized) {
+        return;
+      }
+      lastSerialized = serialized;
+      writeStoredTabsState(nextState);
+    });
+  }
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -928,29 +1024,59 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    const getDescription = () => {
-      if (!selectedTab.value) {
-        return t("seed-bible", {
-          defaultValue: "Seed Bible",
-        });
-      }
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+    if (!chapter) {
+      // Truncated like every other branch: this key is translatable, and a
+      // translation is free to be longer than the English default.
+      return truncateForMeta(
+        t("app-meta-description", { defaultValue: APP_META_DESCRIPTION }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
 
-      const chapter = selectedTab.value.readingState.chapterData.value;
-      if (!chapter) {
-        return t("seed-bible", {
-          defaultValue: "Seed Bible",
-        });
-      }
+    // Used whenever there is no scripture to quote — an empty chapter payload,
+    // or a reference so long it leaves no room for any.
+    const referenceOnly = () =>
+      truncateForMeta(
+        t("seed-bible-description", {
+          bookName: chapter.book.name,
+          chapterNumber: chapter.chapter.number,
+          defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
 
-      return t("seed-bible-description", {
+    const excerpt = buildChapterExcerpt(
+      chapter.chapter.content,
+      META_DESCRIPTION_MAX_GRAPHEMES
+    );
+    if (!excerpt) {
+      return referenceOnly();
+    }
+
+    const compose = (scripture: string) =>
+      t("chapter-meta-description", {
         bookName: chapter.book.name,
         chapterNumber: chapter.chapter.number,
-        appName: branding?.appName ?? "Seed Bible",
-        defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+        translationName: chapter.translation.shortName,
+        excerpt: scripture,
+        defaultValue:
+          "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
       });
-    };
 
-    return getDescription();
+    // Charge the citation against the budget first, so what gets cut is always
+    // scripture. Truncating only the composed string would instead chop the
+    // citation off the end for any locale whose template puts it last.
+    const scriptureBudget =
+      META_DESCRIPTION_MAX_GRAPHEMES - countGraphemes(compose(""));
+    const fitted =
+      scriptureBudget > 0 ? truncateForMeta(excerpt, scriptureBudget) : "";
+    if (!fitted) {
+      return referenceOnly();
+    }
+
+    // Backstop for a template whose own literal text overruns the budget.
+    return truncateForMeta(compose(fitted), META_DESCRIPTION_MAX_GRAPHEMES);
   });
 
   const siteName = computed(() => {
@@ -1301,7 +1427,13 @@ export function createSeedBibleState(
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
-    const session = await sessions.createSession();
+    // Start the session where the user is reading, not at the default book.
+    const activeReadingState = selectedTab.value?.readingState ?? null;
+    const session = await sessions.createSession(
+      activeReadingState
+        ? getSessionStartPosition(activeReadingState)
+        : undefined
+    );
     if (typeof posthog !== "undefined" && posthog) {
       posthog.capture("create_session", {
         sessionId: session.id,

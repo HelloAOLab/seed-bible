@@ -1,5 +1,4 @@
 import { BaseEventManager } from "../../../../../packages/seed-bible-utils/application/services/BaseEventManager";
-import type { EventCallback } from "../../../../../packages/seed-bible-utils/application/services/BaseEventManager";
 
 // ─── test map ────────────────────────────────────────────────────────────────
 
