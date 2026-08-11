@@ -157,6 +157,7 @@ export function AnimateStrictTag<
   options: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
     fromValue?: B["tags"][K];
     toValue: B["tags"][K];
+    ignoreCancellation?: boolean;
   }
 ): Promise<void>;
 // Overload 2: animate several tags at once — animateTag(bot, options), where
@@ -169,6 +170,7 @@ export function AnimateStrictTag<
   options: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
     fromValue?: Partial<B["tags"]>;
     toValue: Partial<B["tags"]>;
+    ignoreCancellation?: boolean;
   }
 ): Promise<void>;
 export function AnimateStrictTag<
@@ -182,19 +184,38 @@ export function AnimateStrictTag<
     | (Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
         fromValue?: Partial<B["tags"]>;
         toValue: Partial<B["tags"]>;
+        ignoreCancellation?: boolean;
       }),
   options?: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
     fromValue?: B["tags"][K];
     toValue: B["tags"][K];
+    ignoreCancellation?: boolean;
   }
 ): Promise<void> {
   // The native animateTag is poorly typed; the strict overloads above are the
   // contract callers see, so the implementation passes through.
-  return animateTag(
+  const optionsObject =
+    typeof tagOrOptions === "object" ? tagOrOptions : options;
+  const ignoreCancellation = optionsObject?.ignoreCancellation ?? false;
+
+  const promise = animateTag(
     bot,
     tagOrOptions as string | AnimateTagFunctionOptions,
     options
-  );
+  ) as Promise<void>;
+
+  if (!ignoreCancellation) return promise;
+
+  // Opt-in: treat a canceled animation (an unhighlight or a newer update
+  // superseding an in-flight one) as a normal outcome instead of a rejection,
+  // so it never aborts a caller that expects to coexist with such interruptions.
+  return promise.catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("The animation was canceled")) {
+      return;
+    }
+    throw error;
+  });
 }
 
 export const GetCamRotationFocusPoint: GetCamRotationFocusPointType = ({

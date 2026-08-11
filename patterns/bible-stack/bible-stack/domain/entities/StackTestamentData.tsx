@@ -96,12 +96,13 @@ export class StackTestamentData extends StackPieceData<
     return super.resetHierarchy(clearPiece);
   }
   tryExplodeSplitSections(): boolean {
-    return this.childrenData.some((section) => {
-      if (section instanceof StackSectionData) {
-        return section.tryExplode();
+    let anyExploded = false;
+    for (const section of this.childrenData) {
+      if (section instanceof StackSectionData && section.tryExplode()) {
+        anyExploded = true;
       }
-      return false;
-    });
+    }
+    return anyExploded;
   }
   isSelectable(): boolean {
     return !!this.isActive && this.selectionState === SelectionStates.Idle;

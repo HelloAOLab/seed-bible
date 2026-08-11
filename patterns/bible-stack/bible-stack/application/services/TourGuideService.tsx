@@ -18,12 +18,14 @@ export class TourGuideService implements TourGuideServicePort {
     return !!this.#ongoingTourGuideSectionData;
   }
 
-  beginTourGuide(data: StackSectionData) {
+  async beginTourGuide(data: StackSectionData): Promise<void> {
     if (!this.isThereAnOngoingTourGuide()) {
       this.#ongoingTourGuideSectionData = data;
-      this.#tourGuieAdapterPort.startTourGuideSequence(data).finally(() => {
+      try {
+        await this.#tourGuieAdapterPort.startTourGuideSequence(data);
+      } finally {
         this.#endTourGuide();
-      });
+      }
     }
   }
 

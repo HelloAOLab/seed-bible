@@ -132,9 +132,11 @@ export class StackBibleData extends StackData<StackTestamentData> {
     );
   }
   tryExplodeSplitSections(): boolean {
-    return this.childrenData.some((testament) => {
-      return testament.tryExplodeSplitSections();
-    });
+    let anyExploded = false;
+    for (const testament of this.childrenData) {
+      if (testament.tryExplodeSplitSections()) anyExploded = true;
+    }
+    return anyExploded;
   }
   getExplodeAnimationPlan(): ExplodeStackCommand[] {
     const plan: ExplodeStackCommand[] = [];

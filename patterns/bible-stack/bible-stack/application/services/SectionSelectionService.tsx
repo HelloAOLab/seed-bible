@@ -15,6 +15,7 @@ import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { BookSpawnerPort } from "../ports/in/PieceSpawn";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TourGuideServicePort } from "../ports/in/TourGuide";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;
@@ -28,6 +29,7 @@ interface ServiceParams {
   sectionSelectionEventPort: SectionSelectionEventPort;
   bookSpawnerPort: BookSpawnerPort;
   tourGuideServicePort: TourGuideServicePort;
+  pieceHierarchyServicePort: PieceHierarchyServicePort;
 }
 
 export class SectionSelectionService implements SectionSelectionServicePort {
@@ -42,6 +44,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
   #sectionSelectionEventPort: ServiceParams["sectionSelectionEventPort"];
   #bookSpawnerPort: ServiceParams["bookSpawnerPort"];
   #tourGuideServicePort: ServiceParams["tourGuideServicePort"];
+  #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #selectionNameRegistry: Set<string> = new Set();
 
   constructor({
@@ -56,6 +59,7 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     sectionSelectionEventPort,
     bookSpawnerPort,
     tourGuideServicePort,
+    pieceHierarchyServicePort,
   }: ServiceParams) {
     this.#labelDataStorePort = labelDataStorePort;
     this.#pieceHighlighterPort = pieceHighlighterPort;
@@ -68,9 +72,14 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     this.#sectionSelectionEventPort = sectionSelectionEventPort;
     this.#bookSpawnerPort = bookSpawnerPort;
     this.#tourGuideServicePort = tourGuideServicePort;
+    this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
   }
 
   async #prepareSelection(data: StackSectionData): Promise<void> {
+    const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
+      data.parentDataIds ?? {}
+    );
+
     if (!data.piece) {
       throw new Error(
         "SectionSelectionService: data.piece not defined at prepareSelection."
@@ -82,7 +91,11 @@ export class SectionSelectionService implements SectionSelectionServicePort {
 
     // Implode the previously-exploded section before exploding this one.
     const previous = this.#explodedViewServicePort.currentExplodedSection;
-    if (previous && previous.id !== data.id) {
+    if (
+      previous &&
+      previous.id !== data.id &&
+      bibleData?.currentStackVizState === "Regular"
+    ) {
       previous.implode();
       const previousStack = (previous.parentDataIds
         ? previous.getOldestAncestor()
@@ -150,10 +163,12 @@ export class SectionSelectionService implements SectionSelectionServicePort {
 
   async select({
     data,
+    makeTourGuide = true,
   }: {
     data: StackSectionData;
     source: PieceSelectionSource;
     pacing?: StackPresenceNavigationPacing;
+    makeTourGuide?: boolean;
   }): Promise<void> {
     const name = data.getPieceInfoProperty("name");
     const isFirstSelection = !this.hasSectionEverBeenSelected(name);
@@ -178,7 +193,8 @@ export class SectionSelectionService implements SectionSelectionServicePort {
 
     this.#finalizeSelection(data);
 
-    if (isFirstSelection) this.#tourGuideServicePort.beginTourGuide(data);
+    if (isFirstSelection && makeTourGuide)
+      await this.#tourGuideServicePort.beginTourGuide(data);
   }
 
   async deselect(data: StackSectionData): Promise<void> {

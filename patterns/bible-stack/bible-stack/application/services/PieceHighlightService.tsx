@@ -369,8 +369,14 @@ export class PieceHighlightService implements PieceHighlighterPort {
     if (data.highlightState === HighlightStates.Idle) {
       return;
     }
+    const previousState = data.highlightState;
     data.changeHighlightState(HighlightEvents.RequestUnhighlight);
-    this.#pieceHighlightAdapterPort.interruptSequence(piece);
+    if (
+      previousState === HighlightStates.Highlighting ||
+      previousState === HighlightStates.Unhighlighting
+    ) {
+      this.#pieceHighlightAdapterPort.interruptSequence(piece);
+    }
     await Promise.all([
       this.#pieceHighlightAdapterPort.unhighlight(piece, pacing),
       this.#pieceLabelServicePort.hideLabel(piece, pacing),

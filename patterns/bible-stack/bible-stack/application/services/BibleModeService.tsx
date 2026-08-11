@@ -125,23 +125,25 @@ export class BibleModeService implements BibleModeServicePort {
   }
 
   async #toggleMode(bibleData: StackBibleData) {
-    switch (bibleData.currentStackVizState) {
-      case BibleVisualizationStates.Regular:
-        {
-          bibleData.changeVizState(BibleVisualizationStates.Expanded);
-          await this.#explodeAllSections(bibleData);
-        }
-        break;
-      case BibleVisualizationStates.Expanded:
-        {
-          bibleData.changeVizState(BibleVisualizationStates.Regular);
-          bibleData.implodeAllSections();
-        }
-        break;
-    }
-    await this.#bibleStackUpdaterPort.update({
-      data: bibleData,
-      pacing: "Regular",
+    this.#sequenceStateServicePort.executeAsSequence(async () => {
+      switch (bibleData.currentStackVizState) {
+        case BibleVisualizationStates.Regular:
+          {
+            bibleData.changeVizState(BibleVisualizationStates.Expanded);
+            await this.#explodeAllSections(bibleData);
+          }
+          break;
+        case BibleVisualizationStates.Expanded:
+          {
+            bibleData.changeVizState(BibleVisualizationStates.Regular);
+            bibleData.implodeAllSections();
+          }
+          break;
+      }
+      await this.#bibleStackUpdaterPort.update({
+        data: bibleData,
+        pacing: "Regular",
+      });
     });
   }
 
@@ -153,59 +155,79 @@ export class BibleModeService implements BibleModeServicePort {
         pacing: "Regular",
       });
 
-    const plan = bibleData.getExplodeAnimationPlan();
+    let plan = bibleData.getExplodeAnimationPlan();
+    let prevSignature = "";
 
-    for (const command of plan) {
-      const { action, piece } = command;
-      switch (action) {
-        case ExplodeStackActions.ExplodeSection:
-          {
-            const sectionData = this.#pieceDataRepository.getPieceData(
-              piece as Piece<"StackSection">
+    while (plan.length > 0) {
+      const signature = plan
+        .map((command) => `${command.action}:${command.piece.id}`)
+        .join("|");
+      if (signature === prevSignature) break;
+      prevSignature = signature;
+
+      const explodes = plan.filter(
+        (command) => command.action === "ExplodeSection"
+      );
+      const nonExplodes = plan.filter(
+        (command) => command.action !== "ExplodeSection"
+      );
+
+      await Promise.all(
+        explodes.map((command) => {
+          const sectionData = this.#pieceDataRepository.getPieceData(
+            command.piece as Piece<"StackSection">
+          );
+          if (!sectionData) {
+            throw new Error(
+              "BibleModeService: sectionData not found at explodeAllSections"
             );
-            if (!sectionData) {
-              throw new Error(
-                "BibleModeService: sectionData not found at explodeAllSections"
-              );
-            }
-            await this.#explodedViewServicePort.explodeSection({
-              data: sectionData,
-            });
           }
-          break;
-        case ExplodeStackActions.SelectSection:
-          {
-            const sectionData = this.#pieceDataRepository.getPieceData(
-              piece as Piece<"StackSection">
-            );
-            if (!sectionData) {
-              throw new Error(
-                "BibleModeService: sectionData not found at explodeAllSections"
+          return this.#explodedViewServicePort.explodeSection({
+            data: sectionData,
+          });
+        })
+      );
+
+      for (const command of nonExplodes) {
+        const { action, piece } = command;
+        switch (action) {
+          case ExplodeStackActions.SelectSection:
+            {
+              const sectionData = this.#pieceDataRepository.getPieceData(
+                piece as Piece<"StackSection">
               );
+              if (!sectionData) {
+                throw new Error(
+                  "BibleModeService: sectionData not found at explodeAllSections"
+                );
+              }
+              await this.#sectionSelectionServicePort.select({
+                data: sectionData,
+                source: "Unknown",
+                makeTourGuide: false,
+              });
             }
-            await this.#sectionSelectionServicePort.select({
-              data: sectionData,
-              source: "Unknown",
-            });
-          }
-          break;
-        case ExplodeStackActions.SelectTestament:
-          {
-            const testamentData = this.#pieceDataRepository.getPieceData(
-              piece as Piece<"StackTestament">
-            );
-            if (!testamentData) {
-              throw new Error(
-                "BibleModeService: testamentData not found at explodeAllSections"
+            break;
+          case ExplodeStackActions.SelectTestament:
+            {
+              const testamentData = this.#pieceDataRepository.getPieceData(
+                piece as Piece<"StackTestament">
               );
+              if (!testamentData) {
+                throw new Error(
+                  "BibleModeService: testamentData not found at explodeAllSections"
+                );
+              }
+              await this.#testamentSelectionServicePort.select({
+                data: testamentData,
+                source: "Unknown",
+              });
             }
-            await this.#testamentSelectionServicePort.select({
-              data: testamentData,
-              source: "Unknown",
-            });
-          }
-          break;
+            break;
+        }
       }
+
+      plan = bibleData.getExplodeAnimationPlan();
     }
   }
 }

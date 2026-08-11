@@ -54,9 +54,8 @@ export class ExplodedViewService implements ExplodedViewServicePort {
       );
 
     if (
-      testamentData ||
-      (bibleData &&
-        bibleData.currentStackVizState === BibleVisualizationStates.Regular)
+      (testamentData && !bibleData) ||
+      bibleData?.currentStackVizState === BibleVisualizationStates.Regular
     ) {
       if (this.#currentExplodedSection) {
         this.#currentExplodedSection.implode();

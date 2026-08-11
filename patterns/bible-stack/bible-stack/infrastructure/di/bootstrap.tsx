@@ -201,6 +201,7 @@ import { LabelInteractionController } from "../controllers/stack/LabelInteractio
 import { LabelInteractionService } from "../../application/services/InteractionLabelService";
 import { SectionShadowInteractionService } from "../../application/services/SectionShadowInteractionService";
 import type { BibleStackInfrastructureEvents } from "../models/events";
+import { UpperCoverOpacityAdapter } from "../adapters/stacks/UpperCoverOpacityAdapter";
 
 let initialized = false;
 
@@ -718,6 +719,10 @@ export const bootstrapExtension = () => {
     colorLerper: colorLerper,
     piecesConfigProvider: piecesConfigProvider,
   });
+  const upperCoverOpacityAdapter = new UpperCoverOpacityAdapter({
+    bibleDataRepository,
+    coverMapper: stackCoverMapper,
+  });
 
   // 4. Instantiating services
 
@@ -1077,6 +1082,7 @@ export const bootstrapExtension = () => {
     sectionSelectionEventPort: bibleStackEventManager,
     pieceLabelServicePort: pieceLabelService,
     tourGuideServicePort: tourGuideService,
+    pieceHierarchyServicePort: pieceHierarchyService,
   });
 
   const stackPresenceNavigationService = new StackPresenceNavigationService({
@@ -1183,6 +1189,7 @@ export const bootstrapExtension = () => {
   const cameraController = new CameraController({
     viewportPort: viewportService,
     renderOrderAdapter,
+    upperCoverOpacityAdapter,
   });
   const canvasInteractionController = new CanvasInteractionController({
     spatialNavigationPort: spatialNavigationService,
