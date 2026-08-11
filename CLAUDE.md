@@ -85,8 +85,14 @@ Separate packages that `export default` a function which, when called, calls `re
 
 ### Tests (`test/`)
 
-- Unit tests in `test/unit/` mirror the package structure
-- Integration tests in `test/integration/`
+Unit tests in `test/unit/` mirror the package structure; integration tests live in `test/integration/`. Test real-world behavior, not implementation details:
+
+- Assert on observable behavior (rendered output, returned data, persisted state, emitted events), not internals like whether a helper was called.
+- Mock only at the real boundary — `OsManager`/CasualOS SDK calls — not sibling managers or internal helpers.
+- Don't test the framework. Trust Preact and `@preact/signals`; test what your code does with that state, not that a signal updates or a component re-renders.
+- Keep tests independent: no shared mutable fixtures, no dependence on run order.
+- Avoid fixed-duration sleeps for async work (a debounce, a fetch) — poll a condition with a timeout instead, as the `waitForCondition` helpers in several manager tests already do. A zero-delay flush of the microtask queue is fine; a hardcoded "wait 250ms and hope" is not.
+- Regression tests should fail on the pre-fix code — revert the fix locally, confirm red, then restore it. A regression test that passes either way isn't testing anything.
 
 ### Build System
 
@@ -106,7 +112,9 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **TypeScript**: Strict mode is on (`strict`, `noImplicitAny`, `strictNullChecks`). No `any` unless unavoidable.
 
-**Comments**: Keep them terse. Only add a comment when the _why_ isn't obvious from the code itself (a non-obvious constraint, a workaround, a subtle invariant). Don't restate what the code already shows, and don't narrate the change or task that produced it (that belongs in the commit message or PR description, not the file).
+**Comments**: Only add comments when the _why_ or _how_ isn't obvious from the code itself (a non-obvious constraint, a workaround, a subtle invariant). Don't restate what the code already shows, and don't narrate the change or task that produced it (that belongs in the commit message or PR description, not the file).
+
+**Duplication**: Before writing new logic, do a quick check for an existing helper in the same manager/component or obvious nearby domain (grep for likely names, skim the relevant manager). Reuse or extend a close match instead of writing a parallel version. This is a light check, not an audit — a couple minutes of looking is enough; if nothing turns up, write the new code rather than searching further.
 
 **Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.
 
