@@ -4,7 +4,10 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
+import type {
+  ApiRequestOptions,
+  TranslationBookChapter,
+} from "../managers/FreeUseBibleAPI";
 import type {
   BibleReadingState,
   DiscoverResultWithBookData,
@@ -62,6 +65,12 @@ export type AdjacentChapterHook<TData = unknown> = (ctx: {
   currentChapter: TranslationBookChapter;
   direction: "next" | "previous";
   data: Signal<TData>;
+  /**
+   * Forwarded from the `getAdjacentChapter` caller so a hook that does its own
+   * fetching can be cancelled the same way the reading state's fallback
+   * next/previous lookup is.
+   */
+  options?: ApiRequestOptions;
 }) =>
   | AdjacentChapterTarget
   | null

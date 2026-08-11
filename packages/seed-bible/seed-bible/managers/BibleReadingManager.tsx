@@ -1,4 +1,5 @@
 import {
+  type ApiRequestOptions,
   type AvailableTranslations,
   type ChapterFootnote,
   type ChapterVerse,
@@ -373,7 +374,8 @@ export interface BibleReadingState {
    * chapter's next/previous link. `null` when there is nothing to show.
    */
   getAdjacentChapter: (
-    direction: "next" | "previous"
+    direction: "next" | "previous",
+    options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
 
   /** Streaming discovered cross references for the current chapter, grouped by provider. */
@@ -2926,7 +2928,8 @@ export function createBibleReadingState(
    * next/previous link when no extension answers.
    */
   const getAdjacentChapter = async (
-    direction: "next" | "previous"
+    direction: "next" | "previous",
+    options?: ApiRequestOptions
   ): Promise<TranslationBookChapter | null> => {
     const currentChapter = chapterData.value;
     if (!currentChapter) {
@@ -2943,6 +2946,7 @@ export function createBibleReadingState(
         currentChapter,
         direction,
         data: runtime.data,
+        options,
       });
       // `undefined` defers to the next extension; `null` means "no neighbour".
       if (target === null) {
@@ -2952,15 +2956,16 @@ export function createBibleReadingState(
         return await dataManager.getTranslationBookChapter(
           target.translationId ?? currentChapter.translation.id,
           target.bookId,
-          target.chapter
+          target.chapter,
+          options
         );
       }
     }
 
     return (
       (direction === "next"
-        ? await dataManager.getNextChapter(currentChapter)
-        : await dataManager.getPreviousChapter(currentChapter)) ?? null
+        ? await dataManager.getNextChapter(currentChapter, options)
+        : await dataManager.getPreviousChapter(currentChapter, options)) ?? null
     );
   };
 

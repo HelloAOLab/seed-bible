@@ -4,7 +4,10 @@ import {
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
 import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
-import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
+import type {
+  ApiRequestOptions,
+  TranslationBookChapter,
+} from "../managers/FreeUseBibleAPI";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
@@ -259,7 +262,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     // dropped once every caller that can walk away has — so cancellation would
     // be inert on mobile, which is where it matters most.
     const controller = new AbortController();
-    const prefetchOptions = { signal: controller.signal };
+    const prefetchOptions: ApiRequestOptions = { signal: controller.signal };
 
     // `getAdjacentChapter` — not `bibleData.getNextChapter` — because an enabled
     // reading extension can redirect where next/previous actually go. While a
@@ -272,7 +275,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       set: (chapter: TranslationBookChapter | null) => void
     ) => {
       readingState
-        .getAdjacentChapter(direction)
+        .getAdjacentChapter(direction, prefetchOptions)
         .then((result) => {
           if (!cancelled) {
             set(result ?? null);
