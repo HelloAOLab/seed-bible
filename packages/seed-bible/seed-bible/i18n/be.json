@@ -434,5 +434,10 @@
   "remove": "Выдаліць",
   "signed-out-message": "Вы выйшлі з сістэмы. Калі ласка, увайдзіце зноў.",
   "account-suspended-message": "Ваш уліковы запіс быў прыпынены.",
-  "loading-chapter": "Загрузка раздзела…"
+  "loading-chapter": "Загрузка раздзела…",
+  "book-not-found-title": "Кніга не знойдзена",
+  "book-not-found-message": "Нам не ўдалося знайсці гэту кнігу на мове {{translationName}} .",
+  "book-not-found-action": "Перайсці да {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Загрузка рэдактара малюнкаў…",
+  "swipe-to-see-more": "Правядзіце пальцам, каб убачыць больш"
 }

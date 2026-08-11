@@ -434,5 +434,10 @@
   "remove": "Fjerne",
   "signed-out-message": "Du er logget ut. Vennligst logg inn igjen.",
   "account-suspended-message": "Kontoen din er suspendert.",
-  "loading-chapter": "Laster inn kapittel …"
+  "loading-chapter": "Laster inn kapittel …",
+  "book-not-found-title": "Boken ble ikke funnet",
+  "book-not-found-message": "Vi fant ikke den boken i {{translationName}} .",
+  "book-not-found-action": "Gå til {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Laster inn bilderedigereren …",
+  "swipe-to-see-more": "Sveip for å se mer"
 }

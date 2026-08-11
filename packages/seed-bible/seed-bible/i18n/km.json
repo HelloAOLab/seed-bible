@@ -434,5 +434,10 @@
   "remove": "លុបចេញ",
   "signed-out-message": "អ្នកបានចាកចេញហើយ។ សូមចូលម្តងទៀត។",
   "account-suspended-message": "គណនីរបស់អ្នកត្រូវបានផ្អាក។",
-  "loading-chapter": "កំពុងផ្ទុកជំពូក…"
+  "loading-chapter": "កំពុងផ្ទុកជំពូក…",
+  "book-not-found-title": "រកមិនឃើញសៀវភៅ",
+  "book-not-found-message": "យើងរកមិនឃើញសៀវភៅនោះនៅក្នុង {{translationName}} ទេ។",
+  "book-not-found-action": "ចូលទៅកាន់ {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "កំពុងផ្ទុកកម្មវិធីនិពន្ធរូបភាព...",
+  "swipe-to-see-more": "អូសដើម្បីមើលបន្ថែម"
 }

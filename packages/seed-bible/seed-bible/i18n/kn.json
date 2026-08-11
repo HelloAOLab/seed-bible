@@ -434,5 +434,10 @@
   "remove": "ತೆಗೆದುಹಾಕಿ",
   "signed-out-message": "ನೀವು ಸೈನ್ ಔಟ್ ಆಗಿದ್ದೀರಿ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.",
   "account-suspended-message": "ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಅಮಾನತುಗೊಳಿಸಲಾಗಿದೆ.",
-  "loading-chapter": "ಅಧ್ಯಾಯವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…"
+  "loading-chapter": "ಅಧ್ಯಾಯವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…",
+  "book-not-found-title": "ಪುಸ್ತಕ ಕಂಡುಬಂದಿಲ್ಲ.",
+  "book-not-found-message": "ನಮಗೆ ಆ ಪುಸ್ತಕ {{translationName}} ನಲ್ಲಿ ಸಿಗಲಿಲ್ಲ.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} ಗೆ ಹೋಗಿ",
+  "loading-picture-editor": "ಚಿತ್ರ ಸಂಪಾದಕವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
+  "swipe-to-see-more": "ಇನ್ನಷ್ಟು ನೋಡಲು ಸ್ವೈಪ್ ಮಾಡಿ"
 }

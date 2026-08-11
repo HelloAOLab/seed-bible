@@ -434,5 +434,10 @@
   "remove": "દૂર કરો",
   "signed-out-message": "તમને સાઇન આઉટ કરવામાં આવ્યા છે. કૃપા કરીને ફરીથી સાઇન ઇન કરો.",
   "account-suspended-message": "તમારું એકાઉન્ટ સસ્પેન્ડ કરવામાં આવ્યું છે.",
-  "loading-chapter": "પ્રકરણ લોડ કરી રહ્યું છે..."
+  "loading-chapter": "પ્રકરણ લોડ કરી રહ્યું છે...",
+  "book-not-found-title": "પુસ્તક મળ્યું નથી",
+  "book-not-found-message": "અમને તે પુસ્તક {{translationName}} માં મળ્યું નથી.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} પર જાઓ.",
+  "loading-picture-editor": "ચિત્ર સંપાદક લોડ કરી રહ્યું છે…",
+  "swipe-to-see-more": "વધુ જોવા માટે સ્વાઇપ કરો"
 }

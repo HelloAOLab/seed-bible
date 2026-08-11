@@ -434,5 +434,10 @@
   "remove": "తొలగించండి",
   "signed-out-message": "మీరు లాగ్ అవుట్ అయ్యారు. దయచేసి మళ్ళీ లాగ్ ఇన్ చేయండి.",
   "account-suspended-message": "మీ ఖాతా నిలిపివేయబడింది.",
-  "loading-chapter": "అధ్యాయం లోడ్ అవుతోంది…"
+  "loading-chapter": "అధ్యాయం లోడ్ అవుతోంది…",
+  "book-not-found-title": "పుస్తకం దొరకలేదు",
+  "book-not-found-message": "మేము ఆ పుస్తకాన్ని {{translationName}} లో కనుగొనలేకపోయాము.",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} కు వెళ్ళండి",
+  "loading-picture-editor": "పిక్చర్ ఎడిటర్ లోడ్ అవుతోంది…",
+  "swipe-to-see-more": "మరిన్ని చూడటానికి స్వైప్ చేయండి"
 }

@@ -434,5 +434,10 @@
   "remove": "Susa",
   "signed-out-message": "Usuphumile ngemvume. Sicela ungene ngemvume futhi.",
   "account-suspended-message": "I-akhawunti yakho imisiwe.",
-  "loading-chapter": "Ilayisha isahluko…"
+  "loading-chapter": "Ilayisha isahluko…",
+  "book-not-found-title": "Incwadi ayitholakalanga",
+  "book-not-found-message": "Asikwazanga ukuthola leyo ncwadi ku- {{translationName}} .",
+  "book-not-found-action": "Iya ku- {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Ilayisha umhleli wesithombe…",
+  "swipe-to-see-more": "Swayipha ukuze ubone okwengeziwe"
 }

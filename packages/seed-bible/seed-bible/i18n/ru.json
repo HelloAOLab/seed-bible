@@ -434,5 +434,10 @@
   "remove": "Удалять",
   "signed-out-message": "Вы вышли из системы. Пожалуйста, войдите снова.",
   "account-suspended-message": "Ваш аккаунт заблокирован.",
-  "loading-chapter": "Загрузка главы…"
+  "loading-chapter": "Загрузка главы…",
+  "book-not-found-title": "Книга не найдена",
+  "book-not-found-message": "Мы не смогли найти эту книгу в {{translationName}} .",
+  "book-not-found-action": "Перейти к {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Загрузка редактора изображений…",
+  "swipe-to-see-more": "Пролистайте, чтобы увидеть больше"
 }
