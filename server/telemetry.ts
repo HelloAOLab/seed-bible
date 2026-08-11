@@ -45,12 +45,14 @@ import {
   BatchSpanProcessor,
   ConsoleSpanExporter,
   SimpleSpanProcessor,
+  type SpanExporter,
   type SpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import {
   MeterProvider,
   PeriodicExportingMetricReader,
+  type PushMetricExporter,
 } from "@opentelemetry/sdk-metrics";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
@@ -103,6 +105,12 @@ const APP_ATTR = {
 export interface Telemetry {
   /** True when an OTLP endpoint was configured and providers were registered. */
   readonly enabled: boolean;
+  /**
+   * Exports everything buffered so far without shutting anything down. Spans
+   * are batched and metrics are pushed on an interval, so this is what makes
+   * either observable on demand. Safe to call when disabled.
+   */
+  forceFlush(): Promise<void>;
   /** Flushes and shuts down both providers. Safe to call when disabled. */
   shutdown(): Promise<void>;
 }
@@ -115,6 +123,15 @@ export interface InitTelemetryOptions {
   allowedBranches?: ReadonlySet<string>;
   /** Reported as a resource attribute, for grouping deployments. */
   rootBranch?: string;
+  /**
+   * Sends telemetry somewhere other than an OTLP endpoint. Supplying this also
+   * switches telemetry on, so tests can exercise the real provider/exporter
+   * wiring against in-process exporters instead of only the disabled fast path.
+   */
+  exporters?: {
+    traces: SpanExporter;
+    metrics: PushMetricExporter;
+  };
 }
 
 interface Instruments {
@@ -140,6 +157,7 @@ let branchAllowlist: ReadonlySet<string> = new Set();
 
 const DISABLED: Telemetry = {
   enabled: false,
+  async forceFlush() {},
   async shutdown() {},
 };
 
@@ -160,11 +178,12 @@ function isTruthyEnv(value: string | undefined): boolean {
 export function initTelemetry(options: InitTelemetryOptions = {}): Telemetry {
   branchAllowlist = options.allowedBranches ?? new Set();
 
+  const injected = options.exporters;
   const endpoint =
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT ??
     process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT;
 
-  if (!endpoint || isTruthyEnv(process.env.OTEL_SDK_DISABLED)) {
+  if ((!endpoint && !injected) || isTruthyEnv(process.env.OTEL_SDK_DISABLED)) {
     enabled = false;
     return DISABLED;
   }
@@ -181,7 +200,7 @@ export function initTelemetry(options: InitTelemetryOptions = {}): Telemetry {
   );
 
   const spanProcessors: SpanProcessor[] = [
-    new BatchSpanProcessor(new OTLPTraceExporter()),
+    new BatchSpanProcessor(injected?.traces ?? new OTLPTraceExporter()),
   ];
   // Local debugging aid: print spans to stdout as well, so span shape can be
   // checked without standing up a collector.
@@ -201,7 +220,7 @@ export function initTelemetry(options: InitTelemetryOptions = {}): Telemetry {
     resource,
     readers: [
       new PeriodicExportingMetricReader({
-        exporter: new OTLPMetricExporter(),
+        exporter: injected?.metrics ?? new OTLPMetricExporter(),
         ...(Number.isFinite(exportInterval) && exportInterval > 0
           ? { exportIntervalMillis: exportInterval }
           : {}),
@@ -216,12 +235,28 @@ export function initTelemetry(options: InitTelemetryOptions = {}): Telemetry {
 
   return {
     enabled: true,
+    async forceFlush() {
+      await Promise.allSettled([
+        tracerProvider.forceFlush(),
+        meterProvider.forceFlush(),
+      ]);
+    },
     async shutdown() {
       enabled = false;
+      tracer = null;
+      instruments = null;
       await Promise.allSettled([
         tracerProvider.shutdown(),
         meterProvider.shutdown(),
       ]);
+      // Unregister what register() installed, so shutdown is a true inverse of
+      // init. The OpenTelemetry API ignores a second attempt to set a global
+      // provider, so without this a later initTelemetry() would silently keep
+      // using the dead providers instead of the new ones.
+      trace.disable();
+      metrics.disable();
+      propagation.disable();
+      context.disable();
     },
   };
 }
@@ -536,6 +571,10 @@ export function expressSpanMiddleware(
     const route = routeLabel(pathname);
     const start = performance.now();
 
+    // Not awaited — the middleware must return once `next()` has been called.
+    // The catch is required: a downstream middleware that throws synchronously
+    // instead of calling `next(err)` would otherwise surface as an unhandled
+    // promise rejection rather than a logged error.
     void withSpan(
       `${method} ${route}`,
       {
@@ -570,7 +609,9 @@ export function expressSpanMiddleware(
           branch: defaultBranch,
         });
       }
-    );
+    ).catch((err: unknown) => {
+      console.error("Request span failed:", err);
+    });
   };
 }
 

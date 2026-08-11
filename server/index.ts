@@ -40,6 +40,7 @@ import {
 } from "node:http";
 import { pathToFileURL } from "node:url";
 import { pipeline, Readable } from "node:stream";
+import { pipeline as streamPipeline } from "node:stream/promises";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { createGzip } from "node:zlib";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
@@ -150,11 +151,30 @@ function acceptsGzip(headers: IncomingHttpHeaders): boolean {
  * latency on nearly every page. `close` is listened for as well as `finish` so
  * an aborted connection still settles this rather than leaking a span.
  */
-function responseFinished(res: ServerResponse): Promise<void> {
-  if (res.writableFinished) return Promise.resolve();
+function responseFinished(
+  req: IncomingMessage,
+  res: ServerResponse
+): Promise<void> {
+  const socket = res.socket;
+  if (
+    res.writableFinished ||
+    res.closed ||
+    res.destroyed ||
+    socket?.destroyed === true
+  ) {
+    return Promise.resolve();
+  }
   return new Promise((resolve) => {
-    res.once("finish", () => resolve());
-    res.once("close", () => resolve());
+    const done = (): void => resolve();
+    res.once("finish", done);
+    res.once("close", done);
+    // Bun is the reason for the next two. When a client disconnects mid-
+    // transfer it emits nothing at all on the response — no "close", and
+    // `res.closed`/`res.destroyed` stay false/undefined — while the request
+    // aborts and the socket is destroyed. Waiting only on the response would
+    // hang forever there, leaking the span and losing the request entirely.
+    req.once("aborted", done);
+    socket?.once("close", done);
   });
 }
 
@@ -465,73 +485,98 @@ async function proxyAsset(
 
   const upstreamUrl = `${ASSET_HOST}${pathAndQuery}`;
   const proxyStart = performance.now();
-  let upstream: Response;
-  try {
-    upstream = await withSpan(
-      "asset.proxy",
-      { kind: SpanKind.CLIENT, attributes: { "url.full": upstreamUrl } },
-      async (span) => {
-        const response = await fetch(upstreamUrl, {
+
+  // The span stays open across the whole exchange — upstream fetch *and* body
+  // transfer. Ending it once the headers arrived would report every asset as
+  // instant no matter how large the file or how slow the client, and would let
+  // a mid-stream failure land after the span had already closed.
+  await withSpan(
+    "asset.proxy",
+    { kind: SpanKind.CLIENT, attributes: { "url.full": upstreamUrl } },
+    async (span) => {
+      let upstream: Response;
+      try {
+        upstream = await fetch(upstreamUrl, {
           method: "GET",
           headers: forwardHeaders,
           redirect: "manual",
         });
-        span.setAttribute("http.response.status_code", response.status);
-        return response;
-      }
-    );
-  } catch (err) {
-    console.error(`Asset proxy failed for ${pathAndQuery}:`, err);
-    recordAssetProxy(proxyStart, 502);
-    res.writeHead(502, { "content-type": "text/plain" });
-    res.end("Bad gateway");
-    return;
-  }
-  recordAssetProxy(proxyStart, upstream.status);
-
-  const headers: Record<string, string> = {};
-  upstream.headers.forEach((value, key) => {
-    switch (key.toLowerCase()) {
-      case "content-encoding":
-      case "content-length":
-      case "transfer-encoding":
-      case "connection":
+      } catch (err) {
+        console.error(`Asset proxy failed for ${pathAndQuery}:`, err);
+        recordError(span, err);
+        recordAssetProxy(proxyStart, 502);
+        res.writeHead(502, { "content-type": "text/plain" });
+        res.end("Bad gateway");
         return;
-      default:
-        headers[key] = value;
-    }
-  });
+      }
+      span.setAttribute("http.response.status_code", upstream.status);
 
-  // Only gzip a full 200 response — a 206 (range) or 304 (not modified) has no
-  // body worth compressing, and re-encoding a byte range would corrupt it.
-  // This also assumes `fetch` has fully decoded any upstream content-coding
-  // (it does, transparently) — if the asset host ever served a coding undici
-  // leaves encoded, this would gzip an already-encoded body and corrupt it.
-  const shouldGzip =
-    upstream.status === 200 &&
-    !!upstream.body &&
-    COMPRESSIBLE_CONTENT_TYPE_RE.test(headers["content-type"] ?? "") &&
-    acceptsGzip(req.headers);
-  if (shouldGzip) headers["content-encoding"] = "gzip";
-  headers["vary"] = "accept-encoding";
+      const headers: Record<string, string> = {};
+      upstream.headers.forEach((value, key) => {
+        switch (key.toLowerCase()) {
+          case "content-encoding":
+          case "content-length":
+          case "transfer-encoding":
+          case "connection":
+            return;
+          default:
+            headers[key] = value;
+        }
+      });
 
-  res.writeHead(upstream.status, headers);
-  if (upstream.body) {
-    const upstreamBody = Readable.fromWeb(
-      upstream.body as NodeReadableStream<Uint8Array>
-    );
-    if (shouldGzip) {
-      pipeline(upstreamBody, createGzip(), res, (err) =>
-        logStreamFailure(`Asset proxy gzip failed for ${pathAndQuery}`, err)
+      // Only gzip a full 200 response — a 206 (range) or 304 (not modified) has
+      // no body worth compressing, and re-encoding a byte range would corrupt
+      // it. This also assumes `fetch` has fully decoded any upstream
+      // content-coding (it does, transparently) — if the asset host ever served
+      // a coding undici leaves encoded, this would gzip an already-encoded body
+      // and corrupt it.
+      const shouldGzip =
+        upstream.status === 200 &&
+        !!upstream.body &&
+        COMPRESSIBLE_CONTENT_TYPE_RE.test(headers["content-type"] ?? "") &&
+        acceptsGzip(req.headers);
+      if (shouldGzip) headers["content-encoding"] = "gzip";
+      headers["vary"] = "accept-encoding";
+
+      res.writeHead(upstream.status, headers);
+      if (!upstream.body) {
+        res.end();
+        recordAssetProxy(proxyStart, upstream.status);
+        return;
+      }
+
+      const upstreamBody = Readable.fromWeb(
+        upstream.body as NodeReadableStream<Uint8Array>
       );
-    } else {
-      pipeline(upstreamBody, res, (err) =>
-        logStreamFailure(`Asset proxy failed for ${pathAndQuery}`, err)
-      );
+      // Listeners are attached before streaming starts, so a disconnect that
+      // happens immediately is not missed.
+      const disconnected = responseFinished(req, res);
+      const streaming = shouldGzip
+        ? streamPipeline(upstreamBody, createGzip(), res)
+        : streamPipeline(upstreamBody, res);
+      // Under Bun this promise never settles when the client goes away, hence
+      // the race below. Marking it handled here keeps a late rejection from
+      // surfacing as an unhandled one; `race` still sees the original.
+      void streaming.catch(() => {});
+      try {
+        await Promise.race([streaming, disconnected]);
+      } catch (err) {
+        const streamErr = err as NodeJS.ErrnoException;
+        logStreamFailure(
+          `Asset proxy${shouldGzip ? " gzip" : ""} failed for ${pathAndQuery}`,
+          streamErr
+        );
+        // A client that navigates away mid-download aborts the stream. That is
+        // normal browser behaviour, not a server fault, so it should not mark
+        // the span as an error.
+        if (streamErr.code !== "ERR_STREAM_PREMATURE_CLOSE") {
+          recordError(span, err);
+        }
+      } finally {
+        recordAssetProxy(proxyStart, upstream.status);
+      }
     }
-  } else {
-    res.end();
-  }
+  );
 }
 
 /**
@@ -562,10 +607,11 @@ async function handle(
   const routeName = isAssetRequest
     ? "asset-proxy"
     : routeLabel(parsedUrl.pathname);
+  // Resolved once here and handed to dispatch, which needs the same value for
+  // actual routing — deriving it twice risks the two copies drifting apart.
+  const route = resolveRoute(url);
   const metricBranch =
-    isAssetRequest || routeName === "/__invalidate"
-      ? ""
-      : resolveRoute(url).branch;
+    isAssetRequest || routeName === "/__invalidate" ? "" : route.branch;
   const start = performance.now();
 
   await withSpan(
@@ -590,10 +636,10 @@ async function handle(
     },
     async (span) => {
       try {
-        await dispatch(req, res, url, parsedUrl, isAssetRequest, span);
+        await dispatch(req, res, url, parsedUrl, route, isAssetRequest, span);
         // Gzipped and proxied responses stream after dispatch returns; wait for
         // the body to be flushed so the recorded duration covers it.
-        await responseFinished(res);
+        await responseFinished(req, res);
       } finally {
         setResponseStatus(span, res.statusCode);
         recordHttpRequest(start, {
@@ -612,6 +658,7 @@ async function dispatch(
   res: ServerResponse,
   url: string,
   parsedUrl: URL,
+  route: Route,
   isAssetRequest: boolean,
   span: Span
 ): Promise<void> {
@@ -660,7 +707,6 @@ async function dispatch(
     return;
   }
 
-  const route = resolveRoute(url);
   const ssrAllowed = ALLOWED_SSR_BRANCHES.has(route.branch);
 
   try {

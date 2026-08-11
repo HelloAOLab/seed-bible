@@ -2,17 +2,31 @@
 //
 // The suite runs under jsdom globally (see vite.config.ts); this file needs the
 // real Node environment because it exercises server-side telemetry helpers.
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
+import { InMemorySpanExporter } from "@opentelemetry/sdk-trace-base";
+import {
+  AggregationTemporality,
+  InMemoryMetricExporter,
+  type DataPoint,
+  type Histogram as HistogramData,
+} from "@opentelemetry/sdk-metrics";
 import {
   branchLabel,
   expressSpanMiddleware,
   initTelemetry,
   instrumentStore,
+  markRenderDegraded,
+  recordCacheLookup,
+  recordHttpRequest,
+  requestSpanAttributes,
   routeLabel,
   setBranchAllowlistForTesting,
+  setResponseStatus,
   withSpan,
   type MiddlewareRequest,
   type MiddlewareResponse,
+  type Telemetry,
 } from "../../../server/telemetry";
 import type {
   ArtifactStore,
@@ -110,6 +124,231 @@ describe("withSpan when telemetry is disabled", () => {
         throw new Error("boom");
       })
     ).rejects.toThrow("boom");
+  });
+});
+
+// The suite above covers the disabled fast path. These exercise the real
+// wiring — providers, processors, exporters, span and metric creation — against
+// in-process exporters, so a bad provider option or a typo'd attribute key
+// fails in CI rather than the first time telemetry is switched on in prod.
+describe("with telemetry enabled", () => {
+  let spans: InMemorySpanExporter;
+  let metricsExporter: InMemoryMetricExporter;
+  let telemetry: Telemetry;
+
+  beforeEach(() => {
+    spans = new InMemorySpanExporter();
+    metricsExporter = new InMemoryMetricExporter(
+      AggregationTemporality.CUMULATIVE
+    );
+    telemetry = initTelemetry({
+      allowedBranches: new Set(["main"]),
+      rootBranch: "main",
+      exporters: { traces: spans, metrics: metricsExporter },
+    });
+  });
+
+  afterEach(async () => {
+    await telemetry.shutdown();
+  });
+
+  it("registers providers and reports itself enabled", () => {
+    expect(telemetry.enabled).toBe(true);
+  });
+
+  async function finishedSpans() {
+    await telemetry.forceFlush();
+    return spans.getFinishedSpans();
+  }
+
+  it("creates a real span with the given name and attributes", async () => {
+    await withSpan(
+      "GET /b/:branch/:buildId",
+      {
+        kind: SpanKind.SERVER,
+        attributes: requestSpanAttributes({
+          method: "GET",
+          pathname: "/b/main/build-1",
+          route: "/b/:branch/:buildId",
+          httpVersion: "1.1",
+          host: "seedbible.org",
+          clientAddress: "203.0.113.7",
+          userAgent: "test-agent",
+        }),
+      },
+      async (span) => {
+        setResponseStatus(span, 200);
+      }
+    );
+
+    const [span] = await finishedSpans();
+    expect(span?.name).toBe("GET /b/:branch/:buildId");
+    expect(span?.kind).toBe(SpanKind.SERVER);
+    expect(span?.attributes).toMatchObject({
+      "http.request.method": "GET",
+      "http.route": "/b/:branch/:buildId",
+      "url.path": "/b/main/build-1",
+      "url.scheme": "http",
+      "network.protocol.version": "1.1",
+      "server.address": "seedbible.org",
+      "client.address": "203.0.113.7",
+      "user_agent.original": "test-agent",
+      "http.response.status_code": 200,
+    });
+  });
+
+  it("nests child spans under the active request span", async () => {
+    await withSpan("GET /", { kind: SpanKind.SERVER }, async () => {
+      await withSpan("ssr.render", {}, async () => {});
+    });
+
+    const finished = await finishedSpans();
+    const parent = finished.find((s) => s.name === "GET /");
+    const child = finished.find((s) => s.name === "ssr.render");
+    // Context propagation across `await` is the thing most likely to silently
+    // break; without it every span would come out as its own root.
+    expect(child?.parentSpanContext?.spanId).toBe(parent?.spanContext().spanId);
+    expect(child?.spanContext().traceId).toBe(parent?.spanContext().traceId);
+  });
+
+  it("records a thrown error on the span and marks it failed", async () => {
+    await expect(
+      withSpan("ssr.render", {}, async () => {
+        throw new Error("render exploded");
+      })
+    ).rejects.toThrow("render exploded");
+
+    const [span] = await finishedSpans();
+    expect(span?.status.code).toBe(SpanStatusCode.ERROR);
+    expect(span?.attributes["error.type"]).toBe("Error");
+    expect(span?.events.map((e) => e.name)).toContain("exception");
+  });
+
+  it("flags a degraded render on the surrounding request span", async () => {
+    await withSpan("GET /", { kind: SpanKind.SERVER }, async () => {
+      // Mirrors renderAndRespond's fallback: render() threw, we serve the
+      // un-rendered shell with a 200 anyway.
+      markRenderDegraded();
+    });
+
+    const [span] = await finishedSpans();
+    expect(span?.attributes["seedbible.ssr.degraded"]).toBe(true);
+  });
+
+  it("marks a 5xx response as an errored span", async () => {
+    await withSpan("GET /", { kind: SpanKind.SERVER }, async (span) => {
+      setResponseStatus(span, 500);
+    });
+
+    const [span] = await finishedSpans();
+    expect(span?.status.code).toBe(SpanStatusCode.ERROR);
+  });
+
+  it("continues an upstream trace from a traceparent header", async () => {
+    const traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+    const { extractContext } = await import("../../../server/telemetry");
+
+    await withSpan(
+      "GET /",
+      {
+        kind: SpanKind.SERVER,
+        parent: extractContext({
+          traceparent: `00-${traceId}-00f067aa0ba902b7-01`,
+        }),
+      },
+      async () => {}
+    );
+
+    const [span] = await finishedSpans();
+    expect(span?.spanContext().traceId).toBe(traceId);
+    expect(span?.parentSpanContext?.spanId).toBe("00f067aa0ba902b7");
+  });
+
+  it("records the request duration histogram with clamped branch labels", async () => {
+    recordHttpRequest(performance.now() - 25, {
+      method: "GET",
+      statusCode: 200,
+      route: "/",
+      branch: "main",
+    });
+    recordHttpRequest(performance.now() - 5, {
+      method: "GET",
+      statusCode: 200,
+      route: "/b/:branch/:buildId",
+      branch: "someones-feature-branch",
+    });
+
+    await telemetry.forceFlush();
+    const metrics = metricsExporter
+      .getMetrics()
+      .flatMap((rm) => rm.scopeMetrics)
+      .flatMap((sm) => sm.metrics);
+
+    const duration = metrics.find(
+      (m) => m.descriptor.name === "http.server.request.duration"
+    );
+    expect(duration).toBeDefined();
+    expect(duration?.descriptor.unit).toBe("s");
+
+    const points = (duration?.dataPoints ?? []) as DataPoint<HistogramData>[];
+    const branches = points.map((p) => p.attributes["seedbible.branch"]);
+    expect(branches).toContain("main");
+    // The unknown branch must not appear verbatim — that is the cardinality
+    // guard doing its job on real recorded data, not just in isolation.
+    expect(branches).toContain("other");
+    expect(branches).not.toContain("someones-feature-branch");
+
+    const mainPoint = points.find(
+      (p) => p.attributes["seedbible.branch"] === "main"
+    );
+    expect(mainPoint?.value.count).toBe(1);
+    expect(mainPoint?.value.sum).toBeGreaterThan(0);
+  });
+
+  it("counts cache hits and misses separately", async () => {
+    recordCacheLookup("pointer", true);
+    recordCacheLookup("pointer", true);
+    recordCacheLookup("pointer", false);
+
+    await telemetry.forceFlush();
+    const lookups = metricsExporter
+      .getMetrics()
+      .flatMap((rm) => rm.scopeMetrics)
+      .flatMap((sm) => sm.metrics)
+      .find((m) => m.descriptor.name === "seedbible.cache.lookups");
+
+    const byResult = Object.fromEntries(
+      (lookups?.dataPoints ?? []).map((p) => [
+        `${p.attributes["seedbible.cache"]}:${p.attributes["seedbible.cache.result"]}`,
+        p.value,
+      ])
+    );
+    expect(byResult["pointer:hit"]).toBe(2);
+    expect(byResult["pointer:miss"]).toBe(1);
+  });
+
+  it("traces store reads through instrumentStore", async () => {
+    const store = instrumentStore(
+      {
+        readPointer: async () => ({ buildId: "b1" }),
+        fetchArtifacts: async () => ({
+          serverModulePath: "/tmp/s.mjs",
+          html: "",
+        }),
+        fetchHtml: async () => "",
+      },
+      "s3"
+    );
+
+    await store.readPointer("main");
+
+    const [span] = await finishedSpans();
+    expect(span?.name).toBe("store.readPointer");
+    expect(span?.attributes).toMatchObject({
+      "seedbible.store.operation": "readPointer",
+      "seedbible.branch": "main",
+      "seedbible.store.backend": "s3",
+    });
   });
 });
 
