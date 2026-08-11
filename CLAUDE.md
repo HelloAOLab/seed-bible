@@ -23,17 +23,6 @@ This applies to all prose responses — summaries, explanations, and trade-off d
 
 This project requires **pnpm v10+**. Do not use npm or yarn.
 
-### Dev REPL commands (after `pnpm dev`)
-
-```bash
-.save [name]     Save simulation state to filesystem
-.reload          Hot reload from disk
-.system          Open system portal
-.download        Download .aux file
-run(script)      Execute an AUX script in the simulation
-shout(name, arg) Trigger a shout event
-```
-
 ## Common Commands
 
 ```bash
