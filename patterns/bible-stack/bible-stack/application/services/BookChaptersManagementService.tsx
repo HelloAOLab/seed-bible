@@ -65,6 +65,7 @@ export class BookChaptersManagementService implements BookChaptersManagementServ
         chapterData.attachToBook();
         chapterData.activate();
         chapterData.show();
+        chapterData.becomeHighlightable();
         this.#chaptersManagementAdapterPort.setUpChapter({
           chapter,
           book: bookData.piece,

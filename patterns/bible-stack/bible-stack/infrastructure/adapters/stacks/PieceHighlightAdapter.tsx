@@ -118,6 +118,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
 
     if (piece.type === BiblePieces.StackChapter) {
       const bot = this.#chapterMapperPort.toInfrastructure(piece);
+
       if (!bot) return;
       const chapterData = this.#pieceDataRepositoryPort.getPieceData(piece);
       if (!chapterData) return;

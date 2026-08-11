@@ -601,10 +601,7 @@ export class PieceActivityService implements PieceActivityServicePort {
 
     const ownUserPresence = this.#userPresenceServicePort.getOwnUserPresence();
 
-    if (!ownUserPresence)
-      throw new Error(
-        `PieceActivityService: ownUserPresence not found at updateNotification`
-      );
+    if (!ownUserPresence) return;
 
     const { readingInstanceId: ownUserCurrActivityId } = ownUserPresence;
 
