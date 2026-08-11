@@ -1,4 +1,37 @@
 import { type SeedBibleState } from "seed-bible";
+import { z } from "zod";
+
+const bonfireSessionStartResponseSchema = z.object({
+  session: z.object({
+    session_id: z.string(),
+  }),
+});
+
+const bonfireChatResponseSchema = z.object({
+  session_id: z.string(),
+  message: z.object({
+    id: z.string(),
+    role: z.string(),
+    content: z.string(),
+  }),
+  sources: z.array(z.unknown()).optional(),
+  usage: z
+    .object({
+      input_tokens: z.number(),
+      output_tokens: z.number(),
+      cost_usd: z.number(),
+    })
+    .optional(),
+  quota: z
+    .object({
+      org_limit: z.number(),
+      org_used: z.number(),
+      org_remaining: z.number(),
+      org_used_pct: z.number(),
+      request_interaction_cost: z.number(),
+    })
+    .optional(),
+});
 
 export interface BonfireOptions {
   /** The organization ID for the Bonfire API. */
@@ -58,7 +91,9 @@ export function* registerBonfireChatProvider(
           headers,
         }
       );
-      const data = await response.json();
+      const data = bonfireSessionStartResponseSchema.parse(
+        await response.json()
+      );
       console.log("[Bonfire] Session created", data);
       chatSessionMap.set(chatContext.chatId, data.session.session_id);
     },
@@ -113,7 +148,7 @@ export function* registerBonfireChatProvider(
             org_id: orgId,
             ai_id: aiId,
             session_id: sessionId,
-            stream: false,
+            stream: true,
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
             },
@@ -123,7 +158,7 @@ export function* registerBonfireChatProvider(
         }
       );
 
-      const data = await response.json();
+      const data = bonfireChatResponseSchema.parse(await response.json());
 
       const message = data.message;
 
