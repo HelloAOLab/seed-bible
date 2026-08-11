@@ -404,6 +404,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+
       const rtl = isRtl();
       const hasNext = readingState.hasNext.value;
       const hasPrev = readingState.hasPrevious.value;
@@ -450,6 +454,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       window.clearTimeout(swipeCommitTimer.current);
 
+      // Held until the slide finishes: committing mid-animation swaps the
+      // panels' contents under a moving track, which reads as a jump. Timing
+      // has no bearing on whether Chrome honours the history entry a swipe
+      // creates — see #1401.
       swipeCommitTimer.current = window.setTimeout(() => {
         // The navigation always runs, even if another gesture has since taken
         // the track over: the reader completed the swipe that asked for it.
@@ -518,9 +526,27 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
     };
 
+    // The browser can take a gesture over mid-swipe (a system edge gesture, a
+    // second finger). `touchend` never arrives in that case, so without this
+    // the track stays parked wherever the finger left it and the next
+    // `touchmove` measures from a stale origin.
+    const onTouchCancel = () => {
+      swipeTouchStartX.current = null;
+      swipeTouchStartY.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (track) {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = centreTransform();
+      }
+    };
+
     viewport.addEventListener("touchstart", onTouchStart, { passive: true });
-    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+    viewport.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
     return () => {
       // Retire any commit still in flight: the pending timer would otherwise
@@ -531,6 +557,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
+      viewport.removeEventListener("touchcancel", onTouchCancel);
     };
   }, [isMobile, readingState]);
 
