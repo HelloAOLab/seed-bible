@@ -57,6 +57,24 @@ export interface RenderOptions {
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
 
 /**
+ * Substitutes a literal placeholder for a value, without `String.replace`'s
+ * special handling of `$&`, `` $` ``, `$'`, `$$`, and `$1`-`$99` in the
+ * *replacement* string — which applies even when the search argument is a
+ * plain string, not a `RegExp`. Every value substituted below ultimately
+ * comes from live Bible translation content this project doesn't control
+ * the source of, so a translation containing a literal `$1` (a footnote
+ * referencing a dollar amount, say) would otherwise corrupt that one
+ * substitution silently instead of throwing.
+ */
+function replacePlaceholder(
+  source: string,
+  placeholder: string,
+  value: string
+): string {
+  return source.split(placeholder).join(value);
+}
+
+/**
  * Detects a URL that isn't already the canonical
  * `/{lang}/{translationId}/{bookSlug}/{chapter}` form, for requests that
  * already have an explicit language somewhere — a 4-segment path, or a
@@ -436,12 +454,19 @@ export async function render(
     JSON.stringify(state.bibleData.api.snapshotResponseCache())
   );
 
+  const substitutions: Array<[placeholder: string, value: string]> = [
+    ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+    ["<!-- CONFIG_JSON -->", configJson],
+    ["<!-- SEED_JSON -->", seedJson],
+    ["<!-- APP_HTML -->", appHtml],
+  ];
+
   return {
-    html: options.html
-      .replace("<!-- META -->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
-      .replace("<!-- CONFIG_JSON -->", configJson)
-      .replace("<!-- SEED_JSON -->", seedJson)
-      .replace("<!-- APP_HTML -->", appHtml),
+    html: substitutions.reduce(
+      (html, [placeholder, value]) =>
+        replacePlaceholder(html, placeholder, value),
+      options.html
+    ),
     ...(notFound ? { notFound: true as const } : {}),
   };
 }

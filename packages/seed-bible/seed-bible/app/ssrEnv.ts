@@ -31,10 +31,19 @@ export function isWebKitUserAgent(userAgent: string): boolean {
  * Whether the current browser is WebKit-based. On the server, falls back to
  * `ssrRenderedAsWebKit` — the same check already run once against the
  * request's `User-Agent` header (see `AppConfig.renderedAsWebKit`) — since
- * there is no live `navigator` to read.
+ * there is no real browser `navigator` to read.
+ *
+ * Guards on `document` rather than `navigator`: this app's server runs on
+ * Bun, and Bun ships a global `navigator` object of its own (`{ userAgent:
+ * "Bun/x.y.z", ... }`) on every request, so a `typeof navigator ===
+ * "undefined"` check is always false there — it would silently evaluate
+ * `isWebKitUserAgent("Bun/x.y.z")` (always false) instead of falling back to
+ * the per-request value this function was given. `document` has no such
+ * impostor: Bun (and Node) never define it, and every real browser (and
+ * jsdom, which the test suite runs under) always does.
  */
 export function isWebKit(ssrRenderedAsWebKit: boolean): boolean {
-  return typeof navigator === "undefined"
+  return typeof document === "undefined"
     ? ssrRenderedAsWebKit
     : isWebKitUserAgent(navigator.userAgent);
 }

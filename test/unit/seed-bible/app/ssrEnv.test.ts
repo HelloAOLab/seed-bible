@@ -30,8 +30,22 @@ describe("isWebKit", () => {
     vi.unstubAllGlobals();
   });
 
-  it("falls back to the SSR-derived value when there is no live navigator", () => {
+  it("falls back to the SSR-derived value when there is no document at all", () => {
+    vi.stubGlobal("document", undefined);
     vi.stubGlobal("navigator", undefined);
+    expect(isWebKit(true)).toBe(true);
+    expect(isWebKit(false)).toBe(false);
+  });
+
+  // Regression: this app's server runs on Bun, and Bun ships its own global
+  // `navigator` (`{ userAgent: "Bun/x.y.z" }`) on every request — so a guard
+  // that keys off `navigator` being defined can never detect "we're on the
+  // server" there, and would silently ignore the per-request SSR value in
+  // favor of matching Bun's own fake user agent against the WebKit regexes
+  // (which never matches). `document` has no such impostor.
+  it("falls back to the SSR-derived value under Bun's fake global navigator, even though navigator is defined", () => {
+    vi.stubGlobal("document", undefined);
+    vi.stubGlobal("navigator", { userAgent: "Bun/1.3.11" });
     expect(isWebKit(true)).toBe(true);
     expect(isWebKit(false)).toBe(false);
   });
