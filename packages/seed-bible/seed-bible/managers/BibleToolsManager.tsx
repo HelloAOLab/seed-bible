@@ -11,7 +11,7 @@ import {
 import { buildReadingUrl } from "../managers/ReadingUrlPath";
 import { extractContentText } from "../managers/ChapterText";
 import type { BookId } from "../managers/BibleDataManager";
-import { readInjectedConfig } from "../app/appConfig";
+import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
@@ -583,8 +583,10 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
   ];
 }
 
-function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
-  return [
+function getDefaultToolbarTools(
+  branding?: BrandingConfig
+): ManagedBibleToolbarTool[] {
+  const tools: ManagedBibleToolbarTool[] = [
     {
       id: "stop-playing",
       priority: -1,
@@ -776,6 +778,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isControllable: false,
     },
   ];
+  return tools.filter(
+    (tool) => !branding?.disabledToolbarTools?.includes(tool.id)
+  );
 }
 
 function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
@@ -1061,11 +1066,6 @@ function formatVerseRanges(verseNumbers: number[]): string {
   return start === end ? `${start}` : `${start}-${end}`;
 }
 
-/** Extracts and normalizes the plain text content of a single selected verse. */
-function extractVerseText(verse: BibleSelectedVerse): string {
-  return extractContentText(verse.verse.content);
-}
-
 /**
  * Formats the selected verses from the reading state into a human-readable string.
  * @param readingState The reading state containing the selected verses to format.
@@ -1085,7 +1085,9 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
 
   return groups
     .map((group) => {
-      const text = group.map((verse) => extractVerseText(verse)).join(" ");
+      const text = group
+        .map((verse) => extractContentText(verse.verse.content))
+        .join(" ");
 
       const range = formatVerseRanges(group.map((v) => v.verse.number));
 
@@ -1110,9 +1112,11 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
  * - Getter methods resolve predicates and priorities for the provided context,
  *   then return tools sorted by ascending priority.
  */
-export function createBibleToolsManager(): ToolsManager {
+export function createBibleToolsManager(
+  branding?: BrandingConfig
+): ToolsManager {
   const toolbarTools = signal<ManagedBibleToolbarTool[]>(
-    getDefaultToolbarTools()
+    getDefaultToolbarTools(branding)
   );
   const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
     getDefaultVerseToolbarTools()

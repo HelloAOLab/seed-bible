@@ -448,6 +448,7 @@ export function createSeedBibleState(
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
   });
+  const branding = options.config?.branding;
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
@@ -494,7 +495,7 @@ export function createSeedBibleState(
     navigation,
     login
   );
-  const tools = createBibleToolsManager();
+  const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
   const sessions = createSessionsManager(

@@ -442,5 +442,8 @@
   "chapter-unavailable-description": "We were unable to load the data for this chapter. Please check your internet connection and try again.",
   "reload": "Reload",
   "loading-picture-editor": "Loading the picture editor…",
-  "swipe-to-see-more": "Swipe to see more"
+  "swipe-to-see-more": "Swipe to see more",
+  "show-more-languages": "Show more languages",
+  "translation-book-coverage": "{{included}} of {{total}} books",
+  "showing-languages-count": "Showing {{shown}} of {{total}}"
 }
