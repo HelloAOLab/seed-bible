@@ -517,15 +517,25 @@ export function createAnnotationSyncManager(
     return running;
   };
 
+  /**
+   * Syncs after the pending queue has changed.
+   *
+   * A plain `sync()` joins an in-flight pass, and that pass read the queue
+   * before this change existed — so it would never see the new row. Marking the
+   * pass dirty is what makes it look again, and means awaiting the returned
+   * promise really does cover the new work.
+   */
+  const syncNewWork = (): Promise<void> => {
+    dirty = true;
+    return sync();
+  };
+
   const notifyLocalChange = (): void => {
     void refreshPendingCount();
     if (!isOnline.peek() || !login.userId.peek()) {
       return;
     }
-    // Marks the in-flight pass (if any) as needing to look again, since this
-    // change may have landed after it read the queue.
-    dirty = true;
-    void sync();
+    void syncNewWork();
   };
 
   const dropConflict = (conflictId: string): void => {
@@ -572,7 +582,12 @@ export function createAnnotationSyncManager(
     // Awaited so the choice has actually been carried out by the time this
     // resolves — the modal keeps its buttons disabled until then, and a caller
     // that checks the result isn't racing the push.
-    await sync();
+    //
+    // `syncNewWork`, not `sync`: a pass can still be running (the loop keeps
+    // going through the other rows after raising a conflict, so the prompt can
+    // be answered mid-pass), and that pass read the queue before this row was
+    // unblocked. Without the dirty flag it would finish without ever pushing it.
+    await syncNewWork();
   };
 
   const applyResolution = async (
@@ -613,10 +628,12 @@ export function createAnnotationSyncManager(
         pendingOp: "upsert",
         updatedAtMs: row.updatedAtMs,
       });
+      // Replaces the pending row in place: `conflict.server` carries the same id
+      // as `row`, so this leaves the original entry holding the server's version
+      // with nothing left to push. Deleting it afterwards would remove the very
+      // note this choice exists to preserve.
       await store.put(syncedRow(owner, conflict.server));
       onSynced?.(conflict.server, owner);
-      await store.delete(owner, row.annotationId);
-      onRemoved?.(row.annotationId, owner);
       return;
     }
 

@@ -447,6 +447,22 @@ describe("AnnotationsManager", () => {
       expect(warn).toHaveBeenCalled();
     });
 
+    it("does not prompt to sign in while offline, where it could only fail", async () => {
+      login.userId.value = null;
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = createManager();
+      window.dispatchEvent(new Event("offline"));
+
+      await manager.createNewAnnotation();
+
+      // No store here (jsdom has no IndexedDB), so there is nowhere to put the
+      // note either — say so rather than opening a sign-in that cannot work.
+      expect(login.login).not.toHaveBeenCalled();
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(warn).toHaveBeenCalled();
+      manager.sync.dispose();
+    });
+
     it("no-ops and warns when there is no active tab", async () => {
       tabs = createMockTabsManager(null);
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -929,6 +945,19 @@ describe("AnnotationsManager", () => {
 
       expect(await store.get(LOCAL_OWNER, "draft")).not.toBeNull();
       expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("starts a signed-out draft offline without prompting to sign in", async () => {
+      login.userId.value = null;
+      const manager = createOfflineManager();
+      goOffline();
+
+      await manager.createNewAnnotation();
+
+      // With somewhere local to put it, the note is drafted straight away and
+      // becomes the account's when the user signs in later.
+      expect(login.login).not.toHaveBeenCalled();
+      expect(manager.editingAnnotation.value).not.toBeNull();
     });
 
     it("shows signed-out drafts in the chapter listing", async () => {
