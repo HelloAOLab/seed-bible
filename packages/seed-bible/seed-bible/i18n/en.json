@@ -221,6 +221,8 @@
   "save": "Save",
   "bookmark-verses": "Bookmark",
   "seed-bible-description": "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+  "chapter-meta-description": "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
+  "app-meta-description": "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.",
   "social-title": "Read {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "New folder",
   "chapter-navigation": "Chapter navigation",

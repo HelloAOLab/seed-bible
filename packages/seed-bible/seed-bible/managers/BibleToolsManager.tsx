@@ -9,6 +9,7 @@ import {
   type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
 import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import { extractContentText } from "../managers/ChapterText";
 import type { BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
@@ -1062,20 +1063,7 @@ function formatVerseRanges(verseNumbers: number[]): string {
 
 /** Extracts and normalizes the plain text content of a single selected verse. */
 function extractVerseText(verse: BibleSelectedVerse): string {
-  return verse.verse.content
-    .map((part) => {
-      if (typeof part === "string") return part;
-
-      if (part && typeof part === "object" && "text" in part) {
-        return (part as { text: string }).text;
-      }
-
-      return "";
-    })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .replace(/\s+([,.;:!?’”)\]])/g, "$1")
-    .trim();
+  return extractContentText(verse.verse.content);
 }
 
 /**
