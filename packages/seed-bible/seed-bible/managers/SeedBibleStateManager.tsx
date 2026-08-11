@@ -1069,17 +1069,25 @@ export function createSeedBibleState(
   const RESUME_GRACE_MS = 5000;
   const justResumedFromBackground = signal(false);
   let resumeGraceTimer: ReturnType<typeof setTimeout> | null = null;
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState !== "visible") return;
-      justResumedFromBackground.value = true;
-      if (resumeGraceTimer !== null) {
-        clearTimeout(resumeGraceTimer);
-      }
-      resumeGraceTimer = setTimeout(() => {
-        justResumedFromBackground.value = false;
-        resumeGraceTimer = null;
-      }, RESUME_GRACE_MS);
+  if (typeof document !== "undefined" && !import.meta.env.SSR) {
+    effect(() => {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState !== "visible") return;
+        justResumedFromBackground.value = true;
+        if (resumeGraceTimer !== null) {
+          clearTimeout(resumeGraceTimer);
+        }
+        resumeGraceTimer = setTimeout(() => {
+          justResumedFromBackground.value = false;
+          resumeGraceTimer = null;
+        }, RESUME_GRACE_MS);
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () =>
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
     });
   }
 
