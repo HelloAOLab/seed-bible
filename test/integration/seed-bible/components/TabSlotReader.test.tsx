@@ -303,7 +303,7 @@ function renderTabSlotReader(
 
 function dispatchTouch(
   element: Element,
-  type: "touchstart" | "touchmove" | "touchend",
+  type: "touchstart" | "touchmove" | "touchend" | "touchcancel",
   touchPoints: Array<{ clientX: number; clientY: number }>,
   timeStamp?: number
 ) {
@@ -864,6 +864,145 @@ describe("TabSlotReader integration", () => {
 
       expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
       expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // A swipe is the same navigation as a toolbar chevron press and must reach
+  // the reading state the same way, with no options of its own. Forcing
+  // `replace` here would bypass the coalescing in `emitPositionNavigate` that
+  // keeps a fast skim down to one Back press, and — worse — overwrite the
+  // entry for the chapter the reader is leaving, so Back skips it entirely.
+  it("navigates on swipe exactly as the toolbar chevrons do, without overriding how the URL is written", () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).toHaveBeenCalledWith();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // Committing the navigation mid-animation swaps the panels' contents under a
+  // moving track, which reads as a glaring jump. Nothing about the history
+  // entry depends on the timing (see the commitSwipe comment in TabsLayout), so
+  // the slide is allowed to finish first.
+  it("waits for the slide animation to finish before navigating", () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+      });
+
+      // Part-way through the slide, the reader must not have moved yet.
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(readingState.loadNextChapter).not.toHaveBeenCalled();
+
+      act(() => {
+        vi.advanceTimersByTime(50);
+      });
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // The browser can claim a gesture part-way through (a system edge gesture, a
+  // second finger). `touchend` never arrives, so the track has to be put back
+  // by `touchcancel` or it stays parked where the finger left it.
+  it("recentres the track and navigates nowhere when the browser cancels the gesture", () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+      expect(track).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchcancel", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).not.toHaveBeenCalled();
+      expect(track?.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
     } finally {
       vi.useRealTimers();
     }

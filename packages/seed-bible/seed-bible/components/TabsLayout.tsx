@@ -50,7 +50,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
   const isMobile = state?.app.isMobile.value ?? false;
-  const navigation = state?.navigation;
 
   const swipeViewportRef = useRef<HTMLDivElement | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
@@ -424,8 +423,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
     };
 
-    const readingNavigationOptions = { replace: !!navigation };
-
     /**
      * Finishes a swipe past the threshold: slide to the neighbouring panel,
      * navigate, and recentre only once the new text is on screen. That panel is
@@ -442,12 +439,12 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       track.style.transform = landingTransform;
       readingState.clearSelectedVerses();
 
-      if (navigation) {
-        navigation.push(navigation.currentUrl.peek());
-      }
-
       window.clearTimeout(swipeCommitTimer.current);
 
+      // Held until the slide finishes: committing mid-animation swaps the
+      // panels' contents under a moving track, which reads as a jump. Timing
+      // has no bearing on whether Chrome honours the history entry a swipe
+      // creates — see #1401.
       swipeCommitTimer.current = window.setTimeout(() => {
         // The navigation always runs, even if another gesture has since taken
         // the track over: the reader completed the swipe that asked for it.
@@ -504,13 +501,30 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       if (shouldLoadNext && hasNext) {
         commitSwipe(track, `translateX(${sign * PANEL_PCT * 2}%)`, () =>
-          readingState.loadNextChapter(readingNavigationOptions)
+          readingState.loadNextChapter()
         );
       } else if (shouldLoadPrev && hasPrev) {
         commitSwipe(track, "translateX(0%)", () =>
-          readingState.loadPreviousChapter(readingNavigationOptions)
+          readingState.loadPreviousChapter()
         );
       } else {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = centreTransform();
+      }
+    };
+
+    // The browser can take a gesture over mid-swipe (a system edge gesture, a
+    // second finger). `touchend` never arrives in that case, so without this
+    // the track stays parked wherever the finger left it and the next
+    // `touchmove` measures from a stale origin.
+    const onTouchCancel = () => {
+      swipeTouchStartX.current = null;
+      swipeTouchStartY.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (track) {
         track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = centreTransform();
       }
@@ -519,6 +533,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     viewport.addEventListener("touchstart", onTouchStart, { passive: true });
     viewport.addEventListener("touchmove", onTouchMove, { passive: false });
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+    viewport.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
     return () => {
       // Retire any commit still in flight: the pending timer would otherwise
@@ -529,8 +544,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
+      viewport.removeEventListener("touchcancel", onTouchCancel);
     };
-  }, [isMobile, readingState, navigation]);
+  }, [isMobile, readingState]);
 
   // Keyboard chapter navigation for the selected slot. Left/Right move between
   // chapters (respecting text direction, like the swipe gesture and toolbar
