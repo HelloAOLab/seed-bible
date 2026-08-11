@@ -13,6 +13,7 @@ import {
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
+import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
@@ -939,6 +940,37 @@ describe("createBibleToolsManager", () => {
       const state = createReadingState([]);
 
       expect(formatSelectedVerses(state)).toBe("");
+    });
+  });
+
+  describe("extractVerseContentText", () => {
+    it("joins plain strings and formatted text", () => {
+      expect(
+        extractContentText([
+          "In the beginning",
+          { text: "was the Word", wordsOfJesus: true },
+        ])
+      ).toBe("In the beginning was the Word");
+    });
+
+    it("drops parts that carry no text of their own", () => {
+      expect(
+        extractContentText([
+          "Jesus wept",
+          { noteId: 0 },
+          { lineBreak: true },
+        ] as never)
+      ).toBe("Jesus wept");
+    });
+
+    it("collapses whitespace and tightens spacing before punctuation", () => {
+      expect(extractContentText(["Hello", ",", "world", "."])).toBe(
+        "Hello, world."
+      );
+    });
+
+    it("returns an empty string for empty content", () => {
+      expect(extractContentText([])).toBe("");
     });
   });
 

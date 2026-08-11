@@ -1066,11 +1066,6 @@ function formatVerseRanges(verseNumbers: number[]): string {
   return start === end ? `${start}` : `${start}-${end}`;
 }
 
-/** Extracts and normalizes the plain text content of a single selected verse. */
-function extractVerseText(verse: BibleSelectedVerse): string {
-  return extractContentText(verse.verse.content);
-}
-
 /**
  * Formats the selected verses from the reading state into a human-readable string.
  * @param readingState The reading state containing the selected verses to format.
@@ -1090,7 +1085,9 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
 
   return groups
     .map((group) => {
-      const text = group.map((verse) => extractVerseText(verse)).join(" ");
+      const text = group
+        .map((verse) => extractContentText(verse.verse.content))
+        .join(" ");
 
       const range = formatVerseRanges(group.map((v) => v.verse.number));
 
