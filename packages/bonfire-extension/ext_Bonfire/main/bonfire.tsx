@@ -6,7 +6,7 @@ export interface BonfireOptions {
   /** The AI ID for the Bonfire API. */
   aiId: string;
   /** The API key for the Bonfire API. */
-  apiKey: string;
+  // apiKey: string;
   /** The name of the Bonfire chat provider. */
   name: string;
   /** The URL of the icon for the Bonfire chat provider. */
@@ -22,9 +22,9 @@ export function* registerBonfireChatProvider(
   context: SeedBibleState,
   options: BonfireOptions
 ) {
-  const { orgId, aiId, apiKey, name, iconUrl } = options;
+  const { orgId, aiId, name, iconUrl } = options;
   const headers = {
-    "X-API-Key": apiKey,
+    "Content-Type": "application/json",
   };
 
   // Map of chat IDs to bonfire session IDs
@@ -47,12 +47,13 @@ export function* registerBonfireChatProvider(
     onJoinChat: async (chatContext) => {
       console.log("[Bonfire] Creating session for chat", chatContext.chatId);
       const response = await fetch(
-        "https://api.heybonfire.com/api/v1/sessions",
+        "https://bonfire.seedbible.io/api/v1/session/start",
         {
           method: "POST",
           body: JSON.stringify({
             org_id: orgId,
             ai_id: aiId,
+            metadata: { client: "seed-bible" },
           }),
           headers,
         }
@@ -65,14 +66,17 @@ export function* registerBonfireChatProvider(
       console.log("[Bonfire] Deleting session for chat", chatContext.chatId);
       const sessionId = chatSessionMap.get(chatContext.chatId);
       if (sessionId) {
-        await fetch(`https://api.heybonfire.com/api/v1/sessions/end`, {
+        await fetch(`https://bonfire.seedbible.io/api/v1/session/end`, {
           method: "POST",
           body: JSON.stringify({
             org_id: orgId,
             ai_id: aiId,
             session_id: sessionId,
           }),
-          headers,
+          headers: {
+            ...headers,
+            "Idempotency-Key": crypto.randomUUID(),
+          },
         });
         console.log("[Bonfire] Session deleted");
         chatSessionMap.delete(chatContext.chatId);
@@ -102,10 +106,13 @@ export function* registerBonfireChatProvider(
 
       const readingState = context.app.selectedTab.value?.readingState;
       const response = await fetch(
-        "https://api.heybonfire.com/api/v1/chat/completions",
+        "https://bonfire.seedbible.io/api/v1/session/chat",
         {
           method: "POST",
           body: JSON.stringify({
+            org_id: orgId,
+            ai_id: aiId,
+            session_id: sessionId,
             stream: false,
             input: {
               content: lastMessage?.type === "text" ? lastMessage?.text : "",
@@ -118,7 +125,7 @@ export function* registerBonfireChatProvider(
 
       const data = await response.json();
 
-      const message = data.choices[0].message;
+      const message = data.message;
 
       if (message) {
         return {
