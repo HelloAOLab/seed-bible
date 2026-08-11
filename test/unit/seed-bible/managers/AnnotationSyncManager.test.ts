@@ -417,11 +417,55 @@ describe("AnnotationSyncManager", () => {
         data: { html: "<p>mine</p>" },
       });
 
-      // Theirs survives as the synced copy of the original id.
+      // Theirs survives as the synced copy of the original id. Asserted without
+      // a `??` fallback on purpose: `original?.x ?? theirs.x` passes even when
+      // the row has been deleted, which is exactly how a bug that wiped it here
+      // went unnoticed.
       const original = await store.get(OWNER, "ann-1");
-      expect(original?.annotation?.data.html ?? theirs.data.html).toBe(
-        theirs.data.html
+      expect(original).not.toBeNull();
+      expect(original?.annotation?.data.html).toBe(theirs.data.html);
+      expect(original?.pendingOp).toBeNull();
+    });
+
+    it("keep_both keeps both notes visible, not just the new one", async () => {
+      const { sync, conflictId, theirs } = await raiseEditConflict();
+      serverHas(null);
+
+      await sync.resolveConflict(conflictId, "keep_both");
+
+      const rows = await store.listForChapter(OWNER, "GEN", 1);
+      const bodies = rows
+        .map((row) => row.annotation?.data.html)
+        .sort((a, b) => (a ?? "").localeCompare(b ?? ""));
+
+      expect(bodies).toEqual(["<p>mine</p>", theirs.data.html]);
+    });
+
+    it("tells the UI about the surviving note rather than removing it", async () => {
+      const onRemoved = vi.fn();
+      const onSynced = vi.fn();
+      const base = makeAnnotation("ann-1");
+      const theirs = makeAnnotation("ann-1", {
+        html: "<p>theirs</p>",
+        updatedAtMs: 5_000,
+      });
+      await store.put(
+        pendingUpsert(
+          makeAnnotation("ann-1", { html: "<p>mine</p>", updatedAtMs: 9_000 }),
+          base
+        )
       );
+      serverHas(theirs);
+      const sync = createSync({ onRemoved, onSynced });
+      await sync.sync();
+      const conflictId = sync.conflicts.value[0]!.id;
+      serverHas(null);
+
+      await sync.resolveConflict(conflictId, "keep_both");
+
+      // Reporting it as removed would strip it from the open chapter's view.
+      expect(onRemoved).not.toHaveBeenCalledWith("ann-1", OWNER);
+      expect(onSynced).toHaveBeenCalledWith(theirs, OWNER);
     });
 
     it("keep_mine on a deleted-here conflict carries out the deletion", async () => {
@@ -474,6 +518,51 @@ describe("AnnotationSyncManager", () => {
       await sync.resolveConflict("nope", "keep_mine");
 
       expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("pushes the choice even when answered while its own pass is still running", async () => {
+      // The pass keeps working through the other pending rows after raising a
+      // conflict, so the prompt can be answered mid-pass. That pass read the
+      // queue before the row was unblocked, so joining it is not enough — the
+      // resolution has to make it look again or the note is never pushed.
+      const base = makeAnnotation("conflicted");
+      const theirs = makeAnnotation("conflicted", {
+        html: "<p>theirs</p>",
+        updatedAtMs: 5_000,
+      });
+      const mine = makeAnnotation("conflicted", {
+        html: "<p>mine</p>",
+        updatedAtMs: 9_000,
+      });
+      await store.put(pendingUpsert(mine, base, { updatedAtMs: 1 }));
+      await store.put(
+        pendingUpsert(makeAnnotation("slow"), null, { updatedAtMs: 2 })
+      );
+
+      const sync = createSync();
+      let resolved: Promise<void> | null = null;
+
+      getDataMock.mockImplementation(
+        async (_record: string, address: string) => {
+          if (address === "conflicted") {
+            return { success: true, data: theirs };
+          }
+          // Reached only after the conflict was raised, so the prompt is
+          // answered while this pass is still mid-loop.
+          resolved ??= sync.resolveConflict(
+            sync.conflicts.value[0]!.id,
+            "keep_mine"
+          );
+          return { success: false, errorCode: "data_not_found" };
+        }
+      );
+
+      await sync.sync();
+      await resolved;
+
+      const written = recordDataMock.mock.calls.map((call) => call[1]);
+      expect(written).toContain("conflicted");
+      expect((await store.get(OWNER, "conflicted"))?.pendingOp).toBeNull();
     });
   });
 

@@ -973,15 +973,16 @@ export function createAnnotationsManager(
   const createNewAnnotation = async (): Promise<void> => {
     let userId = login.userId.value;
 
-    // Offer a sign-in, but don't insist on one. Without a local store there is
-    // nowhere else to put the note, so an account is still required; with one,
-    // the note is kept on the device and adopted when the user does sign in.
-    // The prompt is skipped entirely while offline, where it cannot succeed.
-    if (!userId && (!store || sync.isOnline.value)) {
+    // Offer a sign-in, but don't insist on one: with a local store the note is
+    // kept on the device and adopted when the user does sign in. Skipped while
+    // offline, where signing in cannot succeed — including when there is no
+    // local store, since a prompt that can only fail is worse than saying so.
+    if (!userId && sync.isOnline.value) {
       const userInfo = await login.login();
       userId = userInfo?.id ?? null;
     }
 
+    // No account and nowhere local to put it: nothing can be written.
     if (!userId && !store) {
       console.warn("Cannot create an annotation while signed out.");
       return;
