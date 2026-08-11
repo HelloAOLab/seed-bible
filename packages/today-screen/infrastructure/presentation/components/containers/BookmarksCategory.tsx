@@ -3,11 +3,6 @@ import { useBookmarksCategory } from "../../hooks/useBookmarksCategory";
 export interface BookmarkProps {
   text: string;
   handleClick: () => void;
-  // iconName: string,
-  // MaterialIcon: (props: {
-  //     children: string;
-  //     className?: string;
-  // }) => preact.JSX.Element
 }
 
 export type BookmarkData = BookmarkProps & {
