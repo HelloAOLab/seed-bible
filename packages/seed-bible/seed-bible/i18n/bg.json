@@ -434,5 +434,10 @@
   "remove": "Премахване",
   "signed-out-message": "Излезли сте от профила си. Моля, влезте отново.",
   "account-suspended-message": "Вашият акаунт е спрян.",
-  "loading-chapter": "Зареждане на глава…"
+  "loading-chapter": "Зареждане на глава…",
+  "book-not-found-title": "Книгата не е намерена",
+  "book-not-found-message": "Не успяхме да намерим тази книга на {{translationName}} .",
+  "book-not-found-action": "Отидете на {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Зареждане на редактора на изображения…",
+  "swipe-to-see-more": "Плъзнете, за да видите още"
 }

@@ -434,5 +434,10 @@
   "remove": "حذف",
   "signed-out-message": "شما از سیستم خارج شده‌اید. لطفاً دوباره وارد شوید.",
   "account-suspended-message": "حساب کاربری شما به حالت تعلیق درآمده است.",
-  "loading-chapter": "در حال بارگذاری فصل…"
+  "loading-chapter": "در حال بارگذاری فصل…",
+  "book-not-found-title": "کتاب پیدا نشد",
+  "book-not-found-message": "ما نتوانستیم آن کتاب را در {{translationName}} پیدا کنیم.",
+  "book-not-found-action": "به {{bookName}} {{chapterNumber}} بروید",
+  "loading-picture-editor": "در حال بارگذاری ویرایشگر تصویر…",
+  "swipe-to-see-more": "برای دیدن موارد بیشتر، انگشت خود را بکشید"
 }

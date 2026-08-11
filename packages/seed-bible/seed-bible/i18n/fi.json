@@ -434,5 +434,10 @@
   "remove": "Poistaa",
   "signed-out-message": "Sinut on kirjattu ulos. Kirjaudu uudelleen sisään.",
   "account-suspended-message": "Tilisi on jäädytetty.",
-  "loading-chapter": "Lukua ladataan…"
+  "loading-chapter": "Lukua ladataan…",
+  "book-not-found-title": "Kirjaa ei löytynyt",
+  "book-not-found-message": "Emme löytäneet kyseistä kirjaa tiedostonimestä {{translationName}} .",
+  "book-not-found-action": "Siirry kirjan {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Kuvanmuokkausohjelmaa ladataan…",
+  "swipe-to-see-more": "Pyyhkäise nähdäksesi lisää"
 }

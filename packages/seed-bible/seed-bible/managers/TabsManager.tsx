@@ -77,6 +77,14 @@ import type { I18nManager } from "../i18n";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
 import { difference } from "es-toolkit";
+import {
+  normalizeStoredTabsState,
+  readQueryReadingParams,
+  readStoredTabsState,
+  reconcileStoredTabs,
+  type PersistedTab,
+  type QueryReadingParams,
+} from "./TabsPersistence";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -201,6 +209,31 @@ function getInitialHighlightedVerses(url: URL): number[] {
     : typeof value === "number"
       ? [value]
       : [];
+}
+
+/**
+ * Reading parameters the visitor's own URL asked for, used to reconcile a
+ * deep link against the restored tabs. A canonical reading path (e.g.
+ * "/en/AAB/john/3") is the modern form; the legacy `?translation=&book=&chapter=`
+ * query params are still honored for links made before the path scheme.
+ */
+function readInitialReadingParams(
+  url: URL,
+  basePath: string
+): QueryReadingParams {
+  const parsed = parseReadingPath(url.pathname, basePath);
+  if (!parsed) {
+    return readQueryReadingParams(url);
+  }
+  return {
+    translationId: parsed.translationId,
+    // An unresolved book flows through as the raw segment, matching
+    // `getInitialFirstTabBookId`, so the reading state can surface a
+    // not-found instead of silently landing on a default book.
+    bookId: parsed.bookId ?? parsed.rawBookSegment,
+    chapter: parsed.chapter,
+    specified: true,
+  };
 }
 
 export interface InitialTabsOptions {
@@ -348,42 +381,102 @@ export function createTabs(
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
   );
-  const initialTranslationId = getInitialTranslationId(
-    navigation.currentUrl.value,
-    navigation.basePath,
-    i18nManager.defaultLanguage
-  );
-  // Snapshot taken before `commitSelectedTabToUrl` rewrites the address bar
-  // into the canonical path form below — that form always includes a
-  // translationId path segment (even for the app's own default), so
-  // re-parsing the *current* URL later can no longer tell "the visitor's own
-  // link named a translation" apart from "the app defaulted it." Used by the
-  // profile-restore effect to avoid overriding an explicit deep link.
+  // Read from the frozen arrival snapshot rather than the live URL: by the time
+  // the profile loads, `commitSelectedTabToUrl` has already rewritten the
+  // address bar into the canonical path form, which always includes a
+  // translationId path segment (even for the app's own default), so re-parsing
+  // the *current* URL later can no longer tell "the visitor's own link named a
+  // translation" apart from "the app defaulted it." Used by the profile-restore
+  // effect to avoid overriding an explicit deep link.
   const hadExplicitInitialUrlTranslation =
-    parseReadingPath(
-      navigation.currentUrl.value.pathname,
-      navigation.basePath
-    ) !== null ||
-    navigation.currentUrl.value.searchParams.has("translationId") ||
-    navigation.currentUrl.value.searchParams.has("translation");
-  const initialBookId = getInitialFirstTabBookId(
-    navigation.currentUrl.value,
-    navigation.basePath
-  );
-  const initialChapter = getInitialFirstTabChapter(
-    navigation.currentUrl.value,
-    navigation.basePath
-  );
+    parseReadingPath(navigation.initialUrl.pathname, navigation.basePath) !==
+      null ||
+    navigation.initialUrl.searchParams.has("translationId") ||
+    navigation.initialUrl.searchParams.has("translation");
   selfHealNonCanonicalPath(navigation);
 
-  console.log("Creating TabsManager with initial URL parameters:", {
-    initialTranslationId,
-    initialBookId,
-    initialChapter,
-  });
+  // Every startup read below comes from `initialUrl` — the frozen snapshot of the
+  // URL the page was opened with — rather than the live `currentUrl`. They are
+  // the same href at this point, but only the snapshot is guaranteed to stay
+  // that way: `currentUrl` is a signal that the reader's own position-to-URL echo
+  // (and anything else constructed between the navigation manager and here) can
+  // move. Reading one source for all of them also keeps this consistent with the
+  // reconcile below, which needs the snapshot to tell "the user linked here" from
+  // "the reader wrote its position into the URL".
+  const highlightedVerses = getInitialHighlightedVerses(navigation.initialUrl);
 
-  const tabs = signal<ReaderTab[]>(
-    createInitialTabs(
+  // Builds a reader tab from a persisted descriptor, seeding its reading state
+  // so it loads the stored chapter directly (no Genesis 1 flash). The selected
+  // tab also picks up any `?verse=` scroll/highlight, matching createInitialTabs.
+  const buildRestoredTab = (
+    descriptor: PersistedTab,
+    index: number,
+    selectedId: string
+  ): ReaderTab => {
+    const isSelected = descriptor.id === selectedId;
+    const readingState = createBibleReadingState(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      {
+        initialTranslationId: descriptor.translationId,
+        initialBookId: descriptor.bookId,
+        initialChapterNumber: descriptor.chapterNumber,
+        scrollToVerse:
+          isSelected && highlightedVerses.length > 0
+            ? highlightedVerses[0]
+            : undefined,
+      },
+      discoverManager,
+      readingExtensionManager
+    );
+
+    if (isSelected && highlightedVerses.length > 0 && descriptor.bookId) {
+      readingState.decorateVerses(
+        descriptor.bookId,
+        descriptor.chapterNumber,
+        highlightedVerses,
+        {
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
+          removeAfterMs: 5000,
+        }
+      );
+    }
+
+    return {
+      id: descriptor.id,
+      title: `Tab ${index + 1}`,
+      readingState,
+      sharedSession: null,
+      sharedChat: null,
+      slotOnly: descriptor.slotOnly ?? false,
+    };
+  };
+
+  const storedState = normalizeStoredTabsState(readStoredTabsState());
+
+  let initialTabs: ReaderTab[];
+  let initialSelectedTabId: string;
+
+  if (!storedState || storedState.tabs.length === 0) {
+    // No stored state (SSR or first-ever visit): seed a single tab from the URL
+    // reading params, or the defaults — the original behavior.
+    const initialTranslationId = getInitialTranslationId(
+      navigation.initialUrl,
+      navigation.basePath,
+      i18nManager.defaultLanguage
+    );
+    const initialBookId = getInitialFirstTabBookId(
+      navigation.initialUrl,
+      navigation.basePath
+    );
+    const initialChapter = getInitialFirstTabChapter(
+      navigation.initialUrl,
+      navigation.basePath
+    );
+
+    initialTabs = createInitialTabs(
       dataManager,
       highlightsManager,
       i18nManager,
@@ -391,15 +484,34 @@ export function createTabs(
         translationId: initialTranslationId,
         bookId: initialBookId,
         chapter: initialChapter,
-        highlightedVerses: getInitialHighlightedVerses(
-          navigation.currentUrl.value
-        ),
+        highlightedVerses,
       },
       discoverManager,
       readingExtensionManager
-    )
-  );
-  const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
+    );
+    initialSelectedTabId = initialTabs[0]?.id ?? "";
+  } else {
+    // Restore the stored tabs, reconciled against the URL reading params — from
+    // the same frozen snapshot as the reads above, so we compare against what the
+    // user actually linked with, not a position the reader may have written back.
+    const query = readInitialReadingParams(
+      navigation.initialUrl,
+      navigation.basePath
+    );
+    const { tabs: descriptors, selectedTabId } = reconcileStoredTabs(
+      storedState,
+      query,
+      defaultTranslation.id
+    );
+
+    initialTabs = descriptors.map((descriptor, index) =>
+      buildRestoredTab(descriptor, index, selectedTabId)
+    );
+    initialSelectedTabId = selectedTabId;
+  }
+
+  const tabs = signal<ReaderTab[]>(initialTabs);
+  const selectedTabId = signal<string>(initialSelectedTabId);
   const selectedTab = computed(
     () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
   );

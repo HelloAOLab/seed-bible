@@ -4,7 +4,13 @@ import {
   render,
 } from "../../../standalone/entry-ssr";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
-import { createDefaultManagerResponseMap } from "../seed-bible/managers/testUtils/mockBibleApiData";
+import {
+  aabBooks,
+  createDefaultManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeUrl,
+} from "../seed-bible/managers/testUtils/mockBibleApiData";
 import { buildChapterUrl } from "../../../script/lib/sitemap";
 
 describe("legacyReadingUrlRedirect", () => {
@@ -394,6 +400,10 @@ describe("render() server-rendered meta tags", () => {
     // cross-origin. Matching the origin lets those writes land harmlessly —
     // the assertions below read the returned HTML, not `window.location`.
     jsdom.reconfigure({ url: "http://ssr.local/" });
+    // Same jsdom caveat for stored tab state: real SSR has no `localStorage`,
+    // so nothing is restored, but under jsdom one render's persisted tabs would
+    // otherwise decide where the next render opens.
+    localStorage.clear();
     originalFetch = globalThis.fetch;
     // `?useFreeBibleAPI=true` points the app at the endpoint this map is keyed
     // on (see `getDefaultAPIEndpoint`), so no network is touched.
@@ -491,6 +501,73 @@ describe("render() server-rendered meta tags", () => {
         uiLocale: "en",
       })
     ).toBe(`${origin}${served}`);
+  });
+
+  it("quotes the chapter's own text in the description and og:description", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    // The fixture chapter is two short verses, so the whole excerpt fits inside
+    // the snippet budget and no ellipsis is appended.
+    const expected = "Genesis 1 (AAB): Verse 1 Verse 2";
+    expect(html).toContain(`<meta name="description" content="${expected}"`);
+    expect(html).toContain(
+      `<meta property="og:description" content="${expected}"`
+    );
+  });
+
+  it("describes the app, not just its name, when the chapter fails to load", async () => {
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the text never arrives.
+    const html = await renderHtml("/en/AAB/genesis/2?useFreeBibleAPI=true");
+
+    expect(html).not.toContain('<meta name="description" content="Seed Bible"');
+    expect(html).toContain("study the Bible online");
+  });
+
+  it("escapes verse text exactly once", async () => {
+    // The i18n layer is configured with `escapeValue: false`, so Preact's
+    // renderToStringAsync is the only thing escaping the attribute. Double
+    // escaping here would surface as `&amp;quot;` in the served HTML.
+    const responses = createDefaultManagerResponseMap();
+    responses[makeUrl("/api/AAB/GEN/1.json")] = createResponse(
+      makeChapter(aabBooks, "GEN", 1, [
+        { type: "verse", number: 1, content: ['He said "peace" & love'] },
+      ])
+    );
+    globalThis.fetch = (async (url: string) => {
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    }) as typeof globalThis.fetch;
+
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).toContain(
+      '<meta name="description" content="Genesis 1 (AAB): He said &quot;peace&quot; &amp; love"'
+    );
+    expect(html).not.toContain("&amp;quot;");
+  });
+
+  it("emits Twitter card tags and Open Graph tags with the property attribute", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).toContain(
+      '<meta name="twitter:card" content="summary_large_image"'
+    );
+    expect(html).toContain(
+      '<meta name="twitter:title" content="Read Genesis 1"'
+    );
+    expect(html).toContain(
+      '<meta name="twitter:description" content="Genesis 1 (AAB):'
+    );
+
+    // Open Graph parsers only read `property=`, so these were being ignored.
+    expect(html).toContain('<meta property="og:site_name"');
+    expect(html).toContain('<meta property="og:locale"');
+    expect(html).not.toContain('<meta name="og:site_name"');
+    expect(html).not.toContain('<meta name="og:locale"');
   });
 
   it("still emits the real canonical URL when the chapter fails to load", async () => {

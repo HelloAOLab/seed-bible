@@ -1203,46 +1203,54 @@ describe("createSeedBibleState", () => {
     });
   });
 
-  describe("pageTitle tag", () => {
-    function setSelectedTabChapter(
-      state: SeedBibleState,
-      bookId: string,
-      bookName: string,
-      chapterNumber: number,
-      translationName = "Test Translation",
-      textDirection: "ltr" | "rtl" = "ltr"
-    ) {
-      const tab =
-        state.tabs.tabs.value.find(
-          (t) => t.id === state.tabs.selectedTabId.value
-        ) ?? null;
-      expect(tab).not.toBeNull();
-      // Batched, and with translationId set to match chapterData.translation.id,
-      // so the reading-state effect that watches translationId/bookId/chapterNumber
-      // (and re-fetches content whenever they don't match chapterData) sees a
-      // fully consistent position and never issues a real network request.
-      batch(() => {
-        tab!.readingState.translationId.value = "test-translation";
-        tab!.readingState.bookId.value = bookId;
-        tab!.readingState.chapterNumber.value = chapterNumber;
-        tab!.readingState.chapterData.value = {
-          translation: {
-            id: "test-translation",
-            name: translationName,
-            textDirection,
-          },
-          book: { id: bookId, name: bookName, abbreviation: bookId },
-          chapter: {
-            number: chapterNumber,
-            id: `${bookId}-${chapterNumber}`,
-            reference: `${bookName} ${chapterNumber}`,
-          },
-          verses: [],
-          notes: [],
-        } as any;
-      });
-    }
+  // Shared by the pageTitle and meta-description suites: both read signals
+  // derived from the selected tab's loaded chapter.
+  function setSelectedTabChapter(
+    state: SeedBibleState,
+    bookId: string,
+    bookName: string,
+    chapterNumber: number,
+    translationName = "Test Translation",
+    textDirection: "ltr" | "rtl" = "ltr",
+    extra: {
+      content?: unknown[];
+      shortName?: string;
+    } = {}
+  ) {
+    const tab =
+      state.tabs.tabs.value.find(
+        (t) => t.id === state.tabs.selectedTabId.value
+      ) ?? null;
+    expect(tab).not.toBeNull();
+    // Batched, and with translationId set to match chapterData.translation.id,
+    // so the reading-state effect that watches translationId/bookId/chapterNumber
+    // (and re-fetches content whenever they don't match chapterData) sees a
+    // fully consistent position and never issues a real network request.
+    batch(() => {
+      tab!.readingState.translationId.value = "test-translation";
+      tab!.readingState.bookId.value = bookId;
+      tab!.readingState.chapterNumber.value = chapterNumber;
+      tab!.readingState.chapterData.value = {
+        translation: {
+          id: "test-translation",
+          name: translationName,
+          shortName: extra.shortName ?? translationName,
+          textDirection,
+        },
+        book: { id: bookId, name: bookName, abbreviation: bookId },
+        chapter: {
+          number: chapterNumber,
+          id: `${bookId}-${chapterNumber}`,
+          reference: `${bookName} ${chapterNumber}`,
+          content: extra.content,
+        },
+        verses: [],
+        notes: [],
+      } as any;
+    });
+  }
 
+  describe("pageTitle tag", () => {
     it("sets pageTitle from the selected book and chapter", async () => {
       const state = await createState();
 
@@ -1278,6 +1286,247 @@ describe("createSeedBibleState", () => {
       expect(state.app.title.value).toBe(
         `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
+    });
+  });
+
+  describe("meta description", () => {
+    const GENESIS_1 = [
+      { type: "heading", content: ["The Creation"] },
+      {
+        type: "verse",
+        number: 1,
+        content: ["In the beginning God created the heavens and the earth."],
+      },
+      {
+        type: "verse",
+        number: 2,
+        content: [
+          "Now the earth was formless and void, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters.",
+        ],
+      },
+    ];
+
+    function graphemeCount(text: string): number {
+      return [
+        ...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(
+          text
+        ),
+      ].length;
+    }
+
+    it("leads with the reference and quotes the chapter", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(
+        state,
+        "genesis",
+        "Genesis",
+        1,
+        "Berean Standard Bible",
+        "ltr",
+        {
+          content: GENESIS_1,
+          shortName: "BSB",
+        }
+      );
+
+      expect(state.app.description.value).toBe(
+        "Genesis 1 (BSB): In the beginning God created the heavens and the earth. Now the earth was formless and void, and darkness was over the surface of the…"
+      );
+    });
+
+    it("stays within the snippet budget and emits no verse numbers", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB", "ltr", {
+        content: GENESIS_1,
+        shortName: "BSB",
+      });
+
+      const description = state.app.description.value;
+      expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      // The only digit allowed is the chapter number in the reference.
+      expect(description.replace("Genesis 1 (BSB):", "")).not.toMatch(/\d/);
+    });
+
+    it("skips the section heading rather than leading with it", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB", "ltr", {
+        content: GENESIS_1,
+        shortName: "BSB",
+      });
+
+      expect(state.app.description.value).not.toContain("The Creation");
+    });
+
+    it("describes the app, not just its name, when no chapter is loaded", async () => {
+      const state = await createState();
+
+      const description = state.app.description.value;
+
+      // Regression guard: this used to emit the bare site name as the
+      // description, which tells a search engine nothing.
+      expect(description).not.toBe("Seed Bible");
+      expect(description).toContain("study the Bible online");
+    });
+
+    it("falls back to the reference when the chapter has no quotable text", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB", "ltr", {
+        content: [{ type: "line_break" }],
+        shortName: "BSB",
+      });
+
+      expect(state.app.description.value).toBe(
+        "Read Genesis 1 in the Seed Bible"
+      );
+    });
+
+    it("falls back to the reference when chapter content is missing entirely", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB");
+
+      expect(state.app.description.value).toBe(
+        "Read Genesis 1 in the Seed Bible"
+      );
+    });
+
+    // Book names come from each translation's own catalog, not a fixed short
+    // label, so this branch has no inherent length ceiling either.
+    it("bounds the reference-only fallback for a very long book name", async () => {
+      const state = await createState();
+      const longBookName =
+        "The First Book of Moses Commonly Called Genesis Together With Extended Introductory Commentary And Translator Notes For The Attentive Reader Of Scripture";
+
+      setSelectedTabChapter(state, "genesis", longBookName, 1, "BSB", "ltr", {
+        content: [{ type: "line_break" }],
+        shortName: "BSB",
+      });
+
+      const description = state.app.description.value;
+
+      expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      expect(description.endsWith("…")).toBe(true);
+    });
+
+    // Only observable with a reordered template: with the citation charged
+    // against the budget up front, the excerpt absorbs the cut. Truncating the
+    // composed string alone would chop the citation off the end instead.
+    it("cuts scripture, not the citation, when the template ends with the citation", async () => {
+      const state = await createState();
+      const i18next = (await import("i18next")).default;
+      const EN_DEFAULT =
+        "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}";
+
+      i18next.addResource(
+        "en",
+        "seed-bible",
+        "chapter-meta-description",
+        "「{{excerpt}}」— {{bookName}} {{chapterNumber}} ({{translationName}})"
+      );
+
+      try {
+        setSelectedTabChapter(state, "genesis", "Genesis", 1, "Berean", "ltr", {
+          content: GENESIS_1,
+          shortName: "BSB",
+        });
+
+        const description = state.app.description.value;
+
+        expect(description).toContain("— Genesis 1 (BSB)");
+        expect(description.endsWith("(BSB)")).toBe(true);
+        expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      } finally {
+        i18next.addResource(
+          "en",
+          "seed-bible",
+          "chapter-meta-description",
+          EN_DEFAULT
+        );
+      }
+    });
+  });
+
+  describe("tab state persistence", () => {
+    interface StoredTabsState {
+      tabs: { id: string; slotOnly?: boolean }[];
+      selectedTabId: string;
+      layout: string;
+      slotTabIds: (string | null)[];
+      selectedSlotIndex: number | null;
+    }
+
+    const readStoredTabs = (): StoredTabsState =>
+      JSON.parse(localStorage.getItem("sb-tabs-state") ?? "null");
+
+    // SettingsManager reads the anonymous, device-only config store
+    // (`login.localConfig`) from this key, so writing it before a bootstrap is
+    // how a test simulates opening the app with panels off/on.
+    const setPanelsDisabled = (disablePanels: boolean) =>
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ disablePanels })
+      );
+
+    const openSecondPane = async (state: SeedBibleState) => {
+      const slot = state.tabsLayout.openTabInNewSlot(
+        state.tabsLayout.slots.value[0]!.tab!.id
+      );
+      const clone = state.tabs.tabs.value.find(
+        (tab) => tab.id === slot?.tab?.id
+      )!;
+      await waitForInitialLoad(clone.readingState, 1000);
+    };
+
+    it("stores the split layout together with the hidden clone backing it", async () => {
+      const state = await createState();
+
+      await openSecondPane(state);
+
+      const stored = readStoredTabs();
+      expect(stored.layout).toBe("split-2v");
+      expect(stored.slotTabIds).toHaveLength(2);
+      expect(stored.slotTabIds.every((id) => typeof id === "string")).toBe(
+        true
+      );
+      // The second pane is backed by a hidden clone. Without it in `tabs`, the
+      // restored pane would resolve to no tab and come back empty.
+      expect(stored.tabs.filter((tab) => tab.slotOnly)).toHaveLength(1);
+    });
+
+    it("keeps a stored split through a load with panels disabled", async () => {
+      // 1. Build a two-pane split with panels enabled.
+      const withPanels = await createState();
+      await openSecondPane(withPanels);
+      expect(readStoredTabs().slotTabIds).toHaveLength(2);
+
+      // 2. Reload with panels disabled.
+      setPanelsDisabled(true);
+      const panelsOff = await createState();
+      expect(panelsOff.app.panelsEnabled.value).toBe(false);
+
+      // The rendered view collapses to a single pane...
+      expect(panelsOff.app.effectiveSlotLayout.value).toBe("single");
+      expect(panelsOff.app.effectiveSlots.value).toHaveLength(1);
+      // ...but the layout manager still holds the split, so that is what the
+      // persistence effect writes back. Collapsing it here instead would
+      // overwrite storage with a single pane and destroy the split for good.
+      expect(panelsOff.tabsLayout.layout.value).toBe("split-2v");
+      expect(panelsOff.tabsLayout.slots.value).toHaveLength(2);
+      expect(readStoredTabs().slotTabIds).toHaveLength(2);
+
+      // 3. Re-enable panels and reload: the split renders again.
+      setPanelsDisabled(false);
+      const panelsBackOn = await createState();
+      expect(panelsBackOn.app.panelsEnabled.value).toBe(true);
+      expect(panelsBackOn.app.effectiveSlotLayout.value).toBe("split-2v");
+      expect(panelsBackOn.app.effectiveSlots.value).toHaveLength(2);
+      expect(
+        panelsBackOn.app.effectiveSlots.value.map((slot) => slot.tab?.id)
+      ).toEqual(readStoredTabs().slotTabIds);
     });
   });
 

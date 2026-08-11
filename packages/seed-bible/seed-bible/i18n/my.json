@@ -434,5 +434,10 @@
   "remove": "ဖယ်ရှားပါ",
   "signed-out-message": "သင်ထွက်ပြီးပါပြီ။ ထပ်မံ၍ လက်မှတ်ထိုးဝင်ပါ။",
   "account-suspended-message": "သင့်အကောင့်ကို ဆိုင်းငံ့ထားပါသည်။",
-  "loading-chapter": "အခန်းကို တင်နေသည်…"
+  "loading-chapter": "အခန်းကို တင်နေသည်…",
+  "book-not-found-title": "စာအုပ်မတွေ့ပါ",
+  "book-not-found-message": "{{translationName}} မှာ အဲဒီစာအုပ်ကို ကျွန်တော်တို့ ရှာမတွေ့ပါဘူး။",
+  "book-not-found-action": "{{bookName}} {{chapterNumber}} သို့ သွားပါ",
+  "loading-picture-editor": "ပုံတည်းဖြတ်သူကို တင်နေသည်…",
+  "swipe-to-see-more": "ပိုမိုကြည့်ရှုရန် ပွတ်ဆွဲပါ"
 }

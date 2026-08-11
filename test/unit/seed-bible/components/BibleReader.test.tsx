@@ -15,6 +15,7 @@ import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/man
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import { vi, type Mock } from "vitest";
 import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
+import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -28,7 +29,14 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
     }),
   };
 });
-
+const testBranding: BrandingConfig = {
+  appName: "Test App",
+  shortName: "Test",
+  logo: "",
+  icon: "",
+  websiteUrl: "https://example.com",
+  disabledToolbarTools: [],
+};
 type ReaderFixture = {
   slot: TabSlot;
   selectorState: BibleSelectorState;
@@ -248,7 +256,7 @@ function createMobileState(): SeedBibleState {
     os: {
       connectionId: "test-connection",
     },
-    tools: createBibleToolsManager(),
+    tools: createBibleToolsManager(testBranding),
     playlists: {
       playing: signal(null),
     },
@@ -311,7 +319,15 @@ describe("BibleReader", () => {
   });
 
   afterEach(() => {
-    // render(null, container);
+    // Detaching the container is not enough: the tree stays mounted, so its
+    // effect cleanups never run and a late async update (the reader's skeleton
+    // timer, an un-awaited retry) still diffs into a document that Vitest has
+    // since torn down — an unhandled "document is not defined" rejection.
+    // Unmounting clears the component's parent DOM, which makes preact drop
+    // those updates instead.
+    act(() => {
+      render(null, container);
+    });
     container.remove();
   });
 
@@ -2217,7 +2233,7 @@ describe("BibleReader", () => {
         isMobile: signal(false),
         openVerseReference,
       },
-      tools: createBibleToolsManager(),
+      tools: createBibleToolsManager(testBranding),
       playlists: {
         playing: signal(null),
       },

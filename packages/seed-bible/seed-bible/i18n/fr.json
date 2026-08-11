@@ -434,5 +434,10 @@
   "remove": "Retirer",
   "signed-out-message": "Vous avez été déconnecté. Veuillez vous reconnecter.",
   "account-suspended-message": "Votre compte a été suspendu.",
-  "loading-chapter": "Chargement du chapitre…"
+  "loading-chapter": "Chargement du chapitre…",
+  "book-not-found-title": "Livre introuvable",
+  "book-not-found-message": "Nous n'avons pas pu trouver ce livre dans {{translationName}} .",
+  "book-not-found-action": "Allez à {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Chargement de l'éditeur d'images…",
+  "swipe-to-see-more": "Faites glisser pour en voir plus"
 }

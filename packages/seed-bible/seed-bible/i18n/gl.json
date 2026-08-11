@@ -434,5 +434,10 @@
   "remove": "Eliminar",
   "signed-out-message": "Pechouse a túa sesión. Volve iniciar sesión.",
   "account-suspended-message": "A túa conta foi suspendida.",
-  "loading-chapter": "Cargando capítulo…"
+  "loading-chapter": "Cargando capítulo…",
+  "book-not-found-title": "Libro non atopado",
+  "book-not-found-message": "Non puidemos atopar ese libro en {{translationName}} .",
+  "book-not-found-action": "Ir a {{bookName}} {{chapterNumber}}",
+  "loading-picture-editor": "Cargando o editor de imaxes…",
+  "swipe-to-see-more": "Desliza para ver máis"
 }
