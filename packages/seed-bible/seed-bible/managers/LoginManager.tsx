@@ -828,6 +828,9 @@ export function createLoginManager({
           cachedProfile.value = p;
           cachedProfileUserId = loadingForUserId;
           writeCachedProfile(loadingForUserId, p);
+          if (import.meta.env.DEV) {
+            console.log("[LoginManager] Profile loaded:", p);
+          }
         }
         return p;
       })
