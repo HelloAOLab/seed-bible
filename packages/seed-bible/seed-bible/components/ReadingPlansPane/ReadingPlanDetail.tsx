@@ -416,7 +416,10 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   }
 
   const percent = totalDays > 0 ? Math.round((doneDays / totalDays) * 100) : 0;
-  const endsMs = summary.lastDay?.date.toMillis() ?? null;
+  const lastDate = summary.lastDay?.date;
+  const endsMs = lastDate
+    ? new Date(lastDate.year, lastDate.month - 1, lastDate.day).getTime()
+    : null;
 
   // Whether every reading on the active day is complete (gates the day button).
   const activeDayReadings = activeDay

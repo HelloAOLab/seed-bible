@@ -3,7 +3,12 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import { Fragment, type ComponentChildren, JSX, type RefObject } from "preact";
+import {
+  Fragment,
+  type ComponentChildren,
+  type JSX,
+  type RefObject,
+} from "preact";
 import {
   Suspense,
   useEffect,
