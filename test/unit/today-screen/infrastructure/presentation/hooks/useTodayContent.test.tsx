@@ -70,17 +70,25 @@ describe("useTodayContent", () => {
     });
   });
 
-  describe("dividedSectionsIds", () => {
-    it("includes bookmarks first when there are bookmarks", () => {
+  describe("showBookmarks", () => {
+    it("is true when there are bookmarks", () => {
       const result = setup({ bookmarks: [{ id: "b1" }] });
-      expect(result.current.dividedSectionsIds).toEqual([
-        "bookmarks",
-        "search",
-        "social",
-      ]);
+      expect(result.current.showBookmarks).toBe(true);
     });
 
-    it("omits bookmarks when there are none", () => {
+    it("is false when there are none", () => {
+      const result = setup({ bookmarks: [] });
+      expect(result.current.showBookmarks).toBe(false);
+    });
+  });
+
+  describe("dividedSectionsIds", () => {
+    it("lists the standalone sections (bookmarks is not one of them)", () => {
+      const result = setup({ bookmarks: [{ id: "b1" }] });
+      expect(result.current.dividedSectionsIds).toEqual(["search", "social"]);
+    });
+
+    it("is unaffected by whether there are bookmarks", () => {
       const result = setup({ bookmarks: [] });
       expect(result.current.dividedSectionsIds).toEqual(["search", "social"]);
     });
