@@ -312,6 +312,9 @@ function createMockState(
     discover: {
       scrollToVerse: signal(null),
     },
+    panes: {
+      closeFullscreenPanes: vi.fn(),
+    },
   } as unknown as SeedBibleState;
 }
 
