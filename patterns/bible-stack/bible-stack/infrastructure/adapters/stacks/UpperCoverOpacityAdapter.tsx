@@ -23,7 +23,7 @@ export class UpperCoverOpacityAdapter {
     const opacity = this.#computeOpacity();
     for (const bibleData of bibles) {
       const upperCover = bibleData.staticBiblePieces?.upperCover;
-      if (!upperCover || bibleData.currentState !== BibleStates.Open) return;
+      if (!upperCover || bibleData.currentState !== BibleStates.Open) continue;
 
       const uppperCoverBot = this.#coverMapper.toInfrastructure(upperCover);
 

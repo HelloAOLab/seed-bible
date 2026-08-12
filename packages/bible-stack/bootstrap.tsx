@@ -6,6 +6,7 @@ import {
   registerExtension,
   type SeedBibleState,
 } from "@packages/seed-bible/seed-bible/managers";
+import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/seedBible";
 import { v4 as uuid } from "uuid";
 import bibleStackPattern from "virtual:@pattern/bible-stack";
@@ -31,13 +32,19 @@ export const bootstrapExtension = () => {
         seedBibleUtilsId
       ] as DependenciesMap[typeof seedBibleUtilsId];
 
-      context.tools.registerBelowReaderTool({
+      yield context.tools.registerBelowReaderTool({
         onSelect: () => {
           const dimension = "stack";
           const inst = uuid();
           context.panes.openPane({
             placement: "floating",
-            title: "bible-stack",
+            title: () => {
+              const { t } = useI18n();
+              return t("below-reader-tool", {
+                ns: "bible-stack",
+                defaultValue: "Bible Stack",
+              });
+            },
             icon: Icon,
             component: () => (
               <PortalComponent
@@ -57,12 +64,14 @@ export const bootstrapExtension = () => {
           });
         },
         id: "bible-stack",
-        title: "bible-stack",
+        title: {
+          key: "below-reader-tool",
+          defaultValue: "Bible Stack",
+          ns: "bible-stack",
+        },
         icon: Icon,
         priority: 0,
       });
-
-      yield () => {};
     },
   });
 };

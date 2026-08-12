@@ -23,6 +23,7 @@ export class ScripturePiecesStateService implements ScripturePiecesStateServiceP
 
   resetToDefault(): void {
     this.#arePiecesDraggable = ARE_PIECES_DRAGGABLE_DEFAULT;
+    this.#shouldShowLabelDates = SHOULD_SHOW_LABELS_DEFAULT;
   }
 
   makePiecesDraggable() {
@@ -44,7 +45,7 @@ export class ScripturePiecesStateService implements ScripturePiecesStateServiceP
   }
 
   disableLabelDates() {
-    this.#shouldShowLabelDates = true;
+    this.#shouldShowLabelDates = false;
   }
 
   get shouldShowLabelDates() {

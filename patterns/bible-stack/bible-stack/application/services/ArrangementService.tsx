@@ -183,23 +183,26 @@ export class ArrangementService implements ArrangementServicePort {
 
     let testamentIndex: number | undefined;
     let found = false;
-    const allArrangements = this.getAllArrangements();
+    const allArrangementsData = this.getAllArrangements().map(
+      (arrangement, index) => ({ arrangement, index })
+    );
     const initialArrangement = this.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
-      allArrangements.splice(arrangementIndex, 1);
-      allArrangements.unshift(initialArrangement);
+      allArrangementsData.splice(arrangementIndex, 1);
+      allArrangementsData.unshift({
+        arrangement: initialArrangement,
+        index: arrangementIndex,
+      });
 
-      for (
-        let currentArrangementIndex = 0;
-        currentArrangementIndex < allArrangements.length;
-        currentArrangementIndex++
-      ) {
-        const currentArrangement = allArrangements[currentArrangementIndex];
-        if (currentArrangement) {
-          const result = checkPathInArrangement(currentArrangement);
+      for (let i = 0; i < allArrangementsData.length; i++) {
+        const currentArrangementData = allArrangementsData[i];
+        if (currentArrangementData) {
+          const result = checkPathInArrangement(
+            currentArrangementData.arrangement
+          );
           if (result.found) {
             found = true;
-            arrangementIndex = currentArrangementIndex;
+            arrangementIndex = currentArrangementData.index;
             ({ testamentIndex } = result.data);
             break;
           }
@@ -255,23 +258,26 @@ export class ArrangementService implements ArrangementServicePort {
 
     let testamentIndex: number | undefined, sectionIndex: number | undefined;
     let found = false;
-    const allArrangements = this.getAllArrangements();
+    const allArrangementsData = this.getAllArrangements().map(
+      (arrangement, index) => ({ arrangement, index })
+    );
     const initialArrangement = this.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
-      allArrangements.splice(arrangementIndex, 1);
-      allArrangements.unshift(initialArrangement);
+      allArrangementsData.splice(arrangementIndex, 1);
+      allArrangementsData.unshift({
+        arrangement: initialArrangement,
+        index: arrangementIndex,
+      });
 
-      for (
-        let currentArrangementIndex = 0;
-        currentArrangementIndex < allArrangements.length;
-        currentArrangementIndex++
-      ) {
-        const currentArrangement = allArrangements[currentArrangementIndex];
-        if (currentArrangement) {
-          const result = checkPathInArrangement(currentArrangement);
+      for (let i = 0; i < allArrangementsData.length; i++) {
+        const currentArrangementData = allArrangementsData[i];
+        if (currentArrangementData) {
+          const result = checkPathInArrangement(
+            currentArrangementData.arrangement
+          );
           if (result.found) {
             found = true;
-            arrangementIndex = currentArrangementIndex;
+            arrangementIndex = currentArrangementData.index;
             ({ testamentIndex, sectionIndex } = result.data);
             break;
           }
@@ -338,23 +344,26 @@ export class ArrangementService implements ArrangementServicePort {
       sectionIndex: number | undefined,
       bookIndex: number | undefined;
     let found = false;
-    const allArrangements = this.getAllArrangements();
+    const allArrangementsData = this.getAllArrangements().map(
+      (arrangement, index) => ({ arrangement, index })
+    );
     const initialArrangement = this.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
-      allArrangements.splice(arrangementIndex, 1);
-      allArrangements.unshift(initialArrangement);
+      allArrangementsData.splice(arrangementIndex, 1);
+      allArrangementsData.unshift({
+        arrangement: initialArrangement,
+        index: arrangementIndex,
+      });
 
-      for (
-        let currentArrangementIndex = 0;
-        currentArrangementIndex < allArrangements.length;
-        currentArrangementIndex++
-      ) {
-        const currentArrangement = allArrangements[currentArrangementIndex];
-        if (currentArrangement) {
-          const result = checkPathInArrangement(currentArrangement);
+      for (let i = 0; i < allArrangementsData.length; i++) {
+        const currentArrangementData = allArrangementsData[i];
+        if (currentArrangementData) {
+          const result = checkPathInArrangement(
+            currentArrangementData.arrangement
+          );
           if (result.found) {
             found = true;
-            arrangementIndex = currentArrangementIndex;
+            arrangementIndex = currentArrangementData.index;
             ({ testamentIndex, sectionIndex, bookIndex } = result.data);
             break;
           }

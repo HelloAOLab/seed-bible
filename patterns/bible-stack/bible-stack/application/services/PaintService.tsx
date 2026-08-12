@@ -93,7 +93,7 @@ export class PaintService implements PaintPort {
     if (!data) {
       throw new Error("PaintService: data not found at unpaint");
     }
-    if (data.paintColor === this.#color) return;
+    if (!data.paintColor) return;
     const piece = data.piece;
     if (!piece) {
       throw new Error("PaintService: piece not found at unpaint");

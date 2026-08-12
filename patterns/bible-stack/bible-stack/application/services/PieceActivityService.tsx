@@ -620,8 +620,8 @@ export class PieceActivityService implements PieceActivityServicePort {
         !container.isSelected);
 
     if (shouldHide) {
-      const hid = this.tryHideNotification(container);
-      if (hid) return;
+      this.tryHideNotification(container);
+      return;
     }
 
     const isOwnUserInPiece =

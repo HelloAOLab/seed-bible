@@ -92,7 +92,7 @@ export class InfoLabelData {
     return undefined;
   }
   addActivityIndicator(indicator: ActivityIndicator) {
-    if (this.#activityIndicators.has(indicator.id)) {
+    if (!this.#activityIndicators.has(indicator.id)) {
       this.#activityIndicators.set(indicator.id, indicator);
     }
   }

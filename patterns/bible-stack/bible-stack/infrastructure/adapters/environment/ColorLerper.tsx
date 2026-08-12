@@ -72,13 +72,7 @@ export class ColorLerper {
       }
       const intervalId = setInterval(
         () => {
-          const hexColor = RgbToHex({
-            rgbColor: rgbColors[i]!,
-          });
-          SetStrictTag(bot, tag, hexColor);
-          i++;
-
-          if (i >= divisionFactor) {
+          if (i >= rgbColors.length) {
             const finalColor = RgbToHex({
               rgbColor: ClampRGBColor(end),
             });
@@ -86,7 +80,14 @@ export class ColorLerper {
             this.clearLerpData(bot.id, tag);
             clearInterval(Number(lerpData.lerpId));
             resolve();
+            return;
           }
+
+          const hexColor = RgbToHex({
+            rgbColor: rgbColors[i]!,
+          });
+          SetStrictTag(bot, tag, hexColor);
+          i++;
         },
         (durationSec * 1000) / divisionFactor
       );
