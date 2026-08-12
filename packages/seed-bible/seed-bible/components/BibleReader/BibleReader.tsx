@@ -2082,6 +2082,7 @@ export function BibleReader(props: BibleReaderProps) {
             <div className="sb-footnote-modal-content">
               <VerseReferenceText
                 text={selectedFootnote.value.note.text}
+                books={translationBooks.value?.books}
                 onReferenceClick={(ref) => {
                   selectFootnote(null);
                   void state?.app.openVerseReference(ref);

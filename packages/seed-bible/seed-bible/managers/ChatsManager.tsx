@@ -17,6 +17,7 @@ import type { TranslatableTitle } from "./BibleToolsManager";
 import { translateTitle } from "../app/utils";
 import type { VerseRef } from "./BibleDataManager";
 import { parseVerseReferences } from "./BibleDataManager";
+import type { TranslationBook } from "./FreeUseBibleAPI";
 import { getConnectedUserVisualKey } from "./SessionsManager";
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
@@ -589,7 +590,8 @@ function parseTextMessage(
   message: TextChatMessage,
   participants: ChatParticipant[],
   participantIdAliases: Readonly<Record<string, string>>,
-  i18n: i18n
+  i18n: i18n,
+  books?: TranslationBook[]
 ): ParsedChatTextMessage {
   const { t } = i18n;
   const { text } = message;
@@ -617,7 +619,7 @@ function parseTextMessage(
     });
   }
 
-  for (const { ref, start, end } of parseVerseReferences(text)) {
+  for (const { ref, start, end } of parseVerseReferences(text, books)) {
     pending.push({ kind: "verse_ref", start, end, ref });
   }
 
@@ -1399,18 +1401,22 @@ function createSharedChatSession(
     }
   };
 
-  const parsedMessages = computed<ParsedChatTextMessage[]>(() =>
-    messages.value
+  const parsedMessages = computed<ParsedChatTextMessage[]>(() => {
+    // Test doubles and partial session mocks may omit reading state; fall back
+    // to English-only resolution via getBookId when books are unavailable.
+    const books = session.readingState?.translationBooks?.value?.books;
+    return messages.value
       .filter((m): m is TextChatMessage => m.type === "text")
       .map((m) =>
         parseTextMessage(
           m,
           totalParticipants.value,
           participantIdAliases.value,
-          i18n
+          i18n,
+          books
         )
-      )
-  );
+      );
+  });
 
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
 
@@ -1519,7 +1525,8 @@ function createLocalChatSession(
   loginManager: LoginManager,
   chatProviders: Signal<ChatProvider[]>,
   i18nManager: I18nManager,
-  history?: ChatSessionHistory
+  history?: ChatSessionHistory,
+  translationBooks?: ReadonlySignal<TranslationBook[] | undefined>
 ): ChatSession {
   const i18n = i18nManager.i18n;
   // Join times keyed by participant id, recorded the first time each id is seen.
@@ -1901,18 +1908,20 @@ function createLocalChatSession(
     getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
   );
 
-  const parsedMessages = computed<ParsedChatTextMessage[]>(() =>
-    messages.value
+  const parsedMessages = computed<ParsedChatTextMessage[]>(() => {
+    const books = translationBooks?.value;
+    return messages.value
       .filter((m): m is TextChatMessage => m.type === "text")
       .map((m) =>
         parseTextMessage(
           m,
           totalParticipants.value,
           participantIdAliases.value,
-          i18n
+          i18n,
+          books
         )
-      )
-  );
+      );
+  });
 
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
   const chatId = uuid();
@@ -1970,7 +1979,13 @@ function createLocalChatSession(
 
 export function createChatsManager(
   loginManager: LoginManager,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  /**
+   * Books for the currently open reader tab. Used so local chat can resolve
+   * localized scripture names (shared chats read books from the session's
+   * reading state instead).
+   */
+  translationBooks?: ReadonlySignal<TranslationBook[] | undefined>
 ): ChatsManager {
   const chats = signal<ChatSession[]>([]);
   const isOpen = signal<boolean>(false);
@@ -2024,7 +2039,8 @@ export function createChatsManager(
       loginManager,
       chatProviders,
       i18nManager,
-      history
+      history,
+      translationBooks
     );
     chats.value = [...chats.value, chat];
     return chat;

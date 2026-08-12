@@ -10,7 +10,10 @@ import {
   type BibleDataManager,
   type BookId,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
-import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import {
+  FreeUseBibleAPI,
+  type TranslationBook,
+} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   EXAMPLE_API_ENDPOINT,
@@ -690,6 +693,261 @@ describe("all 66 Protestant-canon books", () => {
         );
       }
     );
+  });
+
+  describe("with localized translation books", () => {
+    const spaBooks = [
+      {
+        id: "GEN",
+        name: "Génesis",
+        commonName: "Génesis",
+        title: null,
+        order: 1,
+        numberOfChapters: 50,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 1533,
+      },
+      {
+        id: "EXO",
+        name: "Éxodo",
+        commonName: "Éxodo",
+        title: null,
+        order: 2,
+        numberOfChapters: 40,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 1213,
+      },
+      {
+        id: "EZR",
+        name: "Esdras",
+        commonName: "Esdras",
+        title: null,
+        order: 15,
+        numberOfChapters: 10,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 280,
+      },
+      {
+        id: "NEH",
+        name: "Nehemías",
+        commonName: "Nehemías",
+        title: null,
+        order: 16,
+        numberOfChapters: 13,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 406,
+      },
+      {
+        id: "1CO",
+        name: "1 Corintios",
+        commonName: "1 Corintios",
+        title: null,
+        order: 46,
+        numberOfChapters: 16,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 437,
+      },
+      {
+        id: "PHP",
+        name: "Filipenses",
+        commonName: "Filipenses",
+        title: null,
+        order: 50,
+        numberOfChapters: 4,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 104,
+      },
+      {
+        id: "PHM",
+        name: "Filemon",
+        commonName: "Filemon",
+        title: null,
+        order: 57,
+        numberOfChapters: 1,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 25,
+      },
+    ] as TranslationBook[];
+
+    it("matches an exact localized book name (Esdras → EZR)", () => {
+      expect(parseVerseReference("Esdras 3", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 3,
+      });
+      expect(parseVerseReference("Esdras 3:1", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 3,
+        verse: 1,
+      });
+      expect(parseVerseReference("Esdras 3:1-5", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 3,
+        verse: 1,
+        endVerse: 5,
+      });
+      expect(parseVerseReference("Esdras 1:1-2:3", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 1,
+        verse: 1,
+        endChapter: 2,
+        endVerse: 3,
+      });
+    });
+
+    it("finds a localized name mid-sentence", () => {
+      expect(
+        parseVerseReferences("Lee Esdras 3 primero", spaBooks)
+      ).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "EZR", chapter: 3 },
+        })
+      );
+      expect(
+        parseVerseReferences("See Esdras 3:1 and also John 1:1", spaBooks)
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ref: { book: "EZR", chapter: 3, verse: 1 },
+          }),
+          expect.objectContaining({
+            ref: { book: "JHN", chapter: 1, verse: 1 },
+          }),
+        ])
+      );
+    });
+
+    it("matches accented localized book names in the prose scanner", () => {
+      expect(parseVerseReferences("Génesis 3", spaBooks)).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "GEN", chapter: 3 },
+        })
+      );
+      expect(
+        parseVerseReferences("Lee Éxodo 2 conmigo", spaBooks)
+      ).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "EXO", chapter: 2 },
+        })
+      );
+      expect(parseVerseReferences("Ver Nehemías 1:5", spaBooks)).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "NEH", chapter: 1, verse: 5 },
+        })
+      );
+      expect(parseVerseReference("Génesis 3:1", spaBooks)).toEqual({
+        book: "GEN",
+        chapter: 3,
+        verse: 1,
+      });
+    });
+
+    it("matches localized names case-insensitively", () => {
+      expect(parseVerseReference("esdras 3", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 3,
+      });
+      expect(parseVerseReference("ESDRAS 3:1", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 3,
+        verse: 1,
+      });
+    });
+
+    it("does not unique-prefix expand short tokens when scanning prose", () => {
+      // Prefix matching belongs in the deliberate single-reference parser, not
+      // free-text scanning — otherwise "Is 3" becomes Isaiah, "So 3" Song, etc.
+      expect(parseVerseReferences("See Esd 3 for context", spaBooks)).toEqual(
+        []
+      );
+      expect(
+        parseVerseReferences("See Filip 2:1 for context", spaBooks)
+      ).toEqual([]);
+      // Exact full names still match.
+      expect(
+        parseVerseReferences("See Filipenses 2:1 for context", spaBooks)
+      ).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "PHP", chapter: 2, verse: 1 },
+        })
+      );
+    });
+
+    it("does not treat ordinary short English words as book abbreviations", () => {
+      // These match unique English prefixes only if we reintroduce "name starts
+      // with token" matching — they must stay unlinked in chat/footnotes.
+      const ordinary = [
+        "Is 3 enough for everyone?",
+        "So 3 people showed up",
+        "Am 3 sure about this",
+        "Ho 1 waited",
+        "Ru 2 left early",
+      ];
+      for (const text of ordinary) {
+        expect(parseVerseReferences(text, spaBooks)).toEqual([]);
+        expect(parseVerseReferences(text)).toEqual([]);
+      }
+    });
+
+    it("matches numbered localized book names", () => {
+      expect(parseVerseReference("1 Corintios 13:4", spaBooks)).toEqual({
+        book: "1CO",
+        chapter: 13,
+        verse: 4,
+      });
+      expect(
+        parseVerseReferences("See 1 Corintios 13:4 for love", spaBooks)
+      ).toContainEqual(
+        expect.objectContaining({
+          ref: { book: "1CO", chapter: 13, verse: 4 },
+        })
+      );
+    });
+
+    it("falls back to English when the localized list has no match", () => {
+      expect(parseVerseReference("John 3:16", spaBooks)).toEqual({
+        book: "JHN",
+        chapter: 3,
+        verse: 16,
+      });
+      expect(parseVerseReference("Ezra 3", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 3,
+      });
+    });
+
+    it("falls back to English when books are omitted or empty", () => {
+      expect(parseVerseReference("John 3:16")).toEqual({
+        book: "JHN",
+        chapter: 3,
+        verse: 16,
+      });
+      expect(parseVerseReference("John 3:16", [])).toEqual({
+        book: "JHN",
+        chapter: 3,
+        verse: 16,
+      });
+      // Localized-only names need the books list to resolve to a real id.
+      // parseVerseReference keeps the raw token when unresolved; the multi-ref
+      // scanner rejects unknown names.
+      expect(parseVerseReference("Esdras 3")).toEqual({
+        book: "Esdras",
+        chapter: 3,
+      });
+      expect(parseVerseReferences("Esdras 3")).toEqual([]);
+    });
+
+    it("matches by book id when the listed common name differs", () => {
+      expect(parseVerseReference("EZR 3", spaBooks)).toEqual({
+        book: "EZR",
+        chapter: 3,
+      });
+    });
+
+    it("returns no mid-sentence hits for fully unknown names", () => {
+      expect(
+        parseVerseReferences("See Nopeon 1 for context", spaBooks)
+      ).toEqual([]);
+    });
   });
 });
 
