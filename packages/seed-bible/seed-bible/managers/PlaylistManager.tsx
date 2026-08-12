@@ -604,35 +604,38 @@ export function createPlaylistManager(
 
   /**
    * Starts creating a new playlist: opens the create view and sets
-   * `editingPlaylist` to a fresh, empty (unsaved) playlist. Persisting happens
-   * later via `saveEditingPlaylist`. No-op when not signed in.
+   * `editingPlaylist` to a fresh, unsaved playlist, optionally pre-filled
+   * with the given title/description/items (e.g. an AI-generated playlist).
+   * Persisting happens later via `saveEditingPlaylist`. No-op when not
+   * signed in.
    */
-  const createNewPlaylist =
-    async (): Promise<Signal<Playlist | null> | null> => {
-      let userId = login.userId.value;
-      if (!userId) {
-        const userInfo = await login.login();
-        if (!userInfo) {
-          console.warn("Cannot create a playlist while signed out.");
-          return null;
-        }
-        userId = userInfo.id;
+  const createNewPlaylist = async (
+    initial?: Pick<Playlist, "title" | "description" | "items">
+  ): Promise<Signal<Playlist | null> | null> => {
+    let userId = login.userId.value;
+    if (!userId) {
+      const userInfo = await login.login();
+      if (!userInfo) {
+        console.warn("Cannot create a playlist while signed out.");
+        return null;
       }
-      const now = Date.now();
-      editingPlaylist.value = PlaylistSchema.parse({
-        id: `playlist_${uuid()}`,
-        recordName: userId,
-        authorUserId: userId,
-        title: null,
-        description: null,
-        items: [],
-        createdAtMs: now,
-        updatedAtMs: now,
-      });
-      view.value = "create_playlist";
+      userId = userInfo.id;
+    }
+    const now = Date.now();
+    editingPlaylist.value = PlaylistSchema.parse({
+      id: `playlist_${uuid()}`,
+      recordName: userId,
+      authorUserId: userId,
+      title: initial?.title ?? null,
+      description: initial?.description ?? null,
+      items: initial?.items ?? [],
+      createdAtMs: now,
+      updatedAtMs: now,
+    });
+    view.value = "create_playlist";
 
-      return editingPlaylist;
-    };
+    return editingPlaylist;
+  };
 
   /**
    * Opens an existing playlist for editing: sets `editingPlaylist` to a copy of

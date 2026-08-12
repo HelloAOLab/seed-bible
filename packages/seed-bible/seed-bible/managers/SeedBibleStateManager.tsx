@@ -133,7 +133,6 @@ import {
   createBibleReadingExtensionManager,
   type BibleReadingExtensionManager,
 } from "../managers/BibleReadingExtensionManager";
-import { v4 as uuid } from "uuid";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -404,7 +403,6 @@ import {
   createPlaylistManager,
   type PlaylistManager,
   type PlaylistItemData,
-  type SimplePlaylist,
 } from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
@@ -1688,10 +1686,10 @@ export function createSeedBibleState(
       },
     });
 
-    const playPlaylist = generateFunctionTool({
-      name: "playPlaylist",
+    const createPlaylist = generateFunctionTool({
+      name: "createPlaylist",
       description:
-        "Starts playing the given playlist. Useful for giving the user a tour of verses/chapters to read. Each call starts a brand-new, independent, one-off playlist that has no relationship to any playlist discussed earlier in this conversation (including one currently open in the playlist editor) — it is never used to modify an existing playlist.",
+        "Opens the playlist editor pre-filled with the given generated playlist so the user can review, edit, and save it themselves. Does not play or save anything on its own. Each call opens a brand-new, independent playlist that has no relationship to any playlist discussed earlier in this conversation (including one already open in the editor) — it is never used to modify an existing playlist.",
       parameters: GeneratedPlaylistSchema,
       function: async (args) => {
         let items: PlaylistItemData[];
@@ -1701,23 +1699,20 @@ export function createSeedBibleState(
           return `error: ${err instanceof Error ? err.message : String(err)}`;
         }
 
-        const playlist: SimplePlaylist = {
-          id: uuid(),
+        const editing = await playlists.createNewPlaylist({
           title: args.title,
           description: args.description,
           items,
-        };
-
-        const playingState = playlists.startPlaying(playlist);
-        if (!playingState) {
-          return "error: could not start playback — no active reading tab to play on";
+        });
+        if (!editing) {
+          return "error: could not open the playlist editor — sign-in was required and did not complete";
         }
 
         return "success";
       },
     });
 
-    return [goToReference.tool, searchVerses.tool, playPlaylist.tool];
+    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
   };
 
   const enableCoreChatContext = () => {
