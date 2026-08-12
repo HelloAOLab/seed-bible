@@ -554,5 +554,8 @@
   "reading-plan-mark-passage-complete": "Mark {{passage}} as read",
   "reading-plan-read-nudge-title": "Nice reading!",
   "reading-plan-read-nudge-toast": "Mark {{passage}} complete?",
-  "reading-plan-nudge-later": "Not now"
+  "reading-plan-nudge-later": "Not now",
+  "session-host-reconnecting": "Reconnecting to the session…",
+  "session-host-reconnected": "Reconnected to the session",
+  "session-host-left": "The host left — you were removed from the session"
 }

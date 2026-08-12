@@ -158,9 +158,12 @@ export function createNavigationManager(
           return;
         }
 
-        currentUrl.value = new URL(
+        const destination = new URL(
           event.destination?.url ?? window.location.href
         );
+        if (currentUrl.peek().href !== destination.href) {
+          currentUrl.value = destination;
+        }
         event.intercept();
       };
       window.navigation.addEventListener("navigate", onNavigate);
