@@ -34,7 +34,7 @@ import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { emphasizeVerses } from "../../managers";
+import { emphasizeVerses, type PanesManager } from "../../managers";
 import {
   parseVerseReference,
   type BookId,
@@ -248,6 +248,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         login={props.state.login}
         tabs={tabs}
         discover={props.state.discover}
+        panes={props.state.panes}
         onReferenceClick={props.state.app.openVerseReference}
       />
 
@@ -671,6 +672,7 @@ function AnnotationGroupSection(props: {
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
   tabs: TabsManager;
+  panes: PanesManager;
   onReferenceClick?: (ref: VerseRef) => void;
 }) {
   const {
@@ -681,6 +683,7 @@ function AnnotationGroupSection(props: {
     toast,
     login,
     tabs,
+    panes,
     onReferenceClick,
   } = props;
   const { t, language } = useI18n();
@@ -729,6 +732,7 @@ function AnnotationGroupSection(props: {
                   return;
                 }
 
+                panes.closeFullscreenPanes();
                 // `translationId` is optional on the item; fall back to the tab's current
                 // translation. `.peek()` avoids re-navigating when the tab changes it.
                 await tab.readingState.selectTranslationAndChapter(
@@ -814,6 +818,7 @@ function AnnotationsSection(props: {
   login: LoginManager;
   tabs: TabsManager;
   discover: DiscoverManager;
+  panes: PanesManager;
   onReferenceClick?: (ref: VerseRef) => void;
 }) {
   const {
@@ -824,6 +829,7 @@ function AnnotationsSection(props: {
     login,
     tabs,
     discover,
+    panes,
     onReferenceClick,
   } = props;
   const { t } = useI18n();
@@ -916,6 +922,7 @@ function AnnotationsSection(props: {
               toast={toast}
               login={login}
               tabs={tabs}
+              panes={panes}
               onReferenceClick={onReferenceClick}
             />
           );
