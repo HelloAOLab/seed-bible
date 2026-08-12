@@ -45,6 +45,9 @@ afterEach(() => {
   // Reset to "/" so neither query params nor a book/chapter path written by
   // tab/URL sync effects leak into the next test's initial tab state.
   window.history.replaceState(null, "", "/");
+  // Same reason for stored tabs: a case that seeds `sb-tabs-state` would
+  // otherwise have the next test restore its tabs instead of starting fresh.
+  window.localStorage.clear();
   globalThis.fetch = originalFetch;
 });
 
@@ -220,12 +223,15 @@ function createMockSharedSession(
     userCanNavigate: vi.fn().mockReturnValue(true),
     currentUser: signal(null),
     isHost: vi.fn().mockReturnValue(false),
+    isSynced: signal(true),
   } as BibleReadingSession;
 }
 
 describe("createTabs", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    // Clear persisted tab state so a restore test can't leak into the next.
+    window.localStorage.clear();
   });
 
   it("addTab() creates a new tab with new reading state", async () => {
@@ -664,6 +670,124 @@ describe("createTabs", () => {
 
     const firstTab = manager.tabs.value[0]!;
     expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("reads its startup params from the URL the page opened with, not a later one", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/?book=EXO&chapter=2&verse=5");
+    setWebResponses(createExampleManagerResponseMap());
+
+    // The navigation manager freezes the arrival URL; something then moves the
+    // live one before the tabs are built. The reader's own position-to-URL echo
+    // does exactly this on a real cold start, which is why the startup reads have
+    // to come from the frozen snapshot.
+    const navigation = createNavigationManager();
+    window.history.replaceState(null, "", "/");
+    expect(navigation.currentUrl.value.search).toBe("");
+
+    const i18nManager = createI18nManager(navigation, ["en"]);
+    const manager = createTabs(
+      navigation,
+      createDataManager(),
+      createHighlightsManagerMock() as any,
+      {} as any,
+      i18nManager,
+      createLoginManagerMock() as any
+    );
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.bookId.value).toBe("EXO");
+    expect(firstTab.readingState.chapterNumber.value).toBe(2);
+    // `?verse=` is read from the same snapshot, so the scroll target and the
+    // transient highlight survive too.
+    expect(firstTab.readingState.scrollToVerse.value).toBe(5);
+    expect(
+      firstTab.readingState.decorations.value.some((decoration) =>
+        decoration.verses.includes(5)
+      )
+    ).toBe(true);
+  });
+
+  it("restores stored tabs when the URL has no reading params", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "EXO",
+            chapterNumber: 2,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(manager.tabs.value).toHaveLength(1);
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.translationId.value).toBe("AAB");
+    expect(readingState.bookId.value).toBe("EXO");
+    expect(readingState.chapterNumber.value).toBe(2);
+  });
+
+  it("reconciles a deep link against stored tabs, selecting the matching tab", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(
+      null,
+      "",
+      "/?translation=NIV&book=MAT&chapter=1"
+    );
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // The query translation (NIV) matches the second stored tab, so it is
+    // updated to the query position and selected; the first tab is untouched.
+    expect(manager.tabs.value).toHaveLength(2);
+    expect(manager.selectedTabId.value).toBe("tab-2");
+    const selected = manager.tabs.value.find(
+      (tab) => tab.id === "tab-2"
+    )!.readingState;
+    expect(selected.translationId.value).toBe("NIV");
+    expect(selected.bookId.value).toBe("MAT");
+    expect(selected.chapterNumber.value).toBe(1);
   });
 
   it("applies the saved profile translation to the selected tab once the profile loads, when the URL has no explicit translation", async () => {

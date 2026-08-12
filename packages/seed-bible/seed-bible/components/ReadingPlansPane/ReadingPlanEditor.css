@@ -1,0 +1,592 @@
+/* Reading-plan editor — one pane for both creating and editing a plan. */
+.sb-rp-editor {
+  --rp-accent: var(--sb-primary-color);
+  --rp-accent-contrast: var(--sb-primary-font-color, #fff);
+  --rp-accent-soft: color-mix(in srgb, var(--rp-accent) 12%, transparent);
+  --rp-accent-border: color-mix(in srgb, var(--rp-accent) 50%, transparent);
+  --rp-border: var(--sb-divider-color, rgba(0, 0, 0, 0.12));
+  --rp-muted: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--sb-font-color);
+  font-family: "DM Sans", var(--sb-font-family, sans-serif);
+}
+
+/* "Saving…" / "Draft saved" — the plan is written to the user's account after
+   every change, so this is the only thing that tells them it happened. The
+   editor's title and back button live in the pane header (see
+   ReadingPlansPane), so this row is all that sits above the body. */
+.sb-rp-editor-status {
+  min-height: 1.25rem;
+  padding: 8px 16px 0;
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* Body */
+.sb-rp-editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Name, readings and cadences are all on this one screen, so each needs a
+   visible boundary of its own to stay legible as a group. */
+.sb-rp-editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-rp-editor-section-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.sb-rp-field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rp-muted);
+}
+
+.sb-rp-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--rp-muted);
+}
+
+/* Fields */
+.sb-rp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-rp-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.sb-rp-text-input:focus-visible {
+  outline: none;
+  border-color: var(--rp-accent);
+  box-shadow: 0 0 0 3px var(--rp-accent-soft);
+}
+
+.sb-rp-text-input-error {
+  border-color: #dc2626;
+}
+
+.sb-rp-text-input:disabled {
+  opacity: 0.6;
+}
+
+/* Cadence / pace choices */
+.sb-rp-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-rp-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.sb-rp-choice:hover {
+  border-color: var(--rp-accent-border);
+}
+
+.sb-rp-choice-selected {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent-soft);
+}
+
+.sb-rp-choice-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--rp-border);
+  border-radius: 50%;
+  color: var(--rp-accent-contrast);
+}
+
+.sb-rp-choice-selected .sb-rp-choice-radio {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent);
+}
+
+.sb-rp-choice-radio .material-symbols-outlined {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Cadences are a multi-select — an author can offer several paces for the same
+   plan — so they get a checkbox rather than the radio the pace picker uses. The
+   native input is kept for keyboard and screen-reader use and visually replaced
+   by .sb-rp-choice-box. */
+.sb-rp-choice-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sb-rp-choice-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--rp-border);
+  border-radius: 6px;
+  color: var(--rp-accent-contrast);
+}
+
+.sb-rp-choice-selected .sb-rp-choice-box {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent);
+}
+
+.sb-rp-choice-box .material-symbols-outlined {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sb-rp-choice-checkbox:focus-visible + .sb-rp-choice-box {
+  outline: 2px solid var(--rp-accent);
+  outline-offset: 2px;
+}
+
+.sb-rp-choice-checkbox:disabled + .sb-rp-choice-box {
+  opacity: 0.6;
+}
+
+/* Sessions step: a vertical list of the plan's reading sessions. */
+.sb-rp-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-rp-session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-rp-session {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--rp-border);
+  border-radius: 12px;
+}
+
+.sb-rp-session-selected {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent-soft);
+}
+
+.sb-rp-session-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-rp-session-select {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-rp-session-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--rp-accent) 18%, transparent);
+  color: var(--rp-accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.sb-rp-session-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-rp-session-count {
+  margin-inline-start: auto;
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+}
+
+.sb-rp-session-remove {
+  color: var(--rp-muted);
+}
+
+.sb-rp-session-remove:hover {
+  color: #dc2626;
+}
+
+.sb-rp-add-session {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px dashed var(--rp-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--rp-accent);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-rp-add-session:hover {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent-soft);
+}
+
+.sb-rp-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-rp-choice-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-rp-choice-description {
+  font-size: 0.8125rem;
+  color: var(--rp-muted);
+}
+
+.sb-rp-add-reading {
+  display: flex;
+  gap: 8px;
+}
+
+.sb-rp-add-reading .sb-rp-text-input {
+  flex: 1;
+}
+
+.sb-rp-add-button {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--rp-accent);
+  color: var(--rp-accent-contrast);
+}
+
+.sb-rp-add-button:hover {
+  opacity: 0.9;
+}
+
+.sb-rp-empty-day {
+  margin: 4px 0;
+  font-size: 0.8125rem;
+  color: var(--rp-muted);
+  text-align: center;
+}
+
+.sb-rp-reading-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-rp-reading-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+}
+
+/* The item body: a leading type icon and the label with its summary. For a text
+   or link reading the whole thing is the button that opens the preview; for
+   scripture there's nothing to open, so it's a plain span. Both share the same
+   layout so the list stays visually uniform. */
+.sb-rp-reading-body,
+.sb-rp-reading-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.sb-rp-reading-open {
+  cursor: pointer;
+}
+
+.sb-rp-reading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
+  color: var(--rp-accent);
+}
+
+.sb-rp-reading-icon .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-rp-reading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sb-rp-reading-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-rp-reading-open:hover .sb-rp-reading-label {
+  text-decoration: underline;
+}
+
+/* One-line summary of what the reading holds: an excerpt of a text snippet, or
+   a link's host. Already truncated in code, but clipped here too so a long
+   unbroken string can't stretch the row. */
+.sb-rp-reading-preview {
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-rp-reading-remove {
+  color: var(--rp-muted);
+}
+
+.sb-rp-reading-remove:hover {
+  color: #dc2626;
+}
+
+/* Icon buttons */
+.sb-rp-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-rp-icon-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
+}
+
+.sb-rp-add-button:hover,
+.sb-rp-reading-remove:hover {
+  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
+}
+
+/* Footer.
+
+   The reader toolbar is a floating bar fixed to the bottom of the viewport and
+   centred across its full width, so on desktop it reaches over the side pane
+   and lands on top of whatever sits at the bottom of it — which was hiding the
+   wizard's "Next" button and the plan detail's "Start plan" button. Reserve the
+   toolbar's height beneath the footer so the button always clears it. The
+   numbers mirror BibleReaderToolbar's own variables, so they move together. */
+.sb-rp-editor-footer,
+.sb-rpd-footer {
+  --rp-toolbar-clearance: calc(
+    var(--sb-reader-toolbar-bottom, 1.125rem) +
+      var(--sb-reader-toolbar-button-height, 3.25rem) + 0.5rem
+  );
+}
+
+.sb-rp-editor-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px calc(12px + var(--rp-toolbar-clearance));
+  border-top: 1px solid var(--rp-border);
+}
+
+/* On mobile the toolbar is a full-width bar pinned to the bottom of the screen
+   and the pane is already inset above it (see PaneLayout.css), so only a small
+   breathing gap — plus the home indicator — is needed. */
+@media (max-width: 480px) {
+  .sb-rp-editor-footer,
+  .sb-rpd-footer {
+    --rp-toolbar-clearance: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+.sb-rp-footer-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  text-align: center;
+}
+
+.sb-rp-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #dc2626;
+}
+
+.sb-rp-editor-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.sb-rp-button {
+  padding: 11px 18px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.sb-rp-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sb-rp-button-secondary {
+  border: 1px solid var(--rp-border);
+  background: transparent;
+  color: var(--sb-font-color);
+}
+
+.sb-rp-button-primary {
+  border: 1px solid var(--rp-accent);
+  background: var(--rp-accent);
+  color: var(--rp-accent-contrast);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* The primary button only grows to fill the editor's side-by-side footer row.
+   Elsewhere (celebration, start CTA) it must size to its content instead. */
+.sb-rp-editor-actions .sb-rp-button-primary {
+  flex: 1;
+}
+
+/* Second press of "Discard" — the one that actually erases the plan. */
+.sb-rp-button-danger {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.sb-rp-button-primary:not(:disabled):hover {
+  opacity: 0.92;
+}
+
+/* Soft accent button — Figma's peach "Mark as complete" */
+.sb-rp-button-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--rp-accent-border);
+  background: var(--rp-accent-soft);
+  color: var(--rp-accent);
+}
+
+.sb-rp-button-soft .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-rp-button-soft:not(:disabled):hover {
+  background: color-mix(in srgb, var(--sb-primary-color) 18%, transparent);
+}

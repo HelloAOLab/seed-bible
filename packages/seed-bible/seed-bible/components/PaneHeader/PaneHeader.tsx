@@ -17,6 +17,12 @@ export interface PaneHeaderProps {
    */
   icon?: () => ComponentChild;
   /**
+   * Optional content rendered at the very start of the header, before the icon
+   * and title — a pane's own back button, for instance. Rendered as a component
+   * so it can use hooks (i18n, signals).
+   */
+  leading?: () => ComponentChild;
+  /**
    * Optional custom header content rendered between the title and the close
    * button. Rendered as a component so it can use hooks (i18n, signals).
    */
@@ -38,6 +44,7 @@ export function PaneHeader(props: PaneHeaderProps) {
     title: Title,
     onClose,
     icon: Icon,
+    leading: Leading,
     header: Header,
     onPointerDown,
   } = props;
@@ -45,6 +52,16 @@ export function PaneHeader(props: PaneHeaderProps) {
 
   return (
     <div className="sb-pane-header" onPointerDown={onPointerDown}>
+      {Leading && (
+        <div
+          className="sb-pane-header-leading"
+          onPointerDown={(event: PointerEvent) => {
+            event.stopPropagation();
+          }}
+        >
+          <Leading />
+        </div>
+      )}
       <div className="sb-pane-header-title">
         {Icon && (
           <span className="sb-pane-header-icon">
