@@ -3,6 +3,8 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { DiscoverContentPanel } from "@packages/seed-bible/seed-bible/components/DiscoverContentPanel/DiscoverContentPanel";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -17,6 +19,12 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
     }),
   };
 });
+
+vi.mock("@packages/seed-bible/seed-bible/managers/Sanitization", () => ({
+  setSafeHtml: vi.fn(async (html: string, element: HTMLElement) => {
+    element.innerHTML = html;
+  }),
+}));
 
 const RESULTS_FIXTURE = [
   {
@@ -35,6 +43,16 @@ const RESULTS_FIXTURE = [
   },
 ];
 
+function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
+  return {
+    id: "ann-1",
+    bookId: "GEN",
+    chapterNumber: 1,
+    data: { type: "comment", html: "<p>A helpful note.</p>" },
+    ...overrides,
+  } as Annotation;
+}
+
 function createMockTab(
   overrides: {
     discoverContentPanelVisible?: boolean;
@@ -44,6 +62,8 @@ function createMockTab(
   return {
     id: "tab-1",
     readingState: {
+      bookId: signal("GEN"),
+      chapterNumber: signal(1),
       discoverContentPanelVisible: signal(
         overrides.discoverContentPanelVisible ?? true
       ),
@@ -54,6 +74,31 @@ function createMockTab(
       discoveredContent: signal([]),
     },
   } as unknown as ReaderTab;
+}
+
+function createMockState(
+  overrides: { annotationsForChapter?: Annotation[] } = {}
+): SeedBibleState {
+  return {
+    app: {
+      toast: vi.fn(),
+      openVerseReference: vi.fn().mockResolvedValue(undefined),
+    },
+    login: {
+      userId: signal(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
+    },
+    tabs: { tabs: signal([]), selectedTabId: signal(null) },
+    panes: { closeFullscreenPanes: vi.fn() },
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
+    annotations: {
+      getAnnotationsForChapter: vi.fn(() =>
+        signal(overrides.annotationsForChapter ?? [])
+      ),
+      sync: { pendingCount: signal(0) },
+    },
+  } as unknown as SeedBibleState;
 }
 
 describe("DiscoverContentPanel", () => {
@@ -71,7 +116,14 @@ describe("DiscoverContentPanel", () => {
 
   it("renders nothing when there is no tab", () => {
     act(() => {
-      render(<DiscoverContentPanel tab={null} variant="side" />, container);
+      render(
+        <DiscoverContentPanel
+          tab={null}
+          state={createMockState()}
+          variant="side"
+        />,
+        container
+      );
     });
 
     expect(container.innerHTML).toBe("");
@@ -84,17 +136,31 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} variant="side" />, container);
+      render(
+        <DiscoverContentPanel
+          tab={tab}
+          state={createMockState()}
+          variant="side"
+        />,
+        container
+      );
     });
 
     expect(container.innerHTML).toBe("");
   });
 
-  it("renders nothing when there are no discovered results, even with the toggle on", () => {
+  it("renders nothing when there are no discovered results or annotations, even with the toggle on", () => {
     const tab = createMockTab({ discoverContentPanelVisible: true });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} variant="side" />, container);
+      render(
+        <DiscoverContentPanel
+          tab={tab}
+          state={createMockState()}
+          variant="side"
+        />,
+        container
+      );
     });
 
     expect(container.innerHTML).toBe("");
@@ -104,7 +170,14 @@ describe("DiscoverContentPanel", () => {
     const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} variant="side" />, container);
+      render(
+        <DiscoverContentPanel
+          tab={tab}
+          state={createMockState()}
+          variant="side"
+        />,
+        container
+      );
     });
 
     const panel = container.querySelector(".sb-discover-content-panel");
@@ -118,12 +191,56 @@ describe("DiscoverContentPanel", () => {
     const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
 
     act(() => {
-      render(<DiscoverContentPanel tab={tab} variant="inline" />, container);
+      render(
+        <DiscoverContentPanel
+          tab={tab}
+          state={createMockState()}
+          variant="inline"
+        />,
+        container
+      );
     });
 
     const panel = container.querySelector(".sb-discover-content-panel");
     expect(panel?.classList.contains("sb-discover-content-panel--inline")).toBe(
       true
     );
+  });
+
+  it("renders the tab's notes (annotations) even when there are no other discovered results", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel tab={tab} state={state} variant="side" />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-discover-content-panel")
+    ).not.toBeNull();
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toContain("Notes");
+    expect(container.textContent).toContain("A helpful note.");
+  });
+
+  it("renders nothing when there are discovered results absent but also no annotations", () => {
+    const tab = createMockTab();
+    const state = createMockState({ annotationsForChapter: [] });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel tab={tab} state={state} variant="side" />,
+        container
+      );
+    });
+
+    expect(container.innerHTML).toBe("");
   });
 });

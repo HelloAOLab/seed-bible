@@ -7,11 +7,13 @@ import { handleHorizontalListKeyNav } from "../../app/keyboardNav";
 import { useState } from "preact/hooks";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { FeaturesManager } from "../../managers/FeaturesManager";
+import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
   readingState: BibleReadingState;
   playlists: PlaylistManager;
+  annotations: AnnotationsManager;
   features: FeaturesManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
@@ -32,6 +34,7 @@ export function QuickToolbar(props: QuickToolbarProps) {
   const tools = toolsManager.getQuickTools({
     readingState,
     playlists,
+    annotations: props.annotations,
     features: props.features,
     surface: "quick-toolbar",
   });

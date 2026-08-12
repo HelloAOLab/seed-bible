@@ -239,6 +239,7 @@ function createMobileState(): SeedBibleState {
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
     os: {
       connectionId: "test-connection",
@@ -247,6 +248,8 @@ function createMobileState(): SeedBibleState {
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -255,6 +258,7 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      sync: { pendingCount: signal(0) },
     },
   } as any as SeedBibleState;
 }
@@ -288,10 +292,17 @@ function createDesktopState(
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
     },
+    login: {
+      userId: signal<string | null>(null),
+      profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
+    },
     tools: createBibleToolsManager(testBranding),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -300,6 +311,7 @@ function createDesktopState(
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      sync: { pendingCount: signal(0) },
     },
   } as any as SeedBibleState;
 }

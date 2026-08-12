@@ -12,7 +12,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   AnnotationPreview,
   getAnnotationUpdatedTimeFormatter,
-} from "../DiscoverPane/DiscoverPane";
+} from "../DiscoverPane/AnnotationsSection";
 
 /** The id every conflict shares, so only one prompt is ever open. */
 const MODAL_ID = "annotation-conflict";

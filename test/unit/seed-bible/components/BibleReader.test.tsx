@@ -258,11 +258,16 @@ function createMobileState(): SeedBibleState {
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
     os: {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
+    tabs: {} as any,
+    panes: {} as any,
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -271,6 +276,7 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      sync: { pendingCount: signal(0) },
     },
   } as any as SeedBibleState;
 }
@@ -2338,6 +2344,9 @@ describe("BibleReader", () => {
       },
       bookmarks: {
         isLocationBookmarked: vi.fn(() => false),
+      },
+      annotations: {
+        getAnnotationsForChapter: vi.fn(() => signal([])),
       },
     } as any as SeedBibleState;
 

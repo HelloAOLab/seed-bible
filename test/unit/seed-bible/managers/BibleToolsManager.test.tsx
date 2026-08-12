@@ -76,10 +76,13 @@ function createQuickToolContext(
     discoveredStudyNotes?: unknown[];
     discoveredContent?: unknown[];
     discoverContentPanelVisible?: boolean;
+    annotationsForChapter?: unknown[];
   } = {}
 ): QuickToolContext {
   return {
     readingState: {
+      bookId: signal("GEN"),
+      chapterNumber: signal(1),
       discoveredCrossReferences: signal(
         overrides.discoveredCrossReferences ?? []
       ),
@@ -92,6 +95,11 @@ function createQuickToolContext(
     playlists: {
       playing: signal(null),
       isMobile: signal(false),
+    } as any,
+    annotations: {
+      getAnnotationsForChapter: vi.fn(() =>
+        signal(overrides.annotationsForChapter ?? [])
+      ),
     } as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
@@ -1082,6 +1090,19 @@ describe("createBibleToolsManager", () => {
 
         expect(tool?.visible.value).toBe(true);
       }
+    });
+
+    it("is visible when the chapter has annotations, even with no discovered results", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        annotationsForChapter: [{ id: "ann-1" }],
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool?.visible.value).toBe(true);
     });
 
     it("flips the tab's discoverContentPanelVisible signal when selected", () => {

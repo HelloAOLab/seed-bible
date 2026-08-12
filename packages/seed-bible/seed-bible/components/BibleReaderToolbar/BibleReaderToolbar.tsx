@@ -39,7 +39,7 @@ import {
   AnnotationCommentMeta,
   annotationLocationLabel,
   openDeleteAnnotationConfirm,
-} from "../DiscoverPane/DiscoverPane";
+} from "../DiscoverPane/AnnotationsSection";
 import {
   ContextMenuWithButton,
   ContextMenuItem,
@@ -820,6 +820,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         .getQuickTools({
           readingState: readingState.value!,
           playlists: props.state.playlists,
+          annotations: props.state.annotations,
           features: props.state.features,
           surface: "mobile-navigation-bar",
         })

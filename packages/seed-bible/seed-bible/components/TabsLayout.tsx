@@ -680,7 +680,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const belowContent = (
     <>
       {belongsCard}
-      <DiscoverContentPanel tab={tab} variant="inline" />
+      <DiscoverContentPanel tab={tab} state={state} variant="inline" />
     </>
   );
 
@@ -741,11 +741,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           />
         )}
         {showInlineDiscoverPanel && (
-          <DiscoverContentPanel tab={tab} variant="inline" />
+          <DiscoverContentPanel tab={tab} state={state} variant="inline" />
         )}
       </div>
       {showSideDiscoverPanel && (
-        <DiscoverContentPanel tab={tab} variant="side" />
+        <DiscoverContentPanel tab={tab} state={state} variant="side" />
       )}
     </div>
   );

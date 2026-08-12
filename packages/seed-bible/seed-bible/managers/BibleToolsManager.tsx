@@ -339,7 +339,8 @@ export type ManagedBibleBelowReaderToolbarToolItem =
  * Runtime context for the quick toolbar surface — the compact row of
  * actions shown at the top of the reader, beside the chapter bookmark
  * button. Intentionally lean: quick tools are header-level chapter actions
- * and only need the active reading state.
+ * and only need the active reading state (plus whichever manager a specific
+ * tool's visibility/action depends on).
  */
 export interface QuickToolContext {
   /** Active reading state for the current reader surface. */
@@ -349,6 +350,9 @@ export interface QuickToolContext {
    * Playlist manager state.
    */
   playlists: PlaylistManager;
+
+  /** Used by the discover-content-panel tool to factor notes into visibility. */
+  annotations: AnnotationsManager;
 
   features: FeaturesManager;
 
@@ -609,7 +613,20 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
           view_agenda
         </MaterialIcon>
       ),
-      isVisible: (c) => hasAnyDiscoverResults(c.readingState),
+      isVisible: (c) => {
+        if (hasAnyDiscoverResults(c.readingState)) {
+          return true;
+        }
+        const bookId = c.readingState.bookId.value;
+        const chapterNumber = c.readingState.chapterNumber.value;
+        if (!bookId || !chapterNumber) {
+          return false;
+        }
+        return (
+          c.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+            .length > 0
+        );
+      },
       onSelect: (c) => {
         c.readingState.discoverContentPanelVisible.value =
           !c.readingState.discoverContentPanelVisible.value;
