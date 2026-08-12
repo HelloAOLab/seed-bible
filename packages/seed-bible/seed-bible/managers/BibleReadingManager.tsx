@@ -1137,27 +1137,30 @@ export function previousPosition(
  * chapter's actual verse count until it's loaded; resolve it here, guarding
  * against stale chapter data left over from a failed fetch
  * (`selectTranslationAndChapter` doesn't clear `chapterData` on error).
+ *
+ * `verseNumbers`, when given, is used verbatim instead of expanding
+ * `ref.verse`..`ref.endVerse` into a contiguous range - callers whose source
+ * data can be non-contiguous (e.g. an annotation's gapped verse selection)
+ * should pass the exact set to highlight.
  */
 export function emphasizeVerses(
   readingState: BibleReadingState,
-  ref: VerseRef
+  ref: VerseRef,
+  verseNumbers?: number[]
 ): string | null {
   if (!ref.verse) {
     return null;
   }
 
   const endVerse = ref.endVerse;
+  const verses =
+    verseNumbers ?? (endVerse ? range(ref.verse, endVerse + 1) : [ref.verse]);
 
-  return readingState.decorateVerses(
-    ref.book,
-    ref.chapter,
-    endVerse ? range(ref.verse, endVerse + 1) : [ref.verse],
-    {
-      className: "sb-verse-decoration-diminish",
-      containerClassName: "sb-chapter-decoration-diminish",
-      removeAfterMs: 3000,
-    }
-  );
+  return readingState.decorateVerses(ref.book, ref.chapter, verses, {
+    className: "sb-verse-decoration-diminish",
+    containerClassName: "sb-chapter-decoration-diminish",
+    removeAfterMs: 3000,
+  });
 }
 
 export function createBibleReadingState(

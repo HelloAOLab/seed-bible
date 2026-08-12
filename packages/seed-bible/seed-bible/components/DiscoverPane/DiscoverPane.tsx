@@ -557,6 +557,7 @@ function AnnotationAuthor(props: {
   const name = useSignal("");
   const pictureUrl = useSignal<string | null>(null);
   const isSelf = userId === login.userId.value;
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!userId) {
@@ -591,8 +592,6 @@ function AnnotationAuthor(props: {
   if (!userId) {
     return null;
   }
-
-  const { t } = useI18n();
 
   return (
     <span className="sb-annotation-comment-author">
@@ -739,12 +738,16 @@ function AnnotationGroupSection(props: {
                   { scrollToVerse: annotation.verseNumber }
                 );
 
-                emphasizeVerses(tab.readingState, {
-                  book: annotation.bookId as BookId,
-                  chapter: annotation.chapterNumber,
-                  verse: annotation.verseNumber,
-                  endVerse: annotation.endVerseNumber ?? undefined,
-                });
+                emphasizeVerses(
+                  tab.readingState,
+                  {
+                    book: annotation.bookId as BookId,
+                    chapter: annotation.chapterNumber,
+                    verse: annotation.verseNumber,
+                    endVerse: annotation.endVerseNumber ?? undefined,
+                  },
+                  annotationVerseNumbers(annotation)
+                );
               }}
             >
               <div className="sb-annotation-item-main">

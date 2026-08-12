@@ -196,15 +196,17 @@ function annotationVerseRangeKey(annotation: Annotation): string {
   if (verseNumbers.length === 0) {
     return "chapter";
   }
-  return `${Math.min(...verseNumbers)}-${Math.max(...verseNumbers)}`;
+  return [...verseNumbers].sort((a, b) => a - b).join(",");
 }
 
 /**
- * Groups annotations that target the same verse range (same start *and* end
- * verse - a whole-chapter annotation only groups with other whole-chapter
- * annotations), sorts within each group oldest-first by `createdAtMs` (a
- * comment thread reads top-to-bottom in the order it was written; ties or
- * missing timestamps keep their incoming relative order), and sorts the
+ * Groups annotations that target the exact same set of verses (a
+ * whole-chapter annotation only groups with other whole-chapter
+ * annotations; two annotations that merely share the same start and end
+ * verse but differ in between - e.g. `[3, 5]` vs. `[3, 4, 5]` - land in
+ * separate groups), sorts within each group oldest-first by `createdAtMs`
+ * (a comment thread reads top-to-bottom in the order it was written; ties
+ * or missing timestamps keep their incoming relative order), and sorts the
  * groups themselves with whole-chapter groups first, then ascending by
  * start verse, then by end verse.
  */
@@ -616,6 +618,12 @@ export function createAnnotationsManager(
   // to still be selected in the reader.
   const isDraftingNewAnnotation = signal(false);
 
+  // The tab a draft was started on, so the live-sync effect below keeps
+  // tracking that tab's selection even if the user switches to a different
+  // open tab while the composer is still up (a normal action - the composer
+  // is a docked panel, not a modal).
+  const draftTabId = signal<string | null>(null);
+
   const activeTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -630,7 +638,10 @@ export function createAnnotationsManager(
       return;
     }
     const current = editingAnnotation.value;
-    const tab = activeTab.value;
+    const tabId = draftTabId.value;
+    const tab = tabId
+      ? (tabs.tabs.value.find((t) => t.id === tabId) ?? null)
+      : null;
     if (!current || !tab) {
       return;
     }
@@ -670,6 +681,7 @@ export function createAnnotationsManager(
 
     const now = Date.now();
     isDraftingNewAnnotation.value = true;
+    draftTabId.value = tab.id;
     // Verse targeting starts null; the sync effect above fills it in
     // immediately from the current selection, then keeps it live.
     editingAnnotation.value = annotationSchema.parse({
@@ -692,6 +704,7 @@ export function createAnnotationsManager(
 
   const editAnnotation = (annotation: Annotation): void => {
     isDraftingNewAnnotation.value = false;
+    draftTabId.value = null;
     editingAnnotation.value = { ...annotation };
     discover.view.value = "create_annotation";
   };
@@ -713,12 +726,14 @@ export function createAnnotationsManager(
     const saved = await saveAnnotation(next);
     upsertIntoCache(saved);
     isDraftingNewAnnotation.value = false;
+    draftTabId.value = null;
     editingAnnotation.value = null;
     discover.view.value = "discover";
   };
 
   const cancelEditingAnnotation = (): void => {
     isDraftingNewAnnotation.value = false;
+    draftTabId.value = null;
     editingAnnotation.value = null;
     discover.view.value = "discover";
   };

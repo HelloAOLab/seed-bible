@@ -53,9 +53,12 @@ function createMockTab(
   } as unknown as ReaderTab;
 }
 
-function createMockTabsManager(tab: ReaderTab | null): TabsManager {
+function createMockTabsManager(
+  tab: ReaderTab | null,
+  ...moreTabs: ReaderTab[]
+): TabsManager {
   return {
-    tabs: signal(tab ? [tab] : []),
+    tabs: signal(tab ? [tab, ...moreTabs] : []),
     selectedTabId: signal(tab?.id ?? null),
   } as unknown as TabsManager;
 }
@@ -546,6 +549,37 @@ describe("AnnotationsManager", () => {
       expect(manager.editingAnnotation.value?.verseNumbers).toBeNull();
     });
 
+    it("keeps syncing against the tab the draft was started on after switching the active tab", async () => {
+      const tabA = createMockTab({
+        id: "tab-1",
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+        ],
+      });
+      const tabB = createMockTab({ id: "tab-2", bookId: "EXO" });
+      tabs = createMockTabsManager(tabA, tabB);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+      expect(manager.editingAnnotation.value?.verseNumber).toBe(5);
+
+      tabs.selectedTabId.value = "tab-2";
+
+      expect(manager.editingAnnotation.value?.verseNumber).toBe(5);
+      expect(manager.editingAnnotation.value?.endVerseNumber).toBeNull();
+      expect(manager.editingAnnotation.value?.verseNumbers).toEqual([5]);
+
+      tabA.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 5 } },
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 6 } },
+      ] as never;
+
+      expect(manager.editingAnnotation.value?.verseNumber).toBe(5);
+      expect(manager.editingAnnotation.value?.endVerseNumber).toBe(6);
+    });
+
     it("stops syncing once the new draft is saved", async () => {
       tab = createMockTab({
         bookId: "GEN",
@@ -791,6 +825,45 @@ describe("groupAnnotationsByVerseRange", () => {
     const groups = groupAnnotationsByVerseRange([a, b, c]);
 
     expect(groups).toHaveLength(3);
+  });
+
+  it("splits annotations that share a start/end verse but target different verses in between", () => {
+    const gapped = createCommentAnnotation({
+      id: "gapped",
+      verseNumber: 3,
+      endVerseNumber: 5,
+      verseNumbers: [3, 5],
+    });
+    const full = createCommentAnnotation({
+      id: "full",
+      verseNumber: 3,
+      endVerseNumber: 5,
+      verseNumbers: [3, 4, 5],
+    });
+
+    const groups = groupAnnotationsByVerseRange([gapped, full]);
+
+    expect(groups).toHaveLength(2);
+  });
+
+  it("groups annotations that target the identical non-contiguous verse set", () => {
+    const a = createCommentAnnotation({
+      id: "a",
+      verseNumber: 3,
+      endVerseNumber: 5,
+      verseNumbers: [3, 5],
+    });
+    const b = createCommentAnnotation({
+      id: "b",
+      verseNumber: 3,
+      endVerseNumber: 5,
+      verseNumbers: [3, 5],
+    });
+
+    const groups = groupAnnotationsByVerseRange([a, b]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.annotations.map((x) => x.id)).toEqual(["a", "b"]);
   });
 
   it("groups whole-chapter annotations together, separate from verse-targeted ones", () => {

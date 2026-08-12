@@ -914,6 +914,71 @@ describe("DiscoverPane", () => {
     expect(editAnnotation).not.toHaveBeenCalled();
   });
 
+  it("clicking an annotation row with a gapped verse selection only emphasizes the annotation's actual verses", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+      endVerseNumber: 7,
+      verseNumbers: [3, 4, 5, 7],
+      data: { type: "comment", html: "<p>Great verse</p>" },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const decorateVerses = vi.fn(() => "decoration-1");
+    const tab = createMockTab({
+      translationId: "BSB",
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+      decorateVerses,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const item = container.querySelector(
+      ".sb-annotation-item"
+    ) as HTMLLIElement;
+
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(decorateVerses).toHaveBeenCalledWith(
+      "GEN",
+      1,
+      [3, 4, 5, 7],
+      expect.objectContaining({
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
+        removeAfterMs: 3000,
+      })
+    );
+  });
+
   it("clicking an annotation row with no verse targeting does not navigate or emphasize anything", async () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
