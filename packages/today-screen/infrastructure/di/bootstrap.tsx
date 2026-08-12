@@ -233,6 +233,12 @@ export const bootstrapExtension = () => {
           return (
             <Today
               config={{
+                isBookmarksListOpen: context.bookmarks.isFilterActive.value,
+                showBookmarksList: () => {
+                  context.sidebar.isSidebarCollapsed.value = false;
+                  context.bookmarks.isFilterActive.value = true;
+                },
+                isMobile: context.app.isMobile,
                 ColorParser,
                 MaterialIcon,
                 Skeleton,

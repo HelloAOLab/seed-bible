@@ -1,4 +1,5 @@
 import {
+  type ApiRequestOptions,
   type AvailableTranslations,
   type ChapterFootnote,
   type ChapterVerse,
@@ -386,6 +387,19 @@ export interface BibleReadingState {
    * `previousChapterApiLink`.
    */
   hasPrevious: ReadonlySignal<boolean>;
+
+  /**
+   * The chapter `loadNextChapter`/`loadPreviousChapter` would move to, resolved
+   * without moving there — for callers that render the neighbouring chapter
+   * ahead of time, like the mobile swipe preview. Enabled extensions answer
+   * first (so playback previews its own queue), falling back to the current
+   * chapter's next/previous link. `null` when there is nothing to show.
+   */
+  getAdjacentChapter: (
+    direction: "next" | "previous",
+    options?: ApiRequestOptions
+  ) => Promise<TranslationBookChapter | null>;
+
   /** Streaming discovered cross references for the current chapter, grouped by provider. */
   discoveredCrossReferences: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
@@ -3001,6 +3015,56 @@ export function createBibleReadingState(
     )
   );
 
+  /**
+   * The chapter that `loadNextChapter`/`loadPreviousChapter` would move to,
+   * resolved without moving there. Enabled extensions get first say (in
+   * priority order), so a caller that renders the neighbouring chapter ahead of
+   * time — the mobile swipe preview — shows the chapter navigation will actually
+   * land on rather than the canonical next one. Falls back to the chapter's own
+   * next/previous link when no extension answers.
+   */
+  const getAdjacentChapter = async (
+    direction: "next" | "previous",
+    options?: ApiRequestOptions
+  ): Promise<TranslationBookChapter | null> => {
+    const currentChapter = chapterData.value;
+    if (!currentChapter) {
+      return null;
+    }
+
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const hook = runtime.instance.getAdjacentChapter;
+      if (!hook) {
+        continue;
+      }
+      const target = await hook({
+        readingState: readingStateRef,
+        currentChapter,
+        direction,
+        data: runtime.data,
+        options,
+      });
+      // `undefined` defers to the next extension; `null` means "no neighbour".
+      if (target === null) {
+        return null;
+      }
+      if (target) {
+        return await dataManager.getTranslationBookChapter(
+          target.translationId ?? currentChapter.translation.id,
+          target.bookId,
+          target.chapter,
+          options
+        );
+      }
+    }
+
+    return (
+      (direction === "next"
+        ? await dataManager.getNextChapter(currentChapter, options)
+        : await dataManager.getPreviousChapter(currentChapter, options)) ?? null
+    );
+  };
+
   loadInitialData();
 
   readingStateRef = {
@@ -3041,6 +3105,7 @@ export function createBibleReadingState(
     loadNextChapter,
     hasNext,
     hasPrevious,
+    getAdjacentChapter,
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,

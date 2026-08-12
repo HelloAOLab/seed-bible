@@ -1,5 +1,6 @@
 import type {
   AvailableTranslations,
+  ChapterData,
   CompleteTranslation,
   Translation,
   TranslationBookChapter,
@@ -477,7 +478,9 @@ export function makeExampleUrl(path: string): string {
 export function makeChapter(
   translationBooks: TranslationBooks,
   book: string,
-  chapter: number
+  chapter: number,
+  /** Overrides the default two-verse body, for tests that care about the text. */
+  content?: ChapterData["content"]
 ): TranslationBookChapter {
   const selectedBook =
     translationBooks.books.find((entry) => entry.id === book) ??
@@ -498,7 +501,7 @@ export function makeChapter(
     numberOfVerses: 2,
     chapter: {
       number: chapter,
-      content: [
+      content: content ?? [
         { type: "verse", number: 1, content: ["Verse 1"] },
         { type: "verse", number: 2, content: ["Verse 2"] },
       ],

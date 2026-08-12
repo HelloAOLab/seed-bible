@@ -80,6 +80,12 @@ export function Main({
     initialState ??
     useMemo(() => createSeedBibleState({ config: appConfig, initialHref }), []);
 
+  // Dev-only escape hatch for poking at live managers from the browser
+  // console (e.g. `window.__seedBible.login`) — never runs in production.
+  if (import.meta.env.DEV && typeof window !== "undefined") {
+    (window as unknown as { __seedBible?: typeof state }).__seedBible = state;
+  }
+
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
   }, []);

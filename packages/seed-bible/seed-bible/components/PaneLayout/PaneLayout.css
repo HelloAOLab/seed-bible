@@ -167,7 +167,9 @@
    exact box height (no env() addition, which would open a gap below the pane).
    The verse toolbar is taller than this bar, which is why it is hidden outright
    while a pane fills the screen rather than having room reserved for it (see
-   `isVerseToolbarVisible` in BibleReaderToolbar). */
+   `isVerseToolbarVisible` in BibleReaderToolbar).
+   NOTE: `FullscreenPane` must not set `bottom` inline — an inline value beats
+   this media query and reopens the "footer hidden behind the toolbar" bug. */
 @media (max-width: 480px) {
   .sb-pane-shell-detached[data-placement="fullscreen"] {
     bottom: 4.375rem;

@@ -13,6 +13,13 @@ import {
 } from "../managers/TabsManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { saveProfileConfigValue } from "../managers/ProfileConfigSync";
+import {
+  DEFAULT_POPULAR_LANGUAGES,
+  filterTranslationGroups,
+  groupTranslationsByLanguage,
+  type TranslationLanguageGroup,
+  type TranslationViewMode,
+} from "../managers/translationGrouping";
 import type {
   BookOrientation,
   SettingsManager,
@@ -48,13 +55,6 @@ export interface BibleSelectorSetOpenOptions {
 
 export interface GhostBook {
   ghost?: boolean;
-}
-
-export interface TranslationLanguageGroup {
-  language: string;
-  languageEnglishName: string;
-  languageName: string;
-  translations: Translation[];
 }
 
 export type BibleSelectorBookItem = TranslationBook | GhostBook;
@@ -186,7 +186,7 @@ export interface BibleSelectorState {
   showCustomTranslation: Signal<boolean>;
   allowedTranslationLimit: Signal<number>;
   apiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
-  showAllLanguages: Signal<"complete" | "all" | "popular">;
+  showAllLanguages: Signal<TranslationViewMode>;
   showTranslationSettings: Signal<boolean>;
   showTranslationInfo: Signal<{
     translation: Translation;
@@ -199,6 +199,14 @@ export interface BibleSelectorState {
   pendingOfflineDelete: Signal<Translation | null>;
   inputValue: Signal<string>;
   filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
+
+  /**
+   * How many language groups match the current search and view mode before the
+   * `allowedTranslationLimit` page size is applied. What "show more" is judged
+   * against — the unfiltered catalog total would keep the control on screen
+   * long after paging can reveal anything.
+   */
+  matchingTranslationGroupCount: ReadonlySignal<number>;
   handleTranslationAddition: () => void;
   openTabs: () => void;
   bookmarks: BookmarksManager;
@@ -537,51 +545,11 @@ export function createBibleSelectorState(
 
   const apocryphaAvailable = signal<boolean>(false);
 
-  const defaultTranslations = signal<string[]>([
-    "eng",
-    "spa",
-    "arb",
-    "hin",
-    "heb",
-    "grc",
-  ]);
+  const defaultTranslations = signal<string[]>([...DEFAULT_POPULAR_LANGUAGES]);
 
-  const apiTranslations = computed<Array<TranslationLanguageGroup>>(() => {
-    const normalized = availableTranslations.value.map((item: Translation) => ({
-      ...item,
-      languageEnglishName:
-        item?.languageEnglishName || item.languageName || item.language,
-    }));
-    const grouped = new Map<string, TranslationLanguageGroup>();
-
-    normalized.forEach((translation: Translation) => {
-      const languageCode = translation.language;
-      const existing = grouped.get(languageCode);
-
-      if (existing) {
-        if (
-          !existing.translations.some(
-            (existingTranslation) => existingTranslation.id === translation.id
-          )
-        ) {
-          existing.translations.push(translation);
-        }
-        return;
-      }
-
-      grouped.set(languageCode, {
-        language: languageCode,
-        languageEnglishName: translation.languageEnglishName || languageCode,
-        languageName:
-          translation.languageName ||
-          translation.languageEnglishName ||
-          languageCode,
-        translations: [translation],
-      });
-    });
-
-    return Array.from(grouped.values());
-  });
+  const apiTranslations = computed<Array<TranslationLanguageGroup>>(() =>
+    groupTranslationsByLanguage(availableTranslations.value)
+  );
 
   const allowedTranslationLimit = signal<number>(50);
 
@@ -618,12 +586,10 @@ export function createBibleSelectorState(
 
   // ─── TranslationModal State ───────────────────────────────────────────────────
 
-  const showAllLanguages = signal<"complete" | "all" | "popular">(
-    (safeLocalStorage.getItem("showAllLanguages") as
-      | "complete"
-      | "all"
-      | "popular"
-      | null) || "complete"
+  const showAllLanguages = signal<TranslationViewMode>(
+    (safeLocalStorage.getItem(
+      "showAllLanguages"
+    ) as TranslationViewMode | null) || "complete"
   );
 
   const showTranslationSettings = signal<boolean>(false);
@@ -877,164 +843,23 @@ export function createBibleSelectorState(
     }
   });
 
+  const pagedApiTranslations = computed(() =>
+    filterTranslationGroups({
+      groups: apiTranslations.value,
+      query: languageQuery.value,
+      viewMode: showAllLanguages.value,
+      limit: allowedTranslationLimit.value,
+      selectedTranslation: selectedTranslation.value,
+      popularLanguages: defaultTranslations.value,
+    })
+  );
+
   const filteredApiTranslations = computed<Array<TranslationLanguageGroup>>(
-    () => {
-      const lq = languageQuery.value;
-      const apiTr = apiTranslations.value;
-      const limit = allowedTranslationLimit.value;
-      const selTr = selectedTranslation.value;
-      const sal = showAllLanguages.value;
-      const dtr = defaultTranslations.value;
-      const selectedLanguageCode = selTr?.language?.toLowerCase();
-      const selectedLanguageName = selTr?.languageEnglishName?.toLowerCase();
+    () => pagedApiTranslations.value.groups
+  );
 
-      const filterByMode = (
-        groups: TranslationLanguageGroup[]
-      ): TranslationLanguageGroup[] => {
-        if (sal === "all") {
-          return groups.map((group) => ({
-            ...group,
-            translations: [...group.translations],
-          }));
-        }
-
-        const next: TranslationLanguageGroup[] = [];
-
-        groups.forEach((group) => {
-          if (
-            sal === "popular" &&
-            !dtr.includes(group.language) &&
-            !group.translations.some((translation) =>
-              dtr.includes(translation.language)
-            )
-          ) {
-            return;
-          }
-
-          if (sal === "complete") {
-            const filteredTranslations = group.translations.filter(
-              (translation) =>
-                !(
-                  translation.numberOfBooks < 66 && translation.id !== selTr?.id
-                )
-            );
-
-            if (filteredTranslations.length > 0) {
-              next.push({
-                ...group,
-                translations: filteredTranslations,
-              });
-            }
-
-            return;
-          }
-
-          next.push({
-            ...group,
-            translations: [...group.translations],
-          });
-        });
-
-        return next;
-      };
-
-      const filterByQuery = (
-        groups: TranslationLanguageGroup[],
-        lowercaseQuery: string
-      ): TranslationLanguageGroup[] => {
-        const next: TranslationLanguageGroup[] = [];
-
-        groups.forEach((group) => {
-          const languageMatch =
-            group.language.toLowerCase().includes(lowercaseQuery) ||
-            group.languageEnglishName.toLowerCase().includes(lowercaseQuery) ||
-            group.languageName.toLowerCase().includes(lowercaseQuery) ||
-            group.translations.some((translation) => {
-              const languageEnglishName =
-                translation.languageEnglishName?.toLowerCase() ||
-                translation.englishName.toLowerCase();
-              const languageName = translation.languageName?.toLowerCase();
-
-              return (
-                languageEnglishName.includes(lowercaseQuery) ||
-                Boolean(languageName?.includes(lowercaseQuery))
-              );
-            });
-
-          if (languageMatch) {
-            next.push({
-              ...group,
-              translations: [...group.translations],
-            });
-            return;
-          }
-
-          const matchedTranslations = group.translations.filter(
-            (translation) => {
-              const shortName = translation.shortName.toLowerCase();
-
-              if (
-                shortName.includes(lowercaseQuery) ||
-                translation?.name?.toLowerCase().includes(lowercaseQuery) ||
-                translation?.languageEnglishName
-                  ?.toLowerCase()
-                  .includes(lowercaseQuery) ||
-                translation?.languageName
-                  ?.toLowerCase()
-                  .includes(lowercaseQuery)
-              ) {
-                return true;
-              }
-
-              return false;
-            }
-          );
-
-          if (matchedTranslations.length > 0) {
-            next.push({
-              ...group,
-              translations: matchedTranslations,
-            });
-          }
-        });
-
-        return next;
-      };
-
-      const sortFn = (
-        a: TranslationLanguageGroup,
-        b: TranslationLanguageGroup
-      ): number => {
-        if (
-          a.language === selectedLanguageCode ||
-          a.language.toLowerCase() === selectedLanguageName
-        ) {
-          return -1;
-        }
-
-        if (
-          b.language === selectedLanguageCode ||
-          b.language.toLowerCase() === selectedLanguageName
-        ) {
-          return 1;
-        }
-
-        return a.language.localeCompare(b.language);
-      };
-
-      const allGroups = apiTr;
-
-      if (lq !== "") {
-        const lowercaseQuery = lq.toLowerCase();
-        const queryFiltered = filterByQuery(allGroups, lowercaseQuery);
-        const modeFiltered = filterByMode(queryFiltered);
-
-        return modeFiltered.slice(0, limit).sort(sortFn);
-      } else {
-        const modeFiltered = filterByMode(allGroups);
-        return modeFiltered.sort(sortFn).slice(0, limit);
-      }
-    }
+  const matchingTranslationGroupCount = computed(
+    () => pagedApiTranslations.value.totalMatching
   );
 
   effect(() => {
@@ -1092,6 +917,7 @@ export function createBibleSelectorState(
     pendingOfflineDelete,
     inputValue,
     filteredApiTranslations,
+    matchingTranslationGroupCount,
     handleTranslationAddition,
     openTabs,
     bookmarks,
