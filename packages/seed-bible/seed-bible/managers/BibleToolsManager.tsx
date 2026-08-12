@@ -1194,24 +1194,6 @@ function formatVerseRanges(verseNumbers: number[]): string {
   return start === end ? `${start}` : `${start}-${end}`;
 }
 
-/** Extracts and normalizes the plain text content of a single selected verse. */
-export function extractVerseText(verse: BibleSelectedVerse): string {
-  return verse.verse.content
-    .map((part) => {
-      if (typeof part === "string") return part;
-
-      if (part && typeof part === "object" && "text" in part) {
-        return (part as { text: string }).text;
-      }
-
-      return "";
-    })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .replace(/\s+([,.;:!?’”)\]])/g, "$1")
-    .trim();
-}
-
 /**
  * Formats the selected verses from the reading state into a human-readable string.
  * @param readingState The reading state containing the selected verses to format.

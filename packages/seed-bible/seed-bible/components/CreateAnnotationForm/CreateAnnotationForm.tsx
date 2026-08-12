@@ -9,7 +9,7 @@ import {
   formatAnnotationVerseNumbers,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
-import { extractVerseText } from "../../managers/BibleToolsManager";
+import { extractContentText } from "../../managers/ChapterText";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
@@ -53,14 +53,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           (c): c is ChapterVerse =>
             c.type === "verse" && verseNumbers.includes(c.number)
         )
-        .map((verse) =>
-          extractVerseText({
-            bookId: editing.bookId,
-            chapterNumber: editing.chapterNumber,
-            verse,
-            translationId: chapterData.translation.id,
-          })
-        )
+        .map((verse) => extractContentText(verse.content))
         .join(" ")
     : null;
 
