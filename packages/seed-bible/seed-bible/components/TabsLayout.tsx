@@ -4,6 +4,7 @@ import {
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
 import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
+import { DiscoverContentPanel } from "./DiscoverContentPanel/DiscoverContentPanel";
 import type {
   ApiRequestOptions,
   TranslationBookChapter,
@@ -54,6 +55,18 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
   const isMobile = state?.app.isMobile.value ?? false;
+  // "Available space" for the discover content panel, approximated per slot:
+  // a slot only gets the side-docked variant when it's the sole slot on a
+  // non-mobile viewport and no other pane is already using the "side"
+  // placement (see PanesManager) — a split layout divides the same width
+  // across slots, so every slot in a multi-slot layout falls back to inline.
+  const isSoleSlot = (state?.app.effectiveSlots.value.length ?? 1) === 1;
+  const blockedBySidePane =
+    state?.app.effectivePanes.value.some(
+      (pane) => pane.placement === "side" || pane.placement === "fullscreen"
+    ) ?? false;
+  const showSideDiscoverPanel = !isMobile && isSoleSlot && !blockedBySidePane;
+  const showInlineDiscoverPanel = !isMobile && !showSideDiscoverPanel;
 
   const swipeViewportRef = useRef<HTMLDivElement | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
@@ -658,16 +671,22 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   };
 
   // On mobile the reader's chapter panel is the scroll container, so the card
-  // goes inside it (via `belowContent`) and is reached by scrolling to the end
-  // of the passage. On desktop the pane itself scrolls, so it stays a sibling
-  // rendered after the reader.
+  // (and the inline discover panel) goes inside it (via `belowContent`) and is
+  // reached by scrolling to the end of the passage. On desktop the pane itself
+  // scrolls, so they stay siblings rendered after the reader.
   const belongsCard = (
     <ReadingPlanBelongsCard state={state} readingState={readingState} />
+  );
+  const belowContent = (
+    <>
+      {belongsCard}
+      <DiscoverContentPanel tab={tab} variant="inline" />
+    </>
   );
 
   const mobileChrome = isMobile
     ? {
-        belowContent: belongsCard,
+        belowContent,
         isScrolled,
         prevChapterPreview,
         nextChapterPreview,
@@ -689,36 +708,44 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     : undefined;
 
   return (
-    <div
-      className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
-      ref={slotScrollerRefCallback}
-    >
-      <BibleReader
-        currentSlot={slot}
-        readingState={readingState}
-        selectorState={state.selector}
-        state={state}
-        mobileChrome={mobileChrome}
-        sharedSession={tab.sharedSession}
-      />
-      {!isMobile && belongsCard}
-      {!isMobile && (
-        <BelowReaderToolbar
-          toolsManager={state.tools}
-          readingState={readingState}
-          sharedSession={tab.sharedSession}
-          selectorState={state.selector}
-          tabsManager={state.tabs}
-          panesManager={state.panes}
-          tabsLayoutManager={state.tabsLayout}
-          openSidebar={state.sidebar.openSidebar}
-          openSearch={state.sidebar.openSearch}
+    <div className="sb-pane-reader-outer">
+      <div
+        className={`sb-pane-reader${isMobile ? " sb-pane-reader-mobile" : ""}`}
+        ref={slotScrollerRefCallback}
+      >
+        <BibleReader
           currentSlot={slot}
-          toast={state.app.toast}
-          openChat={state.sidebar.openChatPanel}
-          chats={state.chats}
-          features={state.features}
+          readingState={readingState}
+          selectorState={state.selector}
+          state={state}
+          mobileChrome={mobileChrome}
+          sharedSession={tab.sharedSession}
         />
+        {!isMobile && belongsCard}
+        {!isMobile && (
+          <BelowReaderToolbar
+            toolsManager={state.tools}
+            readingState={readingState}
+            sharedSession={tab.sharedSession}
+            selectorState={state.selector}
+            tabsManager={state.tabs}
+            panesManager={state.panes}
+            tabsLayoutManager={state.tabsLayout}
+            openSidebar={state.sidebar.openSidebar}
+            openSearch={state.sidebar.openSearch}
+            currentSlot={slot}
+            toast={state.app.toast}
+            openChat={state.sidebar.openChatPanel}
+            chats={state.chats}
+            features={state.features}
+          />
+        )}
+        {showInlineDiscoverPanel && (
+          <DiscoverContentPanel tab={tab} variant="inline" />
+        )}
+      </div>
+      {showSideDiscoverPanel && (
+        <DiscoverContentPanel tab={tab} variant="side" />
       )}
     </div>
   );

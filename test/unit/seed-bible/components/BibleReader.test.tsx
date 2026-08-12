@@ -193,6 +193,7 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
     discoveredStudyNotes: signal([]),
+    discoverContentPanelVisible: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
@@ -238,6 +239,8 @@ function createMobileState(): SeedBibleState {
   return {
     app: {
       isMobile: signal(true),
+      effectiveSlots: signal([{ id: "slot-1", tab: null }]),
+      effectivePanes: signal([]),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),

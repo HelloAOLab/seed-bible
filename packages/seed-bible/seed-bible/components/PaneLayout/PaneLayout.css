@@ -303,9 +303,23 @@
   grid-row: 2;
 }
 
+/* Flex row wrapping `.sb-pane-reader` in every slot. Almost always has just
+   the one child; gains a second, `.sb-discover-content-panel--side`, when
+   that slot has room for the discover content panel to dock beside the
+   reader instead of flowing inline inside it (see `TabsLayout.tsx`). */
+.sb-pane-reader-outer {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
 .sb-pane-reader {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   overflow: auto;
   scrollbar-width: none;

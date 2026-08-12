@@ -412,6 +412,13 @@ export interface BibleReadingState {
   discoveredStudyNotes: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
+  /**
+   * Per-tab visibility toggle for the compact discover content panel (cross
+   * references/study notes/content). Defaults to visible; flipped by the
+   * "discover-content-panel" quick tool. In-memory only for the tab's
+   * lifetime — not persisted, mirroring `selectedVerses`/`scrollPosition`.
+   */
+  discoverContentPanelVisible: Signal<boolean>;
 
   /**
    * True while this reading state is part of a shared/multiplayer session.
@@ -1175,6 +1182,20 @@ export function emphasizeVerses(
     containerClassName: "sb-chapter-decoration-diminish",
     removeAfterMs: 3000,
   });
+}
+
+/** True when the reading state has any discovered cross reference, study note, or content result for the current chapter. */
+export function hasAnyDiscoverResults(
+  readingState: BibleReadingState | null | undefined
+): boolean {
+  if (!readingState) {
+    return false;
+  }
+  return (
+    readingState.discoveredCrossReferences.value.length > 0 ||
+    readingState.discoveredStudyNotes.value.length > 0 ||
+    readingState.discoveredContent.value.length > 0
+  );
 }
 
 export function createBibleReadingState(
@@ -2830,6 +2851,8 @@ export function createBibleReadingState(
       .filter((providerResults) => providerResults.results.length > 0);
   });
 
+  const discoverContentPanelVisible = signal<boolean>(true);
+
   if (discoverManager) {
     let discoverGeneration = 0;
 
@@ -3109,6 +3132,7 @@ export function createBibleReadingState(
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
+    discoverContentPanelVisible,
     title,
     shortTitle,
     subTitle,

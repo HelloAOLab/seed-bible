@@ -2718,6 +2718,26 @@ describe("createBibleReadingState", () => {
     });
   });
 
+  describe("discoverContentPanelVisible", () => {
+    it("defaults to visible and round-trips writes", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"])
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelVisible.value).toBe(true);
+
+      state.discoverContentPanelVisible.value = false;
+      expect(state.discoverContentPanelVisible.value).toBe(false);
+
+      state.discoverContentPanelVisible.value = true;
+      expect(state.discoverContentPanelVisible.value).toBe(true);
+    });
+  });
+
   describe("reading extensions", () => {
     const genBookData = aabBooks.books.find((book) => book.id === "GEN")!;
 

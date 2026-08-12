@@ -81,3 +81,10 @@
 .sb-now-playing-icon-title {
   margin: 0;
 }
+
+/* Visual on/off cue for toggle-style quick tools (e.g. the discover content
+   panel toggle) — the framework's tool predicates don't carry a "pressed"
+   signal, so the tool's own icon function applies this class conditionally. */
+.sb-quick-tool-icon-active {
+  color: var(--sb-primary-color);
+}

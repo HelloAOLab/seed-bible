@@ -9,6 +9,7 @@ import {
   createBibleToolsManager,
   getShareUrl,
   type BibleToolContext,
+  type QuickToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -66,6 +67,36 @@ function createContext(): BibleToolContext {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+  };
+}
+
+function createQuickToolContext(
+  overrides: {
+    discoveredCrossReferences?: unknown[];
+    discoveredStudyNotes?: unknown[];
+    discoveredContent?: unknown[];
+    discoverContentPanelVisible?: boolean;
+  } = {}
+): QuickToolContext {
+  return {
+    readingState: {
+      discoveredCrossReferences: signal(
+        overrides.discoveredCrossReferences ?? []
+      ),
+      discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
+      discoveredContent: signal(overrides.discoveredContent ?? []),
+      discoverContentPanelVisible: signal(
+        overrides.discoverContentPanelVisible ?? true
+      ),
+    } as any,
+    playlists: {
+      playing: signal(null),
+      isMobile: signal(false),
+    } as any,
+    features: {
+      isFeatureEnabled: vi.fn(() => signal(true)),
+    } as any,
+    surface: "quick-toolbar",
   };
 }
 
@@ -1021,6 +1052,55 @@ describe("createBibleToolsManager", () => {
 
       expect(tool).toBeDefined();
       expect(tool?.visible.value).toBe(true);
+    });
+  });
+
+  describe("discover-content-panel quick tool", () => {
+    it("is invisible when there are no discovered results", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext();
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(false);
+    });
+
+    it("is visible when there are discovered cross references, study notes, or content", () => {
+      const manager = createBibleToolsManager(testBranding);
+
+      for (const overrides of [
+        { discoveredCrossReferences: [{ providerId: "p1", results: [{}] }] },
+        { discoveredStudyNotes: [{ providerId: "p1", results: [{}] }] },
+        { discoveredContent: [{ providerId: "p1", results: [{}] }] },
+      ]) {
+        const tool = manager
+          .getQuickTools(createQuickToolContext(overrides))
+          .find((t) => t.id === "discover-content-panel");
+
+        expect(tool?.visible.value).toBe(true);
+      }
+    });
+
+    it("flips the tab's discoverContentPanelVisible signal when selected", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        discoverContentPanelVisible: true,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      tool?.onSelect();
+      expect(context.readingState.discoverContentPanelVisible.value).toBe(
+        false
+      );
+
+      tool?.onSelect();
+      expect(context.readingState.discoverContentPanelVisible.value).toBe(true);
     });
   });
 

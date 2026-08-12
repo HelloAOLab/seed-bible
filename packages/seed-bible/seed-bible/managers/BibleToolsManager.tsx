@@ -5,6 +5,7 @@ import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
   uiLocaleForDefaultTranslation,
+  hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
@@ -588,6 +589,30 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
         c.playlists.isMobile.value,
       onSelect: (c) => {
         c.playlists.view.value = "play_playlist";
+      },
+    },
+    {
+      id: "discover-content-panel",
+      priority: 10,
+      title: {
+        key: "discover-content-panel",
+        defaultValue: "Discover content",
+      },
+      icon: (c) => (
+        <MaterialIcon
+          className={
+            c.readingState.discoverContentPanelVisible.value
+              ? "sb-quick-tool-icon-active"
+              : undefined
+          }
+        >
+          view_agenda
+        </MaterialIcon>
+      ),
+      isVisible: (c) => hasAnyDiscoverResults(c.readingState),
+      onSelect: (c) => {
+        c.readingState.discoverContentPanelVisible.value =
+          !c.readingState.discoverContentPanelVisible.value;
       },
     },
   ];

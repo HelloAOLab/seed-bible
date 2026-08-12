@@ -28,6 +28,7 @@ type ReaderFixture = {
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
   selectedFootnote: Signal<SelectedFootnote | null>;
+  discoveredCrossReferences: Signal<unknown[]>;
   selectVerse: Mock;
   selectFootnote: Mock;
   setOpen: Mock;
@@ -112,6 +113,7 @@ function createFixture(): ReaderFixture {
   });
   const decorations = signal<VerseDecoration[]>([]);
   const selectedFootnote = signal<SelectedFootnote | null>(null);
+  const discoveredCrossReferences = signal<unknown[]>([]);
   const selectVerse = vi.fn();
   const selectFootnote = vi.fn();
   const setOpen = vi.fn(async () => undefined);
@@ -163,8 +165,9 @@ function createFixture(): ReaderFixture {
     initialChapterLoadSettled: signal(true),
     isChapterContentStale: computed(() => chapterData.value === null),
     discoveredContent: signal([]),
-    discoveredCrossReferences: signal([]),
+    discoveredCrossReferences,
     discoveredStudyNotes: signal([]),
+    discoverContentPanelVisible: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
@@ -199,6 +202,7 @@ function createFixture(): ReaderFixture {
     decorations,
     selectedVerses,
     selectedFootnote,
+    discoveredCrossReferences,
     selectVerse,
     selectFootnote,
     setOpen,
@@ -216,6 +220,8 @@ function createMobileState(): SeedBibleState {
   return {
     app: {
       isMobile: signal(true),
+      effectiveSlots: signal([{ id: "slot-1", tab: null }]),
+      effectivePanes: signal([]),
     },
     selector: {
       selectingTranslation: signal(false),
@@ -253,10 +259,22 @@ function createMobileState(): SeedBibleState {
   } as any as SeedBibleState;
 }
 
-function createDesktopState(): SeedBibleState {
+function createDesktopState(
+  options: { slotCount?: number; sidePaneOpen?: boolean } = {}
+): SeedBibleState {
+  const slotCount = options.slotCount ?? 1;
   return {
     app: {
       isMobile: signal(false),
+      effectiveSlots: signal(
+        Array.from({ length: slotCount }, (_, i) => ({
+          id: `slot-${i + 1}`,
+          tab: null,
+        }))
+      ),
+      effectivePanes: signal(
+        options.sidePaneOpen ? [{ id: "other-pane", placement: "side" }] : []
+      ),
     },
     selector: {
       selectingTranslation: signal(false),
@@ -1328,5 +1346,100 @@ describe("TabSlotReader integration", () => {
     // The finger never moved more than 14px from where it started, so nothing
     // near the stale sample's 163px should ever reach the track.
     expect(offsets.every((offset) => Math.abs(offset) <= 14)).toBe(true);
+  });
+
+  describe("discover content panel placement", () => {
+    const crossReferenceFixture = [
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ];
+
+    it("renders the side variant beside the reader for a sole desktop slot with no side pane open", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const sidePanel = container.querySelector(
+        ".sb-discover-content-panel--side"
+      );
+      expect(sidePanel).not.toBeNull();
+      expect(sidePanel?.closest(".sb-pane-reader")).toBeNull();
+      expect(
+        container.querySelector(".sb-discover-content-panel--inline")
+      ).toBeNull();
+    });
+
+    it("falls back to the inline variant for a sole desktop slot when a side pane is already open", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState({ sidePaneOpen: true });
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const inlinePanel = container.querySelector(
+        ".sb-discover-content-panel--inline"
+      );
+      expect(inlinePanel).not.toBeNull();
+      expect(inlinePanel?.closest(".sb-pane-reader")).not.toBeNull();
+      expect(
+        container.querySelector(".sb-discover-content-panel--side")
+      ).toBeNull();
+    });
+
+    it("renders the inline variant inside the reader's own scroll for a multi-slot desktop layout", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState({ slotCount: 2 });
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const inlinePanel = container.querySelector(
+        ".sb-discover-content-panel--inline"
+      );
+      expect(inlinePanel).not.toBeNull();
+      expect(inlinePanel?.closest(".sb-pane-reader")).not.toBeNull();
+      expect(
+        container.querySelector(".sb-discover-content-panel--side")
+      ).toBeNull();
+    });
+
+    it("renders the inline variant inside the mobile swipe panel's own scroll", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createMobileState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const scroller = container.querySelector(
+        ".sb-reader-swipe-panel-current"
+      );
+      const inlinePanel = scroller?.querySelector(
+        ".sb-discover-content-panel--inline"
+      );
+      expect(inlinePanel).not.toBeNull();
+    });
+
+    it("renders neither variant when there is nothing discovered for the chapter", () => {
+      const { slot, readingState } = createFixture();
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+    });
   });
 });
