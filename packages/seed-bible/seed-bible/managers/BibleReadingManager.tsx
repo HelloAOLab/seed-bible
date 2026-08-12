@@ -1998,7 +1998,19 @@ export function createBibleReadingState(
         applyChapterContent(options.content);
       } else if (
         !didPositionChange &&
-        !chapterMatchesPosition(chapterData.peek(), next) &&
+        chapterMatchesPosition(chapterData.peek(), next)
+      ) {
+        // Already showing this chapter, so the position-driven loader effect
+        // has nothing to fetch and will never call `applyChapterContent` —
+        // which is normally what hands `pendingScrollTarget` off to
+        // `scrollToVerse`. Publish it directly, or a scroll request against a
+        // chapter that's already loaded would be silently dropped.
+        if (scrollToVerseRequest !== null) {
+          pendingScrollTarget = null;
+          scrollToVerse.value = scrollToVerseRequest;
+        }
+      } else if (
+        !didPositionChange &&
         !positionsEqual(openContentRequestPosition, next)
       ) {
         // The position is where it already was, but its text is missing — the

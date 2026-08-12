@@ -852,6 +852,21 @@ describe("createBibleReadingState", () => {
     expect(state.scrollToVerse.value).toBe(3);
   });
 
+  it("selectTranslationAndChapter() still scrolls when the book/chapter is already loaded", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+
+    await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+      scrollToVerse: 4,
+    });
+
+    expect(state.scrollToVerse.value).toBe(4);
+  });
+
   it("publishes a deep-linked verse on the initial load", async () => {
     // A `?verse=` deep link asks for the scroll before anything is fetched. The
     // chapter request needs one round trip while the initial load needs two
