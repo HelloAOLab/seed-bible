@@ -168,7 +168,7 @@ export const bootstrapExtension = () => {
                     initialShowTestamentLabels: true,
                     initialShowSectionLabels: false,
                     initialScaleFactor: 0.6,
-                    initialIsReadingHistoryEnabled: false,
+                    initialIsReadingHistoryEnabled: true,
                     extensionId,
                     translate: (
                       key: string,
