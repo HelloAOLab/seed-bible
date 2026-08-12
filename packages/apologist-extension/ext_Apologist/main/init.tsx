@@ -180,7 +180,7 @@ export default function initApologistExtension() {
         url.searchParams.get("apologistIconUrl") ?? undefined;
       const customApologistDomain =
         url.searchParams.get("apologistDomain") ?? null;
-      const apologistDomain = customApologistDomain ?? "apologist.ao.bot";
+      const apologistDomain = customApologistDomain ?? "apologist.seedbible.io";
       const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
       const apologistShareToken =
         url.searchParams.get("apologistShareToken") ?? null;
