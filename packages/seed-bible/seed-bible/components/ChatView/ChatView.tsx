@@ -724,11 +724,16 @@ export function ChatView(props: ChatViewProps) {
       });
       draft.value = "";
       chat.setTypingStatus(false);
-      const input = inputRef.current;
-      if (input) {
-        input.focus();
-        resizeComposeInput(input);
-      }
+      // Defer until Preact has cleared the textarea DOM value, otherwise
+      // resizeComposeInput measures the still-tall content and leaves the
+      // empty field expanded.
+      window.queueMicrotask(() => {
+        const input = inputRef.current;
+        if (input) {
+          input.focus();
+          resizeComposeInput(input);
+        }
+      });
     } catch (error) {
       submitError.value =
         error instanceof Error
@@ -759,6 +764,10 @@ export function ChatView(props: ChatViewProps) {
       }
 
       if (event.key === "Enter") {
+        // Don't steal Enter while an IME is confirming a candidate.
+        if (event.isComposing || event.keyCode === 229) {
+          return;
+        }
         event.preventDefault();
         if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
           selectEveryoneMention();
@@ -782,7 +791,14 @@ export function ChatView(props: ChatViewProps) {
 
     // Desktop: Enter submits; Shift+Enter inserts a newline.
     // Mobile: Enter inserts a newline; submit is via the send button.
-    if (event.key === "Enter" && !event.shiftKey && !state.app.isMobile.value) {
+    // Skip while an IME is composing (CJK candidate confirmation, etc.).
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.isComposing &&
+      event.keyCode !== 229 &&
+      !state.app.isMobile.value
+    ) {
       event.preventDefault();
       void handleSubmit(event);
     }

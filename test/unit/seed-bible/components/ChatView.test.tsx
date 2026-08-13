@@ -640,7 +640,9 @@ describe("ChatView", () => {
     expect(input.value).toBe("");
   });
 
-  it("submits on Enter and inserts a newline on Shift+Enter on desktop", async () => {
+  // jsdom does not insert a native textarea newline on synthetic Shift+Enter,
+  // so this only asserts we don't submit on Shift+Enter (and do on Enter).
+  it("submits on Enter and does not submit on Shift+Enter on desktop", async () => {
     const sendMessage = vi.fn().mockResolvedValue(undefined);
     const chat = createMockChatSession({ sendMessage });
     const state = createMockState();
@@ -654,7 +656,6 @@ describe("ChatView", () => {
     )!;
     typeIntoInput(input, "Hello");
 
-    // Shift+Enter should not submit (newline is handled by the browser).
     pressKey(input, "Enter", { shiftKey: true });
     expect(sendMessage).not.toHaveBeenCalled();
 
@@ -665,6 +666,36 @@ describe("ChatView", () => {
 
     expect(sendMessage).toHaveBeenCalledWith({ type: "text", text: "Hello" });
     expect(input.value).toBe("");
+  });
+
+  it("does not submit on Enter while an IME is composing", async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const chat = createMockChatSession({ sendMessage });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    typeIntoInput(input, "こんにちは");
+
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+          isComposing: true,
+        })
+      );
+      await Promise.resolve();
+    });
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(input.value).toBe("こんにちは");
   });
 
   it("does not submit on Enter on mobile", async () => {
