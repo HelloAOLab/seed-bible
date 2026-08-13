@@ -28,7 +28,7 @@ import type { CapitalizeFirstLetterType } from "../../domain/functions/string";
 import type { ReadingHistoryConfigProvider } from "../config/readingHistory/ReadingHistoryConfigProvider";
 import type { SectionInfoMapper } from "../../infrastructure/mappers/SectionInfoMapper";
 import type { SessionProvider } from "../adapters/session/SessionProvider";
-import type { UseHorizontalScroll } from "../presentation/hooks/useHorizontalScroll";
+import type { UseHorizontalScroll } from "@packages/seed-bible/seed-bible/components/useHorizontalScroll";
 import type { Signal } from "@preact/signals";
 import type { ConnectedSessionUser } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import type {

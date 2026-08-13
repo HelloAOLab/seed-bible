@@ -1,4 +1,4 @@
-import { useHorizontalScroll } from "@packages/seed-bible-utils/infrastructure/presentation/hooks/useHorizontalScroll";
+import { useHorizontalScroll } from "@packages/seed-bible/seed-bible/components/useHorizontalScroll";
 import { useRef, type MutableRef } from "preact/hooks";
 
 type UseBookmarksCategory = () => {

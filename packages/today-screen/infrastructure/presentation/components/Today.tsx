@@ -18,7 +18,7 @@ import type { BibleReadingSession } from "../../../../seed-bible/seed-bible/mana
 import type { VerseSearchResult } from "../../../domain/models/search";
 import type { Bookmark } from "../../../../seed-bible/seed-bible/managers/BookmarksManager";
 import type { TranslationBooks } from "../../../../seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import type { UseHorizontalScroll } from "../../../../seed-bible-utils/infrastructure/presentation/hooks/useHorizontalScroll";
+import type { UseHorizontalScroll } from "../../../../seed-bible/seed-bible/components/useHorizontalScroll";
 import "./../styles/styles.css";
 // import type { UserProfile } from "../../../../seed-bible/seed-bible/managers/LoginManager";
 
