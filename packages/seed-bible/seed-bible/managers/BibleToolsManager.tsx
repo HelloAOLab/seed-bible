@@ -610,7 +610,7 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
               : undefined
           }
         >
-          view_agenda
+          explore
         </MaterialIcon>
       ),
       isVisible: (c) => {
