@@ -350,6 +350,7 @@ describe("SessionsManager", () => {
   let i18n: I18nManager;
 
   let os: CasualOSManager;
+  let clearBranchDeviceCacheSpy: Mock;
 
   beforeEach(async () => {
     const { v4: uuidMock } = await vi.importMock("uuid");
@@ -358,6 +359,15 @@ describe("SessionsManager", () => {
     uuid.mockReturnValueOnce("test-config-bot-id");
 
     os = CasualOSManager();
+    // `os` is real here — only `getSharedDocument` is stubbed — so every other
+    // method it exposes has to be safe to call. Stubbed for the whole file
+    // rather than per-describe: any test that drives a sync recovery reaches
+    // this, and reaching the real one used to build the inst client and open
+    // a websocket to auth.seedbible.org. That connection resolving mid-run
+    // fails the suite with an unhandled error even when every test passes.
+    clearBranchDeviceCacheSpy = vi
+      .spyOn(os, "clearBranchDeviceCache")
+      .mockImplementation(() => undefined) as unknown as Mock;
     mockMap = createMockSharedMap();
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
@@ -1635,16 +1645,6 @@ describe("SessionsManager", () => {
   // stay empty forever (self included) unless the subscription is rebuilt and
   // the OS's stale peer cache is cleared first.
   describe("presence recovery after a reconnect", () => {
-    let clearBranchDeviceCacheSpy: Mock;
-
-    beforeEach(() => {
-      // Stub the cache purge — the real one lazily builds the inst client,
-      // which would open a websocket.
-      clearBranchDeviceCacheSpy = vi
-        .spyOn(os, "clearBranchDeviceCache")
-        .mockImplementation(() => undefined) as unknown as Mock;
-    });
-
     async function joinSession() {
       const manager = createSessionsManager(
         os,
