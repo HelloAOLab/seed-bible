@@ -9,6 +9,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { I18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { i18n } from "i18next";
 import {
   getUserAnimalVisual,
@@ -20,6 +21,32 @@ import {
 // existing behavior of these tests intact.
 const mockI18n = { t: (key: string) => key } as unknown as i18n;
 const mockI18nManager = { i18n: mockI18n } as unknown as I18nManager;
+
+// Spanish book names for the localized-parsing tests. "Esdras" and "Génesis"
+// are the discriminators: neither resolves through the English-only fallback,
+// so a reference only becomes a link when these books reach the parser.
+const SPA_BOOKS = [
+  {
+    id: "GEN",
+    name: "Génesis",
+    commonName: "Génesis",
+    title: null,
+    order: 1,
+    numberOfChapters: 50,
+    firstChapterNumber: 1,
+    totalNumberOfVerses: 1533,
+  },
+  {
+    id: "EZR",
+    name: "Esdras",
+    commonName: "Esdras",
+    title: null,
+    order: 15,
+    numberOfChapters: 10,
+    firstChapterNumber: 1,
+    totalNumberOfVerses: 280,
+  },
+] as TranslationBook[];
 
 // ChatsManager generates ids via `v4` from the "uuid" package, so mock the
 // module to produce deterministic, sequential ids.
@@ -143,6 +170,7 @@ function createSharedSessionMock(options?: {
     isSelf: boolean;
   }>;
   currentUserId?: string | null;
+  translationBooks?: TranslationBook[];
 }) {
   const sharedChats = new MockSharedArray<unknown>(options?.initialChats ?? []);
   const sharedChatProviders = new MockSharedMap<unknown>();
@@ -197,6 +225,10 @@ function createSharedSessionMock(options?: {
       : null
   );
 
+  const translationBooks = signal<{ books: TranslationBook[] } | null>(
+    options?.translationBooks ? { books: options.translationBooks } : null
+  );
+
   const session = {
     id: "session-1",
     document: {
@@ -218,6 +250,10 @@ function createSharedSessionMock(options?: {
     connectedUsers,
     allUsers,
     currentUser,
+    // Shared chat parses verse refs against the session's books when available.
+    readingState: {
+      translationBooks,
+    },
   } as unknown as BibleReadingSession;
 
   return {
@@ -229,6 +265,7 @@ function createSharedSessionMock(options?: {
     connectedUsers,
     allUsers,
     currentUser,
+    translationBooks,
   };
 }
 
@@ -3566,6 +3603,140 @@ describe("createChatsManager", () => {
           {
             type: "verse_reference",
             text: "GEN 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("resolves a localized book name from the injected translation books", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(
+        loginManager,
+        mockI18nManager,
+        signal<TranslationBook[] | undefined>(SPA_BOOKS)
+      );
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Lee Esdras 3:1 hoy" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Lee ",
+          {
+            type: "verse_reference",
+            text: "Esdras 3:1",
+            ref: { book: "EZR", chapter: 3, verse: 1 },
+          },
+          " hoy",
+        ],
+      });
+    });
+
+    it("leaves a localized book name as plain text without translation books", async () => {
+      // Guards the plumbing above: "Esdras" has no English fallback, so this
+      // only becomes a link when the books signal is wired through.
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Lee Esdras 3:1 hoy" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Lee Esdras 3:1 hoy"],
+      });
+    });
+
+    it("re-parses existing messages when the injected translation books change", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const translationBooks = signal<TranslationBook[] | undefined>(undefined);
+      const chats = createChatsManager(
+        loginManager,
+        mockI18nManager,
+        translationBooks
+      );
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Ver Génesis 1:1" });
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Ver Génesis 1:1"],
+      });
+
+      translationBooks.value = SPA_BOOKS;
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            text: "Génesis 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("resolves a localized book name from the session's books (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats } = createSharedSessionMock({
+        translationBooks: SPA_BOOKS,
+      });
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const chatSession = chats.createSharedSession(session);
+
+      sharedChats.push({
+        id: "m1",
+        authors: [],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Lee Esdras 3:1 hoy",
+      });
+
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Lee ",
+          {
+            type: "verse_reference",
+            text: "Esdras 3:1",
+            ref: { book: "EZR", chapter: 3, verse: 1 },
+          },
+          " hoy",
+        ],
+      });
+    });
+
+    it("re-parses when the session's books arrive after the message (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats, translationBooks } =
+        createSharedSessionMock();
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const chatSession = chats.createSharedSession(session);
+
+      sharedChats.push({
+        id: "m1",
+        authors: [],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Ver Génesis 1:1",
+      });
+
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        parts: ["Ver Génesis 1:1"],
+      });
+
+      translationBooks.value = { books: SPA_BOOKS };
+
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            text: "Génesis 1:1",
             ref: { book: "GEN", chapter: 1, verse: 1 },
           },
         ],

@@ -891,10 +891,17 @@ describe("createPlaylistManager", () => {
      * Activates the registered "playlist" reading extension in isolation, with
      * the given per-enablement `data`. The returned instance owns its own live
      * playing state, built from that data.
+     *
+     * A real-ish reading state is passed because the instance's
+     * `hasNext`/`hasPrevious` consult its `chapterData` (the queue's edges fall
+     * through to the reader's own chapter navigation). `chapterData` starts null
+     * — no chapter loaded — so those read purely off the queue unless a test
+     * sets it.
      */
     const activateExtension = (
       data?: PlaylistReadingData,
-      isShared = false
+      isShared = false,
+      readingState: any = makeReadingState(vi.fn())
     ): PlaylistReadingExtensionInstance => {
       const definition =
         lastReadingExtensionManager.getReadingExtension("playlist");
@@ -902,7 +909,7 @@ describe("createPlaylistManager", () => {
         throw new Error('"playlist" reading extension was not registered');
       }
       return definition.activate({
-        readingState: {} as any,
+        readingState,
         data: signal(data),
         isShared: signal(isShared),
       }) as unknown as PlaylistReadingExtensionInstance;
@@ -922,7 +929,7 @@ describe("createPlaylistManager", () => {
       });
     });
 
-    it("navigateNext/navigatePrevious advance the queue and prevent at the bounds", async () => {
+    it("navigateNext/navigatePrevious advance the queue and hand back over at the bounds", async () => {
       makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -937,9 +944,11 @@ describe("createPlaylistManager", () => {
         step: 0,
       });
 
-      // At the start of the queue, previous() is prevented.
+      // At the start of the queue there is nothing to step back to, so the
+      // reader's own chapter navigation takes over ("default", not "prevent" —
+      // preventing here left the reader with dead controls and no way out).
       expect(await instance.navigatePrevious!({} as any)).toEqual({
-        type: "prevent",
+        type: "default",
       });
       // Advancing is handled by the playing state itself (which drives the
       // reader), so the hook returns "prevent" to stop the reader's own
@@ -948,10 +957,36 @@ describe("createPlaylistManager", () => {
         type: "prevent",
       });
       expect(instance.playingState.currentIndex.value).toBe(1);
-      // At the end of the queue, next() is prevented too.
+      // Past the end of the queue, likewise back to normal navigation.
       expect(await instance.navigateNext!({} as any)).toEqual({
-        type: "prevent",
+        type: "default",
       });
+      expect(instance.playingState.currentIndex.value).toBe(1);
+    });
+
+    it("hasNext/hasPrevious fall back to the loaded chapter's own links at the queue's edges", async () => {
+      makeManager("user-1");
+      await flush();
+      const readingState = makeReadingState(vi.fn());
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+      const instance = activateExtension(
+        { playlists: [playlist], queue: playlist.items, step: 0 },
+        false,
+        readingState
+      );
+
+      // A single-item queue: no step before or after it.
+      expect(instance.hasNext!.value).toBe(false);
+      expect(instance.hasPrevious!.value).toBe(false);
+
+      // With a chapter loaded that has neighbours, the reader can still move —
+      // which is what keeps next/previous alive after a plan session ends.
+      readingState.chapterData.value = {
+        nextChapterApiLink: "/api/next.json",
+        previousChapterApiLink: "/api/previous.json",
+      } as any;
+      expect(instance.hasNext!.value).toBe(true);
+      expect(instance.hasPrevious!.value).toBe(true);
     });
 
     it("keeps navigateNext/navigatePrevious (and transformQueryParams) even for a shared reading state", async () => {

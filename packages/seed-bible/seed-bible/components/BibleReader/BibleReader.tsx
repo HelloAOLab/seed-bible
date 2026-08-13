@@ -3,7 +3,12 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import { Fragment, type JSX, type RefObject } from "preact";
+import {
+  Fragment,
+  type ComponentChildren,
+  type JSX,
+  type RefObject,
+} from "preact";
 import {
   Suspense,
   useEffect,
@@ -1049,6 +1054,12 @@ export interface BibleReaderMobileChromeProps {
   swipeTrackRef: RefObject<HTMLDivElement>;
   // A callback because it feeds component state, not just a ref.
   currentScrollerRefCallback: (el: HTMLDivElement | null) => void;
+  /**
+   * Rendered inside the scrolling chapter panel, after the passage. On mobile
+   * the panel is the scroll container, so anything placed here is reached by
+   * scrolling to the end of the chapter rather than sitting over the text.
+   */
+  belowContent?: ComponentChildren;
 }
 
 function renderStaticChapterContent(
@@ -1836,6 +1847,10 @@ export function BibleReader(props: BibleReaderProps) {
           )}
         </>
       )}
+
+      {/* Undefined on desktop, where the caller renders this itself below the
+          reader — the desktop pane is its own scroll container. */}
+      {mobileChrome?.belowContent}
     </>
   );
 
@@ -2067,6 +2082,7 @@ export function BibleReader(props: BibleReaderProps) {
             <div className="sb-footnote-modal-content">
               <VerseReferenceText
                 text={selectedFootnote.value.note.text}
+                books={translationBooks.value?.books}
                 onReferenceClick={(ref) => {
                   selectFootnote(null);
                   void state?.app.openVerseReference(ref);

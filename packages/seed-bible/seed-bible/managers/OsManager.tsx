@@ -245,6 +245,37 @@ export function CasualOSManager(
     return doc;
   }
 
+  /**
+   * Forgets which peers the inst client thinks are connected to a shared
+   * document's branch, so the next `repo/watch_branch_devices` is treated as
+   * a fresh start.
+   *
+   * Workaround for a CasualOS client bug that permanently breaks presence
+   * after a dropped connection: when the local socket goes down,
+   * `InstRecordsClient` synthesizes a disconnect for every peer it knows
+   * about but never removes them from its own `_connectedDevices` cache. On
+   * reconnect it does re-request the device list, and the server does send
+   * the full list back — but every replayed "connected" message is then
+   * filtered out as a duplicate against that stale cache, so no peer (not
+   * even ourselves) is ever reported as present again for the life of the
+   * session. Clearing the cache first lets the replayed list through.
+   *
+   * Reaches into a private field, so it's written to quietly do nothing if a
+   * future SDK version changes shape rather than throwing.
+   */
+  function clearBranchDeviceCache(
+    recordName: string | null,
+    inst: string,
+    docName: string
+  ): void {
+    const internals = getInstClient() as unknown as {
+      _connectedDevices?: Map<string, unknown>;
+    };
+    // Mirrors the SDK's own branch cache key: `${recordName ?? ""}/${inst}/${branch}`.
+    const key = `${recordName ?? ""}/${inst}/doc/${docName}`;
+    internals._connectedDevices?.delete?.(key);
+  }
+
   effect(() => {
     client.sessionKey = sessionKey.value as string;
   });
@@ -269,6 +300,7 @@ export function CasualOSManager(
     sessionKey,
     parsedSessionKey,
     connectionKey,
+    clearBranchDeviceCache,
     sessionInvalidated,
 
     getData: async (recordName: string, address: string) => {

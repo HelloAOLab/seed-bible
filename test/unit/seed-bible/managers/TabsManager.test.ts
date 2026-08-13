@@ -224,6 +224,7 @@ function createMockSharedSession(
     userCanNavigate: vi.fn().mockReturnValue(true),
     currentUser: signal(null),
     isHost: vi.fn().mockReturnValue(false),
+    isSynced: signal(true),
   } as BibleReadingSession;
 }
 

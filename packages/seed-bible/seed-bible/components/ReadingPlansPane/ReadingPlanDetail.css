@@ -1,0 +1,475 @@
+/* Reading plan detail */
+.sb-rpd {
+  --rp-accent: var(--sb-primary-color);
+  --rp-accent-contrast: var(--sb-primary-font-color, #fff);
+  --rp-accent-soft: color-mix(in srgb, var(--rp-accent) 12%, transparent);
+  --rp-accent-border: color-mix(in srgb, var(--rp-accent) 50%, transparent);
+  --rp-border: var(--sb-divider-color, rgba(0, 0, 0, 0.12));
+  --rp-muted: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+  --rp-success: #059669;
+  --rp-peach: var(--sb-secondary-color, #faddd1);
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--sb-font-color);
+  font-family: "DM Sans", var(--sb-font-family, sans-serif);
+}
+
+/* Peach progress header. The plan's name, its icon and the back button live in
+   the pane's own header (see ReadingPlansPane), so this starts at the summary
+   line rather than repeating the title underneath it. */
+.sb-rpd-hero-header {
+  position: relative;
+  padding: 12px 16px 16px;
+  background: var(--rp-peach);
+}
+
+.sb-rpd-subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--rp-muted);
+}
+
+.sb-rpd-section-title {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.sb-rpd-hero-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.sb-rpd-progress-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--rp-border);
+  overflow: hidden;
+}
+
+.sb-rpd-progress-bar-onhero {
+  background: color-mix(in srgb, var(--rp-accent) 22%, transparent);
+}
+
+.sb-rpd-progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--rp-accent);
+  transition: width 0.3s ease;
+}
+
+.sb-rpd-progress-count {
+  flex: none;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.sb-rpd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.sb-rpd-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--sb-reader-background, #fff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Body */
+.sb-rpd-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sb-rpd-empty {
+  margin: 8px 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--rp-muted);
+}
+
+/* Day tabs */
+.sb-rpd-day-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.sb-rpd-day-tab {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 62px;
+  height: 72px;
+  padding: 6px;
+  border: 1px solid var(--rp-border);
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-rpd-day-tab-today {
+  color: var(--rp-accent);
+}
+
+.sb-rpd-day-tab-active {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent-soft);
+}
+
+.sb-rpd-day-tab-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rp-muted);
+}
+
+.sb-rpd-day-tab-num {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sb-rpd-day-tab .sb-rpd-day-tab-check {
+  font-size: 16px;
+  color: var(--rp-success);
+}
+
+.sb-rpd-day-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rp-accent);
+}
+
+/* Reading cards */
+.sb-rpd-reading-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Every reading has the same layout, whatever kind it is: the completion check
+   sits outside the card on the left, and the card itself opens the reading —
+   scripture in the reader, text and links in a preview. A multi-chapter
+   scripture reading adds a chapter strip beneath, hence the column. */
+.sb-rpd-reading-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-rpd-reading-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sb-rpd-reading-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sb-rpd-reading-toggle:hover {
+  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
+}
+
+.sb-rpd-reading-main .sb-rpd-reading-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-rpd-reading-card-open:hover {
+  border-color: var(--rp-accent);
+}
+
+.sb-rpd-reading-card-open:hover .sb-rpd-reading-title {
+  text-decoration: underline;
+}
+
+/* A reading with nowhere to go (no reader wired up) is still a card, just not
+   a target — the check beside it remains the way to tick it off. */
+.sb-rpd-reading-card:disabled {
+  cursor: default;
+}
+
+.sb-rpd-reading-expand {
+  flex: none;
+  color: var(--rp-muted);
+}
+
+/* One chip per chapter of a multi-chapter reading, so "six chapters into John
+   1–10" is something the plan can record instead of an all-or-nothing tick. */
+.sb-rpd-chapter-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 44px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-rpd-chapter-chip {
+  min-width: 34px;
+  padding: 5px 8px;
+  border: 1px solid var(--rp-border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-rpd-chapter-chip:hover {
+  border-color: var(--rp-accent);
+}
+
+.sb-rpd-chapter-chip-done {
+  border-color: var(--rp-success);
+  background: color-mix(in srgb, var(--rp-success) 15%, transparent);
+  color: var(--rp-success);
+}
+
+/* Leading type icon for a text/link reading, in the same soft tile idiom the
+   plan cards use. */
+.sb-rpd-reading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
+  color: var(--rp-accent);
+}
+
+.sb-rpd-reading-icon .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* One-line summary of what the reading holds: an excerpt of a text snippet, or
+   a link's host. Already truncated in code, but clipped here too so a long
+   unbroken string can't stretch the card. */
+.sb-rpd-reading-preview {
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-rpd-reading-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--rp-border);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-rpd-reading-card-done {
+  opacity: 0.75;
+}
+
+.sb-rpd-reading-check {
+  display: inline-flex;
+  flex: none;
+  color: var(--rp-accent);
+}
+
+.sb-rpd-reading-check .material-symbols-outlined {
+  font-size: 26px;
+}
+
+.sb-rpd-reading-check-done {
+  color: var(--rp-success);
+}
+
+/* Part-way through a multi-chapter reading — neither empty nor ticked. */
+.sb-rpd-reading-check-partial {
+  color: var(--rp-accent);
+}
+
+.sb-rpd-reading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-rpd-reading-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.sb-rpd-reading-meta {
+  font-size: 0.8125rem;
+  color: var(--rp-muted);
+}
+
+/* Reflect card */
+.sb-rpd-reflect {
+  padding: 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sb-font-color) 5%, transparent);
+}
+
+.sb-rpd-reflect-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rp-muted);
+}
+
+.sb-rpd-reflect-head .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-rpd-reflect-text {
+  margin: 8px 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* Footer. `--rp-toolbar-clearance` keeps the buttons out from under the
+   floating reader toolbar — see the note in ReadingPlanEditor.css, which
+   defines it for both footers. */
+.sb-rpd-footer {
+  padding: 12px 16px calc(16px + var(--rp-toolbar-clearance, 0px));
+  border-top: 1px solid var(--rp-border);
+}
+
+.sb-rpd-footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.sb-rpd-footer-actions .sb-rp-button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sb-rpd-footer .sb-rp-button {
+  width: 100%;
+}
+
+.sb-rpd-footer-actions .sb-rp-button {
+  width: auto;
+}
+
+/* Edit / delete for the open plan. Kept visually quiet — they sit alongside
+   the progress summary, not in place of it. */
+.sb-rpd-plan-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.sb-rpd-footer-note {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--rp-muted);
+}
+
+.sb-rpd-hero-summary {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--rp-muted);
+}
+
+/* Celebration */
+.sb-rpd-celebration {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.sb-rpd-celebration-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--rp-accent);
+  color: var(--rp-accent-contrast);
+  box-shadow: 0 8px 24px var(--rp-accent-soft);
+}
+
+.sb-rpd-celebration-badge .material-symbols-outlined {
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.sb-rpd-celebration-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.sb-rpd-celebration-subtitle {
+  margin: 0 0 8px;
+  font-size: 0.9375rem;
+  color: var(--rp-muted);
+}
+
+.sb-rpd-celebration .sb-rp-button {
+  min-width: 180px;
+}
