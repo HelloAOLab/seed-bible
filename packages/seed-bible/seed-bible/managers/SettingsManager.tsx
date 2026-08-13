@@ -127,7 +127,7 @@ export interface AppSettings {
   keepScreenAwake: boolean;
   /** User-added custom highlight colors (hex strings, max 3). */
   customHighlightColors: string[];
-  /** Max width of the chapter content in rem. */
+  /** Max width of the chapter content in ch. */
   scriptureWidth: number;
   /** Selected theme preset id (owned/consumed by ThemeManager). */
   themeId: string;
@@ -136,6 +136,8 @@ export interface AppSettings {
   /** User highlight-color overrides layered on top of the preset highlights. */
   customHighlights: Record<string, Partial<ThemeHighlightColor>>;
 }
+
+export const DEFAULT_SCRIPTURE_WIDTH = 50; // ch
 
 export const AppSettingsSchema = z.object({
   fontSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
@@ -198,7 +200,7 @@ export const AppSettingsSchema = z.object({
   }),
   keepScreenAwake: z.boolean(),
   customHighlightColors: z.array(z.string()).max(3),
-  scriptureWidth: z.number().min(24).max(192).default(48),
+  scriptureWidth: z.number().min(24).max(192).default(DEFAULT_SCRIPTURE_WIDTH),
   themeId: z.string(),
   customTheme: z.record(z.string(), z.string()),
   customHighlights: z.record(
@@ -211,7 +213,6 @@ export const AppSettingsSchema = z.object({
   ),
 });
 
-export const DEFAULT_SCRIPTURE_WIDTH = 48;
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
@@ -928,9 +929,9 @@ export function createSettings(
     writeTextConfig(nextTextConfig);
   };
 
-  const setScriptureWidth = (margin: number) => {
-    if (!Number.isFinite(margin)) return;
-    const clamped = Math.max(24, Math.min(192, margin));
+  const setScriptureWidth = (width: number) => {
+    if (!Number.isFinite(width)) return;
+    const clamped = Math.max(24, Math.min(192, width));
     settings.value = { ...settings.value, scriptureWidth: clamped };
     sessionOverrides[TAG_SCRIPTURE_WIDTH] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_WIDTH, clamped);
@@ -1155,7 +1156,7 @@ export function createSettings(
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty(
       "--sb-scripture-width",
-      `${settings.value.scriptureWidth}rem`
+      `${settings.value.scriptureWidth}ch`
     );
   });
 

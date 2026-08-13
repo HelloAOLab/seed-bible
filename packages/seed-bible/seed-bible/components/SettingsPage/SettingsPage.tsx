@@ -778,7 +778,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                     if (Number.isFinite(parsed)) setScriptureWidth(parsed);
                   }}
                 />
-                <span className="sb-scripture-margins-unit">rem</span>
+                <span className="sb-scripture-margins-unit">ch</span>
               </div>
               <button
                 type="button"

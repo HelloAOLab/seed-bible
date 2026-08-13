@@ -1,6 +1,5 @@
 .sb-bible-reader {
-  padding-top: 1.875rem;
-  padding-bottom: 6rem;
+  padding: 1.875rem 1.5rem 6rem 1.5rem;
   margin: 0 auto;
   box-sizing: border-box;
   position: relative;
@@ -1032,6 +1031,6 @@
   justify-self: flex-end;
 }
 
-.sb-bible-main-content {
+.sb-bible-reader-main-content {
   max-width: var(--sb-scripture-width, 48rem);
 }
