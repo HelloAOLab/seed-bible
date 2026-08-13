@@ -15,7 +15,6 @@ import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
 import {
   TODAY_PANE_ID,
   createTodayManager,
-  todayWillAutoOpenForUrl,
   type TodayManager,
 } from "../managers/TodayManager";
 import {
@@ -702,29 +701,18 @@ export function createSeedBibleState(
     panes.closeFullscreenPanes();
   });
 
-  // Whether Today will auto-open over the reader on this cold load. Shares the
-  // predicate with `TodayManager` rather than keeping a second copy — the two
-  // copies is how this drifted out of date when #1547 moved the reading
-  // position out of query params and into the path.
-  const todayWillAutoOpen = todayWillAutoOpenForUrl(
-    navigation.initialUrl,
-    navigation.basePath
-  );
-
-  // Latches true the first time Today's pane is observed open, so the
-  // "about to be covered by Today" window (the gap between the chapter
-  // loading and Today's pane actually opening) doesn't read as reader-visible.
-  const todayHasOpened = signal(false);
-  effect(() => {
-    if (panes.panes.value.some((pane) => pane.id === TODAY_PANE_ID)) {
-      todayHasOpened.value = true;
-    }
-  });
-
-  // The reader is visible when a chapter is loaded, no fullscreen pane covers
-  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
-  // any open pane covers the reader), and Today isn't about to auto-open over
-  // it for this load.
+  // The reader is visible when a chapter is loaded and no fullscreen pane
+  // covers it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on
+  // mobile any open pane covers the reader).
+  //
+  // Today needs no special case here even though it auto-opens over the reader:
+  // its pane opens synchronously while this state is being built, whereas a
+  // chapter can only arrive from an async fetch afterwards. So by the time
+  // `chapterLoaded` can turn true, Today's pane is already in `panes` and the
+  // check below sees it. While Today was an extension that was not true — panes
+  // loaded in a later `useEffect`, leaving a window where the chapter had
+  // loaded and nothing covered it yet, which a `todayHasOpened` latch papered
+  // over. `todayCoversReader.test.ts` guards the ordering this now relies on.
   const readerVisible = computed<boolean>(() => {
     const chapterLoaded =
       selectedTab.value?.readingState.chapterData.value != null;
@@ -735,9 +723,6 @@ export function createSeedBibleState(
       (pane) => pane.placement === "fullscreen" || isMobile.value
     );
     if (coveredByPane) {
-      return false;
-    }
-    if (todayWillAutoOpen && !todayHasOpened.value) {
       return false;
     }
     return true;
