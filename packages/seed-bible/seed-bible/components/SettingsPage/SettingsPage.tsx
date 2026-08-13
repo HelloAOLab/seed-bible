@@ -634,7 +634,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const isMobile = state.app.isMobile.value;
 
   const verseConfig = settings.settings.value.textConfig.verse;
-  const currentMargin = settings.settings.value.scriptureMargin;
+  const currentScriptureWidth = settings.settings.value.scriptureWidth;
   const currentLineHeight = verseConfig.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT;
   const lineHeightIndex = (() => {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
@@ -677,9 +677,8 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
     if (next !== undefined) settings.setVerseLineHeight(next);
   };
 
-  const setMargin = (next: number) => {
-    if (!Number.isFinite(next)) return;
-    settings.setScriptureMargin(Math.max(0, Math.min(200, next)));
+  const setScriptureWidth = (next: number) => {
+    settings.setScriptureWidth(next);
   };
 
   const { t } = useI18n();
@@ -753,15 +752,15 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
               <span className="sb-margin-icon-wrap">
                 <MarginIcon />
               </span>
-              {t("scripture-margins", { defaultValue: "Scripture Margins" })}
+              {t("scripture-width", { defaultValue: "Scripture Width" })}
             </div>
             <div className="sb-scripture-margins-row">
               <button
                 type="button"
                 className="sb-scripture-margins-step"
-                onClick={() => setMargin(currentMargin - 1)}
-                aria-label={t("decrease-scripture-margin", {
-                  defaultValue: "Decrease scripture margin",
+                onClick={() => setScriptureWidth(currentScriptureWidth - 1)}
+                aria-label={t("decrease-scripture-width", {
+                  defaultValue: "Decrease scripture width",
                 })}
               >
                 −
@@ -770,23 +769,23 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
                 <input
                   type="number"
                   className="sb-scripture-margins-input"
-                  value={currentMargin}
-                  min={0}
-                  max={45}
+                  value={currentScriptureWidth}
+                  min={24}
+                  max={192}
                   onInput={(event: Event) => {
                     const target = event.currentTarget as HTMLInputElement;
                     const parsed = Number(target.value);
-                    if (Number.isFinite(parsed)) setMargin(parsed);
+                    if (Number.isFinite(parsed)) setScriptureWidth(parsed);
                   }}
                 />
-                <span className="sb-scripture-margins-unit">%</span>
+                <span className="sb-scripture-margins-unit">rem</span>
               </div>
               <button
                 type="button"
                 className="sb-scripture-margins-step"
-                onClick={() => setMargin(currentMargin + 1)}
-                aria-label={t("increase-scripture-margin", {
-                  defaultValue: "Increase scripture margin",
+                onClick={() => setScriptureWidth(currentScriptureWidth + 1)}
+                aria-label={t("increase-scripture-width", {
+                  defaultValue: "Increase scripture width",
                 })}
               >
                 +

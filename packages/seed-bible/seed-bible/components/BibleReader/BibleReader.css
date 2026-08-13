@@ -1,6 +1,4 @@
 .sb-bible-reader {
-  width: calc(100% - (var(--sb-scripture-margin) * 2));
-  min-width: 17.1875rem;
   padding-top: 1.875rem;
   padding-bottom: 6rem;
   margin: 0 auto;
@@ -1018,12 +1016,22 @@
 
 .sb-bible-reader-content {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .sb-bible-reader-content {
+    flex-direction: row;
+    align-items: flex-start;
+  }
 }
 
 .sb-bible-reader-discover-panel {
   flex: 1 1 22.5rem;
   justify-self: flex-end;
+}
+
+.sb-bible-main-content {
+  max-width: var(--sb-scripture-width, 48rem);
 }

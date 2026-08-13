@@ -127,8 +127,8 @@ export interface AppSettings {
   keepScreenAwake: boolean;
   /** User-added custom highlight colors (hex strings, max 3). */
   customHighlightColors: string[];
-  /** Horizontal padding (px) applied to the bible reader container. */
-  scriptureMargin: number;
+  /** Max width of the chapter content in rem. */
+  scriptureWidth: number;
   /** Selected theme preset id (owned/consumed by ThemeManager). */
   themeId: string;
   /** User color overrides layered on top of the selected theme preset. */
@@ -198,7 +198,7 @@ export const AppSettingsSchema = z.object({
   }),
   keepScreenAwake: z.boolean(),
   customHighlightColors: z.array(z.string()).max(3),
-  scriptureMargin: z.number().min(0).max(45),
+  scriptureWidth: z.number().min(24).max(192).default(48),
   themeId: z.string(),
   customTheme: z.record(z.string(), z.string()),
   customHighlights: z.record(
@@ -211,7 +211,7 @@ export const AppSettingsSchema = z.object({
   ),
 });
 
-export const DEFAULT_SCRIPTURE_MARGIN = 27;
+export const DEFAULT_SCRIPTURE_WIDTH = 48;
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
@@ -226,7 +226,7 @@ const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
-const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
+const TAG_SCRIPTURE_WIDTH = "app.scriptureWidth";
 const TAG_THEME_ID = "app.themeId";
 const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
@@ -242,7 +242,7 @@ const PROFILE_TEXT_CONFIG = "textConfig";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
-const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
+const PROFILE_SCRIPTURE_WIDTH = "scriptureWidth";
 const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
@@ -353,7 +353,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
   customHighlightColors: [],
-  scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
+  scriptureWidth: DEFAULT_SCRIPTURE_WIDTH,
   themeId: "light",
   customTheme: {},
   customHighlights: {},
@@ -708,8 +708,8 @@ export interface SettingsManager {
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
   ) => void;
-  /** Set the same horizontal margin on bookTitle, heading, and verse (Scripture Margins control). */
-  setScriptureMargin: (margin: number) => void;
+  /** Set the max width of the chapter content (Scripture Width control). */
+  setScriptureWidth: (width: number) => void;
   /** Set the verse line-height (Scripture line-spacing control). */
   setVerseLineHeight: (lineHeight: number) => void;
   /** Clear per-section color overrides so the active theme drives text colors. */
@@ -813,9 +813,9 @@ export function createSettings(
       customHighlightColors: parseCustomHighlightColors(
         read(PROFILE_CUSTOM_HIGHLIGHT_COLORS, TAG_CUSTOM_HIGHLIGHT_COLORS)
       ),
-      scriptureMargin: parseNumber(
-        read(PROFILE_SCRIPTURE_MARGIN, TAG_SCRIPTURE_MARGIN),
-        DEFAULT_SETTINGS.scriptureMargin
+      scriptureWidth: parseNumber(
+        read(PROFILE_SCRIPTURE_WIDTH, TAG_SCRIPTURE_WIDTH),
+        DEFAULT_SETTINGS.scriptureWidth
       ),
       themeId: parseThemeId(
         read(PROFILE_THEME_ID, TAG_THEME_ID),
@@ -928,12 +928,12 @@ export function createSettings(
     writeTextConfig(nextTextConfig);
   };
 
-  const setScriptureMargin = (margin: number) => {
+  const setScriptureWidth = (margin: number) => {
     if (!Number.isFinite(margin)) return;
-    const clamped = Math.max(0, Math.min(45, margin));
-    settings.value = { ...settings.value, scriptureMargin: clamped };
-    sessionOverrides[TAG_SCRIPTURE_MARGIN] = clamped;
-    saveProfileConfigValue(login, PROFILE_SCRIPTURE_MARGIN, clamped);
+    const clamped = Math.max(24, Math.min(192, margin));
+    settings.value = { ...settings.value, scriptureWidth: clamped };
+    sessionOverrides[TAG_SCRIPTURE_WIDTH] = clamped;
+    saveProfileConfigValue(login, PROFILE_SCRIPTURE_WIDTH, clamped);
   };
 
   const setVerseLineHeight = (lineHeight: number) => {
@@ -1083,7 +1083,7 @@ export function createSettings(
     sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
     sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
-    sessionOverrides[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
+    sessionOverrides[TAG_SCRIPTURE_WIDTH] = DEFAULT_SETTINGS.scriptureWidth;
     sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
     sessionOverrides[TAG_CUSTOM_THEME] = {};
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
@@ -1123,8 +1123,8 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, []);
     saveProfileConfigValue(
       login,
-      PROFILE_SCRIPTURE_MARGIN,
-      DEFAULT_SETTINGS.scriptureMargin
+      PROFILE_SCRIPTURE_WIDTH,
+      DEFAULT_SETTINGS.scriptureWidth
     );
     saveProfileConfigValue(login, PROFILE_THEME_ID, DEFAULT_SETTINGS.themeId);
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, {});
@@ -1154,8 +1154,8 @@ export function createSettings(
   effect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty(
-      "--sb-scripture-margin",
-      `${settings.value.scriptureMargin}%`
+      "--sb-scripture-width",
+      `${settings.value.scriptureWidth}rem`
     );
   });
 
@@ -1180,7 +1180,7 @@ export function createSettings(
     setSelectionUI,
     setScriptureElements,
     updateTextSection,
-    setScriptureMargin,
+    setScriptureWidth,
     setVerseLineHeight,
     resetTextColors,
     resetTextConfig,

@@ -2228,7 +2228,9 @@ export function BibleReader(props: BibleReaderProps) {
             )}
           </div>
           <div className="sb-bible-reader-content">
-            {renderMainContent()}
+            <div className="sb-bible-reader-main-content">
+              {renderMainContent()}
+            </div>
             <div className="sb-bible-reader-discover-panel">
               {discoverPanel}
             </div>
