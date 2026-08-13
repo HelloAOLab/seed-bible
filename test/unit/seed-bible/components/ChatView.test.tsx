@@ -102,17 +102,29 @@ function createMockState(): SeedBibleState {
   } as unknown as SeedBibleState;
 }
 
-function typeIntoInput(input: HTMLInputElement, text: string) {
+function typeIntoInput(input: HTMLTextAreaElement, text: string) {
   act(() => {
     input.value = text;
     input.selectionStart = text.length;
+    input.selectionEnd = text.length;
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
   });
 }
 
-function pressKey(input: HTMLInputElement, key: string) {
+function pressKey(
+  input: HTMLTextAreaElement,
+  key: string,
+  options: { shiftKey?: boolean } = {}
+) {
   act(() => {
-    input.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+        shiftKey: options.shiftKey ?? false,
+      })
+    );
   });
 }
 
@@ -219,7 +231,7 @@ describe("ChatView", () => {
     expect(indicator?.textContent).toContain("Bob is typing...");
   });
 
-  it("renders an input box", () => {
+  it("renders a multiline compose textarea", () => {
     const chat = createMockChatSession();
     const state = createMockState();
 
@@ -227,11 +239,12 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     );
     expect(input).not.toBeNull();
-    expect(input?.tagName.toLowerCase()).toBe("input");
+    expect(input?.tagName.toLowerCase()).toBe("textarea");
+    expect(input?.rows).toBe(1);
   });
 
   it("shows a mobile type-hint caret whenever the empty input is blurred", () => {
@@ -252,7 +265,7 @@ describe("ChatView", () => {
       true
     );
     // Opening chat must not focus the field — focus would open the soft keyboard.
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     expect(document.activeElement).not.toBe(input);
@@ -312,7 +325,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={mobileState} />, container);
     });
 
-    const mobileInput = container.querySelector<HTMLInputElement>(
+    const mobileInput = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     );
     expect(document.activeElement).not.toBe(mobileInput);
@@ -326,7 +339,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={desktopState} />, container);
     });
 
-    const desktopInput = container.querySelector<HTMLInputElement>(
+    const desktopInput = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     );
     expect(document.activeElement).toBe(desktopInput);
@@ -613,7 +626,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "Hello");
@@ -625,6 +638,61 @@ describe("ChatView", () => {
 
     expect(sendMessage).toHaveBeenCalledWith({ type: "text", text: "Hello" });
     expect(input.value).toBe("");
+  });
+
+  it("submits on Enter and inserts a newline on Shift+Enter on desktop", async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const chat = createMockChatSession({ sendMessage });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    typeIntoInput(input, "Hello");
+
+    // Shift+Enter should not submit (newline is handled by the browser).
+    pressKey(input, "Enter", { shiftKey: true });
+    expect(sendMessage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      pressKey(input, "Enter");
+      await Promise.resolve();
+    });
+
+    expect(sendMessage).toHaveBeenCalledWith({ type: "text", text: "Hello" });
+    expect(input.value).toBe("");
+  });
+
+  it("does not submit on Enter on mobile", async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const chat = createMockChatSession({ sendMessage });
+    const state = {
+      app: {
+        openVerseReference: vi.fn().mockResolvedValue(undefined),
+        isMobile: signal(true),
+      },
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    typeIntoInput(input, "Hello");
+
+    await act(async () => {
+      pressKey(input, "Enter");
+      await Promise.resolve();
+    });
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(input.value).toBe("Hello");
   });
 
   it("does not call sendMessage when the draft is empty", async () => {
@@ -653,7 +721,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     const sendButton =
@@ -680,7 +748,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "Hello"
     );
 
@@ -708,7 +776,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
 
@@ -739,7 +807,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "@"
     );
 
@@ -758,7 +826,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "foo@"
     );
 
@@ -778,7 +846,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "@ali"
     );
 
@@ -801,7 +869,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");
@@ -835,7 +903,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");
@@ -866,7 +934,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");
@@ -887,7 +955,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");

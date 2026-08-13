@@ -51,6 +51,35 @@ interface JoinEvent {
   timeMs: number;
 }
 
+/** Compose field grows with content, then scrolls past this many lines. */
+const COMPOSE_INPUT_MAX_LINES = 5;
+
+/**
+ * Sizes the compose textarea to its content, capped at
+ * {@link COMPOSE_INPUT_MAX_LINES} lines (overflow then scrolls).
+ */
+function resizeComposeInput(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  const style = getComputedStyle(el);
+  const lineHeight = parseFloat(style.lineHeight);
+  const paddingTop = parseFloat(style.paddingTop) || 0;
+  const paddingBottom = parseFloat(style.paddingBottom) || 0;
+  const borderTop = parseFloat(style.borderTopWidth) || 0;
+  const borderBottom = parseFloat(style.borderBottomWidth) || 0;
+  // Fall back to font-size * typical line-height if line-height is "normal".
+  const resolvedLineHeight =
+    Number.isFinite(lineHeight) && lineHeight > 0
+      ? lineHeight
+      : (parseFloat(style.fontSize) || 14) * 1.2;
+  const maxHeight =
+    resolvedLineHeight * COMPOSE_INPUT_MAX_LINES +
+    paddingTop +
+    paddingBottom +
+    borderTop +
+    borderBottom;
+  el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+}
+
 /**
  * Derives the join events that should be shown in the message log. Only
  * participants other than the current user (humans and AI) with a known join
@@ -499,7 +528,7 @@ export function ChatView(props: ChatViewProps) {
   const isSubmitting = useSignal(false);
   const submitError = useSignal<string | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const isFirstRenderRef = useRef(true);
   const wasAtBottomRef = useRef(true);
   // Mobile-only: while the field is blurred and empty, blink a fake caret
@@ -660,6 +689,7 @@ export function ChatView(props: ChatViewProps) {
       input.focus();
       input.setSelectionRange(nextCursor, nextCursor);
       cursorPosition.value = nextCursor;
+      resizeComposeInput(input);
     });
   };
 
@@ -672,48 +702,8 @@ export function ChatView(props: ChatViewProps) {
   };
 
   const handleInputPositionUpdate = (event: Event) => {
-    const target = event.currentTarget as HTMLInputElement;
+    const target = event.currentTarget as HTMLTextAreaElement;
     cursorPosition.value = target.selectionStart ?? target.value.length;
-  };
-
-  const handleMentionKeyDown = (event: KeyboardEvent) => {
-    if (!isMentionPickerOpen) {
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      mentionActiveIndex.value =
-        (mentionActiveIndex.value + 1) % totalMentionCount;
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      mentionActiveIndex.value =
-        (mentionActiveIndex.value - 1 + totalMentionCount) % totalMentionCount;
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
-        selectEveryoneMention();
-      } else {
-        const participantIndex =
-          mentionActiveIndex.value - (showEveryoneSuggestion ? 1 : 0);
-        const suggestion = allMentionSuggestions[participantIndex];
-        if (suggestion) {
-          selectMention(suggestion);
-        }
-      }
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      cursorPosition.value = 0;
-    }
   };
 
   const handleSubmit = async (event: Event) => {
@@ -734,7 +724,11 @@ export function ChatView(props: ChatViewProps) {
       });
       draft.value = "";
       chat.setTypingStatus(false);
-      inputRef.current?.focus();
+      const input = inputRef.current;
+      if (input) {
+        input.focus();
+        resizeComposeInput(input);
+      }
     } catch (error) {
       submitError.value =
         error instanceof Error
@@ -744,6 +738,53 @@ export function ChatView(props: ChatViewProps) {
             });
     } finally {
       isSubmitting.value = false;
+    }
+  };
+
+  const handleComposeKeyDown = (event: KeyboardEvent) => {
+    if (isMentionPickerOpen) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        mentionActiveIndex.value =
+          (mentionActiveIndex.value + 1) % totalMentionCount;
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        mentionActiveIndex.value =
+          (mentionActiveIndex.value - 1 + totalMentionCount) %
+          totalMentionCount;
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
+          selectEveryoneMention();
+        } else {
+          const participantIndex =
+            mentionActiveIndex.value - (showEveryoneSuggestion ? 1 : 0);
+          const suggestion = allMentionSuggestions[participantIndex];
+          if (suggestion) {
+            selectMention(suggestion);
+          }
+        }
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cursorPosition.value = 0;
+        return;
+      }
+    }
+
+    // Desktop: Enter submits; Shift+Enter inserts a newline.
+    // Mobile: Enter inserts a newline; submit is via the send button.
+    if (event.key === "Enter" && !event.shiftKey && !state.app.isMobile.value) {
+      event.preventDefault();
+      void handleSubmit(event);
     }
   };
 
@@ -974,22 +1015,23 @@ export function ChatView(props: ChatViewProps) {
               className="sb-chat-view-input-hint-caret"
               aria-hidden="true"
             />
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
               className="sb-chat-view-input"
+              rows={1}
               placeholder={t("type-a-message", {
                 defaultValue: "Type a message...",
               })}
               value={draft.value}
               onInput={(event) => {
-                const input = event.currentTarget as HTMLInputElement;
+                const input = event.currentTarget as HTMLTextAreaElement;
                 draft.value = input.value;
                 cursorPosition.value =
                   input.selectionStart ?? input.value.length;
                 chat.setTypingStatus(input.value.trim().length > 0);
+                resizeComposeInput(input);
               }}
-              onKeyDown={handleMentionKeyDown}
+              onKeyDown={handleComposeKeyDown}
               onClick={handleInputPositionUpdate}
               onKeyUp={handleInputPositionUpdate}
               onSelect={handleInputPositionUpdate}
@@ -1004,6 +1046,9 @@ export function ChatView(props: ChatViewProps) {
               aria-autocomplete="list"
               aria-expanded={isMentionPickerOpen}
               aria-haspopup="listbox"
+              aria-label={t("type-a-message", {
+                defaultValue: "Type a message...",
+              })}
             />
           </div>
           <button
