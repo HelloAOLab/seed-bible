@@ -5,10 +5,12 @@
 }
 
 .sb-discover-content-panel--side {
-  flex: 0 0 auto;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
   width: 22.5rem;
   min-width: 18rem;
-  height: 100%;
+  max-height: calc(100% - 2rem);
   overflow: hidden;
   background: var(--sb-reader-background);
   box-shadow:
@@ -17,6 +19,7 @@
   border-radius: 16px;
   padding: 16px;
   gap: 12px;
+  z-index: 1;
 }
 
 .sb-discover-content-panel--inline {
