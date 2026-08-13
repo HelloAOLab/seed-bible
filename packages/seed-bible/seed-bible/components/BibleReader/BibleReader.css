@@ -356,11 +356,6 @@
 
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
   padding-top: 2.5rem;
-}
-.sb-bible-reader-mobile
-  .sb-reader-swipe-panel:has(.sb-translation-license-notice) {
-  /* Trailing chrome clearance when a license line is the last content —
-     chapter content drops its own inset in that case (see below). */
   padding-bottom: var(--sb-reader-bottom-inset);
 }
 
@@ -434,8 +429,6 @@
   line-height: var(--text-verse-line-height, 1.7);
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
-
-  padding-bottom: var(--sb-reader-bottom-inset);
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
      Short enough to read as immediate rather than as an animation. */
@@ -1034,4 +1027,9 @@
 
 .sb-bible-reader-main-content {
   max-width: var(--sb-scripture-width, 48rem);
+  padding-bottom: var(--sb-reader-bottom-inset);
+
+  &:has(+ .sb-bible-reader-discover-panel) {
+    padding-bottom: 1rem;
+  }
 }
