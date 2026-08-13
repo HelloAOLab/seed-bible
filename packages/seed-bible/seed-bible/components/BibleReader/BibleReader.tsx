@@ -1156,6 +1156,8 @@ interface BibleReaderProps {
    * header. Floats to the right (in LTR) so chapter text wraps around it.
    * Desktop-only — callers should not pass this on mobile. */
   discoverPanel?: ComponentChildren;
+
+  readingPlanBelongs?: ComponentChildren;
 }
 
 export interface BibleReaderMobileChromeProps {
@@ -1618,6 +1620,7 @@ export function BibleReader(props: BibleReaderProps) {
     mobileChrome,
     sharedSession,
     discoverPanel,
+    readingPlanBelongs,
   } = props;
   const {
     translationId,
@@ -2033,6 +2036,13 @@ export function BibleReader(props: BibleReaderProps) {
     </>
   );
 
+  const extraContent = (discoverPanel || readingPlanBelongs) && (
+    <div className="sb-bible-reader-discover-panel">
+      {discoverPanel}
+      {readingPlanBelongs}
+    </div>
+  );
+
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
@@ -2155,6 +2165,7 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-current"
               >
                 {renderMainContent()}
+                {extraContent}
               </div>
               <div
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
@@ -2231,9 +2242,7 @@ export function BibleReader(props: BibleReaderProps) {
             <div className="sb-bible-reader-main-content">
               {renderMainContent()}
             </div>
-            <div className="sb-bible-reader-discover-panel">
-              {discoverPanel}
-            </div>
+            {extraContent}
           </div>
         </>
       )}

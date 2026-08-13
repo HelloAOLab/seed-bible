@@ -45,7 +45,9 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   if (!tab) {
     return null;
   }
-  if (!tab.readingState.discoverContentPanelVisible.value) {
+
+  const isHidden = tab.readingState.discoverContentPanelVisible.value === false;
+  if (isHidden) {
     return null;
   }
 
@@ -85,7 +87,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   return (
     <div
-      className={`sb-discover-content-panel sb-discover-content-panel--${variant}`}
+      className={`sb-discover-content-panel sb-discover-content-panel--${variant} ${isHidden ? "sb-discover-content-panel--hidden" : ""}`}
       aria-label={t("discover-content-panel", {
         defaultValue: "Discover content",
       })}
@@ -112,19 +114,21 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       )}
 
       {variant === "side" && (
-        <div className="sb-dcp-filters" role="tablist">
-          {filters.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={activeFilter.value === key}
-              className={`sb-dcp-chip${activeFilter.value === key ? " sb-dcp-chip--active" : ""}`}
-              onClick={() => (activeFilter.value = key)}
-            >
-              {label}
-            </button>
-          ))}
+        <div style={{ display: "contents" }}>
+          <div className="sb-dcp-filters" role="tablist">
+            {filters.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={activeFilter.value === key}
+                className={`sb-dcp-chip${activeFilter.value === key ? " sb-dcp-chip--active" : ""}`}
+                onClick={() => (activeFilter.value = key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
