@@ -22,12 +22,6 @@ type FilterKey =
 interface DiscoverContentPanelProps {
   tab: ReaderTab | null;
   state: SeedBibleState;
-  /**
-   * "side" docks the panel beside the reader with its own scroll region;
-   * "inline" flows the panel inside the reader's own scroll viewport. Chosen
-   * per-slot by the caller based on available space (see `TabsLayout.tsx`).
-   */
-  variant: "side" | "inline";
 }
 
 /**
@@ -38,7 +32,7 @@ interface DiscoverContentPanelProps {
  * toggle is off, or there's nothing to show for the chapter.
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
-  const { tab, state, variant } = props;
+  const { tab, state } = props;
   const { t } = useI18n();
   const activeFilter = useSignal<FilterKey>("all");
 
@@ -87,50 +81,46 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   return (
     <div
-      className={`sb-discover-content-panel sb-discover-content-panel--${variant} ${isHidden ? "sb-discover-content-panel--hidden" : ""}`}
+      className={`sb-discover-content-panel ${isHidden ? "sb-discover-content-panel--hidden" : ""}`}
       aria-label={t("discover-content-panel", {
         defaultValue: "Discover content",
       })}
     >
-      {variant === "side" && (
-        <div className="sb-dcp-header">
-          <div className="sb-dcp-header-title">
-            <MaterialIcon className="sb-dcp-header-icon">explore</MaterialIcon>
-            <span>
-              {t("discover-book-title", {
-                defaultValue: "Discover {{book}}",
-                book: bookName,
-              })}
-            </span>
-          </div>
-          <button
-            type="button"
-            className="sb-dcp-create-btn"
-            onClick={() => void state.annotations.createNewAnnotation()}
-          >
-            + {t("create-playlist", { defaultValue: "Create" })}
-          </button>
+      <div className="sb-dcp-header">
+        <div className="sb-dcp-header-title">
+          <MaterialIcon className="sb-dcp-header-icon">explore</MaterialIcon>
+          <span>
+            {t("discover-book-title", {
+              defaultValue: "Discover {{book}}",
+              book: bookName,
+            })}
+          </span>
         </div>
-      )}
+        <button
+          type="button"
+          className="sb-dcp-create-btn"
+          onClick={() => void state.annotations.createNewAnnotation()}
+        >
+          + {t("create-playlist", { defaultValue: "Create" })}
+        </button>
+      </div>
 
-      {variant === "side" && (
-        <div style={{ display: "contents" }}>
-          <div className="sb-dcp-filters" role="tablist">
-            {filters.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={activeFilter.value === key}
-                className={`sb-dcp-chip${activeFilter.value === key ? " sb-dcp-chip--active" : ""}`}
-                onClick={() => (activeFilter.value = key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+      <div style={{ display: "contents" }}>
+        <div className="sb-dcp-filters" role="tablist">
+          {filters.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={activeFilter.value === key}
+              className={`sb-dcp-chip${activeFilter.value === key ? " sb-dcp-chip--active" : ""}`}
+              onClick={() => (activeFilter.value = key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       <div className="sb-discover-content-panel-scroll">
         {(f === "all" || f === "annotations") && (
@@ -155,15 +145,13 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         {(f === "all" || f === "content") && <ContentSection tab={tab} />}
       </div>
 
-      {variant === "side" && (
-        <button
-          type="button"
-          className="sb-dcp-show-all"
-          onClick={() => state.app.openDiscover()}
-        >
-          {t("show-all", { defaultValue: "Show All" })}
-        </button>
-      )}
+      <button
+        type="button"
+        className="sb-dcp-show-all"
+        onClick={() => state.app.openDiscover()}
+      >
+        {t("show-all", { defaultValue: "Show All" })}
+      </button>
     </div>
   );
 }
