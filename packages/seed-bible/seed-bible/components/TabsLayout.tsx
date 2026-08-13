@@ -55,18 +55,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
   const isMobile = state?.app.isMobile.value ?? false;
-  // "Available space" for the discover content panel, approximated per slot:
-  // a slot only gets the side-docked variant when it's the sole slot on a
-  // non-mobile viewport and no other pane is already using the "side"
-  // placement (see PanesManager) — a split layout divides the same width
-  // across slots, so every slot in a multi-slot layout falls back to inline.
-  const isSoleSlot = (state?.app.effectiveSlots.value.length ?? 1) === 1;
-  const blockedBySidePane =
-    state?.app.effectivePanes.value.some(
-      (pane) => pane.placement === "side" || pane.placement === "fullscreen"
-    ) ?? false;
-  const showSideDiscoverPanel = !isMobile && isSoleSlot && !blockedBySidePane;
-  const showInlineDiscoverPanel = !isMobile && !showSideDiscoverPanel;
 
   const swipeViewportRef = useRef<HTMLDivElement | null>(null);
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
@@ -721,9 +709,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           mobileChrome={mobileChrome}
           sharedSession={tab.sharedSession}
           discoverPanel={
-            showSideDiscoverPanel ? (
-              <DiscoverContentPanel tab={tab} state={state} variant="side" />
-            ) : undefined
+            <DiscoverContentPanel tab={tab} state={state} variant="side" />
           }
         />
         {!isMobile && belongsCard}
@@ -744,9 +730,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
             chats={state.chats}
             features={state.features}
           />
-        )}
-        {showInlineDiscoverPanel && (
-          <DiscoverContentPanel tab={tab} state={state} variant="inline" />
         )}
       </div>
     </div>
