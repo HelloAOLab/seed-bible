@@ -5,7 +5,6 @@ import { useReadingHistoryTimeline } from "@packages/seed-bible/seed-bible/compo
 import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 import { useTimeContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
-import { calculateReadingHistorySummary } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 import { ColorParser } from "@packages/seed-bible-utils/domain/functions/colors";
 
 vi.mock(
@@ -22,16 +21,6 @@ vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext",
   () => ({
     useTimeContext: vi.fn(),
-  })
-);
-vi.mock(
-  "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
-  () => ({
-    flat: vi.fn((arrays: unknown[][]) => arrays.flat()),
-    calculateReadingHistorySummary: vi.fn(() => ({
-      totalTimeSpentReading: 0,
-      users: {},
-    })),
   })
 );
 
@@ -100,10 +89,6 @@ describe("useReadingHistoryTimeline", () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
     (useTimeContext as Mock).mockReturnValue({ tick: 0 });
-    (calculateReadingHistorySummary as Mock).mockReturnValue({
-      totalTimeSpentReading: 0,
-      users: {},
-    });
   });
 
   afterEach(() => {
@@ -290,9 +275,10 @@ describe("useReadingHistoryTimeline", () => {
   });
 
   describe("reading-events effect", () => {
-    it("summarizes an empty set when no user is selected", () => {
-      setup({ userFilters: new Map() });
-      expect(calculateReadingHistorySummary).toHaveBeenCalledWith([]);
+    it("fetches nothing when no user is selected", () => {
+      const getReadingHistoryEvents = vi.fn(async () => []);
+      setup({ userFilters: new Map() }, { getReadingHistoryEvents });
+      expect(getReadingHistoryEvents).not.toHaveBeenCalled();
     });
 
     it("fetches events for each selected user", () => {
@@ -364,10 +350,6 @@ describe("useReadingHistoryTimeline", () => {
           },
         ]
       );
-      (calculateReadingHistorySummary as Mock).mockReturnValue({
-        totalTimeSpentReading: 180,
-        users: { u1: {} },
-      });
       const result = setup(
         { userFilters: new Map([["u1", true]]) },
         { getReadingHistoryEvents }
@@ -418,10 +400,6 @@ describe("useReadingHistoryTimeline", () => {
           },
         ]
       );
-      (calculateReadingHistorySummary as Mock).mockReturnValue({
-        totalTimeSpentReading: 180,
-        users: { u1: {} },
-      });
       const result = setup(
         { userFilters: new Map([["u1", true]]) },
         { getReadingHistoryEvents }
@@ -447,10 +425,6 @@ describe("useReadingHistoryTimeline", () => {
             userId: "u1",
           }))
       );
-      (calculateReadingHistorySummary as Mock).mockReturnValue({
-        totalTimeSpentReading: 180,
-        users: { u1: {} },
-      });
       // A full-year range gives enough distinct days to cross the 30-iteration yield.
       const result = setup(
         { userFilters: new Map([["u1", true]]), year: 2026 },
@@ -496,10 +470,6 @@ describe("useReadingHistoryTimeline", () => {
           },
         ]
       );
-      (calculateReadingHistorySummary as Mock).mockReturnValue({
-        totalTimeSpentReading: 180,
-        users: { u1: {} },
-      });
       setup(
         { userFilters: new Map([["u1", true]]) },
         {

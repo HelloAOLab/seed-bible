@@ -3,18 +3,16 @@ import type {
   ReadingHistoryTimelineFooterData,
 } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
 import type {
-  ReadingEventsByDay,
-  DailyReadingHistorySummaries,
   DateRange,
   KeyRangesMap,
   TimelineRangesMap,
 } from "./readingHistory";
 import { useTimeContext } from "./TimeContext";
-import {
-  flat,
-  calculateReadingHistorySummary,
+import { loadDailyReadingHistory } from "../../managers/ReadingHistoryManager";
+import type {
+  DailyReadingHistorySummaries,
+  ReadingHistorySummary,
 } from "../../managers/ReadingHistoryManager";
-import type { ReadingHistorySummary } from "../../managers/ReadingHistoryManager";
 import { useTodayContext } from "./TodayContext";
 import { useSocialSectionContext } from "./SocialSectionContext";
 import type { TooltipContentData } from "./tooltipTypes";
@@ -102,7 +100,6 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     weeksCount,
     SEC_PER_MINUTE,
     SEC_PER_HOUR,
-    SEC_PER_DAY,
     dayRangesMap,
   } = useMemo(() => {
     const getStartOfWeek = (date: Date) => {
@@ -171,78 +168,21 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
       }
     }
 
-    let summary;
-    // const rangedEventsByBook: RangedReadingEventsByBook = new Map();
-    const eventsByDay: ReadingEventsByDay = new Map();
-    const dailySummaries: DailyReadingHistorySummaries = new Map();
-
-    if (selectedUsers.length === 0) {
-      summary = calculateReadingHistorySummary([]);
-      setYearlyReadingHistorySummary(summary);
-      setDailyReadingHistorySummaries(dailySummaries);
-      return;
-    }
-
     const startDateStartOfWeekSeconds = startDateStartOfWeek.getTime() / 1000;
     const endSeconds = timelineRange.endDate.getTime() / 1000;
 
-    const allEventPromises = selectedUsers.map((recordName) =>
-      getReadingHistoryEvents(
-        recordName,
-        startDateStartOfWeekSeconds,
-        endSeconds
-      )
-    );
-
-    const dayKeys = Array.from(dayRangesMap.keys());
-
-    const yieldToMain = () =>
-      new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-    Promise.all(allEventPromises)
-      .then(async (allEvents) => {
+    loadDailyReadingHistory({
+      fetchEvents: getReadingHistoryEvents,
+      readerIds: selectedUsers,
+      dayKeys: Array.from(dayRangesMap.keys()),
+      startSeconds: startDateStartOfWeekSeconds,
+      endSeconds,
+      minDurationSeconds: SEC_PER_MINUTE,
+    })
+      .then(({ summariesByDay, total }) => {
         if (!isMounted) return;
-        const flattenedEvents = Array.from(flat(allEvents));
-
-        for (const event of flattenedEvents) {
-          const { start, end } = event;
-          const duration = end - start;
-          if (duration < SEC_PER_MINUTE) continue;
-
-          const dayIndex = Math.floor(
-            (start - startDateStartOfWeekSeconds) / SEC_PER_DAY
-          );
-
-          if (dayIndex >= 0 && dayIndex < dayKeys.length) {
-            const key = dayKeys[dayIndex];
-
-            if (key) {
-              if (!eventsByDay.has(key)) {
-                eventsByDay.set(key, []);
-              }
-              eventsByDay.get(key)?.push(event);
-            }
-          }
-        }
-
-        let iterations = 0;
-        for (const [dayKey, events] of eventsByDay) {
-          const daySummary = calculateReadingHistorySummary(events);
-          dailySummaries.set(dayKey, daySummary);
-          iterations++;
-          if (iterations % 30 === 0) {
-            await yieldToMain();
-          }
-        }
-
-        await yieldToMain();
-
-        summary = calculateReadingHistorySummary(flattenedEvents);
-
-        if (!isMounted) return;
-
-        setYearlyReadingHistorySummary(summary);
-        setDailyReadingHistorySummaries(dailySummaries);
+        setYearlyReadingHistorySummary(total);
+        setDailyReadingHistorySummaries(summariesByDay);
       })
       .catch((error) => {
         console.warn(
