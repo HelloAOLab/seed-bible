@@ -1152,6 +1152,10 @@ interface BibleReaderProps {
   /** The shared session backing this tab, if any — drives the mobile header
    * participants stack. Null/undefined for a normal, non-shared tab. */
   sharedSession?: BibleReadingSession | null;
+  /** Optional panel rendered at the inline end of the reader, below the
+   * header. Floats to the right (in LTR) so chapter text wraps around it.
+   * Desktop-only — callers should not pass this on mobile. */
+  discoverPanel?: ComponentChildren;
 }
 
 export interface BibleReaderMobileChromeProps {
@@ -1613,6 +1617,7 @@ export function BibleReader(props: BibleReaderProps) {
     state,
     mobileChrome,
     sharedSession,
+    discoverPanel,
   } = props;
   const {
     translationId,
@@ -2222,7 +2227,12 @@ export function BibleReader(props: BibleReaderProps) {
               </div>
             )}
           </div>
-          {renderMainContent()}
+          <div className="sb-bible-reader-content">
+            {renderMainContent()}
+            <div className="sb-bible-reader-discover-panel">
+              {discoverPanel}
+            </div>
+          </div>
         </>
       )}
 

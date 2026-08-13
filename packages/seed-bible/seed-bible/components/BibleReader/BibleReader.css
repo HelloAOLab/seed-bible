@@ -1015,3 +1015,15 @@
   text-align: center;
   opacity: 0.75;
 }
+
+.sb-bible-reader-content {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.sb-bible-reader-discover-panel {
+  flex: 1 1 22.5rem;
+  justify-self: flex-end;
+}

@@ -5,12 +5,15 @@
 }
 
 .sb-discover-content-panel--side {
-  position: absolute;
-  right: 1rem;
+  position: sticky;
   top: 1rem;
-  width: 22.5rem;
+  flex: 1 1 22.5rem;
+  /* float: inline-end; */
+  /* margin-inline-start: 2rem;
+  margin-bottom: 1.5rem; */
+  /* width: 22.5rem; */
   min-width: 18rem;
-  max-height: calc(100% - 2rem);
+  max-height: calc(100vh - 2rem);
   overflow: hidden;
   background: var(--sb-reader-background);
   box-shadow:
@@ -19,7 +22,6 @@
   border-radius: 16px;
   padding: 16px;
   gap: 12px;
-  z-index: 1;
 }
 
 .sb-discover-content-panel--inline {

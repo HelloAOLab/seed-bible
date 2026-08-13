@@ -720,6 +720,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           state={state}
           mobileChrome={mobileChrome}
           sharedSession={tab.sharedSession}
+          discoverPanel={
+            showSideDiscoverPanel ? (
+              <DiscoverContentPanel tab={tab} state={state} variant="side" />
+            ) : undefined
+          }
         />
         {!isMobile && belongsCard}
         {!isMobile && (
@@ -744,9 +749,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           <DiscoverContentPanel tab={tab} state={state} variant="inline" />
         )}
       </div>
-      {showSideDiscoverPanel && (
-        <DiscoverContentPanel tab={tab} state={state} variant="side" />
-      )}
     </div>
   );
 }

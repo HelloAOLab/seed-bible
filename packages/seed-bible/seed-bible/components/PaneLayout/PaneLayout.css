@@ -303,12 +303,10 @@
   grid-row: 2;
 }
 
-/* Flex row wrapping `.sb-pane-reader` in every slot. The reader always fills
-   the full width; when the discover content panel is visible it floats as an
-   absolutely-positioned overlay inside this container (see `TabsLayout.tsx`
-   and `.sb-discover-content-panel--side`). */
+/* Flex row wrapping `.sb-pane-reader` in every slot. Always has just the one
+   child; the discover content panel floats inside `.sb-bible-reader` itself
+   (see `.sb-discover-content-panel--side` and `BibleReader.tsx`). */
 .sb-pane-reader-outer {
-  position: relative;
   display: flex;
   flex-direction: row;
   height: 100%;
