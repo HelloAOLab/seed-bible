@@ -36,6 +36,16 @@ export interface CreateTestSeedBibleStateOptions {
    * pass an in-memory store to exercise anything that depends on downloads.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * Whether the Today screen auto-opens over the reader, as it does in
+   * production for a URL with no reading position. Defaults to `false` so the
+   * fixture models a reader looking at a chapter — otherwise Today's fullscreen
+   * pane covers the reader in every test that isn't about Today.
+   *
+   * Applied through the real `?today=` param rather than a bespoke flag, so
+   * tests exercise the same path a user's URL would.
+   */
+  todayOpen?: boolean;
 }
 
 export async function waitFor(
@@ -171,6 +181,15 @@ export async function createTestSeedBibleState(
 
   installFreeUseBibleApiMock(globalThis as TestGlobalScope, responses);
   await ensureI18nInitialized();
+
+  // Pin Today's initial state before the state is built: `TodayManager` latches
+  // it from `initialUrl` at construction, so it cannot be set afterwards. Keeps
+  // whatever path the caller already navigated to.
+  if (typeof window !== "undefined") {
+    const url = new URL(window.location.href);
+    url.searchParams.set("today", options.todayOpen ? "open" : "closed");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
 
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");

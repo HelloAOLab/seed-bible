@@ -31,7 +31,6 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "../../app/keyboardNav";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import {
   SessionUserAvatar,
   getUserDisplayName,
@@ -39,7 +38,6 @@ import {
   sessionRoleRank,
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
-import { getExtensionExports } from "../../managers";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -2096,17 +2094,7 @@ export function Tabs(props: TabsProps) {
                 aria-label={t("tasks", { defaultValue: "Tasks" })}
                 title={t("tasks", { defaultValue: "Tasks" })}
                 onClick={() => {
-                  const today =
-                    getExtensionExports<TodayScreenAPI>("today-screen");
-                  if (today) {
-                    today.open();
-                  } else {
-                    app.toast(
-                      t("today-coming-soon", {
-                        defaultValue: "Today screen is coming soon",
-                      })
-                    );
-                  }
+                  state.today.open();
                 }}
               >
                 <svg

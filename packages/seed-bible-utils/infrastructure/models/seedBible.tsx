@@ -28,7 +28,6 @@ import type { CapitalizeFirstLetterType } from "../../domain/functions/string";
 import type { ReadingHistoryConfigProvider } from "../config/readingHistory/ReadingHistoryConfigProvider";
 import type { SectionInfoMapper } from "../../infrastructure/mappers/SectionInfoMapper";
 import type { SessionProvider } from "../adapters/session/SessionProvider";
-import type { UseHorizontalScroll } from "@packages/seed-bible/seed-bible/components/useHorizontalScroll";
 import type { Signal } from "@preact/signals";
 import type { ConnectedSessionUser } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import type {
@@ -96,5 +95,4 @@ export interface UtilsAPI {
   sessionProvider: SessionProvider;
   bookNames: Signal<Map<string, string>>;
   connectedUsers: Signal<ConnectedSessionUser[]>;
-  useHorizontalScroll: UseHorizontalScroll;
 }

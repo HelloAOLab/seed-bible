@@ -85,7 +85,7 @@ export function createReadingHistoryState(deps: ReadingHistoryStateDeps): {
       .catch((err) => {
         if (deps.userId.peek() !== requestedUserId) return;
         console.error(
-          "[Debug] [today-screen] getUserLastReading failed for userId",
+          "[TodayManager] getUserLastReading failed for userId",
           userId,
           err
         );
