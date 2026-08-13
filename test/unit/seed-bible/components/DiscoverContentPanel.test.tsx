@@ -64,6 +64,7 @@ function createMockTab(
     readingState: {
       bookId: signal("GEN"),
       chapterNumber: signal(1),
+      chapterData: signal(null),
       discoverContentPanelVisible: signal(
         overrides.discoverContentPanelVisible ?? true
       ),
@@ -83,6 +84,7 @@ function createMockState(
     app: {
       toast: vi.fn(),
       openVerseReference: vi.fn().mockResolvedValue(undefined),
+      openDiscover: vi.fn(),
     },
     login: {
       userId: signal(null),
@@ -96,6 +98,7 @@ function createMockState(
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
       ),
+      createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       sync: { pendingCount: signal(0) },
     },
   } as unknown as SeedBibleState;
