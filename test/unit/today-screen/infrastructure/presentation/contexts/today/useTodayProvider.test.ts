@@ -1,5 +1,5 @@
-import { useTodayProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/useTodayProvider";
-import type { TodayConfig } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/Today";
+import { useTodayProvider } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTodayProvider";
+import type { TodayConfig } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 
 const config = {
   language: "en",

@@ -5,12 +5,12 @@ import { signal } from "@preact/signals";
 import {
   BookmarksSection,
   type CategorizedBookmarks,
-} from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/BookmarksSection";
-import { useBookmarksSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBookmarksSection";
-import { BookmarksCategory } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/BookmarksCategory";
+} from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection";
+import { useBookmarksSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useBookmarksSection";
+import { BookmarksCategory } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/BookmarksCategory";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBookmarksSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useBookmarksSection",
   () => ({
     useBookmarksSection: vi.fn(),
   })
@@ -20,7 +20,7 @@ vi.mock(
 // maps categories to children. The real BookmarksCategory pulls its own hook
 // (and the Today context), which is out of scope here.
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/BookmarksCategory",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/BookmarksCategory",
   () => ({
     BookmarksCategory: vi.fn(
       ({

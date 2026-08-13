@@ -2,13 +2,13 @@ import type { Mock } from "vitest";
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import {
-  Today,
+  TodayPane,
   type TodayConfig,
-} from "../../../../../../packages/today-screen/infrastructure/presentation/components/Today";
-import { TodayProvider } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+} from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
+import { TodayProvider } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     TodayProvider: vi.fn(
       ({ children }: { config: unknown; children: ComponentChildren }) => (
@@ -19,7 +19,7 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/TimeContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TimeContext",
   () => ({
     TimeProvider: vi.fn(({ children }: { children: ComponentChildren }) => (
       <div data-testid="time-provider">{children}</div>
@@ -28,7 +28,7 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContainer",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContainer",
   () => ({
     TodayContainer: vi.fn(() => <div data-testid="today-container" />),
   })
@@ -37,7 +37,7 @@ vi.mock(
 // The config is opaque to this component (it just forwards it), so a stub is fine.
 const config = {} as unknown as TodayConfig;
 
-describe("Today", () => {
+describe("TodayPane", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
@@ -52,7 +52,7 @@ describe("Today", () => {
   });
 
   function setup() {
-    act(() => render(<Today config={config} />, container));
+    act(() => render(<TodayPane config={config} />, container));
     return container;
   }
 

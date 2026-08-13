@@ -2,11 +2,11 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { useTodayContent } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContent";
-import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import { useTodayContent } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTodayContent";
+import { useTodayContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     useTodayContext: vi.fn(),
   })

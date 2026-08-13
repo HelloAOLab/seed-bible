@@ -1,25 +1,25 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Book } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Book";
-import { useBook } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBook";
+import { Book } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Book";
+import { useBook } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useBook";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBook",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useBook",
   () => ({
     useBook: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Chapter",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Chapter",
   () => ({
     Chapter: vi.fn(() => <div data-testid="chapter" />),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/UserIcon",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/UserIcon",
   () => ({
     UserIcon: vi.fn(() => <div data-testid="user-icon" />),
   })

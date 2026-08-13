@@ -1,18 +1,18 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { HistoryCard } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/HistoryCard";
-import { useHistoryCard } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHistoryCard";
+import { HistoryCard } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/HistoryCard";
+import { useHistoryCard } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useHistoryCard";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHistoryCard",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useHistoryCard",
   () => ({
     useHistoryCard: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/FilteredReading",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/FilteredReading",
   () => ({
     FilteredReading: vi.fn(() => <div data-testid="filtered-reading" />),
   })
@@ -20,7 +20,7 @@ vi.mock(
 
 // Deps used by the internal ReadingHistoryTimelineSection.
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     useTodayContext: vi.fn(() => ({
       ReadingHistoryTimeline: () => <div data-testid="timeline" />,
@@ -29,7 +29,7 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useReadingHistoryTimeline",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useReadingHistoryTimeline",
   () => ({
     useReadingHistoryTimeline: vi.fn(() => ({
       itemsData: [],

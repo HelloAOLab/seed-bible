@@ -1,13 +1,13 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSocialSection } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSocialSection";
-import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
-import type { Timespan } from "../../../../../../packages/today-screen/domain/models/commonTypes";
-import type { FilteredReading } from "../../../../../../packages/today-screen/domain/models/readingHistory";
+import { useSocialSection } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSocialSection";
+import { useTodayContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import type { Timespan } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/commonTypes";
+import type { FilteredReading } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     useTodayContext: vi.fn(),
   })

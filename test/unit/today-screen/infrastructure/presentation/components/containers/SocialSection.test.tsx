@@ -1,20 +1,20 @@
 import type { Mock } from "vitest";
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { SocialSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SocialSection";
-import { useSocialSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSocialSection";
-import { SocialSectionProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
-import { TitledSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/TitledSection";
+import { SocialSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
+import { useSocialSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSocialSection";
+import { SocialSectionProvider } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
+import { TitledSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TitledSection";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSocialSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSocialSection",
   () => ({
     useSocialSection: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
   () => ({
     SocialSectionProvider: vi.fn(
       ({ children }: { value: unknown; children: ComponentChildren }) => (
@@ -25,7 +25,7 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/TitledSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TitledSection",
   () => ({
     TitledSection: vi.fn(
       ({ title, children }: { title: string; children: ComponentChildren }) => (
@@ -38,7 +38,7 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/HistoryCard",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/HistoryCard",
   () => ({
     HistoryCard: vi.fn(() => <div data-testid="history-card" />),
   })

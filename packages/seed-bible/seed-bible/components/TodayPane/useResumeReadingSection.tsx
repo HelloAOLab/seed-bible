@@ -1,0 +1,78 @@
+import type { ResumeReadingCardData } from "./ResumeReadingSection";
+import { useTodayContext } from "./TodayContext";
+import { useMemo, useCallback } from "preact/hooks";
+
+type UseResumeReadingSection = () => {
+  MaterialIcon: (props: {
+    children: string;
+    className?: string | undefined;
+  }) => preact.JSX.Element;
+  Skeleton: (props: {
+    shape?: "block" | "line" | "circle" | "button";
+    width?: string;
+    height?: string;
+    radius?: string;
+    className?: string;
+  }) => preact.JSX.Element;
+  SkeletonContainer: (props: {
+    label: string;
+    className?: string;
+    children: preact.ComponentChildren;
+  }) => preact.JSX.Element;
+  /** True while history is still loading — render a placeholder card. */
+  isLoading: boolean;
+  /** Already-translated status announced by the loading placeholder. */
+  loadingLabel: string;
+  /** The resume-card data, or `null` while loading. */
+  cardData: ResumeReadingCardData | null;
+  handleButtonClick: () => void;
+};
+
+export const useResumeReadingSection: UseResumeReadingSection = () => {
+  const {
+    MaterialIcon,
+    Skeleton,
+    SkeletonContainer,
+    readingHistory,
+    t,
+    bookNames,
+    addTab,
+    closeToday,
+    getDefaultTranslation,
+  } = useTodayContext();
+
+  const state = readingHistory.value;
+  // A resume position only exists in the `ready` state; in `loading` we render
+  // a placeholder instead of dereferencing a value that isn't there yet.
+  const lastReading = state.status === "ready" ? state.lastReading : undefined;
+
+  const cardData = useMemo<ResumeReadingCardData | null>(() => {
+    if (!lastReading) return null;
+    return {
+      title: t("resume-reading", {
+        defaultValue: "CONTINUE WHERE YOU LEFT",
+      }),
+      book: bookNames.value.get(lastReading.bookId) ?? lastReading.bookId,
+      chapter: lastReading.chapter,
+      buttonIcon: "arrow_right_alt",
+    };
+  }, [lastReading, t, bookNames.value]);
+
+  const handleButtonClick = useCallback(() => {
+    if (!lastReading) return;
+    addTab(lastReading.bookId, lastReading.chapter, getDefaultTranslation());
+    closeToday();
+  }, [lastReading, addTab, closeToday, getDefaultTranslation]);
+
+  return {
+    MaterialIcon,
+    Skeleton,
+    SkeletonContainer,
+    isLoading: state.status === "loading",
+    loadingLabel: t("resume-reading-loading", {
+      defaultValue: "Loading your reading history…",
+    }),
+    cardData,
+    handleButtonClick,
+  };
+};

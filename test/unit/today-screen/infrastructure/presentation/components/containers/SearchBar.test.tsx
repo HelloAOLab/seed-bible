@@ -1,11 +1,11 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { SearchBar } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchBar";
-import { useSearchBar } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchBar";
+import { SearchBar } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SearchBar";
+import { useSearchBar } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSearchBar";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchBar",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSearchBar",
   () => ({
     useSearchBar: vi.fn(),
   })

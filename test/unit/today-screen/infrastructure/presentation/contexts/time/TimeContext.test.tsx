@@ -5,11 +5,11 @@ import {
   TimeProvider,
   useTimeContext,
   type TimeContextType,
-} from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/TimeContext";
-import { useTimeProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/useTimeProvider";
+} from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
+import { useTimeProvider } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTimeProvider";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/useTimeProvider",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTimeProvider",
   () => ({
     useTimeProvider: vi.fn(),
   })

@@ -2,27 +2,27 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { useTodayContainer } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContainer";
-import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
-import { TodayContent } from "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContent";
-import { Welcome } from "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Welcome";
+import { useTodayContainer } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTodayContainer";
+import { useTodayContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { TodayContent } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContent";
+import { Welcome } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Welcome";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     useTodayContext: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContent",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContent",
   () => ({
     TodayContent: () => null,
   })
 );
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Welcome",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Welcome",
   () => ({
     Welcome: () => null,
   })

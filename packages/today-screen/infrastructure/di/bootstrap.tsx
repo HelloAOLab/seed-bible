@@ -5,18 +5,18 @@ import {
   Skeleton,
   SkeletonContainer,
 } from "@packages/seed-bible/seed-bible/components/Skeleton/Skeleton";
-import { Today } from "../presentation/components/Today";
+import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
-import { TodayReadingHistoryService } from "@packages/today-screen/application/services/TodayReadingHistoryService";
-import { SubscribedUsersProvider } from "../adapters/subscriptions/SubscribedUsersProvider";
-import type { FilteredReading } from "@packages/today-screen/domain/models/readingHistory";
-import { createReadingHistoryState } from "./createReadingHistoryState";
+import { TodayReadingHistoryService } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayReadingHistoryService";
+import { SubscribedUsersProvider } from "@packages/seed-bible/seed-bible/components/TodayPane/SubscribedUsersProvider";
+import type { FilteredReading } from "@packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
+import { createReadingHistoryState } from "@packages/seed-bible/seed-bible/components/TodayPane/createReadingHistoryState";
 import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/seedBible";
 import { getReadingHistoryEvents } from "@packages/seed-bible/seed-bible/managers";
 import { getDefaultTranslationForLanguage } from "@packages/seed-bible/seed-bible/managers";
-import type { VerseSearchResult } from "@packages/today-screen/domain/models/search";
-import { ReadingHistoryConfigProvider } from "../config/readingHistory/readingHistoryConfigProvider";
-import { getHighlightedWelcomeVerse } from "../config/translations/welcomeVerseMap";
+import type { VerseSearchResult } from "@packages/seed-bible/seed-bible/components/TodayPane/search";
+import { ReadingHistoryConfigProvider } from "@packages/seed-bible/seed-bible/components/TodayPane/readingHistoryConfigProvider";
+import { getHighlightedWelcomeVerse } from "@packages/seed-bible/seed-bible/components/TodayPane/welcomeVerseMap";
 import { hasReadingUrlPosition } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 
 export interface TodayScreenAPI {
@@ -226,7 +226,7 @@ export const bootstrapExtension = () => {
         const component = () => {
           const { t, language } = useI18n();
           return (
-            <Today
+            <TodayPane
               config={{
                 isBookmarksListOpen: context.bookmarks.isFilterActive.value,
                 showBookmarksList: () => {

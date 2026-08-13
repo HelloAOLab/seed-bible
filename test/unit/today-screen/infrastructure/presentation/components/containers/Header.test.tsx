@@ -1,11 +1,11 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Header } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Header";
-import { useHeader } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHeader";
+import { Header } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Header";
+import { useHeader } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useHeader";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHeader",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useHeader",
   () => ({
     useHeader: vi.fn(),
   })

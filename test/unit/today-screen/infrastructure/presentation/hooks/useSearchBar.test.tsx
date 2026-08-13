@@ -1,12 +1,12 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSearchBar } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchBar";
-import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
-import type { VerseSearchResult } from "../../../../../../packages/today-screen/domain/models/search";
+import { useSearchBar } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSearchBar";
+import { useTodayContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import type { VerseSearchResult } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/search";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     useTodayContext: vi.fn(),
   })

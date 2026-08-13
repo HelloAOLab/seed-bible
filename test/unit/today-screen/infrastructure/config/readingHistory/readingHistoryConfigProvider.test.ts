@@ -1,4 +1,4 @@
-import { ReadingHistoryConfigProvider } from "../../../../../../packages/today-screen/infrastructure/config/readingHistory/readingHistoryConfigProvider";
+import { ReadingHistoryConfigProvider } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/readingHistoryConfigProvider";
 
 const DAY = 24 * 60 * 60;
 

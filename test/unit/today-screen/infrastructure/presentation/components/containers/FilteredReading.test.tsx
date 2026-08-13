@@ -1,19 +1,19 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { FilteredReading } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/FilteredReading";
-import { Book } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Book";
-import { useFilteredReading } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useFilteredReading";
+import { FilteredReading } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/FilteredReading";
+import { Book } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Book";
+import { useFilteredReading } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useFilteredReading";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useFilteredReading",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useFilteredReading",
   () => ({
     useFilteredReading: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Book",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Book",
   () => ({
     Book: vi.fn(() => <div data-testid="book" />),
   })

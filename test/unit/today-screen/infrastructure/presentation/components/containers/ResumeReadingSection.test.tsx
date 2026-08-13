@@ -1,11 +1,11 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ResumeReadingSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/ResumeReadingSection";
-import { useResumeReadingSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useResumeReadingSection";
+import { ResumeReadingSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/ResumeReadingSection";
+import { useResumeReadingSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useResumeReadingSection";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useResumeReadingSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useResumeReadingSection",
   () => ({
     useResumeReadingSection: vi.fn(),
   })

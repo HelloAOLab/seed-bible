@@ -1,12 +1,12 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useFilteredReading } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useFilteredReading";
-import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
-import type { FilteredReading } from "../../../../../../packages/today-screen/domain/models/readingHistory";
+import { useFilteredReading } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useFilteredReading";
+import { useSocialSectionContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
+import type { FilteredReading } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
   () => ({
     useSocialSectionContext: vi.fn(),
   })

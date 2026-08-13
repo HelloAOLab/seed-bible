@@ -3,7 +3,7 @@ import { act } from "preact/test-utils";
 import {
   Chapter,
   type Props,
-} from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Chapter";
+} from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Chapter";
 
 type UserData = Props["usersData"][number];
 

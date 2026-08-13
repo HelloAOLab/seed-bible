@@ -1,25 +1,25 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useReadingHistoryTimeline } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useReadingHistoryTimeline";
-import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
-import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
-import { useTimeContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/TimeContext";
+import { useReadingHistoryTimeline } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useReadingHistoryTimeline";
+import { useTodayContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { useSocialSectionContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
+import { useTimeContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
 import { calculateReadingHistorySummary } from "../../../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 import { ColorParser } from "../../../../../../packages/seed-bible-utils/domain/functions/colors";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     useTodayContext: vi.fn(),
   })
 );
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
   () => ({ useSocialSectionContext: vi.fn() })
 );
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/TimeContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TimeContext",
   () => ({
     useTimeContext: vi.fn(),
   })

@@ -1,19 +1,19 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useHistoryCard } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHistoryCard";
-import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
-import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
+import { useHistoryCard } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useHistoryCard";
+import { useTodayContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { useSocialSectionContext } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
   () => ({
     useTodayContext: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
+  "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
   () => ({
     useSocialSectionContext: vi.fn(),
   })

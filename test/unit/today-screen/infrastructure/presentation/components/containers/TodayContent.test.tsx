@@ -1,53 +1,53 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { TodayContent } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContent";
-import { useTodayContent } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContent";
+import { TodayContent } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContent";
+import { useTodayContent } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTodayContent";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContent",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTodayContent",
   () => ({
     useTodayContent: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Header",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Header",
   () => ({
     Header: vi.fn(() => <div data-testid="header" />),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/ResumeReadingSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/ResumeReadingSection",
   () => ({
     ResumeReadingSection: vi.fn(() => <div data-testid="resume" />),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/Divider",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Divider",
   () => ({
     Divider: vi.fn(() => <div data-testid="divider" />),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SearchSection",
   () => ({
     SearchSection: vi.fn(() => <div data-testid="section-search" />),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SocialSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSection",
   () => ({
     SocialSection: vi.fn(() => <div data-testid="section-social" />),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/BookmarksSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection",
   () => ({
     BookmarksSection: vi.fn(() => <div data-testid="section-bookmarks" />),
   })

@@ -1,0 +1,120 @@
+import {
+  Signal,
+  useComputed,
+  useSignal,
+  type ReadonlySignal,
+} from "@preact/signals";
+import { useTodayContext } from "./TodayContext";
+
+import { useMemo, useEffect, useCallback } from "preact/hooks";
+
+type UseWelcome = () => {
+  greeting: string;
+  book: ReadonlySignal<string>;
+  welcomeVerse: Signal<string>;
+  openBookSelector: () => void;
+  selectorText: string;
+  MaterialIcon: (props: {
+    children: string;
+    className?: string | undefined;
+  }) => preact.JSX.Element;
+  startButtonText: string;
+  startButtonIcon: string;
+  handleStartButtonClick: () => void;
+  seedBibleIconStyle: React.CSSProperties;
+};
+
+const STRAT_BUTTON_ICON = "arrow_right_alt";
+
+export const useWelcome: UseWelcome = () => {
+  const {
+    t,
+    username,
+    bookNames,
+    getVerseText,
+    lastTranslationId,
+    getDefaultTranslation,
+    getHighlightedWelcomeVerse,
+    openBookSelector,
+    MaterialIcon,
+    addTab,
+    closeToday,
+    theme,
+  } = useTodayContext();
+
+  const greeting = useMemo(() => {
+    return username
+      ? t("personal-greeting", {
+          name: username,
+          defaultValue: "Welcome, {{name}}!",
+        })
+      : t("anonymous-greeting", { defaultValue: "Welcome!" });
+  }, [username, t]);
+
+  const book = useComputed(() => {
+    return `${bookNames.value.get("JHN")?.toUpperCase()} 1:1`;
+  });
+  const welcomeVerse = useSignal("");
+
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchWelcomeVerse = async () => {
+      const defaultTranslation = getDefaultTranslation();
+      const translationId = lastTranslationId.value ?? defaultTranslation ?? "";
+
+      const rawVerseText = await getVerseText(translationId, "JHN", 1, 1);
+      const computedVerse = getHighlightedWelcomeVerse(
+        translationId,
+        rawVerseText ?? ""
+      );
+
+      if (isActive) {
+        welcomeVerse.value = `"${computedVerse}"`;
+      }
+    };
+
+    fetchWelcomeVerse();
+
+    return () => {
+      isActive = false;
+    };
+  }, [lastTranslationId.value]);
+
+  const { selectorText, startButtonText } = useMemo(() => {
+    return {
+      selectorText: t("open-bible", { defaultValue: "Open Bible" }),
+      startButtonText: t("read-first-chapter", {
+        defaultValue: "Read the first chapter",
+      }),
+    };
+  }, [t]);
+
+  const handleStartButtonClick = useCallback(() => {
+    const defaultTranslation = getDefaultTranslation();
+    const translationId = lastTranslationId.value ?? defaultTranslation ?? "";
+    addTab("GEN", 1, translationId);
+    closeToday();
+  }, [addTab, closeToday, getDefaultTranslation, lastTranslationId.value]);
+
+  const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
+    return {
+      width: "1.25rem",
+      height: "1.25rem",
+      backgroundColor: theme.variables.readerFontColor,
+    };
+  }, [theme]);
+
+  return {
+    greeting,
+    book,
+    welcomeVerse,
+    openBookSelector,
+    selectorText,
+    MaterialIcon,
+    startButtonText,
+    startButtonIcon: STRAT_BUTTON_ICON,
+    handleStartButtonClick,
+    seedBibleIconStyle,
+  };
+};

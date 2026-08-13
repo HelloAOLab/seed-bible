@@ -1,19 +1,19 @@
 import type { Mock } from "vitest";
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { SearchSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchSection";
-import { useSearchSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchSection";
-import { SeedBibleIcon } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon";
+import { SearchSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SearchSection";
+import { useSearchSection } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSearchSection";
+import { SeedBibleIcon } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SeedBibleIcon";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useSearchSection",
   () => ({
     useSearchSection: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/TitledSection",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TitledSection",
   () => ({
     TitledSection: vi.fn(
       ({ title, children }: { title: string; children: ComponentChildren }) => (
@@ -26,14 +26,14 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchBar",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SearchBar",
   () => ({
     SearchBar: vi.fn(() => <div data-testid="search-bar" />),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SeedBibleIcon",
   () => ({
     SeedBibleIcon: vi.fn(() => <div data-testid="seed-bible-icon" />),
   })

@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useTimeProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/useTimeProvider";
+import { useTimeProvider } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTimeProvider";
 
 const T0 = 1_700_000_000_000;
 

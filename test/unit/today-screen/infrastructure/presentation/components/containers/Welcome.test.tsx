@@ -1,19 +1,19 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Welcome } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Welcome";
-import { useWelcome } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useWelcome";
-import { SeedBibleIcon } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon";
+import { Welcome } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/Welcome";
+import { useWelcome } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useWelcome";
+import { SeedBibleIcon } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SeedBibleIcon";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useWelcome",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useWelcome",
   () => ({
     useWelcome: vi.fn(),
   })
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SeedBibleIcon",
   () => ({
     SeedBibleIcon: vi.fn(() => <div data-testid="seed-bible-icon" />),
   })

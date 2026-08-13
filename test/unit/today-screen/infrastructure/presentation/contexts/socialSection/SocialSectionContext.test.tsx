@@ -4,7 +4,7 @@ import {
   SocialSectionProvider,
   useSocialSectionContext,
   type SocialSectionContextType,
-} from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
+} from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 
 function makeValue(
   overrides: Partial<SocialSectionContextType> = {}

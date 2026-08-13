@@ -5,12 +5,12 @@ import {
   TodayProvider,
   useTodayContext,
   type TodayContextType,
-} from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
-import { useTodayProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/useTodayProvider";
-import type { TodayConfig } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/Today";
+} from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { useTodayProvider } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTodayProvider";
+import type { TodayConfig } from "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/useTodayProvider",
+  "../../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useTodayProvider",
   () => ({
     // Echoes the config so the provided context value is observable.
     useTodayProvider: vi.fn((config) => config),

@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { MutableRef } from "preact/hooks";
-import { useClickOutside } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useClickOutside";
+import { useClickOutside } from "../../../../../../packages/seed-bible/seed-bible/components/TodayPane/useClickOutside";
 
 type Ref = MutableRef<HTMLElement | null>;
 

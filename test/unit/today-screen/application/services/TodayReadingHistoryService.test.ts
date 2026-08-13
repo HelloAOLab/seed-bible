@@ -1,4 +1,4 @@
-import { TodayReadingHistoryService } from "../../../../../packages/today-screen/application/services/TodayReadingHistoryService";
+import { TodayReadingHistoryService } from "../../../../../packages/seed-bible/seed-bible/components/TodayPane/TodayReadingHistoryService";
 import type { ReadingEvent } from "../../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 
 // ─── factories ──────────────────────────────────────────────────────────────
