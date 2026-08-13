@@ -1,4 +1,4 @@
-import "./ReadingPlanBelongsCard.css";
+import "./ReadingPlansSection.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
@@ -50,7 +50,7 @@ interface PlanMatch {
  * text and link readings that happen to share the session (and can't be reached
  * from the reader at all) are left alone.
  */
-export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
+export function ReadingPlansSection(props: ReadingPlanBelongsCardProps) {
   const { state, readingState } = props;
   const { t } = useI18n();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -256,9 +256,9 @@ export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
         className={`sb-rpb-card${nudging ? " sb-rpb-card-nudge" : ""}`}
         ref={cardRef}
       >
-        <div className="sb-rpb-label">
-          {t("reading-belongs-to", { defaultValue: "This reading belongs to" })}
-        </div>
+        <h3 className="sb-discover-section-title">
+          {t("reading-plans", { defaultValue: "Reading Plans" })}
+        </h3>
 
         <ul className="sb-rpb-list">
           {matches.map((match) => (

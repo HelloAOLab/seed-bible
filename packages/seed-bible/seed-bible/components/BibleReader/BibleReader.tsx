@@ -1620,7 +1620,6 @@ export function BibleReader(props: BibleReaderProps) {
     mobileChrome,
     sharedSession,
     discoverPanel,
-    readingPlanBelongs,
   } = props;
   const {
     translationId,
@@ -2036,11 +2035,8 @@ export function BibleReader(props: BibleReaderProps) {
     </>
   );
 
-  const extraContent = (discoverPanel || readingPlanBelongs) && (
-    <div className="sb-bible-reader-discover-panel">
-      {discoverPanel}
-      {readingPlanBelongs}
-    </div>
+  const extraContent = discoverPanel && (
+    <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   );
 
   return (

@@ -11,6 +11,7 @@ import {
 } from "../DiscoverPane/DiscoveredResultsSections";
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
 import { MaterialIcon } from "../icons";
+import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
 
 type FilterKey =
   | "all"
@@ -143,6 +144,9 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           <StudyNotesSection tab={tab} />
         )}
         {(f === "all" || f === "content") && <ContentSection tab={tab} />}
+        {f === "all" && (
+          <ReadingPlansSection readingState={tab.readingState} state={state} />
+        )}
       </div>
 
       <button

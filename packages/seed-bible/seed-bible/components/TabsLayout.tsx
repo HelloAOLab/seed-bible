@@ -3,7 +3,6 @@ import {
   CHAPTER_SKELETON_DELAY_MS,
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
-import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
 import { DiscoverContentPanel } from "./DiscoverContentPanel/DiscoverContentPanel";
 import type {
   ApiRequestOptions,
@@ -693,14 +692,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           state={state}
           mobileChrome={mobileChrome}
           sharedSession={tab.sharedSession}
-          readingPlanBelongs={
-            <ReadingPlanBelongsCard state={state} readingState={readingState} />
-          }
-          discoverPanel={
-            <DiscoverContentPanel tab={tab} state={state} variant="side" />
-          }
+          discoverPanel={<DiscoverContentPanel tab={tab} state={state} />}
         />
-        {/* {!isMobile && belongsCard} */}
         {!isMobile && (
           <BelowReaderToolbar
             toolsManager={state.tools}
