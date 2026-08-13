@@ -19,7 +19,6 @@ export const useTodayContent: UseTodayContent = () => {
   const showResumeReading = status === "loading" || status === "ready";
   const showBookmarks = bookmarks.value.length > 0;
   const showSearch = true;
-  const showRecommendations = false;
   const showSocial = true;
 
   const dividedSectionsIds = useMemo<DividedSection[]>(() => {
@@ -28,14 +27,11 @@ export const useTodayContent: UseTodayContent = () => {
     if (showSearch) {
       sectionsData.push("search");
     }
-    if (showRecommendations) {
-      sectionsData.push("recommendations");
-    }
     if (showSocial) {
       sectionsData.push("social");
     }
     return sectionsData;
-  }, [showSearch, showRecommendations, showSocial]);
+  }, [showSearch, showSocial]);
 
   return {
     showResumeReading,

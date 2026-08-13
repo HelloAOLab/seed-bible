@@ -1,7 +1,6 @@
 import { useSocialSection } from "../../hooks/useSocialSection";
 import { SocialSectionProvider } from "../../contexts/socialSection/SocialSectionContext";
 import { TitledSection } from "../ui/TitledSection";
-// import { PresenceCard } from "./PresenceCard";
 import { HistoryCard } from "./HistoryCard";
 
 export const SocialSection = () => {
@@ -31,7 +30,6 @@ export const SocialSection = () => {
       }}
     >
       <TitledSection title={title}>
-        {/* <PresenceCard /> */}
         <HistoryCard />
       </TitledSection>
     </SocialSectionProvider>

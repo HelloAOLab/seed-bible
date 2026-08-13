@@ -14,7 +14,6 @@ import type { CapitalizeFirstLetterType } from "../../../../seed-bible-utils/dom
 import type { ReadingEvent } from "../../../../seed-bible/seed-bible/managers/ReadingHistoryManager";
 import type { BibleTheme } from "../../../../seed-bible/seed-bible/managers/ThemeManager";
 import type { ReadingHistoryServicePort } from "../../ports/readingHistoryService";
-import type { BibleReadingSession } from "../../../../seed-bible/seed-bible/managers/SessionsManager";
 import type { VerseSearchResult } from "../../../domain/models/search";
 import type { Bookmark } from "../../../../seed-bible/seed-bible/managers/BookmarksManager";
 import type { TranslationBooks } from "../../../../seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -142,12 +141,6 @@ export interface TodayConfig {
   CapitalizeFirstLetter: CapitalizeFirstLetterType;
   theme: BibleTheme;
   readingHistoryService: ReadingHistoryServicePort;
-  sharedSessions: ReadonlySignal<BibleReadingSession[]>;
-  userDeterministicIdentityProvider: {
-    getColorById(id: string): string;
-    getIconById(id: string): string;
-  };
-  joinSharedSession: (id: string) => Promise<BibleReadingSession>;
   bookmarks: ReadonlySignal<Array<Bookmark>>;
   getTranslationBooks: (translation: string) => Promise<TranslationBooks>;
   readingHistoryConfigProvider: {

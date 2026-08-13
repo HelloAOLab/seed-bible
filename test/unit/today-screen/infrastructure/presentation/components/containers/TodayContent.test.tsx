@@ -33,15 +33,6 @@ vi.mock(
 );
 
 vi.mock(
-  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/RecommendationsSection",
-  () => ({
-    RecommendationsSection: vi.fn(() => (
-      <div data-testid="section-recommendations" />
-    )),
-  })
-);
-
-vi.mock(
   "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchSection",
   () => ({
     SearchSection: vi.fn(() => <div data-testid="section-search" />),
@@ -62,7 +53,7 @@ vi.mock(
   })
 );
 
-type DividedSection = "search" | "recommendations" | "social";
+type DividedSection = "search" | "social";
 
 describe("TodayContent", () => {
   let container: HTMLDivElement;
@@ -128,16 +119,15 @@ describe("TodayContent", () => {
   describe("divided sections", () => {
     it("renders the component mapped to each section id", () => {
       setup({
-        dividedSectionsIds: ["search", "recommendations", "social"],
+        dividedSectionsIds: ["search", "social"],
       });
       expect(q("[data-testid='section-search']")).not.toBeNull();
-      expect(q("[data-testid='section-recommendations']")).not.toBeNull();
       expect(q("[data-testid='section-social']")).not.toBeNull();
     });
 
     it("renders a divider between sections but not after the last", () => {
-      setup({ dividedSectionsIds: ["search", "recommendations", "social"] });
-      expect(count("[data-testid='divider']")).toBe(2); // 3 sections → 2 dividers
+      setup({ dividedSectionsIds: ["search", "social"] });
+      expect(count("[data-testid='divider']")).toBe(1); // 2 sections → 1 divider
     });
 
     it("renders no divider for a single section", () => {

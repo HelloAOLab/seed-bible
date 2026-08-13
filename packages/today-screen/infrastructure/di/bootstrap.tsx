@@ -212,11 +212,6 @@ export const bootstrapExtension = () => {
         }
       });
 
-      const sharedSessions = computed(() => {
-        const tabs = context.tabs.tabs.value.filter((tab) => tab.sharedSession);
-        return tabs.map((tab) => tab.sharedSession!);
-      });
-
       const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
 
       const TODAY_PANE_ID = "today-screen-pane";
@@ -328,15 +323,6 @@ export const bootstrapExtension = () => {
                 CapitalizeFirstLetter,
                 theme: context.theme.currentTheme.value,
                 readingHistoryService,
-                sharedSessions,
-                userDeterministicIdentityProvider: {
-                  getColorById: (id: string) =>
-                    sessionProvider.getUserColorById(id),
-                  getIconById: (id: string) =>
-                    sessionProvider.getUserIconById(id),
-                },
-                joinSharedSession: (id: string) =>
-                  context.app.joinSharedSession(id),
                 bookmarks: context.bookmarks.bookmarks,
                 getTranslationBooks: (translation: string) =>
                   context.bibleData.getTranslationBooks(translation),
