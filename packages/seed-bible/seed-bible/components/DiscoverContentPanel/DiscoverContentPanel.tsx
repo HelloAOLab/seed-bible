@@ -11,7 +11,10 @@ import {
 } from "../DiscoverPane/DiscoveredResultsSections";
 import { AnnotationsSection } from "../DiscoverPane/AnnotationsSection";
 import { MaterialIcon } from "../icons";
-import { ReadingPlansSection } from "../ReadingPlansSection/ReadingPlansSection";
+import {
+  getReadingPlansForChapter,
+  ReadingPlansSection,
+} from "../ReadingPlansSection/ReadingPlansSection";
 
 type FilterKey =
   | "all"
@@ -54,7 +57,13 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
       .length > 0
   );
-  if (!hasAnnotations && !hasAnyDiscoverResults(tab.readingState)) {
+  const plans = getReadingPlansForChapter(state, tab.readingState);
+
+  if (
+    !hasAnnotations &&
+    !hasAnyDiscoverResults(tab.readingState) &&
+    plans.length === 0
+  ) {
     return null;
   }
 
@@ -144,8 +153,12 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
           <StudyNotesSection tab={tab} />
         )}
         {(f === "all" || f === "content") && <ContentSection tab={tab} />}
-        {f === "all" && (
-          <ReadingPlansSection readingState={tab.readingState} state={state} />
+        {f === "all" && plans.length > 0 && (
+          <ReadingPlansSection
+            readingState={tab.readingState}
+            state={state}
+            plans={plans}
+          />
         )}
       </div>
 
