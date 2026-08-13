@@ -40,7 +40,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
   const {
     getDayRangeSeconds,
     getReadingHistoryEvents,
-    translate,
+    t,
     GetPastDateInfo,
     language,
     CapitalizeFirstLetter,
@@ -321,9 +321,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     const dayLabelGridColumn = `1 / 2`;
     const todayDate = new Date();
 
-    const translatedMonday = translate("monday-short");
-    const translatedWednesday = translate("wednesday-short");
-    const translatedFriday = translate("friday-short");
+    const translatedMonday = t("monday-short", { defaultValue: "Mon" });
+    const translatedWednesday = t("wednesday-short", { defaultValue: "Wed" });
+    const translatedFriday = t("friday-short", { defaultValue: "Fri" });
 
     const items: ReadingHistoryContentData[] = [
       {
@@ -483,10 +483,13 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
       legendSquaresData,
       lessText: "Less",
       moreText: "More",
-      yearSelectorLabelTextContent: translate("selected-year", { year }),
+      yearSelectorLabelTextContent: t("selected-year", {
+        year,
+        defaultValue: "Year: {{year}}",
+      }),
       yearSelectorOptionsData,
     };
-  }, [yearTimespanMap, year, selectYear, translate]);
+  }, [yearTimespanMap, year, selectYear, t]);
 
   // Wheel → horizontal scroll is shared via the injected hook.
   useHorizontalScroll(timelineRef);

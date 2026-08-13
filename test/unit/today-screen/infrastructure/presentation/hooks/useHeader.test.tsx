@@ -40,7 +40,7 @@ describe("useHeader", () => {
       language: options.language ?? "en",
       username: options.username,
       MaterialIcon,
-      translate: vi.fn((key: string) => key),
+      t: vi.fn((key: string) => key),
     });
     const result = { current: null as unknown as Result };
     function TestComponent() {

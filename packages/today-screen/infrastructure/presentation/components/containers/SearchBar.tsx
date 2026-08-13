@@ -12,7 +12,7 @@ export const SearchBar = () => {
     runSearch,
     handleFocus,
     handleSelect,
-    translate,
+    t,
     MaterialIcon,
   } = useSearchBar();
 
@@ -32,7 +32,7 @@ export const SearchBar = () => {
         <div className="today-searchbar-dropdown">
           {loading.value && (
             <div className="today-searchbar-status">
-              {translate("searching", { defaultValue: "Searching..." })}
+              {t("searching", { defaultValue: "Searching..." })}
             </div>
           )}
 
@@ -44,7 +44,7 @@ export const SearchBar = () => {
 
           {!loading.value && !error.value && results.value.length === 0 && (
             <div className="today-searchbar-status">
-              {translate("no-search-results", {
+              {t("no-search-results", {
                 defaultValue: "No matching verses.",
               })}
             </div>

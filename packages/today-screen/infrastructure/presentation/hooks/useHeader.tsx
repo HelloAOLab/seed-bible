@@ -20,7 +20,7 @@ type UseHeader = () => {
 import { useMemo, useCallback } from "preact/hooks";
 
 export const useHeader: UseHeader = () => {
-  const { language, username, MaterialIcon, translate } = useTodayContext();
+  const { language, username, MaterialIcon, t } = useTodayContext();
 
   const { day, month, greeting } = useMemo(() => {
     const date = new Date();
@@ -29,20 +29,22 @@ export const useHeader: UseHeader = () => {
       .toLocaleString(language, { month: "short" })
       .toUpperCase();
     const hour = date.getHours();
-    const greetingKey =
+    // Spelled out per branch rather than translating a computed key, so the
+    // keys stay visible to the i18n lint rules and the usage scanner.
+    const greeting =
       hour >= 5 && hour < 12
-        ? "greeting-morning"
+        ? t("greeting-morning", { defaultValue: "Good morning" })
         : hour >= 12 && hour < 18
-          ? "greeting-afternoon"
+          ? t("greeting-afternoon", { defaultValue: "Good afternoon" })
           : hour >= 18 && hour < 21
-            ? "greeting-evening"
-            : "greeting-night";
+            ? t("greeting-evening", { defaultValue: "Good evening" })
+            : t("greeting-night", { defaultValue: "Good night" });
     return {
       day,
       month,
-      greeting: translate(greetingKey),
+      greeting,
     };
-  }, [language, translate]);
+  }, [language, t]);
 
   const handleNotificationClick = useCallback(() => {
     console.log(`useHeader: handleNotificationClick`);

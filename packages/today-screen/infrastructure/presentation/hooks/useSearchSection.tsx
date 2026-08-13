@@ -13,15 +13,15 @@ type UseSearchSection = () => {
 };
 
 export const useSearchSection: UseSearchSection = () => {
-  const { translate, openBookSelector, MaterialIcon, theme, isMobile } =
+  const { t, openBookSelector, MaterialIcon, theme, isMobile } =
     useTodayContext();
 
   const { title, selectorText } = useMemo(() => {
     return {
-      title: translate("go-somewhere-new"),
-      selectorText: translate("books"),
+      title: t("go-somewhere-new", { defaultValue: "GO SOMEWHERE NEW" }),
+      selectorText: t("books", { defaultValue: "Books" }),
     };
-  }, [translate]);
+  }, [t]);
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {

@@ -52,7 +52,7 @@ function makeToday(overrides: Record<string, unknown> = {}) {
       return { start, end: start + 86399 };
     }),
     getReadingHistoryEvents: vi.fn(async () => []),
-    translate: vi.fn((key: string) => key),
+    t: vi.fn((key: string) => key),
     GetPastDateInfo: vi.fn(() => ({
       weekday: undefined,
       day: 18,

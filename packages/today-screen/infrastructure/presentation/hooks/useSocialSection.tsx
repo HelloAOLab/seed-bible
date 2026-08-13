@@ -27,7 +27,7 @@ type UserProfileMap = Map<string, UserProfile>;
 
 export const useSocialSection: UseSocialSection = () => {
   const {
-    translate,
+    t,
     subscribedUsersProfileProvider,
     subscribedUsersIdsProvider,
     getCommunityReading,
@@ -44,7 +44,10 @@ export const useSocialSection: UseSocialSection = () => {
   const timespan = useSignal<Timespan | undefined>(initialOption.timespan);
   const communityReading = useSignal<FilteredReading>({});
 
-  const title = useMemo(() => translate("community"), [translate]);
+  const title = useMemo(
+    () => t("community", { defaultValue: "COMMUNITY" }),
+    [t]
+  );
 
   const selectYear = useCallback((selectedYear: number) => {
     year.value = selectedYear;

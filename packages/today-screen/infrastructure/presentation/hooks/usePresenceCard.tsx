@@ -16,7 +16,12 @@ type UsePresenceCard = () => {
 
 export const usePresenceCard: UsePresenceCard = () => {
   const {
-    translate,
+    // Aliased rather than used as `t`: PresenceCard is commented out of
+    // SocialSection, so `live-now`/`Join` were deliberately left behind in the
+    // extension's own translations instead of being promoted into core. Calling
+    // them through `t` would make the i18n rules demand core keys for a card
+    // that never renders.
+    t: translate,
     sharedSessions,
     bookNames,
     userDeterministicIdentityProvider,

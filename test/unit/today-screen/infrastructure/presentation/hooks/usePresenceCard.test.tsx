@@ -60,7 +60,7 @@ describe("usePresenceCard", () => {
 
   function setup(sessions: ReturnType<typeof makeSession>[]) {
     (useTodayContext as Mock).mockReturnValue({
-      translate: vi.fn((key: string) => key),
+      t: vi.fn((key: string) => key),
       sharedSessions: signal(sessions),
       bookNames: signal(new Map([["GEN", "Genesis"]])),
       userDeterministicIdentityProvider: { getIconById },

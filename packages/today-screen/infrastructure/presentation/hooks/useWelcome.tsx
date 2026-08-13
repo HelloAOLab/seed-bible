@@ -28,7 +28,7 @@ const STRAT_BUTTON_ICON = "arrow_right_alt";
 
 export const useWelcome: UseWelcome = () => {
   const {
-    translate,
+    t,
     username,
     bookNames,
     getVerseText,
@@ -44,9 +44,12 @@ export const useWelcome: UseWelcome = () => {
 
   const greeting = useMemo(() => {
     return username
-      ? translate("personal-greeting", { name: username })
-      : translate("anonymous-greeting");
-  }, [username, translate]);
+      ? t("personal-greeting", {
+          name: username,
+          defaultValue: "Welcome, {{name}}!",
+        })
+      : t("anonymous-greeting", { defaultValue: "Welcome!" });
+  }, [username, t]);
 
   const book = useComputed(() => {
     return `${bookNames.value.get("JHN")?.toUpperCase()} 1:1`;
@@ -80,10 +83,12 @@ export const useWelcome: UseWelcome = () => {
 
   const { selectorText, startButtonText } = useMemo(() => {
     return {
-      selectorText: translate("open-bible"),
-      startButtonText: translate("read-first-chapter"),
+      selectorText: t("open-bible", { defaultValue: "Open Bible" }),
+      startButtonText: t("read-first-chapter", {
+        defaultValue: "Read the first chapter",
+      }),
     };
-  }, [translate]);
+  }, [t]);
 
   const handleStartButtonClick = useCallback(() => {
     const defaultTranslation = getDefaultTranslation();

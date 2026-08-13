@@ -65,7 +65,7 @@ export interface TodayConfig {
     from: number;
     to: number;
   }) => Promise<FilteredReading>;
-  translate: (key: string, options?: Record<string, unknown>) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
   bookNames: Signal<Map<string, string>>;
   addTab: (
     bookId: string,

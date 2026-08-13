@@ -18,7 +18,7 @@ type UseSearchBar = () => {
   runSearch: (value: string) => void;
   handleFocus: () => void;
   handleSelect: (result: VerseSearchResult) => void;
-  translate: (key: string, options?: Record<string, unknown>) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
   MaterialIcon: (props: {
     children: string;
     className?: string | undefined;
@@ -28,7 +28,7 @@ type UseSearchBar = () => {
 const DEBOUNCE_MS = 180;
 
 export const useSearchBar: UseSearchBar = () => {
-  const { searchVerses, addTab, closeToday, translate, MaterialIcon } =
+  const { searchVerses, addTab, closeToday, t, MaterialIcon } =
     useTodayContext();
 
   const query = useSignal("");
@@ -39,7 +39,13 @@ export const useSearchBar: UseSearchBar = () => {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const placeholder = useMemo(() => translate("search-verses"), [translate]);
+  const placeholder = useMemo(
+    () =>
+      t("today-search-verses", {
+        defaultValue: "Search books, chapter, verses....",
+      }),
+    [t]
+  );
 
   // `latestRequestRef` guards against out-of-order responses; `debounceTimeoutRef`
   // coalesces keystrokes into a single search.
@@ -124,7 +130,7 @@ export const useSearchBar: UseSearchBar = () => {
     runSearch,
     handleFocus,
     handleSelect,
-    translate,
+    t,
     MaterialIcon,
   };
 };

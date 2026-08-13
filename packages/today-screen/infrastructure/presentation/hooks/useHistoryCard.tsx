@@ -40,7 +40,7 @@ type UseHistoryCard = () => {
 
 export const useHistoryCard: UseHistoryCard = () => {
   const {
-    translate,
+    t,
     MaterialIcon,
     language,
     readingHistoryConfigProvider,
@@ -94,20 +94,28 @@ export const useHistoryCard: UseHistoryCard = () => {
     [selectYear, selectDay]
   );
 
-  // Mirror `translate` into a signal so the computed re-runs on language change.
-  const translateSignal = useSignal(translate);
+  // Mirror `t` into a signal so the computed re-runs on language change.
+  const translateSignal = useSignal(t);
   useEffect(() => {
-    translateSignal.value = translate;
-  }, [translate]);
+    translateSignal.value = t;
+  }, [t]);
 
   const timespanFilterOptionsData = useComputed<TimespanFilterOptionData[]>(
     () => {
+      // Shadowed so the lookups below are plain `t("…")` calls — the shape the
+      // i18n lint rules and the usage scanner match on — while still reading the
+      // signal that makes this computed re-run on a language change.
+      const t = translateSignal.value;
+      const labels: Record<TimespanOptionId, string> = {
+        twoDays: t("last-48-hours", { defaultValue: "Last 48 hours" }),
+        week: t("this-week", { defaultValue: "This week" }),
+        month: t("this-month", { defaultValue: "This month" }),
+        all: t("all", { defaultValue: "All" }),
+      };
       const keys = ["twoDays", "week", "month", "all"] as const;
 
       return keys.map((key) => ({
-        label: translateSignal.value(
-          readingHistoryConfigProvider.getTimespanOptionLabelMap()[key]
-        ),
+        label: labels[key],
         id: key,
         onClick: () => handleTimespanOptionClick(key),
         isSelected: selectedTimespanOptionId.value === key,
@@ -126,13 +134,13 @@ export const useHistoryCard: UseHistoryCard = () => {
   const userFilterText = useMemo(() => {
     const count = [...userFilters.values()].filter((value) => value).length;
     if (count === userFilters.size) {
-      return translate("Everyone");
+      return t("everyone", { defaultValue: "Everyone" });
     }
     if (count === 0) {
-      return translate("None");
+      return t("none", { defaultValue: "None" });
     }
-    return translate("Custom");
-  }, [userFilters, translate]);
+    return t("custom", { defaultValue: "Custom" });
+  }, [userFilters, t]);
 
   const dateLabel = useMemo(() => {
     if (!timespan) return undefined;

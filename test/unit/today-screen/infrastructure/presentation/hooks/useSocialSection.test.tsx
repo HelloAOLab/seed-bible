@@ -56,7 +56,7 @@ describe("useSocialSection", () => {
 
   function setup() {
     (useTodayContext as Mock).mockReturnValue({
-      translate: vi.fn((key: string) => key),
+      t: vi.fn((key: string) => key),
       subscribedUsersProfileProvider: { getUserProfile },
       subscribedUsersIdsProvider: { getUsersIds },
       getCommunityReading,

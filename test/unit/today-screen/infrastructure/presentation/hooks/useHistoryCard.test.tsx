@@ -52,7 +52,7 @@ describe("useHistoryCard", () => {
     language?: string;
   }) {
     (useTodayContext as Mock).mockReturnValue({
-      translate: vi.fn((key: string) => key),
+      t: vi.fn((key: string) => key),
       MaterialIcon,
       language: options.language ?? "en",
       readingHistoryConfigProvider: {
@@ -158,7 +158,7 @@ describe("useHistoryCard", () => {
         "last-48-hours",
         "this-week",
         "this-month",
-        "All",
+        "all",
       ]);
       expect(opts[0]!.isSelected).toBe(true);
       expect(opts[1]!.isSelected).toBe(false);
@@ -207,34 +207,34 @@ describe("useHistoryCard", () => {
   });
 
   describe("userFilterText", () => {
-    it("is 'Everyone' when all users are selected", () => {
+    it("is 'everyone' when all users are selected", () => {
       const result = setup({
         userFilters: new Map([
           ["u1", true],
           ["u2", true],
         ]),
       });
-      expect(result.current.userFilterText).toBe("Everyone");
+      expect(result.current.userFilterText).toBe("everyone");
     });
 
-    it("is 'None' when no users are selected", () => {
+    it("is 'none' when no users are selected", () => {
       const result = setup({
         userFilters: new Map([
           ["u1", false],
           ["u2", false],
         ]),
       });
-      expect(result.current.userFilterText).toBe("None");
+      expect(result.current.userFilterText).toBe("none");
     });
 
-    it("is 'Custom' when some users are selected", () => {
+    it("is 'custom' when some users are selected", () => {
       const result = setup({
         userFilters: new Map([
           ["u1", true],
           ["u2", false],
         ]),
       });
-      expect(result.current.userFilterText).toBe("Custom");
+      expect(result.current.userFilterText).toBe("custom");
     });
   });
 

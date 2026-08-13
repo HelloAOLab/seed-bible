@@ -60,7 +60,7 @@ describe("useSearchBar", () => {
       searchVerses,
       addTab,
       closeToday,
-      translate: vi.fn((key: string) => key),
+      t: vi.fn((key: string) => key),
       MaterialIcon,
     });
     const result = { current: null as unknown as Hook };
@@ -79,7 +79,7 @@ describe("useSearchBar", () => {
       expect(result.current.query.value).toBe("");
       expect(result.current.isOpen.value).toBe(false);
       expect(result.current.results.value).toEqual([]);
-      expect(result.current.placeholder).toBe("search-verses");
+      expect(result.current.placeholder).toBe("today-search-verses");
       expect(result.current.MaterialIcon).toBe(MaterialIcon);
     });
   });

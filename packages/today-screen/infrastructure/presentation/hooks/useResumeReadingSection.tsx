@@ -34,7 +34,7 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
     Skeleton,
     SkeletonContainer,
     readingHistory,
-    translate,
+    t,
     bookNames,
     addTab,
     closeToday,
@@ -49,12 +49,14 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
   const cardData = useMemo<ResumeReadingCardData | null>(() => {
     if (!lastReading) return null;
     return {
-      title: translate("resume-reading"),
+      title: t("resume-reading", {
+        defaultValue: "CONTINUE WHERE YOU LEFT",
+      }),
       book: bookNames.value.get(lastReading.bookId) ?? lastReading.bookId,
       chapter: lastReading.chapter,
       buttonIcon: "arrow_right_alt",
     };
-  }, [lastReading, translate, bookNames.value]);
+  }, [lastReading, t, bookNames.value]);
 
   const handleButtonClick = useCallback(() => {
     if (!lastReading) return;
@@ -67,7 +69,9 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
     Skeleton,
     SkeletonContainer,
     isLoading: state.status === "loading",
-    loadingLabel: translate("resume-reading-loading"),
+    loadingLabel: t("resume-reading-loading", {
+      defaultValue: "Loading your reading history…",
+    }),
     cardData,
     handleButtonClick,
   };

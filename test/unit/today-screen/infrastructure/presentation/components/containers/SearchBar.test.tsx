@@ -41,7 +41,7 @@ function makeResult(options: {
     runSearch: options.runSearch ?? vi.fn(),
     handleFocus: options.handleFocus ?? vi.fn(),
     handleSelect: options.handleSelect ?? vi.fn(),
-    translate: vi.fn(
+    t: vi.fn(
       (key: string, opts?: { defaultValue?: string }) =>
         opts?.defaultValue ?? key
     ),

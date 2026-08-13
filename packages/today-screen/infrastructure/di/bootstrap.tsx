@@ -260,7 +260,7 @@ export const bootstrapExtension = () => {
                   : undefined,
                 readingHistory,
                 getCommunityReading,
-                translate: (key, options) =>
+                t: (key, options) =>
                   t(key, {
                     ns: [extensionId, "seed-bible"],
                     ...(options ?? {}),

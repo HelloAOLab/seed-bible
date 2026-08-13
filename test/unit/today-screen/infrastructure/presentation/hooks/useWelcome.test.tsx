@@ -63,9 +63,15 @@ describe("useWelcome", () => {
     } = {}
   ) {
     (useTodayContext as Mock).mockReturnValue({
-      translate: vi.fn((key: string, params?: Record<string, unknown>) =>
-        params ? `${key}:${JSON.stringify(params)}` : key
-      ),
+      t: vi.fn((key: string, params?: Record<string, unknown>) => {
+        // `defaultValue` rides along on every call site; only the interpolation
+        // params are interesting here.
+        const interpolation = { ...params };
+        delete interpolation.defaultValue;
+        return Object.keys(interpolation).length > 0
+          ? `${key}:${JSON.stringify(interpolation)}`
+          : key;
+      }),
       username: options.username,
       bookNames: signal(options.bookNames ?? new Map([["JHN", "John"]])),
       getVerseText,

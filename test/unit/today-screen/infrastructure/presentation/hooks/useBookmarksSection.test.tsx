@@ -42,7 +42,7 @@ describe("useBookmarksSection", () => {
   function configure(
     options: {
       bookmarks?: ReturnType<typeof signal<FakeBookmark[]>>;
-      translate?: Mock;
+      t?: Mock;
       getTranslationBooks?: Mock;
       isMobile?: ReturnType<typeof signal<boolean>>;
       showBookmarksList?: Mock;
@@ -52,7 +52,7 @@ describe("useBookmarksSection", () => {
       bookmarks: options.bookmarks ?? signal<FakeBookmark[]>([]),
       addTab,
       closeToday,
-      translate: options.translate ?? vi.fn((key: string) => key),
+      t: options.t ?? vi.fn((key: string) => key),
       getTranslationBooks:
         options.getTranslationBooks ?? vi.fn(async () => books([])),
       isMobile: options.isMobile ?? signal(false),
@@ -133,9 +133,9 @@ describe("useBookmarksSection", () => {
   }
 
   describe("label", () => {
-    it("translates the BOOKMARKS key", () => {
-      const { result } = setup({ translate: vi.fn((key) => `[${key}]`) });
-      expect(result.current.label.value).toBe("[BOOKMARKS]");
+    it("translates the today-bookmarks key", () => {
+      const { result } = setup({ t: vi.fn((key) => `[${key}]`) });
+      expect(result.current.label.value).toBe("[today-bookmarks]");
     });
   });
 
@@ -310,13 +310,13 @@ describe("useBookmarksSection", () => {
     });
 
     it("is defined (with a translated label) when any strip wraps to a new line", () => {
-      const { result } = setup({ translate: vi.fn((key) => `[${key}]`) }, [
+      const { result } = setup({ t: vi.fn((key) => `[${key}]`) }, [
         [0, 0],
         [0, 20],
       ]);
       const more = result.current.moreButtonData.value;
       expect(more).toBeDefined();
-      expect(more!.label).toBe("[VIEW-MORE]");
+      expect(more!.label).toBe("[view-more]");
     });
   });
 });

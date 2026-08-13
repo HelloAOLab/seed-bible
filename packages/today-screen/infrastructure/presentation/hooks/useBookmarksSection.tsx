@@ -25,17 +25,21 @@ export const useBookmarksSection: UseBookmarksSection = () => {
     bookmarks,
     addTab,
     closeToday,
-    translate,
+    t,
     getTranslationBooks,
     showBookmarksList,
     isMobile,
   } = useTodayContext();
-  const translateSignal = useSignal(translate);
+  // Mirrored into a signal so the computeds below re-run on language change; the
+  // shadowed `t` keeps each lookup a plain `t("…")` call, which is the shape the
+  // i18n lint rules and the usage scanner match on.
+  const translateSignal = useSignal(t);
   useEffect(() => {
-    translateSignal.value = translate;
-  }, [translate]);
+    translateSignal.value = t;
+  }, [t]);
   const label = useComputed(() => {
-    return translateSignal.value("BOOKMARKS");
+    const t = translateSignal.value;
+    return t("today-bookmarks", { defaultValue: "BOOKMARKS" });
   });
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -128,8 +132,9 @@ export const useBookmarksSection: UseBookmarksSection = () => {
     if (!isOverflowing.value || isMobile.value) {
       return undefined;
     }
+    const t = translateSignal.value;
     return {
-      label: translateSignal.value("VIEW-MORE"),
+      label: t("view-more", { defaultValue: "VIEW MORE" }),
       onClick: () => {
         showBookmarksList();
       },

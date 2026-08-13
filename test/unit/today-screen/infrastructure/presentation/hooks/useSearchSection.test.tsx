@@ -36,7 +36,7 @@ describe("useSearchSection", () => {
 
   function setup(secondaryFontColor = "#abcdef", isMobile = false) {
     (useTodayContext as Mock).mockReturnValue({
-      translate: vi.fn((key: string) => key),
+      t: vi.fn((key: string) => key),
       openBookSelector,
       MaterialIcon,
       theme: { variables: { secondaryFontColor } },

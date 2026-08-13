@@ -52,7 +52,7 @@ describe("useResumeReadingSection", () => {
     (useTodayContext as Mock).mockReturnValue({
       MaterialIcon,
       readingHistory,
-      translate: vi.fn((key: string) => key),
+      t: vi.fn((key: string) => key),
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
       addTab,
       closeToday,
