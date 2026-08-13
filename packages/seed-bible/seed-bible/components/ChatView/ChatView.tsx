@@ -1048,7 +1048,12 @@ function ChatMessage({
       <p className="sb-chat-view-message-body">
         <MessageBody
           message={message}
-          onVerseReferenceClick={(ref) => state.app.openVerseReference(ref)}
+          onVerseReferenceClick={(ref) => {
+            if (state.app.isMobile.value) {
+              state.sidebar.closeChatPanel();
+            }
+            void state.app.openVerseReference(ref);
+          }}
         />
       </p>
       {showTimestamp && (
