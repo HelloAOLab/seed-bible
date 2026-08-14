@@ -4,7 +4,10 @@ import { signal } from "@preact/signals";
 import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  createTestSeedBibleState,
+  waitFor,
+} from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
 import {
   aabBooks,
@@ -696,5 +699,109 @@ describe("BibleReaderToolbar mobile More menu", () => {
     });
 
     expect(menu()).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar floating chapter nav", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar(): Promise<{
+    state: SeedBibleState;
+    bookLabel: HTMLButtonElement;
+  }> {
+    const state = await createTestSeedBibleState();
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const bookLabel = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-floating-nav-label"
+    );
+    if (!bookLabel) {
+      throw new Error("The floating book/chapter label did not render.");
+    }
+    return { state, bookLabel };
+  }
+
+  const TAP_X = 100;
+  const TAP_Y = 700;
+
+  function touchEvent(type: "pointerdown" | "pointerup", x: number) {
+    return new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 1,
+      pointerType: "touch",
+      clientX: x,
+      clientY: TAP_Y,
+    });
+  }
+
+  function tap(
+    element: HTMLElement,
+    options: { withClick?: boolean; releaseX?: number } = {}
+  ) {
+    element.dispatchEvent(touchEvent("pointerdown", TAP_X));
+    element.dispatchEvent(touchEvent("pointerup", options.releaseX ?? TAP_X));
+    if (options.withClick) {
+      element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+  }
+
+  it("opens the book selector on a tap that lands mid-scroll", async () => {
+    const { state, bookLabel } = await renderToolbar();
+    expect(state.selector.isOpen.value).toBe(false);
+
+    // Chromium spends the tap that halts a momentum scroll on stopping it: the
+    // pointer events arrive but no click follows, so a click-only control sits
+    // there doing nothing until the page settles.
+    await act(async () => {
+      tap(bookLabel);
+    });
+
+    await waitFor(() => state.selector.isOpen.value);
+  });
+
+  it("opens the book selector on an ordinary tap", async () => {
+    const { state, bookLabel } = await renderToolbar();
+
+    await act(async () => {
+      tap(bookLabel, { withClick: true });
+    });
+
+    await waitFor(() => state.selector.isOpen.value);
+  });
+
+  it("leaves the book selector closed when the tap becomes a swipe", async () => {
+    const { state, bookLabel } = await renderToolbar();
+
+    await act(async () => {
+      tap(bookLabel, { releaseX: TAP_X + 140 });
+      // Let anything the press started settle, so the assertion isn't just
+      // beating an open that was on its way.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(state.selector.isOpen.value).toBe(false);
   });
 });

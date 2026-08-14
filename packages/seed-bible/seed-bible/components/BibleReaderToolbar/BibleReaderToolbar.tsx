@@ -3,6 +3,7 @@ import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
+import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
   applyToolbarCustomization,
   UI_SIZE_SCALE_MAP,
@@ -1343,8 +1344,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selector && (
                           <button
                             type="button"
-                            onClick={selector.onSelect}
-                            onPointerDown={spawnRipple}
+                            {...flingSafeTapHandlers(
+                              selector.onSelect,
+                              spawnRipple
+                            )}
                             className="sb-reader-floating-nav-label"
                           >
                             {getReaderNavLabel()}
