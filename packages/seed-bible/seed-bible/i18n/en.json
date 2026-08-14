@@ -586,5 +586,8 @@
   "annotation-conflict-resolve-failed": "Couldn't apply that choice. It'll be tried again.",
   "annotations-pending-sync": "{{count}} change waiting to sync",
   "annotations-pending-sync-plural": "{{count}} changes waiting to sync",
-  "annotation-sync-failed": "Couldn't save a note to your account. It's still on this device."
+  "annotation-sync-failed": "Couldn't save a note to your account. It's still on this device.",
+  "session-host-reconnecting": "Reconnecting to the session…",
+  "session-host-reconnected": "Reconnected to the session",
+  "session-host-left": "The host left — you were removed from the session"
 }
