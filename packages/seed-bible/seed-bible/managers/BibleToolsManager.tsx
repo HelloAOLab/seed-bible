@@ -36,7 +36,6 @@ import type { PlaylistManager } from "./PlaylistManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
 import { i18n, useI18n } from "../i18n";
 import {
-  FEATURE_KEY_FOLLOWING,
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
@@ -786,10 +785,7 @@ function getDefaultToolbarTools(
       priority: 117,
       title: { key: "following", defaultValue: "Following" },
       icon: () => <MaterialIcon>group</MaterialIcon>,
-      isVisible: (context) =>
-        !!context.follows &&
-        !!context.login &&
-        context.features.isFeatureEnabled(FEATURE_KEY_FOLLOWING).value,
+      isVisible: (context) => !!context.follows && !!context.login,
       onSelect: (context) => {
         const follows = context.follows;
         const login = context.login;

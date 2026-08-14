@@ -6,12 +6,9 @@ export interface PostHog {
 }
 
 export const FEATURE_KEY_READING_PLANS = "reading-plans";
-export const FEATURE_KEY_FOLLOWING = "following";
 /**
  * Gates the global shared-session registry in `InvitationsManager`, which
- * surfaces live sessions hosted by people you follow. Kept separate from
- * {@link FEATURE_KEY_FOLLOWING} because it opens a shared document for every
- * client — it needs to be switchable off without taking following with it.
+ * surfaces live sessions hosted by people you follow.
  */
 export const FEATURE_KEY_FOLLOWED_SESSIONS = "followed-sessions";
 
