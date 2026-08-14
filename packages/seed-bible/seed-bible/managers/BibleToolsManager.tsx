@@ -41,7 +41,6 @@ import {
 } from "./FeaturesManager";
 import type { FollowsManager } from "./FollowsManager";
 import type { LoginManager } from "./LoginManager";
-import { FollowingPane } from "../components/FollowingPane/FollowingPane";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 
@@ -778,26 +777,6 @@ function getDefaultToolbarTools(
               }}
             />
           ),
-        });
-      },
-    },
-    {
-      id: "open-following",
-      priority: 117,
-      title: { key: "following", defaultValue: "Following" },
-      icon: () => <MaterialIcon>group</MaterialIcon>,
-      isVisible: (context) => !!context.follows && !!context.login,
-      onSelect: (context) => {
-        const follows = context.follows;
-        const login = context.login;
-        if (!follows || !login) {
-          return;
-        }
-        context.panesManager.openPane({
-          id: "following-pane",
-          placement: "side",
-          title: i18n.t("following", { defaultValue: "Following" }),
-          component: () => <FollowingPane follows={follows} login={login} />,
         });
       },
     },

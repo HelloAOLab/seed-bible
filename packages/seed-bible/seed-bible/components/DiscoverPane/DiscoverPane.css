@@ -320,3 +320,86 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* The signed-in user's own follow list (see `FollowingSection`): a
+   share-my-link CTA, then the accounts they follow with unfollow. */
+.sb-following-share {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 8px;
+}
+
+.sb-following-share-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-following-share-button {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sb-following-share-button:hover {
+  opacity: 0.9;
+}
+
+.sb-following-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-following-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.sb-following-row:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-following-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
+.sb-following-unfollow {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sb-following-unfollow:hover:not(:disabled) {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-primary-color);
+}
+
+.sb-following-unfollow:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

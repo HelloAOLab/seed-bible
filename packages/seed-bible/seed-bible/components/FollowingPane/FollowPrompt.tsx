@@ -3,7 +3,7 @@ import { Avatar } from "../Avatar/Avatar";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import type { UserProfile } from "../../managers/LoginManager";
 import { useI18n } from "../../i18n/I18nManager";
-import "./FollowingPane.css";
+import "./FollowPrompt.css";
 
 /**
  * Confirmation shown when a `?follow=<userId>` link is opened.

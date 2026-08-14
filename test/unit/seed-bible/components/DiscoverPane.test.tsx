@@ -21,6 +21,7 @@ import type {
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type { FollowedUser } from "@packages/seed-bible/seed-bible/managers/FollowsManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -292,14 +293,29 @@ function createMockTab(
   } as unknown as ReaderTab;
 }
 
+function makeFollowedUser(overrides: Partial<FollowedUser> = {}): FollowedUser {
+  return {
+    userId: "followed-1",
+    followedAtMs: Date.now(),
+    name: null,
+    pictureUrl: null,
+    ...overrides,
+  };
+}
+
 function createMockState(
   isMobile = false,
   overrides: {
     getUserProfile?: ReturnType<typeof vi.fn>;
     openVerseReference?: ReturnType<typeof vi.fn>;
     userId?: string | null;
+    following?: FollowedUser[];
+    isLoading?: boolean;
+    unfollow?: ReturnType<typeof vi.fn>;
+    refreshProfiles?: ReturnType<typeof vi.fn>;
   } = {}
 ): SeedBibleState {
+  const following = overrides.following ?? [];
   return {
     app: {
       isMobile: signal(isMobile),
@@ -319,8 +335,12 @@ function createMockState(
       closeFullscreenPanes: vi.fn(),
     },
     follows: {
-      following: signal([]),
-      followingIds: signal([]),
+      following: signal(following),
+      followingIds: signal(following.map((f) => f.userId)),
+      unfollow: overrides.unfollow ?? vi.fn().mockResolvedValue(undefined),
+      refreshProfiles:
+        overrides.refreshProfiles ?? vi.fn().mockResolvedValue(undefined),
+      isLoading: signal(overrides.isLoading ?? false),
     },
   } as unknown as SeedBibleState;
 }
@@ -1806,6 +1826,139 @@ describe("DiscoverPane", () => {
 
     expect(container.querySelector(".sb-play-playlist")).not.toBeNull();
     expect(container.querySelector(".sb-discover-create")).toBeNull();
+  });
+
+  it("shows the signed-out message in the Following section when there is no logged-in user", () => {
+    const { playlists } = createMockPlaylists({ userPlaylists: [] });
+    const { annotations } = createMockAnnotations();
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState(false, { userId: null });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const emptyStates = Array.from(
+      container.querySelectorAll(".sb-discover-empty")
+    ).map((el) => el.textContent);
+    expect(emptyStates).toContain("Sign in to follow other people.");
+    expect(container.querySelector(".sb-following-share")).toBeNull();
+  });
+
+  it("shows the empty-following message when signed in but following no one", () => {
+    const { playlists } = createMockPlaylists({ userPlaylists: [] });
+    const { annotations } = createMockAnnotations();
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState(false, { userId: "u1", following: [] });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const emptyStates = Array.from(
+      container.querySelectorAll(".sb-discover-empty")
+    ).map((el) => el.textContent);
+    expect(emptyStates).toContain(
+      "You aren't following anyone yet. Open someone's follow link, or follow people you're reading with in a shared session."
+    );
+  });
+
+  it("lists followed accounts and unfollowing one calls follows.unfollow with their id", () => {
+    const { playlists } = createMockPlaylists({ userPlaylists: [] });
+    const { annotations } = createMockAnnotations();
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const unfollow = vi.fn().mockResolvedValue(undefined);
+    const state = createMockState(false, {
+      userId: "u1",
+      following: [makeFollowedUser({ userId: "f1", name: "Alice" })],
+      unfollow,
+    });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const rows = container.querySelectorAll(".sb-following-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.querySelector(".sb-following-name")!.textContent).toBe(
+      "Alice"
+    );
+
+    act(() => {
+      rows[0]!
+        .querySelector(".sb-following-unfollow")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(unfollow).toHaveBeenCalledWith("f1");
+  });
+
+  it("the share-link button copies the follow URL to clipboard", () => {
+    const { playlists } = createMockPlaylists({ userPlaylists: [] });
+    const { annotations } = createMockAnnotations();
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState(false, { userId: "u1" });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const shareButton = container.querySelector(
+      ".sb-following-share-button"
+    ) as HTMLButtonElement;
+    expect(shareButton.textContent).toBe("Copy my follow link");
+
+    act(() => {
+      shareButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      `${window.location.origin}/?follow=u1`
+    );
   });
 });
 

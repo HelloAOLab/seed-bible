@@ -1,0 +1,83 @@
+/* Follow confirmation prompt, shown for `?follow=<userId>` links. */
+.sb-follow-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+  color: var(--sb-font-color);
+}
+
+.sb-follow-prompt-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sb-follow-prompt-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-follow-prompt-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-follow-prompt-location {
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-follow-prompt-description {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-follow-prompt-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-follow-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sb-follow-prompt-primary,
+.sb-follow-prompt-secondary {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sb-follow-prompt-primary {
+  border: 1px solid var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+}
+
+.sb-follow-prompt-secondary {
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  background: transparent;
+  color: var(--sb-font-color);
+}
+
+.sb-follow-prompt-primary:hover:not(:disabled),
+.sb-follow-prompt-secondary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.sb-follow-prompt-primary:disabled,
+.sb-follow-prompt-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
