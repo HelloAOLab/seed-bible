@@ -22,7 +22,10 @@ import {
   type AnnotationGroup,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
-import type { FollowsManager } from "../../managers/FollowsManager";
+import type {
+  FollowedUser,
+  FollowsManager,
+} from "../../managers/FollowsManager";
 import { setSafeHtml } from "../../managers/Sanitization";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { MaterialIcon } from "../icons";
@@ -242,6 +245,12 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         toast={props.toast}
       />
 
+      <FollowedPlaylistsSection
+        follows={props.state.follows}
+        playlists={playlists}
+        toast={props.toast}
+      />
+
       <AnnotationsSection
         tab={selectedTab}
         annotations={annotations}
@@ -375,6 +384,150 @@ function PlaylistSection({
         </ul>
       )}
     </DiscoverSection>
+  );
+}
+
+/**
+ * Playlists belonging to people the signed-in user follows, sectioned per
+ * followed account (name + avatar header) rather than merged into
+ * `PlaylistSection`'s own list — these rows can only ever be someone else's
+ * playlist, so there's no "own vs. followed" ambiguity to guard against the
+ * way `AnnotationGroupSection` has to for merged annotations. Renders nothing
+ * when there's no follow with any playlists, since (unlike "My Playlists")
+ * there's no create-one call-to-action to fall back on for an empty state.
+ */
+function FollowedPlaylistsSection(props: {
+  follows: FollowsManager;
+  playlists: PlaylistManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { follows, playlists, toast } = props;
+  const { t } = useI18n();
+
+  // Reading each followed user's view here (rather than only `followingIds`)
+  // subscribes this render to their playlists arriving.
+  const groups = follows.following.value
+    .map((followed) => ({
+      followed,
+      playlists: playlists.getUserPlaylists(followed.userId).value,
+    }))
+    .filter((group) => group.playlists.length > 0);
+
+  if (groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <DiscoverSection
+      title={t("following-playlists", {
+        defaultValue: "Playlists from people you follow",
+      })}
+    >
+      <ul className="sb-followed-playlists-groups">
+        {groups.map((group) => (
+          <FollowedPlaylistGroup
+            key={group.followed.userId}
+            followed={group.followed}
+            playlists={group.playlists}
+            playlistsManager={playlists}
+            toast={toast}
+          />
+        ))}
+      </ul>
+    </DiscoverSection>
+  );
+}
+
+/** One followed account's playlists: an avatar/name header plus its rows. */
+function FollowedPlaylistGroup(props: {
+  followed: FollowedUser;
+  playlists: Playlist[];
+  playlistsManager: PlaylistManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { followed, playlists, playlistsManager, toast } = props;
+  const { t } = useI18n();
+
+  const displayName =
+    followed.name?.trim() ||
+    t("follow-unnamed-user", {
+      id: followed.userId.slice(0, 8),
+      defaultValue: "User {{id}}",
+    });
+
+  return (
+    <li className="sb-followed-playlists-group">
+      <div className="sb-followed-playlists-group-header">
+        <Avatar
+          imageUrl={followed.pictureUrl ?? null}
+          visual={getUserAnimalVisual(followed.userId)}
+          title={displayName}
+        />
+        <span className="sb-followed-playlists-group-name">{displayName}</span>
+      </div>
+      <ul className="sb-discover-list">
+        {playlists.map((playlist) => (
+          <li
+            key={playlist.id}
+            className="sb-discover-item sb-discover-item--row sb-playlist-item"
+            dir="auto"
+            onClick={() => playlistsManager.startPlaying(playlist)}
+          >
+            <div className="sb-discover-item-main">
+              <span className="sb-discover-item-title">
+                {playlist.title ??
+                  t("untitled-playlist", {
+                    defaultValue: "Untitled playlist",
+                  })}
+              </span>
+              {playlist.description ? (
+                <span className="sb-discover-item-description">
+                  {playlist.description}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="sb-discover-item-play"
+              aria-label={t("play-playlist", {
+                defaultValue: "Play playlist",
+              })}
+              onClick={(e) => {
+                e.stopPropagation();
+                playlistsManager.startPlaying(playlist);
+              }}
+            >
+              <MaterialIcon>play_arrow</MaterialIcon>
+            </button>
+            <ContextMenuWithButton
+              buttonClassName="sb-discover-item-menu"
+              aria-label={t("playlist-options", {
+                defaultValue: "Playlist options",
+              })}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ContextMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const url = playlistsManager.getPlaylistUrl(playlist);
+                  navigator.clipboard.writeText(url);
+                  toast(
+                    t("playlist-url-copied", {
+                      defaultValue: "Playlist URL copied to clipboard",
+                    })
+                  );
+                }}
+              >
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  share
+                </MaterialIcon>
+                {t("share-playlist", { defaultValue: "Share playlist" })}
+              </ContextMenuItem>
+            </ContextMenuWithButton>
+          </li>
+        ))}
+      </ul>
+    </li>
   );
 }
 

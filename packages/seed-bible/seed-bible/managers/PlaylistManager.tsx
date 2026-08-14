@@ -557,40 +557,98 @@ export function createPlaylistManager(
     return records.items.map((record) => PlaylistSchema.parse(record.data));
   };
 
-  /**
-   * Lists the playlists of several accounts at once — used to show the
-   * playlists of everyone the signed-in user follows.
-   *
-   * Takes the account IDs rather than reading the follow list itself, so the
-   * playlist manager doesn't need to know that following exists.
-   *
-   * One unreachable or empty account must not blank the whole list, so failures
-   * are logged and skipped rather than rejecting. Results are grouped by
-   * account and returned in the order the IDs were given; accounts with no
-   * playlists are omitted.
-   */
-  const listPlaylistsForUsers = async (
-    recordNames: string[]
-  ): Promise<{ recordName: string; playlists: Playlist[] }[]> => {
-    const settled = await Promise.allSettled(
-      recordNames.map((recordName) => listPlaylists(recordName))
-    );
+  // Cached playlists for an explicitly-named account, keyed by userId. Only
+  // ever populated via `getUserPlaylists` (never for the signed-in user's own
+  // list, which lives in `userPlaylists` above), so there's no risk of one
+  // account's data leaking into another's view on a sign-in switch — unlike
+  // `AnnotationsManager`/`HighlightsManager`, this cache never needs an
+  // `explicit`-flag/sweep pair to protect it.
+  type UserPlaylistsEntry = {
+    data: Signal<Playlist[]>;
+    settled: boolean;
+    load: Promise<void> | null;
+  };
+  const userPlaylistEntries = new Map<string, UserPlaylistsEntry>();
+  // Identity-stable views handed to callers, keyed by userId. Never pruned:
+  // evicting one would mint a new computed on the next call, breaking
+  // identity for callers still holding the old one.
+  const userPlaylistViews = new Map<string, ReadonlySignal<Playlist[]>>();
 
-    const results: { recordName: string; playlists: Playlist[] }[] = [];
-    settled.forEach((result, index) => {
-      const recordName = recordNames[index]!;
-      if (result.status === "rejected") {
-        console.warn(
-          `Failed to load playlists for ${recordName}:`,
-          result.reason
-        );
+  const getOrCreateUserPlaylistsEntry = (
+    userId: string
+  ): UserPlaylistsEntry => {
+    let entry = userPlaylistEntries.get(userId);
+    if (!entry) {
+      entry = { data: signal<Playlist[]>([]), settled: false, load: null };
+      userPlaylistEntries.set(userId, entry);
+    }
+    return entry;
+  };
+
+  const loadUserPlaylists = async (
+    userId: string,
+    entry: UserPlaylistsEntry
+  ): Promise<void> => {
+    try {
+      const loaded = await listPlaylists(userId);
+      // A load that settled the entry while this request was in the air
+      // holds newer playlists than this response does.
+      if (entry.settled) {
         return;
       }
-      if (result.value.length > 0) {
-        results.push({ recordName, playlists: result.value });
+      entry.data.value = loaded;
+      entry.settled = true;
+    } catch (error) {
+      console.error(`Failed to load playlists for ${userId}:`, error);
+      if (!entry.settled) {
+        entry.data.value = [];
+        entry.settled = true;
       }
-    });
-    return results;
+    }
+  };
+
+  const ensureUserPlaylistsLoaded = (
+    userId: string,
+    entry: UserPlaylistsEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadUserPlaylists(userId, entry).finally(() => {
+        entry.load = null;
+      });
+    }
+    return entry.load;
+  };
+
+  /**
+   * Reactive view of one account's playlists, pinned to the account passed
+   * in rather than whoever is signed in — this is how a followed user's
+   * playlists are read. Playlists are stored world-readable
+   * (`publicRead:playlists`), so this works for any account and does not
+   * require being signed in. Loads lazily on first access, keyed by account.
+   */
+  const getUserPlaylists = (userId: string): ReadonlySignal<Playlist[]> => {
+    let view = userPlaylistViews.get(userId);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateUserPlaylistsEntry(userId);
+        void ensureUserPlaylistsLoaded(userId, entry);
+        return entry.data.value;
+      });
+      userPlaylistViews.set(userId, view);
+    }
+
+    // Kick the load eagerly so callers see fresh data as soon as possible,
+    // without subscribing this call site to anything (the view itself is
+    // what a caller should read to react to it arriving).
+    void ensureUserPlaylistsLoaded(
+      userId,
+      getOrCreateUserPlaylistsEntry(userId)
+    );
+
+    return view;
   };
 
   /**
@@ -1125,7 +1183,7 @@ export function createPlaylistManager(
     reorderEditingPlaylistItem,
     cancelEditingPlaylist,
     listPlaylists,
-    listPlaylistsForUsers,
+    getUserPlaylists,
     loadPlaylist,
     userPlaylists,
     availablePlaylists,
