@@ -724,6 +724,20 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   const isOpen = sidebar.isChatPanelOpen.value;
   const selectedChat = state.chats.selectedChat.value;
   const chats = state.chats.chats.value;
+  const providers = state.chats.providers.value;
+  // The AI context button surfaces tools that only a tool-calling provider can
+  // invoke, so hide it once every AI participant left in the chat is one that
+  // can't call tools.
+  const selectedChatHasToolCallingProvider = selectedChat
+    ? selectedChat.participants.value.some(
+        (p) =>
+          p.isAI &&
+          providers.some(
+            (provider) =>
+              provider.id === p.providerId && provider.supportsToolCalling
+          )
+      )
+    : true;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -881,7 +895,8 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           </ContextMenuWithButton>
         ) : null}
 
-        {state.chats.activeContexts.value.length > 0 ? (
+        {state.chats.activeContexts.value.length > 0 &&
+        selectedChatHasToolCallingProvider ? (
           <ContextMenuWithButton
             anchorClassName="sb-floating-chat-header-ai-context-anchor"
             buttonClassName="sb-floating-chat-header-ai-context-button"
