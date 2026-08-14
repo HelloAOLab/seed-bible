@@ -185,6 +185,7 @@ function createMockPlaylists(
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
     goBackFromPlayingView,
+    getUserPlaylists: vi.fn(() => signal([])),
   } as unknown as PlaylistManager;
 
   return {
@@ -229,6 +230,7 @@ function createMockAnnotations(
   const annotations = {
     editingAnnotation: signal(overrides.editingAnnotation ?? null),
     getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+    getUserAnnotationsForChapter: vi.fn(() => signal([])),
     createNewAnnotation,
     editAnnotation,
     saveEditingAnnotation,
@@ -295,6 +297,7 @@ function createMockState(
   overrides: {
     getUserProfile?: ReturnType<typeof vi.fn>;
     openVerseReference?: ReturnType<typeof vi.fn>;
+    userId?: string | null;
   } = {}
 ): SeedBibleState {
   return {
@@ -305,7 +308,7 @@ function createMockState(
         overrides.openVerseReference ?? vi.fn().mockResolvedValue(undefined),
     },
     login: {
-      userId: signal(null),
+      userId: signal(overrides.userId ?? null),
       getUserProfile:
         overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
     },
@@ -314,6 +317,10 @@ function createMockState(
     },
     panes: {
       closeFullscreenPanes: vi.fn(),
+    },
+    follows: {
+      following: signal([]),
+      followingIds: signal([]),
     },
   } as unknown as SeedBibleState;
 }
@@ -1389,14 +1396,17 @@ describe("DiscoverPane", () => {
 
   it("the annotation Edit menu item calls editAnnotation", () => {
     const { playlists } = createMockPlaylists();
-    const annotation = createAnnotation({ id: "a1" });
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+    });
     const { annotations, editAnnotation } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
     const tab = createMockTab();
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
-    const state = createMockState();
+    const state = createMockState(false, { userId: "user-1" });
 
     act(() => {
       render(
@@ -1428,14 +1438,17 @@ describe("DiscoverPane", () => {
 
   it("the annotation Delete menu item opens a confirm modal; confirming deletes and closes it", async () => {
     const { playlists } = createMockPlaylists();
-    const annotation = createAnnotation({ id: "a1" });
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+    });
     const { annotations, deleteAnnotationAndRefresh } = createMockAnnotations({
       annotationsForChapter: [annotation],
     });
     const tab = createMockTab();
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
-    const state = createMockState();
+    const state = createMockState(false, { userId: "user-1" });
 
     act(() => {
       render(
@@ -1501,7 +1514,10 @@ describe("DiscoverPane", () => {
 
   it("shows a toast but still closes the modal when deleting an annotation fails", async () => {
     const { playlists } = createMockPlaylists();
-    const annotation = createAnnotation({ id: "a1" });
+    const annotation = createAnnotation({
+      id: "a1",
+      data: { type: "comment", html: "<p>Hello</p>", userId: "user-1" },
+    });
     const { annotations } = createMockAnnotations({
       annotationsForChapter: [annotation],
       deleteAnnotationAndRefreshImpl: () => Promise.reject(new Error("nope")),
@@ -1509,7 +1525,7 @@ describe("DiscoverPane", () => {
     const tab = createMockTab();
     const tabs = createMockTabs(tab);
     const modals = createModalManager();
-    const state = createMockState();
+    const state = createMockState(false, { userId: "user-1" });
 
     act(() => {
       render(
