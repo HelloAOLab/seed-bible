@@ -258,8 +258,17 @@ interface MockChatsResult {
   providers: ReturnType<typeof signal<ChatProvider[]>>;
 }
 
-function createMockProvider(id: string, name = id): ChatProvider {
-  return { id, name, supportsSharedChats: false } as unknown as ChatProvider;
+function createMockProvider(
+  id: string,
+  name = id,
+  supportsToolCalling = true
+): ChatProvider {
+  return {
+    id,
+    name,
+    supportsSharedChats: false,
+    supportsToolCalling,
+  } as unknown as ChatProvider;
 }
 
 /** A fake `ChatsManager` exposing just the surface `DiscoverPaneTitle`'s AI button uses. */
@@ -2166,6 +2175,46 @@ describe("DiscoverPaneTitle", () => {
     expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-2");
     expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
     expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("excludes AI providers that don't support tool calling from the AI button", () => {
+    chatsFixture = createMockChats([
+      createMockProvider("provider-1", "Provider One"),
+      createMockProvider("provider-2", "No Tools", false),
+    ]);
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    // Only one tool-calling provider remains, so no menu is shown and it's
+    // added automatically, same as the single-provider case.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+    expect(chatsFixture.addParticipant).not.toHaveBeenCalledWith("provider-2");
   });
 
   it("stores a whitespace-only title as null in the create view", () => {

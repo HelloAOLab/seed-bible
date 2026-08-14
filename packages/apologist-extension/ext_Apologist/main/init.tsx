@@ -205,6 +205,7 @@ export default function initApologistExtension() {
         },
         iconUrl: apologistIconUrl,
         supportsSharedChats: true,
+        supportsToolCalling: true,
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {

@@ -224,6 +224,9 @@ export interface ChatProvider {
   /** Whether this provider supports being added to shared chats. If false, then the provider can only be used in local (single user) chats. */
   supportsSharedChats: boolean;
 
+  /** Whether this provider supports calling tools that are provided via {@link ChatContext.tools}. Defaults to false. */
+  supportsToolCalling?: boolean;
+
   /**
    * Generates a response for the given chat context. May return a single
    * message, or an (async) iterable/iterator of messages to emit a sequence

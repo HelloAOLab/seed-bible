@@ -162,7 +162,9 @@ export function DiscoverPaneTitle(props: {
 
   if (view === "create_playlist") {
     const editing = playlists.editingPlaylist.value;
-    const providers = chats.providers.value;
+    const providers = chats.providers.value.filter(
+      (p) => p.supportsToolCalling
+    );
     // Opens the chat panel on a fresh local chat, seeded with an anonymous
     // prompt message inviting the user to describe what they want changed,
     // with the given AI provider (if any) already added as a participant.
