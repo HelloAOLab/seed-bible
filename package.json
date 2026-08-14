@@ -70,6 +70,8 @@
     "@preact/signals": "^2.9.1",
     "@preact/signals-debug": "^1.4.2",
     "@testing-library/preact": "^3.2.4",
+    "@tiptap/core": "catalog:",
+    "@tiptap/starter-kit": "catalog:",
     "@types/express": "^5.0.6",
     "@types/geojson": "^7946.0.16",
     "@types/jest": "30.0.0",

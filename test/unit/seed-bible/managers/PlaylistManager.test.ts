@@ -19,6 +19,7 @@ import {
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
@@ -257,6 +258,7 @@ describe("createPlaylistManager", () => {
     const readingExtensionManager = sharedReadingExtensionManager!;
     lastNavigation = navigation;
     lastReadingExtensionManager = readingExtensionManager;
+    const discover = createDiscoverManager();
     return createPlaylistManager(
       os,
       login,
@@ -265,7 +267,8 @@ describe("createPlaylistManager", () => {
       isMobile,
       modals,
       i18n,
-      readingExtensionManager
+      readingExtensionManager,
+      discover
     );
   };
 

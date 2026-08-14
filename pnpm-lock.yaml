@@ -246,6 +246,12 @@ importers:
       '@testing-library/preact':
         specifier: ^3.2.4
         version: 3.2.4(preact@10.29.2)
+      '@tiptap/core':
+        specifier: 'catalog:'
+        version: 3.27.1(@tiptap/pm@3.27.1)
+      '@tiptap/starter-kit':
+        specifier: 'catalog:'
+        version: 3.27.1
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6

@@ -10,7 +10,6 @@ import {
 import type { CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
-import { range } from "es-toolkit";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
@@ -20,6 +19,9 @@ import type {
   BibleReadingExtensionManager,
   ReadingExtensionInstance,
 } from "./BibleReadingExtensionManager";
+import type { DiscoverManager } from "./DiscoverManager";
+import { emphasizeVerses } from "./BibleReadingManager";
+import type { BookId } from "./BibleDataManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -256,31 +258,23 @@ export function createPlayingState(
       { scrollToVerse: ref.verse }
     );
 
-    if (ref.verse) {
-      // `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know
-      // the chapter's actual verse count until it's loaded; resolve it here,
-      // guarding against stale chapter data left over from a failed fetch
-      // (`selectTranslationAndChapter` doesn't clear `chapterData` on error).
-      const loadedChapter = tab.readingState.chapterData.value;
-      const chapterDataMatches =
-        loadedChapter?.book.id === ref.bookId &&
-        loadedChapter?.chapter.number === ref.chapter;
-      const endVerse = ref.toEndOfChapter
-        ? chapterDataMatches
-          ? loadedChapter.numberOfVerses
-          : undefined
-        : ref.endVerse;
-      decorationId = tab.readingState.decorateVerses(
-        ref.bookId,
-        ref.chapter,
-        endVerse ? range(ref.verse, endVerse + 1) : [ref.verse],
-        {
-          className: "sb-verse-decoration-diminish",
-          containerClassName: "sb-chapter-decoration-diminish",
-          removeAfterMs: 3000,
-        }
-      );
-    }
+    const loadedChapter = tab.readingState.chapterData.value;
+    const chapterDataMatches =
+      loadedChapter?.book.id === ref.bookId &&
+      loadedChapter?.chapter.number === ref.chapter;
+    const endVerse = ref.toEndOfChapter
+      ? chapterDataMatches
+        ? loadedChapter.numberOfVerses
+        : undefined
+      : ref.endVerse;
+
+    decorationId = emphasizeVerses(tab.readingState, {
+      book: ref.bookId as BookId,
+      chapter: ref.chapter,
+      verse: ref.verse,
+      endChapter: ref.endChapter,
+      endVerse: endVerse,
+    });
   };
 
   /** Advances to the next step. No-op at the end of the queue. */
@@ -449,7 +443,8 @@ export function createPlaylistManager(
   isMobile: ReadonlySignal<boolean>,
   modals: ModalManager,
   i18n: I18nManager,
-  readingExtensionManager: BibleReadingExtensionManager
+  readingExtensionManager: BibleReadingExtensionManager,
+  discover: DiscoverManager
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -458,11 +453,10 @@ export function createPlaylistManager(
     navigation.currentUrl.value.searchParams.get("playlistStep")
   );
   const userPlaylists = signal<Playlist[]>([]);
-  const view = signal<null | "discover" | "create_playlist" | "play_playlist">(
-    null
-  );
-
-  const isDiscoverOpen = computed(() => !!view.value);
+  // view/isDiscoverOpen are owned by DiscoverManager now; these are local
+  // aliases so the rest of this function keeps working unchanged.
+  const view = discover.view;
+  const isDiscoverOpen = discover.isDiscoverOpen;
 
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
@@ -495,13 +489,9 @@ export function createPlaylistManager(
       : null;
   });
 
-  const actualView = computed(() => {
-    if (view.value === "play_playlist" && !playing.value) {
-      return "discover";
-    }
-
-    return view.value;
-  });
+  const actualView = computed(() =>
+    discover.resolveActualView(!!playing.value)
+  );
 
   const availablePlaylists = computed(() => {
     return userPlaylists;

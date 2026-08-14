@@ -487,7 +487,8 @@ export function createSeedBibleState(
     i18n,
     login,
     discover,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -502,14 +503,15 @@ export function createSeedBibleState(
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login);
+  const annotations = createAnnotationsManager(os, login, tabs, discover);
   const sessions = createSessionsManager(
     os,
     data,
     login,
     highlights,
     i18n,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
@@ -656,7 +658,8 @@ export function createSeedBibleState(
     isMobile,
     modals,
     i18n,
-    readingExtensions
+    readingExtensions,
+    discover
   );
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
@@ -1680,7 +1683,6 @@ export function createSeedBibleState(
     );
   });
 
-  // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
     if (!playlists.view.peek()) {
       playlists.view.value = playlists.playing.peek()
@@ -1842,8 +1844,16 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: () => <DiscoverPaneTitle playlists={playlists} />,
-        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        title: () => (
+          <DiscoverPaneTitle
+            playlists={playlists}
+            annotations={annotations}
+            tabs={tabs}
+          />
+        ),
+        header: () => (
+          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
+        ),
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -1858,6 +1868,7 @@ export function createSeedBibleState(
             state={state}
             tabs={tabs}
             playlists={playlists}
+            annotations={annotations}
             modals={modals}
             toast={state.app.toast}
           />

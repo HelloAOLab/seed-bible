@@ -1,4 +1,17 @@
 import type { JSX, VNode } from "preact";
+import {
+  computed,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
+
+export type DiscoverView =
+  | null
+  | "discover"
+  | "create_playlist"
+  | "play_playlist"
+  | "create_annotation";
 
 export interface DiscoverContext {
   translationId: string;
@@ -54,15 +67,48 @@ export interface DiscoverProviderResults {
   results: DiscoverResult[];
 }
 
+/** A verse to scroll the Discover pane's annotations list to once it's open. */
+export interface DiscoverScrollTarget {
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number;
+}
+
 export interface DiscoverManager {
   registerDiscoverProvider: (provider: DiscoverProvider) => void;
   discover: (
     context: DiscoverContext
   ) => AsyncIterable<DiscoverProviderResults>;
+  /** Which sub-view of the discover pane is shown, or null when closed. */
+  view: Signal<DiscoverView>;
+  /** True whenever `view` is non-null, i.e. the discover pane is open. */
+  isDiscoverOpen: ReadonlySignal<boolean>;
+  /**
+   * Collapses "play_playlist" back to "discover" when nothing is actually
+   * playing. Takes a plain boolean (rather than owning a playback signal
+   * itself) because DiscoverManager is constructed before PlaylistManager's
+   * playback state exists.
+   */
+  resolveActualView: (isPlaying: boolean) => DiscoverView;
+  /**
+   * Set when an annotated verse number is clicked on desktop; consumed once
+   * by the annotations section to scroll to that verse's group, then cleared.
+   */
+  scrollToVerse: Signal<DiscoverScrollTarget | null>;
 }
 
 export function createDiscoverManager(): DiscoverManager {
   const providers: DiscoverProvider[] = [];
+  const view = signal<DiscoverView>(null);
+  const isDiscoverOpen = computed(() => !!view.value);
+  const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
+
+  function resolveActualView(isPlaying: boolean): DiscoverView {
+    if (view.value === "play_playlist" && !isPlaying) {
+      return "discover";
+    }
+    return view.value;
+  }
 
   return {
     registerDiscoverProvider(provider: DiscoverProvider): void {
@@ -73,6 +119,11 @@ export function createDiscoverManager(): DiscoverManager {
         providers.push(provider);
       }
     },
+
+    view,
+    isDiscoverOpen,
+    resolveActualView,
+    scrollToVerse,
 
     async *discover(
       context: DiscoverContext

@@ -36,9 +36,10 @@ import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
-import type {
-  DiscoverManager,
-  DiscoverProviderResults,
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+  type DiscoverProviderResults,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import {
   createBibleReadingExtensionManager,
@@ -849,6 +850,21 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.book.id).toBe("GEN");
     expect(state.chapterData.value?.chapter.number).toBe(5);
     expect(state.scrollToVerse.value).toBe(3);
+  });
+
+  it("selectTranslationAndChapter() still scrolls when the book/chapter is already loaded", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.bookId.value).toBe("GEN");
+    expect(state.chapterNumber.value).toBe(1);
+
+    await state.selectTranslationAndChapter("AAB", "GEN", 1, {
+      scrollToVerse: 4,
+    });
+
+    expect(state.scrollToVerse.value).toBe(4);
   });
 
   it("publishes a deep-linked verse on the initial load", async () => {
@@ -2359,6 +2375,7 @@ describe("createBibleReadingState", () => {
     ): DiscoverManager {
       let callIndex = 0;
       return {
+        ...createDiscoverManager(),
         registerDiscoverProvider: vi.fn(),
         discover: vi.fn().mockImplementation(async function* () {
           const results = responses[callIndex++] ?? [];
@@ -2706,6 +2723,7 @@ describe("createBibleReadingState", () => {
 
     function createContentDiscoverManager(): DiscoverManager {
       return {
+        ...createDiscoverManager(),
         registerDiscoverProvider: vi.fn(),
         discover: vi.fn().mockImplementation(async function* () {
           yield {
