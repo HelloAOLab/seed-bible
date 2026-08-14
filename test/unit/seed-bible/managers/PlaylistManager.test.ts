@@ -1236,6 +1236,112 @@ describe("createPlaylistManager", () => {
 
     expect(manager.playing.value).toBeNull();
   });
+
+  describe("playlist analytics", () => {
+    let mockPosthogCapture: Mock;
+
+    beforeEach(() => {
+      mockPosthogCapture = vi.fn();
+      (globalThis as any).posthog = { capture: mockPosthogCapture };
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).posthog;
+    });
+
+    it("captures playlist_created when saving a new draft", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const draftId = manager.editingPlaylist.value!.id;
+
+      await manager.saveEditingPlaylist();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_created", {
+        playlistId: draftId,
+        playlistLocator: `user-1.${draftId}`,
+        itemCount: 0,
+      });
+    });
+
+    it("captures playlist_updated when saving an existing playlist", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: makePlaylist({ id: "playlist-1" }) }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+
+      manager.editingPlaylist.value = makePlaylist({
+        id: "playlist-1",
+        title: "New",
+      });
+      await manager.saveEditingPlaylist();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_updated", {
+        playlistId: "playlist-1",
+        playlistLocator: "user-1.playlist-1",
+        itemCount: 0,
+      });
+    });
+
+    it("captures playlist_played with isCreator true for the user's own playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ authorUserId: "user-1" });
+
+      manager.startPlaying(playlist);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_played", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: true,
+      });
+    });
+
+    it("captures playlist_played with isCreator false for a playlist shared by someone else", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ authorUserId: "user-2" });
+
+      manager.startPlaying(playlist);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_played", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+    });
+
+    it("captures playlist_finished once playback reaches the last item, and not again on revisit", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        authorUserId: "user-2",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
+
+      await manager.playing.value!.next();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_finished", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+
+      // Navigating back to the last item again does not re-report it.
+      await manager.playing.value!.previous();
+      await manager.playing.value!.next();
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe("createPlayingState", () => {

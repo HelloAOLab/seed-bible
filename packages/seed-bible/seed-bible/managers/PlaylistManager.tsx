@@ -516,6 +516,28 @@ export function createPlaylistManager(
   };
 
   /**
+   * Reports a playlist analytics event for each given playlist, tagging
+   * whether the current user authored it. Used to distinguish playback by the
+   * creator from playback by someone the playlist was shared with.
+   */
+  const capturePlaylistEvent = (
+    eventName: string,
+    playlists: Playlist[]
+  ): void => {
+    if (typeof posthog === "undefined" || !posthog) {
+      return;
+    }
+    const userId = login.userId.peek();
+    for (const playlist of playlists) {
+      posthog.capture(eventName, {
+        playlistId: playlist.id,
+        playlistLocator: getPlaylistLocator(playlist),
+        isCreator: playlist.authorUserId === userId,
+      });
+    }
+  };
+
+  /**
    * Permanently deletes a playlist: erases its record, drops it from
    * `userPlaylists`, and clears any edit/playback state that referenced it.
    */
@@ -626,6 +648,13 @@ export function createPlaylistManager(
     const playlist: Playlist = { ...current, updatedAtMs: Date.now() };
     await savePlaylist(playlist);
     const exists = userPlaylists.value.some((p) => p.id === playlist.id);
+    if (typeof posthog !== "undefined" && posthog) {
+      posthog.capture(exists ? "playlist_updated" : "playlist_created", {
+        playlistId: playlist.id,
+        playlistLocator: getPlaylistLocator(playlist),
+        itemCount: playlist.items.length,
+      });
+    }
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
@@ -743,6 +772,8 @@ export function createPlaylistManager(
       queue.length > 0
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
+
+    capturePlaylistEvent("playlist_played", playlists);
 
     targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
       playlists,
@@ -893,6 +924,27 @@ export function createPlaylistManager(
         }
       });
 
+      // Reports a `playlist_finished` event the first time playback reaches
+      // the last item in the queue. Guarded by `hasFiredFinished` so
+      // navigating back and forth over the last item doesn't re-report it.
+      let hasFiredFinished = false;
+      const disposeFinishedTracking = effect(() => {
+        const queueLength = playingState.queue.value.length;
+        const index = playingState.currentIndex.value;
+        if (
+          hasFiredFinished ||
+          queueLength === 0 ||
+          index !== queueLength - 1
+        ) {
+          return;
+        }
+        hasFiredFinished = true;
+        capturePlaylistEvent(
+          "playlist_finished",
+          playingState.playlists.peek()
+        );
+      });
+
       // Playback governs stepping *within* the queue; at its edges the reader's
       // own chapter navigation takes over again. Before this, reaching the last
       // item left next/previous permanently dead — nothing stops playback from
@@ -1006,6 +1058,7 @@ export function createPlaylistManager(
         dispose: () => {
           disposeOut();
           disposeIn();
+          disposeFinishedTracking();
           playingState.dispose();
         },
       };
