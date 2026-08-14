@@ -1,0 +1,36 @@
+.sb-annotation-editor {
+  /* min-height: 8rem; */
+  margin-bottom: 8px;
+}
+
+.sb-annotation-editor--loading {
+  min-height: 8rem;
+}
+
+/* Shown only on mobile, where opening the composer hides the reader (and the
+   verse(s) being annotated) behind a fullscreen pane. */
+.sb-annotation-verse-quote {
+  display: none;
+  margin-bottom: 8px;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+}
+
+.sb-annotation-verse-quote-reference {
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-size: 0.85em;
+}
+
+.sb-annotation-verse-quote-text {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--sb-secondary-font-color);
+}
+
+@media (max-width: 480px) {
+  .sb-annotation-verse-quote {
+    display: block;
+  }
+}

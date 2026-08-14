@@ -20,6 +20,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
@@ -275,6 +276,7 @@ describe("createPlaylistManager", () => {
     const { chats, addContext, removeContext } = makeChats();
     lastNavigation = navigation;
     lastReadingExtensionManager = readingExtensionManager;
+    const discover = createDiscoverManager();
     lastChatsAddContext = addContext;
     lastChatsRemoveContext = removeContext;
     return createPlaylistManager(
@@ -286,6 +288,7 @@ describe("createPlaylistManager", () => {
       modals,
       i18n,
       readingExtensionManager,
+      discover,
       chats
     );
   };

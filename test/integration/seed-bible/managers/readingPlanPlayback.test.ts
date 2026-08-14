@@ -138,6 +138,9 @@ function setup() {
     tabs: signal([tab]),
     selectedTabId: signal("tab-1"),
   } as any;
+  const discover = {
+    view: signal(null),
+  } as any;
   const os = CasualOSManager();
   Object.assign(os, {
     recordData: vi.fn(),
@@ -154,6 +157,7 @@ function setup() {
     createModalManager(),
     i18n,
     readingExtensionManager,
+    discover,
     {
       removeContext: vi.fn(),
     } as any

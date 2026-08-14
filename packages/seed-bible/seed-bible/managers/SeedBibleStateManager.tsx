@@ -499,7 +499,8 @@ export function createSeedBibleState(
     i18n,
     login,
     discover,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -514,14 +515,15 @@ export function createSeedBibleState(
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login);
+  const annotations = createAnnotationsManager(os, login, tabs, discover);
   const sessions = createSessionsManager(
     os,
     data,
     login,
     highlights,
     i18n,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
@@ -669,6 +671,7 @@ export function createSeedBibleState(
     modals,
     i18n,
     readingExtensions,
+    discover,
     chats
   );
   // Close any fullscreen pane when the book/chapter in the URL path changes,
@@ -1693,7 +1696,6 @@ export function createSeedBibleState(
     );
   });
 
-  // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
     if (!playlists.view.peek()) {
       playlists.view.value = playlists.playing.peek()
@@ -1977,11 +1979,15 @@ export function createSeedBibleState(
         title: () => (
           <DiscoverPaneTitle
             playlists={playlists}
+            annotations={annotations}
+            tabs={tabs}
             chats={chats}
             openChatPanel={sidebar.openChatPanel}
           />
         ),
-        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        header: () => (
+          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
+        ),
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -1996,6 +2002,7 @@ export function createSeedBibleState(
             state={state}
             tabs={tabs}
             playlists={playlists}
+            annotations={annotations}
             modals={modals}
             toast={state.app.toast}
           />

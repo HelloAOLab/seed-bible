@@ -2,6 +2,7 @@ import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "./TextAlign";
+import VerseReferenceMark from "./VerseReferenceMark";
 import "./TipTapEditor.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
@@ -54,6 +55,7 @@ export default function TipTapEditor(props: TipTapEditorProps) {
         StarterKit,
         Underline,
         TextAlign.configure({ types: ["heading", "paragraph"] }),
+        VerseReferenceMark,
       ],
       onUpdate: ({ editor }) => onEmptyChangeRef.current(editor.isEmpty),
     });
