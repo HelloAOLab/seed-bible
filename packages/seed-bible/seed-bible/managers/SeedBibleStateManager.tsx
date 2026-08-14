@@ -400,13 +400,25 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
-import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import {
+  createPlaylistManager,
+  type PlaylistManager,
+  type PlaylistItemData,
+} from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
   DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
+import {
+  AIBibleVerseRefSchema,
+  convertToPlaylistItem,
+  GeneratedPlaylistSchema,
+  generateFunctionTool,
+} from "./AIManager";
+import { z } from "zod";
+import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -659,7 +671,8 @@ export function createSeedBibleState(
     modals,
     i18n,
     readingExtensions,
-    discover
+    discover,
+    chats
   );
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
@@ -1705,6 +1718,125 @@ export function createSeedBibleState(
     }
   });
 
+  /**
+   * Builds the AI tools that let a provider interact with the core app state.
+   */
+  const getCoreTools = () => {
+    const goToReference = generateFunctionTool({
+      name: "goToReference",
+      description:
+        "Navigates the user to a specific book, chapter, and verse in the Bible.",
+      parameters: AIBibleVerseRefSchema,
+      function: async (args) => {
+        const readingState = currentReadingState.peek();
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        await readingState.tab.readingState.selectTranslationAndChapter(
+          readingState.translationId,
+          args.ref.bookId,
+          args.ref.chapter,
+          {
+            scrollToVerse: args.ref.verse ?? undefined,
+          }
+        );
+
+        if (args.ref.verse) {
+          readingState.tab.readingState.decorateVerses(
+            args.ref.bookId,
+            args.ref.chapter,
+            args.ref.endVerse
+              ? range(args.ref.verse, args.ref.endVerse + 1)
+              : args.ref.verse,
+            {
+              className: "sb-verse-decoration-diminish",
+              containerClassName: "sb-chapter-decoration-diminish",
+              removeAfterMs: 3000,
+            }
+          );
+        }
+
+        return "success";
+      },
+    });
+
+    const searchVerses = generateFunctionTool({
+      name: "searchVerses",
+      description:
+        "Searches the Bible for verses matching the given query. Returns a list of results.",
+      parameters: z.object({
+        q: z.string().describe("The search query to look for in the Bible."),
+      }),
+      function: async (args) => {
+        const readingState = currentReadingState.peek()?.tab.readingState;
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        const activeLanguage =
+          readingState?.translation.value?.language ??
+          readingState?.defaultTranslation.language ??
+          getDefaultTranslationForLanguage(i18n.defaultLanguage).language;
+        const results = await search.searchVerses(
+          activeLanguage,
+          readingState.translationId.peek(),
+          args.q
+        );
+
+        const verses = (results.hits ?? []).map((hit) => ({
+          translationId: hit.document.translation,
+          translationLabel: hit.document.translation,
+          bookId: hit.document.book,
+          bookLabel: hit.document.book,
+          chapterNumber: hit.document.chapter,
+          verseNumber: hit.document.verse,
+          text: hit.document.text,
+        }));
+
+        return JSON.stringify(verses);
+      },
+    });
+
+    const createPlaylist = generateFunctionTool({
+      name: "createPlaylist",
+      description:
+        "Opens the playlist editor pre-filled with the given generated playlist so the user can review, edit, and save it themselves. Does not play or save anything on its own. Each call opens a brand-new, independent playlist that has no relationship to any playlist discussed earlier in this conversation (including one already open in the editor) — it is never used to modify an existing playlist.",
+      parameters: GeneratedPlaylistSchema,
+      function: async (args) => {
+        let items: PlaylistItemData[];
+        try {
+          items = args.items.map((i) => convertToPlaylistItem(i));
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+
+        const editing = await playlists.createNewPlaylist({
+          title: args.title,
+          description: args.description,
+          items,
+        });
+        if (!editing) {
+          return "error: could not open the playlist editor — sign-in was required and did not complete";
+        }
+
+        return "success";
+      },
+    });
+
+    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
+  };
+
+  const enableCoreChatContext = () => {
+    chats.addContext({
+      id: "core",
+      label: { key: "seed-bible", defaultValue: "Seed Bible" },
+      tools: getCoreTools(),
+    });
+  };
+
+  enableCoreChatContext();
+
   // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
   // // load that playlist and start playing it immediately. The locator's `id` is
   // // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
@@ -1849,6 +1981,8 @@ export function createSeedBibleState(
             playlists={playlists}
             annotations={annotations}
             tabs={tabs}
+            chats={chats}
+            openChatPanel={sidebar.openChatPanel}
           />
         ),
         header: () => (
