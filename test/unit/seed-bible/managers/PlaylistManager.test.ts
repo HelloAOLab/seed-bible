@@ -77,7 +77,7 @@ describe("Playlist schemas", () => {
 
 type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
-type ChatsArg = Parameters<typeof createPlaylistManager>[8];
+type ChatsArg = Parameters<typeof createPlaylistManager>[9];
 type TabArg = Parameters<typeof createPlayingState>[1];
 
 /** A minimal `ChatsManager` fake exposing just the context registration surface. */

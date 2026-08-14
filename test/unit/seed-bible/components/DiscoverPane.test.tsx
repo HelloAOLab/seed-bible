@@ -2036,11 +2036,14 @@ describe("DiscoverPaneTitle", () => {
       view: "create_playlist",
       editingPlaylist: createPlaylist({ title: "Draft" }),
     });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
       render(
         <DiscoverPaneTitle
           playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
           chats={chatsFixture.chats}
           openChatPanel={openChatPanel}
         />,
@@ -2082,11 +2085,14 @@ describe("DiscoverPaneTitle", () => {
       view: "create_playlist",
       editingPlaylist: createPlaylist({ title: "Draft" }),
     });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
       render(
         <DiscoverPaneTitle
           playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
           chats={chatsFixture.chats}
           openChatPanel={openChatPanel}
         />,
@@ -2118,11 +2124,14 @@ describe("DiscoverPaneTitle", () => {
       view: "create_playlist",
       editingPlaylist: createPlaylist({ title: "Draft" }),
     });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
       render(
         <DiscoverPaneTitle
           playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
           chats={chatsFixture.chats}
           openChatPanel={openChatPanel}
         />,
@@ -2212,6 +2221,8 @@ describe("DiscoverPaneTitle", () => {
           playlists={playlists}
           annotations={annotations}
           tabs={tabs}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
         />,
         container
       );

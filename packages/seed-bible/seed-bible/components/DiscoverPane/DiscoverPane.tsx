@@ -111,7 +111,7 @@ export function DiscoverPaneTitle(props: {
   chats: ChatsManager;
   openChatPanel: () => void;
 }) {
-  const { playlists, annotations, tabs } = props;
+  const { playlists, annotations, tabs, chats, openChatPanel } = props;
   const { t } = useI18n();
   const view = playlists.actualView.value;
 
