@@ -1,8 +1,18 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
+import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
-import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
+import type {
+  Playlist,
+  PlaylistManager,
+  PlaylistPlayHistory,
+} from "../../managers/PlaylistManager";
+import {
+  formatPlaylistPlayDurationMs,
+  isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryPercent,
+} from "../../managers/PlaylistManager";
 import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
@@ -14,6 +24,7 @@ import {
 import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import { playlistItemLabel } from "../playlistItemLabel";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 
 interface DiscoverPaneProps {
@@ -158,6 +169,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   // Reading `.value` during render subscribes the component to updates.
   const userPlaylists = playlists.userPlaylists.value;
+  const playlistHistory = playlists.userPlaylistHistory.value;
   const selectedTab =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
 
@@ -167,6 +179,13 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         userPlaylists={userPlaylists}
         playlists={playlists}
         modals={modals}
+        toast={props.toast}
+      />
+
+      <PlaylistHistorySection
+        history={playlistHistory}
+        playlists={playlists}
+        tabs={tabs}
         toast={props.toast}
       />
 
@@ -297,6 +316,161 @@ function PlaylistSection({
               </ContextMenuWithButton>
             </li>
           ))}
+        </ul>
+      )}
+    </DiscoverSection>
+  );
+}
+
+/**
+ * Past play sessions for playlists the user has opened (including shared ones).
+ * Rows match the Discover playlist list; expanding one shows duration, last
+ * item + progress, and Continue or Replay.
+ */
+function PlaylistHistorySection({
+  history,
+  playlists,
+  tabs,
+  toast,
+}: {
+  history: PlaylistPlayHistory[];
+  playlists: PlaylistManager;
+  tabs: TabsManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { t } = useI18n();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const selectedTab =
+    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
+  const books = selectedTab?.readingState.translationBooks.value?.books ?? [];
+  const resolveBookName = (bookId: string): string => {
+    const book = books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
+
+  return (
+    <DiscoverSection
+      title={t("playlist-history", { defaultValue: "Playlist history" })}
+    >
+      {history.length === 0 ? (
+        <DiscoverEmpty
+          text={t("discover-playlist-history-empty", {
+            defaultValue: "Playlists you play will show up here.",
+          })}
+        />
+      ) : (
+        <ul className="sb-discover-list">
+          {history.map((entry) => {
+            const expanded = expandedId === entry.id;
+            const percent = Math.round(playlistPlayHistoryPercent(entry) * 100);
+            const complete = isPlaylistPlayHistoryComplete(entry);
+            const lastLabel = entry.lastItem
+              ? playlistItemLabel(entry.lastItem, t, resolveBookName)
+              : null;
+
+            return (
+              <li
+                key={entry.id}
+                className={
+                  "sb-discover-item sb-playlist-history-item" +
+                  (expanded ? " sb-playlist-history-item--expanded" : "")
+                }
+                dir="auto"
+              >
+                <button
+                  type="button"
+                  className="sb-playlist-history-item-header"
+                  aria-expanded={expanded}
+                  onClick={() =>
+                    setExpandedId((current) =>
+                      current === entry.id ? null : entry.id
+                    )
+                  }
+                >
+                  <div className="sb-discover-item-main">
+                    <span className="sb-discover-item-title">
+                      {entry.playlistTitle ??
+                        t("untitled-playlist", {
+                          defaultValue: "Untitled playlist",
+                        })}
+                    </span>
+                    <span className="sb-discover-item-description">
+                      {t("playlist-history-progress-summary", {
+                        defaultValue: "{{percent}}% complete",
+                        percent,
+                      })}
+                    </span>
+                  </div>
+                  <MaterialIcon className="sb-playlist-history-chevron">
+                    {expanded ? "expand_less" : "expand_more"}
+                  </MaterialIcon>
+                </button>
+
+                {expanded ? (
+                  <div className="sb-playlist-history-details">
+                    <div className="sb-playlist-history-detail-row">
+                      <span className="sb-playlist-history-detail-label">
+                        {t("playlist-history-duration", {
+                          defaultValue: "Time played",
+                        })}
+                      </span>
+                      <span className="sb-playlist-history-detail-value">
+                        {formatPlaylistPlayDurationMs(entry.durationMs)}
+                      </span>
+                    </div>
+                    <div className="sb-playlist-history-detail-row">
+                      <span className="sb-playlist-history-detail-label">
+                        {t("playlist-history-last-item", {
+                          defaultValue: "Last item",
+                        })}
+                      </span>
+                      <span className="sb-playlist-history-detail-value">
+                        {lastLabel
+                          ? t("playlist-history-last-item-progress", {
+                              defaultValue: "{{item}} · {{percent}}%",
+                              item: lastLabel,
+                              percent,
+                            })
+                          : t("playlist-history-progress-summary", {
+                              defaultValue: "{{percent}}% complete",
+                              percent,
+                            })}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="sb-discover-create sb-playlist-history-action"
+                      onClick={() => {
+                        const action = complete
+                          ? playlists.replayFromHistory(entry)
+                          : playlists.continueFromHistory(entry);
+                        void action.catch(() => {
+                          toast(
+                            t("playlist-history-open-failed", {
+                              defaultValue:
+                                "Couldn't open that playlist. It may have been deleted.",
+                            })
+                          );
+                        });
+                      }}
+                    >
+                      <MaterialIcon>
+                        {complete ? "replay" : "play_arrow"}
+                      </MaterialIcon>
+                      {complete
+                        ? t("playlist-history-replay", {
+                            defaultValue: "Replay",
+                          })
+                        : t("playlist-history-continue", {
+                            defaultValue: "Continue",
+                          })}
+                    </button>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       )}
     </DiscoverSection>

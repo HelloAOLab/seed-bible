@@ -759,7 +759,10 @@ function getDefaultToolbarTools(
                     createdAtMs: plan.createdAtMs,
                     updatedAtMs: plan.updatedAtMs,
                   },
-                  startIndex
+                  startIndex,
+                  // Reading plans reuse the playlist player but keep their own
+                  // progress records — don't also write playlist play history.
+                  { history: false }
                 );
               }}
             />

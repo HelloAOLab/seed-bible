@@ -11,10 +11,15 @@ import {
 import {
   PlaylistItem,
   PlaylistSchema,
+  PlaylistPlayHistorySchema,
   createPlaylistManager,
   createPlayingState,
+  formatPlaylistPlayDurationMs,
+  isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryPercent,
   type Playlist,
   type PlaylistItemData,
+  type PlaylistPlayHistory,
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
@@ -24,6 +29,7 @@ import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
 const MARKER = "publicRead:playlists";
+const HISTORY_MARKER = "publicRead:playlistPlayHistory";
 
 function makePlaylist(overrides: Partial<Playlist> = {}): Playlist {
   return PlaylistSchema.parse({
@@ -33,6 +39,30 @@ function makePlaylist(overrides: Partial<Playlist> = {}): Playlist {
     title: "My Playlist",
     description: null,
     items: [],
+    createdAtMs: START_MS,
+    updatedAtMs: START_MS,
+    ...overrides,
+  });
+}
+
+function makeHistory(
+  overrides: Partial<PlaylistPlayHistory> = {}
+): PlaylistPlayHistory {
+  return PlaylistPlayHistorySchema.parse({
+    id: "playlist_history_1",
+    recordName: "user-1",
+    userId: "user-1",
+    playlistId: "playlist-1",
+    playlistRecordName: "user-1",
+    playlistTitle: "My Playlist",
+    playlistDescription: null,
+    previousHistoryId: null,
+    totalSteps: 2,
+    currentStep: 0,
+    lastItem: { type: "html", html: "<p>hi</p>" },
+    startedAtMs: START_MS,
+    endedAtMs: null,
+    durationMs: 0,
     createdAtMs: START_MS,
     updatedAtMs: START_MS,
     ...overrides,
@@ -70,6 +100,35 @@ describe("Playlist schemas", () => {
       ],
     });
     expect(playlist.items).toHaveLength(2);
+  });
+});
+
+describe("playlist play history helpers", () => {
+  it("computes percent complete from the current step", () => {
+    expect(playlistPlayHistoryPercent({ currentStep: 0, totalSteps: 4 })).toBe(
+      0.25
+    );
+    expect(playlistPlayHistoryPercent({ currentStep: 3, totalSteps: 4 })).toBe(
+      1
+    );
+    expect(playlistPlayHistoryPercent({ currentStep: -1, totalSteps: 0 })).toBe(
+      0
+    );
+  });
+
+  it("treats the last queue index as complete", () => {
+    expect(
+      isPlaylistPlayHistoryComplete({ currentStep: 2, totalSteps: 3 })
+    ).toBe(true);
+    expect(
+      isPlaylistPlayHistoryComplete({ currentStep: 1, totalSteps: 3 })
+    ).toBe(false);
+  });
+
+  it("formats wall-clock durations", () => {
+    expect(formatPlaylistPlayDurationMs(5_000)).toBe("5s");
+    expect(formatPlaylistPlayDurationMs(65_000)).toBe("1m 5s");
+    expect(formatPlaylistPlayDurationMs(3_661_000)).toBe("1h 1m");
   });
 });
 
@@ -884,6 +943,210 @@ describe("createPlaylistManager", () => {
     // Switching back reflects the still-running playback again.
     tabsManager.selectedTabId.value = "tab-1";
     expect(manager.playing.value).not.toBeNull();
+  });
+
+  describe("playlist play history", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(START_MS);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("creates a history entry when playback starts while signed in", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      const entry = manager.userPlaylistHistory.value[0]!;
+      expect(entry.playlistId).toBe(playlist.id);
+      expect(entry.currentStep).toBe(0);
+      expect(entry.totalSteps).toBe(2);
+      expect(entry.previousHistoryId).toBeNull();
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        entry.id,
+        expect.objectContaining({
+          playlistId: playlist.id,
+          totalSteps: 2,
+        }),
+        { marker: HISTORY_MARKER }
+      );
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("does not create history when signed out", async () => {
+      const manager = makeManager(null);
+      await flush();
+      recordDataMock.mockClear();
+
+      manager.startPlaying(
+        makePlaylist({ items: [{ type: "html", html: "a" }] })
+      );
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+      expect(
+        recordDataMock.mock.calls.some(
+          (call) => call[3]?.marker === HISTORY_MARKER
+        )
+      ).toBe(false);
+
+      manager.stopPlaying();
+    });
+
+    it("skips history when startPlaying is called with history: false", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      manager.startPlaying(
+        makePlaylist({ items: [{ type: "html", html: "a" }] }),
+        0,
+        { history: false }
+      );
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+      manager.stopPlaying();
+    });
+
+    it("updates currentStep as playback advances and finalizes on stop", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "link", url: "https://example.com" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await flush();
+
+      await manager.playing.value!.next();
+      await flush();
+
+      expect(manager.userPlaylistHistory.value[0]!.currentStep).toBe(1);
+      expect(manager.userPlaylistHistory.value[0]!.lastItem).toEqual({
+        type: "html",
+        html: "b",
+      });
+
+      vi.setSystemTime(START_MS + 12_000);
+      manager.stopPlaying();
+      await flush();
+
+      const entry = manager.userPlaylistHistory.value[0]!;
+      expect(entry.endedAtMs).toBe(START_MS + 12_000);
+      expect(entry.durationMs).toBe(entry.endedAtMs! - entry.startedAtMs);
+      expect(entry.currentStep).toBe(1);
+    });
+
+    it("continueFromHistory loads the playlist and chains previousHistoryId", async () => {
+      const prior = makeHistory({
+        id: "hist-prior",
+        currentStep: 1,
+        totalSteps: 3,
+      });
+      listDataByMarkerMock.mockImplementation(
+        async (_recordName: string, marker: string) => {
+          if (marker === HISTORY_MARKER) {
+            return { success: true, items: [{ data: prior }] };
+          }
+          return { success: true, items: [] };
+        }
+      );
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      const manager = makeManager("user-1");
+      await flush();
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+
+      await manager.continueFromHistory(prior);
+      await flush();
+
+      expect(manager.playing.value?.currentIndex.value).toBe(1);
+      const newest = manager.userPlaylistHistory.value[0]!;
+      expect(newest.id).not.toBe(prior.id);
+      expect(newest.previousHistoryId).toBe(prior.id);
+      expect(newest.currentStep).toBe(1);
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("replayFromHistory starts at step 0 and chains previousHistoryId", async () => {
+      const prior = makeHistory({
+        id: "hist-done",
+        currentStep: 2,
+        totalSteps: 3,
+      });
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      await manager.replayFromHistory(prior);
+      await flush();
+
+      expect(manager.playing.value?.currentIndex.value).toBe(0);
+      expect(manager.userPlaylistHistory.value[0]!.previousHistoryId).toBe(
+        prior.id
+      );
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("syncs stored history on login and clears it on logout", async () => {
+      const stored = makeHistory({ id: "hist-stored" });
+      listDataByMarkerMock.mockImplementation(
+        async (_recordName: string, marker: string) => {
+          if (marker === HISTORY_MARKER) {
+            return { success: true, items: [{ data: stored }] };
+          }
+          return { success: true, items: [] };
+        }
+      );
+
+      const manager = makeManager("user-1");
+      await flush();
+      expect(manager.userPlaylistHistory.value).toEqual([stored]);
+
+      userId.value = null;
+      await flush();
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+    });
   });
 
   describe("playlist reading extension", () => {

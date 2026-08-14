@@ -10,6 +10,7 @@ import { createModalManager } from "@packages/seed-bible/seed-bible/managers/Mod
 import type {
   Playlist,
   PlaylistManager,
+  PlaylistPlayHistory,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { createPlayingState } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type {
@@ -104,12 +105,15 @@ interface MockPlaylistsResult {
   getPlaylistUrl: ReturnType<typeof vi.fn>;
   cancelEditingPlaylist: ReturnType<typeof vi.fn>;
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
+  continueFromHistory: ReturnType<typeof vi.fn>;
+  replayFromHistory: ReturnType<typeof vi.fn>;
 }
 
 function createMockPlaylists(
   overrides: {
     view?: "discover" | "create_playlist" | "play_playlist" | null;
     userPlaylists?: Playlist[];
+    userPlaylistHistory?: PlaylistPlayHistory[];
     editingPlaylist?: Playlist | null;
     playing?: ReturnType<typeof createPlayingState> | null;
     deletePlaylistImpl?: () => Promise<void>;
@@ -126,12 +130,15 @@ function createMockPlaylists(
   );
   const cancelEditingPlaylist = vi.fn();
   const goBackFromPlayingView = vi.fn();
+  const continueFromHistory = vi.fn().mockResolvedValue(undefined);
+  const replayFromHistory = vi.fn().mockResolvedValue(undefined);
 
   const view = signal(overrides.view ?? "discover");
   const playlists = {
     view,
     actualView: view,
     userPlaylists: signal(overrides.userPlaylists ?? []),
+    userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
     editingPlaylist: signal(overrides.editingPlaylist ?? null),
     playing: signal(overrides.playing ?? null),
     createNewPlaylist,
@@ -140,6 +147,8 @@ function createMockPlaylists(
     deletePlaylist,
     getPlaylistUrl,
     cancelEditingPlaylist,
+    continueFromHistory,
+    replayFromHistory,
     saveEditingPlaylist: vi.fn().mockResolvedValue(undefined),
     addEditingPlaylistItem: vi.fn(),
     updateEditingPlaylistItem: vi.fn(),
@@ -156,6 +165,8 @@ function createMockPlaylists(
     getPlaylistUrl,
     cancelEditingPlaylist,
     goBackFromPlayingView,
+    continueFromHistory,
+    replayFromHistory,
   };
 }
 
@@ -908,5 +919,154 @@ describe("DiscoverPaneTitle", () => {
     });
 
     expect(playlists.editingPlaylist.value?.title).toBeNull();
+  });
+
+  function createHistoryEntry(
+    overrides: Partial<PlaylistPlayHistory> = {}
+  ): PlaylistPlayHistory {
+    return {
+      id: "hist-1",
+      recordName: "user-1",
+      userId: "user-1",
+      playlistId: "playlist-1",
+      playlistRecordName: "user-1",
+      playlistTitle: "Shared Study",
+      playlistDescription: null,
+      previousHistoryId: null,
+      totalSteps: 4,
+      currentStep: 1,
+      lastItem: {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+      },
+      startedAtMs: 1_000,
+      endedAtMs: 1_000 + 65_000,
+      durationMs: 65_000,
+      createdAtMs: 1_000,
+      updatedAtMs: 1_000 + 65_000,
+      ...overrides,
+    };
+  }
+
+  it("shows the empty playlist-history message when there is no history", () => {
+    const { playlists } = createMockPlaylists({ userPlaylistHistory: [] });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const emptyStates = Array.from(
+      container.querySelectorAll(".sb-discover-empty")
+    ).map((el) => el.textContent);
+    expect(emptyStates).toContain("Playlists you play will show up here.");
+  });
+
+  it("lists playlist history and expands to show duration, progress, and Continue", async () => {
+    const entry = createHistoryEntry();
+    const { playlists, continueFromHistory, replayFromHistory } =
+      createMockPlaylists({
+        userPlaylistHistory: [entry],
+      });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const header = container.querySelector(
+      ".sb-playlist-history-item-header"
+    ) as HTMLButtonElement;
+    expect(header).not.toBeNull();
+    expect(header.querySelector(".sb-discover-item-title")?.textContent).toBe(
+      "Shared Study"
+    );
+    expect(container.querySelector(".sb-playlist-history-details")).toBeNull();
+
+    act(() => {
+      header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const details = container.querySelector(".sb-playlist-history-details");
+    expect(details).not.toBeNull();
+    expect(details?.textContent).toContain("1m 5s");
+    expect(details?.textContent).toContain("50%");
+
+    const action = details?.querySelector(
+      ".sb-playlist-history-action"
+    ) as HTMLButtonElement;
+    expect(action?.textContent).toContain("Continue");
+
+    await act(async () => {
+      action.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(continueFromHistory).toHaveBeenCalledWith(entry);
+    expect(replayFromHistory).not.toHaveBeenCalled();
+  });
+
+  it("shows Replay when a history entry is complete", async () => {
+    const entry = createHistoryEntry({
+      currentStep: 3,
+      totalSteps: 4,
+    });
+    const { playlists, replayFromHistory, continueFromHistory } =
+      createMockPlaylists({
+        userPlaylistHistory: [entry],
+      });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector(".sb-playlist-history-item-header")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const action = container.querySelector(
+      ".sb-playlist-history-action"
+    ) as HTMLButtonElement;
+    expect(action.textContent).toContain("Replay");
+
+    await act(async () => {
+      action.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(replayFromHistory).toHaveBeenCalledWith(entry);
+    expect(continueFromHistory).not.toHaveBeenCalled();
   });
 });
