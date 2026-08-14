@@ -742,6 +742,7 @@ function getDefaultToolbarTools(
           component: () => (
             <ReadingPlansPane
               readingPlans={readingPlans}
+              follows={context.follows}
               books={readingState.translationBooks.value?.books ?? []}
               modals={context.modals}
               // Tapping a scripture reading takes the user to it. Without this
