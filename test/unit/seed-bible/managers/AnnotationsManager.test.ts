@@ -401,6 +401,132 @@ describe("AnnotationsManager", () => {
     });
   });
 
+  describe("getUserAnnotationsForChapter", () => {
+    const mockPerUserAnnotations = () => {
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: string, _marker: string, lastAddress?: string) => {
+          // Pagination terminates on the second call (`lastAddress` set) —
+          // real behavior when there's exactly one page of results.
+          if (lastAddress) {
+            return { success: true, items: [] };
+          }
+          if (recordName === "user-1") {
+            return {
+              success: true,
+              items: [
+                {
+                  address: "a1",
+                  data: createCommentAnnotation({ id: "user-1-note" }),
+                },
+              ],
+            };
+          }
+          if (recordName === "followed-user") {
+            return {
+              success: true,
+              items: [
+                {
+                  address: "a2",
+                  data: createCommentAnnotation({ id: "followed-note" }),
+                },
+              ],
+            };
+          }
+          return { success: true, items: [] };
+        }
+      );
+    };
+
+    it("reads annotations from the named account's record", async () => {
+      mockPerUserAnnotations();
+      const manager = createManager();
+
+      const view = manager.getUserAnnotationsForChapter(
+        "followed-user",
+        "GEN",
+        1
+      );
+
+      await vi.waitFor(() => {
+        expect(view.value.map((a) => a.id)).toEqual(["followed-note"]);
+      });
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "followed-user",
+        "publicRead:annotations/GEN/1",
+        undefined
+      );
+    });
+
+    it("stays pinned to that account when the signed-in account changes", async () => {
+      mockPerUserAnnotations();
+      const manager = createManager();
+
+      const view = manager.getUserAnnotationsForChapter(
+        "followed-user",
+        "GEN",
+        1
+      );
+      await vi.waitFor(() => {
+        expect(view.value.map((a) => a.id)).toEqual(["followed-note"]);
+      });
+
+      login.userId.value = "user-2";
+
+      // Unlike `getAnnotationsForChapter`, this view does not follow the
+      // signed-in account — it still shows the followed user's annotations.
+      expect(view.value.map((a) => a.id)).toEqual(["followed-note"]);
+    });
+
+    it("keeps a followed account's cached annotations across a sign-in", async () => {
+      mockPerUserAnnotations();
+      const manager = createManager();
+
+      manager.getUserAnnotationsForChapter("followed-user", "GEN", 1);
+      await vi.waitFor(() => {
+        expect(listDataByMarkerMock).toHaveBeenCalledWith(
+          "followed-user",
+          "publicRead:annotations/GEN/1",
+          undefined
+        );
+      });
+      const callsAfterFirstLoad = listDataByMarkerMock.mock.calls.length;
+
+      // The account-switch sweep must not evict explicitly-requested entries,
+      // or every sign-in would force a re-read of every followed user.
+      login.userId.value = "user-2";
+
+      manager.getUserAnnotationsForChapter("followed-user", "GEN", 1);
+      expect(listDataByMarkerMock.mock.calls.length).toBe(callsAfterFirstLoad);
+    });
+
+    it("returns the same signal for repeated calls", () => {
+      mockPerUserAnnotations();
+      const manager = createManager();
+
+      expect(
+        manager.getUserAnnotationsForChapter("followed-user", "GEN", 1)
+      ).toBe(manager.getUserAnnotationsForChapter("followed-user", "GEN", 1));
+    });
+
+    it("keeps different accounts' annotations separate for the same chapter", async () => {
+      mockPerUserAnnotations();
+      const manager = createManager();
+
+      const mine = manager.getUserAnnotationsForChapter("user-1", "GEN", 1);
+      const theirs = manager.getUserAnnotationsForChapter(
+        "followed-user",
+        "GEN",
+        1
+      );
+
+      await vi.waitFor(() => {
+        expect(mine.value.map((a) => a.id)).toEqual(["user-1-note"]);
+        expect(theirs.value.map((a) => a.id)).toEqual(["followed-note"]);
+      });
+    });
+  });
+
   describe("createNewAnnotation", () => {
     it("no-ops and warns when signed out and login is declined", async () => {
       login.userId.value = null;
