@@ -3,7 +3,11 @@ import {
   CHAPTER_SKELETON_DELAY_MS,
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
-import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
+import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
+import type {
+  ApiRequestOptions,
+  TranslationBookChapter,
+} from "../managers/FreeUseBibleAPI";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
@@ -87,6 +91,19 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       document.body.classList.remove(className);
     };
   }, [isMobile, isScrolled]);
+
+  // When a mobile pane opens (every pane fills the screen there), the verse
+  // sheet yields and the default bottom toolbar comes back. Clear scroll-hide
+  // so that bar isn't left translated off-screen — e.g. after Locations opens
+  // a map from a verse selection while the user had scrolled down.
+  useEffect(() => {
+    if (!isMobile) return;
+    return effect(() => {
+      if ((state.panes?.panes?.value?.length ?? 0) > 0) {
+        setIsScrolled(false);
+      }
+    });
+  }, [isMobile, state]);
 
   // The element the reader actually scrolls in: the slot itself on desktop, the
   // centre swipe panel on mobile. Held as state rather than a ref so the
@@ -220,6 +237,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   }, [scroller, isMobile, readingState]);
 
   const currentChapterValue = readingState.chapterData.value;
+  // Reading `.value` here subscribes this component to playback position, which
+  // the swipe previews below depend on (the queue decides the neighbour).
+  const playbackStep =
+    state?.playlists?.playing.value?.currentIndex.value ?? null;
 
   useEffect(() => {
     if (!isMobile || !state) {
@@ -241,38 +262,40 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     // dropped once every caller that can walk away has — so cancellation would
     // be inert on mobile, which is where it matters most.
     const controller = new AbortController();
-    const prefetchOptions = { signal: controller.signal };
+    const prefetchOptions: ApiRequestOptions = { signal: controller.signal };
 
-    if (readingState.hasPrevious.value) {
-      state.bibleData
-        .getPreviousChapter(chapterData, prefetchOptions)
+    // `getAdjacentChapter` — not `bibleData.getNextChapter` — because an enabled
+    // reading extension can redirect where next/previous actually go. While a
+    // reading plan session or playlist is playing, the next chapter is the
+    // queue's next step, which for a session spanning two books is not the
+    // chapter that follows this one. Previewing the canonical neighbour made the
+    // swipe animate in one chapter and then land on another.
+    const loadPreview = (
+      direction: "next" | "previous",
+      set: (chapter: TranslationBookChapter | null) => void
+    ) => {
+      readingState
+        .getAdjacentChapter(direction, prefetchOptions)
         .then((result) => {
           if (!cancelled) {
-            setPrevChapterPreview(result ?? null);
+            set(result ?? null);
           }
         })
         .catch(() => {
           if (!cancelled) {
-            setPrevChapterPreview(null);
+            set(null);
           }
         });
+    };
+
+    if (readingState.hasPrevious.value) {
+      loadPreview("previous", setPrevChapterPreview);
     } else {
       setPrevChapterPreview(null);
     }
 
     if (readingState.hasNext.value) {
-      state.bibleData
-        .getNextChapter(chapterData, prefetchOptions)
-        .then((result) => {
-          if (!cancelled) {
-            setNextChapterPreview(result ?? null);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setNextChapterPreview(null);
-          }
-        });
+      loadPreview("next", setNextChapterPreview);
     } else {
       setNextChapterPreview(null);
     }
@@ -287,6 +310,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     currentChapterValue?.translation.id,
     currentChapterValue?.book.id,
     currentChapterValue?.chapter.number,
+    // While playing, the neighbour depends on the queue position too — without
+    // this the preview would keep showing the step the reader has left behind.
+    playbackStep,
   ]);
 
   useEffect(() => {
@@ -378,6 +404,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+
       const rtl = isRtl();
       const hasNext = readingState.hasNext.value;
       const hasPrev = readingState.hasPrevious.value;
@@ -424,6 +454,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       window.clearTimeout(swipeCommitTimer.current);
 
+      // Held until the slide finishes: committing mid-animation swaps the
+      // panels' contents under a moving track, which reads as a jump. Timing
+      // has no bearing on whether Chrome honours the history entry a swipe
+      // creates — see #1401.
       swipeCommitTimer.current = window.setTimeout(() => {
         // The navigation always runs, even if another gesture has since taken
         // the track over: the reader completed the swipe that asked for it.
@@ -492,9 +526,27 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
     };
 
+    // The browser can take a gesture over mid-swipe (a system edge gesture, a
+    // second finger). `touchend` never arrives in that case, so without this
+    // the track stays parked wherever the finger left it and the next
+    // `touchmove` measures from a stale origin.
+    const onTouchCancel = () => {
+      swipeTouchStartX.current = null;
+      swipeTouchStartY.current = null;
+      swipeDirectionLocked.current = null;
+      swipeCurrentDx.current = 0;
+
+      const track = swipeTrackRef.current;
+      if (track) {
+        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transform = centreTransform();
+      }
+    };
+
     viewport.addEventListener("touchstart", onTouchStart, { passive: true });
-    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
     viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+    viewport.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
     return () => {
       // Retire any commit still in flight: the pending timer would otherwise
@@ -505,6 +557,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       viewport.removeEventListener("touchstart", onTouchStart);
       viewport.removeEventListener("touchmove", onTouchMove);
       viewport.removeEventListener("touchend", onTouchEnd);
+      viewport.removeEventListener("touchcancel", onTouchCancel);
     };
   }, [isMobile, readingState]);
 
@@ -604,8 +657,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }, 50);
   };
 
+  // On mobile the reader's chapter panel is the scroll container, so the card
+  // goes inside it (via `belowContent`) and is reached by scrolling to the end
+  // of the passage. On desktop the pane itself scrolls, so it stays a sibling
+  // rendered after the reader.
+  const belongsCard = (
+    <ReadingPlanBelongsCard state={state} readingState={readingState} />
+  );
+
   const mobileChrome = isMobile
     ? {
+        belowContent: belongsCard,
         isScrolled,
         prevChapterPreview,
         nextChapterPreview,
@@ -639,6 +701,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         mobileChrome={mobileChrome}
         sharedSession={tab.sharedSession}
       />
+      {!isMobile && belongsCard}
       {!isMobile && (
         <BelowReaderToolbar
           toolsManager={state.tools}
@@ -727,7 +790,7 @@ function EmptySlotToolbar({
                         item.onSelect();
                         setSelectedToolId(null);
                       }}
-                      className="sb-tool-context-menu-item"
+                      className="sb-tool-context-menu-item ssd"
                     >
                       <MenuItemIcon />
                       <span>{translateTitle(t, item.title)}</span>

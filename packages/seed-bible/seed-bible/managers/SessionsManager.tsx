@@ -8,6 +8,7 @@ import {
 import {
   createBibleReadingState,
   type BibleReadingState,
+  type InitialBibleReadingOptions,
   type VerseDecoration,
   type VerseDecorationInput,
 } from "../managers/BibleReadingManager";
@@ -22,6 +23,7 @@ import type {
 } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
+import type { AnnotationsManager } from "./AnnotationsManager";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -75,6 +77,22 @@ interface SessionData {
   chapterNumber: number | null;
   scrollToVerse: number | null;
 }
+
+/**
+ * Where a new session should begin reading.
+ *
+ * Seeded into the session's reading state at construction rather than
+ * navigated to afterwards, so the reader never loads the default book first —
+ * see `addTab`'s `initialReadingOptions` for the same reasoning.
+ *
+ * Chapter-level deliberately: a `scrollToVerse` seeded here does not survive
+ * to the rendered session tab, which opens at the top of the chapter either
+ * way, so it is left out rather than carried as a setting that does nothing.
+ */
+export type SessionStartPosition = Pick<
+  InitialBibleReadingOptions,
+  "initialTranslationId" | "initialBookId" | "initialChapterNumber"
+>;
 
 export interface SessionOptions {
   allowedNavigators: string[] | null;
@@ -357,6 +375,7 @@ function toSessionDecorationInput(
     endIndex: decoration.endIndex,
     className: decoration.className,
     style: decoration.style,
+    highlight: decoration.highlight,
     removeAfterMs: decoration.removeAfterMs,
     preserveOnChapterChange: decoration.preserveOnChapterChange,
     translationId: decoration.translationId,
@@ -527,6 +546,15 @@ export interface BibleReadingSession {
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
 
   /**
+   * Whether this client's own connection to the shared document is
+   * currently synced. False while resyncing (e.g. right after a mobile
+   * device resumes from the background) — during that window, this
+   * client's own view of `connectedUsers` can't be trusted to reflect who
+   * is actually still connected.
+   */
+  isSynced: ReadonlySignal<boolean>;
+
+  /**
    * Whether the given user is the session host, based on the session's current options.
    * @param user The user to check.
    */
@@ -581,15 +609,20 @@ async function createBibleReadingSession(
   i18nManager: I18nManager,
   readingExtensionManager: BibleReadingExtensionManager | undefined,
   id: string,
-  defaultOptions?: SessionOptions
+  defaultOptions?: SessionOptions,
+  startPosition?: SessionStartPosition,
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(
     dataManager,
     highlightsManager,
     i18nManager,
-    { isShared: true },
+    // `isShared` last: a caller's start position must not be able to turn a
+    // session's reading state back into an unshared one.
+    { ...startPosition, isShared: true },
     undefined,
-    readingExtensionManager
+    readingExtensionManager,
+    getAnnotationsManager
   );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
@@ -953,6 +986,23 @@ async function createBibleReadingSession(
 
   const initialSessionData = getSessionDataFromMap(stateMap);
   await queueRemoteSync(initialSessionData);
+
+  // Publish where the session starts immediately, instead of leaving it to the
+  // local publish debounce below: until the map holds a position there is
+  // nothing for a joiner to load, so they settle on the default book and
+  // publish *that* — pulling the host off the chapter they started from.
+  //
+  // Written after the initial sync above on purpose. Seeded any earlier, that
+  // sync would read our own position back out of the map and re-navigate the
+  // reader to the chapter it is already on, pushing a history entry for it.
+  if (startPosition?.initialBookId && !toStringOrNull(stateMap.get("bookId"))) {
+    document.transact(() => {
+      stateMap.set("translationId", startPosition.initialTranslationId ?? null);
+      stateMap.set("bookId", startPosition.initialBookId ?? null);
+      stateMap.set("chapterNumber", startPosition.initialChapterNumber ?? null);
+    });
+  }
+
   syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
@@ -1016,8 +1066,8 @@ async function createBibleReadingSession(
     }
   });
 
-  const remoteClientsSubscription = document.remoteClients.subscribe(
-    (event) => {
+  const subscribeToRemoteClients = () =>
+    document.remoteClients.subscribe((event) => {
       if (event.type === "client_connected") {
         connectedClients.set(event.client.connectionId, {
           ...event.client,
@@ -1029,6 +1079,41 @@ async function createBibleReadingSession(
 
       const nextVersion = ++remoteClientsVersion;
       void syncConnectedUsers(nextVersion);
+    });
+
+  let remoteClientsSubscription = subscribeToRemoteClients();
+
+  // Rebuilds the presence subscription from scratch. The OS reports every
+  // peer as disconnected when our own connection drops, but on reconnect it
+  // silently suppresses the re-sent peer list, so presence would otherwise
+  // stay empty forever — including our own entry (see `clearBranchDeviceCache`).
+  // Dropping the subscription resets the document's peer list, clearing the
+  // OS cache lets the re-sent list through, and re-subscribing asks for it.
+  const rebuildRemoteClientsSubscription = () => {
+    remoteClientsSubscription.unsubscribe();
+    os.clearBranchDeviceCache(null, id, "session_data");
+    connectedClients.clear();
+    remoteClientsSubscription = subscribeToRemoteClients();
+    void syncConnectedUsers(++remoteClientsVersion);
+  };
+
+  // `getSharedDocument()` already awaited the first sync before returning,
+  // so we start out synced. Keep listening for the life of the session —
+  // unlike that initial await, this lets callers tell "my own connection
+  // just dropped/is resyncing" apart from "the other client actually left".
+  const isSynced = signal(true);
+  const statusUpdatedSubscription = document.onStatusUpdated.subscribe(
+    (status) => {
+      if (status.type !== "sync") {
+        return;
+      }
+      const wasSynced = isSynced.value;
+      isSynced.value = status.synced;
+      // Only a genuine drop-and-recover needs the presence rebuild — not the
+      // initial sync, which already delivered a fresh peer list.
+      if (status.synced && !wasSynced) {
+        rebuildRemoteClientsSubscription();
+      }
     }
   );
 
@@ -1450,6 +1535,7 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
+    statusUpdatedSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
     stopExtensionSync?.();
@@ -1484,6 +1570,7 @@ async function createBibleReadingSession(
     allUsers,
     connectedUsers,
     currentUser,
+    isSynced,
     removeSharedDecoration,
     dispose,
     isHost,
@@ -1494,7 +1581,16 @@ async function createBibleReadingSession(
 }
 
 export interface SessionsManager {
-  createSession: () => Promise<BibleReadingSession>;
+  /**
+   * Creates a session.
+   *
+   * @param startPosition Where the session should open. Defaults to the
+   * reading state's own default position (the first book of the default
+   * translation) when omitted.
+   */
+  createSession: (
+    startPosition?: SessionStartPosition
+  ) => Promise<BibleReadingSession>;
   joinSession: (id: string) => Promise<BibleReadingSession>;
 }
 
@@ -1504,9 +1600,10 @@ export function createSessionsManager(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
-  readingExtensionManager?: BibleReadingExtensionManager
+  readingExtensionManager?: BibleReadingExtensionManager,
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): SessionsManager {
-  const createSession = async () => {
+  const createSession = async (startPosition?: SessionStartPosition) => {
     const id = createSessionId();
     // Claim host at create time so the settings UI knows which connected
     // user is allowed to change session-wide toggles.
@@ -1519,7 +1616,9 @@ export function createSessionsManager(
       i18nManager,
       readingExtensionManager,
       id,
-      { ...DEFAULT_SESSION_OPTIONS, hostUserId }
+      { ...DEFAULT_SESSION_OPTIONS, hostUserId },
+      startPosition,
+      getAnnotationsManager
     );
   };
 
@@ -1531,7 +1630,10 @@ export function createSessionsManager(
       highlightsManager,
       i18nManager,
       readingExtensionManager,
-      id
+      id,
+      undefined,
+      undefined,
+      getAnnotationsManager
     );
   };
 

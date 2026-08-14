@@ -285,8 +285,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("uses theme.variables.secondaryColor as userColor when multiple users", () => {
-      // eslint-disable-next-line
-      const getColorByReadingTime = vi.fn((args: any) => "#computed");
+      const getColorByReadingTime = vi.fn((_args: any) => "#computed");
       (useScriptureMapContext as Mock).mockReturnValue({
         ...makeScriptureMapContext(),
         readingHistoryService: { getColorByReadingTime },
@@ -337,8 +336,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("uses '#dfdede' as baseColor fallback when readerToolbarFloatingButtonBackground is undefined", () => {
-      // eslint-disable-next-line
-      const getColorByReadingTime = vi.fn((args: any) => "#computed");
+      const getColorByReadingTime = vi.fn((_args: any) => "#computed");
       (useScriptureMapContext as Mock).mockReturnValue({
         ...makeScriptureMapContext(),
         readingHistoryService: { getColorByReadingTime },

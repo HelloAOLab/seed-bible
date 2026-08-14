@@ -1,0 +1,274 @@
+/* "This reading belongs to" card — shown at the bottom of the passage */
+.sb-rpb-card {
+  --rpb-accent: var(--sb-primary-color);
+  --rpb-accent-contrast: var(--sb-primary-font-color, #fff);
+  --rpb-accent-soft: color-mix(in srgb, var(--rpb-accent) 10%, transparent);
+  --rpb-accent-border: color-mix(in srgb, var(--rpb-accent) 50%, transparent);
+  --rpb-border: var(--sb-divider-color, rgba(0, 0, 0, 0.12));
+  --rpb-muted: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+  --rpb-success: #059669;
+
+  box-sizing: border-box;
+  width: calc(100% - 32px);
+  max-width: 40rem;
+  margin: 16px auto 96px;
+  padding: 14px 16px;
+  border: 1px solid var(--rpb-border);
+  border-radius: 12px;
+  background: var(--sb-reader-background, #fff);
+  color: var(--sb-font-color);
+  font-family: "DM Sans", var(--sb-font-family, sans-serif);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sb-rpb-card-nudge {
+  border-color: var(--rpb-accent-border);
+  box-shadow: 0 0 0 3px var(--rpb-accent-soft);
+}
+
+.sb-rpb-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--rpb-muted);
+}
+
+.sb-rpb-nudge-text {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--rpb-accent);
+}
+
+.sb-rpb-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.sb-rpb-item + .sb-rpb-item {
+  border-top: 1px solid var(--rpb-border);
+}
+
+.sb-rpb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-rpb-plan-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-rpb-check {
+  display: inline-flex;
+  flex: none;
+  color: var(--rpb-muted);
+}
+
+.sb-rpb-check .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.sb-rpb-check-done {
+  color: var(--rpb-success);
+}
+
+.sb-rpb-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--rpb-accent-border);
+  border-radius: 8px;
+  background: var(--rpb-accent-soft);
+  color: var(--rpb-accent);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-rpb-mark .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-rpb-mark:hover {
+  background: color-mix(in srgb, var(--rpb-accent) 18%, transparent);
+}
+
+/* When the reader has genuinely read the passage, promote the button to a
+   solid accent fill and give it a gentle one-shot pulse to draw the eye. */
+.sb-rpb-mark-nudge {
+  background: var(--rpb-accent);
+  color: var(--rpb-accent-contrast);
+  border-color: var(--rpb-accent);
+  animation: sb-rpb-pulse 1.6s ease-in-out 2;
+}
+
+.sb-rpb-mark-nudge:hover {
+  background: var(--rpb-accent);
+  opacity: 0.92;
+}
+
+@keyframes sb-rpb-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--rpb-accent-soft);
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--rpb-accent-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-rpb-mark-nudge {
+    animation: none;
+  }
+}
+
+/* Top-right "you've read this" notification */
+.sb-rpb-toast {
+  --rpb-accent: var(--sb-primary-color);
+  --rpb-accent-contrast: var(--sb-primary-font-color, #fff);
+  --rpb-accent-soft: color-mix(in srgb, var(--rpb-accent) 12%, transparent);
+  --rpb-border: var(--sb-divider-color, rgba(0, 0, 0, 0.12));
+  --rpb-muted: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 14px;
+  border: 1px solid var(--rpb-border);
+  border-radius: 14px;
+  background: var(--sb-reader-background, #fff);
+  color: var(--sb-font-color);
+  font-family: "DM Sans", var(--sb-font-family, sans-serif);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  animation: sb-rpb-toast-in 0.25s ease-out;
+}
+
+@keyframes sb-rpb-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sb-rpb-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--rpb-accent-soft);
+  color: var(--rpb-accent);
+}
+
+.sb-rpb-toast-icon .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-rpb-toast-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sb-rpb-toast-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.sb-rpb-toast-sub {
+  font-size: 0.8125rem;
+  color: var(--rpb-muted);
+}
+
+.sb-rpb-toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.sb-rpb-toast-primary {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--rpb-accent);
+  color: var(--rpb-accent-contrast);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-rpb-toast-primary:hover {
+  opacity: 0.92;
+}
+
+.sb-rpb-toast-later {
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  color: var(--rpb-muted);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sb-rpb-toast-later:hover {
+  color: var(--sb-font-color);
+}
+
+.sb-rpb-toast-close {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--rpb-muted);
+  cursor: pointer;
+}
+
+.sb-rpb-toast-close .material-symbols-outlined {
+  font-size: 18px;
+}

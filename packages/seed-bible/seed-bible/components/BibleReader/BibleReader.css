@@ -278,6 +278,31 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
+.sb-bible-reader-mobile-header-notes {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  height: 2rem;
+  border-radius: 1rem;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  padding: 0 0.375rem;
+  margin-inline-start: 0;
+}
+
+.sb-bible-reader-mobile-header-notes:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-bible-reader-mobile-header-notes-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* Account ("You") avatar button — sits between the bookmark and settings
  * buttons in the mobile header, matching their 2rem circular footprint.
  * Replaced by the session participants stack when in a shared session. */
@@ -315,6 +340,7 @@
   flex: 1 1 auto;
   position: relative;
   overflow: hidden;
+  touch-action: pan-y;
   width: 100%;
   min-height: 0;
 }
@@ -336,7 +362,9 @@
 }
 .sb-bible-reader-mobile
   .sb-reader-swipe-panel:has(.sb-translation-license-notice) {
-  padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  /* Trailing chrome clearance when a license line is the last content —
+     chapter content drops its own inset in that case (see below). */
+  padding-bottom: var(--sb-reader-bottom-inset);
 }
 
 .sb-reader-swipe-panel {
@@ -345,7 +373,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
   scrollbar-width: none;
 }
 
@@ -410,7 +438,7 @@
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
 
-  padding-bottom: 8.125rem;
+  padding-bottom: var(--sb-reader-bottom-inset);
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
      Short enough to read as immediate rather than as an animation. */
@@ -421,6 +449,14 @@
      page background. */
   position: relative;
   isolation: isolate;
+}
+
+/* When a translation license notice follows the chapter, only the trailing
+   element reserves the bottom-chrome inset (mobile swipe panel padding, or
+   BelowReaderToolbar on desktop). Keep a small content gap here instead of a
+   second full inset, which stacked badly with a tall mobile verse sheet. */
+.sb-bible-reader:has(.sb-translation-license-notice) .sb-chapter-content {
+  padding-bottom: 1.5rem;
 }
 
 /* The highlight ribbons are drawn here, behind the text: an SVG overlay sized to
@@ -453,6 +489,22 @@
   .sb-highlight-ribbon-enter {
     opacity: 0;
   }
+}
+
+/* A highlight arriving from a shared session (or an extension) is outlined
+   rather than solid, so it reads as somebody else's mark laid over the page
+   instead of one of the reader's own. The reader's highlight is still there
+   underneath and returns to solid when the broadcast goes away. Same colour on
+   the stroke — only the amount of fill differs — so the colour still says who
+   picked what. One opacity serves both themes; the presets are light enough in
+   light mode and dark enough in dark mode to read at the same strength. */
+.sb-highlight-ribbon-broadcast {
+  fill-opacity: 0.5;
+  stroke-width: 2;
+  transition:
+    opacity 0.25s ease,
+    fill 0.25s ease,
+    stroke 0.25s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -559,11 +611,32 @@
   white-space: nowrap;
   vertical-align: middle;
   /* Phase 2 (UI-scaling): gutters in em so they track the reader glyph knob.
-     Color/opacity adopted from develop. */
+     Color/opacity adopted from develop.
+     The leading gutter is the only thing separating a verse number from the
+     end of the previous verse — verse text carries no spaces of its own — so
+     dropping it mashes them together ("...had your fill.²Do not work..."). It
+     has no bearing on the numbers-off case this fix is about: no number is
+     rendered then, which is why the space is inserted in the markup instead
+     (see `needsVerseSpacing` in BibleReader.tsx). */
   margin-inline-start: 0.625em;
   margin-inline-end: 0.3125em;
   color: inherit;
   opacity: 0.7;
+}
+
+.sb-verse-number-annotated {
+  border: 1px solid var(--sb-verse-font-color);
+  border-radius: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.sb-verse-annotation-icon {
+  cursor: pointer;
+}
+
+.sb-verse-number .material-symbols-outlined {
+  font-size: 1em;
 }
 
 .sb-poem-line-1 {

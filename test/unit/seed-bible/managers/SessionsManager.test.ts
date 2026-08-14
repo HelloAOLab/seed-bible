@@ -58,6 +58,28 @@ function createMockRemoteClientsObservable() {
   };
 }
 
+function createMockStatusUpdatedObservable() {
+  const subscribers = new Set<
+    (status: { type: string; synced?: boolean }) => void
+  >();
+
+  return {
+    subscribe: vi.fn(
+      (handler: (status: { type: string; synced?: boolean }) => void) => {
+        subscribers.add(handler);
+        return {
+          unsubscribe: () => subscribers.delete(handler),
+        };
+      }
+    ),
+    emit: (status: { type: string; synced?: boolean }) => {
+      for (const subscriber of subscribers) {
+        subscriber(status);
+      }
+    },
+  };
+}
+
 function createMockSharedMap(initial: Record<string, unknown> = {}) {
   const store = new Map<string, unknown>(Object.entries(initial));
   const subscribers = new Set<MockChangesSubscriber>();
@@ -299,11 +321,15 @@ describe("SessionsManager", () => {
   let mockOptionsMap: ReturnType<typeof createMockSharedMap>;
   let mockDecorationsMap: ReturnType<typeof createMockSharedMap>;
   let mockRemoteClients: ReturnType<typeof createMockRemoteClientsObservable>;
+  let mockStatusUpdated: ReturnType<typeof createMockStatusUpdatedObservable>;
   let mockDocument: {
     getMap: Mock;
     transact: Mock;
     unsubscribe: Mock;
     remoteClients: {
+      subscribe: Mock;
+    };
+    onStatusUpdated: {
       subscribe: Mock;
     };
   };
@@ -337,6 +363,7 @@ describe("SessionsManager", () => {
     mockUserProfilesMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
+    mockStatusUpdated = createMockStatusUpdatedObservable();
     mockDocument = {
       getMap: vi.fn((name: string) => {
         if (name === "options") {
@@ -361,6 +388,9 @@ describe("SessionsManager", () => {
       unsubscribe: vi.fn(),
       remoteClients: {
         subscribe: mockRemoteClients.subscribe,
+      },
+      onStatusUpdated: {
+        subscribe: mockStatusUpdated.subscribe,
       },
     };
 
@@ -432,6 +462,76 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
     });
+  });
+
+  it("createSession(startPosition) builds the session's reader at that position", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession({
+      initialTranslationId: "BSB",
+      initialBookId: "LUK",
+      initialChapterNumber: 21,
+    });
+
+    // Seeded at construction rather than navigated to afterwards, so the
+    // session's reader never loads the default book first.
+    expect(createBibleReadingState).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      {
+        initialTranslationId: "BSB",
+        initialBookId: "LUK",
+        initialChapterNumber: 21,
+        isShared: true,
+      },
+      undefined,
+      undefined,
+      undefined
+    );
+  });
+
+  it("createSession(startPosition) publishes the start position without waiting for the publish debounce", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession({
+      initialTranslationId: "BSB",
+      initialBookId: "LUK",
+      initialChapterNumber: 21,
+    });
+
+    // Deliberately no `flushPublishDebounce()`: until the map holds a position
+    // there is nothing for a joiner to load, so they would settle on the
+    // default book and publish that back over the host.
+    expect(mockMap.set).toHaveBeenCalledWith("translationId", "BSB");
+    expect(mockMap.set).toHaveBeenCalledWith("bookId", "LUK");
+    expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 21);
+  });
+
+  it("createSession() without a start position leaves the shared position empty", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+
+    await manager.createSession();
+
+    expect(mockMap.set).not.toHaveBeenCalled();
   });
 
   it("joinSession(id) loads and returns a session with the given ID", async () => {
@@ -828,6 +928,56 @@ describe("SessionsManager", () => {
     await waitFor(() => session.readingState.decorations.value.length === 1);
 
     expect(session.readingState.decorations.value).toEqual([remoteDecoration]);
+  });
+
+  it("applies a shared decoration's highlight to the reading state", async () => {
+    mockMap = createMockSharedMap({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    // `toSessionDecorationInput` copies fields one at a time, so a decoration
+    // field that isn't listed there reaches nobody.
+    const remoteDecoration: VerseDecoration = {
+      id: "shared-highlight:GEN:1:3",
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verses: [3],
+      highlight: { colorId: "green" },
+    };
+
+    mockDecorationsMap = createMockSharedMap({
+      [JSON.stringify(["conn-other", "shared-highlight:GEN:1:3"])]:
+        remoteDecoration,
+    });
+    mockDocument.getMap.mockImplementation((name: string) => {
+      if (name === "options") {
+        return mockOptionsMap;
+      }
+
+      if (name === "decorations") {
+        return mockDecorationsMap;
+      }
+
+      return mockMap;
+    });
+
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() => session.readingState.decorations.value.length === 1);
+
+    expect(session.readingState.decorations.value[0]?.highlight).toEqual({
+      colorId: "green",
+    });
   });
 
   it("applies removeAfterMs from shared decorations", async () => {
@@ -1419,6 +1569,160 @@ describe("SessionsManager", () => {
     session.dispose();
 
     expect(mockDocument.unsubscribe).toHaveBeenCalled();
+  });
+
+  it("isSynced starts true and tracks the document's sync status updates", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    // getSharedDocument() already awaited the first sync before resolving,
+    // so a freshly joined session starts out trusted.
+    expect(session.isSynced.value).toBe(true);
+
+    mockStatusUpdated.emit({ type: "sync", synced: false });
+    expect(session.isSynced.value).toBe(false);
+
+    mockStatusUpdated.emit({ type: "sync", synced: true });
+    expect(session.isSynced.value).toBe(true);
+
+    // Other status message types (e.g. "connection") don't affect it.
+    mockStatusUpdated.emit({ type: "connection" });
+    expect(session.isSynced.value).toBe(true);
+  });
+
+  it("dispose() unsubscribes from the status-updated observable", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    session.dispose();
+    mockStatusUpdated.emit({ type: "sync", synced: false });
+
+    // The subscription was torn down by dispose(), so this emission after
+    // teardown should not reach the (now-stale) signal.
+    expect(session.isSynced.value).toBe(true);
+  });
+
+  // Regression coverage for #1346: after the local connection drops and
+  // recovers, the OS suppresses the peer list it re-sends, so presence would
+  // stay empty forever (self included) unless the subscription is rebuilt and
+  // the OS's stale peer cache is cleared first.
+  describe("presence recovery after a reconnect", () => {
+    let clearBranchDeviceCacheSpy: Mock;
+
+    beforeEach(() => {
+      // Stub the cache purge — the real one lazily builds the inst client,
+      // which would open a websocket.
+      clearBranchDeviceCacheSpy = vi
+        .spyOn(os, "clearBranchDeviceCache")
+        .mockImplementation(() => undefined) as unknown as Mock;
+    });
+
+    async function joinSession() {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      return manager.joinSession("group-abc");
+    }
+
+    it("rebuilds the presence subscription and clears the stale peer cache when the connection recovers", async () => {
+      const session = await joinSession();
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(1);
+
+      // The connection drops: the OS reports every peer as gone, ourselves
+      // included, which is what empties the list.
+      mockRemoteClients.emit({
+        type: "client_disconnected",
+        isSelf: true,
+        client: { connectionId: "test-config-bot-id", userId: null },
+      });
+      mockStatusUpdated.emit({ type: "sync", synced: false });
+      await waitFor(() => session.connectedUsers.value.length === 0);
+
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+
+      expect(clearBranchDeviceCacheSpy).toHaveBeenCalledWith(
+        null,
+        "group-abc",
+        "session_data"
+      );
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(2);
+    });
+
+    it("repopulates connected users from the peer list replayed after the rebuild", async () => {
+      const session = await joinSession();
+
+      mockStatusUpdated.emit({ type: "sync", synced: false });
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+
+      // The fresh watch request gets the full current peer list back, which
+      // the re-established subscription now receives.
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: "test-config-bot-id", userId: null },
+      });
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: false,
+        client: { connectionId: "host-conn", userId: "host-user" },
+      });
+
+      await waitFor(() => session.connectedUsers.value.length === 2);
+      expect(session.connectedUsers.value.some((user) => user.isSelf)).toBe(
+        true
+      );
+      expect(
+        session.connectedUsers.value.map((user) => user.connectionId).sort()
+      ).toEqual(["host-conn", "test-config-bot-id"]);
+    });
+
+    it("does not rebuild on the initial sync, which already delivered a peer list", async () => {
+      await joinSession();
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(1);
+
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+
+      expect(clearBranchDeviceCacheSpy).not.toHaveBeenCalled();
+      expect(mockRemoteClients.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("stops tracking presence after dispose(), including across a rebuild", async () => {
+      const session = await joinSession();
+
+      mockStatusUpdated.emit({ type: "sync", synced: false });
+      mockStatusUpdated.emit({ type: "sync", synced: true });
+      session.dispose();
+
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: false,
+        client: { connectionId: "late-conn", userId: "late-user" },
+      });
+
+      // The rebuilt subscription (not just the original one) must be the one
+      // dispose() tore down.
+      expect(
+        session.connectedUsers.value.some(
+          (user) => user.connectionId === "late-conn"
+        )
+      ).toBe(false);
+    });
   });
 
   it("tracks connected users from remoteClients and loads profiles for authenticated users", async () => {

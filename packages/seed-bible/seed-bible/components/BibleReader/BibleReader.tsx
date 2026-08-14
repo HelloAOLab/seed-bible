@@ -3,7 +3,12 @@ import {
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
-import type { JSX, RefObject } from "preact";
+import {
+  Fragment,
+  type ComponentChildren,
+  type JSX,
+  type RefObject,
+} from "preact";
 import {
   Suspense,
   useEffect,
@@ -33,6 +38,11 @@ import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import {
+  annotationVerseNumbers,
+  type Annotation,
+  type AnnotationsManager,
+} from "../../managers/AnnotationsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
@@ -125,6 +135,60 @@ function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
   );
 }
 
+interface ChapterNotesButtonProps {
+  state: SeedBibleState;
+  bookId: string | null;
+  chapterNumber: number | null;
+}
+
+/**
+ * Shows the note count for the chapter currently in view; hidden entirely
+ * when the chapter has no annotations. Opens the Discover pane, which lists
+ * the chapter's annotations grouped by verse range.
+ */
+function ChapterNotesButton(props: ChapterNotesButtonProps) {
+  const { state, bookId, chapterNumber } = props;
+  const { t } = useI18n();
+  const noteCount =
+    bookId && chapterNumber
+      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+          .length
+      : 0;
+
+  if (noteCount === 0) {
+    return null;
+  }
+
+  const label = t("chapter-notes-count", {
+    defaultValue: "{{count}} notes for this chapter",
+    count: noteCount,
+  });
+
+  return (
+    <button
+      type="button"
+      className="sb-bible-reader-mobile-header-notes"
+      // Mirrors the account button below: stop the tap here so the reader
+      // pane wrapper's pointerdown handler doesn't interfere with opening
+      // Discover.
+      onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+        state.app.openDiscover();
+      }}
+      aria-label={label}
+      title={label}
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        sticky_note_2
+      </span>
+      <span className="sb-bible-reader-mobile-header-notes-count">
+        {noteCount}
+      </span>
+    </button>
+  );
+}
+
 interface VerseLine {
   indentLevel: number;
   parts: ChapterVerse["content"];
@@ -179,6 +243,16 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
+}
+
+/**
+ * A highlight resolved for one verse, plus where it came from. `broadcast` is
+ * true for a highlight carried by a decoration — a session peer's, or an
+ * extension's — as opposed to one the reader saved themselves.
+ */
+interface ResolvedHighlight {
+  highlight: ChapterHighlight;
+  broadcast: boolean;
 }
 
 function hasContentTargeting(decoration: VerseDecoration): boolean {
@@ -521,24 +595,83 @@ function renderChapterContent(
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
   highlights: ChapterHighlight[],
   decorations: VerseDecoration[],
-  scriptureElements: ScriptureElementsBehavior
+  chapterAnnotations: Annotation[],
+  scriptureElements: ScriptureElementsBehavior,
+  onAnnotationVerseClick: (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => void
 ) {
   if (!chapterData) {
     return null;
   }
 
-  const getVerseHighlight = (verseNumber: number): ChapterHighlight | null => {
+  const getVerseDecorations = (verseNumber: number) => {
+    return decorations.filter(
+      (decoration) =>
+        (!decoration.translationId ||
+          decoration.translationId === chapterData.translation.id) &&
+        decoration.bookId === chapterData.book.id &&
+        decoration.chapterNumber === chapterData.chapter.number &&
+        decoration.verses.includes(verseNumber)
+    );
+  };
+
+  // Decorations asking to be drawn as highlights (`decoration.highlight`),
+  // flattened to one entry per verse. Content-targeted decorations are skipped:
+  // the ribbon layer works per verse-run and can't paint a text fragment.
+  // Later decorations win, matching how their CSS is layered below.
+  const decorationHighlights = new Map<number, ChapterHighlight>();
+  for (const decoration of decorations) {
+    if (!decoration.highlight || hasContentTargeting(decoration)) {
+      continue;
+    }
+    if (
+      (decoration.translationId &&
+        decoration.translationId !== chapterData.translation.id) ||
+      decoration.bookId !== chapterData.book.id ||
+      decoration.chapterNumber !== chapterData.chapter.number
+    ) {
+      continue;
+    }
+    for (const verseNumber of decoration.verses) {
+      decorationHighlights.set(verseNumber, {
+        ...decoration.highlight,
+        verse: verseNumber,
+      });
+    }
+  }
+
+  // `showHighlights` hides the reader's *saved* highlights. Decoration
+  // highlights are a live signal from a session peer or an extension, so they
+  // stay visible either way — as they did when they were plain CSS.
+  //
+  // `broadcast` distinguishes the two for rendering: a decoration highlight is
+  // drawn as an outline, a saved one as a solid ribbon. A broadcast covers the
+  // reader's own highlight rather than replacing it, so the outline is what
+  // says "this isn't yours, and yours is still underneath".
+  const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    const decorated = decorationHighlights.get(verseNumber);
+    if (decorated) {
+      return { highlight: decorated, broadcast: true };
+    }
+
+    if (!scriptureElements.showHighlights) {
+      return null;
+    }
+
     for (const highlight of highlights) {
       if (typeof highlight.verse === "number") {
         if (highlight.verse === verseNumber) {
-          return highlight;
+          return { highlight, broadcast: false };
         }
         continue;
       }
 
       const [start, end] = highlight.verse;
       if (verseNumber >= start && verseNumber <= end) {
-        return highlight;
+        return { highlight, broadcast: false };
       }
     }
 
@@ -549,27 +682,43 @@ function renderChapterContent(
   // ChapterContent), so a highlighted run's wrapper paints no background itself.
   // It only carries the readable font color and a `fill` (a CSS-var reference for
   // preset colors, or the custom hex) that the layer reads back off the DOM.
-  const getHighlightPresentation = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  const getHighlightPresentation = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return {
         className: "",
         style: undefined as JSX.CSSProperties | undefined,
         fill: null as string | null,
+        broadcast: false,
       };
     }
 
-    if (highlight.customColor && highlight.customFontColor) {
+    const { highlight, broadcast } = resolved;
+
+    // A custom colour stands on its own — the font colour is optional and the
+    // text inherits when it's absent. Requiring both meant a highlight with
+    // only a custom colour silently rendered as its preset instead.
+    if (highlight.customColor) {
       return {
         className: "sb-highlight",
-        style: { color: highlight.customFontColor } as JSX.CSSProperties,
+        style: highlight.customFontColor
+          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
+          : undefined,
         fill: highlight.customColor,
+        broadcast,
       };
     }
 
+    // The `transparent` fallback matters: a colorId with no matching theme
+    // variable would otherwise make `fill` invalid at computed-value time, and
+    // `fill` inherits down to its initial value of black — a solid black bar
+    // behind the verse. Colour ids don't all come from our own picker (an
+    // extension can pass one through from a chat message), so an unrecognised
+    // one has to fail invisible.
     return {
       className: `sb-highlight sb-highlight-${highlight.colorId}`,
       style: undefined as JSX.CSSProperties | undefined,
-      fill: `var(--sb-highlight-${highlight.colorId}-color)`,
+      fill: `var(--sb-highlight-${highlight.colorId}-color, transparent)`,
+      broadcast,
     };
   };
 
@@ -597,25 +746,72 @@ function renderChapterContent(
     );
   };
 
-  const getVerseDecorations = (verseNumber: number) => {
-    return decorations.filter(
-      (decoration) =>
-        (!decoration.translationId ||
-          decoration.translationId === chapterData.translation.id) &&
-        decoration.bookId === chapterData.book.id &&
-        decoration.chapterNumber === chapterData.chapter.number &&
-        decoration.verses.includes(verseNumber)
-    );
-  };
-
-  const getHighlightColorKey = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
+  // Also keys on `broadcast`, so a broadcast highlight never merges into one run
+  // with a saved highlight of the same colour — they draw differently.
+  const getHighlightColorKey = (resolved: ResolvedHighlight | null) => {
+    if (!resolved) {
       return null;
     }
-    if (highlight.customColor && highlight.customFontColor) {
-      return `custom:${highlight.customColor}:${highlight.customFontColor}`;
+    const { highlight, broadcast } = resolved;
+    const prefix = broadcast ? "broadcast:" : "";
+    if (highlight.customColor) {
+      return `${prefix}custom:${highlight.customColor}:${highlight.customFontColor ?? ""}`;
     }
-    return highlight.colorId;
+    return `${prefix}${highlight.colorId}`;
+  };
+
+  // Only matches an annotation to the verse number it *starts* at (the
+  // lowest verse it targets), not every verse it spans — a Genesis 1:3-6
+  // note marks verse 3 only, not 4, 5, and 6 too.
+  const getVerseAnnotations = (verseNumber: number): Annotation[] =>
+    chapterAnnotations.filter((annotation) => {
+      const verseNumbers = annotationVerseNumbers(annotation);
+      return (
+        verseNumbers.length > 0 && Math.min(...verseNumbers) === verseNumber
+      );
+    });
+
+  // Renders a verse's number when shown, boxed if the verse has a covering
+  // annotation; when verse numbers are hidden, an annotated verse still shows
+  // a `sticky_note_2` icon in that spot so the indicator survives the setting.
+  // An annotated number/icon is clickable, jumping straight to its note.
+  const renderVerseNumberOrIcon = (
+    verseNumber: number,
+    verse: BibleSelectedVerse
+  ) => {
+    const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
+    const handleAnnotationClick = (event: MouseEvent) =>
+      onAnnotationVerseClick(verse, verseNumber, event);
+
+    if (scriptureElements.showVerseNumbers) {
+      return (
+        <sup
+          className={
+            hasAnnotation
+              ? "sb-verse-number sb-verse-number-annotated"
+              : "sb-verse-number"
+          }
+          onClick={hasAnnotation ? handleAnnotationClick : undefined}
+          role={hasAnnotation ? "button" : undefined}
+          tabIndex={hasAnnotation ? 0 : undefined}
+        >
+          {verseNumber}
+        </sup>
+      );
+    }
+    if (!hasAnnotation) {
+      return null;
+    }
+    return (
+      <sup
+        className="sb-verse-number sb-verse-annotation-icon"
+        onClick={handleAnnotationClick}
+        role="button"
+        tabIndex={0}
+      >
+        <span className="material-symbols-outlined">sticky_note_2</span>
+      </sup>
+    );
   };
 
   // Renders a single verse's `<span class="sb-verse">`. The highlight background
@@ -691,9 +887,8 @@ function renderChapterContent(
                   className={verseDecoratorClassName}
                   style={verseDecoratorStyle}
                 >
-                  {segIndex === 0 && scriptureElements.showVerseNumbers && (
-                    <sup className="sb-verse-number">{value.number}</sup>
-                  )}
+                  {segIndex === 0 &&
+                    renderVerseNumberOrIcon(value.number, verse)}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -726,9 +921,7 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    scriptureElements.showVerseNumbers && (
-                      <sup className="sb-verse-number">{value.number}</sup>
-                    )}
+                    renderVerseNumberOrIcon(value.number, verse)}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -764,9 +957,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {scriptureElements.showVerseNumbers && (
-            <sup className="sb-verse-number">{value.number}</sup>
-          )}
+          {renderVerseNumberOrIcon(value.number, verse)}
           {value.content.map((part, index) =>
             renderInlineContent(
               part,
@@ -794,6 +985,21 @@ function renderChapterContent(
   const entries = chapterData.chapter.content;
   const nodes: (JSX.Element | null)[] = [];
 
+  // Verse text carries no leading/trailing spaces of its own — with numbers on,
+  // the number's own margins are what keep one verse off the back of the
+  // previous one. Hide the numbers and adjacent verses collide
+  // ("...had your fill.Do not work..."), so emit a real space between them.
+  // It sits between the verse spans rather than inside one, so highlight
+  // ribbons and verse selection still stop at a verse's own glyphs, and it
+  // collapses away at a line break like any other space.
+  const needsVerseSpacing = !scriptureElements.showVerseNumbers;
+  let previousWasVerse = false;
+
+  // Keyed so the separator is a first-class sibling of the keyed verses it sits
+  // between, rather than an unkeyed string mixed in among them. A fragment adds
+  // nothing to the DOM — what renders is the bare text node either way.
+  const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
+
   for (let i = 0; i < entries.length; ) {
     const entry = entries[i];
 
@@ -817,12 +1023,14 @@ function renderChapterContent(
           {heading}
         </h3>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (entry.type === "line_break") {
       nodes.push(<div key={`break-${i}`} className="sb-line-break" />);
+      previousWasVerse = false;
       i += 1;
       continue;
     }
@@ -842,15 +1050,19 @@ function renderChapterContent(
           )}
         </p>
       );
+      previousWasVerse = false;
       i += 1;
       continue;
     }
 
     if (isVerseEntry(entry)) {
-      const highlight = scriptureElements.showHighlights
-        ? getVerseHighlight(entry.number)
-        : null;
+      const highlight = getVerseHighlight(entry.number);
       const colorKey = getHighlightColorKey(highlight);
+
+      if (needsVerseSpacing && previousWasVerse) {
+        nodes.push(verseSeparator(`space-${i}`));
+      }
+      previousWasVerse = true;
 
       if (colorKey === null) {
         nodes.push(renderVerseNode(entry, i));
@@ -876,11 +1088,7 @@ function renderChapterContent(
           if (!isVerseEntry(next)) {
             break;
           }
-          const nextKey = getHighlightColorKey(
-            scriptureElements.showHighlights
-              ? getVerseHighlight(next.number)
-              : null
-          );
+          const nextKey = getHighlightColorKey(getVerseHighlight(next.number));
           const nextIsPoetry = splitVerseIntoSegments(next.content).some(
             (s) => s.type === "poetry"
           );
@@ -908,10 +1116,19 @@ function renderChapterContent(
           style={presentation.style}
           data-highlight-fill={presentation.fill ?? undefined}
           data-highlight-key={runKey}
+          data-highlight-broadcast={presentation.broadcast ? "true" : undefined}
         >
-          {runIndices.map((idx) =>
-            renderVerseNode(entries[idx] as ChapterVerse, idx)
-          )}
+          {runIndices.flatMap((idx, runIndex) => {
+            const verseNode = renderVerseNode(
+              entries[idx] as ChapterVerse,
+              idx
+            );
+            // Same separator as between top-level verses; inside a run it falls
+            // within the ribbon, which is correct — the whole run is one fill.
+            return needsVerseSpacing && runIndex > 0
+              ? [verseSeparator(`space-${idx}`), verseNode]
+              : [verseNode];
+          })}
         </span>
       );
       i = j;
@@ -951,6 +1168,12 @@ export interface BibleReaderMobileChromeProps {
   swipeTrackRef: RefObject<HTMLDivElement>;
   // A callback because it feeds component state, not just a ref.
   currentScrollerRefCallback: (el: HTMLDivElement | null) => void;
+  /**
+   * Rendered inside the scrolling chapter panel, after the passage. On mobile
+   * the panel is the scroll container, so anything placed here is reached by
+   * scrolling to the end of the chapter rather than sitting over the text.
+   */
+  belowContent?: ComponentChildren;
 }
 
 function renderStaticChapterContent(
@@ -965,7 +1188,9 @@ function renderStaticChapterContent(
     () => {},
     [],
     [],
-    scriptureElements
+    [],
+    scriptureElements,
+    () => {}
   );
 }
 
@@ -976,6 +1201,7 @@ interface Ribbon {
   key: string;
   d: string;
   fill: string;
+  broadcast: boolean;
   first: number;
   last: number;
   enter: boolean;
@@ -1029,6 +1255,7 @@ interface ChapterContentProps {
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
+  annotations?: AnnotationsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1038,6 +1265,11 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  onAnnotationVerseClick: (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => void;
   /**
    * True while this is the chapter the reader has *left* — shown dimmed until
    * the chapter they navigated to arrives.
@@ -1053,12 +1285,23 @@ function ChapterContent(props: ChapterContentProps) {
     selectedVerses,
     highlights,
     decorations,
+    annotations,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
     justConvertedSelectionRef,
     scriptureElements,
+    onAnnotationVerseClick,
   } = props;
+
+  const currentChapter = chapterData.value;
+  const chapterAnnotations =
+    currentChapter && annotations
+      ? annotations.getAnnotationsForChapter(
+          currentChapter.book.id,
+          currentChapter.chapter.number
+        ).value
+      : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [ribbons, setRibbons] = useState<Ribbon[]>([]);
@@ -1130,6 +1373,7 @@ function ChapterContent(props: ChapterContentProps) {
         el,
         key: el.getAttribute("data-highlight-key") || `i${index}`,
         fill: el.getAttribute("data-highlight-fill") ?? "",
+        broadcast: el.getAttribute("data-highlight-broadcast") === "true",
         lines: collectLineRects(el, box.left, box.top),
         leadPad: padX,
         trailPad: padX,
@@ -1161,6 +1405,7 @@ function ChapterContent(props: ChapterContentProps) {
       key: string;
       d: string;
       fill: string;
+      broadcast: boolean;
       first: number;
       last: number;
     }> = [];
@@ -1180,6 +1425,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: `${chapterId}:${run.key}`,
         d,
         fill: run.fill,
+        broadcast: run.broadcast,
         first,
         last,
       });
@@ -1224,6 +1470,7 @@ function ChapterContent(props: ChapterContentProps) {
         key: r.key,
         d: r.d,
         fill: r.fill,
+        broadcast: r.broadcast,
         first: r.first,
         last: r.last,
         enter,
@@ -1317,14 +1564,19 @@ function ChapterContent(props: ChapterContentProps) {
         {ribbons.map((ribbon) => (
           <path
             key={ribbon.key}
-            className={
-              ribbon.enter
-                ? "sb-highlight-ribbon sb-highlight-ribbon-enter"
-                : "sb-highlight-ribbon"
-            }
+            className={[
+              "sb-highlight-ribbon",
+              ribbon.enter ? "sb-highlight-ribbon-enter" : "",
+              ribbon.broadcast ? "sb-highlight-ribbon-broadcast" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             d={ribbon.d}
             style={{
               fill: ribbon.fill,
+              // Same colour on the stroke; the class decides how much of the
+              // fill shows through.
+              stroke: ribbon.broadcast ? ribbon.fill : undefined,
               opacity: ribbon.exiting ? 0 : undefined,
             }}
           />
@@ -1345,7 +1597,9 @@ function ChapterContent(props: ChapterContentProps) {
         (noteId) => selectFootnote(noteId),
         highlights.value.highlights,
         decorations.value,
-        scriptureElements
+        chapterAnnotations,
+        scriptureElements,
+        onAnnotationVerseClick
       )}
     </div>
   );
@@ -1409,6 +1663,43 @@ export function BibleReader(props: BibleReaderProps) {
   );
 
   const isMobile = state?.app.isMobile.value ?? false;
+
+  // Clicking an annotated verse number selects the verse (like clicking its
+  // text does) and jumps straight to its note: expands and scrolls to it in
+  // the mobile verse toolbar, or opens/scrolls the Discover pane on desktop,
+  // where that toolbar isn't used.
+  const handleAnnotationVerseClick = (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => {
+    // The <sup> sits inside the verse's own clickable <span>; stop the tap
+    // here so selectVerse (a toggle) doesn't run twice and immediately undo
+    // itself.
+    event.stopPropagation();
+    selectVerse(verse, event.clientX, event.clientY);
+    if (!state) {
+      return;
+    }
+
+    if (isMobile) {
+      readingState.pendingAnnotationScrollVerse.value = verseNumber;
+      return;
+    }
+
+    // Set the target before (maybe) opening: if Discover is already open,
+    // openDiscover() would just toggle it *closed* — only open when it isn't
+    // already showing, and let the effect in AnnotationsSection react to the
+    // target either way.
+    state.discover.scrollToVerse.value = {
+      bookId: verse.bookId,
+      chapterNumber: verse.chapterNumber,
+      verseNumber,
+    };
+    if (!state.discover.isDiscoverOpen.value) {
+      state.app.openDiscover();
+    }
+  };
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
   // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
@@ -1695,9 +1986,11 @@ export function BibleReader(props: BibleReaderProps) {
               justConvertedSelectionRef={justConvertedSelectionRef}
               highlights={highlights}
               decorations={decorations}
+              annotations={state?.annotations}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
+              onAnnotationVerseClick={handleAnnotationVerseClick}
             />
           </Suspense>
         ))}
@@ -1728,6 +2021,10 @@ export function BibleReader(props: BibleReaderProps) {
           )}
         </>
       )}
+
+      {/* Undefined on desktop, where the caller renders this itself below the
+          reader — the desktop pane is its own scroll container. */}
+      {mobileChrome?.belowContent}
     </>
   );
 
@@ -1773,6 +2070,11 @@ export function BibleReader(props: BibleReaderProps) {
               playlists={state.playlists}
               features={state.features}
               className="sb-quick-toolbar-mobile-header"
+            />
+            <ChapterNotesButton
+              state={state}
+              bookId={bookId.value}
+              chapterNumber={chapterNumber.value}
             />
             {!state.playlists.playing.value && (
               <ReaderBookmarkButton
@@ -1959,6 +2261,7 @@ export function BibleReader(props: BibleReaderProps) {
             <div className="sb-footnote-modal-content">
               <VerseReferenceText
                 text={selectedFootnote.value.note.text}
+                books={translationBooks.value?.books}
                 onReferenceClick={(ref) => {
                   selectFootnote(null);
                   void state?.app.openVerseReference(ref);

@@ -587,6 +587,28 @@ describe("HighlightsManager", () => {
     await manager.unhighlightVerses("BSB", "GEN", 1, [2, 3, 6, 7]);
 
     expect(recordDataMock).toHaveBeenCalledTimes(0);
+    // Signed out there is nothing saved to remove, so the clear resolves no
+    // account at all. Prompting would put a login modal in front of someone
+    // clearing a highlight that was never in their records — a shared
+    // session's broadcast highlight, say.
+    expect(login.login).not.toHaveBeenCalled();
+    expect(getDataMock).not.toHaveBeenCalled();
+  });
+
+  it("unhighlightVerses() does not write when no saved highlight covers the verses", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        highlights: [{ colorId: "color-7", verse: [5, 8] }],
+      },
+    });
+    const manager = createHighlightsManager(os, login);
+
+    await manager.unhighlightVerses("BSB", "GEN", 1, [1, 2]);
+
+    // Nothing on these verses to remove, so the write would have stored an
+    // unchanged set.
+    expect(recordDataMock).not.toHaveBeenCalled();
   });
 
   it("highlightVerses() does nothing for an empty verse list, without asking the user to sign in", async () => {

@@ -1,0 +1,448 @@
+/* Compare pane. The surrounding shell (docking, background, mobile-fullscreen)
+   comes from the managed side pane (`SidePane`/`PaneLayout`), so this only lays
+   out the content column and the pinned Add Translation bar.
+
+   The reorder list deliberately reuses the `.sb-discover-*` classes from
+   `DiscoverPane.css` (always in the main bundle) so it matches the playlist
+   editor exactly rather than drifting from it. */
+
+.sb-compare-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--sb-font-color);
+}
+
+/* Only this scrolls, so the Add Translation bar below stays put. A column so
+   the empty-state note can take the leftover height and centre itself in it. */
+.sb-compare-scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* Shown when the only block is the translation being read. */
+.sb-compare-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.sb-compare-empty-icon {
+  font-size: 2.5rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 65%);
+}
+
+.sb-compare-empty-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-compare-empty-hint {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-compare-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-compare-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+}
+
+/* Abbreviation on the left, full translation name on the right. */
+.sb-compare-block-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+/* Every header except the one being read is a button that switches the reader
+   to that translation. Styled to look like the plain header it replaces. */
+.sb-compare-block-header--switch {
+  border-top: none;
+  border-inline: none;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-compare-block-header--switch:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-compare-block-header--switch:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-compare-block-abbreviation {
+  flex: 0 0 auto;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sb-compare-block-name {
+  flex: 1;
+  min-width: 0;
+  text-align: end;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-compare-block-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-compare-block-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.sb-compare-verse-number {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: super;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-compare-block-message {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-compare-retry {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-compare-retry:hover {
+  background: var(--sb-divider-color);
+}
+
+/* Bottom padding matches `.sb-compare-picker`'s padding, so "Add translation"
+   and "Done" line up when switching screens. */
+.sb-compare-add-bar {
+  flex: 0 0 auto;
+  padding: 8px 12px 12px;
+}
+
+.sb-compare-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-compare-add-button:hover {
+  opacity: 0.9;
+}
+
+/* On desktop the floating reader toolbar can drift over this pane and cover
+   the button below; reserve clearance for it. Mobile panes render fullscreen
+   and already inset for the toolbar, so they don't need this. */
+@media (min-width: 481px) {
+  .sb-compare-add-bar {
+    padding-bottom: calc(
+      var(--sb-reader-toolbar-bottom) + var(--sb-reader-toolbar-button-height) +
+        0.75rem
+    );
+  }
+
+  /* Minus the 0.75rem buffer above: `.sb-compare-picker`'s own bottom padding
+     already supplies it. */
+  .sb-compare-picker-done {
+    margin-bottom: calc(
+      var(--sb-reader-toolbar-bottom) + var(--sb-reader-toolbar-button-height)
+    );
+  }
+}
+
+/* The label keeps its width; the reference is what truncates when the header
+   runs out of room. */
+.sb-compare-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.sb-compare-title {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sb-compare-reference {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+/* Pins Add Translation to the bottom instead of scrolling with the list,
+   matching the main Compare screen. */
+.sb-compare-settings-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* `.sb-discover-pane` is now a flex child, not the full-height scroller. */
+.sb-compare-settings.sb-discover-pane {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 12px;
+}
+
+.sb-compare-settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  cursor: pointer;
+}
+
+.sb-compare-settings-button:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-font-color);
+}
+
+/* Centred rather than baseline-aligned: a long translation name wraps to two
+   lines, and baseline alignment pinned the abbreviation and the "currently
+   reading" note to the first of them, leaving them floating above the rest of
+   the row. Centring lines them up with each other and with the row's remove
+   button. */
+.sb-compare-settings-label {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Let the name take the slack so the note stays at the end of the row. */
+.sb-compare-settings-label .sb-discover-item-title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The current translation's row: pinned, no drag handle. */
+.sb-compare-settings-pinned {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-compare-settings-pin {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-compare-picker-note {
+  flex: 0 0 auto;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-compare-picker {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+  gap: 8px;
+  color: var(--sb-font-color);
+}
+
+/* Translations already in the comparison. */
+.sb-compare-picker-selected {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Scrolls past ~3.5 rows so a long comparison doesn't push the rest down. */
+.sb-compare-picker-selected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 7rem;
+  overflow-y: auto;
+}
+
+.sb-compare-picker-selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-compare-picker-selected-chip:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-compare-picker-selected-chip:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-compare-picker-selected-chip .material-symbols-outlined {
+  font-size: 1rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+/* Search input and catalog filter share a row; the filter's menu is anchored
+   to it. */
+.sb-compare-picker-search-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Override the modal-oriented width the reader's `.searchbar` carries — in the
+   pane it takes whatever the filter button leaves. */
+.sb-compare-picker .sb-compare-search {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.sb-compare-filters-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-compare-filters-button:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-compare-filters-button:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-compare-filters-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 10;
+  min-width: 12.5rem;
+  padding: 0.3125rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.5rem;
+  background: var(--sb-menu-background, var(--sb-background));
+  box-shadow: 0 4px 12px var(--sb-shadow-color);
+}
+
+/* The shared list has a fixed height suited to the reader's modal; in the pane
+   it should take whatever room is left above the Done bar. */
+.sb-compare-picker .sb-translation-list {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.sb-compare-picker-done {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-compare-picker-done:hover {
+  opacity: 0.9;
+}

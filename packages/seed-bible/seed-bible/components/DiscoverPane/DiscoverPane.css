@@ -37,7 +37,12 @@
   font-weight: 600;
 }
 
-.sb-discover-create {
+/* Overrides `.sb-context-menu-button`'s icon-button sizing (fixed
+   width/height, zero padding) — the "+ Create" trigger keeps its original
+   pill-button look now that it's a `ContextMenuWithButton`. */
+.sb-discover-create.sb-context-menu-button {
+  width: auto;
+  height: auto;
   padding: 6px 12px;
   border: 1px solid var(--sb-primary-color);
   border-radius: 8px;
@@ -47,8 +52,9 @@
   cursor: pointer;
 }
 
-.sb-discover-create:hover {
+.sb-discover-create.sb-context-menu-button:hover {
   opacity: 0.9;
+  background: var(--sb-primary-color);
 }
 
 /*
@@ -57,7 +63,8 @@
  * playlist/cross-reference/study-note/content sections. CreatePlaylistForm
  * and PlayPlaylistView reuse the same classes for their own item lists.
  */
-.sb-discover-list {
+.sb-discover-list,
+.sb-annotation-group-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -86,13 +93,45 @@
   cursor: pointer;
 }
 
-.sb-discover-item-main {
+.sb-annotation-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Annotation row (see `AnnotationGroupSection`) — its own class rather than
+   reusing `.sb-discover-item`/`.sb-discover-item--row` so it can diverge
+   visually (e.g. no border) without affecting playlists/cross-references/
+   study notes/content, which still use the shared discover-item classes. */
+.sb-annotation-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sb-annotation-item-preview {
+  font-size: 0.9rem;
+
+  & p {
+    margin: 0;
+  }
+}
+
+.sb-discover-item-main,
+.sb-annotation-item-main {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
   flex: 1;
   min-width: 0;
+}
+
+.sb-annotation-item-main {
+  gap: 4px;
 }
 
 .sb-discover-item-edit,
@@ -172,6 +211,57 @@
 .sb-discover-item-description {
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+/* One verse-range group of annotations (see `AnnotationGroupSection`): a
+   collapsible header plus its `.sb-discover-list` of annotation rows. */
+.sb-annotation-group + .sb-annotation-group {
+  margin-top: 4px;
+}
+
+.sb-annotation-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 0px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--sb-font-color);
+  text-align: start;
+}
+
+.sb-annotation-group-header-icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  transition: transform 0.15s ease;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-annotation-group-header-icon--collapsed {
+  transform: rotate(-90deg);
+}
+
+.sb-annotation-group-header-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sb-annotation-comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+  font-style: italic;
+}
+
+.sb-annotation-comment-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
 }
 
 .sb-discover-item-content {

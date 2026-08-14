@@ -58,7 +58,7 @@ export const TestamentContent = memo(
               );
             case "booksContainer":
               return (
-                <BooksContainer key={data.content[0]?.key}>
+                <BooksContainer key={data.content[0]?.key} masonry>
                   {data.content.map(({ key, ...restOfBookData }) => (
                     <Book key={key} {...restOfBookData} />
                   ))}

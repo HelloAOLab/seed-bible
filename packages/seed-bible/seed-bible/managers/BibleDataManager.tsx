@@ -4,6 +4,7 @@ import {
   FreeUseBibleAPI,
   type ApiRequestOptions,
   type Translation,
+  type TranslationBook,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
@@ -12,6 +13,7 @@ import {
   type OfflineTranslationsManager,
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
+import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 
 /** How a set of translations should be folded into the known-translations list. */
 export interface MergeTranslationsOptions {
@@ -236,20 +238,48 @@ export interface VerseRefMatch {
 }
 
 /**
+ * Resolves a typed book name to a {@link BookId} for free-text scanning and
+ * single-string refs in chat / footnotes.
+ *
+ * When `books` is provided, only an exact match on localized common name, name,
+ * or id is tried (e.g. spa_onbv "Esdras" → EZR). Deliberate prefix abbreviations
+ * are intentionally not used here — short ordinary words like "Is" / "So" would
+ * otherwise become false-positive Isaiah / Song of Solomon links. Falls back to
+ * the English name / USFM id map via {@link getBookId}, which is already
+ * conservative about prefixes.
+ */
+function resolveBookId(book: string, books?: TranslationBook[]): BookId | null {
+  if (books?.length) {
+    const exact = exactTranslationBook(normalizeBookName(book), books);
+    if (exact) {
+      return exact.id as BookId;
+    }
+  }
+
+  return getBookId(book);
+}
+
+/**
  * Parses the given verse reference.
  * Formatted like "GEN 1:1".
  *
  * @param text The reference to parse.
+ * @param books Optional current-translation books; searched before English
+ * names / book ids so localized labels (e.g. "Esdras") resolve correctly.
  */
-export function parseVerseReference(text: string): VerseRef | null {
+export function parseVerseReference(
+  text: string,
+  books?: TranslationBook[]
+): VerseRef | null {
   // Formats supported:
   //   GEN 1          – chapter only
   //   GEN 1:1        – chapter + verse
   //   GEN 5-7        – chapter range (hyphen, en dash, or em dash)
   //   GEN 5:16-19    – verse range within one chapter
   //   GEN 1:1-2:10   – cross-chapter verse range
+  // Book names may include non-ASCII letters (e.g. Spanish "Génesis").
   const match = text.match(
-    /^\s*([0-9A-Za-z\s]+)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/
+    /^\s*((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+\p{L}[\p{L}\p{N}]*)*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/u
   );
 
   if (!match) {
@@ -296,7 +326,7 @@ export function parseVerseReference(text: string): VerseRef | null {
       : undefined;
 
   return {
-    book: (getBookId(book) ?? book) as BookId,
+    book: (resolveBookId(book, books) ?? book) as BookId,
     chapter,
     verse,
     content,
@@ -308,14 +338,24 @@ export function parseVerseReference(text: string): VerseRef | null {
 /**
  * Finds and parses all verse references in the given text, returning each
  * with its character offsets (start inclusive, end exclusive).
+ *
+ * @param books Optional current-translation books; searched before English
+ * names / book ids so localized labels resolve correctly. Matching is exact
+ * (plus conservative English ids via {@link getBookId}); free-text scanning
+ * does not apply unique-prefix expansion of short tokens.
  */
-export function parseVerseReferences(text: string): VerseRefMatch[] {
+export function parseVerseReferences(
+  text: string,
+  books?: TranslationBook[]
+): VerseRefMatch[] {
   const results: VerseRefMatch[] = [];
-  // Book name patterns:
+  // Book name patterns (Unicode-aware so accented names like "Génesis" match):
   //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
-  //   [A-Za-z][A-Za-z0-9]* — word starting with a letter, e.g. "GEN", "John", "Kings"
+  //   \p{L}[\p{L}\p{N}]* — word starting with a letter in any script
+  //   (?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)? — optional "of …" for "Song of Solomon"
+  // Word boundary: not preceded by a letter/digit (ASCII \b alone fails for non-ASCII).
   const pattern =
-    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
+    /(?<![\p{L}\p{N}])((?:\d+\s?)?\p{L}[\p{L}\p{N}]*(?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)?)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/gu;
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
@@ -328,16 +368,35 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
       rangeEndStr,
     ] = match;
 
-    if (!bookStr || !chapterStr) continue;
+    // Rejected candidates must retry one character later. Otherwise a false
+    // hit like "See 1" consumes the leading digit of "1 Corinthians" and the
+    // real numbered-book reference is never found.
+    const retryFromNextChar = () => {
+      pattern.lastIndex = match!.index + 1;
+    };
 
-    const bookId = getBookId(bookStr);
-    if (!bookId) continue;
+    if (!bookStr || !chapterStr) {
+      retryFromNextChar();
+      continue;
+    }
+
+    const bookId = resolveBookId(bookStr, books);
+    if (!bookId) {
+      retryFromNextChar();
+      continue;
+    }
 
     const chapter = parseInt(chapterStr);
-    if (isNaN(chapter)) continue;
+    if (isNaN(chapter)) {
+      retryFromNextChar();
+      continue;
+    }
 
     const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
-    if (verse !== undefined && isNaN(verse)) continue;
+    if (verse !== undefined && isNaN(verse)) {
+      retryFromNextChar();
+      continue;
+    }
 
     let endChapter: number | undefined;
     let endVerse: number | undefined;
@@ -426,6 +485,7 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["sng", "SNG"],
   ["song", "SNG"],
   ["songofsolomon", "SNG"],
+  ["songofsongs", "SNG"],
   ["isa", "ISA"],
   ["isaiah", "ISA"],
   ["jer", "JER"],
@@ -567,6 +627,7 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
  * both "Song of Solomon" and the URL slug "song-of-solomon" resolve.
  */
 export function getBookId(book: string): BookId | null {
+  const hadSpaces = /\s/.test(book.trim());
   const bookLower = book.toLowerCase().replaceAll(/[\s-]+/g, "");
 
   const id = BOOK_ID_MAP.get(bookLower);
@@ -574,9 +635,15 @@ export function getBookId(book: string): BookId | null {
     return id;
   }
 
-  for (const [key, id] of BOOK_ID_MAP) {
-    if (bookLower.startsWith(key)) {
-      return id;
+  // Loose prefix fallback is for single-token inputs (e.g. "Leviticus" → lev)
+  // and numbered-book abbreviations (e.g. "1 chron" → 1ch). Multi-word phrases
+  // that aren't numbered — like "Song of Moses" — must match a book name
+  // exactly, or not at all.
+  if (!hadSpaces || /^\d/.test(bookLower)) {
+    for (const [key, mappedId] of BOOK_ID_MAP) {
+      if (bookLower.startsWith(key)) {
+        return mappedId;
+      }
     }
   }
 
