@@ -1,4 +1,12 @@
-import { batch, computed, effect, signal, untracked } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
@@ -182,6 +190,29 @@ export function formatReadingPlanId(
   address: string
 ): string {
   return `rp_${recordName}_${address}`;
+}
+
+/**
+ * Inverse of {@link formatReadingPlanId}. A plan's `address` is always
+ * `plan_${uuid()}` (see `startEditingReadingPlan`) and so always contains an
+ * underscore itself, while `recordName` is a CasualOS user id and never does
+ * — so splitting on the FIRST underscore after the `rp_` prefix, rather than
+ * a naive `split("_")`, is what correctly separates the two. Returns null for
+ * anything not shaped like a planId this function produces, rather than
+ * guessing.
+ */
+export function parseReadingPlanId(
+  planId: string
+): { recordName: string; address: string } | null {
+  if (!planId.startsWith("rp_")) {
+    return null;
+  }
+  const rest = planId.slice(3);
+  const sep = rest.indexOf("_");
+  if (sep === -1) {
+    return null;
+  }
+  return { recordName: rest.slice(0, sep), address: rest.slice(sep + 1) };
 }
 
 /**
@@ -1514,6 +1545,224 @@ export function createReadingPlansManager(
     }
   };
 
+  // Cached reading-plan progress for an explicitly-named account, keyed by
+  // userId. Only ever populated via `getUserReadingPlanProgresses` (never for
+  // the signed-in user's own `userReadingPlanProgresses` above), so there's
+  // no risk of one account's data leaking into another's view on a sign-in
+  // switch — unlike `AnnotationsManager`/`HighlightsManager`, this cache
+  // never needs an `explicit`-flag/sweep pair to protect it. Mirrors
+  // `PlaylistManager`'s `getUserPlaylists` cache.
+  type UserReadingPlanProgressesEntry = {
+    data: Signal<ReadingPlanProgress[]>;
+    settled: boolean;
+    load: Promise<void> | null;
+  };
+  const userReadingPlanProgressEntries = new Map<
+    string,
+    UserReadingPlanProgressesEntry
+  >();
+  const userReadingPlanProgressViews = new Map<
+    string,
+    ReadonlySignal<ReadingPlanProgress[]>
+  >();
+
+  const getOrCreateUserReadingPlanProgressesEntry = (
+    userId: string
+  ): UserReadingPlanProgressesEntry => {
+    let entry = userReadingPlanProgressEntries.get(userId);
+    if (!entry) {
+      entry = {
+        data: signal<ReadingPlanProgress[]>([]),
+        settled: false,
+        load: null,
+      };
+      userReadingPlanProgressEntries.set(userId, entry);
+    }
+    return entry;
+  };
+
+  const loadUserReadingPlanProgresses = async (
+    userId: string,
+    entry: UserReadingPlanProgressesEntry
+  ): Promise<void> => {
+    try {
+      const loaded = await loadReadingProgress(userId);
+      // A load that settled the entry while this request was in the air
+      // holds newer progress than this response does.
+      if (entry.settled) {
+        return;
+      }
+      entry.data.value = loaded;
+      entry.settled = true;
+    } catch (error) {
+      console.error(
+        `Failed to load reading plan progress for ${userId}:`,
+        error
+      );
+      if (!entry.settled) {
+        entry.data.value = [];
+        entry.settled = true;
+      }
+    }
+  };
+
+  const ensureUserReadingPlanProgressesLoaded = (
+    userId: string,
+    entry: UserReadingPlanProgressesEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadUserReadingPlanProgresses(userId, entry).finally(() => {
+        entry.load = null;
+      });
+    }
+    return entry.load;
+  };
+
+  /**
+   * Reactive view of one account's reading-plan progress, pinned to the
+   * account passed in rather than whoever is signed in — this is how a
+   * followed user's "what they're currently reading" is discovered. Progress
+   * is stored world-readable (`publicRead:readingPlanProgress`), so this
+   * works for any account and does not require being signed in. Each entry's
+   * `planId` can be resolved to actual plan content via `parseReadingPlanId`
+   * + `getReadingPlanByLocator`, regardless of who authored that plan. Loads
+   * lazily on first access, keyed by account.
+   */
+  const getUserReadingPlanProgresses = (
+    userId: string
+  ): ReadonlySignal<ReadingPlanProgress[]> => {
+    let view = userReadingPlanProgressViews.get(userId);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateUserReadingPlanProgressesEntry(userId);
+        void ensureUserReadingPlanProgressesLoaded(userId, entry);
+        return entry.data.value;
+      });
+      userReadingPlanProgressViews.set(userId, view);
+    }
+
+    // Kick the load eagerly so callers see fresh data as soon as possible,
+    // without subscribing this call site to anything (the view itself is
+    // what a caller should read to react to it arriving).
+    void ensureUserReadingPlanProgressesLoaded(
+      userId,
+      getOrCreateUserReadingPlanProgressesEntry(userId)
+    );
+
+    return view;
+  };
+
+  // Cached plan content keyed by locator (`recordName`+`address`), not by
+  // account — a plan lives once regardless of how many followers are reading
+  // it, so this naturally dedups when two followed users are on the same
+  // plan. Resolves to null on failure (deleted plan, bad locator) instead of
+  // throwing, so one bad reference is skipped in a feed rather than breaking
+  // it.
+  type ReadingPlanLocatorEntry = {
+    data: Signal<ReadingPlan | null>;
+    settled: boolean;
+    load: Promise<void> | null;
+  };
+  const readingPlanLocatorEntries = new Map<string, ReadingPlanLocatorEntry>();
+  const readingPlanLocatorViews = new Map<
+    string,
+    ReadonlySignal<ReadingPlan | null>
+  >();
+
+  const getOrCreateReadingPlanLocatorEntry = (
+    planId: string
+  ): ReadingPlanLocatorEntry => {
+    let entry = readingPlanLocatorEntries.get(planId);
+    if (!entry) {
+      entry = {
+        data: signal<ReadingPlan | null>(null),
+        settled: false,
+        load: null,
+      };
+      readingPlanLocatorEntries.set(planId, entry);
+    }
+    return entry;
+  };
+
+  const loadReadingPlanByLocator = async (
+    recordName: string,
+    address: string,
+    entry: ReadingPlanLocatorEntry
+  ): Promise<void> => {
+    try {
+      const plan = await getReadingPlan(recordName, address);
+      if (entry.settled) {
+        return;
+      }
+      entry.data.value = plan;
+      entry.settled = true;
+    } catch (error) {
+      console.error(
+        `Failed to load reading plan ${recordName}/${address}:`,
+        error
+      );
+      if (!entry.settled) {
+        entry.data.value = null;
+        entry.settled = true;
+      }
+    }
+  };
+
+  const ensureReadingPlanByLocatorLoaded = (
+    recordName: string,
+    address: string,
+    entry: ReadingPlanLocatorEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadReadingPlanByLocator(recordName, address, entry).finally(
+        () => {
+          entry.load = null;
+        }
+      );
+    }
+    return entry.load;
+  };
+
+  /**
+   * Reactive view of a single plan's content, addressed directly by
+   * `{recordName, address}` rather than by an already-loaded metadata object
+   * — this is how a followed user's progress (which only carries the opaque
+   * `planId`, parsed via `parseReadingPlanId`) is turned into an actual plan
+   * to render, whether that plan was authored by the followed user
+   * themselves or by a third party. Resolves to `null` (never throws) for a
+   * plan that can't be loaded, so a bad reference degrades to "skip this row"
+   * rather than breaking the whole feed.
+   */
+  const getReadingPlanByLocator = (
+    recordName: string,
+    address: string
+  ): ReadonlySignal<ReadingPlan | null> => {
+    const planId = formatReadingPlanId(recordName, address);
+    let view = readingPlanLocatorViews.get(planId);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateReadingPlanLocatorEntry(planId);
+        void ensureReadingPlanByLocatorLoaded(recordName, address, entry);
+        return entry.data.value;
+      });
+      readingPlanLocatorViews.set(planId, view);
+    }
+
+    void ensureReadingPlanByLocatorLoaded(
+      recordName,
+      address,
+      getOrCreateReadingPlanLocatorEntry(planId)
+    );
+
+    return view;
+  };
+
   /**
    * Opens a plan. When the full plan is already cached at the listed version
    * it is shown straight away and nothing is fetched — opening a plan you can
@@ -2203,6 +2452,8 @@ export function createReadingPlansManager(
     setPassageCompleteForProgress,
     userReadingPlanProgresses,
     userReadingPlans,
+    getUserReadingPlanProgresses,
+    getReadingPlanByLocator,
     selectedReadingPlan,
     selectReadingPlan,
     saveReadingPlan,

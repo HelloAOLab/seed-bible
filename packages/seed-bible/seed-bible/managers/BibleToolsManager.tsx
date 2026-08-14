@@ -39,6 +39,8 @@ import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
+import type { FollowsManager } from "./FollowsManager";
+import type { LoginManager } from "./LoginManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 
@@ -175,6 +177,12 @@ export interface BibleToolContext {
 
   /** Annotations manager, for creating/editing notes on selected verses. */
   annotations?: AnnotationsManager;
+
+  /** The accounts the signed-in user follows, for the Following pane. */
+  follows?: FollowsManager;
+
+  /** Login manager, for identifying the signed-in account. */
+  login?: LoginManager;
 
   /** Features manager */
   features: FeaturesManager;
@@ -733,6 +741,7 @@ function getDefaultToolbarTools(
           component: () => (
             <ReadingPlansPane
               readingPlans={readingPlans}
+              follows={context.follows}
               books={readingState.translationBooks.value?.books ?? []}
               modals={context.modals}
               // Tapping a scripture reading takes the user to it. Without this

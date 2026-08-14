@@ -17,10 +17,15 @@ import {
   annotationVerseNumbers,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
+  sortAnnotations,
   type Annotation,
   type AnnotationGroup,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
+import type {
+  FollowedUser,
+  FollowsManager,
+} from "../../managers/FollowsManager";
 import { setSafeHtml } from "../../managers/Sanitization";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { MaterialIcon } from "../icons";
@@ -240,12 +245,19 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         toast={props.toast}
       />
 
+      <FollowedPlaylistsSection
+        follows={props.state.follows}
+        playlists={playlists}
+        toast={props.toast}
+      />
+
       <AnnotationsSection
         tab={selectedTab}
         annotations={annotations}
         modals={modals}
         toast={props.toast}
         login={props.state.login}
+        follows={props.state.follows}
         tabs={tabs}
         discover={props.state.discover}
         panes={props.state.panes}
@@ -255,6 +267,11 @@ export function DiscoverPane(props: DiscoverPaneProps) {
       <CrossReferencesSection tab={selectedTab} />
       <StudyNotesSection tab={selectedTab} />
       <ContentSection tab={selectedTab} />
+
+      <FollowingSection
+        follows={props.state.follows}
+        login={props.state.login}
+      />
     </div>
   );
 }
@@ -372,6 +389,150 @@ function PlaylistSection({
         </ul>
       )}
     </DiscoverSection>
+  );
+}
+
+/**
+ * Playlists belonging to people the signed-in user follows, sectioned per
+ * followed account (name + avatar header) rather than merged into
+ * `PlaylistSection`'s own list — these rows can only ever be someone else's
+ * playlist, so there's no "own vs. followed" ambiguity to guard against the
+ * way `AnnotationGroupSection` has to for merged annotations. Renders nothing
+ * when there's no follow with any playlists, since (unlike "My Playlists")
+ * there's no create-one call-to-action to fall back on for an empty state.
+ */
+function FollowedPlaylistsSection(props: {
+  follows: FollowsManager;
+  playlists: PlaylistManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { follows, playlists, toast } = props;
+  const { t } = useI18n();
+
+  // Reading each followed user's view here (rather than only `followingIds`)
+  // subscribes this render to their playlists arriving.
+  const groups = follows.following.value
+    .map((followed) => ({
+      followed,
+      playlists: playlists.getUserPlaylists(followed.userId).value,
+    }))
+    .filter((group) => group.playlists.length > 0);
+
+  if (groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <DiscoverSection
+      title={t("following-playlists", {
+        defaultValue: "Playlists from people you follow",
+      })}
+    >
+      <ul className="sb-followed-playlists-groups">
+        {groups.map((group) => (
+          <FollowedPlaylistGroup
+            key={group.followed.userId}
+            followed={group.followed}
+            playlists={group.playlists}
+            playlistsManager={playlists}
+            toast={toast}
+          />
+        ))}
+      </ul>
+    </DiscoverSection>
+  );
+}
+
+/** One followed account's playlists: an avatar/name header plus its rows. */
+function FollowedPlaylistGroup(props: {
+  followed: FollowedUser;
+  playlists: Playlist[];
+  playlistsManager: PlaylistManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { followed, playlists, playlistsManager, toast } = props;
+  const { t } = useI18n();
+
+  const displayName =
+    followed.name?.trim() ||
+    t("follow-unnamed-user", {
+      id: followed.userId.slice(0, 8),
+      defaultValue: "User {{id}}",
+    });
+
+  return (
+    <li className="sb-followed-playlists-group">
+      <div className="sb-followed-playlists-group-header">
+        <Avatar
+          imageUrl={followed.pictureUrl ?? null}
+          visual={getUserAnimalVisual(followed.userId)}
+          title={displayName}
+        />
+        <span className="sb-followed-playlists-group-name">{displayName}</span>
+      </div>
+      <ul className="sb-discover-list">
+        {playlists.map((playlist) => (
+          <li
+            key={playlist.id}
+            className="sb-discover-item sb-discover-item--row sb-playlist-item"
+            dir="auto"
+            onClick={() => playlistsManager.startPlaying(playlist)}
+          >
+            <div className="sb-discover-item-main">
+              <span className="sb-discover-item-title">
+                {playlist.title ??
+                  t("untitled-playlist", {
+                    defaultValue: "Untitled playlist",
+                  })}
+              </span>
+              {playlist.description ? (
+                <span className="sb-discover-item-description">
+                  {playlist.description}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="sb-discover-item-play"
+              aria-label={t("play-playlist", {
+                defaultValue: "Play playlist",
+              })}
+              onClick={(e) => {
+                e.stopPropagation();
+                playlistsManager.startPlaying(playlist);
+              }}
+            >
+              <MaterialIcon>play_arrow</MaterialIcon>
+            </button>
+            <ContextMenuWithButton
+              buttonClassName="sb-discover-item-menu"
+              aria-label={t("playlist-options", {
+                defaultValue: "Playlist options",
+              })}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ContextMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const url = playlistsManager.getPlaylistUrl(playlist);
+                  navigator.clipboard.writeText(url);
+                  toast(
+                    t("playlist-url-copied", {
+                      defaultValue: "Playlist URL copied to clipboard",
+                    })
+                  );
+                }}
+              >
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  share
+                </MaterialIcon>
+                {t("share-playlist", { defaultValue: "Share playlist" })}
+              </ContextMenuItem>
+            </ContextMenuWithButton>
+          </li>
+        ))}
+      </ul>
+    </li>
   );
 }
 
@@ -716,94 +877,102 @@ function AnnotationGroupSection(props: {
       </button>
       {expanded.value ? (
         <ul className="sb-annotation-group-list">
-          {group.annotations.map((annotation) => (
-            <li
-              key={annotation.id}
-              className="sb-annotation-item"
-              dir="auto"
-              onClick={async () => {
-                if (!annotation.verseNumber) {
-                  return;
-                }
-                const tab = tabs.tabs.value.find(
-                  (t) => t.id === tabs.selectedTabId.value
-                );
-                if (!tab) {
-                  return;
-                }
+          {group.annotations.map((annotation) => {
+            // Followed users' annotations can appear in this same list; only
+            // the author may edit or delete their own annotation.
+            const isOwnAnnotation =
+              annotation.data.userId === login.userId.value;
+            return (
+              <li
+                key={annotation.id}
+                className="sb-annotation-item"
+                dir="auto"
+                onClick={async () => {
+                  if (!annotation.verseNumber) {
+                    return;
+                  }
+                  const tab = tabs.tabs.value.find(
+                    (t) => t.id === tabs.selectedTabId.value
+                  );
+                  if (!tab) {
+                    return;
+                  }
 
-                panes.closeFullscreenPanes();
-                // `translationId` is optional on the item; fall back to the tab's current
-                // translation. `.peek()` avoids re-navigating when the tab changes it.
-                await tab.readingState.selectTranslationAndChapter(
-                  tab.readingState.translationId.peek(),
-                  annotation.bookId,
-                  annotation.chapterNumber,
-                  { scrollToVerse: annotation.verseNumber }
-                );
+                  panes.closeFullscreenPanes();
+                  // `translationId` is optional on the item; fall back to the tab's current
+                  // translation. `.peek()` avoids re-navigating when the tab changes it.
+                  await tab.readingState.selectTranslationAndChapter(
+                    tab.readingState.translationId.peek(),
+                    annotation.bookId,
+                    annotation.chapterNumber,
+                    { scrollToVerse: annotation.verseNumber }
+                  );
 
-                emphasizeVerses(
-                  tab.readingState,
-                  {
-                    book: annotation.bookId as BookId,
-                    chapter: annotation.chapterNumber,
-                    verse: annotation.verseNumber,
-                    endVerse: annotation.endVerseNumber ?? undefined,
-                  },
-                  annotationVerseNumbers(annotation)
-                );
-              }}
-            >
-              <div className="sb-annotation-item-main">
-                <AnnotationPreview
-                  html={annotation.data.html}
-                  onReferenceClick={onReferenceClick}
-                />
-                <AnnotationCommentMeta
-                  annotation={annotation}
-                  login={login}
-                  t={t}
-                  language={language}
-                />
-              </div>
-              <ContextMenuWithButton
-                buttonClassName="sb-annotation-item-menu"
-                aria-label={t("annotation-options", {
-                  defaultValue: "Annotation options",
-                })}
-                onClick={(e) => e.stopPropagation()}
+                  emphasizeVerses(
+                    tab.readingState,
+                    {
+                      book: annotation.bookId as BookId,
+                      chapter: annotation.chapterNumber,
+                      verse: annotation.verseNumber,
+                      endVerse: annotation.endVerseNumber ?? undefined,
+                    },
+                    annotationVerseNumbers(annotation)
+                  );
+                }}
               >
-                <ContextMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    annotations.editAnnotation(annotation);
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    edit
-                  </MaterialIcon>
-                  {t("edit-annotation", { defaultValue: "Edit" })}
-                </ContextMenuItem>
-                <ContextMenuItem
-                  className="sb-context-menu-item--danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDeleteAnnotationConfirm(
-                      modals,
-                      annotations,
-                      annotation,
-                      toast
-                    );
-                  }}
-                >
-                  <MaterialIcon className="sb-context-menu-item-icon">
-                    delete
-                  </MaterialIcon>
-                  {t("delete-annotation", { defaultValue: "Delete" })}
-                </ContextMenuItem>
-              </ContextMenuWithButton>
-            </li>
-          ))}
+                <div className="sb-annotation-item-main">
+                  <AnnotationPreview
+                    html={annotation.data.html}
+                    onReferenceClick={onReferenceClick}
+                  />
+                  <AnnotationCommentMeta
+                    annotation={annotation}
+                    login={login}
+                    t={t}
+                    language={language}
+                  />
+                </div>
+                {isOwnAnnotation ? (
+                  <ContextMenuWithButton
+                    buttonClassName="sb-annotation-item-menu"
+                    aria-label={t("annotation-options", {
+                      defaultValue: "Annotation options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        annotations.editAnnotation(annotation);
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        edit
+                      </MaterialIcon>
+                      {t("edit-annotation", { defaultValue: "Edit" })}
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="sb-context-menu-item--danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteAnnotationConfirm(
+                          modals,
+                          annotations,
+                          annotation,
+                          toast
+                        );
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        delete
+                      </MaterialIcon>
+                      {t("delete-annotation", { defaultValue: "Delete" })}
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </div>
@@ -816,6 +985,7 @@ function AnnotationsSection(props: {
   modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
   login: LoginManager;
+  follows: FollowsManager;
   tabs: TabsManager;
   discover: DiscoverManager;
   panes: PanesManager;
@@ -827,6 +997,7 @@ function AnnotationsSection(props: {
     modals,
     toast,
     login,
+    follows,
     tabs,
     discover,
     panes,
@@ -893,10 +1064,22 @@ function AnnotationsSection(props: {
     return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
   }
 
-  const chapterAnnotations = annotations.getAnnotationsForChapter(
+  const ownAnnotations = annotations.getAnnotationsForChapter(
     bookId,
     chapterNumber
   ).value;
+  // Reading each followed user's view here (rather than only `followingIds`)
+  // subscribes this render to their annotations arriving, same as `.value`
+  // above does for the signed-in user's own.
+  const followedAnnotations = follows.followingIds.value.flatMap(
+    (userId) =>
+      annotations.getUserAnnotationsForChapter(userId, bookId, chapterNumber)
+        .value
+  );
+  const chapterAnnotations = sortAnnotations([
+    ...ownAnnotations,
+    ...followedAnnotations,
+  ]);
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
 
   return (
@@ -1154,4 +1337,151 @@ function formatRef(ref: ReferenceWithBookData): string {
     }
   }
   return label;
+}
+
+/**
+ * Builds the shareable link that lets someone follow the given account.
+ * Mirrors the `?playlist=` locator links produced by `PlaylistManager`.
+ */
+function getFollowUrl(userId: string, origin?: string): string {
+  const base =
+    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  return `${base}/?follow=${encodeURIComponent(userId)}`;
+}
+
+function FollowRow(props: {
+  user: FollowedUser;
+  onUnfollow: (userId: string) => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const isRemoving = useSignal(false);
+
+  const displayName =
+    props.user.name?.trim() ||
+    t("follow-unnamed-user", {
+      id: props.user.userId.slice(0, 8),
+      defaultValue: "User {{id}}",
+    });
+
+  return (
+    <li className="sb-following-row">
+      <Avatar
+        imageUrl={props.user.pictureUrl ?? null}
+        visual={getUserAnimalVisual(props.user.userId)}
+        title={displayName}
+      />
+      <span className="sb-following-name">{displayName}</span>
+      <button
+        type="button"
+        className="sb-following-unfollow"
+        disabled={isRemoving.value}
+        aria-label={t("unfollow-user", {
+          name: displayName,
+          defaultValue: "Unfollow {{name}}",
+        })}
+        onClick={() => {
+          isRemoving.value = true;
+          void props.onUnfollow(props.user.userId).finally(() => {
+            isRemoving.value = false;
+          });
+        }}
+      >
+        {t("unfollow", { defaultValue: "Unfollow" })}
+      </button>
+    </li>
+  );
+}
+
+/**
+ * The accounts the signed-in user follows: a share-my-link CTA, plus the
+ * followed list with unfollow. Always renders something (a sign-in prompt,
+ * loading, empty, or the list) rather than returning `null` like
+ * `FollowedPlaylistsSection` — this is the primary surface for the follow
+ * feature itself, not a secondary "also see this" list.
+ */
+function FollowingSection(props: {
+  follows: FollowsManager;
+  login: LoginManager;
+}) {
+  const { t } = useI18n();
+  const copied = useSignal(false);
+
+  // Profile snapshots stored alongside each follow go stale as people rename
+  // themselves or change their picture. Refresh once when this section mounts
+  // (i.e. once per time Discover is opened) — this is the only surface that
+  // shows the whole list at once.
+  useEffect(() => {
+    void props.follows.refreshProfiles();
+  }, []);
+
+  const userId = props.login.userId.value;
+  const following = props.follows.following.value;
+
+  const copyMyLink = async () => {
+    if (!userId) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(getFollowUrl(userId));
+      copied.value = true;
+      setTimeout(() => {
+        copied.value = false;
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy the follow link:", err);
+    }
+  };
+
+  return (
+    <DiscoverSection title={t("following", { defaultValue: "Following" })}>
+      {userId && (
+        <div className="sb-following-share">
+          <p className="sb-following-share-text">
+            {t("following-share-description", {
+              defaultValue:
+                "Share this link so other people can follow you and see your highlights, playlists, and reading activity.",
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-following-share-button"
+            onClick={() => void copyMyLink()}
+          >
+            {copied.value
+              ? t("copied", { defaultValue: "Copied" })
+              : t("following-copy-my-link", {
+                  defaultValue: "Copy my follow link",
+                })}
+          </button>
+        </div>
+      )}
+
+      {!userId ? (
+        <DiscoverEmpty
+          text={t("following-signed-out", {
+            defaultValue: "Sign in to follow other people.",
+          })}
+        />
+      ) : props.follows.isLoading.value && following.length === 0 ? (
+        <DiscoverEmpty text={t("loading", { defaultValue: "Loading…" })} />
+      ) : following.length === 0 ? (
+        <DiscoverEmpty
+          text={t("following-empty", {
+            defaultValue:
+              "You aren't following anyone yet. Open someone's follow link, or follow people you're reading with in a shared session.",
+          })}
+        />
+      ) : (
+        <ul className="sb-following-list">
+          {following.map((user) => (
+            <FollowRow
+              key={user.userId}
+              user={user}
+              onUnfollow={props.follows.unfollow}
+            />
+          ))}
+        </ul>
+      )}
+    </DiscoverSection>
+  );
 }

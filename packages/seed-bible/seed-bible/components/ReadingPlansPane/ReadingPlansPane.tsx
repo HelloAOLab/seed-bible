@@ -6,6 +6,7 @@ import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   formatReadingPlanId,
+  parseReadingPlanId,
   getReadingCalendar,
   summarizeCalendar,
   type CalendarReadingDay,
@@ -21,12 +22,23 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type {
+  FollowedUser,
+  FollowsManager,
+} from "../../managers/FollowsManager";
+import { getUserAnimalVisual } from "../../managers/SessionsManager";
+import { Avatar } from "../Avatar/Avatar";
 import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
+  /**
+   * Powers the "Reading plans from people you follow" section. Without it
+   * the section is omitted entirely.
+   */
+  follows?: FollowsManager;
   /** Books of the active translation, for the scripture typeahead + labels. */
   books: TranslationBook[];
   /** Modals host, for previewing/opening a text or link reading. */
@@ -232,8 +244,14 @@ export function ReadingPlansPaneActions(props: {
  * exports above), so this component renders only the body of each screen.
  */
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
-  const { readingPlans, books, modals, onOpenScripture, onPlayReadings } =
-    props;
+  const {
+    readingPlans,
+    follows,
+    books,
+    modals,
+    onOpenScripture,
+    onPlayReadings,
+  } = props;
   // The view outlives this component, so closing the pane to go read and add a
   // passage brings the user back to the editor they were in, not to the list.
   const view = readingPlansView.value;
@@ -321,6 +339,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   return (
     <ReadingPlansList
       readingPlans={readingPlans}
+      follows={follows}
       books={books}
       onOpen={(plan) => void openPlanDetail(readingPlans, plan)}
       onEdit={(plan) => void editPlan(plan)}
@@ -340,6 +359,11 @@ interface PlanRow {
 
 interface ReadingPlansListProps {
   readingPlans: ReadingPlansManager;
+  /**
+   * Powers the "Reading plans from people you follow" section. Omitted
+   * entirely when not provided.
+   */
+  follows?: FollowsManager;
   books: TranslationBook[];
   onOpen: (plan: ReadingPlanMetadata) => void;
   onEdit: (plan: ReadingPlanMetadata) => void;
@@ -347,8 +371,29 @@ interface ReadingPlansListProps {
   onRestart: (plan: ReadingPlanMetadata) => void;
 }
 
+/** Resolves a book id to its display name, for reading labels/typeaheads. */
+function resolveBookName(books: TranslationBook[], bookId: string): string {
+  const book = books.find((b) => b.id === bookId);
+  return book?.name ?? book?.commonName ?? bookId;
+}
+
+/** A short, comma-joined summary of a reading day's first few readings. */
+function dayReadingsLabel(
+  books: TranslationBook[],
+  day: CalendarReadingDay
+): string {
+  return day.sessions
+    .flatMap((cs) => cs.session.readings)
+    .map((r) =>
+      readingLabel(r.item, (bookId) => resolveBookName(books, bookId), "")
+    )
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(", ");
+}
+
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, books, onOpen, onEdit, onRestart } = props;
+  const { readingPlans, follows, books, onOpen, onEdit, onRestart } = props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
   // than deleting on the tap that was meant to open it.
@@ -361,18 +406,8 @@ function ReadingPlansList(props: ReadingPlansListProps) {
   const failedPlanId = planLoadError.value;
   const openingId = openingPlanId.value;
 
-  const resolveBookName = (bookId: string): string => {
-    const book = books.find((b) => b.id === bookId);
-    return book?.name ?? book?.commonName ?? bookId;
-  };
-
-  const dayReadingsLabel = (day: CalendarReadingDay): string =>
-    day.sessions
-      .flatMap((cs) => cs.session.readings)
-      .map((r) => readingLabel(r.item, resolveBookName, ""))
-      .filter(Boolean)
-      .slice(0, 3)
-      .join(", ");
+  const dayReadingsLabelForBooks = (day: CalendarReadingDay): string =>
+    dayReadingsLabel(books, day);
 
   const nowMs = Date.now();
   const fullById = new Map(
@@ -510,7 +545,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                   {planTitle(hero.meta)}
                 </span>
                 <span className="sb-rp-today-readings">
-                  {dayReadingsLabel(hero.summary.next)}
+                  {dayReadingsLabelForBooks(hero.summary.next)}
                 </span>
               </div>
               <span className="sb-rp-today-go" aria-hidden="true">
@@ -601,7 +636,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                   <ActivePlanCard
                     row={row}
                     title={planTitle(row.meta)}
-                    dayReadingsLabel={dayReadingsLabel}
+                    dayReadingsLabel={dayReadingsLabelForBooks}
                     opening={openingId === row.planId}
                     onOpen={() => onOpen(row.meta)}
                     t={t}
@@ -716,7 +751,152 @@ function ReadingPlansList(props: ReadingPlansListProps) {
           ) : null}
         </div>
       )}
+      {follows ? (
+        <FollowedReadingPlansSection
+          readingPlans={readingPlans}
+          follows={follows}
+          books={books}
+          onOpen={onOpen}
+          openingId={openingId}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Reading plans people the signed-in user follows are currently going
+ * through — one section per followed account, showing their own progress.
+ * A followed row always has a progress record (that's how it was found), so
+ * it's always "active" or "completed", never "not started" — there is
+ * nothing to bucket. Renders nothing when no followed account has any
+ * resolvable progress, mirroring `FollowedPlaylistsSection`'s reasoning:
+ * there's no create-one call-to-action to fall back on for someone else's
+ * reading.
+ */
+function FollowedReadingPlansSection(props: {
+  readingPlans: ReadingPlansManager;
+  follows: FollowsManager;
+  books: TranslationBook[];
+  onOpen: (plan: ReadingPlanMetadata) => void;
+  openingId: string | null;
+}) {
+  const { readingPlans, follows, books, onOpen, openingId } = props;
+  const { t } = useI18n();
+  const nowMs = Date.now();
+
+  // Reading each followed user's progress view (and each resolved plan's
+  // `.value`) here — not just `followingIds` — subscribes this render to
+  // their data arriving as it settles.
+  const groups = follows.following.value
+    .map((followed) => {
+      const progresses = readingPlans.getUserReadingPlanProgresses(
+        followed.userId
+      ).value;
+      const rows: FollowedReadingPlanRow[] = [];
+      for (const progress of progresses) {
+        const locator = parseReadingPlanId(progress.planId);
+        if (!locator) {
+          continue; // malformed/legacy planId — skip rather than throw
+        }
+        const full = readingPlans.getReadingPlanByLocator(
+          locator.recordName,
+          locator.address
+        ).value;
+        if (!full) {
+          continue; // not yet loaded (or unresolvable) — re-renders once settled
+        }
+        const summary = summarizeCalendar(
+          getReadingCalendar(full, progress, nowMs),
+          nowMs,
+          progress.timeZone
+        );
+        rows.push({ full, progress, planId: progress.planId, summary });
+      }
+      return { followed, rows };
+    })
+    .filter((group) => group.rows.length > 0);
+
+  if (groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <PlanSection
+      label={t("following-reading-plans", {
+        defaultValue: "Reading plans from people you follow",
+      })}
+      count={groups.reduce((sum, group) => sum + group.rows.length, 0)}
+    >
+      <ul className="sb-rp-followed-groups">
+        {groups.map((group) => (
+          <FollowedReadingPlanGroup
+            key={group.followed.userId}
+            followed={group.followed}
+            rows={group.rows}
+            books={books}
+            onOpen={onOpen}
+            openingId={openingId}
+            t={t}
+          />
+        ))}
+      </ul>
+    </PlanSection>
+  );
+}
+
+interface FollowedReadingPlanRow {
+  full: ReadingPlan;
+  progress: ReadingPlanProgress;
+  planId: string;
+  summary: CalendarSummary;
+}
+
+/** One followed account's in-progress reading plans: an avatar/name header plus its cards. */
+function FollowedReadingPlanGroup(props: {
+  followed: FollowedUser;
+  rows: FollowedReadingPlanRow[];
+  books: TranslationBook[];
+  onOpen: (plan: ReadingPlanMetadata) => void;
+  openingId: string | null;
+  t: ReturnType<typeof useI18n>["t"];
+}) {
+  const { followed, rows, books, onOpen, openingId, t } = props;
+
+  const displayName =
+    followed.name?.trim() ||
+    t("follow-unnamed-user", {
+      id: followed.userId.slice(0, 8),
+      defaultValue: "User {{id}}",
+    });
+
+  return (
+    <li className="sb-rp-followed-group">
+      <div className="sb-rp-followed-group-header">
+        <Avatar
+          imageUrl={followed.pictureUrl ?? null}
+          visual={getUserAnimalVisual(followed.userId)}
+          title={displayName}
+        />
+        <span className="sb-rp-followed-group-name">{displayName}</span>
+      </div>
+      <div className="sb-rp-section-cards">
+        {rows.map((row) => (
+          <ActivePlanCard
+            key={row.planId}
+            row={row}
+            title={
+              row.full.title ??
+              t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+            }
+            dayReadingsLabel={(day) => dayReadingsLabel(books, day)}
+            opening={openingId === row.planId}
+            onOpen={() => onOpen(row.full)}
+            t={t}
+          />
+        ))}
+      </div>
+    </li>
   );
 }
 
@@ -736,7 +916,11 @@ function PlanSection(props: {
 }
 
 function ActivePlanCard(props: {
-  row: PlanRow;
+  // Only `summary`/`progress` are read below, so this accepts both an owned
+  // plan's full `PlanRow` and a followed plan's `{summary, progress}`-shaped
+  // row (see `FollowedReadingPlanRow`) without either needing the other's
+  // fields (`meta`/`planId`/`full`/`state`).
+  row: Pick<PlanRow, "summary" | "progress">;
   title: string;
   dayReadingsLabel: (day: CalendarReadingDay) => string;
   opening: boolean;

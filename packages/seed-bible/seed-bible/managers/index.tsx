@@ -7,6 +7,7 @@ export * from "./BibleToolsManager";
 export * from "./BookmarksManager";
 export * from "./ChapterText";
 export * from "./ExtensionManager";
+export * from "./FollowsManager";
 export * from "./FreeUseBibleAPI";
 export * from "./InvitationsManager";
 export * from "./LoginManager";

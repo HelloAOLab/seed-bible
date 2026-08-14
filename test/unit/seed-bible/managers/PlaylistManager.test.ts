@@ -413,6 +413,96 @@ describe("createPlaylistManager", () => {
     );
   });
 
+  describe("getUserPlaylists", () => {
+    const mockPerUserPlaylists = () => {
+      listDataByMarkerMock.mockImplementation(async (recordName: unknown) => {
+        if (recordName === "user-1") {
+          return {
+            success: true,
+            items: [
+              {
+                data: makePlaylist({
+                  id: "user-1-playlist",
+                  recordName: "user-1",
+                  authorUserId: "user-1",
+                }),
+              },
+            ],
+          };
+        }
+        if (recordName === "followed-user") {
+          return {
+            success: true,
+            items: [
+              {
+                data: makePlaylist({
+                  id: "followed-playlist",
+                  recordName: "followed-user",
+                  authorUserId: "followed-user",
+                }),
+              },
+            ],
+          };
+        }
+        return { success: true, items: [] };
+      });
+    };
+
+    it("reads playlists from the named account's record", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const view = manager.getUserPlaylists("followed-user");
+      await flush();
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "followed-user",
+        MARKER
+      );
+      expect(view.value.map((p) => p.id)).toEqual(["followed-playlist"]);
+    });
+
+    it("returns the same signal for repeated calls", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.getUserPlaylists("followed-user")).toBe(
+        manager.getUserPlaylists("followed-user")
+      );
+    });
+
+    it("keeps different accounts' playlists separate", async () => {
+      mockPerUserPlaylists();
+      const manager = makeManager("user-1");
+      await flush();
+
+      const mine = manager.getUserPlaylists("user-1");
+      const theirs = manager.getUserPlaylists("followed-user");
+      await flush();
+
+      expect(mine.value.map((p) => p.id)).toEqual(["user-1-playlist"]);
+      expect(theirs.value.map((p) => p.id)).toEqual(["followed-playlist"]);
+    });
+
+    it("settles to an empty list without throwing when the account's playlists can't be loaded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      listDataByMarkerMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "nope",
+      });
+
+      const view = manager.getUserPlaylists("broken-user");
+      await flush();
+
+      expect(view.value).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+    });
+  });
+
   it("loadPlaylist fetches by locator and parses the record on success", async () => {
     const manager = makeManager("user-1");
     await flush();

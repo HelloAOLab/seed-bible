@@ -6,6 +6,11 @@ export interface PostHog {
 }
 
 export const FEATURE_KEY_READING_PLANS = "reading-plans";
+/**
+ * Gates the global shared-session registry in `InvitationsManager`, which
+ * surfaces live sessions hosted by people you follow.
+ */
+export const FEATURE_KEY_FOLLOWED_SESSIONS = "followed-sessions";
 
 export function createFeaturesManager(posthog: PostHog | null) {
   const flags = signal<string[]>([]);

@@ -110,6 +110,30 @@ describe("useSocialSection", () => {
       expect(getUserProfile).toHaveBeenCalledWith("u2");
     });
 
+    it("skips a subscribed user whose profile isn't available", () => {
+      getUserProfile = vi.fn((id: string) =>
+        id === "u2" ? undefined : { id, name: `Name ${id}` }
+      );
+      const result = setup();
+      expect([...result.current.userProfileMap.keys()]).toEqual([
+        CURRENT_USER_ID,
+        "u1",
+      ]);
+    });
+
+    it("keeps the profile map stable while the subscribed ids are unchanged", () => {
+      // `getUsersIds` returns a fresh array each call. The map is keyed on the
+      // ids themselves, so it must not change identity on every render — the
+      // filters effect below stores a new Map each time it runs, and an
+      // unstable map would drive an endless render loop.
+      const result = setup();
+      const first = result.current.userProfileMap;
+      act(() => {
+        result.current.selectYear(2025);
+      });
+      expect(result.current.userProfileMap).toBe(first);
+    });
+
     it("initializes every user filter to true", () => {
       const result = setup();
       expect(result.current.userFilters.get(CURRENT_USER_ID)).toBe(true);

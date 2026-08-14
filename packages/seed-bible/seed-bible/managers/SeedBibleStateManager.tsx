@@ -39,7 +39,7 @@ import type {
   TabsLayoutManager,
 } from "../managers/TabsLayoutManager";
 import { createLoginManager } from "../managers/LoginManager";
-import type { LoginManager } from "../managers/LoginManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
 import { createTabs } from "../managers/TabsManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
@@ -77,6 +77,10 @@ import {
   createBookmarksManager,
   type BookmarksManager,
 } from "../managers/BookmarksManager";
+import {
+  createFollowsManager,
+  type FollowsManager,
+} from "../managers/FollowsManager";
 import {
   createChatsManager,
   type ChatSession,
@@ -327,6 +331,12 @@ export interface SeedBibleState {
   highlights: HighlightsManager;
   /** Per-tab/location bookmarks manager. */
   bookmarks: BookmarksManager;
+  /**
+   * The set of accounts the signed-in user follows. Following is asymmetric
+   * and unlocks reads of those accounts' already-public highlights, playlists,
+   * and reading history.
+   */
+  follows: FollowsManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
@@ -401,7 +411,11 @@ export interface SeedBibleState {
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
-import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
+import {
+  createFeaturesManager,
+  FEATURE_KEY_FOLLOWED_SESSIONS,
+  type FeaturesManager,
+} from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
@@ -464,6 +478,7 @@ export function createSeedBibleState(
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
+  const follows = createFollowsManager(os, login);
   const settings = createSettings(os, login, navigation);
   // Persist a user's explicit language selection to their profile. Wiring it
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
@@ -1640,9 +1655,18 @@ export function createSeedBibleState(
     chats.selectChat(sharedChat.id);
   };
 
-  const invitations = createInvitationsManager(os, login, async (sessionId) => {
-    await handleJoinSharedSession(sessionId);
-  });
+  const invitations = createInvitationsManager(
+    os,
+    login,
+    follows,
+    async (sessionId) => {
+      await handleJoinSharedSession(sessionId);
+    },
+    {
+      enabled: () =>
+        features.isFeatureEnabled(FEATURE_KEY_FOLLOWED_SESSIONS).value,
+    }
+  );
 
   const setupInitialSession = async () => {
     // Joining a session opens a live WebSocket — never do this during SSR.
@@ -1656,6 +1680,70 @@ export function createSeedBibleState(
     }
 
     await handleJoinSharedSession(initialSessionId);
+  };
+
+  /**
+   * Handles a `?follow=<userId>` link by asking the user to confirm.
+   *
+   * Never follows automatically: the link can come from anywhere, and writing
+   * to the user's follow list without showing them whose account it is would
+   * turn any link into a silent subscription. The param is cleared either way
+   * so a reload doesn't re-prompt.
+   */
+  const setupInitialFollow = async () => {
+    // Needs the network (to resolve the profile) and a modal — neither exists
+    // during SSR.
+    if (typeof window === "undefined") {
+      return;
+    }
+    const followUserId = navigation.currentUrl.value.searchParams
+      .get("follow")
+      ?.trim();
+    if (!followUserId) {
+      return;
+    }
+
+    navigation.updateQueryParam("follow", null);
+
+    if (followUserId === login.userId.value) {
+      return;
+    }
+
+    // A profile that fails to load isn't a reason to abort — the account may
+    // simply never have set one. Show the prompt with whatever we have.
+    let profile: UserProfile | null = null;
+    try {
+      profile = await login.getUserProfile(followUserId);
+    } catch (error) {
+      console.warn("Could not load the profile for a follow link:", error);
+    }
+
+    const modalId = `follow-prompt-${followUserId}`;
+    const { FollowPrompt } =
+      await import("../components/FollowingPane/FollowPrompt");
+
+    modals.openModal({
+      id: modalId,
+      title: { key: "follow", defaultValue: "Follow" },
+      content: () => (
+        <FollowPrompt
+          userId={followUserId}
+          profile={profile}
+          onConfirm={async () => {
+            await follows.follow(followUserId);
+            modals.closeModal(modalId);
+            const { t } = i18n;
+            toast(
+              t("following-user-toast", {
+                name: profile?.name?.trim() || followUserId.slice(0, 8),
+                defaultValue: "Following {{name}}",
+              })
+            );
+          }}
+          onCancel={() => modals.closeModal(modalId)}
+        />
+      ),
+    });
   };
 
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
@@ -1746,6 +1834,8 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  void setupInitialFollow();
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -1764,6 +1854,7 @@ export function createSeedBibleState(
     readingHistory,
     highlights,
     bookmarks,
+    follows,
     annotations,
     chats,
     sessions,

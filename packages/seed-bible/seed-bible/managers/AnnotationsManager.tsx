@@ -45,6 +45,21 @@ export interface AnnotationsManager {
     chapterNumber: number
   ) => ReadonlySignal<Annotation[]>;
 
+  /**
+   * Reactive view of one chapter's annotations for a named account.
+   *
+   * Unlike {@link AnnotationsManager.getAnnotationsForChapter}, this view is
+   * pinned to the account passed in and does not follow the signed-in user —
+   * it's how a followed user's annotations are read. Annotations are stored
+   * world-readable (`publicRead:annotations/{bookId}/{chapterNumber}`), so
+   * this works for any account and does not require being signed in.
+   */
+  getUserAnnotationsForChapter: (
+    userId: string,
+    bookId: string,
+    chapterNumber: number
+  ) => ReadonlySignal<Annotation[]>;
+
   /** The annotation currently being created/edited in the pane, or null. */
   editingAnnotation: Signal<Annotation | null>;
 
@@ -310,7 +325,7 @@ function getAnnotationMarker(
   return `publicRead:${group}/${bookId}/${chapterNumber}`;
 }
 
-function sortAnnotations(annotations: Annotation[]): Annotation[] {
+export function sortAnnotations(annotations: Annotation[]): Annotation[] {
   return [...annotations].sort((a, b) => {
     if (typeof a.order === "number") {
       if (typeof b.order === "number") {
@@ -336,6 +351,17 @@ type AnnotationsEntry = {
   settled: boolean;
   /** In-flight load, shared by concurrent readers. */
   load: Promise<void> | null;
+  /**
+   * True when this entry was requested for a named account (via
+   * `getUserAnnotationsForChapter`) rather than for whoever is signed in.
+   *
+   * The account-switch sweep drops every entry that isn't the signed-in
+   * account's, which is what stops one account's annotations being served to
+   * the next. Entries for a followed user are never "the signed-in
+   * account's", so without this flag every sign-in would evict them and
+   * force a re-read.
+   */
+  explicit: boolean;
 };
 
 function entryKey(userId: string, address: string): string {
@@ -470,10 +496,14 @@ export function createAnnotationsManager(
   const entries = new Map<string, AnnotationsEntry>();
   // Identity-stable per-chapter views handed to callers, keyed by address.
   const views = new Map<string, ReadonlySignal<Annotation[]>>();
+  // Per-account views handed to callers that named an account explicitly,
+  // keyed by account + address. Same no-pruning rule as `views`.
+  const userViews = new Map<string, ReadonlySignal<Annotation[]>>();
 
   const getOrCreateEntry = (
     userId: string,
-    address: string
+    address: string,
+    explicit = false
   ): AnnotationsEntry => {
     const key = entryKey(userId, address);
     let entry = entries.get(key);
@@ -483,8 +513,14 @@ export function createAnnotationsManager(
         data: signal<Annotation[]>([]),
         settled: false,
         load: null,
+        explicit,
       };
       entries.set(key, entry);
+    } else if (explicit) {
+      // The signed-in user can also be read through the explicit path (a
+      // caller passing their own id). Once that happens the entry has to
+      // survive the sweep like any other explicit entry.
+      entry.explicit = true;
     }
     return entry;
   };
@@ -555,6 +591,28 @@ export function createAnnotationsManager(
     return view;
   };
 
+  // Views pinned to a named account. Kept separate from `views` rather than
+  // re-keying it: those views deliberately read `login.userId` so they track
+  // the signed-in account, and these deliberately don't.
+  const getOrCreateUserView = (
+    userId: string,
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<Annotation[]> => {
+    const address = annotationsCacheAddress(bookId, chapterNumber);
+    const key = entryKey(userId, address);
+    let view = userViews.get(key);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateEntry(userId, address, true);
+        void ensureLoaded(userId, bookId, chapterNumber, entry);
+        return entry.data.value;
+      });
+      userViews.set(key, view);
+    }
+    return view;
+  };
+
   // Drops every cached entry that no longer belongs to the signed-in
   // account, so signing back in re-reads from the server instead of serving
   // a stale entry left over from a previous session as that same account.
@@ -566,7 +624,10 @@ export function createAnnotationsManager(
     }
     cachedUserId = userId;
     for (const [key, entry] of entries) {
-      if (entry.userId !== userId) {
+      // Entries for an explicitly named account (a followed user's
+      // annotations) aren't the signed-in account's data and were never at
+      // risk of leaking across a switch, so the sweep leaves them alone.
+      if (entry.userId !== userId && !entry.explicit) {
         entries.delete(key);
       }
     }
@@ -576,6 +637,26 @@ export function createAnnotationsManager(
     bookId: string,
     chapterNumber: number
   ): ReadonlySignal<Annotation[]> => getOrCreateView(bookId, chapterNumber);
+
+  const getUserAnnotationsForChapter = (
+    userId: string,
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<Annotation[]> => {
+    const address = annotationsCacheAddress(bookId, chapterNumber);
+    const view = getOrCreateUserView(userId, bookId, chapterNumber);
+
+    // Kick the load eagerly, same as `getAnnotationsForChapter`, so callers
+    // that read the view later still see it arrive as soon as possible.
+    void ensureLoaded(
+      userId,
+      bookId,
+      chapterNumber,
+      getOrCreateEntry(userId, address, true)
+    );
+
+    return view;
+  };
 
   const upsertIntoCache = (annotation: Annotation): void => {
     const userId = login.userId.peek();
@@ -753,6 +834,7 @@ export function createAnnotationsManager(
     deleteAnnotation,
     listAnnotationsForChapter,
     getAnnotationsForChapter,
+    getUserAnnotationsForChapter,
     editingAnnotation,
     createNewAnnotation,
     editAnnotation,

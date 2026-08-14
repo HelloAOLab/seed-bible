@@ -958,6 +958,124 @@ describe("HighlightsManager", () => {
       );
     });
   });
+
+  describe("getUserChapterHighlights", () => {
+    const mockPerUserHighlights = () => {
+      getDataMock.mockImplementation(async (recordName: unknown) => {
+        if (recordName === "user-1") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "user-1-color", verse: 1 }] },
+          };
+        }
+        if (recordName === "followed-user") {
+          return {
+            success: true,
+            data: { highlights: [{ colorId: "followed-color", verse: 3 }] },
+          };
+        }
+        return {
+          success: false,
+          errorCode: "data_not_found",
+          errorMessage: "Data not found",
+        };
+      });
+    };
+
+    it("reads highlights from the named account's record", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getUserChapterHighlights(
+        "followed-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "followed-user",
+        "highlights:BSB/GEN/1"
+      );
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "followed-color", verse: 3 }],
+      });
+    });
+
+    it("stays pinned to that account when the signed-in account changes", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const view = manager.getUserChapterHighlights(
+        "followed-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      login.userId.value = "user-2";
+      await flushPromises();
+
+      // Unlike `getChapterHighlights`, this view does not follow the signed-in
+      // account — it still shows the followed user's highlights.
+      expect(view.value).toEqual({
+        highlights: [{ colorId: "followed-color", verse: 3 }],
+      });
+    });
+
+    it("keeps a followed account's cached highlights across a sign-in", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      manager.getUserChapterHighlights("followed-user", "BSB", "GEN", 1);
+      await flushPromises();
+      const callsAfterFirstLoad = getDataMock.mock.calls.length;
+
+      // The account-switch sweep must not evict explicitly-requested entries,
+      // or every sign-in would force a re-read of every followed user.
+      login.userId.value = "user-2";
+      await flushPromises();
+
+      manager.getUserChapterHighlights("followed-user", "BSB", "GEN", 1);
+      await flushPromises();
+
+      expect(getDataMock.mock.calls.length).toBe(callsAfterFirstLoad);
+    });
+
+    it("returns the same signal for repeated calls", () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      expect(
+        manager.getUserChapterHighlights("followed-user", "BSB", "GEN", 1)
+      ).toBe(
+        manager.getUserChapterHighlights("followed-user", "BSB", "GEN", 1)
+      );
+    });
+
+    it("keeps different accounts' highlights separate for the same chapter", async () => {
+      mockPerUserHighlights();
+      const manager = createHighlightsManager(os, login);
+
+      const mine = manager.getUserChapterHighlights("user-1", "BSB", "GEN", 1);
+      const theirs = manager.getUserChapterHighlights(
+        "followed-user",
+        "BSB",
+        "GEN",
+        1
+      );
+      await flushPromises();
+
+      expect(mine.value).toEqual({
+        highlights: [{ colorId: "user-1-color", verse: 1 }],
+      });
+      expect(theirs.value).toEqual({
+        highlights: [{ colorId: "followed-color", verse: 3 }],
+      });
+    });
+  });
 });
 
 describe("highlightContainsVerse", () => {

@@ -283,6 +283,22 @@ export interface HighlightsManager {
   ) => ReadonlySignal<ChapterHighlights>;
 
   /**
+   * Gets a reactive view of one chapter's highlights for a named account.
+   *
+   * Unlike {@link HighlightsManager.getChapterHighlights}, this view is pinned
+   * to the account passed in and does not follow the signed-in user — it's how
+   * a followed user's highlights are read. Highlights are stored world-readable
+   * (`publicRead:highlights/{translationId}`), so this works for any account
+   * and does not require being signed in.
+   */
+  getUserChapterHighlights: (
+    userId: string,
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ) => ReadonlySignal<ChapterHighlights>;
+
+  /**
    * Replaces and persists highlights for a chapter.
    *
    * Input highlights are normalized before being cached/stored.
@@ -357,6 +373,16 @@ type ChapterHighlightsEntry = {
   settled: boolean;
   /** In-flight load, shared by concurrent readers and mutators. */
   load: Promise<void> | null;
+  /**
+   * True when this entry was requested for a named account (via
+   * `getUserChapterHighlights`) rather than for whoever is signed in.
+   *
+   * The account-switch sweep drops every entry that isn't the signed-in
+   * account's, which is what stops one account's highlights being served to
+   * the next. Entries for a followed user are never "the signed-in account's",
+   * so without this flag every sign-in would evict them and force a re-read.
+   */
+  explicit: boolean;
 };
 
 function entryKey(userId: string, address: string): string {
@@ -390,10 +416,14 @@ export function createHighlightsManager(
   // mint a new computed on the next call, breaking that identity for callers
   // still holding the old one.
   const views = new Map<string, ReadonlySignal<ChapterHighlights>>();
+  // Per-account views handed to callers that named an account explicitly,
+  // keyed by account + address. Same no-pruning rule as `views`.
+  const userViews = new Map<string, ReadonlySignal<ChapterHighlights>>();
 
   const getOrCreateEntry = (
     userId: string,
-    address: string
+    address: string,
+    explicit = false
   ): ChapterHighlightsEntry => {
     const key = entryKey(userId, address);
     let entry = entries.get(key);
@@ -403,8 +433,14 @@ export function createHighlightsManager(
         data: signal<ChapterHighlights>(emptyChapterHighlights),
         settled: false,
         load: null,
+        explicit,
       };
       entries.set(key, entry);
+    } else if (explicit) {
+      // The signed-in user can also be read through the explicit path (a
+      // caller passing their own id). Once that happens the entry has to
+      // survive the sweep like any other explicit entry.
+      entry.explicit = true;
     }
     return entry;
   };
@@ -480,6 +516,26 @@ export function createHighlightsManager(
     return view;
   };
 
+  // Views pinned to a named account. Kept separate from `views` rather than
+  // re-keying it: those views deliberately read `login.userId` so they track
+  // the signed-in account, and these deliberately don't.
+  const getOrCreateUserView = (
+    userId: string,
+    address: string
+  ): ReadonlySignal<ChapterHighlights> => {
+    const key = entryKey(userId, address);
+    let view = userViews.get(key);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateEntry(userId, address, true);
+        void ensureLoaded(userId, address, entry);
+        return entry.data.value;
+      });
+      userViews.set(key, view);
+    }
+    return view;
+  };
+
   // Drops every cached entry that no longer belongs to the signed-in
   // account, so signing back in re-reads from the server instead of serving
   // a stale entry left over from a previous session as that same account.
@@ -491,7 +547,10 @@ export function createHighlightsManager(
     }
     cachedUserId = userId;
     for (const [key, entry] of entries) {
-      if (entry.userId !== userId) {
+      // Entries for an explicitly named account (a followed user's highlights)
+      // aren't the signed-in account's data and were never at risk of leaking
+      // across a switch, so the sweep leaves them alone.
+      if (entry.userId !== userId && !entry.explicit) {
         entries.delete(key);
       }
     }
@@ -517,6 +576,26 @@ export function createHighlightsManager(
       const entry = getOrCreateEntry(userId, address);
       void ensureLoaded(userId, address, entry);
     }
+
+    return view;
+  };
+
+  const getUserChapterHighlights = (
+    userId: string,
+    translationId: string,
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<ChapterHighlights> => {
+    const address = createChapterHighlightsAddress(
+      translationId,
+      bookId,
+      chapterNumber
+    );
+    const view = getOrCreateUserView(userId, address);
+
+    // Kick the load eagerly, same as `getChapterHighlights`, so callers that
+    // read the view later still see it arrive as soon as possible.
+    void ensureLoaded(userId, address, getOrCreateEntry(userId, address, true));
 
     return view;
   };
@@ -757,6 +836,7 @@ export function createHighlightsManager(
 
   return {
     getChapterHighlights,
+    getUserChapterHighlights,
     saveChapterHighlights,
     highlightVerse,
     highlightVerses,
