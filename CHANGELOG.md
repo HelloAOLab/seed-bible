@@ -12,6 +12,8 @@
 
 ### 🐛 Fixed
 
+- Fix an issue where switching apps on a mobile device would always kick you out of a shared session upon returning. ([#1468](https://github.com/HelloAOLab/seed-bible/pull/1468))
+
 ### 🗑️ Removed
 
 ## v1.4.0 — 2026-08-10

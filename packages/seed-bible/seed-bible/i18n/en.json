@@ -568,5 +568,8 @@
   "reading-plan-read-nudge-toast": "Mark {{passage}} complete?",
   "reading-plan-nudge-later": "Not now",
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
-  "app-meta-description": "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans."
+  "app-meta-description": "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.",
+  "session-host-reconnecting": "Reconnecting to the session…",
+  "session-host-reconnected": "Reconnected to the session",
+  "session-host-left": "The host left — you were removed from the session"
 }
