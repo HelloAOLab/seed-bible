@@ -337,8 +337,18 @@ export interface BookmarksManager {
     verse?: BookmarkVerse
   ) => Promise<void>;
 
-  /** Removes a specific bookmark by id. */
+  /** Removes a specific bookmark by id, from every category it belongs to. */
   removeBookmark: (id: string) => Promise<void>;
+
+  /**
+   * Drops a bookmark's membership in a single category. The bookmark itself is
+   * only deleted when that category was its last one. No-op when the bookmark
+   * id is unknown or it does not belong to the category.
+   */
+  removeBookmarkFromCategory: (
+    id: string,
+    categoryName: string
+  ) => Promise<void>;
 
   /**
    * Sets the categories an existing bookmark belongs to (creating any missing
@@ -581,6 +591,30 @@ export function createBookmarksManager(
     await persist(next, categories.value);
   };
 
+  const removeBookmarkFromCategory: BookmarksManager["removeBookmarkFromCategory"] =
+    async (id, categoryName) => {
+      const existing = bookmarks.value.find((bookmark) => bookmark.id === id);
+      if (!existing) return;
+
+      const names = getBookmarkCategories(existing.category);
+      if (!names.includes(categoryName)) return;
+
+      const remaining = names.filter((name) => name !== categoryName);
+      const next =
+        remaining.length === 0
+          ? bookmarks.value.filter((bookmark) => bookmark.id !== id)
+          : bookmarks.value.map((bookmark) =>
+              bookmark.id === id
+                ? {
+                    ...bookmark,
+                    category: serializeBookmarkCategories(remaining),
+                  }
+                : bookmark
+            );
+      bookmarks.value = next;
+      await persist(next, categories.value);
+    };
+
   const setBookmarkCategories: BookmarksManager["setBookmarkCategories"] =
     async (id, category) => {
       const nextCategory = serializeBookmarkCategories(
@@ -801,6 +835,7 @@ export function createBookmarksManager(
     isChapterBookmarked,
     addBookmark,
     removeBookmark,
+    removeBookmarkFromCategory,
     setBookmarkCategories,
     removeBookmarkForLocation,
     toggleBookmarkForTab,

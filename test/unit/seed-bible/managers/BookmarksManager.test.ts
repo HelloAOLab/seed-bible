@@ -267,6 +267,127 @@ describe("BookmarksManager", () => {
     );
   });
 
+  it("removes a bookmark from one category without touching the others", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [
+          createBookmark({
+            category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites", "To Study"],
+          }),
+        ],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "Favorites" },
+          { name: "To Study" },
+        ],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.removeBookmarkFromCategory("bm-1", "Favorites");
+
+    expect(manager.bookmarks.value).toEqual([
+      createBookmark({ category: [DEFAULT_BOOKMARK_CATEGORY, "To Study"] }),
+    ]);
+    expect(manager.categories.value).toEqual([
+      { name: DEFAULT_BOOKMARK_CATEGORY },
+      { name: "Favorites" },
+      { name: "To Study" },
+    ]);
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      "bookmarks",
+      {
+        bookmarks: [
+          createBookmark({ category: [DEFAULT_BOOKMARK_CATEGORY, "To Study"] }),
+        ],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "Favorites" },
+          { name: "To Study" },
+        ],
+      },
+      { marker: "publicRead" }
+    );
+  });
+
+  it("collapses to a single category name when one membership remains", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [
+          createBookmark({
+            category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites"],
+          }),
+        ],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "Favorites" },
+        ],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.removeBookmarkFromCategory("bm-1", "Favorites");
+
+    expect(manager.bookmarks.value).toEqual([
+      createBookmark({ category: DEFAULT_BOOKMARK_CATEGORY }),
+    ]);
+  });
+
+  it("deletes the bookmark when removing it from its last category", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [createBookmark({ category: "Favorites" })],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "Favorites" },
+        ],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.removeBookmarkFromCategory("bm-1", "Favorites");
+
+    expect(manager.bookmarks.value).toEqual([]);
+    expect(manager.categories.value).toEqual([
+      { name: DEFAULT_BOOKMARK_CATEGORY },
+      { name: "Favorites" },
+    ]);
+  });
+
+  it("ignores removal for an unknown bookmark or a category it is not in", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: {
+        bookmarks: [createBookmark({ category: "Favorites" })],
+        categories: [
+          { name: DEFAULT_BOOKMARK_CATEGORY },
+          { name: "Favorites" },
+        ],
+      },
+    });
+
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.removeBookmarkFromCategory("missing", "Favorites");
+    await manager.removeBookmarkFromCategory("bm-1", "To Study");
+
+    expect(manager.bookmarks.value).toEqual([
+      createBookmark({ category: "Favorites" }),
+    ]);
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
   it("toggles bookmark by location and ignores incomplete locations", async () => {
     const manager = createBookmarksManager(os, login);
     await flushPromises();

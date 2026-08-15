@@ -1927,7 +1927,10 @@ function BookmarksSection(props: BookmarksSectionProps) {
                           <ContextMenuItem
                             className="sb-tab-menu-item"
                             onClick={() => {
-                              void bookmarks.removeBookmark(bookmark.id);
+                              void bookmarks.removeBookmarkFromCategory(
+                                bookmark.id,
+                                category.name
+                              );
                             }}
                           >
                             {t("remove-bookmark", {
