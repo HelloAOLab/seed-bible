@@ -678,12 +678,6 @@
   height: calc(var(--chapter-width) - var(--userPresenceBorderPadding));
 }
 
-@property --angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .book-container .book-cover .chapter.show-user-presence::before,
 .book-container .book-cover .chapter.show-user-presence::after,
 .book-container .book-cover.show-user-presence::before,
@@ -696,26 +690,19 @@
   left: 50%;
   translate: -50% -50%;
   z-index: -1;
-  animation: 8s spin linear infinite;
   box-sizing: content-box;
 }
 
 .book-container .book-cover .chapter.show-user-presence::before,
 .book-container .book-cover .chapter.show-user-presence::after {
-  background-image: conic-gradient(
-    from var(--angle),
-    var(--userPresenceColors)
-  );
+  background-image: conic-gradient(from 0deg, var(--userPresenceColors));
   padding: var(--userPresenceBorderPadding);
   border-radius: calc(3px * var(--scale-factor));
 }
 
 .book-container .book-cover.show-user-presence::before,
 .book-container .book-cover.show-user-presence::after {
-  background-image: conic-gradient(
-    from var(--angle),
-    var(--bookUserPresenceColors)
-  );
+  background-image: conic-gradient(from 0deg, var(--bookUserPresenceColors));
   padding: calc(var(--scale-factor) * 6px);
   border-radius: calc(10px * var(--scale-factor));
 }
@@ -904,14 +891,4 @@
 
 .hidden {
   display: none !important;
-}
-
-@keyframes spin {
-  from {
-    --angle: 0deg;
-  }
-
-  to {
-    --angle: 360deg;
-  }
 }
