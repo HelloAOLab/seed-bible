@@ -207,6 +207,55 @@ describe("BookmarksManager", () => {
     ]);
   });
 
+  it("looks up the bookmark saved at a location", async () => {
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.addBookmark("BSB", "GEN", 1);
+    await manager.addBookmark("BSB", "GEN", 1, { verse: 3 });
+    await manager.addBookmark("BSB", "GEN", 1, { verse: [5, 7] });
+
+    const chapter = manager.getBookmarkForLocation("BSB", "GEN", 1);
+    expect(chapter?.verse).toBeUndefined();
+
+    expect(manager.getBookmarkForLocation("BSB", "GEN", 1, 3)?.id).toBe(
+      manager.bookmarks.value.find((b) => b.verse === 3)?.id
+    );
+    expect(
+      manager.getBookmarkForLocation("BSB", "GEN", 1, [5, 7])?.verse
+    ).toEqual([5, 7]);
+
+    // A verse the user never bookmarked, and a range that only partly overlaps
+    // a saved one, both count as misses.
+    expect(manager.getBookmarkForLocation("BSB", "GEN", 1, 4)).toBeUndefined();
+    expect(
+      manager.getBookmarkForLocation("BSB", "GEN", 1, [5, 6])
+    ).toBeUndefined();
+    expect(manager.getBookmarkForLocation("BSB", "EXO", 1)).toBeUndefined();
+  });
+
+  it("removes a bookmark from every folder it belongs to", async () => {
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.addBookmark("BSB", "GEN", 1, {
+      category: ["Favorites", "To Study"],
+      verse: 3,
+    });
+    const id = manager.bookmarks.value[0]!.id;
+
+    await manager.removeBookmark(id);
+
+    expect(manager.bookmarks.value).toEqual([]);
+    expect(manager.getBookmarkForLocation("BSB", "GEN", 1, 3)).toBeUndefined();
+    // The folders themselves outlive the bookmarks stored in them.
+    expect(manager.categories.value).toEqual([
+      { name: DEFAULT_BOOKMARK_CATEGORY },
+      { name: "Favorites" },
+      { name: "To Study" },
+    ]);
+  });
+
   it("attempts login before adding when unauthenticated", async () => {
     login.userId.value = null;
     login.login.mockImplementation(async () => {

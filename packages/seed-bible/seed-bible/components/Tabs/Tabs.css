@@ -527,6 +527,34 @@
   margin-top: 0.25rem;
 }
 
+/* Sits opposite Save so the destructive action is nowhere near the primary
+ * one the user reaches for. */
+.sb-bookmark-picker-remove {
+  margin-right: auto;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #b91c1c;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.sb-bookmark-picker-remove:hover:not(:disabled) {
+  background: color-mix(in srgb, #b91c1c, transparent 92%);
+}
+
+.sb-bookmark-picker-remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .sb-bookmark-picker-stage-folder {
   min-width: 5.25rem;
   height: 2.25rem;

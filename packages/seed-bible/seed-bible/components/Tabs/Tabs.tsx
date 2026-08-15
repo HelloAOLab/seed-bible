@@ -1451,6 +1451,23 @@ function BookmarkCategoryPickerContent(props: {
     }
   };
 
+  /**
+   * Drops the bookmark from every folder at once. Unchecking them all can't do
+   * this — `setBookmarkCategories` treats an empty list as a no-op, since a
+   * bookmark with no folder has nowhere to live.
+   */
+  const handleRemove = async () => {
+    if (!isEdit || !bookmarkId || isSaving.value) return;
+
+    isSaving.value = true;
+    try {
+      await bookmarks.removeBookmark(bookmarkId);
+      onClose();
+    } finally {
+      isSaving.value = false;
+    }
+  };
+
   return (
     <div className="sb-bookmark-picker">
       <div className="sb-bookmark-picker-categories" role="group">
@@ -1546,6 +1563,20 @@ function BookmarkCategoryPickerContent(props: {
       )}
 
       <div className="sb-bookmark-picker-actions">
+        {isEdit && bookmarkId && (
+          <button
+            type="button"
+            className="sb-bookmark-picker-remove"
+            disabled={isSaving.value}
+            onClick={() => {
+              void handleRemove();
+            }}
+          >
+            {t("remove-bookmark-from-all-folders", {
+              defaultValue: "Remove from all folders",
+            })}
+          </button>
+        )}
         {isAddingNew.value && (
           <button
             type="button"

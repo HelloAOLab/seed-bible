@@ -416,6 +416,7 @@
   "remove": "Remove",
   "move-bookmark": "Move to folder",
   "edit-bookmark": "Edit bookmark",
+  "remove-bookmark-from-all-folders": "Remove from all folders",
   "add-bookmark-modal": "Add bookmark",
   "move-to-new": "Move to new",
   "drag-to-reorder-playlist-item": "Drag to reorder",

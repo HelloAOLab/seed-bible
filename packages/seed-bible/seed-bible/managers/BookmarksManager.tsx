@@ -301,6 +301,19 @@ export interface BookmarksManager {
   ) => boolean;
 
   /**
+   * Returns the bookmark saved at the given location, or undefined when there
+   * is none. Matches on the same rules as `isLocationBookmarked` — callers
+   * that need the bookmark's id (to edit its folders, say) use this instead of
+   * re-deriving the match themselves.
+   */
+  getBookmarkForLocation: (
+    translationId: string | null | undefined,
+    bookId: string | null | undefined,
+    chapterNumber: number | null | undefined,
+    verse?: BookmarkVerse
+  ) => Bookmark | undefined;
+
+  /**
    * Returns true if any bookmark (chapter- or verse-level) exists for the
    * given chapter. Used by the tab row dot indicator to flag any saved
    * reference into that chapter.
@@ -497,13 +510,13 @@ export function createBookmarksManager(
     void loadBookmarks(userId);
   });
 
-  const isLocationBookmarked: BookmarksManager["isLocationBookmarked"] = (
+  const getBookmarkForLocation: BookmarksManager["getBookmarkForLocation"] = (
     translationId,
     bookId,
     chapterNumber,
     verse
   ) => {
-    return bookmarks.value.some((bookmark) =>
+    return bookmarks.value.find((bookmark) =>
       bookmarkMatchesLocation(
         bookmark,
         translationId,
@@ -511,6 +524,18 @@ export function createBookmarksManager(
         chapterNumber,
         verse
       )
+    );
+  };
+
+  const isLocationBookmarked: BookmarksManager["isLocationBookmarked"] = (
+    translationId,
+    bookId,
+    chapterNumber,
+    verse
+  ) => {
+    return (
+      getBookmarkForLocation(translationId, bookId, chapterNumber, verse) !==
+      undefined
     );
   };
 
@@ -832,6 +857,7 @@ export function createBookmarksManager(
     closeView,
     toggleCategoryExpanded,
     isLocationBookmarked,
+    getBookmarkForLocation,
     isChapterBookmarked,
     addBookmark,
     removeBookmark,
