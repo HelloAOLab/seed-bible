@@ -37,6 +37,12 @@ export interface Pane {
    */
   icon?: () => ComponentChild;
   /**
+   * Optional content rendered at the very start of the pane's header, before
+   * the icon and title — a pane's own back button, for instance. Rendered as a
+   * component so it can use hooks (i18n, signals).
+   */
+  leading?: () => ComponentChild;
+  /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
    * hooks (i18n, signals). Omit for a plain title-and-close header.
@@ -80,6 +86,12 @@ export interface PaneOpenOptions {
    * a component so it can use hooks.
    */
   icon?: () => ComponentChild;
+  /**
+   * Optional content rendered at the very start of the pane's header, before
+   * the icon and title — a pane's own back button, for instance. Rendered as a
+   * component so it can use hooks (i18n, signals).
+   */
+  leading?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
@@ -171,6 +183,7 @@ function createPaneFactory() {
     customId?: string,
     header?: () => ComponentChild,
     icon?: () => ComponentChild,
+    leading?: () => ComponentChild,
     onClose?: (reason: PaneCloseReason) => void
   ): Pane => {
     const paneId = nextPaneId;
@@ -182,6 +195,7 @@ function createPaneFactory() {
       title,
       component,
       icon,
+      leading,
       header,
       onClose,
       placement,
@@ -271,6 +285,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           title: options.title,
           component: options.component,
           icon: options.icon,
+          leading: options.leading,
           header: options.header,
           onClose: options.onClose,
         };
@@ -304,6 +319,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
       options.id,
       options.header,
       options.icon,
+      options.leading,
       options.onClose
     );
     syncPaneState([...basePanes, nextPane], nextPane.id, "displaced");

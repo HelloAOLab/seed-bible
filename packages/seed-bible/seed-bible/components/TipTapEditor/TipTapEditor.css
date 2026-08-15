@@ -42,3 +42,9 @@
   background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
   color: var(--sb-primary-color);
 }
+
+.sb-editor-content a.sb-verse-reference-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}

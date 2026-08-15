@@ -18,7 +18,9 @@ import {
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
@@ -75,7 +77,20 @@ describe("Playlist schemas", () => {
 
 type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
+type ChatsArg = Parameters<typeof createPlaylistManager>[9];
 type TabArg = Parameters<typeof createPlayingState>[1];
+
+/** A minimal `ChatsManager` fake exposing just the context registration surface. */
+function makeChats(): {
+  chats: ChatsArg;
+  addContext: Mock;
+  removeContext: Mock;
+} {
+  const addContext = vi.fn();
+  const removeContext = vi.fn();
+  const chats = { addContext, removeContext } as unknown as ChatsArg;
+  return { chats, addContext, removeContext };
+}
 
 /**
  * The reading-extension registry shared by the fake reading states and the
@@ -228,6 +243,9 @@ describe("createPlaylistManager", () => {
   let lastReadingExtensionManager: ReturnType<
     typeof createBibleReadingExtensionManager
   >;
+  /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
+  let lastChatsAddContext: Mock;
+  let lastChatsRemoveContext: Mock;
 
   const makeManager = (
     id: string | null = "user-1",
@@ -255,8 +273,12 @@ describe("createPlaylistManager", () => {
     // Reuse the registry the fake reading states share, so the extension the
     // manager registers is the one those tabs can enable.
     const readingExtensionManager = sharedReadingExtensionManager!;
+    const { chats, addContext, removeContext } = makeChats();
     lastNavigation = navigation;
     lastReadingExtensionManager = readingExtensionManager;
+    const discover = createDiscoverManager();
+    lastChatsAddContext = addContext;
+    lastChatsRemoveContext = removeContext;
     return createPlaylistManager(
       os,
       login,
@@ -265,7 +287,9 @@ describe("createPlaylistManager", () => {
       isMobile,
       modals,
       i18n,
-      readingExtensionManager
+      readingExtensionManager,
+      discover,
+      chats
     );
   };
 
@@ -644,6 +668,354 @@ describe("createPlaylistManager", () => {
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
+  describe("chat AI context", () => {
+    /** Finds a registered tool by name from the most recent `addContext` call. */
+    const getTool = (name: string) => {
+      const call = lastChatsAddContext.mock.calls.at(
+        -1
+      )?.[0] as IdentifiedLocalChatContext;
+      const tool = call.tools?.find((t) => t.name === name);
+      if (!tool) {
+        throw new Error(`Tool "${name}" was not registered`);
+      }
+      return tool;
+    };
+
+    it("registers the playlist-editing tools once the editor opens", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      expect(lastChatsAddContext).not.toHaveBeenCalled();
+
+      await manager.createNewPlaylist();
+
+      expect(lastChatsAddContext).toHaveBeenCalledTimes(1);
+      const context = lastChatsAddContext.mock.calls[0]![0];
+      expect(context.id).toBe("playlist-editor");
+      expect(context.tools.map((t: { name: string }) => t.name).sort()).toEqual(
+        [
+          "insertPlaylistItem",
+          "movePlaylistItem",
+          "deletePlaylistItem",
+          "updatePlaylistItem",
+          "updatePlaylistMetadata",
+          "getPlaylistState",
+        ].sort()
+      );
+    });
+
+    it("withdraws the tools when the editor closes via cancel", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      // The registration effect also fires once at manager creation (while
+      // nothing is being edited yet), so reset the spy to isolate the call
+      // that matters: the one triggered by leaving the editor.
+      lastChatsRemoveContext.mockClear();
+
+      manager.cancelEditingPlaylist();
+
+      expect(lastChatsRemoveContext).toHaveBeenCalledWith("playlist-editor");
+    });
+
+    it("withdraws the tools when the editor closes via save", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await manager.saveEditingPlaylist();
+
+      expect(lastChatsRemoveContext).toHaveBeenCalledWith("playlist-editor");
+    });
+
+    it("does not register tools when no playlist is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.editingPlaylist.value).toBeNull();
+      expect(lastChatsAddContext).not.toHaveBeenCalled();
+    });
+
+    it("the registered tools operate on whatever playlist is currently being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await getTool("insertPlaylistItem").function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+      ]);
+
+      await getTool("updatePlaylistMetadata").function({
+        title: "My AI Playlist",
+        description: "Made with AI",
+      });
+      expect(manager.editingPlaylist.value!.title).toBe("My AI Playlist");
+      expect(manager.editingPlaylist.value!.description).toBe("Made with AI");
+
+      await getTool("deletePlaylistItem").function({ index: 0 });
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("getPlaylistState reflects the current live contents of the playlist being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await getTool("insertPlaylistItem").function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      await getTool("updatePlaylistMetadata").function({
+        title: "My AI Playlist",
+        description: "Made with AI",
+      });
+
+      const state = JSON.parse(
+        (await getTool("getPlaylistState").function({})) as string
+      );
+      expect(state).toEqual({
+        title: "My AI Playlist",
+        description: "Made with AI",
+        items: [
+          {
+            type: "link",
+            bibleVerse: null,
+            link: { title: null, url: "https://example.com" },
+            html: null,
+          },
+        ],
+      });
+    });
+
+    it("getPlaylistState reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const getPlaylistState = getTool("getPlaylistState");
+      manager.cancelEditingPlaylist();
+
+      await expect(getPlaylistState.function({})).resolves.toBe(
+        "error: no playlist is currently being edited"
+      );
+    });
+
+    it("insertPlaylistItem inserts each AI item type at the given index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "bible-verse",
+        bibleVerse: {
+          ref: {
+            bookId: "JHN",
+            chapter: 3,
+            verse: 16,
+            endChapter: null,
+            endVerse: null,
+          },
+        },
+        link: null,
+        html: null,
+      });
+      await insertPlaylistItem.function({
+        index: 1,
+        type: "html",
+        bibleVerse: null,
+        link: null,
+        html: { title: "Note", html: "<p>hi</p>" },
+      });
+      // Inserting at 0 again pushes both earlier items back.
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+        { type: "bible-verse", ref: { bookId: "JHN", chapter: 3, verse: 16 } },
+        { type: "html", title: "Note", html: "<p>hi</p>" },
+      ]);
+    });
+
+    it("insertPlaylistItem reports an error for an out-of-range index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 5,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: { title: null, html: "<p>hi</p>" },
+        })
+      ).resolves.toBe("error: index out of range (0-0)");
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("insertPlaylistItem reports an error instead of throwing when the type's matching field is missing", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 0,
+          type: "bible-verse",
+          bibleVerse: null,
+          link: null,
+          html: null,
+        })
+      ).resolves.toBe(
+        'error: Item has type "bible-verse" but no bibleVerse was provided.'
+      );
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("updatePlaylistItem reports an error instead of throwing when the type's matching field is missing", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      const updatePlaylistItem = getTool("updatePlaylistItem");
+
+      await expect(
+        updatePlaylistItem.function({
+          index: 0,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: null,
+        })
+      ).resolves.toBe('error: Item has type "html" but no html was provided.');
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+      ]);
+    });
+
+    it("insertPlaylistItem reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 0,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: { title: null, html: "<p>hi</p>" },
+        })
+      ).resolves.toBe("error: no editing playlist");
+    });
+
+    it("movePlaylistItem reorders items in the currently-edited playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>a</p>" });
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>b</p>" });
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>c</p>" });
+      const movePlaylistItem = getTool("movePlaylistItem");
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 2 })
+      ).resolves.toBe("success");
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "html", html: "<p>b</p>" },
+        { type: "html", html: "<p>c</p>" },
+        { type: "html", html: "<p>a</p>" },
+      ]);
+    });
+
+    it("movePlaylistItem reports an error for an out-of-range index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>a</p>" });
+      const movePlaylistItem = getTool("movePlaylistItem");
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 5 })
+      ).resolves.toBe("error: target index out of range (0-0) or equal");
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "html", html: "<p>a</p>" },
+      ]);
+    });
+
+    it("movePlaylistItem reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const movePlaylistItem = getTool("movePlaylistItem");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 1 })
+      ).resolves.toBe("error: no editing playlist");
+    });
+
+    it("updatePlaylistMetadata reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const updatePlaylistMetadata = getTool("updatePlaylistMetadata");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        updatePlaylistMetadata.function({
+          title: "Too late",
+          description: null,
+        })
+      ).resolves.toBe("error: no playlist is currently being edited");
+    });
+  });
+
+  it("startPlaying returns null when there is no active tab to play on", async () => {
+    const tabs = {
+      tabs: signal([]),
+      selectedTabId: signal(""),
+    } as unknown as TabsArg;
+    const manager = makeManager("user-1", tabs);
+    await flush();
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "<p>hi</p>" }],
+    });
+
+    const result = manager.startPlaying(playlist);
+
+    expect(result).toBeNull();
+    expect(manager.playing.value).toBeNull();
+  });
+
   it("startPlaying prefers always uses the selected tab", async () => {
     const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
     tabs.tabs.value = [
@@ -891,10 +1263,17 @@ describe("createPlaylistManager", () => {
      * Activates the registered "playlist" reading extension in isolation, with
      * the given per-enablement `data`. The returned instance owns its own live
      * playing state, built from that data.
+     *
+     * A real-ish reading state is passed because the instance's
+     * `hasNext`/`hasPrevious` consult its `chapterData` (the queue's edges fall
+     * through to the reader's own chapter navigation). `chapterData` starts null
+     * — no chapter loaded — so those read purely off the queue unless a test
+     * sets it.
      */
     const activateExtension = (
       data?: PlaylistReadingData,
-      isShared = false
+      isShared = false,
+      readingState: any = makeReadingState(vi.fn())
     ): PlaylistReadingExtensionInstance => {
       const definition =
         lastReadingExtensionManager.getReadingExtension("playlist");
@@ -902,7 +1281,7 @@ describe("createPlaylistManager", () => {
         throw new Error('"playlist" reading extension was not registered');
       }
       return definition.activate({
-        readingState: {} as any,
+        readingState,
         data: signal(data),
         isShared: signal(isShared),
       }) as unknown as PlaylistReadingExtensionInstance;
@@ -922,7 +1301,7 @@ describe("createPlaylistManager", () => {
       });
     });
 
-    it("navigateNext/navigatePrevious advance the queue and prevent at the bounds", async () => {
+    it("navigateNext/navigatePrevious advance the queue and hand back over at the bounds", async () => {
       makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -937,9 +1316,11 @@ describe("createPlaylistManager", () => {
         step: 0,
       });
 
-      // At the start of the queue, previous() is prevented.
+      // At the start of the queue there is nothing to step back to, so the
+      // reader's own chapter navigation takes over ("default", not "prevent" —
+      // preventing here left the reader with dead controls and no way out).
       expect(await instance.navigatePrevious!({} as any)).toEqual({
-        type: "prevent",
+        type: "default",
       });
       // Advancing is handled by the playing state itself (which drives the
       // reader), so the hook returns "prevent" to stop the reader's own
@@ -948,10 +1329,36 @@ describe("createPlaylistManager", () => {
         type: "prevent",
       });
       expect(instance.playingState.currentIndex.value).toBe(1);
-      // At the end of the queue, next() is prevented too.
+      // Past the end of the queue, likewise back to normal navigation.
       expect(await instance.navigateNext!({} as any)).toEqual({
-        type: "prevent",
+        type: "default",
       });
+      expect(instance.playingState.currentIndex.value).toBe(1);
+    });
+
+    it("hasNext/hasPrevious fall back to the loaded chapter's own links at the queue's edges", async () => {
+      makeManager("user-1");
+      await flush();
+      const readingState = makeReadingState(vi.fn());
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+      const instance = activateExtension(
+        { playlists: [playlist], queue: playlist.items, step: 0 },
+        false,
+        readingState
+      );
+
+      // A single-item queue: no step before or after it.
+      expect(instance.hasNext!.value).toBe(false);
+      expect(instance.hasPrevious!.value).toBe(false);
+
+      // With a chapter loaded that has neighbours, the reader can still move —
+      // which is what keeps next/previous alive after a plan session ends.
+      readingState.chapterData.value = {
+        nextChapterApiLink: "/api/next.json",
+        previousChapterApiLink: "/api/previous.json",
+      } as any;
+      expect(instance.hasNext!.value).toBe(true);
+      expect(instance.hasPrevious!.value).toBe(true);
     });
 
     it("keeps navigateNext/navigatePrevious (and transformQueryParams) even for a shared reading state", async () => {

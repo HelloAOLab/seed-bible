@@ -4,7 +4,7 @@
   padding: 10px 12px;
 }
 
-.sb-playlist-add-editor .ProseMirror {
+.ProseMirror {
   min-height: 60px;
   outline: none;
 }
@@ -36,10 +36,10 @@
   }
 }
 
-.sb-playlist-add-editor .ProseMirror > *:first-child {
+.ProseMirror > *:first-child {
   margin-top: 0;
 }
 
-.sb-playlist-add-editor .ProseMirror > *:last-child {
+.ProseMirror > *:last-child {
   margin-bottom: 0;
 }

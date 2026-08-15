@@ -2082,8 +2082,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
-          {/* Only offered while the app isn't installed yet. Once installed
-              (standalone session or recorded on the profile) this disappears. */}
+          {/* Shown in normal browser tabs when not already treated as installed.
+              installed is session-only (standalone, or markInstalled this load) —
+              not localStorage/profile — so uninstalling the PWA brings this back. */}
           {!state.onboarding.installed.value && (
             <li>
               <button

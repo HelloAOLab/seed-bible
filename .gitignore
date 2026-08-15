@@ -8,7 +8,6 @@ size-report.md
 coverage-summary.md
 .DS_Store
 package-lock.json
-.claude
 bun.lock
 .vscode/*
 !.vscode/settings.json
@@ -17,3 +16,4 @@ bun.lock
 coverage/
 secrets.json
 .pnpm-store/*
+*.local.*

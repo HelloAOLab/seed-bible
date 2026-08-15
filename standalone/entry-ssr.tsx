@@ -330,9 +330,11 @@ export function acceptLanguageRedirect(
 /**
  * Server-side renders the app to a complete HTML document.
  *
- * The app shell (chrome, theme, head) renders on the server; verse content
- * is fetched and filled in by the client after hydration — standard for a
- * data-driven SPA that does not block first paint on network fetches.
+ * Verse content is part of that document, not filled in later: the reader
+ * suspends the server render on the first chapter fetch (see `BibleReader`),
+ * bounded by `SSR_INITIAL_CHAPTER_TIMEOUT_MS`. That suspension is what lets the
+ * meta block below quote the chapter — remove it and every chapter page falls
+ * back to a generic description.
  */
 export async function render(
   options: RenderOptions
@@ -414,12 +416,21 @@ export async function render(
         media="(prefers-color-scheme: dark)"
       />
       <meta name="description" content={state.app.description.value} />
-      <meta name="og:locale" content={state.i18n.language.value} />
-      <meta name="og:locale:alternate" content={state.i18n.defaultLanguage} />
+      <meta property="og:locale" content={state.i18n.language.value} />
+      <meta
+        property="og:locale:alternate"
+        content={state.i18n.defaultLanguage}
+      />
       <meta property="og:title" content={state.app.socialTitle.value} />
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
-      <meta name="og:site_name" content={state.app.siteName.value} />
+      <meta property="og:site_name" content={state.app.siteName.value} />
+      {/* `twitter:*` really is `name=`, unlike `og:*`. No `twitter:image`: it
+          would fall back to `og:image`, which is root-relative in index.html
+          and so unresolvable by most scrapers either way. */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={state.app.socialTitle.value} />
+      <meta name="twitter:description" content={state.app.description.value} />
       <link rel="canonical" href={state.app.canonicalUrl.value} />
       <title>{state.app.title.value}</title>
     </>
@@ -429,7 +440,7 @@ export async function render(
 
   return {
     html: options.html
-      .replace("<!-- META -->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+      .replace("<!-- META -->", metaHtml)
       .replace("<!-- CONFIG_JSON -->", configJson)
       .replace("<!-- APP_HTML -->", appHtml),
     ...(notFound ? { notFound: true as const } : {}),

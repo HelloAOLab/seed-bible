@@ -3,20 +3,19 @@ import {
   type BibleSelectorBookItem,
   type BibleSelectorPsalmsGroups,
   type BibleSelectorState,
-  type TranslationLanguageGroup,
 } from "../../managers/BibleSelectorManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
-  TickIcon,
   FiltersIcon,
-  SelectedIcon,
   AddIcon,
   MinusIcon,
   ShareIcon,
   SbTabsIcon,
 } from "../../components/icons";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
-import { computed, signal } from "@preact/signals";
+import { TranslationList } from "../TranslationList/TranslationList";
+import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
+import { computed } from "@preact/signals";
 import type { JSX } from "preact";
 import type { BibleDataManager, BookId } from "../../managers/BibleDataManager";
 import {
@@ -32,13 +31,7 @@ import {
 import { readInjectedConfig } from "../../app/appConfig";
 import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-} from "preact/hooks";
+import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
 
@@ -1017,62 +1010,6 @@ const SideBarChapters = (props: {
   );
 };
 
-const LANGUAGE_VIEW_MODES = {
-  COMPLETE: "complete",
-  POPULAR: "popular",
-  ALL: "all",
-} as const;
-
-// Component for empty state with option to expand search
-const EmptyStateWithExpand = (props: {
-  onExpand: () => void;
-  t: (key: string, options?: Record<string, unknown>) => string;
-}) => {
-  const { onExpand, t } = props;
-  return (
-    <div className="language-list sb-lg-centered">
-      <span>
-        {t("no-translation-results-found", {
-          defaultValue:
-            "No results found. Would you like to expand your search to include partial and incomplete translations as well?",
-        })}
-      </span>
-      <button onClick={onExpand} className="sb-lg-expandButton">
-        {t("show-all-translations", { defaultValue: "Show all translations" })}
-      </button>
-    </div>
-  );
-};
-
-// Component for empty state with no results
-const EmptyStateNoResults = (props: {
-  t: (key: string, options?: Record<string, unknown>) => string;
-}) => {
-  const { t } = props;
-  return (
-    <div className="language-list">
-      <span>
-        {t("no-results-found", { defaultValue: "No results found." })}
-      </span>
-    </div>
-  );
-};
-
-// Component for load more button
-const LoadMoreButton = (props: { onLoadMore: () => void }) => {
-  const { onLoadMore } = props;
-  return (
-    <div
-      className="item flex-between sb-lg-loadMoreButton"
-      onClick={onLoadMore}
-    >
-      <span className="material-symbols-outlined sb-lg-expandIcon">
-        expand_more
-      </span>
-    </div>
-  );
-};
-
 /** Renders a byte count as a short, human-readable size like "7.1 MB". */
 function formatBytes(bytes: number): string {
   if (bytes < 1024) {
@@ -1354,12 +1291,14 @@ const TranslationModal = (props: {
     selectingTranslation,
     showCustomTranslation,
     allowedTranslationLimit,
-    apiTranslations,
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
     pendingOfflineDelete,
     filteredApiTranslations,
+    matchingTranslationGroupCount,
+    selectedTranslation,
+    pickTranslation,
     setOpen,
   } = bibleSelectorState;
 
@@ -1372,81 +1311,68 @@ const TranslationModal = (props: {
     void bibleDataManager.offline.checkForUpdates();
   }, []);
 
-  // Helper function to check if should show expand button
-  const shouldShowExpandButton = (
-    viewMode: string,
-    hasResults: boolean
-  ): boolean => {
-    return (
-      !hasResults &&
-      (viewMode === LANGUAGE_VIEW_MODES.COMPLETE ||
-        viewMode === LANGUAGE_VIEW_MODES.POPULAR)
-    );
-  };
-
-  // Helper function to check if should show load more button
+  // Judged against how many groups actually match the current search and view
+  // mode, not the size of the whole catalog: in "complete" mode most of the
+  // catalog's languages have no complete translation, so comparing against the
+  // catalog total left a control on screen that could not reveal anything.
   const shouldShowLoadMoreButton = (
-    filteredCount: number,
     allowedLimit: number,
-    totalCount: number
-  ): boolean => {
-    return allowedLimit < totalCount && filteredCount >= 50;
-  };
+    matchingCount: number
+  ): boolean => allowedLimit < matchingCount;
 
-  const LanguageList = computed(() => {
-    const filteredTranslations = filteredApiTranslations.value;
-    const currentViewMode = showAllLanguages.value;
-    const hasResults = filteredTranslations.length > 0;
-
-    // Show expand button state
-    if (shouldShowExpandButton(currentViewMode, hasResults)) {
-      return (
-        <EmptyStateWithExpand
-          onExpand={() => {
-            showAllLanguages.value = LANGUAGE_VIEW_MODES.ALL;
-          }}
-          t={t}
-        />
-      );
-    }
-
-    // Show no results state
-    if (!hasResults && currentViewMode === LANGUAGE_VIEW_MODES.ALL) {
-      return <EmptyStateNoResults t={t} />;
-    }
-
-    // Show language list
-    return (
-      <div
-        className="language-list"
-        onScroll={() => {
+  // The list itself is the shared `TranslationList`, so the reader and the
+  // Compare pane group, search and render translations the same way. Only the
+  // reader's own row actions (offline downloads, share) are passed in.
+  const LanguageList = computed(() => (
+    <TranslationList
+      groups={filteredApiTranslations.value}
+      query={languageQuery.value}
+      viewMode={showAllLanguages.value}
+      selectedTranslationIds={
+        selectedTranslation.value ? [selectedTranslation.value.id] : []
+      }
+      expandedLanguage={
+        selectedTranslation.value?.language?.toLowerCase() ?? null
+      }
+      onPick={(translation) => {
+        pickTranslation(translation.id);
+      }}
+      onShowAllTranslations={() => {
+        showAllLanguages.value = "all";
+      }}
+      canLoadMore={shouldShowLoadMoreButton(
+        allowedTranslationLimit.value,
+        matchingTranslationGroupCount.value
+      )}
+      totalGroupCount={matchingTranslationGroupCount.value}
+      onLoadMore={() => {
+        allowedTranslationLimit.value = allowedTranslationLimit.value + 50;
+      }}
+      onShowInfo={(translation, event) => {
+        if (showTranslationInfo.value?.translation.id === translation.id) {
           showTranslationInfo.value = null;
-          showTranslationSettings.value = false;
-        }}
-      >
-        {filteredTranslations.map((languageGroup) => (
-          <LanguageComponent
-            app={app}
-            languageGroup={languageGroup}
-            bibleSelectorState={bibleSelectorState}
-            bibleDataManager={bibleDataManager}
-          />
-        ))}
-        {shouldShowLoadMoreButton(
-          filteredTranslations.length,
-          allowedTranslationLimit.value,
-          apiTranslations.value.length
-        ) && (
-          <LoadMoreButton
-            onLoadMore={() => {
-              allowedTranslationLimit.value =
-                allowedTranslationLimit.value + 50;
-            }}
-          />
-        )}
-      </div>
-    );
-  });
+          return;
+        }
+        showTranslationInfo.value = {
+          translation,
+          position: { x: event.clientX, y: event.clientY },
+        };
+      }}
+      onScroll={() => {
+        showTranslationInfo.value = null;
+        showTranslationSettings.value = false;
+      }}
+      renderActions={(translation) => (
+        <TranslationRowActions
+          app={app}
+          translation={translation}
+          bibleSelectorState={bibleSelectorState}
+          bibleDataManager={bibleDataManager}
+        />
+      )}
+    />
+  ));
+
   return (
     <>
       <div
@@ -1582,30 +1508,18 @@ const TranslationModal = (props: {
   );
 };
 
-const LanguageComponent = (props: {
+/**
+ * The reader-only controls at the end of a translation row in the shared
+ * `TranslationList`: offline download management and a share link. Compare's
+ * picker renders the same list without these.
+ */
+const TranslationRowActions = (props: {
   app: AppState;
-  languageGroup: TranslationLanguageGroup;
+  translation: Translation;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
 }) => {
-  const { app, languageGroup, bibleSelectorState, bibleDataManager } = props;
-  const {
-    language,
-    languageName: nativeLanguageName,
-    languageEnglishName,
-    translations,
-  } = languageGroup;
-  const {
-    languageQuery,
-    selectedTranslation,
-    showAllLanguages,
-    showTranslationInfo,
-    filteredApiTranslations,
-    pickTranslation,
-  } = bibleSelectorState;
-  const showRef = useRef<ReturnType<typeof signal<boolean>> | null>(null);
-  if (!showRef.current) showRef.current = signal(false);
-  const showSig = showRef.current;
+  const { app, translation, bibleSelectorState, bibleDataManager } = props;
   const { t } = useI18n();
 
   const shareTranslatation = async (props: { translation: Translation }) => {
@@ -1646,169 +1560,23 @@ const LanguageComponent = (props: {
     );
   };
 
-  const sortedTranslations = useMemo(() => {
-    if (!showSig.value) {
-      return [];
-    }
-    return [...translations].sort((a, b) => {
-      if (a.id === selectedTranslation?.value?.id) return -1;
-      if (b.id === selectedTranslation?.value?.id) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }, [translations, selectedTranslation.value, showSig.value]);
-
-  useEffect(() => {
-    const selectedLanguageCode = selectedTranslation?.value?.language;
-
-    if (languageQuery.value.length > 0) {
-      showSig.value = true;
-    } else if (filteredApiTranslations.value.length === 1) {
-      showSig.value = true;
-    } else if (selectedLanguageCode === language.toLowerCase()) {
-      showSig.value = true;
-    } else {
-      showSig.value = false;
-    }
-  }, [
-    languageQuery.value,
-    selectedTranslation.value,
-    filteredApiTranslations.value,
-    language,
-  ]);
-
   return (
     <>
-      <div
-        key={language}
-        className="item flex-between"
-        onClick={() => {
-          showSig.value = !showSig.value;
+      <OfflineTranslationControls
+        translation={translation}
+        offline={bibleDataManager.offline}
+        bibleSelectorState={bibleSelectorState}
+        app={app}
+      />
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          shareTranslatation({ translation });
         }}
-        style={{
-          backgroundColor: showSig.value ? "" : "var(--sb-background)",
-          marginBottom: showSig.value ? "0px" : "0.625rem",
-          gap: "0.5rem",
-        }}
+        class="share-btn flex-center"
       >
-        <span style={{ textTransform: "capitalize", flex: "1 1 auto" }}>
-          {nativeLanguageName}
-        </span>
-        {language !== "eng" &&
-          nativeLanguageName !== languageEnglishName &&
-          languageEnglishName && (
-            <span className="sb-language-english-name">
-              ({languageEnglishName})
-            </span>
-          )}
-        <span
-          style={{
-            transition: "transform 0.3s",
-          }}
-          class={`material-symbols-outlined ${showSig.value ? "upside-down" : ""}`}
-          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
-        >
-          expand_more
-        </span>
-      </div>
-      {showSig.value && (
-        <>
-          <div style={{ margin: "0.3125rem 0.3125rem" }}>
-            {sortedTranslations.map((value) => {
-              const completionPercentage = Math.ceil(
-                (value.numberOfBooks / 66) * 100
-              );
-              const rotation = (completionPercentage / 100) * 360;
-              return (
-                <div
-                  onClick={async () => {
-                    pickTranslation(value.id);
-                  }}
-                  style={{
-                    background:
-                      selectedTranslation?.value?.id === value.id
-                        ? "color-mix(in srgb, var(--pageBookBackground) 50%, transparent)"
-                        : "var(--sb-background)",
-                  }}
-                  class="translation-option flex-between-center-gap-md"
-                >
-                  <span class="translation-title inline-flex-start-center-gap-sm">
-                    {selectedTranslation?.value?.id === value.id ? (
-                      <TickIcon height={15} width={15} />
-                    ) : showAllLanguages.value === "all" ||
-                      showAllLanguages.value === "popular" ? (
-                      <span
-                        class="emptyCircle"
-                        style={{
-                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--sb-primary-color) ${completionPercentage}%, #eee 0) border-box`,
-                        }}
-                      ></span>
-                    ) : (
-                      <span class="emptyCircle"></span>
-                    )}
-                    <span class="translation-description">{`${value.name} (${value.shortName})`}</span>
-                    {value?.licenseNotice && (
-                      <span
-                        style={{ display: "flex" }}
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation();
-                          console.log(value, "showTranslationInfo");
-                          if (showTranslationInfo.value) {
-                            if (
-                              showTranslationInfo.value.translation.id ===
-                              value.id
-                            ) {
-                              showTranslationInfo.value = null;
-                              return;
-                            } else {
-                              showTranslationInfo.value = {
-                                translation: value,
-                                position: { x: e.clientX, y: e.clientY },
-                              };
-                              return;
-                            }
-                          }
-                          showTranslationInfo.value = {
-                            translation: value,
-                            position: { x: e.clientX, y: e.clientY },
-                          };
-                        }}
-                        title={t("information-about-this-translation", {
-                          defaultValue: "Information about this translation",
-                        })}
-                      >
-                        <span
-                          style={{ fontSize: "1.125rem" }}
-                          class="material-symbols-outlined"
-                        >
-                          info
-                        </span>
-                      </span>
-                    )}
-                  </span>
-                  <span class="sb-translation-actions inline-flex-start-center-gap-sm">
-                    <OfflineTranslationControls
-                      translation={value}
-                      offline={bibleDataManager.offline}
-                      bibleSelectorState={bibleSelectorState}
-                      app={app}
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        shareTranslatation({ translation: value });
-                      }}
-                      class="share-btn flex-center"
-                    >
-                      <ShareIcon height={18} width={22} />
-                    </button>
-                  </span>
-                </div>
-              );
-            })}
-            <div class="language-separator" style={{ width: "100%" }}></div>
-          </div>
-        </>
-      )}
+        <ShareIcon height={18} width={22} />
+      </button>
     </>
   );
 };
@@ -1848,100 +1616,15 @@ const TranslationSettings = (props: {
 }) => {
   const { bibleSelectorState } = props;
   const { showAllLanguages, showTranslationSettings } = bibleSelectorState;
-  const { t } = useI18n();
   return (
     <div className="modal translationSettingsModal">
-      <div
-        class="translation-option flex-between-center-gap-md"
-        onClick={() => {
-          showAllLanguages.value = "complete";
+      <TranslationViewModeMenu
+        viewMode={showAllLanguages.value}
+        onChange={(mode) => {
+          showAllLanguages.value = mode;
           showTranslationSettings.value = false;
         }}
-      >
-        <span
-          class="translation-title inline-flex-start-center-gap-sm"
-          style={{
-            color:
-              showAllLanguages.value === "complete"
-                ? "var(--addButtonIcon)"
-                : "var(--text3)",
-          }}
-        >
-          {showAllLanguages.value === "complete" ? (
-            <SelectedIcon height={17} width={17} />
-          ) : (
-            <span
-              class="emptyCircle"
-              style={{ border: "1px solid #ccc" }}
-            ></span>
-          )}
-          <span class="translation-description">
-            {t("complete-translations", {
-              defaultValue: "Complete translations",
-            })}
-          </span>
-        </span>
-      </div>
-      <div
-        class="translation-option flex-between-center-gap-md"
-        onClick={() => {
-          showAllLanguages.value = "all";
-          showTranslationSettings.value = false;
-        }}
-      >
-        <span
-          class="translation-title inline-flex-start-center-gap-sm"
-          style={{
-            color:
-              showAllLanguages.value === "all"
-                ? "var(--addButtonIcon)"
-                : "var(--text3)",
-          }}
-        >
-          {showAllLanguages.value === "all" ? (
-            <SelectedIcon height={17} width={17} />
-          ) : (
-            <span
-              class="emptyCircle"
-              style={{ border: "1px solid #ccc" }}
-            ></span>
-          )}
-          <span class="translation-description">
-            {t("all-translations", { defaultValue: "All translations" })}
-          </span>
-        </span>
-      </div>
-      <div
-        class="translation-option flex-between-center-gap-md"
-        onClick={() => {
-          showAllLanguages.value = "popular";
-          showTranslationSettings.value = false;
-        }}
-      >
-        <span
-          class="translation-title inline-flex-start-center-gap-sm"
-          style={{
-            color:
-              showAllLanguages.value === "popular"
-                ? "var(--addButtonIcon)"
-                : "var(--text3)",
-          }}
-        >
-          {showAllLanguages.value === "popular" ? (
-            <SelectedIcon height={17} width={17} />
-          ) : (
-            <span
-              class="emptyCircle"
-              style={{ border: "1px solid #ccc" }}
-            ></span>
-          )}
-          <span class="translation-description">
-            {t("popular-translations", {
-              defaultValue: "Popular translations",
-            })}
-          </span>
-        </span>
-      </div>
+      />
     </div>
   );
 };
