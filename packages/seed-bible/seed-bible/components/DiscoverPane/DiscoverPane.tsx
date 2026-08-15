@@ -11,6 +11,7 @@ import type {
 import {
   formatPlaylistPlayDurationMs,
   isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryDisplayDurationMs,
   playlistPlayHistoryPercent,
 } from "../../managers/PlaylistManager";
 import { effect, useSignal } from "@preact/signals";
@@ -572,7 +573,9 @@ function PlaylistHistorySection({
                         })}
                       </span>
                       <span className="sb-playlist-history-detail-value">
-                        {formatPlaylistPlayDurationMs(entry.durationMs)}
+                        {formatPlaylistPlayDurationMs(
+                          playlistPlayHistoryDisplayDurationMs(entry)
+                        )}
                       </span>
                     </div>
                     <div className="sb-playlist-history-detail-row">

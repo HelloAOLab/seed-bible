@@ -17,6 +17,8 @@ import {
   formatPlaylistPlayDurationMs,
   isPlaylistPlayHistoryComplete,
   playlistPlayHistoryPercent,
+  retainPlaylistPlayHistory,
+  MAX_PLAYLIST_PLAY_HISTORY,
   type Playlist,
   type PlaylistItemData,
   type PlaylistPlayHistory,
@@ -131,6 +133,38 @@ describe("playlist play history helpers", () => {
     expect(formatPlaylistPlayDurationMs(5_000)).toBe("5s");
     expect(formatPlaylistPlayDurationMs(65_000)).toBe("1m 5s");
     expect(formatPlaylistPlayDurationMs(3_661_000)).toBe("1h 1m");
+  });
+
+  it("retains only the newest session per playlist, capped", () => {
+    const older = makeHistory({
+      id: "h-old",
+      playlistId: "p1",
+      startedAtMs: START_MS,
+    });
+    const newer = makeHistory({
+      id: "h-new",
+      playlistId: "p1",
+      startedAtMs: START_MS + 10_000,
+    });
+    const other = makeHistory({
+      id: "h-other",
+      playlistId: "p2",
+      startedAtMs: START_MS + 5_000,
+    });
+    expect(
+      retainPlaylistPlayHistory([older, newer, other]).map((e) => e.id)
+    ).toEqual(["h-new", "h-other"]);
+
+    const many = Array.from({ length: MAX_PLAYLIST_PLAY_HISTORY + 5 }, (_, i) =>
+      makeHistory({
+        id: `h-${i}`,
+        playlistId: `playlist-${i}`,
+        startedAtMs: START_MS + i,
+      })
+    );
+    const retained = retainPlaylistPlayHistory(many);
+    expect(retained).toHaveLength(MAX_PLAYLIST_PLAY_HISTORY);
+    expect(retained[0]!.id).toBe(`h-${MAX_PLAYLIST_PLAY_HISTORY + 4}`);
   });
 });
 
@@ -281,6 +315,7 @@ function makeTabWithExtensionMocks(
 describe("createPlaylistManager", () => {
   let recordDataMock: Mock;
   let listDataByMarkerMock: Mock;
+  let listAllDataByMarkerMock: Mock;
   let getDataMock: Mock;
   let eraseDataMock: Mock;
   let loginMock: Mock;
@@ -316,6 +351,7 @@ describe("createPlaylistManager", () => {
     Object.assign(os, {
       recordData: recordDataMock,
       listDataByMarker: listDataByMarkerMock,
+      listAllDataByMarker: listAllDataByMarkerMock,
       getData: getDataMock,
       eraseData: eraseDataMock,
     });
@@ -355,6 +391,9 @@ describe("createPlaylistManager", () => {
   beforeEach(() => {
     recordDataMock = vi.fn().mockResolvedValue(undefined);
     listDataByMarkerMock = vi
+      .fn()
+      .mockResolvedValue({ success: true, items: [] });
+    listAllDataByMarkerMock = vi
       .fn()
       .mockResolvedValue({ success: true, items: [] });
     getDataMock = vi.fn().mockResolvedValue({ success: true, data: null });
@@ -1436,14 +1475,10 @@ describe("createPlaylistManager", () => {
         currentStep: 1,
         totalSteps: 3,
       });
-      listDataByMarkerMock.mockImplementation(
-        async (_recordName: string, marker: string) => {
-          if (marker === HISTORY_MARKER) {
-            return { success: true, items: [{ data: prior }] };
-          }
-          return { success: true, items: [] };
-        }
-      );
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
+      });
       const playlist = makePlaylist({
         items: [
           { type: "html", html: "a" },
@@ -1465,6 +1500,9 @@ describe("createPlaylistManager", () => {
       expect(newest.id).not.toBe(prior.id);
       expect(newest.previousHistoryId).toBe(prior.id);
       expect(newest.currentStep).toBe(1);
+      // Latest-per-playlist retention: the prior row is erased.
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", prior.id);
 
       manager.stopPlaying();
       await flush();
@@ -1502,22 +1540,121 @@ describe("createPlaylistManager", () => {
 
     it("syncs stored history on login and clears it on logout", async () => {
       const stored = makeHistory({ id: "hist-stored" });
-      listDataByMarkerMock.mockImplementation(
-        async (_recordName: string, marker: string) => {
-          if (marker === HISTORY_MARKER) {
-            return { success: true, items: [{ data: stored }] };
-          }
-          return { success: true, items: [] };
-        }
-      );
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: stored }],
+      });
 
       const manager = makeManager("user-1");
       await flush();
+      expect(listAllDataByMarkerMock).toHaveBeenCalledWith(
+        "user-1",
+        HISTORY_MARKER
+      );
       expect(manager.userPlaylistHistory.value).toEqual([stored]);
 
       userId.value = null;
       await flush();
       expect(manager.userPlaylistHistory.value).toEqual([]);
+    });
+
+    it("loads all pages, keeps newest per playlist, and erases duplicates", async () => {
+      const older = makeHistory({
+        id: "hist-old",
+        playlistId: "playlist-1",
+        startedAtMs: START_MS,
+      });
+      const newer = makeHistory({
+        id: "hist-new",
+        playlistId: "playlist-1",
+        startedAtMs: START_MS + 60_000,
+      });
+      const other = makeHistory({
+        id: "hist-other",
+        playlistId: "playlist-2",
+        playlistRecordName: "user-1",
+        startedAtMs: START_MS + 30_000,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: older }, { data: newer }, { data: other }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylistHistory.value.map((e) => e.id)).toEqual([
+        "hist-new",
+        "hist-other",
+      ]);
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", "hist-old");
+    });
+
+    it("does not write history to the backend while idle on the same step", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await flush();
+
+      const historyWrites = () =>
+        recordDataMock.mock.calls.filter(
+          (call) => call[3]?.marker === HISTORY_MARKER
+        );
+      const writesAfterStart = historyWrites().length;
+      expect(writesAfterStart).toBeGreaterThanOrEqual(1);
+
+      recordDataMock.mockClear();
+      vi.setSystemTime(START_MS + 30_000);
+      // Re-trigger the mirror effect with the same step (simulates idle ticks /
+      // redundant effect runs). No step change → no backend write.
+      await manager.playing.value!.jumpTo(0);
+      await flush();
+      expect(historyWrites()).toHaveLength(0);
+
+      await manager.playing.value!.next();
+      await flush();
+      expect(historyWrites().length).toBeGreaterThanOrEqual(1);
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("replacing a playlist's session erases the previous history row", async () => {
+      const prior = makeHistory({
+        id: "hist-prior",
+        playlistId: "playlist-1",
+        startedAtMs: START_MS,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+      eraseDataMock.mockClear();
+
+      manager.startPlaying(
+        makePlaylist({
+          id: "playlist-1",
+          items: [{ type: "html", html: "a" }],
+        })
+      );
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      expect(manager.userPlaylistHistory.value[0]!.id).not.toBe(prior.id);
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", prior.id);
+
+      manager.stopPlaying();
+      await flush();
     });
   });
 
