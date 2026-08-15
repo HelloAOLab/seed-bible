@@ -1,6 +1,17 @@
 import * as z from "zod/v4";
+import { v4 as uuid } from "uuid";
+import {
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
+import type { DiscoverManager } from "./DiscoverManager";
+import type { ReaderTab, TabsManager } from "./TabsManager";
+import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 
 export interface AnnotationQuery {
   recordName?: string;
@@ -21,6 +32,53 @@ export interface AnnotationsManager {
     chapterNumber: number,
     query?: AnnotationQuery
   ) => Promise<Annotation[]>;
+
+  /**
+   * Reactive view of the signed-in account's annotations for one chapter,
+   * sorted the same way `listAnnotationsForChapter` sorts. Loads lazily on
+   * first access, keyed by account + bookId/chapterNumber; empty (not
+   * loading) when signed out. Stays live-updated by
+   * `saveEditingAnnotation`/`deleteAnnotationAndRefresh` below.
+   */
+  getAnnotationsForChapter: (
+    bookId: string,
+    chapterNumber: number
+  ) => ReadonlySignal<Annotation[]>;
+
+  /** The annotation currently being created/edited in the pane, or null. */
+  editingAnnotation: Signal<Annotation | null>;
+
+  /**
+   * Starts creating a new annotation on the active tab's current chapter and
+   * switches the pane to the create/edit view. Pre-fills the verse targeting
+   * from the reader's current text selection when one exists for that
+   * chapter. No-op (with a console warning) when signed out and login is
+   * declined, or when there is no active chapter to attach to.
+   */
+  createNewAnnotation: () => Promise<void>;
+
+  /**
+   * Opens an existing annotation for editing: sets `editingAnnotation` to a
+   * copy of it and switches to the create/edit view.
+   */
+  editAnnotation: (annotation: Annotation) => void;
+
+  /**
+   * Persists `editingAnnotation` (upsert), updates the chapter cache, clears
+   * the draft, and returns to the discover view. No-op when nothing is being
+   * edited. Rethrows on save failure, leaving `editingAnnotation` intact so
+   * the caller doesn't lose the draft.
+   */
+  saveEditingAnnotation: () => Promise<void>;
+
+  /** Discards the current edit and returns to the discover view. */
+  cancelEditingAnnotation: () => void;
+
+  /**
+   * Deletes an annotation, updates the chapter cache, and clears the editing
+   * draft if it was the one being edited. Rethrows on failure.
+   */
+  deleteAnnotationAndRefresh: (annotation: Annotation) => Promise<void>;
 }
 
 export const commentAnnotationSchema = z.object({
@@ -54,6 +112,196 @@ export const annotationSchema = z.object({
   data: annotationDataSchema,
 });
 
+/**
+ * Resolves the verse numbers an annotation targets: `verseNumbers` when
+ * present (the exact, possibly non-contiguous selection), else expanded from
+ * `verseNumber`/`endVerseNumber` for annotations saved before that field
+ * existed, else empty for a whole-chapter annotation.
+ */
+export function annotationVerseNumbers(
+  annotation: Pick<
+    Annotation,
+    "verseNumber" | "endVerseNumber" | "verseNumbers"
+  >
+): number[] {
+  if (annotation.verseNumbers && annotation.verseNumbers.length > 0) {
+    return annotation.verseNumbers;
+  }
+  if (annotation.verseNumber == null) {
+    return [];
+  }
+  const end = annotation.endVerseNumber ?? annotation.verseNumber;
+  const numbers: number[] = [];
+  for (let n = annotation.verseNumber; n <= end; n++) {
+    numbers.push(n);
+  }
+  return numbers;
+}
+
+/**
+ * Formats verse numbers into a compact label, grouping consecutive runs:
+ * `[3, 4, 5]` -> `"3-5"`, `[3, 4, 5, 7]` -> `"3-5,7"`, `[7]` -> `"7"`.
+ */
+/**
+ * Finds the chapter data for an annotation's book/chapter, searching every
+ * open tab's currently loaded chapter. Returns null if the annotated chapter
+ * isn't loaded in any open tab (e.g. editing a note for a chapter the user
+ * has since navigated away from).
+ */
+export function findAnnotationChapterData(
+  annotation: Pick<Annotation, "bookId" | "chapterNumber">,
+  tabs: TabsManager
+): TranslationBookChapter | null {
+  return (
+    tabs.tabs.value
+      .map((tab) => tab.readingState.chapterData.value)
+      .find(
+        (c) =>
+          c?.book.id === annotation.bookId &&
+          c?.chapter.number === annotation.chapterNumber
+      ) ?? null
+  );
+}
+
+export function formatAnnotationVerseNumbers(verseNumbers: number[]): string {
+  const sorted = Array.from(new Set(verseNumbers)).sort((a, b) => a - b);
+  const groups: string[] = [];
+  let start = sorted[0];
+  let end = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    const n = sorted[i];
+    if (n !== undefined && end !== undefined && n === end + 1) {
+      end = n;
+      continue;
+    }
+    if (start !== undefined && end !== undefined) {
+      groups.push(start === end ? `${start}` : `${start}-${end}`);
+    }
+    start = n;
+    end = n;
+  }
+  return groups.join(",");
+}
+
+export interface AnnotationGroup {
+  /** Lowest verse number targeted by every annotation in this group, or `null` for a whole-chapter group. */
+  startVerseNumber: number | null;
+  /** Highest verse number targeted by every annotation in this group, or `null` for a whole-chapter group. */
+  endVerseNumber: number | null;
+  annotations: Annotation[];
+}
+
+function annotationVerseRangeKey(annotation: Annotation): string {
+  const verseNumbers = annotationVerseNumbers(annotation);
+  if (verseNumbers.length === 0) {
+    return "chapter";
+  }
+  return [...verseNumbers].sort((a, b) => a - b).join(",");
+}
+
+/**
+ * Groups annotations that target the exact same set of verses (a
+ * whole-chapter annotation only groups with other whole-chapter
+ * annotations; two annotations that merely share the same start and end
+ * verse but differ in between - e.g. `[3, 5]` vs. `[3, 4, 5]` - land in
+ * separate groups), sorts within each group oldest-first by `createdAtMs`
+ * (a comment thread reads top-to-bottom in the order it was written; ties
+ * or missing timestamps keep their incoming relative order), and sorts the
+ * groups themselves with whole-chapter groups first, then ascending by
+ * start verse, then by end verse.
+ */
+export function groupAnnotationsByVerseRange(
+  annotations: Annotation[]
+): AnnotationGroup[] {
+  const groups = new Map<string, AnnotationGroup>();
+
+  for (const annotation of annotations) {
+    const key = annotationVerseRangeKey(annotation);
+    let group = groups.get(key);
+    if (!group) {
+      const verseNumbers = annotationVerseNumbers(annotation);
+      group = {
+        startVerseNumber:
+          verseNumbers.length > 0 ? Math.min(...verseNumbers) : null,
+        endVerseNumber:
+          verseNumbers.length > 0 ? Math.max(...verseNumbers) : null,
+        annotations: [],
+      };
+      groups.set(key, group);
+    }
+    group.annotations.push(annotation);
+  }
+
+  for (const group of groups.values()) {
+    group.annotations.sort((a, b) => {
+      const aTime = a.data.createdAtMs;
+      const bTime = b.data.createdAtMs;
+      if (typeof aTime === "number" && typeof bTime === "number") {
+        return aTime - bTime;
+      }
+      return 0;
+    });
+  }
+
+  return Array.from(groups.values()).sort((a, b) => {
+    if (a.startVerseNumber == null) {
+      return b.startVerseNumber == null ? 0 : -1;
+    }
+    if (b.startVerseNumber == null) {
+      return 1;
+    }
+    if (a.startVerseNumber !== b.startVerseNumber) {
+      return a.startVerseNumber - b.startVerseNumber;
+    }
+    return (a.endVerseNumber ?? 0) - (b.endVerseNumber ?? 0);
+  });
+}
+
+interface VerseTargeting {
+  verseNumber: number | null;
+  endVerseNumber: number | null;
+  verseNumbers: number[] | null;
+}
+
+/**
+ * Derives verse targeting from a tab's current text selection, restricted to
+ * the given book/chapter (mirrors how `BibleReaderToolbar` reads
+ * `selectedVerses` for highlighting). Empty/non-matching selection means
+ * "whole chapter".
+ */
+function deriveVerseTargeting(
+  tab: ReaderTab,
+  bookId: string,
+  chapterNumber: number
+): VerseTargeting {
+  const selectedVerseNumbers = Array.from(
+    new Set(
+      tab.readingState.selectedVerses.value
+        .filter((v) => v.bookId === bookId && v.chapterNumber === chapterNumber)
+        .map((v) => v.verse.number)
+    )
+  ).sort((a, b) => a - b);
+
+  if (selectedVerseNumbers.length === 0) {
+    return { verseNumber: null, endVerseNumber: null, verseNumbers: null };
+  }
+
+  const verseNumber = selectedVerseNumbers[0]!;
+  const maxVerseNumber = selectedVerseNumbers[selectedVerseNumbers.length - 1]!;
+  return {
+    verseNumber,
+    endVerseNumber: maxVerseNumber !== verseNumber ? maxVerseNumber : null,
+    verseNumbers: selectedVerseNumbers,
+  };
+}
+
+function verseNumbersEqual(a: number[] | null, b: number[] | null): boolean {
+  if (a == null || b == null) {
+    return a == null && b == null;
+  }
+  return a.length === b.length && a.every((n, i) => n === b[i]);
+}
+
 function getAnnotationMarker(
   bookId: string,
   chapterNumber: number,
@@ -79,9 +327,26 @@ function sortAnnotations(annotations: Annotation[]): Annotation[] {
   });
 }
 
+type AnnotationsEntry = {
+  /** Account these annotations belong to. */
+  userId: string;
+  /** Latest known annotations for this account + chapter. */
+  data: Signal<Annotation[]>;
+  /** True once a load or a mutation has put real annotations in `data`. */
+  settled: boolean;
+  /** In-flight load, shared by concurrent readers. */
+  load: Promise<void> | null;
+};
+
+function entryKey(userId: string, address: string): string {
+  return `${userId} ${address}`;
+}
+
 export function createAnnotationsManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  tabs: TabsManager,
+  discover: DiscoverManager
 ): AnnotationsManager {
   const resolveRecordName = async (recordName?: string): Promise<string> => {
     if (recordName) {
@@ -177,9 +442,322 @@ export function createAnnotationsManager(
     return sortAnnotations(annotations);
   };
 
+  // --- Reactive per-chapter cache, mirroring HighlightsManager's pattern ---
+
+  function annotationsCacheAddress(
+    bookId: string,
+    chapterNumber: number
+  ): string {
+    return `annotations:${bookId}/${chapterNumber}`;
+  }
+
+  function upsertAnnotation(
+    list: Annotation[],
+    next: Annotation
+  ): Annotation[] {
+    const exists = list.some((a) => a.id === next.id);
+    const merged = exists
+      ? list.map((a) => (a.id === next.id ? next : a))
+      : [...list, next];
+    return sortAnnotations(merged);
+  }
+
+  function removeAnnotationById(list: Annotation[], id: string): Annotation[] {
+    return list.filter((a) => a.id !== id);
+  }
+
+  // Cached annotations, keyed by account + chapter address.
+  const entries = new Map<string, AnnotationsEntry>();
+  // Identity-stable per-chapter views handed to callers, keyed by address.
+  const views = new Map<string, ReadonlySignal<Annotation[]>>();
+
+  const getOrCreateEntry = (
+    userId: string,
+    address: string
+  ): AnnotationsEntry => {
+    const key = entryKey(userId, address);
+    let entry = entries.get(key);
+    if (!entry) {
+      entry = {
+        userId,
+        data: signal<Annotation[]>([]),
+        settled: false,
+        load: null,
+      };
+      entries.set(key, entry);
+    }
+    return entry;
+  };
+
+  const loadEntry = async (
+    userId: string,
+    bookId: string,
+    chapterNumber: number,
+    entry: AnnotationsEntry
+  ): Promise<void> => {
+    try {
+      const loaded = await listAnnotationsForChapter(bookId, chapterNumber, {
+        recordName: userId,
+      });
+      // A mutation that settled the entry while this request was in the air
+      // holds newer annotations than this response does.
+      if (entry.settled) {
+        return;
+      }
+      entry.data.value = loaded;
+      entry.settled = true;
+    } catch (error) {
+      console.error("Failed to load annotations for chapter:", error);
+      if (!entry.settled) {
+        entry.data.value = [];
+        entry.settled = true;
+      }
+    }
+  };
+
+  const ensureLoaded = (
+    userId: string,
+    bookId: string,
+    chapterNumber: number,
+    entry: AnnotationsEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadEntry(userId, bookId, chapterNumber, entry).finally(
+        () => {
+          entry.load = null;
+        }
+      );
+    }
+    return entry.load;
+  };
+
+  const getOrCreateView = (
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<Annotation[]> => {
+    const address = annotationsCacheAddress(bookId, chapterNumber);
+    let view = views.get(address);
+    if (!view) {
+      view = computed(() => {
+        const userId = login.userId.value; // keeps this view following the signed-in account
+        if (!userId) {
+          return [];
+        }
+        const entry = getOrCreateEntry(userId, address);
+        void ensureLoaded(userId, bookId, chapterNumber, entry);
+        return entry.data.value;
+      });
+      views.set(address, view);
+    }
+    return view;
+  };
+
+  // Drops every cached entry that no longer belongs to the signed-in
+  // account, so signing back in re-reads from the server instead of serving
+  // a stale entry left over from a previous session as that same account.
+  let cachedUserId: string | null | undefined;
+  effect(() => {
+    const userId = login.userId.value;
+    if (userId === cachedUserId) {
+      return;
+    }
+    cachedUserId = userId;
+    for (const [key, entry] of entries) {
+      if (entry.userId !== userId) {
+        entries.delete(key);
+      }
+    }
+  });
+
+  const getAnnotationsForChapter = (
+    bookId: string,
+    chapterNumber: number
+  ): ReadonlySignal<Annotation[]> => getOrCreateView(bookId, chapterNumber);
+
+  const upsertIntoCache = (annotation: Annotation): void => {
+    const userId = login.userId.peek();
+    if (!userId) {
+      return;
+    }
+    const address = annotationsCacheAddress(
+      annotation.bookId,
+      annotation.chapterNumber
+    );
+    const entry = getOrCreateEntry(userId, address);
+    entry.data.value = upsertAnnotation(entry.data.value, annotation);
+    entry.settled = true;
+  };
+
+  const removeFromCache = (annotation: Annotation): void => {
+    const userId = login.userId.peek();
+    if (!userId) {
+      return;
+    }
+    const address = annotationsCacheAddress(
+      annotation.bookId,
+      annotation.chapterNumber
+    );
+    const entry = entries.get(entryKey(userId, address));
+    if (!entry) {
+      return;
+    }
+    entry.data.value = removeAnnotationById(entry.data.value, annotation.id);
+  };
+
+  // --- Editing/view-transition state, mirroring PlaylistManager's pattern ---
+
+  const editingAnnotation = signal<Annotation | null>(null);
+
+  // True only while composing a brand-new annotation (between
+  // `createNewAnnotation` and save/cancel) - gates the live-selection sync
+  // effect below so re-opening an *existing* annotation for editing never
+  // has its saved verse targeting silently overwritten by whatever happens
+  // to still be selected in the reader.
+  const isDraftingNewAnnotation = signal(false);
+
+  // The tab a draft was started on, so the live-sync effect below keeps
+  // tracking that tab's selection even if the user switches to a different
+  // open tab while the composer is still up (a normal action - the composer
+  // is a docked panel, not a modal).
+  const draftTabId = signal<string | null>(null);
+
+  const activeTab = computed(
+    () =>
+      tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
+  );
+
+  // Keeps a new annotation's verse targeting in sync with the reader's live
+  // text selection for as long as it's being drafted, so the user can select
+  // verses before, during, or after opening the composer and always see (and
+  // save) the current selection - no manual verse-range controls needed.
+  effect(() => {
+    if (!isDraftingNewAnnotation.value) {
+      return;
+    }
+    const current = editingAnnotation.value;
+    const tabId = draftTabId.value;
+    const tab = tabId
+      ? (tabs.tabs.value.find((t) => t.id === tabId) ?? null)
+      : null;
+    if (!current || !tab) {
+      return;
+    }
+    const targeting = deriveVerseTargeting(
+      tab,
+      current.bookId,
+      current.chapterNumber
+    );
+    if (
+      current.verseNumber === targeting.verseNumber &&
+      current.endVerseNumber === targeting.endVerseNumber &&
+      verseNumbersEqual(current.verseNumbers ?? null, targeting.verseNumbers)
+    ) {
+      return;
+    }
+    editingAnnotation.value = { ...current, ...targeting };
+  });
+
+  const createNewAnnotation = async (): Promise<void> => {
+    let userId = login.userId.value;
+    if (!userId) {
+      const userInfo = await login.login();
+      if (!userInfo) {
+        console.warn("Cannot create an annotation while signed out.");
+        return;
+      }
+      userId = userInfo.id;
+    }
+
+    const tab = activeTab.value;
+    const bookId = tab?.readingState.bookId.value ?? null;
+    const chapterNumber = tab?.readingState.chapterNumber.value ?? null;
+    if (!tab || !bookId || !chapterNumber) {
+      console.warn("Cannot create an annotation: no active chapter.");
+      return;
+    }
+
+    const now = Date.now();
+    isDraftingNewAnnotation.value = true;
+    draftTabId.value = tab.id;
+    // Verse targeting starts null; the sync effect above fills it in
+    // immediately from the current selection, then keeps it live.
+    editingAnnotation.value = annotationSchema.parse({
+      id: `annotation_${uuid()}`,
+      bookId,
+      chapterNumber,
+      verseNumber: null,
+      endVerseNumber: null,
+      verseNumbers: null,
+      data: {
+        type: "comment",
+        html: "",
+        userId,
+        createdAtMs: now,
+        updatedAtMs: now,
+      },
+    });
+    discover.view.value = "create_annotation";
+  };
+
+  const editAnnotation = (annotation: Annotation): void => {
+    isDraftingNewAnnotation.value = false;
+    draftTabId.value = null;
+    editingAnnotation.value = { ...annotation };
+    discover.view.value = "create_annotation";
+  };
+
+  const saveEditingAnnotation = async (): Promise<void> => {
+    const current = editingAnnotation.value;
+    if (!current) {
+      return;
+    }
+    const now = Date.now();
+    const next: Annotation = {
+      ...current,
+      data: {
+        ...current.data,
+        updatedAtMs: now,
+        createdAtMs: current.data.createdAtMs ?? now,
+      },
+    };
+    const saved = await saveAnnotation(next);
+    upsertIntoCache(saved);
+    isDraftingNewAnnotation.value = false;
+    draftTabId.value = null;
+    editingAnnotation.value = null;
+    discover.view.value = "discover";
+  };
+
+  const cancelEditingAnnotation = (): void => {
+    isDraftingNewAnnotation.value = false;
+    draftTabId.value = null;
+    editingAnnotation.value = null;
+    discover.view.value = "discover";
+  };
+
+  const deleteAnnotationAndRefresh = async (
+    annotation: Annotation
+  ): Promise<void> => {
+    await deleteAnnotation(annotation.id);
+    removeFromCache(annotation);
+    if (editingAnnotation.peek()?.id === annotation.id) {
+      cancelEditingAnnotation();
+    }
+  };
+
   return {
     saveAnnotation,
     deleteAnnotation,
     listAnnotationsForChapter,
+    getAnnotationsForChapter,
+    editingAnnotation,
+    createNewAnnotation,
+    editAnnotation,
+    saveEditingAnnotation,
+    cancelEditingAnnotation,
+    deleteAnnotationAndRefresh,
   };
 }

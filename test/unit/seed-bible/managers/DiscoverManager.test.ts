@@ -220,4 +220,79 @@ describe("createDiscoverManager", () => {
       expect(first).toEqual(second);
     });
   });
+
+  describe("view", () => {
+    it("defaults to null", () => {
+      const manager = createDiscoverManager();
+      expect(manager.view.value).toBeNull();
+    });
+
+    it("can be set to each sub-view", () => {
+      const manager = createDiscoverManager();
+      manager.view.value = "discover";
+      expect(manager.view.value).toBe("discover");
+      manager.view.value = "create_playlist";
+      expect(manager.view.value).toBe("create_playlist");
+      manager.view.value = "play_playlist";
+      expect(manager.view.value).toBe("play_playlist");
+      manager.view.value = "create_annotation";
+      expect(manager.view.value).toBe("create_annotation");
+      manager.view.value = null;
+      expect(manager.view.value).toBeNull();
+    });
+  });
+
+  describe("isDiscoverOpen", () => {
+    it("is false when view is null", () => {
+      const manager = createDiscoverManager();
+      expect(manager.isDiscoverOpen.value).toBe(false);
+    });
+
+    it("is true whenever view is non-null", () => {
+      const manager = createDiscoverManager();
+      manager.view.value = "discover";
+      expect(manager.isDiscoverOpen.value).toBe(true);
+      manager.view.value = "create_playlist";
+      expect(manager.isDiscoverOpen.value).toBe(true);
+      manager.view.value = "play_playlist";
+      expect(manager.isDiscoverOpen.value).toBe(true);
+      manager.view.value = "create_annotation";
+      expect(manager.isDiscoverOpen.value).toBe(true);
+    });
+
+    it("goes back to false once view is cleared", () => {
+      const manager = createDiscoverManager();
+      manager.view.value = "discover";
+      manager.view.value = null;
+      expect(manager.isDiscoverOpen.value).toBe(false);
+    });
+  });
+
+  describe("resolveActualView", () => {
+    it("collapses play_playlist to discover when nothing is playing", () => {
+      const manager = createDiscoverManager();
+      manager.view.value = "play_playlist";
+      expect(manager.resolveActualView(false)).toBe("discover");
+    });
+
+    it("keeps play_playlist when something is playing", () => {
+      const manager = createDiscoverManager();
+      manager.view.value = "play_playlist";
+      expect(manager.resolveActualView(true)).toBe("play_playlist");
+    });
+
+    it("returns view unchanged for every other value regardless of isPlaying", () => {
+      const manager = createDiscoverManager();
+      for (const value of [
+        null,
+        "discover",
+        "create_playlist",
+        "create_annotation",
+      ] as const) {
+        manager.view.value = value;
+        expect(manager.resolveActualView(false)).toBe(value);
+        expect(manager.resolveActualView(true)).toBe(value);
+      }
+    });
+  });
 });
