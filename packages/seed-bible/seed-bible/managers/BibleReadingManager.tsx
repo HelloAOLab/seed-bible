@@ -8,7 +8,10 @@ import {
   type TranslationBookChapter,
   type TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
-import { type BibleDataManager } from "../managers/BibleDataManager";
+import {
+  type BibleDataManager,
+  type VerseRef,
+} from "../managers/BibleDataManager";
 import {
   batch,
   computed,
@@ -19,7 +22,7 @@ import {
   type Signal,
 } from "@preact/signals";
 import type { JSX } from "preact";
-import { sortBy } from "es-toolkit";
+import { range, sortBy } from "es-toolkit";
 import type {
   ChapterHighlight,
   ChapterHighlights,
@@ -41,6 +44,11 @@ import type {
   ReadingExtensionRuntime,
   ReadingNavigationOutcome,
 } from "../managers/BibleReadingExtensionManager";
+import {
+  annotationVerseNumbers,
+  type Annotation,
+  type AnnotationsManager,
+} from "../managers/AnnotationsManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -220,6 +228,14 @@ export interface BibleReadingState {
   decorations: ReadonlySignal<VerseDecoration[]>;
   /** Current multi-verse selection in the active chapter. */
   selectedVerses: Signal<BibleSelectedVerse[]>;
+  /**
+   * Annotations covering any of the currently selected verses, scoped to the
+   * active chapter. A whole-chapter annotation (no verse targeting) never
+   * matches here, since `annotationVerseNumbers` resolves it to `[]`. Empty
+   * when this reading state was created without an `AnnotationsManager`
+   * (e.g. a shared session's reading state).
+   */
+  selectionAnnotations: ReadonlySignal<Annotation[]>;
   /** Currently selected footnote with resolved verse/chapter context. */
   selectedFootnote: ReadonlySignal<SelectedFootnote | null>;
   /**
@@ -268,6 +284,12 @@ export interface BibleReadingState {
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
   scrollToVerse: Signal<number | null>;
+  /**
+   * Set when an annotated verse number is clicked; consumed once by whichever
+   * surface renders that verse's annotation (the mobile verse toolbar) to
+   * expand and scroll to it, then cleared.
+   */
+  pendingAnnotationScrollVerse: Signal<number | null>;
 
   /**
    * Toggles a verse in the current selection.
@@ -1122,13 +1144,54 @@ export function previousPosition(
   };
 }
 
+/**
+ * Highlights `ref`'s verse range in `tab`, diminishing after 3s.
+ *
+ * `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know the
+ * chapter's actual verse count until it's loaded; resolve it here, guarding
+ * against stale chapter data left over from a failed fetch
+ * (`selectTranslationAndChapter` doesn't clear `chapterData` on error).
+ *
+ * `verseNumbers`, when given, is used verbatim instead of expanding
+ * `ref.verse`..`ref.endVerse` into a contiguous range - callers whose source
+ * data can be non-contiguous (e.g. an annotation's gapped verse selection)
+ * should pass the exact set to highlight.
+ */
+export function emphasizeVerses(
+  readingState: BibleReadingState,
+  ref: VerseRef,
+  verseNumbers?: number[]
+): string | null {
+  if (!ref.verse) {
+    return null;
+  }
+
+  const endVerse = ref.endVerse;
+  const verses =
+    verseNumbers ?? (endVerse ? range(ref.verse, endVerse + 1) : [ref.verse]);
+
+  return readingState.decorateVerses(ref.book, ref.chapter, verses, {
+    className: "sb-verse-decoration-diminish",
+    containerClassName: "sb-chapter-decoration-diminish",
+    removeAfterMs: 3000,
+  });
+}
+
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
   options: InitialBibleReadingOptions = {},
   discoverManager?: DiscoverManager,
-  readingExtensionManager?: BibleReadingExtensionManager
+  readingExtensionManager?: BibleReadingExtensionManager,
+  /**
+   * Lazily resolved rather than passed directly: `AnnotationsManager` itself
+   * depends on `TabsManager`, which is what constructs the *first* tab's
+   * reading state — a direct reference would be a construction-order cycle.
+   * By the time anything actually reads `selectionAnnotations.value`, the
+   * caller's `AnnotationsManager` already exists.
+   */
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -1198,6 +1261,19 @@ export function createBibleReadingState(
   const highlights = computed<ChapterHighlights>(
     () => activeChapterHighlights.value.value
   );
+  const activeChapterAnnotations = signal<ReadonlySignal<Annotation[]>>(
+    signal<Annotation[]>([])
+  );
+  const chapterAnnotations = computed<Annotation[]>(
+    () => activeChapterAnnotations.value.value
+  );
+  const selectionAnnotations = computed<Annotation[]>(() => {
+    const verseNumbers = selectedVerses.value.map((v) => v.verse.number);
+    if (verseNumbers.length === 0) return [];
+    return chapterAnnotations.value.filter((annotation) =>
+      annotationVerseNumbers(annotation).some((n) => verseNumbers.includes(n))
+    );
+  });
   const decorations = signal<VerseDecoration[]>([]);
   const decorationRemovalTimers = new Map<
     string,
@@ -1221,6 +1297,7 @@ export function createBibleReadingState(
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
+  const pendingAnnotationScrollVerse = signal<number | null>(null);
 
   // Reading-extension enablement (per reading state). Extensions are registered
   // globally on the BibleReadingExtensionManager but never enabled by default;
@@ -1920,6 +1997,13 @@ export function createBibleReadingState(
         next.bookId,
         next.chapterNumber
       );
+      const annotationsManager = getAnnotationsManager?.();
+      activeChapterAnnotations.value = annotationsManager
+        ? annotationsManager.getAnnotationsForChapter(
+            next.bookId,
+            next.chapterNumber
+          )
+        : signal<Annotation[]>([]);
 
       if (options?.content) {
         // Supersede any request already in the air before committing, so a
@@ -1928,7 +2012,19 @@ export function createBibleReadingState(
         applyChapterContent(options.content);
       } else if (
         !didPositionChange &&
-        !chapterMatchesPosition(chapterData.peek(), next) &&
+        chapterMatchesPosition(chapterData.peek(), next)
+      ) {
+        // Already showing this chapter, so the position-driven loader effect
+        // has nothing to fetch and will never call `applyChapterContent` —
+        // which is normally what hands `pendingScrollTarget` off to
+        // `scrollToVerse`. Publish it directly, or a scroll request against a
+        // chapter that's already loaded would be silently dropped.
+        if (scrollToVerseRequest !== null) {
+          pendingScrollTarget = null;
+          scrollToVerse.value = scrollToVerseRequest;
+        }
+      } else if (
+        !didPositionChange &&
         !positionsEqual(openContentRequestPosition, next)
       ) {
         // The position is where it already was, but its text is missing — the
@@ -2986,6 +3082,8 @@ export function createBibleReadingState(
     highlights,
     decorations,
     selectedVerses,
+    selectionAnnotations,
+    pendingAnnotationScrollVerse,
     selectedFootnote,
     loading,
     error,

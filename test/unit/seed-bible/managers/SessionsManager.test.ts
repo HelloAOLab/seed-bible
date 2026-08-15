@@ -492,6 +492,7 @@ describe("SessionsManager", () => {
         isShared: true,
       },
       undefined,
+      undefined,
       undefined
     );
   });

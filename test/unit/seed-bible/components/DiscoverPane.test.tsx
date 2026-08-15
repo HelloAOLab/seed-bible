@@ -14,10 +14,15 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { createPlayingState } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type {
+  Annotation,
+  AnnotationsManager,
+} from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import type {
   TabsManager,
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -82,6 +87,27 @@ vi.mock(
   })
 );
 
+vi.mock("@packages/seed-bible/seed-bible/managers/Sanitization", () => ({
+  setSafeHtml: vi.fn(async (html: string, element: HTMLElement) => {
+    element.innerHTML = html;
+  }),
+}));
+
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/CreateAnnotationForm/CreateAnnotationForm",
+  () => ({
+    CreateAnnotationForm: ({
+      annotations,
+    }: {
+      annotations: AnnotationsManager;
+    }) => (
+      <div className="stub-create-annotation-form">
+        {annotations.editingAnnotation.value?.id}
+      </div>
+    ),
+  })
+);
+
 function createPlaylist(overrides: Partial<Playlist> = {}): Playlist {
   return {
     id: "playlist-1",
@@ -92,6 +118,16 @@ function createPlaylist(overrides: Partial<Playlist> = {}): Playlist {
     items: [],
     createdAtMs: 1,
     updatedAtMs: 1,
+    ...overrides,
+  };
+}
+
+function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
+  return {
+    id: "ann-1",
+    bookId: "GEN",
+    chapterNumber: 1,
+    data: { type: "comment", html: "<p>Hello</p>" },
     ...overrides,
   };
 }
@@ -111,7 +147,12 @@ interface MockPlaylistsResult {
 
 function createMockPlaylists(
   overrides: {
-    view?: "discover" | "create_playlist" | "play_playlist" | null;
+    view?:
+      | "discover"
+      | "create_playlist"
+      | "play_playlist"
+      | "create_annotation"
+      | null;
     userPlaylists?: Playlist[];
     userPlaylistHistory?: PlaylistPlayHistory[];
     editingPlaylist?: Playlist | null;
@@ -170,6 +211,101 @@ function createMockPlaylists(
   };
 }
 
+interface MockAnnotationsResult {
+  annotations: AnnotationsManager;
+  createNewAnnotation: ReturnType<typeof vi.fn>;
+  editAnnotation: ReturnType<typeof vi.fn>;
+  saveEditingAnnotation: ReturnType<typeof vi.fn>;
+  cancelEditingAnnotation: ReturnType<typeof vi.fn>;
+  deleteAnnotationAndRefresh: ReturnType<typeof vi.fn>;
+}
+
+function createMockAnnotations(
+  overrides: {
+    editingAnnotation?: Annotation | null;
+    annotationsForChapter?: Annotation[];
+    deleteAnnotationAndRefreshImpl?: () => Promise<void>;
+  } = {}
+): MockAnnotationsResult {
+  const createNewAnnotation = vi.fn();
+  const editAnnotation = vi.fn();
+  const saveEditingAnnotation = vi.fn().mockResolvedValue(undefined);
+  const cancelEditingAnnotation = vi.fn();
+  const deleteAnnotationAndRefresh = vi.fn(
+    overrides.deleteAnnotationAndRefreshImpl ?? (() => Promise.resolve())
+  );
+  const chapterAnnotations = signal<Annotation[]>(
+    overrides.annotationsForChapter ?? []
+  );
+
+  const annotations = {
+    editingAnnotation: signal(overrides.editingAnnotation ?? null),
+    getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+    createNewAnnotation,
+    editAnnotation,
+    saveEditingAnnotation,
+    cancelEditingAnnotation,
+    deleteAnnotationAndRefresh,
+  } as unknown as AnnotationsManager;
+
+  return {
+    annotations,
+    createNewAnnotation,
+    editAnnotation,
+    saveEditingAnnotation,
+    cancelEditingAnnotation,
+    deleteAnnotationAndRefresh,
+  };
+}
+
+type ChatProvider =
+  import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatProvider;
+
+interface MockChatsResult {
+  chats: import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatsManager;
+  createLocalSession: ReturnType<typeof vi.fn>;
+  selectChat: ReturnType<typeof vi.fn>;
+  addParticipant: ReturnType<typeof vi.fn>;
+  providers: ReturnType<typeof signal<ChatProvider[]>>;
+}
+
+function createMockProvider(
+  id: string,
+  name = id,
+  supportsToolCalling = true
+): ChatProvider {
+  return {
+    id,
+    name,
+    supportsSharedChats: false,
+    supportsToolCalling,
+  } as unknown as ChatProvider;
+}
+
+/** A fake `ChatsManager` exposing just the surface `DiscoverPaneTitle`'s AI button uses. */
+function createMockChats(
+  providers: ChatProvider[] = [],
+  existingChats: import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatSession[] = []
+): MockChatsResult {
+  const selectChat = vi.fn();
+  const addParticipant = vi.fn();
+  const createLocalSession = vi.fn(() => ({ id: "chat-1", addParticipant }));
+  const providersSignal = signal(providers);
+  const chats = {
+    chats: signal(existingChats),
+    createLocalSession,
+    selectChat,
+    providers: providersSignal,
+  } as unknown as import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatsManager;
+  return {
+    chats,
+    createLocalSession,
+    selectChat,
+    addParticipant,
+    providers: providersSignal,
+  };
+}
+
 function createMockTabs(tab: ReaderTab | null = null): TabsManager {
   return {
     tabs: signal(tab ? [tab] : []),
@@ -179,18 +315,25 @@ function createMockTabs(tab: ReaderTab | null = null): TabsManager {
 
 function createMockTab(
   overrides: {
+    bookId?: string | null;
+    chapterNumber?: number;
     chapterData?: {
-      book: { name: string };
+      book: { id?: string; name: string; commonName?: string };
       chapter: { number: number };
     } | null;
     discoveredCrossReferences?: unknown[];
     discoveredStudyNotes?: unknown[];
     discoveredContent?: unknown[];
+    translationId?: string;
+    selectTranslationAndChapter?: ReturnType<typeof vi.fn>;
+    decorateVerses?: ReturnType<typeof vi.fn>;
   } = {}
 ): ReaderTab {
   return {
     id: "tab-1",
     readingState: {
+      bookId: signal(overrides.bookId ?? "GEN"),
+      chapterNumber: signal(overrides.chapterNumber ?? 1),
       chapterData: signal(overrides.chapterData ?? null),
       discoveredCrossReferences: signal(
         overrides.discoveredCrossReferences ?? []
@@ -198,15 +341,39 @@ function createMockTab(
       discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
       discoveredContent: signal(overrides.discoveredContent ?? []),
       translationBooks: signal(null),
+      translationId: signal(overrides.translationId ?? "BSB"),
+      selectTranslationAndChapter:
+        overrides.selectTranslationAndChapter ??
+        vi.fn().mockResolvedValue(undefined),
+      decorateVerses: overrides.decorateVerses ?? vi.fn(() => "decoration-1"),
     },
   } as unknown as ReaderTab;
 }
 
-function createMockState(isMobile = false): SeedBibleState {
+function createMockState(
+  isMobile = false,
+  overrides: {
+    getUserProfile?: ReturnType<typeof vi.fn>;
+    openVerseReference?: ReturnType<typeof vi.fn>;
+  } = {}
+): SeedBibleState {
   return {
     app: {
       isMobile: signal(isMobile),
       toast: vi.fn(),
+      openVerseReference:
+        overrides.openVerseReference ?? vi.fn().mockResolvedValue(undefined),
+    },
+    login: {
+      userId: signal(null),
+      getUserProfile:
+        overrides.getUserProfile ?? vi.fn().mockResolvedValue({ name: "" }),
+    },
+    discover: {
+      scrollToVerse: signal(null),
+    },
+    panes: {
+      closeFullscreenPanes: vi.fn(),
     },
   } as unknown as SeedBibleState;
 }
@@ -229,13 +396,17 @@ describe("DiscoverPane", () => {
     vi.restoreAllMocks();
   });
 
-  it("DiscoverPaneHeader shows + Create only in the discover sub-view, and clicking it calls createNewPlaylist", () => {
+  it("DiscoverPaneHeader shows the create menu only in the discover sub-view, with Annotation and Playlist items", () => {
     const { playlists, createNewPlaylist } = createMockPlaylists({
       view: "discover",
     });
+    const { annotations, createNewAnnotation } = createMockAnnotations();
 
     act(() => {
-      render(<DiscoverPaneHeader playlists={playlists} />, container);
+      render(
+        <DiscoverPaneHeader playlists={playlists} annotations={annotations} />,
+        container
+      );
     });
 
     const createButton = container.querySelector(
@@ -243,8 +414,26 @@ describe("DiscoverPane", () => {
     ) as HTMLButtonElement;
     expect(createButton).not.toBeNull();
 
+    const annotationItem = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ).find((el) => el.textContent?.includes("Annotation")) as
+      | HTMLButtonElement
+      | undefined;
+    const playlistItem = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ).find((el) => el.textContent?.includes("Playlist")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(annotationItem).not.toBeUndefined();
+    expect(playlistItem).not.toBeUndefined();
+
     act(() => {
-      createButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      annotationItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(createNewAnnotation).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      playlistItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(createNewPlaylist).toHaveBeenCalledTimes(1);
 
@@ -257,6 +446,7 @@ describe("DiscoverPane", () => {
 
   it("shows the empty-playlists message when there are no playlists", () => {
     const { playlists } = createMockPlaylists({ userPlaylists: [] });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -266,6 +456,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -294,6 +485,7 @@ describe("DiscoverPane", () => {
         createPlaylist({ id: "p2", title: null }),
       ],
     });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -303,6 +495,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -329,6 +522,7 @@ describe("DiscoverPane", () => {
     const { playlists, startPlaying } = createMockPlaylists({
       userPlaylists: [playlist],
     });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -338,6 +532,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -367,6 +562,7 @@ describe("DiscoverPane", () => {
     const { playlists, getPlaylistUrl } = createMockPlaylists({
       userPlaylists: [playlist],
     });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -376,6 +572,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -409,6 +606,7 @@ describe("DiscoverPane", () => {
     const { playlists, editPlaylist } = createMockPlaylists({
       userPlaylists: [playlist],
     });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -418,6 +616,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -444,6 +643,7 @@ describe("DiscoverPane", () => {
     const { playlists, deletePlaylist } = createMockPlaylists({
       userPlaylists: [playlist],
     });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -453,6 +653,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -515,6 +716,7 @@ describe("DiscoverPane", () => {
       userPlaylists: [playlist],
       deletePlaylistImpl: () => Promise.reject(new Error("nope")),
     });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -524,6 +726,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -571,8 +774,859 @@ describe("DiscoverPane", () => {
     modalContainer.remove();
   });
 
-  it("shows the select-a-tab hint for cross references, study notes, and content when no tab is selected", () => {
+  it("shows the empty-annotations message when there are no annotations for the chapter", () => {
     const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const emptyStates = Array.from(
+      container.querySelectorAll(".sb-discover-empty")
+    ).map((el) => el.textContent);
+    expect(emptyStates).toContain("You have no annotations");
+  });
+
+  it("lists annotations with a book/chapter/verse location label and a sanitized preview", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: { type: "comment", html: "<p>Great verse</p>" },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const items = container.querySelectorAll(".sb-annotation-item");
+    expect(items).toHaveLength(1);
+    expect(
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
+    ).toBe("Genesis 1:3");
+    expect(
+      items[0]?.querySelector(".sb-annotation-item-preview")?.textContent
+    ).toBe("Great verse");
+  });
+
+  it("clicking a verse-reference link inside an annotation's preview navigates to that reference, without also navigating to the annotation's own verse", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: '<p>See <a class="sb-verse-reference-link" href="/read?book=JHN&chapter=3">John 3:16</a></p>',
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const openVerseReference = vi.fn().mockResolvedValue(undefined);
+    const state = createMockState(false, { openVerseReference });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const link = container.querySelector(
+      ".sb-annotation-item-preview a.sb-verse-reference-link"
+    ) as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+
+    await act(async () => {
+      link.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+      await Promise.resolve();
+    });
+
+    expect(openVerseReference).toHaveBeenCalledWith(
+      expect.objectContaining({ book: "JHN", chapter: 3, verse: 16 })
+    );
+    // The row's own navigate-on-click (to GEN 1:3) must not also fire.
+    expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotation row navigates to its verse and emphasizes it, without opening it for editing", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+      endVerseNumber: 5,
+      data: { type: "comment", html: "<p>Great verse</p>" },
+    });
+    const { annotations, editAnnotation } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const decorateVerses = vi.fn(() => "decoration-1");
+    const tab = createMockTab({
+      translationId: "BSB",
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+      decorateVerses,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const item = container.querySelector(
+      ".sb-annotation-item"
+    ) as HTMLLIElement;
+
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(selectTranslationAndChapter).toHaveBeenCalledWith("BSB", "GEN", 1, {
+      scrollToVerse: 3,
+    });
+    expect(decorateVerses).toHaveBeenCalledWith(
+      "GEN",
+      1,
+      [3, 4, 5],
+      expect.objectContaining({
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
+        removeAfterMs: 3000,
+      })
+    );
+    expect(editAnnotation).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotation row with a gapped verse selection only emphasizes the annotation's actual verses", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+      endVerseNumber: 7,
+      verseNumbers: [3, 4, 5, 7],
+      data: { type: "comment", html: "<p>Great verse</p>" },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const decorateVerses = vi.fn(() => "decoration-1");
+    const tab = createMockTab({
+      translationId: "BSB",
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+      decorateVerses,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const item = container.querySelector(
+      ".sb-annotation-item"
+    ) as HTMLLIElement;
+
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(decorateVerses).toHaveBeenCalledWith(
+      "GEN",
+      1,
+      [3, 4, 5, 7],
+      expect.objectContaining({
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
+        removeAfterMs: 3000,
+      })
+    );
+  });
+
+  it("clicking an annotation row with no verse targeting does not navigate or emphasize anything", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: null,
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+    const decorateVerses = vi.fn(() => "decoration-1");
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+      selectTranslationAndChapter,
+      decorateVerses,
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const item = container.querySelector(
+      ".sb-annotation-item"
+    ) as HTMLLIElement;
+
+    await act(async () => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+    expect(decorateVerses).not.toHaveBeenCalled();
+  });
+
+  it("shows just the book/chapter for annotations with no verse targeting", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({ id: "a1", verseNumber: null });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
+    ).toBe("Genesis 1");
+  });
+
+  it("shows a book/chapter/verse-range label for annotations spanning multiple verses", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      endVerseNumber: 5,
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
+    ).toBe("Genesis 1:3-5");
+  });
+
+  it("shows a grouped range plus a non-contiguous verse for gapped selections", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      endVerseNumber: 7,
+      verseNumbers: [3, 4, 5, 7],
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-annotation-group-header-title")?.textContent
+    ).toBe("Genesis 1:3-5,7");
+  });
+
+  it("groups annotations with the same verse range together and gives each distinct range its own group, ordered by verse", () => {
+    const { playlists } = createMockPlaylists();
+    const wholeChapter = createAnnotation({
+      id: "chapter-note",
+      verseNumber: null,
+    });
+    const verse3a = createAnnotation({ id: "verse-3-a", verseNumber: 3 });
+    const verse3b = createAnnotation({ id: "verse-3-b", verseNumber: 3 });
+    const verse7 = createAnnotation({ id: "verse-7", verseNumber: 7 });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [verse7, verse3a, wholeChapter, verse3b],
+    });
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const groupTitles = Array.from(
+      container.querySelectorAll(".sb-annotation-group-header-title")
+    ).map((el) => el.textContent);
+    expect(groupTitles).toEqual(["Genesis 1", "Genesis 1:3", "Genesis 1:7"]);
+
+    const groups = container.querySelectorAll(".sb-annotation-group");
+    expect(groups[1]?.querySelectorAll(".sb-annotation-item")).toHaveLength(2);
+  });
+
+  it("collapses and re-expands a group's annotations when its header is clicked", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({ id: "a1", verseNumber: 3 });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const header = container.querySelector(
+      ".sb-annotation-group-header"
+    ) as HTMLButtonElement;
+    expect(header.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
+
+    act(() => {
+      header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(header.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(0);
+
+    act(() => {
+      header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(header.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
+  });
+
+  it("shows the comment's author name resolved from their profile and a formatted updated time", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-42",
+        userName: "Loading Placeholder",
+        updatedAtMs: Date.UTC(2026, 0, 5, 10, 30),
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const getUserProfile = vi.fn().mockResolvedValue({ name: "Jordan Rivera" });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, { getUserProfile });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(getUserProfile).toHaveBeenCalledWith("user-42");
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector(".sb-annotation-comment-author-name")
+          ?.textContent
+      ).toBe("Jordan Rivera");
+    });
+    const expectedUpdated = new Intl.DateTimeFormat("en", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(Date.UTC(2026, 0, 5, 10, 30)));
+    expect(
+      container.querySelector(".sb-annotation-comment-updated")?.textContent
+    ).toBe(`| ${expectedUpdated}`);
+  });
+
+  it("shows the comment's avatar resolved from their profile picture, before the name", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-99",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const getUserProfile = vi.fn().mockResolvedValue({
+      name: "Jordan Rivera",
+      pictureUrl: "https://example.com/jordan.png",
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState(false, { getUserProfile });
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    await vi.waitFor(() => {
+      const avatar = container.querySelector(
+        ".sb-tab-user-icon-has-image"
+      ) as HTMLElement;
+      expect(avatar).not.toBeNull();
+      expect(avatar?.style.backgroundImage).toContain(
+        "https://example.com/jordan.png"
+      );
+    });
+
+    const author = container.querySelector(".sb-annotation-comment-author")!;
+    const avatarIndex = Array.from(author.children).findIndex((el) =>
+      el.classList.contains("sb-tab-user-icon")
+    );
+    const nameIndex = Array.from(author.children).findIndex((el) =>
+      el.classList.contains("sb-annotation-comment-author-name")
+    );
+    expect(avatarIndex).toBeGreaterThanOrEqual(0);
+    expect(avatarIndex).toBeLessThan(nameIndex);
+  });
+
+  it("shows a deterministic fallback avatar (derived from the user id) when the author has no profile picture", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-no-picture",
+        userName: "No Picture",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-has-image")).toBeNull();
+  });
+
+  it("the annotation Edit menu item calls editAnnotation", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({ id: "a1" });
+    const { annotations, editAnnotation } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const editItem = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ).find((el) => el.textContent?.includes("Edit")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(editItem).not.toBeUndefined();
+
+    act(() => {
+      editItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(editAnnotation).toHaveBeenCalledWith(annotation);
+  });
+
+  it("the annotation Delete menu item opens a confirm modal; confirming deletes and closes it", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({ id: "a1" });
+    const { annotations, deleteAnnotationAndRefresh } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const deleteItem = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ).find((el) => el.textContent?.includes("Delete")) as
+      | HTMLButtonElement
+      | undefined;
+
+    act(() => {
+      deleteItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const modal = modals.modals.value.find(
+      (m) => m.id === "delete-annotation-confirm-a1"
+    );
+    expect(modal).not.toBeUndefined();
+
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    act(() => {
+      render(
+        modal!.content({
+          t: (key, options) => (options?.defaultValue as string) ?? key,
+        }),
+        modalContainer
+      );
+    });
+    expect(modalContainer.textContent).toContain(
+      "Delete this annotation? This can't be undone."
+    );
+
+    const confirmButton = modalContainer.querySelector(
+      ".sb-session-settings-end"
+    ) as HTMLButtonElement;
+
+    await act(async () => {
+      confirmButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(deleteAnnotationAndRefresh).toHaveBeenCalledWith(annotation);
+    expect(
+      modals.modals.value.some((m) => m.id === "delete-annotation-confirm-a1")
+    ).toBe(false);
+
+    render(null, modalContainer);
+    modalContainer.remove();
+  });
+
+  it("shows a toast but still closes the modal when deleting an annotation fails", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({ id: "a1" });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+      deleteAnnotationAndRefreshImpl: () => Promise.reject(new Error("nope")),
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const deleteItem = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ).find((el) => el.textContent?.includes("Delete")) as
+      | HTMLButtonElement
+      | undefined;
+    act(() => {
+      deleteItem?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const modal = modals.modals.value.find(
+      (m) => m.id === "delete-annotation-confirm-a1"
+    )!;
+    const modalContainer = document.createElement("div");
+    document.body.appendChild(modalContainer);
+    act(() => {
+      render(modal.content({ t: (key) => key }), modalContainer);
+    });
+
+    const confirmButton = modalContainer.querySelector(
+      ".sb-session-settings-end"
+    ) as HTMLButtonElement;
+
+    await act(async () => {
+      confirmButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(state.app.toast).toHaveBeenCalledWith(
+      "Couldn't delete the annotation."
+    );
+    expect(
+      modals.modals.value.some((m) => m.id === "delete-annotation-confirm-a1")
+    ).toBe(false);
+
+    render(null, modalContainer);
+    modalContainer.remove();
+  });
+
+  it("shows the select-a-tab hint for annotations, cross references, study notes, and content when no tab is selected", () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -582,6 +1636,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -595,11 +1650,12 @@ describe("DiscoverPane", () => {
     ).filter(
       (el) => el.textContent === "Select a tab to discover related material."
     );
-    expect(hints).toHaveLength(3);
+    expect(hints).toHaveLength(4);
   });
 
   it("hides cross reference / study note / content sections entirely when there are no results", () => {
     const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations();
     const tab = createMockTab({
       chapterData: { book: { name: "Genesis" }, chapter: { number: 1 } },
     });
@@ -612,6 +1668,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -630,6 +1687,7 @@ describe("DiscoverPane", () => {
 
   it("renders cross references, study notes, and content results for the selected tab", () => {
     const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations();
     const tab = createMockTab({
       chapterData: { book: { name: "Genesis" }, chapter: { number: 1 } },
       discoveredCrossReferences: [
@@ -683,6 +1741,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -710,6 +1769,7 @@ describe("DiscoverPane", () => {
       view: "create_playlist",
       editingPlaylist: createPlaylist(),
     });
+    const { annotations } = createMockAnnotations();
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
@@ -719,6 +1779,7 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -733,11 +1794,10 @@ describe("DiscoverPane", () => {
     expect(container.querySelector(".sb-discover-create")).toBeNull();
   });
 
-  it("renders PlayPlaylistView when view is play_playlist", () => {
-    const playlist = createPlaylist();
-    const { playlists } = createMockPlaylists({
-      view: "play_playlist",
-      playing: createPlayingState([playlist]),
+  it("renders CreateAnnotationForm when view is create_annotation", () => {
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations } = createMockAnnotations({
+      editingAnnotation: createAnnotation({ id: "ann-9" }),
     });
     const tabs = createMockTabs();
     const modals = createModalManager();
@@ -748,6 +1808,38 @@ describe("DiscoverPane", () => {
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".stub-create-annotation-form")?.textContent
+    ).toBe("ann-9");
+    expect(container.querySelector(".sb-discover-create")).toBeNull();
+  });
+
+  it("renders PlayPlaylistView when view is play_playlist", () => {
+    const playlist = createPlaylist();
+    const { playlists } = createMockPlaylists({
+      view: "play_playlist",
+      playing: createPlayingState([playlist]),
+    });
+    const { annotations } = createMockAnnotations();
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -763,10 +1855,14 @@ describe("DiscoverPane", () => {
 
 describe("DiscoverPaneTitle", () => {
   let container: HTMLDivElement;
+  let chatsFixture: MockChatsResult;
+  let openChatPanel: Mock<() => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    chatsFixture = createMockChats();
+    openChatPanel = vi.fn<() => void>();
   });
 
   afterEach(() => {
@@ -777,9 +1873,20 @@ describe("DiscoverPaneTitle", () => {
 
   it("shows the plain 'Discover' label in the discover view", () => {
     const { playlists } = createMockPlaylists({ view: "discover" });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+
+        container
+      );
     });
 
     expect(container.textContent).toBe("Discover");
@@ -793,9 +1900,20 @@ describe("DiscoverPaneTitle", () => {
         createPlaylist({ title: "Evening Reading" }),
       ]),
     });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+
+        container
+      );
     });
 
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
@@ -816,9 +1934,20 @@ describe("DiscoverPaneTitle", () => {
       view: "play_playlist",
       playing: createPlayingState([createPlaylist({ title: null })]),
     });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+
+        container
+      );
     });
 
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
@@ -852,9 +1981,20 @@ describe("DiscoverPaneTitle", () => {
       editingPlaylist: signal(null),
       goBackFromPlayingView: vi.fn(),
     } as unknown as PlaylistManager;
+    const { annotations } = createMockAnnotations();
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+
+        container
+      );
     });
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
       "Evening Reading"
@@ -875,9 +2015,20 @@ describe("DiscoverPaneTitle", () => {
       view: "create_playlist",
       editingPlaylist: createPlaylist({ title: "Draft" }),
     });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+
+        container
+      );
     });
 
     const input = container.querySelector(
@@ -900,14 +2051,202 @@ describe("DiscoverPaneTitle", () => {
     expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
   });
 
+  it("with no AI providers, the AI button starts a local chat seeded with a prompt message and no participant", () => {
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    // No menu with zero (or one) provider: a plain button, not the
+    // context-menu trigger.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    expect(aiButton).not.toBeNull();
+
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    const history = chatsFixture.createLocalSession.mock.calls[0]![0];
+    expect(history.providerIds).toEqual([]);
+    expect(history.messages).toHaveLength(1);
+    expect(history.messages[0]).toMatchObject({
+      authors: [],
+      type: "text",
+      text: "What do you want to add/change?",
+    });
+
+    expect(chatsFixture.addParticipant).not.toHaveBeenCalled();
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("with exactly one AI provider, the AI button adds it automatically without showing a menu", () => {
+    chatsFixture = createMockChats([createMockProvider("provider-1")]);
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("with multiple AI providers, the AI button shows a menu and starts the chat with the selected provider", () => {
+    chatsFixture = createMockChats([
+      createMockProvider("provider-1", "Provider One"),
+      createMockProvider("provider-2", "Provider Two"),
+    ]);
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    expect(aiButton).not.toBeNull();
+    // Not yet started: opening the menu shouldn't create a chat by itself.
+    expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const menuItems = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ) as HTMLButtonElement[];
+    expect(menuItems.map((item) => item.textContent)).toEqual([
+      "Provider One",
+      "Provider Two",
+    ]);
+
+    act(() => {
+      menuItems[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-2");
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("excludes AI providers that don't support tool calling from the AI button", () => {
+    chatsFixture = createMockChats([
+      createMockProvider("provider-1", "Provider One"),
+      createMockProvider("provider-2", "No Tools", false),
+    ]);
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    // Only one tool-calling provider remains, so no menu is shown and it's
+    // added automatically, same as the single-provider case.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+    expect(chatsFixture.addParticipant).not.toHaveBeenCalledWith("provider-2");
+  });
+
   it("stores a whitespace-only title as null in the create view", () => {
     const { playlists } = createMockPlaylists({
       view: "create_playlist",
       editingPlaylist: createPlaylist({ title: "Something" }),
     });
+    const { annotations } = createMockAnnotations();
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={createMockTabs()}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+
+        container
+      );
     });
 
     const input = container.querySelector(
@@ -953,12 +2292,14 @@ describe("DiscoverPaneTitle", () => {
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
+    const { annotations } = createMockAnnotations();
 
     act(() => {
       render(
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -982,12 +2323,14 @@ describe("DiscoverPaneTitle", () => {
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
+    const { annotations } = createMockAnnotations();
 
     act(() => {
       render(
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -1038,12 +2381,14 @@ describe("DiscoverPaneTitle", () => {
     const tabs = createMockTabs();
     const modals = createModalManager();
     const state = createMockState();
+    const { annotations } = createMockAnnotations();
 
     act(() => {
       render(
         <DiscoverPane
           tabs={tabs}
           playlists={playlists}
+          annotations={annotations}
           modals={modals}
           state={state}
           toast={state.app.toast}
@@ -1068,5 +2413,105 @@ describe("DiscoverPaneTitle", () => {
     });
     expect(replayFromHistory).toHaveBeenCalledWith(entry);
     expect(continueFromHistory).not.toHaveBeenCalled();
+  });
+
+  function renderAnnotationTitle(editing: Annotation) {
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations, cancelEditingAnnotation } = createMockAnnotations({
+      editingAnnotation: editing,
+    });
+    const tab = createMockTab({
+      bookId: editing.bookId,
+      chapterNumber: editing.chapterNumber,
+      chapterData: {
+        book: { id: editing.bookId, name: "Genesis" },
+        chapter: { number: editing.chapterNumber },
+      },
+    });
+    const tabs = createMockTabs(tab);
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          annotations={annotations}
+          tabs={tabs}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    return { cancelEditingAnnotation };
+  }
+
+  it("shows 'Annotate {book} {chapter}' when no verses are selected", () => {
+    renderAnnotationTitle(
+      createAnnotation({ bookId: "GEN", chapterNumber: 3 })
+    );
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate Genesis 3"
+    );
+  });
+
+  it("shows 'Annotate {book} {chapter}:{verse}' when a single verse is selected", () => {
+    renderAnnotationTitle(
+      createAnnotation({
+        bookId: "GEN",
+        chapterNumber: 3,
+        verseNumber: 5,
+      })
+    );
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate Genesis 3:5"
+    );
+  });
+
+  it("shows 'Annotate {book} {chapter}:{verse}-{endVerse}' when a range is selected", () => {
+    renderAnnotationTitle(
+      createAnnotation({
+        bookId: "GEN",
+        chapterNumber: 3,
+        verseNumber: 3,
+        endVerseNumber: 5,
+      })
+    );
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate Genesis 3:3-5"
+    );
+  });
+
+  it("shows a range plus a non-contiguous verse when the selection has a gap", () => {
+    renderAnnotationTitle(
+      createAnnotation({
+        bookId: "GEN",
+        chapterNumber: 3,
+        verseNumber: 3,
+        endVerseNumber: 7,
+        verseNumbers: [3, 4, 5, 7],
+      })
+    );
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Annotate Genesis 3:3-5,7"
+    );
+  });
+
+  it("back button in the create_annotation view calls cancelEditingAnnotation", () => {
+    const { cancelEditingAnnotation } = renderAnnotationTitle(
+      createAnnotation({ bookId: "GEN", chapterNumber: 3 })
+    );
+
+    const backButton = container.querySelector(
+      ".sb-reading-plans-back"
+    ) as HTMLButtonElement;
+    act(() => {
+      backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(cancelEditingAnnotation).toHaveBeenCalledTimes(1);
   });
 });
