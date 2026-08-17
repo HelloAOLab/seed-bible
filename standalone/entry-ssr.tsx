@@ -436,23 +436,11 @@ export async function render(
   // rather than the bundled "en" fallback.
   await state.i18n.ready;
 
-  const [renderedAppHtml] = await Promise.all([
+  const [appHtml] = await Promise.all([
     renderToStringAsync(
       <Main initialState={state} config={config} initialHref={href} />
     ),
   ]);
-
-  // `renderToStringAsync` wraps any component that had to `throw` its data
-  // promise during SSR (BibleReader.tsx's and Tabs.tsx's `TabRow` chapter-load
-  // suspension) in `<!--$s-->`/`<!--/$s-->` markers, even once it resolved to
-  // real content — that's basically always, since the chapter fetch is never
-  // instant. Preact's `hydrate()` has no notion of these markers (they don't
-  // appear anywhere in `preact` or `preact/compat`), so they show up as a
-  // stray comment node in front of whichever element they wrapped — a real
-  // DOM difference the client tree, which never suspends these checks outside
-  // SSR, doesn't reproduce. Stripping them here is safe: nothing in this
-  // codebase reads them back (no resumable-hydration helper is in use).
-  const appHtml = renderedAppHtml.replace(/<!--\/?\$s-->/g, "");
 
   const metaHtml = await renderToStringAsync(
     <>
@@ -501,12 +489,10 @@ export async function render(
   const ssrChapterContentSettled = !state.tabs.tabs.value.some(
     (tab) => tab.readingState.initialChapterLoadTimedOut.value
   );
-  const renderedTabIds = state.tabs.tabs.value.map((tab) => tab.id);
   const clientConfig: AppConfig = {
     ...config,
     renderedForPath: options.path,
     ssrChapterContentSettled,
-    renderedTabIds,
   };
 
   const configJson = escapeForScript(JSON.stringify(clientConfig));

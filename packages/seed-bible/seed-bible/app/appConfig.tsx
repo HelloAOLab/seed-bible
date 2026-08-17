@@ -74,25 +74,6 @@ export interface AppConfig {
    * predates this field doesn't block hydration purely on version skew.
    */
   ssrChapterContentSettled: boolean;
-
-  /**
-   * IDs of the reader tabs the server actually rendered into the sidebar's
-   * tab list, in order — see `entry-ssr.tsx`'s `render()`. SSR always builds
-   * tabs from the URL alone (`TabsPersistence.ts`'s `readStoredTabsState`
-   * returns null server-side), but a returning visitor's browser can hold a
-   * `sb-tabs-state` localStorage entry describing several tabs from an
-   * earlier session; `TabsManager.tsx` restores and reconciles those on
-   * construction, before `hydrate()` ever runs. When that produces a
-   * different tab list than the server rendered, the sidebar has a different
-   * number of `TabRow`s than the SSR HTML — a structural mismatch `hydrate()`
-   * can't paper over, unlike an attribute-level disagreement. The hydration
-   * gate (`app/hydrationGate.ts`) compares this against the client's
-   * constructed tab ids before deciding to hydrate.
-   *
-   * Optional so an older server build that predates this field doesn't block
-   * hydration purely on version skew — the gate skips the check when absent.
-   */
-  renderedTabIds?: string[];
 }
 
 export const DEFAULT_APP_CONFIG: AppConfig = {

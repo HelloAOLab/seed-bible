@@ -9,26 +9,13 @@ export interface HydrationGateContext {
   search: string;
   /** The element `hydrate()`/`render()` will target (e.g. `#app`). */
   container: Element;
-  /**
-   * IDs of the reader tabs the client's `TabsManager` actually constructed,
-   * in order — compared against `config.renderedTabIds`. A returning
-   * visitor's `sb-tabs-state` localStorage entry (see `TabsPersistence.ts`)
-   * can restore a different tab list than the URL-only one SSR always
-   * builds, which changes how many `TabRow`s the sidebar mounts — a
-   * structural difference `hydrate()` can't reconcile.
-   */
-  tabIds: string[];
 }
 
 export type HydrationDecision =
   | { hydrate: true }
   | {
       hydrate: false;
-      reason:
-        | "no-ssr-content"
-        | "chapter-load-incomplete"
-        | "url-mismatch"
-        | "tabs-mismatch";
+      reason: "no-ssr-content" | "chapter-load-incomplete" | "url-mismatch";
     };
 
 /**
@@ -39,7 +26,7 @@ export type HydrationDecision =
  * otherwise happen.
  */
 export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
-  const { config, pathname, search, container, tabIds } = ctx;
+  const { config, pathname, search, container } = ctx;
 
   // A shell that was never actually filled in (a non-whitelisted branch's
   // stale fallback with a swallowed substitution, or a render() error path)
@@ -57,14 +44,6 @@ export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
 
   if (!config.ssrChapterContentSettled) {
     return { hydrate: false, reason: "chapter-load-incomplete" };
-  }
-
-  if (
-    config.renderedTabIds &&
-    (config.renderedTabIds.length !== tabIds.length ||
-      config.renderedTabIds.some((id, i) => id !== tabIds[i]))
-  ) {
-    return { hydrate: false, reason: "tabs-mismatch" };
   }
 
   const ssrUrl = new URL(
