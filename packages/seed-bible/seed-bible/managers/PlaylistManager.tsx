@@ -534,6 +534,38 @@ export function createPlaylistManager(
   };
 
   /**
+   * Reports a playlist analytics event for each given playlist, tagging
+   * whether the current user authored it. Used to distinguish playback by the
+   * creator from playback by someone the playlist was shared with. Accepts
+   * `SimplePlaylist` (an unsaved playlist, e.g. an AI-generated one played
+   * before it's ever recorded) as well as a full `Playlist` — an unsaved
+   * playlist has no `authorUserId` on record, so it's attributed to the
+   * current user, the only one who could have been playing it.
+   * `extraProperties` are merged in on top of the common `playlistId`/
+   * `playlistLocator`/`isCreator` fields, so every playlist event stays
+   * queryable by the same base shape in PostHog.
+   */
+  const capturePlaylistEvent = (
+    eventName: string,
+    playlists: SimplePlaylist[],
+    extraProperties: Record<string, unknown> = {}
+  ): void => {
+    if (typeof posthog === "undefined" || !posthog) {
+      return;
+    }
+    const userId = login.userId.peek();
+    for (const playlist of playlists) {
+      const authorUserId = (playlist as Partial<Playlist>).authorUserId;
+      posthog.capture(eventName, {
+        playlistId: playlist.id,
+        playlistLocator: getPlaylistLocator(playlist),
+        isCreator: authorUserId == null || authorUserId === userId,
+        ...extraProperties,
+      });
+    }
+  };
+
+  /**
    * Permanently deletes a playlist: erases its record, drops it from
    * `userPlaylists`, and clears any edit/playback state that referenced it.
    */
@@ -650,6 +682,11 @@ export function createPlaylistManager(
     const playlist: Playlist = { ...current, updatedAtMs: Date.now() };
     await savePlaylist(playlist);
     const exists = userPlaylists.value.some((p) => p.id === playlist.id);
+    capturePlaylistEvent(
+      exists ? "playlist_updated" : "playlist_created",
+      [playlist],
+      { itemCount: playlist.items.length }
+    );
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
@@ -805,6 +842,8 @@ export function createPlaylistManager(
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
 
+    capturePlaylistEvent("playlist_played", playlists);
+
     targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
       playlists,
       queue,
@@ -953,6 +992,42 @@ export function createPlaylistManager(
           playingState.setState(next);
         }
       });
+
+      // Reports a `playlist_finished` event the first time *this client's
+      // own* forward navigation reaches the last item in the queue. Hooked
+      // onto `next()` itself rather than a reactive effect on `currentIndex`,
+      // because `next()` is only ever called by this client's own advance —
+      // never by an inbound session sync (which moves the index via
+      // `setState` instead, so every synced participant's index can shift
+      // without each of them having "finished" anything) and never by a
+      // queue edit (`removeFromQueue` clamping the index after the trailing
+      // items are deleted doesn't call `next()` either). Comparing the index
+      // before/after also rules out a single-item queue's starting position,
+      // a deep link that opens directly on the last step, and a redundant
+      // press of "next" while already on the last item — none of those are a
+      // forward move. Guarded by `hasFiredFinished` so navigating back and
+      // forth over the last item doesn't re-report it.
+      let hasFiredFinished = false;
+      const localNext = playingState.next;
+      playingState.next = async (): Promise<void> => {
+        const before = playingState.currentIndex.peek();
+        await localNext();
+        const after = playingState.currentIndex.peek();
+        const queueLength = playingState.queue.peek().length;
+        if (
+          hasFiredFinished ||
+          after <= before ||
+          queueLength === 0 ||
+          after !== queueLength - 1
+        ) {
+          return;
+        }
+        hasFiredFinished = true;
+        capturePlaylistEvent(
+          "playlist_finished",
+          playingState.playlists.peek()
+        );
+      };
 
       // Playback governs stepping *within* the queue; at its edges the reader's
       // own chapter navigation takes over again. Before this, reaching the last

@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Analytics for common playlist actions like creating and finishing playlists.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
