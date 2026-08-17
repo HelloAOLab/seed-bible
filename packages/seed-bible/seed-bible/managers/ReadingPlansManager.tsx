@@ -185,6 +185,20 @@ export function formatReadingPlanId(
   return `rp_${recordName}_${address}`;
 }
 
+/** Session/reading totals for analytics, counted as the plan currently stands. */
+function readingPlanCounts(plan: ReadingPlan): {
+  totalSessions: number;
+  totalReadings: number;
+} {
+  return {
+    totalSessions: plan.sessions.length,
+    totalReadings: plan.sessions.reduce(
+      (sum, session) => sum + session.readings.length,
+      0
+    ),
+  };
+}
+
 /**
  * Creates a fresh progress record for a user starting a plan. `id` (unique) and
  * `nowMs` are passed in so this stays deterministic; the manager supplies them.
@@ -1885,6 +1899,24 @@ export function createReadingPlansManager(
           : [...userReadingPlans.value, metadata];
       });
       editingReadingPlanSaveError.value = false;
+      // Editing an already-published plan (`isNew: false`) autosaves the same
+      // way but isn't a "draft" in the lifecycle sense — it keeps its
+      // `"complete"` status throughout and reports via
+      // reading_plan_updated on finish, not here.
+      if (draft.isNew) {
+        captureEvent(
+          draft.persisted
+            ? "reading_plan_draft_updated"
+            : "reading_plan_draft_created",
+          {
+            planId: formatReadingPlanId(
+              draft.plan.recordName,
+              draft.plan.address
+            ),
+            ...readingPlanCounts(draft.plan),
+          }
+        );
+      }
     } catch (error) {
       console.error("Failed to save reading plan draft:", error);
       editingReadingPlanSaveError.value = true;
@@ -2197,11 +2229,7 @@ export function createReadingPlansManager(
       draft.isNew ? "reading_plan_created" : "reading_plan_updated",
       {
         planId: formatReadingPlanId(plan.recordName, plan.address),
-        totalSessions: plan.sessions.length,
-        totalReadings: plan.sessions.reduce(
-          (sum, session) => sum + session.readings.length,
-          0
-        ),
+        ...readingPlanCounts(plan),
       }
     );
     return plan;
@@ -2278,6 +2306,10 @@ export function createReadingPlansManager(
     }
     try {
       await deleteReadingPlan(draft.plan);
+      captureEvent("reading_plan_draft_discarded", {
+        planId: formatReadingPlanId(draft.plan.recordName, draft.plan.address),
+        ...readingPlanCounts(draft.plan),
+      });
     } catch (error) {
       console.error("Failed to discard reading plan draft:", error);
     }

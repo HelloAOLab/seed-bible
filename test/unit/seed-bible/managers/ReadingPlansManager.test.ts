@@ -2105,7 +2105,7 @@ describe("createReadingPlansManager", () => {
       });
     });
 
-    it("discarding a never-finished draft does not capture reading_plan_deleted", async () => {
+    it("discarding a never-finished draft captures reading_plan_draft_discarded, not reading_plan_deleted", async () => {
       const manager = makeManager("user-1");
       await flush();
       vi.useFakeTimers();
@@ -2119,14 +2119,150 @@ describe("createReadingPlansManager", () => {
         // since finishEditingReadingPlan was never called).
         await vi.advanceTimersByTimeAsync(2000);
         expect(manager.editingReadingPlan.value!.persisted).toBe(true);
+        const plan = manager.editingReadingPlan.value!.plan;
         mockPosthogCapture.mockClear();
 
         await manager.discardEditingReadingPlan();
 
+        expect(mockPosthogCapture).toHaveBeenCalledWith(
+          "reading_plan_draft_discarded",
+          {
+            planId: `rp_${plan.recordName}_${plan.address}`,
+            totalSessions: 1,
+            totalReadings: 1,
+          }
+        );
         // A draft that was never finished never fired reading_plan_created,
         // so discarding it must not look like a delete either.
         expect(mockPosthogCapture).not.toHaveBeenCalledWith(
           "reading_plan_deleted",
+          expect.anything()
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("cancelEditingReadingPlan keeps the draft and does not capture reading_plan_draft_discarded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      vi.useFakeTimers();
+      try {
+        manager.startEditingReadingPlan();
+        manager.addReadingToEditingPlan({
+          type: "bible-verse",
+          ref: { bookId: "PSA", chapter: 1 },
+        });
+        await vi.advanceTimersByTimeAsync(2000);
+        mockPosthogCapture.mockClear();
+
+        manager.cancelEditingReadingPlan();
+        await vi.advanceTimersByTimeAsync(2000);
+
+        expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+          "reading_plan_draft_discarded",
+          expect.anything()
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("autosaving a new draft captures reading_plan_draft_created on the first save, reading_plan_draft_updated after", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      vi.useFakeTimers();
+      try {
+        manager.startEditingReadingPlan();
+        manager.addReadingToEditingPlan({
+          type: "bible-verse",
+          ref: { bookId: "PSA", chapter: 1 },
+        });
+        await vi.advanceTimersByTimeAsync(2000);
+        const plan = manager.editingReadingPlan.value!.plan;
+
+        expect(mockPosthogCapture).toHaveBeenCalledWith(
+          "reading_plan_draft_created",
+          {
+            planId: `rp_${plan.recordName}_${plan.address}`,
+            totalSessions: 1,
+            totalReadings: 1,
+          }
+        );
+        expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+          "reading_plan_draft_updated",
+          expect.anything()
+        );
+
+        mockPosthogCapture.mockClear();
+        manager.updateEditingReadingPlan({ title: "Psalms" });
+        await vi.advanceTimersByTimeAsync(2000);
+
+        expect(mockPosthogCapture).toHaveBeenCalledWith(
+          "reading_plan_draft_updated",
+          {
+            planId: `rp_${plan.recordName}_${plan.address}`,
+            totalSessions: 1,
+            totalReadings: 1,
+          }
+        );
+        expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+          "reading_plan_draft_created",
+          expect.anything()
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("resuming a saved draft and editing it captures reading_plan_draft_updated, not created", async () => {
+      const draftPlan = makePlan({
+        status: "draft",
+        recordName: "user-1",
+        address: "draft-1",
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      vi.useFakeTimers();
+      try {
+        manager.resumeEditingReadingPlan(draftPlan);
+        manager.updateEditingReadingPlan({ title: "Resumed" });
+        await vi.advanceTimersByTimeAsync(2000);
+
+        expect(mockPosthogCapture).toHaveBeenCalledWith(
+          "reading_plan_draft_updated",
+          {
+            planId: "rp_user-1_draft-1",
+            totalSessions: 3,
+            totalReadings: 3,
+          }
+        );
+        expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+          "reading_plan_draft_created",
+          expect.anything()
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("editing an already-published plan does not capture any draft event", async () => {
+      const plan = makePlan({ authorUserId: "user-1", recordName: "user-1" });
+      getDataMock.mockResolvedValue({ success: true, data: plan });
+      const manager = makeManager("user-1");
+      await flush();
+      vi.useFakeTimers();
+      try {
+        manager.editExistingReadingPlan(plan);
+        manager.updateEditingReadingPlan({ title: "Retitled" });
+        await vi.advanceTimersByTimeAsync(2000);
+
+        expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+          "reading_plan_draft_created",
+          expect.anything()
+        );
+        expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+          "reading_plan_draft_updated",
           expect.anything()
         );
       } finally {
