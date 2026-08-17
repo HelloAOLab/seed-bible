@@ -593,10 +593,14 @@ describe("ChatView", () => {
       getMessageAuthors: vi.fn().mockReturnValue([]),
     });
     const openVerseReference = vi.fn().mockResolvedValue(undefined);
+    const closeChatPanel = vi.fn();
     const state = {
       app: {
         openVerseReference,
         isMobile: signal(false),
+      },
+      sidebar: {
+        closeChatPanel,
       },
     } as unknown as SeedBibleState;
 
@@ -615,6 +619,48 @@ describe("ChatView", () => {
       );
     });
 
+    expect(openVerseReference).toHaveBeenCalledWith(verseRef);
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
+  it("closes the chat panel on mobile when a verse reference link is clicked", () => {
+    const verseRef = { book: "JHN" as BookId, chapter: 3, verse: 16 };
+    const message = createMockMessage({
+      parts: [
+        { type: "verse_reference" as const, text: "John 3:16", ref: verseRef },
+      ],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      getMessageAuthors: vi.fn().mockReturnValue([]),
+    });
+    const openVerseReference = vi.fn().mockResolvedValue(undefined);
+    const closeChatPanel = vi.fn();
+    const state = {
+      app: {
+        openVerseReference,
+        isMobile: signal(true),
+      },
+      sidebar: {
+        closeChatPanel,
+      },
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const link = container.querySelector(
+      ".sb-verse-reference-link"
+    ) as HTMLAnchorElement;
+
+    act(() => {
+      link.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+    });
+
+    expect(closeChatPanel).toHaveBeenCalledTimes(1);
     expect(openVerseReference).toHaveBeenCalledWith(verseRef);
   });
 
