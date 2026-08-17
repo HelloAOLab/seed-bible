@@ -1,0 +1,54 @@
+import type {
+  ExperienceKey,
+  ExperienceKeyMap,
+} from "../../../domain/models/experience";
+import { type PieceVisibilityState } from "../../../domain/models/piece";
+import type { HighlightStatesMap } from "../../../domain/models/scripture";
+import { CHAPTER_STATE_MAP } from "./chapterStateMap";
+import { HIGHLIGHT_STATES_MAP } from "./highlightStateMap";
+
+export class PieceStateConfigProvider {
+  getPiecesChapterState<E extends ExperienceKey>({
+    experienceKey,
+    bookId,
+    chapter,
+  }: {
+    experienceKey: E;
+    bookId: string;
+    chapter: number;
+  }): {
+    [K in ExperienceKeyMap[E]]?: PieceVisibilityState;
+  } {
+    const states = CHAPTER_STATE_MAP[experienceKey][bookId]?.[chapter] ?? {};
+    return states;
+  }
+
+  getPieceChapterState<E extends ExperienceKey>({
+    experienceKey,
+    bookId,
+    chapter,
+    pieceKey,
+  }: {
+    experienceKey: E;
+    bookId: string;
+    chapter: number;
+    pieceKey: ExperienceKeyMap[E];
+  }): PieceVisibilityState | undefined {
+    const states = this.getPiecesChapterState({
+      experienceKey: experienceKey,
+      bookId,
+      chapter,
+    });
+    return states[pieceKey];
+  }
+
+  getPiecesHighlightState<E extends ExperienceKey>({
+    experienceKey,
+    pieceKey,
+  }: {
+    experienceKey: E;
+    pieceKey: ExperienceKeyMap[E];
+  }): HighlightStatesMap[E][ExperienceKeyMap[E]] {
+    return HIGHLIGHT_STATES_MAP[experienceKey][pieceKey];
+  }
+}
