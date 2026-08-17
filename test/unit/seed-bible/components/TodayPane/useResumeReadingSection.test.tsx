@@ -11,6 +11,10 @@ vi.mock(
     useTodayContext: vi.fn(),
   })
 );
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 const addTab = vi.fn();
 const closeToday = vi.fn();
@@ -47,7 +51,6 @@ describe("useResumeReadingSection", () => {
         : signal({ status: "loading" as const });
     (useTodayContext as Mock).mockReturnValue({
       readingHistory,
-      t: vi.fn((key: string) => key),
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
       addTab,
       closeToday,
@@ -87,7 +90,7 @@ describe("useResumeReadingSection", () => {
   describe("cardData", () => {
     it("translates the resume title and uses a fixed button icon", () => {
       const result = setup({ lastReading: { bookId: "GEN", chapter: 3 } });
-      expect(result.current.cardData?.title).toBe("resume-reading");
+      expect(result.current.cardData?.title).toBe("CONTINUE WHERE YOU LEFT");
       expect(result.current.cardData?.buttonIcon).toBe("arrow_right_alt");
     });
 

@@ -22,6 +22,10 @@ vi.mock(
     useTimeContext: vi.fn(),
   })
 );
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 // The hook imports these directly, so they are stubbed at the module boundary
 // rather than injected. `importOriginal` keeps each module's other exports real
@@ -82,7 +86,6 @@ const NOW = new Date(2026, 4, 23, 12, 0, 0);
 function makeToday(overrides: Record<string, unknown> = {}) {
   return {
     getReadingHistoryEvents: vi.fn(async () => []),
-    t: vi.fn((key: string) => key),
     language: "en",
     theme: {
       variables: {
@@ -177,9 +180,9 @@ describe("useReadingHistoryTimeline", () => {
         "7 / 8",
       ]);
       expect(labels.map((l) => (l as { children: string }).children)).toEqual([
-        "monday-short",
-        "wednesday-short",
-        "friday-short",
+        "Mon",
+        "Wed",
+        "Fri",
       ]);
     });
   });
@@ -311,7 +314,7 @@ describe("useReadingHistoryTimeline", () => {
       expect(result.current.footer.lessText).toBe("Less");
       expect(result.current.footer.moreText).toBe("More");
       expect(result.current.footer.yearSelectorLabelTextContent).toBe(
-        "selected-year"
+        "Year: 1999"
       );
     });
   });

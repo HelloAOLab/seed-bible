@@ -12,6 +12,10 @@ vi.mock(
     useTodayContext: vi.fn(),
   })
 );
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -56,7 +60,6 @@ describe("useSocialSection", () => {
 
   function setup() {
     (useTodayContext as Mock).mockReturnValue({
-      t: vi.fn((key: string) => key),
       subscribedUsersProfileProvider: { getUserProfile },
       subscribedUsersIdsProvider: { getUsersIds },
       getCommunityReading,
@@ -80,7 +83,7 @@ describe("useSocialSection", () => {
   describe("static data", () => {
     it("translates the community title", () => {
       const result = setup();
-      expect(result.current.title).toBe("community");
+      expect(result.current.title).toBe("COMMUNITY");
     });
 
     it("seeds year and timespan from the twoDays option", () => {

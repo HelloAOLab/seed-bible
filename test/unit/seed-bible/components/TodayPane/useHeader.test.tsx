@@ -2,6 +2,7 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useHeader } from "@packages/seed-bible/seed-bible/components/TodayPane/useHeader";
+import { mockI18nState } from "../../testUtils/mockI18n";
 import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 
 vi.mock(
@@ -10,6 +11,11 @@ vi.mock(
     useTodayContext: vi.fn(),
   })
 );
+
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 type Result = ReturnType<typeof useHeader>;
 
@@ -32,10 +38,9 @@ describe("useHeader", () => {
   function setup(
     options: { language?: string; username?: string | undefined } = {}
   ) {
+    mockI18nState.language = options.language ?? "en";
     (useTodayContext as Mock).mockReturnValue({
-      language: options.language ?? "en",
       username: options.username,
-      t: vi.fn((key: string) => key),
     });
     const result = { current: null as unknown as Result };
     function TestComponent() {
@@ -64,20 +69,20 @@ describe("useHeader", () => {
 
   describe("greeting", () => {
     it("is morning between 05:00 and 11:59", () => {
-      expect(setupAtHour(8).current.greeting).toBe("greeting-morning");
+      expect(setupAtHour(8).current.greeting).toBe("Good morning");
     });
 
     it("is afternoon between 12:00 and 17:59", () => {
-      expect(setupAtHour(14).current.greeting).toBe("greeting-afternoon");
+      expect(setupAtHour(14).current.greeting).toBe("Good afternoon");
     });
 
     it("is evening between 18:00 and 20:59", () => {
-      expect(setupAtHour(19).current.greeting).toBe("greeting-evening");
+      expect(setupAtHour(19).current.greeting).toBe("Good evening");
     });
 
     it("is night otherwise", () => {
-      expect(setupAtHour(23).current.greeting).toBe("greeting-night");
-      expect(setupAtHour(3).current.greeting).toBe("greeting-night");
+      expect(setupAtHour(23).current.greeting).toBe("Good night");
+      expect(setupAtHour(3).current.greeting).toBe("Good night");
     });
   });
 

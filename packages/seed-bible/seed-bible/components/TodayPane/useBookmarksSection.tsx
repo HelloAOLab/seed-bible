@@ -5,6 +5,7 @@ import {
   type ReadonlySignal,
 } from "@preact/signals";
 import { useTodayContext } from "./TodayContext";
+import { useI18n } from "../../i18n";
 import type { CategorizedBookmarks } from "./BookmarksSection";
 import type { MutableRef } from "preact/hooks";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
@@ -25,11 +26,11 @@ export const useBookmarksSection: UseBookmarksSection = () => {
     bookmarks,
     addTab,
     closeToday,
-    t,
     getTranslationBooks,
     showBookmarksList,
     isMobile,
   } = useTodayContext();
+  const { t } = useI18n();
   // Mirrored into a signal so the computeds below re-run on language change; the
   // shadowed `t` keeps each lookup a plain `t("…")` call, which is the shape the
   // i18n lint rules and the usage scanner match on.

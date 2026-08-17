@@ -12,6 +12,10 @@ vi.mock(
     useTodayContext: vi.fn(),
   })
 );
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 interface FakeBookmark {
   id: string;
@@ -42,7 +46,6 @@ describe("useBookmarksSection", () => {
   function configure(
     options: {
       bookmarks?: ReturnType<typeof signal<FakeBookmark[]>>;
-      t?: Mock;
       getTranslationBooks?: Mock;
       isMobile?: ReturnType<typeof signal<boolean>>;
       showBookmarksList?: Mock;
@@ -52,7 +55,6 @@ describe("useBookmarksSection", () => {
       bookmarks: options.bookmarks ?? signal<FakeBookmark[]>([]),
       addTab,
       closeToday,
-      t: options.t ?? vi.fn((key: string) => key),
       getTranslationBooks:
         options.getTranslationBooks ?? vi.fn(async () => books([])),
       isMobile: options.isMobile ?? signal(false),
@@ -134,8 +136,8 @@ describe("useBookmarksSection", () => {
 
   describe("label", () => {
     it("translates the today-bookmarks key", () => {
-      const { result } = setup({ t: vi.fn((key) => `[${key}]`) });
-      expect(result.current.label.value).toBe("[today-bookmarks]");
+      const { result } = setup();
+      expect(result.current.label.value).toBe("BOOKMARKS");
     });
   });
 
@@ -310,13 +312,13 @@ describe("useBookmarksSection", () => {
     });
 
     it("is defined (with a translated label) when any strip wraps to a new line", () => {
-      const { result } = setup({ t: vi.fn((key) => `[${key}]`) }, [
+      const { result } = setup({}, [
         [0, 0],
         [0, 20],
       ]);
       const more = result.current.moreButtonData.value;
       expect(more).toBeDefined();
-      expect(more!.label).toBe("[view-more]");
+      expect(more!.label).toBe("VIEW MORE");
     });
   });
 });

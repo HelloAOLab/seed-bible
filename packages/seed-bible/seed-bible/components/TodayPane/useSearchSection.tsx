@@ -1,4 +1,5 @@
 import { useTodayContext } from "./TodayContext";
+import { useI18n } from "../../i18n";
 import { useMemo } from "preact/hooks";
 
 type UseSearchSection = () => {
@@ -9,7 +10,8 @@ type UseSearchSection = () => {
 };
 
 export const useSearchSection: UseSearchSection = () => {
-  const { t, openBookSelector, theme, isMobile } = useTodayContext();
+  const { openBookSelector, theme, isMobile } = useTodayContext();
+  const { t } = useI18n();
 
   const { title, selectorText } = useMemo(() => {
     return {

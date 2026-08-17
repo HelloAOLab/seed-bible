@@ -2,7 +2,6 @@ import { useTodayProvider } from "@packages/seed-bible/seed-bible/components/Tod
 import type { TodayConfig } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 
 const config = {
-  language: "en",
   username: "Alice",
   theme: { variables: {} },
 } as unknown as TodayConfig;
@@ -18,7 +17,6 @@ describe("useTodayProvider", () => {
 
   it("carries over every config property", () => {
     const result = useTodayProvider(config);
-    expect(result.language).toBe("en");
     expect(result.username).toBe("Alice");
     expect(result.theme).toBe(config.theme);
   });
@@ -26,7 +24,7 @@ describe("useTodayProvider", () => {
   it("does not mutate the original config", () => {
     const original = { ...config } as unknown as TodayConfig;
     const result = useTodayProvider(config);
-    result.language = "es";
+    result.username = "Bob";
     expect(config).toEqual(original);
   });
 });

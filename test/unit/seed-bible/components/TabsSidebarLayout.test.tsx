@@ -7,13 +7,6 @@ import {
 } from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
 
-vi.mock("../i18n/I18nManager", () => ({
-  useI18n: () => ({
-    t: (key: string, options?: { defaultValue?: string }) =>
-      options?.defaultValue ?? key,
-  }),
-}));
-
 vi.mock("../components/ContextMenu", () => ({
   closeContextMenus: vi.fn(),
   ContextMenuItem: ({

@@ -19,7 +19,6 @@ import "./TodayPane.css";
 import { memo } from "preact/compat";
 
 export interface TodayConfig {
-  language: string;
   username: string | undefined;
   userProfile:
     | {
@@ -39,7 +38,6 @@ export interface TodayConfig {
     from: number;
     to: number;
   }) => Promise<FilteredReading>;
-  t: (key: string, options?: Record<string, unknown>) => string;
   bookNames: Signal<Map<string, string>>;
   addTab: (
     bookId: string,

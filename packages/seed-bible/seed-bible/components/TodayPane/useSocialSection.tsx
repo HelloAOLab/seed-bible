@@ -1,4 +1,5 @@
 import { useTodayContext } from "./TodayContext";
+import { useI18n } from "../../i18n";
 import { useSignal, useSignalEffect } from "@preact/signals";
 import type { FilteredReading } from "./readingHistory";
 import type { SocialSectionUserProfile } from "./SocialSectionContext";
@@ -27,7 +28,6 @@ type UserProfileMap = Map<string, UserProfile>;
 
 export const useSocialSection: UseSocialSection = () => {
   const {
-    t,
     subscribedUsersProfileProvider,
     subscribedUsersIdsProvider,
     getCommunityReading,
@@ -35,6 +35,7 @@ export const useSocialSection: UseSocialSection = () => {
     userId,
     userProfile,
   } = useTodayContext();
+  const { t } = useI18n();
 
   const initialOption = useMemo(
     () => readingHistoryConfigProvider.buildTimespanOptionsMap().twoDays,

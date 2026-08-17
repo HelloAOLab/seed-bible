@@ -11,6 +11,10 @@ vi.mock(
     useTodayContext: vi.fn(),
   })
 );
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 const openBookSelector = vi.fn();
 
@@ -32,7 +36,6 @@ describe("useSearchSection", () => {
 
   function setup(secondaryFontColor = "#abcdef", isMobile = false) {
     (useTodayContext as Mock).mockReturnValue({
-      t: vi.fn((key: string) => key),
       openBookSelector,
       theme: { variables: { secondaryFontColor } },
       isMobile: signal(isMobile),
@@ -48,8 +51,8 @@ describe("useSearchSection", () => {
 
   it("translates the title and selector text", () => {
     const result = setup();
-    expect(result.current.title).toBe("go-somewhere-new");
-    expect(result.current.selectorText).toBe("books");
+    expect(result.current.title).toBe("GO SOMEWHERE NEW");
+    expect(result.current.selectorText).toBe("Books");
   });
 
   it("builds the seed-bible icon style from the theme", () => {

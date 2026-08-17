@@ -8,6 +8,7 @@ import type {
   TimelineRangesMap,
 } from "./readingHistory";
 import { useTimeContext } from "./TimeContext";
+import { useI18n } from "../../i18n";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { ColorParser } from "../../managers/Colors";
 import {
@@ -43,7 +44,8 @@ const step = 0.25;
 export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const { getReadingHistoryEvents, t, language, theme } = useTodayContext();
+  const { getReadingHistoryEvents, theme } = useTodayContext();
+  const { t, language } = useI18n();
   const { selectYear, selectDay, year, timespan, userFilters } =
     useSocialSectionContext();
 

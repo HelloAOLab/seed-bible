@@ -15,15 +15,12 @@ export function TodayPaneHost(props: {
   today: TodayManager;
 }) {
   const { state, today } = props;
-  const { t, language } = useI18n();
   const userId = state.login.userId.value ?? undefined;
   const profile = state.login.profile.value;
 
   return (
     <TodayPane
       config={{
-        language,
-        t,
         username: profile?.name,
         userId,
         userProfile: userId

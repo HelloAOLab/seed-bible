@@ -1,5 +1,6 @@
 import type { ResumeReadingCardData } from "./ResumeReadingSection";
 import { useTodayContext } from "./TodayContext";
+import { useI18n } from "../../i18n";
 import { useMemo, useCallback } from "preact/hooks";
 
 type UseResumeReadingSection = () => {
@@ -15,12 +16,12 @@ type UseResumeReadingSection = () => {
 export const useResumeReadingSection: UseResumeReadingSection = () => {
   const {
     readingHistory,
-    t,
     bookNames,
     addTab,
     closeToday,
     getDefaultTranslation,
   } = useTodayContext();
+  const { t } = useI18n();
 
   const state = readingHistory.value;
   // A resume position only exists in the `ready` state; in `loading` we render

@@ -26,6 +26,10 @@ vi.mock(
     getHighlightedWelcomeVerse,
   })
 );
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -73,15 +77,6 @@ describe("useWelcome", () => {
     } = {}
   ) {
     (useTodayContext as Mock).mockReturnValue({
-      t: vi.fn((key: string, params?: Record<string, unknown>) => {
-        // `defaultValue` rides along on every call site; only the interpolation
-        // params are interesting here.
-        const interpolation = { ...params };
-        delete interpolation.defaultValue;
-        return Object.keys(interpolation).length > 0
-          ? `${key}:${JSON.stringify(interpolation)}`
-          : key;
-      }),
       username: options.username,
       bookNames: signal(options.bookNames ?? new Map([["JHN", "John"]])),
       getVerseText,
@@ -104,14 +99,12 @@ describe("useWelcome", () => {
   describe("greeting", () => {
     it("uses a personal greeting when a username is present", () => {
       const result = setup({ username: "Gabriel" });
-      expect(result.current.greeting).toBe(
-        'personal-greeting:{"name":"Gabriel"}'
-      );
+      expect(result.current.greeting).toBe("Welcome, Gabriel!");
     });
 
     it("uses an anonymous greeting when there is no username", () => {
       const result = setup({ username: undefined });
-      expect(result.current.greeting).toBe("anonymous-greeting");
+      expect(result.current.greeting).toBe("Welcome!");
     });
   });
 
@@ -130,8 +123,8 @@ describe("useWelcome", () => {
   describe("static content", () => {
     it("translates the selector and button texts", () => {
       const result = setup();
-      expect(result.current.selectorText).toBe("open-bible");
-      expect(result.current.startButtonText).toBe("read-first-chapter");
+      expect(result.current.selectorText).toBe("Open Bible");
+      expect(result.current.startButtonText).toBe("Read the first chapter");
       expect(result.current.startButtonIcon).toBe("arrow_right_alt");
     });
 

@@ -2,6 +2,7 @@ import { useSignal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import type { MutableRef } from "preact/hooks";
 import { useTodayContext } from "./TodayContext";
+import { useI18n } from "../../i18n";
 import { useClickOutside } from "./useClickOutside";
 import type { VerseSearchResult } from "./search";
 
@@ -18,13 +19,13 @@ type UseSearchBar = () => {
   runSearch: (value: string) => void;
   handleFocus: () => void;
   handleSelect: (result: VerseSearchResult) => void;
-  t: (key: string, options?: Record<string, unknown>) => string;
 };
 
 const DEBOUNCE_MS = 180;
 
 export const useSearchBar: UseSearchBar = () => {
-  const { searchVerses, addTab, closeToday, t } = useTodayContext();
+  const { searchVerses, addTab, closeToday } = useTodayContext();
+  const { t } = useI18n();
 
   const query = useSignal("");
   const results = useSignal<VerseSearchResult[]>([]);
@@ -125,6 +126,5 @@ export const useSearchBar: UseSearchBar = () => {
     runSearch,
     handleFocus,
     handleSelect,
-    t,
   };
 };

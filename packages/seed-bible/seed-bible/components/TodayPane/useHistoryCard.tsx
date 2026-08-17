@@ -13,6 +13,7 @@ import {
   type SocialSectionUserProfile,
 } from "./SocialSectionContext";
 import { useClickOutside } from "./useClickOutside";
+import { useI18n } from "../../i18n";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import type {
   TimespanFilterOptionData,
@@ -36,7 +37,8 @@ type UseHistoryCard = () => {
 };
 
 export const useHistoryCard: UseHistoryCard = () => {
-  const { t, language, readingHistoryConfigProvider } = useTodayContext();
+  const { readingHistoryConfigProvider } = useTodayContext();
+  const { t, language } = useI18n();
   const {
     userFilters,
     userProfileMap,

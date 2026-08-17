@@ -5,6 +5,7 @@ import {
   type ReadonlySignal,
 } from "@preact/signals";
 import { useTodayContext } from "./TodayContext";
+import { useI18n } from "../../i18n";
 import { getHighlightedWelcomeVerse } from "./welcomeVerseMap";
 
 import { useMemo, useEffect, useCallback } from "preact/hooks";
@@ -25,7 +26,6 @@ const STRAT_BUTTON_ICON = "arrow_right_alt";
 
 export const useWelcome: UseWelcome = () => {
   const {
-    t,
     username,
     bookNames,
     getVerseText,
@@ -36,6 +36,7 @@ export const useWelcome: UseWelcome = () => {
     closeToday,
     theme,
   } = useTodayContext();
+  const { t } = useI18n();
 
   const greeting = useMemo(() => {
     return username

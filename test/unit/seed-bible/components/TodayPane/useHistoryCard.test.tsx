@@ -2,6 +2,7 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useHistoryCard } from "@packages/seed-bible/seed-bible/components/TodayPane/useHistoryCard";
+import { mockI18nState } from "../../testUtils/mockI18n";
 import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 
@@ -24,6 +25,11 @@ vi.mock(
 const { useHorizontalScroll } = vi.hoisted(() => ({
   useHorizontalScroll: vi.fn(),
 }));
+
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/useHorizontalScroll",
@@ -60,9 +66,8 @@ describe("useHistoryCard", () => {
     timespan?: { from: number; to: number } | undefined;
     language?: string;
   }) {
+    mockI18nState.language = options.language ?? "en";
     (useTodayContext as Mock).mockReturnValue({
-      t: vi.fn((key: string) => key),
-      language: options.language ?? "en",
       readingHistoryConfigProvider: {
         buildTimespanOptionsMap: () => optionsMap,
         getTimespanOptionLabelMap: () => labelMap,
@@ -162,10 +167,10 @@ describe("useHistoryCard", () => {
         "all",
       ]);
       expect(opts.map((o) => o.label)).toEqual([
-        "last-48-hours",
-        "this-week",
-        "this-month",
-        "all",
+        "Last 48 hours",
+        "This week",
+        "This month",
+        "All",
       ]);
       expect(opts[0]!.isSelected).toBe(true);
       expect(opts[1]!.isSelected).toBe(false);
@@ -221,7 +226,7 @@ describe("useHistoryCard", () => {
           ["u2", true],
         ]),
       });
-      expect(result.current.userFilterText).toBe("everyone");
+      expect(result.current.userFilterText).toBe("Everyone");
     });
 
     it("is 'none' when no users are selected", () => {
@@ -231,7 +236,7 @@ describe("useHistoryCard", () => {
           ["u2", false],
         ]),
       });
-      expect(result.current.userFilterText).toBe("none");
+      expect(result.current.userFilterText).toBe("None");
     });
 
     it("is 'custom' when some users are selected", () => {
@@ -241,7 +246,7 @@ describe("useHistoryCard", () => {
           ["u2", false],
         ]),
       });
-      expect(result.current.userFilterText).toBe("custom");
+      expect(result.current.userFilterText).toBe("Custom");
     });
   });
 

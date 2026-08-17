@@ -1,4 +1,5 @@
 import { useTodayContext } from "./TodayContext";
+import { useI18n } from "../../i18n";
 
 const NOTIFICATION_ICON = "notifications";
 const SETTINGS_ICON = "settings";
@@ -16,7 +17,8 @@ type UseHeader = () => {
 import { useMemo, useCallback } from "preact/hooks";
 
 export const useHeader: UseHeader = () => {
-  const { language, username, t } = useTodayContext();
+  const { username } = useTodayContext();
+  const { t, language } = useI18n();
 
   const { day, month, greeting } = useMemo(() => {
     const date = new Date();

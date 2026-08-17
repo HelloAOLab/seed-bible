@@ -11,6 +11,10 @@ vi.mock(
     useTodayContext: vi.fn(),
   })
 );
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 const addTab = vi.fn();
 const closeToday = vi.fn();
@@ -56,7 +60,6 @@ describe("useSearchBar", () => {
       searchVerses,
       addTab,
       closeToday,
-      t: vi.fn((key: string) => key),
     });
     const result = { current: null as unknown as Hook };
     function TestComponent() {
@@ -74,7 +77,9 @@ describe("useSearchBar", () => {
       expect(result.current.query.value).toBe("");
       expect(result.current.isOpen.value).toBe(false);
       expect(result.current.results.value).toEqual([]);
-      expect(result.current.placeholder).toBe("today-search-verses");
+      expect(result.current.placeholder).toBe(
+        "Search books, chapter, verses...."
+      );
     });
   });
 
