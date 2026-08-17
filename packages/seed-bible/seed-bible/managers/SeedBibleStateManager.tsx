@@ -4,6 +4,7 @@ import {
   createBibleDataManager,
   type BibleDataManager,
   type BookId,
+  type TranslationsCache,
   type VerseRef,
 } from "../managers/BibleDataManager";
 import {
@@ -437,6 +438,12 @@ export interface CreateSeedBibleStateOptions {
    * IndexedDB; tests pass an in-memory store, and null disables the feature.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * Cache shared across `getTranslations()` calls. Only the SSR host passes
+   * one in (see `standalone/ssrTranslationsCache.ts`) — omitted here, client
+   * behavior (per-page-load cache + localStorage) is unchanged.
+   */
+  translationsCache?: TranslationsCache;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -471,6 +478,7 @@ export function createSeedBibleState(
   );
   const data = createBibleDataManager(api, {
     offlineStore: options.offlineStore,
+    translationsCache: options.translationsCache,
   });
   const os = CasualOSManager();
   const login = createLoginManager({ os });

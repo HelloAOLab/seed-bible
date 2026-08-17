@@ -19,6 +19,7 @@ import {
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import { ssrTranslationsCache } from "./ssrTranslationsCache";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -390,6 +391,7 @@ export async function render(
   const state = createSeedBibleState({
     config,
     initialHref: href,
+    translationsCache: ssrTranslationsCache,
   });
 
   // Block until the detected language's translations are loaded so the

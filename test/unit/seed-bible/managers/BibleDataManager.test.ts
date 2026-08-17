@@ -9,6 +9,7 @@ import {
   parseVerseReferences,
   type BibleDataManager,
   type BookId,
+  type TranslationsCache,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import {
   FreeUseBibleAPI,
@@ -268,6 +269,118 @@ describe("createBibleDataManager", () => {
     expect(manager.buildTranslationId("NIV")).toBe(
       makeEndpointUrl(ALT_ENDPOINT, "api/NIV/books.json")
     );
+  });
+
+  describe("translationsCache option", () => {
+    function createTestCache(): TranslationsCache {
+      const store = new Map<string, Promise<Translation[]>>();
+      return {
+        get: (endpoint) => store.get(endpoint),
+        set: (endpoint, promise) => store.set(endpoint, promise),
+        delete: (endpoint) => store.delete(endpoint),
+      };
+    }
+
+    it("shares one fetch across separate managers that share a cache", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+
+      const translationsCache = createTestCache();
+      const managerA = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+      const managerB = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await managerA.getTranslations();
+      await managerB.getTranslations();
+
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("shares one in-flight fetch across managers racing on a cache miss", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+
+      const translationsCache = createTestCache();
+      const managerA = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+      const managerB = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await Promise.all([
+        managerA.getTranslations(),
+        managerB.getTranslations(),
+      ]);
+
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("refresh: true bypasses and evicts the cache", async () => {
+      const updatedNiv = {
+        ...translations.translations[1]!,
+        sha256: "updated",
+      };
+      webGetMock
+        .mockResolvedValueOnce(createResponse(translations))
+        .mockResolvedValueOnce(
+          createResponse({
+            translations: [translations.translations[0]!, updatedNiv],
+          })
+        );
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await manager.getTranslations();
+      const cachedAgain = await manager.getTranslations();
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+      expect(cachedAgain.find((t) => t.id === "NIV")?.sha256).not.toBe(
+        "updated"
+      );
+
+      const refreshed = await manager.getTranslations(undefined, {
+        refresh: true,
+      });
+      expect(webGetMock).toHaveBeenCalledTimes(2);
+      expect(refreshed.find((t) => t.id === "NIV")?.sha256).toBe("updated");
+    });
+
+    it("does not cache a failed fetch, so the next call retries", async () => {
+      webGetMock
+        .mockRejectedValueOnce(new Error("network down"))
+        .mockResolvedValueOnce(createResponse(translations));
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await expect(manager.getTranslations()).rejects.toThrow("network down");
+
+      const result = await manager.getTranslations();
+      expect(result).toEqual(translations.translations);
+      expect(webGetMock).toHaveBeenCalledTimes(2);
+    });
   });
 });
 

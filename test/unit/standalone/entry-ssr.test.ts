@@ -12,6 +12,7 @@ import {
   makeUrl,
 } from "../seed-bible/managers/testUtils/mockBibleApiData";
 import { buildChapterUrl } from "../../../script/lib/sitemap";
+import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
 
 describe("legacyReadingUrlRedirect", () => {
   describe("already the canonical shape", () => {
@@ -419,6 +420,11 @@ describe("render() server-rendered meta tags", () => {
     // the server, and that suspension is what makes the meta tags render with
     // content rather than an empty shell.
     import.meta.env.SSR = true;
+    // The SSR translations cache is a module-level singleton shared across
+    // every `render()` call in the real server process (that's the point —
+    // see ssrTranslationsCache.ts). Reset it so one test's cached response
+    // can't leak into the next.
+    resetSsrTranslationsCacheForTests();
   });
 
   afterEach(() => {
@@ -626,5 +632,31 @@ describe("render() server-rendered meta tags", () => {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
     }
     expect(result.notFound).toBe(true);
+  });
+
+  // Regression: every `render()` used to build a brand-new, empty-cache
+  // FreeUseBibleAPI and unconditionally re-fetch the translations list, so a
+  // long-running SSR process fetched `available_translations.json` fresh on
+  // every single HTTP request. The shared, TTL-based `ssrTranslationsCache`
+  // fixes that — two renders sharing an endpoint should hit the network for
+  // it only once.
+  it("shares one available_translations.json fetch across multiple SSR renders", async () => {
+    const responses = createDefaultManagerResponseMap();
+    const fetchMock = vi.fn(async (url: string) => {
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+    await renderHtml("/en/NIV/matthew/1?useFreeBibleAPI=true");
+
+    const translationsCalls = fetchMock.mock.calls.filter(([url]) =>
+      (url as string).endsWith("/api/available_translations.json")
+    );
+    expect(translationsCalls).toHaveLength(1);
   });
 });
