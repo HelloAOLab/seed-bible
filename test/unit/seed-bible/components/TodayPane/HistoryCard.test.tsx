@@ -18,13 +18,12 @@ vi.mock(
   })
 );
 
-// Deps used by the internal ReadingHistoryTimelineSection.
+// Deps used by the internal ReadingHistoryTimelineSection. The timeline itself
+// is stood in for so this test stays about HistoryCard's own markup.
 vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
+  "@packages/seed-bible/seed-bible/components/ReadingHistoryTimeline/ReadingHistoryTimeline",
   () => ({
-    useTodayContext: vi.fn(() => ({
-      ReadingHistoryTimeline: () => <div data-testid="timeline" />,
-    })),
+    ReadingHistoryTimeline: () => <div data-testid="timeline" />,
   })
 );
 
@@ -40,10 +39,6 @@ vi.mock(
 );
 
 type HistoryCardResult = ReturnType<typeof useHistoryCard>;
-
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
 
 interface TimespanOption {
   id: string;
@@ -68,7 +63,6 @@ function makeResult(options: {
   timespanFilterRef?: { current: HTMLDivElement | null };
 }): HistoryCardResult {
   return {
-    MaterialIcon,
     userFilterOpen: { value: options.userFilterOpen ?? false },
     userFilterIcon: { value: options.userFilterIcon ?? "keyboard_arrow_down" },
     handleUserFilterClick: options.handleUserFilterClick ?? vi.fn(),
@@ -116,9 +110,9 @@ describe("HistoryCard", () => {
       setup({ userFilterText: "Custom", userFilterIcon: "keyboard_arrow_up" });
       expect(q(".history-card.today-section-card")).not.toBeNull();
       expect(q(".user-filter-label")!.textContent).toBe("Custom");
-      expect(q(".user-filter-container .material-icon")!.textContent).toBe(
-        "keyboard_arrow_up"
-      );
+      expect(
+        q(".user-filter-container .material-symbols-outlined")!.textContent
+      ).toBe("keyboard_arrow_up");
     });
 
     it("always renders the FilteredReading section", () => {

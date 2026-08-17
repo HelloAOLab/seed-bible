@@ -1361,7 +1361,19 @@ const BibleIcon = (props: any) => (
   </svg>
 );
 
-export const MaterialIcon = ({ children, className, ...props }: any) => (
+export interface MaterialIconProps extends Omit<
+  preact.JSX.HTMLAttributes<HTMLSpanElement>,
+  "children"
+> {
+  /** The Material Symbols glyph name, e.g. `arrow_right_alt`. */
+  children: string;
+}
+
+export const MaterialIcon = ({
+  children,
+  className,
+  ...props
+}: MaterialIconProps) => (
   <span className={`material-symbols-outlined ${className ?? ""}`} {...props}>
     {children}
   </span>

@@ -1,11 +1,9 @@
+import { MaterialIcon } from "../icons";
+
 export type UserIconProps = {
   pictureUrl?: string;
   color: string;
   icon: string;
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
 };
 
 export const UserIcon = (props: UserIconProps) => {
@@ -20,7 +18,7 @@ export const UserIcon = (props: UserIconProps) => {
       className="filtered-reading-book-icon"
       style={{ backgroundColor: props.color }}
     >
-      <props.MaterialIcon>{props.icon}</props.MaterialIcon>
+      <MaterialIcon>{props.icon}</MaterialIcon>
     </div>
   );
 };

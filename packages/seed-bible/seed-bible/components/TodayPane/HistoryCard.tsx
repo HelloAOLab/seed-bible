@@ -1,12 +1,12 @@
 import { Fragment } from "preact/jsx-runtime";
 import { useHistoryCard } from "./useHistoryCard";
 import { useReadingHistoryTimeline } from "./useReadingHistoryTimeline";
-import { useTodayContext } from "./TodayContext";
+import { MaterialIcon } from "../icons";
+import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
 import { FilteredReading } from "./FilteredReading";
 import { Tooltip } from "./Tooltip";
 
 const ReadingHistoryTimelineSection = () => {
-  const { ReadingHistoryTimeline } = useTodayContext();
   const { itemsData, timelineRef, footer } = useReadingHistoryTimeline();
 
   return (
@@ -21,7 +21,6 @@ const ReadingHistoryTimelineSection = () => {
 
 export const HistoryCard = () => {
   const {
-    MaterialIcon,
     userFilterOpen,
     userFilterIcon,
     handleUserFilterClick,

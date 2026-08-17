@@ -12,10 +12,6 @@ vi.mock(
   })
 );
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 const addTab = vi.fn();
 const closeToday = vi.fn();
 const getDefaultTranslation = vi.fn(() => "AAB");
@@ -50,7 +46,6 @@ describe("useResumeReadingSection", () => {
           })
         : signal({ status: "loading" as const });
     (useTodayContext as Mock).mockReturnValue({
-      MaterialIcon,
       readingHistory,
       t: vi.fn((key: string) => key),
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
@@ -109,11 +104,6 @@ describe("useResumeReadingSection", () => {
       });
       expect(result.current.cardData?.book).toBe("XYZ");
     });
-  });
-
-  it("exposes the MaterialIcon", () => {
-    const result = setup({ lastReading: { bookId: "GEN", chapter: 1 } });
-    expect(result.current.MaterialIcon).toBe(MaterialIcon);
   });
 
   it("opens the last reading in a tab on button click", () => {

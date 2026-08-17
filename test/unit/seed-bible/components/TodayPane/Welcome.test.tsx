@@ -35,10 +35,6 @@ interface Options {
   handleStartButtonClick?: () => void;
 }
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 function makeResult(options: Options = {}): Result {
   return {
     greeting: options.greeting ?? "Welcome, Alice!",
@@ -48,7 +44,6 @@ function makeResult(options: Options = {}): Result {
     },
     openBookSelector: options.openBookSelector ?? vi.fn(),
     selectorText: options.selectorText ?? "Open Bible",
-    MaterialIcon,
     startButtonText: options.startButtonText ?? "Read the first chapter",
     startButtonIcon: options.startButtonIcon ?? "arrow_forward",
     handleStartButtonClick: options.handleStartButtonClick ?? vi.fn(),
@@ -123,9 +118,9 @@ describe("Welcome", () => {
       setup({ startButtonText: "Start", startButtonIcon: "play_arrow" });
       const button = btn(".welcome-screen-start-button")!;
       expect(button.textContent).toContain("Start");
-      expect(button.querySelector(".material-icon")!.textContent).toBe(
-        "play_arrow"
-      );
+      expect(
+        button.querySelector(".material-symbols-outlined")!.textContent
+      ).toBe("play_arrow");
     });
 
     it("calls handleStartButtonClick when the start button is clicked", () => {

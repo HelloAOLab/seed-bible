@@ -1,19 +1,7 @@
 import { useI18n } from "../../i18n";
-import { MaterialIcon } from "../icons";
-import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
-import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
-import { useHorizontalScroll } from "../useHorizontalScroll";
-import { ColorParser } from "../../managers/Colors";
-import {
-  GetDayRangeSeconds,
-  GetPastDateInfo,
-} from "../../managers/ReadingHistoryTime";
-import { CapitalizeFirstLetter } from "../../managers/Strings";
-import { getColorByReadingTime } from "../../managers/ReadingHistoryColors";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { TodayManager } from "../../managers/TodayManager";
-import { getHighlightedWelcomeVerse } from "./welcomeVerseMap";
 import { TodayPane } from "./TodayPane";
 
 /**
@@ -34,10 +22,6 @@ export function TodayPaneHost(props: {
   return (
     <TodayPane
       config={{
-        ColorParser,
-        MaterialIcon,
-        Skeleton,
-        SkeletonContainer,
         language,
         t,
         username: profile?.name,
@@ -105,13 +89,6 @@ export function TodayPaneHost(props: {
             state.selector.setOpen(true, slot);
           }
         },
-        ReadingHistoryTimeline,
-        getDayRangeSeconds: GetDayRangeSeconds,
-        GetPastDateInfo,
-        CapitalizeFirstLetter,
-        useHorizontalScroll,
-        getHighlightedWelcomeVerse,
-        readingHistoryService: { getColorByReadingTime },
       }}
     />
   );

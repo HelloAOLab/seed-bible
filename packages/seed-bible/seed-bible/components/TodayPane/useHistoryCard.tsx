@@ -13,16 +13,13 @@ import {
   type SocialSectionUserProfile,
 } from "./SocialSectionContext";
 import { useClickOutside } from "./useClickOutside";
+import { useHorizontalScroll } from "../useHorizontalScroll";
 import type {
   TimespanFilterOptionData,
   TimespanOptionId,
 } from "./readingHistory";
 
 type UseHistoryCard = () => {
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
   userFilterOpen: ReadonlySignal<boolean>;
   userFilterIcon: ReadonlySignal<string>;
   handleUserFilterClick: (e: MouseEvent) => void;
@@ -39,13 +36,7 @@ type UseHistoryCard = () => {
 };
 
 export const useHistoryCard: UseHistoryCard = () => {
-  const {
-    t,
-    MaterialIcon,
-    language,
-    readingHistoryConfigProvider,
-    useHorizontalScroll,
-  } = useTodayContext();
+  const { t, language, readingHistoryConfigProvider } = useTodayContext();
   const {
     userFilters,
     userProfileMap,
@@ -155,7 +146,6 @@ export const useHistoryCard: UseHistoryCard = () => {
   }, [timespan, language]);
 
   return {
-    MaterialIcon,
     userFilterOpen,
     userFilterIcon,
     handleUserFilterClick,

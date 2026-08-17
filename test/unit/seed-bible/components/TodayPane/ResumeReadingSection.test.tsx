@@ -13,16 +13,11 @@ vi.mock(
 
 type Result = ReturnType<typeof useResumeReadingSection>;
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 function makeResult(
   cardData: Partial<Result["cardData"]> = {},
   handleButtonClick = vi.fn()
 ): Result {
   return {
-    MaterialIcon,
     cardData: {
       title: "CONTINUE WHERE YOU LEFT",
       book: "Genesis",
@@ -73,9 +68,9 @@ describe("ResumeReadingSection", () => {
 
   it("renders the button icon through MaterialIcon", () => {
     setup({ buttonIcon: "bookmark" });
-    expect(q(".today-resume-card button .material-icon")!.textContent).toBe(
-      "bookmark"
-    );
+    expect(
+      q(".today-resume-card button .material-symbols-outlined")!.textContent
+    ).toBe("bookmark");
   });
 
   it("calls handleButtonClick when the button is clicked", () => {

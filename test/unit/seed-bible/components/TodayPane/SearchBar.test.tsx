@@ -14,10 +14,6 @@ vi.mock(
 type SearchResult = { id: string; reference: string; text: string };
 type Result = ReturnType<typeof useSearchBar>;
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 function makeResult(options: {
   query?: string;
   results?: SearchResult[];
@@ -45,7 +41,6 @@ function makeResult(options: {
       (key: string, opts?: { defaultValue?: string }) =>
         opts?.defaultValue ?? key
     ),
-    MaterialIcon,
   } as unknown as Result;
 }
 
@@ -78,7 +73,9 @@ describe("SearchBar", () => {
   describe("input", () => {
     it("renders the search icon, placeholder and current query value", () => {
       setup({ placeholder: "Buscar...", query: "gen" });
-      expect(q(".today-searchbar .material-icon")!.textContent).toBe("search");
+      expect(
+        q(".today-searchbar .material-symbols-outlined")!.textContent
+      ).toBe("search");
       expect(input().placeholder).toBe("Buscar...");
       expect(input().value).toBe("gen");
     });

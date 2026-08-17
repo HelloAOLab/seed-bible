@@ -19,17 +19,12 @@ type UseSearchBar = () => {
   handleFocus: () => void;
   handleSelect: (result: VerseSearchResult) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
 };
 
 const DEBOUNCE_MS = 180;
 
 export const useSearchBar: UseSearchBar = () => {
-  const { searchVerses, addTab, closeToday, t, MaterialIcon } =
-    useTodayContext();
+  const { searchVerses, addTab, closeToday, t } = useTodayContext();
 
   const query = useSignal("");
   const results = useSignal<VerseSearchResult[]>([]);
@@ -131,6 +126,5 @@ export const useSearchBar: UseSearchBar = () => {
     handleFocus,
     handleSelect,
     t,
-    MaterialIcon,
   };
 };

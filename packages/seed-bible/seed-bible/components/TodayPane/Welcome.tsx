@@ -1,5 +1,6 @@
 import { useWelcome } from "./useWelcome";
 import { SeedBibleIcon } from "./SeedBibleIcon";
+import { MaterialIcon } from "../icons";
 
 export const Welcome = () => {
   const {
@@ -8,7 +9,6 @@ export const Welcome = () => {
     welcomeVerse,
     openBookSelector,
     selectorText,
-    MaterialIcon,
     startButtonText,
     startButtonIcon,
     handleStartButtonClick,

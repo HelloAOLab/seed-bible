@@ -11,10 +11,6 @@ vi.mock(
   })
 );
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 type Result = ReturnType<typeof useHeader>;
 
 describe("useHeader", () => {
@@ -39,7 +35,6 @@ describe("useHeader", () => {
     (useTodayContext as Mock).mockReturnValue({
       language: options.language ?? "en",
       username: options.username,
-      MaterialIcon,
       t: vi.fn((key: string) => key),
     });
     const result = { current: null as unknown as Result };
@@ -101,11 +96,10 @@ describe("useHeader", () => {
   });
 
   describe("static data", () => {
-    it("exposes the notification and settings icons and the MaterialIcon", () => {
+    it("exposes the notification and settings icons", () => {
       const result = setup();
       expect(result.current.notificationIcon).toBe("notifications");
       expect(result.current.settingsIcon).toBe("settings");
-      expect(result.current.MaterialIcon).toBe(MaterialIcon);
     });
   });
 

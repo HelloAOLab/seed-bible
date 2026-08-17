@@ -21,10 +21,6 @@ vi.mock(
   })
 );
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 interface Profile {
   name: string;
   color: string;
@@ -57,7 +53,6 @@ describe("useBook", () => {
   }) {
     (useTodayContext as Mock).mockReturnValue({
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
-      MaterialIcon,
       translationBooksMap: signal(
         options.booksMap ?? new Map([["GEN", { numberOfChapters: 3 }]])
       ),
@@ -147,7 +142,6 @@ describe("useBook", () => {
       expect(result.current.usersIconData).toHaveLength(2);
       expect(result.current.usersIconData[0]).toEqual({
         key: "u1",
-        MaterialIcon,
         pictureUrl: undefined,
         color: "rgb(1, 2, 3)",
         icon: "person",

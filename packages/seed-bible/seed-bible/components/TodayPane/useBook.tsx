@@ -24,7 +24,6 @@ export const useBook: UseBook = ({
 }) => {
   const {
     bookNames,
-    MaterialIcon,
     translationBooksMap,
     addTab,
     closeToday,
@@ -53,7 +52,6 @@ export const useBook: UseBook = ({
           id,
           {
             key: id,
-            MaterialIcon,
             ...profile,
             pictureUrl: profile.pictureUrl ?? undefined,
           },
@@ -62,17 +60,12 @@ export const useBook: UseBook = ({
     );
     const extra = usersId.slice(MAX_ICONS).length;
     const usersIconData: UserIconData[] = [...iconsDataMap.values()].map(
-      (data) => {
-        const { key, MaterialIcon, pictureUrl, color, icon } = data;
-
-        return {
-          key,
-          MaterialIcon,
-          pictureUrl,
-          color,
-          icon,
-        };
-      }
+      ({ key, pictureUrl, color, icon }) => ({
+        key,
+        pictureUrl,
+        color,
+        icon,
+      })
     );
 
     const blankChapters = Array.from({

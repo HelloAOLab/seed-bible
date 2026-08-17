@@ -1,3 +1,5 @@
+import { MaterialIcon } from "../icons";
+
 export interface Props {
   number: number;
   usersData: {
@@ -5,10 +7,6 @@ export interface Props {
     pictureUrl?: string | undefined;
     color: string;
     icon: string;
-    MaterialIcon: (props: {
-      children: string;
-      className?: string | undefined;
-    }) => preact.JSX.Element;
   }[];
   handleClick: () => void;
 }
@@ -27,7 +25,7 @@ export const Chapter = ({ number, usersData, handleClick }: Props) => {
               <img src={data.pictureUrl} />
             ) : (
               <div style={{ backgroundColor: data.color }}>
-                <data.MaterialIcon>{data.icon}</data.MaterialIcon>
+                <MaterialIcon>{data.icon}</MaterialIcon>
               </div>
             );
           })}

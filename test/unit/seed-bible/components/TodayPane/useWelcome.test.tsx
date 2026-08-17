@@ -12,8 +12,19 @@ vi.mock(
   })
 );
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
+// The hook imports the verse highlighter directly, so it is stubbed at the
+// module boundary rather than injected.
+const { getHighlightedWelcomeVerse } = vi.hoisted(() => ({
+  getHighlightedWelcomeVerse:
+    vi.fn<(translationId: string, rawVerseText: string) => string>(),
+}));
+
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/TodayPane/welcomeVerseMap",
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    getHighlightedWelcomeVerse,
+  })
 );
 
 function deferred<T>() {
@@ -33,7 +44,6 @@ describe("useWelcome", () => {
   let closeToday: Mock;
   let getVerseText: Mock;
   let getDefaultTranslation: Mock;
-  let getHighlightedWelcomeVerse: Mock;
   let lastTranslationId: Signal<string | null>;
 
   beforeEach(() => {
@@ -44,7 +54,7 @@ describe("useWelcome", () => {
     closeToday = vi.fn();
     getVerseText = vi.fn(async () => "raw verse");
     getDefaultTranslation = vi.fn(() => "DEF");
-    getHighlightedWelcomeVerse = vi.fn(
+    getHighlightedWelcomeVerse.mockImplementation(
       (_translationId: string, raw: string) => `HL:${raw}`
     );
     lastTranslationId = signal<string | null>("KJV");
@@ -77,9 +87,7 @@ describe("useWelcome", () => {
       getVerseText,
       lastTranslationId,
       getDefaultTranslation,
-      getHighlightedWelcomeVerse,
       openBookSelector,
-      MaterialIcon,
       addTab,
       closeToday,
       theme: { variables: { readerFontColor: "#112233" } },
@@ -127,9 +135,8 @@ describe("useWelcome", () => {
       expect(result.current.startButtonIcon).toBe("arrow_right_alt");
     });
 
-    it("exposes MaterialIcon and openBookSelector", () => {
+    it("forwards openBookSelector", () => {
       const result = setup();
-      expect(result.current.MaterialIcon).toBe(MaterialIcon);
       expect(result.current.openBookSelector).toBe(openBookSelector);
     });
 

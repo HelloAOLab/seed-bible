@@ -12,10 +12,6 @@ vi.mock(
   })
 );
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 const addTab = vi.fn();
 const closeToday = vi.fn();
 const DEBOUNCE_MS = 180;
@@ -61,7 +57,6 @@ describe("useSearchBar", () => {
       addTab,
       closeToday,
       t: vi.fn((key: string) => key),
-      MaterialIcon,
     });
     const result = { current: null as unknown as Hook };
     function TestComponent() {
@@ -80,7 +75,6 @@ describe("useSearchBar", () => {
       expect(result.current.isOpen.value).toBe(false);
       expect(result.current.results.value).toEqual([]);
       expect(result.current.placeholder).toBe("today-search-verses");
-      expect(result.current.MaterialIcon).toBe(MaterialIcon);
     });
   });
 

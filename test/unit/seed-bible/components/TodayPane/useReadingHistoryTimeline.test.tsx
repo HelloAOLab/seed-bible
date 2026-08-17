@@ -5,7 +5,6 @@ import { useReadingHistoryTimeline } from "@packages/seed-bible/seed-bible/compo
 import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 import { useTimeContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
-import { ColorParser } from "@packages/seed-bible-utils/domain/functions/colors";
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
@@ -24,10 +23,56 @@ vi.mock(
   })
 );
 
-const getColorByReadingTime = vi.fn(
-  (_data: { baseColor: string; [key: string]: unknown }) => "#abc"
+// The hook imports these directly, so they are stubbed at the module boundary
+// rather than injected. `importOriginal` keeps each module's other exports real
+// — a bare factory would silently drop them.
+const {
+  getColorByReadingTime,
+  useHorizontalScroll,
+  GetDayRangeSeconds,
+  GetPastDateInfo,
+} = vi.hoisted(() => ({
+  getColorByReadingTime:
+    vi.fn<(data: { baseColor: string; [key: string]: unknown }) => string>(),
+  useHorizontalScroll: vi.fn(),
+  GetDayRangeSeconds: vi.fn<(ms: number) => { start: number; end: number }>(),
+  GetPastDateInfo: vi.fn<
+    (
+      time: number,
+      lang?: string
+    ) => {
+      weekday: string | undefined;
+      day: number;
+      month: number;
+      monthName: string;
+      year: number;
+    }
+  >(),
+}));
+
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/ReadingHistoryTime",
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    GetDayRangeSeconds,
+    GetPastDateInfo,
+  })
 );
-const useHorizontalScroll = vi.fn();
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/ReadingHistoryColors",
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    getColorByReadingTime,
+  })
+);
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/useHorizontalScroll",
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    useHorizontalScroll,
+  })
+);
+
 const selectYear = vi.fn();
 const selectDay = vi.fn();
 
@@ -36,32 +81,15 @@ const NOW = new Date(2026, 4, 23, 12, 0, 0);
 
 function makeToday(overrides: Record<string, unknown> = {}) {
   return {
-    getDayRangeSeconds: vi.fn((ms: number) => {
-      const start = Math.floor(ms / 1000);
-      return { start, end: start + 86399 };
-    }),
     getReadingHistoryEvents: vi.fn(async () => []),
     t: vi.fn((key: string) => key),
-    GetPastDateInfo: vi.fn(() => ({
-      weekday: undefined,
-      day: 18,
-      month: 4,
-      monthName: "may",
-      year: 2026,
-    })),
     language: "en",
-    CapitalizeFirstLetter: vi.fn(
-      (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-    ),
     theme: {
       variables: {
         readerToolbarFloatingButtonBackground: "#base",
         secondaryColor: "#sec",
       },
     },
-    readingHistoryService: { getColorByReadingTime },
-    useHorizontalScroll,
-    ColorParser,
     ...overrides,
   };
 }
@@ -89,6 +117,20 @@ describe("useReadingHistoryTimeline", () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
     (useTimeContext as Mock).mockReturnValue({ tick: 0 });
+    // Re-seeded per test because `clearAllMocks` resets calls but not
+    // implementations, so a per-test override would otherwise leak forward.
+    GetDayRangeSeconds.mockImplementation((ms: number) => {
+      const start = Math.floor(ms / 1000);
+      return { start, end: start + 86399 };
+    });
+    GetPastDateInfo.mockImplementation(() => ({
+      weekday: undefined,
+      day: 18,
+      month: 4,
+      monthName: "may",
+      year: 2026,
+    }));
+    getColorByReadingTime.mockImplementation(() => "#abc");
   });
 
   afterEach(() => {
@@ -165,7 +207,7 @@ describe("useReadingHistoryTimeline", () => {
         "nov",
         "dec",
       ];
-      const GetPastDateInfo = vi.fn((time: number) => {
+      GetPastDateInfo.mockImplementation((time: number) => {
         const d = new Date(time);
         return {
           weekday: undefined,
@@ -177,7 +219,7 @@ describe("useReadingHistoryTimeline", () => {
       });
       // A full-year range spans many distinct months, exercising the
       // month-boundary / last-week dedup branches.
-      const result = setup({ year: 2026 }, { GetPastDateInfo });
+      const result = setup({ year: 2026 });
       expect(monthLabels(result).length).toBeGreaterThan(1);
     });
   });
@@ -487,7 +529,7 @@ describe("useReadingHistoryTimeline", () => {
   });
 
   describe("side effects", () => {
-    it("wires the injected horizontal scroll to the timeline ref", () => {
+    it("wires the horizontal scroll to the timeline ref", () => {
       const result = setup();
       expect(useHorizontalScroll).toHaveBeenCalledWith(
         result.current.timelineRef

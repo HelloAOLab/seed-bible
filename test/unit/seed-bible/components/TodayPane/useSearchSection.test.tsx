@@ -12,10 +12,6 @@ vi.mock(
   })
 );
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 const openBookSelector = vi.fn();
 
 type Result = ReturnType<typeof useSearchSection>;
@@ -38,7 +34,6 @@ describe("useSearchSection", () => {
     (useTodayContext as Mock).mockReturnValue({
       t: vi.fn((key: string) => key),
       openBookSelector,
-      MaterialIcon,
       theme: { variables: { secondaryFontColor } },
       isMobile: signal(isMobile),
     });
@@ -72,11 +67,6 @@ describe("useSearchSection", () => {
       width: "1.25rem",
       height: "1.25rem",
     });
-  });
-
-  it("exposes the MaterialIcon", () => {
-    const result = setup();
-    expect(result.current.MaterialIcon).toBe(MaterialIcon);
   });
 
   it("forwards openBookSelector", () => {

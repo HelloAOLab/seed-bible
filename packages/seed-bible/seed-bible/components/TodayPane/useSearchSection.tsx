@@ -5,16 +5,11 @@ type UseSearchSection = () => {
   title: string;
   openBookSelector: () => void;
   selectorText: string;
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
   seedBibleIconStyle: React.CSSProperties;
 };
 
 export const useSearchSection: UseSearchSection = () => {
-  const { t, openBookSelector, MaterialIcon, theme, isMobile } =
-    useTodayContext();
+  const { t, openBookSelector, theme, isMobile } = useTodayContext();
 
   const { title, selectorText } = useMemo(() => {
     return {
@@ -35,7 +30,6 @@ export const useSearchSection: UseSearchSection = () => {
     title,
     openBookSelector,
     selectorText,
-    MaterialIcon,
     seedBibleIconStyle,
   };
 };

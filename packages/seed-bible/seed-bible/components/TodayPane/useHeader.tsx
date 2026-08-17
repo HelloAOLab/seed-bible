@@ -7,10 +7,6 @@ type UseHeader = () => {
   date: string;
   greeting: string;
   name: string;
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
   notificationIcon: string;
   settingsIcon: string;
   handleNotificationClick: () => void;
@@ -20,7 +16,7 @@ type UseHeader = () => {
 import { useMemo, useCallback } from "preact/hooks";
 
 export const useHeader: UseHeader = () => {
-  const { language, username, MaterialIcon, t } = useTodayContext();
+  const { language, username, t } = useTodayContext();
 
   const { day, month, greeting } = useMemo(() => {
     const date = new Date();
@@ -58,7 +54,6 @@ export const useHeader: UseHeader = () => {
     date: `${day} ${month}`,
     greeting,
     name: username && username.length > 0 ? username : "Guest",
-    MaterialIcon,
     notificationIcon: NOTIFICATION_ICON,
     settingsIcon: SETTINGS_ICON,
     handleNotificationClick,

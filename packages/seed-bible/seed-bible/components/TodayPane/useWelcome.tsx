@@ -5,6 +5,7 @@ import {
   type ReadonlySignal,
 } from "@preact/signals";
 import { useTodayContext } from "./TodayContext";
+import { getHighlightedWelcomeVerse } from "./welcomeVerseMap";
 
 import { useMemo, useEffect, useCallback } from "preact/hooks";
 
@@ -14,10 +15,6 @@ type UseWelcome = () => {
   welcomeVerse: Signal<string>;
   openBookSelector: () => void;
   selectorText: string;
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
   startButtonText: string;
   startButtonIcon: string;
   handleStartButtonClick: () => void;
@@ -34,9 +31,7 @@ export const useWelcome: UseWelcome = () => {
     getVerseText,
     lastTranslationId,
     getDefaultTranslation,
-    getHighlightedWelcomeVerse,
     openBookSelector,
-    MaterialIcon,
     addTab,
     closeToday,
     theme,
@@ -111,7 +106,6 @@ export const useWelcome: UseWelcome = () => {
     welcomeVerse,
     openBookSelector,
     selectorText,
-    MaterialIcon,
     startButtonText,
     startButtonIcon: STRAT_BUTTON_ICON,
     handleStartButtonClick,

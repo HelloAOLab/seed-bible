@@ -8,6 +8,14 @@ import type {
   TimelineRangesMap,
 } from "./readingHistory";
 import { useTimeContext } from "./TimeContext";
+import { useHorizontalScroll } from "../useHorizontalScroll";
+import { ColorParser } from "../../managers/Colors";
+import {
+  GetDayRangeSeconds,
+  GetPastDateInfo,
+} from "../../managers/ReadingHistoryTime";
+import { CapitalizeFirstLetter } from "../../managers/Strings";
+import { getColorByReadingTime } from "../../managers/ReadingHistoryColors";
 import { loadDailyReadingHistory } from "../../managers/ReadingHistoryManager";
 import type {
   DailyReadingHistorySummaries,
@@ -35,18 +43,7 @@ const step = 0.25;
 export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const {
-    getDayRangeSeconds,
-    getReadingHistoryEvents,
-    t,
-    GetPastDateInfo,
-    language,
-    CapitalizeFirstLetter,
-    theme,
-    readingHistoryService,
-    useHorizontalScroll,
-    ColorParser,
-  } = useTodayContext();
+  const { getReadingHistoryEvents, t, language, theme } = useTodayContext();
   const { selectYear, selectDay, year, timespan, userFilters } =
     useSocialSectionContext();
 
@@ -136,7 +133,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
           break;
         const dayDate = new Date(startDateStartOfWeek);
         dayDate.setDate(dayDate.getDate() + week * 7 + day);
-        const { start, end } = getDayRangeSeconds(dayDate.getTime());
+        const { start, end } = GetDayRangeSeconds(dayDate.getTime());
         dayRangesMap.set(`${week}-${day}`, { start, end });
       }
     }
@@ -232,7 +229,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         const prevColor = prevItemsColorMapRef.current.get(key);
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
-          color = readingHistoryService.getColorByReadingTime({
+          color = getColorByReadingTime({
             baseColor,
             step,
             readingTimeSeconds: summary.totalTimeSpentReading,

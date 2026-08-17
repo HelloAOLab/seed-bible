@@ -7,21 +7,12 @@ import {
 
 type UserData = Props["usersData"][number];
 
-const MaterialIcon = ({
-  children,
-  className,
-}: {
-  children: string;
-  className?: string;
-}) => <span className={`material-icon ${className ?? ""}`}>{children}</span>;
-
 function makeUser(overrides: Partial<UserData> = {}): UserData {
   return {
     name: "Alice",
     pictureUrl: undefined,
     color: "rgb(10, 20, 30)",
     icon: "person",
-    MaterialIcon,
     ...overrides,
   };
 }
@@ -101,7 +92,7 @@ describe("Chapter", () => {
       // Icon users are wrapped in a colored <div>.
       expect(icon.tagName).toBe("DIV");
       expect(icon.style.backgroundColor).toBe("rgb(1, 2, 3)");
-      const materialIcon = icon.querySelector(".material-icon");
+      const materialIcon = icon.querySelector(".material-symbols-outlined");
       expect(materialIcon).not.toBeNull();
       expect(materialIcon!.textContent).toBe("star");
       expect(icon.querySelector("img")).toBeNull();
@@ -128,9 +119,9 @@ describe("Chapter", () => {
       const icons = iconEls();
       expect(icons[0]!.tagName).toBe("IMG");
       expect(icons[0]!.getAttribute("src")).toBe("https://example.com/a.png");
-      expect(icons[1]!.querySelector(".material-icon")!.textContent).toBe(
-        "face"
-      );
+      expect(
+        icons[1]!.querySelector(".material-symbols-outlined")!.textContent
+      ).toBe("face");
     });
   });
 

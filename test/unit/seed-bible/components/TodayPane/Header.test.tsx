@@ -13,16 +13,11 @@ vi.mock(
 
 type HeaderResult = ReturnType<typeof useHeader>;
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
-);
-
 function makeHeaderResult(overrides: Partial<HeaderResult> = {}): HeaderResult {
   return {
     date: "Thursday, Jun 11",
     greeting: "Good morning",
     name: "Alice",
-    MaterialIcon,
     notificationIcon: "notifications",
     settingsIcon: "settings",
     handleNotificationClick: vi.fn(),

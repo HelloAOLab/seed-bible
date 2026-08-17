@@ -8,42 +8,17 @@ import type {
   TimespanOption,
   TimespanOptionId,
 } from "./readingHistory";
-import type { ReadingHistoryTimelineComponent } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
-import type { GetDayRangeSecondsType } from "../../managers/ReadingHistoryTime";
-import type { CapitalizeFirstLetterType } from "../../managers/Strings";
 import type { ReadingEvent } from "../../managers/ReadingHistoryManager";
 import type { BibleTheme } from "../../managers/ThemeManager";
-import type { ReadingHistoryServicePort } from "./readingHistoryService";
 import type { VerseSearchResult } from "./search";
 import type { Bookmark } from "../../managers/BookmarksManager";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
-import type { UseHorizontalScroll } from "../useHorizontalScroll";
 import "./TodayPane.css";
 // import type { UserProfile } from "../../managers/LoginManager";
 
 import { memo } from "preact/compat";
-import type { ColorParserType } from "../../managers/Colors";
 
 export interface TodayConfig {
-  ColorParser: ColorParserType;
-  MaterialIcon: (props: {
-    children: string;
-    className?: string;
-  }) => preact.JSX.Element;
-  /** Shared shimmering placeholder block (see the reader's `Skeleton`). */
-  Skeleton: (props: {
-    shape?: "block" | "line" | "circle" | "button";
-    width?: string;
-    height?: string;
-    radius?: string;
-    className?: string;
-  }) => preact.JSX.Element;
-  /** Accessible wrapper announcing a group of `Skeleton` blocks as loading. */
-  SkeletonContainer: (props: {
-    label: string;
-    className?: string;
-    children: preact.ComponentChildren;
-  }) => preact.JSX.Element;
   language: string;
   username: string | undefined;
   userProfile:
@@ -121,37 +96,18 @@ export interface TodayConfig {
   subscribedUsersIdsProvider: {
     getUsersIds(): string[];
   };
-  ReadingHistoryTimeline: ReadingHistoryTimelineComponent;
-  getDayRangeSeconds: GetDayRangeSecondsType;
   getReadingHistoryEvents: (
     recordName: string,
     startTime: number,
     endTime: number
   ) => Promise<Iterable<ReadingEvent>>;
-  GetPastDateInfo: (
-    time: number,
-    lang?: string | undefined
-  ) => {
-    weekday: string | undefined;
-    day: number;
-    month: number;
-    monthName: string;
-    year: number;
-  };
-  CapitalizeFirstLetter: CapitalizeFirstLetterType;
   theme: BibleTheme;
-  readingHistoryService: ReadingHistoryServicePort;
   bookmarks: ReadonlySignal<Array<Bookmark>>;
   getTranslationBooks: (translation: string) => Promise<TranslationBooks>;
   readingHistoryConfigProvider: {
     buildTimespanOptionsMap: () => Record<TimespanOptionId, TimespanOption>;
     getTimespanOptionLabelMap(): Record<TimespanOptionId, string>;
   };
-  getHighlightedWelcomeVerse: (
-    translationId: string,
-    rawVerseText: string
-  ) => string;
-  useHorizontalScroll: UseHorizontalScroll;
   isMobile: Signal<boolean>;
   isBookmarksListOpen: boolean;
   showBookmarksList: () => void;

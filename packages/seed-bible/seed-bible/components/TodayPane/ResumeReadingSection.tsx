@@ -1,4 +1,6 @@
 import { useResumeReadingSection } from "./useResumeReadingSection";
+import { MaterialIcon } from "../icons";
+import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 
 export interface ResumeReadingCardData {
   title: string;
@@ -8,15 +10,8 @@ export interface ResumeReadingCardData {
 }
 
 export const ResumeReadingSection = () => {
-  const {
-    MaterialIcon,
-    Skeleton,
-    SkeletonContainer,
-    isLoading,
-    loadingLabel,
-    cardData,
-    handleButtonClick,
-  } = useResumeReadingSection();
+  const { isLoading, loadingLabel, cardData, handleButtonClick } =
+    useResumeReadingSection();
 
   // History still loading: show a placeholder card so a returning user sees the
   // personalized layout (never Welcome) while the resume position is fetched.

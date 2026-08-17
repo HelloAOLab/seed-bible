@@ -19,8 +19,18 @@ vi.mock(
   })
 );
 
-const MaterialIcon = ({ children }: { children: string }) => (
-  <span className="material-icon">{children}</span>
+// The hook imports the scroll helper directly, so it is stubbed at the module
+// boundary rather than injected.
+const { useHorizontalScroll } = vi.hoisted(() => ({
+  useHorizontalScroll: vi.fn(),
+}));
+
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/useHorizontalScroll",
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    useHorizontalScroll,
+  })
 );
 
 const optionsMap = {
@@ -44,7 +54,6 @@ describe("useHistoryCard", () => {
   const selectYear = vi.fn();
   const selectDay = vi.fn();
   const toggleUserFilter = vi.fn();
-  const useHorizontalScroll = vi.fn();
 
   function configure(options: {
     userFilters?: Map<string, boolean>;
@@ -53,13 +62,11 @@ describe("useHistoryCard", () => {
   }) {
     (useTodayContext as Mock).mockReturnValue({
       t: vi.fn((key: string) => key),
-      MaterialIcon,
       language: options.language ?? "en",
       readingHistoryConfigProvider: {
         buildTimespanOptionsMap: () => optionsMap,
         getTimespanOptionLabelMap: () => labelMap,
       },
-      useHorizontalScroll,
     });
     (useSocialSectionContext as Mock).mockReturnValue({
       userFilters: options.userFilters ?? new Map([["u1", true]]),
@@ -257,7 +264,7 @@ describe("useHistoryCard", () => {
   });
 
   describe("horizontal scroll", () => {
-    it("wires the injected useHorizontalScroll to the timespan filter ref", () => {
+    it("wires useHorizontalScroll to the timespan filter ref", () => {
       const result = setup();
       expect(useHorizontalScroll).toHaveBeenCalledWith(
         result.current.timespanFilterRef

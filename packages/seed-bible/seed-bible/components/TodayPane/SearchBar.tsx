@@ -1,4 +1,5 @@
 import { useSearchBar } from "./useSearchBar";
+import { MaterialIcon } from "../icons";
 
 export const SearchBar = () => {
   const {
@@ -13,7 +14,6 @@ export const SearchBar = () => {
     handleFocus,
     handleSelect,
     t,
-    MaterialIcon,
   } = useSearchBar();
 
   const showDropdown = isOpen.value && query.value.trim().length > 0;

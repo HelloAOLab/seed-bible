@@ -3,22 +3,6 @@ import { useTodayContext } from "./TodayContext";
 import { useMemo, useCallback } from "preact/hooks";
 
 type UseResumeReadingSection = () => {
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
-  Skeleton: (props: {
-    shape?: "block" | "line" | "circle" | "button";
-    width?: string;
-    height?: string;
-    radius?: string;
-    className?: string;
-  }) => preact.JSX.Element;
-  SkeletonContainer: (props: {
-    label: string;
-    className?: string;
-    children: preact.ComponentChildren;
-  }) => preact.JSX.Element;
   /** True while history is still loading — render a placeholder card. */
   isLoading: boolean;
   /** Already-translated status announced by the loading placeholder. */
@@ -30,9 +14,6 @@ type UseResumeReadingSection = () => {
 
 export const useResumeReadingSection: UseResumeReadingSection = () => {
   const {
-    MaterialIcon,
-    Skeleton,
-    SkeletonContainer,
     readingHistory,
     t,
     bookNames,
@@ -65,9 +46,6 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
   }, [lastReading, addTab, closeToday, getDefaultTranslation]);
 
   return {
-    MaterialIcon,
-    Skeleton,
-    SkeletonContainer,
     isLoading: state.status === "loading",
     loadingLabel: t("resume-reading-loading", {
       defaultValue: "Loading your reading history…",
