@@ -204,6 +204,13 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
 
   const prevItemsColorMapRef = useRef<ItemsColorMap>(new Map());
 
+  // Unwrapped here in the render body, never inside the memo below. `useMemo` is
+  // not a reactive scope, so a `theme.value` read in there would neither
+  // subscribe this component to a theme change nor invalidate the memo — the
+  // signal's own identity never changes, only the value it holds. Reading it out
+  // here is what makes a theme switch recolour the timeline immediately.
+  const currentTheme = theme.value;
+
   const itemsColorMap = useMemo<ItemsColorMap>(() => {
     const colorMap: ItemsColorMap = new Map();
     if (!dailyReadingHistorySummaries || !yearlyReadingHistorySummary)
@@ -217,19 +224,19 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     const fullColorTimeSeconds = yearlySummaryUsersCount * SEC_PER_HOUR; // 1 hour per selected user
 
     const backgroundRgb = ColorParser(
-      theme.value.variables.readerBackground ?? "#FFFFFF",
+      currentTheme.variables.readerBackground ?? "#FFFFFF",
       "arrayRGB"
     );
-    const baseColor = theme.value.variables.dividerColor
+    const baseColor = currentTheme.variables.dividerColor
       ? ColorParser(
-          theme.value.variables.dividerColor,
+          currentTheme.variables.dividerColor,
           "longHex",
           backgroundRgb
         )
       : "#dfdede";
-    const userColor = theme.value.variables.primaryColor
+    const userColor = currentTheme.variables.primaryColor
       ? ColorParser(
-          theme.value.variables.primaryColor,
+          currentTheme.variables.primaryColor,
           "longHex",
           backgroundRgb
         )
@@ -268,7 +275,12 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     }
 
     return prevItemsColorMapRef.current;
-  }, [tick, dailyReadingHistorySummaries, yearlyReadingHistorySummary, theme]);
+  }, [
+    tick,
+    dailyReadingHistorySummaries,
+    yearlyReadingHistorySummary,
+    currentTheme,
+  ]);
 
   const itemsData = useMemo<ReadingHistoryContentData[]>(() => {
     const monthsSet = new Set();

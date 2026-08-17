@@ -15,6 +15,9 @@ type UseSearchSection = (props: {
 
 export const useSearchSection: UseSearchSection = ({ theme, isMobile }) => {
   const { t } = useI18n();
+  // Unwrapped in the render body so this component subscribes to the theme; a
+  // `.value` read inside the memo below would not (see useReadingHistoryTimeline).
+  const currentTheme = theme.value;
 
   const { title, selectorText } = useMemo(() => {
     return {
@@ -27,9 +30,9 @@ export const useSearchSection: UseSearchSection = ({ theme, isMobile }) => {
     return {
       width: isMobile.value ? "1.25rem" : "1.5rem",
       height: isMobile.value ? "1.25rem" : "1.5rem",
-      backgroundColor: theme.value.variables.secondaryFontColor,
+      backgroundColor: currentTheme.variables.secondaryFontColor,
     };
-  }, [theme.value, isMobile.value]);
+  }, [currentTheme, isMobile.value]);
 
   return {
     title,

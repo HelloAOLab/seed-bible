@@ -86,12 +86,15 @@ function makeToday(overrides: Record<string, unknown> = {}) {
   });
 }
 
-const THEME = signal({
+const DEFAULT_THEME = {
   variables: {
     readerToolbarFloatingButtonBackground: "#base",
     secondaryColor: "#sec",
   },
-} as unknown as BibleTheme);
+} as unknown as BibleTheme;
+
+// Mutated by the theme-switch test, so it is reset in `beforeEach`.
+const THEME = signal(DEFAULT_THEME);
 
 function makeSocial(overrides: Record<string, unknown> = {}) {
   return {
@@ -130,6 +133,7 @@ describe("useReadingHistoryTimeline", () => {
       year: 2026,
     }));
     getColorByReadingTime.mockImplementation(() => "#abc");
+    THEME.value = DEFAULT_THEME;
   });
 
   afterEach(() => {
@@ -513,12 +517,12 @@ describe("useReadingHistoryTimeline", () => {
           },
         ]
       );
+      THEME.value = {
+        variables: { secondaryColor: "#sec" },
+      } as unknown as BibleTheme;
       setup(
         { userFilters: new Map([["u1", true]]) },
-        {
-          getReadingHistoryEvents,
-          theme: { variables: { secondaryColor: "#sec" } },
-        }
+        { getReadingHistoryEvents }
       );
 
       await act(async () => {
@@ -526,6 +530,54 @@ describe("useReadingHistoryTimeline", () => {
       });
 
       expect(getColorByReadingTime.mock.calls[0]![0].baseColor).toBe("#dfdede");
+    });
+
+    /**
+     * Regression: the colours must follow a theme switch on their own.
+     *
+     * `theme` arrives as a signal, and a `.value` read inside the colour
+     * `useMemo` neither subscribes this hook nor invalidates the memo — the
+     * signal object's identity never changes. That left the timeline showing the
+     * previous theme's colours until something unrelated (the clock tick, or the
+     * next reading-history refetch) happened to recompute them, 3-8s later.
+     */
+    it("recolours as soon as the theme changes, with no refetch or tick", async () => {
+      const getReadingHistoryEvents = vi.fn(
+        async (_id: string, startTime: number) => [
+          {
+            start: startTime + 100,
+            end: startTime + 220,
+            bookId: "GEN",
+            chapter: 1,
+            userId: "u1",
+          },
+        ]
+      );
+      setup(
+        { userFilters: new Map([["u1", true]]) },
+        { getReadingHistoryEvents }
+      );
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+
+      const callsBefore = getColorByReadingTime.mock.calls.length;
+      expect(callsBefore).toBeGreaterThan(0);
+      expect(getColorByReadingTime.mock.calls[0]![0].baseColor).toBe("#dfdede");
+
+      const fetchesBefore = getReadingHistoryEvents.mock.calls.length;
+      await act(async () => {
+        THEME.value = {
+          variables: { dividerColor: "#123456" },
+        } as unknown as BibleTheme;
+      });
+
+      const afterSwitch = getColorByReadingTime.mock.calls.slice(callsBefore);
+      expect(afterSwitch.length).toBeGreaterThan(0);
+      expect(afterSwitch[0]![0].baseColor).not.toBe("#dfdede");
+      // No refetch was needed to get there.
+      expect(getReadingHistoryEvents.mock.calls).toHaveLength(fetchesBefore);
     });
   });
 

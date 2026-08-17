@@ -44,6 +44,9 @@ export const useWelcome: UseWelcome = ({
     today;
   const username = login.profile.value?.name;
   const { t } = useI18n();
+  // Unwrapped in the render body so this component subscribes to the theme; a
+  // `.value` read inside the memo below would not (see useReadingHistoryTimeline).
+  const currentTheme = theme.value;
 
   const greeting = useMemo(() => {
     return username
@@ -106,9 +109,9 @@ export const useWelcome: UseWelcome = ({
     return {
       width: "1.25rem",
       height: "1.25rem",
-      backgroundColor: theme.value.variables.readerFontColor,
+      backgroundColor: currentTheme.variables.readerFontColor,
     };
-  }, [theme.value]);
+  }, [currentTheme]);
 
   return {
     greeting,
