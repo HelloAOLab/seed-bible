@@ -1260,6 +1260,7 @@ describe("createPlaylistManager", () => {
       expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_created", {
         playlistId: draftId,
         playlistLocator: `user-1.${draftId}`,
+        isCreator: true,
         itemCount: 0,
       });
     });
@@ -1281,6 +1282,7 @@ describe("createPlaylistManager", () => {
       expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_updated", {
         playlistId: "playlist-1",
         playlistLocator: "user-1.playlist-1",
+        isCreator: true,
         itemCount: 0,
       });
     });
@@ -1340,6 +1342,145 @@ describe("createPlaylistManager", () => {
       await manager.playing.value!.previous();
       await manager.playing.value!.next();
       expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not capture playlist_finished when a single-item playlist starts (start-at-last is not the same as finishing)", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+
+      manager.startPlaying(playlist);
+
+      // "played" fires for the start; "finished" must not, since nothing was
+      // actually played through — the queue just happens to be one item long,
+      // so its start and its end are the same index.
+      expect(mockPosthogCapture).toHaveBeenCalledWith(
+        "playlist_played",
+        expect.anything()
+      );
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("does not capture playlist_finished when a deep link opens directly on the last step", async () => {
+      const playlist = makePlaylist({
+        id: "playlist-1",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      // The URL opens straight on step 2 (the last item) via a shared link,
+      // rather than the user navigating there.
+      makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/?playlist=user-1.playlist-1&playlistStep=2"
+      );
+      await flush();
+
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("does not capture playlist_finished when removing trailing items clamps the current index to the new last item", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+          { type: "html", html: "d" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
+      await manager.playing.value!.next();
+      await manager.playing.value!.next();
+      expect(manager.playing.value!.currentIndex.value).toBe(2);
+
+      // Deleting the trailing item shrinks the queue so index 2 becomes the
+      // new last index, without the user ever advancing into it.
+      manager.playing.value!.removeFromQueue(3);
+      expect(manager.playing.value!.queue.value).toHaveLength(3);
+      expect(manager.playing.value!.currentIndex.value).toBe(2);
+
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("captures playlist_finished only for the participant that advances, not for a peer whose index moves via session sync", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        authorUserId: "user-2",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      // Both participants' enablements are mirrored onto the same `data`
+      // signal, the same way `SessionsManager` keeps a shared session's
+      // participants in sync.
+      const sharedData = signal<unknown>({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
+      const definition =
+        lastReadingExtensionManager.getReadingExtension("playlist")!;
+      const participantA = definition.activate({
+        readingState: {} as any,
+        data: sharedData,
+        isShared: signal(true),
+      }) as unknown as PlaylistReadingExtensionInstance;
+      const participantB = definition.activate({
+        readingState: {} as any,
+        data: sharedData,
+        isShared: signal(true),
+      }) as unknown as PlaylistReadingExtensionInstance;
+      mockPosthogCapture.mockClear();
+
+      // A advances locally into the last item...
+      await participantA.playingState.next();
+      // ...which propagates to B purely via the synced `data`...
+      expect(participantB.playingState.currentIndex.value).toBe(1);
+
+      // ...but only A actually finished playback; B's move was an inbound sync.
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_finished", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+    });
+
+    it("does not throw and does not report playback events when posthog is unavailable", async () => {
+      delete (globalThis as any).posthog;
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      expect(() => manager.startPlaying(playlist)).not.toThrow();
+      await expect(manager.playing.value!.next()).resolves.toBeUndefined();
+
+      expect(mockPosthogCapture).not.toHaveBeenCalled();
     });
   });
 });
