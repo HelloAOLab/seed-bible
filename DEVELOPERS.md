@@ -94,11 +94,11 @@ On the pattern side (the code that runs inside the portal's iframe), use CasualO
 // send a message out to the host page
 await os.sendEmbedMessage({ type: "featureClicked", featureId });
 
+// onEmbedMessage.tsx
 // receive messages sent from the host page
-export function onEmbedMessage(data: { origin: string; message: any }) {
-  if (data.message?.type === "highlightFeature") {
-    highlightFeature(data.message.featureId);
-  }
+let data = that;
+if (data.message?.type === "highlightFeature") {
+  highlightFeature(data.message.featureId);
 }
 ```
 
