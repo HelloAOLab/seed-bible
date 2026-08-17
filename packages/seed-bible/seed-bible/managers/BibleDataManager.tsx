@@ -944,8 +944,17 @@ export function createBibleDataManager(
         .then((response) => response.translations);
       translationsCache?.set(normalizedEndpoint, resultPromise);
       // A failed fetch must not poison the cache for its whole TTL — mirrors
-      // FreeUseBibleAPI's own cache, which evicts on rejection too.
-      resultPromise.catch(() => translationsCache?.delete(normalizedEndpoint));
+      // FreeUseBibleAPI's own cache, which evicts on rejection too. Only
+      // evict if this is still the entry stored for the endpoint: a slower,
+      // superseded request (replaced by a `refresh` or a fresh post-TTL
+      // fetch) rejecting later must not delete the newer, valid entry that
+      // took its place.
+      const failedPromise = resultPromise;
+      failedPromise.catch(() => {
+        if (translationsCache?.get(normalizedEndpoint) === failedPromise) {
+          translationsCache?.delete(normalizedEndpoint);
+        }
+      });
     }
 
     const result = await resultPromise;

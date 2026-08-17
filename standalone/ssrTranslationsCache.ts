@@ -1,6 +1,9 @@
 import type { TranslationsCache } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
+/** The default TTL, used whenever the env var is unset or not a usable number. */
+const DEFAULT_TTL_MS = 60 * 60_000; // 1 hour
+
 /**
  * How long a fetched translations list is trusted before the SSR host
  * fetches it again. The translations endpoint changes rarely — each entry
@@ -9,8 +12,17 @@ import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeU
  * volume drastically without meaningfully risking staleness. Configurable
  * for ops without a redeploy, same idiom as `POINTER_TTL_MS` in
  * `server/index.ts`.
+ *
+ * Falls back to the default for anything that isn't a positive, finite
+ * number — an unset var parses as `undefined` (`Number(undefined)` is
+ * `NaN`), but an env var can also be set to an empty string (`Number("")`
+ * is `0`, which would expire every entry instantly) or a non-numeric value
+ * (`NaN`, which would never expire, the opposite of a safe fallback).
  */
-const TTL_MS = Number(process.env.SSR_TRANSLATIONS_CACHE_TTL_MS ?? 60 * 60_000); // 1 hour
+export const TTL_MS = (() => {
+  const parsed = Number(process.env.SSR_TRANSLATIONS_CACHE_TTL_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TTL_MS;
+})();
 
 interface Entry {
   promise: Promise<Translation[]>;
@@ -27,6 +39,14 @@ interface Entry {
  */
 const cache = new Map<string, Entry>();
 
+/**
+ * Every caller sharing a cache hit receives the exact same `Translation[]`
+ * instance (and the same element objects within it), across concurrent
+ * requests and even different render()s. That's safe only because nothing
+ * downstream mutates a `Translation` in place — `mergeTranslations` in
+ * `BibleDataManager.tsx` only reads from it. If that ever changes, this
+ * cache would need to hand out a defensive copy instead.
+ */
 export const ssrTranslationsCache: TranslationsCache = {
   get(endpoint) {
     const entry = cache.get(endpoint);

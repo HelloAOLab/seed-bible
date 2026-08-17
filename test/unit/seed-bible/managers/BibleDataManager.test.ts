@@ -381,6 +381,54 @@ describe("createBibleDataManager", () => {
       expect(result).toEqual(translations.translations);
       expect(webGetMock).toHaveBeenCalledTimes(2);
     });
+
+    // Regression: a slow request's own `.catch` used to delete whatever the
+    // cache currently held for that endpoint, not just its own (now stale)
+    // entry. A `refresh: true` call that starts and finishes while the
+    // original request is still hanging replaces the cache entry with a
+    // fresh, valid one — the original request rejecting afterward must not
+    // wipe that out.
+    it("does not evict a fresher cache entry when a superseded request rejects later", async () => {
+      function createDeferred<T>() {
+        let resolve!: (value: T) => void;
+        let reject!: (error: unknown) => void;
+        const promise = new Promise<T>((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+        return { promise, resolve, reject };
+      }
+
+      const deferredA = createDeferred<ReturnType<typeof createResponse>>();
+      const deferredB = createDeferred<ReturnType<typeof createResponse>>();
+      webGetMock
+        .mockImplementationOnce(() => deferredA.promise)
+        .mockImplementationOnce(() => deferredB.promise);
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      // Both calls run synchronously up to their own first `await`, so this
+      // reproduces the exact race: A's fetch starts and hangs, then B's
+      // `refresh: true` call supersedes it before A ever settles.
+      const callA = manager.getTranslations();
+      const callB = manager.getTranslations(undefined, { refresh: true });
+      const normalizedEndpoint = manager.endpoints.value[0]!;
+
+      deferredB.resolve(createResponse(translations));
+      await callB;
+      const cachedAfterB = translationsCache.get(normalizedEndpoint);
+      expect(cachedAfterB).toBeDefined();
+
+      deferredA.reject(new Error("stale request failed"));
+      await expect(callA).rejects.toThrow("stale request failed");
+
+      // B's entry must still be the current cache contents.
+      expect(translationsCache.get(normalizedEndpoint)).toBe(cachedAfterB);
+    });
   });
 });
 
