@@ -2533,17 +2533,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           Math.min(...selectedVerseNumbers),
                           Math.max(...selectedVerseNumbers),
                         ] as [number, number]);
-                const isSelectionBookmarked =
+                const selectionBookmark =
                   rs && verseTarget !== undefined
-                    ? bookmarks.isLocationBookmarked(
+                    ? bookmarks.getBookmarkForLocation(
                         rs.translationId.value,
                         rs.bookId.value,
                         rs.chapterNumber.value,
                         verseTarget
                       )
-                    : false;
+                    : undefined;
+                const isSelectionBookmarked = selectionBookmark !== undefined;
                 const bookmarkLabel = isSelectionBookmarked
-                  ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                  ? t("edit-bookmark", { defaultValue: "Edit bookmark" })
                   : t("bookmark-verses", { defaultValue: "Bookmark" });
 
                 const highlightCard = selectionUI.value.showHighlightColors ? (
@@ -2594,21 +2595,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         ) {
                           return;
                         }
-                        if (isSelectionBookmarked) {
-                          void bookmarks.removeBookmarkForLocation(
+                        openBookmarkCategoryModal(
+                          props.state,
+                          {
                             translationId,
                             bookId,
                             chapterNumber,
-                            verseTarget
-                          );
-                          return;
-                        }
-                        openBookmarkCategoryModal(props.state, {
-                          translationId,
-                          bookId,
-                          chapterNumber,
-                          verse: verseTarget,
-                        });
+                            verse: verseTarget,
+                          },
+                          selectionBookmark
+                            ? {
+                                mode: "edit",
+                                bookmarkId: selectionBookmark.id,
+                              }
+                            : undefined
+                        );
                       }}
                       aria-label={bookmarkLabel}
                       aria-pressed={isSelectionBookmarked}
