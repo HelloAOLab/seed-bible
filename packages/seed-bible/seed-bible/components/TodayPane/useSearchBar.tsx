@@ -24,7 +24,7 @@ type UseSearchBar = () => {
 const DEBOUNCE_MS = 180;
 
 export const useSearchBar: UseSearchBar = () => {
-  const { searchVerses, addTab, closeToday } = useTodayContext();
+  const { searchVerses, openPassage } = useTodayContext();
   const { t } = useI18n();
 
   const query = useSignal("");
@@ -104,15 +104,15 @@ export const useSearchBar: UseSearchBar = () => {
   };
 
   const handleSelect = (result: VerseSearchResult) => {
-    addTab(
-      result.bookId,
-      result.chapterNumber,
-      result.translationId,
-      result.verseNumber ?? undefined
-    );
+    // Clear the query before leaving, so reopening Today shows an empty box.
     runSearch("");
     isOpen.value = false;
-    closeToday();
+    openPassage({
+      bookId: result.bookId,
+      chapter: result.chapterNumber,
+      verse: result.verseNumber ?? undefined,
+      translationId: result.translationId,
+    });
   };
 
   return {

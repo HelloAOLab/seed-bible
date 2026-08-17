@@ -14,13 +14,7 @@ type UseResumeReadingSection = () => {
 };
 
 export const useResumeReadingSection: UseResumeReadingSection = () => {
-  const {
-    readingHistory,
-    bookNames,
-    addTab,
-    closeToday,
-    getDefaultTranslation,
-  } = useTodayContext();
+  const { readingHistory, bookNames, openPassage } = useTodayContext();
   const { t } = useI18n();
 
   const state = readingHistory.value;
@@ -42,9 +36,8 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
 
   const handleButtonClick = useCallback(() => {
     if (!lastReading) return;
-    addTab(lastReading.bookId, lastReading.chapter, getDefaultTranslation());
-    closeToday();
-  }, [lastReading, addTab, closeToday, getDefaultTranslation]);
+    openPassage({ bookId: lastReading.bookId, chapter: lastReading.chapter });
+  }, [lastReading, openPassage]);
 
   return {
     isLoading: state.status === "loading",

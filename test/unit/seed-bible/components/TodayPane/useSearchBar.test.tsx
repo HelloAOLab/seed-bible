@@ -16,8 +16,7 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return mockI18nManager();
 });
 
-const addTab = vi.fn();
-const closeToday = vi.fn();
+const openPassage = vi.fn();
 const DEBOUNCE_MS = 180;
 
 function makeResult(
@@ -58,8 +57,7 @@ describe("useSearchBar", () => {
   function setup() {
     (useTodayContext as Mock).mockReturnValue({
       searchVerses,
-      addTab,
-      closeToday,
+      openPassage,
     });
     const result = { current: null as unknown as Hook };
     function TestComponent() {
@@ -220,10 +218,14 @@ describe("useSearchBar", () => {
           makeResult({ bookId: "GEN", chapterNumber: 1, verseNumber: 5 })
         )
       );
-      expect(addTab).toHaveBeenCalledWith("GEN", 1, "AAB", 5);
+      expect(openPassage).toHaveBeenCalledWith({
+        bookId: "GEN",
+        chapter: 1,
+        verse: 5,
+        translationId: "AAB",
+      });
       expect(result.current.query.value).toBe("");
       expect(result.current.isOpen.value).toBe(false);
-      expect(closeToday).toHaveBeenCalledTimes(1);
     });
 
     it("passes undefined when the result has no verse number", () => {
@@ -233,7 +235,12 @@ describe("useSearchBar", () => {
           makeResult({ bookId: "PSA", chapterNumber: 23, verseNumber: null })
         )
       );
-      expect(addTab).toHaveBeenCalledWith("PSA", 23, "AAB", undefined);
+      expect(openPassage).toHaveBeenCalledWith({
+        bookId: "PSA",
+        chapter: 23,
+        verse: undefined,
+        translationId: "AAB",
+      });
     });
   });
 

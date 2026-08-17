@@ -24,8 +24,7 @@ type UseBookmarksSection = () => {
 export const useBookmarksSection: UseBookmarksSection = () => {
   const {
     bookmarks,
-    addTab,
-    closeToday,
+    openPassage,
     getTranslationBooks,
     showBookmarksList,
     isMobile,
@@ -89,8 +88,7 @@ export const useBookmarksSection: UseBookmarksSection = () => {
       const data = {
         text: `${name} ${chapterNumber}`,
         handleClick: () => {
-          addTab(bookId, chapterNumber, translationId);
-          closeToday();
+          openPassage({ bookId, chapter: chapterNumber, translationId });
         },
         key: bookmark.id,
       };

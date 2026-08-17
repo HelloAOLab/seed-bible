@@ -42,9 +42,7 @@ type UseBookResult = ReturnType<typeof useBook>;
 
 describe("useBook", () => {
   let container: HTMLDivElement;
-  const addTab = vi.fn();
-  const closeToday = vi.fn();
-  const getDefaultTranslation = vi.fn(() => "AAB");
+  const openPassage = vi.fn();
 
   function configureContexts(options: {
     bookNames?: Map<string, string>;
@@ -56,9 +54,7 @@ describe("useBook", () => {
       translationBooksMap: signal(
         options.booksMap ?? new Map([["GEN", { numberOfChapters: 3 }]])
       ),
-      addTab,
-      closeToday,
-      getDefaultTranslation,
+      openPassage,
     });
     (useSocialSectionContext as Mock).mockReturnValue({
       userProfileMap:
@@ -212,17 +208,12 @@ describe("useBook", () => {
       expect(result.current.chaptersData[0]!.usersData).toHaveLength(0);
     });
 
-    it("opens the chapter in a new tab when a chapter is clicked", () => {
+    // `openPassage` opens the chapter and leaves Today in one action, so the
+    // hook's whole job here is to name the right target.
+    it("opens the clicked chapter, letting the default translation apply", () => {
       const result = setup(props());
       act(() => result.current.chaptersData[0]!.handleClick());
-      expect(getDefaultTranslation).toHaveBeenCalled();
-      expect(addTab).toHaveBeenCalledWith("GEN", 1, "AAB");
-    });
-
-    it("closes the Today screen when a chapter is clicked", () => {
-      const result = setup(props());
-      act(() => result.current.chaptersData[0]!.handleClick());
-      expect(closeToday).toHaveBeenCalledTimes(1);
+      expect(openPassage).toHaveBeenCalledWith({ bookId: "GEN", chapter: 1 });
     });
   });
 });

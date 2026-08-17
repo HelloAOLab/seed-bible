@@ -1,7 +1,10 @@
 import { useI18n } from "../../i18n";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { TodayManager } from "../../managers/TodayManager";
+import {
+  openTodayPassage,
+  type TodayManager,
+} from "../../managers/TodayManager";
 import { TodayPane } from "./TodayPane";
 
 /**
@@ -53,29 +56,7 @@ export function TodayPaneHost(props: {
           state.sidebar.isSidebarCollapsed.value = false;
           state.bookmarks.isFilterActive.value = true;
         },
-        closeToday: today.close,
-        addTab: (bookId, chapter, translationId, verse) => {
-          const tab = state.tabs.addTab(undefined, {
-            initialBookId: bookId,
-            initialChapterNumber: chapter,
-            initialTranslationId: translationId,
-            scrollToVerse: verse,
-          });
-          // `scrollToVerse` only scrolls; the highlight is a separate
-          // decoration (same pattern as the reader's search panel).
-          if (verse !== undefined) {
-            tab.readingState.decorateVerses(bookId, chapter, verse, {
-              className: "sb-verse-decoration-diminish",
-              containerClassName: "sb-chapter-decoration-diminish",
-              removeAfterMs: 3000,
-            });
-          }
-          const slotId = state.tabsLayout.selectedSlotId.value;
-          if (slotId) {
-            state.tabsLayout.openTabInSlot(slotId, tab.id);
-          }
-          state.app.selectTab(tab.id);
-        },
+        openPassage: (target) => openTodayPassage(state, today, target),
         openBookSelector: () => {
           const slot =
             state.tabsLayout.slots.value.find(

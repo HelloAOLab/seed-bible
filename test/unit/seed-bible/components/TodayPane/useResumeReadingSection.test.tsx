@@ -16,9 +16,7 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   return mockI18nManager();
 });
 
-const addTab = vi.fn();
-const closeToday = vi.fn();
-const getDefaultTranslation = vi.fn(() => "AAB");
+const openPassage = vi.fn();
 
 type Result = ReturnType<typeof useResumeReadingSection>;
 
@@ -52,9 +50,7 @@ describe("useResumeReadingSection", () => {
     (useTodayContext as Mock).mockReturnValue({
       readingHistory,
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
-      addTab,
-      closeToday,
-      getDefaultTranslation,
+      openPassage,
     });
     const result = { current: null as unknown as Result };
     function TestComponent() {
@@ -83,8 +79,7 @@ describe("useResumeReadingSection", () => {
   it("does nothing on button click while loading", () => {
     const result = setup({ status: "loading" });
     act(() => result.current.handleButtonClick());
-    expect(addTab).not.toHaveBeenCalled();
-    expect(closeToday).not.toHaveBeenCalled();
+    expect(openPassage).not.toHaveBeenCalled();
   });
 
   describe("cardData", () => {
@@ -109,16 +104,9 @@ describe("useResumeReadingSection", () => {
     });
   });
 
-  it("opens the last reading in a tab on button click", () => {
+  it("opens the last reading, letting the default translation apply", () => {
     const result = setup({ lastReading: { bookId: "JHN", chapter: 3 } });
     act(() => result.current.handleButtonClick());
-    expect(getDefaultTranslation).toHaveBeenCalled();
-    expect(addTab).toHaveBeenCalledWith("JHN", 3, "AAB");
-  });
-
-  it("closes the Today screen on button click", () => {
-    const result = setup({ lastReading: { bookId: "JHN", chapter: 3 } });
-    act(() => result.current.handleButtonClick());
-    expect(closeToday).toHaveBeenCalledTimes(1);
+    expect(openPassage).toHaveBeenCalledWith({ bookId: "JHN", chapter: 3 });
   });
 });

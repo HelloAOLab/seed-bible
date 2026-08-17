@@ -39,8 +39,7 @@ class MockResizeObserver {
 
 describe("useBookmarksSection", () => {
   let container: HTMLDivElement;
-  const addTab = vi.fn();
-  const closeToday = vi.fn();
+  const openPassage = vi.fn();
   let offsetTopDesc: PropertyDescriptor | undefined;
 
   function configure(
@@ -53,8 +52,7 @@ describe("useBookmarksSection", () => {
   ) {
     const ctx = {
       bookmarks: options.bookmarks ?? signal<FakeBookmark[]>([]),
-      addTab,
-      closeToday,
+      openPassage,
       getTranslationBooks:
         options.getTranslationBooks ?? vi.fn(async () => books([])),
       isMobile: options.isMobile ?? signal(false),
@@ -214,20 +212,16 @@ describe("useBookmarksSection", () => {
       expect(firstIn(result, "Favorites").text).toBe("XYZ 3");
     });
 
-    it("opens a tab for the bookmark location on click", () => {
+    it("opens the bookmark's own translation, book and chapter on click", () => {
       const { result } = setup({
         bookmarks: signal<FakeBookmark[]>([bookmark]),
       });
       act(() => firstIn(result, "Favorites").handleClick());
-      expect(addTab).toHaveBeenCalledWith("GEN", 3, "T1");
-    });
-
-    it("closes the Today screen on click", () => {
-      const { result } = setup({
-        bookmarks: signal<FakeBookmark[]>([bookmark]),
+      expect(openPassage).toHaveBeenCalledWith({
+        bookId: "GEN",
+        chapter: 3,
+        translationId: "T1",
       });
-      act(() => firstIn(result, "Favorites").handleClick());
-      expect(closeToday).toHaveBeenCalledTimes(1);
     });
   });
 

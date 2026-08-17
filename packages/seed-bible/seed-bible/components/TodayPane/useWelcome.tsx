@@ -32,8 +32,7 @@ export const useWelcome: UseWelcome = () => {
     lastTranslationId,
     getDefaultTranslation,
     openBookSelector,
-    addTab,
-    closeToday,
+    openPassage,
     theme,
   } = useTodayContext();
   const { t } = useI18n();
@@ -87,11 +86,13 @@ export const useWelcome: UseWelcome = () => {
   }, [t]);
 
   const handleStartButtonClick = useCallback(() => {
-    const defaultTranslation = getDefaultTranslation();
-    const translationId = lastTranslationId.value ?? defaultTranslation ?? "";
-    addTab("GEN", 1, translationId);
-    closeToday();
-  }, [addTab, closeToday, getDefaultTranslation, lastTranslationId.value]);
+    // `openPassage` falls back to the default translation when this is unset.
+    openPassage({
+      bookId: "GEN",
+      chapter: 1,
+      translationId: lastTranslationId.value,
+    });
+  }, [openPassage, lastTranslationId.value]);
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {

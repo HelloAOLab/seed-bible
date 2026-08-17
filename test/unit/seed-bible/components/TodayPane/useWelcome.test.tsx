@@ -44,24 +44,22 @@ type Result = ReturnType<typeof useWelcome>;
 describe("useWelcome", () => {
   let container: HTMLDivElement;
   let openBookSelector: Mock;
-  let addTab: Mock;
-  let closeToday: Mock;
+  let openPassage: Mock;
   let getVerseText: Mock;
   let getDefaultTranslation: Mock;
-  let lastTranslationId: Signal<string | null>;
+  let lastTranslationId: Signal<string | undefined>;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
     openBookSelector = vi.fn();
-    addTab = vi.fn();
-    closeToday = vi.fn();
+    openPassage = vi.fn();
     getVerseText = vi.fn(async () => "raw verse");
     getDefaultTranslation = vi.fn(() => "DEF");
     getHighlightedWelcomeVerse.mockImplementation(
       (_translationId: string, raw: string) => `HL:${raw}`
     );
-    lastTranslationId = signal<string | null>("KJV");
+    lastTranslationId = signal<string | undefined>("KJV");
   });
 
   afterEach(() => {
@@ -83,8 +81,7 @@ describe("useWelcome", () => {
       lastTranslationId,
       getDefaultTranslation,
       openBookSelector,
-      addTab,
-      closeToday,
+      openPassage,
       theme: { variables: { readerFontColor: "#112233" } },
     });
     const result = { current: null as unknown as Result };
@@ -159,7 +156,7 @@ describe("useWelcome", () => {
     });
 
     it("falls back to the default translation when there is no last one", async () => {
-      lastTranslationId.value = null;
+      lastTranslationId.value = undefined;
       getDefaultTranslation.mockReturnValue("DEF");
       const result = setup();
       await act(async () => {});
@@ -169,7 +166,7 @@ describe("useWelcome", () => {
     });
 
     it("falls back to an empty translation id when none is available", async () => {
-      lastTranslationId.value = null;
+      lastTranslationId.value = undefined;
       getDefaultTranslation.mockReturnValue(undefined);
       setup();
       await act(async () => {});
@@ -212,21 +209,24 @@ describe("useWelcome", () => {
       lastTranslationId.value = "KJV";
       const result = setup();
       act(() => result.current.handleStartButtonClick());
-      expect(addTab).toHaveBeenCalledWith("GEN", 1, "KJV");
+      expect(openPassage).toHaveBeenCalledWith({
+        bookId: "GEN",
+        chapter: 1,
+        translationId: "KJV",
+      });
     });
 
-    it("closes the Today screen", () => {
+    // No last translation leaves the id unset rather than resolving a default
+    // here — `openPassage` owns that fallback now.
+    it("leaves the translation unset when there is no last one", () => {
+      lastTranslationId.value = undefined;
       const result = setup();
       act(() => result.current.handleStartButtonClick());
-      expect(closeToday).toHaveBeenCalledTimes(1);
-    });
-
-    it("falls back through the default translation then empty string", () => {
-      lastTranslationId.value = null;
-      getDefaultTranslation.mockReturnValue(undefined);
-      const result = setup();
-      act(() => result.current.handleStartButtonClick());
-      expect(addTab).toHaveBeenCalledWith("GEN", 1, "");
+      expect(openPassage).toHaveBeenCalledWith({
+        bookId: "GEN",
+        chapter: 1,
+        translationId: undefined,
+      });
     });
   });
 });

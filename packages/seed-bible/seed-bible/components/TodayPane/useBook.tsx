@@ -22,13 +22,7 @@ export const useBook: UseBook = ({
   chaptersReading,
   usersId,
 }) => {
-  const {
-    bookNames,
-    translationBooksMap,
-    addTab,
-    closeToday,
-    getDefaultTranslation,
-  } = useTodayContext();
+  const { bookNames, translationBooksMap, openPassage } = useTodayContext();
   const { userProfileMap } = useSocialSectionContext();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -81,8 +75,7 @@ export const useBook: UseBook = ({
           })
           .filter(Boolean) as ChapterData["usersData"] | undefined) ?? [];
       const handleChapterClick = () => {
-        addTab(bookId, chapter, getDefaultTranslation());
-        closeToday();
+        openPassage({ bookId, chapter });
       };
       return {
         key: String(chapter),

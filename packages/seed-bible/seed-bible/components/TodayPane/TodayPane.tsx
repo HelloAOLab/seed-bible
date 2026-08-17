@@ -39,13 +39,16 @@ export interface TodayConfig {
     to: number;
   }) => Promise<FilteredReading>;
   bookNames: Signal<Map<string, string>>;
-  addTab: (
-    bookId: string,
-    chapter: number,
-    translationId?: string | undefined,
-    verse?: number | undefined
-  ) => void;
-  closeToday: () => void;
+  /**
+   * Opens a passage in the reader and leaves Today — every call site wants both,
+   * so they are one action. `translationId` falls back to the reader's default.
+   */
+  openPassage: (target: {
+    bookId: string;
+    chapter: number;
+    verse?: number;
+    translationId?: string;
+  }) => void;
   getDefaultTranslation: () => string | undefined;
   /** The last translation id that was in use (last valid, persists across deselection). */
   lastTranslationId: Signal<string | undefined>;

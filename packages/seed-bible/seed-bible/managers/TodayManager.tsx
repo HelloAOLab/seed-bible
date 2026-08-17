@@ -11,6 +11,7 @@ import type { NavigationManager } from "./NavigationManager";
 import type { SearchManager } from "./SearchManager";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { ReaderTab } from "./TabsManager";
+import type { SeedBibleState } from "./SeedBibleStateManager";
 import {
   getReadingHistoryEvents,
   type ReadingEvent,
@@ -338,4 +339,51 @@ export function createTodayManager(options: {
       disposeUrlSync();
     },
   };
+}
+
+/** Where in scripture a Today card wants to send the reader. */
+export interface TodayPassageTarget {
+  bookId: string;
+  chapter: number;
+  verse?: number;
+  /** Defaults to the reader's default translation when omitted. */
+  translationId?: string;
+}
+
+/**
+ * Opens a passage in the reader and leaves Today.
+ *
+ * Every Today card that navigates wants both halves, so they are one action —
+ * a card that opened a chapter without closing Today would leave the reader
+ * hidden behind a fullscreen pane.
+ *
+ * A standalone function rather than a `TodayManager` method: it spans `tabs`,
+ * `tabsLayout` and `app`, none of which exist when `createTodayManager` runs.
+ */
+export function openTodayPassage(
+  state: SeedBibleState,
+  today: TodayManager,
+  { bookId, chapter, verse, translationId }: TodayPassageTarget
+): void {
+  const tab = state.tabs.addTab(undefined, {
+    initialBookId: bookId,
+    initialChapterNumber: chapter,
+    initialTranslationId: translationId ?? today.getDefaultTranslation(),
+    scrollToVerse: verse,
+  });
+  // `scrollToVerse` only scrolls; the highlight is a separate decoration
+  // (same pattern as the reader's search panel).
+  if (verse !== undefined) {
+    tab.readingState.decorateVerses(bookId, chapter, verse, {
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
+      removeAfterMs: 3000,
+    });
+  }
+  const slotId = state.tabsLayout.selectedSlotId.value;
+  if (slotId) {
+    state.tabsLayout.openTabInSlot(slotId, tab.id);
+  }
+  state.app.selectTab(tab.id);
+  today.close();
 }
