@@ -2105,6 +2105,35 @@ describe("createReadingPlansManager", () => {
       });
     });
 
+    it("discarding a never-finished draft does not capture reading_plan_deleted", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      vi.useFakeTimers();
+      try {
+        manager.startEditingReadingPlan();
+        manager.addReadingToEditingPlan({
+          type: "bible-verse",
+          ref: { bookId: "PSA", chapter: 1 },
+        });
+        // Let the debounced autosave persist the draft (status stays "draft"
+        // since finishEditingReadingPlan was never called).
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(manager.editingReadingPlan.value!.persisted).toBe(true);
+        mockPosthogCapture.mockClear();
+
+        await manager.discardEditingReadingPlan();
+
+        // A draft that was never finished never fired reading_plan_created,
+        // so discarding it must not look like a delete either.
+        expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+          "reading_plan_deleted",
+          expect.anything()
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it("startReadingPlan captures reading_plan_started", async () => {
       const manager = makeManager("user-1");
       await flush();
@@ -2119,6 +2148,22 @@ describe("createReadingPlansManager", () => {
         progressId: progress.id,
         selfPaced: false,
         cadenceId: "every-other-day",
+      });
+    });
+
+    it("startReadingPlan captures reading_plan_started with a null cadenceId for a self-paced plan", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      const progress = await manager.startReadingPlan(metadataOf(makePlan()), {
+        selfPaced: true,
+      });
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("reading_plan_started", {
+        planId: progress.planId,
+        progressId: progress.id,
+        selfPaced: true,
+        cadenceId: null,
       });
     });
 
@@ -2222,6 +2267,22 @@ describe("createReadingPlansManager", () => {
           progressId: "progress-1",
           dayOffset: day.dayOffset,
         }
+      );
+      // The day's two sessions both just completed too - one
+      // reading_plan_session_finished per session, plus the one day event.
+      expect(
+        mockPosthogCapture.mock.calls.filter(
+          (c) => c[0] === "reading_plan_session_finished"
+        )
+      ).toHaveLength(2);
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(3);
+
+      // Marking an already-complete day complete again must not re-fire.
+      mockPosthogCapture.mockClear();
+      await manager.markDayComplete(day);
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_day_finished",
+        expect.anything()
       );
 
       mockPosthogCapture.mockClear();

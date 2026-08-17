@@ -2217,6 +2217,7 @@ export function createReadingPlansManager(
   const deleteReadingPlan = async (plan: {
     recordName: string;
     address: string;
+    status: ReadingPlanStatus;
   }) => {
     const planId = formatReadingPlanId(plan.recordName, plan.address);
     const ownProgresses = userReadingPlanProgresses.value.filter(
@@ -2224,7 +2225,12 @@ export function createReadingPlansManager(
     );
     await os.eraseData(plan.recordName, `${plan.address}_metadata`);
     await os.eraseData(plan.recordName, plan.address);
-    captureEvent("reading_plan_deleted", { planId });
+    // A draft that was never finished never fired `reading_plan_created`, so
+    // discarding it here (see `discardEditingReadingPlan`) must not count as a
+    // delete — only a plan that actually got published is one.
+    if (plan.status === "complete") {
+      captureEvent("reading_plan_deleted", { planId });
+    }
     // Best effort: a progress that fails to erase leaves nothing broken behind
     // (it simply stops matching a plan), so it must not fail the delete.
     await Promise.all(
