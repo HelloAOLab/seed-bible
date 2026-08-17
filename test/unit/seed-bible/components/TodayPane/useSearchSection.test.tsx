@@ -1,16 +1,9 @@
-import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { useSearchSection } from "@packages/seed-bible/seed-bible/components/TodayPane/useSearchSection";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
   return mockI18nManager();
@@ -35,14 +28,16 @@ describe("useSearchSection", () => {
   });
 
   function setup(secondaryFontColor = "#abcdef", isMobile = false) {
-    (useTodayContext as Mock).mockReturnValue({
-      openBookSelector,
-      theme: { variables: { secondaryFontColor } },
-      isMobile: signal(isMobile),
-    });
+    const theme = signal({
+      variables: { secondaryFontColor },
+    } as unknown as BibleTheme);
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      result.current = useSearchSection();
+      result.current = useSearchSection({
+        theme,
+        isMobile: signal(isMobile),
+        onOpenBookSelector: openBookSelector,
+      });
       return null;
     }
     act(() => render(<TestComponent />, container));
@@ -70,12 +65,5 @@ describe("useSearchSection", () => {
       width: "1.25rem",
       height: "1.25rem",
     });
-  });
-
-  it("forwards openBookSelector", () => {
-    const result = setup();
-    expect(result.current.openBookSelector).toBe(openBookSelector);
-    act(() => result.current.openBookSelector());
-    expect(openBookSelector).toHaveBeenCalledTimes(1);
   });
 });

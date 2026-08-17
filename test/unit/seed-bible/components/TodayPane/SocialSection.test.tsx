@@ -1,6 +1,13 @@
 import type { Mock } from "vitest";
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
+import { todayStub, loginWithName } from "../../testUtils/todayStubs";
+const themeStub = () =>
+  signal({
+    variables: {},
+  } as unknown as import("@packages/seed-bible/seed-bible/managers/ThemeManager").BibleTheme);
+
 import { SocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSection";
 import { useSocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/useSocialSection";
 import { SocialSectionProvider } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
@@ -78,7 +85,17 @@ describe("SocialSection", () => {
   function setup(overrides: Partial<Result> = {}) {
     const result = makeResult(overrides);
     (useSocialSection as Mock).mockReturnValue(result);
-    act(() => render(<SocialSection />, container));
+    act(() =>
+      render(
+        <SocialSection
+          today={todayStub({})}
+          login={loginWithName("Tester")}
+          theme={themeStub()}
+          onOpenPassage={vi.fn()}
+        />,
+        container
+      )
+    );
     return result;
   }
 

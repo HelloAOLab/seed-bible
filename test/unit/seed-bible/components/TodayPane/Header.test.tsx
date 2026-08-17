@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { loginWithName } from "../../testUtils/todayStubs";
 import { Header } from "@packages/seed-bible/seed-bible/components/TodayPane/Header";
 import { useHeader } from "@packages/seed-bible/seed-bible/components/TodayPane/useHeader";
 
@@ -43,7 +44,7 @@ describe("Header", () => {
   function setup(overrides: Partial<HeaderResult> = {}) {
     const result = makeHeaderResult(overrides);
     (useHeader as Mock).mockReturnValue(result);
-    act(() => render(<Header />, container));
+    act(() => render(<Header login={loginWithName("Tester")} />, container));
     return result;
   }
 

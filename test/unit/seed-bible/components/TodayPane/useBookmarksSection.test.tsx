@@ -3,15 +3,9 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { useBookmarksSection } from "@packages/seed-bible/seed-bible/components/TodayPane/useBookmarksSection";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { todayStub } from "../../testUtils/todayStubs";
 import type { TranslationBooks } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
   return mockI18nManager();
@@ -52,13 +46,12 @@ describe("useBookmarksSection", () => {
   ) {
     const ctx = {
       bookmarks: options.bookmarks ?? signal<FakeBookmark[]>([]),
-      openPassage,
+      onOpenPassage: openPassage,
       getTranslationBooks:
         options.getTranslationBooks ?? vi.fn(async () => books([])),
       isMobile: options.isMobile ?? signal(false),
-      showBookmarksList: options.showBookmarksList ?? vi.fn(),
+      onShowBookmarksList: options.showBookmarksList ?? vi.fn(),
     };
-    (useTodayContext as Mock).mockReturnValue(ctx);
     return ctx;
   }
 
@@ -106,7 +99,13 @@ describe("useBookmarksSection", () => {
     const ctx = configure(options);
     const result = { current: null as unknown as UseBookmarksResult };
     function TestComponent() {
-      const r = useBookmarksSection();
+      const r = useBookmarksSection({
+        today: todayStub({ getTranslationBooks: ctx.getTranslationBooks }),
+        bookmarks: ctx.bookmarks as never,
+        isMobile: ctx.isMobile as never,
+        onOpenPassage: ctx.onOpenPassage,
+        onShowBookmarksList: ctx.onShowBookmarksList,
+      });
       result.current = r;
       if (!strips) return null;
       return (

@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { todayStub } from "../../testUtils/todayStubs";
 import { FilteredReading } from "@packages/seed-bible/seed-bible/components/TodayPane/FilteredReading";
 import { Book } from "@packages/seed-bible/seed-bible/components/TodayPane/Book";
 import { useFilteredReading } from "@packages/seed-bible/seed-bible/components/TodayPane/useFilteredReading";
@@ -46,7 +47,12 @@ describe("FilteredReading", () => {
     (useFilteredReading as Mock).mockReturnValue({
       booksData: booksData as unknown as BooksData,
     });
-    act(() => render(<FilteredReading />, container));
+    act(() =>
+      render(
+        <FilteredReading today={todayStub({})} onOpenPassage={vi.fn()} />,
+        container
+      )
+    );
   }
 
   function readingContainer() {
@@ -83,11 +89,14 @@ describe("FilteredReading", () => {
     setup([book]);
 
     const passedProps = (Book as Mock).mock.calls[0]![0];
-    expect(passedProps).toEqual({
+    expect(passedProps).toMatchObject({
       bookId: "GEN",
       chaptersReading: { 1: ["u1", "u2"] },
       usersId: ["u1", "u2"],
     });
     expect(passedProps).not.toHaveProperty("key");
+    // Each Book also needs the manager and the navigate handler to open a chapter.
+    expect(passedProps.today).toBeDefined();
+    expect(passedProps.onOpenPassage).toBeDefined();
   });
 });

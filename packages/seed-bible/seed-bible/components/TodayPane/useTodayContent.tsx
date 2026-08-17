@@ -1,21 +1,24 @@
+import type { ReadonlySignal } from "@preact/signals";
 import type { DividedSection } from "./TodayContent";
-import { useTodayContext } from "./TodayContext";
+import type { Bookmark } from "../../managers/BookmarksManager";
+import type { TodayManager } from "../../managers/TodayManager";
 
 import { useMemo } from "preact/hooks";
 
-type UseTodayContent = () => {
+type UseTodayContent = (props: {
+  today: TodayManager;
+  bookmarks: ReadonlySignal<Bookmark[]>;
+}) => {
   showResumeReading: boolean;
   showBookmarks: boolean;
   dividedSectionsIds: DividedSection[];
 };
 
-export const useTodayContent: UseTodayContent = () => {
-  const { readingHistory, bookmarks } = useTodayContext();
-
+export const useTodayContent: UseTodayContent = ({ today, bookmarks }) => {
   // Show the resume section (as a placeholder) while history is still loading,
   // and (with real data) once it is ready. `empty` renders Welcome instead, so
   // it never reaches here.
-  const status = readingHistory.value.status;
+  const status = today.readingHistory.value.status;
   const showResumeReading = status === "loading" || status === "ready";
   const showBookmarks = bookmarks.value.length > 0;
   const showSearch = true;

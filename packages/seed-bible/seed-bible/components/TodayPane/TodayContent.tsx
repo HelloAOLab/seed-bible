@@ -6,30 +6,58 @@ import { Fragment } from "preact/jsx-runtime";
 import { SearchSection } from "./SearchSection";
 import { SocialSection } from "./SocialSection";
 import { BookmarksSection } from "./BookmarksSection";
+import type { TodayScreenProps } from "./TodayPane";
 
 export type DividedSection = "search" | "social";
 
-const sectionComponentMap: Record<DividedSection, () => preact.JSX.Element> = {
-  search: SearchSection,
-  social: SocialSection,
-};
-
-export const TodayContent = () => {
+export const TodayContent = (props: TodayScreenProps) => {
   const { dividedSectionsIds, showResumeReading, showBookmarks } =
-    useTodayContent();
+    useTodayContent(props);
+
+  const sectionById: Record<DividedSection, preact.JSX.Element> = {
+    search: (
+      <SearchSection
+        today={props.today}
+        theme={props.theme}
+        isMobile={props.isMobile}
+        onOpenBookSelector={props.onOpenBookSelector}
+        onOpenPassage={props.onOpenPassage}
+      />
+    ),
+    social: (
+      <SocialSection
+        today={props.today}
+        login={props.login}
+        theme={props.theme}
+        onOpenPassage={props.onOpenPassage}
+      />
+    ),
+  };
 
   return (
     <div className="today-content">
-      <Header />
-      {showResumeReading && <ResumeReadingSection />}
-      {showBookmarks && <BookmarksSection />}
+      <Header login={props.login} />
+      {showResumeReading && (
+        <ResumeReadingSection
+          today={props.today}
+          onOpenPassage={props.onOpenPassage}
+        />
+      )}
+      {showBookmarks && (
+        <BookmarksSection
+          today={props.today}
+          bookmarks={props.bookmarks}
+          isMobile={props.isMobile}
+          onOpenPassage={props.onOpenPassage}
+          onShowBookmarksList={props.onShowBookmarksList}
+        />
+      )}
       {dividedSectionsIds.map((id, index) => {
         const isLastItem = index === dividedSectionsIds.length - 1;
-        const Section = sectionComponentMap[id];
 
         return (
           <Fragment key={id}>
-            <Section />
+            {sectionById[id]}
             {!isLastItem && <Divider />}
           </Fragment>
         );

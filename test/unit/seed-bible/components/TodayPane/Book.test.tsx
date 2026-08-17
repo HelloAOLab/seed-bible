@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { todayStub } from "../../testUtils/todayStubs";
 import { Book } from "@packages/seed-bible/seed-bible/components/TodayPane/Book";
 import { useBook } from "@packages/seed-bible/seed-bible/components/TodayPane/useBook";
 
@@ -51,7 +52,16 @@ describe("Book", () => {
     const result = makeBookResult(overrides);
     (useBook as Mock).mockReturnValue(result);
     act(() =>
-      render(<Book bookId="GEN" chaptersReading={{}} usersId={[]} />, container)
+      render(
+        <Book
+          bookId="GEN"
+          chaptersReading={{}}
+          usersId={[]}
+          today={todayStub({})}
+          onOpenPassage={vi.fn()}
+        />,
+        container
+      )
     );
     return result;
   }

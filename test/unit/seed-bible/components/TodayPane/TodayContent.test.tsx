@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { todayScreenPropsStub } from "../../testUtils/todayStubs";
 import { TodayContent } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContent";
 import { useTodayContent } from "@packages/seed-bible/seed-bible/components/TodayPane/useTodayContent";
 
@@ -75,7 +76,7 @@ describe("TodayContent", () => {
       showResumeReading: options.showResumeReading ?? false,
       showBookmarks: options.showBookmarks ?? false,
     });
-    act(() => render(<TodayContent />, container));
+    act(() => render(<TodayContent {...todayScreenPropsStub()} />, container));
   }
 
   const q = (sel: string) => container.querySelector(sel);

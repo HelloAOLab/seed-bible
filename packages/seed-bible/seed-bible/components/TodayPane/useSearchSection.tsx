@@ -1,16 +1,19 @@
-import { useTodayContext } from "./TodayContext";
+import type { ReadonlySignal } from "@preact/signals";
+import type { BibleTheme } from "../../managers/ThemeManager";
 import { useI18n } from "../../i18n";
 import { useMemo } from "preact/hooks";
 
-type UseSearchSection = () => {
+type UseSearchSection = (props: {
+  theme: ReadonlySignal<BibleTheme>;
+  isMobile: ReadonlySignal<boolean>;
+  onOpenBookSelector: () => void;
+}) => {
   title: string;
-  openBookSelector: () => void;
   selectorText: string;
   seedBibleIconStyle: React.CSSProperties;
 };
 
-export const useSearchSection: UseSearchSection = () => {
-  const { openBookSelector, theme, isMobile } = useTodayContext();
+export const useSearchSection: UseSearchSection = ({ theme, isMobile }) => {
   const { t } = useI18n();
 
   const { title, selectorText } = useMemo(() => {
@@ -24,13 +27,12 @@ export const useSearchSection: UseSearchSection = () => {
     return {
       width: isMobile.value ? "1.25rem" : "1.5rem",
       height: isMobile.value ? "1.25rem" : "1.5rem",
-      backgroundColor: theme.variables.secondaryFontColor,
+      backgroundColor: theme.value.variables.secondaryFontColor,
     };
-  }, [theme, isMobile.value]);
+  }, [theme.value, isMobile.value]);
 
   return {
     title,
-    openBookSelector,
     selectorText,
     seedBibleIconStyle,
   };

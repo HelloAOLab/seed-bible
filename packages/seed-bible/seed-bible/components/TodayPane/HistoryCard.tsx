@@ -1,3 +1,4 @@
+import type { ReadonlySignal } from "@preact/signals";
 import { Fragment } from "preact/jsx-runtime";
 import { useHistoryCard } from "./useHistoryCard";
 import { useReadingHistoryTimeline } from "./useReadingHistoryTimeline";
@@ -5,9 +6,17 @@ import { MaterialIcon } from "../icons";
 import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
 import { FilteredReading } from "./FilteredReading";
 import { Tooltip } from "./Tooltip";
+import type { BibleTheme } from "../../managers/ThemeManager";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 
-const ReadingHistoryTimelineSection = () => {
-  const { itemsData, timelineRef, footer } = useReadingHistoryTimeline();
+const ReadingHistoryTimelineSection = (props: {
+  today: TodayManager;
+  theme: ReadonlySignal<BibleTheme>;
+}) => {
+  const { itemsData, timelineRef, footer } = useReadingHistoryTimeline(props);
 
   return (
     <ReadingHistoryTimeline
@@ -19,7 +28,11 @@ const ReadingHistoryTimelineSection = () => {
   );
 };
 
-export const HistoryCard = () => {
+export const HistoryCard = (props: {
+  today: TodayManager;
+  theme: ReadonlySignal<BibleTheme>;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) => {
   const {
     userFilterOpen,
     userFilterIcon,
@@ -34,7 +47,7 @@ export const HistoryCard = () => {
     selectedTimespanOptionId,
     dateLabel,
     timespanFilterRef,
-  } = useHistoryCard();
+  } = useHistoryCard(props.today);
 
   return (
     <div className="history-card today-section-card">
@@ -83,11 +96,17 @@ export const HistoryCard = () => {
       </div>
       {selectedTimespanOptionId.value === "all" && (
         <Fragment>
-          <ReadingHistoryTimelineSection />
+          <ReadingHistoryTimelineSection
+            today={props.today}
+            theme={props.theme}
+          />
           {dateLabel && <span className="date-label">{dateLabel}</span>}
         </Fragment>
       )}
-      <FilteredReading />
+      <FilteredReading
+        today={props.today}
+        onOpenPassage={props.onOpenPassage}
+      />
     </div>
   );
 };

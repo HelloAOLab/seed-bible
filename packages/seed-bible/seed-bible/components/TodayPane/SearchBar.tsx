@@ -1,8 +1,15 @@
 import { useSearchBar } from "./useSearchBar";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 
-export const SearchBar = () => {
+export const SearchBar = (props: {
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) => {
   const { t } = useI18n();
   const {
     query,
@@ -15,7 +22,7 @@ export const SearchBar = () => {
     runSearch,
     handleFocus,
     handleSelect,
-  } = useSearchBar();
+  } = useSearchBar(props);
 
   const showDropdown = isOpen.value && query.value.trim().length > 0;
 

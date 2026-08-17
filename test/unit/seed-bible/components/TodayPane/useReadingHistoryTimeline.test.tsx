@@ -2,16 +2,12 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useReadingHistoryTimeline } from "@packages/seed-bible/seed-bible/components/TodayPane/useReadingHistoryTimeline";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { signal } from "@preact/signals";
+import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { todayStub } from "../../testUtils/todayStubs";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 import { useTimeContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
 
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
   () => ({ useSocialSectionContext: vi.fn() })
@@ -84,18 +80,18 @@ const selectDay = vi.fn();
 const NOW = new Date(2026, 4, 23, 12, 0, 0);
 
 function makeToday(overrides: Record<string, unknown> = {}) {
-  return {
+  return todayStub({
     getReadingHistoryEvents: vi.fn(async () => []),
-    language: "en",
-    theme: {
-      variables: {
-        readerToolbarFloatingButtonBackground: "#base",
-        secondaryColor: "#sec",
-      },
-    },
     ...overrides,
-  };
+  });
 }
+
+const THEME = signal({
+  variables: {
+    readerToolbarFloatingButtonBackground: "#base",
+    secondaryColor: "#sec",
+  },
+} as unknown as BibleTheme);
 
 function makeSocial(overrides: Record<string, unknown> = {}) {
   return {
@@ -147,11 +143,13 @@ describe("useReadingHistoryTimeline", () => {
     social: Record<string, unknown> = {},
     today: Record<string, unknown> = {}
   ) {
-    (useTodayContext as Mock).mockReturnValue(makeToday(today));
     (useSocialSectionContext as Mock).mockReturnValue(makeSocial(social));
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      result.current = useReadingHistoryTimeline();
+      result.current = useReadingHistoryTimeline({
+        today: makeToday(today),
+        theme: THEME,
+      });
       return null;
     }
     act(() => render(<TestComponent />, container));

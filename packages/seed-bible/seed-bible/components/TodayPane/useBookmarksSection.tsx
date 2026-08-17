@@ -4,31 +4,41 @@ import {
   useSignalEffect,
   type ReadonlySignal,
 } from "@preact/signals";
-import { useTodayContext } from "./TodayContext";
 import { useI18n } from "../../i18n";
 import type { CategorizedBookmarks } from "./BookmarksSection";
 import type { MutableRef } from "preact/hooks";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
+import type { Bookmark } from "../../managers/BookmarksManager";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 
 import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 
 type MoreButtonData = { label: string; onClick: () => void };
 
-type UseBookmarksSection = () => {
+type UseBookmarksSection = (props: {
+  today: TodayManager;
+  bookmarks: ReadonlySignal<Bookmark[]>;
+  isMobile: ReadonlySignal<boolean>;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+  onShowBookmarksList: () => void;
+}) => {
   label: ReadonlySignal<string>;
   categorizedBookmarks: ReadonlySignal<CategorizedBookmarks>;
   moreButtonData: ReadonlySignal<MoreButtonData | undefined>;
   containerRef: MutableRef<HTMLDivElement | null>;
 };
 
-export const useBookmarksSection: UseBookmarksSection = () => {
-  const {
-    bookmarks,
-    openPassage,
-    getTranslationBooks,
-    showBookmarksList,
-    isMobile,
-  } = useTodayContext();
+export const useBookmarksSection: UseBookmarksSection = ({
+  today,
+  bookmarks,
+  isMobile,
+  onOpenPassage,
+  onShowBookmarksList,
+}) => {
+  const { getTranslationBooks } = today;
   const { t } = useI18n();
   // Mirrored into a signal so the computeds below re-run on language change; the
   // shadowed `t` keeps each lookup a plain `t("…")` call, which is the shape the
@@ -88,7 +98,7 @@ export const useBookmarksSection: UseBookmarksSection = () => {
       const data = {
         text: `${name} ${chapterNumber}`,
         handleClick: () => {
-          openPassage({ bookId, chapter: chapterNumber, translationId });
+          onOpenPassage({ bookId, chapter: chapterNumber, translationId });
         },
         key: bookmark.id,
       };
@@ -135,7 +145,7 @@ export const useBookmarksSection: UseBookmarksSection = () => {
     return {
       label: t("view-more", { defaultValue: "VIEW MORE" }),
       onClick: () => {
-        showBookmarksList();
+        onShowBookmarksList();
       },
     };
   });

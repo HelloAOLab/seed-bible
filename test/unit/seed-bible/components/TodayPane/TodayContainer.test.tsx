@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { todayScreenPropsStub } from "../../testUtils/todayStubs";
 import { TodayContainer } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContainer";
 import { useTodayContainer } from "@packages/seed-bible/seed-bible/components/TodayPane/useTodayContainer";
 
@@ -11,15 +12,20 @@ vi.mock(
   })
 );
 
-type Result = ReturnType<typeof useTodayContainer>;
+// Both branches read context of their own, so they are stood in for here — this
+// test is about which branch the container picks.
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContent",
+  () => ({
+    TodayContent: () => <div data-testid="today-content" />,
+  })
+);
 
-function setupResult(overrides: Partial<Result> = {}): Result {
-  return {
-    Component: () => <div data-testid="inner" />,
-    style: {},
-    ...overrides,
-  } as unknown as Result;
-}
+vi.mock("@packages/seed-bible/seed-bible/components/TodayPane/Welcome", () => ({
+  Welcome: () => <div data-testid="welcome" />,
+}));
+
+type Result = ReturnType<typeof useTodayContainer>;
 
 describe("TodayContainer", () => {
   let container: HTMLDivElement;
@@ -36,8 +42,14 @@ describe("TodayContainer", () => {
   });
 
   function setup(overrides: Partial<Result> = {}) {
-    (useTodayContainer as Mock).mockReturnValue(setupResult(overrides));
-    act(() => render(<TodayContainer />, container));
+    (useTodayContainer as Mock).mockReturnValue({
+      showWelcome: false,
+      style: {},
+      ...overrides,
+    });
+    act(() =>
+      render(<TodayContainer {...todayScreenPropsStub()} />, container)
+    );
   }
 
   const todayContainer = () =>
@@ -48,11 +60,24 @@ describe("TodayContainer", () => {
     expect(todayContainer()).not.toBeNull();
   });
 
-  it("renders the resolved Component inside the container", () => {
-    setup({ Component: () => <div data-testid="custom-screen" /> });
+  it("renders Welcome (and not the personalized layout) when asked to", () => {
+    setup({ showWelcome: true });
     expect(
-      todayContainer()!.querySelector("[data-testid='custom-screen']")
+      todayContainer()!.querySelector("[data-testid='welcome']")
     ).not.toBeNull();
+    expect(
+      todayContainer()!.querySelector("[data-testid='today-content']")
+    ).toBeNull();
+  });
+
+  it("renders the personalized layout otherwise", () => {
+    setup({ showWelcome: false });
+    expect(
+      todayContainer()!.querySelector("[data-testid='today-content']")
+    ).not.toBeNull();
+    expect(
+      todayContainer()!.querySelector("[data-testid='welcome']")
+    ).toBeNull();
   });
 
   it("applies the style from the hook to the container", () => {

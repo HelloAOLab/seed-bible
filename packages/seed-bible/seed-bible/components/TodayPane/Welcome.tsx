@@ -1,19 +1,31 @@
+import type { ReadonlySignal } from "@preact/signals";
 import { useWelcome } from "./useWelcome";
 import { SeedBibleIcon } from "./SeedBibleIcon";
 import { MaterialIcon } from "../icons";
+import type { LoginManager } from "../../managers/LoginManager";
+import type { BibleTheme } from "../../managers/ThemeManager";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 
-export const Welcome = () => {
+export const Welcome = (props: {
+  today: TodayManager;
+  login: LoginManager;
+  theme: ReadonlySignal<BibleTheme>;
+  onOpenBookSelector: () => void;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) => {
   const {
     greeting,
     book,
     welcomeVerse,
-    openBookSelector,
     selectorText,
     startButtonText,
     startButtonIcon,
     handleStartButtonClick,
     seedBibleIconStyle,
-  } = useWelcome();
+  } = useWelcome(props);
 
   return (
     <div className={"welcome-screen"}>
@@ -27,7 +39,7 @@ export const Welcome = () => {
         <button
           className="book-selector-button clickable"
           type="button"
-          onClick={openBookSelector}
+          onClick={props.onOpenBookSelector}
         >
           <SeedBibleIcon style={seedBibleIconStyle} />
           {selectorText}

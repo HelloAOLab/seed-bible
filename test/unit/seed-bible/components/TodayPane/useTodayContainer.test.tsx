@@ -1,29 +1,8 @@
-import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { useTodayContainer } from "@packages/seed-bible/seed-bible/components/TodayPane/useTodayContainer";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
-import { TodayContent } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContent";
-import { Welcome } from "@packages/seed-bible/seed-bible/components/TodayPane/Welcome";
-
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
-
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContent",
-  () => ({
-    TodayContent: () => null,
-  })
-);
-
-vi.mock("@packages/seed-bible/seed-bible/components/TodayPane/Welcome", () => ({
-  Welcome: () => null,
-}));
+import { todayStub } from "../../testUtils/todayStubs";
 
 type Result = ReturnType<typeof useTodayContainer>;
 
@@ -52,10 +31,10 @@ describe("useTodayContainer", () => {
             lastReading: options.lastReading ?? { bookId: "JHN", chapter: 3 },
           })
         : signal({ status: options.status });
-    (useTodayContext as Mock).mockReturnValue({ readingHistory });
+    const today = todayStub({ readingHistory });
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      result.current = useTodayContainer();
+      result.current = useTodayContainer(today);
       return null;
     }
     act(() => render(<TestComponent />, container));
@@ -64,13 +43,13 @@ describe("useTodayContainer", () => {
 
   it("shows Welcome (safe-centered) when history is empty", () => {
     const result = setup({ status: "empty" });
-    expect(result.current.Component).toBe(Welcome);
+    expect(result.current.showWelcome).toBe(true);
     expect(result.current.style).toEqual({ alignItems: "safe center" });
   });
 
   it("shows TodayContent (top-aligned) while history is loading", () => {
     const result = setup({ status: "loading" });
-    expect(result.current.Component).toBe(TodayContent);
+    expect(result.current.showWelcome).toBe(false);
     expect(result.current.style).toEqual({ alignItems: "flex-start" });
   });
 
@@ -79,7 +58,7 @@ describe("useTodayContainer", () => {
       status: "ready",
       lastReading: { bookId: "JHN", chapter: 3 },
     });
-    expect(result.current.Component).toBe(TodayContent);
+    expect(result.current.showWelcome).toBe(false);
     expect(result.current.style).toEqual({ alignItems: "flex-start" });
   });
 });

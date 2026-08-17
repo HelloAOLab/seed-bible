@@ -1,9 +1,15 @@
 import type { ResumeReadingCardData } from "./ResumeReadingSection";
-import { useTodayContext } from "./TodayContext";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 import { useI18n } from "../../i18n";
 import { useMemo, useCallback } from "preact/hooks";
 
-type UseResumeReadingSection = () => {
+type UseResumeReadingSection = (props: {
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) => {
   /** True while history is still loading — render a placeholder card. */
   isLoading: boolean;
   /** Already-translated status announced by the loading placeholder. */
@@ -13,8 +19,11 @@ type UseResumeReadingSection = () => {
   handleButtonClick: () => void;
 };
 
-export const useResumeReadingSection: UseResumeReadingSection = () => {
-  const { readingHistory, bookNames, openPassage } = useTodayContext();
+export const useResumeReadingSection: UseResumeReadingSection = ({
+  today,
+  onOpenPassage,
+}) => {
+  const { readingHistory, bookNames } = today;
   const { t } = useI18n();
 
   const state = readingHistory.value;
@@ -36,8 +45,8 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
 
   const handleButtonClick = useCallback(() => {
     if (!lastReading) return;
-    openPassage({ bookId: lastReading.bookId, chapter: lastReading.chapter });
-  }, [lastReading, openPassage]);
+    onOpenPassage({ bookId: lastReading.bookId, chapter: lastReading.chapter });
+  }, [lastReading, onOpenPassage]);
 
   return {
     isLoading: state.status === "loading",

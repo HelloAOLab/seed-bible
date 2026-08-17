@@ -2,16 +2,13 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useSocialSection } from "@packages/seed-bible/seed-bible/components/TodayPane/useSocialSection";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { getUserAnimalVisual } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
+import { signal } from "@preact/signals";
+import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { todayStub, loginStub } from "../../testUtils/todayStubs";
 import type { Timespan } from "@packages/seed-bible/seed-bible/components/TodayPane/commonTypes";
 import type { FilteredReading } from "@packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
 
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
   return mockI18nManager();
@@ -29,11 +26,14 @@ const INITIAL_TIMESPAN: Timespan = { from: 100, to: 200 };
 const INITIAL_YEAR = 2024;
 
 const CURRENT_USER_ID = "me";
+// The hook builds the current user's own row from the real visual hash rather
+// than being handed a profile, so the expectation is derived the same way.
+const CURRENT_USER_VISUAL = getUserAnimalVisual(CURRENT_USER_ID);
 const CURRENT_USER_PROFILE = {
   name: "Me",
-  pictureUrl: null,
-  color: "color-me",
-  icon: "icon-me",
+  pictureUrl: undefined,
+  color: CURRENT_USER_VISUAL.color,
+  icon: CURRENT_USER_VISUAL.defaultIcon,
 };
 
 type Result = ReturnType<typeof useSocialSection>;
@@ -59,21 +59,22 @@ describe("useSocialSection", () => {
   });
 
   function setup() {
-    (useTodayContext as Mock).mockReturnValue({
-      subscribedUsersProfileProvider: { getUserProfile },
-      subscribedUsersIdsProvider: { getUsersIds },
+    const today = todayStub({
+      subscribedUsers: { getUserProfile, getUsersIds } as never,
       getCommunityReading,
-      userId: CURRENT_USER_ID,
-      userProfile: CURRENT_USER_PROFILE,
       readingHistoryConfigProvider: {
         buildTimespanOptionsMap: () => ({
           twoDays: { year: INITIAL_YEAR, timespan: INITIAL_TIMESPAN },
         }),
-      },
+      } as never,
+    });
+    const login = loginStub({
+      userId: signal(CURRENT_USER_ID),
+      profile: signal({ name: "Me" } as UserProfile),
     });
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      result.current = useSocialSection();
+      result.current = useSocialSection({ today, login });
       return null;
     }
     act(() => render(<TestComponent />, container));

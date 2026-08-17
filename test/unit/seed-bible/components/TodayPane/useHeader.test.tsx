@@ -1,16 +1,8 @@
-import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useHeader } from "@packages/seed-bible/seed-bible/components/TodayPane/useHeader";
+import { loginWithName } from "../../testUtils/todayStubs";
 import { mockI18nState } from "../../testUtils/mockI18n";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
-
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
@@ -39,12 +31,10 @@ describe("useHeader", () => {
     options: { language?: string; username?: string | undefined } = {}
   ) {
     mockI18nState.language = options.language ?? "en";
-    (useTodayContext as Mock).mockReturnValue({
-      username: options.username,
-    });
+    const login = loginWithName(options.username);
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      result.current = useHeader();
+      result.current = useHeader(login);
       return null;
     }
     act(() => render(<TestComponent />, container));

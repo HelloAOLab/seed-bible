@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { todayStub } from "../../testUtils/todayStubs";
 import { SearchBar } from "@packages/seed-bible/seed-bible/components/TodayPane/SearchBar";
 import { useSearchBar } from "@packages/seed-bible/seed-bible/components/TodayPane/useSearchBar";
 
@@ -61,7 +62,12 @@ describe("SearchBar", () => {
   function setup(options: Parameters<typeof makeResult>[0] = {}) {
     const result = makeResult(options);
     (useSearchBar as Mock).mockReturnValue(result);
-    act(() => render(<SearchBar />, container));
+    act(() =>
+      render(
+        <SearchBar today={todayStub({})} onOpenPassage={vi.fn()} />,
+        container
+      )
+    );
     return result;
   }
 

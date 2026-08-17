@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { todayStub } from "../../testUtils/todayStubs";
 import { ResumeReadingSection } from "@packages/seed-bible/seed-bible/components/TodayPane/ResumeReadingSection";
 import { useResumeReadingSection } from "@packages/seed-bible/seed-bible/components/TodayPane/useResumeReadingSection";
 
@@ -50,7 +51,12 @@ describe("ResumeReadingSection", () => {
     (useResumeReadingSection as Mock).mockReturnValue(
       makeResult(cardData, handleButtonClick)
     );
-    act(() => render(<ResumeReadingSection />, container));
+    act(() =>
+      render(
+        <ResumeReadingSection today={todayStub({})} onOpenPassage={vi.fn()} />,
+        container
+      )
+    );
     return handleButtonClick;
   }
 

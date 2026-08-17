@@ -2,15 +2,9 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useSearchBar } from "@packages/seed-bible/seed-bible/components/TodayPane/useSearchBar";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
+import { todayStub } from "../../testUtils/todayStubs";
 import type { VerseSearchResult } from "@packages/seed-bible/seed-bible/components/TodayPane/search";
 
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
   return mockI18nManager();
@@ -55,13 +49,10 @@ describe("useSearchBar", () => {
   });
 
   function setup() {
-    (useTodayContext as Mock).mockReturnValue({
-      searchVerses,
-      openPassage,
-    });
+    const today = todayStub({ searchVerses });
     const result = { current: null as unknown as Hook };
     function TestComponent() {
-      const r = useSearchBar();
+      const r = useSearchBar({ today, onOpenPassage: openPassage });
       result.current = r;
       return <div ref={r.containerRef} />;
     }

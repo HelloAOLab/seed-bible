@@ -3,15 +3,8 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useHistoryCard } from "@packages/seed-bible/seed-bible/components/TodayPane/useHistoryCard";
 import { mockI18nState } from "../../testUtils/mockI18n";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
-
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
+import { todayStub } from "../../testUtils/todayStubs";
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
@@ -67,11 +60,13 @@ describe("useHistoryCard", () => {
     language?: string;
   }) {
     mockI18nState.language = options.language ?? "en";
-    (useTodayContext as Mock).mockReturnValue({
+    const today = todayStub({
       readingHistoryConfigProvider: {
         buildTimespanOptionsMap: () => optionsMap,
         getTimespanOptionLabelMap: () => labelMap,
-      },
+      } as unknown as ReturnType<
+        typeof todayStub
+      >["readingHistoryConfigProvider"],
     });
     (useSocialSectionContext as Mock).mockReturnValue({
       userFilters: options.userFilters ?? new Map([["u1", true]]),
@@ -81,6 +76,7 @@ describe("useHistoryCard", () => {
       selectYear,
       selectDay,
     });
+    return today;
   }
 
   beforeEach(() => {
@@ -95,10 +91,10 @@ describe("useHistoryCard", () => {
   });
 
   function setup(options: Parameters<typeof configure>[0] = {}) {
-    configure(options);
+    const today = configure(options);
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      const r = useHistoryCard();
+      const r = useHistoryCard(today);
       result.current = r;
       return (
         <div>

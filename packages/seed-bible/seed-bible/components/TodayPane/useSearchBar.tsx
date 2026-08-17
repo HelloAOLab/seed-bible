@@ -1,14 +1,20 @@
 import { useSignal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import type { MutableRef } from "preact/hooks";
-import { useTodayContext } from "./TodayContext";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 import { useI18n } from "../../i18n";
 import { useClickOutside } from "./useClickOutside";
 import type { VerseSearchResult } from "./search";
 
 import { useRef, useEffect, useMemo } from "preact/hooks";
 
-type UseSearchBar = () => {
+type UseSearchBar = (props: {
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) => {
   query: ReadonlySignal<string>;
   results: ReadonlySignal<VerseSearchResult[]>;
   loading: ReadonlySignal<boolean>;
@@ -23,8 +29,8 @@ type UseSearchBar = () => {
 
 const DEBOUNCE_MS = 180;
 
-export const useSearchBar: UseSearchBar = () => {
-  const { searchVerses, openPassage } = useTodayContext();
+export const useSearchBar: UseSearchBar = ({ today, onOpenPassage }) => {
+  const { searchVerses } = today;
   const { t } = useI18n();
 
   const query = useSignal("");
@@ -107,7 +113,7 @@ export const useSearchBar: UseSearchBar = () => {
     // Clear the query before leaving, so reopening Today shows an empty box.
     runSearch("");
     isOpen.value = false;
-    openPassage({
+    onOpenPassage({
       bookId: result.bookId,
       chapter: result.chapterNumber,
       verse: result.verseNumber ?? undefined,

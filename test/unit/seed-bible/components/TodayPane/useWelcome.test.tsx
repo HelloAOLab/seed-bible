@@ -3,14 +3,8 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { useWelcome } from "@packages/seed-bible/seed-bible/components/TodayPane/useWelcome";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
-
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
+import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { todayStub, loginWithName } from "../../testUtils/todayStubs";
 
 // The hook imports the verse highlighter directly, so it is stubbed at the
 // module boundary rather than injected.
@@ -74,19 +68,24 @@ describe("useWelcome", () => {
       bookNames?: Map<string, string>;
     } = {}
   ) {
-    (useTodayContext as Mock).mockReturnValue({
-      username: options.username,
+    const today = todayStub({
       bookNames: signal(options.bookNames ?? new Map([["JHN", "John"]])),
       getVerseText,
       lastTranslationId,
       getDefaultTranslation,
-      openBookSelector,
-      openPassage,
-      theme: { variables: { readerFontColor: "#112233" } },
     });
+    const theme = signal({
+      variables: { readerFontColor: "#112233" },
+    } as unknown as BibleTheme);
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      result.current = useWelcome();
+      result.current = useWelcome({
+        today,
+        login: loginWithName(options.username),
+        theme,
+        onOpenBookSelector: openBookSelector,
+        onOpenPassage: openPassage,
+      });
       return null;
     }
     act(() => render(<TestComponent />, container));
@@ -123,11 +122,6 @@ describe("useWelcome", () => {
       expect(result.current.selectorText).toBe("Open Bible");
       expect(result.current.startButtonText).toBe("Read the first chapter");
       expect(result.current.startButtonIcon).toBe("arrow_right_alt");
-    });
-
-    it("forwards openBookSelector", () => {
-      const result = setup();
-      expect(result.current.openBookSelector).toBe(openBookSelector);
     });
 
     it("builds the seed-bible icon style from the theme", () => {

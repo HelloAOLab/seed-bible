@@ -1,12 +1,17 @@
-import { useTodayContext } from "./TodayContext";
 import { useI18n } from "../../i18n";
 import { useSignal, useSignalEffect } from "@preact/signals";
 import type { FilteredReading } from "./readingHistory";
 import type { SocialSectionUserProfile } from "./SocialSectionContext";
 import { useState, useMemo, useCallback, useEffect } from "preact/hooks";
 import type { Timespan } from "./commonTypes";
+import type { LoginManager } from "../../managers/LoginManager";
+import type { TodayManager } from "../../managers/TodayManager";
+import { getUserAnimalVisual } from "../../managers/SessionsManager";
 
-type UseSocialSection = () => {
+type UseSocialSection = (props: {
+  today: TodayManager;
+  login: LoginManager;
+}) => {
   title: string;
   userProfileMap: Map<string, SocialSectionUserProfile>;
   userFilters: Map<string, boolean>;
@@ -26,15 +31,23 @@ type UserProfile = {
 };
 type UserProfileMap = Map<string, UserProfile>;
 
-export const useSocialSection: UseSocialSection = () => {
-  const {
-    subscribedUsersProfileProvider,
-    subscribedUsersIdsProvider,
-    getCommunityReading,
-    readingHistoryConfigProvider,
-    userId,
-    userProfile,
-  } = useTodayContext();
+export const useSocialSection: UseSocialSection = ({ today, login }) => {
+  const { subscribedUsers, getCommunityReading, readingHistoryConfigProvider } =
+    today;
+  const userId = login.userId.value;
+  const profile = login.profile.value;
+  // The current user's own row in the filter list. Derived here rather than
+  // passed in, so a profile change re-renders only this section.
+  const userProfile = useMemo<UserProfile | undefined>(() => {
+    if (!userId) return undefined;
+    const visual = getUserAnimalVisual(userId);
+    return {
+      name: profile?.name ?? "Guest",
+      pictureUrl: profile?.pictureUrl,
+      color: visual.color,
+      icon: visual.defaultIcon,
+    };
+  }, [userId, profile?.name, profile?.pictureUrl]);
   const { t } = useI18n();
 
   const initialOption = useMemo(
@@ -88,11 +101,11 @@ export const useSocialSection: UseSocialSection = () => {
     if (userId && userProfile) {
       const map: UserProfileMap = new Map([
         [userId, userProfile],
-        ...subscribedUsersIdsProvider
+        ...subscribedUsers
           .getUsersIds()
           .map((id): [string, UserProfile] => [
             id,
-            subscribedUsersProfileProvider.getUserProfile(id)!,
+            subscribedUsers.getUserProfile(id)!,
           ]),
       ]);
       setUserProfileMap(map);

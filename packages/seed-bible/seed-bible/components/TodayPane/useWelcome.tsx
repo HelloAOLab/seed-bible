@@ -4,17 +4,27 @@ import {
   useSignal,
   type ReadonlySignal,
 } from "@preact/signals";
-import { useTodayContext } from "./TodayContext";
+import type { LoginManager } from "../../managers/LoginManager";
+import type { BibleTheme } from "../../managers/ThemeManager";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 import { useI18n } from "../../i18n";
 import { getHighlightedWelcomeVerse } from "./welcomeVerseMap";
 
 import { useMemo, useEffect, useCallback } from "preact/hooks";
 
-type UseWelcome = () => {
+type UseWelcome = (props: {
+  today: TodayManager;
+  login: LoginManager;
+  theme: ReadonlySignal<BibleTheme>;
+  onOpenBookSelector: () => void;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) => {
   greeting: string;
   book: ReadonlySignal<string>;
   welcomeVerse: Signal<string>;
-  openBookSelector: () => void;
   selectorText: string;
   startButtonText: string;
   startButtonIcon: string;
@@ -24,17 +34,15 @@ type UseWelcome = () => {
 
 const STRAT_BUTTON_ICON = "arrow_right_alt";
 
-export const useWelcome: UseWelcome = () => {
-  const {
-    username,
-    bookNames,
-    getVerseText,
-    lastTranslationId,
-    getDefaultTranslation,
-    openBookSelector,
-    openPassage,
-    theme,
-  } = useTodayContext();
+export const useWelcome: UseWelcome = ({
+  today,
+  login,
+  theme,
+  onOpenPassage,
+}) => {
+  const { bookNames, getVerseText, lastTranslationId, getDefaultTranslation } =
+    today;
+  const username = login.profile.value?.name;
   const { t } = useI18n();
 
   const greeting = useMemo(() => {
@@ -86,27 +94,26 @@ export const useWelcome: UseWelcome = () => {
   }, [t]);
 
   const handleStartButtonClick = useCallback(() => {
-    // `openPassage` falls back to the default translation when this is unset.
-    openPassage({
+    // `onOpenPassage` falls back to the default translation when this is unset.
+    onOpenPassage({
       bookId: "GEN",
       chapter: 1,
       translationId: lastTranslationId.value,
     });
-  }, [openPassage, lastTranslationId.value]);
+  }, [onOpenPassage, lastTranslationId.value]);
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {
       width: "1.25rem",
       height: "1.25rem",
-      backgroundColor: theme.variables.readerFontColor,
+      backgroundColor: theme.value.variables.readerFontColor,
     };
-  }, [theme]);
+  }, [theme.value]);
 
   return {
     greeting,
     book,
     welcomeVerse,
-    openBookSelector,
     selectorText,
     startButtonText,
     startButtonIcon: STRAT_BUTTON_ICON,

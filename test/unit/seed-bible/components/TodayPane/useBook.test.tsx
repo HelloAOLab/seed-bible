@@ -3,16 +3,9 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { useBook } from "@packages/seed-bible/seed-bible/components/TodayPane/useBook";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 import type { BookProps } from "@packages/seed-bible/seed-bible/components/TodayPane/Book";
-
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
+import { todayStub } from "../../testUtils/todayStubs";
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
@@ -49,12 +42,12 @@ describe("useBook", () => {
     booksMap?: Map<string, { numberOfChapters: number }>;
     profiles?: Map<string, Profile>;
   }) {
-    (useTodayContext as Mock).mockReturnValue({
+    const today = todayStub({
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
+      // Only `numberOfChapters` is read, so the fake book summaries omit the rest.
       translationBooksMap: signal(
         options.booksMap ?? new Map([["GEN", { numberOfChapters: 3 }]])
-      ),
-      openPassage,
+      ) as never,
     });
     (useSocialSectionContext as Mock).mockReturnValue({
       userProfileMap:
@@ -64,6 +57,7 @@ describe("useBook", () => {
           ["u2", makeProfile("u2")],
         ]),
     });
+    return today;
   }
 
   beforeEach(() => {
@@ -81,10 +75,10 @@ describe("useBook", () => {
     props: BookProps,
     options: Parameters<typeof configureContexts>[0] = {}
   ) {
-    configureContexts(options);
+    const today = configureContexts(options);
     const result = { current: null as unknown as UseBookResult };
     function TestComponent() {
-      result.current = useBook(props);
+      result.current = useBook({ ...props, today, onOpenPassage: openPassage });
       return null;
     }
     act(() => render(<TestComponent />, container));

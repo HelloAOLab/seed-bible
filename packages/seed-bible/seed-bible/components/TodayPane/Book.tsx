@@ -1,6 +1,10 @@
 import { useBook } from "./useBook";
 import { Chapter, type Props as ChapterProps } from "./Chapter";
 import { UserIcon, type UserIconProps } from "./UserIcon";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 
 export interface BookProps {
   bookId: string;
@@ -8,6 +12,11 @@ export interface BookProps {
     [chapter: number]: string[];
   };
   usersId: string[];
+}
+
+export interface BookComponentProps extends BookProps {
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
 }
 
 export interface ChapterData extends ChapterProps {
@@ -18,7 +27,7 @@ export type UserIconData = UserIconProps & {
   key: string;
 };
 
-export const Book = (props: BookProps) => {
+export const Book = (props: BookComponentProps) => {
   const {
     name,
     /* chapter, */

@@ -1,6 +1,10 @@
 import { useResumeReadingSection } from "./useResumeReadingSection";
 import { MaterialIcon } from "../icons";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import type {
+  TodayManager,
+  TodayPassageTarget,
+} from "../../managers/TodayManager";
 
 export interface ResumeReadingCardData {
   title: string;
@@ -9,9 +13,12 @@ export interface ResumeReadingCardData {
   buttonIcon: string;
 }
 
-export const ResumeReadingSection = () => {
+export const ResumeReadingSection = (props: {
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) => {
   const { isLoading, loadingLabel, cardData, handleButtonClick } =
-    useResumeReadingSection();
+    useResumeReadingSection(props);
 
   // History still loading: show a placeholder card so a returning user sees the
   // personalized layout (never Welcome) while the resume position is fetched.

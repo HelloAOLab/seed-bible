@@ -1,6 +1,13 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
+import { todayStub } from "../../testUtils/todayStubs";
+const themeStub = () =>
+  signal({
+    variables: {},
+  } as unknown as import("@packages/seed-bible/seed-bible/managers/ThemeManager").BibleTheme);
+
 import { HistoryCard } from "@packages/seed-bible/seed-bible/components/TodayPane/HistoryCard";
 import { useHistoryCard } from "@packages/seed-bible/seed-bible/components/TodayPane/useHistoryCard";
 
@@ -98,7 +105,16 @@ describe("HistoryCard", () => {
   function setup(options: Parameters<typeof makeResult>[0] = {}) {
     const result = makeResult(options);
     (useHistoryCard as Mock).mockReturnValue(result);
-    act(() => render(<HistoryCard />, container));
+    act(() =>
+      render(
+        <HistoryCard
+          today={todayStub({})}
+          theme={themeStub()}
+          onOpenPassage={vi.fn()}
+        />,
+        container
+      )
+    );
     return result;
   }
 

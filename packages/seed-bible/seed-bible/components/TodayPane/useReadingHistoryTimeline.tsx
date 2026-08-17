@@ -7,6 +7,7 @@ import type {
   KeyRangesMap,
   TimelineRangesMap,
 } from "./readingHistory";
+import type { ReadonlySignal } from "@preact/signals";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
 import { useHorizontalScroll } from "../useHorizontalScroll";
@@ -22,13 +23,17 @@ import type {
   DailyReadingHistorySummaries,
   ReadingHistorySummary,
 } from "../../managers/ReadingHistoryManager";
-import { useTodayContext } from "./TodayContext";
 import { useSocialSectionContext } from "./SocialSectionContext";
 import type { TooltipContentData } from "./tooltipTypes";
+import type { BibleTheme } from "../../managers/ThemeManager";
+import type { TodayManager } from "../../managers/TodayManager";
 
 type ItemsColorMap = Map<string, React.CSSProperties["color"]>;
 
-type UseReadingHistoryTimeline = () => {
+type UseReadingHistoryTimeline = (props: {
+  today: TodayManager;
+  theme: ReadonlySignal<BibleTheme>;
+}) => {
   itemsData: ReadingHistoryContentData[];
   timelineRef: { current: HTMLDivElement | null };
   footer: ReadingHistoryTimelineFooterData;
@@ -41,10 +46,13 @@ const step = 0.25;
 
 // const initialTimelineYear = new Date().getFullYear();
 
-export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
+export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
+  today,
+  theme,
+}) => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const { getReadingHistoryEvents, theme } = useTodayContext();
+  const { getReadingHistoryEvents } = today;
   const { t, language } = useI18n();
   const { selectYear, selectDay, year, timespan, userFilters } =
     useSocialSectionContext();
@@ -209,14 +217,22 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     const fullColorTimeSeconds = yearlySummaryUsersCount * SEC_PER_HOUR; // 1 hour per selected user
 
     const backgroundRgb = ColorParser(
-      theme.variables.readerBackground ?? "#FFFFFF",
+      theme.value.variables.readerBackground ?? "#FFFFFF",
       "arrayRGB"
     );
-    const baseColor = theme.variables.dividerColor
-      ? ColorParser(theme.variables.dividerColor, "longHex", backgroundRgb)
+    const baseColor = theme.value.variables.dividerColor
+      ? ColorParser(
+          theme.value.variables.dividerColor,
+          "longHex",
+          backgroundRgb
+        )
       : "#dfdede";
-    const userColor = theme.variables.primaryColor
-      ? ColorParser(theme.variables.primaryColor, "longHex", backgroundRgb)
+    const userColor = theme.value.variables.primaryColor
+      ? ColorParser(
+          theme.value.variables.primaryColor,
+          "longHex",
+          backgroundRgb
+        )
       : "#D2691E";
 
     for (let week = 0; week < weeksCount; week++) {

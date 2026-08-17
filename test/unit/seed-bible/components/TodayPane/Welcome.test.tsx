@@ -1,6 +1,11 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
+import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { todayStub, loginWithName } from "../../testUtils/todayStubs";
+const themeStub = () => signal({ variables: {} } as unknown as BibleTheme);
+
 import { Welcome } from "@packages/seed-bible/seed-bible/components/TodayPane/Welcome";
 import { useWelcome } from "@packages/seed-bible/seed-bible/components/TodayPane/useWelcome";
 import { SeedBibleIcon } from "@packages/seed-bible/seed-bible/components/TodayPane/SeedBibleIcon";
@@ -65,11 +70,22 @@ describe("Welcome", () => {
     vi.clearAllMocks();
   });
 
-  function setup(options: Options = {}) {
+  function setup(options: Options = {}, onOpenBookSelector = vi.fn()) {
     const result = makeResult(options);
     (useWelcome as Mock).mockReturnValue(result);
-    act(() => render(<Welcome />, container));
-    return result;
+    act(() =>
+      render(
+        <Welcome
+          today={todayStub({})}
+          login={loginWithName("Tester")}
+          theme={themeStub()}
+          onOpenBookSelector={onOpenBookSelector}
+          onOpenPassage={vi.fn()}
+        />,
+        container
+      )
+    );
+    return { ...result, onOpenBookSelector };
   }
 
   const q = (sel: string) => container.querySelector(sel);
@@ -106,10 +122,10 @@ describe("Welcome", () => {
       );
     });
 
-    it("calls openBookSelector when the selector button is clicked", () => {
+    it("calls onOpenBookSelector when the selector button is clicked", () => {
       const result = setup();
       act(() => btn(".book-selector-button")!.click());
-      expect(result.openBookSelector).toHaveBeenCalledTimes(1);
+      expect(result.onOpenBookSelector).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -15,12 +15,10 @@ import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
 import {
   TODAY_PANE_ID,
   createTodayManager,
+  openTodayPassage,
   type TodayManager,
 } from "../managers/TodayManager";
-import {
-  TodayPaneHost,
-  TodayPaneTitle,
-} from "../components/TodayPane/TodayPaneHost";
+import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
@@ -1888,7 +1886,33 @@ export function createSeedBibleState(
   //
   // The thunks are hoisted out of the effect so their identity is stable —
   // rebuilding them on every reopen would remount the whole Today tree.
-  const renderTodayPane = () => <TodayPaneHost state={state} today={today} />;
+  // Hoisted out of the render thunk so their identity is stable — rebuilding
+  // them per render would defeat the `memo` on `TodayPane`.
+  const openTodayBookSelector = () => {
+    const slot =
+      tabsLayout.slots.value.find(
+        (candidate) => candidate.id === tabsLayout.selectedSlotId.value
+      ) ?? null;
+    if (slot) {
+      selector.setOpen(true, slot);
+    }
+  };
+  const showTodayBookmarksList = () => {
+    sidebar.isSidebarCollapsed.value = false;
+    bookmarks.isFilterActive.value = true;
+  };
+  const renderTodayPane = () => (
+    <TodayPane
+      today={today}
+      login={login}
+      bookmarks={bookmarks.bookmarks}
+      theme={theme}
+      isMobile={isMobile}
+      onOpenPassage={(target) => openTodayPassage(state, today, target)}
+      onOpenBookSelector={openTodayBookSelector}
+      onShowBookmarksList={showTodayBookmarksList}
+    />
+  );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
 
   effect(() => {

@@ -1,16 +1,8 @@
-import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { useTodayContent } from "@packages/seed-bible/seed-bible/components/TodayPane/useTodayContent";
-import { useTodayContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext";
-
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/TodayContext",
-  () => ({
-    useTodayContext: vi.fn(),
-  })
-);
+import { todayStub } from "../../testUtils/todayStubs";
 
 type Result = ReturnType<typeof useTodayContent>;
 
@@ -40,13 +32,11 @@ describe("useTodayContent", () => {
             lastReading: { bookId: "GEN", chapter: 1 },
           })
         : signal({ status });
-    (useTodayContext as Mock).mockReturnValue({
-      readingHistory,
-      bookmarks: signal(options.bookmarks ?? []),
-    });
+    const today = todayStub({ readingHistory });
+    const bookmarks = signal(options.bookmarks ?? []) as never;
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      result.current = useTodayContent();
+      result.current = useTodayContent({ today, bookmarks });
       return null;
     }
     act(() => render(<TestComponent />, container));

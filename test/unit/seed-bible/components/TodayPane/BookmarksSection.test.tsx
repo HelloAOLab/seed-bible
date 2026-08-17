@@ -2,6 +2,7 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
+import { todayStub } from "../../testUtils/todayStubs";
 import {
   BookmarksSection,
   type CategorizedBookmarks,
@@ -74,7 +75,18 @@ describe("BookmarksSection", () => {
 
   function setup(options: Parameters<typeof makeHookResult>[0] = {}) {
     (useBookmarksSection as Mock).mockReturnValue(makeHookResult(options));
-    act(() => render(<BookmarksSection />, container));
+    act(() =>
+      render(
+        <BookmarksSection
+          today={todayStub({})}
+          bookmarks={signal([])}
+          isMobile={signal(false)}
+          onOpenPassage={vi.fn()}
+          onShowBookmarksList={vi.fn()}
+        />,
+        container
+      )
+    );
   }
 
   function categories() {

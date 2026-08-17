@@ -1,10 +1,10 @@
-import { useTodayContext } from "./TodayContext";
+import type { LoginManager } from "../../managers/LoginManager";
 import { useI18n } from "../../i18n";
 
 const NOTIFICATION_ICON = "notifications";
 const SETTINGS_ICON = "settings";
 
-type UseHeader = () => {
+type UseHeader = (login: LoginManager) => {
   date: string;
   greeting: string;
   name: string;
@@ -16,8 +16,8 @@ type UseHeader = () => {
 
 import { useMemo, useCallback } from "preact/hooks";
 
-export const useHeader: UseHeader = () => {
-  const { username } = useTodayContext();
+export const useHeader: UseHeader = (login) => {
+  const username = login.profile.value?.name;
   const { t, language } = useI18n();
 
   const { day, month, greeting } = useMemo(() => {

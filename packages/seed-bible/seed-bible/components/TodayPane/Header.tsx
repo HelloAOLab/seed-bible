@@ -1,6 +1,7 @@
 import { useHeader } from "./useHeader";
+import type { LoginManager } from "../../managers/LoginManager";
 
-export const Header = () => {
+export const Header = (props: { login: LoginManager }) => {
   const {
     date,
     greeting,
@@ -10,7 +11,7 @@ export const Header = () => {
     // settingsIcon,
     // handleNotificationClick,
     // handleSettingsClick,
-  } = useHeader();
+  } = useHeader(props.login);
 
   return (
     <div className="today-header">

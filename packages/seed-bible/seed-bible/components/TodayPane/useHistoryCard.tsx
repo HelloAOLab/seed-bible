@@ -7,7 +7,7 @@ import {
   useMemo,
   useCallback,
 } from "preact/hooks";
-import { useTodayContext } from "./TodayContext";
+import type { TodayManager } from "../../managers/TodayManager";
 import {
   useSocialSectionContext,
   type SocialSectionUserProfile,
@@ -20,7 +20,7 @@ import type {
   TimespanOptionId,
 } from "./readingHistory";
 
-type UseHistoryCard = () => {
+type UseHistoryCard = (today: TodayManager) => {
   userFilterOpen: ReadonlySignal<boolean>;
   userFilterIcon: ReadonlySignal<string>;
   handleUserFilterClick: (e: MouseEvent) => void;
@@ -36,8 +36,8 @@ type UseHistoryCard = () => {
   timespanFilterRef: MutableRef<HTMLDivElement | null>;
 };
 
-export const useHistoryCard: UseHistoryCard = () => {
-  const { readingHistoryConfigProvider } = useTodayContext();
+export const useHistoryCard: UseHistoryCard = (today) => {
+  const { readingHistoryConfigProvider } = today;
   const { t, language } = useI18n();
   const {
     userFilters,

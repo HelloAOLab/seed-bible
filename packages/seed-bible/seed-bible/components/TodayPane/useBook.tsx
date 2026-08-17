@@ -1,12 +1,11 @@
 import { useComputed } from "@preact/signals";
-import { useTodayContext } from "./TodayContext";
 import { useSocialSectionContext } from "./SocialSectionContext";
-import type { BookProps, UserIconData, ChapterData } from "./Book";
+import type { BookComponentProps, UserIconData, ChapterData } from "./Book";
 import { useState, useMemo, useCallback } from "preact/hooks";
 
 const MAX_ICONS = 7;
 
-type UseBook = (props: BookProps) => {
+type UseBook = (props: BookComponentProps) => {
   name: string;
   // chapter: number;
   usersIconData: UserIconData[];
@@ -21,8 +20,10 @@ export const useBook: UseBook = ({
   // chapter,
   chaptersReading,
   usersId,
+  today,
+  onOpenPassage,
 }) => {
-  const { bookNames, translationBooksMap, openPassage } = useTodayContext();
+  const { bookNames, translationBooksMap } = today;
   const { userProfileMap } = useSocialSectionContext();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -75,7 +76,7 @@ export const useBook: UseBook = ({
           })
           .filter(Boolean) as ChapterData["usersData"] | undefined) ?? [];
       const handleChapterClick = () => {
-        openPassage({ bookId, chapter });
+        onOpenPassage({ bookId, chapter });
       };
       return {
         key: String(chapter),

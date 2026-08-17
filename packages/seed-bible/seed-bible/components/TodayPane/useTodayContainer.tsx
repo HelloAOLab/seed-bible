@@ -1,35 +1,20 @@
 import type { CSSProperties } from "preact";
-import { TodayContent } from "./TodayContent";
-import { Welcome } from "./Welcome";
-import { useTodayContext } from "./TodayContext";
-import { useMemo } from "preact/hooks";
+import type { TodayManager } from "../../managers/TodayManager";
 
-type UseTodayContainer = () => {
-  Component: () => preact.JSX.Element;
+type UseTodayContainer = (today: TodayManager) => {
+  /** Whether to render Welcome instead of the personalized layout. */
+  showWelcome: boolean;
   style: CSSProperties;
 };
 
-export const useTodayContainer: UseTodayContainer = () => {
-  const { readingHistory } = useTodayContext();
-  const status = readingHistory.value.status;
-  const { Component, style } = useMemo(() => {
-    // Welcome is a definite state — shown only when the user is known to have
-    // no history (`empty`). `loading` and `ready` both render the personalized
-    // layout, so a returning user never sees Welcome while history loads.
-    if (status === "empty") {
-      return {
-        Component: Welcome,
-        style: { alignItems: "safe center" },
-      };
-    }
-    return {
-      Component: TodayContent,
-      style: { alignItems: "flex-start" },
-    };
-  }, [status]);
+export const useTodayContainer: UseTodayContainer = (today) => {
+  // Welcome is a definite state — shown only when the user is known to have no
+  // history (`empty`). `loading` and `ready` both render the personalized
+  // layout, so a returning user never sees Welcome while history loads.
+  const showWelcome = today.readingHistory.value.status === "empty";
 
   return {
-    Component,
-    style,
+    showWelcome,
+    style: { alignItems: showWelcome ? "safe center" : "flex-start" },
   };
 };
