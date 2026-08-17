@@ -19,6 +19,10 @@ import {
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import {
+  composeThemeStyleText,
+  THEME_PRESET_STYLE_TEXT,
+} from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -46,6 +50,11 @@ export interface RenderOptions {
    * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
    *   should be injected, so the client can seed its own API cache with data
    *   the server already fetched instead of re-fetching it.
+   * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
+   *   should be injected, inside a `<style id="sb-theme-styles">` tag.
+   * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
+   *   CSS text should be injected, for the pre-hydration script that applies
+   *   a returning visitor's saved theme before first paint.
    * - `<!--META-->` where any additional meta tags should be injected (optional).
    *
    * The host server loads this from disk at startup and passes it to the render function on each request, allowing it to be customized or overridden per request if needed.
@@ -55,6 +64,15 @@ export interface RenderOptions {
 }
 
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
+
+/**
+ * Static across every request — the built-in presets have no custom
+ * overrides, so this only needs computing once. Read by the pre-hydration
+ * inline script in `index.html`, before any JS bundle loads.
+ */
+const themePresetsJson = escapeForScript(
+  JSON.stringify(THEME_PRESET_STYLE_TEXT)
+);
 
 /**
  * Substitutes a literal placeholder for a value, without `String.replace`'s
@@ -457,7 +475,27 @@ export async function render(
     </>
   );
 
-  const configJson = escapeForScript(JSON.stringify(config));
+  // Metadata about *this render*, not part of the deployment config the
+  // render itself needed — kept separate from `config` (which is what's
+  // threaded into <Main config={config} .../> above) so the hydration gate
+  // (app/hydrationGate.ts) has something to verify against without the app
+  // itself needing to care about it.
+  //
+  // Only the SSR-only timeout (not a real fetch error or a deterministic
+  // "book not found") can leave a normally-SSR'd page missing verse text a
+  // live client would eventually show — those other terminal states are
+  // ones a live client reproduces identically, so they aren't a hydration
+  // hazard and don't need to suppress it here.
+  const ssrChapterContentSettled = !state.tabs.tabs.value.some(
+    (tab) => tab.readingState.initialChapterLoadTimedOut.value
+  );
+  const clientConfig: AppConfig = {
+    ...config,
+    renderedForPath: options.path,
+    ssrChapterContentSettled,
+  };
+
+  const configJson = escapeForScript(JSON.stringify(clientConfig));
   // Snapshotted after the render above settles, so it includes every
   // response the render actually fetched (translations, book catalog,
   // chapter content) — that's what lets the client skip re-fetching them.
@@ -467,6 +505,11 @@ export async function render(
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+    [
+      "<!-- THEME_STYLE_TAG -->",
+      composeThemeStyleText(state.theme.currentTheme.value),
+    ],
+    ["<!-- THEME_PRESETS_JSON -->", themePresetsJson],
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
     ["<!-- APP_HTML -->", appHtml],

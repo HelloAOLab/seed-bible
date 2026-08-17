@@ -386,6 +386,8 @@ describe("render() redirect wiring", () => {
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
     "<!doctype html><html><head>",
+    '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
+    '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
@@ -479,6 +481,45 @@ describe("render() server-rendered meta tags", () => {
     )?.[1];
     expect(injected).toBeDefined();
     expect(JSON.parse(injected as string)).toMatchObject(config);
+  });
+
+  it("injects the exact request path as renderedForPath, and ssrChapterContentSettled true, for the hydration gate", async () => {
+    const path = "/en/AAB/genesis/1?useFreeBibleAPI=true";
+    const html = await renderHtml(path);
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const config = JSON.parse(injected as string) as {
+      renderedForPath: string;
+      ssrChapterContentSettled: boolean;
+    };
+    expect(config.renderedForPath).toBe(path);
+    expect(config.ssrChapterContentSettled).toBe(true);
+  });
+
+  it("injects the active theme's CSS into the #sb-theme-styles tag", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<style id="sb-theme-styles">([^<]*)<\/style>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    expect(injected).toContain("body {");
+    expect(injected).toContain("--sb-");
+  });
+
+  it("injects the built-in theme presets into the #sb-theme-presets tag, for the pre-hydration script", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="sb-theme-presets">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const presets = JSON.parse(injected as string) as Record<string, string>;
+    expect(presets.light).toContain("body {");
+    expect(presets.dark).toContain("body {");
   });
 
   it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {

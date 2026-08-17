@@ -1,4 +1,6 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { MOBILE_BREAKPOINT } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type {
   Translation,
   TranslationBooks,
@@ -678,6 +680,56 @@ describe("createSeedBibleState", () => {
     await waitFor(() => readingState.bookId.value === "EXO");
 
     expect(state.panes.panes.value).toHaveLength(0);
+  });
+
+  describe("viewport seeding and applyViewport()", () => {
+    it("seeds the desktop viewport size when renderedAsMobile is false, ignoring the real window size", async () => {
+      const state = await createTestSeedBibleState({
+        config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: false },
+      });
+
+      expect(state.app.viewportWidth.value).toBe(1000);
+      expect(state.app.viewportHeight.value).toBe(1000);
+    });
+
+    it("seeds the mobile viewport size when renderedAsMobile is true, ignoring the real window size", async () => {
+      const state = await createTestSeedBibleState({
+        config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+      });
+
+      expect(state.app.viewportWidth.value).toBe(MOBILE_BREAKPOINT);
+      expect(state.app.viewportHeight.value).toBe(800);
+    });
+
+    it("applyViewport() corrects the seeded value to the real window size", async () => {
+      const state = await createState();
+      const originalWidth = window.innerWidth;
+      const originalHeight = window.innerHeight;
+      try {
+        Object.defineProperty(window, "innerWidth", {
+          value: 1234,
+          configurable: true,
+        });
+        Object.defineProperty(window, "innerHeight", {
+          value: 567,
+          configurable: true,
+        });
+
+        state.app.applyViewport();
+
+        expect(state.app.viewportWidth.value).toBe(1234);
+        expect(state.app.viewportHeight.value).toBe(567);
+      } finally {
+        Object.defineProperty(window, "innerWidth", {
+          value: originalWidth,
+          configurable: true,
+        });
+        Object.defineProperty(window, "innerHeight", {
+          value: originalHeight,
+          configurable: true,
+        });
+      }
+    });
   });
 
   describe("mobile tab slot restrictions", () => {

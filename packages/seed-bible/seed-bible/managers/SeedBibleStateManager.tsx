@@ -46,11 +46,7 @@ import {
   writeStoredTabsState,
   type PersistedTab,
 } from "../managers/TabsPersistence";
-import {
-  generateThemeCssVariables,
-  createTheme,
-  generateThemeCssClasses,
-} from "../managers/ThemeManager";
+import { createTheme } from "../managers/ThemeManager";
 import type { ThemeManager } from "../managers/ThemeManager";
 import {
   batch,
@@ -199,6 +195,13 @@ export interface AppState {
   viewportWidth: ReadonlySignal<number>;
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
+  /**
+   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
+   * Call once from a post-mount effect to correct the SSR-matched seed value
+   * (see `viewportWidth`/`viewportHeight`) to the device's real viewport
+   * right after Preact's first commit. No-op on the server.
+   */
+  applyViewport: () => void;
 
   /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
@@ -301,11 +304,8 @@ export interface SeedBibleState {
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
-  /** Theme manager plus derived CSS variables/classes for rendering. */
-  theme: ThemeManager & {
-    themeCssVariables: ReadonlySignal<string>;
-    themeCssClasses: ReadonlySignal<string>;
-  };
+  /** Theme manager. Writes its own CSS to `document.head` — see `ThemeManager.tsx`. */
+  theme: ThemeManager;
   /** Sidebar/settings visibility manager. */
   sidebar: SidebarManager;
   /** Reader tab lifecycle manager. */
@@ -603,13 +603,6 @@ export function createSeedBibleState(
   });
   const readingPlans = createReadingPlansManager(os, login);
 
-  const { currentTheme } = themeManager;
-  const theme = computed(() => currentTheme.value);
-  const themeCssVariables = computed(() =>
-    generateThemeCssVariables(theme.value)
-  );
-  const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
-
   // Theme is the source of truth for text colors. When the user switches
   // theme presets, drop any per-section color override from the text editor
   // so verse / book title / heading pick up the new theme's colors.
@@ -626,22 +619,16 @@ export function createSeedBibleState(
   );
 
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
-  const isSSR = import.meta.env.SSR as boolean;
 
-  const viewportWidth = signal(
-    typeof window === "undefined"
-      ? isSSR && renderedAsMobile
-        ? MOBILE_BREAKPOINT
-        : 1000
-      : window.innerWidth
-  );
-  const viewportHeight = signal(
-    typeof window === "undefined"
-      ? isSSR && renderedAsMobile
-        ? 800
-        : 1000
-      : window.innerHeight
-  );
+  // Seeded from the SAME `renderedAsMobile` guess the server made — never
+  // `window.innerWidth`/`.innerHeight` here — so the client's first
+  // render/hydrate pass produces the identical viewport-derived layout the
+  // server rendered, regardless of the device's actual screen size.
+  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
+  // dimensions once, from a post-mount effect in `MainBody` — see
+  // `app/main.tsx`.
+  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
+  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
@@ -793,19 +780,29 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
+  /**
+   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
+   * Shared by the resize listener below and a one-time post-mount correction
+   * (`MainBody` in `app/main.tsx`) — one place reads `window.inner*` into
+   * these signals. No-op on the server.
+   */
+  const applyViewport = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    batch(() => {
+      viewportWidth.value = window.innerWidth;
+      viewportHeight.value = window.innerHeight;
+    });
+  };
+
   effect(() => {
     if (typeof window === "undefined") {
       return;
     }
-    const handleResize = () => {
-      batch(() => {
-        viewportWidth.value = window.innerWidth;
-        viewportHeight.value = window.innerHeight;
-      });
-    };
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", applyViewport);
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", applyViewport);
     };
   });
 
@@ -1648,11 +1645,7 @@ export function createSeedBibleState(
   const state: SeedBibleState = {
     os,
     bibleData: data,
-    theme: {
-      ...themeManager,
-      themeCssVariables,
-      themeCssClasses,
-    },
+    theme: themeManager,
     sidebar,
     tabs,
     tabsLayout,
@@ -1699,6 +1692,7 @@ export function createSeedBibleState(
       effectivePanes,
       viewportWidth,
       viewportHeight,
+      applyViewport,
       isMobile,
       isMobileLandscape,
       isCompactDesktop,

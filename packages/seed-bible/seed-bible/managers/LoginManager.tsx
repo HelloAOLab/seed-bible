@@ -89,6 +89,14 @@ export interface LoginManager {
   localConfig: Signal<Record<string, unknown>>;
 
   /**
+   * Applies the device's real saved `localConfig` from `localStorage`,
+   * merged under whatever is already there. `localConfig` seeds empty (to
+   * match SSR); call this once from a post-mount effect to bring in the
+   * device's real settings without risking a hydration mismatch.
+   */
+  hydrateLocalConfig: () => void;
+
+  /**
    * The promise that resolves with the user's profile information once it has loaded.
    * Null if the user is not logged in.
    */
@@ -447,7 +455,15 @@ export function createLoginManager({
   // const userId = os.userId;
   const profile = signal<UserProfile | null>(null);
   const cachedProfile = signal<UserProfile | null>(null);
-  const localConfig = signal<Record<string, unknown>>(readLocalConfig());
+  // Seeded empty — matching SSR, which has no `localStorage` at all — rather
+  // than reading real `localStorage` here immediately. `createSeedBibleState`
+  // (and everything downstream that derives from `localConfig`, e.g.
+  // `SettingsManager`/`ThemeManager`) runs before Preact's first
+  // render/hydrate pass, so an eager real read here would make the client's
+  // first render disagree with what the server produced. `hydrateLocalConfig`
+  // (below) applies the real value once, from a post-mount effect — see
+  // `MainBody` in `app/main.tsx`.
+  const localConfig = signal<Record<string, unknown>>({});
   const isProfileLoading = signal(false);
   const isSavingProfile = signal(false);
   // Counts profile writes currently in flight so overlapping writes (e.g. a
@@ -479,6 +495,23 @@ export function createLoginManager({
     }
     writeLocalConfig(config);
   });
+
+  /**
+   * Reads the device's real anonymous local config from `localStorage` and
+   * applies it. Call once, from a post-mount effect, to correct the
+   * SSR-matching empty seed (see `localConfig` above) to the device's real
+   * saved settings right after Preact's first commit —
+   * `SettingsManager`'s own `effect()` already depends on `localConfig` and
+   * re-derives automatically, so nothing downstream needs to change.
+   *
+   * Merges the disk read UNDER the current in-memory value (rather than
+   * overwriting outright), so a setter that already fired in the brief
+   * window before this runs isn't clobbered by the (now-stale) disk
+   * snapshot for that same key.
+   */
+  const hydrateLocalConfig = () => {
+    localConfig.value = { ...readLocalConfig(), ...localConfig.value };
+  };
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const data = await os.getData(userId, "profile");
@@ -983,6 +1016,7 @@ export function createLoginManager({
     profile,
     cachedProfile,
     localConfig,
+    hydrateLocalConfig,
     // Exposed as a getter so external readers see the promise assigned by the
     // profile-loading effect below. A plain property would capture the value
     // at construction time (null), which stays null after a fresh login and

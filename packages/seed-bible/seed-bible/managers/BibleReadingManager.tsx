@@ -264,6 +264,14 @@ export interface BibleReadingState {
    * `chapterData === null` on its own cannot.
    */
   initialChapterLoadSettled: ReadonlySignal<boolean>;
+  /**
+   * True only when `initialChapterLoadSettled` became true because the
+   * SSR-only load deadline passed, not because the load actually finished
+   * (successfully or with a real error). Distinguishes an SSR-timing
+   * artifact — a live client would keep waiting rather than give up — from
+   * any deterministic terminal state a live client would reproduce anyway.
+   */
+  initialChapterLoadTimedOut: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -1188,6 +1196,8 @@ export function createBibleReadingState(
    * rather than repeatedly.
    */
   const initialChapterLoadSettled = signal<boolean>(false);
+  /** See the interface doc on `initialChapterLoadTimedOut`. */
+  const initialChapterLoadTimedOut = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
@@ -1258,6 +1268,7 @@ export function createBibleReadingState(
   const SSR_INITIAL_CHAPTER_TIMEOUT_MS = 5000;
   const initialChapterLoadTimer = import.meta.env.SSR
     ? setTimeout(() => {
+        initialChapterLoadTimedOut.value = true;
         initialChapterLoadSettled.value = true;
       }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
     : null;
@@ -2982,6 +2993,7 @@ export function createBibleReadingState(
     chapterData,
     chapterDataPromise,
     initialChapterLoadSettled,
+    initialChapterLoadTimedOut,
     isChapterContentStale,
     highlights,
     decorations,
