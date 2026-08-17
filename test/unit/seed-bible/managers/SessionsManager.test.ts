@@ -397,6 +397,12 @@ describe("SessionsManager", () => {
     getSharedDocumentMock = vi
       .spyOn(os, "getSharedDocument")
       .mockResolvedValue(mockDocument as unknown as SharedDocument);
+    // The real implementation lazily builds an inst client, which opens a
+    // real websocket connection — stub it everywhere so a sync-status test
+    // that flips false→true (which triggers a presence rebuild) can't
+    // trigger a real network connection whose async events fire after the
+    // test has finished and crash an unrelated, later test.
+    vi.spyOn(os, "clearBranchDeviceCache").mockImplementation(() => undefined);
     mockDataManager = {};
     mockLoginManager = {
       getUserProfile: vi.fn(async (userId: string) => ({

@@ -49,7 +49,7 @@ export function OnboardingModals({
   );
 
   // step === "install" — but never prompt someone who already has the app
-  // (e.g. the profile loaded after mount and reported it installed).
+  // (standalone session, or just finished installing this page load).
   if (onboarding.installed.value) {
     return null;
   }
@@ -153,8 +153,8 @@ function InstallContent({
     try {
       const result = await os.promptToInstallPWA();
       if (result.outcome === "accepted") {
-        // Record the install on the user's profile (backend) + local cache so
-        // the prompt and the Settings entry disappear from now on.
+        // Hide install UI for this session; not persisted (uninstall can't be
+        // detected later via storage).
         onboarding.markInstalled();
 
         toast(
