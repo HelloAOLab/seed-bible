@@ -57,4 +57,37 @@ describe("createOnboardingManager", () => {
     expect(onboarding.installAvailable.value).toBe(false);
     expect(onboarding.installed.value).toBe(true);
   });
+
+  it("does not treat a leftover localStorage install flag as still installed", () => {
+    // Pre-fix sticky flag: after PWA uninstall this key can remain on the
+    // origin even though the user is back in a normal browser tab.
+    window.localStorage.setItem("sb-app-installed", "true");
+
+    const onboarding = createOnboardingManager(createLogin());
+
+    expect(onboarding.installed.value).toBe(false);
+    expect(onboarding.installAvailable.value).toBe(true);
+  });
+
+  it("treats a standalone (installed-PWA) session as installed", () => {
+    // jsdom has no matchMedia by default, so without this stub every test
+    // only covers the browser-tab (not-installed) branch.
+    const matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+    vi.stubGlobal("matchMedia", matchMedia);
+
+    try {
+      const onboarding = createOnboardingManager(createLogin());
+
+      expect(matchMedia).toHaveBeenCalledWith("(display-mode: standalone)");
+      expect(onboarding.standalone).toBe(true);
+      expect(onboarding.installed.value).toBe(true);
+      expect(onboarding.installAvailable.value).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

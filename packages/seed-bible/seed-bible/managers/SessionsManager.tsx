@@ -23,6 +23,7 @@ import type {
 } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
+import type { AnnotationsManager } from "./AnnotationsManager";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -645,7 +646,8 @@ async function createBibleReadingSession(
   readingExtensionManager: BibleReadingExtensionManager | undefined,
   id: string,
   defaultOptions?: SessionOptions,
-  startPosition?: SessionStartPosition
+  startPosition?: SessionStartPosition,
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(
     dataManager,
@@ -655,7 +657,8 @@ async function createBibleReadingSession(
     // session's reading state back into an unshared one.
     { ...startPosition, isShared: true },
     undefined,
-    readingExtensionManager
+    readingExtensionManager,
+    getAnnotationsManager
   );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
@@ -1726,7 +1729,8 @@ export function createSessionsManager(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
-  readingExtensionManager?: BibleReadingExtensionManager
+  readingExtensionManager?: BibleReadingExtensionManager,
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): SessionsManager {
   const createSession = async (startPosition?: SessionStartPosition) => {
     const id = createSessionId();
@@ -1742,7 +1746,8 @@ export function createSessionsManager(
       readingExtensionManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId },
-      startPosition
+      startPosition,
+      getAnnotationsManager
     );
   };
 
@@ -1754,7 +1759,10 @@ export function createSessionsManager(
       highlightsManager,
       i18nManager,
       readingExtensionManager,
-      id
+      id,
+      undefined,
+      undefined,
+      getAnnotationsManager
     );
   };
 

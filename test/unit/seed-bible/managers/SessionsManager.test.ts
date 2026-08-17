@@ -358,13 +358,19 @@ describe("SessionsManager", () => {
     uuid.mockImplementation(() => `uuid-${uuidCount++}`);
     uuid.mockReturnValueOnce("test-config-bot-id");
 
-    os = CasualOSManager();
     // `os` is real here — only `getSharedDocument` is stubbed — so every other
     // method it exposes has to be safe to call. Stubbed for the whole file
     // rather than per-describe: any test that drives a sync recovery reaches
     // this, and reaching the real one used to build the inst client and open
     // a websocket to auth.seedbible.org. That connection resolving mid-run
     // fails the suite with an unhandled error even when every test passes.
+    os = CasualOSManager();
+    
+    // Stub the cache purge for every test, not just the presence ones: the
+    // real one lazily builds the inst client, which opens a websocket to the
+    // live server. Any test that takes a session through a resync (sync false
+    // then true) reaches it, and the connection outlives the test — landing as
+    // an unhandled error in whichever test is running when it completes.
     clearBranchDeviceCacheSpy = vi
       .spyOn(os, "clearBranchDeviceCache")
       .mockImplementation(() => undefined) as unknown as Mock;
@@ -413,6 +419,12 @@ describe("SessionsManager", () => {
     getSharedDocumentMock = vi
       .spyOn(os, "getSharedDocument")
       .mockResolvedValue(mockDocument as unknown as SharedDocument);
+    // The real implementation lazily builds an inst client, which opens a
+    // real websocket connection — stub it everywhere so a sync-status test
+    // that flips false→true (which triggers a presence rebuild) can't
+    // trigger a real network connection whose async events fire after the
+    // test has finished and crash an unrelated, later test.
+    vi.spyOn(os, "clearBranchDeviceCache").mockImplementation(() => undefined);
     mockDataManager = {};
     mockLoginManager = {
       getUserProfile: vi.fn(async (userId: string) => ({
@@ -507,6 +519,7 @@ describe("SessionsManager", () => {
         initialChapterNumber: 21,
         isShared: true,
       },
+      undefined,
       undefined,
       undefined
     );
