@@ -2037,6 +2037,246 @@ describe("createReadingPlansManager", () => {
     expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
     expect(saved.totalReadings).toBe(3);
   });
+
+  describe("analytics", () => {
+    let mockPosthogCapture: Mock;
+
+    beforeEach(() => {
+      mockPosthogCapture = vi.fn();
+      (globalThis as any).posthog = { capture: mockPosthogCapture };
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).posthog;
+    });
+
+    it("finishEditingReadingPlan captures reading_plan_created for a new draft", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "bible-verse",
+        ref: { bookId: "PSA", chapter: 1 },
+      });
+
+      const plan = await manager.finishEditingReadingPlan();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("reading_plan_created", {
+        planId: `rp_${plan!.recordName}_${plan!.address}`,
+        totalSessions: 1,
+        totalReadings: 1,
+      });
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_updated",
+        expect.anything()
+      );
+    });
+
+    it("finishEditingReadingPlan captures reading_plan_updated for an existing plan", async () => {
+      const plan = makePlan({ authorUserId: "user-1", recordName: "user-1" });
+      getDataMock.mockResolvedValue({ success: true, data: plan });
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editExistingReadingPlan(plan);
+      mockPosthogCapture.mockClear();
+
+      await manager.finishEditingReadingPlan();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("reading_plan_updated", {
+        planId: "rp_user-1_plan-1",
+        totalSessions: 3,
+        totalReadings: 3,
+      });
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_created",
+        expect.anything()
+      );
+    });
+
+    it("deleteReadingPlan captures reading_plan_deleted", async () => {
+      const plan = makePlan({ recordName: "user-1", address: "plan-1" });
+      const manager = makeManager("user-1");
+      await flush();
+
+      await manager.deleteReadingPlan(plan);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("reading_plan_deleted", {
+        planId: "rp_user-1_plan-1",
+      });
+    });
+
+    it("startReadingPlan captures reading_plan_started", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      const progress = await manager.startReadingPlan(metadataOf(makePlan()), {
+        cadenceId: "every-other-day",
+        selfPaced: false,
+      });
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("reading_plan_started", {
+        planId: progress.planId,
+        progressId: progress.id,
+        selfPaced: false,
+        cadenceId: "every-other-day",
+      });
+    });
+
+    it("markSessionComplete captures reading_plan_session_finished exactly once, and doesn't refire when already complete", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.selectReadingPlanProgress(makeProgress());
+
+      await manager.markSessionComplete({
+        id: "s1",
+        readings: [reading("r1")],
+      });
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith(
+        "reading_plan_session_finished",
+        {
+          planId: "rp_record-1_plan-1",
+          progressId: "progress-1",
+          sessionId: "s1",
+        }
+      );
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+
+      mockPosthogCapture.mockClear();
+      await manager.markSessionComplete({
+        id: "s1",
+        readings: [reading("r1")],
+      });
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_session_finished",
+        expect.anything()
+      );
+    });
+
+    it("completing a session's last reading also captures reading_plan_session_finished", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.selectReadingPlanProgress(makeProgress());
+      const session = { id: "s2", readings: [reading("r2a"), reading("r2b")] };
+
+      await manager.markReadingComplete(session, "r2a");
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_session_finished",
+        expect.anything()
+      );
+
+      await manager.markReadingComplete(session, "r2b");
+      expect(mockPosthogCapture).toHaveBeenCalledWith(
+        "reading_plan_session_finished",
+        {
+          planId: "rp_record-1_plan-1",
+          progressId: "progress-1",
+          sessionId: "s2",
+        }
+      );
+    });
+
+    it("un-marking a session does not capture reading_plan_session_finished", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.selectReadingPlanProgress(makeProgress());
+      const session = { id: "s1", readings: [reading("r1")] };
+      await manager.markSessionComplete(session);
+      mockPosthogCapture.mockClear();
+
+      await manager.markSessionComplete(session, false);
+
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_session_finished",
+        expect.anything()
+      );
+    });
+
+    it("markDayComplete captures reading_plan_day_finished only once every session on the day is complete", async () => {
+      const plan = makePlan({
+        sessions: [
+          { id: "s1", readings: [reading("r1")] },
+          { id: "s2", readings: [reading("r2")] },
+        ],
+      });
+      const progress = makeProgress({
+        customCadence: {
+          segments: [{ type: "read", days: 1, sessionsPerDay: 2 }],
+        },
+        timeZone: ZONE,
+      });
+      const manager = makeManager("user-1");
+      await manager.selectReadingPlanProgress(progress);
+      const day = getReadingCalendar(
+        plan,
+        progress,
+        START_MS
+      )[0] as CalendarReadingDay;
+
+      await manager.markDayComplete(day);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith(
+        "reading_plan_day_finished",
+        {
+          planId: "rp_record-1_plan-1",
+          progressId: "progress-1",
+          dayOffset: day.dayOffset,
+        }
+      );
+
+      mockPosthogCapture.mockClear();
+      await manager.markDayComplete(day, false);
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_day_finished",
+        expect.anything()
+      );
+    });
+
+    it("completing the plan's last remaining session captures reading_plan_finished", async () => {
+      const plan = makePlan(); // 3 sessions, 1 reading each
+      getDataMock.mockResolvedValue({ success: true, data: plan });
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.selectReadingPlan(metadataOf(plan));
+      await manager.selectReadingPlanProgress(makeProgress());
+
+      await manager.markSessionComplete({
+        id: "s1",
+        readings: [reading("r1")],
+      });
+      await manager.markSessionComplete({
+        id: "s2",
+        readings: [reading("r2")],
+      });
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_finished",
+        expect.anything()
+      );
+
+      await manager.markSessionComplete({
+        id: "s3",
+        readings: [reading("r3")],
+      });
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("reading_plan_finished", {
+        planId: "rp_record-1_plan-1",
+        progressId: "progress-1",
+        totalSessions: 3,
+        totalReadings: 3,
+      });
+
+      mockPosthogCapture.mockClear();
+      // Already at 100% - re-saving must not re-fire.
+      await manager.markSessionComplete({
+        id: "s3",
+        readings: [reading("r3")],
+      });
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "reading_plan_finished",
+        expect.anything()
+      );
+    });
+  });
 });
 
 describe("progress updates", () => {

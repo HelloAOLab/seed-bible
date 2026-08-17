@@ -12,6 +12,7 @@ import {
 } from "./civilDate";
 import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
+import { captureEvent } from "./Utils";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -1328,6 +1329,50 @@ export function summarizeCalendar(
   };
 }
 
+/**
+ * Fires the session/plan "finished" analytics events for whatever completion
+ * transitions happened between `previous` and `next`. Called from every path
+ * that persists progress, so a session completed via marking the whole
+ * session, the whole day, or its last individual reading is reported the same
+ * way. Only the incomplete -> complete direction fires: undoing progress, or
+ * re-saving a session that was already complete, must not re-emit.
+ */
+function captureProgressCompletionEvents(
+  plan: ReadingPlan | undefined,
+  previous: ReadingPlanProgress | undefined,
+  next: ReadingPlanProgress
+): void {
+  const previousSessions = new Map(
+    (previous?.sessions ?? []).map((s) => [s.sessionId, s])
+  );
+  for (const session of next.sessions) {
+    if (
+      session.completedAtMs &&
+      !previousSessions.get(session.sessionId)?.completedAtMs
+    ) {
+      captureEvent("reading_plan_session_finished", {
+        planId: next.planId,
+        progressId: next.id,
+        sessionId: session.sessionId,
+      });
+    }
+  }
+  if (!plan) {
+    return;
+  }
+  const previousPercent = previous
+    ? withProgressStats(plan, previous).percentComplete
+    : 0;
+  if (previousPercent < 1 && next.percentComplete === 1) {
+    captureEvent("reading_plan_finished", {
+      planId: next.planId,
+      progressId: next.id,
+      totalSessions: next.totalSessions,
+      totalReadings: next.totalReadings,
+    });
+  }
+}
+
 export function createReadingPlansManager(
   os: CasualOSManager,
   login: LoginManager
@@ -1564,16 +1609,24 @@ export function createReadingPlansManager(
   // recomputing the derived stats against the selected plan when it matches.
   const updateSelectedProgress = async (updated: ReadingPlanProgress) => {
     const plan = selectedReadingPlan.value;
-    const next =
+    const matchingPlan =
       plan &&
       formatReadingPlanId(plan.recordName, plan.address) === updated.planId
-        ? withProgressStats(plan, updated)
-        : updated;
+        ? plan
+        : undefined;
+    const previous =
+      selectedReadingPlanProgress.value?.id === updated.id
+        ? selectedReadingPlanProgress.value
+        : undefined;
+    const next = matchingPlan
+      ? withProgressStats(matchingPlan, updated)
+      : updated;
     selectedReadingPlanProgress.value = next;
     userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
       (p) => (p.id === next.id ? next : p)
     );
     await saveReadingPlanProgress(next);
+    captureProgressCompletionEvents(matchingPlan, previous, next);
   };
 
   const requireSelectedProgress = () => {
@@ -1616,9 +1669,25 @@ export function createReadingPlansManager(
   /** Marks an entire calendar day (all sessions and readings) complete/incomplete and saves. */
   const markDayComplete = async (day: CalendarReadingDay, complete = true) => {
     const current = requireSelectedProgress();
+    // Day completion is calendar information (which sessions fall on this day)
+    // that isn't visible from a plain progress diff, so it's checked here
+    // rather than centrally alongside session/plan completion.
+    const wasAlreadyComplete = day.sessions.every((cs) =>
+      isSessionComplete(
+        cs.session,
+        current.sessions.find((s) => s.sessionId === cs.session.id)
+      )
+    );
     await updateSelectedProgress(
       markDayCompleteInProgress(current, day, Date.now(), complete)
     );
+    if (complete && !wasAlreadyComplete) {
+      captureEvent("reading_plan_day_finished", {
+        planId: current.planId,
+        progressId: current.id,
+        dayOffset: day.dayOffset,
+      });
+    }
   };
 
   /** Marks one chapter of one reading complete/incomplete and saves. */
@@ -1651,6 +1720,9 @@ export function createReadingPlansManager(
     const plan = fullReadingPlans.value.find(
       (p) => formatReadingPlanId(p.recordName, p.address) === updated.planId
     );
+    const previous = userReadingPlanProgresses.value.find(
+      (p) => p.id === updated.id
+    );
     const next = plan ? withProgressStats(plan, updated) : updated;
     userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
       (p) => (p.id === next.id ? next : p)
@@ -1659,6 +1731,7 @@ export function createReadingPlansManager(
       selectedReadingPlanProgress.value = next;
     }
     await saveReadingPlanProgress(next);
+    captureProgressCompletionEvents(plan, previous, next);
   };
 
   /**
@@ -1758,6 +1831,12 @@ export function createReadingPlansManager(
       ...userReadingPlanProgresses.value,
       progress,
     ];
+    captureEvent("reading_plan_started", {
+      planId: progress.planId,
+      progressId: progress.id,
+      selfPaced: progress.selfPaced,
+      cadenceId: progress.selectedCadenceId,
+    });
     return progress;
   };
 
@@ -2114,6 +2193,17 @@ export function createReadingPlansManager(
     });
     editingReadingPlan.value = null;
     editingReadingPlanSaving.value = false;
+    captureEvent(
+      draft.isNew ? "reading_plan_created" : "reading_plan_updated",
+      {
+        planId: formatReadingPlanId(plan.recordName, plan.address),
+        totalSessions: plan.sessions.length,
+        totalReadings: plan.sessions.reduce(
+          (sum, session) => sum + session.readings.length,
+          0
+        ),
+      }
+    );
     return plan;
   };
 
@@ -2134,6 +2224,7 @@ export function createReadingPlansManager(
     );
     await os.eraseData(plan.recordName, `${plan.address}_metadata`);
     await os.eraseData(plan.recordName, plan.address);
+    captureEvent("reading_plan_deleted", { planId });
     // Best effort: a progress that fails to erase leaves nothing broken behind
     // (it simply stops matching a plan), so it must not fail the delete.
     await Promise.all(
