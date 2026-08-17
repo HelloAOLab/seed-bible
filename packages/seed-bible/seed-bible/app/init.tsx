@@ -46,6 +46,7 @@ void Promise.all([state.i18n.ready, waitForInitialChapterLoads()]).then(() => {
     pathname: location.pathname,
     search: location.search,
     container,
+    tabIds: state.tabs.tabs.value.map((tab) => tab.id),
   });
 
   const app = <Main initialState={state} config={config} />;
