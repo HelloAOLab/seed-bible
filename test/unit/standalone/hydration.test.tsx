@@ -1,5 +1,6 @@
 import { render as ssrRender } from "../../../standalone/entry-ssr";
 import { hydrate } from "preact";
+import { act } from "preact/test-utils";
 import { Main } from "@packages/seed-bible/seed-bible/app/main";
 import {
   DEFAULT_APP_CONFIG,
@@ -21,6 +22,39 @@ const TEMPLATE = [
 ].join("");
 
 const PATH = "/en/AAB/genesis/1?useFreeBibleAPI=true";
+
+/**
+ * `sb-tabs-state` exactly as `writeStoredTabsState` leaves it, for a visitor
+ * whose previous session ended on `tabs`. Used to reproduce the returning-visitor
+ * case: the server can never see this (no `localStorage`), so it is the client's
+ * job not to let it change the first render.
+ */
+function seedStoredTabsState(
+  tabs: Array<{
+    id: string;
+    translationId: string;
+    bookId: string;
+    chapterNumber: number;
+  }>,
+  options: {
+    selectedTabId?: string;
+    layout?: string;
+    slotTabIds?: string[];
+    selectedSlotIndex?: number;
+  } = {}
+): void {
+  localStorage.setItem(
+    "sb-tabs-state",
+    JSON.stringify({
+      version: 1,
+      tabs,
+      selectedTabId: options.selectedTabId ?? tabs[0]!.id,
+      layout: options.layout ?? "single",
+      slotTabIds: options.slotTabIds ?? [tabs[0]!.id],
+      selectedSlotIndex: options.selectedSlotIndex ?? 0,
+    })
+  );
+}
 
 async function renderSsrDocument(): Promise<string> {
   jsdom.reconfigure({ url: `http://ssr.local${PATH}` });
@@ -62,19 +96,21 @@ describe("client hydration", () => {
   });
 
   /**
-   * Two known, pre-existing differences have to be normalized out before a
-   * byte-for-byte comparison is meaningful — neither is something this test
-   * (or Stage 3) introduced, and neither is fixed by it:
+   * Two differences still have to be normalized out before a byte-for-byte
+   * comparison is meaningful:
    *
-   * 1. `<!--$s-->`/`<!--/$s-->` — markers `preact-render-to-string`'s
-   *    `renderToStringAsync` wraps around a resolved Suspense boundary
-   *    (used for the chapter-load suspension; see `BibleReader.tsx`,
-   *    `Tabs.tsx`'s `TabRow`). Preact's actual `hydrate()` (checked against
-   *    `preact/dist/preact.js` and `preact/compat`'s `Suspense`) has no
-   *    special handling for these — they're an SSR-only serialization
-   *    artifact, not a signal hydrate reads. They're harmless (invisible
-   *    comment nodes hydrate leaves in place) but make a raw string
-   *    comparison fail even for a perfectly correct hydration.
+   * 1. `<!--$s-->`/`<!--/$s-->` — markers `preact-render-to-string` wraps around
+   *    any component that had to `throw` its data promise (the chapter-load
+   *    suspension in `BibleReader.tsx` and `Tabs.tsx`'s `TabRow`), emitted even
+   *    once the promise resolved to real content. These are harmless to
+   *    `hydrate()`, not merely tolerated: Preact's node matching requires a
+   *    candidate with `setAttribute` and a matching `localName`
+   *    (`preact/src/diff/index.js`), so a comment node is skipped over rather
+   *    than tripped on, and Preact then drops it as unmatched. Verified directly
+   *    against `preact/debug` with markers around an element, around text, at
+   *    the container root, and nested: zero mismatches reported in all four. So
+   *    they are a string-comparison artifact only — do NOT "fix" them by
+   *    stripping them from the SSR output.
    *
    * 2. The anonymous "Guest" avatar's icon + color
    *    (`sb-tab-user-icon-animal` in `Tabs.tsx`'s `SelfAvatarVisual`) is
@@ -82,43 +118,26 @@ describe("client hydration", () => {
    *    (`OsManager.tsx`), which is a fresh `uuid()` generated independently
    *    by the server's `CasualOSManager()` instance and the client's — so
    *    for a signed-out visitor it is *never* the same value across the
-   *    hydration boundary. This is a genuine, pre-existing hydration hazard
-   *    Stage 3 did not introduce and does not fix (fixing it means giving
-   *    anonymous identity a stable pre-mount default, the same
-   *    seed-then-correct pattern used for viewport/theme/settings — a
-   *    follow-up, not done here). Tracked as a known gap; normalized here
-   *    so it doesn't mask an unrelated regression in this test.
+   *    hydration boundary. A genuine hydration hazard, though an
+   *    attribute-level one, which Preact neither reports nor corrects. Fixing
+   *    it means giving anonymous identity a stable pre-mount default — the same
+   *    seed-then-correct pattern used for viewport/settings/tabs. Tracked as a
+   *    known gap; normalized here so it doesn't mask an unrelated regression.
    *
-   * 3. The first-run tutorial offer card (`TutorialPrompt`, rendered as the
-   *    LAST sibling in the tree) is absent from the SSR output but present
-   *    after hydration. Root cause: `renderToStringAsync` only re-renders
-   *    the specific subtree that threw (the chapter-load Suspense
-   *    boundary) once its promise resolves — it does not re-render sibling
-   *    content that already committed earlier in the same pass. Since
-   *    `TutorialManager`'s `promptVisible` (`TutorialManager.tsx`) flips
-   *    true as a side effect of that SAME chapter load settling
-   *    (`readerVisible` depends on `chapterData`), and `TutorialPrompt` is
-   *    positioned before the chapter-suspending subtree in render order,
-   *    its SSR pass captures the pre-resolution (`false`) value and never
-   *    revisits it — a general property of "resume only what threw"
-   *    Suspense SSR, not something specific to Stage 3. Safe for
-   *    `hydrate()` specifically because it's a wholesale trailing addition
-   *    (nothing existing to mismatch), not an attribute-level disagreement
-   *    on a shared node — but still a real content gap between what the
-   *    server rendered and what a client mounts moments later, worth its
-   *    own follow-up. Normalized here by comparing only what precedes it.
+   * A third divergence used to be normalized here and is now genuinely fixed:
+   * the first-run tutorial offer card (`TutorialPrompt`) was absent from the SSR
+   * output but present after hydration, because `TutorialManager`'s auto-start
+   * effect flipped `promptVisible` true as soon as the chapter load settled —
+   * which on the client happens before `hydrate()` (`app/init.tsx` awaits it),
+   * while SSR captured the pre-resolution `false` and never revisited it
+   * (`renderToStringAsync` only re-renders the subtree that threw). That put an
+   * element in the client tree the served HTML lacked, which IS reported by
+   * `hydrate()`. The effect is now armed from a post-mount effect instead
+   * (`TutorialManager.armAutoStart`, called by `app.hydrateFromStorage`), so the
+   * comparison below covers it rather than normalizing it away.
    */
-  // Removed whole (open tag through its own matching close), not just
-  // truncated at the open tag — this element may be entirely absent from
-  // one side (see finding 3 above), and truncating instead of removing
-  // would leave that side's ancestor closing tags unbalanced relative to
-  // the other, producing a spurious difference of its own.
-  const TUTORIAL_PROMPT_RE =
-    /<div role="dialog" aria-modal="false" aria-labelledby="sb-tutorial-prompt-title"[\s\S]*?<\/div><\/div>/;
-
   function normalizeKnownSsrClientDivergences(html: string): string {
     return html
-      .replace(TUTORIAL_PROMPT_RE, "")
       .replace(/<!--\/?\$s-->/g, "")
       .replace(
         /(style="border-color:)[^;]+(;background-color:)[^;]+(;?" class="sb-tab-user-icon sb-tab-user-icon-animal"><span class="material-symbols-outlined">)[a-z_]+(<\/span>)/g,
@@ -174,6 +193,156 @@ describe("client hydration", () => {
     expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
       normalizeKnownSsrClientDivergences(beforeHtml)
     );
+  });
+
+  /**
+   * Puts the SSR document into jsdom and returns the pieces a client needs to
+   * hydrate onto it. Split out of the first test so the returning-visitor cases
+   * below can seed `localStorage` between the SSR render (which must not see it)
+   * and the client's `createSeedBibleState` (which must).
+   */
+  async function installSsrDocument(): Promise<{
+    container: HTMLElement;
+    beforeHtml: string;
+  }> {
+    const html = await renderSsrDocument();
+    document.open();
+    document.write(html);
+    document.close();
+    // `document.write` re-navigates jsdom's location to "about:blank"; put it
+    // back to what the server rendered for, matching a real browser.
+    jsdom.reconfigure({ url: `http://ssr.local${PATH}` });
+    const container = document.getElementById("app")!;
+    return { container, beforeHtml: container.innerHTML };
+  }
+
+  async function createClientState() {
+    const config = readInjectedConfig();
+    const apiResponseSnapshot = readInjectedApiResponseSnapshot();
+    const state = createSeedBibleState({ config, apiResponseSnapshot });
+    await Promise.all([
+      state.i18n.ready,
+      Promise.all(
+        state.tabs.tabs.value.map((t) => t.readingState.chapterDataPromise)
+      ),
+    ]);
+    return { config, state };
+  }
+
+  // Excludes the mobile "add a tab" button, which reuses `sb-tab-row` for its
+  // styling (Tabs.tsx) but isn't a reader tab.
+  function countTabRows(container: HTMLElement): number {
+    return container.querySelectorAll(
+      ".sb-tab-row:not(.sb-tab-mobile-add-inline)"
+    ).length;
+  }
+
+  it("hydrates cleanly when the visitor already has this chapter's tab saved", async () => {
+    // The reported repro: load a chapter, then refresh. The refresh finds an
+    // `sb-tabs-state` entry describing the tab the previous load persisted.
+    const { container, beforeHtml } = await installSsrDocument();
+    seedStoredTabsState([
+      { id: "tab-1", translationId: "AAB", bookId: "GEN", chapterNumber: 1 },
+    ]);
+
+    const { config, state } = await createClientState();
+
+    // The saved tab reconciles to the same single tab the URL implies, so the
+    // gate is satisfied — and must stay satisfied, since falling back to
+    // `render()` for every returning visitor is what the reverted fix did.
+    expect(
+      decideHydration({
+        config,
+        pathname: location.pathname,
+        search: location.search,
+        container,
+      })
+    ).toEqual({ hydrate: true });
+
+    hydrate(<Main initialState={state} config={config} />, container);
+
+    expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
+      normalizeKnownSsrClientDivergences(beforeHtml)
+    );
+  });
+
+  it("hydrates cleanly with several saved tabs, then restores them after mount", async () => {
+    // The structural case: two saved tabs across a split. Restoring them before
+    // the first render mounts a second `TabRow` and a second pane that the served
+    // HTML never had — extra elements are the one divergence `hydrate()` reports
+    // rather than silently patching, so they have to arrive afterwards.
+    const { container, beforeHtml } = await installSsrDocument();
+    seedStoredTabsState(
+      [
+        { id: "tab-1", translationId: "AAB", bookId: "GEN", chapterNumber: 1 },
+        { id: "tab-2", translationId: "AAB", bookId: "EXO", chapterNumber: 2 },
+      ],
+      {
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      }
+    );
+
+    const { config, state } = await createClientState();
+    expect(state.tabs.tabs.value).toHaveLength(1);
+    expect(countTabRows(container)).toBe(1);
+
+    hydrate(<Main initialState={state} config={config} />, container);
+
+    // The DOM the server sent is still exactly the DOM we have.
+    expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
+      normalizeKnownSsrClientDivergences(beforeHtml)
+    );
+
+    // ...and only now do the saved tabs appear, via `MainBody`'s post-mount
+    // effect calling `app.hydrateFromStorage()`.
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await Promise.all(
+        state.tabs.tabs.value.map((t) => t.readingState.chapterDataPromise)
+      );
+    });
+
+    expect(state.tabs.tabs.value.map((t) => t.id)).toEqual(["tab-1", "tab-2"]);
+    expect(state.tabsLayout.layout.value).toBe("split-2v");
+    expect(countTabRows(container)).toBe(2);
+  });
+
+  it("does not overwrite the saved tabs before restoring them", async () => {
+    // The managers seed with a single URL-derived tab. Persisting *that* before
+    // the restore ran would replace a whole saved session with one tab — the
+    // saved tabs destroyed by the act of opening the page.
+    await installSsrDocument();
+    seedStoredTabsState(
+      [
+        { id: "tab-1", translationId: "AAB", bookId: "GEN", chapterNumber: 1 },
+        { id: "tab-2", translationId: "AAB", bookId: "EXO", chapterNumber: 2 },
+      ],
+      {
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      }
+    );
+
+    const { state } = await createClientState();
+    // Let every eager effect settle, including the persistence one.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const stored = JSON.parse(localStorage.getItem("sb-tabs-state")!);
+    expect(stored.tabs).toHaveLength(2);
+
+    // Once the restore has run, persisting is correct again.
+    state.app.hydrateFromStorage();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(
+      JSON.parse(localStorage.getItem("sb-tabs-state")!).tabs
+    ).toHaveLength(2);
   });
 
   it("declines to hydrate when the live URL doesn't match what was rendered", async () => {

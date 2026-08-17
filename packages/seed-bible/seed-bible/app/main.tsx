@@ -147,6 +147,18 @@ function MainBody({
     state.login.hydrateLocalConfig();
   }, []);
 
+  // Deferred real read, same reason as the two above: saved tabs and their slot
+  // layout, the cached translation catalog, the selector view mode, and the
+  // tutorial/onboarding flags all seed to what the server rendered so the first
+  // hydrate pass can't disagree with it, then get corrected here. Unlike the
+  // others this one is load-bearing for correctness rather than polish — a
+  // returning visitor's extra tabs would mount `TabRow`s and panes the served
+  // HTML never had, which is the one divergence `hydrate()` reports instead of
+  // silently patching.
+  useEffect(() => {
+    state.app.hydrateFromStorage();
+  }, []);
+
   if (typeof document !== "undefined") {
     useSignalEffect(() => {
       document.title = state.app.title.value;

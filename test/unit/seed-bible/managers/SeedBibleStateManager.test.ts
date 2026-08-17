@@ -1514,6 +1514,20 @@ describe("createSeedBibleState", () => {
     const readStoredTabs = (): StoredTabsState =>
       JSON.parse(localStorage.getItem("sb-tabs-state") ?? "null");
 
+    /**
+     * Creates state and runs the post-mount storage correction, the way
+     * `MainBody` does in the real app. Both are needed here: the managers seed
+     * from the URL alone so the client's first render matches the SSR HTML, and
+     * until `hydrateFromStorage` has read the stored tabs back, the persistence
+     * effect stays blocked so it can't overwrite them with that seed.
+     */
+    const loadApp = async () => {
+      const state = await createState();
+      state.app.hydrateFromStorage();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return state;
+    };
+
     // SettingsManager reads the anonymous, device-only config store
     // (`login.localConfig`) from this key, so writing it before a bootstrap is
     // how a test simulates opening the app with panels off/on.
@@ -1534,7 +1548,7 @@ describe("createSeedBibleState", () => {
     };
 
     it("stores the split layout together with the hidden clone backing it", async () => {
-      const state = await createState();
+      const state = await loadApp();
 
       await openSecondPane(state);
 
@@ -1551,13 +1565,13 @@ describe("createSeedBibleState", () => {
 
     it("keeps a stored split through a load with panels disabled", async () => {
       // 1. Build a two-pane split with panels enabled.
-      const withPanels = await createState();
+      const withPanels = await loadApp();
       await openSecondPane(withPanels);
       expect(readStoredTabs().slotTabIds).toHaveLength(2);
 
       // 2. Reload with panels disabled.
       setPanelsDisabled(true);
-      const panelsOff = await createState();
+      const panelsOff = await loadApp();
       expect(panelsOff.app.panelsEnabled.value).toBe(false);
 
       // The rendered view collapses to a single pane...
@@ -1572,7 +1586,7 @@ describe("createSeedBibleState", () => {
 
       // 3. Re-enable panels and reload: the split renders again.
       setPanelsDisabled(false);
-      const panelsBackOn = await createState();
+      const panelsBackOn = await loadApp();
       expect(panelsBackOn.app.panelsEnabled.value).toBe(true);
       expect(panelsBackOn.app.effectiveSlotLayout.value).toBe("split-2v");
       expect(panelsBackOn.app.effectiveSlots.value).toHaveLength(2);

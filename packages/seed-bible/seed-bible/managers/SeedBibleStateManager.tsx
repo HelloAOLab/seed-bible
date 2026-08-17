@@ -203,6 +203,20 @@ export interface AppState {
    */
   applyViewport: () => void;
 
+  /**
+   * Applies every value the app keeps in `localStorage` that also feeds the
+   * first render — saved tabs and their slot layout, the cached translation
+   * catalog, the selector's view mode, and the tutorial/onboarding flags.
+   *
+   * All of those seed to what the server rendered (it has no `localStorage` at
+   * all), because a client tree with extra elements is the one hydration
+   * divergence Preact reports rather than silently patching. Call once from a
+   * post-mount effect — see `MainBody` in `app/main.tsx` — so the device's real
+   * state arrives as a normal diffed re-render. Ordering matters and is fixed
+   * here: slots bind to tab objects by id, so tabs are restored first.
+   */
+  hydrateFromStorage: () => void;
+
   /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
@@ -946,6 +960,13 @@ export function createSeedBibleState(
     }
   });
 
+  // Blocks the persistence effect below until `hydrateFromStorage` has read the
+  // stored tabs back. Until then the managers hold only the single URL-derived
+  // tab they seed with to match SSR, and persisting *that* would overwrite the
+  // visitor's saved tabs with a one-tab state before anything ever restored
+  // them — the saved session would be destroyed by the act of loading the page.
+  const tabsRestored = signal(false);
+
   // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
   // selected tab, the layout preset, and the slot arrangement) to localStorage
   // so TabsManager/TabsLayoutManager can restore it on the next refresh or
@@ -971,6 +992,10 @@ export function createSeedBibleState(
         });
 
     effect(() => {
+      if (!tabsRestored.value) {
+        return;
+      }
+
       const persistedTabs = buildPersistedTabs();
       const persistableIds = new Set(persistedTabs.map((tab) => tab.id));
 
@@ -1005,6 +1030,29 @@ export function createSeedBibleState(
       writeStoredTabsState(nextState);
     });
   }
+
+  /**
+   * One-time correction of every `localStorage`-derived value that feeds the
+   * first render. See `AppState.hydrateFromStorage`.
+   */
+  const hydrateFromStorage = () => {
+    batch(() => {
+      // Tabs before slots: slots are bound to tab objects by id, and restoring
+      // tabs replaces those objects wholesale.
+      tabs.hydrateStoredTabs();
+      tabsLayout.hydrateStoredLayout();
+      data.hydrateCachedCatalog();
+      selector.hydrateStoredViewMode();
+      tutorial.hydrateStoredFlags();
+      onboarding.hydrateStoredFlags();
+      // Unblocks the persistence effect above, which now sees the restored tab
+      // list rather than the URL-only seed.
+      tabsRestored.value = true;
+    });
+    // Deliberately outside the batch: this can set `promptVisible`, and it must
+    // observe the settled reader state rather than a half-applied one.
+    tutorial.armAutoStart();
+  };
 
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
@@ -1693,6 +1741,7 @@ export function createSeedBibleState(
       viewportWidth,
       viewportHeight,
       applyViewport,
+      hydrateFromStorage,
       isMobile,
       isMobileLandscape,
       isCompactDesktop,
