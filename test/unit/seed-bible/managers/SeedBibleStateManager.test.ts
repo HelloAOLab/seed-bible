@@ -136,9 +136,15 @@ vi.mock("@packages/seed-bible/seed-bible/managers/HighlightsManager", () => ({
   createHighlightsManager: () => mockHighlightsManager,
 }));
 
-vi.mock("@packages/seed-bible/seed-bible/managers/SessionsManager", () => ({
-  createSessionsManager: () => mockSessionsManager,
-}));
+// Partial: ChatsManager imports participant-visual helpers from this module, so
+// replacing it wholesale breaks any test that creates a chat session.
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/SessionsManager",
+  async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    createSessionsManager: () => mockSessionsManager,
+  })
+);
 
 vi.mock(
   "@packages/seed-bible/seed-bible/i18n/I18nManager",
@@ -209,6 +215,7 @@ function createMockSharedSession(id: string) {
       isExtensionEnabled: vi.fn().mockReturnValue(false),
       enableExtension: vi.fn(),
       disableExtension: vi.fn(),
+      dispose: vi.fn(),
     },
     document: {} as SharedDocument,
     options: signal({
@@ -219,6 +226,7 @@ function createMockSharedSession(id: string) {
       endedAt: null,
     }),
     connectedUsers: signal([]),
+    isSynced: signal(true),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
     dispose: vi.fn(),
@@ -593,6 +601,207 @@ describe("createSeedBibleState", () => {
     } finally {
       window.history.replaceState(null, "", window.location.pathname);
     }
+  });
+
+  describe("host-disconnect grace timer", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const HOST_ID = "host-user-1";
+    const hostConnectedUser = {
+      userId: HOST_ID,
+      connectionId: "host-connection",
+      isSelf: false,
+    };
+    // Our own presence entry. The grace timer only trusts a presence list
+    // that includes us — a list missing self means the presence channel
+    // itself is broken, not that anyone actually left.
+    const selfConnectedUser = {
+      userId: "guest-user-1",
+      connectionId: "guest-connection",
+      isSelf: true,
+    };
+
+    function createMockHostedSession(id: string) {
+      const session = createMockSharedSession(id);
+      session.options.value = {
+        ...session.options.value,
+        hostUserId: HOST_ID,
+      };
+      return session;
+    }
+
+    async function joinAsHostedSession(state: SeedBibleState, id: string) {
+      const session = createMockHostedSession(id);
+      // `wrapSessionLifecycle` (invoked by `joinSharedSession` below)
+      // replaces `session.dispose` with its own wrapper, so the original
+      // spy must be captured before that happens in order to assert on it.
+      const originalDispose = session.dispose;
+      mockSessionsManager.joinSession.mockResolvedValue(session);
+      await state.app.joinSharedSession(id);
+      // Seed `sessionsWhereHostWasSeen` — the host must be observed as
+      // connected at least once before the disconnect heuristic applies,
+      // so joiners don't immediately close their own tab before they even
+      // see the host.
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      return { session, originalDispose };
+    }
+
+    it("does not start the disconnect timer while this client's own connection is unsynced", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-unsynced"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [selfConnectedUser];
+
+      vi.advanceTimersByTime(20_000);
+
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows a reconnecting toast and closes the tab after the grace period once synced and the host is still gone", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-grace"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [selfConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "Reconnecting to the session…"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(29_999);
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+      expect(originalDispose).toHaveBeenCalledTimes(1);
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(false);
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host left — you were removed from the session"
+      );
+    });
+
+    it("cancels the pending removal and shows a reconnected toast if the host reappears before the grace period elapses", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-recover"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [selfConnectedUser];
+      vi.advanceTimersByTime(15_000);
+
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "Reconnected to the session"
+      );
+
+      vi.advanceTimersByTime(20_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+    });
+
+    it("does not close the tab if this client's connection goes unsynced while the timer is pending", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-resync"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [selfConnectedUser];
+      vi.advanceTimersByTime(1000);
+      // This client's own connection drops mid-wait (e.g. the phone was
+      // backgrounded right after the host first looked gone). The host is
+      // still absent from `connectedUsers`, but that reading is no longer
+      // trustworthy.
+      session.isSynced.value = false;
+
+      vi.advanceTimersByTime(29_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+    });
+
+    it("suppresses arming the timer for a short window right after the tab returns to the foreground", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-resume"
+      );
+
+      document.dispatchEvent(new Event("visibilitychange"));
+
+      session.connectedUsers.value = [selfConnectedUser];
+      expect(state.app.currentToast.value).toBeNull();
+
+      vi.advanceTimersByTime(4999);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      // The post-resume grace window has now elapsed, so the effect re-runs
+      // and arms the timer.
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe(
+        "Reconnecting to the session…"
+      );
+
+      vi.advanceTimersByTime(30_000);
+      expect(originalDispose).toHaveBeenCalledTimes(1);
+    });
+
+    // Regression test for the two-device repro in #1346: after the guest
+    // backgrounded and resumed, the OS stopped reporting presence entirely
+    // (the list went empty and never recovered, self included) while the
+    // document itself kept syncing. The host had not left, so the guest must
+    // not be ejected on the strength of that empty list.
+    it("never closes the tab when the presence list is empty because the presence channel itself is broken", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-presence-broken"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      // The document resynced fine (navigation still works)...
+      session.isSynced.value = true;
+      // ...but presence went silent: nobody is listed, not even ourselves,
+      // even though we are obviously still here.
+      session.connectedUsers.value = [];
+
+      vi.advanceTimersByTime(120_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+      expect(state.app.currentToast.value).toBeNull();
+    });
   });
 
   it("tabs can be opened in new slots", async () => {
@@ -1203,46 +1412,54 @@ describe("createSeedBibleState", () => {
     });
   });
 
-  describe("pageTitle tag", () => {
-    function setSelectedTabChapter(
-      state: SeedBibleState,
-      bookId: string,
-      bookName: string,
-      chapterNumber: number,
-      translationName = "Test Translation",
-      textDirection: "ltr" | "rtl" = "ltr"
-    ) {
-      const tab =
-        state.tabs.tabs.value.find(
-          (t) => t.id === state.tabs.selectedTabId.value
-        ) ?? null;
-      expect(tab).not.toBeNull();
-      // Batched, and with translationId set to match chapterData.translation.id,
-      // so the reading-state effect that watches translationId/bookId/chapterNumber
-      // (and re-fetches content whenever they don't match chapterData) sees a
-      // fully consistent position and never issues a real network request.
-      batch(() => {
-        tab!.readingState.translationId.value = "test-translation";
-        tab!.readingState.bookId.value = bookId;
-        tab!.readingState.chapterNumber.value = chapterNumber;
-        tab!.readingState.chapterData.value = {
-          translation: {
-            id: "test-translation",
-            name: translationName,
-            textDirection,
-          },
-          book: { id: bookId, name: bookName, abbreviation: bookId },
-          chapter: {
-            number: chapterNumber,
-            id: `${bookId}-${chapterNumber}`,
-            reference: `${bookName} ${chapterNumber}`,
-          },
-          verses: [],
-          notes: [],
-        } as any;
-      });
-    }
+  // Shared by the pageTitle and meta-description suites: both read signals
+  // derived from the selected tab's loaded chapter.
+  function setSelectedTabChapter(
+    state: SeedBibleState,
+    bookId: string,
+    bookName: string,
+    chapterNumber: number,
+    translationName = "Test Translation",
+    textDirection: "ltr" | "rtl" = "ltr",
+    extra: {
+      content?: unknown[];
+      shortName?: string;
+    } = {}
+  ) {
+    const tab =
+      state.tabs.tabs.value.find(
+        (t) => t.id === state.tabs.selectedTabId.value
+      ) ?? null;
+    expect(tab).not.toBeNull();
+    // Batched, and with translationId set to match chapterData.translation.id,
+    // so the reading-state effect that watches translationId/bookId/chapterNumber
+    // (and re-fetches content whenever they don't match chapterData) sees a
+    // fully consistent position and never issues a real network request.
+    batch(() => {
+      tab!.readingState.translationId.value = "test-translation";
+      tab!.readingState.bookId.value = bookId;
+      tab!.readingState.chapterNumber.value = chapterNumber;
+      tab!.readingState.chapterData.value = {
+        translation: {
+          id: "test-translation",
+          name: translationName,
+          shortName: extra.shortName ?? translationName,
+          textDirection,
+        },
+        book: { id: bookId, name: bookName, abbreviation: bookId },
+        chapter: {
+          number: chapterNumber,
+          id: `${bookId}-${chapterNumber}`,
+          reference: `${bookName} ${chapterNumber}`,
+          content: extra.content,
+        },
+        verses: [],
+        notes: [],
+      } as any;
+    });
+  }
 
+  describe("pageTitle tag", () => {
     it("sets pageTitle from the selected book and chapter", async () => {
       const state = await createState();
 
@@ -1278,6 +1495,167 @@ describe("createSeedBibleState", () => {
       expect(state.app.title.value).toBe(
         `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
+    });
+  });
+
+  describe("meta description", () => {
+    const GENESIS_1 = [
+      { type: "heading", content: ["The Creation"] },
+      {
+        type: "verse",
+        number: 1,
+        content: ["In the beginning God created the heavens and the earth."],
+      },
+      {
+        type: "verse",
+        number: 2,
+        content: [
+          "Now the earth was formless and void, and darkness was over the surface of the deep, and the Spirit of God was hovering over the surface of the waters.",
+        ],
+      },
+    ];
+
+    function graphemeCount(text: string): number {
+      return [
+        ...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(
+          text
+        ),
+      ].length;
+    }
+
+    it("leads with the reference and quotes the chapter", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(
+        state,
+        "genesis",
+        "Genesis",
+        1,
+        "Berean Standard Bible",
+        "ltr",
+        {
+          content: GENESIS_1,
+          shortName: "BSB",
+        }
+      );
+
+      expect(state.app.description.value).toBe(
+        "Genesis 1 (BSB): In the beginning God created the heavens and the earth. Now the earth was formless and void, and darkness was over the surface of the…"
+      );
+    });
+
+    it("stays within the snippet budget and emits no verse numbers", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB", "ltr", {
+        content: GENESIS_1,
+        shortName: "BSB",
+      });
+
+      const description = state.app.description.value;
+      expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      // The only digit allowed is the chapter number in the reference.
+      expect(description.replace("Genesis 1 (BSB):", "")).not.toMatch(/\d/);
+    });
+
+    it("skips the section heading rather than leading with it", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB", "ltr", {
+        content: GENESIS_1,
+        shortName: "BSB",
+      });
+
+      expect(state.app.description.value).not.toContain("The Creation");
+    });
+
+    it("describes the app, not just its name, when no chapter is loaded", async () => {
+      const state = await createState();
+
+      const description = state.app.description.value;
+
+      // Regression guard: this used to emit the bare site name as the
+      // description, which tells a search engine nothing.
+      expect(description).not.toBe("Seed Bible");
+      expect(description).toContain("study the Bible online");
+    });
+
+    it("falls back to the reference when the chapter has no quotable text", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB", "ltr", {
+        content: [{ type: "line_break" }],
+        shortName: "BSB",
+      });
+
+      expect(state.app.description.value).toBe(
+        "Read Genesis 1 in the Seed Bible"
+      );
+    });
+
+    it("falls back to the reference when chapter content is missing entirely", async () => {
+      const state = await createState();
+
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "BSB");
+
+      expect(state.app.description.value).toBe(
+        "Read Genesis 1 in the Seed Bible"
+      );
+    });
+
+    // Book names come from each translation's own catalog, not a fixed short
+    // label, so this branch has no inherent length ceiling either.
+    it("bounds the reference-only fallback for a very long book name", async () => {
+      const state = await createState();
+      const longBookName =
+        "The First Book of Moses Commonly Called Genesis Together With Extended Introductory Commentary And Translator Notes For The Attentive Reader Of Scripture";
+
+      setSelectedTabChapter(state, "genesis", longBookName, 1, "BSB", "ltr", {
+        content: [{ type: "line_break" }],
+        shortName: "BSB",
+      });
+
+      const description = state.app.description.value;
+
+      expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      expect(description.endsWith("…")).toBe(true);
+    });
+
+    // Only observable with a reordered template: with the citation charged
+    // against the budget up front, the excerpt absorbs the cut. Truncating the
+    // composed string alone would chop the citation off the end instead.
+    it("cuts scripture, not the citation, when the template ends with the citation", async () => {
+      const state = await createState();
+      const i18next = (await import("i18next")).default;
+      const EN_DEFAULT =
+        "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}";
+
+      i18next.addResource(
+        "en",
+        "seed-bible",
+        "chapter-meta-description",
+        "「{{excerpt}}」— {{bookName}} {{chapterNumber}} ({{translationName}})"
+      );
+
+      try {
+        setSelectedTabChapter(state, "genesis", "Genesis", 1, "Berean", "ltr", {
+          content: GENESIS_1,
+          shortName: "BSB",
+        });
+
+        const description = state.app.description.value;
+
+        expect(description).toContain("— Genesis 1 (BSB)");
+        expect(description.endsWith("(BSB)")).toBe(true);
+        expect(graphemeCount(description)).toBeLessThanOrEqual(155);
+      } finally {
+        i18next.addResource(
+          "en",
+          "seed-bible",
+          "chapter-meta-description",
+          EN_DEFAULT
+        );
+      }
     });
   });
 
@@ -1525,6 +1903,91 @@ describe("createSeedBibleState", () => {
       expect(readingState.translationId.value).toBe("hin_cvb");
       expect(readingState.bookId.value).toBe("EXO");
       expect(readingState.chapterNumber.value).toBe(2);
+    });
+  });
+
+  describe("local chat scripture parsing", () => {
+    // English book names resolve with no catalog at all, so an accented Spanish
+    // name is the only text that can distinguish "books came from the selected
+    // tab" from "the English-only fallback happened to match".
+    function localizedSpaBooks(): TranslationBooks {
+      const base = booksForTranslation(aabBooks, SPA_TRANSLATION);
+      const spanishNames: Record<string, string> = {
+        GEN: "Génesis",
+        EXO: "Éxodo",
+        MAT: "Mateo",
+      };
+      return {
+        ...base,
+        books: base.books.map((book) => ({
+          ...book,
+          name: spanishNames[book.id] ?? book.name,
+          commonName: spanishNames[book.id] ?? book.commonName,
+        })),
+      };
+    }
+
+    it("resolves localized book names from the selected tab's translation", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({
+          spaBooks: localizedSpaBooks(),
+        }),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await readingState.selectTranslationAndChapter("spa_onbv", "GEN", 1);
+      await waitForInitialLoad(readingState, 1000);
+
+      const chat = state.chats.createLocalSession();
+      await chat.sendMessage({ type: "text", text: "Ver Génesis 1:1" });
+
+      expect(chat.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            text: "Génesis 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("follows the selected tab when the user switches tabs", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({
+          spaBooks: localizedSpaBooks(),
+        }),
+      });
+      const englishTabId = state.tabs.selectedTabId.value;
+      const spanishTab = state.tabs.addTab();
+      await waitForInitialLoad(spanishTab.readingState, 1000);
+      await spanishTab.readingState.selectTranslationAndChapter(
+        "spa_onbv",
+        "GEN",
+        1
+      );
+      await waitForInitialLoad(spanishTab.readingState, 1000);
+
+      const chat = state.chats.createLocalSession();
+      await chat.sendMessage({ type: "text", text: "Ver Génesis 1:1" });
+
+      expect(chat.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+
+      // Back on the English tab the same text is no longer a reference, which
+      // is what proves the books are read from whichever tab is selected.
+      state.tabs.selectTab(englishTabId);
+
+      expect(chat.parsedMessages.value[0]).toMatchObject({
+        parts: ["Ver Génesis 1:1"],
+      });
     });
   });
 });

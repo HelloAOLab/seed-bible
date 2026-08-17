@@ -16,12 +16,19 @@ import {
   hasReadingUrlPosition,
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
+import {
+  META_DESCRIPTION_MAX_GRAPHEMES,
+  buildChapterExcerpt,
+  countGraphemes,
+  truncateForMeta,
+} from "../managers/ChapterText";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
+  type TranslationBook,
 } from "../managers/FreeUseBibleAPI";
 import { createPanes } from "../managers/PanesManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
@@ -149,6 +156,14 @@ export const MOBILE_BREAKPOINT = 480;
  * components/Tabs/Tabs.css by hand.
  */
 export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
+
+/**
+ * Fallback `<meta name="description">` for pages with no chapter to quote —
+ * the site root, and the three cases where a chapter never arrives (an upstream
+ * failure, a book absent from the translation, or the SSR load timeout).
+ */
+const APP_META_DESCRIPTION =
+  "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -385,13 +400,25 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
-import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import {
+  createPlaylistManager,
+  type PlaylistManager,
+  type PlaylistItemData,
+} from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
   DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
+import {
+  AIBibleVerseRefSchema,
+  convertToPlaylistItem,
+  GeneratedPlaylistSchema,
+  generateFunctionTool,
+} from "./AIManager";
+import { z } from "zod";
+import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -456,7 +483,11 @@ export function createSeedBibleState(
   i18n.setLanguagePersister(settings.persistLanguage);
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
-  const chats = createChatsManager(login, i18n);
+  // Filled once tabs exist so local chat can resolve localized book names.
+  const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
+    undefined
+  );
+  const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
   const readingExtensions = createBibleReadingExtensionManager();
@@ -468,7 +499,8 @@ export function createSeedBibleState(
     i18n,
     login,
     discover,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -481,16 +513,17 @@ export function createSeedBibleState(
     navigation,
     login
   );
-  const tools = createBibleToolsManager();
+  const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login);
+  const annotations = createAnnotationsManager(os, login, tabs, discover);
   const sessions = createSessionsManager(
     os,
     data,
     login,
     highlights,
     i18n,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
@@ -600,6 +633,12 @@ export function createSeedBibleState(
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
 
+  // Keep local-chat scripture parsing in sync with the open reading tab.
+  effect(() => {
+    selectedTabTranslationBooks.value =
+      selectedTab.value?.readingState.translationBooks.value?.books;
+  });
+
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
   const isSSR = import.meta.env.SSR as boolean;
 
@@ -631,7 +670,9 @@ export function createSeedBibleState(
     isMobile,
     modals,
     i18n,
-    readingExtensions
+    readingExtensions,
+    discover,
+    chats
   );
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
@@ -1010,29 +1051,59 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    const getDescription = () => {
-      if (!selectedTab.value) {
-        return t("seed-bible", {
-          defaultValue: "Seed Bible",
-        });
-      }
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+    if (!chapter) {
+      // Truncated like every other branch: this key is translatable, and a
+      // translation is free to be longer than the English default.
+      return truncateForMeta(
+        t("app-meta-description", { defaultValue: APP_META_DESCRIPTION }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
 
-      const chapter = selectedTab.value.readingState.chapterData.value;
-      if (!chapter) {
-        return t("seed-bible", {
-          defaultValue: "Seed Bible",
-        });
-      }
+    // Used whenever there is no scripture to quote — an empty chapter payload,
+    // or a reference so long it leaves no room for any.
+    const referenceOnly = () =>
+      truncateForMeta(
+        t("seed-bible-description", {
+          bookName: chapter.book.name,
+          chapterNumber: chapter.chapter.number,
+          defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
 
-      return t("seed-bible-description", {
+    const excerpt = buildChapterExcerpt(
+      chapter.chapter.content,
+      META_DESCRIPTION_MAX_GRAPHEMES
+    );
+    if (!excerpt) {
+      return referenceOnly();
+    }
+
+    const compose = (scripture: string) =>
+      t("chapter-meta-description", {
         bookName: chapter.book.name,
         chapterNumber: chapter.chapter.number,
-        appName: branding?.appName ?? "Seed Bible",
-        defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+        translationName: chapter.translation.shortName,
+        excerpt: scripture,
+        defaultValue:
+          "{{bookName}} {{chapterNumber}} ({{translationName}}): {{excerpt}}",
       });
-    };
 
-    return getDescription();
+    // Charge the citation against the budget first, so what gets cut is always
+    // scripture. Truncating only the composed string would instead chop the
+    // citation off the end for any locale whose template puts it last.
+    const scriptureBudget =
+      META_DESCRIPTION_MAX_GRAPHEMES - countGraphemes(compose(""));
+    const fitted =
+      scriptureBudget > 0 ? truncateForMeta(excerpt, scriptureBudget) : "";
+    if (!fitted) {
+      return referenceOnly();
+    }
+
+    // Backstop for a template whose own literal text overruns the budget.
+    return truncateForMeta(compose(fitted), META_DESCRIPTION_MAX_GRAPHEMES);
   });
 
   const siteName = computed(() => {
@@ -1210,6 +1281,28 @@ export function createSeedBibleState(
     panes.selectPane(paneId);
   };
 
+  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
+  // A new call overwrites the current toast and restarts the timer, so only the
+  // most recent message is ever visible. The incrementing id keys the render so
+  // the slide-in animation replays even for a repeated message.
+  //
+  // Defined here (rather than further down, where it's exposed on `state`)
+  // because the host-disconnect handling below also calls it, and that
+  // effect runs immediately when constructed.
+  const currentToast = signal<{ id: number; message: string } | null>(null);
+  let toastSeq = 0;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  const toast = (message: string) => {
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+    }
+    currentToast.value = { id: ++toastSeq, message };
+    toastTimer = setTimeout(() => {
+      currentToast.value = null;
+      toastTimer = null;
+    }, 3500);
+  };
+
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
   // entry is removed from the global shared-sessions registry too. The
   // registry is opened by every client, so other users see the session
@@ -1276,6 +1369,39 @@ export function createSeedBibleState(
   // never through the disconnect heuristic.
   const locallyHostedSessionIds = new Set<string>();
 
+  // Suppresses the host-disconnect grace timer for a short window right
+  // after the tab returns to the foreground. On mobile, backgrounding the
+  // app lets its own connection go stale; right as it resumes, this
+  // client's own `connectedUsers` view can still read "host missing" for a
+  // few seconds even though the host never left. `session.isSynced` (below)
+  // covers most of this, but the underlying connection can briefly report
+  // itself synced again a beat before it's actually caught up, so this is
+  // extra insurance layered on top of it.
+  const RESUME_GRACE_MS = 5000;
+  const justResumedFromBackground = signal(false);
+  let resumeGraceTimer: ReturnType<typeof setTimeout> | null = null;
+  if (typeof document !== "undefined" && !import.meta.env.SSR) {
+    effect(() => {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState !== "visible") return;
+        justResumedFromBackground.value = true;
+        if (resumeGraceTimer !== null) {
+          clearTimeout(resumeGraceTimer);
+        }
+        resumeGraceTimer = setTimeout(() => {
+          justResumedFromBackground.value = false;
+          resumeGraceTimer = null;
+        }, RESUME_GRACE_MS);
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () =>
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+    });
+  }
+
   // Auto-close participant tabs when the host goes away. Two signals:
   //  (a) `options.endedAt` was written by the host (clean "End Session"
   //      action — works when the CRDT flushes before the host disconnects).
@@ -1289,19 +1415,44 @@ export function createSeedBibleState(
   // host who logs in mid-session will briefly look disconnected (their
   // OS connection re-establishes with a new identity), and we want their
   // updated `hostUserId` to land via the CRDT before we close the tab.
+  //
+  // Signal (b) is judged from THIS client's own `connectedUsers` view,
+  // which is only trustworthy while this client's own connection is
+  // synced (`session.isSynced`) and not still catching up right after a
+  // mobile resume (`justResumedFromBackground`). Otherwise a client's own
+  // stale/resyncing connection can make the host look gone when it never
+  // left — see issue #1346.
   const sessionsWhereHostWasSeen = new Set<string>();
-  const HOST_DISCONNECT_GRACE_MS = 8000;
+  const HOST_DISCONNECT_GRACE_MS = 30000;
   const pendingHostDisconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
-  const clearPendingHostDisconnect = (sessionId: string) => {
+  const clearPendingHostDisconnect = (sessionId: string): boolean => {
     const timer = pendingHostDisconnectTimers.get(sessionId);
     if (timer !== undefined) {
       clearTimeout(timer);
       pendingHostDisconnectTimers.delete(sessionId);
+      return true;
     }
+    return false;
   };
+  const sessionHostIsConnected = (session: BibleReadingSession): boolean =>
+    session.connectedUsers.value.some(
+      (user) =>
+        isSessionHost(session.options.value, user.userId) ||
+        isSessionHost(session.options.value, user.connectionId)
+    );
+  // Whether this client's view of who's present is worth acting on. We are
+  // definitionally present in our own session, so a list that doesn't even
+  // include us means the presence channel is broken (it can go permanently
+  // silent after a dropped connection) — and "the host isn't in the list"
+  // tells us nothing at all. Never eject anyone on that basis.
+  const sessionPresenceIsTrustworthy = (
+    session: BibleReadingSession
+  ): boolean =>
+    session.isSynced.value &&
+    session.connectedUsers.value.some((user) => user.isSelf);
   effect(() => {
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
@@ -1322,34 +1473,71 @@ export function createSeedBibleState(
       const hostId = session.options.value.hostUserId;
       if (!hostId) continue;
 
-      const users = session.connectedUsers.value;
       // A session stays alive as long as the host OR any co-host is present,
       // so appointing a co-host lets the original host leave without kicking
       // everyone else out.
-      const hostIsConnected = users.some(
-        (user) =>
-          isSessionHost(session.options.value, user.userId) ||
-          isSessionHost(session.options.value, user.connectionId)
-      );
+      const hostIsConnected = sessionHostIsConnected(session);
+      const { t } = i18n;
 
       if (hostIsConnected) {
         sessionsWhereHostWasSeen.add(session.id);
         // Host came back (e.g. reconnected after their login flow) — cancel
         // any pending close so the tab survives the round-trip.
-        clearPendingHostDisconnect(session.id);
+        if (clearPendingHostDisconnect(session.id)) {
+          toast(
+            t("session-host-reconnected", {
+              defaultValue: "Reconnected to the session",
+            })
+          );
+        }
       } else if (
         sessionsWhereHostWasSeen.has(session.id) &&
-        !pendingHostDisconnectTimers.has(session.id)
+        !pendingHostDisconnectTimers.has(session.id) &&
+        sessionPresenceIsTrustworthy(session) &&
+        !justResumedFromBackground.value
       ) {
         // Host appears to have left, but it may be a transient reconnect
         // (host logging in/out) — wait briefly to give the CRDT time to
         // deliver a new `hostUserId` or for the host's connection to
-        // re-appear before tearing down.
+        // re-appear before tearing down. We only get here once THIS
+        // client's own connection is synced and past its post-resume grace
+        // window, so this reading is trustworthy enough to start the timer
+        // (though it's re-verified again below right before acting on it).
         const tabId = tab.id;
         const sessionId = session.id;
+        toast(
+          t("session-host-reconnecting", {
+            defaultValue: "Reconnecting to the session…",
+          })
+        );
         const timer = setTimeout(() => {
           pendingHostDisconnectTimers.delete(sessionId);
+          const currentTab = tabs.tabs.value.find(
+            (candidateTab) => candidateTab.id === tabId
+          );
+          const currentSession = currentTab?.sharedSession;
+          if (!currentSession || currentSession.id !== sessionId) {
+            // Tab/session already gone (e.g. closed some other way).
+            sessionsWhereHostWasSeen.delete(sessionId);
+            return;
+          }
+          if (
+            !sessionPresenceIsTrustworthy(currentSession) ||
+            sessionHostIsConnected(currentSession)
+          ) {
+            // Our own connection is still resyncing, our presence view is
+            // unreliable, or the host is actually back — don't tear down on
+            // stale/incomplete information. The effect above will
+            // re-evaluate and re-arm this timer if the host is still
+            // genuinely gone once presence is trustworthy again.
+            return;
+          }
           sessionsWhereHostWasSeen.delete(sessionId);
+          toast(
+            t("session-host-left", {
+              defaultValue: "The host left — you were removed from the session",
+            })
+          );
           tabs.removeTab(tabId);
         }, HOST_DISCONNECT_GRACE_MS);
         pendingHostDisconnectTimers.set(sessionId, timer);
@@ -1483,24 +1671,6 @@ export function createSeedBibleState(
     await handleJoinSharedSession(initialSessionId);
   };
 
-  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
-  // A new call overwrites the current toast and restarts the timer, so only the
-  // most recent message is ever visible. The incrementing id keys the render so
-  // the slide-in animation replays even for a repeated message.
-  const currentToast = signal<{ id: number; message: string } | null>(null);
-  let toastSeq = 0;
-  let toastTimer: ReturnType<typeof setTimeout> | null = null;
-  const toast = (message: string) => {
-    if (toastTimer !== null) {
-      clearTimeout(toastTimer);
-    }
-    currentToast.value = { id: ++toastSeq, message };
-    toastTimer = setTimeout(() => {
-      currentToast.value = null;
-      toastTimer = null;
-    }, 3500);
-  };
-
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
   // when a forced sign-out actually happened, so this can't toast for a request that
   // merely failed, nor for a sign-out the user asked for. Without a message they
@@ -1526,7 +1696,6 @@ export function createSeedBibleState(
     );
   });
 
-  // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
     if (!playlists.view.peek()) {
       playlists.view.value = playlists.playing.peek()
@@ -1548,6 +1717,125 @@ export function createSeedBibleState(
         : "discover";
     }
   });
+
+  /**
+   * Builds the AI tools that let a provider interact with the core app state.
+   */
+  const getCoreTools = () => {
+    const goToReference = generateFunctionTool({
+      name: "goToReference",
+      description:
+        "Navigates the user to a specific book, chapter, and verse in the Bible.",
+      parameters: AIBibleVerseRefSchema,
+      function: async (args) => {
+        const readingState = currentReadingState.peek();
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        await readingState.tab.readingState.selectTranslationAndChapter(
+          readingState.translationId,
+          args.ref.bookId,
+          args.ref.chapter,
+          {
+            scrollToVerse: args.ref.verse ?? undefined,
+          }
+        );
+
+        if (args.ref.verse) {
+          readingState.tab.readingState.decorateVerses(
+            args.ref.bookId,
+            args.ref.chapter,
+            args.ref.endVerse
+              ? range(args.ref.verse, args.ref.endVerse + 1)
+              : args.ref.verse,
+            {
+              className: "sb-verse-decoration-diminish",
+              containerClassName: "sb-chapter-decoration-diminish",
+              removeAfterMs: 3000,
+            }
+          );
+        }
+
+        return "success";
+      },
+    });
+
+    const searchVerses = generateFunctionTool({
+      name: "searchVerses",
+      description:
+        "Searches the Bible for verses matching the given query. Returns a list of results.",
+      parameters: z.object({
+        q: z.string().describe("The search query to look for in the Bible."),
+      }),
+      function: async (args) => {
+        const readingState = currentReadingState.peek()?.tab.readingState;
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        const activeLanguage =
+          readingState?.translation.value?.language ??
+          readingState?.defaultTranslation.language ??
+          getDefaultTranslationForLanguage(i18n.defaultLanguage).language;
+        const results = await search.searchVerses(
+          activeLanguage,
+          readingState.translationId.peek(),
+          args.q
+        );
+
+        const verses = (results.hits ?? []).map((hit) => ({
+          translationId: hit.document.translation,
+          translationLabel: hit.document.translation,
+          bookId: hit.document.book,
+          bookLabel: hit.document.book,
+          chapterNumber: hit.document.chapter,
+          verseNumber: hit.document.verse,
+          text: hit.document.text,
+        }));
+
+        return JSON.stringify(verses);
+      },
+    });
+
+    const createPlaylist = generateFunctionTool({
+      name: "createPlaylist",
+      description:
+        "Opens the playlist editor pre-filled with the given generated playlist so the user can review, edit, and save it themselves. Does not play or save anything on its own. Each call opens a brand-new, independent playlist that has no relationship to any playlist discussed earlier in this conversation (including one already open in the editor) — it is never used to modify an existing playlist.",
+      parameters: GeneratedPlaylistSchema,
+      function: async (args) => {
+        let items: PlaylistItemData[];
+        try {
+          items = args.items.map((i) => convertToPlaylistItem(i));
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+
+        const editing = await playlists.createNewPlaylist({
+          title: args.title,
+          description: args.description,
+          items,
+        });
+        if (!editing) {
+          return "error: could not open the playlist editor — sign-in was required and did not complete";
+        }
+
+        return "success";
+      },
+    });
+
+    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
+  };
+
+  const enableCoreChatContext = () => {
+    chats.addContext({
+      id: "core",
+      label: { key: "seed-bible", defaultValue: "Seed Bible" },
+      tools: getCoreTools(),
+    });
+  };
+
+  enableCoreChatContext();
 
   // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
   // // load that playlist and start playing it immediately. The locator's `id` is
@@ -1688,8 +1976,18 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: () => <DiscoverPaneTitle playlists={playlists} />,
-        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        title: () => (
+          <DiscoverPaneTitle
+            playlists={playlists}
+            annotations={annotations}
+            tabs={tabs}
+            chats={chats}
+            openChatPanel={sidebar.openChatPanel}
+          />
+        ),
+        header: () => (
+          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
+        ),
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -1704,6 +2002,7 @@ export function createSeedBibleState(
             state={state}
             tabs={tabs}
             playlists={playlists}
+            annotations={annotations}
             modals={modals}
             toast={state.app.toast}
           />

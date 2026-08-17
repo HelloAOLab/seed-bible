@@ -1,0 +1,210 @@
+/* Styles for the shared translation picker list (`TranslationList`), used by
+   the reader's translation modal and the Compare pane. Moved here from
+   `BibleSelector.css` when the list became a shared component, so the styles
+   travel with it instead of being implicitly available only where the reader's
+   stylesheet happens to be loaded.
+
+   `.translation-option`, `.translation-title`, `.translation-description` and
+   `.emptyCircle` keep their original (unprefixed) names: the reader's
+   translation-settings popover and custom-translation rows still use them, so
+   renaming would have meant touching markup unrelated to this list. */
+
+.sb-translation-list {
+  height: 18.75rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  font-family: system-ui, sans-serif;
+}
+
+/* Collapsible language header row. */
+.sb-translation-list-language {
+  padding: 0.3125rem 0.625rem;
+  cursor: pointer;
+  border-radius: 0.375rem;
+}
+
+/* Hover is behind `hover: hover` because a touch device keeps the hover state
+   applied after a tap until you tap elsewhere — an un-guarded rule leaves the
+   row stuck in its highlighted colour. `:active` gives the press feedback that
+   replaces it on touch. */
+@media (hover: hover) {
+  .sb-translation-list-language:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-translation-list-language:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-translation-list-chevron {
+  transition: transform 0.3s;
+}
+
+.sb-translation-list-chevron--open {
+  transform: rotate(180deg);
+}
+
+.sb-translation-list-separator {
+  text-align: center;
+  border-top: 1px solid var(--sb-divider-color);
+  height: 0px;
+  background-color: transparent;
+}
+
+.sb-translation-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+  text-align: center;
+}
+
+.sb-translation-list-expand-button {
+  display: flex;
+  background: var(--sb-primary-color);
+  padding: 0.3125rem 1rem;
+  border-radius: 0.3125rem;
+  border: none;
+  outline: none;
+  color: var(--sb-primary-font-color);
+  width: max-content;
+  cursor: pointer;
+}
+
+.sb-translation-list-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-translation-list-load-more:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-translation-list-load-more:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-translation-list-load-more-count {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  font-size: 0.75rem;
+}
+
+.sb-translation-list-actions {
+  flex: 0 0 auto;
+}
+
+.translation-option {
+  margin-bottom: 0.3125rem;
+  width: 100%;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
+  cursor: pointer;
+}
+
+.translation-title {
+  width: 100%;
+  font-weight: bold;
+  font-size: 0.875rem;
+  font-family: system-ui, sans-serif;
+}
+
+.translation-description {
+  font-weight: normal;
+  font-size: 0.875rem;
+  width: 100%;
+  font-family: system-ui, sans-serif;
+}
+
+.emptyCircle {
+  display: inline-block;
+  border: 2px solid transparent;
+  height: 0.9375rem;
+  width: 0.9375rem;
+  border-radius: 50%;
+}
+
+/* Canon-coverage ring. Colours are theme tokens: the interior used to be a
+   hardcoded `white` and the unfilled track `#eee`, which turned the whole thing
+   into a bright blob in dark mode. */
+.sb-translation-completion {
+  flex: 0 0 auto;
+  display: inline-block;
+  box-sizing: border-box;
+  height: 0.9375rem;
+  width: 0.9375rem;
+  border: 2px solid transparent;
+  border-radius: 50%;
+}
+
+.sb-translation-completion--ring {
+  background:
+    linear-gradient(var(--sb-background), var(--sb-background)) padding-box,
+    conic-gradient(
+        /* Start the arc so it finishes at twelve o'clock. */ from
+          calc(var(--sb-completion-percent) * -3.6deg),
+        var(--sb-primary-color) calc(var(--sb-completion-percent) * 1%),
+        var(--sb-divider-color) 0
+      )
+      border-box;
+}
+
+/* Inside the reader's modal the list fills the remaining height instead of
+   using its own fixed height. */
+@media only screen and (max-width: 480px) {
+  .modal .sb-translation-list {
+    height: calc(100% - 1.25rem);
+  }
+}
+
+/* ─── View-mode (catalog filter) menu ─────────────────────────────────────── */
+
+.sb-translation-view-mode-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The original markup coloured the selected row with `--addButtonIcon` and the
+   rest with `--text3`, neither of which is defined anywhere — so the states
+   were indistinguishable apart from the tick. These use real theme tokens. */
+.sb-translation-view-mode-option {
+  display: flex;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-translation-view-mode-option--selected {
+  color: var(--sb-primary-color);
+}
+
+@media (hover: hover) {
+  .sb-translation-view-mode-option:hover {
+    background: var(--sb-divider-color);
+  }
+}
+
+.sb-translation-view-mode-option:active {
+  background: var(--sb-divider-color);
+}
+
+.sb-translation-view-mode-bullet {
+  border: 1px solid var(--sb-divider-color);
+}

@@ -14,7 +14,7 @@ const TUTORIAL_SEEN_KEY = "sb-tutorial-seen";
 const TUTORIAL_OPTED_OUT_KEY = "sb-tutorial-opted-out";
 const TUTORIAL_FEATURES_KEY = "sb-tutorial-features-seen";
 
-// Stored unprefixed on profile.config (matching `fontSize`, `appInstalled`,
+// Stored unprefixed on profile.config (matching `fontSize`, `lang`,
 // etc.) — the backend record that the user has completed/skipped the tour.
 const PROFILE_TUTORIAL_SEEN = "tutorialSeen";
 const PROFILE_TUTORIAL_OPTED_OUT = "tutorialOptedOut";

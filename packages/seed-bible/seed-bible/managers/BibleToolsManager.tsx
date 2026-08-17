@@ -9,8 +9,9 @@ import {
   type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
 import { buildReadingUrl } from "../managers/ReadingUrlPath";
+import { extractContentText } from "../managers/ChapterText";
 import type { BookId } from "../managers/BibleDataManager";
-import { readInjectedConfig } from "../app/appConfig";
+import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
@@ -24,8 +25,15 @@ import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
 import type { AppState } from "./SeedBibleStateManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
-import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
+import {
+  ReadingPlansPane,
+  ReadingPlansPaneActions,
+  ReadingPlansPaneIcon,
+  ReadingPlansPaneLeading,
+  ReadingPlansPaneTitle,
+} from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
+import type { AnnotationsManager } from "./AnnotationsManager";
 import { i18n, useI18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
@@ -164,6 +172,9 @@ export interface BibleToolContext {
   readingPlans?: ReadingPlansManager;
   /** Playlist manager */
   playlists?: PlaylistManager;
+
+  /** Annotations manager, for creating/editing notes on selected verses. */
+  annotations?: AnnotationsManager;
 
   /** Features manager */
   features: FeaturesManager;
@@ -582,8 +593,10 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
   ];
 }
 
-function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
-  return [
+function getDefaultToolbarTools(
+  branding?: BrandingConfig
+): ManagedBibleToolbarTool[] {
+  const tools: ManagedBibleToolbarTool[] = [
     {
       id: "stop-playing",
       priority: -1,
@@ -703,13 +716,58 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         if (!readingPlans) {
           return;
         }
+        const readingState = context.readingState;
         context.panesManager.openPane({
           id: "reading-plans-pane",
           placement: "side",
 
-          // TODO: Translate this title
-          title: "Reading Plans",
-          component: () => <ReadingPlansPane readingPlans={readingPlans} />,
+          // The pane's own header carries the plans chrome: a back button when
+          // the user has drilled into a plan or the create wizard, the plan's
+          // name as the title, and the new-plan button.
+          title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
+          icon: () => <ReadingPlansPaneIcon />,
+          leading: () => (
+            <ReadingPlansPaneLeading readingPlans={readingPlans} />
+          ),
+          header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
+          component: () => (
+            <ReadingPlansPane
+              readingPlans={readingPlans}
+              books={readingState.translationBooks.value?.books ?? []}
+              modals={context.modals}
+              // Tapping a scripture reading takes the user to it. Without this
+              // a plan can only be ticked off, never actually read from.
+              onOpenScripture={async (ref, translationId) => {
+                await readingState.selectTranslationAndChapter(
+                  translationId ?? readingState.translationId.peek(),
+                  ref.bookId,
+                  ref.chapter,
+                  { scrollToVerse: ref.verse }
+                );
+              }}
+              // A day of a plan is a run of readings, which is exactly what the
+              // playlist queue already steps through — so it is handed straight
+              // to `startPlaying` rather than growing a second set of next/back
+              // controls here. The synthetic playlist borrows the plan's own
+              // record name and address so playback is identifiable; it isn't a
+              // real playlist record, so a shared/reloaded URL won't resume it.
+              onPlayReadings={(plan, items, startIndex) => {
+                context.playlists?.startPlaying(
+                  {
+                    id: plan.address,
+                    // recordName: plan.recordName,
+                    // authorUserId: plan.authorUserId,
+                    title: plan.title,
+                    description: plan.description,
+                    items,
+                    // createdAtMs: plan.createdAtMs,
+                    // updatedAtMs: plan.updatedAtMs,
+                  },
+                  startIndex
+                );
+              }}
+            />
+          ),
         });
       },
     },
@@ -775,6 +833,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isControllable: false,
     },
   ];
+  return tools.filter(
+    (tool) => !branding?.disabledToolbarTools?.includes(tool.id)
+  );
 }
 
 function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
@@ -805,6 +866,79 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         };
 
         context.readingState.clearSelectedVerses();
+      },
+    },
+    {
+      id: "add-to-reading-plan",
+      priority: 125,
+      title: { key: "add-to-reading-plan", defaultValue: "Add to plan" },
+      icon: () => <MaterialIcon>library_add</MaterialIcon>,
+      // Only offered while a plan is actually being authored — it adds to that
+      // draft, so with no draft there is nowhere for the passage to go. Mirrors
+      // how "Add to Playlist" follows `editingPlaylist`.
+      isVisible: (context) =>
+        !!context.readingPlans?.editingReadingPlan.value &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
+        context.readingState.selectedVerses.value.length > 0,
+      onSelect: async (context) => {
+        const readingPlans = context.readingPlans;
+        const draft = readingPlans?.editingReadingPlan.value;
+        if (!readingPlans || !draft) {
+          return;
+        }
+        const verses = context.readingState.selectedVerses.value;
+        if (verses.length === 0) {
+          return;
+        }
+        // Collapse the selection into one reading spanning its first → last
+        // verse. A selection can cross a chapter boundary, so order by
+        // (chapter, verse) rather than verse number alone and record the span
+        // with endChapter/endVerse.
+        const first = verses[0]!;
+        const ordered = verses
+          .filter((v) => v.bookId === first.bookId)
+          .sort(
+            (a, b) =>
+              a.chapterNumber - b.chapterNumber ||
+              a.verse.number - b.verse.number
+          );
+        const start = ordered[0]!;
+        const end = ordered[ordered.length - 1]!;
+        const spansChapters = end.chapterNumber !== start.chapterNumber;
+
+        readingPlans.addReadingToEditingPlan({
+          type: "bible-verse",
+          ref: {
+            bookId: start.bookId,
+            chapter: start.chapterNumber,
+            verse: start.verse.number,
+            ...(spansChapters
+              ? { endChapter: end.chapterNumber, endVerse: end.verse.number }
+              : end.verse.number !== start.verse.number
+                ? { endVerse: end.verse.number }
+                : {}),
+          },
+        });
+        context.toast(
+          i18n.t("added-to-reading-plan-session", {
+            defaultValue: "Added to session {{session}}",
+            session: draft.selectedSessionIndex + 1,
+          })
+        );
+        context.readingState.clearSelectedVerses();
+      },
+    },
+    {
+      id: "annotate-verse",
+      priority: 150,
+      title: { key: "note", defaultValue: "Note" },
+      icon: () => <MaterialIcon>note_add</MaterialIcon>,
+      isVisible: (context) =>
+        !!context.annotations &&
+        context.readingState.selectedVerses.value.length > 0,
+      onSelect: async (context) => {
+        if (!context.annotations) return;
+        await context.annotations.createNewAnnotation();
       },
     },
     {
@@ -1060,24 +1194,6 @@ function formatVerseRanges(verseNumbers: number[]): string {
   return start === end ? `${start}` : `${start}-${end}`;
 }
 
-/** Extracts and normalizes the plain text content of a single selected verse. */
-function extractVerseText(verse: BibleSelectedVerse): string {
-  return verse.verse.content
-    .map((part) => {
-      if (typeof part === "string") return part;
-
-      if (part && typeof part === "object" && "text" in part) {
-        return (part as { text: string }).text;
-      }
-
-      return "";
-    })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .replace(/\s+([,.;:!?’”)\]])/g, "$1")
-    .trim();
-}
-
 /**
  * Formats the selected verses from the reading state into a human-readable string.
  * @param readingState The reading state containing the selected verses to format.
@@ -1097,7 +1213,9 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
 
   return groups
     .map((group) => {
-      const text = group.map((verse) => extractVerseText(verse)).join(" ");
+      const text = group
+        .map((verse) => extractContentText(verse.verse.content))
+        .join(" ");
 
       const range = formatVerseRanges(group.map((v) => v.verse.number));
 
@@ -1122,9 +1240,11 @@ export function formatSelectedVerses(readingState: BibleReadingState) {
  * - Getter methods resolve predicates and priorities for the provided context,
  *   then return tools sorted by ascending priority.
  */
-export function createBibleToolsManager(): ToolsManager {
+export function createBibleToolsManager(
+  branding?: BrandingConfig
+): ToolsManager {
   const toolbarTools = signal<ManagedBibleToolbarTool[]>(
-    getDefaultToolbarTools()
+    getDefaultToolbarTools(branding)
   );
   const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
     getDefaultVerseToolbarTools()
