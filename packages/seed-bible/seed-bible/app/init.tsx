@@ -1,10 +1,11 @@
 import "./initPostHog";
 import { Main } from "../app/main";
-import { render, hydrate } from "preact";
+import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { decideHydration } from "../app/hydrationGate";
+import { hydrateWithFallback } from "../app/hydrateWithFallback";
 
 // Config (base path + asset host, plus SSR-verification metadata) injected
 // by the host server. Reading it on the client is what lets the hydration
@@ -51,7 +52,32 @@ void Promise.all([state.i18n.ready, waitForInitialChapterLoads()]).then(() => {
   const app = <Main initialState={state} config={config} />;
 
   if (decision.hydrate) {
-    hydrate(app, container);
+    const result = hydrateWithFallback(app, container);
+    if (result.outcome !== "hydrated") {
+      console.error(
+        "Hydration failed; falling back to a full render():",
+        result.hydrateError
+      );
+      if (typeof posthog !== "undefined" && posthog) {
+        posthog.capture("hydration_failed", {
+          error:
+            result.hydrateError instanceof Error
+              ? result.hydrateError.message
+              : String(result.hydrateError),
+        });
+      }
+    }
+    if (result.outcome === "failed") {
+      console.error("Fallback render() also failed:", result.renderError);
+      if (typeof posthog !== "undefined" && posthog) {
+        posthog.capture("hydration_fallback_failed", {
+          error:
+            result.renderError instanceof Error
+              ? result.renderError.message
+              : String(result.renderError),
+        });
+      }
+    }
   } else {
     // Preact does not warn on a hydration mismatch — it silently patches
     // the DOM to match, which can leave stale attributes in place. Falling
