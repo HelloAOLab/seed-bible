@@ -1,12 +1,15 @@
-import type { ReadonlySignal } from "@preact/signals";
-import { useSearchSection } from "./useSearchSection";
+import { useSignal, type ReadonlySignal } from "@preact/signals";
+import { useRef, useEffect } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
-import { SearchBar } from "./SearchBar";
 import { SeedBibleIcon } from "./SeedBibleIcon";
+import { useClickOutside } from "./useClickOutside";
+import { MaterialIcon } from "../icons";
+import { useI18n } from "../../i18n";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
   TodayManager,
   TodayPassageTarget,
+  VerseSearchResult,
 } from "../../managers/TodayManager";
 
 export const SearchSection = (props: {
@@ -16,21 +19,181 @@ export const SearchSection = (props: {
   onOpenBookSelector: () => void;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) => {
-  const { title, selectorText, seedBibleIconStyle } = useSearchSection(props);
+  const { t } = useI18n();
+  // Both read here in the render body, which is a reactive scope, so a theme
+  // switch or a breakpoint crossing restyles the icon immediately (see
+  // useReadingHistoryTimeline).
+  const theme = props.theme.value;
+  const isMobile = props.isMobile.value;
+  const iconSize = isMobile ? "1.25rem" : "1.5rem";
 
   return (
-    <TitledSection title={title}>
+    <TitledSection
+      title={t("go-somewhere-new", { defaultValue: "GO SOMEWHERE NEW" })}
+    >
       <div className="search-container">
         <button
           className="book-selector-button clickable"
           type="button"
           onClick={props.onOpenBookSelector}
         >
-          <SeedBibleIcon style={seedBibleIconStyle} />
-          {selectorText}
+          <SeedBibleIcon
+            style={{
+              width: iconSize,
+              height: iconSize,
+              backgroundColor: theme.variables.secondaryFontColor,
+            }}
+          />
+          {t("books", { defaultValue: "Books" })}
         </button>
         <SearchBar today={props.today} onOpenPassage={props.onOpenPassage} />
       </div>
     </TitledSection>
   );
 };
+
+const DEBOUNCE_MS = 180;
+
+function SearchBar(props: {
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) {
+  const { searchVerses } = props.today;
+  const { t } = useI18n();
+
+  const query = useSignal("");
+  const results = useSignal<VerseSearchResult[]>([]);
+  const loading = useSignal(false);
+  const error = useSignal<string | null>(null);
+  const isOpen = useSignal(false);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // `latestRequestRef` guards against out-of-order responses; `debounceTimeoutRef`
+  // coalesces keystrokes into a single search.
+  const latestRequestRef = useRef(0);
+  const debounceTimeoutRef = useRef<number | null>(null);
+
+  useClickOutside([containerRef], () => {
+    isOpen.value = false;
+  });
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current !== null) {
+        window.clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const runSearch = (nextQuery: string) => {
+    query.value = nextQuery;
+    isOpen.value = true;
+
+    if (debounceTimeoutRef.current !== null) {
+      window.clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
+    }
+
+    const trimmed = nextQuery.trim();
+    const requestId = ++latestRequestRef.current;
+
+    if (!trimmed) {
+      results.value = [];
+      loading.value = false;
+      error.value = null;
+      return;
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    debounceTimeoutRef.current = window.setTimeout(() => {
+      searchVerses(trimmed)
+        .then((found) => {
+          if (latestRequestRef.current !== requestId) return;
+          results.value = found;
+          loading.value = false;
+        })
+        .catch((err: unknown) => {
+          if (latestRequestRef.current !== requestId) return;
+          results.value = [];
+          loading.value = false;
+          error.value =
+            err instanceof Error ? err.message : "Unable to search verses.";
+        });
+    }, DEBOUNCE_MS);
+  };
+
+  const handleSelect = (result: VerseSearchResult) => {
+    // Clear the query before leaving, so reopening Today shows an empty box.
+    runSearch("");
+    isOpen.value = false;
+    props.onOpenPassage({
+      bookId: result.bookId,
+      chapter: result.chapterNumber,
+      verse: result.verseNumber ?? undefined,
+      translationId: result.translationId,
+    });
+  };
+
+  const showDropdown = isOpen.value && query.value.trim().length > 0;
+
+  return (
+    <div className="today-searchbar" ref={containerRef}>
+      <MaterialIcon>search</MaterialIcon>
+      <input
+        type="text"
+        placeholder={t("today-search-verses", {
+          defaultValue: "Search books, chapter, verses....",
+        })}
+        value={query.value}
+        onInput={(e) => runSearch((e.target as HTMLInputElement).value)}
+        onFocus={() => {
+          isOpen.value = true;
+        }}
+      />
+      {showDropdown && (
+        <div className="today-searchbar-dropdown">
+          {loading.value && (
+            <div className="today-searchbar-status">
+              {t("searching", { defaultValue: "Searching..." })}
+            </div>
+          )}
+
+          {!loading.value && error.value && (
+            <div className="today-searchbar-status today-searchbar-status-error">
+              {error.value}
+            </div>
+          )}
+
+          {!loading.value && !error.value && results.value.length === 0 && (
+            <div className="today-searchbar-status">
+              {t("no-search-results", {
+                defaultValue: "No matching verses.",
+              })}
+            </div>
+          )}
+
+          {!loading.value &&
+            !error.value &&
+            results.value.map((result) => (
+              <button
+                key={result.id}
+                type="button"
+                className="today-searchbar-result"
+                onClick={() => handleSelect(result)}
+              >
+                <span className="today-searchbar-result-ref">
+                  {result.reference}
+                </span>
+                <span className="today-searchbar-result-text">
+                  {result.text}
+                </span>
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}

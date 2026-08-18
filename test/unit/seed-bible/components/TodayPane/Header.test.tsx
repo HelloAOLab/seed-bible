@@ -1,31 +1,13 @@
-import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { loginWithName } from "../../testUtils/todayStubs";
 import { Header } from "@packages/seed-bible/seed-bible/components/TodayPane/Header";
-import { useHeader } from "@packages/seed-bible/seed-bible/components/TodayPane/useHeader";
+import { loginWithName } from "../../testUtils/todayStubs";
+import { mockI18nState } from "../../testUtils/mockI18n";
 
-vi.mock(
-  "@packages/seed-bible/seed-bible/components/TodayPane/useHeader",
-  () => ({
-    useHeader: vi.fn(),
-  })
-);
-
-type HeaderResult = ReturnType<typeof useHeader>;
-
-function makeHeaderResult(overrides: Partial<HeaderResult> = {}): HeaderResult {
-  return {
-    date: "Thursday, Jun 11",
-    greeting: "Good morning",
-    name: "Alice",
-    notificationIcon: "notifications",
-    settingsIcon: "settings",
-    handleNotificationClick: vi.fn(),
-    handleSettingsClick: vi.fn(),
-    ...overrides,
-  } as unknown as HeaderResult;
-}
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 describe("Header", () => {
   let container: HTMLDivElement;
@@ -33,80 +15,90 @@ describe("Header", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    vi.clearAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  function setup(overrides: Partial<HeaderResult> = {}) {
-    const result = makeHeaderResult(overrides);
-    (useHeader as Mock).mockReturnValue(result);
-    act(() => render(<Header login={loginWithName("Tester")} />, container));
-    return result;
+  function setup(
+    options: { language?: string; username?: string | undefined } = {}
+  ) {
+    mockI18nState.language = options.language ?? "en";
+    act(() =>
+      render(<Header login={loginWithName(options.username)} />, container)
+    );
   }
 
-  function header() {
-    return container.querySelector<HTMLDivElement>(".today-header");
+  function setupAtHour(hour: number) {
+    vi.setSystemTime(new Date(2026, 5, 15, hour, 0, 0));
+    setup();
   }
 
-  // The notification/settings action buttons are currently commented out in
-  // the Header component, so their tests are disabled to match. Restore both
-  // together if the buttons come back.
-  // function buttons() {
-  //   return header()!.querySelectorAll<HTMLButtonElement>("button");
-  // }
+  const header = () =>
+    container.querySelector<HTMLDivElement>(".today-header")!;
+  const date = () => header().querySelector(":scope > span")!.textContent;
+  const heading = () => header().querySelector("h1")!.textContent;
 
-  describe("content", () => {
-    it("renders the date in the header's direct span", () => {
-      setup({ date: "Friday, Jun 12" });
-      expect(header()!.querySelector(":scope > span")!.textContent).toBe(
-        "Friday, Jun 12"
-      );
+  describe("date", () => {
+    it("formats the date as 'day MONTH'", () => {
+      vi.setSystemTime(new Date(2026, 5, 15, 8, 0, 0));
+      setup({ language: "en" });
+
+      // Derived the same way the component does, so the assertion holds in any
+      // timezone and under any ICU build.
+      const expectedMonth = new Date(2026, 5, 15)
+        .toLocaleString("en", { month: "short" })
+        .toUpperCase();
+      expect(date()).toBe(`15 ${expectedMonth}`);
     });
-
-    it("renders the greeting and name in the heading", () => {
-      setup({ greeting: "Good evening", name: "Bob" });
-      expect(header()!.querySelector("h1")!.textContent).toBe(
-        "Good evening, Bob!"
-      );
-    });
-
-    // it("renders the notification icon in the first button", () => {
-    //   setup({ notificationIcon: "bell" });
-    //   expect(buttons()[0]!.querySelector(".material-icon")!.textContent).toBe(
-    //     "bell"
-    //   );
-    // });
-
-    // it("renders the settings icon in the second button", () => {
-    //   setup({ settingsIcon: "gear" });
-    //   expect(buttons()[1]!.querySelector(".material-icon")!.textContent).toBe(
-    //     "gear"
-    //   );
-    // });
-
-    // it("renders exactly two action buttons", () => {
-    //   setup();
-    //   expect(buttons()).toHaveLength(2);
-    // });
   });
 
-  // describe("interaction", () => {
-  //   it("calls handleNotificationClick when the first button is clicked", () => {
-  //     const result = setup();
-  //     act(() => buttons()[0]!.click());
-  //     expect(result.handleNotificationClick).toHaveBeenCalledTimes(1);
-  //     expect(result.handleSettingsClick).not.toHaveBeenCalled();
-  //   });
+  describe("greeting", () => {
+    it("is morning between 05:00 and 11:59", () => {
+      setupAtHour(8);
+      expect(heading()).toContain("Good morning,");
+    });
 
-  //   it("calls handleSettingsClick when the second button is clicked", () => {
-  //     const result = setup();
-  //     act(() => buttons()[1]!.click());
-  //     expect(result.handleSettingsClick).toHaveBeenCalledTimes(1);
-  //     expect(result.handleNotificationClick).not.toHaveBeenCalled();
-  //   });
-  // });
+    it("is afternoon between 12:00 and 17:59", () => {
+      setupAtHour(14);
+      expect(heading()).toContain("Good afternoon,");
+    });
+
+    it("is evening between 18:00 and 20:59", () => {
+      setupAtHour(19);
+      expect(heading()).toContain("Good evening,");
+    });
+
+    it("is night late at night", () => {
+      setupAtHour(23);
+      expect(heading()).toContain("Good night,");
+    });
+
+    it("is night in the small hours", () => {
+      setupAtHour(3);
+      expect(heading()).toContain("Good night,");
+    });
+  });
+
+  describe("name", () => {
+    it("uses the username when present", () => {
+      setup({ username: "Alice" });
+      expect(heading()).toContain("Alice!");
+    });
+
+    it("falls back to 'Guest' for an empty username", () => {
+      setup({ username: "" });
+      expect(heading()).toContain("Guest!");
+    });
+
+    it("falls back to 'Guest' when the username is undefined", () => {
+      setup({ username: undefined });
+      expect(heading()).toContain("Guest!");
+    });
+  });
 });

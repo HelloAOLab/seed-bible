@@ -1,31 +1,31 @@
-import { useResumeReadingSection } from "./useResumeReadingSection";
 import { MaterialIcon } from "../icons";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { useI18n } from "../../i18n";
 import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
 
-export interface ResumeReadingCardData {
-  title: string;
-  book: string;
-  chapter: number;
-  buttonIcon: string;
-}
-
 export const ResumeReadingSection = (props: {
   today: TodayManager;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) => {
-  const { isLoading, loadingLabel, cardData, handleButtonClick } =
-    useResumeReadingSection(props);
+  const { readingHistory, bookNames } = props.today;
+  const { t } = useI18n();
 
-  // History still loading: show a placeholder card so a returning user sees the
-  // personalized layout (never Welcome) while the resume position is fetched.
-  if (isLoading || !cardData) {
+  const state = readingHistory.value;
+  // A resume position only exists in the `ready` state; anything else renders a
+  // placeholder rather than dereferencing a value that isn't there yet. That
+  // keeps a returning user on the personalized layout (never Welcome) while
+  // their reading history is fetched.
+  const lastReading = state.status === "ready" ? state.lastReading : undefined;
+
+  if (!lastReading) {
     return (
       <SkeletonContainer
-        label={loadingLabel}
+        label={t("resume-reading-loading", {
+          defaultValue: "Loading your reading history…",
+        })}
         className="today-resume-card today-resume-card--loading"
       >
         <div className="today-resume-card-loading-text">
@@ -39,13 +39,23 @@ export const ResumeReadingSection = (props: {
 
   return (
     <div className="today-resume-card">
-      <span>{cardData.title}</span>
+      <span>
+        {t("resume-reading", { defaultValue: "CONTINUE WHERE YOU LEFT" })}
+      </span>
       <h1>
-        {`${cardData.book} `}
-        <span>{cardData.chapter}</span>
+        {`${bookNames.value.get(lastReading.bookId) ?? lastReading.bookId} `}
+        <span>{lastReading.chapter}</span>
       </h1>
-      <button onClick={handleButtonClick} className="clickable">
-        <MaterialIcon>{cardData.buttonIcon}</MaterialIcon>
+      <button
+        onClick={() =>
+          props.onOpenPassage({
+            bookId: lastReading.bookId,
+            chapter: lastReading.chapter,
+          })
+        }
+        className="clickable"
+      >
+        <MaterialIcon>arrow_right_alt</MaterialIcon>
       </button>
     </div>
   );
