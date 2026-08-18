@@ -1,0 +1,72 @@
+/* About page --------------------------------------------------------------- */
+
+.sb-about-page {
+  width: 100%;
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-about-header {
+  padding: 1.5rem 1.5rem 0;
+}
+
+.sb-about-home-link {
+  font-family: var(--sb-book-title-font-family), serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--sb-font-color);
+  text-decoration: none;
+}
+
+.sb-about-content {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.sb-about-content h1 {
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  color: var(--sb-chapter-heading-font-color);
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0 0 1.5rem;
+}
+
+.sb-about-content h2 {
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  color: var(--sb-chapter-heading-font-color);
+  font-size: 1.25rem;
+  line-height: 1.3;
+  margin: 0 0 0.5rem;
+}
+
+.sb-about-content p,
+.sb-about-content li {
+  line-height: 1.7;
+}
+
+.sb-about-content section {
+  margin-bottom: 2rem;
+}
+
+.sb-about-content ul {
+  padding-left: 1.4em;
+  margin: 0;
+}
+
+.sb-about-content a {
+  color: var(--sb-link-color);
+}
+
+.sb-about-cta {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-weight: 600;
+  text-decoration: none;
+}

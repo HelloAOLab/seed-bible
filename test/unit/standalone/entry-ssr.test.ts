@@ -154,6 +154,13 @@ describe("legacyReadingUrlRedirect", () => {
     }
     expect(legacyReadingUrlRedirect(once, "")).toBeNull();
   });
+
+  // A static page's 2-segment "/{lang}/about" shape happens to be the same
+  // segment count as the legacy "/{book}/{chapter}" reading shape; this pins
+  // that the numeric-chapter check keeps them from colliding.
+  it("declines a static page path", () => {
+    expect(legacyReadingUrlRedirect("/en/about", "")).toBeNull();
+  });
 });
 
 describe("acceptLanguageRedirect", () => {
@@ -277,6 +284,10 @@ describe("acceptLanguageRedirect", () => {
     }
     expect(legacyReadingUrlRedirect(once, "")).toBeNull();
     expect(acceptLanguageRedirect(once, "", [])).toBeNull();
+  });
+
+  it("declines a static page path", () => {
+    expect(acceptLanguageRedirect("/en/about", "", ["en"])).toBeNull();
   });
 });
 
@@ -626,5 +637,26 @@ describe("render() server-rendered meta tags", () => {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
     }
     expect(result.notFound).toBe(true);
+  });
+
+  it("renders the About page's own title, description, and canonical URL, with no notFound", async () => {
+    const result = (await render({
+      path: "/en/about?useFreeBibleAPI=true",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: TEMPLATE,
+    })) as { html: string; notFound?: true; redirectTo?: string };
+
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    expect(result.notFound).toBeFalsy();
+    expect(result.html).toContain(
+      "<title>About the Seed Bible | Seed Bible</title>"
+    );
+    expect(result.html).toContain('<link rel="canonical" href="/en/about"');
+    expect(result.html).toContain(
+      '<meta property="og:url" content="/en/about"'
+    );
+    expect(result.html).not.toContain('<link rel="canonical" href="/"');
   });
 });

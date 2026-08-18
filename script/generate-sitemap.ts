@@ -1,6 +1,8 @@
 /**
  * Generates the Seed Bible sitemap: one child sitemap per translation (every
- * chapter of every book) plus a sitemap index and a robots.txt.
+ * chapter of every book), one dedicated child sitemap for static pages (e.g.
+ * "/{lang}/about", one URL per supported UI language), plus a sitemap index
+ * and a robots.txt.
  *
  * Each chapter URL carries the UI locale (`?lang=`) that maps to the
  * translation's Bible language — Spanish translations get the Spanish UI,
@@ -32,6 +34,7 @@ import {
   getDefaultAPIEndpoint,
   type Translation,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { LANG_META } from "@packages/seed-bible/seed-bible/i18n/languageMeta";
 import {
   bibleLanguageToUiLocale,
   buildTranslationParam,
@@ -39,6 +42,7 @@ import {
   chunk,
   renderSitemapIndex,
   renderUrlset,
+  staticPageUrls,
   trimTrailingSlash,
   uniqueSitemapName,
   MAX_URLS_PER_SITEMAP,
@@ -262,6 +266,17 @@ async function generate(options: Options): Promise<void> {
     throw new Error(
       "No translation sitemaps could be built (every translation failed or was filtered out)."
     );
+  }
+
+  // Static, non-reading pages (e.g. "About") aren't tied to any Bible
+  // translation. Folding them into every per-translation sitemap would
+  // duplicate the same "/en/about" URL once per English translation; instead
+  // they get one dedicated child sitemap, one URL per supported UI language.
+  // Reuses the `{ translationId, urls }` shape purely as a filename/grouping
+  // key — the write loop below is generic over it.
+  const pageUrls = staticPageUrls(origin, Object.keys(LANG_META));
+  if (pageUrls.length > 0) {
+    sitemaps.push({ translationId: "pages", urls: pageUrls });
   }
 
   // Write fresh: clear any stale child sitemaps from a previous run.

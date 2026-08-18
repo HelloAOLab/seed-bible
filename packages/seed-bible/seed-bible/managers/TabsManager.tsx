@@ -12,6 +12,7 @@ import {
   parseReadingPath,
   stripBasePath,
 } from "./ReadingUrlPath";
+import { parseStaticPagePath } from "./StaticPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -645,6 +646,21 @@ export function createTabs(
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
+      // Never overwrite a static page's own URL (e.g. "/en/about") with the
+      // reading position. This runs unconditionally on mount and on every
+      // UI-language change (see the effects below); without this guard, the
+      // very first hydration of a static page — and any later language
+      // switch while on it — would immediately replace the address bar with
+      // a reading URL, since a reading tab always exists underneath.
+      if (
+        parseStaticPagePath(
+          navigation.currentUrl.peek().pathname,
+          navigation.basePath
+        )
+      ) {
+        return;
+      }
+
       const tab = selectedTab.peek();
       const nextQueryParams: Record<string, string | null> =
         tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};

@@ -1370,4 +1370,20 @@ describe("createTabs", () => {
       createBibleReadingStateSpy.mockRestore();
     }
   });
+
+  // Regression: a static page's URL (e.g. "/en/about") has no reading
+  // position of its own, but a reading tab is still created underneath it
+  // with default content. Without an explicit guard in
+  // `commitSelectedTabToUrl`, the effect that runs on mount would
+  // unconditionally rewrite the address bar to that default reading path,
+  // clobbering the static page's own URL the instant the app hydrates.
+  it("does not overwrite a static page's URL with the reading position on mount", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+  });
 });

@@ -17,6 +17,10 @@ import {
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
 import {
+  buildStaticPagePath,
+  parseStaticPagePath,
+} from "../managers/StaticPagePath";
+import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
   countGraphemes,
@@ -263,6 +267,9 @@ export interface AppState {
 
   /** The name of the site (used for Open Graph and other social media metadata). */
   siteName: ReadonlySignal<string>;
+
+  /** Whether the current URL is the static "/{lang}/about" page. */
+  isAboutPage: ReadonlySignal<boolean>;
 
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
@@ -1026,6 +1033,20 @@ export function createSeedBibleState(
     });
   }
 
+  /**
+   * Whether the current URL is a static, non-reading page (currently just
+   * "/{lang}/about"). Drives the page-level component swap in `main.tsx` and
+   * the meta-signal branches below \u2014 a single source of truth so the
+   * rendered content and its title/description/canonical always agree.
+   */
+  const isAboutPage = computed(
+    () =>
+      parseStaticPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )?.page === "about"
+  );
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -1038,6 +1059,10 @@ export function createSeedBibleState(
     });
 
     const getTitle = () => {
+      if (isAboutPage.value) {
+        return `${t("about-title", { defaultValue: "About the Seed Bible" })} | ${seedBibleTitle}`;
+      }
+
       if (!selectedTab.value) {
         return seedBibleTitle;
       }
@@ -1051,6 +1076,16 @@ export function createSeedBibleState(
   const description = computed(() => {
     void i18n.language.value;
     const { t } = i18n;
+
+    if (isAboutPage.value) {
+      return truncateForMeta(
+        t("about-meta-description", {
+          defaultValue:
+            "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools.",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
@@ -1136,6 +1171,10 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
+    if (isAboutPage.value) {
+      return t("about-title", { defaultValue: "About the Seed Bible" });
+    }
+
     const chapter = selectedTab.value?.readingState.chapterData.value;
     if (!chapter) {
       return t("read-the-bible", {
@@ -1177,6 +1216,16 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
+    if (isAboutPage.value) {
+      // Uses the *resolved* i18n language, not the raw URL segment, so a
+      // garbage/unsupported language in the URL still canonicalizes to a
+      // real page instead of echoing back something that doesn't exist.
+      return `${navigation.basePath}${buildStaticPagePath({
+        language: i18n.language.value,
+        page: "about",
+      })}`;
+    }
+
     const readingState = selectedTab.value?.readingState;
     const bookId = readingState?.bookId.value;
 
@@ -1943,6 +1992,7 @@ export function createSeedBibleState(
       siteName,
       canonicalUrl,
       socialTitle,
+      isAboutPage,
       currentToast,
       toast,
       isDiscoverOpen: playlists.isDiscoverOpen,

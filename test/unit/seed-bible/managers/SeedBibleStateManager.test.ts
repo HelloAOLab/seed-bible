@@ -1498,6 +1498,31 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("about page", () => {
+    it("recognizes the /{lang}/about URL and branches every meta signal", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+      const state = await createState();
+
+      expect(state.app.isAboutPage.value).toBe(true);
+      expect(state.app.title.value).toBe("About the Seed Bible | Seed Bible");
+      expect(state.app.description.value).toBe(
+        "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools."
+      );
+      expect(state.app.socialTitle.value).toBe("About the Seed Bible");
+      expect(state.app.canonicalUrl.value).toBe("/en/about");
+    });
+
+    it("does not treat an ordinary reading URL as the About page", async () => {
+      const state = await createState();
+
+      expect(state.app.isAboutPage.value).toBe(false);
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
+      expect(state.app.title.value).toBe("Genesis 1 - ESV | Seed Bible");
+    });
+  });
+
   describe("meta description", () => {
     const GENESIS_1 = [
       { type: "heading", content: ["The Creation"] },
