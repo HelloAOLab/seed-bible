@@ -58,6 +58,14 @@
     transform 0.25s ease;
 }
 
+/* The chapter controls render as real `<a>` elements, which pulls in the
+   global anchor styling from base.css. `a:visited` outspecifies the class
+   rule above, so without this the chevron takes the visited-link colour as
+   soon as the reader has been to the next chapter — which is immediately. */
+.sb-reader-toolbar-button:visited {
+  color: inherit;
+}
+
 .sb-reader-toolbar-button:hover:not(:disabled) {
   background-color: rgba(0, 0, 0, 0.05);
 }
@@ -362,8 +370,16 @@
     border: none;
     background: transparent;
     color: var(--sb-font-color);
+    /* Same reason as `.sb-reader-toolbar-button` above: these are links now,
+       and the chevron is a ligature font — actual text — so the anchor's
+       default underline would draw right under the glyph. */
+    text-decoration: none;
     cursor: pointer;
     transition: transform 0.12s ease;
+  }
+
+  .sb-reader-floating-nav-arrow:visited {
+    color: var(--sb-font-color);
   }
 
   /* The 34px visual circle, centered in the wider hit region. Carries the
