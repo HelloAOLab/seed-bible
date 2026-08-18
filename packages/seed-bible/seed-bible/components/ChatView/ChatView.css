@@ -414,8 +414,14 @@ img.sb-chat-view-message-avatar {
   line-height: 1.2;
   resize: none;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   /* Cap at 5 lines: 5 × font-size × line-height + vertical padding. */
   max-height: calc(0.875rem * 1.2 * 5 + 1.25rem);
+}
+
+.sb-chat-view-input::-webkit-scrollbar {
+  display: none;
 }
 
 /* Mobile type-hint: faux blinking caret while the field is unfocused.
