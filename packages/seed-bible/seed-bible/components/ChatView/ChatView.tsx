@@ -44,7 +44,24 @@ interface ChatJoinGroup {
   timeMs: number;
 }
 
-type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup;
+type ToolCallChatMessage = Extract<ChatMessage, { type: "tool_call" }>;
+
+/** A run of consecutive tool-call messages from the same author(s) collapsed into one notification. */
+interface ChatToolCallGroup {
+  type: "tool";
+  /** A stable key for the group, set once at creation. */
+  key: string;
+  /** A key identifying the author(s) of every message in the group, used to detect contiguous runs. */
+  authorKey: string;
+  /** The first tool-call message in the run, used to resolve the author. */
+  message: ToolCallChatMessage;
+  /** The number of tool calls in the run. */
+  count: number;
+  /** The time of the most recent tool call in the group. */
+  timeMs: number;
+}
+
+type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup | ChatToolCallGroup;
 
 interface JoinEvent {
   participant: ChatParticipant;
@@ -72,28 +89,41 @@ function getJoinEvents(
     .map((participant) => ({ participant, timeMs: participant.joinTimeMs }));
 }
 
+const ENTRY_KIND_PRIORITY = { message: 0, tool: 1, join: 2 } as const;
+
 /**
- * Interleaves messages and participant join events into a single time-ordered
- * list of render groups. Consecutive messages from the same author(s) are grouped
- * together (a join event between them breaks the group), and consecutive join
- * events collapse into a single notification.
+ * Interleaves messages, tool-call events, and participant join events into a
+ * single time-ordered list of render groups. Consecutive messages from the
+ * same author(s) are grouped together, consecutive tool calls from the same
+ * author(s) collapse into one notification, and consecutive join events
+ * collapse into a single notification. A change in entry kind or author
+ * breaks the current group.
  */
 function buildTimeline(
   messages: ParsedChatTextMessage[],
+  toolCallMessages: ToolCallChatMessage[],
   participants: ChatParticipant[]
 ): ChatTimelineGroup[] {
-  if (messages.length === 0) {
+  if (messages.length === 0 && toolCallMessages.length === 0) {
     return [];
   }
 
   type Entry =
     | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
+    | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
     | { kind: "join"; timeMs: number; participant: ChatParticipant };
 
   const entries: Entry[] = [
     ...messages.map(
       (message): Entry => ({
         kind: "message",
+        timeMs: message.timeMs,
+        message,
+      })
+    ),
+    ...toolCallMessages.map(
+      (message): Entry => ({
+        kind: "tool",
         timeMs: message.timeMs,
         message,
       })
@@ -107,11 +137,11 @@ function buildTimeline(
     ),
   ];
 
-  // Stable sort by time; at equal times, messages come before joins.
+  // Stable sort by time; at equal times, messages come before tool calls, which come before joins.
   entries.sort(
     (a, b) =>
       a.timeMs - b.timeMs ||
-      (a.kind === b.kind ? 0 : a.kind === "message" ? -1 : 1)
+      ENTRY_KIND_PRIORITY[a.kind] - ENTRY_KIND_PRIORITY[b.kind]
   );
 
   const groups: ChatTimelineGroup[] = [];
@@ -123,6 +153,21 @@ function buildTimeline(
         lastGroup.messages.push(entry.message);
       } else {
         groups.push({ type: "messages", key, messages: [entry.message] });
+      }
+    } else if (entry.kind === "tool") {
+      const authorKey = entry.message.authors.join(" ");
+      if (lastGroup?.type === "tool" && lastGroup.authorKey === authorKey) {
+        lastGroup.count += 1;
+        lastGroup.timeMs = entry.timeMs;
+      } else {
+        groups.push({
+          type: "tool",
+          key: `tool-${entry.message.id}`,
+          authorKey,
+          message: entry.message,
+          count: 1,
+          timeMs: entry.timeMs,
+        });
       }
     } else if (lastGroup?.type === "join") {
       lastGroup.participants.push(entry.participant);
@@ -226,6 +271,30 @@ function getAuthorLabel(
   }
 
   return authors.join(", ");
+}
+
+/**
+ * Builds the label for a tool-use notification, e.g. "Alice used a tool" or
+ * "Alice used 3 tools".
+ */
+function getToolUseLabel(
+  name: string,
+  count: number,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  if (count === 1) {
+    return t("chat-tool-used", {
+      defaultValue: "{{name}} used a tool",
+      name,
+      count,
+    });
+  }
+
+  return t("chat-tool-used", {
+    defaultValue: "{{name}} used {{count}} tools",
+    name,
+    count,
+  });
 }
 
 function RelativeDateTime({ timeMs }: { timeMs: number }) {
@@ -493,7 +562,14 @@ export function ChatView(props: ChatViewProps) {
   const { chat, state } = props;
   const { t } = useI18n();
   const messages = chat.parsedMessages.value;
-  const timelineGroups = buildTimeline(messages, chat.totalParticipants.value);
+  const toolCallMessages = chat.messages.value.filter(
+    (m): m is ToolCallChatMessage => m.type === "tool_call"
+  );
+  const timelineGroups = buildTimeline(
+    messages,
+    toolCallMessages,
+    chat.totalParticipants.value
+  );
   const draft = useSignal("");
   const cursorPosition = useSignal(0);
   const isSubmitting = useSignal(false);
@@ -591,7 +667,7 @@ export function ChatView(props: ChatViewProps) {
       }
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages.length]);
+  }, [messages.length, toolCallMessages.length]);
 
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
@@ -759,7 +835,7 @@ export function ChatView(props: ChatViewProps) {
         role="log"
         aria-live="polite"
       >
-        {messages.length === 0 ? (
+        {timelineGroups.length === 0 ? (
           <div className="sb-chat-view-empty">
             <AskIcon className="sb-chat-view-empty-icon" />
             <p className="sb-chat-view-empty-title">
@@ -790,6 +866,30 @@ export function ChatView(props: ChatViewProps) {
                   </div>
                   <span className="sb-chat-view-event-text">
                     {getJoinLabel(group.participants, t)}
+                  </span>
+                  <RelativeDateTime timeMs={group.timeMs} />
+                </div>
+              );
+            }
+
+            if (group.type === "tool") {
+              const avatar = getMessageAvatar(chat, group.message, t);
+              return (
+                <div className="sb-chat-view-event" key={group.key}>
+                  <div className="sb-chat-view-event-avatar-shell">
+                    <Avatar
+                      imageUrl={avatar.imageUrl}
+                      visual={avatar.visual}
+                      title={avatar.label}
+                      isSelf={avatar.isSelf}
+                    />
+                  </div>
+                  <span className="sb-chat-view-event-text">
+                    {getToolUseLabel(
+                      getAuthorLabel(chat, group.message, t),
+                      group.count,
+                      t
+                    )}
                   </span>
                   <RelativeDateTime timeMs={group.timeMs} />
                 </div>
@@ -1048,7 +1148,12 @@ function ChatMessage({
       <p className="sb-chat-view-message-body">
         <MessageBody
           message={message}
-          onVerseReferenceClick={(ref) => state.app.openVerseReference(ref)}
+          onVerseReferenceClick={(ref) => {
+            if (state.app.isMobile.value) {
+              state.sidebar.closeChatPanel();
+            }
+            void state.app.openVerseReference(ref);
+          }}
         />
       </p>
       {showTimestamp && (

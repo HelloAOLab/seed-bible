@@ -1,10 +1,11 @@
+import { getBookId } from "./BibleDataManager";
+import {
+  exactTranslationBook,
+  normalizeBookName,
+  prefixTranslationBooks,
+} from "./bookNameMatch";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 import type { VerseRef } from "./PlaylistManager";
-
-/** Normalizes a book name for comparison: lowercased, whitespace collapsed. */
-function normalize(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
 
 /** Whether the given chapter number falls within the book's chapter range. */
 export function bookHasChapter(
@@ -14,33 +15,6 @@ export function bookHasChapter(
   const first = book.firstChapterNumber;
   const last = first + book.numberOfChapters - 1;
   return chapter >= first && chapter <= last;
-}
-
-/** Exact (case-insensitive) match on the book's common name, name, or id. */
-function exactBook(
-  target: string,
-  books: TranslationBook[]
-): TranslationBook | null {
-  return (
-    books.find(
-      (b) =>
-        normalize(b.commonName) === target ||
-        normalize(b.name) === target ||
-        normalize(b.id) === target
-    ) ?? null
-  );
-}
-
-/** All books whose common name or name starts with the target. */
-function prefixBooks(
-  target: string,
-  books: TranslationBook[]
-): TranslationBook[] {
-  return books.filter(
-    (b) =>
-      normalize(b.commonName).startsWith(target) ||
-      normalize(b.name).startsWith(target)
-  );
 }
 
 /**
@@ -83,20 +57,27 @@ export function buildTail(
 
 /**
  * Parses a human-typed scripture reference (e.g. "John 3:16", "1 John 2:1-3",
- * "Genesis 1:1-2:3") into every {@link VerseRef} it could plausibly mean,
- * matching the book name against the provided translation books.
+ * "Genesis 1:1-2:3") into every {@link VerseRef} it could plausibly mean.
  *
  * The verse may be omitted to reference a whole chapter, so a bare "Genesis 1"
  * yields `{ bookId, chapter }`, and a chapter range like "John 1-3" yields
  * `{ bookId, chapter: 1, endChapter: 3 }`. Mixing a chapter start with a verse
  * end (e.g. "John 1-2:3") is invalid and yields an empty list.
  *
- * Book matching is, in order: an exact (case-insensitive) match on the book's
- * common name, name, or id; otherwise a prefix match on the common name or
- * name. An exact match resolves to a single book. When a prefix matches several
- * books (e.g. "Phil" -> Philippians and Philemon), each book that actually
- * contains the requested chapter becomes a separate result — so "Phil 2" yields
- * only Philippians (Philemon has one chapter) while "Phil 1" yields both.
+ * Book matching, in order:
+ * 1. When `books` is provided, an exact (case-insensitive) match on a book's
+ *    common name, name, or id; otherwise a prefix match on the common name or
+ *    name. Localized names from the current translation are found here (e.g.
+ *    spa_onbv "Esdras" → EZR).
+ * 2. Otherwise, the canonical English book name or USFM/book id via
+ *    {@link getBookId}. When `books` is still available, the matched id is
+ *    re-resolved against that list so single-chapter verse shorthand still
+ *    works.
+ *
+ * An exact match resolves to a single book. When a prefix matches several books
+ * (e.g. "Phil" -> Philippians and Philemon), each book that actually contains
+ * the requested chapter becomes a separate result — so "Phil 2" yields only
+ * Philippians (Philemon has one chapter) while "Phil 1" yields both.
  *
  * For a book that has only one chapter and is named unambiguously, a bare
  * trailing number is read as a verse rather than a chapter, so "Philemon 2"
@@ -107,7 +88,7 @@ export function buildTail(
  */
 export function parseVerseReferences(
   input: string,
-  books: TranslationBook[]
+  books?: TranslationBook[]
 ): VerseRef[] {
   const trimmed = input.trim();
   if (!trimmed) {
@@ -139,14 +120,28 @@ export function parseVerseReferences(
   const chapter = Number(chapterStr);
   const isBareNumber = !verseStr && !endChapterStr && !endVerseStr;
 
-  const target = normalize(bookName);
-  const exact = exactBook(target, books);
-  // An exact match resolves to a single book; otherwise every prefix match is a
-  // candidate to be narrowed by chapter below.
-  const nameMatches = exact ? [exact] : prefixBooks(target, books);
+  const target = normalizeBookName(bookName);
+  let nameMatches: TranslationBook[] = [];
+  if (books?.length) {
+    const exact = exactTranslationBook(target, books);
+    // An exact match resolves to a single book; otherwise every prefix match is a
+    // candidate to be narrowed by chapter below.
+    nameMatches = exact ? [exact] : prefixTranslationBooks(target, books);
+  }
 
   if (nameMatches.length === 0) {
-    return [];
+    // Fall back to English names / book ids. If the translation list is still
+    // available, recover book metadata so single-chapter verse shorthand works.
+    const bookId = getBookId(bookName);
+    if (!bookId) {
+      return [];
+    }
+    const byId = books?.find((b) => b.id === bookId);
+    if (byId) {
+      nameMatches = [byId];
+    } else {
+      return [{ bookId, chapter, ...tail }];
+    }
   }
 
   if (nameMatches.length === 1) {
@@ -179,7 +174,7 @@ export function parseVerseReferences(
  */
 export function parseVerseReference(
   input: string,
-  books: TranslationBook[]
+  books?: TranslationBook[]
 ): VerseRef | null {
   const refs = parseVerseReferences(input, books);
   return refs.length === 1 ? refs[0]! : null;

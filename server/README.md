@@ -49,14 +49,16 @@ All configuration is via environment variables. Defaults are applied at startup.
 
 ### Server
 
-| Variable           | Default   | Description                                                                                     |
-| ------------------ | --------- | ----------------------------------------------------------------------------------------------- |
-| `NODE_ENV`         | _(unset)_ | `production` selects the multi-branch host; anything else runs the Vite dev server.             |
-| `PORT`             | `3002`    | Port the server listens on.                                                                     |
-| `ROOT_BRANCH`      | `main`    | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.     |
-| `ASSET_HOST`       | `""`      | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`). |
-| `POINTER_TTL_MS`   | `10000`   | How long (ms) a branch → buildId pointer is cached before re-reading from the store.            |
-| `MODULE_CACHE_MAX` | `20`      | Max entries in each LRU cache (loaded SSR modules, and pre-rendered HTML for non-SSR branches). |
+| Variable              | Default   | Description                                                                                                                           |
+| --------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`            | _(unset)_ | `production` selects the multi-branch host; anything else runs the Vite dev server.                                                   |
+| `PORT`                | `3002`    | Port the server listens on.                                                                                                           |
+| `ROOT_BRANCH`         | `main`    | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.                                           |
+| `ASSET_HOST`          | `""`      | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`).                                       |
+| `POINTER_TTL_MS`      | `10000`   | How long (ms) a branch → buildId pointer is cached before re-reading from the store.                                                  |
+| `MODULE_CACHE_MAX`    | `20`      | Max entries in each LRU cache (loaded SSR modules, and pre-rendered HTML for non-SSR branches).                                       |
+| `INVALIDATION_SECRET` | `""`      | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.** |
+| `SHUTDOWN_GRACE_MS`   | `5000`    | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                  |
 
 ### SSR whitelisting
 
@@ -117,6 +119,57 @@ branches/<name>/<buildId>/assets/...    → this build's content-hashed chunks
 sw.js, registerSW.js, manifest.webmanifest → root-scoped PWA shell (main build only)
 ```
 
+### Telemetry (OpenTelemetry)
+
+The server emits **traces and metrics** over OTLP. It is **off unless
+`OTEL_EXPORTER_OTLP_ENDPOINT` is set** — with no endpoint configured nothing is
+registered and no spans are allocated, so local development is unaffected.
+
+| Variable                              | Default          | Description                                                                         |
+| ------------------------------------- | ---------------- | ----------------------------------------------------------------------------------- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`         | _(unset)_        | **Enables telemetry.** Base OTLP/HTTP URL, e.g. `http://collector:4318`.            |
+| `OTEL_EXPORTER_OTLP_HEADERS`          | _(unset)_        | Extra headers for the exporter, e.g. `x-api-key=…`. Used for backend auth.          |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`  | _(derived)_      | Overrides the traces endpoint only.                                                 |
+| `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | _(derived)_      | Overrides the metrics endpoint only.                                                |
+| `OTEL_SERVICE_NAME`                   | `seed-bible-ssr` | `service.name` reported on every span and metric.                                   |
+| `OTEL_RESOURCE_ATTRIBUTES`            | _(unset)_        | Extra resource attributes, e.g. `deployment.environment.name=staging`.              |
+| `OTEL_TRACES_SAMPLER`                 | parent-based     | Standard sampler selection, e.g. `parentbased_traceidratio`.                        |
+| `OTEL_TRACES_SAMPLER_ARG`             | _(unset)_        | Sampler argument, e.g. `0.1` for 10% of traces.                                     |
+| `OTEL_METRIC_EXPORT_INTERVAL`         | `60000`          | Metric push interval (ms).                                                          |
+| `OTEL_SDK_DISABLED`                   | `false`          | Hard off switch, even when an endpoint is set.                                      |
+| `OTEL_DEBUG_CONSOLE`                  | `false`          | Also print spans to stdout — lets you check span shape without running a collector. |
+
+**Spans.** Each request produces a `SERVER` span named `<METHOD> <route>`, where
+the route is a bounded label (`/`, `/healthz`, `/__invalidate`, `/b/:branch`,
+`/b/:branch/:buildId`, `asset-proxy`). Nested under it, as applicable:
+`store.readPointer`, `store.fetchArtifacts`, `store.fetchHtml`, `build.import`
+(evaluating a branch's SSR bundle — the cold-start cost), `ssr.render`, and
+`asset.proxy`. An inbound `traceparent` header is honoured, so a trace started
+by a CDN or load balancer continues here. `GET /healthz` is deliberately **not**
+traced: it fires constantly and would drown out real traffic.
+
+**Metrics.** `http.server.request.duration`, `seedbible.ssr.render.duration`,
+`seedbible.ssr.render.failures`, `seedbible.cache.lookups` (pointer/module/HTML,
+hit vs miss), `seedbible.store.operation.duration`,
+`seedbible.asset_proxy.duration`, and `seedbible.process.memory`.
+
+**Watch `seedbible.ssr.render.failures`.** When `render()` throws, the server
+logs it and serves the un-rendered HTML with a **200 OK** — so from the outside
+the site looks healthy while visitors get a page with no server-rendered
+content. Those requests carry `seedbible.ssr.degraded=true` on the request span.
+This counter is the only cheap alarm for that state.
+
+**Cardinality note.** Metric attributes use a clamped branch label: branches in
+`ALLOWED_SSR_BRANCHES` appear by name, everything else collapses to `other`.
+Any branch can be deployed and requested, so the raw name would be unbounded
+cardinality. Spans are not aggregated and keep the real branch name.
+
+**Why it is instrumented by hand.** Production runs under Bun from a single
+pre-bundled file. `@opentelemetry/auto-instrumentations-node` works by patching
+modules as they load, which Bun does not support and a pre-bundled file leaves
+no opportunity for — so it would silently produce nothing. Every span is created
+explicitly in [telemetry.ts](telemetry.ts) instead.
+
 ## Example configurations
 
 Production host on S3, SSR'ing only `main` and `staging`, rendering all other
@@ -129,6 +182,8 @@ S3_BUCKET=seed-bible-artifacts \
 ASSET_HOST=https://cdn.seedbible.example \
 ALLOWED_SSR_BRANCHES=main,staging \
 DEFAULT_SSR_BRANCH=main \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
+OTEL_SERVICE_NAME=seed-bible-ssr \
 node server/dist/index.js
 ```
 

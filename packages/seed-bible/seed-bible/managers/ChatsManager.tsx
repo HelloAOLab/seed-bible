@@ -17,10 +17,12 @@ import type { TranslatableTitle } from "./BibleToolsManager";
 import { translateTitle } from "../app/utils";
 import type { VerseRef } from "./BibleDataManager";
 import { parseVerseReferences } from "./BibleDataManager";
+import type { TranslationBook } from "./FreeUseBibleAPI";
 import { getConnectedUserVisualKey } from "./SessionsManager";
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type i18n } from "i18next";
+import type { AIProviderFunctionTool } from "./AIManager";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -50,8 +52,14 @@ export const textChatMessageSchema = chatMessageBaseSchema.extend({
   text: z.string(),
 });
 
+export const toolCallChatMessageSchema = chatMessageBaseSchema.extend({
+  type: z.literal("tool_call"),
+  name: z.string(),
+});
+
 export const chatMessageSchema = z.discriminatedUnion("type", [
   textChatMessageSchema,
+  toolCallChatMessageSchema,
 ]);
 
 export type ChatMessageBase = z.infer<typeof chatMessageBaseSchema>;
@@ -60,6 +68,12 @@ export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
 export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
   textChatMessageSchema.omit({
+    timeMs: true,
+    id: true,
+    authors: true,
+    targets: true,
+  }),
+  toolCallChatMessageSchema.omit({
     timeMs: true,
     id: true,
     authors: true,
@@ -83,6 +97,22 @@ export interface StreamingTextChatMessageOptions {
 export type ChatProviderMessageOptions =
   | ChatMessageOptions
   | StreamingTextChatMessageOptions;
+
+/**
+ * A stream of messages that a {@link ChatProvider} can return from
+ * `generateResponse` instead of a single message, e.g. to narrate multiple
+ * turns of a tool-calling loop. Each yielded message may itself be a
+ * {@link StreamingTextChatMessageOptions} with progressively-streamed text.
+ */
+export type ChatProviderMessageStream =
+  | Iterable<ChatProviderMessageOptions>
+  | AsyncIterable<ChatProviderMessageOptions>
+  | Iterator<ChatProviderMessageOptions>
+  | AsyncIterator<ChatProviderMessageOptions>;
+
+export type ChatProviderResponse =
+  | ChatProviderMessageOptions
+  | ChatProviderMessageStream;
 
 export interface ParsedChatTextMessage extends ChatMessageBase {
   type: "text";
@@ -116,17 +146,70 @@ export interface ParsedVerseReferencePart {
   ref: VerseRef;
 }
 
+/**
+ * Custom context that a local chat session can provide to its AI chat providers.
+ */
+export interface LocalChatContext {
+  /**
+   * The instructions (system prompt) that should be passed to AI models.
+   * If omitted, the chat provider can choose its own instructions.
+   */
+  instructions?: string;
+
+  /**
+   * The tools that should be provided to the AI model for this chat.
+   */
+  tools?: AIProviderFunctionTool[];
+}
+
+/**
+ * A {@link LocalChatContext} that carries an `id` so it can be added to and
+ * later removed from a chat session via `addContext`/`removeContext`.
+ */
+export interface IdentifiedLocalChatContext extends LocalChatContext {
+  /**
+   * A unique identifier used to add or remove this context. Adding a context
+   * with an `id` that is already present replaces the existing one.
+   */
+  id: string;
+
+  /**
+   * The label for the context, which can be used to display a description of the context to the user.
+   */
+  label: TranslatableTitle;
+}
+
 export interface ChatContext {
   chatId: string;
   messages: ChatMessage[];
   participant: ChatParticipant;
   participants: ChatParticipant[];
+
+  /**
+   * The instructions (system prompt) that should be passed to AI models, if any.
+   */
+  instructions?: string;
+
+  /**
+   * The tools that should be provided to the AI model, if any.
+   */
+  tools?: AIProviderFunctionTool[];
 }
 
 export interface JoinLeaveChatContext {
   chatId: string;
   messages: ChatMessage[];
   participants: ChatParticipant[];
+
+  /**
+   * The instructions (system prompt) that should be passed to AI models, if any.
+   */
+  instructions?: string;
+
+  /**
+   * The tools that should be provided to the AI model, if any.
+   */
+  tools?: AIProviderFunctionTool[];
 }
 
 export interface ChatProvider {
@@ -141,13 +224,19 @@ export interface ChatProvider {
   /** Whether this provider supports being added to shared chats. If false, then the provider can only be used in local (single user) chats. */
   supportsSharedChats: boolean;
 
-  /** Generates a response for the given chat context. */
+  /** Whether this provider supports calling tools that are provided via {@link ChatContext.tools}. Defaults to false. */
+  supportsToolCalling?: boolean;
+
+  /**
+   * Generates a response for the given chat context. May return a single
+   * message, or an (async) iterable/iterator of messages to emit a sequence
+   * of messages for one turn (e.g. across a multi-step tool-calling loop).
+   * Each message, whether returned directly or yielded from a stream, may
+   * itself stream its text progressively via {@link StreamingTextChatMessageOptions}.
+   */
   generateResponse: (
     context: ChatContext
-  ) =>
-    | ChatProviderMessageOptions
-    | Promise<ChatProviderMessageOptions | null>
-    | null;
+  ) => ChatProviderResponse | Promise<ChatProviderResponse | null> | null;
   /** Called when this provider is added as a participant to a chat. */
   onJoinChat?: (context: JoinLeaveChatContext) => void | Promise<void>;
   /** Called when this provider is removed as a participant from a chat. */
@@ -307,6 +396,13 @@ export interface ChatSession {
    * @returns The authors of the message, or an empty array if the authors are anonymous or have left the session.
    */
   getMessageAuthors: (message: ChatMessage) => ChatParticipant[];
+
+  /**
+   * The final (merged) custom context provided to AI chat providers. This is
+   * owned by the {@link ChatsManager} and shared across all chat sessions, so
+   * a context added to the manager is automatically available here.
+   */
+  context: ReadonlySignal<LocalChatContext>;
 }
 
 export interface SharedChatSession extends ChatSession {
@@ -332,6 +428,42 @@ export interface ChatsManager {
   createLocalSession: (history?: ChatSessionHistory) => ChatSession;
   registerProvider: (provider: ChatProvider) => () => void;
   selectChat: (chatId: string | null) => void;
+
+  /**
+   * The final (merged) custom context provided to AI chat providers across all
+   * chat sessions. Combines the default context (set via {@link setContext})
+   * with any additional contexts (added via {@link addContext}).
+   */
+  context: ReadonlySignal<LocalChatContext>;
+
+  /**
+   * The identified contexts currently added via {@link addContext}, in the
+   * order they were added. Unlike {@link context}, this preserves each
+   * context's `id`/`label`/`tools` individually instead of merging them.
+   */
+  activeContexts: ReadonlySignal<IdentifiedLocalChatContext[]>;
+
+  /**
+   * Merges the given fields into the default custom context. Applies to every
+   * chat session managed by this manager.
+   * @param context The context fields to merge in.
+   */
+  setContext: (context: LocalChatContext) => void;
+
+  /**
+   * Adds an additional identified context that is merged into the default
+   * context before being sent to AI chat providers. Adding a context whose
+   * `id` is already present replaces the existing one.
+   * @param context The identified context to add.
+   */
+  addContext: (context: IdentifiedLocalChatContext) => void;
+
+  /**
+   * Removes a previously added context by its `id`. Does nothing if no context
+   * with that `id` is present.
+   * @param id The id of the context to remove.
+   */
+  removeContext: (id: string) => void;
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
@@ -444,44 +576,82 @@ function createProviderParticipantId(
   return `${ownerConnectionId}_${providerId}`;
 }
 
-function toAsyncTextIterator(
-  stream: ChatProviderTextStream
-): AsyncIterator<string> {
+/**
+ * Combines the default chat context with any additional contexts into a single
+ * {@link LocalChatContext} to hand to an AI chat provider. Instructions are
+ * concatenated (non-empty, in order, separated by blank lines) and tool lists
+ * are concatenated in order. Empty results collapse to `undefined` so a
+ * provider can tell "no context" from "empty context".
+ */
+function mergeLocalChatContexts(
+  contexts: LocalChatContext[]
+): LocalChatContext {
+  const instructions = contexts
+    .map((context) => context.instructions)
+    .filter(
+      (instruction): instruction is string =>
+        typeof instruction === "string" && instruction.trim().length > 0
+    );
+  const tools = contexts.flatMap((context) => context.tools ?? []);
+
+  return {
+    instructions:
+      instructions.length > 0 ? instructions.join("\n\n") : undefined,
+    tools: tools.length > 0 ? tools : undefined,
+  };
+}
+
+function toAsyncIterator<T>(
+  stream: Iterable<T> | AsyncIterable<T> | Iterator<T> | AsyncIterator<T>
+): AsyncIterator<T> {
   if (
-    typeof (stream as AsyncIterable<string>)[Symbol.asyncIterator] ===
-    "function"
+    typeof (stream as AsyncIterable<T>)[Symbol.asyncIterator] === "function"
   ) {
-    return (stream as AsyncIterable<string>)[Symbol.asyncIterator]();
+    return (stream as AsyncIterable<T>)[Symbol.asyncIterator]();
   }
-  if (typeof (stream as Iterable<string>)[Symbol.iterator] === "function") {
-    const iterator = (stream as Iterable<string>)[Symbol.iterator]();
+  if (typeof (stream as Iterable<T>)[Symbol.iterator] === "function") {
+    const iterator = (stream as Iterable<T>)[Symbol.iterator]();
     return {
-      next: async () => {
-        const next = iterator.next();
-        return {
-          done: next.done ?? false,
-          value: (next.value ?? "") as string,
-        };
-      },
+      next: async () => iterator.next(),
     };
   }
-  if (typeof (stream as AsyncIterator<string>).next === "function") {
-    return stream as AsyncIterator<string>;
+  if (typeof (stream as AsyncIterator<T>).next === "function") {
+    return stream as AsyncIterator<T>;
   }
 
   return {
     next: async () => ({
       done: true,
-      value: undefined as unknown as string,
+      value: undefined as unknown as T,
     }),
   };
+}
+
+/**
+ * Distinguishes a single {@link ChatProviderMessageOptions} (always
+ * discriminated by a `type` field) from a {@link ChatProviderMessageStream}
+ * (an (async) iterable/iterator of messages, with no `type` field of its
+ * own). Plain arrays of messages are supported since arrays are `Iterable`.
+ */
+function isProviderMessageStream(
+  response: ChatProviderResponse
+): response is ChatProviderMessageStream {
+  if (typeof response === "object" && response !== null && "type" in response) {
+    return false;
+  }
+  return (
+    typeof (response as AsyncIterable<unknown>)[Symbol.asyncIterator] ===
+      "function" ||
+    typeof (response as Iterable<unknown>)[Symbol.iterator] === "function" ||
+    typeof (response as Iterator<unknown>).next === "function"
+  );
 }
 
 async function consumeProviderTextStream(options: {
   stream: ChatProviderTextStream;
   onChunk: (currentText: string) => void;
 }): Promise<string> {
-  const iterator = toAsyncTextIterator(options.stream);
+  const iterator = toAsyncIterator(options.stream);
   let text = "";
 
   while (true) {
@@ -498,6 +668,119 @@ async function consumeProviderTextStream(options: {
   }
 
   return text;
+}
+
+/**
+ * Handles a single message returned (or yielded) by a {@link ChatProvider},
+ * building a {@link ChatMessage} and handing it to `upsertMessage`. If the
+ * message's text is itself a stream, it is consumed chunk by chunk, calling
+ * `upsertMessage` with the same message ID each time so the caller can
+ * upsert-in-place as the text grows.
+ */
+async function processProviderMessage(options: {
+  message: ChatProviderMessageOptions;
+  authorId: string;
+  getParticipants: () => ChatParticipant[];
+  i18n: i18n;
+  upsertMessage: (message: ChatMessage) => void;
+}): Promise<void> {
+  const { message, authorId, getParticipants, i18n, upsertMessage } = options;
+
+  if (message.type === "tool_call") {
+    upsertMessage(
+      createChatMessage(
+        {
+          type: "tool_call",
+          name: message.name,
+        },
+        [authorId],
+        [],
+        { id: uuid(), timeMs: Date.now() }
+      )
+    );
+  }
+
+  if (message.type !== "text") {
+    return;
+  }
+
+  if (typeof message.text !== "string") {
+    const messageId = uuid();
+    const messageTimeMs = Date.now();
+
+    const upsertStreamingResponse = (text: string) => {
+      const responseTargets = resolveMessageTargets(
+        getParticipants(),
+        text,
+        i18n
+      );
+      upsertMessage(
+        createChatMessage(
+          { type: "text", text },
+          [authorId],
+          responseTargets.map((target) => target.id),
+          { id: messageId, timeMs: messageTimeMs }
+        )
+      );
+    };
+
+    const finalText = await consumeProviderTextStream({
+      stream: message.text,
+      onChunk: upsertStreamingResponse,
+    });
+    upsertStreamingResponse(finalText);
+    return;
+  }
+
+  const responseTargets = resolveMessageTargets(
+    getParticipants(),
+    message.text,
+    i18n
+  );
+  upsertMessage(
+    createChatMessage(
+      { type: "text", text: message.text },
+      [authorId],
+      responseTargets.map((target) => target.id)
+    )
+  );
+}
+
+/**
+ * Handles the full response returned by a {@link ChatProvider}'s
+ * `generateResponse`: a single message, a stream of messages, or `null`.
+ * Messages are processed sequentially — including fully consuming each
+ * message's own text stream — before the next message is requested from the
+ * provider's iterator.
+ */
+async function processProviderResponse(options: {
+  response: ChatProviderResponse | null;
+  authorId: string;
+  getParticipants: () => ChatParticipant[];
+  i18n: i18n;
+  upsertMessage: (message: ChatMessage) => void;
+}): Promise<void> {
+  const { response, ...messageOptions } = options;
+  if (!response) {
+    return;
+  }
+
+  if (!isProviderMessageStream(response)) {
+    await processProviderMessage({ message: response, ...messageOptions });
+    return;
+  }
+
+  const iterator = toAsyncIterator(response);
+  while (true) {
+    const next = await iterator.next();
+    if (next.done) {
+      break;
+    }
+    if (!next.value) {
+      continue;
+    }
+    await processProviderMessage({ message: next.value, ...messageOptions });
+  }
 }
 
 function upsertMessageInList(
@@ -589,7 +872,8 @@ function parseTextMessage(
   message: TextChatMessage,
   participants: ChatParticipant[],
   participantIdAliases: Readonly<Record<string, string>>,
-  i18n: i18n
+  i18n: i18n,
+  books?: TranslationBook[]
 ): ParsedChatTextMessage {
   const { t } = i18n;
   const { text } = message;
@@ -617,7 +901,7 @@ function parseTextMessage(
     });
   }
 
-  for (const { ref, start, end } of parseVerseReferences(text)) {
+  for (const { ref, start, end } of parseVerseReferences(text, books)) {
     pending.push({ kind: "verse_ref", start, end, ref });
   }
 
@@ -722,7 +1006,7 @@ export function resolveMessageTargets(
   return Array.from(matches.values());
 }
 
-function resolveMessageAuthors(
+export function resolveMessageAuthors(
   participants: ChatParticipant[],
   message: ChatMessage,
   participantIdAliases: Readonly<Record<string, string>> = {}
@@ -849,7 +1133,8 @@ function getMostRecentProviderParticipant(
 function createSharedChatSession(
   session: BibleReadingSession,
   chatProviders: Signal<ChatProvider[]>,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  chatContext: ReadonlySignal<LocalChatContext>
 ): SharedChatSession {
   const i18n = i18nManager.i18n;
   const chats = session.document.getArray<unknown>("chats");
@@ -1247,10 +1532,13 @@ function createSharedChatSession(
       (entry) => entry.id === localProvider.providerId
     );
     if (provider?.onJoinChat) {
+      const merged = chatContext.value;
       provider.onJoinChat({
         chatId,
         messages: messages.value,
         participants: participants.value,
+        instructions: merged.instructions,
+        tools: merged.tools,
       });
     }
   };
@@ -1325,71 +1613,35 @@ function createSharedChatSession(
         setParticipantTyping(participant.id, true);
 
         try {
+          const merged = chatContext.value;
           const response = await provider.generateResponse({
             chatId,
             messages: [...messages.value, nextMessage],
             participant,
             participants: participants.value,
+            instructions: merged.instructions,
+            tools: merged.tools,
           });
-          if (!response) {
-            return;
-          }
-
-          const streamingText =
-            response.type === "text" && typeof response.text !== "string"
-              ? response.text
-              : null;
-
-          if (streamingText) {
-            const messageId = uuid();
-            const messageTimeMs = Date.now();
-
-            const upsertStreamingResponse = (text: string) => {
-              const responseTargets = resolveMessageTargets(
-                participants.value,
-                text,
-                i18n
-              );
-              const nextResponseMessage = createChatMessage(
-                {
-                  type: "text",
-                  text,
-                },
-                [participant.id],
-                responseTargets.map((target) => target.id),
-                {
-                  id: messageId,
-                  timeMs: messageTimeMs,
-                }
-              );
-              upsertSharedMessage(nextResponseMessage);
-            };
-
-            const finalText = await consumeProviderTextStream({
-              stream: streamingText,
-              onChunk: upsertStreamingResponse,
-            });
-            upsertStreamingResponse(finalText);
-            return;
-          }
-
-          if (response.type !== "text" || typeof response.text !== "string") {
-            return;
-          }
-
-          const responseTargets = resolveMessageTargets(
-            participants.value,
-            response.text,
-            i18n
-          );
-          chats.push(
+          await processProviderResponse({
+            response,
+            authorId: participant.id,
+            getParticipants: () => participants.value,
+            i18n,
+            upsertMessage: upsertSharedMessage,
+          });
+        } catch (err) {
+          upsertSharedMessage(
             createChatMessage(
               {
                 type: "text",
-                text: response.text,
+                text: i18n.t("chat-ai-error", {
+                  defaultValue:
+                    "Sorry, something went wrong generating a response ({{error}}).",
+                  error: err instanceof Error ? err.message : String(err),
+                }),
               },
               [participant.id],
-              responseTargets.map((target) => target.id)
+              []
             )
           );
         } finally {
@@ -1399,18 +1651,22 @@ function createSharedChatSession(
     }
   };
 
-  const parsedMessages = computed<ParsedChatTextMessage[]>(() =>
-    messages.value
+  const parsedMessages = computed<ParsedChatTextMessage[]>(() => {
+    // Test doubles and partial session mocks may omit reading state; fall back
+    // to English-only resolution via getBookId when books are unavailable.
+    const books = session.readingState?.translationBooks?.value?.books;
+    return messages.value
       .filter((m): m is TextChatMessage => m.type === "text")
       .map((m) =>
         parseTextMessage(
           m,
           totalParticipants.value,
           participantIdAliases.value,
-          i18n
+          i18n,
+          books
         )
-      )
-  );
+      );
+  });
 
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
 
@@ -1460,10 +1716,13 @@ function createSharedChatSession(
         (entry) => entry.id === localProvider.providerId
       );
       if (provider && provider.onLeaveChat) {
+        const merged = chatContext.value;
         provider.onLeaveChat({
           chatId,
           messages: messages.value,
           participants: participants.value,
+          instructions: merged.instructions,
+          tools: merged.tools,
         });
       }
     },
@@ -1473,6 +1732,7 @@ function createSharedChatSession(
         message,
         participantIdAliases.value
       ),
+    context: chatContext,
     isShared: true,
     session,
   };
@@ -1480,16 +1740,7 @@ function createSharedChatSession(
 
 function getWasMentionedSignal(
   participants: ReadonlySignal<(UserChatParticipant | AIChatParticipant)[]>,
-  unreadMessages: ReadonlySignal<
-    {
-      id: string;
-      authors: string[];
-      timeMs: number;
-      targets: string[] | true;
-      type: "text";
-      text: string;
-    }[]
-  >
+  unreadMessages: ReadonlySignal<ChatMessage[]>
 ) {
   return computed(() => {
     const selfParticipantIds = new Set(
@@ -1519,7 +1770,9 @@ function createLocalChatSession(
   loginManager: LoginManager,
   chatProviders: Signal<ChatProvider[]>,
   i18nManager: I18nManager,
-  history?: ChatSessionHistory
+  chatContext: ReadonlySignal<LocalChatContext>,
+  history?: ChatSessionHistory,
+  translationBooks?: ReadonlySignal<TranslationBook[] | undefined>
 ): ChatSession {
   const i18n = i18nManager.i18n;
   // Join times keyed by participant id, recorded the first time each id is seen.
@@ -1718,10 +1971,13 @@ function createLocalChatSession(
       (entry) => entry.id === participantId
     );
     if (provider?.onJoinChat) {
+      const merged = chatContext.value;
       provider.onJoinChat({
         chatId,
         messages: messages.value,
         participants: participants.value,
+        instructions: merged.instructions,
+        tools: merged.tools,
       });
     }
   };
@@ -1795,77 +2051,40 @@ function createLocalChatSession(
         );
 
         try {
+          const merged = chatContext.value;
           const response = await provider.generateResponse({
             chatId,
             messages: [...messages.value],
             participant: target,
             participants: participants.value,
+            instructions: merged.instructions,
+            tools: merged.tools,
           });
-          if (!response) {
-            return;
-          }
-
-          const streamingText =
-            response.type === "text" && typeof response.text !== "string"
-              ? response.text
-              : null;
-
-          if (streamingText) {
-            const messageId = uuid();
-            const messageTimeMs = Date.now();
-
-            const upsertStreamingResponse = (text: string) => {
-              const responseTargets = resolveMessageTargets(
-                participants.value,
-                text,
-                i18n
-              );
-              const nextResponseMessage = createChatMessage(
-                {
-                  type: "text",
-                  text,
-                },
-                [target.id],
-                responseTargets.map((entry) => entry.id),
-                {
-                  id: messageId,
-                  timeMs: messageTimeMs,
-                }
-              );
-              messages.value = upsertMessageInList(
-                messages.value,
-                nextResponseMessage
-              );
-            };
-
-            const finalText = await consumeProviderTextStream({
-              stream: streamingText,
-              onChunk: upsertStreamingResponse,
-            });
-            upsertStreamingResponse(finalText);
-            return;
-          }
-
-          if (response.type !== "text" || typeof response.text !== "string") {
-            return;
-          }
-
-          const responseTargets = resolveMessageTargets(
-            participants.value,
-            response.text,
-            i18n
-          );
-          messages.value = [
-            ...messages.value,
+          await processProviderResponse({
+            response,
+            authorId: target.id,
+            getParticipants: () => participants.value,
+            i18n,
+            upsertMessage: (message) => {
+              messages.value = upsertMessageInList(messages.value, message);
+            },
+          });
+        } catch (err) {
+          messages.value = upsertMessageInList(
+            messages.value,
             createChatMessage(
               {
                 type: "text",
-                text: response.text,
+                text: i18n.t("chat-ai-error", {
+                  defaultValue:
+                    "Sorry, something went wrong generating a response ({{error}}).",
+                  error: err instanceof Error ? err.message : String(err),
+                }),
               },
               [target.id],
-              responseTargets.map((entry) => entry.id)
-            ),
-          ];
+              []
+            )
+          );
         } finally {
           providerTypingParticipantIds.value =
             providerTypingParticipantIds.value.filter((id) => id !== target.id);
@@ -1901,18 +2120,20 @@ function createLocalChatSession(
     getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
   );
 
-  const parsedMessages = computed<ParsedChatTextMessage[]>(() =>
-    messages.value
+  const parsedMessages = computed<ParsedChatTextMessage[]>(() => {
+    const books = translationBooks?.value;
+    return messages.value
       .filter((m): m is TextChatMessage => m.type === "text")
       .map((m) =>
         parseTextMessage(
           m,
           totalParticipants.value,
           participantIdAliases.value,
-          i18n
+          i18n,
+          books
         )
-      )
-  );
+      );
+  });
 
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
   const chatId = uuid();
@@ -1957,24 +2178,64 @@ function createLocalChatSession(
         (entry) => entry.id === participantId
       );
       if (provider && provider.onLeaveChat) {
+        const merged = chatContext.value;
         provider.onLeaveChat({
           chatId,
           messages: messages.value,
           participants: participants.value,
+          instructions: merged.instructions,
+          tools: merged.tools,
         });
       }
     },
     getMessageAuthors,
+    context: chatContext,
   };
 }
 
 export function createChatsManager(
   loginManager: LoginManager,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  /**
+   * Books for the currently open reader tab. Used so local chat can resolve
+   * localized scripture names (shared chats read books from the session's
+   * reading state instead).
+   */
+  translationBooks?: ReadonlySignal<TranslationBook[] | undefined>
 ): ChatsManager {
   const chats = signal<ChatSession[]>([]);
   const isOpen = signal<boolean>(false);
   const chatProviders = signal<ChatProvider[]>([]);
+
+  // The custom context (instructions + tools) shared by every chat session.
+  // It is kept in-memory only: it is local to this client and is never
+  // broadcast to remote participants (tool `function` callbacks are not
+  // serializable and only ever run in the local runtime).
+  const defaultContext = signal<LocalChatContext>({});
+  const additionalContexts = signal<IdentifiedLocalChatContext[]>([]);
+  const context = computed<LocalChatContext>(() =>
+    mergeLocalChatContexts([defaultContext.value, ...additionalContexts.value])
+  );
+  // Reads via `.peek()` (not `.value`) when deriving the next value from the
+  // current one: these are called from reactive effects that toggle a
+  // context on/off (e.g. `PlaylistManager` while a playlist is being edited),
+  // and a tracked read here would make `additionalContexts`/`defaultContext` a
+  // dependency of that calling effect — which its own write to the same
+  // signal would then re-trigger, looping forever.
+  const setContext = (next: LocalChatContext) => {
+    defaultContext.value = { ...defaultContext.peek(), ...next };
+  };
+  const addContext = (next: IdentifiedLocalChatContext) => {
+    additionalContexts.value = [
+      ...additionalContexts.peek().filter((c) => c.id !== next.id),
+      next,
+    ];
+  };
+  const removeContext = (id: string) => {
+    additionalContexts.value = additionalContexts
+      .peek()
+      .filter((c) => c.id !== id);
+  };
   const selectedChatId = signal<string | null>(null);
   const selectedChat = computed(
     () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
@@ -2024,14 +2285,21 @@ export function createChatsManager(
       loginManager,
       chatProviders,
       i18nManager,
-      history
+      context,
+      history,
+      translationBooks
     );
     chats.value = [...chats.value, chat];
     return chat;
   };
 
   const createSharedSession = (session: BibleReadingSession) => {
-    const chat = createSharedChatSession(session, chatProviders, i18nManager);
+    const chat = createSharedChatSession(
+      session,
+      chatProviders,
+      i18nManager,
+      context
+    );
     chats.value = [...chats.value, chat];
     return chat;
   };
@@ -2049,5 +2317,10 @@ export function createChatsManager(
     selectChat: (chatId: string | null) => {
       selectedChatId.value = chatId;
     },
+    context,
+    activeContexts: additionalContexts,
+    setContext,
+    addContext,
+    removeContext,
   };
 }
