@@ -16,7 +16,7 @@ import {
   DEFAULT_UI_LANGUAGE,
 } from "../managers/ReadingUrlPath";
 import type { NavigationManager } from "../managers/NavigationManager";
-import type { BookId } from "../managers/BibleDataManager";
+import type { BibleDataManager, BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig } from "../app/appConfig";
 import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
@@ -193,6 +193,13 @@ export interface BibleToolContext {
    * which is exactly when the chapter links have to be right.
    */
   navigation?: NavigationManager;
+
+  /**
+   * Bible data manager, for tools that build their own links. Needed for
+   * `buildTranslationId`, which is what turns a custom translation's short id
+   * into the full URL its address actually uses.
+   */
+  data?: BibleDataManager;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -479,6 +486,13 @@ function resolveToolPredicate<TContext>(
 }
 
 /**
+ * Shared stand-in for "this tool has no address". Constant, so every tool
+ * without a `getHref` can point at the same signal instead of allocating an
+ * identical one on each resolve.
+ */
+const NO_HREF: ReadonlySignal<string | null> = computed(() => null);
+
+/**
  * Resolves a tool's optional `getHref` to a signal. Null — the default —
  * means the tool has no address and renders as a plain button.
  */
@@ -489,7 +503,7 @@ function resolveToolHref<TContext>(
   const result = href?.(context);
 
   if (typeof result === "undefined" || result === null) {
-    return computed(() => null);
+    return NO_HREF;
   }
 
   if (typeof result === "string") {
@@ -532,14 +546,22 @@ function chapterToolHref(
     return null;
   }
 
+  // A custom translation's address carries its full endpoint URL, not the short
+  // id the reading position holds. `canonicalUrl` resolves it the same way, and
+  // these links have to agree with it — otherwise a custom translation's
+  // "next chapter" link would point somewhere the canonical tag disowns.
+  const translationId =
+    context.data?.buildTranslationId(position.translationId) ??
+    position.translationId;
+
   const language =
     bibleLanguageToUiLocale(context.readingState.translation.value?.language) ??
-    uiLocaleForDefaultTranslation(position.translationId) ??
+    uiLocaleForDefaultTranslation(translationId) ??
     DEFAULT_UI_LANGUAGE;
 
   const path = buildReadingPath({
     language,
-    translationId: position.translationId,
+    translationId,
     bookId: position.bookId as BookId,
     chapter: position.chapterNumber,
   });

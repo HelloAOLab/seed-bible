@@ -253,8 +253,11 @@ export interface BibleReadingState {
    * Never rejects — a rejected promise thrown during `renderToStringAsync`
    * becomes a render exception and loses the whole document.
    *
-   * Always pair a throw with `initialChapterLoadSettled`, or a load that
-   * finishes without content will suspend, resume, and suspend again in a loop.
+   * Always pair a throw with a settled check, or a load that finishes without
+   * content will suspend, resume, and suspend again in a loop. Which check
+   * depends on what the component needs: `initialChapterLoadSettled` for the
+   * chapter text alone, {@link initialLoadSettled} for anything that also needs
+   * the book catalog.
    */
   chapterDataPromise: Promise<void>;
   /**
@@ -263,6 +266,18 @@ export interface BibleReadingState {
    * `chapterData === null` on its own cannot.
    */
   initialChapterLoadSettled: ReadonlySignal<boolean>;
+  /**
+   * True once everything {@link chapterDataPromise} waits for has settled —
+   * the chapter, and during SSR the book catalog too.
+   *
+   * This is the check to pair with a throw of that promise unless you only care
+   * about the chapter text. Guarding on `initialChapterLoadSettled` alone is a
+   * trap: the chapter and the catalog are independent requests, so when the
+   * chapter wins that latch flips while the catalog is still in flight, the
+   * component stops suspending, and it renders without a catalog — which for
+   * the toolbar means serving a chapter page with no links out of it.
+   */
+  initialLoadSettled: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -1295,13 +1310,20 @@ export function createBibleReadingState(
     })
   );
 
+  // The single condition this promise settles on. Anything that throws the
+  // promise guards on this same signal, so the two cannot drift apart — a guard
+  // watching a subset would stop suspending before the promise was ready.
+  const initialLoadSettled = computed<boolean>(
+    () => initialChapterLoadSettled.value && initialCatalogSettled.value
+  );
+
   // Resolves — never rejects. A rejected promise thrown during
   // `renderToStringAsync` surfaces as a render exception and takes down the
   // whole document; resolving lets the already-rendered error branch explain
   // what went wrong instead. Depends only on the latches, so it settles once.
   effectDisposers.push(
     effect(() => {
-      if (!initialChapterLoadSettled.value || !initialCatalogSettled.value) {
+      if (!initialLoadSettled.value) {
         return;
       }
       clearInitialChapterLoadTimer();
@@ -3011,6 +3033,7 @@ export function createBibleReadingState(
     chapterData,
     chapterDataPromise,
     initialChapterLoadSettled,
+    initialLoadSettled,
     isChapterContentStale,
     highlights,
     decorations,

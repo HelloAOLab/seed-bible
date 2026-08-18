@@ -179,6 +179,7 @@ function createFixture(): ReaderFixture {
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null
     ),

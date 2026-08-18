@@ -435,7 +435,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  // Server only: wait for the first chapter load to settle before rendering.
+  // Server only: wait for the initial load to settle before rendering.
   //
   // This toolbar sits outside the reader's own Suspense boundary, so
   // `renderToStringAsync` would otherwise render it in the first synchronous
@@ -444,10 +444,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // arrows server-rendered disabled, with no links out of it for a crawler to
   // follow. `chapterDataPromise` never rejects, and the deadline behind it
   // bounds the wait.
-  if (
-    import.meta.env.SSR &&
-    !readingState.value.initialChapterLoadSettled.value
-  ) {
+  //
+  // `initialLoadSettled`, not `initialChapterLoadSettled`: the catalog is a
+  // separate request from the chapter, so the chapter can settle first and
+  // leave that narrower latch true while the catalog is still on its way.
+  if (import.meta.env.SSR && !readingState.value.initialLoadSettled.value) {
     throw readingState.value.chapterDataPromise;
   }
 
@@ -477,6 +478,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       modals: props.state.modals,
       app: props.state.app,
       navigation: props.state.navigation,
+      data: props.state.bibleData,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -540,6 +542,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       modals: props.state.modals,
       app: props.state.app,
       navigation: props.state.navigation,
+      data: props.state.bibleData,
     });
 
     const { selectionUI } = settings.settings.value;

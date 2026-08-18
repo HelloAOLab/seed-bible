@@ -1082,6 +1082,23 @@ describe("createBibleToolsManager", () => {
       expect(hrefOf(context, "next-chapter")).toBe("/es/spa_onbv/john/4");
     });
 
+    it("uses the translation's full address for a custom endpoint", () => {
+      // `buildTranslationId` is a no-op for official translations but expands a
+      // custom-endpoint one into its full URL. `canonicalUrl` applies it, so
+      // these links have to as well — otherwise a custom translation's next
+      // chapter link would name an id the canonical tag disowns.
+      const context = createLinkableContext({
+        data: {
+          buildTranslationId: (id: string) =>
+            `https://custom.example/api/${id}/books.json`,
+        } as any,
+      });
+
+      expect(hrefOf(context, "next-chapter")).toBe(
+        `/en/${encodeURIComponent("https://custom.example/api/BSB/books.json")}/john/4`
+      );
+    });
+
     it("leaves tools that only act without an href", () => {
       const context = createLinkableContext();
 
