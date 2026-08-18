@@ -499,6 +499,25 @@ describe("render() server-rendered meta tags", () => {
     expect(config.ssrChapterContentSettled).toBe(true);
   });
 
+  it("injects ssrChapterContentSettled false when the initial chapter fetch fails, not just on an SSR timeout", async () => {
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the fetch fails outright — no timeout involved.
+    // A real client hitting the same failure would not necessarily see it too
+    // (a network blip specific to the server's own request path), so the
+    // client must not hydrate onto whatever this render produced — including
+    // any next/previous-chapter availability computed off the missing data.
+    const html = await renderHtml("/en/AAB/genesis/2?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const config = JSON.parse(injected as string) as {
+      ssrChapterContentSettled: boolean;
+    };
+    expect(config.ssrChapterContentSettled).toBe(false);
+  });
+
   it("injects the active theme's CSS into the #sb-theme-styles tag", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 

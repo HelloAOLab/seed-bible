@@ -265,13 +265,16 @@ export interface BibleReadingState {
    */
   initialChapterLoadSettled: ReadonlySignal<boolean>;
   /**
-   * True only when `initialChapterLoadSettled` became true because the
-   * SSR-only load deadline passed, not because the load actually finished
-   * (successfully or with a real error). Distinguishes an SSR-timing
-   * artifact — a live client would keep waiting rather than give up — from
-   * any deterministic terminal state a live client would reproduce anyway.
+   * True when `initialChapterLoadSettled` became true for a reason that
+   * doesn't guarantee a live client would land on the same content: the
+   * SSR-only load deadline passed, or the load errored out. Either way, the
+   * catalog and/or chapter data behind availability computations (like
+   * `hasNext`/`hasPrevious`) may be missing on the server even though a
+   * client-side retry succeeds — a network hiccup, rate limit, or timeout
+   * hitting the server process doesn't necessarily hit a visitor's own
+   * browser. `false` only for a load that actually completed with content.
    */
-  initialChapterLoadTimedOut: ReadonlySignal<boolean>;
+  initialChapterLoadUnreliable: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -1196,8 +1199,8 @@ export function createBibleReadingState(
    * rather than repeatedly.
    */
   const initialChapterLoadSettled = signal<boolean>(false);
-  /** See the interface doc on `initialChapterLoadTimedOut`. */
-  const initialChapterLoadTimedOut = signal<boolean>(false);
+  /** See the interface doc on `initialChapterLoadUnreliable`. */
+  const initialChapterLoadUnreliable = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
@@ -1268,7 +1271,7 @@ export function createBibleReadingState(
   const SSR_INITIAL_CHAPTER_TIMEOUT_MS = 5000;
   const initialChapterLoadTimer = import.meta.env.SSR
     ? setTimeout(() => {
-        initialChapterLoadTimedOut.value = true;
+        initialChapterLoadUnreliable.value = true;
         initialChapterLoadSettled.value = true;
       }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
     : null;
@@ -2075,6 +2078,14 @@ export function createBibleReadingState(
       }
       error.value =
         err instanceof Error ? err.message : "Failed to load chapter.";
+      // A failure here on the *initial* load doesn't mean a live client would
+      // hit the same wall — it may be the server's own request path (e.g. an
+      // HTML error page coming back where JSON was expected), not something
+      // wrong with the chapter itself. It must not look "settled" to the
+      // hydration gate — see the interface doc on `initialChapterLoadUnreliable`.
+      if (!initialChapterLoadSettled.peek()) {
+        initialChapterLoadUnreliable.value = true;
+      }
     } finally {
       if (contentRequestController === controller) {
         contentRequestController = null;
@@ -2619,6 +2630,13 @@ export function createBibleReadingState(
       console.error("Error loading initial Bible data:", err);
       error.value =
         err instanceof Error ? err.message : "Failed to load Bible data.";
+      // An error here doesn't mean a live client would hit the same wall —
+      // it may be the server's own network path (rate limiting, a transient
+      // upstream blip) rather than something the requested chapter itself is
+      // missing. Flagging it the same as a timeout keeps the SSR host from
+      // baking availability computed off no data (e.g. disabled next/previous
+      // buttons) into a page a client then hydrates onto and never corrects.
+      initialChapterLoadUnreliable.value = true;
     } finally {
       endRequest();
       // Terminal either way. Without this a failed first load leaves anything
@@ -2993,7 +3011,7 @@ export function createBibleReadingState(
     chapterData,
     chapterDataPromise,
     initialChapterLoadSettled,
-    initialChapterLoadTimedOut,
+    initialChapterLoadUnreliable,
     isChapterContentStale,
     highlights,
     decorations,

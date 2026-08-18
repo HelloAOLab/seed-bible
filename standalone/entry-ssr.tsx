@@ -481,13 +481,17 @@ export async function render(
   // (app/hydrationGate.ts) has something to verify against without the app
   // itself needing to care about it.
   //
-  // Only the SSR-only timeout (not a real fetch error or a deterministic
-  // "book not found") can leave a normally-SSR'd page missing verse text a
-  // live client would eventually show — those other terminal states are
-  // ones a live client reproduces identically, so they aren't a hydration
-  // hazard and don't need to suppress it here.
+  // Covers both the SSR-only timeout and a real fetch error. A deterministic
+  // failure (e.g. "book not found") would leave the same gap for a live
+  // client, but an upstream error hitting the server's own request (a
+  // transient blip, rate limiting keyed to the server's shared IP) is not
+  // guaranteed to hit a visitor's browser too — and until the catalog or
+  // chapter loads, things like next/previous availability compute off no
+  // data. Treating any unsettled-for-a-bad-reason load as a hydration hazard
+  // costs nothing but an extra client-side render() when the failure really
+  // was deterministic.
   const ssrChapterContentSettled = !state.tabs.tabs.value.some(
-    (tab) => tab.readingState.initialChapterLoadTimedOut.value
+    (tab) => tab.readingState.initialChapterLoadUnreliable.value
   );
   const clientConfig: AppConfig = {
     ...config,
