@@ -1,9 +1,11 @@
-import type { PieceHighlightPort } from "../../domain/ports/pieceHighlight";
-import type { ContextMenuRendererPort } from "../../domain/ports/contextMenuRenderer";
 import type { ReadingStatePort } from "../ports/in/readingState";
 import type { PieceKey } from "../../domain/models/piece";
 import type { ExperienceKey } from "../../domain/models/experience";
-import type { VerseReferenceConfigProviderPort } from "../ports/out/PieceInteraction";
+import type {
+  ContextMenuRendererPort,
+  PieceHighlightPort,
+  VerseReferenceConfigProviderPort,
+} from "../ports/out/PieceInteraction";
 
 interface PieceInteractionServiceParams {
   pieceHighlight: PieceHighlightPort;

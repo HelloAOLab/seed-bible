@@ -1,5 +1,7 @@
-import type { PieceHighlightPort } from "../../domain/ports/pieceHighlight";
-import type { ContextMenuRendererPort } from "../../domain/ports/contextMenuRenderer";
+import type {
+  ContextMenuRendererPort,
+  PieceHighlightPort,
+} from "../ports/out/EnvironmentInteraction";
 
 interface EnvironmentInteractionServiceParams {
   pieceHighlight: PieceHighlightPort;

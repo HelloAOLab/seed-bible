@@ -1,10 +1,10 @@
-import type { PieceStatePort } from "../../../domain/ports/pieceState";
+import type { PieceStatePort } from "../../../application/ports/out/PieceState";
 import {
   PIECE_VISIBILITY_STATES,
   type PieceVisibilityState,
 } from "../../../domain/models/piece";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { PiecesProvider } from "../PiecesProvider";
+import type { PiecesProvider } from "./PiecesProvider";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
 import type { PieceBotTags } from "../../models/casualos";

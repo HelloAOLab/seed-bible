@@ -42,7 +42,7 @@ import { EnvironmentConfigProvider } from "../config/environment/EnvironmentConf
 import { PiecesSequenceAdapter } from "../adapters/sequences/PiecesSequenceAdapter";
 import { LoggerAdapter } from "../adapters/casualos/LoggerAdapter";
 import { PiecePositionService } from "../../application/services/PiecePositionService";
-import { PiecesProvider } from "../adapters/PiecesProvider";
+import { PiecesProvider } from "../adapters/pieces/PiecesProvider";
 import { PieceMapper } from "../mappers/PieceMapper";
 import { PieceAdapter } from "../adapters/pieces/PieceAdapter";
 import { PiecesRenderOrderAdapter } from "../adapters/pieces/PiecesRenderOrderAdapter";
@@ -50,7 +50,7 @@ import { PiecePositionConfigProvider } from "../config/piecePosition/PiecePositi
 import { LayerConfigProvider } from "../config/layers/LayerConfigProvider";
 import { HitboxConfigProvider } from "../config/hitboxes/HitboxConfigProvider";
 import { HitboxLifecycleService } from "../../application/services/HitboxLifecycleService";
-import { HitboxLifecycleAdapter } from "../adapters/HitboxLifecycleAdapter";
+import { HitboxLifecycleAdapter } from "../adapters/pieces/HitboxLifecycleAdapter";
 import { HitboxMapper } from "../mappers/HitboxMapper";
 import {
   EXPERIENCE_KEYS,
@@ -58,8 +58,8 @@ import {
 } from "../../domain/models/experience";
 // import { PieceStateConfigProvider } from "../config/pieceState/PieceStateConfigProvider";
 import { VFXBotFactory } from "../adapters/vfx/VFXBotFactory";
-import { thisTypedBot as coneBot } from "../prefabs/pieces/environment/cone/botAdapter";
-import { thisTypedBot as glowBot } from "../prefabs/pieces/environment/glow/botAdapter";
+import { thisTypedBot as coneBot } from "../prefabs/pieces/vfx/cone/botAdapter";
+import { thisTypedBot as glowBot } from "../prefabs/pieces/vfx/glow/botAdapter";
 import { ColorLerper } from "../adapters/casualos/ColorLerper";
 import type { PieceBot } from "../models/casualos";
 import { thisTypedBot as entrypointBot } from "../entrypoints/casualos/botAdapter";
@@ -215,7 +215,7 @@ export const bootstrapExtension = () => {
   });
   // const pieceStateService = new PieceStateService({
   //   pieceState: pieceStateAdapter,
-  //   scriptureData: scriptureDataProvider,
+  //   pieceStateConfigProviderPort: pieceStateConfigProvider,
   //   readingState: readingStateService,
   //   getExperienceKey,
   // });

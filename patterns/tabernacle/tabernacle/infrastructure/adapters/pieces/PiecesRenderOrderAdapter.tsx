@@ -3,7 +3,7 @@ import type { PiecesRenderOrderPort } from "../../../application/ports/out/piece
 import type { LayerConfigProvider } from "../../config/layers/LayerConfigProvider";
 import { SetStrictTag } from "../../functions/casualos";
 import type { PieceMapper } from "../../mappers/PieceMapper";
-import type { PiecesProvider } from "../PiecesProvider";
+import type { PiecesProvider } from "./PiecesProvider";
 
 interface AdapterParams {
   layerConfigProvider: LayerConfigProvider;

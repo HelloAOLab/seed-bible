@@ -1,5 +1,5 @@
-import type { Point3D } from "bibleVizUtils.domain.models.commonTypes";
-import type { Piece, PieceKey } from "tabernacle.domain.models.piece";
+import type { Point3D } from "./commonTypes";
+import type { Piece, PieceKey } from "./piece";
 
 export interface HitboxData {
   position: Point3D;

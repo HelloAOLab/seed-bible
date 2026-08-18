@@ -1,2 +1,2 @@
-import type { PieceBot } from "tabernacle.infrastructure.models.casualos";
+import type { PieceBot } from "../../../../models/casualos";
 export const thisTypedBot = thisBot as PieceBot<"fence">;

@@ -1,6 +1,7 @@
-import type { ContextMenuRendererPort } from "../../../domain/ports/contextMenuRenderer";
+import type { ContextMenuRendererPort as PieceInteractionContextMenuRendererPort } from "../../../application/ports/out/PieceInteraction";
+import type { ContextMenuRendererPort as EnvironmentContextMenuRendererPort } from "../../../application/ports/out/EnvironmentInteraction";
 import type { PieceKey, VerseReference } from "../../../domain/models/piece";
-import type { PiecesProvider } from "../PiecesProvider";
+import type { PiecesProvider } from "./PiecesProvider";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type {
   ExperienceKey,
@@ -13,7 +14,11 @@ interface AdapterParams {
   pieceMapper: PieceMapper;
 }
 
-export class ContextMenuRendererAdapter implements ContextMenuRendererPort {
+export class ContextMenuRendererAdapter
+  implements
+    PieceInteractionContextMenuRendererPort,
+    EnvironmentContextMenuRendererPort
+{
   #currentContextMenuBot: Bot | null = null;
   #getDimension: AdapterParams["getDimension"];
   #piecesProvider: AdapterParams["piecesProvider"];

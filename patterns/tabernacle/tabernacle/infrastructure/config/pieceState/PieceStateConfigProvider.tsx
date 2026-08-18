@@ -3,9 +3,10 @@ import type {
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
 import { type PieceVisibilityState } from "../../../domain/models/piece";
+import type { PieceStateConfigProviderPort } from "../../../application/ports/out/PieceState";
 import { CHAPTER_STATE_MAP } from "./chapterStateMap";
 
-export class PieceStateConfigProvider {
+export class PieceStateConfigProvider implements PieceStateConfigProviderPort {
   getPiecesChapterState<E extends ExperienceKey>({
     experienceKey,
     bookId,

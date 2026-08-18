@@ -24,9 +24,6 @@ export const bootstrapExtension = () => {
           verse: v.verse.number,
         }));
 
-      // One verse-toolbar button per experience: it shows only when the selected
-      // verses reference a piece of that experience, and its dropdown lists just
-      // that experience's pieces. Pieces of different experiences never mix.
       for (const experience of Object.values(EXPERIENCE_KEYS)) {
         const meta = EXPERIENCE_META[experience];
 

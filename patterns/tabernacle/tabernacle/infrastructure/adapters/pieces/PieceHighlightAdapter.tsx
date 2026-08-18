@@ -1,9 +1,10 @@
-import type { PieceHighlightPort } from "../../../domain/ports/pieceHighlight";
-import type { PieceStatePort } from "../../../domain/ports/pieceState";
+import type { PieceHighlightPort as PieceInteractionPieceHighlightPort } from "../../../application/ports/out/PieceInteraction";
+import type { PieceHighlightPort as EnvironmentPieceHighlightPort } from "../../../application/ports/out/EnvironmentInteraction";
+import type { PieceStateAdapter } from "./PieceStateAdapter";
 import type { LayerProviderPort } from "../../../application/ports/out/tabernacle";
 import { PIECE_VISIBILITY_STATES } from "../../../domain/models/piece";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { PiecesProvider } from "../PiecesProvider";
+import type { PiecesProvider } from "./PiecesProvider";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import { AnimateStrictTag, ApplyStrictMod } from "../../functions/casualos";
 import type { VFXBotFactory } from "../vfx/VFXBotFactory";
@@ -23,11 +24,13 @@ interface AdapterParams {
   pieceMapper: PieceMapper;
   vfxBotFactory: VFXBotFactory;
   colorLerper: ColorLerper;
-  pieceState: PieceStatePort;
+  pieceState: PieceStateAdapter;
   layerProvider: LayerProviderPort;
 }
 
-export class PieceHighlightAdapter implements PieceHighlightPort {
+export class PieceHighlightAdapter
+  implements PieceInteractionPieceHighlightPort, EnvironmentPieceHighlightPort
+{
   #focusedBots: Bot[] = [];
   #lastInteractionId: string | null = null;
   #getDimension: AdapterParams["getDimension"];

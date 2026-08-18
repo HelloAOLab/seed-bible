@@ -1,11 +1,11 @@
 import type {
   HitboxSpawnerPort,
   HitboxProviderPort,
-} from "../../application/ports/out/hitboxLifecycle";
-import type { HitboxData, Hitbox } from "../../domain/models/hitbox";
-import type { Piece } from "../../domain/models/piece";
-import type { HitboxMapper } from "../mappers/HitboxMapper";
-import type { HitboxBot, HitboxBotTags } from "../models/casualos";
+} from "../../../application/ports/out/hitboxLifecycle";
+import type { HitboxData, Hitbox } from "../../../domain/models/hitbox";
+import type { Piece } from "../../../domain/models/piece";
+import type { HitboxMapper } from "../../mappers/HitboxMapper";
+import type { HitboxBot, HitboxBotTags } from "../../models/casualos";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -48,7 +48,7 @@ export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
     const hitboxBot = create(mod) as HitboxBot;
 
     os.addBotListener(hitboxBot, "onClick", () => {
-      // TODO: Call an OnHitboxClicked event
+      // TODO: Call an OnHitboxClicked event or get the hitbox's piece and handle a click for it
       //   @import { piecesInteractionController } from "tabernacle.infrastructure.di.bootstrap";
       // piecesInteractionController?.handlePieceClick(links.piece.tags.key);
     });

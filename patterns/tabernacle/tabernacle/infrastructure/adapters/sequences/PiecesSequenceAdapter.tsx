@@ -1,5 +1,5 @@
 import type { PiecesSequencePort } from "../../../application/ports/out/experience";
-import type { PieceStatePort } from "../../../domain/ports/pieceState";
+import type { PieceStateAdapter } from "../pieces/PieceStateAdapter";
 import type { LayerConfigProvider } from "../../config/layers/LayerConfigProvider";
 import type { ExperienceKey } from "../../../domain/models/experience";
 import { PIECE_VISIBILITY_STATES } from "../../../domain/models/piece";
@@ -7,7 +7,7 @@ import { PIECE_VISIBILITY_STATES } from "../../../domain/models/piece";
 const STAGGER_MS = 200;
 
 interface AdapterParams {
-  pieceState: PieceStatePort;
+  pieceState: PieceStateAdapter;
   layerProvider: LayerConfigProvider;
 }
 

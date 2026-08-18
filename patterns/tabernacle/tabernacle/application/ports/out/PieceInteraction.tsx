@@ -17,3 +17,19 @@ export interface VerseReferenceConfigProviderPort {
     currentChapter: number;
   }): { inChapter: VerseReference[]; inOtherChapters: VerseReference[] };
 }
+
+export interface ContextMenuRendererPort {
+  toggleContextMenu<E extends ExperienceKey>(
+    experience: E,
+    key: ExperienceKeyMap[E],
+    versesInChapter: VerseReference[],
+    versesInOtherChapters: VerseReference[]
+  ): void;
+}
+
+export interface PieceHighlightPort {
+  highlightPiece<E extends ExperienceKey>(
+    experience: E,
+    key: ExperienceKeyMap[E]
+  ): void;
+}
