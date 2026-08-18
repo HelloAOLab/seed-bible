@@ -1,23 +1,31 @@
-import { useTimeProvider } from "./useTimeProvider";
-
 import { createContext } from "preact";
-import { useContext } from "preact/hooks";
-
-export interface TimeProviderProps {
-  children: React.ReactNode;
-}
+import { useContext, useEffect, useState } from "preact/hooks";
 
 export interface TimeContextType {
   tick: number;
 }
 
+const TICK_INTERVAL_MS = 10000;
+
 const TimeContext = createContext<TimeContextType | undefined>(undefined);
 
-export const TimeProvider = ({ children }: TimeProviderProps) => {
-  const contextValue = useTimeProvider();
+/**
+ * Re-renders its subtree every ten seconds so that time-relative content — the
+ * header's date and greeting, the timeline's day buckets — stays current
+ * without each consumer running its own timer.
+ */
+export const TimeProvider = ({ children }: { children: React.ReactNode }) => {
+  const [tick, setTick] = useState<number>(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(Date.now());
+    }, TICK_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <TimeContext.Provider value={contextValue}>{children}</TimeContext.Provider>
+    <TimeContext.Provider value={{ tick }}>{children}</TimeContext.Provider>
   );
 };
 
