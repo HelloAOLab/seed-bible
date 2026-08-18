@@ -518,6 +518,31 @@ describe("render() server-rendered meta tags", () => {
     expect(config.ssrChapterContentSettled).toBe(false);
   });
 
+  it("does not disable the mobile floating nav's chapter buttons for a genuine mid-book chapter", async () => {
+    // `<BibleReaderToolbar>` (which renders the mobile floating nav) is a
+    // sibling of `<TabsLayout>`/`<BibleReader>`, not a descendant of it, so
+    // `BibleReader`'s own SSR suspend-on-chapter-load doesn't defer it too.
+    // Exodus has 40 chapters in the fixture catalog, so chapter 2 has both a
+    // previous and next chapter — the buttons must not render disabled.
+    const html = await renderHtml("/en/AAB/exodus/2?useFreeBibleAPI=true", {
+      renderedAsMobile: true,
+    });
+
+    // Matched by `data-tool-id` (stable) rather than `aria-label`
+    // (translatable, user-facing copy that can change independently of the
+    // button's behavior), and via `hasAttribute` on the parsed element rather
+    // than a `disabled[^>]*data-tool-id=...` regex, so the assertion doesn't
+    // depend on attribute order in the serialized tag.
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const prevButton = doc.querySelector('[data-tool-id="previous-chapter"]');
+    const nextButton = doc.querySelector('[data-tool-id="next-chapter"]');
+
+    expect(prevButton).not.toBeNull();
+    expect(nextButton).not.toBeNull();
+    expect(prevButton?.hasAttribute("disabled")).toBe(false);
+    expect(nextButton?.hasAttribute("disabled")).toBe(false);
+  });
+
   it("injects the active theme's CSS into the #sb-theme-styles tag", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 
