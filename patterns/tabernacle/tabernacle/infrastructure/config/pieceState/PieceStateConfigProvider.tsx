@@ -3,9 +3,7 @@ import type {
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
 import { type PieceVisibilityState } from "../../../domain/models/piece";
-import type { HighlightStatesMap } from "../../../domain/models/scripture";
 import { CHAPTER_STATE_MAP } from "./chapterStateMap";
-import { HIGHLIGHT_STATES_MAP } from "./highlightStateMap";
 
 export class PieceStateConfigProvider {
   getPiecesChapterState<E extends ExperienceKey>({
@@ -40,15 +38,5 @@ export class PieceStateConfigProvider {
       chapter,
     });
     return states[pieceKey];
-  }
-
-  getPiecesHighlightState<E extends ExperienceKey>({
-    experienceKey,
-    pieceKey,
-  }: {
-    experienceKey: E;
-    pieceKey: ExperienceKeyMap[E];
-  }): HighlightStatesMap[E][ExperienceKeyMap[E]] {
-    return HIGHLIGHT_STATES_MAP[experienceKey][pieceKey];
   }
 }

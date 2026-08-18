@@ -44,6 +44,7 @@ export interface PieceBotTags<
   targetPositionZ?: number;
   pointable: boolean;
   formRenderOrder: number;
+  formDepthWrite?: boolean;
 }
 
 export interface VFXBotTags<

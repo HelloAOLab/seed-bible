@@ -1,5 +1,8 @@
 // import { computed, effect } from "@preact/signals";
-import { TABERNACLE_PIECE_KEYS } from "../../domain/models/piece";
+import {
+  TABERNACLE_PIECE_KEYS,
+  type PieceKey,
+} from "../../domain/models/piece";
 import { thisTypedBot as altarOfSacrificeBot } from "../prefabs/pieces/main/altar-of-sacrifice/botAdapter";
 import { thisTypedBot as arkOfCovenantBot } from "../prefabs/pieces/main/ark-of-covenant/botAdapter";
 import { thisTypedBot as barsBot } from "../prefabs/pieces/main/bars/botAdapter";
@@ -19,11 +22,16 @@ import { thisTypedBot as redCurtainBot } from "../prefabs/pieces/main/red-curtai
 import { thisTypedBot as ringsBot } from "../prefabs/pieces/main/rings/botAdapter";
 import { thisTypedBot as tableOfShowbreadBot } from "../prefabs/pieces/main/table-of-showbread/botAdapter";
 import { thisTypedBot as wallsBot } from "../prefabs/pieces/main/walls/botAdapter";
-// import { TabernacleService } from "../../application/services/TabernacleService";
-// import { ScriptureDataConfigProvider, VerseReferenceConfigProvider } from "../config/verseReference/VerseReferenceConfigProvider";
-// import { ReadingStateAdapter } from "../adapters/casualos/ReadingStateAdapter";
-import { TabernacleVisualizerAdapter } from "../adapters/casualos/TabernacleVisualizerAdapter";
-// import { TabernacleController } from "../controllers/tabernacle/TabernacleController";
+// import { PieceStateService } from "../../application/services/PieceStateService";
+import { PieceInteractionService } from "../../application/services/PieceInteractionService";
+import { EnvironmentInteractionService } from "../../application/services/EnvironmentInteractionService";
+import { VerseReferenceConfigProvider } from "../config/verseReference/VerseReferenceConfigProvider";
+import { ReadingStateService } from "../../application/services/ReadingStateService";
+import { PieceStateAdapter } from "../adapters/pieces/PieceStateAdapter";
+import { PieceHighlightAdapter } from "../adapters/pieces/PieceHighlightAdapter";
+import { ContextMenuRendererAdapter } from "../adapters/pieces/ContextMenuRendererAdapter";
+import { PiecesInteractionController } from "../controllers/pieces/PiecesInteractionController";
+import { EnvironmentInteractionController } from "../controllers/environment/EnvironmentInteractionController";
 // import { ScriptureInteractionService } from "../../application/services/ScriptureInteractionService";
 // import { ScriptureInteractionController } from "../controllers/scripture/ScriptureInteractionController";
 import { ExperienceService } from "../../application/services/ExperienceService";
@@ -44,16 +52,43 @@ import { HitboxConfigProvider } from "../config/hitboxes/HitboxConfigProvider";
 import { HitboxLifecycleService } from "../../application/services/HitboxLifecycleService";
 import { HitboxLifecycleAdapter } from "../adapters/HitboxLifecycleAdapter";
 import { HitboxMapper } from "../mappers/HitboxMapper";
-import { EXPERIENCE_KEYS } from "../../domain/models/experience";
+import {
+  EXPERIENCE_KEYS,
+  type ExperienceKey,
+} from "../../domain/models/experience";
 // import { PieceStateConfigProvider } from "../config/pieceState/PieceStateConfigProvider";
 import { VFXBotFactory } from "../adapters/vfx/VFXBotFactory";
 import { thisTypedBot as coneBot } from "../prefabs/pieces/environment/cone/botAdapter";
 import { thisTypedBot as glowBot } from "../prefabs/pieces/environment/glow/botAdapter";
 import { ColorLerper } from "../adapters/casualos/ColorLerper";
-
-// const extensionId = "tabernacle";
+import type { PieceBot } from "../models/casualos";
+import { thisTypedBot as entrypointBot } from "../entrypoints/casualos/botAdapter";
 
 let initialized = false;
+
+const mainPieces: {
+  [K in PieceKey]: PieceBot<K>;
+} = {
+  "altar-of-sacrifice": altarOfSacrificeBot,
+  "ark-of-covenant": arkOfCovenantBot,
+  bars: barsBot,
+  "bronze-laver": bronzeLaverBot,
+  "brown-curtain": brownCurtainBot,
+  fence: fenceBot,
+  "front-curtain": frontCurtainBot,
+  "front-pillars": frontPillarsBot,
+  "grey-curtain": greyCurtainBot,
+  ground: groundBot,
+  "incense-altar": incenseAltarBot,
+  "inner-curtain": innerCurtainBot,
+  "inner-pillars": innerPillarsBot,
+  menorah: menorahBot,
+  "purple-curtain": purpleCurtainBot,
+  "red-curtain": redCurtainBot,
+  rings: ringsBot,
+  "table-of-showbread": tableOfShowbreadBot,
+  walls: wallsBot,
+};
 
 export const bootstrapExtension = () => {
   if (initialized) return;
@@ -63,10 +98,21 @@ export const bootstrapExtension = () => {
   const DIMENSION = configBot.tags.dimension as string;
   if (!DIMENSION) {
     throw new Error(
-      "bible-stack bootstrap: dimension not provided in configBot tags"
+      "house-of-the-lord bootstrap: dimension not provided in configBot tags"
     );
   }
   const getDimension = () => DIMENSION;
+
+  const EXPERIENCE = configBot.tags.experience as ExperienceKey;
+  if (!EXPERIENCE) {
+    throw new Error(
+      "house-of-the-lord bootstrap: experience not provided in configBot tags"
+    );
+  }
+  const getExperienceKey = () => EXPERIENCE;
+  const HIGHLIGHTED_PIECE = configBot.tags.highlightedPiece as
+    | PieceKey
+    | undefined;
 
   // 1. Adapters / config providers
   const colorLerper = new ColorLerper();
@@ -76,8 +122,8 @@ export const bootstrapExtension = () => {
       glow: glowBot,
     },
   });
-  // const readingStateAdapter = new ReadingStateAdapter();
-  // const verseReferenceConfigProvider = new VerseReferenceConfigProvider();
+  const readingStateService = new ReadingStateService();
+  const verseReferenceConfigProvider = new VerseReferenceConfigProvider();
   // const pieceStateConfigProvider = new PieceStateConfigProvider();
   const loggerAdapter = new LoggerAdapter();
   const pieceMapper = new PieceMapper();
@@ -125,16 +171,28 @@ export const bootstrapExtension = () => {
   });
   const piecePositionConfigProvider = new PiecePositionConfigProvider();
   const hitboxConfigProvider = new HitboxConfigProvider();
-  const visualizerAdapter = new TabernacleVisualizerAdapter({
+  const pieceStateAdapter = new PieceStateAdapter({
+    getDimension,
+    piecesProvider,
+    pieceMapper,
+  });
+  const layerConfigProvider = new LayerConfigProvider();
+  const pieceHighlightAdapter = new PieceHighlightAdapter({
+    getDimension,
     piecesProvider,
     pieceMapper,
     vfxBotFactory,
     colorLerper,
-    getDimension,
+    pieceState: pieceStateAdapter,
+    layerProvider: layerConfigProvider,
   });
-  const layerConfigProvider = new LayerConfigProvider();
+  const contextMenuRendererAdapter = new ContextMenuRendererAdapter({
+    getDimension,
+    piecesProvider,
+    pieceMapper,
+  });
   const piecesSequenceAdapter = new PiecesSequenceAdapter({
-    visualizer: visualizerAdapter,
+    pieceState: pieceStateAdapter,
     layerProvider: layerConfigProvider,
   });
   const piecesRenderOrderAdapter = new PiecesRenderOrderAdapter({
@@ -155,12 +213,23 @@ export const bootstrapExtension = () => {
     hitboxProviderPort: hitboxConfigProvider,
     hitboxSpawnerPort: hitboxLifecycleAdapter,
   });
-  // const tabernacleService = new TabernacleService({
-  //   visualizer: visualizerAdapter,
+  // const pieceStateService = new PieceStateService({
+  //   pieceState: pieceStateAdapter,
   //   scriptureData: scriptureDataProvider,
-  //   pieceConfig: piecesConfigProvider,
-  //   readingState: readingStateAdapter,
+  //   readingState: readingStateService,
+  //   getExperienceKey,
   // });
+  const pieceInteractionService = new PieceInteractionService({
+    pieceHighlight: pieceHighlightAdapter,
+    contextMenu: contextMenuRendererAdapter,
+    verseReferenceConfigProviderPort: verseReferenceConfigProvider,
+    readingState: readingStateService,
+    getExperienceKey,
+  });
+  const environmentInteractionService = new EnvironmentInteractionService({
+    pieceHighlight: pieceHighlightAdapter,
+    contextMenu: contextMenuRendererAdapter,
+  });
   const piecePositionService = new PiecePositionService({
     piecesProviderPort: piecesProvider,
     piecePositionUpdaterPort: piecePositionAdapter,
@@ -183,22 +252,21 @@ export const bootstrapExtension = () => {
     logger: loggerAdapter,
     piecesSetUpPort: piecesSetUpService,
     environmentSetUpPort: environmentSetUpService,
-    getExperienceKey: () => EXPERIENCE_KEYS.TABERNACLE,
+    getExperienceKey,
   });
   // const scriptureInteractionService = new ScriptureInteractionService({
   //   experienceDisplayerPort: experienceService,
   // });
 
   // 3. Controller
-  // tabernacleController = new TabernacleController({
-  //   tabernacleService,
-  //   navigate: (bookId, chapter) => {
-  //     context.app.selectedTab.value?.readingState.selectChapter(
-  //       bookId,
-  //       chapter
-  //     );
-  //   },
-  // });
+  const piecesInteractionController = new PiecesInteractionController({
+    pieceInteractionService,
+  });
+  const environmentInteractionController = new EnvironmentInteractionController(
+    {
+      environmentInteractionService,
+    }
+  );
   // const scriptureInteractionController = new ScriptureInteractionController(
   //   {
   //     verseMenuClickHandlerPort: scriptureInteractionService,
@@ -211,58 +279,25 @@ export const bootstrapExtension = () => {
   //   const bookId = readingState?.bookId.value;
   //   const chapterNumber = readingState?.chapterNumber.value;
   //   if (!bookId || !chapterNumber) return;
-  //   readingStateAdapter.setCurrentReading(bookId, chapterNumber);
-  //   tabernacleService.updateVisualsForChapter(bookId, chapterNumber);
+  //   readingStateService.setCurrentReading(bookId, chapterNumber);
+  //   pieceStateService.updatePiecesState();
   // });
 
-  // 5. Computed signal: piece keys referenced by currently selected verses
-  // const foundPieces = computed(() => {
-  //   const readingState = context.app.selectedTab.value?.readingState;
-  //   const selectedVerses = readingState?.selectedVerses.value ?? [];
-  //   const keys = new Set<PieceKey>();
-  //   for (const { bookId, chapterNumber, verse } of selectedVerses) {
-  //     for (const key of scriptureDataProvider.getPiecesForVerse(
-  //       bookId,
-  //       chapterNumber,
-  //       verse.number
-  //     )) {
-  //       keys.add(key);
-  //     }
-  //   }
-  //   return [...keys];
-  // });
+  Object.values(mainPieces).forEach((pieceBot) => {
+    os.addBotListener(pieceBot, "onClick", () => {
+      piecesInteractionController.handlePieceClick(pieceBot.tags.key);
+    });
+  });
 
-  // 6. Register verse toolbar tool
-  // yield context.tools.registerVerseToolbarTool({
-  //   id: `${extensionId}-verse`,
-  //   priority: 0,
-  //   title: {
-  //     key: extensionId,
-  //     defaultValue: "Tabernacle",
-  //     ns: extensionId,
-  //   },
-  //   icon: TabernacleIcon,
-  //   isVisible: () => foundPieces.value.length > 0,
-  //   getItems: () =>
-  //     foundPieces.value.map((key) => ({
-  //       id: `${extensionId}-piece-${key}`,
-  //       title: {
-  //         key,
-  //         defaultValue: key
-  //           .split("-")
-  //           .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-  //           .join(" "),
-  //         ns: extensionId,
-  //       },
-  //       icon: TabernacleIcon,
-  //       onSelect: () => {
-  //         scriptureInteractionController.handleVerseMenuItemClick(key);
-  //         // tabernacleController?.handlePieceClick(key);
-  //       },
-  //     })),
-  // });
+  os.addBotListener(entrypointBot, "onGridClick", () => {
+    environmentInteractionController.handleGridClick();
+  });
 
   // 6. Disposers
 
-  experienceService.tryDisplayExperience();
+  experienceService.tryDisplayExperience().then((displayed) => {
+    if (displayed && HIGHLIGHTED_PIECE) {
+      pieceHighlightAdapter.highlightPiece(EXPERIENCE, HIGHLIGHTED_PIECE);
+    }
+  });
 };

@@ -29,6 +29,7 @@ export class PiecesRenderOrderAdapter implements PiecesRenderOrderPort {
   setOrder(experience: ExperienceKey): void {
     const keys = this.#layerConfigProvider.getAllLayers(experience).flat();
     for (let i = 0; i < keys.length; i++) {
+      const value = keys.length - i;
       const key = keys[i]!;
       const piece = this.#piecesProvider.getPiece(experience, key);
       const pieceBot = this.#pieceMapper.toInfrastructure(piece);
@@ -37,7 +38,7 @@ export class PiecesRenderOrderAdapter implements PiecesRenderOrderPort {
           "PiecesRenderOrderAdapter: pieceBot not found at setOrder"
         );
       }
-      SetStrictTag(pieceBot, "formRenderOrder", i);
+      SetStrictTag(pieceBot, "formRenderOrder", value);
     }
   }
 }

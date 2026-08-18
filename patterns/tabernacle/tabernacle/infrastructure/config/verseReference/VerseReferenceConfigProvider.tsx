@@ -4,8 +4,9 @@ import type {
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
 import { VERSE_REFERENCE_MAP } from "./referenceMap";
+import type { VerseReferenceConfigProviderPort } from "../../../application/ports/out/PieceInteraction";
 
-export class VerseReferenceConfigProvider {
+export class VerseReferenceConfigProvider implements VerseReferenceConfigProviderPort {
   getPiecesForVerse<E extends ExperienceKey>({
     experienceKey,
     bookId,

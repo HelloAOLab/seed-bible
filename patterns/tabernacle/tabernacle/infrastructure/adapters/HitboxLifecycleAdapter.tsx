@@ -49,8 +49,8 @@ export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
 
     os.addBotListener(hitboxBot, "onClick", () => {
       // TODO: Call an OnHitboxClicked event
-      //   @import { tabernacleController } from "tabernacle.infrastructure.di.bootstrap";
-      // tabernacleController?.handlePieceClick(links.piece.tags.key);
+      //   @import { piecesInteractionController } from "tabernacle.infrastructure.di.bootstrap";
+      // piecesInteractionController?.handlePieceClick(links.piece.tags.key);
     });
 
     return this.#hitboxMapper.toDomain(hitboxBot);

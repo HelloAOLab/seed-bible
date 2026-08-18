@@ -1,5 +1,5 @@
 import type { PiecesSequencePort } from "../../../application/ports/out/experience";
-import type { TabernacleVisualizerPort } from "../../../domain/ports/visualizer";
+import type { PieceStatePort } from "../../../domain/ports/pieceState";
 import type { LayerConfigProvider } from "../../config/layers/LayerConfigProvider";
 import type { ExperienceKey } from "../../../domain/models/experience";
 import { PIECE_VISIBILITY_STATES } from "../../../domain/models/piece";
@@ -7,16 +7,16 @@ import { PIECE_VISIBILITY_STATES } from "../../../domain/models/piece";
 const STAGGER_MS = 200;
 
 interface AdapterParams {
-  visualizer: TabernacleVisualizerPort;
+  pieceState: PieceStatePort;
   layerProvider: LayerConfigProvider;
 }
 
 export class PiecesSequenceAdapter implements PiecesSequencePort {
-  #visualizer: AdapterParams["visualizer"];
+  #pieceState: AdapterParams["pieceState"];
   #layerProvider: AdapterParams["layerProvider"];
 
-  constructor({ visualizer, layerProvider }: AdapterParams) {
-    this.#visualizer = visualizer;
+  constructor({ pieceState, layerProvider }: AdapterParams) {
+    this.#pieceState = pieceState;
     this.#layerProvider = layerProvider;
   }
 
@@ -26,7 +26,7 @@ export class PiecesSequenceAdapter implements PiecesSequencePort {
     const animations: Promise<void>[] = [];
     for (const key of orderedKeys) {
       animations.push(
-        this.#visualizer.applyMeshState({
+        this.#pieceState.applyMeshState({
           experience,
           key,
           state: PIECE_VISIBILITY_STATES.SHOWN,
