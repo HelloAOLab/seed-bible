@@ -6,13 +6,29 @@ import { getUserAnimalVisual } from "@packages/seed-bible/seed-bible/managers/Se
 import { signal } from "@preact/signals";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { todayStub, loginStub } from "../../testUtils/todayStubs";
-import type { Timespan } from "@packages/seed-bible/seed-bible/components/TodayPane/commonTypes";
-import type { FilteredReading } from "@packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
+import type {
+  FilteredReading,
+  Timespan,
+} from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
   return mockI18nManager();
 });
+
+// The hook imports the window builder directly, so it is stubbed at the module
+// boundary rather than injected.
+const { buildTimespanOptions } = vi.hoisted(() => ({
+  buildTimespanOptions: vi.fn(),
+}));
+
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/TodayReadingHistory",
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    buildTimespanOptions,
+  })
+);
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -41,15 +57,15 @@ type Result = ReturnType<typeof useSocialSection>;
 describe("useSocialSection", () => {
   let container: HTMLDivElement;
   let getCommunityReading: Mock;
-  let getUsersIds: Mock;
-  let getUserProfile: Mock;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
     getCommunityReading = vi.fn(async () => ({}) as FilteredReading);
-    getUsersIds = vi.fn(() => ["u1", "u2"]);
-    getUserProfile = vi.fn((id: string) => ({ id, name: `Name ${id}` }));
+    // Re-seeded here because `vi.clearAllMocks()` drops the implementation.
+    buildTimespanOptions.mockReturnValue({
+      twoDays: { year: INITIAL_YEAR, timespan: INITIAL_TIMESPAN },
+    });
   });
 
   afterEach(() => {
@@ -59,15 +75,7 @@ describe("useSocialSection", () => {
   });
 
   function setup() {
-    const today = todayStub({
-      subscribedUsers: { getUserProfile, getUsersIds } as never,
-      getCommunityReading,
-      readingHistoryConfigProvider: {
-        buildTimespanOptionsMap: () => ({
-          twoDays: { year: INITIAL_YEAR, timespan: INITIAL_TIMESPAN },
-        }),
-      } as never,
-    });
+    const today = todayStub({ getCommunityReading });
     const login = loginStub({
       userId: signal(CURRENT_USER_ID),
       profile: signal({ name: "Me" } as UserProfile),
@@ -95,40 +103,29 @@ describe("useSocialSection", () => {
   });
 
   describe("user profiles and filters", () => {
-    it("builds the profile map from the current user plus subscribed user ids", () => {
+    it("builds the profile map from the signed-in user alone", () => {
+      // Nobody subscribes to anyone yet, so "community" is a party of one.
       const result = setup();
-      // The current user is added first, then the subscribed users.
       expect([...result.current.userProfileMap.keys()]).toEqual([
         CURRENT_USER_ID,
-        "u1",
-        "u2",
       ]);
       expect(result.current.userProfileMap.get(CURRENT_USER_ID)).toEqual(
         CURRENT_USER_PROFILE
       );
-      expect(result.current.userProfileMap.get("u1")).toEqual({
-        id: "u1",
-        name: "Name u1",
-      });
-      expect(getUserProfile).toHaveBeenCalledWith("u1");
-      expect(getUserProfile).toHaveBeenCalledWith("u2");
     });
 
     it("initializes every user filter to true", () => {
       const result = setup();
       expect(result.current.userFilters.get(CURRENT_USER_ID)).toBe(true);
-      expect(result.current.userFilters.get("u1")).toBe(true);
-      expect(result.current.userFilters.get("u2")).toBe(true);
     });
 
     it("toggles a single user filter off and back on", () => {
       const result = setup();
-      act(() => result.current.toggleUserFilter("u1"));
-      expect(result.current.userFilters.get("u1")).toBe(false);
-      expect(result.current.userFilters.get("u2")).toBe(true);
+      act(() => result.current.toggleUserFilter(CURRENT_USER_ID));
+      expect(result.current.userFilters.get(CURRENT_USER_ID)).toBe(false);
 
-      act(() => result.current.toggleUserFilter("u1"));
-      expect(result.current.userFilters.get("u1")).toBe(true);
+      act(() => result.current.toggleUserFilter(CURRENT_USER_ID));
+      expect(result.current.userFilters.get(CURRENT_USER_ID)).toBe(true);
     });
   });
 

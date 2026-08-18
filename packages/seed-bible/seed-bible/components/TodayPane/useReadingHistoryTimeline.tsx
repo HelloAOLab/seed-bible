@@ -2,11 +2,6 @@ import type {
   ReadingHistoryContentData,
   ReadingHistoryTimelineFooterData,
 } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
-import type {
-  DateRange,
-  KeyRangesMap,
-  TimelineRangesMap,
-} from "./readingHistory";
 import type { ReadonlySignal } from "@preact/signals";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
@@ -15,6 +10,7 @@ import { ColorParser } from "../../managers/Colors";
 import {
   GetDayRangeSeconds,
   GetPastDateInfo,
+  type Range,
 } from "../../managers/ReadingHistoryTime";
 import { CapitalizeFirstLetter } from "../../managers/Strings";
 import { getColorByReadingTime } from "../../managers/ReadingHistoryColors";
@@ -27,6 +23,18 @@ import { useSocialSectionContext } from "./SocialSectionContext";
 import type { TooltipContentData } from "./tooltipTypes";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type { TodayManager } from "../../managers/TodayManager";
+
+/** An inclusive date window. */
+type DateRange = {
+  startDate: Date;
+  endDate: Date;
+};
+
+/** Maps a day key to its second-based time range. */
+type KeyRangesMap = Map<string, Range>;
+
+/** Maps a timeline year to the date window it covers. */
+type TimelineRangesMap = Map<number, DateRange>;
 
 type ItemsColorMap = Map<string, React.CSSProperties["color"]>;
 

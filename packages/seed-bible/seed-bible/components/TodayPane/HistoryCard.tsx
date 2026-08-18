@@ -47,7 +47,7 @@ export const HistoryCard = (props: {
     selectedTimespanOptionId,
     dateLabel,
     timespanFilterRef,
-  } = useHistoryCard(props.today);
+  } = useHistoryCard();
 
   return (
     <div className="history-card today-section-card">

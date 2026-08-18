@@ -4,10 +4,10 @@ import type { MutableRef } from "preact/hooks";
 import type {
   TodayManager,
   TodayPassageTarget,
+  VerseSearchResult,
 } from "../../managers/TodayManager";
 import { useI18n } from "../../i18n";
 import { useClickOutside } from "./useClickOutside";
-import type { VerseSearchResult } from "./search";
 
 import { useRef, useEffect, useMemo } from "preact/hooks";
 

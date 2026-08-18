@@ -10,7 +10,8 @@
  * answers "the local day containing this timestamp".
  */
 
-type Range = {
+/** A half-open span of unix seconds, as returned by {@link GetDayRangeSeconds}. */
+export type Range = {
   start: number;
   end: number;
 };

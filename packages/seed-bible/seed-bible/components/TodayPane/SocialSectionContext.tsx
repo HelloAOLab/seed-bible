@@ -1,5 +1,7 @@
-import type { Timespan } from "./commonTypes";
-import type { FilteredReading } from "./readingHistory";
+import type {
+  FilteredReading,
+  Timespan,
+} from "../../managers/TodayReadingHistory";
 
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";

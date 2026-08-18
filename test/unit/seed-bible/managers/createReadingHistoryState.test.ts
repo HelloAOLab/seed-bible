@@ -1,6 +1,8 @@
 import { signal } from "@preact/signals";
-import { createReadingHistoryState } from "@packages/seed-bible/seed-bible/components/TodayPane/createReadingHistoryState";
-import type { UserLastReading } from "@packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
+import {
+  createReadingHistoryState,
+  type UserLastReading,
+} from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

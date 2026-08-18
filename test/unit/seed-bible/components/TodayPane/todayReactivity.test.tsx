@@ -2,7 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
-import type { ReadingHistoryState } from "@packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
+import type { ReadingHistoryState } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
 import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
@@ -49,13 +49,6 @@ describe("Today screen reactivity", () => {
   const themeWith = (variables: Record<string, string>) =>
     ({ variables }) as unknown as BibleTheme;
 
-  const timespanOptions = {
-    twoDays: { year: 2026, timespan: { from: 1, to: 2 } },
-    week: { year: 2026, timespan: { from: 3, to: 4 } },
-    month: { year: 2026, timespan: { from: 5, to: 6 } },
-    all: { year: 2026, timespan: undefined },
-  };
-
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -96,14 +89,6 @@ describe("Today screen reactivity", () => {
       searchVerses: async () => [],
       getCommunityReading: async () => ({}),
       getReadingHistoryEvents: async () => [],
-      readingHistoryConfigProvider: {
-        buildTimespanOptionsMap: () => timespanOptions,
-        getTimespanOptionLabelMap: () => ({}),
-      } as never,
-      subscribedUsers: {
-        getUsersIds: () => [],
-        getUserProfile: () => undefined,
-      } as never,
     });
     const login = loginStub({ userId: signal("u1"), profile });
 

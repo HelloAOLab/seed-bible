@@ -19,15 +19,14 @@ import {
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
 import { hasReadingUrlPosition } from "./ReadingUrlPath";
 import type { TranslationBooks } from "./FreeUseBibleAPI";
-import { createReadingHistoryState } from "../components/TodayPane/createReadingHistoryState";
-import { TodayReadingHistoryService } from "../components/TodayPane/TodayReadingHistoryService";
-import { SubscribedUsersProvider } from "../components/TodayPane/SubscribedUsersProvider";
-import { ReadingHistoryConfigProvider } from "../components/TodayPane/readingHistoryConfigProvider";
-import type {
-  FilteredReading,
-  ReadingHistoryState,
-} from "../components/TodayPane/readingHistory";
-import type { VerseSearchResult } from "../components/TodayPane/search";
+import {
+  createReadingHistoryState,
+  getCommunityReading as queryCommunityReading,
+  getUserLastReading as queryUserLastReading,
+  type FilteredReading,
+  type ReadingHistoryState,
+  type Timespan,
+} from "./TodayReadingHistory";
 
 /**
  * Id of the Today pane. Exported because `readerVisible` and the toolbar both
@@ -35,6 +34,17 @@ import type { VerseSearchResult } from "../components/TodayPane/search";
  * paths drifted apart while Today was an extension.
  */
 export const TODAY_PANE_ID = "today-screen-pane";
+
+/** A single verse match returned by the full-text verse search. */
+export interface VerseSearchResult {
+  id: string;
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number | null;
+  reference: string;
+  text: string;
+}
 
 /** Books the reader currently has loaded, in the shape Today's cards want. */
 type TranslationBookSummary = {
@@ -81,10 +91,7 @@ export interface TodayManager {
    */
   readingHistory: ReadonlySignal<ReadingHistoryState>;
   /** Reading activity for one window, bucketed book -> chapter -> userId[]. */
-  getCommunityReading: (timespan: {
-    from: number;
-    to: number;
-  }) => Promise<FilteredReading>;
+  getCommunityReading: (timespan: Timespan) => Promise<FilteredReading>;
   /** Book id -> display name for the translation the reader has loaded. */
   bookNames: ReadonlySignal<Map<string, string>>;
   /**
@@ -112,8 +119,6 @@ export interface TodayManager {
     endTime: number
   ) => Promise<Iterable<ReadingEvent>>;
   getTranslationBooks: (translation: string) => Promise<TranslationBooks>;
-  readingHistoryConfigProvider: ReadingHistoryConfigProvider;
-  subscribedUsers: SubscribedUsersProvider;
   open: () => void;
   close: () => void;
   /** Tears down the internal effects. The app never calls this; tests do. */
@@ -140,45 +145,32 @@ export function createTodayManager(options: {
   const { os, login, navigation, search, bibleData, currentReadingState } =
     options;
 
-  const subscribedUsers = new SubscribedUsersProvider();
-  const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
-
   const fetchReadingHistoryEvents = (
     recordName: string,
     startTime: number,
     endTime: number
   ) => getReadingHistoryEvents(os, recordName, startTime, endTime);
 
-  const readingHistoryService = new TodayReadingHistoryService({
-    readingEventsProviderPort: {
-      getReadingHistoryEvents: fetchReadingHistoryEvents,
-    },
-    usersIdProviderPort: {
-      getUsersIds: () => {
-        const userId = login.userId.value;
-        if (!userId) {
-          return [];
-        }
-        return [userId, ...subscribedUsers.getUsersIds()];
-      },
-    },
-  });
-
   const { readingHistory, dispose: disposeReadingHistory } =
     createReadingHistoryState({
       userId: login.userId,
       refetchTrigger: currentReadingState,
       getUserLastReading: (userId, range) =>
-        readingHistoryService.getUserLastReading(userId, range),
+        queryUserLastReading(fetchReadingHistoryEvents, userId, range),
     });
 
-  const getCommunityReading = (timespan: {
-    from: number;
-    to: number;
-  }): Promise<FilteredReading> =>
-    readingHistoryService
-      .getCommunityReading([{ id: "value", span: timespan }])
-      .then((result) => result.value);
+  // The reader list is just the signed-in user: nothing subscribes to anyone
+  // else yet, so a fan-out over "community" members has nothing to fan out to.
+  const getCommunityReading = (
+    timespan: Timespan
+  ): Promise<FilteredReading> => {
+    const userId = login.userId.value;
+    return queryCommunityReading(
+      fetchReadingHistoryEvents,
+      userId ? [userId] : [],
+      timespan
+    );
+  };
 
   // Latched so Today's cards keep their book names while the reader is between
   // chapters — the live signals blink to null during a translation switch, and
@@ -328,8 +320,6 @@ export function createTodayManager(options: {
     getReadingHistoryEvents: fetchReadingHistoryEvents,
     getTranslationBooks: (translation: string) =>
       bibleData.getTranslationBooks(translation),
-    readingHistoryConfigProvider,
-    subscribedUsers,
     open,
     close,
     dispose: () => {

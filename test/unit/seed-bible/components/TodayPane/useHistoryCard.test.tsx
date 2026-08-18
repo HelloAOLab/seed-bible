@@ -4,7 +4,6 @@ import { act } from "preact/test-utils";
 import { useHistoryCard } from "@packages/seed-bible/seed-bible/components/TodayPane/useHistoryCard";
 import { mockI18nState } from "../../testUtils/mockI18n";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
-import { todayStub } from "../../testUtils/todayStubs";
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
@@ -13,10 +12,14 @@ vi.mock(
   })
 );
 
-// The hook imports the scroll helper directly, so it is stubbed at the module
+// The hook imports both helpers directly, so they are stubbed at the module
 // boundary rather than injected.
 const { useHorizontalScroll } = vi.hoisted(() => ({
   useHorizontalScroll: vi.fn(),
+}));
+
+const { buildTimespanOptions } = vi.hoisted(() => ({
+  buildTimespanOptions: vi.fn(),
 }));
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -32,18 +35,19 @@ vi.mock(
   })
 );
 
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/TodayReadingHistory",
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    buildTimespanOptions,
+  })
+);
+
 const optionsMap = {
   twoDays: { year: 2026, timespan: { from: 1, to: 2 } },
   week: { year: 2026, timespan: { from: 3, to: 4 } },
   month: { year: 2026, timespan: { from: 5, to: 6 } },
   all: { year: 2026, timespan: undefined },
-};
-
-const labelMap = {
-  all: "All",
-  month: "this-month",
-  week: "this-week",
-  twoDays: "last-48-hours",
 };
 
 type Result = ReturnType<typeof useHistoryCard>;
@@ -60,14 +64,6 @@ describe("useHistoryCard", () => {
     language?: string;
   }) {
     mockI18nState.language = options.language ?? "en";
-    const today = todayStub({
-      readingHistoryConfigProvider: {
-        buildTimespanOptionsMap: () => optionsMap,
-        getTimespanOptionLabelMap: () => labelMap,
-      } as unknown as ReturnType<
-        typeof todayStub
-      >["readingHistoryConfigProvider"],
-    });
     (useSocialSectionContext as Mock).mockReturnValue({
       userFilters: options.userFilters ?? new Map([["u1", true]]),
       userProfileMap: new Map(),
@@ -76,12 +72,13 @@ describe("useHistoryCard", () => {
       selectYear,
       selectDay,
     });
-    return today;
   }
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    // Re-seeded here because `vi.clearAllMocks()` drops the implementation.
+    buildTimespanOptions.mockReturnValue(optionsMap);
   });
 
   afterEach(() => {
@@ -91,10 +88,10 @@ describe("useHistoryCard", () => {
   });
 
   function setup(options: Parameters<typeof configure>[0] = {}) {
-    const today = configure(options);
+    configure(options);
     const result = { current: null as unknown as Result };
     function TestComponent() {
-      const r = useHistoryCard(today);
+      const r = useHistoryCard();
       result.current = r;
       return (
         <div>

@@ -3,7 +3,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useFilteredReading } from "@packages/seed-bible/seed-bible/components/TodayPane/useFilteredReading";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
-import type { FilteredReading } from "@packages/seed-bible/seed-bible/components/TodayPane/readingHistory";
+import type { FilteredReading } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",

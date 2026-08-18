@@ -1,9 +1,12 @@
 import { useI18n } from "../../i18n";
 import { useSignal, useSignalEffect } from "@preact/signals";
-import type { FilteredReading } from "./readingHistory";
 import type { SocialSectionUserProfile } from "./SocialSectionContext";
 import { useState, useMemo, useCallback, useEffect } from "preact/hooks";
-import type { Timespan } from "./commonTypes";
+import {
+  buildTimespanOptions,
+  type FilteredReading,
+  type Timespan,
+} from "../../managers/TodayReadingHistory";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { TodayManager } from "../../managers/TodayManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
@@ -32,8 +35,7 @@ type UserProfile = {
 type UserProfileMap = Map<string, UserProfile>;
 
 export const useSocialSection: UseSocialSection = ({ today, login }) => {
-  const { subscribedUsers, getCommunityReading, readingHistoryConfigProvider } =
-    today;
+  const { getCommunityReading } = today;
   const userId = login.userId.value;
   const profile = login.profile.value;
   // The current user's own row in the filter list. Derived here rather than
@@ -50,10 +52,7 @@ export const useSocialSection: UseSocialSection = ({ today, login }) => {
   }, [userId, profile?.name, profile?.pictureUrl]);
   const { t } = useI18n();
 
-  const initialOption = useMemo(
-    () => readingHistoryConfigProvider.buildTimespanOptionsMap().twoDays,
-    []
-  );
+  const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
   const year = useSignal<number>(initialOption.year);
   const timespan = useSignal<Timespan | undefined>(initialOption.timespan);
   const communityReading = useSignal<FilteredReading>({});
@@ -99,16 +98,7 @@ export const useSocialSection: UseSocialSection = ({ today, login }) => {
 
   useEffect(() => {
     if (userId && userProfile) {
-      const map: UserProfileMap = new Map([
-        [userId, userProfile],
-        ...subscribedUsers
-          .getUsersIds()
-          .map((id): [string, UserProfile] => [
-            id,
-            subscribedUsers.getUserProfile(id)!,
-          ]),
-      ]);
-      setUserProfileMap(map);
+      setUserProfileMap(new Map([[userId, userProfile]]));
     } else {
       setUserProfileMap(new Map());
     }

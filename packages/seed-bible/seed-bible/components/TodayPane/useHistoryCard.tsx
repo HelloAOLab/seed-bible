@@ -7,7 +7,6 @@ import {
   useMemo,
   useCallback,
 } from "preact/hooks";
-import type { TodayManager } from "../../managers/TodayManager";
 import {
   useSocialSectionContext,
   type SocialSectionUserProfile,
@@ -15,12 +14,20 @@ import {
 import { useClickOutside } from "./useClickOutside";
 import { useI18n } from "../../i18n";
 import { useHorizontalScroll } from "../useHorizontalScroll";
-import type {
-  TimespanFilterOptionData,
-  TimespanOptionId,
-} from "./readingHistory";
+import {
+  buildTimespanOptions,
+  type TimespanOptionId,
+} from "../../managers/TodayReadingHistory";
 
-type UseHistoryCard = (today: TodayManager) => {
+/** Data for a single timespan-filter button in the history card. */
+export interface TimespanFilterOptionData {
+  label: string;
+  id: TimespanOptionId;
+  onClick: () => void;
+  isSelected: boolean;
+}
+
+type UseHistoryCard = () => {
   userFilterOpen: ReadonlySignal<boolean>;
   userFilterIcon: ReadonlySignal<string>;
   handleUserFilterClick: (e: MouseEvent) => void;
@@ -36,8 +43,7 @@ type UseHistoryCard = (today: TodayManager) => {
   timespanFilterRef: MutableRef<HTMLDivElement | null>;
 };
 
-export const useHistoryCard: UseHistoryCard = (today) => {
-  const { readingHistoryConfigProvider } = today;
+export const useHistoryCard: UseHistoryCard = () => {
   const { t, language } = useI18n();
   const {
     userFilters,
@@ -75,7 +81,7 @@ export const useHistoryCard: UseHistoryCard = (today) => {
     (id: TimespanOptionId) => {
       if (selectedTimespanOptionId.value === id) return;
 
-      const option = readingHistoryConfigProvider.buildTimespanOptionsMap()[id];
+      const option = buildTimespanOptions()[id];
       selectedTimespanOptionId.value = id;
       // `selectYear` sets the year and clears the timespan; `selectDay` then
       // narrows to the option's window. Both writes batch within this handler.

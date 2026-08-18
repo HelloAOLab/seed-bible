@@ -3,7 +3,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { useSearchBar } from "@packages/seed-bible/seed-bible/components/TodayPane/useSearchBar";
 import { todayStub } from "../../testUtils/todayStubs";
-import type { VerseSearchResult } from "@packages/seed-bible/seed-bible/components/TodayPane/search";
+import type { VerseSearchResult } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
