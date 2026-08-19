@@ -16,6 +16,7 @@ import {
 import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
 import { htmlMetaAssetsPlugin } from "./script/lib/vite-plugin-html-meta-assets";
 import { inlineCriticalCssPlugin } from "./script/lib/vite-plugin-inline-critical-css";
+import { purgeCssPlugin } from "./script/lib/vite-plugin-purgecss";
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
 // asset URL is namespaced by branch and build id: assets for a build live at
@@ -132,6 +133,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     extensionsPlugin(),
     htmlMetaAssetsPlugin(),
     ...inlineCriticalCssPlugin(),
+    purgeCssPlugin(),
     // Only the root build ships a service worker (see `isRootBuild` above).
     ...(isRootBuild
       ? [

@@ -105,6 +105,7 @@
     "pretty-quick": "^4.2.2",
     "prompts": "^2.4.2",
     "puppeteer": "^24.30.0",
+    "purgecss": "^8.0.0",
     "rxjs": "catalog:",
     "stylelint": "^17.14.1",
     "ts-jest": "^29.4.6",

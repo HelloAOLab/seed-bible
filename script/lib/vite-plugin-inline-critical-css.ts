@@ -1,4 +1,4 @@
-import type { Plugin } from "vite";
+import type { IndexHtmlTransformContext, Plugin } from "vite";
 import fs from "fs";
 import path from "path";
 import { transform } from "esbuild";
@@ -6,6 +6,12 @@ import {
   injectCriticalStyles,
   makeStylesheetsNonBlocking,
 } from "./inlineCriticalCss";
+import {
+  collectPurgeContent,
+  formatPurgeSavings,
+  isPurgeCssDisabled,
+  purgeCssFiles,
+} from "./purgeCss";
 
 const INLINE_CSS_RE = /\.inline\.css$/;
 
@@ -37,6 +43,7 @@ const VIRTUAL_ID_PREFIX = "\0inline-critical-css:";
  */
 export function inlineCriticalCssPlugin(): Plugin[] {
   const captured = new Map<string, string>();
+  let projectRoot = process.cwd();
   // The virtual id is a plain counter, not the real path — an absolute
   // Windows path has its own `C:\...` colon, and a virtual id combining that
   // with the `\0inline-critical-css:` prefix tripped up rolldown's own
@@ -72,15 +79,47 @@ export function inlineCriticalCssPlugin(): Plugin[] {
     {
       name: "vite-plugin-inline-critical-css:inject",
       apply: "build",
+      configResolved(config) {
+        projectRoot = config.root;
+      },
       transformIndexHtml: {
         order: "post",
-        handler(html) {
+        async handler(html, ctx) {
           const criticalCss = [...captured.values()].join("\n");
-          return makeStylesheetsNonBlocking(
-            injectCriticalStyles(html, criticalCss)
+          // This CSS is re-sent with every HTML response rather than cached as
+          // an asset, so unused rules here cost more than they do in the
+          // external stylesheet. `vite-plugin-purgecss` can't reach it: it was
+          // deliberately kept out of the bundle by the capture plugin above.
+          const purged = await purgeCriticalCss(
+            criticalCss,
+            ctx.bundle,
+            projectRoot
           );
+          return makeStylesheetsNonBlocking(injectCriticalStyles(html, purged));
         },
       },
     },
   ];
+}
+
+const CRITICAL_CSS_NAME = "critical.css";
+
+async function purgeCriticalCss(
+  css: string,
+  bundle: IndexHtmlTransformContext["bundle"],
+  projectRoot: string
+): Promise<string> {
+  if (!bundle || isPurgeCssDisabled() || css.length === 0) return css;
+
+  const purged = await purgeCssFiles(
+    [{ name: CRITICAL_CSS_NAME, css }],
+    collectPurgeContent(bundle, projectRoot)
+  );
+  const result = purged.get(CRITICAL_CSS_NAME);
+  if (result === undefined) return css;
+
+  console.log(
+    `[purgecss] inlined critical CSS: ${formatPurgeSavings(css.length, result.length)}`
+  );
+  return result;
 }
