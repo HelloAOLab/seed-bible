@@ -14,11 +14,16 @@ import {
   PlaylistPlayHistorySchema,
   createPlaylistManager,
   createPlayingState,
+  findMergeablePlayHistory,
   formatPlaylistPlayDurationMs,
+  groupPlaylistPlayHistoryByDay,
   isPlaylistPlayHistoryComplete,
+  latestIncompletePlayHistoryByPlaylist,
+  playlistPlayHistoryDayKind,
   playlistPlayHistoryPercent,
   retainPlaylistPlayHistory,
   MAX_PLAYLIST_PLAY_HISTORY,
+  PLAYLIST_PLAY_HISTORY_MERGE_WINDOW_MS,
   type Playlist,
   type PlaylistItemData,
   type PlaylistPlayHistory,
@@ -135,7 +140,7 @@ describe("playlist play history helpers", () => {
     expect(formatPlaylistPlayDurationMs(3_661_000)).toBe("1h 1m");
   });
 
-  it("retains only the newest session per playlist, capped", () => {
+  it("retains every session newest-first, capped", () => {
     const older = makeHistory({
       id: "h-old",
       playlistId: "p1",
@@ -153,7 +158,7 @@ describe("playlist play history helpers", () => {
     });
     expect(
       retainPlaylistPlayHistory([older, newer, other]).map((e) => e.id)
-    ).toEqual(["h-new", "h-other"]);
+    ).toEqual(["h-new", "h-other", "h-old"]);
 
     const many = Array.from({ length: MAX_PLAYLIST_PLAY_HISTORY + 5 }, (_, i) =>
       makeHistory({
@@ -165,6 +170,143 @@ describe("playlist play history helpers", () => {
     const retained = retainPlaylistPlayHistory(many);
     expect(retained).toHaveLength(MAX_PLAYLIST_PLAY_HISTORY);
     expect(retained[0]!.id).toBe(`h-${MAX_PLAYLIST_PLAY_HISTORY + 4}`);
+    expect(retained.at(-1)!.id).toBe("h-5");
+  });
+
+  it("keeps the latest incomplete session per playlist for resume", () => {
+    const complete = makeHistory({
+      id: "h-done",
+      playlistId: "p1",
+      currentStep: 1,
+      totalSteps: 2,
+      startedAtMs: START_MS + 20_000,
+    });
+    const olderIncomplete = makeHistory({
+      id: "h-old",
+      playlistId: "p1",
+      currentStep: 0,
+      totalSteps: 2,
+      startedAtMs: START_MS,
+    });
+    const newerIncomplete = makeHistory({
+      id: "h-new",
+      playlistId: "p1",
+      currentStep: 0,
+      totalSteps: 2,
+      startedAtMs: START_MS + 10_000,
+    });
+    const other = makeHistory({
+      id: "h-other",
+      playlistId: "p2",
+      currentStep: 0,
+      totalSteps: 2,
+      startedAtMs: START_MS + 5_000,
+    });
+    expect(
+      latestIncompletePlayHistoryByPlaylist([
+        complete,
+        olderIncomplete,
+        newerIncomplete,
+        other,
+      ]).map((e) => e.id)
+    ).toEqual(["h-new", "h-other"]);
+  });
+
+  it("groups sessions by calendar day", () => {
+    const today = makeHistory({
+      id: "h-today",
+      startedAtMs: Date.UTC(2026, 5, 17, 13, 45, 0),
+    });
+    const yesterday = makeHistory({
+      id: "h-yesterday",
+      startedAtMs: Date.UTC(2026, 5, 16, 8, 0, 0),
+    });
+    const older = makeHistory({
+      id: "h-older",
+      startedAtMs: Date.UTC(2026, 5, 10, 12, 0, 0),
+    });
+    const groups = groupPlaylistPlayHistoryByDay(
+      [older, today, yesterday],
+      "UTC"
+    );
+    expect(groups.map((g) => g.dayKey)).toEqual([
+      "2026-06-17",
+      "2026-06-16",
+      "2026-06-10",
+    ]);
+    expect(groups[0]!.entries.map((e) => e.id)).toEqual(["h-today"]);
+    expect(
+      playlistPlayHistoryDayKind(
+        "2026-06-17",
+        Date.UTC(2026, 5, 17, 18, 0, 0),
+        "UTC"
+      )
+    ).toBe("today");
+    expect(
+      playlistPlayHistoryDayKind(
+        "2026-06-16",
+        Date.UTC(2026, 5, 17, 18, 0, 0),
+        "UTC"
+      )
+    ).toBe("yesterday");
+    expect(
+      playlistPlayHistoryDayKind(
+        "2026-06-10",
+        Date.UTC(2026, 5, 17, 18, 0, 0),
+        "UTC"
+      )
+    ).toBe("date");
+  });
+
+  it("merges Continue only within the window for an incomplete session", () => {
+    const prior = makeHistory({
+      id: "hist-prior",
+      currentStep: 1,
+      totalSteps: 3,
+      endedAtMs: START_MS,
+      updatedAtMs: START_MS,
+    });
+    const playlist = {
+      playlistRecordName: prior.playlistRecordName,
+      playlistId: prior.playlistId,
+    };
+    expect(
+      findMergeablePlayHistory(
+        [prior],
+        playlist,
+        1,
+        prior.id,
+        START_MS + 60_000
+      )?.id
+    ).toBe(prior.id);
+    expect(
+      findMergeablePlayHistory(
+        [prior],
+        playlist,
+        1,
+        prior.id,
+        START_MS + PLAYLIST_PLAY_HISTORY_MERGE_WINDOW_MS + 1
+      )
+    ).toBeNull();
+    expect(
+      findMergeablePlayHistory([prior], playlist, 1, null, START_MS + 60_000)
+    ).toBeNull();
+    const complete = makeHistory({
+      id: "hist-done",
+      currentStep: 2,
+      totalSteps: 3,
+      endedAtMs: START_MS,
+      updatedAtMs: START_MS,
+    });
+    expect(
+      findMergeablePlayHistory(
+        [complete],
+        playlist,
+        0,
+        complete.id,
+        START_MS + 60_000
+      )
+    ).toBeNull();
   });
 });
 
@@ -476,21 +618,47 @@ describe("createPlaylistManager", () => {
     );
   });
 
-  it("deletePlaylist erases the record and drops it from userPlaylists", async () => {
+  it("deletePlaylist erases the record, matching history, and drops it from userPlaylists", async () => {
     listDataByMarkerMock.mockResolvedValue({
       success: true,
       items: [{ data: makePlaylist({ id: "playlist-a" }) }],
     });
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [
+        {
+          data: makeHistory({
+            id: "hist-playlist-a",
+            playlistId: "playlist-a",
+            playlistRecordName: "user-1",
+          }),
+        },
+        {
+          data: makeHistory({
+            id: "hist-other",
+            playlistId: "playlist-other",
+            playlistRecordName: "user-1",
+          }),
+        },
+      ],
+    });
     const manager = makeManager("user-1");
     await flush();
     expect(manager.userPlaylists.value).toHaveLength(1);
+    expect(manager.userPlaylistHistory.value).toHaveLength(2);
 
     await manager.deletePlaylist(
       makePlaylist({ id: "playlist-a", recordName: "user-1" })
     );
+    await flush();
 
     expect(eraseDataMock).toHaveBeenCalledWith("user-1", "playlist-a");
+    expect(eraseDataMock).toHaveBeenCalledWith("user-1", "hist-playlist-a");
+    expect(eraseDataMock).not.toHaveBeenCalledWith("user-1", "hist-other");
     expect(manager.userPlaylists.value).toEqual([]);
+    expect(manager.userPlaylistHistory.value.map((e) => e.id)).toEqual([
+      "hist-other",
+    ]);
   });
 
   it("deletePlaylist throws and keeps the playlist when erase fails", async () => {
@@ -1469,11 +1637,13 @@ describe("createPlaylistManager", () => {
       expect(entry.currentStep).toBe(1);
     });
 
-    it("continueFromHistory loads the playlist and chains previousHistoryId", async () => {
+    it("continueFromHistory reuses the same session when resuming within the merge window", async () => {
       const prior = makeHistory({
         id: "hist-prior",
         currentStep: 1,
         totalSteps: 3,
+        endedAtMs: START_MS,
+        updatedAtMs: START_MS,
       });
       listAllDataByMarkerMock.mockResolvedValue({
         success: true,
@@ -1496,23 +1666,69 @@ describe("createPlaylistManager", () => {
       await flush();
 
       expect(manager.playing.value?.currentIndex.value).toBe(1);
-      const newest = manager.userPlaylistHistory.value[0]!;
-      expect(newest.id).not.toBe(prior.id);
-      expect(newest.previousHistoryId).toBe(prior.id);
-      expect(newest.currentStep).toBe(1);
-      // Latest-per-playlist retention: the prior row is erased.
       expect(manager.userPlaylistHistory.value).toHaveLength(1);
-      expect(eraseDataMock).toHaveBeenCalledWith("user-1", prior.id);
+      const resumed = manager.userPlaylistHistory.value[0]!;
+      expect(resumed.id).toBe(prior.id);
+      expect(resumed.endedAtMs).toBeNull();
+      expect(eraseDataMock).not.toHaveBeenCalledWith("user-1", prior.id);
 
       manager.stopPlaying();
       await flush();
     });
 
-    it("replayFromHistory starts at step 0 and chains previousHistoryId", async () => {
+    it("continueFromHistory appends a new session after the merge window", async () => {
+      const prior = makeHistory({
+        id: "hist-prior",
+        currentStep: 1,
+        totalSteps: 3,
+        endedAtMs: START_MS,
+        updatedAtMs: START_MS,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
+      });
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      vi.setSystemTime(START_MS + PLAYLIST_PLAY_HISTORY_MERGE_WINDOW_MS + 1);
+      await manager.continueFromHistory(prior);
+      await flush();
+
+      expect(manager.playing.value?.currentIndex.value).toBe(1);
+      expect(manager.userPlaylistHistory.value).toHaveLength(2);
+      const newest = manager.userPlaylistHistory.value[0]!;
+      expect(newest.id).not.toBe(prior.id);
+      expect(newest.previousHistoryId).toBe(prior.id);
+      expect(newest.currentStep).toBe(1);
+      expect(
+        manager.userPlaylistHistory.value.some((e) => e.id === prior.id)
+      ).toBe(true);
+      expect(eraseDataMock).not.toHaveBeenCalledWith("user-1", prior.id);
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("replayFromHistory starts at step 0, chains previousHistoryId, and keeps the completed session", async () => {
       const prior = makeHistory({
         id: "hist-done",
         currentStep: 2,
         totalSteps: 3,
+        endedAtMs: START_MS,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
       });
       const playlist = makePlaylist({
         items: [
@@ -1533,6 +1749,10 @@ describe("createPlaylistManager", () => {
       expect(manager.userPlaylistHistory.value[0]!.previousHistoryId).toBe(
         prior.id
       );
+      expect(manager.userPlaylistHistory.value).toHaveLength(2);
+      expect(
+        manager.userPlaylistHistory.value.some((e) => e.id === prior.id)
+      ).toBe(true);
 
       manager.stopPlaying();
       await flush();
@@ -1558,7 +1778,7 @@ describe("createPlaylistManager", () => {
       expect(manager.userPlaylistHistory.value).toEqual([]);
     });
 
-    it("loads all pages, keeps newest per playlist, and erases duplicates", async () => {
+    it("loads all pages and keeps every session newest-first", async () => {
       const older = makeHistory({
         id: "hist-old",
         playlistId: "playlist-1",
@@ -1586,8 +1806,9 @@ describe("createPlaylistManager", () => {
       expect(manager.userPlaylistHistory.value.map((e) => e.id)).toEqual([
         "hist-new",
         "hist-other",
+        "hist-old",
       ]);
-      expect(eraseDataMock).toHaveBeenCalledWith("user-1", "hist-old");
+      expect(eraseDataMock).not.toHaveBeenCalled();
     });
 
     it("does not write history to the backend while idle on the same step", async () => {
@@ -1626,11 +1847,12 @@ describe("createPlaylistManager", () => {
       await flush();
     });
 
-    it("replacing a playlist's session erases the previous history row", async () => {
+    it("starting a playlist keeps previous history rows for that playlist", async () => {
       const prior = makeHistory({
         id: "hist-prior",
         playlistId: "playlist-1",
         startedAtMs: START_MS,
+        endedAtMs: START_MS,
       });
       listAllDataByMarkerMock.mockResolvedValue({
         success: true,
@@ -1649,12 +1871,32 @@ describe("createPlaylistManager", () => {
       );
       await flush();
 
-      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      expect(manager.userPlaylistHistory.value).toHaveLength(2);
       expect(manager.userPlaylistHistory.value[0]!.id).not.toBe(prior.id);
-      expect(eraseDataMock).toHaveBeenCalledWith("user-1", prior.id);
+      expect(
+        manager.userPlaylistHistory.value.some((e) => e.id === prior.id)
+      ).toBe(true);
+      expect(eraseDataMock).not.toHaveBeenCalledWith("user-1", prior.id);
 
       manager.stopPlaying();
       await flush();
+    });
+
+    it("removePlayHistory drops the session from memory and the backend", async () => {
+      const stored = makeHistory({ id: "hist-stored" });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: stored }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      eraseDataMock.mockClear();
+
+      await manager.removePlayHistory(stored);
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", stored.id);
     });
   });
 

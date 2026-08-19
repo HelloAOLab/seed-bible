@@ -318,6 +318,30 @@
 
 /* Playlist play-history rows: same shell as playlist items, with an expandable
    details block for duration / last item / continue-or-replay. */
+.sb-playlist-history-day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-playlist-history-day-group + .sb-playlist-history-day-group {
+  margin-top: 10px;
+}
+
+.sb-playlist-history-day {
+  margin: 0 0 2px;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-playlist-continue-item {
+  cursor: default;
+}
+
 .sb-playlist-history-item {
   padding: 0;
   gap: 0;
@@ -376,6 +400,13 @@
   color: var(--sb-font-color);
 }
 
+.sb-playlist-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .sb-playlist-history-action {
   display: inline-flex;
   align-items: center;
@@ -386,4 +417,20 @@
 
 .sb-playlist-history-action .material-symbols-outlined {
   font-size: 1rem;
+}
+
+.sb-playlist-history-remove {
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sb-playlist-history-remove:hover {
+  color: var(--sb-font-color);
 }

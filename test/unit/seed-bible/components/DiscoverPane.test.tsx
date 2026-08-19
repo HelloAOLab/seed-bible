@@ -143,6 +143,7 @@ interface MockPlaylistsResult {
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
   continueFromHistory: ReturnType<typeof vi.fn>;
   replayFromHistory: ReturnType<typeof vi.fn>;
+  removePlayHistory: ReturnType<typeof vi.fn>;
 }
 
 function createMockPlaylists(
@@ -173,6 +174,7 @@ function createMockPlaylists(
   const goBackFromPlayingView = vi.fn();
   const continueFromHistory = vi.fn().mockResolvedValue(undefined);
   const replayFromHistory = vi.fn().mockResolvedValue(undefined);
+  const removePlayHistory = vi.fn().mockResolvedValue(undefined);
 
   const view = signal(overrides.view ?? "discover");
   const playlists = {
@@ -190,6 +192,7 @@ function createMockPlaylists(
     cancelEditingPlaylist,
     continueFromHistory,
     replayFromHistory,
+    removePlayHistory,
     saveEditingPlaylist: vi.fn().mockResolvedValue(undefined),
     addEditingPlaylistItem: vi.fn(),
     updateEditingPlaylistItem: vi.fn(),
@@ -208,6 +211,7 @@ function createMockPlaylists(
     goBackFromPlayingView,
     continueFromHistory,
     replayFromHistory,
+    removePlayHistory,
   };
 }
 
@@ -2311,7 +2315,9 @@ describe("DiscoverPaneTitle", () => {
     const emptyStates = Array.from(
       container.querySelectorAll(".sb-discover-empty")
     ).map((el) => el.textContent);
-    expect(emptyStates).toContain("Playlists you play will show up here.");
+    expect(emptyStates).toContain(
+      "Play a saved playlist while signed in and it will show up here."
+    );
   });
 
   it("lists playlist history and expands to show duration, progress, and Continue", async () => {
@@ -2413,6 +2419,97 @@ describe("DiscoverPaneTitle", () => {
     });
     expect(replayFromHistory).toHaveBeenCalledWith(entry);
     expect(continueFromHistory).not.toHaveBeenCalled();
+  });
+
+  it("shows Continue listening for incomplete sessions and Remove from history", async () => {
+    const now = Date.now();
+    const entry = createHistoryEntry({
+      startedAtMs: now,
+      endedAtMs: now + 65_000,
+      updatedAtMs: now + 65_000,
+    });
+    const { playlists, continueFromHistory, removePlayHistory } =
+      createMockPlaylists({
+        userPlaylistHistory: [entry],
+      });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("Continue listening");
+    expect(container.textContent).toContain("Today");
+    const continuePlay = container.querySelector(
+      ".sb-playlist-continue-item .sb-discover-item-play"
+    ) as HTMLButtonElement;
+    expect(continuePlay).not.toBeNull();
+
+    await act(async () => {
+      continuePlay.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(continueFromHistory).toHaveBeenCalledWith(entry);
+
+    act(() => {
+      container
+        .querySelector(".sb-playlist-history-item-header")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const remove = container.querySelector(
+      ".sb-playlist-history-remove"
+    ) as HTMLButtonElement;
+    expect(remove?.textContent).toContain("Remove from history");
+
+    await act(async () => {
+      remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(removePlayHistory).toHaveBeenCalledWith(entry);
+  });
+
+  it("hides Continue listening when every session is complete", () => {
+    const entry = createHistoryEntry({
+      currentStep: 3,
+      totalSteps: 4,
+    });
+    const { playlists } = createMockPlaylists({
+      userPlaylistHistory: [entry],
+    });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-playlist-continue-item")).toBeNull();
+    expect(container.textContent).toContain("Playlist history");
+    expect(container.textContent).toContain("Shared Study");
   });
 
   function renderAnnotationTitle(editing: Annotation) {

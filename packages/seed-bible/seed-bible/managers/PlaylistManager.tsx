@@ -30,6 +30,7 @@ import {
 import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
 import type { BookId } from "./BibleDataManager";
+import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -130,9 +131,9 @@ export type VerseRef = z.infer<typeof VerseRefSchema>;
 /**
  * One play session of a playlist, stored under the user's record so shared
  * playlist links can be reopened later from Discover without keeping the URL.
- * Replaying or continuing creates a *new* entry (optionally tagging
- * {@link PlaylistPlayHistory.previousHistoryId}); older sessions for the same
- * playlist are pruned so Discover keeps one row per playlist.
+ * Replaying or continuing after the merge window creates a *new* entry
+ * (optionally tagging {@link PlaylistPlayHistory.previousHistoryId}). Older
+ * sessions for the same playlist are kept so Discover can show a listening log.
  */
 export const PlaylistPlayHistorySchema = z.object({
   id: z.string(),
@@ -175,11 +176,17 @@ export type PlayingState = ReturnType<typeof createPlayingState>;
 const PLAYLIST_PLAY_HISTORY_MARKER = "publicRead:playlistPlayHistory";
 
 /**
- * Bound on how many distinct playlists we keep play-history for. History grows
- * one row per play without this; combined with single-page loads that used to
- * mean recent sessions silently vanished after reload.
+ * Bound on how many play sessions we keep. History grows one row per play
+ * without this; combined with single-page loads that used to mean recent
+ * sessions silently vanished after reload.
  */
-export const MAX_PLAYLIST_PLAY_HISTORY = 50;
+export const MAX_PLAYLIST_PLAY_HISTORY = 200;
+
+/**
+ * Continue from an incomplete session within this window reopens that row
+ * instead of appending a near-duplicate. Matches reading-history's merge.
+ */
+export const PLAYLIST_PLAY_HISTORY_MERGE_WINDOW_MS = 30 * 60 * 1000;
 
 /** Identity of the playlist a history row refers to (record + id). */
 export function playlistPlayHistoryKey(
@@ -189,28 +196,127 @@ export function playlistPlayHistoryKey(
 }
 
 /**
- * Newest-first, one session per playlist, capped at
- * {@link MAX_PLAYLIST_PLAY_HISTORY}. Used both when loading from the backend
- * and when pruning after a new play so the Discover list stays bounded.
+ * Newest-first sessions, capped at {@link MAX_PLAYLIST_PLAY_HISTORY}. Used
+ * both when loading from the backend and when pruning after a new play so the
+ * Discover list stays bounded.
  */
 export function retainPlaylistPlayHistory(
+  entries: PlaylistPlayHistory[]
+): PlaylistPlayHistory[] {
+  return [...entries]
+    .sort((a, b) => b.startedAtMs - a.startedAtMs)
+    .slice(0, MAX_PLAYLIST_PLAY_HISTORY);
+}
+
+/**
+ * Latest incomplete session per playlist, newest-first. Powers the Discover
+ * "Continue listening" strip so resume is not buried in the full log.
+ */
+export function latestIncompletePlayHistoryByPlaylist(
   entries: PlaylistPlayHistory[]
 ): PlaylistPlayHistory[] {
   const sorted = [...entries].sort((a, b) => b.startedAtMs - a.startedAtMs);
   const seen = new Set<string>();
   const retained: PlaylistPlayHistory[] = [];
   for (const entry of sorted) {
+    if (isPlaylistPlayHistoryComplete(entry)) {
+      continue;
+    }
     const key = playlistPlayHistoryKey(entry);
     if (seen.has(key)) {
       continue;
     }
     seen.add(key);
     retained.push(entry);
-    if (retained.length >= MAX_PLAYLIST_PLAY_HISTORY) {
-      break;
-    }
   }
   return retained;
+}
+
+export type PlaylistPlayHistoryDayGroup = {
+  dayKey: string;
+  entries: PlaylistPlayHistory[];
+};
+
+/**
+ * Newest-first sessions grouped by calendar day in `timeZone` (the machine
+ * zone when omitted). Day keys are `YYYY-MM-DD`.
+ */
+export function groupPlaylistPlayHistoryByDay(
+  entries: PlaylistPlayHistory[],
+  timeZone?: string | null
+): PlaylistPlayHistoryDayGroup[] {
+  const sorted = retainPlaylistPlayHistory(entries);
+  const groups = new Map<string, PlaylistPlayHistory[]>();
+  const order: string[] = [];
+  for (const entry of sorted) {
+    const dayKey = civilDateToISO(civilDateInZone(entry.startedAtMs, timeZone));
+    const group = groups.get(dayKey);
+    if (group) {
+      group.push(entry);
+      continue;
+    }
+    groups.set(dayKey, [entry]);
+    order.push(dayKey);
+  }
+  return order.map((dayKey) => ({
+    dayKey,
+    entries: groups.get(dayKey) ?? [],
+  }));
+}
+
+/** Which heading Discover should use for a history day group. */
+export function playlistPlayHistoryDayKind(
+  dayKey: string,
+  nowMs: number = Date.now(),
+  timeZone?: string | null
+): "today" | "yesterday" | "date" {
+  const today = civilDateToISO(civilDateInZone(nowMs, timeZone));
+  if (dayKey === today) {
+    return "today";
+  }
+  const yesterday = civilDateToISO(
+    addCivilDays(civilDateInZone(nowMs, timeZone), -1)
+  );
+  if (dayKey === yesterday) {
+    return "yesterday";
+  }
+  return "date";
+}
+
+/**
+ * Incomplete Continue within {@link PLAYLIST_PLAY_HISTORY_MERGE_WINDOW_MS} of
+ * the prior session's last activity reuses that row. Replay of a completed
+ * session never merges. `previousHistoryId` must match the prior row so a
+ * fresh Play from My Playlists still starts a new session.
+ */
+export function findMergeablePlayHistory(
+  entries: PlaylistPlayHistory[],
+  playlist: Pick<PlaylistPlayHistory, "playlistRecordName" | "playlistId">,
+  step: number,
+  previousHistoryId: string | null,
+  nowMs: number = Date.now()
+): PlaylistPlayHistory | null {
+  if (!previousHistoryId) {
+    return null;
+  }
+  const prior = entries.find((entry) => entry.id === previousHistoryId);
+  if (!prior) {
+    return null;
+  }
+  if (playlistPlayHistoryKey(prior) !== playlistPlayHistoryKey(playlist)) {
+    return null;
+  }
+  if (isPlaylistPlayHistoryComplete(prior)) {
+    return null;
+  }
+  if (prior.currentStep !== step) {
+    return null;
+  }
+  const lastActivityMs = prior.endedAtMs ?? prior.updatedAtMs;
+  if (nowMs - lastActivityMs > PLAYLIST_PLAY_HISTORY_MERGE_WINDOW_MS) {
+    return null;
+  }
+  return prior;
 }
 
 /** Fraction of the queue reached (0–1), counting every item type. */
@@ -708,7 +814,8 @@ export function createPlaylistManager(
   /**
    * Drops every history row that is not in `keep`, both in memory (caller
    * updates the signal) and best-effort on the backend. Used after load and
-   * after starting a new session so older duplicates / overflow never accumulate.
+   * after starting a new session so overflow past the retention cap never
+   * accumulates.
    */
   const prunePlayHistoryOutside = (
     all: PlaylistPlayHistory[],
@@ -772,6 +879,12 @@ export function createPlaylistManager(
       return;
     }
     const now = Date.now();
+    // Continue-within-window reopens this row before a just-queued finalize
+    // write lands; skip that stale "ended" patch so it cannot close the
+    // session we just resumed.
+    if (patch.endedAtMs != null && activePlayHistoryId.peek() === id) {
+      return;
+    }
     const endedAtMs =
       patch.endedAtMs !== undefined ? patch.endedAtMs : existing.endedAtMs;
     const durationMs = Math.max(0, (endedAtMs ?? now) - startedAtMs);
@@ -820,10 +933,11 @@ export function createPlaylistManager(
   };
 
   /**
-   * Opens a new history row for this play session. Local list updates first so
-   * Discover can show it immediately; the CasualOS write is best-effort.
-   * Prior sessions for the same playlist (and any overflow past the retention
-   * cap) are erased so history stays one row per playlist and bounded.
+   * Opens a history row for this play session. Continue within the merge
+   * window reactivates the prior incomplete row; otherwise a new session is
+   * appended. Local list updates first so Discover can show it immediately;
+   * the CasualOS write is best-effort. Overflow past the retention cap is
+   * erased so the log stays bounded.
    */
   const beginPlayHistory = async (
     playlist: SimplePlaylist & Pick<Playlist, "recordName">,
@@ -836,6 +950,36 @@ export function createPlaylistManager(
       return;
     }
     const now = Date.now();
+    const previous = userPlaylistHistory.peek();
+    const mergeable = findMergeablePlayHistory(
+      previous,
+      { playlistRecordName: playlist.recordName, playlistId: playlist.id },
+      step,
+      previousHistoryId,
+      now
+    );
+    if (mergeable) {
+      activePlayHistoryId.value = mergeable.id;
+      activePlayHistoryStartedAtMs.value = mergeable.startedAtMs;
+      const resumed: PlaylistPlayHistory = {
+        ...mergeable,
+        playlistTitle: playlist.title,
+        playlistDescription: playlist.description,
+        currentStep: step,
+        totalSteps: queue.length,
+        lastItem: queue[step] ?? null,
+        endedAtMs: null,
+        updatedAtMs: now,
+      };
+      upsertLocalPlayHistory(resumed);
+      try {
+        await savePlayHistory(resumed);
+      } catch (error) {
+        console.error("Failed to resume playlist play history:", error);
+      }
+      return;
+    }
+
     const id = `playlist_history_${uuid()}`;
     const entry = PlaylistPlayHistorySchema.parse({
       id,
@@ -858,7 +1002,6 @@ export function createPlaylistManager(
     activePlayHistoryId.value = id;
     activePlayHistoryStartedAtMs.value = now;
 
-    const previous = userPlaylistHistory.peek();
     const nextList = retainPlaylistPlayHistory([entry, ...previous]);
     userPlaylistHistory.value = nextList;
     prunePlayHistoryOutside([entry, ...previous], nextList);
@@ -894,9 +1037,57 @@ export function createPlaylistManager(
     });
   };
 
+  const isHistoryForPlaylist = (
+    entry: PlaylistPlayHistory,
+    playlist: Pick<Playlist, "id" | "recordName">
+  ): boolean =>
+    entry.playlistId === playlist.id &&
+    entry.playlistRecordName === playlist.recordName;
+
+  /**
+   * Drops matching history rows from memory and the backend. Clears the
+   * active session pointer first when it points at a dropped row so an
+   * in-flight finalize cannot resurrect it.
+   */
+  const dropPlayHistoryForPlaylist = (
+    playlist: Pick<Playlist, "id" | "recordName">
+  ): void => {
+    const matching = userPlaylistHistory
+      .peek()
+      .filter((entry) => isHistoryForPlaylist(entry, playlist));
+    if (matching.some((entry) => entry.id === activePlayHistoryId.peek())) {
+      activePlayHistoryId.value = null;
+      activePlayHistoryStartedAtMs.value = null;
+    }
+    userPlaylistHistory.value = userPlaylistHistory
+      .peek()
+      .filter((entry) => !isHistoryForPlaylist(entry, playlist));
+    for (const entry of matching) {
+      void erasePlayHistory(entry);
+    }
+  };
+
+  /**
+   * Removes one play session from Discover history. Playback itself is left
+   * running if this was the active row; only tracking stops.
+   */
+  const removePlayHistory = async (
+    entry: PlaylistPlayHistory
+  ): Promise<void> => {
+    if (activePlayHistoryId.peek() === entry.id) {
+      activePlayHistoryId.value = null;
+      activePlayHistoryStartedAtMs.value = null;
+    }
+    userPlaylistHistory.value = userPlaylistHistory
+      .peek()
+      .filter((existing) => existing.id !== entry.id);
+    await erasePlayHistory(entry);
+  };
+
   /**
    * Permanently deletes a playlist: erases its record, drops it from
-   * `userPlaylists`, and clears any edit/playback state that referenced it.
+   * `userPlaylists`, clears matching play-history rows, and clears any
+   * edit/playback state that referenced it.
    */
   const deletePlaylist = async (playlist: Playlist): Promise<void> => {
     const result = await os.eraseData(playlist.recordName, playlist.id);
@@ -910,12 +1101,13 @@ export function createPlaylistManager(
     if (editingPlaylist.peek()?.id === playlist.id) {
       cancelEditingPlaylist();
     }
-    if (
-      playing
-        .peek()
-        ?.playlists.peek()
-        .some((p) => p.id === playlist.id)
-    ) {
+    const wasPlaying = !!playing
+      .peek()
+      ?.playlists.peek()
+      .some((p) => p.id === playlist.id);
+    // Drop history before stopPlaying so finalize cannot write the rows back.
+    dropPlayHistoryForPlaylist(playlist);
+    if (wasPlaying) {
       stopPlaying();
     }
   };
@@ -1147,8 +1339,9 @@ export function createPlaylistManager(
    * reordered/edited without mutating the playlists. The extension owns the live
    * playing state; this manager reads it back via the `playing` computed.
    *
-   * When the user is signed in and `options.history` is not `false`, a new play-
-   * history row is created (chained from `previousHistoryId` when provided).
+   * When the user is signed in and `options.history` is not `false`, a play-
+   * history session is opened (merged into `previousHistoryId` when Continue
+   * is within the merge window, otherwise a new row chained from it).
    *
    * Returns the live playing state, or null when there is no tab to play on.
    */
@@ -1769,6 +1962,7 @@ export function createPlaylistManager(
     stopPlaying,
     continueFromHistory,
     replayFromHistory,
+    removePlayHistory,
     getPlaylistUrl,
     isDiscoverOpen,
     goBackFromPlayingView,

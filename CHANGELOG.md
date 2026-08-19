@@ -7,8 +7,11 @@
 - Add the ability to write notes on one or more verses. A noted verse gets a border around its verse number so you can spot it while reading, and tapping that number opens the note. A button in the chapter header shows how many notes the current chapter has and opens the Discover pane to browse them, grouped by verse with each note's author, avatar, and last-updated time. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
 - Verse references typed inside a note (like "see John 3:16") automatically turn into clickable links to that verse. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
 - On mobile, add, edit, and delete notes directly from the verse selection toolbar, with the verses the note covers shown alongside it as you write. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
+- Show a Continue listening list in Discover for playlists you have not finished, and let you remove a play from Playlist history.
 
 ### 🔧 Changed
+
+- Keep every playlist play in Discover history, grouped by day, instead of only the latest play per playlist. Continuing within 30 minutes resumes the same session instead of adding a duplicate. Deleting a playlist also clears its history.
 
 ### 🐛 Fixed
 
