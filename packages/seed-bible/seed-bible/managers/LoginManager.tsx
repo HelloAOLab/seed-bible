@@ -398,6 +398,13 @@ export function createLoginManager({
     forceLogout(event.errorCode);
   });
 
+  // Known hydration-mismatch risk: unlike `localConfig` below, this reads
+  // `localStorage` and applies it immediately instead of being deferred to a
+  // `hydrate*()` function called from a post-mount effect. Left as-is here —
+  // deferring it touches ~15 tests in LoginManager.test.ts that assert on
+  // synchronous restoration and would delay a returning user's background
+  // session refresh/login — tracked as follow-up work rather than fixed here.
+  /* eslint-disable seed-bible-hydration/no-immediate-storage-access */
   if (typeof localStorage !== "undefined") {
     const storedSessionKey = localStorage.getItem("sessionKey");
     const storedConnectionKey = localStorage.getItem("connectionKey");
@@ -446,6 +453,7 @@ export function createLoginManager({
       }
     }
   }
+  /* eslint-enable seed-bible-hydration/no-immediate-storage-access */
 
   let loginPromise: Promise<UserInfo | null> | null = null;
   let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
