@@ -37,7 +37,11 @@ export const bootstrapExtension = () => {
           getItems: (ctx) =>
             getPiecesForExperience(experience, versesFor(ctx)).map((key) => ({
               id: `${extensionId}-piece-${experience}-${key}`,
-              title: toPieceLabel(key),
+              title: {
+                key: `piece-${key}`,
+                ns: extensionId,
+                defaultValue: toPieceLabel(key),
+              },
               icon: meta.icon,
               onSelect: () => {
                 const inst = uuid();
@@ -65,6 +69,7 @@ export const bootstrapExtension = () => {
                     />
                   ),
                 });
+                ctx.readingState.clearSelectedVerses();
               },
             })),
         });

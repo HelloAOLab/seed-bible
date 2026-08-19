@@ -8,8 +8,20 @@ export interface ExperienceMeta {
 }
 
 export const EXPERIENCE_META: Record<ExperienceKey, ExperienceMeta> = {
+  [EXPERIENCE_KEYS.SOLOMON_TEMPLE]: {
+    title: {
+      key: "experience-solomon-temple",
+      defaultValue: "Solomon's temple",
+      ns: "house-of-the-lord",
+    },
+    icon: () => <MaterialIcon>camping</MaterialIcon>,
+  },
   [EXPERIENCE_KEYS.TABERNACLE]: {
-    title: { key: "title", defaultValue: "Tabernacle", ns: "tabernacle" },
+    title: {
+      key: "experience-tabernacle",
+      defaultValue: "Tabernacle",
+      ns: "house-of-the-lord",
+    },
     icon: () => <MaterialIcon>camping</MaterialIcon>,
   },
 };

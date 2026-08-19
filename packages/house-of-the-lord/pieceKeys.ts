@@ -22,3 +22,10 @@ export const TABERNACLE_PIECE_KEYS = {
 
 export type TabernaclePieceKey =
   (typeof TABERNACLE_PIECE_KEYS)[keyof typeof TABERNACLE_PIECE_KEYS];
+
+export const SOLOMON_TEMPLE_PIECE_KEYS = {
+  TEST: "test",
+} as const;
+
+export type SolomonTemplePieceKey =
+  (typeof SOLOMON_TEMPLE_PIECE_KEYS)[keyof typeof SOLOMON_TEMPLE_PIECE_KEYS];
