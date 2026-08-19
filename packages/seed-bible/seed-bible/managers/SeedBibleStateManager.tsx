@@ -438,6 +438,14 @@ export interface CreateSeedBibleStateOptions {
    * IndexedDB; tests pass an in-memory store, and null disables the feature.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
+   * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
+   * instance already fetched. The client uses this to seed its own API cache
+   * with whatever the server already fetched for the SSR render — see
+   * `readInjectedApiResponseSnapshot` in `app/apiResponseSeed.ts`.
+   */
+  apiResponseSnapshot?: Record<string, unknown>;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -466,6 +474,9 @@ export function createSeedBibleState(
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
+  if (options.apiResponseSnapshot) {
+    api.seedResponseCache(options.apiResponseSnapshot);
+  }
   const i18n = createI18nManager(
     navigation,
     options.config?.acceptedLanguages ?? []
