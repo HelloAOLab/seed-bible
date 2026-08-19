@@ -419,6 +419,7 @@ import {
 } from "./AIManager";
 import { z } from "zod";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
+import { captureEvent } from "./Utils";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -1219,10 +1220,7 @@ export function createSeedBibleState(
     }, 5000);
 
     const posthogTimeoutId = setTimeout(() => {
-      if (typeof posthog === "undefined" || !posthog) {
-        return;
-      }
-      posthog?.capture("user_chapter_read", {
+      captureEvent("user_chapter_read", {
         translationId: chapter.translation.id,
         bookId: chapter.book.id,
         chapter: String(chapter.chapter.number),
@@ -1578,11 +1576,9 @@ export function createSeedBibleState(
         ? getSessionStartPosition(activeReadingState)
         : undefined
     );
-    if (typeof posthog !== "undefined" && posthog) {
-      posthog.capture("create_session", {
-        sessionId: session.id,
-      });
-    }
+    captureEvent("create_session", {
+      sessionId: session.id,
+    });
     locallyHostedSessionIds.add(session.id);
     wrapSessionLifecycle(session);
     // Auto-publish: the moment a shared tab is created, other logged-in
@@ -1597,11 +1593,9 @@ export function createSeedBibleState(
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
-    if (typeof posthog !== "undefined" && posthog) {
-      posthog.capture("join_session", {
-        sessionId: session.id,
-      });
-    }
+    captureEvent("join_session", {
+      sessionId: session.id,
+    });
     wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
     tabsLayout.setSelectedSlotTab(tab.id);

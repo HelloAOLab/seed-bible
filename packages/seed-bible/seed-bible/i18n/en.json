@@ -594,5 +594,9 @@
   "x-notes_other": "{{count}} notes",
   "chapter-notes-count": "{{count}} notes for this chapter",
   "chapter-notes-count_one": "{{count}} note for this chapter",
-  "chapter-notes-count_other": "{{count}} notes for this chapter"
+  "chapter-notes-count_other": "{{count}} notes for this chapter",
+  "create-folder": "Create folder",
+  "edit-bookmark": "Edit bookmark",
+  "remove-bookmark-from-all-folders": "Remove from all folders",
+  "add-bookmark-modal": "Add bookmark"
 }

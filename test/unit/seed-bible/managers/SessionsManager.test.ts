@@ -349,6 +349,7 @@ describe("SessionsManager", () => {
   let i18n: I18nManager;
 
   let os: CasualOSManager;
+  let clearBranchDeviceCacheSpy: Mock;
 
   beforeEach(async () => {
     const { v4: uuidMock } = await vi.importMock("uuid");
@@ -357,6 +358,14 @@ describe("SessionsManager", () => {
     uuid.mockReturnValueOnce("test-config-bot-id");
 
     os = CasualOSManager();
+    // Stub the cache purge for every test, not just the presence ones: the
+    // real one lazily builds the inst client, which opens a websocket to the
+    // live server. Any test that takes a session through a resync (sync false
+    // then true) reaches it, and the connection outlives the test — landing as
+    // an unhandled error in whichever test is running when it completes.
+    clearBranchDeviceCacheSpy = vi
+      .spyOn(os, "clearBranchDeviceCache")
+      .mockImplementation(() => undefined) as unknown as Mock;
     mockMap = createMockSharedMap();
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
@@ -397,6 +406,12 @@ describe("SessionsManager", () => {
     getSharedDocumentMock = vi
       .spyOn(os, "getSharedDocument")
       .mockResolvedValue(mockDocument as unknown as SharedDocument);
+    // The real implementation lazily builds an inst client, which opens a
+    // real websocket connection — stub it everywhere so a sync-status test
+    // that flips false→true (which triggers a presence rebuild) can't
+    // trigger a real network connection whose async events fire after the
+    // test has finished and crash an unrelated, later test.
+    vi.spyOn(os, "clearBranchDeviceCache").mockImplementation(() => undefined);
     mockDataManager = {};
     mockLoginManager = {
       getUserProfile: vi.fn(async (userId: string) => ({
@@ -1619,16 +1634,6 @@ describe("SessionsManager", () => {
   // stay empty forever (self included) unless the subscription is rebuilt and
   // the OS's stale peer cache is cleared first.
   describe("presence recovery after a reconnect", () => {
-    let clearBranchDeviceCacheSpy: Mock;
-
-    beforeEach(() => {
-      // Stub the cache purge — the real one lazily builds the inst client,
-      // which would open a websocket.
-      clearBranchDeviceCacheSpy = vi
-        .spyOn(os, "clearBranchDeviceCache")
-        .mockImplementation(() => undefined) as unknown as Mock;
-    });
-
     async function joinSession() {
       const manager = createSessionsManager(
         os,
