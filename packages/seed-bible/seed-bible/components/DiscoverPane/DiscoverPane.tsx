@@ -1,6 +1,7 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
 import { effect, useSignal } from "@preact/signals";
+import { lazy, Suspense } from "preact/compat";
 import { useEffect, useRef } from "preact/hooks";
 import type { JSX } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
@@ -43,6 +44,13 @@ import {
   type BookId,
   type VerseRef,
 } from "../../managers/BibleDataManager";
+
+// Loaded lazily so its (and its CSS's) bundle is only fetched for the rare
+// visitor who actually has a `recordOverride` active - see
+// `AnnotationOverrideBanner`.
+const AnnotationOverrideBanner = lazy(
+  () => import("./AnnotationOverrideBanner")
+);
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -894,45 +902,6 @@ function AnnotationGroupSection(props: {
   );
 }
 
-/**
- * Shown atop the notes section whenever annotations are being routed through
- * a `recordOverride` (the `annotationRecordKey` URL param) instead of the
- * signed-in account's own record — e.g. a Codex-published translation being
- * annotated through its team's shared record. The button drops that query
- * param and reloads, since the override is only read once at app startup
- * (see `SeedBibleStateManager`) and can't be switched off by a soft
- * navigation.
- */
-function AnnotationOverrideBanner() {
-  const { t } = useI18n();
-
-  const saveToMyAccount = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.delete("annotationRecordKey");
-    window.location.href = url.toString();
-  };
-
-  return (
-    <div className="sb-annotation-override-banner">
-      <span className="sb-annotation-override-banner-text">
-        {t("annotation-override-banner", {
-          defaultValue:
-            "Notes are being saved and loaded from your team's account.",
-        })}
-      </span>
-      <button
-        type="button"
-        className="sb-annotation-override-banner-button"
-        onClick={saveToMyAccount}
-      >
-        {t("annotation-override-save-to-my-account", {
-          defaultValue: "Save to my account",
-        })}
-      </button>
-    </div>
-  );
-}
-
 function AnnotationsSection(props: {
   tab: ReaderTab | null;
   annotations: AnnotationsManager;
@@ -958,7 +927,9 @@ function AnnotationsSection(props: {
   const { t } = useI18n();
   const title = t("notes", { defaultValue: "Notes" });
   const overrideBanner = annotations.hasRecordOverride ? (
-    <AnnotationOverrideBanner />
+    <Suspense fallback={null}>
+      <AnnotationOverrideBanner />
+    </Suspense>
   ) : null;
 
   // Clicking an annotated verse number on desktop (BibleReader.tsx) sets

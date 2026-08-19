@@ -794,7 +794,7 @@ describe("DiscoverPane", () => {
     ).toBeNull();
   });
 
-  it("shows the record-override banner when annotations are routed through a team record, with a button that reloads the URL without the query param", () => {
+  it("shows the record-override banner when annotations are routed through a team record, with a button that reloads the URL without the query param", async () => {
     const { playlists } = createMockPlaylists();
     const { annotations } = createMockAnnotations({
       hasRecordOverride: true,
@@ -826,6 +826,15 @@ describe("DiscoverPane", () => {
           />,
           container
         );
+      });
+
+      // The banner is lazily loaded, so it only mounts once the dynamic
+      // import resolves - which (being a real, unmocked import rather than a
+      // pre-resolved one) can take more than a single tick.
+      await vi.waitFor(() => {
+        expect(
+          container.querySelector(".sb-annotation-override-banner")
+        ).not.toBeNull();
       });
 
       const banner = container.querySelector(".sb-annotation-override-banner");
