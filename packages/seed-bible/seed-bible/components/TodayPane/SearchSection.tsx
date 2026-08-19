@@ -2,7 +2,7 @@ import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useRef, useEffect } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
 import { SeedBibleIcon } from "./SeedBibleIcon";
-import { useClickOutside } from "./useClickOutside";
+import { useClickOutside } from "../useClickOutside";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
 import type { BibleTheme } from "../../managers/ThemeManager";

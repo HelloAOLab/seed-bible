@@ -20,7 +20,7 @@ import type {
   ReadingHistorySummary,
 } from "../../managers/ReadingHistoryManager";
 import { useSocialSectionContext } from "./SocialSectionContext";
-import type { TooltipContentData } from "./tooltipTypes";
+import type { TooltipContentData } from "./Tooltip";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type { TodayManager } from "../../managers/TodayManager";
 

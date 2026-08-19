@@ -12,7 +12,7 @@ import {
 } from "./SocialSectionContext";
 import { TitledSection } from "./TitledSection";
 import { Tooltip } from "./Tooltip";
-import { useClickOutside } from "./useClickOutside";
+import { useClickOutside } from "../useClickOutside";
 import { useReadingHistoryTimeline } from "./useReadingHistoryTimeline";
 import { MaterialIcon } from "../icons";
 import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";

@@ -1,32 +1,9 @@
 import "./ReadingHistoryTimeline.css";
 import type { CSSProperties } from "preact";
-import { useState, useMemo, useRef, useEffect } from "preact/hooks";
+import { useState, useMemo, useRef } from "preact/hooks";
 import { memo } from "preact/compat";
 
-/** Calls `callback` when a click/focus lands outside every provided ref. */
-const useClickOutside = (
-  refs: { current: HTMLElement | null }[],
-  callback: () => void
-) => {
-  useEffect(() => {
-    const handleOutsideInteraction = (e: MouseEvent | FocusEvent) => {
-      const isOutside = refs.every(
-        (ref) => ref.current && !ref.current.contains(e.target as Node)
-      );
-      if (isOutside) {
-        callback();
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideInteraction);
-    document.addEventListener("focusin", handleOutsideInteraction);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideInteraction);
-      document.removeEventListener("focusin", handleOutsideInteraction);
-    };
-  }, [refs, callback]);
-};
+import { useClickOutside } from "../useClickOutside";
 
 export type Range = {
   start: number;

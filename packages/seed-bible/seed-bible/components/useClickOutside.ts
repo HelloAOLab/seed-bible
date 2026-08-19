@@ -1,6 +1,7 @@
 import type { MutableRef } from "preact/hooks";
 import { useEffect } from "preact/hooks";
 
+/** Calls `callback` when a mousedown or focus lands outside every given ref. */
 export const useClickOutside = (
   refs: MutableRef<HTMLElement | null>[],
   callback: () => void
