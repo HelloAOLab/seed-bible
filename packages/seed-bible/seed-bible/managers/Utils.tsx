@@ -6,3 +6,14 @@ export function parseNumber(value: unknown, fallback: number): number {
   }
   return fallback;
 }
+
+/** Sends a PostHog event, no-op when `posthog` isn't present (SSR, tests). */
+export function captureEvent(
+  eventName: string,
+  properties?: Record<string, unknown>
+): void {
+  if (typeof posthog === "undefined" || !posthog) {
+    return;
+  }
+  posthog.capture(eventName, properties);
+}

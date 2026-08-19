@@ -13,12 +13,20 @@ import { v4 as uuid } from "uuid";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
+import type { ChatsManager } from "./ChatsManager";
 import { openPlaylistItemPreview } from "../components/playlistItemPreview";
 import type { I18nManager } from "../i18n";
 import type {
   BibleReadingExtensionManager,
   ReadingExtensionInstance,
 } from "./BibleReadingExtensionManager";
+import {
+  AIPlaylistItemSchema,
+  convertToAiPlaylistItem,
+  convertToPlaylistItem,
+  generateFunctionTool,
+  type GeneratedPlaylist,
+} from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
 import type { BookId } from "./BibleDataManager";
@@ -40,12 +48,14 @@ export const VerseRefSchema = z.object({
   toEndOfChapter: z.boolean().optional(),
 });
 
+export const BibleVersePlaylistItem = z.object({
+  type: z.literal("bible-verse"),
+  ref: VerseRefSchema,
+  translationId: z.string().optional(),
+});
+
 export const PlaylistItem = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("bible-verse"),
-    ref: VerseRefSchema,
-    translationId: z.string().optional(),
-  }),
+  BibleVersePlaylistItem,
   z.object({
     type: z.literal("html"),
     title: z.string().optional(),
@@ -76,10 +86,10 @@ export const PlaylistSchema = z.object({
 });
 
 function getPlaylistLocator(playlist: {
-  recordName: string;
+  recordName?: string;
   id: string;
 }): string {
-  return `${playlist.recordName}.${playlist.id}`;
+  return `${playlist.recordName ?? ""}.${playlist.id}`;
 }
 
 function parsePlaylistLocator(
@@ -99,6 +109,10 @@ function parsePlaylistLocator(
 }
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
+export type SimplePlaylist = Pick<
+  Playlist,
+  "id" | "items" | "title" | "description"
+>;
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
 
@@ -115,7 +129,7 @@ export type PlayingState = ReturnType<typeof createPlayingState>;
  * have items added/removed without mutating `playlists`; both are synced.
  */
 export interface PlaylistReadingData {
-  playlists: Playlist[];
+  playlists: SimplePlaylist[];
   queue: PlaylistItemData[];
   step: number;
 }
@@ -214,10 +228,10 @@ export function expandCrossChapterItem(
  * navigation keeps targeting it even if the user later switches tabs.
  */
 export function createPlayingState(
-  sourcePlaylists: Playlist[],
+  sourcePlaylists: SimplePlaylist[],
   tab: ReaderTab | null = null
 ) {
-  const playlists = signal<Playlist[]>(sourcePlaylists);
+  const playlists = signal<SimplePlaylist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
     sourcePlaylists.flatMap((playlist) =>
       playlist.items.flatMap(expandCrossChapterItem)
@@ -435,6 +449,9 @@ const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
  */
 const PLAYLIST_READING_EXTENSION_ID = "playlist";
 
+/** Id under which the playlist-editing tools are registered with `ChatsManager`. */
+const PLAYLIST_EDITOR_CHAT_CONTEXT_ID = "playlist-editor";
+
 export function createPlaylistManager(
   os: CasualOSManager,
   login: LoginManager,
@@ -444,7 +461,8 @@ export function createPlaylistManager(
   modals: ModalManager,
   i18n: I18nManager,
   readingExtensionManager: BibleReadingExtensionManager,
-  discover: DiscoverManager
+  discover: DiscoverManager,
+  chats: ChatsManager
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -516,6 +534,38 @@ export function createPlaylistManager(
   };
 
   /**
+   * Reports a playlist analytics event for each given playlist, tagging
+   * whether the current user authored it. Used to distinguish playback by the
+   * creator from playback by someone the playlist was shared with. Accepts
+   * `SimplePlaylist` (an unsaved playlist, e.g. an AI-generated one played
+   * before it's ever recorded) as well as a full `Playlist` — an unsaved
+   * playlist has no `authorUserId` on record, so it's attributed to the
+   * current user, the only one who could have been playing it.
+   * `extraProperties` are merged in on top of the common `playlistId`/
+   * `playlistLocator`/`isCreator` fields, so every playlist event stays
+   * queryable by the same base shape in PostHog.
+   */
+  const capturePlaylistEvent = (
+    eventName: string,
+    playlists: SimplePlaylist[],
+    extraProperties: Record<string, unknown> = {}
+  ): void => {
+    if (typeof posthog === "undefined" || !posthog) {
+      return;
+    }
+    const userId = login.userId.peek();
+    for (const playlist of playlists) {
+      const authorUserId = (playlist as Partial<Playlist>).authorUserId;
+      posthog.capture(eventName, {
+        playlistId: playlist.id,
+        playlistLocator: getPlaylistLocator(playlist),
+        isCreator: authorUserId == null || authorUserId === userId,
+        ...extraProperties,
+      });
+    }
+  };
+
+  /**
    * Permanently deletes a playlist: erases its record, drops it from
    * `userPlaylists`, and clears any edit/playback state that referenced it.
    */
@@ -576,16 +626,20 @@ export function createPlaylistManager(
 
   /**
    * Starts creating a new playlist: opens the create view and sets
-   * `editingPlaylist` to a fresh, empty (unsaved) playlist. Persisting happens
-   * later via `saveEditingPlaylist`. No-op when not signed in.
+   * `editingPlaylist` to a fresh, unsaved playlist, optionally pre-filled
+   * with the given title/description/items (e.g. an AI-generated playlist).
+   * Persisting happens later via `saveEditingPlaylist`. No-op when not
+   * signed in.
    */
-  const createNewPlaylist = async (): Promise<void> => {
+  const createNewPlaylist = async (
+    initial?: Pick<Playlist, "title" | "description" | "items">
+  ): Promise<Signal<Playlist | null> | null> => {
     let userId = login.userId.value;
     if (!userId) {
       const userInfo = await login.login();
       if (!userInfo) {
         console.warn("Cannot create a playlist while signed out.");
-        return;
+        return null;
       }
       userId = userInfo.id;
     }
@@ -594,13 +648,15 @@ export function createPlaylistManager(
       id: `playlist_${uuid()}`,
       recordName: userId,
       authorUserId: userId,
-      title: null,
-      description: null,
-      items: [],
+      title: initial?.title ?? null,
+      description: initial?.description ?? null,
+      items: initial?.items ?? [],
       createdAtMs: now,
       updatedAtMs: now,
     });
     view.value = "create_playlist";
+
+    return editingPlaylist;
   };
 
   /**
@@ -626,6 +682,11 @@ export function createPlaylistManager(
     const playlist: Playlist = { ...current, updatedAtMs: Date.now() };
     await savePlaylist(playlist);
     const exists = userPlaylists.value.some((p) => p.id === playlist.id);
+    capturePlaylistEvent(
+      exists ? "playlist_updated" : "playlist_created",
+      [playlist],
+      { itemCount: playlist.items.length }
+    );
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
@@ -637,15 +698,42 @@ export function createPlaylistManager(
    * Appends an item to the currently-edited playlist. No-op when there is no
    * playlist being edited. Persisting happens later via `saveEditingPlaylist`.
    */
-  const addEditingPlaylistItem = (item: PlaylistItemData): void => {
+  const addEditingPlaylistItem = (item: PlaylistItemData): string => {
     const current = editingPlaylist.value;
     if (!current) {
-      return;
+      return "error: no editing playlist";
     }
     editingPlaylist.value = {
       ...current,
       items: [...current.items, item],
     };
+    return "success";
+  };
+
+  /**
+   * Inserts an item at the given index in the currently-edited playlist. No-op when there is no
+   * playlist being edited. Persisting happens later via `saveEditingPlaylist`.
+   */
+  const insertEditingPlaylistItem = (
+    index: number,
+    item: PlaylistItemData
+  ): string => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return "error: no editing playlist";
+    }
+    if (index < 0 || index > current.items.length) {
+      return `error: index out of range (0-${current.items.length})`;
+    }
+    editingPlaylist.value = {
+      ...current,
+      items: [
+        ...current.items.slice(0, index),
+        item,
+        ...current.items.slice(index),
+      ],
+    };
+    return "success";
   };
 
   /**
@@ -656,10 +744,13 @@ export function createPlaylistManager(
   const updateEditingPlaylistItem = (
     index: number,
     item: PlaylistItemData
-  ): void => {
+  ): string => {
     const current = editingPlaylist.value;
-    if (!current || index < 0 || index >= current.items.length) {
-      return;
+    if (!current) {
+      return "error: no editing playlist";
+    }
+    if (index < 0 || index >= current.items.length) {
+      return `error: index out of range (0-${current.items.length - 1})`;
     }
     editingPlaylist.value = {
       ...current,
@@ -667,6 +758,7 @@ export function createPlaylistManager(
         i === index ? item : existing
       ),
     };
+    return "success";
   };
 
   /**
@@ -674,15 +766,16 @@ export function createPlaylistManager(
    * No-op when there is no playlist being edited. Persisting happens later via
    * `saveEditingPlaylist`.
    */
-  const removeEditingPlaylistItem = (index: number): void => {
+  const removeEditingPlaylistItem = (index: number): string => {
     const current = editingPlaylist.value;
     if (!current) {
-      return;
+      return "error: no editing playlist";
     }
     editingPlaylist.value = {
       ...current,
       items: current.items.filter((_, i) => i !== index),
     };
+    return "success";
   };
 
   /**
@@ -693,22 +786,27 @@ export function createPlaylistManager(
    * follow along here — the caller is responsible for keeping any "currently
    * being edited" index pointed at the same logical item.
    */
-  const reorderEditingPlaylistItem = (from: number, to: number): void => {
+  const reorderEditingPlaylistItem = (from: number, to: number): string => {
     const current = editingPlaylist.value;
     if (!current) {
-      return;
+      return "error: no editing playlist";
     }
     const length = current.items.length;
-    if (from < 0 || from >= length || to < 0 || to >= length || from === to) {
-      return;
+    if (from < 0 || from >= length) {
+      return `error: original index out of range (0-${length - 1}) or equal`;
+    } else if (to < 0 || to >= length) {
+      return `error: target index out of range (0-${length - 1}) or equal`;
+    } else if (from === to) {
+      return "success";
     }
     const nextItems = [...current.items];
     const [moved] = nextItems.splice(from, 1);
     if (!moved) {
-      return;
+      return "success";
     }
     nextItems.splice(to, 0, moved);
     editingPlaylist.value = { ...current, items: nextItems };
+    return "success";
   };
 
   /** Discards the current edit and returns to the discover view. */
@@ -728,7 +826,7 @@ export function createPlaylistManager(
    * Returns the live playing state, or null when there is no tab to play on.
    */
   const startPlaying = (
-    playlist: Playlist | Playlist[],
+    playlist: SimplePlaylist | SimplePlaylist[],
     initialStep = 0
   ): PlayingState | null => {
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
@@ -743,6 +841,8 @@ export function createPlaylistManager(
       queue.length > 0
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
+
+    capturePlaylistEvent("playlist_played", playlists);
 
     targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
       playlists,
@@ -892,6 +992,42 @@ export function createPlaylistManager(
           playingState.setState(next);
         }
       });
+
+      // Reports a `playlist_finished` event the first time *this client's
+      // own* forward navigation reaches the last item in the queue. Hooked
+      // onto `next()` itself rather than a reactive effect on `currentIndex`,
+      // because `next()` is only ever called by this client's own advance —
+      // never by an inbound session sync (which moves the index via
+      // `setState` instead, so every synced participant's index can shift
+      // without each of them having "finished" anything) and never by a
+      // queue edit (`removeFromQueue` clamping the index after the trailing
+      // items are deleted doesn't call `next()` either). Comparing the index
+      // before/after also rules out a single-item queue's starting position,
+      // a deep link that opens directly on the last step, and a redundant
+      // press of "next" while already on the last item — none of those are a
+      // forward move. Guarded by `hasFiredFinished` so navigating back and
+      // forth over the last item doesn't re-report it.
+      let hasFiredFinished = false;
+      const localNext = playingState.next;
+      playingState.next = async (): Promise<void> => {
+        const before = playingState.currentIndex.peek();
+        await localNext();
+        const after = playingState.currentIndex.peek();
+        const queueLength = playingState.queue.peek().length;
+        if (
+          hasFiredFinished ||
+          after <= before ||
+          queueLength === 0 ||
+          after !== queueLength - 1
+        ) {
+          return;
+        }
+        hasFiredFinished = true;
+        capturePlaylistEvent(
+          "playlist_finished",
+          playingState.playlists.peek()
+        );
+      };
 
       // Playback governs stepping *within* the queue; at its edges the reader's
       // own chapter navigation takes over again. Before this, reaching the last
@@ -1077,6 +1213,150 @@ export function createPlaylistManager(
     });
   }
 
+  /**
+   * Builds the AI tools that let a provider edit whatever playlist is
+   * currently open in the editor (`editingPlaylist`): add/update/delete items
+   * and update the playlist metadata. Each tool reads `editingPlaylist` live
+   * at call time, so it always targets the playlist being edited at that
+   * moment rather than a fixed snapshot.
+   */
+  const getEditPlaylistTools = () => {
+    const insertPlaylistItemTool = generateFunctionTool({
+      name: "insertPlaylistItem",
+      description: "Inserts an item into the playlist.",
+      parameters: AIPlaylistItemSchema.extend({
+        index: z.number(),
+      }),
+      function: async (args) => {
+        try {
+          return insertEditingPlaylistItem(
+            args.index,
+            convertToPlaylistItem(args)
+          );
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+      },
+    });
+
+    const updatePlaylistItemTool = generateFunctionTool({
+      name: "updatePlaylistItem",
+      description: "Updates an item in the playlist.",
+      parameters: AIPlaylistItemSchema.extend({
+        index: z.number(),
+      }),
+      function: async (args) => {
+        try {
+          return updateEditingPlaylistItem(
+            args.index,
+            convertToPlaylistItem(args)
+          );
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+      },
+    });
+
+    const movePlaylistItemTool = generateFunctionTool({
+      name: "movePlaylistItem",
+      description: "Moves an item in the playlist.",
+      parameters: z.object({
+        originalIndex: z.number(),
+        newIndex: z.number(),
+      }),
+      function: async (args) =>
+        reorderEditingPlaylistItem(args.originalIndex, args.newIndex),
+    });
+
+    const deletePlaylistItemTool = generateFunctionTool({
+      name: "deletePlaylistItem",
+      description: "Deletes an item from the playlist.",
+      parameters: z.object({
+        index: z.number(),
+      }),
+      function: async (args) => removeEditingPlaylistItem(args.index),
+    });
+
+    const updatePlaylistTool = generateFunctionTool({
+      name: "updatePlaylistMetadata",
+      description: "Updates the playlist metadata (title, description)",
+      parameters: z.object({
+        title: z.string(),
+        description: z.string().nullable(),
+      }),
+      function: async (args) => {
+        const current = editingPlaylist.value;
+        if (!current) {
+          return "error: no playlist is currently being edited";
+        }
+
+        editingPlaylist.value = {
+          ...current,
+          title: args.title,
+          description: args.description ?? current.description ?? null,
+        };
+
+        return "success";
+      },
+    });
+
+    const getPlaylistStateTool = generateFunctionTool({
+      name: "getPlaylistState",
+      description:
+        "Returns the current, live contents of the playlist being edited (title, description, and items). Always call this to check the playlist's actual state instead of relying on anything said earlier in the conversation — earlier tool results may no longer be accurate (e.g. if the user undid or discarded a change).",
+      parameters: z.object({}),
+      function: async () => {
+        const current = editingPlaylist.value;
+        if (!current) {
+          return "error: no playlist is currently being edited";
+        }
+        return JSON.stringify(buildGeneratedPlaylist(current));
+      },
+    });
+
+    return [
+      updatePlaylistTool.tool,
+      insertPlaylistItemTool.tool,
+      updatePlaylistItemTool.tool,
+      deletePlaylistItemTool.tool,
+      movePlaylistItemTool.tool,
+      getPlaylistStateTool.tool,
+    ];
+  };
+
+  /** Converts a `Playlist` into the AI-facing `GeneratedPlaylist` shape. */
+  const buildGeneratedPlaylist = (playlist: Playlist): GeneratedPlaylist => ({
+    title: playlist.title ?? null,
+    description: playlist.description ?? null,
+    items: playlist.items.map((i) => convertToAiPlaylistItem(i)),
+  });
+
+  // While a playlist is open in the editor, expose the playlist-editing tools
+  // to every AI chat via `ChatsManager`, so an AI participant can add/update/
+  // remove items and edit the title/description as the user asks. Withdrawn
+  // as soon as the user leaves the editor (save or cancel), so the tools
+  // aren't offered outside of an actual editing session.
+  effect(() => {
+    if (!editingPlaylist.value || !isDiscoverOpen.value) {
+      chats.removeContext(PLAYLIST_EDITOR_CHAT_CONTEXT_ID);
+      return;
+    }
+
+    const generatedPlaylist = buildGeneratedPlaylist(editingPlaylist.value);
+    const playlistLabel = editingPlaylist.value.title
+      ? `"${editingPlaylist.value.title}"`
+      : "this untitled playlist";
+    chats.addContext({
+      id: PLAYLIST_EDITOR_CHAT_CONTEXT_ID,
+      label: {
+        key: "playlist-editor",
+        defaultValue: "Playlist Editor",
+      },
+      instructions: `The user is currently creating or editing a Bible reading playlist (${playlistLabel}). Use the provided tools to add, update, or remove playlist items, and to update the playlist's title and description, as the user asks. These tools ONLY ever apply to this one open playlist — never use them to satisfy a request for a different or additional playlist; if the user asks to create or edit some other playlist while this one is still open, tell them to close this editor first instead of reusing these tools on the wrong playlist. The snapshot below reflects the playlist's live, current state as of this message, and supersedes anything said earlier in the conversation (e.g. an item that was removed and then restored by cancelling); call getPlaylistState first if you need to confirm the current contents before answering a question about them. Playlist: ${JSON.stringify(generatedPlaylist)}`,
+      tools: getEditPlaylistTools(),
+    });
+  });
+
   return {
     savePlaylist,
     deletePlaylist,
@@ -1084,6 +1364,7 @@ export function createPlaylistManager(
     editPlaylist,
     saveEditingPlaylist,
     addEditingPlaylistItem,
+    insertEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
     reorderEditingPlaylistItem,

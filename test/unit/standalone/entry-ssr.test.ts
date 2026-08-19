@@ -388,6 +388,7 @@ describe("render() server-rendered meta tags", () => {
     "<!doctype html><html><head>",
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
+    '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -478,6 +479,64 @@ describe("render() server-rendered meta tags", () => {
     )?.[1];
     expect(injected).toBeDefined();
     expect(JSON.parse(injected as string)).toMatchObject(config);
+  });
+
+  it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<string, unknown>;
+    const urls = Object.keys(seedData);
+    // The render fetches (at least) the chapter it displays — everything
+    // else the client would otherwise refetch on top of that.
+    expect(urls.some((url) => url.includes("/AAB/GEN/1.json"))).toBe(true);
+  });
+
+  // Regression: the placeholder substitutions in render()'s final `return`
+  // used to be a chain of `String.replace(literalPlaceholder, value)` calls.
+  // `replace`'s *replacement* argument treats `$1`, `$&`, etc. specially even
+  // when the search argument is a plain string — so live translation text
+  // containing one of those sequences (a footnote citing a dollar amount, for
+  // instance) would have silently corrupted the substitution instead of
+  // throwing. This fetches a chapter engineered to contain exactly that, and
+  // checks it survives all the way through the HTML back out to
+  // `JSON.parse`.
+  it("preserves a literal $1 in fetched chapter content through the SEED_JSON placeholder", async () => {
+    const riskyChapter = makeChapter(aabBooks, "GEN", 1);
+    riskyChapter.chapter.content = [
+      { type: "verse", number: 1, content: ["This costs $1, or so it says."] },
+    ];
+    globalThis.fetch = (async (url: string) => {
+      if (url === makeUrl("/api/AAB/GEN/1.json")) {
+        return createResponse(riskyChapter);
+      }
+      const responses = createDefaultManagerResponseMap();
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    }) as typeof globalThis.fetch;
+
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<
+      string,
+      { chapter: { content: { content: string[] }[] } }
+    >;
+    const chapterEntry = seedData[makeUrl("/api/AAB/GEN/1.json")];
+    expect(chapterEntry?.chapter.content[0]?.content[0]).toBe(
+      "This costs $1, or so it says."
+    );
   });
 
   // The review's complaint about the sitemap was not just that its URLs

@@ -136,6 +136,8 @@ vi.mock("@packages/seed-bible/seed-bible/managers/HighlightsManager", () => ({
   createHighlightsManager: () => mockHighlightsManager,
 }));
 
+// Partial: ChatsManager imports participant-visual helpers from this module, so
+// replacing it wholesale breaks any test that creates a chat session.
 vi.mock(
   "@packages/seed-bible/seed-bible/managers/SessionsManager",
   async (importOriginal) => ({
@@ -1901,6 +1903,91 @@ describe("createSeedBibleState", () => {
       expect(readingState.translationId.value).toBe("hin_cvb");
       expect(readingState.bookId.value).toBe("EXO");
       expect(readingState.chapterNumber.value).toBe(2);
+    });
+  });
+
+  describe("local chat scripture parsing", () => {
+    // English book names resolve with no catalog at all, so an accented Spanish
+    // name is the only text that can distinguish "books came from the selected
+    // tab" from "the English-only fallback happened to match".
+    function localizedSpaBooks(): TranslationBooks {
+      const base = booksForTranslation(aabBooks, SPA_TRANSLATION);
+      const spanishNames: Record<string, string> = {
+        GEN: "Génesis",
+        EXO: "Éxodo",
+        MAT: "Mateo",
+      };
+      return {
+        ...base,
+        books: base.books.map((book) => ({
+          ...book,
+          name: spanishNames[book.id] ?? book.name,
+          commonName: spanishNames[book.id] ?? book.commonName,
+        })),
+      };
+    }
+
+    it("resolves localized book names from the selected tab's translation", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({
+          spaBooks: localizedSpaBooks(),
+        }),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await readingState.selectTranslationAndChapter("spa_onbv", "GEN", 1);
+      await waitForInitialLoad(readingState, 1000);
+
+      const chat = state.chats.createLocalSession();
+      await chat.sendMessage({ type: "text", text: "Ver Génesis 1:1" });
+
+      expect(chat.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            text: "Génesis 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("follows the selected tab when the user switches tabs", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({
+          spaBooks: localizedSpaBooks(),
+        }),
+      });
+      const englishTabId = state.tabs.selectedTabId.value;
+      const spanishTab = state.tabs.addTab();
+      await waitForInitialLoad(spanishTab.readingState, 1000);
+      await spanishTab.readingState.selectTranslationAndChapter(
+        "spa_onbv",
+        "GEN",
+        1
+      );
+      await waitForInitialLoad(spanishTab.readingState, 1000);
+
+      const chat = state.chats.createLocalSession();
+      await chat.sendMessage({ type: "text", text: "Ver Génesis 1:1" });
+
+      expect(chat.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+
+      // Back on the English tab the same text is no longer a reference, which
+      // is what proves the books are read from whichever tab is selected.
+      state.tabs.selectTab(englishTabId);
+
+      expect(chat.parsedMessages.value[0]).toMatchObject({
+        parts: ["Ver Génesis 1:1"],
+      });
     });
   });
 });
