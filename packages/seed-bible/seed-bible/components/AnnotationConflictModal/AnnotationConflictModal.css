@@ -33,6 +33,37 @@
      the bottom of the dialog. */
   max-height: 9rem;
   overflow-y: auto;
+  cursor: pointer;
+}
+
+.sb-annotation-conflict-version:focus-visible {
+  outline: 2px solid var(--sb-accent-color, currentColor);
+  outline-offset: 2px;
+}
+
+.sb-annotation-conflict-version-selected {
+  border-color: var(--sb-accent-color, currentColor);
+}
+
+.sb-annotation-conflict-version-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+
+.sb-annotation-conflict-checkbox {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.25rem;
+}
+
+.sb-annotation-conflict-version-selected .sb-annotation-conflict-checkbox {
+  background-color: var(--sb-accent-color, currentColor);
+  border-color: var(--sb-accent-color, currentColor);
 }
 
 .sb-annotation-conflict-version-label {
@@ -41,7 +72,6 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 0.375rem;
   opacity: 0.8;
 }
 
