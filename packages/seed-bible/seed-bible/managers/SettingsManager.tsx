@@ -138,6 +138,8 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 50; // ch
+export const MAX_SCRIPTURE_WIDTH = 192; // ch
+export const MIN_SCRIPTURE_WIDTH = 24; // ch
 
 export const AppSettingsSchema = z.object({
   fontSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
@@ -200,7 +202,11 @@ export const AppSettingsSchema = z.object({
   }),
   keepScreenAwake: z.boolean(),
   customHighlightColors: z.array(z.string()).max(3),
-  scriptureWidth: z.number().min(24).max(192).default(DEFAULT_SCRIPTURE_WIDTH),
+  scriptureWidth: z
+    .number()
+    .min(MIN_SCRIPTURE_WIDTH)
+    .max(MAX_SCRIPTURE_WIDTH)
+    .default(DEFAULT_SCRIPTURE_WIDTH),
   themeId: z.string(),
   customTheme: z.record(z.string(), z.string()),
   customHighlights: z.record(
@@ -931,7 +937,10 @@ export function createSettings(
 
   const setScriptureWidth = (width: number) => {
     if (!Number.isFinite(width)) return;
-    const clamped = Math.max(24, Math.min(192, width));
+    const clamped = Math.max(
+      MIN_SCRIPTURE_WIDTH,
+      Math.min(MAX_SCRIPTURE_WIDTH, width)
+    );
     settings.value = { ...settings.value, scriptureWidth: clamped };
     sessionOverrides[TAG_SCRIPTURE_WIDTH] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_WIDTH, clamped);
