@@ -560,8 +560,10 @@ function ScriptureLineHeightIcon({ index }: { index: number }) {
  * otherwise render untranslated. Spelled out as separate `t()` calls (rather
  * than a computed `theme-${id}` key) so the i18n lint rules can see them.
  * User-supplied themes keep whatever name they were given.
+ *
+ * Exported for tests.
  */
-function localizedThemeName(
+export function localizedThemeName(
   t: I18nHook["t"],
   theme: { id: string; name: string }
 ): string {
