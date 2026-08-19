@@ -30,6 +30,21 @@ export interface MergeTranslationsOptions {
 export interface BibleDataManager {
   endpoints: Signal<string[]>;
   availableTranslations: Signal<Translation[]>;
+  /**
+   * Whether the full multi-translation catalog (`getTranslations`) has ever
+   * been fetched (or restored from a prior visit's cache) this session.
+   *
+   * `availableTranslations` alone can't answer that: a normal chapter load
+   * only ever merges in the *one* translation it's reading, via
+   * `getTranslationBooks` — see `BibleReadingManager.loadInitialData`, which
+   * validates a URL-named translation against its own book catalog instead
+   * of downloading the full list just to confirm an ID that's already known.
+   * So `availableTranslations.value.length > 0` is true well before the full
+   * catalog has ever been requested. Callers that need "is every translation
+   * known yet" (the translation selector, a UI-language switch picking a new
+   * default translation) must check this instead of the list's length.
+   */
+  catalogLoaded: Signal<boolean>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
 
@@ -822,6 +837,7 @@ export function createBibleDataManager(
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
+  const catalogLoaded = signal<boolean>(false);
   const translationBooks = signal<Map<string, TranslationBooks>>(new Map());
   const translationEndpoints = signal<Map<string, string>>(new Map());
 
@@ -888,6 +904,7 @@ export function createBibleDataManager(
       options
     );
     mergeTranslations(normalizedEndpoint, result.translations);
+    catalogLoaded.value = true;
     return result.translations;
   };
 
@@ -1034,7 +1051,12 @@ export function createBibleDataManager(
   };
 
   effect(() => {
-    if (availableTranslations.value.length > 0) {
+    // Gated on `catalogLoaded`, not just a non-empty list — an ordinary
+    // chapter load merges in only the one translation it's reading (see
+    // `catalogLoaded`'s own doc comment), and persisting that partial list
+    // here would silently overwrite a previously-cached *complete* catalog
+    // with an incomplete one.
+    if (catalogLoaded.value && availableTranslations.value.length > 0) {
       safeLocalStorage.setItem(
         "availableTranslations",
         JSON.stringify(availableTranslations.value)
@@ -1070,6 +1092,10 @@ export function createBibleDataManager(
       const stored = safeLocalStorage.getItem("availableTranslations");
       if (stored) {
         availableTranslations.value = JSON.parse(stored) as Translation[];
+        // Only ever written after a genuine full-catalog fetch (see the
+        // persistence effect above), so restoring it means the catalog is
+        // already known, not just this session's active translation.
+        catalogLoaded.value = true;
       }
     } catch {
       // Ignore a malformed cache; the live catalog fetch is authoritative.
@@ -1090,6 +1116,7 @@ export function createBibleDataManager(
   return {
     endpoints,
     availableTranslations,
+    catalogLoaded,
     translationBooks,
     api,
     offline,

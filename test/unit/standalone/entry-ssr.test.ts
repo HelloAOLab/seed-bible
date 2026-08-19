@@ -581,6 +581,28 @@ describe("render() server-rendered meta tags", () => {
     expect(urls.some((url) => url.includes("/AAB/GEN/1.json"))).toBe(true);
   });
 
+  it("excludes the full translation catalog from the #app-seed-data JSON script tag", async () => {
+    // An unrecognized translation ID still forces the render to fetch the
+    // full catalog internally, to confirm there's genuinely nothing to fall
+    // back to — that's exactly the large response that must never be
+    // embedded in the page, even when the render does fetch it itself. A
+    // returning visitor likely already has it in their browser's own HTTP
+    // cache; the point of this exclusion is to stop paying for it again on
+    // every single page load's inlined HTML.
+    const html = await renderHtml("/en/NOPE/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<string, unknown>;
+    const urls = Object.keys(seedData);
+    expect(
+      urls.some((url) => url.endsWith("/available_translations.json"))
+    ).toBe(false);
+  });
+
   // Regression: the placeholder substitutions in render()'s final `return`
   // used to be a chain of `String.replace(literalPlaceholder, value)` calls.
   // `replace`'s *replacement* argument treats `$1`, `$&`, etc. specially even

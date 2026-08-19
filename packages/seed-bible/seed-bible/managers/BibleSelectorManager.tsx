@@ -307,7 +307,7 @@ export function createBibleSelectorState(
     error.value = null;
 
     try {
-      if (dataManager.availableTranslations.value.length === 0) {
+      if (!dataManager.catalogLoaded.value) {
         await dataManager.getTranslations();
       }
 

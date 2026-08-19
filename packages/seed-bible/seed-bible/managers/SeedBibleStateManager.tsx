@@ -1873,7 +1873,7 @@ export function createSeedBibleState(
     },
     () => data.availableTranslations.value,
     async () => {
-      if (data.availableTranslations.value.length === 0) {
+      if (!data.catalogLoaded.value) {
         await data.getTranslations();
       }
       return data.availableTranslations.value;

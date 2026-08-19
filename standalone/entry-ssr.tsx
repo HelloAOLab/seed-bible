@@ -66,6 +66,25 @@ export interface RenderOptions {
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
 
 /**
+ * Excludes the full multi-translation catalog from what gets embedded in the
+ * page. It's large, and unlike the rest of the seed snapshot it isn't tied to
+ * the specific chapter this request rendered — a returning visitor likely
+ * already has it in their browser's own HTTP cache from a prior page, so
+ * re-sending it inline on every single request just bloats the HTML. The
+ * client fetches it itself, over a normal (cacheable) request, on the rare
+ * loads that actually need it.
+ */
+function omitAvailableTranslationsResponse(
+  responseCache: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(responseCache).filter(
+      ([url]) => !url.endsWith("/available_translations.json")
+    )
+  );
+}
+
+/**
  * Static across every request — the built-in presets have no custom
  * overrides, so this only needs computing once. Read by the pre-hydration
  * inline script in `index.html`, before any JS bundle loads.
@@ -504,7 +523,11 @@ export async function render(
   // response the render actually fetched (translations, book catalog,
   // chapter content) — that's what lets the client skip re-fetching them.
   const seedJson = escapeForScript(
-    JSON.stringify(state.bibleData.api.snapshotResponseCache())
+    JSON.stringify(
+      omitAvailableTranslationsResponse(
+        state.bibleData.api.snapshotResponseCache()
+      )
+    )
   );
 
   const substitutions: Array<[placeholder: string, value: string]> = [

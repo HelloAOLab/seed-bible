@@ -2544,33 +2544,64 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const loadedTranslations =
-        await dataManager.getTranslations(getActiveEndpoint());
-      availableTranslations.value = toAvailableTranslations(
-        dataManager.availableTranslations.value
-      );
+      // The overwhelmingly common case is a URL that already names a valid
+      // translation on the default endpoint. Validating it against just that
+      // translation's own (much smaller) book catalog — rather than always
+      // pulling down every translation's metadata first — is what keeps an
+      // ordinary chapter load from downloading the full, large translation
+      // list on every single page view. The full catalog below is only
+      // fetched when there's no translation to validate yet
+      // (`useFirstAvailableTranslation`), a custom endpoint is in play (its
+      // translations aren't known until the catalog itself names them), or
+      // the requested translation turns out to be missing.
+      let nextTranslationId: string | undefined;
+      let books: TranslationBooks | undefined;
 
-      const firstAvailableTranslation = loadedTranslations[0];
-      const currentTranslation = useFirstAvailableTranslation.value
-        ? firstAvailableTranslation
-        : (availableTranslations.value.translations.find(
-            (translation) => translation.id === translationId.value
-          ) ??
-          (shouldFallbackToFirstAvailableTranslation
-            ? firstAvailableTranslation
-            : undefined));
-      if (!currentTranslation) {
-        throw new Error(
-          useFirstAvailableTranslation.value
-            ? "No available translations found for endpoint."
-            : `Translation with ID "${translationId.value}" not available.`
+      if (!useFirstAvailableTranslation.value && !getActiveEndpoint()) {
+        try {
+          books = await dataManager.getTranslationBooks(translationId.value);
+          nextTranslationId = translationId.value;
+        } catch {
+          // Not confidently "this translation doesn't exist" on its own — a
+          // network blip would fail the same way. Fall through to the
+          // catalog resolution below, which is what actually decides that.
+        }
+      }
+
+      if (!books || !nextTranslationId) {
+        const loadedTranslations =
+          await dataManager.getTranslations(getActiveEndpoint());
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
+
+        const firstAvailableTranslation = loadedTranslations[0];
+        const currentTranslation = useFirstAvailableTranslation.value
+          ? firstAvailableTranslation
+          : (availableTranslations.value.translations.find(
+              (translation) => translation.id === translationId.value
+            ) ??
+            (shouldFallbackToFirstAvailableTranslation
+              ? firstAvailableTranslation
+              : undefined));
+        if (!currentTranslation) {
+          throw new Error(
+            useFirstAvailableTranslation.value
+              ? "No available translations found for endpoint."
+              : `Translation with ID "${translationId.value}" not available.`
+          );
+        }
+
+        nextTranslationId = currentTranslation.id;
+        books = await dataManager.getTranslationBooks(nextTranslationId);
+      } else {
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
         );
       }
 
-      const nextTranslationId = currentTranslation.id;
       useFirstAvailableTranslation.value = false;
 
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0];
       if (!firstBook) {
         throw new Error("No books available for selected translation.");
