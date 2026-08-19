@@ -92,6 +92,27 @@
   flex: 1 1 auto;
 }
 
+/* Step progress. Only rendered for tours with more than one step. */
+.sb-tour-popover-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  margin-right: 0.25rem;
+}
+
+.sb-tour-dot {
+  width: 1rem;
+  height: 0.1875rem;
+  border-radius: 0.09375rem;
+  background: var(--sb-font-color);
+  opacity: 0.2;
+}
+
+.sb-tour-dot-active {
+  background: var(--sb-primary-color);
+  opacity: 1;
+}
+
 .sb-tour-popover-actions-right {
   display: flex;
   gap: 0.5rem;
