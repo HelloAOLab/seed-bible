@@ -88,6 +88,14 @@ export interface AnnotationsManager {
    * draft if it was the one being edited. Rethrows on failure.
    */
   deleteAnnotationAndRefresh: (annotation: Annotation) => Promise<void>;
+
+  /**
+   * True when a `recordOverride` was passed to `createAnnotationsManager`,
+   * so annotations are being read/written against that record instead of
+   * the signed-in account's own. The UI uses this to show a banner letting
+   * the visitor know where their notes are actually being saved.
+   */
+  hasRecordOverride: boolean;
 }
 
 export const commentAnnotationSchema = z.object({
@@ -788,5 +796,6 @@ export function createAnnotationsManager(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    hasRecordOverride: !!recordOverride,
   };
 }

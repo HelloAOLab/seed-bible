@@ -894,6 +894,45 @@ function AnnotationGroupSection(props: {
   );
 }
 
+/**
+ * Shown atop the notes section whenever annotations are being routed through
+ * a `recordOverride` (the `annotationRecordKey` URL param) instead of the
+ * signed-in account's own record — e.g. a Codex-published translation being
+ * annotated through its team's shared record. The button drops that query
+ * param and reloads, since the override is only read once at app startup
+ * (see `SeedBibleStateManager`) and can't be switched off by a soft
+ * navigation.
+ */
+function AnnotationOverrideBanner() {
+  const { t } = useI18n();
+
+  const saveToMyAccount = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("annotationRecordKey");
+    window.location.href = url.toString();
+  };
+
+  return (
+    <div className="sb-annotation-override-banner">
+      <span className="sb-annotation-override-banner-text">
+        {t("annotation-override-banner", {
+          defaultValue:
+            "Notes are being saved and loaded from your team's account.",
+        })}
+      </span>
+      <button
+        type="button"
+        className="sb-annotation-override-banner-button"
+        onClick={saveToMyAccount}
+      >
+        {t("annotation-override-save-to-my-account", {
+          defaultValue: "Save to my account",
+        })}
+      </button>
+    </div>
+  );
+}
+
 function AnnotationsSection(props: {
   tab: ReaderTab | null;
   annotations: AnnotationsManager;
@@ -918,6 +957,9 @@ function AnnotationsSection(props: {
   } = props;
   const { t } = useI18n();
   const title = t("notes", { defaultValue: "Notes" });
+  const overrideBanner = annotations.hasRecordOverride ? (
+    <AnnotationOverrideBanner />
+  ) : null;
 
   // Clicking an annotated verse number on desktop (BibleReader.tsx) sets
   // this once; scroll to that verse's annotation group if it's this tab's
@@ -968,13 +1010,23 @@ function AnnotationsSection(props: {
   }, [tab, discover, annotations]);
 
   if (!tab) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+    return (
+      <DiscoverSection title={title}>
+        {overrideBanner}
+        {noTabHint(t)}
+      </DiscoverSection>
+    );
   }
 
   const bookId = tab.readingState.bookId.value;
   const chapterNumber = tab.readingState.chapterNumber.value;
   if (!bookId || !chapterNumber) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+    return (
+      <DiscoverSection title={title}>
+        {overrideBanner}
+        {noTabHint(t)}
+      </DiscoverSection>
+    );
   }
 
   const chapterAnnotations = annotations.getAnnotationsForChapter(
@@ -985,6 +1037,7 @@ function AnnotationsSection(props: {
 
   return (
     <DiscoverSection title={title}>
+      {overrideBanner}
       {groups.length === 0 ? (
         <DiscoverEmpty
           text={t("discover-annotations-empty", {

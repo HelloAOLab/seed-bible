@@ -334,6 +334,13 @@ describe("AnnotationsManager", () => {
       );
     }
 
+    it("hasRecordOverride is false with no override, true with one", () => {
+      expect(createManager().hasRecordOverride).toBe(false);
+      expect(
+        createManagerWithOverride("override-record").hasRecordOverride
+      ).toBe(true);
+    });
+
     it("saveAnnotation() uses the record override instead of the signed-in user's id", async () => {
       const manager = createManagerWithOverride("override-record");
       const annotation = createCommentAnnotation();
