@@ -1,9 +1,0 @@
-{
-  "id": "tabernacle",
-  "translations": {
-    "en": {
-      "title": "Tabernacle",
-      "description": "Interactive 3D visualization of the biblical Tabernacle from Exodus, with clickable pieces, chapter-synchronized visibility, and verse navigation."
-    }
-  }
-}
