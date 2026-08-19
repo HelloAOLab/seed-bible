@@ -740,6 +740,9 @@
   box-shadow: var(--sb-verse-toolbar-box-shadow);
   z-index: var(--sb-verse-toolbar-z-index);
   min-height: var(--sb-verse-toolbar-min-height);
+  flex-direction: column;
+  align-items: stretch;
+  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-draggable {
@@ -757,12 +760,6 @@
 }
 
 /* Selected-verse reference label shown above the verse toolbar tools */
-.sb-verse-toolbar {
-  flex-direction: column;
-  align-items: stretch;
-  background-color: var(--sb-reader-background);
-}
-
 .sb-verse-toolbar-ref {
   font-size: 0.75rem;
   font-weight: 600;
@@ -1212,6 +1209,7 @@
   gap: 0.375rem;
   padding: 0;
   align-items: center;
+  padding-block-end: 0;
 }
 
 /* Circular icon-only Add (inline in the scroll strip) + Clear beside the pill. */
@@ -1251,10 +1249,6 @@
 
 .sb-verse-toolbar-mobile .sb-verse-toolbar-action-text {
   display: none;
-}
-
-.sb-verse-toolbar-mobile .sb-verse-toolbar-picker-actions {
-  padding-block-end: 0;
 }
 
 /* Card-grid variant of the mobile action row. Each action becomes a rounded
