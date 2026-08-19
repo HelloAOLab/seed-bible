@@ -137,7 +137,7 @@ export interface AppSettings {
   customHighlights: Record<string, Partial<ThemeHighlightColor>>;
 }
 
-export const DEFAULT_SCRIPTURE_WIDTH = 50; // ch
+export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
 export const MAX_SCRIPTURE_WIDTH = 192; // ch
 export const MIN_SCRIPTURE_WIDTH = 24; // ch
 
