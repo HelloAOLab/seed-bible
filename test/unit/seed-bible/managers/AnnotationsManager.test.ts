@@ -1090,6 +1090,42 @@ describe("AnnotationsManager", () => {
       expect(await store.get("user-1", "shared")).toBeNull();
     });
 
+    it("files a save under the account it started as, not whoever signs in next", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+      manager.editAnnotation(createCommentAnnotation({ id: "alice-note" }));
+
+      // The account changes while the save is mid-flight (two IndexedDB round
+      // trips). The durable row was always written correctly; it was the UI
+      // cache that re-read the *current* login and filed it under the newcomer.
+      const savePromise = manager.saveEditingAnnotation();
+      login.userId.value = "user-2";
+      await savePromise;
+
+      // Nothing of Alice's may appear in the account now signed in.
+      const view = manager.getAnnotationsForChapter("GEN", 1);
+      await settle();
+      expect(view.value.map((a) => a.id)).not.toContain("alice-note");
+      expect(await store.get("user-1", "alice-note")).not.toBeNull();
+      expect(await store.get("user-2", "alice-note")).toBeNull();
+    });
+
+    it("removes a deleted note from the account it started as", async () => {
+      const manager = createOfflineManager();
+      const annotation = createCommentAnnotation({ id: "known" });
+      await store.put(syncedRow("user-1", annotation));
+      goOffline();
+
+      const deletePromise = manager.deleteAnnotationAndRefresh(annotation);
+      login.userId.value = "user-2";
+      await deletePromise;
+
+      // The tombstone belongs to user-1, and user-2's view must be unaffected.
+      const row = await store.get("user-1", "known");
+      expect(row?.deleted).toBe(true);
+      expect(await store.get("user-2", "known")).toBeNull();
+    });
+
     it("reports how many changes are waiting", async () => {
       const manager = createOfflineManager();
       goOffline();

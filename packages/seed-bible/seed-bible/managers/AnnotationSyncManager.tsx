@@ -25,6 +25,7 @@ import { v4 as uuid } from "uuid";
 import type { Annotation } from "./AnnotationsManager";
 import type { LoginManager } from "./LoginManager";
 import type { CasualOSManager } from "./OsManager";
+import { FATAL_SESSION_ERROR_CODES } from "./SessionGuard";
 import {
   annotationFingerprint,
   annotationUpdatedAtMs,
@@ -40,16 +41,28 @@ import {
  *
  * Everything else is treated as permanent, because retrying a request the
  * server has already refused on its merits just burns battery on every
- * reconnect. Note that the codes meaning "this session is over"
- * (`session_expired`, `invalid_key`, `user_is_banned`) are absent on purpose:
- * `SessionGuard` turns those into a sign-out, and the pass abandons its work so
- * the rows survive to be pushed after the next sign-in.
+ * reconnect. The codes meaning "this session is over" are handled separately
+ * again — see {@link SESSION_ENDED_ERROR_CODES}.
  */
 const RETRYABLE_ERROR_CODES: ReadonlySet<string> = new Set([
   "server_error",
   "rate_limit_exceeded",
   "not_logged_in",
 ]);
+
+/**
+ * Failures that mean the session is over rather than that the change is bad.
+ *
+ * These need their own outcome, not "permanent". `SessionGuard` spots them with
+ * `.then`, so it fires a sign-out as a side effect but still *resolves* the
+ * original `{success: false}` object — the request does not reject. Folding them
+ * into "permanent" therefore cleared `pendingOp` and destroyed the queued edit,
+ * which is the opposite of what an expired session should cost: the change is
+ * perfectly valid and simply needs a live session to land.
+ */
+const SESSION_ENDED_ERROR_CODES: ReadonlySet<string> = new Set(
+  FATAL_SESSION_ERROR_CODES
+);
 
 /** Why a local change and the server's copy can't both be kept as they are. */
 export type AnnotationConflictKind =
@@ -190,7 +203,9 @@ type PushOutcome =
   | { status: "done" }
   | { status: "conflict"; conflict: AnnotationConflict }
   | { status: "retry"; message: string }
-  | { status: "permanent"; message: string };
+  | { status: "permanent"; message: string }
+  /** The session ended. Nothing about the row changes; a new sign-in retries it. */
+  | { status: "session_ended"; message: string };
 
 export function createAnnotationSyncManager(
   options: CreateAnnotationSyncManagerOptions
@@ -313,9 +328,90 @@ export function createAnnotationSyncManager(
       : null,
   });
 
+  /**
+   * Whether a row is still the one a push started from.
+   *
+   * A push is a network round trip, and the user can save the same note again
+   * while it is in the air. The local change stamp plus the pending operation is
+   * enough to spot that: any later save rewrites both.
+   */
+  const isUnchangedSince = (
+    started: StoredAnnotation,
+    current: StoredAnnotation | null
+  ): boolean =>
+    current !== null &&
+    current.updatedAtMs === started.updatedAtMs &&
+    current.pendingOp === started.pendingOp;
+
+  /**
+   * Records the outcome of a successful push in the local mirror.
+   *
+   * Deliberately re-reads the row instead of trusting the snapshot the push
+   * started from. Two things can happen during a round trip, and writing the
+   * snapshot back would quietly undo either of them:
+   *
+   * - The user saves the same note again. Marking the row synced with the older
+   *   content would revert the newer edit *and* drop it from the queue, losing
+   *   writing with nothing reported.
+   * - The account signs out. Writing a synced (readable) row back afterwards
+   *   would leave the departed account's note on a possibly shared device, which
+   *   is exactly what `clearSynced` exists to prevent.
+   *
+   * `base` is what the server now holds, so a newer local change can be rebased
+   * onto it — otherwise the next pass would compare against a stale base and
+   * report our own push as somebody else's edit.
+   */
+  const recordPushed = async (
+    owner: string,
+    started: StoredAnnotation,
+    base: Annotation | null
+  ): Promise<void> => {
+    if (!store) {
+      return;
+    }
+
+    const current = await store.get(owner, started.annotationId);
+    const unchanged = isUnchangedSince(started, current);
+
+    if (login.userId.peek() !== owner) {
+      // Signed out mid-push. The content is safely on the server, so the local
+      // copy is now a synced row for an account that has left — drop it. A newer
+      // unsent edit is kept, matching sign-out's "keep unsent writing" rule.
+      if (unchanged) {
+        await store.delete(owner, started.annotationId);
+      }
+      return;
+    }
+
+    if (!current) {
+      // Removed outright while we pushed (a create-then-delete collapse); there
+      // is nothing left to record against.
+      return;
+    }
+
+    if (!unchanged) {
+      await store.put({
+        ...current,
+        baseUpdatedAtMs: base ? annotationUpdatedAtMs(base) : null,
+        baseFingerprint: base ? annotationFingerprint(base) : null,
+      });
+      return;
+    }
+
+    if (!base) {
+      await store.delete(owner, started.annotationId);
+      onRemoved?.(started.annotationId, owner);
+      return;
+    }
+
+    await store.put(syncedRow(owner, base));
+    onSynced?.(base, owner);
+  };
+
   /** Writes an annotation to the server and mirrors the result locally. */
   const writeToServer = async (
     owner: string,
+    row: StoredAnnotation,
     annotation: Annotation
   ): Promise<PushOutcome> => {
     const result = await os.recordData(owner, annotation.id, annotation, {
@@ -326,8 +422,7 @@ export function createAnnotationSyncManager(
       return classifyFailure(result.errorCode, result.errorMessage);
     }
 
-    await store?.put(syncedRow(owner, annotation));
-    onSynced?.(annotation, owner);
+    await recordPushed(owner, row, annotation);
     return { status: "done" };
   };
 
@@ -343,8 +438,9 @@ export function createAnnotationSyncManager(
       return classifyFailure(result.errorCode, result.errorMessage);
     }
 
-    await store?.delete(owner, row.annotationId);
-    onRemoved?.(row.annotationId, owner);
+    // Null base: the server now holds nothing, so a note re-saved during the
+    // erase becomes a fresh create rather than an update to something gone.
+    await recordPushed(owner, row, null);
     return { status: "done" };
   };
 
@@ -368,8 +464,9 @@ export function createAnnotationSyncManager(
 
     if (row.pendingOp === "delete") {
       if (!server.present) {
-        await store?.delete(owner, row.annotationId);
-        onRemoved?.(row.annotationId, owner);
+        // Already gone. Routed through `recordPushed` for the same reason a real
+        // push is: `readServer` was a round trip, so a save may have landed since.
+        await recordPushed(owner, row, null);
         return { status: "done" };
       }
       if (!matchesBase) {
@@ -383,8 +480,12 @@ export function createAnnotationSyncManager(
 
     if (!row.annotation) {
       // An upsert with nothing to write can only be a corrupt row; drop it
-      // rather than retrying it forever.
-      await store?.delete(owner, row.annotationId);
+      // rather than retrying it forever — unless a real save replaced it while
+      // we were reading the server, in which case that save is the truth.
+      const current = await store?.get(owner, row.annotationId);
+      if (current && isUnchangedSince(row, current)) {
+        await store?.delete(owner, row.annotationId);
+      }
       return { status: "done" };
     }
 
@@ -399,26 +500,39 @@ export function createAnnotationSyncManager(
       };
     }
 
-    return writeToServer(owner, row.annotation);
+    return writeToServer(owner, row, row.annotation);
   };
 
   /** Records a failed attempt, giving up on the row once it's hopeless. */
   const recordFailure = async (
+    owner: string,
     row: StoredAnnotation,
     outcome: Extract<PushOutcome, { status: "retry" | "permanent" }>
   ): Promise<void> => {
     setError(row.annotationId, outcome.message);
-
-    if (outcome.status === "permanent") {
-      await store?.put({ ...row, pendingOp: null });
+    if (!store) {
       return;
     }
 
-    const attempts = row.attempts + 1;
-    await store?.put({
-      ...row,
+    // Built from a re-read rather than the snapshot the push started from: this
+    // bookkeeping write is a blind overwrite by key, so spreading a stale row
+    // would revert content the user saved during the failed round trip. A newer
+    // edit deserves its own attempt count anyway.
+    const current = await store.get(owner, row.annotationId);
+    if (!current || !isUnchangedSince(row, current)) {
+      return;
+    }
+
+    if (outcome.status === "permanent") {
+      await store.put({ ...current, pendingOp: null });
+      return;
+    }
+
+    const attempts = current.attempts + 1;
+    await store.put({
+      ...current,
       attempts,
-      pendingOp: attempts >= MAX_SYNC_ATTEMPTS ? null : row.pendingOp,
+      pendingOp: attempts >= MAX_SYNC_ATTEMPTS ? null : current.pendingOp,
     });
   };
 
@@ -474,7 +588,18 @@ export function createAnnotationSyncManager(
         continue;
       }
 
-      await recordFailure(row, outcome);
+      if (outcome.status === "session_ended") {
+        // The change is fine; there is just no live session to land it in. Leave
+        // the row exactly as it is — `recordFailure` would clear `pendingOp` and
+        // the edit would never be retried after signing back in.
+        console.warn(
+          "Annotation sync stopped: the session ended.",
+          outcome.message
+        );
+        return false;
+      }
+
+      await recordFailure(owner, row, outcome);
       if (outcome.status === "retry") {
         // Retryable means the server is unwell, not that this row is special,
         // so stop rather than marching the whole queue into the same wall.
@@ -730,8 +855,11 @@ export function createAnnotationSyncManager(
 function classifyFailure(
   errorCode: string | undefined,
   errorMessage: string | undefined
-): Extract<PushOutcome, { status: "retry" | "permanent" }> {
+): Extract<PushOutcome, { status: "retry" | "permanent" | "session_ended" }> {
   const message = errorMessage ?? errorCode ?? "unknown_error";
+  if (SESSION_ENDED_ERROR_CODES.has(errorCode ?? "")) {
+    return { status: "session_ended", message };
+  }
   return RETRYABLE_ERROR_CODES.has(errorCode ?? "")
     ? { status: "retry", message }
     : { status: "permanent", message };

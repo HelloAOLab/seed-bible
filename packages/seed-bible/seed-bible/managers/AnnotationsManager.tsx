@@ -1031,10 +1031,17 @@ export function createAnnotationsManager(
     if (!current) {
       return;
     }
+    // Captured before awaiting, and passed through explicitly. `saveAnnotation`
+    // resolves the same owner synchronously, but it then awaits two IndexedDB
+    // round trips — long enough for the account to change. Letting the cache
+    // update re-read the *current* login instead would file this note under
+    // whichever account happens to be signed in by then, so the next reader sees
+    // one account's writing as their own.
+    const owner = localOwner();
     // `saveAnnotation` stamps the timestamps now, so every path that persists an
     // annotation gets them — not just this one.
     const saved = await saveAnnotation(current);
-    upsertIntoCache(saved);
+    upsertIntoCache(saved, owner);
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
@@ -1051,8 +1058,10 @@ export function createAnnotationsManager(
   const deleteAnnotationAndRefresh = async (
     annotation: Annotation
   ): Promise<void> => {
+    // Captured before awaiting, for the same reason as `saveEditingAnnotation`.
+    const owner = localOwner();
     await deleteAnnotation(annotation.id);
-    removeFromCache(annotation);
+    removeFromCache(annotation, owner);
     if (editingAnnotation.peek()?.id === annotation.id) {
       cancelEditingAnnotation();
     }
