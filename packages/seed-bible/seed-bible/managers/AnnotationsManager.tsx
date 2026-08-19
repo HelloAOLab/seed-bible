@@ -14,6 +14,13 @@ import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 
 export interface AnnotationQuery {
+  /**
+   * The record to read/write against: either a bare record name or an
+   * actual record key. Both `os.recordData`/`os.eraseData` and
+   * `os.listDataByMarker` resolve this through the records server's
+   * `recordKeyOrRecordName` handling, so a real key works for listing too,
+   * not just for writes.
+   */
   recordName?: string;
   group?: string;
 }
@@ -34,11 +41,13 @@ export interface AnnotationsManager {
   ) => Promise<Annotation[]>;
 
   /**
-   * Reactive view of the signed-in account's annotations for one chapter,
-   * sorted the same way `listAnnotationsForChapter` sorts. Loads lazily on
-   * first access, keyed by account + bookId/chapterNumber; empty (not
-   * loading) when signed out. Stays live-updated by
-   * `saveEditingAnnotation`/`deleteAnnotationAndRefresh` below.
+   * Reactive view of one chapter's annotations, sorted the same way
+   * `listAnnotationsForChapter` sorts: from the record override when one was
+   * passed to `createAnnotationsManager`, otherwise from the signed-in
+   * account's own record. Loads lazily on first access, keyed by the
+   * effective record id + bookId/chapterNumber; empty (not loading) only
+   * when there's no override and the user is signed out. Stays live-updated
+   * by `saveEditingAnnotation`/`deleteAnnotationAndRefresh` below.
    */
   getAnnotationsForChapter: (
     bookId: string,
@@ -328,9 +337,9 @@ function sortAnnotations(annotations: Annotation[]): Annotation[] {
 }
 
 type AnnotationsEntry = {
-  /** Account these annotations belong to. */
-  userId: string;
-  /** Latest known annotations for this account + chapter. */
+  /** Effective record id (override or signed-in account) these annotations belong to. */
+  recordId: string;
+  /** Latest known annotations for this record + chapter. */
   data: Signal<Annotation[]>;
   /** True once a load or a mutation has put real annotations in `data`. */
   settled: boolean;
@@ -338,18 +347,13 @@ type AnnotationsEntry = {
   load: Promise<void> | null;
 };
 
-function entryKey(userId: string, address: string): string {
-  return `${userId} ${address}`;
+function entryKey(recordId: string, address: string): string {
+  return `${recordId} ${address}`;
 }
 
 /**
  * Creates a new AnnotationsManager instance.
- * @param os
- * @param login
- * @param tabs
- * @param discover
  * @param recordOverride The name of the record or record key to use for annotations, overriding the default behavior of using the signed-in user's ID.
- * @returns
  */
 export function createAnnotationsManager(
   os: CasualOSManager,
@@ -486,14 +490,14 @@ export function createAnnotationsManager(
   const views = new Map<string, ReadonlySignal<Annotation[]>>();
 
   const getOrCreateEntry = (
-    userId: string,
+    recordId: string,
     address: string
   ): AnnotationsEntry => {
-    const key = entryKey(userId, address);
+    const key = entryKey(recordId, address);
     let entry = entries.get(key);
     if (!entry) {
       entry = {
-        userId,
+        recordId,
         data: signal<Annotation[]>([]),
         settled: false,
         load: null,
@@ -504,14 +508,14 @@ export function createAnnotationsManager(
   };
 
   const loadEntry = async (
-    userId: string,
+    recordId: string,
     bookId: string,
     chapterNumber: number,
     entry: AnnotationsEntry
   ): Promise<void> => {
     try {
       const loaded = await listAnnotationsForChapter(bookId, chapterNumber, {
-        recordName: userId,
+        recordName: recordId,
       });
       // A mutation that settled the entry while this request was in the air
       // holds newer annotations than this response does.
@@ -530,7 +534,7 @@ export function createAnnotationsManager(
   };
 
   const ensureLoaded = (
-    userId: string,
+    recordId: string,
     bookId: string,
     chapterNumber: number,
     entry: AnnotationsEntry
@@ -539,7 +543,7 @@ export function createAnnotationsManager(
       return entry.load;
     }
     if (!entry.load) {
-      entry.load = loadEntry(userId, bookId, chapterNumber, entry).finally(
+      entry.load = loadEntry(recordId, bookId, chapterNumber, entry).finally(
         () => {
           entry.load = null;
         }
@@ -547,6 +551,15 @@ export function createAnnotationsManager(
     }
     return entry.load;
   };
+
+  // The record id the reactive cache keys off: the override when one was
+  // passed to `createAnnotationsManager`, otherwise the signed-in account.
+  // `??` short-circuits before reading `login.userId.value` whenever an
+  // override is set, so callers of this from inside a computed()/effect()
+  // never subscribe to sign-in state in that case - the override can't
+  // change, so there's nothing to react to.
+  const effectiveRecordId = (): string | null =>
+    recordOverride ?? login.userId.value;
 
   const getOrCreateView = (
     bookId: string,
@@ -556,12 +569,12 @@ export function createAnnotationsManager(
     let view = views.get(address);
     if (!view) {
       view = computed(() => {
-        const userId = login.userId.value; // keeps this view following the signed-in account
-        if (!userId) {
+        const recordId = effectiveRecordId();
+        if (!recordId) {
           return [];
         }
-        const entry = getOrCreateEntry(userId, address);
-        void ensureLoaded(userId, bookId, chapterNumber, entry);
+        const entry = getOrCreateEntry(recordId, address);
+        void ensureLoaded(recordId, bookId, chapterNumber, entry);
         return entry.data.value;
       });
       views.set(address, view);
@@ -572,15 +585,17 @@ export function createAnnotationsManager(
   // Drops every cached entry that no longer belongs to the signed-in
   // account, so signing back in re-reads from the server instead of serving
   // a stale entry left over from a previous session as that same account.
-  let cachedUserId: string | null | undefined;
+  // A no-op (and never re-runs after the first pass) when a record override
+  // is set, since `effectiveRecordId` then never depends on sign-in state.
+  let cachedRecordId: string | null | undefined;
   effect(() => {
-    const userId = login.userId.value;
-    if (userId === cachedUserId) {
+    const recordId = effectiveRecordId();
+    if (recordId === cachedRecordId) {
       return;
     }
-    cachedUserId = userId;
+    cachedRecordId = recordId;
     for (const [key, entry] of entries) {
-      if (entry.userId !== userId) {
+      if (entry.recordId !== recordId) {
         entries.delete(key);
       }
     }
@@ -592,29 +607,29 @@ export function createAnnotationsManager(
   ): ReadonlySignal<Annotation[]> => getOrCreateView(bookId, chapterNumber);
 
   const upsertIntoCache = (annotation: Annotation): void => {
-    const userId = login.userId.peek();
-    if (!userId) {
+    const recordId = recordOverride ?? login.userId.peek();
+    if (!recordId) {
       return;
     }
     const address = annotationsCacheAddress(
       annotation.bookId,
       annotation.chapterNumber
     );
-    const entry = getOrCreateEntry(userId, address);
+    const entry = getOrCreateEntry(recordId, address);
     entry.data.value = upsertAnnotation(entry.data.value, annotation);
     entry.settled = true;
   };
 
   const removeFromCache = (annotation: Annotation): void => {
-    const userId = login.userId.peek();
-    if (!userId) {
+    const recordId = recordOverride ?? login.userId.peek();
+    if (!recordId) {
       return;
     }
     const address = annotationsCacheAddress(
       annotation.bookId,
       annotation.chapterNumber
     );
-    const entry = entries.get(entryKey(userId, address));
+    const entry = entries.get(entryKey(recordId, address));
     if (!entry) {
       return;
     }
@@ -676,7 +691,7 @@ export function createAnnotationsManager(
 
   const createNewAnnotation = async (): Promise<void> => {
     let userId = login.userId.value;
-    if (!userId) {
+    if (!userId && !recordOverride) {
       const userInfo = await login.login();
       if (!userInfo) {
         console.warn("Cannot create an annotation while signed out.");

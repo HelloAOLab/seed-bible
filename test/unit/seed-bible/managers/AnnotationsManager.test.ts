@@ -398,6 +398,69 @@ describe("AnnotationsManager", () => {
         undefined
       );
     });
+
+    it("getAnnotationsForChapter() loads via the record override, not the signed-in user's id", async () => {
+      listDataByMarkerMock
+        .mockResolvedValueOnce({
+          success: true,
+          items: [
+            {
+              address: "a1",
+              data: createCommentAnnotation({ id: "override-note" }),
+            },
+          ],
+        })
+        .mockResolvedValueOnce({ success: true, items: [] });
+
+      const manager = createManagerWithOverride("override-record");
+      const view = manager.getAnnotationsForChapter("GEN", 1);
+      expect(view.value).toEqual([]);
+
+      await vi.waitFor(() => {
+        expect(view.value.map((a) => a.id)).toEqual(["override-note"]);
+      });
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "override-record",
+        "publicRead:annotations/GEN/1",
+        undefined
+      );
+    });
+
+    it("getAnnotationsForChapter() surfaces the override record's annotations when signed out, instead of an empty array", async () => {
+      login.userId.value = null;
+      listDataByMarkerMock
+        .mockResolvedValueOnce({
+          success: true,
+          items: [
+            {
+              address: "a1",
+              data: createCommentAnnotation({ id: "override-note" }),
+            },
+          ],
+        })
+        .mockResolvedValueOnce({ success: true, items: [] });
+
+      const manager = createManagerWithOverride("override-record");
+      const view = manager.getAnnotationsForChapter("GEN", 1);
+
+      await vi.waitFor(() => {
+        expect(view.value.map((a) => a.id)).toEqual(["override-note"]);
+      });
+    });
+
+    it("saveEditingAnnotation() upserts into the override-keyed cache while signed out, so getAnnotationsForChapter reflects the save immediately", async () => {
+      login.userId.value = null;
+      const manager = createManagerWithOverride("override-record");
+      manager.editAnnotation(createCommentAnnotation({ id: "a1" }));
+
+      await manager.saveEditingAnnotation();
+
+      expect(login.login).not.toHaveBeenCalled();
+      expect(
+        manager.getAnnotationsForChapter("GEN", 1).value.map((a) => a.id)
+      ).toEqual(["a1"]);
+    });
   });
 
   describe("getAnnotationsForChapter", () => {

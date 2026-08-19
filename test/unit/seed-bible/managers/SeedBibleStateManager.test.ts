@@ -1458,6 +1458,35 @@ describe("createSeedBibleState", () => {
         undefined
       );
     });
+
+    it("keeps a saved annotation visible in getAnnotationsForChapter - the reactive view the UI actually renders from", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com?annotationRecordKey=custom-record",
+      });
+      const state = await createState();
+      vi.spyOn(state.os, "recordData").mockResolvedValue({
+        success: true,
+      } as any);
+      const loginSpy = vi.spyOn(state.login, "login");
+
+      state.annotations.editAnnotation({
+        id: "ann-1",
+        bookId: "GEN",
+        chapterNumber: 1,
+        data: { type: "comment", html: "<p>Hi</p>" },
+      });
+      await state.annotations.saveEditingAnnotation();
+
+      // Never had to sign in, and the just-saved note shows up through the
+      // same reactive view the annotation pane renders from - not just
+      // through the low-level listAnnotationsForChapter/saveAnnotation calls.
+      expect(loginSpy).not.toHaveBeenCalled();
+      expect(
+        state.annotations
+          .getAnnotationsForChapter("GEN", 1)
+          .value.map((a) => a.id)
+      ).toEqual(["ann-1"]);
+    });
   });
 
   // Shared by the pageTitle and meta-description suites: both read signals
