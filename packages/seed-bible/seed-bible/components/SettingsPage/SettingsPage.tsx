@@ -33,7 +33,10 @@ import {
   Skeleton,
   SkeletonContainer,
 } from "../../components/Skeleton/Skeleton";
-import { ExtensionInitalizer } from "../../managers/ExtensionManager";
+import {
+  ExtensionInitalizer,
+  type ExtensionListEntry,
+} from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
@@ -1156,6 +1159,86 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const { t } = useI18n();
 
+  const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
+    const { id, installed, pendingInstallation } = extensionEntry;
+    const isRegistered =
+      ExtensionInitalizer.getInstance().isExtensionRegistered(id);
+    const installState = getExtensionInstallState(
+      installed,
+      pendingInstallation,
+      isRegistered
+    );
+
+    const stateIcon =
+      installState === "installed"
+        ? "check_circle"
+        : installState === "downloaded"
+          ? "download_done"
+          : installState === "pending"
+            ? "downloading"
+            : "extension";
+
+    const stateLabel =
+      installState === "installed"
+        ? "Installed"
+        : installState === "downloaded"
+          ? "Downloaded"
+          : installState === "pending"
+            ? "Installing…"
+            : "Not installed";
+
+    return (
+      <li key={id} className="sb-extension-row">
+        <div className="sb-extension-row-body">
+          <span
+            className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
+            title={stateLabel}
+          >
+            {stateIcon}
+          </span>
+          <div className="sb-extension-row-content">
+            <span className="sb-extension-name">
+              {t("title", { ns: id, defaultValue: id })}
+            </span>
+            <span className="sb-extension-description">
+              {t("description", { ns: id, defaultValue: "" })}
+            </span>
+          </div>
+          <div className="sb-extension-row-actions">
+            {installState === "none" && (
+              <button
+                type="button"
+                className="sb-extension-row-action-button"
+                onClick={() => void handleInstall(id)}
+                aria-label={t("install", { defaultValue: "Install" })}
+                title={t("install", { defaultValue: "Install" })}
+              >
+                <span className="material-symbols-outlined">download</span>
+              </button>
+            )}
+            {(installState === "installed" ||
+              installState === "downloaded") && (
+              <button
+                type="button"
+                className="sb-extension-row-action-button"
+                onClick={() => handleUninstall(id)}
+                aria-label={t("uninstall", {
+                  defaultValue: "Uninstall",
+                })}
+                title={t("uninstall", { defaultValue: "Uninstall" })}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </li>
+    );
+  };
+
+  const installedExtensions = extensionsList.filter((e) => e.installed);
+  const availableExtensions = extensionsList.filter((e) => !e.installed);
+
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
@@ -1175,89 +1258,46 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </p>
           </div>
         ) : (
-          <ul className="sb-extensions-list">
-            {extensionsList.map((extensionEntry) => {
-              const { id, installed, pendingInstallation } = extensionEntry;
-              const isRegistered =
-                ExtensionInitalizer.getInstance().isExtensionRegistered(id);
-              const installState = getExtensionInstallState(
-                installed,
-                pendingInstallation,
-                isRegistered
-              );
+          <>
+            <div className="sb-extensions-group">
+              <h3 className="sb-settings-subheading">
+                {t("installed-extensions", { defaultValue: "Installed" })}
+              </h3>
+              {installedExtensions.length === 0 ? (
+                <div className="sb-settings-empty-state">
+                  <p>
+                    {t("no-installed-extensions", {
+                      defaultValue: "You haven't installed any extensions yet.",
+                    })}
+                  </p>
+                </div>
+              ) : (
+                <ul className="sb-extensions-list">
+                  {installedExtensions.map(renderExtensionRow)}
+                </ul>
+              )}
+            </div>
 
-              const stateIcon =
-                installState === "installed"
-                  ? "check_circle"
-                  : installState === "downloaded"
-                    ? "download_done"
-                    : installState === "pending"
-                      ? "downloading"
-                      : "extension";
-
-              const stateLabel =
-                installState === "installed"
-                  ? "Installed"
-                  : installState === "downloaded"
-                    ? "Downloaded"
-                    : installState === "pending"
-                      ? "Installing…"
-                      : "Not installed";
-
-              return (
-                <li key={id} className="sb-extension-row">
-                  <div className="sb-extension-row-body">
-                    <span
-                      className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
-                      title={stateLabel}
-                    >
-                      {stateIcon}
-                    </span>
-                    <div className="sb-extension-row-content">
-                      <span className="sb-extension-name">
-                        {}
-                        {t("title", { ns: id, defaultValue: id })}
-                      </span>
-                      <span className="sb-extension-description">
-                        {t("description", { ns: id, defaultValue: "" })}
-                      </span>
-                    </div>
-                    <div className="sb-extension-row-actions">
-                      {installState === "none" && (
-                        <button
-                          type="button"
-                          className="sb-extension-row-action-button"
-                          onClick={() => void handleInstall(id)}
-                          aria-label={t("install", { defaultValue: "Install" })}
-                          title={t("install", { defaultValue: "Install" })}
-                        >
-                          <span className="material-symbols-outlined">
-                            download
-                          </span>
-                        </button>
-                      )}
-                      {(installState === "installed" ||
-                        installState === "downloaded") && (
-                        <button
-                          type="button"
-                          className="sb-extension-row-action-button"
-                          onClick={() => handleUninstall(id)}
-                          aria-label={t("uninstall", {
-                            defaultValue: "Uninstall",
-                          })}
-                          title={t("uninstall", { defaultValue: "Uninstall" })}
-                        >
-                          <span className="material-symbols-outlined">
-                            delete
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+            <div className="sb-extensions-group">
+              <h3 className="sb-settings-subheading">
+                {t("available-extensions", { defaultValue: "Available" })}
+              </h3>
+              {availableExtensions.length === 0 ? (
+                <div className="sb-settings-empty-state">
+                  <p>
+                    {t("no-available-extensions", {
+                      defaultValue:
+                        "There are no more extensions available to install.",
+                    })}
+                  </p>
+                </div>
+              ) : (
+                <ul className="sb-extensions-list">
+                  {availableExtensions.map(renderExtensionRow)}
+                </ul>
+              )}
+            </div>
+          </>
         )}
 
         <div className="sb-extension-footer-actions">

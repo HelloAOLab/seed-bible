@@ -49,6 +49,12 @@
   opacity: 0.5;
 }
 
+.sb-extensions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
 .sb-extension-row {
   display: flex;
   align-items: stretch;
