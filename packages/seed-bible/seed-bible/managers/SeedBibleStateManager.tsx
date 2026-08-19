@@ -516,7 +516,17 @@ export function createSeedBibleState(
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login, tabs, discover);
+
+  const annotationRecordKey =
+    navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
+    undefined;
+  const annotations = createAnnotationsManager(
+    os,
+    login,
+    tabs,
+    discover,
+    annotationRecordKey
+  );
   const sessions = createSessionsManager(
     os,
     data,

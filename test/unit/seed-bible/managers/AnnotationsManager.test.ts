@@ -323,6 +323,83 @@ describe("AnnotationsManager", () => {
     );
   });
 
+  describe("recordOverride", () => {
+    function createManagerWithOverride(recordOverride: string) {
+      return createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        recordOverride
+      );
+    }
+
+    it("saveAnnotation() uses the record override instead of the signed-in user's id", async () => {
+      const manager = createManagerWithOverride("override-record");
+      const annotation = createCommentAnnotation();
+
+      await manager.saveAnnotation(annotation);
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "override-record",
+        "ann-1",
+        annotation,
+        { marker: "publicRead:annotations/GEN/1" }
+      );
+    });
+
+    it("saveAnnotation() still prefers an explicit query.recordName over the record override", async () => {
+      const manager = createManagerWithOverride("override-record");
+      const annotation = createCommentAnnotation();
+
+      await manager.saveAnnotation(annotation, {
+        recordName: "explicit-record",
+      });
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "explicit-record",
+        "ann-1",
+        annotation,
+        { marker: "publicRead:annotations/GEN/1" }
+      );
+    });
+
+    it("saveAnnotation() does not require a signed-in user when a record override is set", async () => {
+      login.userId.value = null;
+      const manager = createManagerWithOverride("override-record");
+
+      await manager.saveAnnotation(createCommentAnnotation());
+
+      expect(login.login).not.toHaveBeenCalled();
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "override-record",
+        "ann-1",
+        expect.any(Object),
+        { marker: "publicRead:annotations/GEN/1" }
+      );
+    });
+
+    it("deleteAnnotation() uses the record override instead of the signed-in user's id", async () => {
+      const manager = createManagerWithOverride("override-record");
+
+      await manager.deleteAnnotation("ann-5");
+
+      expect(eraseDataMock).toHaveBeenCalledWith("override-record", "ann-5");
+    });
+
+    it("listAnnotationsForChapter() uses the record override instead of the signed-in user's id", async () => {
+      const manager = createManagerWithOverride("override-record");
+
+      await manager.listAnnotationsForChapter("GEN", 1);
+
+      expect(listDataByMarkerMock).toHaveBeenCalledWith(
+        "override-record",
+        "publicRead:annotations/GEN/1",
+        undefined
+      );
+    });
+  });
+
   describe("getAnnotationsForChapter", () => {
     it("is empty when signed out", () => {
       login.userId.value = null;

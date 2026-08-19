@@ -342,15 +342,29 @@ function entryKey(userId: string, address: string): string {
   return `${userId} ${address}`;
 }
 
+/**
+ * Creates a new AnnotationsManager instance.
+ * @param os
+ * @param login
+ * @param tabs
+ * @param discover
+ * @param recordOverride The name of the record or record key to use for annotations, overriding the default behavior of using the signed-in user's ID.
+ * @returns
+ */
 export function createAnnotationsManager(
   os: CasualOSManager,
   login: LoginManager,
   tabs: TabsManager,
-  discover: DiscoverManager
+  discover: DiscoverManager,
+  recordOverride?: string
 ): AnnotationsManager {
   const resolveRecordName = async (recordName?: string): Promise<string> => {
     if (recordName) {
       return recordName;
+    }
+
+    if (recordOverride) {
+      return recordOverride;
     }
 
     if (!login.userId.value) {
