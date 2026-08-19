@@ -1,8 +1,30 @@
-import type { ReadonlySignal } from "@preact/signals";
-import { useSocialSection } from "./useSocialSection";
-import { SocialSectionProvider } from "./SocialSectionContext";
+import {
+  useSignal,
+  useSignalEffect,
+  type ReadonlySignal,
+} from "@preact/signals";
+import { useState, useMemo, useEffect, useRef } from "preact/hooks";
+import { Fragment } from "preact/jsx-runtime";
+import {
+  SocialSectionProvider,
+  useSocialSectionContext,
+  type SocialSectionUserProfile,
+} from "./SocialSectionContext";
 import { TitledSection } from "./TitledSection";
-import { HistoryCard } from "./HistoryCard";
+import { Tooltip } from "./Tooltip";
+import { useClickOutside } from "./useClickOutside";
+import { useReadingHistoryTimeline } from "./useReadingHistoryTimeline";
+import { MaterialIcon } from "../icons";
+import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
+import { useHorizontalScroll } from "../useHorizontalScroll";
+import { useI18n } from "../../i18n";
+import {
+  buildTimespanOptions,
+  type FilteredReading as FilteredReadingData,
+  type Timespan,
+  type TimespanOptionId,
+} from "../../managers/TodayReadingHistory";
+import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
@@ -10,23 +32,112 @@ import type {
   TodayPassageTarget,
 } from "../../managers/TodayManager";
 
+const TIMESPAN_OPTION_IDS = ["twoDays", "week", "month", "all"] as const;
+
+/** How many reader avatars a book row shows before collapsing to "+N". */
+const MAX_ICONS = 7;
+
 export const SocialSection = (props: {
   today: TodayManager;
   login: LoginManager;
   theme: ReadonlySignal<BibleTheme>;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) => {
-  const {
-    title,
-    userFilters,
-    userProfileMap,
-    toggleUserFilter,
-    year,
-    timespan,
-    communityReading,
-    selectYear,
-    selectDay,
-  } = useSocialSection(props);
+  const { getCommunityReading } = props.today;
+  const { t } = useI18n();
+  const userId = props.login.userId.value;
+  const profile = props.login.profile.value;
+
+  // The current user's own row in the filter list. Derived here rather than
+  // passed in, so a profile change re-renders only this section.
+  const userProfile = useMemo<SocialSectionUserProfile | undefined>(() => {
+    if (!userId) return undefined;
+    const visual = getUserAnimalVisual(userId);
+    return {
+      name: profile?.name ?? "Guest",
+      pictureUrl: profile?.pictureUrl,
+      color: visual.color,
+      icon: visual.defaultIcon,
+    };
+  }, [userId, profile?.name, profile?.pictureUrl]);
+
+  const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
+  const year = useSignal<number>(initialOption.year);
+  const timespan = useSignal<Timespan | undefined>(initialOption.timespan);
+  const communityReading = useSignal<FilteredReadingData>({});
+
+  const selectYear = (selectedYear: number) => {
+    year.value = selectedYear;
+    timespan.value = undefined;
+  };
+
+  const selectDay = (selectedTimespan: Timespan | undefined) => {
+    timespan.value = selectedTimespan;
+  };
+
+  // Reactive data fetching: fetch the community reading for the exact selected
+  // period. When `timespan` is undefined ("all"), clear it — no fetch.
+  useSignalEffect(() => {
+    const currentTimespan = timespan.value;
+    if (!currentTimespan) {
+      communityReading.value = {};
+      return;
+    }
+
+    let cancelled = false;
+    void getCommunityReading(currentTimespan).then((result) => {
+      if (!cancelled) {
+        communityReading.value = result;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  });
+
+  const [userProfileMap, setUserProfileMap] = useState<
+    Map<string, SocialSectionUserProfile>
+  >(new Map());
+
+  useEffect(() => {
+    if (userId && userProfile) {
+      setUserProfileMap(new Map([[userId, userProfile]]));
+    } else {
+      setUserProfileMap(new Map());
+    }
+  }, [userId, userProfile]);
+
+  const [userFilters, setUserFilters] = useState<Map<string, boolean>>(
+    () => new Map()
+  );
+
+  // Keeps one filter entry per known reader as people appear and disappear,
+  // without discarding the choices already made about the others.
+  useEffect(() => {
+    setUserFilters((prev) => {
+      const next = new Map(prev);
+      for (const id of userProfileMap.keys()) {
+        if (!next.has(id)) {
+          next.set(id, true);
+        }
+      }
+      for (const id of next.keys()) {
+        if (!userProfileMap.has(id)) {
+          next.delete(id);
+        }
+      }
+      return next;
+    });
+  }, [userProfileMap]);
+
+  const toggleUserFilter = (id: string) => {
+    setUserFilters((prev) => {
+      const next = new Map(prev);
+      next.set(id, !next.get(id));
+      return next;
+    });
+  };
 
   return (
     <SocialSectionProvider
@@ -34,14 +145,14 @@ export const SocialSection = (props: {
         userFilters,
         userProfileMap,
         toggleUserFilter,
-        year,
-        timespan,
-        communityReading,
+        year: year.value,
+        timespan: timespan.value,
+        communityReading: communityReading.value,
         selectYear,
         selectDay,
       }}
     >
-      <TitledSection title={title}>
+      <TitledSection title={t("community", { defaultValue: "COMMUNITY" })}>
         <HistoryCard
           today={props.today}
           theme={props.theme}
@@ -51,3 +162,335 @@ export const SocialSection = (props: {
     </SocialSectionProvider>
   );
 };
+
+function HistoryCard(props: {
+  today: TodayManager;
+  theme: ReadonlySignal<BibleTheme>;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) {
+  const { t, language } = useI18n();
+  const {
+    userFilters,
+    userProfileMap,
+    toggleUserFilter,
+    timespan,
+    selectYear,
+    selectDay,
+  } = useSocialSectionContext();
+
+  const userFilterOpen = useSignal(false);
+  const optionsRef = useRef<HTMLDivElement | null>(null);
+  const optionsContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // The timespan filter row scrolls horizontally with the vertical wheel.
+  const timespanFilterRef = useRef<HTMLDivElement | null>(null);
+  useHorizontalScroll(timespanFilterRef);
+
+  useClickOutside([optionsRef, optionsContainerRef], () => {
+    userFilterOpen.value = false;
+  });
+
+  const selectedTimespanOptionId = useSignal<TimespanOptionId>("twoDays");
+
+  const selectTimespanOption = (id: TimespanOptionId) => {
+    if (selectedTimespanOptionId.value === id) return;
+
+    const option = buildTimespanOptions()[id];
+    selectedTimespanOptionId.value = id;
+    // `selectYear` sets the year and clears the timespan; `selectDay` then
+    // narrows to the option's window. Both writes batch within this handler.
+    selectYear(option.year);
+    if (option.timespan) {
+      selectDay(option.timespan);
+    }
+  };
+
+  const timespanLabels: Record<TimespanOptionId, string> = {
+    twoDays: t("last-48-hours", { defaultValue: "Last 48 hours" }),
+    week: t("this-week", { defaultValue: "This week" }),
+    month: t("this-month", { defaultValue: "This month" }),
+    all: t("all", { defaultValue: "All" }),
+  };
+
+  const selectedCount = [...userFilters.values()].filter(Boolean).length;
+  const userFilterText =
+    selectedCount === userFilters.size
+      ? t("everyone", { defaultValue: "Everyone" })
+      : selectedCount === 0
+        ? t("none", { defaultValue: "None" })
+        : t("custom", { defaultValue: "Custom" });
+
+  const dateLabel = timespan
+    ? new Intl.DateTimeFormat(language, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date(timespan.to * 1000))
+    : undefined;
+
+  return (
+    <div className="history-card today-section-card">
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          userFilterOpen.value = !userFilterOpen.value;
+        }}
+        className="user-filter-container clickable"
+        ref={optionsContainerRef}
+      >
+        <span className="user-filter-label">{userFilterText}</span>
+        <MaterialIcon>
+          {userFilterOpen.value ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+        </MaterialIcon>
+        {userFilterOpen.value && (
+          <div
+            ref={optionsRef}
+            className="user-filter-options"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {[...userFilters.entries()].map(([id, selected]) => {
+              const profile = userProfileMap.get(id);
+              if (!profile) return null;
+              return (
+                <button
+                  key={id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleUserFilter(id);
+                  }}
+                  className={`user-filter-option${selected ? " user-filter-option-selected" : ""} clickable`}
+                >
+                  <div style={{ backgroundColor: profile.color }}></div>
+                  {profile.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <div className="timespan-filter-container" ref={timespanFilterRef}>
+        {TIMESPAN_OPTION_IDS.map((id) => (
+          <button
+            onClick={() => selectTimespanOption(id)}
+            key={id}
+            className={`timespan-filter-option${selectedTimespanOptionId.value === id ? " timespan-filter-option-selected" : ""} clickable`}
+          >
+            {timespanLabels[id]}
+          </button>
+        ))}
+      </div>
+      {selectedTimespanOptionId.value === "all" && (
+        <Fragment>
+          <ReadingHistoryTimelineSection
+            today={props.today}
+            theme={props.theme}
+          />
+          {dateLabel && <span className="date-label">{dateLabel}</span>}
+        </Fragment>
+      )}
+      <FilteredReading
+        today={props.today}
+        onOpenPassage={props.onOpenPassage}
+      />
+    </div>
+  );
+}
+
+function ReadingHistoryTimelineSection(props: {
+  today: TodayManager;
+  theme: ReadonlySignal<BibleTheme>;
+}) {
+  const { itemsData, timelineRef, footer } = useReadingHistoryTimeline(props);
+
+  return (
+    <ReadingHistoryTimeline
+      itemsData={itemsData}
+      timelineRef={timelineRef}
+      footer={footer}
+      Tooltip={Tooltip}
+    />
+  );
+}
+
+function FilteredReading(props: {
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) {
+  const { communityReading, userFilters } = useSocialSectionContext();
+
+  const booksData = Object.entries(communityReading)
+    .map(([bookId, chaptersReading]) => {
+      const readerIds = [
+        ...new Set(Object.values(chaptersReading).flat()),
+      ].filter((id) => userFilters.get(id));
+      return { bookId, chaptersReading, readerIds };
+    })
+    .filter((book) => book.readerIds.length > 0);
+
+  if (booksData.length === 0) {
+    return <></>;
+  }
+
+  return (
+    <div className="filtered-reading-container">
+      {booksData.map(({ bookId, chaptersReading, readerIds }) => (
+        <Book
+          key={bookId}
+          bookId={bookId}
+          chaptersReading={chaptersReading}
+          readerIds={readerIds}
+          today={props.today}
+          onOpenPassage={props.onOpenPassage}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** A reader's avatar, as shown on a book row or inside a chapter cell. */
+interface ReaderIcon {
+  id: string;
+  name: string;
+  pictureUrl?: string | undefined;
+  color: string;
+  icon: string;
+}
+
+function Book(props: {
+  bookId: string;
+  chaptersReading: { [chapter: number]: string[] };
+  readerIds: string[];
+  today: TodayManager;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) {
+  const { bookId, chaptersReading, readerIds } = props;
+  const { bookNames, translationBooksMap } = props.today;
+  const { userProfileMap } = useSocialSectionContext();
+
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Both reads sit in the render body, which is a reactive scope, so the row
+  // relabels and its chapter grid fills in as the translation's books arrive.
+  // Inside a `useMemo` they would neither subscribe nor invalidate — the memo
+  // this replaced depended on `readerIds` alone and went stale (see the C5 note
+  // in the work journal).
+  const name = bookNames.value.get(bookId) ?? bookId;
+  const numberOfChapters =
+    translationBooksMap.value.get(bookId)?.numberOfChapters ?? 0;
+
+  const shownReaders: ReaderIcon[] = [];
+  for (const id of readerIds.slice(0, MAX_ICONS)) {
+    const profile = userProfileMap.get(id);
+    // A reader with no profile yet: `communityReading` and `userProfileMap`
+    // arrive from separate async sources and can disagree for a frame, so an
+    // unknown id counts into the "+N" overflow rather than throwing mid-render.
+    if (!profile) continue;
+    shownReaders.push({
+      id,
+      name: profile.name,
+      pictureUrl: profile.pictureUrl ?? undefined,
+      color: profile.color,
+      icon: profile.icon,
+    });
+  }
+  const extraReaders = readerIds.length - shownReaders.length;
+  const readersById = new Map(
+    shownReaders.map((reader) => [reader.id, reader])
+  );
+
+  return (
+    <div
+      className={`filtered-reading-book${isExpanded ? " expanded" : ""} clickable`}
+      onClick={() => setIsExpanded((prev) => !prev)}
+    >
+      <span>{name}</span>
+      <div className="icons-container">
+        {shownReaders.map((reader) => (
+          <UserIcon
+            key={reader.id}
+            pictureUrl={reader.pictureUrl}
+            color={reader.color}
+            icon={reader.icon}
+          />
+        ))}
+        {extraReaders > 0 && (
+          <span className="filtered-reading-book-extra">{`+${extraReaders}`}</span>
+        )}
+      </div>
+      {isExpanded && (
+        <div
+          className="chapters-container"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {Array.from({ length: numberOfChapters }, (_, index) => {
+            const chapter = index + 1;
+            const readers = (chaptersReading[chapter] ?? [])
+              .map((id) => readersById.get(id))
+              .filter((reader): reader is ReaderIcon => Boolean(reader));
+            return (
+              <Chapter
+                key={chapter}
+                number={chapter}
+                readers={readers}
+                onClick={() => props.onOpenPassage({ bookId, chapter })}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Chapter(props: {
+  number: number;
+  readers: ReaderIcon[];
+  onClick: () => void;
+}) {
+  const hasReaders = props.readers.length > 0;
+
+  return (
+    <div
+      className={`filtered-reading-chapter${hasReaders ? " filtered-reading-chapter-highlighted" : ""} clickable`}
+      onClick={props.onClick}
+    >
+      {props.number}
+      {hasReaders && (
+        <div>
+          {props.readers.map((reader) =>
+            reader.pictureUrl ? (
+              <img key={reader.id} src={reader.pictureUrl} />
+            ) : (
+              <div key={reader.id} style={{ backgroundColor: reader.color }}>
+                <MaterialIcon>{reader.icon}</MaterialIcon>
+              </div>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UserIcon(props: {
+  pictureUrl?: string | undefined;
+  color: string;
+  icon: string;
+}) {
+  if (props.pictureUrl) {
+    return (
+      <img src={props.pictureUrl} className="filtered-reading-book-icon" />
+    );
+  }
+
+  return (
+    <div
+      className="filtered-reading-book-icon"
+      style={{ backgroundColor: props.color }}
+    >
+      <MaterialIcon>{props.icon}</MaterialIcon>
+    </div>
+  );
+}
