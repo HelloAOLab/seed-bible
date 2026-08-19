@@ -10,6 +10,8 @@
 
 ### 🐛 Fixed
 
+- Fix the back button and back gesture after opening a bookmark on mobile. Tapping a bookmark used to leave the reader on the bookmarks screen and record two browser history entries for the same chapter — so going back appeared to do nothing. Tapping a bookmark now closes the bookmarks screen and lands on the chapter, and going back returns to the bookmarks list, then to the chapter you were reading before. ([#1338](https://github.com/HelloAOLab/seed-bible/issues/1338))
+
 ### 🗑️ Removed
 
 ## v1.5.0 — 2026-08-17

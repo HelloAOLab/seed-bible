@@ -1249,11 +1249,26 @@ export function createSeedBibleState(
     sidebar.closeSidebar();
   };
 
+  /**
+   * Dismisses the sidebar and runs a navigation as a single history entry.
+   * Both halves write the URL — the sidebar drops `?sidebar=open`, the reader
+   * writes the new position — and each write on its own would cost a history
+   * entry, so pressing back afterwards would land on a stale duplicate of the
+   * destination instead of where the user actually came from.
+   */
+  const navigateFromSidebar = (navigate: () => void) => {
+    navigation.batchWrites(() => {
+      closeSidebarAndSettings();
+      navigate();
+    });
+  };
+
   const handleSelectTab = (tabId: string) => {
-    closeSidebarAndSettings();
-    tabs.selectTab(tabId);
-    tabsLayout.setSelectedSlotTab(tabId);
-    panes.closeFullscreenPanes();
+    navigateFromSidebar(() => {
+      tabs.selectTab(tabId);
+      tabsLayout.setSelectedSlotTab(tabId);
+      panes.closeFullscreenPanes();
+    });
   };
 
   const handleAddTab = () => {
@@ -1267,27 +1282,30 @@ export function createSeedBibleState(
   };
 
   const handleOpenInNewSlot = (tabId: string) => {
-    closeSidebarAndSettings();
-    const slot = tabsLayout.openTabInNewSlot(tabId);
-    if (slot?.tab) {
-      tabs.selectTab(slot.tab.id);
-    }
+    navigateFromSidebar(() => {
+      const slot = tabsLayout.openTabInNewSlot(tabId);
+      if (slot?.tab) {
+        tabs.selectTab(slot.tab.id);
+      }
+    });
   };
 
   const handleSelectSlot = (slotId: string) => {
-    closeSidebarAndSettings();
-    tabsLayout.selectSlot(slotId);
+    navigateFromSidebar(() => {
+      tabsLayout.selectSlot(slotId);
 
-    const selectedSlot =
-      tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
-    if (selectedSlot?.tab) {
-      tabs.selectTab(selectedSlot.tab.id);
-    }
+      const selectedSlot =
+        tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
+      if (selectedSlot?.tab) {
+        tabs.selectTab(selectedSlot.tab.id);
+      }
+    });
   };
 
   const handleSelectPane = (paneId: string) => {
-    closeSidebarAndSettings();
-    panes.selectPane(paneId);
+    navigateFromSidebar(() => {
+      panes.selectPane(paneId);
+    });
   };
 
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
