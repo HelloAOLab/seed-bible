@@ -3,7 +3,7 @@ import {
   type ExperienceKey,
   type ExperienceKeyMap,
 } from "./experience";
-import { SOLOMON_TEMPLE_PIECE_KEYS, TABERNACLE_PIECE_KEYS } from "./pieceKeys";
+import { TABERNACLE_PIECE_KEYS } from "./pieceKeys";
 
 export type VerseReferenceMap = {
   [E in ExperienceKey]: {
@@ -16,30 +16,7 @@ export type VerseReferenceMap = {
 };
 
 export const VERSE_REFERENCE_MAP: VerseReferenceMap = {
-  [EXPERIENCE_KEYS.SOLOMON_TEMPLE]: {
-    "1KI": {
-      5: {
-        1: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        2: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        3: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        4: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        5: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        6: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        7: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        8: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        9: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        10: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        11: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        12: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        13: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        14: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        15: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        16: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        17: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-        18: [SOLOMON_TEMPLE_PIECE_KEYS.TEST],
-      },
-    },
-  },
+  [EXPERIENCE_KEYS.SOLOMON_TEMPLE]: {},
   [EXPERIENCE_KEYS.TABERNACLE]: {
     EXO: {
       25: {
