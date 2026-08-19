@@ -106,17 +106,15 @@ export const Welcome = (props: {
 };
 
 /**
- * Static welcome-screen dictionary for John 1:1.
+ * Maps a `translationId` to its pre-highlighted John 1:1 text.
  *
- * Keyed by `translationId` — exactly the unique translation IDs declared in
- * `DEFAULT_TRANSLATIONS_BY_LANGUAGE` (seed-bible's `BibleReadingManager`). Each
- * value is the verse text fetched from the Free Use Bible API (helloao) with
- * `<hl>…</hl>` tags wrapped around the two semantic anchors of the verse:
+ * Keyed by exactly the unique translation IDs declared in
+ * `DEFAULT_TRANSLATIONS_BY_LANGUAGE` (`BibleReadingManager`). Each value is the
+ * verse text from the Free Use Bible API (helloao) with `<hl>…</hl>` tags
+ * wrapped around the two semantic anchors of the verse:
  *   - the word for "beginning" (e.g. "principio", "commencement"), and
  *   - the clause "the Word was God" (e.g. "el Verbo era Dios").
  */
-
-/** Maps a `translationId` to its pre-highlighted John 1:1 text. */
 type WelcomeVerseMap = Record<string, string>;
 
 const WELCOME_VERSE_MAP: WelcomeVerseMap = {
