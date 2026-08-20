@@ -109,16 +109,17 @@ describe("Welcome", () => {
   });
 
   describe("welcome verse", () => {
-    it("prefers the pre-highlighted text for a mapped translation", async () => {
+    it("prefers the pre-highlighted text for a mapped translation, skipping the API", async () => {
       lastTranslationId.value = "AAB";
-      // Deliberately different from the mapped text, so the assertion can only
-      // pass if the table won.
-      getVerseText.mockResolvedValue("plain api text");
       setup();
       await act(async () => {});
 
-      expect(getVerseText).toHaveBeenCalledWith("AAB", "JHN", 1, 1);
-      expect(q(".welcome-screen-verse")!.innerHTML).toBe(`"${AAB_JOHN_1_1}"`);
+      // A mapped translation is applied straight from the table, so there is
+      // no fetch to wait on or to have superseded it.
+      expect(getVerseText).not.toHaveBeenCalled();
+      expect(q(".welcome-screen-verse")!.textContent).toBe(
+        `"${AAB_JOHN_1_1.replace(/<\/?hl>/g, "")}"`
+      );
     });
 
     it("renders the highlight markers as markup, not text", async () => {
@@ -127,7 +128,11 @@ describe("Welcome", () => {
       await act(async () => {});
 
       const verse = q(".welcome-screen-verse")!;
-      expect(verse.querySelectorAll("hl")).toHaveLength(2);
+      const highlights = [
+        ...verse.querySelectorAll(".welcome-screen-verse-highlight"),
+      ].map((el) => el.textContent);
+
+      expect(highlights).toEqual(["beginning", "Word was God."]);
       expect(verse.textContent).toBe(
         '"In the beginning was the Word, and the Word was with God, and the Word was God."'
       );
@@ -141,7 +146,20 @@ describe("Welcome", () => {
 
       const verse = q(".welcome-screen-verse")!;
       expect(verse.textContent).toBe('"In the beginning"');
-      expect(verse.querySelector("hl")).toBeNull();
+      expect(verse.querySelector(".welcome-screen-verse-highlight")).toBeNull();
+    });
+
+    it("escapes markup in the API-sourced fallback text", async () => {
+      // The table's `<hl>` markers are author-controlled, but this text is not:
+      // it comes straight from the Bible API, and used to be injected as HTML.
+      lastTranslationId.value = "not-a-translation";
+      getVerseText.mockResolvedValue('<img src=x onerror="boom">');
+      setup();
+      await act(async () => {});
+
+      const verse = q(".welcome-screen-verse")!;
+      expect(verse.querySelector("img")).toBeNull();
+      expect(verse.textContent).toBe('"<img src=x onerror="boom">"');
     });
 
     it("falls back to the default translation when there is no last one", async () => {

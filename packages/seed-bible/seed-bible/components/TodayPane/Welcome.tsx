@@ -10,6 +10,9 @@ import type {
   TodayPassageTarget,
 } from "../../managers/TodayManager";
 
+/** Splits a marked verse on its `<hl>`/`</hl>` boundaries; odd parts were inside. */
+const HIGHLIGHT_MARKERS = /<hl>|<\/hl>/;
+
 export const Welcome = (props: {
   today: TodayManager;
   login: LoginManager;
@@ -30,22 +33,21 @@ export const Welcome = (props: {
   useEffect(() => {
     let isActive = true;
 
-    const fetchWelcomeVerse = async () => {
-      const translationId =
-        lastTranslationId.value ?? getDefaultTranslation() ?? "";
+    const translationId =
+      lastTranslationId.value ?? getDefaultTranslation() ?? "";
+    const mappedVerse = WELCOME_VERSE_MAP[translationId];
 
-      const rawVerseText = await getVerseText(translationId, "JHN", 1, 1);
-      const computedVerse = getHighlightedWelcomeVerse(
-        translationId,
-        rawVerseText ?? ""
-      );
-
-      if (isActive) {
-        welcomeVerse.value = `"${computedVerse}"`;
-      }
-    };
-
-    fetchWelcomeVerse();
+    // The table is the common case and needs no network round trip; the API
+    // is only a fallback for a translation the table has not been given yet.
+    if (mappedVerse !== undefined) {
+      welcomeVerse.value = `"${mappedVerse}"`;
+    } else {
+      void getVerseText(translationId, "JHN", 1, 1).then((rawVerseText) => {
+        if (isActive) {
+          welcomeVerse.value = `"${rawVerseText ?? ""}"`;
+        }
+      });
+    }
 
     return () => {
       isActive = false;
@@ -65,10 +67,23 @@ export const Welcome = (props: {
       <span className={"welcome-screen-book"}>
         {`${bookNames.value.get("JHN")?.toUpperCase()} 1:1`}
       </span>
-      <div
-        className="welcome-screen-verse"
-        dangerouslySetInnerHTML={{ __html: welcomeVerse.value }}
-      />
+      {/*
+        Real nodes rather than `dangerouslySetInnerHTML`. The `<hl>` markers are
+        author-controlled -- they come only from the table below -- but the
+        unmapped fallback path renders text straight from the Bible API through
+        this same element, and as raw HTML that text was never escaped.
+      */}
+      <div className="welcome-screen-verse">
+        {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
+          index % 2 === 1 ? (
+            <span className="welcome-screen-verse-highlight" key={index}>
+              {part}
+            </span>
+          ) : (
+            part
+          )
+        )}
+      </div>
       <div className={"welcome-screen-navigation"}>
         <button
           className="book-selector-button clickable"
@@ -179,19 +194,4 @@ const WELCOME_VERSE_MAP: WelcomeVerseMap = {
     "<hl>Ban đầu</hl> có Ngôi Lời, Ngôi Lời ở với Đức Chúa Trời, và <hl>Ngôi Lời là Đức Chúa Trời.</hl>",
   // Chinese (Mandarin) — cmn_cbt
   cmn_cbt: "<hl>太初</hl>，道已經存在，道與上帝同在，<hl>道就是上帝。</hl>",
-};
-
-/**
- * Returns the pre-highlighted John 1:1 text for a translation. Safe fallback:
- * if the translation is not in the map, the raw verse text is returned
- * unchanged (no `<hl>` tags injected).
- *
- * @param translationId The translation ID to look up.
- * @param rawVerseText The plain verse text to fall back to when unmapped.
- */
-const getHighlightedWelcomeVerse = (
-  translationId: string,
-  rawVerseText: string
-): string => {
-  return WELCOME_VERSE_MAP[translationId] ?? rawVerseText;
 };

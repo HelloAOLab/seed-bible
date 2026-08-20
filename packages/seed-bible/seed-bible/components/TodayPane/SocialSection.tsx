@@ -3,7 +3,7 @@ import {
   useSignalEffect,
   type ReadonlySignal,
 } from "@preact/signals";
-import { useState, useMemo, useEffect, useRef } from "preact/hooks";
+import { useMemo, useEffect, useRef } from "preact/hooks";
 import { Fragment } from "preact/jsx-runtime";
 import {
   SocialSectionProvider,
@@ -48,17 +48,24 @@ export const SocialSection = (props: {
   const userId = props.login.userId.value;
   const profile = props.login.profile.value;
 
-  // The current user's own row in the filter list. Derived here rather than
-  // passed in, so a profile change re-renders only this section.
-  const userProfile = useMemo<SocialSectionUserProfile | undefined>(() => {
-    if (!userId) return undefined;
+  // The reader list is the signed-in user alone until subscriptions exist.
+  // Derived rather than held in state: every input is already to hand during
+  // render, so the effect that used to write it only made the map lag a
+  // render behind its own inputs.
+  const userProfileMap = useMemo(() => {
+    if (!userId) return new Map<string, SocialSectionUserProfile>();
     const visual = getUserAnimalVisual(userId);
-    return {
-      name: profile?.name ?? "Guest",
-      pictureUrl: profile?.pictureUrl,
-      color: visual.color,
-      icon: visual.defaultIcon,
-    };
+    return new Map<string, SocialSectionUserProfile>([
+      [
+        userId,
+        {
+          name: profile?.name ?? "Guest",
+          pictureUrl: profile?.pictureUrl,
+          color: visual.color,
+          icon: visual.defaultIcon,
+        },
+      ],
+    ]);
   }, [userId, profile?.name, profile?.pictureUrl]);
 
   const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
@@ -96,53 +103,36 @@ export const SocialSection = (props: {
     };
   });
 
-  const [userProfileMap, setUserProfileMap] = useState<
-    Map<string, SocialSectionUserProfile>
-  >(new Map());
-
-  useEffect(() => {
-    if (userId && userProfile) {
-      setUserProfileMap(new Map([[userId, userProfile]]));
-    } else {
-      setUserProfileMap(new Map());
-    }
-  }, [userId, userProfile]);
-
-  const [userFilters, setUserFilters] = useState<Map<string, boolean>>(
-    () => new Map()
-  );
+  const userFilters = useSignal<Map<string, boolean>>(new Map());
 
   // Keeps one filter entry per known reader as people appear and disappear,
-  // without discarding the choices already made about the others.
+  // without discarding the choices already made about the others. `.peek()`
+  // because this reads and then writes the same signal.
   useEffect(() => {
-    setUserFilters((prev) => {
-      const next = new Map(prev);
-      for (const id of userProfileMap.keys()) {
-        if (!next.has(id)) {
-          next.set(id, true);
-        }
+    const next = new Map(userFilters.peek());
+    for (const id of userProfileMap.keys()) {
+      if (!next.has(id)) {
+        next.set(id, true);
       }
-      for (const id of next.keys()) {
-        if (!userProfileMap.has(id)) {
-          next.delete(id);
-        }
+    }
+    for (const id of next.keys()) {
+      if (!userProfileMap.has(id)) {
+        next.delete(id);
       }
-      return next;
-    });
+    }
+    userFilters.value = next;
   }, [userProfileMap]);
 
   const toggleUserFilter = (id: string) => {
-    setUserFilters((prev) => {
-      const next = new Map(prev);
-      next.set(id, !next.get(id));
-      return next;
-    });
+    const next = new Map(userFilters.peek());
+    next.set(id, !next.get(id));
+    userFilters.value = next;
   };
 
   return (
     <SocialSectionProvider
       value={{
-        userFilters,
+        userFilters: userFilters.value,
         userProfileMap,
         toggleUserFilter,
         year: year.value,
@@ -367,7 +357,7 @@ function Book(props: {
   const { bookNames, translationBooksMap } = props.today;
   const { userProfileMap } = useSocialSectionContext();
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const isExpanded = useSignal(false);
 
   // Both reads sit in the render body, which is a reactive scope, so the row
   // relabels and its chapter grid fills in as the translation's books arrive.
@@ -400,8 +390,10 @@ function Book(props: {
 
   return (
     <div
-      className={`filtered-reading-book${isExpanded ? " expanded" : ""} clickable`}
-      onClick={() => setIsExpanded((prev) => !prev)}
+      className={`filtered-reading-book${
+        isExpanded.value ? " expanded" : ""
+      } clickable`}
+      onClick={() => (isExpanded.value = !isExpanded.value)}
     >
       <span>{name}</span>
       <div className="icons-container">
@@ -417,7 +409,7 @@ function Book(props: {
           <span className="filtered-reading-book-extra">{`+${extraReaders}`}</span>
         )}
       </div>
-      {isExpanded && (
+      {isExpanded.value && (
         <div
           className="chapters-container"
           onClick={(e) => {

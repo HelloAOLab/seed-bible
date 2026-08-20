@@ -134,7 +134,7 @@
   text-align: center;
 }
 
-.welcome-screen .welcome-screen-verse hl {
+.welcome-screen .welcome-screen-verse .welcome-screen-verse-highlight {
   color: var(--sb-primary-color);
 }
 
