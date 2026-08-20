@@ -1,7 +1,7 @@
 import { ProjectFiltersSelector } from "./ProjectFiltersSelector";
 import { ProjectStateSetter } from "./ProjectStateSetter";
 import { ReadingHistoryUserFiltersSelector } from "./ReadingHistoryUserFiltersSelector";
-import { Tooltip } from "./Tooltip";
+import { ScriptureMapTooltip } from "./ScriptureMapTooltip";
 import { useReadingHistoryTimeline } from "../../hooks/useReadingHistoryTimeline";
 import { useSettings } from "../../hooks/useSettings";
 import { useClickOutside } from "@packages/seed-bible/seed-bible/components/useClickOutside";
@@ -225,7 +225,7 @@ const ReadingHistoryTimelineSection = ({
     <ReadingHistoryTimeline
       itemsData={itemsData}
       timelineRef={timelineRef}
-      Tooltip={Tooltip}
+      Tooltip={ScriptureMapTooltip}
       footer={footer}
     />
   );

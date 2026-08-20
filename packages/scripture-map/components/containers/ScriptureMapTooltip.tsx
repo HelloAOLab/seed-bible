@@ -1,6 +1,9 @@
-import { useTooltip } from "../../hooks/useTooltip";
+import { memo } from "preact/compat";
 
-import { createPortal, memo } from "preact/compat";
+import {
+  Tooltip,
+  type TooltipAnchor,
+} from "@packages/seed-bible/seed-bible/components/Tooltip/Tooltip";
 
 export interface ReadingHistoryTooltipHeaderProps {
   monthName: string;
@@ -43,14 +46,9 @@ export type TooltipContentData =
   | UserPresenceTooltipContentData
   | TextTooltipContentData;
 
-export type TooltipAnchor = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+export type { TooltipAnchor };
 
-export interface TooltipProps {
+export interface ScriptureMapTooltipProps {
   contentsData: TooltipContentData[];
   anchor: TooltipAnchor;
   offsetY?: number;
@@ -129,15 +127,13 @@ const ReadingHistoryTooltipHeader = memo(
   }
 );
 
-export const Tooltip = ({
+export const ScriptureMapTooltip = ({
   contentsData,
   anchor,
   offsetY = 0,
-}: TooltipProps) => {
-  const { tooltipRef, tooltipClass, style } = useTooltip({ anchor, offsetY });
-
-  return createPortal(
-    <span ref={tooltipRef} className={tooltipClass} style={style}>
+}: ScriptureMapTooltipProps) => {
+  return (
+    <Tooltip anchor={anchor} offsetY={offsetY}>
       {contentsData.map((data) => {
         switch (data.type) {
           case "readingHistory":
@@ -168,7 +164,6 @@ export const Tooltip = ({
             return data.content;
         }
       })}
-    </span>,
-    document.body
+    </Tooltip>
   );
 };

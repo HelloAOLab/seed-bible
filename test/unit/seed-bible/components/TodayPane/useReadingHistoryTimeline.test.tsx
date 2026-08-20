@@ -244,14 +244,12 @@ describe("useReadingHistoryTimeline", () => {
       expect(first.style.gridColumn).toBe("2 / 3"); // week 0 → 0+2 / 0+3
     });
 
-    it("carries a text tooltip with a formatted date", () => {
+    it("carries a tooltip holding the day's formatted date", () => {
       const result = setup();
-      const tooltip = items(result)[0]!.tooltipContentsData[0] as {
-        type: string;
-        content: string;
-      };
-      expect(tooltip.type).toBe("text");
-      expect(typeof tooltip.content).toBe("string");
+      const tooltip = items(result)[0]!.tooltipContentsData[0]!;
+      // The clock is pinned, so the real localized string can be asserted
+      // rather than merely its type.
+      expect(tooltip.content).toMatch(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/);
     });
 
     it("selects the day's range on click, and clears it on null", () => {

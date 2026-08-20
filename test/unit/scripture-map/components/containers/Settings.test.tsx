@@ -75,13 +75,6 @@ vi.mock(
   })
 );
 
-vi.mock(
-  "../../../../../packages/scripture-map/components/containers/Tooltip",
-  () => ({
-    Tooltip: () => null,
-  })
-);
-
 function makeStaticOption(
   overrides: Partial<SettingsOptionData> = {}
 ): SettingsOptionData {

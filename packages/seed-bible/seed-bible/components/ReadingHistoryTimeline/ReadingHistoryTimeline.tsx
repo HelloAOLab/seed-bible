@@ -4,18 +4,17 @@ import { useState, useMemo, useRef } from "preact/hooks";
 import { memo } from "preact/compat";
 
 import { useClickOutside } from "../useClickOutside";
+import type { TooltipAnchor } from "../Tooltip/Tooltip";
 
 export type Range = {
   start: number;
   end: number;
 };
 
-export type TooltipAnchor = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+// Re-exported, not redeclared: `seed-bible-utils` re-exports this name from
+// here for Scripture Map, so the export has to stay put even though the
+// canonical definition now lives with the Tooltip that consumes it.
+export type { TooltipAnchor };
 
 /**
  * Injected tooltip renderer. Kept intentionally loose (`any[]` content) so the

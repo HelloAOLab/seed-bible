@@ -3,7 +3,7 @@ import { act } from "preact/test-utils";
 import {
   Tooltip,
   type TooltipProps,
-} from "@packages/seed-bible/seed-bible/components/TodayPane/Tooltip";
+} from "@packages/seed-bible/seed-bible/components/Tooltip/Tooltip";
 
 describe("Tooltip", () => {
   let container: HTMLDivElement;
@@ -44,7 +44,7 @@ describe("Tooltip", () => {
 
   function props(overrides: Partial<TooltipProps> = {}): TooltipProps {
     return {
-      contentsData: [{ type: "text", content: "Aug 19, 2026" }],
+      children: "Aug 19, 2026",
       anchor: { x: 512, y: 200, width: 10, height: 30 },
       ...overrides,
     };
@@ -57,28 +57,32 @@ describe("Tooltip", () => {
 
   // The tooltip portals into document.body, so it is never inside `container`.
   function tooltip() {
-    const el = document.body.querySelector<HTMLSpanElement>(".tooltip");
+    const el = document.body.querySelector<HTMLSpanElement>(".sb-tooltip");
     if (!el) throw new Error("tooltip was not rendered");
     return el;
   }
 
   describe("content", () => {
-    it("renders each text entry, in order", () => {
-      const el = setup({
-        contentsData: [
-          { type: "text", content: "Aug 19, 2026" },
-          { type: "text", content: "12 minutes" },
-        ],
-      });
+    it("renders its children, in order", () => {
+      const el = setup({ children: ["Aug 19, 2026", "12 minutes"] });
 
       expect(el.textContent).toBe("Aug 19, 2026" + "12 minutes");
+    });
+
+    it("renders element children, not just text", () => {
+      // Scripture Map fills this slot with its own content components.
+      const el = setup({
+        children: <span className="content-probe">rich</span>,
+      });
+
+      expect(el.querySelector(".content-probe")!.textContent).toBe("rich");
     });
 
     it("renders into document.body rather than the parent container", () => {
       setup();
 
-      expect(container.querySelector(".tooltip")).toBeNull();
-      expect(document.body.querySelector(".tooltip")).not.toBeNull();
+      expect(container.querySelector(".sb-tooltip")).toBeNull();
+      expect(document.body.querySelector(".sb-tooltip")).not.toBeNull();
     });
   });
 
@@ -87,7 +91,7 @@ describe("Tooltip", () => {
       // 200 - 20 (tooltip height) - 8 (edge gap) = 172, so there is room.
       const el = setup({ anchor: { x: 512, y: 200, width: 10, height: 30 } });
 
-      expect(el.className).toBe("tooltip tooltip-up");
+      expect(el.className).toBe("sb-tooltip sb-tooltip-up");
       expect(el.style.top).toBe("200px");
     });
 
@@ -95,7 +99,7 @@ describe("Tooltip", () => {
       // 10 - 20 - 8 = -18, so it cannot sit above; it drops by anchor.height.
       const el = setup({ anchor: { x: 512, y: 10, width: 10, height: 30 } });
 
-      expect(el.className).toBe("tooltip tooltip-down");
+      expect(el.className).toBe("sb-tooltip sb-tooltip-down");
       expect(el.style.top).toBe("40px");
     });
 
@@ -161,7 +165,7 @@ describe("Tooltip", () => {
       const el = tooltip();
       expect(el.style.left).toBe("300px");
       expect(el.style.top).toBe("45px");
-      expect(el.className).toBe("tooltip tooltip-down");
+      expect(el.className).toBe("sb-tooltip sb-tooltip-down");
     });
   });
 });

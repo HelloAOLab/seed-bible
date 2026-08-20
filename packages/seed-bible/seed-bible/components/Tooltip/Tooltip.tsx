@@ -1,29 +1,30 @@
-import type { TooltipAnchor } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
+import "./Tooltip.css";
 
 import { createPortal } from "preact/compat";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 
-/**
- * Today's tooltip renders plain text. The `type` discriminant is kept because
- * Scripture Map's sibling tooltip also renders reading-history and presence
- * variants, and chunk B/E unifies the two into one shared component.
- */
-export interface TooltipContentData {
-  type: "text";
-  content: string;
-}
+/** The on-screen rect a tooltip points at, in viewport coordinates. */
+export type TooltipAnchor = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export interface TooltipProps {
-  contentsData: TooltipContentData[];
   anchor: TooltipAnchor;
+  /** Extra gap between the anchor and the tooltip, in pixels. */
   offsetY?: number;
+  children?: preact.ComponentChildren;
 }
 
-export const Tooltip = ({
-  contentsData,
-  anchor,
-  offsetY = 0,
-}: TooltipProps) => {
+/**
+ * Positioned tooltip shell: portals to `document.body`, flips above or below
+ * the anchor depending on the room available, and clamps itself inside the
+ * viewport. It renders whatever children it is given and knows nothing about
+ * their shape, so each caller owns its own content types.
+ */
+export const Tooltip = ({ anchor, offsetY = 0, children }: TooltipProps) => {
   const tooltipRef = useRef<null | HTMLSpanElement>(null);
   const [style, setStyle] = useState<React.CSSProperties>({
     top: anchor.y + offsetY,
@@ -77,15 +78,10 @@ export const Tooltip = ({
   return createPortal(
     <span
       ref={tooltipRef}
-      className={`tooltip tooltip-${direction}`}
+      className={`sb-tooltip sb-tooltip-${direction}`}
       style={style}
     >
-      {contentsData.map((data) => {
-        switch (data.type) {
-          case "text":
-            return data.content;
-        }
-      })}
+      {children}
     </span>,
     document.body
   );

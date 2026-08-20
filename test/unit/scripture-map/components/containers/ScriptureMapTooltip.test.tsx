@@ -1,31 +1,23 @@
-import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
-  Tooltip,
-  type TooltipProps,
+  ScriptureMapTooltip,
+  type ScriptureMapTooltipProps,
   type TooltipContentData,
-} from "../../../../../packages/scripture-map/components/containers/Tooltip";
-import { useTooltip } from "../../../../../packages/scripture-map/hooks/useTooltip";
+} from "../../../../../packages/scripture-map/components/containers/ScriptureMapTooltip";
 
-vi.mock("../../../../../packages/scripture-map/hooks/useTooltip", () => ({
-  useTooltip: vi.fn(),
-}));
-
-function makeHookResult(overrides: Record<string, unknown> = {}) {
-  return {
-    tooltipRef: { current: null },
-    tooltipClass: "tooltip tooltip-up",
-    style: {} as React.CSSProperties,
-    ...overrides,
-  };
-}
+// The positioned shell is core's shared `Tooltip`, exercised for real here.
+// Its placement and clamping are covered by
+// `test/unit/seed-bible/components/Tooltip.test.tsx`; this file is about the
+// content variants Scripture Map layers on top.
 
 function makeAnchor() {
   return { x: 100, y: 200, width: 50, height: 20 };
 }
 
-function makeProps(overrides: Partial<TooltipProps> = {}): TooltipProps {
+function makeProps(
+  overrides: Partial<ScriptureMapTooltipProps> = {}
+): ScriptureMapTooltipProps {
   return {
     contentsData: [],
     anchor: makeAnchor(),
@@ -33,13 +25,12 @@ function makeProps(overrides: Partial<TooltipProps> = {}): TooltipProps {
   };
 }
 
-describe("Tooltip", () => {
+describe("ScriptureMapTooltip", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useTooltip as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
@@ -48,48 +39,28 @@ describe("Tooltip", () => {
     vi.clearAllMocks();
   });
 
-  function setup(propOverrides: Partial<TooltipProps> = {}) {
+  function setup(propOverrides: Partial<ScriptureMapTooltipProps> = {}) {
     const props = makeProps(propOverrides);
-    act(() => render(<Tooltip {...props} />, container));
+    act(() => render(<ScriptureMapTooltip {...props} />, container));
     return container;
   }
 
   // Tooltip renders through createPortal into document.body, not the container.
   function tooltipEl() {
-    return document.body.querySelector<HTMLSpanElement>(".tooltip");
+    return document.body.querySelector<HTMLSpanElement>(".sb-tooltip");
   }
 
   describe("structure", () => {
-    it("renders the tooltip span with the class from the hook", () => {
+    it("renders its content inside the shared tooltip shell", () => {
       setup();
-      expect(document.body.querySelector(".tooltip.tooltip-up")).not.toBeNull();
-    });
-
-    it("applies the style from the hook", () => {
-      (useTooltip as Mock).mockReturnValue(
-        makeHookResult({ style: { top: "42px" } })
-      );
-      setup();
-      expect(tooltipEl()!.style.top).toBe("42px");
+      expect(
+        document.body.querySelector(".sb-tooltip.sb-tooltip-up")
+      ).not.toBeNull();
     });
 
     it("renders no content when contentsData is empty", () => {
       setup({ contentsData: [] });
       expect(tooltipEl()!.children).toHaveLength(0);
-    });
-  });
-
-  describe("hook args", () => {
-    it("passes anchor and offsetY to useTooltip", () => {
-      const anchor = { x: 10, y: 20, width: 5, height: 5 };
-      setup({ anchor, offsetY: 8 });
-      expect(useTooltip).toHaveBeenCalledWith({ anchor, offsetY: 8 });
-    });
-
-    it("passes offsetY=0 by default", () => {
-      const anchor = makeAnchor();
-      setup({ anchor });
-      expect(useTooltip).toHaveBeenCalledWith({ anchor, offsetY: 0 });
     });
   });
 

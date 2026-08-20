@@ -11,9 +11,12 @@ import {
   type SocialSectionUserProfile,
 } from "./SocialSectionContext";
 import { TitledSection } from "./TitledSection";
-import { Tooltip } from "./Tooltip";
+import { Tooltip, type TooltipAnchor } from "../Tooltip/Tooltip";
 import { useClickOutside } from "../useClickOutside";
-import { useReadingHistoryTimeline } from "./useReadingHistoryTimeline";
+import {
+  useReadingHistoryTimeline,
+  type TimelineTooltipContent,
+} from "./useReadingHistoryTimeline";
 import { MaterialIcon } from "../icons";
 import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
 import { useHorizontalScroll } from "../useHorizontalScroll";
@@ -286,6 +289,23 @@ function HistoryCard(props: {
   );
 }
 
+/**
+ * Adapts the shared `Tooltip` to the shape `ReadingHistoryTimeline` injects:
+ * the timeline hands its renderer a `contentsData` array, the shell takes
+ * children.
+ */
+function TimelineTooltip(props: {
+  contentsData: TimelineTooltipContent[];
+  anchor: TooltipAnchor;
+  offsetY?: number;
+}) {
+  return (
+    <Tooltip anchor={props.anchor} offsetY={props.offsetY}>
+      {props.contentsData.map((data) => data.content)}
+    </Tooltip>
+  );
+}
+
 function ReadingHistoryTimelineSection(props: {
   today: TodayManager;
   theme: ReadonlySignal<BibleTheme>;
@@ -297,7 +317,7 @@ function ReadingHistoryTimelineSection(props: {
       itemsData={itemsData}
       timelineRef={timelineRef}
       footer={footer}
-      Tooltip={Tooltip}
+      Tooltip={TimelineTooltip}
     />
   );
 }

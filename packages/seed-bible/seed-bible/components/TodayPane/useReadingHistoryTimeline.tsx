@@ -20,9 +20,17 @@ import type {
   ReadingHistorySummary,
 } from "../../managers/ReadingHistoryManager";
 import { useSocialSectionContext } from "./SocialSectionContext";
-import type { TooltipContentData } from "./Tooltip";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type { TodayManager } from "../../managers/TodayManager";
+
+/**
+ * What Today puts in a timeline day's tooltip. Only the formatted date, so
+ * the shared `Tooltip` shell renders it as plain text; Scripture Map fills the
+ * same slot with a richer union of its own.
+ */
+export type TimelineTooltipContent = {
+  content: string;
+};
 
 /** An inclusive date window. */
 type DateRange = {
@@ -42,7 +50,7 @@ type UseReadingHistoryTimeline = (props: {
   today: TodayManager;
   theme: ReadonlySignal<BibleTheme>;
 }) => {
-  itemsData: ReadingHistoryContentData[];
+  itemsData: ReadingHistoryContentData<TimelineTooltipContent>[];
   timelineRef: { current: HTMLDivElement | null };
   footer: ReadingHistoryTimelineFooterData;
 };
@@ -290,7 +298,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     currentTheme,
   ]);
 
-  const itemsData = useMemo<ReadingHistoryContentData[]>(() => {
+  const itemsData = useMemo<
+    ReadingHistoryContentData<TimelineTooltipContent>[]
+  >(() => {
     const monthsSet = new Set();
     const monthLabelGridRow = `1 / 2`;
     const dayLabelGridColumn = `1 / 2`;
@@ -300,7 +310,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     const translatedWednesday = t("wednesday-short", { defaultValue: "Wed" });
     const translatedFriday = t("friday-short", { defaultValue: "Fri" });
 
-    const items: ReadingHistoryContentData[] = [
+    const items: ReadingHistoryContentData<TimelineTooltipContent>[] = [
       {
         type: "label",
         key: translatedMonday,
@@ -400,8 +410,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
           year: "numeric",
         }).format(time);
 
-        const tooltipContentData: TooltipContentData = {
-          type: "text",
+        const tooltipContentData: TimelineTooltipContent = {
           content: formattedDate,
         };
 
