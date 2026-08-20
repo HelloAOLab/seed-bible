@@ -104,6 +104,12 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
 
     const pool = this.#poolDictionary.get(key) as Pool<K, P[K]>;
 
+    if (!pool) {
+      throw new Error(
+        `ObjectPooler: pool not registered for key ${String(key)}`
+      );
+    }
+
     const inUseObject = pool.inUseObjects.find(
       (activeObject) => activeObject.id === obj.id
     );
@@ -130,7 +136,7 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     const pool = this.#poolDictionary.get(key) as Pool<K, P[K]>;
 
     if (pool.inUseObjects.length > 0) {
-      this.releaseObjects(pool.inUseObjects, key);
+      this.releaseObjects([...pool.inUseObjects], key);
     }
 
     for (const object of pool.objectPool) {
