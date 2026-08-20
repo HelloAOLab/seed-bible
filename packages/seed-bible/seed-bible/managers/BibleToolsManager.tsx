@@ -1198,7 +1198,7 @@ function openShareModal(
     content: () => (
       <ShareModal
         app={app}
-        session={context.sharedSession}
+        session={context.sharedSession ?? null}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {
           navigator.clipboard.writeText(shareUrl.toString());

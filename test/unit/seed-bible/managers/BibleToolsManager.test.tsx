@@ -1197,7 +1197,7 @@ describe("createBibleToolsManager", () => {
       tool?.onSelect();
 
       expect(openModal).toHaveBeenCalledTimes(1);
-      expect(openModal.mock.calls[0][0].title).toEqual({
+      expect(openModal.mock.calls[0]?.[0]?.title).toEqual({
         key: "share-sheet-title",
         defaultValue: "Share",
       });
