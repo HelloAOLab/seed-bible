@@ -69,7 +69,10 @@ export class SelectedBookLayoutAdapter {
     const chapterHeight =
       this.#stackConfigProviderPort.getStackPieceMeasurement("ChapterHeight");
 
-    const columns = Math.floor(scaleX / (chapterWidth + chapterGap * 2));
+    const columns = Math.max(
+      1,
+      Math.floor(scaleX / (chapterWidth + chapterGap * 2))
+    );
     const rows = Math.ceil(chaptersCount / columns) + 1;
     const height = rows * (chapterHeight + chapterGap * 2);
 
