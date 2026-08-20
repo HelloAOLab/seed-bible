@@ -20,6 +20,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
+import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
   isSessionHost,
   type BibleReadingSession,
@@ -681,6 +682,25 @@ export function openShareSessionModal(
 }
 
 /**
+ * Opens the same share sheet the reader uses, for whichever tab is currently
+ * selected. Starting a live session stays an option inside the sheet instead
+ * of happening the moment this control is tapped.
+ */
+function openShareSheetForCurrentTab(state: SeedBibleState) {
+  const tab = state.app.selectedTab.value;
+  if (!tab) return;
+  openShareModal(
+    {
+      modals: state.modals,
+      app: state.app,
+      toast: state.app.toast,
+      sharedSession: tab.sharedSession,
+    },
+    getShareUrl(tab.readingState)
+  );
+}
+
+/**
  * Entry point for closing a tab. A host closing a session that still has
  * other participants gets the end/hand-off confirmation; everyone else (and
  * hosts who dismissed the dialog) closes directly, which ends the session
@@ -819,18 +839,18 @@ export function TabsHeader(props: TabsHeaderProps) {
           >
             <ContextMenuItem
               onClick={() => {
-                void createSharedSessionAndCopyLink(state, t);
+                openShareSheetForCurrentTab(state);
               }}
             >
               <MaterialIcon
                 className="sb-context-menu-item-icon"
                 aria-hidden="true"
               >
-                fiber_smart_record
+                share
               </MaterialIcon>
               <span>
-                {t("new-shared-session", {
-                  defaultValue: "New shared session",
+                {t("share", {
+                  defaultValue: "Share",
                 })}
               </span>
             </ContextMenuItem>
@@ -1287,43 +1307,6 @@ function getSessionUrl(session: BibleReadingSession) {
     url.searchParams.set("pattern", pattern);
   }
   return url;
-}
-
-async function createSharedSessionAndCopyLink(
-  state: SeedBibleState,
-  t: ReturnType<typeof useI18n>["t"]
-) {
-  const linkText = state.app
-    .createSharedSession()
-    .then((session) => getSessionUrl(session).href);
-
-  try {
-    if (typeof ClipboardItem !== "undefined") {
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          "text/plain": linkText.then(
-            (text) => new Blob([text], { type: "text/plain" })
-          ),
-        }),
-      ]);
-    } else {
-      await navigator.clipboard.writeText(await linkText);
-    }
-    state.app.toast(
-      t("link-to-join-shared-session-copied", {
-        defaultValue:
-          "A link to join the shared session was copied to your clipboard",
-      })
-    );
-  } catch {
-    // Fall back: still surface the link so the session isn't lost if clipboard
-    // access fails (e.g. permission denied after the async session create).
-    try {
-      state.app.toast(await linkText);
-    } catch {
-      // Session creation failed; nothing left to surface.
-    }
-  }
 }
 
 /**
@@ -2345,18 +2328,18 @@ export function Tabs(props: TabsProps) {
             </button>
             <button
               type="button"
-              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-new-session-button"
-              aria-label={t("new-shared-session", {
-                defaultValue: "New shared session",
+              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-share-button"
+              aria-label={t("share", {
+                defaultValue: "Share",
               })}
-              title={t("new-shared-session", {
-                defaultValue: "New shared session",
+              title={t("share", {
+                defaultValue: "Share",
               })}
               onClick={() => {
-                void createSharedSessionAndCopyLink(state, t);
+                openShareSheetForCurrentTab(state);
               }}
             >
-              <MaterialIcon aria-hidden="true">fiber_smart_record</MaterialIcon>
+              <MaterialIcon aria-hidden="true">share</MaterialIcon>
             </button>
           </>
         )}

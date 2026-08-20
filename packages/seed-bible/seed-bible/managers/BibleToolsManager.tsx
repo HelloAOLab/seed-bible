@@ -1177,14 +1177,15 @@ type ShareSheetContext = {
 
 /**
  * Opens the unified share sheet for a reading surface. Shared by the verse
- * toolbar's "Share" tool, the reader toolbar's "Share" tool, and the mobile
- * quick-toolbar "Share" tool so all three open the exact same modal.
- * `shareText` is only passed by the verse flow (the selected verses' text) for
- * the native share sheet; the reader flow shares a link only. The session
- * comes from `context.sharedSession` — the tool's own reading surface — never
- * from global app state, so a background surface can't be shared by mistake.
+ * toolbar's "Share" tool, the reader toolbar's "Share" tool, the mobile
+ * quick-toolbar "Share" tool, and the tabs-screen Share control so every
+ * surface opens the exact same modal. `shareText` is only passed by the verse
+ * flow (the selected verses' text) for the native share sheet; the reader
+ * flow shares a link only. The session comes from `context.sharedSession` —
+ * the tool's own reading surface — never from global app state, so a
+ * background surface can't be shared by mistake.
  */
-function openShareModal(
+export function openShareModal(
   context: ShareSheetContext,
   shareUrl: URL,
   shareText?: string
