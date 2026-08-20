@@ -1,3 +1,5 @@
+// Intentional duplicate of packages/seed-bible-utils/application/services/ScriptureService.tsx —
+// patterns and packages don't share a runtime, so it can't be imported. Keep both copies in sync.
 import type {
   BookInfo,
   ArrangementInfo,
@@ -39,7 +41,7 @@ export class ScriptureService implements ScripturePort {
     chapter: number;
   }): CompleteBookChapter {
     return {
-      chapter: chapter + (book.startIndex ?? 0),
+      chapter: chapter + book.startIndex,
       bookId: book.completeBookId,
     };
   }
@@ -52,8 +54,8 @@ export class ScriptureService implements ScripturePort {
     subsets: readonly SubsetBookInfo[];
   }): SubsetBookChapter {
     const subset = subsets.find((s) => {
-      const start = (s.startIndex ?? 0) + 1;
-      const end = (s.startIndex ?? 0) + s.numberOfChapters;
+      const start = s.startIndex + 1;
+      const end = s.startIndex + s.numberOfChapters;
       return start <= chapter && chapter <= end;
     });
 
@@ -64,7 +66,7 @@ export class ScriptureService implements ScripturePort {
     }
 
     return {
-      chapter: chapter - (subset.startIndex ?? 0),
+      chapter: chapter - subset.startIndex,
       bookId: subset.bookId,
       completeBookId: subset.completeBookId,
     };

@@ -1,3 +1,5 @@
+// Intentional duplicate of packages/seed-bible-utils/application/services/ArrangementService.tsx —
+// patterns and packages don't share a runtime, so it can't be imported. Keep both copies in sync.
 import type {
   ArrangementInfo,
   TestamentInfo,
@@ -389,8 +391,8 @@ export class ArrangementService implements ArrangementServicePort {
       for (const section of testament.sections) {
         for (const book of section.books) {
           if (book.type === "subset" && book.completeBookId === id) {
-            const start = (book.startIndex ?? 0) + 1;
-            const end = (book.startIndex ?? 0) + book.numberOfChapters;
+            const start = book.startIndex + 1;
+            const end = book.startIndex + book.numberOfChapters;
             if (start <= chapterNumber && chapterNumber <= end) {
               return book;
             }

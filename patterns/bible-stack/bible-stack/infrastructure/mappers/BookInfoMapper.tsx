@@ -1,3 +1,5 @@
+// Intentional duplicate of packages/seed-bible-utils/infrastructure/mappers/BookInfoMapper.tsx —
+// patterns and packages don't share a runtime, so it can't be imported. Keep both copies in sync.
 import type {
   BookInfoConfig,
   ArrangementInfoConfig,
@@ -49,8 +51,7 @@ export class BookInfoMapper {
       throw new Error(
         `BookInfoMapper: staticInfo not found for ${info.completeBookId}`
       );
-    const startIndex = info.startIndex ?? 0;
-    const endIndex = info.endIndex ?? completeStaticInfo.numberOfChapters - 1;
+    const { startIndex, endIndex } = info;
     const chaptersVerseCount = completeStaticInfo.chaptersVerseCount.slice(
       startIndex,
       endIndex + 1
@@ -59,8 +60,8 @@ export class BookInfoMapper {
       type: "subset",
       bookId: info.bookId,
       completeBookId: info.completeBookId,
-      startIndex: info.startIndex,
-      endIndex: info.endIndex,
+      startIndex,
+      endIndex,
       translationRule: info.translationRule,
       author: completeStaticInfo.author,
       chaptersVerseCount,
