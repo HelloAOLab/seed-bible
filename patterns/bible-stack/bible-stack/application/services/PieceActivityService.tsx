@@ -470,7 +470,7 @@ export class PieceActivityService implements PieceActivityServicePort {
     let currIndicators = container.activityIndicators;
     const limit = Math.min(pieceActivity.length, this.#maxIndicators);
     for (const indicator of currIndicators) {
-      if (indicator.index >= limit) {
+      if (indicator.indicatorType === "regular" && indicator.index >= limit) {
         this.#activityIndicatorsAdapterPort.hideIndicator(indicator);
         container.removeActivityIndicator(indicator.id);
       }
