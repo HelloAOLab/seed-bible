@@ -392,6 +392,9 @@ export class StackPieceData<
       this.deactivate();
     }
 
+    // By design, clearPiece governs only this node; descendants always release
+    // (super.resetHierarchy uses the default). Deselecting a piece keeps its own
+    // piece but tears down the subtree spawned beneath it — do not propagate it.
     piecesToRelease.push(...super.resetHierarchy());
 
     return piecesToRelease;
