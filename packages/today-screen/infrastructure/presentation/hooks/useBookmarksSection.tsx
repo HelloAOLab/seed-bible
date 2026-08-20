@@ -8,6 +8,7 @@ import { useTodayContext } from "../contexts/today/TodayContext";
 import type { CategorizedBookmarks } from "../components/containers/BookmarksSection";
 import type { MutableRef } from "preact/hooks";
 import type { TranslationBooks } from "../../../../seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { getBookmarkCategories } from "../../../../seed-bible/seed-bible/managers/BookmarksManager";
 
 import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 
@@ -69,11 +70,6 @@ export const useBookmarksSection: UseBookmarksSection = () => {
     const categorized: CategorizedBookmarks = new Map();
     for (const bookmark of bookmarks.value) {
       const { bookId, chapterNumber, translationId, category } = bookmark;
-      let categoryBookmarks = categorized.get(category);
-      if (!categoryBookmarks) {
-        categoryBookmarks = [];
-        categorized.set(category, categoryBookmarks);
-      }
       const translationBooks = booksByTranslation.value.get(translationId);
       // Falls back to the raw bookId until the books for this translation load.
       const name =
@@ -89,7 +85,16 @@ export const useBookmarksSection: UseBookmarksSection = () => {
         },
         key: bookmark.id,
       };
-      categoryBookmarks.push(data);
+
+      // A bookmark can belong to several folders, so it shows up under each.
+      for (const categoryName of getBookmarkCategories(category)) {
+        let categoryBookmarks = categorized.get(categoryName);
+        if (!categoryBookmarks) {
+          categoryBookmarks = [];
+          categorized.set(categoryName, categoryBookmarks);
+        }
+        categoryBookmarks.push(data);
+      }
     }
     return categorized;
   });

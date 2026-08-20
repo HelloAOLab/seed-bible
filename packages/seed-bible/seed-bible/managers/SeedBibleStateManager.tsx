@@ -400,13 +400,26 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
-import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import {
+  createPlaylistManager,
+  type PlaylistManager,
+  type PlaylistItemData,
+} from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
   DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
+import {
+  AIBibleVerseRefSchema,
+  convertToPlaylistItem,
+  GeneratedPlaylistSchema,
+  generateFunctionTool,
+} from "./AIManager";
+import { z } from "zod";
+import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
+import { captureEvent } from "./Utils";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -425,6 +438,14 @@ export interface CreateSeedBibleStateOptions {
    * IndexedDB; tests pass an in-memory store, and null disables the feature.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
+   * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
+   * instance already fetched. The client uses this to seed its own API cache
+   * with whatever the server already fetched for the SSR render — see
+   * `readInjectedApiResponseSnapshot` in `app/apiResponseSeed.ts`.
+   */
+  apiResponseSnapshot?: Record<string, unknown>;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -453,6 +474,9 @@ export function createSeedBibleState(
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
+  if (options.apiResponseSnapshot) {
+    api.seedResponseCache(options.apiResponseSnapshot);
+  }
   const i18n = createI18nManager(
     navigation,
     options.config?.acceptedLanguages ?? []
@@ -487,7 +511,8 @@ export function createSeedBibleState(
     i18n,
     login,
     discover,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -502,14 +527,15 @@ export function createSeedBibleState(
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login);
+  const annotations = createAnnotationsManager(os, login, tabs, discover);
   const sessions = createSessionsManager(
     os,
     data,
     login,
     highlights,
     i18n,
-    readingExtensions
+    readingExtensions,
+    () => annotations
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
@@ -656,7 +682,9 @@ export function createSeedBibleState(
     isMobile,
     modals,
     i18n,
-    readingExtensions
+    readingExtensions,
+    discover,
+    chats
   );
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
@@ -1203,10 +1231,7 @@ export function createSeedBibleState(
     }, 5000);
 
     const posthogTimeoutId = setTimeout(() => {
-      if (typeof posthog === "undefined" || !posthog) {
-        return;
-      }
-      posthog?.capture("user_chapter_read", {
+      captureEvent("user_chapter_read", {
         translationId: chapter.translation.id,
         bookId: chapter.book.id,
         chapter: String(chapter.chapter.number),
@@ -1562,11 +1587,9 @@ export function createSeedBibleState(
         ? getSessionStartPosition(activeReadingState)
         : undefined
     );
-    if (typeof posthog !== "undefined" && posthog) {
-      posthog.capture("create_session", {
-        sessionId: session.id,
-      });
-    }
+    captureEvent("create_session", {
+      sessionId: session.id,
+    });
     locallyHostedSessionIds.add(session.id);
     wrapSessionLifecycle(session);
     // Auto-publish: the moment a shared tab is created, other logged-in
@@ -1581,11 +1604,9 @@ export function createSeedBibleState(
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
-    if (typeof posthog !== "undefined" && posthog) {
-      posthog.capture("join_session", {
-        sessionId: session.id,
-      });
-    }
+    captureEvent("join_session", {
+      sessionId: session.id,
+    });
     wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
     tabsLayout.setSelectedSlotTab(tab.id);
@@ -1680,7 +1701,6 @@ export function createSeedBibleState(
     );
   });
 
-  // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
     if (!playlists.view.peek()) {
       playlists.view.value = playlists.playing.peek()
@@ -1702,6 +1722,125 @@ export function createSeedBibleState(
         : "discover";
     }
   });
+
+  /**
+   * Builds the AI tools that let a provider interact with the core app state.
+   */
+  const getCoreTools = () => {
+    const goToReference = generateFunctionTool({
+      name: "goToReference",
+      description:
+        "Navigates the user to a specific book, chapter, and verse in the Bible.",
+      parameters: AIBibleVerseRefSchema,
+      function: async (args) => {
+        const readingState = currentReadingState.peek();
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        await readingState.tab.readingState.selectTranslationAndChapter(
+          readingState.translationId,
+          args.ref.bookId,
+          args.ref.chapter,
+          {
+            scrollToVerse: args.ref.verse ?? undefined,
+          }
+        );
+
+        if (args.ref.verse) {
+          readingState.tab.readingState.decorateVerses(
+            args.ref.bookId,
+            args.ref.chapter,
+            args.ref.endVerse
+              ? range(args.ref.verse, args.ref.endVerse + 1)
+              : args.ref.verse,
+            {
+              className: "sb-verse-decoration-diminish",
+              containerClassName: "sb-chapter-decoration-diminish",
+              removeAfterMs: 3000,
+            }
+          );
+        }
+
+        return "success";
+      },
+    });
+
+    const searchVerses = generateFunctionTool({
+      name: "searchVerses",
+      description:
+        "Searches the Bible for verses matching the given query. Returns a list of results.",
+      parameters: z.object({
+        q: z.string().describe("The search query to look for in the Bible."),
+      }),
+      function: async (args) => {
+        const readingState = currentReadingState.peek()?.tab.readingState;
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        const activeLanguage =
+          readingState?.translation.value?.language ??
+          readingState?.defaultTranslation.language ??
+          getDefaultTranslationForLanguage(i18n.defaultLanguage).language;
+        const results = await search.searchVerses(
+          activeLanguage,
+          readingState.translationId.peek(),
+          args.q
+        );
+
+        const verses = (results.hits ?? []).map((hit) => ({
+          translationId: hit.document.translation,
+          translationLabel: hit.document.translation,
+          bookId: hit.document.book,
+          bookLabel: hit.document.book,
+          chapterNumber: hit.document.chapter,
+          verseNumber: hit.document.verse,
+          text: hit.document.text,
+        }));
+
+        return JSON.stringify(verses);
+      },
+    });
+
+    const createPlaylist = generateFunctionTool({
+      name: "createPlaylist",
+      description:
+        "Opens the playlist editor pre-filled with the given generated playlist so the user can review, edit, and save it themselves. Does not play or save anything on its own. Each call opens a brand-new, independent playlist that has no relationship to any playlist discussed earlier in this conversation (including one already open in the editor) — it is never used to modify an existing playlist.",
+      parameters: GeneratedPlaylistSchema,
+      function: async (args) => {
+        let items: PlaylistItemData[];
+        try {
+          items = args.items.map((i) => convertToPlaylistItem(i));
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+
+        const editing = await playlists.createNewPlaylist({
+          title: args.title,
+          description: args.description,
+          items,
+        });
+        if (!editing) {
+          return "error: could not open the playlist editor — sign-in was required and did not complete";
+        }
+
+        return "success";
+      },
+    });
+
+    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
+  };
+
+  const enableCoreChatContext = () => {
+    chats.addContext({
+      id: "core",
+      label: { key: "seed-bible", defaultValue: "Seed Bible" },
+      tools: getCoreTools(),
+    });
+  };
+
+  enableCoreChatContext();
 
   // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
   // // load that playlist and start playing it immediately. The locator's `id` is
@@ -1842,8 +1981,18 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: () => <DiscoverPaneTitle playlists={playlists} />,
-        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        title: () => (
+          <DiscoverPaneTitle
+            playlists={playlists}
+            annotations={annotations}
+            tabs={tabs}
+            chats={chats}
+            openChatPanel={sidebar.openChatPanel}
+          />
+        ),
+        header: () => (
+          <DiscoverPaneHeader playlists={playlists} annotations={annotations} />
+        ),
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -1858,6 +2007,7 @@ export function createSeedBibleState(
             state={state}
             tabs={tabs}
             playlists={playlists}
+            annotations={annotations}
             modals={modals}
             toast={state.app.toast}
           />
