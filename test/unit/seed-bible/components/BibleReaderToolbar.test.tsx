@@ -1002,6 +1002,38 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
   });
 
+  it("expands the sheet when dragged from the panel background, not just the handle", async () => {
+    await renderSheet();
+    // The panel element itself, rather than the handle or the swipe hint —
+    // stands in for a finger landing on empty space in the sheet.
+    const panel = sheet()!;
+
+    await press(panel, 500);
+    await moveTo(panel, 460);
+
+    expect(overflow()?.style.height).toBe("40px");
+    expect(sheet()?.className).toContain("sb-verse-sheet-dragging");
+
+    // Past halfway, so releasing settles it fully open.
+    await moveTo(panel, 400);
+    await release(panel, 400);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+  });
+
+  it("does not start the sheet drag when pressing down on a toolbar button", async () => {
+    await renderSheet();
+    const closeButton = container.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-close"
+    );
+    if (!closeButton) throw new Error("The close button did not render.");
+
+    await press(closeButton, 500);
+    await moveTo(closeButton, 460);
+
+    expect(overflow()?.style.height).toBe("0px");
+    expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
+  });
+
   it("keeps the closed drawer's actions out of the tab order", async () => {
     const handle = await renderSheet();
 
