@@ -316,8 +316,7 @@
   gap: 0.5rem;
 }
 
-/* Playlist play-history rows: same shell as playlist items, with an expandable
-   details block for duration / last item / continue-or-replay. */
+/* Playlist play-history rows: same shell as playlist items, grouped by day. */
 .sb-playlist-history-day-group {
   display: flex;
   flex-direction: column;
@@ -338,99 +337,9 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-.sb-playlist-continue-item {
-  cursor: default;
-}
-
-.sb-playlist-history-item {
-  padding: 0;
-  gap: 0;
+.sb-playlist-history-item .sb-discover-item-description {
   overflow: hidden;
-}
-
-.sb-playlist-history-item-header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.sb-playlist-history-item-header:hover {
-  background: color-mix(in srgb, var(--sb-divider-color), transparent 50%);
-}
-
-.sb-playlist-history-chevron {
-  flex: 0 0 auto;
-  font-size: 1.25rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-playlist-history-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 10px 10px;
-  border-top: 1px solid var(--sb-divider-color);
-  padding-top: 8px;
-}
-
-.sb-playlist-history-detail-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.sb-playlist-history-detail-label {
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-}
-
-.sb-playlist-history-detail-value {
-  font-size: 0.8125rem;
-  color: var(--sb-font-color);
-}
-
-.sb-playlist-history-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.sb-playlist-history-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  align-self: flex-start;
-}
-
-.sb-playlist-history-action .material-symbols-outlined {
-  font-size: 1rem;
-}
-
-.sb-playlist-history-remove {
-  border: none;
-  background: transparent;
-  padding: 4px 0;
-  font-size: 0.75rem;
-  font-family: inherit;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.sb-playlist-history-remove:hover {
-  color: var(--sb-font-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }

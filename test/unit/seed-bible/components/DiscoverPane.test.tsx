@@ -2320,7 +2320,7 @@ describe("DiscoverPaneTitle", () => {
     );
   });
 
-  it("lists playlist history and expands to show duration, progress, and Continue", async () => {
+  it("lists playlist history with status, play to continue, and no Continue listening section", async () => {
     const entry = createHistoryEntry();
     const { playlists, continueFromHistory, replayFromHistory } =
       createMockPlaylists({
@@ -2345,37 +2345,35 @@ describe("DiscoverPaneTitle", () => {
       );
     });
 
-    const header = container.querySelector(
-      ".sb-playlist-history-item-header"
-    ) as HTMLButtonElement;
-    expect(header).not.toBeNull();
-    expect(header.querySelector(".sb-discover-item-title")?.textContent).toBe(
+    expect(container.textContent).not.toContain("Continue listening");
+    const item = container.querySelector(
+      ".sb-playlist-history-item"
+    ) as HTMLLIElement;
+    expect(item).not.toBeNull();
+    expect(item.querySelector(".sb-discover-item-title")?.textContent).toBe(
       "Shared Study"
     );
+    expect(
+      item.querySelector(".sb-discover-item-description")?.textContent
+    ).toMatch(/50% complete/);
+    expect(
+      item.querySelector(".sb-discover-item-description")?.textContent
+    ).toContain("JHN 3:16");
     expect(container.querySelector(".sb-playlist-history-details")).toBeNull();
 
-    act(() => {
-      header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    const details = container.querySelector(".sb-playlist-history-details");
-    expect(details).not.toBeNull();
-    expect(details?.textContent).toContain("1m 5s");
-    expect(details?.textContent).toContain("50%");
-
-    const action = details?.querySelector(
-      ".sb-playlist-history-action"
+    const play = item.querySelector(
+      ".sb-discover-item-play"
     ) as HTMLButtonElement;
-    expect(action?.textContent).toContain("Continue");
+    expect(play.getAttribute("aria-label")).toBe("Continue");
 
     await act(async () => {
-      action.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(continueFromHistory).toHaveBeenCalledWith(entry);
     expect(replayFromHistory).not.toHaveBeenCalled();
   });
 
-  it("shows Replay when a history entry is complete", async () => {
+  it("replays a completed history entry from the play button", async () => {
     const entry = createHistoryEntry({
       currentStep: 3,
       totalSteps: 4,
@@ -2403,89 +2401,21 @@ describe("DiscoverPaneTitle", () => {
       );
     });
 
-    act(() => {
-      container
-        .querySelector(".sb-playlist-history-item-header")!
-        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    const action = container.querySelector(
-      ".sb-playlist-history-action"
+    const play = container.querySelector(
+      ".sb-playlist-history-item .sb-discover-item-play"
     ) as HTMLButtonElement;
-    expect(action.textContent).toContain("Replay");
+    expect(play.getAttribute("aria-label")).toBe("Replay");
 
     await act(async () => {
-      action.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     expect(replayFromHistory).toHaveBeenCalledWith(entry);
     expect(continueFromHistory).not.toHaveBeenCalled();
   });
 
-  it("shows Continue listening for incomplete sessions and Remove from history", async () => {
-    const now = Date.now();
-    const entry = createHistoryEntry({
-      startedAtMs: now,
-      endedAtMs: now + 65_000,
-      updatedAtMs: now + 65_000,
-    });
-    const { playlists, continueFromHistory, removePlayHistory } =
-      createMockPlaylists({
-        userPlaylistHistory: [entry],
-      });
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-    const { annotations } = createMockAnnotations();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          annotations={annotations}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    expect(container.textContent).toContain("Continue listening");
-    expect(container.textContent).toContain("Today");
-    const continuePlay = container.querySelector(
-      ".sb-playlist-continue-item .sb-discover-item-play"
-    ) as HTMLButtonElement;
-    expect(continuePlay).not.toBeNull();
-
-    await act(async () => {
-      continuePlay.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(continueFromHistory).toHaveBeenCalledWith(entry);
-
-    act(() => {
-      container
-        .querySelector(".sb-playlist-history-item-header")!
-        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    const remove = container.querySelector(
-      ".sb-playlist-history-remove"
-    ) as HTMLButtonElement;
-    expect(remove?.textContent).toContain("Remove from history");
-
-    await act(async () => {
-      remove.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(removePlayHistory).toHaveBeenCalledWith(entry);
-  });
-
-  it("hides Continue listening when every session is complete", () => {
-    const entry = createHistoryEntry({
-      currentStep: 3,
-      totalSteps: 4,
-    });
-    const { playlists } = createMockPlaylists({
+  it("removes a history session from the overflow menu", async () => {
+    const entry = createHistoryEntry();
+    const { playlists, removePlayHistory } = createMockPlaylists({
       userPlaylistHistory: [entry],
     });
     const tabs = createMockTabs();
@@ -2507,9 +2437,17 @@ describe("DiscoverPaneTitle", () => {
       );
     });
 
-    expect(container.querySelector(".sb-playlist-continue-item")).toBeNull();
-    expect(container.textContent).toContain("Playlist history");
-    expect(container.textContent).toContain("Shared Study");
+    const remove = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ).find((el) => el.textContent?.includes("Remove from history")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(remove).toBeDefined();
+
+    await act(async () => {
+      remove!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(removePlayHistory).toHaveBeenCalledWith(entry);
   });
 
   function renderAnnotationTitle(editing: Annotation) {

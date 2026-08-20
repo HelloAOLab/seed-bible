@@ -1,6 +1,5 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
-import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
 import type {
@@ -9,12 +8,9 @@ import type {
   PlaylistPlayHistory,
 } from "../../managers/PlaylistManager";
 import {
-  formatPlaylistPlayDurationMs,
   groupPlaylistPlayHistoryByDay,
   isPlaylistPlayHistoryComplete,
-  latestIncompletePlayHistoryByPlaylist,
   playlistPlayHistoryDayKind,
-  playlistPlayHistoryDisplayDurationMs,
   playlistPlayHistoryPercent,
 } from "../../managers/PlaylistManager";
 import { effect, useSignal } from "@preact/signals";
@@ -340,13 +336,6 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         toast={props.toast}
       />
 
-      <ContinueListeningSection
-        history={playlistHistory}
-        playlists={playlists}
-        tabs={tabs}
-        toast={props.toast}
-      />
-
       <PlaylistHistorySection
         history={playlistHistory}
         playlists={playlists}
@@ -491,8 +480,8 @@ function PlaylistSection({
 
 /**
  * Past play sessions for playlists the user has opened (including shared ones).
- * Rows match the Discover playlist list; expanding one shows duration, last
- * item + progress, and Continue or Replay.
+ * Rows match the Discover playlist list: play resumes or restarts, and a
+ * menu removes the session from history.
  */
 function playlistTitle(
   entry: PlaylistPlayHistory,
@@ -540,89 +529,22 @@ function formatHistorySessionTime(
   return formatter.format(new Date(startedAtMs));
 }
 
-function ContinueListeningSection({
-  history,
-  playlists,
-  tabs,
-  toast,
-}: {
-  history: PlaylistPlayHistory[];
-  playlists: PlaylistManager;
-  tabs: TabsManager;
-  toast: SeedBibleState["app"]["toast"];
-}) {
-  const { t } = useI18n();
-  const resumeRows = latestIncompletePlayHistoryByPlaylist(history);
-  if (resumeRows.length === 0) {
-    return null;
-  }
-
-  const selectedTab =
-    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
-  const books = selectedTab?.readingState.translationBooks.value?.books ?? [];
-  const resolveBookName = (bookId: string): string => {
-    const book = books.find((b) => b.id === bookId);
-    return book?.name ?? book?.commonName ?? bookId;
-  };
-
-  return (
-    <DiscoverSection
-      title={t("continue-listening", { defaultValue: "Continue listening" })}
-    >
-      <ul className="sb-discover-list">
-        {resumeRows.map((entry) => {
-          const percent = Math.round(playlistPlayHistoryPercent(entry) * 100);
-          const lastLabel = entry.lastItem
-            ? playlistItemLabel(entry.lastItem, t, resolveBookName)
-            : null;
-          return (
-            <li
-              key={entry.id}
-              className="sb-discover-item sb-discover-item--row sb-playlist-continue-item"
-              dir="auto"
-            >
-              <div className="sb-discover-item-main">
-                <span className="sb-discover-item-title">
-                  {playlistTitle(entry, t)}
-                </span>
-                <span className="sb-discover-item-description">
-                  {lastLabel
-                    ? t("playlist-history-last-item-progress", {
-                        defaultValue: "{{item}} · {{percent}}%",
-                        item: lastLabel,
-                        percent,
-                      })
-                    : t("playlist-history-progress-summary", {
-                        defaultValue: "{{percent}}% complete",
-                        percent,
-                      })}
-                </span>
-              </div>
-              <button
-                type="button"
-                className="sb-discover-item-play"
-                aria-label={t("playlist-history-continue", {
-                  defaultValue: "Continue",
-                })}
-                onClick={() => {
-                  void playlists.continueFromHistory(entry).catch(() => {
-                    toast(
-                      t("playlist-history-open-failed", {
-                        defaultValue:
-                          "Couldn't open that playlist. It may have been deleted.",
-                      })
-                    );
-                  });
-                }}
-              >
-                <MaterialIcon>play_arrow</MaterialIcon>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </DiscoverSection>
-  );
+function playFromHistory(
+  playlists: PlaylistManager,
+  entry: PlaylistPlayHistory,
+  toast: SeedBibleState["app"]["toast"],
+  t: ReturnType<typeof useI18n>["t"]
+): void {
+  const action = isPlaylistPlayHistoryComplete(entry)
+    ? playlists.replayFromHistory(entry)
+    : playlists.continueFromHistory(entry);
+  void action.catch(() => {
+    toast(
+      t("playlist-history-open-failed", {
+        defaultValue: "Couldn't open that playlist. It may have been deleted.",
+      })
+    );
+  });
 }
 
 function PlaylistHistorySection({
@@ -637,7 +559,6 @@ function PlaylistHistorySection({
   toast: SeedBibleState["app"]["toast"];
 }) {
   const { t, language } = useI18n();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const dayGroups = groupPlaylistPlayHistoryByDay(history);
 
   const selectedTab =
@@ -667,7 +588,6 @@ function PlaylistHistorySection({
             </h4>
             <ul className="sb-discover-list">
               {group.entries.map((entry) => {
-                const expanded = expandedId === entry.id;
                 const percent = Math.round(
                   playlistPlayHistoryPercent(entry) * 100
                 );
@@ -679,119 +599,76 @@ function PlaylistHistorySection({
                   entry.startedAtMs,
                   language
                 );
+                const summary = lastLabel
+                  ? t("playlist-history-session-summary", {
+                      defaultValue:
+                        "{{time}} - {{percent}}% complete - {{item}}",
+                      time: sessionTime,
+                      percent,
+                      item: lastLabel,
+                    })
+                  : t("playlist-history-session-summary-no-item", {
+                      defaultValue: "{{time}} - {{percent}}% complete",
+                      time: sessionTime,
+                      percent,
+                    });
 
                 return (
                   <li
                     key={entry.id}
-                    className={
-                      "sb-discover-item sb-playlist-history-item" +
-                      (expanded ? " sb-playlist-history-item--expanded" : "")
-                    }
+                    className="sb-discover-item sb-discover-item--row sb-playlist-item sb-playlist-history-item"
                     dir="auto"
+                    onClick={() => playFromHistory(playlists, entry, toast, t)}
                   >
+                    <div className="sb-discover-item-main">
+                      <span className="sb-discover-item-title">
+                        {playlistTitle(entry, t)}
+                      </span>
+                      <span className="sb-discover-item-description">
+                        {summary}
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      className="sb-playlist-history-item-header"
-                      aria-expanded={expanded}
-                      onClick={() =>
-                        setExpandedId((current) =>
-                          current === entry.id ? null : entry.id
-                        )
+                      className="sb-discover-item-play"
+                      aria-label={
+                        complete
+                          ? t("playlist-history-replay", {
+                              defaultValue: "Replay",
+                            })
+                          : t("playlist-history-continue", {
+                              defaultValue: "Continue",
+                            })
                       }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playFromHistory(playlists, entry, toast, t);
+                      }}
                     >
-                      <div className="sb-discover-item-main">
-                        <span className="sb-discover-item-title">
-                          {playlistTitle(entry, t)}
-                        </span>
-                        <span className="sb-discover-item-description">
-                          {t("playlist-history-session-summary", {
-                            defaultValue: "{{time}} · {{percent}}% complete",
-                            time: sessionTime,
-                            percent,
-                          })}
-                        </span>
-                      </div>
-                      <MaterialIcon className="sb-playlist-history-chevron">
-                        {expanded ? "expand_less" : "expand_more"}
-                      </MaterialIcon>
+                      <MaterialIcon>play_arrow</MaterialIcon>
                     </button>
-
-                    {expanded ? (
-                      <div className="sb-playlist-history-details">
-                        <div className="sb-playlist-history-detail-row">
-                          <span className="sb-playlist-history-detail-label">
-                            {t("playlist-history-duration", {
-                              defaultValue: "Time played",
-                            })}
-                          </span>
-                          <span className="sb-playlist-history-detail-value">
-                            {formatPlaylistPlayDurationMs(
-                              playlistPlayHistoryDisplayDurationMs(entry)
-                            )}
-                          </span>
-                        </div>
-                        <div className="sb-playlist-history-detail-row">
-                          <span className="sb-playlist-history-detail-label">
-                            {t("playlist-history-last-item", {
-                              defaultValue: "Last item",
-                            })}
-                          </span>
-                          <span className="sb-playlist-history-detail-value">
-                            {lastLabel
-                              ? t("playlist-history-last-item-progress", {
-                                  defaultValue: "{{item}} · {{percent}}%",
-                                  item: lastLabel,
-                                  percent,
-                                })
-                              : t("playlist-history-progress-summary", {
-                                  defaultValue: "{{percent}}% complete",
-                                  percent,
-                                })}
-                          </span>
-                        </div>
-                        <div className="sb-playlist-history-actions">
-                          <button
-                            type="button"
-                            className="sb-discover-create sb-playlist-history-action"
-                            onClick={() => {
-                              const action = complete
-                                ? playlists.replayFromHistory(entry)
-                                : playlists.continueFromHistory(entry);
-                              void action.catch(() => {
-                                toast(
-                                  t("playlist-history-open-failed", {
-                                    defaultValue:
-                                      "Couldn't open that playlist. It may have been deleted.",
-                                  })
-                                );
-                              });
-                            }}
-                          >
-                            <MaterialIcon>
-                              {complete ? "replay" : "play_arrow"}
-                            </MaterialIcon>
-                            {complete
-                              ? t("playlist-history-replay", {
-                                  defaultValue: "Replay",
-                                })
-                              : t("playlist-history-continue", {
-                                  defaultValue: "Continue",
-                                })}
-                          </button>
-                          <button
-                            type="button"
-                            className="sb-playlist-history-remove"
-                            onClick={() => {
-                              void playlists.removePlayHistory(entry);
-                            }}
-                          >
-                            {t("playlist-history-remove", {
-                              defaultValue: "Remove from history",
-                            })}
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
+                    <ContextMenuWithButton
+                      buttonClassName="sb-discover-item-menu"
+                      aria-label={t("playlist-history-options", {
+                        defaultValue: "Playlist history options",
+                      })}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ContextMenuItem
+                        className="sb-context-menu-item--danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void playlists.removePlayHistory(entry);
+                        }}
+                      >
+                        <MaterialIcon className="sb-context-menu-item-icon">
+                          delete
+                        </MaterialIcon>
+                        {t("playlist-history-remove", {
+                          defaultValue: "Remove from history",
+                        })}
+                      </ContextMenuItem>
+                    </ContextMenuWithButton>
                   </li>
                 );
               })}

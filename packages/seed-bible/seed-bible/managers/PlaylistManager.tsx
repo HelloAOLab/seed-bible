@@ -209,8 +209,8 @@ export function retainPlaylistPlayHistory(
 }
 
 /**
- * Latest incomplete session per playlist, newest-first. Powers the Discover
- * "Continue listening" strip so resume is not buried in the full log.
+ * Latest incomplete session per playlist, newest-first. Useful for a resume
+ * list derived from the full session log.
  */
 export function latestIncompletePlayHistoryByPlaylist(
   entries: PlaylistPlayHistory[]
