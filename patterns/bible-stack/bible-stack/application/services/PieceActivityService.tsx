@@ -653,6 +653,7 @@ export class PieceActivityService implements PieceActivityServicePort {
         color: color ?? "#ffffff",
         direction,
         container,
+        notification: container.activityNotification,
       });
 
     container.attachActivityNotification(newNotification);
