@@ -1087,6 +1087,7 @@ export const bootstrapExtension = () => {
   });
 
   const stackPresenceNavigationService = new StackPresenceNavigationService({
+    loggerPort: loggerAdapter,
     bibleDataRepositoryPort: bibleDataRepository,
     pieceAdapterPort: pieceAdapter,
     pieceDataRepositoryPort: pieceDataRepository,

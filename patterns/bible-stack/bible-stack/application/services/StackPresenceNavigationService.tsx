@@ -30,8 +30,10 @@ import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
+import type { LoggerPort } from "../ports/in/Logger";
 
 interface ServiceParams {
+  loggerPort: LoggerPort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   presenceProviderPort: PresenceProviderPort;
   pieceAdapterPort: PieceAdapterPort;
@@ -59,6 +61,7 @@ interface NavigationTargets {
 }
 
 export class StackPresenceNavigationService implements StackPresenceNavigationServicePort {
+  #loggerPort: ServiceParams["loggerPort"];
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
   #presenceProviderPort: ServiceParams["presenceProviderPort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
@@ -78,6 +81,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   #arrangementServicePort: ServiceParams["arrangementServicePort"];
 
   constructor({
+    loggerPort,
     bibleDataRepositoryPort,
     presenceProviderPort,
     pieceAdapterPort,
@@ -94,6 +98,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     explodedViewServicePort,
     arrangementServicePort,
   }: ServiceParams) {
+    this.#loggerPort = loggerPort;
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
     this.#presenceProviderPort = presenceProviderPort;
     this.#pieceAdapterPort = pieceAdapterPort;
@@ -144,30 +149,38 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#isUpdateQueued = false;
     this.#isThereAnOngoingUpdate = true;
 
-    const { chaptersToDeselect, chaptersToSelectDirectly, chapterToFocus } =
-      this.#determineNavigationTargets(ativeReadingInstance);
+    try {
+      const { chaptersToDeselect, chaptersToSelectDirectly, chapterToFocus } =
+        this.#determineNavigationTargets(ativeReadingInstance);
 
-    const animations: Promise<void>[] = [
-      ...chaptersToSelectDirectly.map((data) =>
-        this.#chapterSelectionServicePort.trySelectChapter({
-          data,
-          bookData: undefined,
-        })
-      ),
-      ...chaptersToDeselect.map((data) =>
-        this.#chapterSelectionServicePort.deselectChapter({ data })
-      ),
-    ];
+      const animations: Promise<void>[] = [
+        ...chaptersToSelectDirectly.map((data) =>
+          this.#chapterSelectionServicePort.trySelectChapter({
+            data,
+            bookData: undefined,
+          })
+        ),
+        ...chaptersToDeselect.map((data) =>
+          this.#chapterSelectionServicePort.deselectChapter({ data })
+        ),
+      ];
 
-    if (chapterToFocus) {
-      animations.push(this.#navigateToChapter(chapterToFocus));
+      if (chapterToFocus) {
+        animations.push(this.#navigateToChapter(chapterToFocus));
+      }
+
+      await (animations.length > 0
+        ? Promise.all(animations)
+        : this.#awaiterPort.sleep(1));
+    } catch (error) {
+      this.#loggerPort.error(
+        "StackPresenceNavigationService: update failed",
+        error
+      );
+    } finally {
+      this.#isThereAnOngoingUpdate = false;
     }
 
-    await (animations.length > 0
-      ? Promise.all(animations)
-      : this.#awaiterPort.sleep(1));
-
-    this.#isThereAnOngoingUpdate = false;
     if (this.#isUpdateQueued) {
       this.update();
     }
