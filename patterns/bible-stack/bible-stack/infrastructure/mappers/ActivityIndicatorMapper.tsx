@@ -26,7 +26,7 @@ export class ActivityIndicatorMapper {
       );
     }
     // @ts-expect-error TODO: Locate index at the indicatorBot's visual state
-    if (!bot.tags.index) {
+    if (typeof bot.tags.index !== "number") {
       throw new Error(
         `ActivityIndicatorMapper: bot.tags.index not defined at toDomain`
       );
