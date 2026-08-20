@@ -179,9 +179,7 @@ export class PieceLabelService<
     pacing: ShowSequencePacing = "Regular"
   ): Promise<void> {
     const labelData = this.getPieceLabel(piece);
-    if (!labelData) {
-      throw new Error(`PieceLabelService: labelData not found at hideLabel`);
-    }
+    if (!labelData) return;
 
     labelData.beginHiding();
     try {
