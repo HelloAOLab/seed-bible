@@ -741,7 +741,7 @@ describe("FloatingChatPanel", () => {
     ).not.toBeNull();
   });
 
-  it("shows no AI context button when there are no active contexts", () => {
+  it("still shows the AI context button (for its Settings entry) when there are no active contexts", () => {
     const { state } = createMockFloatingChatPanelState({ activeContexts: [] });
 
     act(() => {
@@ -750,7 +750,7 @@ describe("FloatingChatPanel", () => {
 
     expect(
       container.querySelector(".sb-floating-chat-header-ai-context-button")
-    ).toBeNull();
+    ).not.toBeNull();
   });
 
   it("shows the AI context button with no count badge for a single active context", () => {

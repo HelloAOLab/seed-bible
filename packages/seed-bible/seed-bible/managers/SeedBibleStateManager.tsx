@@ -82,6 +82,7 @@ import {
   type ChatSession,
   type ChatsManager,
 } from "./ChatsManager";
+import { createMCPManager, type MCPManager } from "./MCPManager";
 import {
   createSessionsManager,
   isSessionHost,
@@ -331,6 +332,8 @@ export interface SeedBibleState {
   annotations: AnnotationsManager;
   /** Chat session manager for in-app chat state. */
   chats: ChatsManager;
+  /** MCP server configuration and connection manager for AI chat tool-calling. */
+  mcp: MCPManager;
   /** Shared reading sessions manager. */
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
@@ -500,6 +503,7 @@ export function createSeedBibleState(
     undefined
   );
   const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
+  const mcp = createMCPManager(os, login, chats);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
   const readingExtensions = createBibleReadingExtensionManager();
@@ -1903,6 +1907,7 @@ export function createSeedBibleState(
     bookmarks,
     annotations,
     chats,
+    mcp,
     sessions,
     modals,
     settings,

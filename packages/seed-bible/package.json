@@ -25,6 +25,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
     "@casual-simulation/aux-common": "catalog:",
     "@casual-simulation/aux-websocket": "catalog:",
     "@casual-simulation/websocket": "catalog:",

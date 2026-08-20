@@ -28,6 +28,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
+import { openAIChatSettingsModal } from "../AIChatSettingsModal/AIChatSettingsModal";
 
 interface SearchResult {
   id: string;
@@ -895,8 +896,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           </ContextMenuWithButton>
         ) : null}
 
-        {state.chats.activeContexts.value.length > 0 &&
-        selectedChatHasToolCallingProvider ? (
+        {selectedChatHasToolCallingProvider ? (
           <ContextMenuWithButton
             anchorClassName="sb-floating-chat-header-ai-context-anchor"
             buttonClassName="sb-floating-chat-header-ai-context-button"
@@ -938,6 +938,26 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 </span>
               </ContextMenuItem>
             ))}
+            {state.chats.activeContexts.value.length > 0 && (
+              <div
+                className="sb-floating-chat-ai-context-sep"
+                role="separator"
+              />
+            )}
+            <ContextMenuItem
+              onClick={() => {
+                openAIChatSettingsModal(state);
+              }}
+            >
+              <MaterialIcon className="sb-context-menu-item-icon">
+                settings
+              </MaterialIcon>
+              <span>
+                {t("ai-chat-settings-menu-item", {
+                  defaultValue: "AI Chat Settings",
+                })}
+              </span>
+            </ContextMenuItem>
           </ContextMenuWithButton>
         ) : null}
 
