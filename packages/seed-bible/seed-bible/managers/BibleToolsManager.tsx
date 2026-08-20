@@ -3,8 +3,8 @@ import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
-  bibleLanguageToUiLocale,
   DEFAULT_BOOK_ID,
+  resolveTranslationUiLanguage,
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
   type BibleSelectedVerse,
@@ -541,22 +541,34 @@ function resolveToolPriority<TContext>(
 /**
  * The address of a chapter, for the prev/next chapter links.
  *
- * Built the same way as `canonicalUrl` in `SeedBibleStateManager` — same
- * language derivation, four-segment path, no query string — so every link
- * points straight at the target's canonical URL. Two things fall out of that:
- * a crawler never follows a link only to be told by `<link rel="canonical">`
+ * Built like `canonicalUrl` in `SeedBibleStateManager` — same translation-id
+ * handling, four-segment path, no query string — so every link points
+ * straight at the target's canonical URL. Two things fall out of that: a
+ * crawler never follows a link only to be told by `<link rel="canonical">`
  * that the real address is elsewhere, and `?verse=`, which describes the
- * chapter being left rather than the one being opened, is dropped.
+ * chapter being left rather than the one being opened, is dropped. So is
+ * `?sessionId=` (see the check below).
  *
- * The language follows the *translation*, not the interface, for the reason
- * given at `canonicalUrl`: the same scripture read with a different UI
- * language is still the same page.
+ * Language derivation matches `canonicalUrl` for the first two steps, but
+ * intentionally not the last: see the `fallback` passed to
+ * {@link resolveTranslationUiLanguage} below.
  */
 function chapterToolHref(
   context: BibleToolContext,
   position: ReadingPosition | null
 ): string | null {
   if (!position) {
+    return null;
+  }
+
+  // Dropping `?sessionId=` above is the right call for a crawler, but it's
+  // exactly the param that keeps a reader in a shared session — so the same
+  // omission would silently drop a middle-clicked "Next Chapter" out of the
+  // session it was clicked from, or hand out a "Copy link" address that
+  // doesn't rejoin it. A session is never being crawled, so there's nothing
+  // to lose by falling back to a plain button here, same as an unnamed
+  // position.
+  if (context.sharedSession) {
     return null;
   }
 
@@ -568,10 +580,19 @@ function chapterToolHref(
     context.data?.buildTranslationId(position.translationId) ??
     position.translationId;
 
-  const language =
-    bibleLanguageToUiLocale(context.readingState.translation.value?.language) ??
-    uiLocaleForDefaultTranslation(translationId) ??
-    DEFAULT_UI_LANGUAGE;
+  const language = resolveTranslationUiLanguage({
+    translationLanguage: context.readingState.translation.value?.language,
+    translationId,
+    // Not `i18n.language.value` like `canonicalUrl`'s version of this
+    // fallback: this href names an address you might never actually be
+    // looking at — a crawler, or a chapter opened in a background tab — so
+    // unlike the page you're currently rendering, it shouldn't vary by the
+    // current visitor's UI language. `DEFAULT_UI_LANGUAGE` is also what
+    // `script/lib/sitemap.ts` falls back to for the same reason, so a
+    // translation this can't place stays consistent with what the sitemap
+    // already publishes for it.
+    fallback: DEFAULT_UI_LANGUAGE,
+  });
 
   const path = buildReadingPath({
     language,

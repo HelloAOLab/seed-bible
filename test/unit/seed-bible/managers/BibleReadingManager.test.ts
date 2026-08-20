@@ -3936,3 +3936,67 @@ describe("createBibleReadingState", () => {
     });
   });
 });
+
+describe("SSR readiness deadlines", () => {
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    delete (import.meta.env as { SSR?: boolean }).SSR;
+  });
+
+  it("settles on its own short deadline when the catalog never answers, without waiting for the chapter's longer one", async () => {
+    // This is the bug the dedicated catalog timeout fixes: before it existed,
+    // both latches shared the chapter's 5-second deadline, so a hung catalog
+    // held the whole SSR response open for the full five seconds even though
+    // nothing waiting on it could ever produce a chapter link either way.
+    const responses = createReadingManagerResponseMap();
+    const booksUrl = makeExampleUrl("/api/AAB/books.json");
+    fetchMock.mockImplementation((url: string) => {
+      if (url === booksUrl) {
+        // Never resolves — the catalog request that's still in flight when
+        // its own deadline arrives.
+        return new Promise(() => {});
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return Promise.resolve(response);
+    });
+
+    vi.useFakeTimers();
+    import.meta.env.SSR = true;
+    // A starting position, not the no-args form: that's what makes
+    // construction take the reactive-effect path straight into
+    // `requestContent` (an un-awaited catalog fetch alongside an awaited
+    // chapter fetch) — the actual path this deadline exists for. The no-args
+    // form instead resolves the catalog *before* ever starting the chapter
+    // fetch, in `loadInitialData`, which can't reproduce the race at all.
+    const state = createBibleReadingState(createDataManager(), {
+      initialTranslationId: "AAB",
+      initialBookId: "GEN",
+      initialChapterNumber: 1,
+    });
+
+    try {
+      // Nothing blocks the chapter itself; flush the microtasks its fetch
+      // chain runs on so it can settle before either deadline is reached.
+      await vi.advanceTimersByTimeAsync(0);
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+      expect(state.translationBooks.value).toBeNull();
+      // The chapter settled, but the catalog is still hanging and hasn't hit
+      // its own deadline yet — nothing waiting on both may proceed.
+      expect(state.initialLoadSettled.value).toBe(false);
+
+      // One tick short of the catalog's own deadline: still waiting.
+      await vi.advanceTimersByTimeAsync(999);
+      expect(state.initialLoadSettled.value).toBe(false);
+
+      // The catalog's deadline — not the chapter's separate, longer one.
+      await vi.advanceTimersByTimeAsync(1);
+      expect(state.initialLoadSettled.value).toBe(true);
+    } finally {
+      state.dispose();
+    }
+  });
+});

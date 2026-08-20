@@ -12,7 +12,6 @@ export interface ToolActionElementProps {
   onActivate: () => void;
   className?: string;
   ariaLabel?: string;
-  ariaCurrent?: JSX.AriaAttributes["aria-current"];
   onPointerDown?: JSX.PointerEventHandler<HTMLElement>;
   children?: ComponentChildren;
 }
@@ -44,7 +43,6 @@ export function ToolActionElement({
   onActivate,
   className,
   ariaLabel,
-  ariaCurrent,
   onPointerDown,
   children,
 }: ToolActionElementProps) {
@@ -54,11 +52,29 @@ export function ToolActionElement({
         href={href}
         className={className}
         aria-label={ariaLabel}
-        aria-current={ariaCurrent}
+        // Anchors are draggable by default, which starts a link-drag ghost on
+        // press-and-move — jarring on a button-shaped chevron that used to be
+        // a real `<button>` (never draggable).
+        draggable={false}
         onPointerDown={onPointerDown}
+        onKeyDown={(event: JSX.TargetedKeyboardEvent<HTMLAnchorElement>) => {
+          // A native <a> activates on Enter (as a click) but not Space — only
+          // a <button> does that. This tool used to be a <button>, so Space
+          // has to keep working: a keyboard reader who tabs to "Next Chapter"
+          // and presses Space, as they always could, should still advance.
+          if (event.key !== " " && event.key !== "Spacebar") {
+            return;
+          }
+          event.preventDefault();
+          onActivate();
+        }}
         onClick={(event: JSX.TargetedMouseEvent<HTMLAnchorElement>) => {
           // Leave new-tab/new-window/download intents to the browser — that is
-          // the whole benefit of having a real href here.
+          // the whole benefit of having a real href here. Middle-click never
+          // reaches this handler at all (it fires `auxclick`, not `click`, in
+          // every current browser); the modifier-key checks are what actually
+          // does the work, `button` is just cheap defense against whatever a
+          // future browser or synthetic event does differently.
           if (
             event.metaKey ||
             event.ctrlKey ||
@@ -83,7 +99,6 @@ export function ToolActionElement({
       disabled={disabled}
       className={className}
       aria-label={ariaLabel}
-      aria-current={ariaCurrent}
       onPointerDown={onPointerDown}
       onClick={() => onActivate()}
     >

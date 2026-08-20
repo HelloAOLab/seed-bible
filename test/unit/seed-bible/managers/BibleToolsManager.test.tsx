@@ -1174,5 +1174,19 @@ describe("createBibleToolsManager", () => {
       expect(hrefOf(context, "open-selector")).toBeNull();
       expect(hrefOf(context, "open-search")).toBeNull();
     });
+
+    it("falls back to a button while in a shared session", () => {
+      // A bare path drops `?sessionId=`, which is what keeps a reader in a
+      // shared session — so a real href here would silently open a
+      // middle-clicked "Next Chapter" (or a copied link) outside the
+      // session it was clicked from. A session is never being crawled, so
+      // there's nothing to lose by falling back, same as an unnamed position.
+      const context = createLinkableContext({
+        sharedSession: {} as any,
+      });
+
+      expect(hrefOf(context, "next-chapter")).toBeNull();
+      expect(hrefOf(context, "previous-chapter")).toBeNull();
+    });
   });
 });

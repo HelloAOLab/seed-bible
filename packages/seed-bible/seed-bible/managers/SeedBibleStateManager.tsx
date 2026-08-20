@@ -7,8 +7,7 @@ import {
   type VerseRef,
 } from "../managers/BibleDataManager";
 import {
-  bibleLanguageToUiLocale,
-  uiLocaleForDefaultTranslation,
+  resolveTranslationUiLanguage,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
 import {
@@ -1187,10 +1186,15 @@ export function createSeedBibleState(
     const translationId = data.buildTranslationId(
       readingState.translationId.value
     );
-    const language =
-      bibleLanguageToUiLocale(readingState.translation.value?.language) ??
-      uiLocaleForDefaultTranslation(translationId) ??
-      i18n.language.value;
+    // Falls back to the current UI language, unlike the chapter tool links'
+    // version of this chain (see `resolveTranslationUiLanguage`) — this is
+    // the page actually being rendered right now, so it has a real "current
+    // visitor" to derive one from.
+    const language = resolveTranslationUiLanguage({
+      translationLanguage: readingState.translation.value?.language,
+      translationId,
+      fallback: i18n.language.value,
+    });
 
     const readingPath = buildReadingPath({
       language,

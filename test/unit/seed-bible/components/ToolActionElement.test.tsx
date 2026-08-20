@@ -30,6 +30,18 @@ function click(
   return { defaultPrevented: event.defaultPrevented };
 }
 
+function keyDown(element: Element, key: string): { defaultPrevented: boolean } {
+  const event = new KeyboardEvent("keydown", {
+    bubbles: true,
+    cancelable: true,
+    key,
+  });
+  act(() => {
+    element.dispatchEvent(event);
+  });
+  return { defaultPrevented: event.defaultPrevented };
+}
+
 describe("ToolActionElement", () => {
   it("renders a real link when it has an address", () => {
     render(
@@ -119,6 +131,48 @@ describe("ToolActionElement", () => {
     const { defaultPrevented } = click(container.querySelector("a")!, init);
 
     // Opening in a new tab is the whole point of having a real href.
+    expect(onActivate).not.toHaveBeenCalled();
+    expect(defaultPrevented).toBe(false);
+  });
+
+  it.each([
+    [" ", "the standard key value"],
+    ["Spacebar", "the legacy key value some browsers still send"],
+  ])("activates on Space (%s) the same as a native <button> would", (key) => {
+    // A native <a> only activates on Enter, not Space — only a <button>
+    // does that. This tool used to be a plain <button>, so a keyboard
+    // reader who tabs to it and presses Space, as they always could,
+    // has to keep advancing rather than silently scrolling the page.
+    const onActivate = vi.fn();
+    render(
+      <ToolActionElement href="/en/BSB/john/4" onActivate={onActivate}>
+        <span>icon</span>
+      </ToolActionElement>,
+      container
+    );
+
+    const { defaultPrevented } = keyDown(container.querySelector("a")!, key);
+
+    expect(onActivate).toHaveBeenCalledTimes(1);
+    expect(defaultPrevented).toBe(true);
+  });
+
+  it("ignores non-Space keys on the anchor", () => {
+    const onActivate = vi.fn();
+    render(
+      <ToolActionElement href="/en/BSB/john/4" onActivate={onActivate}>
+        <span>icon</span>
+      </ToolActionElement>,
+      container
+    );
+
+    // Enter is left to the browser's native anchor activation (which fires a
+    // click, already covered above), not this handler.
+    const { defaultPrevented } = keyDown(
+      container.querySelector("a")!,
+      "Enter"
+    );
+
     expect(onActivate).not.toHaveBeenCalled();
     expect(defaultPrevented).toBe(false);
   });

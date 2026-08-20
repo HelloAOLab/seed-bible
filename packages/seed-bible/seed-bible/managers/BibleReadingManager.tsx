@@ -701,6 +701,32 @@ export function uiLocaleForDefaultTranslation(
   return UI_LOCALE_BY_DEFAULT_TRANSLATION_ID.get(translationId) ?? null;
 }
 
+/**
+ * The language segment for a translation's address: its own language when
+ * that maps to a UI locale, then the locale of the hardcoded default
+ * translation for its id, then `fallback`.
+ *
+ * Extracted because this exact two-step chain had landed in more than one
+ * place with a different last-resort `fallback` each time — `canonicalUrl`
+ * falls back to the current UI language (the page being rendered right now
+ * genuinely has one), while the chapter tool links fall back to
+ * `DEFAULT_UI_LANGUAGE` (an href that might be handed to a crawler or opened
+ * in a background tab has no "current" visitor to derive one from). Making
+ * `fallback` an explicit, required argument keeps that difference visible at
+ * each call site instead of a silent drift between near-identical copies.
+ */
+export function resolveTranslationUiLanguage(params: {
+  translationLanguage: string | null | undefined;
+  translationId: string | null | undefined;
+  fallback: string;
+}): string {
+  return (
+    bibleLanguageToUiLocale(params.translationLanguage) ??
+    uiLocaleForDefaultTranslation(params.translationId) ??
+    params.fallback
+  );
+}
+
 function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
   if (mapped?.length) {
@@ -1377,7 +1403,6 @@ export function createBibleReadingState(
   const initialChapterLoadTimer = import.meta.env.SSR
     ? setTimeout(() => {
         initialChapterLoadSettled.value = true;
-        initialCatalogSettled.value = true;
       }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
     : null;
   const clearInitialChapterLoadTimer = () => {
@@ -1387,6 +1412,27 @@ export function createBibleReadingState(
   };
   effectDisposers.push(clearInitialChapterLoadTimer);
 
+  /**
+   * Its own, much shorter deadline — deliberately not the chapter's. A slow
+   * catalog past this point isn't going to produce a link either way, so
+   * there's nothing to gain by holding the whole response open for it; giving
+   * it the 5s chapter deadline instead would mean a hung `books.json` costs a
+   * five-second TTFB on the live host for a page that ends up with no
+   * chapter links regardless of how long it waited.
+   */
+  const SSR_INITIAL_CATALOG_TIMEOUT_MS = 1000;
+  const initialCatalogTimer = import.meta.env.SSR
+    ? setTimeout(() => {
+        initialCatalogSettled.value = true;
+      }, SSR_INITIAL_CATALOG_TIMEOUT_MS)
+    : null;
+  const clearInitialCatalogTimer = () => {
+    if (initialCatalogTimer !== null) {
+      clearTimeout(initialCatalogTimer);
+    }
+  };
+  effectDisposers.push(clearInitialCatalogTimer);
+
   // Latches once the book catalog has landed. Server-side only: the chapter
   // links in the toolbar can only name their target once the catalog says
   // where the current book ends, and the catalog is fetched on a separate,
@@ -1394,11 +1440,13 @@ export function createBibleReadingState(
   // server would race it and usually win, rendering a chapter page with no
   // links out of it — which is precisely what a crawler needs.
   //
-  // Costs close to nothing: that request is issued before the chapter's own
-  // and returns the smaller payload, so it is normally already home.
+  // Costs close to nothing in the common case: that request is issued before
+  // the chapter's own and returns the smaller payload, so it is normally
+  // already home well inside the catalog's own short deadline above.
   effectDisposers.push(
     effect(() => {
       if (translationBooks.value) {
+        clearInitialCatalogTimer();
         initialCatalogSettled.value = true;
       }
     })
@@ -1421,6 +1469,7 @@ export function createBibleReadingState(
         return;
       }
       clearInitialChapterLoadTimer();
+      clearInitialCatalogTimer();
       resolveChapterDataPromise();
     })
   );
