@@ -26,9 +26,9 @@ export const ResumeReadingSection = (props: {
         label={t("resume-reading-loading", {
           defaultValue: "Loading your reading history…",
         })}
-        className="today-resume-card today-resume-card--loading"
+        className="sb-today-resume-card sb-today-resume-card--loading"
       >
-        <div className="today-resume-card-loading-text">
+        <div className="sb-today-resume-card-loading-text">
           <Skeleton shape="line" width="45%" />
           <Skeleton shape="line" width="60%" height="1.5rem" />
         </div>
@@ -38,7 +38,7 @@ export const ResumeReadingSection = (props: {
   }
 
   return (
-    <div className="today-resume-card">
+    <div className="sb-today-resume-card">
       <span>
         {t("resume-reading", { defaultValue: "CONTINUE WHERE YOU LEFT" })}
       </span>
@@ -53,7 +53,7 @@ export const ResumeReadingSection = (props: {
             chapter: lastReading.chapter,
           })
         }
-        className="clickable"
+        className="sb-today-clickable"
       >
         <MaterialIcon>arrow_right_alt</MaterialIcon>
       </button>

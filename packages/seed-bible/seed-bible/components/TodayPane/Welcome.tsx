@@ -55,8 +55,8 @@ export const Welcome = (props: {
   }, [lastTranslationId.value]);
 
   return (
-    <div className={"welcome-screen"}>
-      <h1 className={"welcome-screen-greeting"}>
+    <div className={"sb-today-welcome-screen"}>
+      <h1 className={"sb-today-welcome-screen-greeting"}>
         {username
           ? t("personal-greeting", {
               name: username,
@@ -64,7 +64,7 @@ export const Welcome = (props: {
             })
           : t("anonymous-greeting", { defaultValue: "Welcome!" })}
       </h1>
-      <span className={"welcome-screen-book"}>
+      <span className={"sb-today-welcome-screen-book"}>
         {`${bookNames.value.get("JHN")?.toUpperCase()} 1:1`}
       </span>
       {/*
@@ -73,10 +73,13 @@ export const Welcome = (props: {
         unmapped fallback path renders text straight from the Bible API through
         this same element, and as raw HTML that text was never escaped.
       */}
-      <div className="welcome-screen-verse">
+      <div className="sb-today-welcome-screen-verse">
         {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
           index % 2 === 1 ? (
-            <span className="welcome-screen-verse-highlight" key={index}>
+            <span
+              className="sb-today-welcome-screen-verse-highlight"
+              key={index}
+            >
               {part}
             </span>
           ) : (
@@ -84,9 +87,9 @@ export const Welcome = (props: {
           )
         )}
       </div>
-      <div className={"welcome-screen-navigation"}>
+      <div className={"sb-today-welcome-screen-navigation"}>
         <button
-          className="book-selector-button clickable"
+          className="sb-today-book-selector-button sb-today-clickable"
           type="button"
           onClick={props.onOpenBookSelector}
         >
@@ -100,7 +103,7 @@ export const Welcome = (props: {
           {t("open-bible", { defaultValue: "Open Bible" })}
         </button>
         <button
-          className={"welcome-screen-start-button clickable"}
+          className={"sb-today-welcome-screen-start-button sb-today-clickable"}
           onClick={() =>
             // `onOpenPassage` falls back to the default translation when unset.
             props.onOpenPassage({

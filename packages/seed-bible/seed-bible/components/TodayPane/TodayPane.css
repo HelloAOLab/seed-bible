@@ -1,8 +1,8 @@
-.clickable {
+.sb-today-clickable {
   cursor: pointer;
 }
 
-.book-selector-button {
+.sb-today-book-selector-button {
   border-style: solid;
   border-width: 1px;
   display: flex;
@@ -15,7 +15,7 @@
   font-weight: 600;
 }
 
-.today-container {
+.sb-today-container {
   width: 100%;
   height: 100%;
   display: flex;
@@ -24,7 +24,7 @@
   overflow-y: scroll;
   scrollbar-width: none;
   padding-bottom: 4rem;
-  --seed-bible-icon-url: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAETAQMAAAB6HCwRAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAZQTFRFGRkZAQEBroFsmgAAAAJ0Uk5T/QI5jzPkAAACwUlEQVR4nO2aS5KjMAyGlWHBbjgCNxkfzT4aR+EIWbKgkiEYbEsWNuChk57Wv0mVLH9+ApK64cnKwC1jWAWstQOAOjT0k6HaD4BZyhsGa9kLsN7hiB1sEvBMg9Em6dX0cKaWeveBm9XdOUOTsnk03l0I5FpMaEXuc0uwiAGQNF0BXUaPRyLdneuWPZhZRedpVaNx6Oq62My58ei90swWHFLLbsEBNeQWHNZ8m7sCANC7dVi6bA/nR3osAjRlezjfxb4IUBUewusYyvqDLjuE6RjKDmF6GkqehJeaslOczrEvBFRdIeBmCgEikUgkmj7r94wh159+VI8FWyqKT+tD8Z6KI2Rr2vmh5SJ/zraIrsynDyZjnNUAiYFUlAy8FKQUeBn1K+nquJHwJrShPehf2axt4LqjsRRuMQEXnC9xQiGqpm2+A5+5kg3byHqzALc5fNKbB7hjiJLTnQB3RZqEUwrgzrF9F8BdBHUS4C6CPglwlzbpcynA5C9iGtDlL+LFgD5/ky8G3POPwtcA2tOA4VMA6jRg/P6AR/59IoCfA0i5bACWAMQDxs2JsIBx+Rp4gNm80hzAvckcIPFuY7BrXHHzAANbhDH+bq3O05toBfiIkfNukSGsfNUroA+MuP9Ajzl0BVgByFjHw7HDv/TH/tAo34+IoXE+8dv+xKlKy0yX0y/702UdRSKRSCQSiUQ/RFERWh37Iz6O2mGJ0nd3v6G0YVbzPEComMh7ia87xj2yufzB0DnRac2jAd0b5WL5AO2LYVHoD9gUls02/gcITVk98YGFyctmbf0R9rdp3x0vNHbUpMn4eaXyWg9IOSXazNpfauvfuTT+AbV1k79HUlu/HPD+2vrHlMbPA95f2f5XAH0a8DFVXQG8pzQugC8GiEQikUgkEolEItFl2pGx6GtTHgEIQAACEIAABCCA/w/wF5ZauGWYASsuAAAAAElFTkSuQmCC");
+  --sb-today-seed-bible-icon-url: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAETAQMAAAB6HCwRAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAZQTFRFGRkZAQEBroFsmgAAAAJ0Uk5T/QI5jzPkAAACwUlEQVR4nO2aS5KjMAyGlWHBbjgCNxkfzT4aR+EIWbKgkiEYbEsWNuChk57Wv0mVLH9+ApK64cnKwC1jWAWstQOAOjT0k6HaD4BZyhsGa9kLsN7hiB1sEvBMg9Em6dX0cKaWeveBm9XdOUOTsnk03l0I5FpMaEXuc0uwiAGQNF0BXUaPRyLdneuWPZhZRedpVaNx6Oq62My58ei90swWHFLLbsEBNeQWHNZ8m7sCANC7dVi6bA/nR3osAjRlezjfxb4IUBUewusYyvqDLjuE6RjKDmF6GkqehJeaslOczrEvBFRdIeBmCgEikUgkmj7r94wh159+VI8FWyqKT+tD8Z6KI2Rr2vmh5SJ/zraIrsynDyZjnNUAiYFUlAy8FKQUeBn1K+nquJHwJrShPehf2axt4LqjsRRuMQEXnC9xQiGqpm2+A5+5kg3byHqzALc5fNKbB7hjiJLTnQB3RZqEUwrgzrF9F8BdBHUS4C6CPglwlzbpcynA5C9iGtDlL+LFgD5/ky8G3POPwtcA2tOA4VMA6jRg/P6AR/59IoCfA0i5bACWAMQDxs2JsIBx+Rp4gNm80hzAvckcIPFuY7BrXHHzAANbhDH+bq3O05toBfiIkfNukSGsfNUroA+MuP9Ajzl0BVgByFjHw7HDv/TH/tAo34+IoXE+8dv+xKlKy0yX0y/702UdRSKRSCQSiUQ/RFERWh37Iz6O2mGJ0nd3v6G0YVbzPEComMh7ia87xj2yufzB0DnRac2jAd0b5WL5AO2LYVHoD9gUls02/gcITVk98YGFyctmbf0R9rdp3x0vNHbUpMn4eaXyWg9IOSXazNpfauvfuTT+AbV1k79HUlu/HPD+2vrHlMbPA95f2f5XAH0a8DFVXQG8pzQugC8GiEQikUgkEolEItFl2pGx6GtTHgEIQAACEIAABCCA/w/wF5ZauGWYASsuAAAAAElFTkSuQmCC");
 
   /* A third, more muted text tier than `--sb-secondary-font-color`: the
      resume card deliberately pairs the two, so they are not interchangeable.
@@ -33,7 +33,7 @@
   --sb-today-muted-font-color: #989898;
 }
 
-.seed-bible-icon {
+.sb-today-seed-bible-icon {
   width: 2rem;
   height: 2rem;
   -webkit-mask-size: contain;
@@ -44,19 +44,19 @@
   mask-position: center;
 }
 
-.seed-bible-icon {
-  -webkit-mask-image: var(--seed-bible-icon-url);
-  mask-image: var(--seed-bible-icon-url);
+.sb-today-seed-bible-icon {
+  -webkit-mask-image: var(--sb-today-seed-bible-icon-url);
+  mask-image: var(--sb-today-seed-bible-icon-url);
 }
 
-.today-container .divider {
+.sb-today-container .sb-today-divider {
   width: 100%;
   height: 0.5px;
   background-color: var(--sb-divider-color);
 }
 
-.today-content,
-.welcome-screen {
+.sb-today-content,
+.sb-today-welcome-screen {
   width: 90%;
   max-width: 51.25rem;
   display: flex;
@@ -67,43 +67,45 @@
   gap: 2rem;
 }
 
-.welcome-screen .welcome-screen-greeting,
-.welcome-screen .welcome-screen-book,
-.welcome-screen .welcome-screen-verse {
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting,
+.sb-today-welcome-screen .sb-today-welcome-screen-book,
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
   font-weight: 500;
 }
 
-.welcome-screen .welcome-screen-greeting,
-.welcome-screen .welcome-screen-verse {
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting,
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
   font-size: 1.75rem;
   font-family: var(--sb-book-title-font-family);
 }
 
-.welcome-screen .welcome-screen-greeting,
-.welcome-screen .welcome-screen-book {
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting,
+.sb-today-welcome-screen .sb-today-welcome-screen-book {
   color: var(--sb-today-muted-font-color);
 }
 
-.welcome-screen .welcome-screen-greeting {
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting {
   margin: 0;
   text-box: auto;
 }
 
-.welcome-screen .welcome-screen-book {
+.sb-today-welcome-screen .sb-today-welcome-screen-book {
   font-size: 0.75rem;
 }
 
-.welcome-screen .welcome-screen-verse {
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
   color: var(--sb-font-color);
   line-height: 2.75rem;
   text-align: center;
 }
 
-.welcome-screen .welcome-screen-verse .welcome-screen-verse-highlight {
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-verse
+  .sb-today-welcome-screen-verse-highlight {
   color: var(--sb-primary-color);
 }
 
-.welcome-screen .welcome-screen-navigation {
+.sb-today-welcome-screen .sb-today-welcome-screen-navigation {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -111,7 +113,7 @@
   width: 100%;
 }
 
-.welcome-screen .welcome-screen-navigation > button {
+.sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
   height: 2.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
@@ -124,39 +126,41 @@
   font-weight: 600;
 }
 
-.welcome-screen .welcome-screen-navigation .book-selector-button {
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-navigation
+  .sb-today-book-selector-button {
   background-color: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   border-color: var(--sb-reader-font-color);
 }
 
-.welcome-screen .welcome-screen-start-button {
+.sb-today-welcome-screen .sb-today-welcome-screen-start-button {
   border: none;
   background-color: var(--sb-primary-color);
   color: var(--sb-reader-background);
 }
 
-.welcome-screen .welcome-screen-start-button > span {
+.sb-today-welcome-screen .sb-today-welcome-screen-start-button > span {
   font-size: 1rem;
 }
 
-/* Drag-to-scroll surfaces and clickable chrome only — `user-select`
-   inherits, so a container covers its chips. The blanket `.today-content *`
+/* Drag-to-scroll surfaces and sb-today-clickable chrome only — `user-select`
+   inherits, so a container covers its chips. The blanket `.sb-today-content *`
    this replaced also caught search-result verse text and the resume card's
    reference, which a reader has every reason to want to copy. */
-.today-container .bookmarks-section-container,
-.today-container .timespan-filter-container,
-.today-container .user-filter-container,
-.today-container .reading-history-timeline-container,
-.today-content button {
+.sb-today-container .sb-today-bookmarks-section-container,
+.sb-today-container .sb-today-timespan-filter-container,
+.sb-today-container .sb-today-user-filter-container,
+.sb-today-container .reading-history-timeline-container,
+.sb-today-content button {
   user-select: none;
 }
 
-.today-content h1 {
+.sb-today-content h1 {
   line-height: 2rem;
 }
 
-.today-header {
+.sb-today-header {
   display: grid;
   grid-template-columns: 1fr auto auto;
   grid-template-rows: auto auto;
@@ -165,14 +169,14 @@
   column-gap: 0.5rem;
 }
 
-.today-header > span {
+.sb-today-header > span {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   font-size: 0.75rem;
   color: var(--sb-font-color);
 }
 
-.today-header > h1 {
+.sb-today-header > h1 {
   grid-column: 1 / 2;
   grid-row: 2 / 3;
   margin: 0;
@@ -182,11 +186,11 @@
   color: var(--sb-font-color);
 }
 
-.today-header > h1 > span {
+.sb-today-header > h1 > span {
   color: var(--sb-primary-color);
 }
 
-.today-header > button {
+.sb-today-header > button {
   grid-row: 1 / 3;
   border: none;
   display: flex;
@@ -202,19 +206,19 @@
   color: var(--sb-reader-font-color);
 }
 
-.today-header > button:nth-of-type(1) {
+.sb-today-header > button:nth-of-type(1) {
   grid-column: 2 / 3;
 }
 
-.today-header > button:nth-of-type(2) {
+.sb-today-header > button:nth-of-type(2) {
   grid-column: 3 / 4;
 }
 
-.today-header > button > span {
+.sb-today-header > button > span {
   font-size: 1.25rem;
 }
 
-.today-container .today-resume-card {
+.sb-today-container .sb-today-resume-card {
   width: 100%;
   background-color: var(--sb-secondary-color);
   border-radius: 1rem;
@@ -225,7 +229,7 @@
   grid-template-rows: auto auto;
 }
 
-.today-container .today-resume-card > span {
+.sb-today-container .sb-today-resume-card > span {
   font-size: 0.75rem;
   color: var(--sb-primary-color);
   font-weight: 500;
@@ -233,7 +237,7 @@
   grid-row: 1 / 2;
 }
 
-.today-container .today-resume-card > h1 {
+.sb-today-container .sb-today-resume-card > h1 {
   margin: 0;
   text-box: auto;
   font-size: 1.5rem;
@@ -242,11 +246,11 @@
   grid-row: 2 / 3;
 }
 
-.today-container .today-resume-card > h1 > span {
+.sb-today-container .sb-today-resume-card > h1 > span {
   color: var(--sb-today-muted-font-color);
 }
 
-.today-container .today-resume-card > button {
+.sb-today-container .sb-today-resume-card > button {
   grid-column: 2 / 3;
   grid-row: 1 / 3;
   display: flex;
@@ -260,7 +264,7 @@
   border-radius: 50%;
 }
 
-.today-container .today-resume-card > button > span {
+.sb-today-container .sb-today-resume-card > button > span {
   color: var(--sb-background);
 }
 
@@ -268,21 +272,23 @@
    fetch is in flight so a returning user sees the personalized layout rather
    than the Welcome page. Overrides the card's grid with a simple row so the
    shared <Skeleton> blocks (text stack + round button) mirror the real card. */
-.today-container .today-resume-card--loading {
+.sb-today-container .sb-today-resume-card--loading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.today-container .today-resume-card--loading .today-resume-card-loading-text {
+.sb-today-container
+  .sb-today-resume-card--loading
+  .sb-today-resume-card-loading-text {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   flex: 1;
 }
 
-.today-container .titled-section {
+.sb-today-container .sb-today-titled-section {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -292,18 +298,27 @@
   margin-top: 0.5rem;
 }
 
-.today-container .titled-section .titled-section-header > h5 {
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > h5 {
   font-size: 0.9rem;
   font-weight: 600;
 }
 
-.today-container .titled-section .titled-section-header > h5,
-.today-container .titled-section .titled-section-header > button {
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > h5,
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > button {
   margin: 0;
   color: var(--sb-today-muted-font-color);
 }
 
-.today-container .titled-section .titled-section-header {
+.sb-today-container .sb-today-titled-section .sb-today-titled-section-header {
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -311,7 +326,10 @@
   gap: 0.75rem;
 }
 
-.today-container .titled-section .titled-section-header > button {
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > button {
   font-weight: 400;
   flex-shrink: 0;
   appearance: none;
@@ -323,20 +341,20 @@
   cursor: pointer;
 }
 
-.today-container .search-container {
+.sb-today-container .sb-today-search-container {
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.5rem;
 }
 
-.today-container .search-container .book-selector-button {
+.sb-today-container .sb-today-search-container .sb-today-book-selector-button {
   background-color: var(--sb-secondary-color);
   border-color: var(--sb-primary-color);
   color: var(--sb-secondary-font-color);
 }
 
-.today-container .search-container .today-searchbar {
+.sb-today-container .sb-today-search-container .sb-today-searchbar {
   width: 100%;
   height: 100%;
   border: solid 1px var(--sb-divider-color);
@@ -352,21 +370,27 @@
   position: relative;
 }
 
-.today-container .search-container .today-searchbar > span {
+.sb-today-container .sb-today-search-container .sb-today-searchbar > span {
   color: var(--sb-reader-font-color);
 }
 
-.today-container .search-container .today-searchbar > input {
+.sb-today-container .sb-today-search-container .sb-today-searchbar > input {
   background-color: transparent;
   border: none;
   color: var(--sb-reader-font-color);
 }
 
-.today-container .search-container .today-searchbar > input:focus {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  > input:focus {
   outline: none;
 }
 
-.today-container .search-container .today-searchbar .today-searchbar-dropdown {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown {
   position: absolute;
   width: 100%;
   top: calc(100% + 0.75rem);
@@ -386,29 +410,29 @@
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
 }
 
-.today-container
-  .search-container
-  .today-searchbar
-  .today-searchbar-dropdown
-  .today-searchbar-status {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-status {
   padding: 0.875rem 0.75rem;
   font-size: 0.875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
-.today-container
-  .search-container
-  .today-searchbar
-  .today-searchbar-dropdown
-  .today-searchbar-status-error {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-status-error {
   color: #b42318;
 }
 
-.today-container
-  .search-container
-  .today-searchbar
-  .today-searchbar-dropdown
-  .today-searchbar-result {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -425,51 +449,51 @@
     border-color 0.15s ease;
 }
 
-.today-container
-  .search-container
-  .today-searchbar
-  .today-searchbar-dropdown
-  .today-searchbar-result:hover {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
   border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
 }
 
-.today-container
-  .search-container
-  .today-searchbar
-  .today-searchbar-dropdown
-  .today-searchbar-result-ref {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result-ref {
   font-weight: 700;
   font-size: 0.875rem;
   color: var(--sb-font-color);
 }
 
-.today-container
-  .search-container
-  .today-searchbar
-  .today-searchbar-dropdown
-  .today-searchbar-result-text {
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result-text {
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
 
-.today-container .today-section-card {
+.sb-today-container .sb-today-section-card {
   padding: 0.75rem 1rem;
   border: solid 1px var(--sb-divider-color);
   width: 100%;
   border-radius: 0.5rem;
 }
 
-.today-container .history-card {
+.sb-today-container .sb-today-history-card {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto;
   gap: 0.5rem;
 }
 
-.today-container .history-card .user-filter-container {
+.sb-today-container .sb-today-history-card .sb-today-user-filter-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -479,13 +503,19 @@
   color: var(--sb-font-color);
 }
 
-.today-container .history-card .user-filter-container .user-filter-label {
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-user-filter-container
+  .sb-today-user-filter-label {
   font-size: 1rem;
   margin-bottom: 0.25rem;
   font-weight: 500;
 }
 
-.today-container .history-card .user-filter-container .user-filter-options {
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-user-filter-container
+  .sb-today-user-filter-options {
   position: absolute;
   top: calc(100% + 0.5rem);
   left: 0;
@@ -506,11 +536,11 @@
   background-color: var(--sb-reader-background);
 }
 
-.today-container .history-card .date-label {
+.sb-today-container .sb-today-history-card .sb-today-date-label {
   color: var(--sb-font-color);
 }
 
-.today-container .user-filter-option {
+.sb-today-container .sb-today-user-filter-option {
   white-space: nowrap;
   padding: 0.25rem 0.5rem;
   border-radius: 1.5625rem;
@@ -525,23 +555,27 @@
   font-size: 0.75rem;
 }
 
-.today-container .user-filter-option > div {
+.sb-today-container .sb-today-user-filter-option > div {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 50%;
 }
 
-.today-container .user-filter-option:not(.user-filter-option-selected):hover {
+.sb-today-container
+  .sb-today-user-filter-option:not(
+    .sb-today-user-filter-option-selected
+  ):hover {
   /* background-color: var(--sb-secondary-color); */
 }
 
-.today-container .user-filter-option.user-filter-option-selected {
+.sb-today-container
+  .sb-today-user-filter-option.sb-today-user-filter-option-selected {
   background-color: var(--sb-secondary-color);
   border-color: var(--sb-primary-color);
   color: var(--sb-secondary-font-color);
 }
 
-.today-container .history-card .timespan-filter-container {
+.sb-today-container .sb-today-history-card .sb-today-timespan-filter-container {
   width: 100%;
   height: auto;
   display: flex;
@@ -554,10 +588,10 @@
   padding: 0 0.5rem;
 }
 
-.today-container
-  .history-card
-  .timespan-filter-container
-  .timespan-filter-option {
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-timespan-filter-container
+  .sb-today-timespan-filter-option {
   border: none;
   background-color: var(--sb-tertiary-color);
   border-radius: 1.875rem;
@@ -569,22 +603,22 @@
   flex-shrink: 0;
 }
 
-.today-container
-  .history-card
-  .timespan-filter-container
-  .timespan-filter-option:hover {
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-timespan-filter-container
+  .sb-today-timespan-filter-option:hover {
   background-color: var(--sb-secondary-color);
 }
 
-.today-container
-  .history-card
-  .timespan-filter-container
-  .timespan-filter-option.timespan-filter-option-selected {
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-timespan-filter-container
+  .sb-today-timespan-filter-option.sb-today-timespan-filter-option-selected {
   color: var(--sb-reader-background);
   background-color: var(--sb-primary-color);
 }
 
-.today-container .filtered-reading-container {
+.sb-today-container .sb-today-filtered-reading-container {
   grid-column: 1 / 3;
   /* grid-row: 2 / 3; */
   display: flex;
@@ -592,7 +626,7 @@
   flex-wrap: wrap;
 }
 
-.today-container .filtered-reading-book {
+.sb-today-container .sb-today-filtered-reading-book {
   display: flex;
   flex-direction: column;
   border: solid 1px var(--sb-divider-color);
@@ -606,16 +640,20 @@
   height: fit-content;
 }
 
-.today-container .filtered-reading-book.expanded {
+.sb-today-container .sb-today-filtered-reading-book.sb-today-expanded {
   border-color: var(--sb-primary-color);
 }
 
-.today-container .filtered-reading-book > .icons-container {
+.sb-today-container
+  .sb-today-filtered-reading-book
+  > .sb-today-icons-container {
   display: flex;
   align-items: center;
 }
 
-.today-container .filtered-reading-book > .chapters-container {
+.sb-today-container
+  .sb-today-filtered-reading-book
+  > .sb-today-chapters-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
@@ -625,12 +663,12 @@
   cursor: default;
 }
 
-.today-container .filtered-reading-book > span {
+.sb-today-container .sb-today-filtered-reading-book > span {
   font-weight: 600;
   color: var(--sb-font-color);
 }
 
-.today-container .filtered-reading-book-icon {
+.sb-today-container .sb-today-filtered-reading-book-icon {
   border: solid 2px var(--sb-reader-background);
   width: 2rem;
   height: 2rem;
@@ -642,20 +680,20 @@
   margin-left: -0.75rem;
 }
 
-.today-container .filtered-reading-book-icon > span {
+.sb-today-container .sb-today-filtered-reading-book-icon > span {
   font-size: 1rem;
 }
 
-.today-container .filtered-reading-book-icon:first-child {
+.sb-today-container .sb-today-filtered-reading-book-icon:first-child {
   margin-left: 0;
 }
 
-.today-container .filtered-reading-book-extra {
+.sb-today-container .sb-today-filtered-reading-book-extra {
   margin-left: 0.25rem;
   font-weight: 600;
 }
 
-.today-container .filtered-reading-chapter {
+.sb-today-container .sb-today-filtered-reading-chapter {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -668,13 +706,13 @@
   position: relative;
 }
 
-.today-container
-  .filtered-reading-chapter.filtered-reading-chapter-highlighted {
+.sb-today-container
+  .sb-today-filtered-reading-chapter.sb-today-filtered-reading-chapter-highlighted {
   background-color: var(--sb-primary-color);
   color: var(--sb-reader-background);
 }
 
-.today-container .filtered-reading-chapter > div {
+.sb-today-container .sb-today-filtered-reading-chapter > div {
   position: absolute;
   display: flex;
   top: -0.5rem;
@@ -682,11 +720,11 @@
   z-index: 1;
 }
 
-.today-container .filtered-reading-chapter > div > *:first-child {
+.sb-today-container .sb-today-filtered-reading-chapter > div > *:first-child {
   margin-left: 0;
 }
 
-.today-container .filtered-reading-chapter > div > * {
+.sb-today-container .sb-today-filtered-reading-chapter > div > * {
   width: 1rem;
   height: 1rem;
   display: flex;
@@ -697,31 +735,31 @@
   margin-left: -0.75rem;
 }
 
-.today-container .filtered-reading-chapter > div > div {
+.sb-today-container .sb-today-filtered-reading-chapter > div > div {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.today-container .filtered-reading-chapter > div > img {
+.sb-today-container .sb-today-filtered-reading-chapter > div > img {
   object-fit: cover;
 }
 
-.today-container .filtered-reading-chapter > div > div > span {
+.sb-today-container .sb-today-filtered-reading-chapter > div > div > span {
   font-size: 0.5rem;
   color: var(--sb-reader-font-color);
 }
 
-.today-container .reading-history-timeline-container {
+.sb-today-container .reading-history-timeline-container {
   grid-column: 1 / 3;
   grid-row: unset;
 }
 
-.today-container .reading-history-timeline {
+.sb-today-container .reading-history-timeline {
   scrollbar-width: none;
 }
 
-.today-container .bookmarks-section {
+.sb-today-container .sb-today-bookmarks-section {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -729,19 +767,23 @@
   gap: 1rem;
 }
 
-.today-container .bookmarks-section > div {
+.sb-today-container .sb-today-bookmarks-section > div {
   width: 100%;
   display: flex;
   align-items: center;
 }
 
-.today-container .bookmarks-section .bookmarks-section-label {
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-label {
   flex-shrink: 0;
   margin: 0;
   color: var(--sb-font-color);
 }
 
-.today-container .bookmarks-section .bookmarks-section-container {
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-container {
   display: flex;
   flex-wrap: wrap;
   flex: 1;
@@ -751,7 +793,9 @@
   overflow: hidden;
 }
 
-.today-container .bookmarks-section .bookmarks-section-bookmark {
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-bookmark {
   height: 100%;
   display: flex;
   justify-content: center;
@@ -768,38 +812,47 @@
   white-space: nowrap;
 }
 
-.today-container .bookmarks-section .bookmarks-section-bookmark > svg > path {
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-bookmark
+  > svg
+  > path {
   stroke: var(--sb-secondary-font-color);
 }
 
-.today-container .bookmarks-section .bookmarks-section-bookmark > span {
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-bookmark
+  > span {
   font-size: 1rem;
 }
 
 @media (width <= 480px) {
-  .today-content,
-  .welcome-screen {
+  .sb-today-content,
+  .sb-today-welcome-screen {
     margin-top: 1rem;
     gap: 1rem;
   }
-  .today-header > h1 {
+  .sb-today-header > h1 {
     font-size: 1.2rem;
   }
-  .welcome-screen .welcome-screen-navigation {
+  .sb-today-welcome-screen .sb-today-welcome-screen-navigation {
     flex-direction: column-reverse;
     align-items: stretch;
     gap: 1rem;
   }
-  .welcome-screen .welcome-screen-greeting {
+  .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
     font-size: 2rem;
   }
-  .welcome-screen .welcome-screen-book {
+  .sb-today-welcome-screen .sb-today-welcome-screen-book {
     font-size: 1rem;
   }
-  .welcome-screen .welcome-screen-navigation > button {
+  .sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
     height: 3rem;
   }
-  .today-container .history-card .timespan-filter-container {
+  .sb-today-container
+    .sb-today-history-card
+    .sb-today-timespan-filter-container {
     overflow-x: scroll;
     scrollbar-width: none;
     padding: 0 0.5rem;
@@ -812,59 +865,77 @@
     );
   }
 
-  .today-container .bookmarks-section .bookmarks-section-bookmark {
+  .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-bookmark {
     padding: 0.4rem 0.8rem;
     font-size: 0.7rem;
     gap: 0.25rem;
   }
-  .today-container .search-container .today-searchbar {
+  .sb-today-container .sb-today-search-container .sb-today-searchbar {
     gap: 0.3rem;
   }
-  .today-container .search-container .today-searchbar > span {
+  .sb-today-container .sb-today-search-container .sb-today-searchbar > span {
     font-size: 1.2rem;
   }
 
-  .today-container .bookmarks-section .bookmarks-section-bookmark > svg {
+  .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-bookmark
+    > svg {
     width: 0.8rem;
     height: 0.8rem;
   }
-  .today-container .search-container .today-searchbar > input {
+  .sb-today-container .sb-today-search-container .sb-today-searchbar > input {
     font-size: 0.9rem;
   }
 
-  .today-container .bookmarks-section .bookmarks-section-container {
+  .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-container {
     gap: 0.3rem;
     flex-wrap: nowrap;
     overflow-x: scroll;
     scrollbar-width: none;
   }
-  .today-container .search-container .book-selector-button {
+  .sb-today-container
+    .sb-today-search-container
+    .sb-today-book-selector-button {
     font-size: 0.85rem;
     padding: 0.4rem 0.65rem;
   }
-  .today-container .search-container .book-selector-button > .seed-bible-icon {
+  .sb-today-container
+    .sb-today-search-container
+    .sb-today-book-selector-button
+    > .sb-today-seed-bible-icon {
     width: 1rem;
     height: 1rem;
   }
-  .today-container .history-card .user-filter-container .user-filter-label {
+  .sb-today-container
+    .sb-today-history-card
+    .sb-today-user-filter-container
+    .sb-today-user-filter-label {
     font-size: 0.95rem;
   }
 
-  .today-container
-    .history-card
-    .timespan-filter-container
-    .timespan-filter-option {
+  .sb-today-container
+    .sb-today-history-card
+    .sb-today-timespan-filter-container
+    .sb-today-timespan-filter-option {
     padding: 0.4rem 0.65rem;
     font-size: 0.6rem;
     font-weight: 400;
     min-width: 3.25rem;
   }
 
-  .today-container .filtered-reading-book > span {
+  .sb-today-container .sb-today-filtered-reading-book > span {
     font-size: 0.8rem;
   }
 
-  .today-container .titled-section .titled-section-header > button {
+  .sb-today-container
+    .sb-today-titled-section
+    .sb-today-titled-section-header
+    > button {
     font-size: 0.75rem;
   }
 }

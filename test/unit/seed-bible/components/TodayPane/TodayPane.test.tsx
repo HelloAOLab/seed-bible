@@ -100,15 +100,15 @@ describe("TodayPane", () => {
   const q = (sel: string) => container.querySelector(sel);
   const count = (sel: string) => container.querySelectorAll(sel).length;
   const todayContainer = () =>
-    container.querySelector<HTMLDivElement>(".today-container");
+    container.querySelector<HTMLDivElement>(".sb-today-container");
 
   it("nests the screen inside the time provider", () => {
     setup();
     const timeProvider = q("[data-testid='time-provider']")!;
-    expect(timeProvider.querySelector(".today-container")).not.toBeNull();
+    expect(timeProvider.querySelector(".sb-today-container")).not.toBeNull();
   });
 
-  it("renders the today-container element", () => {
+  it("renders the sb-today-container element", () => {
     setup();
     expect(todayContainer()).not.toBeNull();
   });
@@ -117,20 +117,20 @@ describe("TodayPane", () => {
     it("renders Welcome, safe-centered, when history is empty", () => {
       setup({ status: "empty" });
       expect(q("[data-testid='welcome']")).not.toBeNull();
-      expect(q(".today-content")).toBeNull();
+      expect(q(".sb-today-content")).toBeNull();
       expect(todayContainer()!.style.alignItems).toBe("safe center");
     });
 
     it("renders the personalized layout, top-aligned, while history loads", () => {
       setup({ status: "loading" });
-      expect(q(".today-content")).not.toBeNull();
+      expect(q(".sb-today-content")).not.toBeNull();
       expect(q("[data-testid='welcome']")).toBeNull();
       expect(todayContainer()!.style.alignItems).toBe("flex-start");
     });
 
     it("renders the personalized layout, top-aligned, when history is ready", () => {
       setup({ status: "ready" });
-      expect(q(".today-content")).not.toBeNull();
+      expect(q(".sb-today-content")).not.toBeNull();
       expect(q("[data-testid='welcome']")).toBeNull();
       expect(todayContainer()!.style.alignItems).toBe("flex-start");
     });
@@ -163,21 +163,21 @@ describe("TodayPane", () => {
       expect(q("[data-testid='section-bookmarks']")).toBeNull();
     });
 
-    it("renders search and social with exactly one divider between them", () => {
+    it("renders search and social with exactly one sb-today-divider between them", () => {
       setup();
       const order = Array.from(
         container.querySelectorAll(
-          "[data-testid^='section-'], .today-content > .divider"
+          "[data-testid^='section-'], .sb-today-content > .sb-today-divider"
         )
-      ).map((el) => el.getAttribute("data-testid") ?? "divider");
+      ).map((el) => el.getAttribute("data-testid") ?? "sb-today-divider");
 
       expect(order).toEqual([
         "section-resume",
         "section-search",
-        "divider",
+        "sb-today-divider",
         "section-social",
       ]);
-      expect(count(".divider")).toBe(1);
+      expect(count(".sb-today-divider")).toBe(1);
     });
   });
 

@@ -31,9 +31,9 @@ export const SearchSection = (props: {
     <TitledSection
       title={t("go-somewhere-new", { defaultValue: "GO SOMEWHERE NEW" })}
     >
-      <div className="search-container">
+      <div className="sb-today-search-container">
         <button
-          className="book-selector-button clickable"
+          className="sb-today-book-selector-button sb-today-clickable"
           type="button"
           onClick={props.onOpenBookSelector}
         >
@@ -140,7 +140,7 @@ function SearchBar(props: {
   const showDropdown = isOpen.value && query.value.trim().length > 0;
 
   return (
-    <div className="today-searchbar" ref={containerRef}>
+    <div className="sb-today-searchbar" ref={containerRef}>
       <MaterialIcon>search</MaterialIcon>
       <input
         type="text"
@@ -154,21 +154,21 @@ function SearchBar(props: {
         }}
       />
       {showDropdown && (
-        <div className="today-searchbar-dropdown">
+        <div className="sb-today-searchbar-dropdown">
           {loading.value && (
-            <div className="today-searchbar-status">
+            <div className="sb-today-searchbar-status">
               {t("searching", { defaultValue: "Searching..." })}
             </div>
           )}
 
           {!loading.value && error.value && (
-            <div className="today-searchbar-status today-searchbar-status-error">
+            <div className="sb-today-searchbar-status sb-today-searchbar-status-error">
               {error.value}
             </div>
           )}
 
           {!loading.value && !error.value && results.value.length === 0 && (
-            <div className="today-searchbar-status">
+            <div className="sb-today-searchbar-status">
               {t("no-search-results", {
                 defaultValue: "No matching verses.",
               })}
@@ -181,13 +181,13 @@ function SearchBar(props: {
               <button
                 key={result.id}
                 type="button"
-                className="today-searchbar-result"
+                className="sb-today-searchbar-result"
                 onClick={() => handleSelect(result)}
               >
-                <span className="today-searchbar-result-ref">
+                <span className="sb-today-searchbar-result-ref">
                   {result.reference}
                 </span>
-                <span className="today-searchbar-result-text">
+                <span className="sb-today-searchbar-result-text">
                   {result.text}
                 </span>
               </button>

@@ -86,11 +86,13 @@ describe("SearchSection", () => {
     container.querySelector<T>(sel);
   const qa = (sel: string) => container.querySelectorAll(sel);
   const input = () => container.querySelector<HTMLInputElement>("input")!;
-  const dropdown = () => q(".today-searchbar-dropdown");
-  const status = () => q(".today-searchbar-status");
+  const dropdown = () => q(".sb-today-searchbar-dropdown");
+  const status = () => q(".sb-today-searchbar-status");
 
   const resultRefs = () =>
-    Array.from(qa(".today-searchbar-result-ref")).map((el) => el.textContent);
+    Array.from(qa(".sb-today-searchbar-result-ref")).map(
+      (el) => el.textContent
+    );
 
   /** Types into the box without letting the debounce fire. */
   function typeQuery(text: string) {
@@ -122,25 +124,29 @@ describe("SearchSection", () => {
   describe("the section chrome", () => {
     it("renders the titled section with its heading", () => {
       setup();
-      expect(q(".titled-section h5")!.textContent).toBe("GO SOMEWHERE NEW");
+      expect(q(".sb-today-titled-section h5")!.textContent).toBe(
+        "GO SOMEWHERE NEW"
+      );
     });
 
     it("renders the book selector button with its label", () => {
       setup();
-      expect(q(".book-selector-button")!.textContent).toBe("Books");
+      expect(q(".sb-today-book-selector-button")!.textContent).toBe("Books");
     });
 
     it("opens the book selector when that button is clicked", () => {
       setup();
-      act(() => q<HTMLButtonElement>(".book-selector-button")!.click());
+      act(() =>
+        q<HTMLButtonElement>(".sb-today-book-selector-button")!.click()
+      );
       expect(onOpenBookSelector).toHaveBeenCalledTimes(1);
     });
 
     it("colours the seed-bible icon from the theme", () => {
       setup();
-      expect(q<HTMLDivElement>(".seed-bible-icon")!.style.backgroundColor).toBe(
-        "rgb(17, 34, 51)"
-      );
+      expect(
+        q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.backgroundColor
+      ).toBe("rgb(17, 34, 51)");
     });
 
     it("recolours the icon when the theme changes", () => {
@@ -152,28 +158,30 @@ describe("SearchSection", () => {
         } as unknown as BibleTheme;
       });
 
-      expect(q<HTMLDivElement>(".seed-bible-icon")!.style.backgroundColor).toBe(
-        "rgb(68, 85, 102)"
-      );
+      expect(
+        q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.backgroundColor
+      ).toBe("rgb(68, 85, 102)");
     });
 
     it("uses a smaller icon on mobile", () => {
       isMobile.value = true;
       setup();
-      expect(q<HTMLDivElement>(".seed-bible-icon")!.style.width).toBe(
+      expect(q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
         "1.25rem"
       );
     });
 
     it("resizes the icon when the viewport crosses the breakpoint", () => {
       setup();
-      expect(q<HTMLDivElement>(".seed-bible-icon")!.style.width).toBe("1.5rem");
+      expect(q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
+        "1.5rem"
+      );
 
       act(() => {
         isMobile.value = true;
       });
 
-      expect(q<HTMLDivElement>(".seed-bible-icon")!.style.width).toBe(
+      expect(q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
         "1.25rem"
       );
     });
@@ -183,7 +191,7 @@ describe("SearchSection", () => {
     it("renders the search icon and a translated placeholder", () => {
       setup();
       expect(
-        q(".today-searchbar .material-symbols-outlined")!.textContent
+        q(".sb-today-searchbar .material-symbols-outlined")!.textContent
       ).toBe("search");
       expect(input().placeholder).toBe("Search books, chapter, verses....");
       expect(input().value).toBe("");
@@ -254,13 +262,13 @@ describe("SearchSection", () => {
 
       await search("gen");
 
-      const rows = qa(".today-searchbar-result");
+      const rows = qa(".sb-today-searchbar-result");
       expect(rows).toHaveLength(2);
       expect(
-        rows[0]!.querySelector(".today-searchbar-result-ref")!.textContent
+        rows[0]!.querySelector(".sb-today-searchbar-result-ref")!.textContent
       ).toBe("John 3:16");
       expect(
-        rows[0]!.querySelector(".today-searchbar-result-text")!.textContent
+        rows[0]!.querySelector(".sb-today-searchbar-result-text")!.textContent
       ).toBe("For God...");
       expect(status()).toBeNull();
     });
@@ -295,10 +303,10 @@ describe("SearchSection", () => {
 
       await search("gen");
 
-      expect(q(".today-searchbar-status-error")!.textContent).toBe(
+      expect(q(".sb-today-searchbar-status-error")!.textContent).toBe(
         "network down"
       );
-      expect(qa(".today-searchbar-result")).toHaveLength(0);
+      expect(qa(".sb-today-searchbar-result")).toHaveLength(0);
     });
 
     it("uses a generic message when the rejection is not an Error", async () => {
@@ -307,7 +315,7 @@ describe("SearchSection", () => {
 
       await search("gen");
 
-      expect(q(".today-searchbar-status-error")!.textContent).toBe(
+      expect(q(".sb-today-searchbar-status-error")!.textContent).toBe(
         "Unable to search verses."
       );
     });
@@ -357,7 +365,7 @@ describe("SearchSection", () => {
       stale.reject(new Error("stale failure"));
       await flush();
 
-      expect(q(".today-searchbar-status-error")).toBeNull();
+      expect(q(".sb-today-searchbar-status-error")).toBeNull();
       expect(resultRefs()).toEqual(["Fresh"]);
     });
 
@@ -384,7 +392,7 @@ describe("SearchSection", () => {
       setup();
       await search("gen");
 
-      act(() => q<HTMLButtonElement>(".today-searchbar-result")!.click());
+      act(() => q<HTMLButtonElement>(".sb-today-searchbar-result")!.click());
 
       expect(onOpenPassage).toHaveBeenCalledWith({
         bookId: "GEN",
@@ -403,7 +411,7 @@ describe("SearchSection", () => {
       setup();
       await search("psa");
 
-      act(() => q<HTMLButtonElement>(".today-searchbar-result")!.click());
+      act(() => q<HTMLButtonElement>(".sb-today-searchbar-result")!.click());
 
       expect(onOpenPassage).toHaveBeenCalledWith({
         bookId: "PSA",

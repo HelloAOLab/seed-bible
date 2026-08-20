@@ -85,26 +85,30 @@ describe("Welcome", () => {
   describe("greeting", () => {
     it("uses a personal greeting when a username is present", () => {
       setup({ username: "Gabriel" });
-      expect(q(".welcome-screen-greeting")!.textContent).toBe(
+      expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
         "Welcome, Gabriel!"
       );
     });
 
     it("uses an anonymous greeting when there is no username", () => {
       setup({ username: undefined });
-      expect(q(".welcome-screen-greeting")!.textContent).toBe("Welcome!");
+      expect(q(".sb-today-welcome-screen-greeting")!.textContent).toBe(
+        "Welcome!"
+      );
     });
   });
 
   describe("book reference", () => {
     it("formats the John 1:1 reference in uppercase", () => {
       setup({ bookNames: new Map([["JHN", "John"]]) });
-      expect(q(".welcome-screen-book")!.textContent).toBe("JOHN 1:1");
+      expect(q(".sb-today-welcome-screen-book")!.textContent).toBe("JOHN 1:1");
     });
 
     it("renders 'undefined' when the John name is missing", () => {
       setup({ bookNames: new Map() });
-      expect(q(".welcome-screen-book")!.textContent).toBe("undefined 1:1");
+      expect(q(".sb-today-welcome-screen-book")!.textContent).toBe(
+        "undefined 1:1"
+      );
     });
   });
 
@@ -117,7 +121,7 @@ describe("Welcome", () => {
       // A mapped translation is applied straight from the table, so there is
       // no fetch to wait on or to have superseded it.
       expect(getVerseText).not.toHaveBeenCalled();
-      expect(q(".welcome-screen-verse")!.textContent).toBe(
+      expect(q(".sb-today-welcome-screen-verse")!.textContent).toBe(
         `"${AAB_JOHN_1_1.replace(/<\/?hl>/g, "")}"`
       );
     });
@@ -127,9 +131,9 @@ describe("Welcome", () => {
       setup();
       await act(async () => {});
 
-      const verse = q(".welcome-screen-verse")!;
+      const verse = q(".sb-today-welcome-screen-verse")!;
       const highlights = [
-        ...verse.querySelectorAll(".welcome-screen-verse-highlight"),
+        ...verse.querySelectorAll(".sb-today-welcome-screen-verse-highlight"),
       ].map((el) => el.textContent);
 
       expect(highlights).toEqual(["beginning", "Word was God."]);
@@ -144,9 +148,11 @@ describe("Welcome", () => {
       setup();
       await act(async () => {});
 
-      const verse = q(".welcome-screen-verse")!;
+      const verse = q(".sb-today-welcome-screen-verse")!;
       expect(verse.textContent).toBe('"In the beginning"');
-      expect(verse.querySelector(".welcome-screen-verse-highlight")).toBeNull();
+      expect(
+        verse.querySelector(".sb-today-welcome-screen-verse-highlight")
+      ).toBeNull();
     });
 
     it("escapes markup in the API-sourced fallback text", async () => {
@@ -157,7 +163,7 @@ describe("Welcome", () => {
       setup();
       await act(async () => {});
 
-      const verse = q(".welcome-screen-verse")!;
+      const verse = q(".sb-today-welcome-screen-verse")!;
       expect(verse.querySelector("img")).toBeNull();
       expect(verse.textContent).toBe('"<img src=x onerror="boom">"');
     });
@@ -169,7 +175,9 @@ describe("Welcome", () => {
       await act(async () => {});
 
       expect(getVerseText).toHaveBeenCalledWith("DEF", "JHN", 1, 1);
-      expect(q(".welcome-screen-verse")!.textContent).toBe('"raw verse"');
+      expect(q(".sb-today-welcome-screen-verse")!.textContent).toBe(
+        '"raw verse"'
+      );
     });
 
     it("falls back to an empty translation id when none is available", async () => {
@@ -187,7 +195,7 @@ describe("Welcome", () => {
       await act(async () => {});
 
       // "KJV" is unmapped, so nothing masks a null slipping through.
-      expect(q(".welcome-screen-verse")!.textContent).toBe('""');
+      expect(q(".sb-today-welcome-screen-verse")!.textContent).toBe('""');
     });
 
     it("ignores a stale fetch result after the translation changes", async () => {
@@ -214,16 +222,20 @@ describe("Welcome", () => {
         d1.resolve("stale text");
       });
 
-      expect(q(".welcome-screen-verse")!.textContent).toBe('"fresh text"');
+      expect(q(".sb-today-welcome-screen-verse")!.textContent).toBe(
+        '"fresh text"'
+      );
     });
   });
 
   describe("book selector", () => {
     it("renders the selector text and a themed icon", () => {
       setup();
-      expect(btn(".book-selector-button").textContent).toBe("Open Bible");
+      expect(btn(".sb-today-book-selector-button").textContent).toBe(
+        "Open Bible"
+      );
 
-      const icon = q<HTMLDivElement>(".seed-bible-icon")!;
+      const icon = q<HTMLDivElement>(".sb-today-seed-bible-icon")!;
       expect(icon.style.backgroundColor).toBe("rgb(17, 34, 51)");
       expect(icon.style.width).toBe("1.25rem");
     });
@@ -237,14 +249,14 @@ describe("Welcome", () => {
         } as unknown as BibleTheme;
       });
 
-      expect(q<HTMLDivElement>(".seed-bible-icon")!.style.backgroundColor).toBe(
-        "rgb(68, 85, 102)"
-      );
+      expect(
+        q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.backgroundColor
+      ).toBe("rgb(68, 85, 102)");
     });
 
     it("opens the book selector when clicked", () => {
       setup();
-      act(() => btn(".book-selector-button").click());
+      act(() => btn(".sb-today-book-selector-button").click());
       expect(onOpenBookSelector).toHaveBeenCalledTimes(1);
     });
   });
@@ -252,7 +264,7 @@ describe("Welcome", () => {
   describe("start button", () => {
     it("renders the start text and the forward arrow", () => {
       setup();
-      const button = btn(".welcome-screen-start-button");
+      const button = btn(".sb-today-welcome-screen-start-button");
       expect(button.textContent).toContain("Read the first chapter");
       expect(
         button.querySelector(".material-symbols-outlined")!.textContent
@@ -263,7 +275,7 @@ describe("Welcome", () => {
       lastTranslationId.value = "KJV";
       setup();
 
-      act(() => btn(".welcome-screen-start-button").click());
+      act(() => btn(".sb-today-welcome-screen-start-button").click());
 
       expect(onOpenPassage).toHaveBeenCalledWith({
         bookId: "GEN",
@@ -278,7 +290,7 @@ describe("Welcome", () => {
       lastTranslationId.value = undefined;
       setup();
 
-      act(() => btn(".welcome-screen-start-button").click());
+      act(() => btn(".sb-today-welcome-screen-start-button").click());
 
       expect(onOpenPassage).toHaveBeenCalledWith({
         bookId: "GEN",

@@ -115,8 +115,8 @@ describe("Today screen reactivity", () => {
   it("swaps Welcome for the personalized layout when history arrives", () => {
     readingHistory.value = { status: "empty" };
     setup();
-    expect(q(".welcome-screen")).not.toBeNull();
-    expect(q(".today-content")).toBeNull();
+    expect(q(".sb-today-welcome-screen")).not.toBeNull();
+    expect(q(".sb-today-content")).toBeNull();
 
     act(() => {
       readingHistory.value = {
@@ -125,36 +125,36 @@ describe("Today screen reactivity", () => {
       } as ReadingHistoryState;
     });
 
-    expect(q(".today-content")).not.toBeNull();
-    expect(q(".welcome-screen")).toBeNull();
+    expect(q(".sb-today-content")).not.toBeNull();
+    expect(q(".sb-today-welcome-screen")).toBeNull();
   });
 
   it("updates the greeting when the signed-in profile changes", () => {
     setup();
-    expect(text(".today-header h1")).toContain("Alice");
+    expect(text(".sb-today-header h1")).toContain("Alice");
 
     act(() => {
       profile.value = { name: "Bob" } as UserProfile;
     });
 
-    expect(text(".today-header h1")).toContain("Bob");
-    expect(text(".today-header h1")).not.toContain("Alice");
+    expect(text(".sb-today-header h1")).toContain("Bob");
+    expect(text(".sb-today-header h1")).not.toContain("Alice");
   });
 
   it("renames the resume card when the translation's book names change", () => {
     setup();
-    expect(text(".today-resume-card h1")).toContain("Genesis");
+    expect(text(".sb-today-resume-card h1")).toContain("Genesis");
 
     act(() => {
       bookNames.value = new Map([["GEN", "Génesis"]]);
     });
 
-    expect(text(".today-resume-card h1")).toContain("Génesis");
+    expect(text(".sb-today-resume-card h1")).toContain("Génesis");
   });
 
   it("reveals the bookmarks strip once a bookmark exists", () => {
     setup();
-    expect(q(".bookmarks-section")).toBeNull();
+    expect(q(".sb-today-bookmarks-section")).toBeNull();
 
     act(() => {
       bookmarks.value = [
@@ -169,14 +169,14 @@ describe("Today screen reactivity", () => {
       ];
     });
 
-    expect(q(".bookmarks-section")).not.toBeNull();
+    expect(q(".sb-today-bookmarks-section")).not.toBeNull();
   });
 
   // The regression that prompted this suite: a theme switch has to repaint
   // immediately, without waiting for an unrelated re-render to carry it.
   it("restyles on a theme switch", () => {
     setup();
-    const icon = () => q(".seed-bible-icon") as HTMLElement;
+    const icon = () => q(".sb-today-seed-bible-icon") as HTMLElement;
     expect(icon().style.backgroundColor).toBe("rgb(1, 2, 3)");
 
     act(() => {
@@ -188,7 +188,7 @@ describe("Today screen reactivity", () => {
 
   it("resizes chrome when the viewport crosses the mobile breakpoint", () => {
     setup();
-    const icon = () => q(".seed-bible-icon") as HTMLElement;
+    const icon = () => q(".sb-today-seed-bible-icon") as HTMLElement;
     expect(icon().style.width).toBe("1.5rem");
 
     act(() => {

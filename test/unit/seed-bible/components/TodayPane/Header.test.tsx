@@ -40,7 +40,7 @@ describe("Header", () => {
   }
 
   const header = () =>
-    container.querySelector<HTMLDivElement>(".today-header")!;
+    container.querySelector<HTMLDivElement>(".sb-today-header")!;
   const date = () => header().querySelector(":scope > span")!.textContent;
   const heading = () => header().querySelector("h1")!.textContent;
 

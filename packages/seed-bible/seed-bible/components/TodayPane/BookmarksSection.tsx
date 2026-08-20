@@ -105,7 +105,7 @@ export const BookmarksSection = (props: {
 
     const checkOverflow = () => {
       const strips = root.querySelectorAll<HTMLElement>(
-        ".bookmarks-section-container"
+        ".sb-today-bookmarks-section-container"
       );
       isOverflowing.value = Array.from(strips).some((strip) => {
         const children = Array.from(strip.children) as HTMLElement[];
@@ -141,7 +141,7 @@ export const BookmarksSection = (props: {
           : undefined
       }
     >
-      <div className={"bookmarks-section"} ref={containerRef}>
+      <div className={"sb-today-bookmarks-section"} ref={containerRef}>
         {Array.from(categorizedBookmarks.value.entries()).map(
           ([category, bookmarksData]) => (
             <BookmarksCategory
@@ -166,8 +166,11 @@ function BookmarksCategory(props: {
 
   return (
     <div>
-      <h5 className={"bookmarks-section-label"}>{props.label}</h5>
-      <div className={"bookmarks-section-container"} ref={containerRef}>
+      <h5 className={"sb-today-bookmarks-section-label"}>{props.label}</h5>
+      <div
+        className={"sb-today-bookmarks-section-container"}
+        ref={containerRef}
+      >
         {props.bookmarksData.map(({ key, ...rest }) => (
           <Bookmark key={key} {...rest} />
         ))}
@@ -179,7 +182,7 @@ function BookmarksCategory(props: {
 function Bookmark(props: { text: string; handleClick: () => void }) {
   return (
     <button
-      className={"bookmarks-section-bookmark clickable"}
+      className={"sb-today-bookmarks-section-bookmark sb-today-clickable"}
       onClick={props.handleClick}
     >
       <BookmarkIcon />

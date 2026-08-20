@@ -13,8 +13,8 @@ export const TitledSection = ({
   children,
 }: TitledSectionProps) => {
   return (
-    <div className="titled-section">
-      <div className={"titled-section-header"}>
+    <div className="sb-today-titled-section">
+      <div className={"sb-today-titled-section-header"}>
         <h5>{title}</h5>
         {buttonData && (
           <button onClick={buttonData.onClick}>{buttonData.label}</button>

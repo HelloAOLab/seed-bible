@@ -66,7 +66,7 @@ function TodayContainer(props: TodayScreenProps) {
 
   return (
     <div
-      className="today-container"
+      className="sb-today-container"
       style={{ alignItems: showWelcome ? "safe center" : "flex-start" }}
     >
       {showWelcome ? (
@@ -86,7 +86,7 @@ function TodayContainer(props: TodayScreenProps) {
 
 function TodayContent(props: TodayScreenProps) {
   return (
-    <div className="today-content">
+    <div className="sb-today-content">
       <Header login={props.login} />
       {/* Unconditional: `TodayContainer` only reaches here while history is
           loading or ready, and the resume card renders a placeholder for the
@@ -111,7 +111,7 @@ function TodayContent(props: TodayScreenProps) {
         onOpenBookSelector={props.onOpenBookSelector}
         onOpenPassage={props.onOpenPassage}
       />
-      <div className="divider" />
+      <div className="sb-today-divider" />
       <SocialSection
         today={props.today}
         login={props.login}

@@ -22,5 +22,5 @@ export function SeedBibleIcon({ style = {} }: { style?: React.CSSProperties }) {
     );
   }
 
-  return <div className="seed-bible-icon" style={style} />;
+  return <div className="sb-today-seed-bible-icon" style={style} />;
 }

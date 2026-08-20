@@ -112,24 +112,29 @@ describe("BookmarksSection", () => {
   }
 
   const heading = () =>
-    container.querySelector(".titled-section-header > h5")!.textContent;
+    container.querySelector(".sb-today-titled-section-header > h5")!
+      .textContent;
   const moreButton = () =>
     container.querySelector<HTMLButtonElement>(
-      ".titled-section-header > button"
+      ".sb-today-titled-section-header > button"
     );
   const categoryLabels = () =>
-    Array.from(container.querySelectorAll(".bookmarks-section-label")).map(
-      (el) => el.textContent
-    );
+    Array.from(
+      container.querySelectorAll(".sb-today-bookmarks-section-label")
+    ).map((el) => el.textContent);
   const chipTexts = (categoryIndex = 0) => {
-    const strips = container.querySelectorAll(".bookmarks-section-container");
+    const strips = container.querySelectorAll(
+      ".sb-today-bookmarks-section-container"
+    );
     const chips = strips[categoryIndex]!.querySelectorAll(
-      ".bookmarks-section-bookmark"
+      ".sb-today-bookmarks-section-bookmark"
     );
     return Array.from(chips).map((el) => el.textContent);
   };
   const firstChip = () =>
-    container.querySelector<HTMLButtonElement>(".bookmarks-section-bookmark")!;
+    container.querySelector<HTMLButtonElement>(
+      ".sb-today-bookmarks-section-bookmark"
+    )!;
 
   describe("the section heading", () => {
     it("translates the bookmarks title", () => {

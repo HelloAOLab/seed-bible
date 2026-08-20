@@ -53,20 +53,21 @@ describe("ResumeReadingSection", () => {
   }
 
   const q = (sel: string) => container.querySelector(sel);
-  const card = () => q(".today-resume-card:not(.today-resume-card--loading)");
+  const card = () =>
+    q(".sb-today-resume-card:not(.sb-today-resume-card--loading)");
   const button = () =>
-    container.querySelector<HTMLButtonElement>(".today-resume-card button")!;
+    container.querySelector<HTMLButtonElement>(".sb-today-resume-card button")!;
 
   describe("while reading history loads", () => {
     it("renders a placeholder instead of a card", () => {
       setup({ status: "loading" });
-      expect(q(".today-resume-card--loading")).not.toBeNull();
+      expect(q(".sb-today-resume-card--loading")).not.toBeNull();
       expect(card()).toBeNull();
     });
 
     it("announces the placeholder to screen readers", () => {
       setup({ status: "loading" });
-      const placeholder = q(".today-resume-card--loading")!;
+      const placeholder = q(".sb-today-resume-card--loading")!;
       expect(placeholder.getAttribute("role")).toBe("status");
       expect(placeholder.querySelector(".sr-only")!.textContent).toBe(
         "Loading your reading history…"
@@ -75,7 +76,7 @@ describe("ResumeReadingSection", () => {
 
     it("offers nothing to click", () => {
       setup({ status: "loading" });
-      expect(q(".today-resume-card button")).toBeNull();
+      expect(q(".sb-today-resume-card button")).toBeNull();
       expect(onOpenPassage).not.toHaveBeenCalled();
     });
   });

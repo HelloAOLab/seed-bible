@@ -222,23 +222,23 @@ function HistoryCard(props: {
     : undefined;
 
   return (
-    <div className="history-card today-section-card">
+    <div className="sb-today-history-card sb-today-section-card">
       <div
         onClick={(e) => {
           e.stopPropagation();
           userFilterOpen.value = !userFilterOpen.value;
         }}
-        className="user-filter-container clickable"
+        className="sb-today-user-filter-container sb-today-clickable"
         ref={optionsContainerRef}
       >
-        <span className="user-filter-label">{userFilterText}</span>
+        <span className="sb-today-user-filter-label">{userFilterText}</span>
         <MaterialIcon>
           {userFilterOpen.value ? "keyboard_arrow_up" : "keyboard_arrow_down"}
         </MaterialIcon>
         {userFilterOpen.value && (
           <div
             ref={optionsRef}
-            className="user-filter-options"
+            className="sb-today-user-filter-options"
             onClick={(e) => e.stopPropagation()}
           >
             {[...userFilters.entries()].map(([id, selected]) => {
@@ -251,7 +251,7 @@ function HistoryCard(props: {
                     e.stopPropagation();
                     toggleUserFilter(id);
                   }}
-                  className={`user-filter-option${selected ? " user-filter-option-selected" : ""} clickable`}
+                  className={`sb-today-user-filter-option${selected ? " sb-today-user-filter-option-selected" : ""} sb-today-clickable`}
                 >
                   <div style={{ backgroundColor: profile.color }}></div>
                   {profile.name}
@@ -261,12 +261,15 @@ function HistoryCard(props: {
           </div>
         )}
       </div>
-      <div className="timespan-filter-container" ref={timespanFilterRef}>
+      <div
+        className="sb-today-timespan-filter-container"
+        ref={timespanFilterRef}
+      >
         {TIMESPAN_OPTION_IDS.map((id) => (
           <button
             onClick={() => selectTimespanOption(id)}
             key={id}
-            className={`timespan-filter-option${selectedTimespanOptionId.value === id ? " timespan-filter-option-selected" : ""} clickable`}
+            className={`sb-today-timespan-filter-option${selectedTimespanOptionId.value === id ? " sb-today-timespan-filter-option-selected" : ""} sb-today-clickable`}
           >
             {timespanLabels[id]}
           </button>
@@ -278,7 +281,9 @@ function HistoryCard(props: {
             today={props.today}
             theme={props.theme}
           />
-          {dateLabel && <span className="date-label">{dateLabel}</span>}
+          {dateLabel && (
+            <span className="sb-today-date-label">{dateLabel}</span>
+          )}
         </Fragment>
       )}
       <FilteredReading
@@ -342,7 +347,7 @@ function FilteredReading(props: {
   }
 
   return (
-    <div className="filtered-reading-container">
+    <div className="sb-today-filtered-reading-container">
       {booksData.map(({ bookId, chaptersReading, readerIds }) => (
         <Book
           key={bookId}
@@ -410,13 +415,13 @@ function Book(props: {
 
   return (
     <div
-      className={`filtered-reading-book${
-        isExpanded.value ? " expanded" : ""
-      } clickable`}
+      className={`sb-today-filtered-reading-book${
+        isExpanded.value ? " sb-today-expanded" : ""
+      } sb-today-clickable`}
       onClick={() => (isExpanded.value = !isExpanded.value)}
     >
       <span>{name}</span>
-      <div className="icons-container">
+      <div className="sb-today-icons-container">
         {shownReaders.map((reader) => (
           <UserIcon
             key={reader.id}
@@ -426,12 +431,12 @@ function Book(props: {
           />
         ))}
         {extraReaders > 0 && (
-          <span className="filtered-reading-book-extra">{`+${extraReaders}`}</span>
+          <span className="sb-today-filtered-reading-book-extra">{`+${extraReaders}`}</span>
         )}
       </div>
       {isExpanded.value && (
         <div
-          className="chapters-container"
+          className="sb-today-chapters-container"
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -465,7 +470,7 @@ function Chapter(props: {
 
   return (
     <div
-      className={`filtered-reading-chapter${hasReaders ? " filtered-reading-chapter-highlighted" : ""} clickable`}
+      className={`sb-today-filtered-reading-chapter${hasReaders ? " sb-today-filtered-reading-chapter-highlighted" : ""} sb-today-clickable`}
       onClick={props.onClick}
     >
       {props.number}
@@ -493,13 +498,16 @@ function UserIcon(props: {
 }) {
   if (props.pictureUrl) {
     return (
-      <img src={props.pictureUrl} className="filtered-reading-book-icon" />
+      <img
+        src={props.pictureUrl}
+        className="sb-today-filtered-reading-book-icon"
+      />
     );
   }
 
   return (
     <div
-      className="filtered-reading-book-icon"
+      className="sb-today-filtered-reading-book-icon"
       style={{ backgroundColor: props.color }}
     >
       <MaterialIcon>{props.icon}</MaterialIcon>

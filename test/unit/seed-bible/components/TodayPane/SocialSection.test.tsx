@@ -103,18 +103,20 @@ describe("SocialSection", () => {
   const q = <T extends Element = Element>(sel: string) =>
     container.querySelector<T>(sel);
   const qa = (sel: string) => Array.from(container.querySelectorAll(sel));
-  const heading = () => q(".titled-section-header > h5")!.textContent;
-  const filterLabel = () => q(".user-filter-label")!.textContent;
+  const heading = () => q(".sb-today-titled-section-header > h5")!.textContent;
+  const filterLabel = () => q(".sb-today-user-filter-label")!.textContent;
   const filterChevron = () =>
-    q(".user-filter-container > .material-symbols-outlined")!.textContent;
-  const filterContainer = () => q<HTMLDivElement>(".user-filter-container")!;
-  const filterOptions = () => qa(".user-filter-option");
+    q(".sb-today-user-filter-container > .material-symbols-outlined")!
+      .textContent;
+  const filterContainer = () =>
+    q<HTMLDivElement>(".sb-today-user-filter-container")!;
+  const filterOptions = () => qa(".sb-today-user-filter-option");
   const timespanButtons = () =>
-    qa(".timespan-filter-option") as HTMLButtonElement[];
+    qa(".sb-today-timespan-filter-option") as HTMLButtonElement[];
   const selectedTimespan = () =>
-    q(".timespan-filter-option-selected")!.textContent;
-  const bookRows = () => qa(".filtered-reading-book");
-  const chapterCells = () => qa(".filtered-reading-chapter");
+    q(".sb-today-timespan-filter-option-selected")!.textContent;
+  const bookRows = () => qa(".sb-today-filtered-reading-book");
+  const chapterCells = () => qa(".sb-today-filtered-reading-chapter");
 
   /** Opens the reader-filter dropdown. */
   function openUserFilter() {
@@ -140,7 +142,9 @@ describe("SocialSection", () => {
     it("renders the community heading around the history card", () => {
       setup();
       expect(heading()).toBe("COMMUNITY");
-      expect(q(".titled-section .history-card")).not.toBeNull();
+      expect(
+        q(".sb-today-titled-section .sb-today-history-card")
+      ).not.toBeNull();
     });
   });
 
@@ -178,7 +182,7 @@ describe("SocialSection", () => {
       setup();
       openUserFilter();
 
-      act(() => q<HTMLDivElement>(".user-filter-options")!.click());
+      act(() => q<HTMLDivElement>(".sb-today-user-filter-options")!.click());
 
       expect(filterOptions().length).toBeGreaterThan(0);
     });
@@ -191,7 +195,9 @@ describe("SocialSection", () => {
       const options = filterOptions();
       expect(options).toHaveLength(1);
       expect(options[0]!.textContent).toBe("Me");
-      expect(options[0]!.className).toContain("user-filter-option-selected");
+      expect(options[0]!.className).toContain(
+        "sb-today-user-filter-option-selected"
+      );
     });
 
     it("lists nobody when signed out", () => {
@@ -213,7 +219,7 @@ describe("SocialSection", () => {
 
       expect(filterLabel()).toBe("None");
       expect(filterOptions()[0]!.className).not.toContain(
-        "user-filter-option-selected"
+        "sb-today-user-filter-option-selected"
       );
     });
 
@@ -328,7 +334,7 @@ describe("SocialSection", () => {
     it("is hidden for a windowed selection", () => {
       setup();
       expect(q("[data-testid='timeline']")).toBeNull();
-      expect(q(".date-label")).toBeNull();
+      expect(q(".sb-today-date-label")).toBeNull();
     });
 
     it("appears when 'all' is selected, without a date label", () => {
@@ -336,11 +342,11 @@ describe("SocialSection", () => {
       selectTimespanByLabel("All");
 
       expect(q("[data-testid='timeline']")).not.toBeNull();
-      // Picking "all" clears the window, and `.date-label` only renders while
+      // Picking "all" clears the window, and `.sb-today-date-label` only renders while
       // one is set. The single path that sets it back is a day click inside the
       // timeline, which is stubbed out here — so the label is deliberately not
       // covered by this suite (see the C5 note in the work journal).
-      expect(q(".date-label")).toBeNull();
+      expect(q(".sb-today-date-label")).toBeNull();
     });
   });
 
@@ -358,7 +364,7 @@ describe("SocialSection", () => {
 
     it("renders nothing when nobody has read anything", async () => {
       await setupWithReading({});
-      expect(q(".filtered-reading-container")).toBeNull();
+      expect(q(".sb-today-filtered-reading-container")).toBeNull();
     });
 
     it("renders one row per book, named from the translation", async () => {
@@ -404,13 +410,13 @@ describe("SocialSection", () => {
       });
 
       expect(
-        bookRows()[0]!.querySelectorAll(".filtered-reading-book-icon")
+        bookRows()[0]!.querySelectorAll(".sb-today-filtered-reading-book-icon")
       ).toHaveLength(1);
     });
 
     it("shows no '+N' badge at or below the avatar cap", async () => {
       await setupWithReading({ GEN: { 1: [CURRENT_USER_ID] } });
-      expect(q(".filtered-reading-book-extra")).toBeNull();
+      expect(q(".sb-today-filtered-reading-book-extra")).toBeNull();
     });
 
     it("uses the reader's picture as their avatar when they have one", async () => {
@@ -421,10 +427,12 @@ describe("SocialSection", () => {
         }
       );
 
-      const avatar = q<HTMLImageElement>("img.filtered-reading-book-icon")!;
+      const avatar = q<HTMLImageElement>(
+        "img.sb-today-filtered-reading-book-icon"
+      )!;
       expect(avatar.src).toBe("https://example.test/me.png");
       expect(
-        q(".filtered-reading-book-icon .material-symbols-outlined")
+        q(".sb-today-filtered-reading-book-icon .material-symbols-outlined")
       ).toBeNull();
     });
   });
@@ -442,21 +450,21 @@ describe("SocialSection", () => {
       act(() => (bookRows()[0] as HTMLDivElement).click());
     }
 
-    it("stay hidden until the book row is expanded", async () => {
+    it("stay hidden until the book row is sb-today-expanded", async () => {
       getCommunityReading.mockResolvedValue({
         GEN: { 1: [CURRENT_USER_ID] },
       } as FilteredReading);
       setup();
       await flush();
 
-      expect(bookRows()[0]!.className).not.toContain("expanded");
+      expect(bookRows()[0]!.className).not.toContain("sb-today-expanded");
       expect(chapterCells()).toHaveLength(0);
     });
 
-    it("render one cell per chapter in the translation, once expanded", async () => {
+    it("render one cell per chapter in the translation, once sb-today-expanded", async () => {
       await setupExpanded({ GEN: { 1: [CURRENT_USER_ID] } });
 
-      expect(bookRows()[0]!.className).toContain("expanded");
+      expect(bookRows()[0]!.className).toContain("sb-today-expanded");
       expect(chapterCells().map((c) => c.textContent![0])).toEqual([
         "1",
         "2",
@@ -475,7 +483,7 @@ describe("SocialSection", () => {
       await setupExpanded({ GEN: { 2: [CURRENT_USER_ID] } });
 
       const highlighted = chapterCells().map((c) =>
-        c.className.includes("filtered-reading-chapter-highlighted")
+        c.className.includes("sb-today-filtered-reading-chapter-highlighted")
       );
       expect(highlighted).toEqual([false, true, false]);
     });
@@ -508,7 +516,7 @@ describe("SocialSection", () => {
       expect(chapterCells()).toHaveLength(3);
 
       // A click inside the grid must not bubble up and collapse the row.
-      act(() => q<HTMLDivElement>(".chapters-container")!.click());
+      act(() => q<HTMLDivElement>(".sb-today-chapters-container")!.click());
       expect(chapterCells()).toHaveLength(3);
 
       act(() => (bookRows()[0] as HTMLDivElement).click());
