@@ -240,6 +240,8 @@ export class PieceActivityService implements PieceActivityServicePort {
     for (const readingInstance of allReadingInstances) {
       const { bookId, chapter } = readingInstance;
 
+      let pathBookId = bookId;
+      let pathChapter = chapter;
       let { found, testamentIndex, sectionIndex, arrangementIndex } =
         this.#arrangementServicePort.getBookInfoPathById({
           id: bookId,
@@ -255,6 +257,8 @@ export class PieceActivityService implements PieceActivityServicePort {
             this.#arrangementServicePort.getBookInfoPathById({
               id: bookSubset.bookId,
             }));
+          pathBookId = bookSubset.bookId;
+          pathChapter = chapter - bookSubset.startIndex;
         }
       }
       if (found) {
@@ -292,11 +296,11 @@ export class PieceActivityService implements PieceActivityServicePort {
           },
           {
             typeOfPiece: BiblePieces.StackBook,
-            key: bookId,
+            key: pathBookId,
           },
           {
             typeOfPiece: BiblePieces.StackChapter,
-            key: `${bookId} ${chapter}`,
+            key: `${pathBookId} ${pathChapter}`,
           },
         ];
 
