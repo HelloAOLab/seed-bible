@@ -134,6 +134,15 @@ export interface AnnotationSyncManager {
   pendingCount: ReadonlySignal<number>;
 
   /**
+   * How many of those local changes belong to one chapter.
+   *
+   * `pendingCount` is account-wide, so a note left unsynced in Exodus would
+   * otherwise still show up as "waiting to sync" under Genesis 1 — this is
+   * what a chapter-scoped display should read instead.
+   */
+  pendingCountForChapter: (bookId: string, chapterNumber: number) => number;
+
+  /**
    * Conflicts waiting on the user. Nothing is written to the server, and no
    * local change is discarded, until each one is resolved.
    */
@@ -186,7 +195,11 @@ export interface CreateAnnotationSyncManagerOptions {
   /** The marker a chapter's annotations are indexed under. Injected for the same reason. */
   getMarker: (bookId: string, chapterNumber: number) => string;
 
-  /** Called after a push changes the server, so caches can be refreshed. */
+  /**
+   * Called so caches can be refreshed: after a push changes the server, or
+   * when a resolution queues a row that should already be visible (see
+   * `keep_both` below) rather than waiting for its first push.
+   */
   onSynced?: (annotation: Annotation, owner: string) => void;
 
   /** Called when a resolution removes an annotation, so caches can drop it. */
@@ -222,6 +235,14 @@ export function createAnnotationSyncManager(
   const syncErrors = signal<Map<string, string>>(new Map());
 
   const pendingCount = computed(() => pendingRows.value.length);
+
+  const pendingCountForChapter = (
+    bookId: string,
+    chapterNumber: number
+  ): number =>
+    pendingRows.value.filter(
+      (row) => row.bookId === bookId && row.chapterNumber === chapterNumber
+    ).length;
 
   // Rows already raised as a conflict, so a repeated pass doesn't queue the
   // same question twice while the user is still looking at the first one.
@@ -753,6 +774,10 @@ export function createAnnotationSyncManager(
         pendingOp: "upsert",
         updatedAtMs: row.updatedAtMs,
       });
+      // Reported right away, the same as any other newly-created offline note —
+      // otherwise this copy sits invisible in the store until its first push
+      // succeeds and fires this same callback.
+      onSynced?.(copy, owner);
       // Replaces the pending row in place: `conflict.server` carries the same id
       // as `row`, so this leaves the original entry holding the server's version
       // with nothing left to push. Deleting it afterwards would remove the very
@@ -841,6 +866,7 @@ export function createAnnotationSyncManager(
     isOnline,
     isSyncing,
     pendingCount,
+    pendingCountForChapter,
     conflicts,
     syncErrors,
     sync,

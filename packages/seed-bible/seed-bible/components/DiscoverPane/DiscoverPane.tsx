@@ -982,7 +982,10 @@ function AnnotationsSection(props: {
     chapterNumber
   ).value;
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
-  const pending = annotations.sync.pendingCount.value;
+  const pending = annotations.sync.pendingCountForChapter(
+    bookId,
+    chapterNumber
+  );
 
   return (
     <DiscoverSection title={title}>

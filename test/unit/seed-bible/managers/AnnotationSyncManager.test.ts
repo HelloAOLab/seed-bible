@@ -468,6 +468,42 @@ describe("AnnotationSyncManager", () => {
       expect(onSynced).toHaveBeenCalledWith(theirs, OWNER);
     });
 
+    it("keep_both reports the new copy immediately, without waiting for it to sync", async () => {
+      const onSynced = vi.fn();
+      const base = makeAnnotation("ann-1");
+      const theirs = makeAnnotation("ann-1", {
+        html: "<p>theirs</p>",
+        updatedAtMs: 5_000,
+      });
+      await store.put(
+        pendingUpsert(
+          makeAnnotation("ann-1", { html: "<p>mine</p>", updatedAtMs: 9_000 }),
+          base
+        )
+      );
+      serverHas(theirs);
+      const sync = createSync({ onSynced });
+      await sync.sync();
+      const conflictId = sync.conflicts.value[0]!.id;
+
+      // Offline for the resolution itself, so nothing gets pushed - matching
+      // the real bug's repro ("choose keep both; stay offline"). Reported
+      // only because a push happened to follow would still leave the copy
+      // invisible for as long as the device stays offline.
+      window.dispatchEvent(new Event("offline"));
+      recordDataMock.mockClear();
+
+      await sync.resolveConflict(conflictId, "keep_both");
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(onSynced).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ html: "<p>mine</p>" }),
+        }),
+        OWNER
+      );
+    });
+
     it("keep_mine on a deleted-here conflict carries out the deletion", async () => {
       const base = makeAnnotation("ann-1");
       const theirs = makeAnnotation("ann-1", {
@@ -923,6 +959,25 @@ describe("AnnotationSyncManager", () => {
 
       await sync.sync();
       expect(sync.pendingCount.value).toBe(0);
+    });
+
+    it("scopes the pending count to one chapter", async () => {
+      await store.put(pendingUpsert(makeAnnotation("ann-1"), null));
+      await store.put(
+        pendingUpsert(
+          { ...makeAnnotation("ann-2"), bookId: "EXO", chapterNumber: 3 },
+          null
+        )
+      );
+      const sync = createSync();
+
+      await sync.refreshPendingCount();
+
+      // Account-wide, both count - but a chapter should only see its own.
+      expect(sync.pendingCount.value).toBe(2);
+      expect(sync.pendingCountForChapter("GEN", 1)).toBe(1);
+      expect(sync.pendingCountForChapter("EXO", 3)).toBe(1);
+      expect(sync.pendingCountForChapter("GEN", 2)).toBe(0);
     });
 
     it("stops listening after dispose", async () => {
