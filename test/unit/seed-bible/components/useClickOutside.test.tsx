@@ -76,6 +76,15 @@ describe("useClickOutside", () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
+  it("does not invoke the callback on a focusin inside a ref", () => {
+    const el = makeEl();
+    const callback = vi.fn();
+    setup([{ current: el }], callback);
+
+    fireFocusIn(el);
+    expect(callback).not.toHaveBeenCalled();
+  });
+
   it("treats a null ref as not-outside, so the callback never fires", () => {
     const callback = vi.fn();
     setup([{ current: null }], callback);

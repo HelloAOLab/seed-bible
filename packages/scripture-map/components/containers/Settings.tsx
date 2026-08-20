@@ -4,7 +4,7 @@ import { ReadingHistoryUserFiltersSelector } from "./ReadingHistoryUserFiltersSe
 import { Tooltip } from "./Tooltip";
 import { useReadingHistoryTimeline } from "../../hooks/useReadingHistoryTimeline";
 import { useSettings } from "../../hooks/useSettings";
-import { useClickOutside } from "../../hooks/useClickOutside";
+import { useClickOutside } from "@packages/seed-bible/seed-bible/components/useClickOutside";
 import type { Dispatch, MutableRef, StateUpdater } from "preact/hooks";
 import { ScriptureMapModes } from "../../models/scriptureMap";
 import { useScriptureMapContext } from "../../contexts/ScriptureMap/ScriptureMapContext";

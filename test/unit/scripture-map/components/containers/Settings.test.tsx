@@ -36,7 +36,7 @@ vi.mock(
   })
 );
 
-vi.mock("../../../../../packages/scripture-map/hooks/useClickOutside", () => ({
+vi.mock("@packages/seed-bible/seed-bible/components/useClickOutside", () => ({
   useClickOutside: vi.fn(),
 }));
 
