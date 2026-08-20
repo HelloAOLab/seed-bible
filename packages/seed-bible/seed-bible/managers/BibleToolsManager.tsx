@@ -356,6 +356,25 @@ export interface QuickToolContext {
 
   /** Which surface is asking, for tools whose visibility depends on it. */
   surface: "quick-toolbar" | "mobile-navigation-bar";
+
+  /**
+   * The current shared bible reading session, if any. Needed by Share so the
+   * sheet can offer session actions for the surface being read, not a
+   * background tab.
+   */
+  sharedSession?: BibleReadingSession | null;
+
+  /** Shows a transient toast message. Optional; Share no-ops the copy toast if missing. */
+  toast?: (message: string) => void;
+
+  /** Modals manager. Share is hidden when this is absent. */
+  modals?: ModalManager;
+
+  /**
+   * App-level state. Share is hidden when this is absent, matching the main
+   * toolbar tool.
+   */
+  app?: AppState;
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
@@ -570,8 +589,10 @@ function NowPlayingIcon({
   );
 }
 
-function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
-  return [
+function getDefaultQuickToolbarTools(
+  branding?: BrandingConfig
+): ManagedBibleQuickToolbarTool[] {
+  const tools: ManagedBibleQuickToolbarTool[] = [
     {
       id: "current-playlist",
       priority: 0,
@@ -590,7 +611,31 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
         c.playlists.view.value = "play_playlist";
       },
     },
+    {
+      id: "share",
+      priority: 100,
+      title: { key: "share", defaultValue: "Share" },
+      icon: () => <MaterialIcon>share</MaterialIcon>,
+      // Mobile-only: on phones Share lives in the header so it stays visible
+      // instead of sitting in the bottom More menu. Desktop keeps it on the
+      // main reader toolbar. Hidden on the mobile-navigation-bar surface,
+      // which is reserved for the audio play control.
+      isVisible: (context) =>
+        computed(
+          () =>
+            context.surface === "quick-toolbar" &&
+            !!context.modals &&
+            !!context.app &&
+            context.playlists.isMobile.value
+        ),
+      onSelect: (context) => {
+        openShareModal(context, getShareUrl(context.readingState));
+      },
+    },
   ];
+  return tools.filter(
+    (tool) => !branding?.disabledToolbarTools?.includes(tool.id)
+  );
 }
 
 function getDefaultToolbarTools(
@@ -789,7 +834,12 @@ function getDefaultToolbarTools(
       priority: 130,
       title: { key: "share", defaultValue: "Share" },
       icon: () => <MaterialIcon>share</MaterialIcon>,
-      isVisible: (context) => !!context.modals && !!context.app,
+      // Desktop-only: on mobile this same action is a quick-toolbar button in
+      // the chapter header, so it does not also appear in the bottom More menu.
+      isVisible: (context) =>
+        !!context.modals &&
+        !!context.app &&
+        !(context.window?.isMobile ?? false),
       onSelect: (context) => {
         openShareModal(context, getShareUrl(context.readingState));
       },
@@ -1114,16 +1164,28 @@ export function getShareUrl(readingState: BibleReadingState) {
 }
 
 /**
+ * Fields `openShareModal` actually reads. Both the main/verse toolbar context
+ * and the leaner quick-toolbar context satisfy this, so Share can live on
+ * either surface without forcing quick tools to carry the full toolbar context.
+ */
+type ShareSheetContext = {
+  modals?: ModalManager;
+  app?: AppState;
+  toast?: (message: string) => void;
+  sharedSession?: BibleReadingSession | null;
+};
+
+/**
  * Opens the unified share sheet for a reading surface. Shared by the verse
- * toolbar's "Share" tool and the reader toolbar's "Share" tool so both open the
- * exact same modal. `shareText` is only passed by the verse flow (the selected
- * verses' text) for the native share sheet; the reader flow shares a link only.
- * The session comes from `context.sharedSession` — the tool's own reading
- * surface — never from global app state, so a background surface can't be
- * shared by mistake.
+ * toolbar's "Share" tool, the reader toolbar's "Share" tool, and the mobile
+ * quick-toolbar "Share" tool so all three open the exact same modal.
+ * `shareText` is only passed by the verse flow (the selected verses' text) for
+ * the native share sheet; the reader flow shares a link only. The session
+ * comes from `context.sharedSession` — the tool's own reading surface — never
+ * from global app state, so a background surface can't be shared by mistake.
  */
 function openShareModal(
-  context: BibleToolContext,
+  context: ShareSheetContext,
   shareUrl: URL,
   shareText?: string
 ) {
@@ -1140,7 +1202,7 @@ function openShareModal(
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {
           navigator.clipboard.writeText(shareUrl.toString());
-          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
+          context.toast?.(i18n.t("copied", { defaultValue: "Copied" }));
           modals.closeModal(modalId);
         }}
         onShareVia={() => {
@@ -1256,7 +1318,7 @@ export function createBibleToolsManager(
     getDefaultBelowReaderToolbarTools()
   );
   const quickTools = signal<ManagedBibleQuickToolbarTool[]>(
-    getDefaultQuickToolbarTools()
+    getDefaultQuickToolbarTools(branding)
   );
 
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {

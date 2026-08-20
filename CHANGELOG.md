@@ -8,6 +8,8 @@
 
 ### 🔧 Changed
 
+- On mobile, show Share in the chapter header instead of the bottom More menu, so it is always visible without opening a menu.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

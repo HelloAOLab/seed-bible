@@ -786,6 +786,17 @@ describe("BibleReaderToolbar mobile More menu", () => {
     expect(document.activeElement).toBe(moreButton);
   });
 
+  it("does not include Share, which lives in the chapter header on mobile", async () => {
+    const { moreButton } = await renderToolbar();
+    await openMenu(moreButton);
+
+    const labels = Array.from(
+      container.querySelectorAll(".sb-mobile-more-menu-label")
+    ).map((el) => el.textContent);
+
+    expect(labels).not.toContain("Share");
+  });
+
   it("stops listening once the menu is closed", async () => {
     const { moreButton } = await renderToolbar();
     await openMenu(moreButton);
