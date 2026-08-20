@@ -17,6 +17,23 @@
 export const CRITICAL_STYLE_PLACEHOLDER = "<!-- CRITICAL_STYLE_TAG -->";
 
 const LINK_TAG_RE = /<link\b[^>]*>/gi;
+const CSS_FILE_ID_RE = /\.css$/;
+
+/**
+ * True for a module id Vite's normal CSS pipeline would bundle into the
+ * external stylesheet (i.e. any `.css` file, ignoring a `?...` query
+ * suffix). `*.inline.css` files never reach this check with their real id —
+ * `vite-plugin-inline-critical-css.ts`'s `resolveId` hook rewrites them to a
+ * virtual id with no `.css` suffix before this runs.
+ *
+ * Used to power `VITE_CRITICAL_CSS_ONLY=true`, which blanks out every match
+ * so a build can be inspected with *only* the critical CSS applied — the
+ * fastest way to see whether the critical set is actually sufficient for a
+ * correct first paint.
+ */
+export function isNonCriticalStylesheetId(id: string): boolean {
+  return CSS_FILE_ID_RE.test(id.replace(/\?.*$/, ""));
+}
 
 function readAttr(tag: string, name: string): string | null {
   const match = new RegExp(

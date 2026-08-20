@@ -1,6 +1,7 @@
 import {
   CRITICAL_STYLE_PLACEHOLDER,
   injectCriticalStyles,
+  isNonCriticalStylesheetId,
   makeStylesheetsNonBlocking,
 } from "../../../../script/lib/inlineCriticalCss";
 
@@ -94,5 +95,23 @@ describe("makeStylesheetsNonBlocking()", () => {
 
     expect(html).toContain('rel="preconnect"');
     expect(html).not.toContain("preload");
+  });
+});
+
+describe("isNonCriticalStylesheetId()", () => {
+  it("matches a plain .css file id", () => {
+    expect(isNonCriticalStylesheetId("/src/app/main.css")).toBe(true);
+  });
+
+  it("matches a .css id with a query string", () => {
+    expect(isNonCriticalStylesheetId("/src/app/main.css?direct")).toBe(true);
+  });
+
+  it("does not match a non-css file id", () => {
+    expect(isNonCriticalStylesheetId("/src/app/main.tsx")).toBe(false);
+  });
+
+  it("does not match the virtual id inline critical CSS is resolved to", () => {
+    expect(isNonCriticalStylesheetId("\0inline-critical-css:0")).toBe(false);
   });
 });

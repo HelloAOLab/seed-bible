@@ -4,6 +4,7 @@ import path from "path";
 import { transform } from "esbuild";
 import {
   injectCriticalStyles,
+  isNonCriticalStylesheetId,
   makeStylesheetsNonBlocking,
 } from "./inlineCriticalCss";
 
@@ -34,8 +35,15 @@ const VIRTUAL_ID_PREFIX = "\0inline-critical-css:";
  *
  * Build-only: in dev, `*.inline.css` files are just ordinary CSS imports
  * handled by Vite's normal dev pipeline.
+ *
+ * Setting `VITE_CRITICAL_CSS_ONLY=true` additionally blanks out every
+ * *other* `.css` file's content, so the build ships with nothing but the
+ * critical CSS inlined in `index.html` — a way to actually eyeball whether
+ * that critical set alone renders a correct first paint, instead of trusting
+ * it by inspection.
  */
 export function inlineCriticalCssPlugin(): Plugin[] {
+  const criticalCssOnly = process.env.VITE_CRITICAL_CSS_ONLY === "true";
   const captured = new Map<string, string>();
   // The virtual id is a plain counter, not the real path — an absolute
   // Windows path has its own `C:\...` colon, and a virtual id combining that
@@ -67,6 +75,10 @@ export function inlineCriticalCssPlugin(): Plugin[] {
         captured.set(filePath, code);
         // An empty module — the CSS lives only in the inlined <style> tag.
         return "export default undefined;\n";
+      },
+      transform(code, id) {
+        if (!criticalCssOnly || !isNonCriticalStylesheetId(id)) return null;
+        return { code: "", map: null };
       },
     },
     {
