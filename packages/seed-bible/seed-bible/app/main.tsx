@@ -31,7 +31,7 @@ import { isWebKit } from "./ssrEnv";
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
 import "./styles/base.inline.css";
-import "./styles/utilities.css";
+import "./styles/utilities.inline.css";
 import {
   OnboardingModals,
   LanguageUnavailableModal,
