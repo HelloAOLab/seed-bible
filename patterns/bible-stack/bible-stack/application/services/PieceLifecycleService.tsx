@@ -619,11 +619,9 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
   deleteChapter(chapter: StackChapterData) {
     this.#pieceDataRepositoryPort.removeChapterData(chapter);
     const piece = chapter.clearPiece();
-    if (chapter.isOnTheGround && chapter.isSelected) {
-      const bundles = chapter.clearChildren();
-      for (const bundle of bundles) {
-        this.deleteVersesBundle(bundle);
-      }
+    const bundles = chapter.clearChildren();
+    for (const bundle of bundles) {
+      this.deleteVersesBundle(bundle);
     }
     if (piece) {
       this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
