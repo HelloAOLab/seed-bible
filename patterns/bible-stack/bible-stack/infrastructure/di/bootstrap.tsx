@@ -930,12 +930,14 @@ export const bootstrapExtension = () => {
     updaterAdapterPort: bookStackUpdaterAdapter,
     bookChaptersManagementServicePort: bookChaptersManagementService,
     pieceLabelServicePort: pieceLabelService,
+    loggerPort: loggerAdapter,
   });
   const sectionStackUpdaterService = new SectionStackUpdaterService({
     updaterAdapterPort: sectionStackUpdaterAdapter,
     bookStackUpdaterPort: bookStackUpdaterService,
     pieceLifecyclePort: stackPieceLifecycleAdapter,
     pieceLabelServicePort: pieceLabelService,
+    loggerPort: loggerAdapter,
   });
   const testamentStackUpdaterService = new TestamentStackUpdaterService({
     updaterAdapterPort: testamentStackUpdaterAdapter,

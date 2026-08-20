@@ -7,7 +7,10 @@ import type {
   PrepareSectionBookCommand,
   PrepareCommand,
 } from "../ports/in/BookStackUpdates";
-import type { BookStackUpdaterPort as UpdaterAdapterPort } from "../ports/out/StackBookUpdater";
+import type {
+  BookStackUpdaterPort as UpdaterAdapterPort,
+  LoggerPort,
+} from "../ports/out/StackBookUpdater";
 import type { BookChaptersManagementServicePort } from "../ports/bibleLifecycle";
 import type { PieceLabelServicePort } from "../ports/pieceLifecycle";
 import { BookShapes } from "../../domain/models/canvas";
@@ -18,21 +21,25 @@ interface ServiceParams {
   updaterAdapterPort: UpdaterAdapterPort;
   bookChaptersManagementServicePort: BookChaptersManagementServicePort;
   pieceLabelServicePort: PieceLabelServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class BookStackUpdaterService implements UpdaterServicePort {
   #updaterAdapterPort: ServiceParams["updaterAdapterPort"];
   #bookChaptersManagementServicePort: ServiceParams["bookChaptersManagementServicePort"];
   #pieceLabelServicePort: ServiceParams["pieceLabelServicePort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     updaterAdapterPort,
     bookChaptersManagementServicePort,
     pieceLabelServicePort,
+    loggerPort,
   }: ServiceParams) {
     this.#updaterAdapterPort = updaterAdapterPort;
     this.#bookChaptersManagementServicePort = bookChaptersManagementServicePort;
     this.#pieceLabelServicePort = pieceLabelServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   /**
@@ -42,10 +49,12 @@ export class BookStackUpdaterService implements UpdaterServicePort {
    */
   prepareBook(command: PrepareCommand) {
     // The legacy only hid chapters when the book was actually showing them
-    // (and, for a selected book, only inside a non-exploded section — that
-    // exploded-view nuance needs the parent-section context the standalone
-    // update flow doesn't carry, so it's left to the chapter service / a later
-    // refinement).
+    // (and, for a selected book, only inside a non-exploded section). That
+    // selected/non-exploded branch needs the parent-section context, which the
+    // standalone update() flow doesn't carry — so from update() only the
+    // Deselecting path fires. It IS reachable when a split section drives the
+    // update: SectionStackUpdaterService.prepareSection passes sectionData for
+    // each of its books, which enables the selected/non-exploded chapter-hide.
     switch (command.data.type) {
       case "StackBook":
         this.#prepareRegularBook(command as PrepareBookCommand);
@@ -111,8 +120,11 @@ export class BookStackUpdaterService implements UpdaterServicePort {
           piece,
           translucencyMode: "Solid",
         });
-      } catch {
-        // No label currently attached to the book — nothing to toggle.
+      } catch (error) {
+        this.#loggerPort.error(
+          "BookStackUpdaterService: showLabel failed at finalizeBook",
+          error
+        );
       }
     }
   }
@@ -124,6 +136,10 @@ export class BookStackUpdaterService implements UpdaterServicePort {
     data: BookEntity;
     pacing: StackUpdatePacing;
   }): Promise<void> {
+    // Both branches are identical on purpose: the ternary narrows `data` per
+    // branch (StackSectionBookData vs StackBookData) so each `{ data }` matches
+    // a concrete member of the PrepareCommand union. A single `{ data }` would
+    // type as the un-narrowed union and fail to assign.
     this.prepareBook(data.type === "StackSectionBook" ? { data } : { data });
     await this.#updaterAdapterPort.update({ data, pacing });
     await this.finalizeBook(data);

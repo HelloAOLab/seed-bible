@@ -1,7 +1,10 @@
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { SectionStackUpdaterPort as UpdaterServicePort } from "../ports/in/SectionStackUpdates";
-import type { SectionStackUpdaterPort as UpdaterAdapterPort } from "../ports/out/StackSectionUpdater";
+import type {
+  SectionStackUpdaterPort as UpdaterAdapterPort,
+  LoggerPort,
+} from "../ports/out/StackSectionUpdater";
 import type { BookStackUpdaterPort } from "../ports/in/BookStackUpdates";
 import type {
   PieceLabelServicePort,
@@ -13,6 +16,7 @@ interface ServiceParams {
   bookStackUpdaterPort: BookStackUpdaterPort;
   pieceLifecyclePort: StackPieceLifecycleAdapterPort;
   pieceLabelServicePort: PieceLabelServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class SectionStackUpdaterService implements UpdaterServicePort {
@@ -20,17 +24,20 @@ export class SectionStackUpdaterService implements UpdaterServicePort {
   #bookStackUpdaterPort: ServiceParams["bookStackUpdaterPort"];
   #pieceLifecyclePort: ServiceParams["pieceLifecyclePort"];
   #pieceLabelServicePort: ServiceParams["pieceLabelServicePort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     updaterAdapterPort,
     bookStackUpdaterPort,
     pieceLifecyclePort,
     pieceLabelServicePort,
+    loggerPort,
   }: ServiceParams) {
     this.#updaterAdapterPort = updaterAdapterPort;
     this.#bookStackUpdaterPort = bookStackUpdaterPort;
     this.#pieceLifecyclePort = pieceLifecyclePort;
     this.#pieceLabelServicePort = pieceLabelServicePort;
+    this.#loggerPort = loggerPort;
   }
 
   /**
@@ -87,8 +94,11 @@ export class SectionStackUpdaterService implements UpdaterServicePort {
       } else {
         await this.#pieceLabelServicePort.hideLabel(shadow);
       }
-    } catch {
-      // No label currently attached to the shadow — nothing to toggle.
+    } catch (error) {
+      this.#loggerPort.error(
+        "SectionStackUpdaterService: showLabel failed at finalizeSection",
+        error
+      );
     }
   }
 
