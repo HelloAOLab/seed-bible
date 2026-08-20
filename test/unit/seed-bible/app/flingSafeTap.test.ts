@@ -1,6 +1,7 @@
 import { vi, type Mock } from "vitest";
 import {
   flingSafeTapHandlers,
+  resetFlingSafeTapForTests,
   type FlingSafeTapHandlers,
 } from "@packages/seed-bible/seed-bible/app/flingSafeTap";
 
@@ -31,6 +32,10 @@ function press(
   );
 }
 
+function simulateMomentumScroll() {
+  document.body.dispatchEvent(new Event("scroll", { bubbles: false }));
+}
+
 describe("flingSafeTapHandlers", () => {
   let button: HTMLButtonElement;
   let onTap: Mock<() => void>;
@@ -44,18 +49,32 @@ describe("flingSafeTapHandlers", () => {
 
   afterEach(() => {
     button.remove();
+    resetFlingSafeTapForTests();
   });
 
   it("runs the action for a tap the browser withholds the click for", () => {
     // What Chromium does on Android when the tap lands during a momentum
     // scroll: the pointer events arrive, the click never does.
+    simulateMomentumScroll();
     press(button, "pointerdown");
     press(button, "pointerup");
 
     expect(onTap).toHaveBeenCalledTimes(1);
   });
 
-  it("runs the action once when the click does arrive", () => {
+  it("waits for the click on an ordinary tap, so it does not open UI under the finger", () => {
+    press(button, "pointerdown");
+    press(button, "pointerup");
+
+    expect(onTap).not.toHaveBeenCalled();
+
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onTap).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs the action once when a fling-stop tap also gets a click", () => {
+    simulateMomentumScroll();
     press(button, "pointerdown");
     press(button, "pointerup");
     button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -64,6 +83,7 @@ describe("flingSafeTapHandlers", () => {
   });
 
   it("ignores a press that travels away from the control", () => {
+    simulateMomentumScroll();
     press(button, "pointerdown");
     press(button, "pointerup", { y: 10 + DRAG_DISTANCE_PX });
 
@@ -71,6 +91,7 @@ describe("flingSafeTapHandlers", () => {
   });
 
   it("ignores a press the browser turns into a scroll", () => {
+    simulateMomentumScroll();
     press(button, "pointerdown");
     button.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true }));
     press(button, "pointerup");
@@ -95,8 +116,10 @@ describe("flingSafeTapHandlers", () => {
   it("activates twice for two taps", () => {
     press(button, "pointerdown");
     press(button, "pointerup");
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     press(button, "pointerdown");
     press(button, "pointerup");
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     expect(onTap).toHaveBeenCalledTimes(2);
   });
@@ -104,6 +127,7 @@ describe("flingSafeTapHandlers", () => {
   it("does not activate a disabled control", () => {
     button.disabled = true;
 
+    simulateMomentumScroll();
     press(button, "pointerdown");
     press(button, "pointerup");
 
@@ -118,7 +142,14 @@ describe("flingSafeTapHandlers", () => {
 
     press(button, "pointerdown");
     press(button, "pointerup");
-    other.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    other.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        clientX: 200,
+        clientY: 200,
+      })
+    );
 
     expect(onTap).toHaveBeenCalledTimes(1);
     expect(onOtherTap).toHaveBeenCalledTimes(1);

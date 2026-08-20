@@ -6,10 +6,10 @@
  * alone ignores the first tap after a fast flick on Android while behaving
  * normally on iOS.
  *
- * These handlers activate from `pointerup` for touch and pen — events that
- * arrive even when the gesture is cancelled — and drop the `click` that follows
- * a tap Chromium did let through, so the action runs exactly once. Mouse and
- * keyboard activation still go through `click`.
+ * Ordinary taps therefore stay on `click`. Only a press that starts while a
+ * scroll is still coasting activates from `pointerup` — the event that still
+ * arrives when Chromium withholds the click. Because that click never comes,
+ * opening UI from `pointerup` cannot steal a leftover mouse event.
  *
  * Reserve this for controls that are harmless to trigger while the page is
  * still moving. Chromium suppresses those clicks on purpose, so that a tap
@@ -22,11 +22,18 @@ const TAP_SLOP_PX = 12;
 /** How long the `click` paired with an already-handled tap stays ignorable. */
 const CLICK_AFTER_TAP_MS = 700;
 
+/**
+ * A scroll event within this window means the page is still coasting, so the
+ * tap is the one Chromium may withhold a `click` for.
+ */
+const FLING_SCROLL_WINDOW_MS = 150;
+
 interface PendingTap {
   pointerId: number;
   element: EventTarget;
   x: number;
   y: number;
+  duringFling: boolean;
 }
 
 // Module scope rather than closure state: the handlers are rebuilt on every
@@ -34,6 +41,8 @@ interface PendingTap {
 // otherwise throw away the press that the release needs to match against.
 let pendingTap: PendingTap | null = null;
 let handledTap: { element: EventTarget; at: number } | null = null;
+let lastScrollAt = 0;
+let scrollWatchInstalled = false;
 
 function isDisabled(element: EventTarget): boolean {
   return (
@@ -41,6 +50,22 @@ function isDisabled(element: EventTarget): boolean {
       element instanceof HTMLInputElement) &&
     element.disabled
   );
+}
+
+function ensureScrollWatch() {
+  if (scrollWatchInstalled || typeof document === "undefined") return;
+  scrollWatchInstalled = true;
+  document.addEventListener(
+    "scroll",
+    () => {
+      lastScrollAt = Date.now();
+    },
+    { capture: true, passive: true }
+  );
+}
+
+function isRecentlyScrolling(): boolean {
+  return Date.now() - lastScrollAt < FLING_SCROLL_WINDOW_MS;
 }
 
 export interface FlingSafeTapHandlers {
@@ -61,6 +86,8 @@ export function flingSafeTapHandlers(
   onTap: () => void,
   onPress?: (event: PointerEvent) => void
 ): FlingSafeTapHandlers {
+  ensureScrollWatch();
+
   return {
     onPointerDown(event) {
       onPress?.(event);
@@ -78,6 +105,7 @@ export function flingSafeTapHandlers(
         element,
         x: event.clientX,
         y: event.clientY,
+        duringFling: isRecentlyScrolling(),
       };
     },
 
@@ -101,6 +129,10 @@ export function flingSafeTapHandlers(
         return;
       }
 
+      // The page was still. Chromium will send a `click`; wait for it so the
+      // action cannot reveal UI under a leftover mouse event.
+      if (!press.duringFling) return;
+
       handledTap = { element: press.element, at: Date.now() };
       onTap();
     },
@@ -122,4 +154,11 @@ export function flingSafeTapHandlers(
       onTap();
     },
   };
+}
+
+/** Clears in-flight tap state so tests cannot leak a recent-scroll flag. */
+export function resetFlingSafeTapForTests() {
+  pendingTap = null;
+  handledTap = null;
+  lastScrollAt = 0;
 }

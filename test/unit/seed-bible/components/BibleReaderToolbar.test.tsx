@@ -10,6 +10,7 @@ import {
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import { resetFlingSafeTapForTests } from "@packages/seed-bible/seed-bible/app/flingSafeTap";
 import { TestHost } from "./TestHost";
 import {
   aabBooks,
@@ -1457,6 +1458,7 @@ describe("BibleReaderToolbar floating chapter nav", () => {
     render(null, container);
     container.remove();
     window.innerWidth = originalInnerWidth;
+    resetFlingSafeTapForTests();
   });
 
   async function renderToolbar(): Promise<{
@@ -1516,6 +1518,10 @@ describe("BibleReaderToolbar floating chapter nav", () => {
     // pointer events arrive but no click follows, so a click-only control sits
     // there doing nothing until the page settles.
     await act(async () => {
+      // The helper only treats a tap as fling-stop when a scroll was still
+      // coasting; without that, it waits for `click`, which this gesture has
+      // none of.
+      document.body.dispatchEvent(new Event("scroll", { bubbles: false }));
       tap(bookLabel);
     });
 
