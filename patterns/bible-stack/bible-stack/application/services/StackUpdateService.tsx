@@ -60,40 +60,45 @@ export class StackUpdateService implements StackUpdateServicePort {
       return;
     }
 
-    const updates: Promise<void>[] = [];
     this.#isUpdating = true;
     this.#pieceInteractabilityPort.blockAll();
 
-    updates.push(
-      ...this.#bibleDataRepositoryPort
-        .getAllBiblesData()
-        .map((data) => this.#bibleStackUpdaterPort.update({ data, pacing }))
-    );
-    updates.push(
-      ...this.#pieceDataRepositoryPort
-        .getStandaloneTestaments()
-        .map((data) => this.#testamentStackUpdaterPort.update({ data, pacing }))
-    );
-    updates.push(
-      ...this.#pieceDataRepositoryPort
-        .getStandaloneSections()
-        .map((data) => this.#sectiontackUpdaterPort.update({ data, pacing }))
-    );
-    updates.push(
-      ...this.#pieceDataRepositoryPort
-        .getStandaloneSectionBooks()
-        .map((data) => this.#bookStackUpdaterPort.update({ data, pacing }))
-    );
-    updates.push(
-      ...this.#pieceDataRepositoryPort
-        .getStandaloneBooks()
-        .map((data) => this.#bookStackUpdaterPort.update({ data, pacing }))
-    );
+    try {
+      const updates: Promise<void>[] = [];
 
-    await Promise.all(updates);
+      updates.push(
+        ...this.#bibleDataRepositoryPort
+          .getAllBiblesData()
+          .map((data) => this.#bibleStackUpdaterPort.update({ data, pacing }))
+      );
+      updates.push(
+        ...this.#pieceDataRepositoryPort
+          .getStandaloneTestaments()
+          .map((data) =>
+            this.#testamentStackUpdaterPort.update({ data, pacing })
+          )
+      );
+      updates.push(
+        ...this.#pieceDataRepositoryPort
+          .getStandaloneSections()
+          .map((data) => this.#sectiontackUpdaterPort.update({ data, pacing }))
+      );
+      updates.push(
+        ...this.#pieceDataRepositoryPort
+          .getStandaloneSectionBooks()
+          .map((data) => this.#bookStackUpdaterPort.update({ data, pacing }))
+      );
+      updates.push(
+        ...this.#pieceDataRepositoryPort
+          .getStandaloneBooks()
+          .map((data) => this.#bookStackUpdaterPort.update({ data, pacing }))
+      );
 
-    this.#pieceInteractabilityPort.unlockAll();
-    this.#isUpdating = false;
+      await Promise.all(updates);
+    } finally {
+      this.#pieceInteractabilityPort.unlockAll();
+      this.#isUpdating = false;
+    }
 
     if (this.#isUpdateQueued) {
       this.#isUpdateQueued = false;
