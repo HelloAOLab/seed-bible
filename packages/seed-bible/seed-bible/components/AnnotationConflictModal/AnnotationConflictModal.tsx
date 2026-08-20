@@ -242,7 +242,7 @@ function ConflictForm(props: {
       <div className="sb-annotation-conflict-actions">
         <button
           type="button"
-          className="sb-session-settings-end"
+          className="sb-annotation-conflict-confirm"
           disabled={applying || !resolution}
           onClick={() => void confirm()}
         >
