@@ -25,12 +25,15 @@
   scrollbar-width: none;
   padding-bottom: 4rem;
   --seed-bible-icon-url: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAETAQMAAAB6HCwRAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAZQTFRFGRkZAQEBroFsmgAAAAJ0Uk5T/QI5jzPkAAACwUlEQVR4nO2aS5KjMAyGlWHBbjgCNxkfzT4aR+EIWbKgkiEYbEsWNuChk57Wv0mVLH9+ApK64cnKwC1jWAWstQOAOjT0k6HaD4BZyhsGa9kLsN7hiB1sEvBMg9Em6dX0cKaWeveBm9XdOUOTsnk03l0I5FpMaEXuc0uwiAGQNF0BXUaPRyLdneuWPZhZRedpVaNx6Oq62My58ei90swWHFLLbsEBNeQWHNZ8m7sCANC7dVi6bA/nR3osAjRlezjfxb4IUBUewusYyvqDLjuE6RjKDmF6GkqehJeaslOczrEvBFRdIeBmCgEikUgkmj7r94wh159+VI8FWyqKT+tD8Z6KI2Rr2vmh5SJ/zraIrsynDyZjnNUAiYFUlAy8FKQUeBn1K+nquJHwJrShPehf2axt4LqjsRRuMQEXnC9xQiGqpm2+A5+5kg3byHqzALc5fNKbB7hjiJLTnQB3RZqEUwrgzrF9F8BdBHUS4C6CPglwlzbpcynA5C9iGtDlL+LFgD5/ky8G3POPwtcA2tOA4VMA6jRg/P6AR/59IoCfA0i5bACWAMQDxs2JsIBx+Rp4gNm80hzAvckcIPFuY7BrXHHzAANbhDH+bq3O05toBfiIkfNukSGsfNUroA+MuP9Ajzl0BVgByFjHw7HDv/TH/tAo34+IoXE+8dv+xKlKy0yX0y/702UdRSKRSCQSiUQ/RFERWh37Iz6O2mGJ0nd3v6G0YVbzPEComMh7ia87xj2yufzB0DnRac2jAd0b5WL5AO2LYVHoD9gUls02/gcITVk98YGFyctmbf0R9rdp3x0vNHbUpMn4eaXyWg9IOSXazNpfauvfuTT+AbV1k79HUlu/HPD+2vrHlMbPA95f2f5XAH0a8DFVXQG8pzQugC8GiEQikUgkEolEItFl2pGx6GtTHgEIQAACEIAABCCA/w/wF5ZauGWYASsuAAAAAElFTkSuQmCC");
-  --spinner-icon-url: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADY0lEQVR4AezZoY4UQRDGcQ4FDoFAIJAI5BkSBLwDAskDQILEERwOAY+Au/AMQAjBHAkSRwgGgcCBpH6Tq6SXnemZuZ2+5XJLqrZraqr/X9UNd7sze/5cu3/7gf565OIIl7eWAzyOdq8duTjC5a3lAJeLdsu4SG8ethxg8+4mEHYDTPghNS0ZuwK3Q/1B+KXwkzaaj0JUD7H0W20AG9/EthfhH8OvhJ+U0aL5PAT1oJcI1602wI2i/HrEQMARNjUatGimUNlL5rq1NsCrqPgSngYITCBzS6/YNGglWw96yeOVtTbAr6i8Ew4QS2fABAh1icrLz+JcGRfplRATm0aeoK0HvWRuZa0NoPBHvAAARdgZAUIEu8TAy7PIfztycYSDhoWJnUU0aeshc2vr2AA2AAABOuaECBJ23OeHkcyPEuI47DUMLMwsoEWTduZ61ykD2AgECOyYEzwQbOgYWImhQYtm5gbXqQMAAAITcMyX+JRZMrBp0MIf9TkDgAET+BAHf8Kfhm9qGFiY2DQmM+cOAEzgVgQXw8d+OaNk1DCwMLFHN5QFxxmg3L/1eDfAti/BWboC2/5Z9+u7Av4OezPxblhzNWr7SctladCq9eKcmn0DCO6Gvs/cNVejNkqbGg1atV6cU3NggL0Z7cypnYFdKZ2jsWcAk7wOxLsRV6M2ypoaDVqT+jGAT4o2uSw1V6O2afcBp0Gr1otzag4NEHtOr+0G2Pa1212B03gF3MO+j8Z/hy/x2BwDCxM7sNNt7n8hAt7G3XxcCJkn4ZsaBhYmNo3JzDkDABMob8A/TVYaLiwZ2DRoDe8ozkwdABCYQG53A+7NJI+Pu2Jg5X4atGhmbnCdMgAQIHCCCI7dgPtU+T02+J5MHGGvuQ/GwswCWjRpZ653HRsAAAgwAYQIEs5c3+qX82qc8HBLHOGgYWFiZxFN2nrI3NpaG8DzeQCg3EiAEMHMDa3l92JlPFSPiU0ja2jrQS+ZW1lrA9yPSoBYOgMmQKhLNHjBpkEr8Xq4lwf/rrUBPhfFgMAEinSTkAYtmilQxpnr1toAb6MC6GGsN8OBYzkRo0WTth700itcG8AGG19GMPh8Ps6t2zIZmrT1MEgcG2Bw4/9yYjfAtq9EyytQfi9WxovO3HIAj82nfkd27KH+AgAA//+s+nFeAAAABklEQVQDABL3rIlqL1lOAAAAAElFTkSuQmCC");
-  --grey: #989898;
+
+  /* A third, more muted text tier than `--sb-secondary-font-color`: the
+     resume card deliberately pairs the two, so they are not interchangeable.
+     Local rather than a theme token because core has no equivalent, and this
+     mid-grey is legible on both themes as-is. */
+  --sb-today-muted-font-color: #989898;
 }
 
-.seed-bible-icon,
-.spinner-icon {
+.seed-bible-icon {
   width: 2rem;
   height: 2rem;
   -webkit-mask-size: contain;
@@ -44,12 +47,6 @@
 .seed-bible-icon {
   -webkit-mask-image: var(--seed-bible-icon-url);
   mask-image: var(--seed-bible-icon-url);
-}
-
-.spinner-icon {
-  -webkit-mask-image: var(--spinner-icon-url);
-  mask-image: var(--spinner-icon-url);
-  background-color: var(--grey);
 }
 
 .today-container .divider {
@@ -79,12 +76,12 @@
 .welcome-screen .welcome-screen-greeting,
 .welcome-screen .welcome-screen-verse {
   font-size: 1.75rem;
-  font-family: "Newsreader";
+  font-family: var(--sb-book-title-font-family);
 }
 
 .welcome-screen .welcome-screen-greeting,
 .welcome-screen .welcome-screen-book {
-  color: var(--grey);
+  color: var(--sb-today-muted-font-color);
 }
 
 .welcome-screen .welcome-screen-greeting {
@@ -143,7 +140,15 @@
   font-size: 1rem;
 }
 
-.today-content * {
+/* Drag-to-scroll surfaces and clickable chrome only — `user-select`
+   inherits, so a container covers its chips. The blanket `.today-content *`
+   this replaced also caught search-result verse text and the resume card's
+   reference, which a reader has every reason to want to copy. */
+.today-container .bookmarks-section-container,
+.today-container .timespan-filter-container,
+.today-container .user-filter-container,
+.today-container .reading-history-timeline-container,
+.today-content button {
   user-select: none;
 }
 
@@ -238,7 +243,7 @@
 }
 
 .today-container .today-resume-card > h1 > span {
-  color: var(--grey);
+  color: var(--sb-today-muted-font-color);
 }
 
 .today-container .today-resume-card > button {
@@ -295,7 +300,7 @@
 .today-container .titled-section .titled-section-header > h5,
 .today-container .titled-section .titled-section-header > button {
   margin: 0;
-  color: var(--grey);
+  color: var(--sb-today-muted-font-color);
 }
 
 .today-container .titled-section .titled-section-header {
@@ -714,76 +719,6 @@
 
 .today-container .reading-history-timeline {
   scrollbar-width: none;
-}
-
-.today-container .presence-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.today-container .presence-card .presence-card-left-section,
-.today-container .presence-card .presence-card-right-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.today-container .presence-card .presence-card-left-section {
-  gap: 0.5rem;
-}
-
-.today-container .presence-card .presence-card-right-section {
-  gap: 1.25rem;
-}
-
-.today-container .presence-card .presence-card-left-section-dot {
-  width: 0.25rem;
-  height: 0.25rem;
-  background-color: var(--sb-reader-font-color);
-  border-radius: 50%;
-}
-
-.today-container .presence-card .presence-card-status {
-  color: #28c244;
-  font-weight: 600;
-  font-size: 0.75rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.today-container .presence-card .presence-card-status > div {
-  background-color: #28c244;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  box-shadow: 0 0 2px 2px #28c2449c;
-}
-
-.today-container .presence-card .presence-card-reading {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.today-container .presence-card .presence-card-avatar-group {
-  display: flex;
-  align-items: center;
-}
-
-.today-container .presence-card .filtered-reading-book-icon {
-}
-
-.today-container .presence-card .presence-card-join-button {
-  appearance: none;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--sb-primary-color);
-  background-color: var(--sb-secondary-color);
 }
 
 .today-container .bookmarks-section {
