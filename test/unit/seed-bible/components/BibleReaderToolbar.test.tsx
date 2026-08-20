@@ -1125,6 +1125,41 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe("0px");
   });
 
+  it("continues straight into the dismiss slide when a single drag from expanded closes the drawer and keeps going", async () => {
+    const handle = await renderSheet();
+
+    // Open it first.
+    await press(handle, 500);
+    await moveTo(handle, 300);
+    await release(handle, 300);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+
+    // One continuous drag: closes the drawer, then keeps going and starts
+    // sliding the sheet itself away — no release/re-press in between.
+    await press(handle, 300);
+    await moveTo(handle, 300 + OVERFLOW_HEIGHT + 40);
+
+    expect(overflow()?.style.height).toBe("0px");
+    expect(sheet()?.style.transform).toBe("translateY(40px)");
+
+    await release(handle, 300 + OVERFLOW_HEIGHT + 40);
+  });
+
+  it("dismisses the selection from one continuous drag starting expanded", async () => {
+    const handle = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 300);
+    await release(handle, 300);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+
+    await press(handle, 300);
+    await moveTo(handle, 300 + OVERFLOW_HEIGHT + 100);
+    await release(handle, 300 + OVERFLOW_HEIGHT + 100);
+
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+  });
+
   it("toggles on a tap that barely moves", async () => {
     const handle = await renderSheet();
 

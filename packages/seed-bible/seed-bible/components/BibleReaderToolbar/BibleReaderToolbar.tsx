@@ -1009,10 +1009,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    *
    * The sheet follows the finger rather than snapping at a threshold: dragging up
    * grows the overflow row a pixel at a time, dragging back down shrinks it, and
-   * dragging down on an already-collapsed sheet slides the whole sheet toward the
-   * bottom of the screen to dismiss it. Releasing settles to whichever resting
-   * position the gesture ended up nearest, so a half-finished drag animates the
-   * rest of the way instead of being abandoned.
+   * once the overflow row is fully closed — whether the drag started collapsed or
+   * (after closing it mid-gesture) expanded — continuing to drag down slides the
+   * whole sheet toward the bottom of the screen to dismiss it, all in one
+   * continuous motion rather than requiring a release and a second drag.
+   * Releasing settles to whichever resting position the gesture ended up nearest,
+   * so a half-finished drag animates the rest of the way instead of being
+   * abandoned.
    *
    * A press that barely moves is a tap, and toggles.
    */
@@ -1073,11 +1076,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const reveal = Math.min(overflowHeight, Math.max(0, drag.startReveal - dy));
     verseSheetDragReveal.value = reveal;
 
-    // Only start sliding the sheet away once there is no overflow left to close:
-    // a downward drag first puts the sheet back to collapsed, and only carries on
-    // into a dismiss if it began there.
+    // Once the overflow row is fully closed, the rest of the same downward drag
+    // slides the whole sheet away to dismiss. `dy` minus `startReveal` is how far
+    // the finger has moved *past* the point where the row finished closing —
+    // using that (rather than raw `dy`) means the dismiss slide picks up smoothly
+    // from 0 instead of jumping by however much drag it took to close the row,
+    // and it works the same whether the drag started collapsed (startReveal 0) or
+    // expanded (startReveal the full row height).
+    const distancePastClosed = dy - drag.startReveal;
     verseSheetDismissOffset.value =
-      reveal === 0 && dy > 0 && drag.startReveal === 0 ? dy : 0;
+      reveal === 0 && distancePastClosed > 0 ? distancePastClosed : 0;
   };
 
   const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
