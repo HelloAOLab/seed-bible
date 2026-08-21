@@ -23,6 +23,7 @@ import type {
 } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
+import type { AnnotationsManager } from "./AnnotationsManager";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -215,6 +216,32 @@ function sharedUserProfileEntriesMatch(
     left.joinedAtMs === right.joinedAtMs &&
     JSON.stringify(left.profile) === JSON.stringify(right.profile)
   );
+}
+
+/**
+ * Where one participant's own reader is, as published into the session's
+ * `reading_positions` map.
+ *
+ * Broadcast per connection because `reading_state` holds a single position for
+ * the whole session, which cannot answer "where is each participant": someone
+ * outside `allowedNavigators` moves their own reader without ever publishing,
+ * and everyone else trails a navigation by the publish debounce. Reading the
+ * session position instead reports every peer wherever the *local* reader is.
+ */
+export interface ParticipantReadingPosition {
+  bookId: string;
+  chapterNumber: number;
+}
+
+function parseParticipantReadingPosition(
+  value: unknown
+): ParticipantReadingPosition | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const bookId = toStringOrNull(record.bookId);
+  const chapterNumber = toPositiveIntOrNull(record.chapterNumber);
+  if (!bookId || chapterNumber === null) return null;
+  return { bookId, chapterNumber };
 }
 
 /**
@@ -545,6 +572,16 @@ export interface BibleReadingSession {
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
 
   /**
+   * Each still-connected participant's own reading position, keyed by
+   * connectionId. A peer who hasn't broadcast one yet is absent rather than
+   * guessed at, so callers that must show something should fall back to
+   * `readingState` themselves.
+   */
+  participantPositions: ReadonlySignal<
+    ReadonlyMap<string, ParticipantReadingPosition>
+  >;
+
+  /**
    * Whether this client's own connection to the shared document is
    * currently synced. False while resyncing (e.g. right after a mobile
    * device resumes from the background) — during that window, this
@@ -609,7 +646,8 @@ async function createBibleReadingSession(
   readingExtensionManager: BibleReadingExtensionManager | undefined,
   id: string,
   defaultOptions?: SessionOptions,
-  startPosition?: SessionStartPosition
+  startPosition?: SessionStartPosition,
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(
     dataManager,
@@ -619,7 +657,8 @@ async function createBibleReadingSession(
     // session's reading state back into an unshared one.
     { ...startPosition, isShared: true },
     undefined,
-    readingExtensionManager
+    readingExtensionManager,
+    getAnnotationsManager
   );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
@@ -639,9 +678,17 @@ async function createBibleReadingSession(
   // `connectedUsers`.
   const userProfilesMap =
     document.getMap<SharedUserProfileEntry>("user_profiles");
+  // Per-connection reading position, written only by its own client. See
+  // `ParticipantReadingPosition` for why the session-wide position can't stand
+  // in for this.
+  const readingPositionsMap =
+    document.getMap<ParticipantReadingPosition>("reading_positions");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
+  const participantPositions = signal<
+    ReadonlyMap<string, ParticipantReadingPosition>
+  >(new Map());
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
   const localConnectionId = os.connectionId;
@@ -692,6 +739,8 @@ async function createBibleReadingSession(
   let remoteSyncDrain: Promise<void> | null = null;
   /** Armed while a local navigation is waiting to be published to peers. */
   let publishTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Armed while our own reading position is waiting to be broadcast. */
+  let positionBroadcastTimer: ReturnType<typeof setTimeout> | null = null;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
   let applyingRemoteExtensions = false;
@@ -792,6 +841,26 @@ async function createBibleReadingSession(
     }
   };
 
+  const syncParticipantPositions = () => {
+    const next = new Map<string, ParticipantReadingPosition>();
+    readingPositionsMap.forEach((value, connectionId) => {
+      if (typeof connectionId !== "string") {
+        return;
+      }
+      // A client that vanished without disposing leaves its entry behind and
+      // the document never shrinks, so connectivity — not the map — decides
+      // who still counts as present.
+      if (!connectedClients.has(connectionId)) {
+        return;
+      }
+      const position = parseParticipantReadingPosition(value);
+      if (position) {
+        next.set(connectionId, position);
+      }
+    });
+    participantPositions.value = next;
+  };
+
   const syncConnectedUsers = async (version: number) => {
     const clients = Array.from(connectedClients.values());
     const nextUsers = await Promise.all(
@@ -888,6 +957,10 @@ async function createBibleReadingSession(
     });
 
     allUsers.value = Array.from(nextUsersByConnectionId.values());
+
+    // Connectivity gates which position entries count, so the positions have
+    // to be rebuilt whenever the connected set changes.
+    syncParticipantPositions();
   };
 
   // When the translation isn't shared, keep the local reader on their own
@@ -1062,6 +1135,55 @@ async function createBibleReadingSession(
       // still see whatever was last published (possibly stale).
     }
   });
+
+  const broadcastLocalPosition = () => {
+    const bookId = readingState.bookId.value;
+    const chapterNumber = readingState.chapterNumber.value;
+    if (!bookId || chapterNumber <= 0) {
+      return;
+    }
+    const currentEntry = parseParticipantReadingPosition(
+      readingPositionsMap.get(localConnectionId)
+    );
+    if (
+      currentEntry &&
+      currentEntry.bookId === bookId &&
+      currentEntry.chapterNumber === chapterNumber
+    ) {
+      return;
+    }
+    try {
+      document.transact(() => {
+        readingPositionsMap.set(localConnectionId, { bookId, chapterNumber });
+      });
+    } catch {
+      // Best-effort — peers keep the last position we managed to publish.
+    }
+  };
+
+  // Deliberately not gated on `userCanNavigate` the way `stopSync` is: this
+  // says where we are, which a participant who may not move the session is
+  // still entitled to report. Debounced on the same window so skimming
+  // chapters leaves one entry rather than one per chapter in a document that
+  // never shrinks. `scrollToVerse` is deliberately not read — presence is
+  // chapter-grained, and tracking it would rewrite the entry on every scroll.
+  const stopBroadcastLocalPosition = effect(() => {
+    void readingState.bookId.value;
+    void readingState.chapterNumber.value;
+    if (positionBroadcastTimer !== null) {
+      clearTimeout(positionBroadcastTimer);
+    }
+    positionBroadcastTimer = setTimeout(() => {
+      positionBroadcastTimer = null;
+      broadcastLocalPosition();
+    }, PUBLISH_DEBOUNCE_MS);
+  });
+
+  const readingPositionsSubscription = readingPositionsMap.changes.subscribe(
+    () => {
+      syncParticipantPositions();
+    }
+  );
 
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
@@ -1531,17 +1653,26 @@ async function createBibleReadingSession(
     decorationsSubscription.unsubscribe();
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
+    readingPositionsSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
     stopExtensionSync?.();
     stopBroadcastLocalIdentity();
-    // Drop our identity entry so peers' lookup for this connection no
-    // longer resolves once we're gone.
+    // Stopped before the delete below, so a broadcast still sitting on the
+    // debounce can't re-add the entry we are about to remove.
+    stopBroadcastLocalPosition();
+    if (positionBroadcastTimer !== null) {
+      clearTimeout(positionBroadcastTimer);
+      positionBroadcastTimer = null;
+    }
+    // Drop our identity and position entries so peers' lookups for this
+    // connection no longer resolve once we're gone.
     try {
       document.transact(() => {
         userProfilesMap.delete(localConnectionId);
+        readingPositionsMap.delete(localConnectionId);
       });
     } catch {
       // Best-effort — the entry will simply linger in the CRDT.
@@ -1567,6 +1698,7 @@ async function createBibleReadingSession(
     allUsers,
     connectedUsers,
     currentUser,
+    participantPositions,
     isSynced,
     removeSharedDecoration,
     dispose,
@@ -1597,7 +1729,8 @@ export function createSessionsManager(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
-  readingExtensionManager?: BibleReadingExtensionManager
+  readingExtensionManager?: BibleReadingExtensionManager,
+  getAnnotationsManager?: () => AnnotationsManager | undefined
 ): SessionsManager {
   const createSession = async (startPosition?: SessionStartPosition) => {
     const id = createSessionId();
@@ -1613,7 +1746,8 @@ export function createSessionsManager(
       readingExtensionManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId },
-      startPosition
+      startPosition,
+      getAnnotationsManager
     );
   };
 
@@ -1625,7 +1759,10 @@ export function createSessionsManager(
       highlightsManager,
       i18nManager,
       readingExtensionManager,
-      id
+      id,
+      undefined,
+      undefined,
+      getAnnotationsManager
     );
   };
 

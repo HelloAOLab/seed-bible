@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { ChatView } from "@packages/seed-bible/seed-bible/components/ChatView/ChatView";
 import type {
+  ChatMessage,
   ChatSession,
   ParsedChatTextMessage,
   UserChatParticipant,
@@ -50,6 +51,20 @@ function createMockMessage(
   };
 }
 
+function createMockToolCallMessage(
+  overrides: Partial<ChatMessage & { type: "tool_call" }> = {}
+): ChatMessage {
+  return {
+    id: "tool-msg-1",
+    authors: ["participant-1"],
+    timeMs: 0,
+    targets: [],
+    type: "tool_call",
+    name: "search",
+    ...overrides,
+  };
+}
+
 function createMockChatSession(
   overrides: Partial<ChatSession> = {}
 ): ChatSession {
@@ -71,6 +86,7 @@ function createMockChatSession(
     addParticipant: vi.fn(),
     removeParticipant: vi.fn(),
     getMessageAuthors: vi.fn().mockReturnValue([]),
+    context: signal({}),
     ...overrides,
   };
 }
@@ -84,17 +100,29 @@ function createMockState(): SeedBibleState {
   } as unknown as SeedBibleState;
 }
 
-function typeIntoInput(input: HTMLInputElement, text: string) {
+function typeIntoInput(input: HTMLTextAreaElement, text: string) {
   act(() => {
     input.value = text;
     input.selectionStart = text.length;
+    input.selectionEnd = text.length;
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
   });
 }
 
-function pressKey(input: HTMLInputElement, key: string) {
+function pressKey(
+  input: HTMLTextAreaElement,
+  key: string,
+  options: { shiftKey?: boolean } = {}
+) {
   act(() => {
-    input.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+        shiftKey: options.shiftKey ?? false,
+      })
+    );
   });
 }
 
@@ -201,7 +229,7 @@ describe("ChatView", () => {
     expect(indicator?.textContent).toContain("Bob is typing...");
   });
 
-  it("renders an input box", () => {
+  it("renders a multiline compose textarea", () => {
     const chat = createMockChatSession();
     const state = createMockState();
 
@@ -209,11 +237,12 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     );
     expect(input).not.toBeNull();
-    expect(input?.tagName.toLowerCase()).toBe("input");
+    expect(input?.tagName.toLowerCase()).toBe("textarea");
+    expect(input?.rows).toBe(1);
   });
 
   it("shows a mobile type-hint caret whenever the empty input is blurred", () => {
@@ -234,7 +263,7 @@ describe("ChatView", () => {
       true
     );
     // Opening chat must not focus the field — focus would open the soft keyboard.
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     expect(document.activeElement).not.toBe(input);
@@ -294,7 +323,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={mobileState} />, container);
     });
 
-    const mobileInput = container.querySelector<HTMLInputElement>(
+    const mobileInput = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     );
     expect(document.activeElement).not.toBe(mobileInput);
@@ -308,7 +337,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={desktopState} />, container);
     });
 
-    const desktopInput = container.querySelector<HTMLInputElement>(
+    const desktopInput = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     );
     expect(document.activeElement).toBe(desktopInput);
@@ -559,10 +588,14 @@ describe("ChatView", () => {
       getMessageAuthors: vi.fn().mockReturnValue([]),
     });
     const openVerseReference = vi.fn().mockResolvedValue(undefined);
+    const closeChatPanel = vi.fn();
     const state = {
       app: {
         openVerseReference,
         isMobile: signal(false),
+      },
+      sidebar: {
+        closeChatPanel,
       },
     } as unknown as SeedBibleState;
 
@@ -582,6 +615,48 @@ describe("ChatView", () => {
     });
 
     expect(openVerseReference).toHaveBeenCalledWith(verseRef);
+    expect(closeChatPanel).not.toHaveBeenCalled();
+  });
+
+  it("closes the chat panel on mobile when a verse reference link is clicked", () => {
+    const verseRef = { book: "JHN" as BookId, chapter: 3, verse: 16 };
+    const message = createMockMessage({
+      parts: [
+        { type: "verse_reference" as const, text: "John 3:16", ref: verseRef },
+      ],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      getMessageAuthors: vi.fn().mockReturnValue([]),
+    });
+    const openVerseReference = vi.fn().mockResolvedValue(undefined);
+    const closeChatPanel = vi.fn();
+    const state = {
+      app: {
+        openVerseReference,
+        isMobile: signal(true),
+      },
+      sidebar: {
+        closeChatPanel,
+      },
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const link = container.querySelector(
+      ".sb-verse-reference-link"
+    ) as HTMLAnchorElement;
+
+    act(() => {
+      link.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+    });
+
+    expect(closeChatPanel).toHaveBeenCalledTimes(1);
+    expect(openVerseReference).toHaveBeenCalledWith(verseRef);
   });
 
   // ─── Message submission ──────────────────────────────────────────────────────
@@ -595,7 +670,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "Hello");
@@ -607,6 +682,92 @@ describe("ChatView", () => {
 
     expect(sendMessage).toHaveBeenCalledWith({ type: "text", text: "Hello" });
     expect(input.value).toBe("");
+  });
+
+  // jsdom does not insert a native textarea newline on synthetic Shift+Enter,
+  // so this only asserts we don't submit on Shift+Enter (and do on Enter).
+  it("submits on Enter and does not submit on Shift+Enter on desktop", async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const chat = createMockChatSession({ sendMessage });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    typeIntoInput(input, "Hello");
+
+    pressKey(input, "Enter", { shiftKey: true });
+    expect(sendMessage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      pressKey(input, "Enter");
+      await Promise.resolve();
+    });
+
+    expect(sendMessage).toHaveBeenCalledWith({ type: "text", text: "Hello" });
+    expect(input.value).toBe("");
+  });
+
+  it("does not submit on Enter while an IME is composing", async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const chat = createMockChatSession({ sendMessage });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    typeIntoInput(input, "こんにちは");
+
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+          isComposing: true,
+        })
+      );
+      await Promise.resolve();
+    });
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(input.value).toBe("こんにちは");
+  });
+
+  it("does not submit on Enter on mobile", async () => {
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
+    const chat = createMockChatSession({ sendMessage });
+    const state = {
+      app: {
+        openVerseReference: vi.fn().mockResolvedValue(undefined),
+        isMobile: signal(true),
+      },
+    } as unknown as SeedBibleState;
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    typeIntoInput(input, "Hello");
+
+    await act(async () => {
+      pressKey(input, "Enter");
+      await Promise.resolve();
+    });
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(input.value).toBe("Hello");
   });
 
   it("does not call sendMessage when the draft is empty", async () => {
@@ -635,7 +796,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     const sendButton =
@@ -662,7 +823,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "Hello"
     );
 
@@ -690,7 +851,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
 
@@ -721,7 +882,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "@"
     );
 
@@ -740,7 +901,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "foo@"
     );
 
@@ -760,7 +921,7 @@ describe("ChatView", () => {
     });
 
     typeIntoInput(
-      container.querySelector<HTMLInputElement>(".sb-chat-view-input")!,
+      container.querySelector<HTMLTextAreaElement>(".sb-chat-view-input")!,
       "@ali"
     );
 
@@ -783,7 +944,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");
@@ -817,7 +978,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");
@@ -848,7 +1009,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");
@@ -869,7 +1030,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const input = container.querySelector<HTMLInputElement>(
+    const input = container.querySelector<HTMLTextAreaElement>(
       ".sb-chat-view-input"
     )!;
     typeIntoInput(input, "@");
@@ -1024,5 +1185,157 @@ describe("ChatView", () => {
     });
 
     expect(container.querySelector(".sb-chat-view-event")).toBeNull();
+  });
+
+  // ─── Tool-call events ────────────────────────────────────────────────────────
+
+  it("renders a tool-use notification for a single tool call", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const toolCall = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const chat = createMockChatSession({
+      messages: signal([toolCall]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const event = container.querySelector(".sb-chat-view-event");
+    expect(event).not.toBeNull();
+    expect(event?.textContent).toContain("Author used a tool");
+  });
+
+  it("collapses consecutive tool calls from the same author into one notification", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const toolCall1 = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const toolCall2 = createMockToolCallMessage({
+      id: "tool-2",
+      authors: ["author"],
+      timeMs: 2_000,
+    });
+    const toolCall3 = createMockToolCallMessage({
+      id: "tool-3",
+      authors: ["author"],
+      timeMs: 3_000,
+    });
+    const chat = createMockChatSession({
+      messages: signal([toolCall1, toolCall2, toolCall3]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const events = container.querySelectorAll(".sb-chat-view-event");
+    expect(events).toHaveLength(1);
+    expect(events[0]?.textContent).toContain("Author used 3 tools");
+  });
+
+  it("starts a new tool-use notification when the author changes", () => {
+    const alice = createMockParticipant({ id: "alice", name: "Alice" });
+    const bob = createMockParticipant({ id: "bob", name: "Bob" });
+    const toolCall1 = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["alice"],
+      timeMs: 1_000,
+    });
+    const toolCall2 = createMockToolCallMessage({
+      id: "tool-2",
+      authors: ["bob"],
+      timeMs: 2_000,
+    });
+    const getMessageAuthors = vi.fn((message: ChatMessage) =>
+      message.authors.includes("alice") ? [alice] : [bob]
+    );
+    const chat = createMockChatSession({
+      messages: signal([toolCall1, toolCall2]),
+      getMessageAuthors,
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const events = container.querySelectorAll(".sb-chat-view-event");
+    expect(events).toHaveLength(2);
+    expect(events[0]?.textContent).toContain("Alice used a tool");
+    expect(events[1]?.textContent).toContain("Bob used a tool");
+  });
+
+  it("breaks an author message group when a tool call happens between messages", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const msg1 = createMockMessage({
+      id: "msg-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const msg2 = createMockMessage({
+      id: "msg-2",
+      authors: ["author"],
+      timeMs: 3_000,
+    });
+    const toolCall = createMockToolCallMessage({
+      id: "tool-1",
+      authors: ["author"],
+      timeMs: 2_000,
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([msg1, msg2]),
+      messages: signal([msg1, toolCall, msg2]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const groups = container.querySelectorAll(".sb-chat-view-message-group");
+    expect(groups).toHaveLength(2);
+    expect(container.querySelectorAll(".sb-chat-view-event")).toHaveLength(1);
+  });
+
+  it("renders the empty state when there are no messages or tool calls", () => {
+    const chat = createMockChatSession({
+      parsedMessages: signal([]),
+      messages: signal([]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-chat-view-empty")).not.toBeNull();
+  });
+
+  it("does not render the empty state when there are only tool calls", () => {
+    const toolCall = createMockToolCallMessage({ id: "tool-1", timeMs: 1_000 });
+    const chat = createMockChatSession({
+      parsedMessages: signal([]),
+      messages: signal([toolCall]),
+      getMessageAuthors: vi.fn().mockReturnValue([]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+    expect(container.querySelector(".sb-chat-view-event")).not.toBeNull();
   });
 });

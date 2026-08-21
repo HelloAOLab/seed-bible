@@ -18,7 +18,9 @@ import {
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
@@ -75,7 +77,20 @@ describe("Playlist schemas", () => {
 
 type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
+type ChatsArg = Parameters<typeof createPlaylistManager>[9];
 type TabArg = Parameters<typeof createPlayingState>[1];
+
+/** A minimal `ChatsManager` fake exposing just the context registration surface. */
+function makeChats(): {
+  chats: ChatsArg;
+  addContext: Mock;
+  removeContext: Mock;
+} {
+  const addContext = vi.fn();
+  const removeContext = vi.fn();
+  const chats = { addContext, removeContext } as unknown as ChatsArg;
+  return { chats, addContext, removeContext };
+}
 
 /**
  * The reading-extension registry shared by the fake reading states and the
@@ -228,6 +243,9 @@ describe("createPlaylistManager", () => {
   let lastReadingExtensionManager: ReturnType<
     typeof createBibleReadingExtensionManager
   >;
+  /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
+  let lastChatsAddContext: Mock;
+  let lastChatsRemoveContext: Mock;
 
   const makeManager = (
     id: string | null = "user-1",
@@ -255,8 +273,12 @@ describe("createPlaylistManager", () => {
     // Reuse the registry the fake reading states share, so the extension the
     // manager registers is the one those tabs can enable.
     const readingExtensionManager = sharedReadingExtensionManager!;
+    const { chats, addContext, removeContext } = makeChats();
     lastNavigation = navigation;
     lastReadingExtensionManager = readingExtensionManager;
+    const discover = createDiscoverManager();
+    lastChatsAddContext = addContext;
+    lastChatsRemoveContext = removeContext;
     return createPlaylistManager(
       os,
       login,
@@ -265,7 +287,9 @@ describe("createPlaylistManager", () => {
       isMobile,
       modals,
       i18n,
-      readingExtensionManager
+      readingExtensionManager,
+      discover,
+      chats
     );
   };
 
@@ -642,6 +666,354 @@ describe("createPlaylistManager", () => {
     expect(manager.editingPlaylist.value).toBeNull();
     expect(manager.view.value).toBe("discover");
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  describe("chat AI context", () => {
+    /** Finds a registered tool by name from the most recent `addContext` call. */
+    const getTool = (name: string) => {
+      const call = lastChatsAddContext.mock.calls.at(
+        -1
+      )?.[0] as IdentifiedLocalChatContext;
+      const tool = call.tools?.find((t) => t.name === name);
+      if (!tool) {
+        throw new Error(`Tool "${name}" was not registered`);
+      }
+      return tool;
+    };
+
+    it("registers the playlist-editing tools once the editor opens", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      expect(lastChatsAddContext).not.toHaveBeenCalled();
+
+      await manager.createNewPlaylist();
+
+      expect(lastChatsAddContext).toHaveBeenCalledTimes(1);
+      const context = lastChatsAddContext.mock.calls[0]![0];
+      expect(context.id).toBe("playlist-editor");
+      expect(context.tools.map((t: { name: string }) => t.name).sort()).toEqual(
+        [
+          "insertPlaylistItem",
+          "movePlaylistItem",
+          "deletePlaylistItem",
+          "updatePlaylistItem",
+          "updatePlaylistMetadata",
+          "getPlaylistState",
+        ].sort()
+      );
+    });
+
+    it("withdraws the tools when the editor closes via cancel", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      // The registration effect also fires once at manager creation (while
+      // nothing is being edited yet), so reset the spy to isolate the call
+      // that matters: the one triggered by leaving the editor.
+      lastChatsRemoveContext.mockClear();
+
+      manager.cancelEditingPlaylist();
+
+      expect(lastChatsRemoveContext).toHaveBeenCalledWith("playlist-editor");
+    });
+
+    it("withdraws the tools when the editor closes via save", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await manager.saveEditingPlaylist();
+
+      expect(lastChatsRemoveContext).toHaveBeenCalledWith("playlist-editor");
+    });
+
+    it("does not register tools when no playlist is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.editingPlaylist.value).toBeNull();
+      expect(lastChatsAddContext).not.toHaveBeenCalled();
+    });
+
+    it("the registered tools operate on whatever playlist is currently being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await getTool("insertPlaylistItem").function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+      ]);
+
+      await getTool("updatePlaylistMetadata").function({
+        title: "My AI Playlist",
+        description: "Made with AI",
+      });
+      expect(manager.editingPlaylist.value!.title).toBe("My AI Playlist");
+      expect(manager.editingPlaylist.value!.description).toBe("Made with AI");
+
+      await getTool("deletePlaylistItem").function({ index: 0 });
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("getPlaylistState reflects the current live contents of the playlist being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await getTool("insertPlaylistItem").function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      await getTool("updatePlaylistMetadata").function({
+        title: "My AI Playlist",
+        description: "Made with AI",
+      });
+
+      const state = JSON.parse(
+        (await getTool("getPlaylistState").function({})) as string
+      );
+      expect(state).toEqual({
+        title: "My AI Playlist",
+        description: "Made with AI",
+        items: [
+          {
+            type: "link",
+            bibleVerse: null,
+            link: { title: null, url: "https://example.com" },
+            html: null,
+          },
+        ],
+      });
+    });
+
+    it("getPlaylistState reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const getPlaylistState = getTool("getPlaylistState");
+      manager.cancelEditingPlaylist();
+
+      await expect(getPlaylistState.function({})).resolves.toBe(
+        "error: no playlist is currently being edited"
+      );
+    });
+
+    it("insertPlaylistItem inserts each AI item type at the given index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "bible-verse",
+        bibleVerse: {
+          ref: {
+            bookId: "JHN",
+            chapter: 3,
+            verse: 16,
+            endChapter: null,
+            endVerse: null,
+          },
+        },
+        link: null,
+        html: null,
+      });
+      await insertPlaylistItem.function({
+        index: 1,
+        type: "html",
+        bibleVerse: null,
+        link: null,
+        html: { title: "Note", html: "<p>hi</p>" },
+      });
+      // Inserting at 0 again pushes both earlier items back.
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+        { type: "bible-verse", ref: { bookId: "JHN", chapter: 3, verse: 16 } },
+        { type: "html", title: "Note", html: "<p>hi</p>" },
+      ]);
+    });
+
+    it("insertPlaylistItem reports an error for an out-of-range index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 5,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: { title: null, html: "<p>hi</p>" },
+        })
+      ).resolves.toBe("error: index out of range (0-0)");
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("insertPlaylistItem reports an error instead of throwing when the type's matching field is missing", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 0,
+          type: "bible-verse",
+          bibleVerse: null,
+          link: null,
+          html: null,
+        })
+      ).resolves.toBe(
+        'error: Item has type "bible-verse" but no bibleVerse was provided.'
+      );
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("updatePlaylistItem reports an error instead of throwing when the type's matching field is missing", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+      await insertPlaylistItem.function({
+        index: 0,
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      const updatePlaylistItem = getTool("updatePlaylistItem");
+
+      await expect(
+        updatePlaylistItem.function({
+          index: 0,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: null,
+        })
+      ).resolves.toBe('error: Item has type "html" but no html was provided.');
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+      ]);
+    });
+
+    it("insertPlaylistItem reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const insertPlaylistItem = getTool("insertPlaylistItem");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        insertPlaylistItem.function({
+          index: 0,
+          type: "html",
+          bibleVerse: null,
+          link: null,
+          html: { title: null, html: "<p>hi</p>" },
+        })
+      ).resolves.toBe("error: no editing playlist");
+    });
+
+    it("movePlaylistItem reorders items in the currently-edited playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>a</p>" });
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>b</p>" });
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>c</p>" });
+      const movePlaylistItem = getTool("movePlaylistItem");
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 2 })
+      ).resolves.toBe("success");
+
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "html", html: "<p>b</p>" },
+        { type: "html", html: "<p>c</p>" },
+        { type: "html", html: "<p>a</p>" },
+      ]);
+    });
+
+    it("movePlaylistItem reports an error for an out-of-range index", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.addEditingPlaylistItem({ type: "html", html: "<p>a</p>" });
+      const movePlaylistItem = getTool("movePlaylistItem");
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 5 })
+      ).resolves.toBe("error: target index out of range (0-0) or equal");
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "html", html: "<p>a</p>" },
+      ]);
+    });
+
+    it("movePlaylistItem reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const movePlaylistItem = getTool("movePlaylistItem");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        movePlaylistItem.function({ originalIndex: 0, newIndex: 1 })
+      ).resolves.toBe("error: no editing playlist");
+    });
+
+    it("updatePlaylistMetadata reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const updatePlaylistMetadata = getTool("updatePlaylistMetadata");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        updatePlaylistMetadata.function({
+          title: "Too late",
+          description: null,
+        })
+      ).resolves.toBe("error: no playlist is currently being edited");
+    });
+  });
+
+  it("startPlaying returns null when there is no active tab to play on", async () => {
+    const tabs = {
+      tabs: signal([]),
+      selectedTabId: signal(""),
+    } as unknown as TabsArg;
+    const manager = makeManager("user-1", tabs);
+    await flush();
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "<p>hi</p>" }],
+    });
+
+    const result = manager.startPlaying(playlist);
+
+    expect(result).toBeNull();
+    expect(manager.playing.value).toBeNull();
   });
 
   it("startPlaying prefers always uses the selected tab", async () => {
@@ -1232,6 +1604,253 @@ describe("createPlaylistManager", () => {
     await flush();
 
     expect(manager.playing.value).toBeNull();
+  });
+
+  describe("playlist analytics", () => {
+    let mockPosthogCapture: Mock;
+
+    beforeEach(() => {
+      mockPosthogCapture = vi.fn();
+      (globalThis as any).posthog = { capture: mockPosthogCapture };
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).posthog;
+    });
+
+    it("captures playlist_created when saving a new draft", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const draftId = manager.editingPlaylist.value!.id;
+
+      await manager.saveEditingPlaylist();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_created", {
+        playlistId: draftId,
+        playlistLocator: `user-1.${draftId}`,
+        isCreator: true,
+        itemCount: 0,
+      });
+    });
+
+    it("captures playlist_updated when saving an existing playlist", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: makePlaylist({ id: "playlist-1" }) }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+
+      manager.editingPlaylist.value = makePlaylist({
+        id: "playlist-1",
+        title: "New",
+      });
+      await manager.saveEditingPlaylist();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_updated", {
+        playlistId: "playlist-1",
+        playlistLocator: "user-1.playlist-1",
+        isCreator: true,
+        itemCount: 0,
+      });
+    });
+
+    it("captures playlist_played with isCreator true for the user's own playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ authorUserId: "user-1" });
+
+      manager.startPlaying(playlist);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_played", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: true,
+      });
+    });
+
+    it("captures playlist_played with isCreator false for a playlist shared by someone else", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ authorUserId: "user-2" });
+
+      manager.startPlaying(playlist);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_played", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+    });
+
+    it("captures playlist_finished once playback reaches the last item, and not again on revisit", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        authorUserId: "user-2",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
+
+      await manager.playing.value!.next();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_finished", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+
+      // Navigating back to the last item again does not re-report it.
+      await manager.playing.value!.previous();
+      await manager.playing.value!.next();
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not capture playlist_finished when a single-item playlist starts (start-at-last is not the same as finishing)", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+
+      manager.startPlaying(playlist);
+
+      // "played" fires for the start; "finished" must not, since nothing was
+      // actually played through — the queue just happens to be one item long,
+      // so its start and its end are the same index.
+      expect(mockPosthogCapture).toHaveBeenCalledWith(
+        "playlist_played",
+        expect.anything()
+      );
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("does not capture playlist_finished when a deep link opens directly on the last step", async () => {
+      const playlist = makePlaylist({
+        id: "playlist-1",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      // The URL opens straight on step 2 (the last item) via a shared link,
+      // rather than the user navigating there.
+      makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/?playlist=user-1.playlist-1&playlistStep=2"
+      );
+      await flush();
+
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("does not capture playlist_finished when removing trailing items clamps the current index to the new last item", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+          { type: "html", html: "d" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
+      await manager.playing.value!.next();
+      await manager.playing.value!.next();
+      expect(manager.playing.value!.currentIndex.value).toBe(2);
+
+      // Deleting the trailing item shrinks the queue so index 2 becomes the
+      // new last index, without the user ever advancing into it.
+      manager.playing.value!.removeFromQueue(3);
+      expect(manager.playing.value!.queue.value).toHaveLength(3);
+      expect(manager.playing.value!.currentIndex.value).toBe(2);
+
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("captures playlist_finished only for the participant that advances, not for a peer whose index moves via session sync", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        authorUserId: "user-2",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      // Both participants' enablements are mirrored onto the same `data`
+      // signal, the same way `SessionsManager` keeps a shared session's
+      // participants in sync.
+      const sharedData = signal<unknown>({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
+      const definition =
+        lastReadingExtensionManager.getReadingExtension("playlist")!;
+      const participantA = definition.activate({
+        readingState: {} as any,
+        data: sharedData,
+        isShared: signal(true),
+      }) as unknown as PlaylistReadingExtensionInstance;
+      const participantB = definition.activate({
+        readingState: {} as any,
+        data: sharedData,
+        isShared: signal(true),
+      }) as unknown as PlaylistReadingExtensionInstance;
+      mockPosthogCapture.mockClear();
+
+      // A advances locally into the last item...
+      await participantA.playingState.next();
+      // ...which propagates to B purely via the synced `data`...
+      expect(participantB.playingState.currentIndex.value).toBe(1);
+
+      // ...but only A actually finished playback; B's move was an inbound sync.
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_finished", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+    });
+
+    it("does not throw and does not report playback events when posthog is unavailable", async () => {
+      delete (globalThis as any).posthog;
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      expect(() => manager.startPlaying(playlist)).not.toThrow();
+      await expect(manager.playing.value!.next()).resolves.toBeUndefined();
+
+      expect(mockPosthogCapture).not.toHaveBeenCalled();
+    });
   });
 });
 

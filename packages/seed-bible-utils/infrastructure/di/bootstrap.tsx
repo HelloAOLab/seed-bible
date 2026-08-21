@@ -173,8 +173,11 @@ export const bootstrapExtension = () => {
         // eslint-disable-next-line
         const sharedSessionsState = context.tabs.tabs.value.map((tab) => {
           return {
+            // Each peer's own position — the session position below only
+            // covers peers who have yet to broadcast one.
+            participantPositions: tab.sharedSession?.participantPositions.value,
             bookId: tab.sharedSession?.readingState.bookId.value,
-            chaperNumber: tab.sharedSession?.readingState.chapterNumber.value,
+            chapterNumber: tab.sharedSession?.readingState.chapterNumber.value,
           };
         });
 

@@ -1,8 +1,9 @@
 import "./BibleReaderToolbar.css";
-import { useComputed, useSignal } from "@preact/signals";
+import { effect, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
+import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
   applyToolbarCustomization,
   UI_SIZE_SCALE_MAP,
@@ -26,6 +27,26 @@ import { useEffect, useRef } from "preact/hooks";
 import { openBookmarkCategoryModal } from "../Tabs/Tabs";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
+import {
+  annotationVerseNumbers,
+  groupAnnotationsByVerseRange,
+  type AnnotationGroup,
+  type AnnotationsManager,
+} from "../../managers/AnnotationsManager";
+import {
+  AnnotationPreview,
+  AnnotationCommentMeta,
+  annotationLocationLabel,
+  openDeleteAnnotationConfirm,
+} from "../DiscoverPane/DiscoverPane";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
+import type { TabsManager } from "../../managers/TabsManager";
+import type { VerseRef } from "../../managers/BibleDataManager";
+import type { LoginManager } from "../../managers/LoginManager";
+import type { ModalManager } from "../../managers/ModalManager";
 import { DEFAULT_HIGHLIGHT_IDS } from "../../managers/ThemeManager";
 
 /**
@@ -399,6 +420,122 @@ function applyHighlightWithSession(
   broadcastDecorationToSession(session, rs, details);
 }
 
+/**
+ * One verse-range group of annotations in the mobile verse sheet's expanded
+ * overflow area — mirrors `DiscoverPane`'s grouped annotation list (same
+ * header/list classes, same collapsible header, same edit/delete menu). A
+ * standalone component (rather than inlined in a `.map()`) so each group's
+ * `expanded` signal is its own hook instance, keyed by group below.
+ */
+function VerseToolbarAnnotationGroup(props: {
+  id: string;
+  group: AnnotationGroup;
+  tabs: TabsManager;
+  login: LoginManager;
+  annotations: AnnotationsManager;
+  modals: ModalManager;
+  toast: SeedBibleState["app"]["toast"];
+  openDiscover: () => void;
+  onReferenceClick?: (ref: VerseRef) => void;
+}) {
+  const {
+    id,
+    group,
+    tabs,
+    login,
+    annotations,
+    modals,
+    toast,
+    onReferenceClick,
+  } = props;
+  const { t, language } = useI18n();
+  const expanded = useSignal(true);
+  const label = annotationLocationLabel(group.annotations[0]!, tabs);
+
+  return (
+    <div className="sb-annotation-group" id={id}>
+      <button
+        type="button"
+        className="sb-annotation-group-header"
+        aria-expanded={expanded.value}
+        aria-label={
+          expanded.value
+            ? t("annotation-group-collapse", {
+                defaultValue: "Collapse group",
+              })
+            : t("annotation-group-expand", { defaultValue: "Expand group" })
+        }
+        onClick={() => (expanded.value = !expanded.value)}
+      >
+        <span className="sb-annotation-group-header-title">{label}</span>
+        <MaterialIcon
+          className={`sb-annotation-group-header-icon${
+            expanded.value ? "" : " sb-annotation-group-header-icon--collapsed"
+          }`}
+        >
+          expand_more
+        </MaterialIcon>
+      </button>
+      {expanded.value ? (
+        <ul className="sb-annotation-group-list">
+          {group.annotations.map((annotation) => (
+            <li key={annotation.id} className="sb-annotation-item" dir="auto">
+              <div className="sb-annotation-item-main">
+                {annotation.data.type === "comment" && (
+                  <AnnotationPreview
+                    html={annotation.data.html}
+                    onReferenceClick={onReferenceClick}
+                  />
+                )}
+                <AnnotationCommentMeta
+                  annotation={annotation}
+                  login={login}
+                  t={t}
+                  language={language}
+                />
+              </div>
+              <ContextMenuWithButton
+                buttonClassName="sb-annotation-item-menu"
+                aria-label={t("annotation-options", {
+                  defaultValue: "Annotation options",
+                })}
+              >
+                <ContextMenuItem
+                  onClick={() => {
+                    console.log("Editing annotation", annotation);
+                    annotations.editAnnotation(annotation);
+                  }}
+                >
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    edit
+                  </MaterialIcon>
+                  {t("edit-annotation", { defaultValue: "Edit" })}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  className="sb-context-menu-item--danger"
+                  onClick={() => {
+                    openDeleteAnnotationConfirm(
+                      modals,
+                      annotations,
+                      annotation,
+                      toast
+                    );
+                  }}
+                >
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    delete
+                  </MaterialIcon>
+                  {t("delete-annotation", { defaultValue: "Delete" })}
+                </ContextMenuItem>
+              </ContextMenuWithButton>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 interface BibleReaderToolbarProps {
   state: SeedBibleState;
 }
@@ -456,6 +593,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      annotations: props.state.annotations,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -518,6 +656,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       toast: props.state.app.toast,
       modals: props.state.modals,
       app: props.state.app,
+      annotations: props.state.annotations,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -566,9 +705,56 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const verseToolbarRef = useRef<HTMLDivElement>(null);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
-  // Whether the mobile verse sheet shows its overflow actions (the "More" /
-  // "Less" toggle). Collapsed by default; reset whenever the selection clears.
+  // Whether the mobile verse sheet is showing its overflow actions. Collapsed by
+  // default; reset whenever the selection clears. Reached by dragging the grab
+  // handle up, or tapping it.
   const isVerseSheetExpanded = useSignal(false);
+
+  /**
+   * Natural height of the sheet's overflow row, measured from the DOM.
+   *
+   * The reveal is animated as an explicit pixel height (`height: auto` can't be
+   * transitioned and can't track a finger), so the target has to be measured
+   * rather than assumed.
+   */
+  const verseSheetOverflowHeight = useSignal(0);
+
+  /**
+   * How much of the overflow row is showing *right now*, in pixels, while a drag
+   * is in progress. Null when no drag is active, which hands the height back to
+   * the expanded/collapsed state so it can animate to its resting position.
+   */
+  const verseSheetDragReveal = useSignal<number | null>(null);
+
+  /**
+   * How far the whole sheet is pushed down by a dismiss drag, in pixels. Only a
+   * downward drag on an already-collapsed sheet moves this; releasing either
+   * dismisses the selection or springs it back to 0.
+   */
+  const verseSheetDismissOffset = useSignal(0);
+
+  /** True while a finger is on the handle, so the settle animations stand down. */
+  const isVerseSheetDragging = useComputed(
+    () => verseSheetDragReveal.value !== null
+  );
+
+  /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
+  const hasVerseSheetOverflow = useComputed(
+    () => verseSheetOverflowHeight.value > 0
+  );
+
+  /**
+   * The overflow row's height as rendered: tracking the finger mid-drag,
+   * otherwise the resting height for the current expanded state (which the CSS
+   * transition animates towards).
+   */
+  const verseSheetRevealHeight = useComputed(() =>
+    verseSheetDragReveal.value !== null
+      ? verseSheetDragReveal.value
+      : isVerseSheetExpanded.value
+        ? verseSheetOverflowHeight.value
+        : 0
+  );
 
   // True when the sidebar drawer is open showing the tabs/bookmarks view
   // (not the settings view) with the bookmark filter active.
@@ -814,6 +1000,169 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     verseToolbarDrag.current = null;
   };
 
+  /**
+   * Dragging the mobile verse sheet's grab handle.
+   *
+   * The sheet follows the finger rather than snapping at a threshold: dragging up
+   * grows the overflow row a pixel at a time, dragging back down shrinks it, and
+   * once the overflow row is fully closed — whether the drag started collapsed or
+   * (after closing it mid-gesture) expanded — continuing to drag down slides the
+   * whole sheet toward the bottom of the screen to dismiss it, all in one
+   * continuous motion rather than requiring a release and a second drag.
+   * Releasing settles to whichever resting position the gesture ended up nearest,
+   * so a half-finished drag animates the rest of the way instead of being
+   * abandoned.
+   *
+   * A press that barely moves is a tap, and toggles.
+   */
+  const VERSE_SHEET_TAP_SLOP = 6;
+  /** How far the sheet must be pushed down before releasing dismisses it. */
+  const VERSE_SHEET_DISMISS_THRESHOLD = 64;
+  const verseSheetDrag = useRef<{
+    pointerId: number;
+    startY: number;
+    startExpanded: boolean;
+    /** Overflow height showing when the drag began: full when expanded, else 0. */
+    startReveal: number;
+    /** Furthest the pointer has travelled, used to tell a tap from a drag. */
+    maxTravel: number;
+  } | null>(null);
+
+  /** The overflow row, measured so the reveal has a pixel target to animate to. */
+  const measureVerseSheetOverflow = (element: HTMLElement | null) => {
+    if (!element) return;
+    verseSheetOverflowHeight.value = element.scrollHeight;
+  };
+
+  const endVerseSheetDrag = (event: PointerEvent): void => {
+    const handle = event.currentTarget as HTMLElement;
+    handle.releasePointerCapture?.(event.pointerId);
+    verseSheetDrag.current = null;
+    verseSheetDragReveal.value = null;
+    verseSheetDismissOffset.value = 0;
+  };
+
+  const handleVerseSheetHandlePointerDown = (event: PointerEvent) => {
+    const handle = event.currentTarget as HTMLElement;
+    handle.setPointerCapture?.(event.pointerId);
+    const expanded = isVerseSheetExpanded.value;
+    verseSheetDrag.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startExpanded: expanded,
+      startReveal: expanded ? verseSheetOverflowHeight.value : 0,
+      maxTravel: 0,
+    };
+    // Take over the height from the expanded/collapsed state so the first move
+    // continues from where the sheet is now rather than jumping.
+    verseSheetDragReveal.value = expanded ? verseSheetOverflowHeight.value : 0;
+    // Keep the drag from also scrolling the chapter behind the sheet.
+    event.preventDefault();
+  };
+
+  const handleVerseSheetHandlePointerMove = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dy = event.clientY - drag.startY;
+    drag.maxTravel = Math.max(drag.maxTravel, Math.abs(dy));
+
+    const overflowHeight = verseSheetOverflowHeight.value;
+    // Up is negative, so subtracting `dy` grows the reveal as the finger rises.
+    const reveal = Math.min(overflowHeight, Math.max(0, drag.startReveal - dy));
+    verseSheetDragReveal.value = reveal;
+
+    // Once the overflow row is fully closed, the rest of the same downward drag
+    // slides the whole sheet away to dismiss. `dy` minus `startReveal` is how far
+    // the finger has moved *past* the point where the row finished closing —
+    // using that (rather than raw `dy`) means the dismiss slide picks up smoothly
+    // from 0 instead of jumping by however much drag it took to close the row,
+    // and it works the same whether the drag started collapsed (startReveal 0) or
+    // expanded (startReveal the full row height).
+    const distancePastClosed = dy - drag.startReveal;
+    verseSheetDismissOffset.value =
+      reveal === 0 && distancePastClosed > 0 ? distancePastClosed : 0;
+  };
+
+  const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dismissOffset = verseSheetDismissOffset.value;
+    const reveal = verseSheetDragReveal.value ?? drag.startReveal;
+    const overflowHeight = verseSheetOverflowHeight.value;
+    endVerseSheetDrag(event);
+
+    if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) {
+      // A tap on the handle is the keyboard-free way to toggle, and the only
+      // affordance left now that the sheet has no "More" card.
+      if (overflowHeight > 0) {
+        isVerseSheetExpanded.value = !drag.startExpanded;
+      }
+      return;
+    }
+
+    if (dismissOffset >= VERSE_SHEET_DISMISS_THRESHOLD) {
+      readingState.value?.clearSelectedVerses();
+      return;
+    }
+
+    // Settle to whichever end the drag finished nearest. Using the midpoint
+    // rather than a fixed threshold means the sheet always ends up where the
+    // finger left it pointing, in either direction.
+    isVerseSheetExpanded.value =
+      overflowHeight > 0 && reveal >= overflowHeight / 2;
+  };
+
+  const handleVerseSheetHandlePointerCancel = (event: PointerEvent) => {
+    const drag = verseSheetDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    endVerseSheetDrag(event);
+    // An interrupted gesture shouldn't leave the sheet half-committed.
+    isVerseSheetExpanded.value = drag.startExpanded;
+  };
+
+  /**
+   * Elements inside the mobile sheet that must keep their own tap/scroll
+   * behavior instead of starting the sheet drag: buttons and inputs (so taps
+   * still register as clicks — capturing the pointer on the panel would
+   * otherwise steal their `pointerup`), and the horizontal highlight-color
+   * strip (its own swipe gesture would fight the sheet's vertical one).
+   */
+  const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
+    "button, input, a, .sb-verse-toolbar-swatches";
+
+  /**
+   * Entry point for the whole-panel version of the handle drag: any part of
+   * the collapsed/expanded mobile sheet not covered by the ignore list above
+   * starts the same drag tracked by the handle, so the user doesn't have to
+   * land a thumb precisely on the handle to expand, collapse, or dismiss it.
+   * Not wired up while the highlight picker is showing — that view has no
+   * overflow row to reveal, and its swatch strip already owns horizontal
+   * swipes.
+   */
+  const handleVerseSheetPanelPointerDown = (event: PointerEvent) => {
+    if (isHighlightPickerOpen.value) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest(VERSE_SHEET_DRAG_IGNORE_SELECTOR)) return;
+    handleVerseSheetHandlePointerDown(event);
+  };
+
+  const handleVerseSheetHandleKeyDown = (event: KeyboardEvent) => {
+    if (verseSheetOverflowHeight.value <= 0) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      isVerseSheetExpanded.value = !isVerseSheetExpanded.value;
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      isVerseSheetExpanded.value = true;
+    } else if (event.key === "ArrowDown" || event.key === "Escape") {
+      event.preventDefault();
+      isVerseSheetExpanded.value = false;
+    }
+  };
+
+  // Verse toolbar highlight picker state
   const colorInputRef = useRef<HTMLInputElement | null>(null);
   const customColorCommitTimeoutRef = useRef<number | null>(null);
   const customHighlightColors = useComputed(
@@ -913,13 +1262,67 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return `${bookName} ${chapter}:${ranges.join(",")}`;
   });
 
+  // Annotations covering any of the currently selected verses — shown
+  // read-only in the mobile verse sheet once it's expanded. Computed by the
+  // reading state itself (see `BibleReadingManager.tsx`), which already
+  // tracks both the active chapter's annotations and the live selection.
+  const selectionAnnotations = useComputed(
+    () => readingState.value?.selectionAnnotations.value ?? []
+  );
+
   // Reset picker and the mobile sheet's expanded state when selection clears.
+  // The drag offsets go too: a sheet dismissed by dragging it down would
+  // otherwise come back for the next selection still pushed off the screen.
   useEffect(() => {
     if (!hasVerseSelection.value) {
       isHighlightPickerOpen.value = false;
       isVerseSheetExpanded.value = false;
+      verseSheetDragReveal.value = null;
+      verseSheetDismissOffset.value = 0;
     }
   }, [hasVerseSelection.value]);
+
+  // Clicking an annotated verse number (BibleReader.tsx) sets this once;
+  // expand the sheet and scroll to that verse's annotation group, then clear
+  // it. Mirrors `readingState.scrollToVerse`'s consumer in TabsLayout.tsx.
+  useEffect(() => {
+    const rs = readingState.value;
+    if (!rs) return;
+
+    let frame = 0;
+    const dispose = effect(() => {
+      const verseNumber = rs.pendingAnnotationScrollVerse.value;
+      if (verseNumber === null) return;
+      rs.pendingAnnotationScrollVerse.value = null; // consume once, immediately
+
+      const group = groupAnnotationsByVerseRange(
+        selectionAnnotations.value
+      ).find((g) =>
+        g.annotations.some((a) =>
+          annotationVerseNumbers(a).includes(verseNumber)
+        )
+      );
+      if (!group) return;
+
+      isVerseSheetExpanded.value = true;
+      const groupKey =
+        group.annotations[0]?.id ??
+        `${group.startVerseNumber}-${group.endVerseNumber}`;
+
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        document
+          .getElementById(`sb-verse-toolbar-annotation-group-${groupKey}`)
+          ?.scrollIntoView({ block: "nearest" });
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      dispose();
+    };
+  }, [readingState.value]);
 
   // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
   // chapter content / end-of-chapter controls clear it when the toolbar grows
@@ -1036,6 +1439,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // toolbar is actually showing — with a pane covering the reader every tap
   // lands "outside", which would silently throw the selection away behind the
   // pane instead of restoring the toolbar when the pane closes.
+  //
+  // A pane docked beside the reader (e.g. Discover, open on desktop) doesn't
+  // cover it, so `isVerseToolbarVisible` stays true and this listener stays
+  // attached — clicks inside that pane (composing an annotation, say) are
+  // also excluded so they can't clear a selection the pane's own content is
+  // actively using (e.g. the annotation title/target derived from it).
+  //
+  // The annotation item's three-dot menu (`ContextMenuWithButton`) is
+  // portaled to `document.body`, so a click on it — or on one of its
+  // Edit/Delete items — doesn't land inside `.sb-verse-toolbar` in the DOM
+  // tree even though it's visually part of the toolbar. Excluding
+  // `.sb-context-menu` (the portaled popup) keeps that click from reading as
+  // "outside" and clearing the selection out from under the still-open menu.
+  // Same story for `.sb-footnote-modal-overlay` — the delete-confirmation
+  // modal Delete opens renders as a sibling of the toolbar at the app root
+  // (`ModalHost`), so without this, confirming or cancelling that dialog
+  // would also clear the selection out from under it.
   useEffect(() => {
     if (!isVerseToolbarVisible.value) return;
 
@@ -1044,6 +1464,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (!target) return;
       if (target.closest(".sb-chapter-content")) return;
       if (target.closest(".sb-verse-toolbar")) return;
+      if (target.closest(".sb-pane-side-shell")) return;
+      if (target.closest(".sb-pane-shell")) return;
+      if (target.closest(".sb-context-menu")) return;
+      if (target.closest(".sb-footnote-modal-overlay")) return;
       readingState.value?.clearSelectedVerses();
     };
 
@@ -1306,8 +1730,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selector && (
                           <button
                             type="button"
-                            onClick={selector.onSelect}
-                            onPointerDown={spawnRipple}
+                            {...flingSafeTapHandlers(
+                              selector.onSelect,
+                              spawnRipple
+                            )}
                             className="sb-reader-floating-nav-label"
                           >
                             {getReaderNavLabel()}
@@ -1424,7 +1850,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    // Close any fullscreen extension pane (e.g. Today).
+                    // Close any fullscreen pane (e.g. Today).
                     panes.closeAll();
                     selectedToolbarToolId.value = null;
                   }}
@@ -1683,31 +2109,73 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <div
           ref={verseToolbarRef}
-          className={`sb-verse-toolbar${isSmallScreen.value ? " sb-verse-toolbar-mobile" : " sb-verse-toolbar-draggable"}`}
+          className={`sb-verse-toolbar${
+            isSmallScreen.value
+              ? ` sb-verse-toolbar-mobile${
+                  // Suppresses the settle animations, so the sheet tracks the
+                  // finger exactly instead of easing towards it.
+                  isVerseSheetDragging.value ? " sb-verse-sheet-dragging" : ""
+                }`
+              : " sb-verse-toolbar-draggable"
+          }`}
           style={
             isSmallScreen.value
-              ? undefined
+              ? {
+                  transform: verseSheetDismissOffset.value
+                    ? `translateY(${verseSheetDismissOffset.value}px)`
+                    : undefined,
+                }
               : {
                   left: `${clampedToolbarLeft.value}px`,
                   top: `${clampedToolbarTop.value}px`,
                 }
           }
           onPointerDown={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerDown
+            isSmallScreen.value
+              ? handleVerseSheetPanelPointerDown
+              : handleVerseToolbarPointerDown
           }
           onPointerMove={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerMove
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerMove
+              : handleVerseToolbarPointerMove
           }
           onPointerUp={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerUp
+              : handleVerseToolbarPointerUp
           }
           onPointerCancel={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerCancel
+              : handleVerseToolbarPointerUp
           }
         >
           {isSmallScreen.value && (
             <>
-              <div className="sb-verse-toolbar-handle" aria-hidden="true" />
+              {/* The drag/tap gesture itself is handled by the panel (see
+                  onPointerDown above), so this only needs to carry the
+                  keyboard-accessible button role: the sheet has no "More"
+                  card any more, so this is the only control that opens the
+                  overflow row for non-pointer users. */}
+              <div
+                className="sb-verse-toolbar-handle-area"
+                role="button"
+                tabIndex={hasVerseSheetOverflow.value ? 0 : -1}
+                aria-expanded={isVerseSheetExpanded.value}
+                aria-label={
+                  isVerseSheetExpanded.value
+                    ? t("show-fewer-verse-actions", {
+                        defaultValue: "Show fewer actions",
+                      })
+                    : t("show-more-verse-actions", {
+                        defaultValue: "Show more actions",
+                      })
+                }
+                onKeyDown={handleVerseSheetHandleKeyDown}
+              >
+                <div className="sb-verse-toolbar-handle" />
+              </div>
               <button
                 type="button"
                 className="sb-verse-toolbar-close"
@@ -2069,17 +2537,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           Math.min(...selectedVerseNumbers),
                           Math.max(...selectedVerseNumbers),
                         ] as [number, number]);
-                const isSelectionBookmarked =
+                const selectionBookmark =
                   rs && verseTarget !== undefined
-                    ? bookmarks.isLocationBookmarked(
+                    ? bookmarks.getBookmarkForLocation(
                         rs.translationId.value,
                         rs.bookId.value,
                         rs.chapterNumber.value,
                         verseTarget
                       )
-                    : false;
+                    : undefined;
+                const isSelectionBookmarked = selectionBookmark !== undefined;
                 const bookmarkLabel = isSelectionBookmarked
-                  ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                  ? t("edit-bookmark", { defaultValue: "Edit bookmark" })
                   : t("bookmark-verses", { defaultValue: "Bookmark" });
 
                 const highlightCard = selectionUI.value.showHighlightColors ? (
@@ -2130,21 +2599,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         ) {
                           return;
                         }
-                        if (isSelectionBookmarked) {
-                          void bookmarks.removeBookmarkForLocation(
+                        openBookmarkCategoryModal(
+                          props.state,
+                          {
                             translationId,
                             bookId,
                             chapterNumber,
-                            verseTarget
-                          );
-                          return;
-                        }
-                        openBookmarkCategoryModal(props.state, {
-                          translationId,
-                          bookId,
-                          chapterNumber,
-                          verse: verseTarget,
-                        });
+                            verse: verseTarget,
+                          },
+                          selectionBookmark
+                            ? {
+                                mode: "edit",
+                                bookmarkId: selectionBookmark.id,
+                              }
+                            : undefined
+                        );
                       }}
                       aria-label={bookmarkLabel}
                       aria-pressed={isSelectionBookmarked}
@@ -2182,77 +2651,145 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   );
                 }
 
-                // Mobile sheet: a card grid. Show the first few actions plus a
-                // "More" toggle; the rest reveal under a "Less" toggle. The X
-                // in the corner handles dismissal, so the Cancel tool is
-                // dropped here.
+                // Mobile sheet: a card grid. The first row of actions is always
+                // showing; the rest live in an overflow row that the grab handle
+                // drags open. The X in the corner handles dismissal, so the
+                // Cancel tool is dropped here.
                 const actionCards = [
                   highlightCard,
                   bookmarkCard,
                   ...nonCancel.map(renderTool),
                 ].filter(Boolean);
 
+                // One full row of cards, matching the four-per-row grid below.
+                // Keeping the collapsed sheet to a single row is what makes it
+                // short by default.
                 const COLLAPSED_COUNT = 4;
-                const needsToggle = actionCards.length > COLLAPSED_COUNT;
-                const primaryCards = needsToggle
+                // Annotations on the selection also make the sheet openable,
+                // even when there aren't enough tool cards to overflow on
+                // their own — otherwise there'd be nothing to drag/tap open
+                // to see them.
+                const hasOverflow =
+                  actionCards.length > COLLAPSED_COUNT ||
+                  selectionAnnotations.value.length > 0;
+                const primaryCards = hasOverflow
                   ? actionCards.slice(0, COLLAPSED_COUNT)
                   : actionCards;
-                const overflowCards = needsToggle
+                const overflowCards = hasOverflow
                   ? actionCards.slice(COLLAPSED_COUNT)
                   : [];
 
                 return (
                   <>
                     {primaryCards}
-                    {needsToggle && (
+                    {hasOverflow && (
+                      // Height rather than display: the row has to be in the
+                      // layout at its full size for the drag to reveal it a pixel
+                      // at a time, so it is clipped instead of removed.
                       <div
-                        key="more-less"
-                        className="sb-verse-toolbar-action-item"
+                        key="overflow"
+                        // While fully closed the row is `visibility: hidden`, not
+                        // merely clipped — otherwise its buttons stay in the tab
+                        // order and the screen-reader tree while invisible. The
+                        // handle above is the disclosure control that brings them
+                        // back, which is why it carries `aria-expanded`.
+                        className={`sb-verse-toolbar-overflow${
+                          verseSheetRevealHeight.value === 0
+                            ? " sb-verse-toolbar-overflow-closed"
+                            : ""
+                        }`}
+                        style={{
+                          height: `${verseSheetRevealHeight.value}px`,
+                        }}
                       >
-                        <button
-                          type="button"
-                          className={`sb-verse-toolbar-action sb-verse-toolbar-more-toggle${
-                            isVerseSheetExpanded.value
-                              ? " sb-verse-toolbar-more-toggle-active"
-                              : ""
-                          }`}
-                          onClick={() => {
-                            isVerseSheetExpanded.value =
-                              !isVerseSheetExpanded.value;
-                          }}
-                          aria-expanded={isVerseSheetExpanded.value}
-                          aria-label={
-                            isVerseSheetExpanded.value
-                              ? t("less", { defaultValue: "Less" })
-                              : t("more", { defaultValue: "More" })
-                          }
-                          title={
-                            isVerseSheetExpanded.value
-                              ? t("less", { defaultValue: "Less" })
-                              : t("more", { defaultValue: "More" })
-                          }
+                        <div
+                          className="sb-verse-toolbar-overflow-row"
+                          ref={measureVerseSheetOverflow}
                         >
-                          <span className="sb-verse-toolbar-action-icon">
-                            <span className="material-symbols-outlined">
-                              {isVerseSheetExpanded.value
-                                ? "keyboard_arrow_up"
-                                : "more_horiz"}
-                            </span>
-                          </span>
-                          <span className="sb-verse-toolbar-action-label">
-                            {isVerseSheetExpanded.value
-                              ? t("less", { defaultValue: "Less" })
-                              : t("more", { defaultValue: "More" })}
-                          </span>
-                        </button>
+                          {overflowCards}
+                          {selectionAnnotations.value.length > 0 && (
+                            <div className="sb-verse-toolbar-annotations">
+                              {groupAnnotationsByVerseRange(
+                                selectionAnnotations.value
+                              ).map((group) => {
+                                const groupKey =
+                                  group.annotations[0]?.id ??
+                                  `${group.startVerseNumber}-${group.endVerseNumber}`;
+                                return (
+                                  <VerseToolbarAnnotationGroup
+                                    key={groupKey}
+                                    id={`sb-verse-toolbar-annotation-group-${groupKey}`}
+                                    group={group}
+                                    tabs={tabs}
+                                    login={props.state.login}
+                                    annotations={props.state.annotations}
+                                    modals={props.state.modals}
+                                    toast={props.state.app.toast}
+                                    openDiscover={props.state.app.openDiscover}
+                                    onReferenceClick={
+                                      props.state.app.openVerseReference
+                                    }
+                                  />
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
-                    {isVerseSheetExpanded.value && overflowCards}
                   </>
                 );
               })()}
             </div>
           )}
+          {/* Replaces the old "More" card: a line of text at the foot of the
+              sheet naming the gesture, instead of a button occupying a whole
+              card slot. Only while there is something left to reveal, and it
+              fades out as the sheet opens. Hidden from assistive tech because
+              the gesture it describes isn't available to them — the handle
+              itself carries the accessible toggle. */}
+          {isSmallScreen.value &&
+            !isHighlightPickerOpen.value &&
+            hasVerseSheetOverflow.value &&
+            !isVerseSheetExpanded.value && (
+              <div
+                className="sb-verse-toolbar-swipe-hint"
+                // Purely decorative: the panel itself owns the drag/tap
+                // gesture now, and the handle above remains the sole
+                // *accessible* control, so this stays out of the a11y tree.
+                aria-hidden="true"
+                style={{
+                  // Fades in step with the drag, so the hint gets out of the way
+                  // as the sheet opens rather than blinking off at the end.
+                  opacity: verseSheetOverflowHeight.value
+                    ? 1 -
+                      Math.min(
+                        1,
+                        verseSheetRevealHeight.value /
+                          verseSheetOverflowHeight.value
+                      )
+                    : 1,
+                }}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  keyboard_double_arrow_up
+                </span>
+                <span>
+                  {t("swipe-up-more", {
+                    defaultValue: "Swipe up to see more",
+                  })}
+                </span>
+                {selectionAnnotations.value.length > 0 && (
+                  <span>
+                    &#x2022;{" "}
+                    {t("x-notes", {
+                      defaultValue: "{{count}} notes",
+                      count: selectionAnnotations.value.length,
+                    })}
+                  </span>
+                )}
+              </div>
+            )}
           {isSmallScreen.value &&
             isHighlightPickerOpen.value &&
             showHighlightColorSwipeHint.value && (

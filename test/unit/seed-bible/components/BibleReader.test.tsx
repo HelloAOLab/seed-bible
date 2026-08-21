@@ -197,6 +197,8 @@ function createFixture(): ReaderFixture {
     shortTitle: signal<string>("shortTitle"),
     subTitle: signal<string>("subTitle"),
     title: signal<string>("title"),
+    selectionAnnotations: signal([]),
+    pendingAnnotationScrollVerse: signal<number | null>(null),
   } as BibleReadingState;
 
   const selectorState = {
@@ -255,6 +257,9 @@ function createMobileState(): SeedBibleState {
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    },
+    annotations: {
+      getAnnotationsForChapter: vi.fn(() => signal([])),
     },
   } as any as SeedBibleState;
 }
@@ -1903,6 +1908,93 @@ describe("BibleReader", () => {
     });
 
     expect(container.querySelector(".sb-verse-number")).toBeNull();
+  });
+
+  function createStateWithAnnotatedVerse(
+    bookId: string,
+    chapterNumber: number,
+    verseNumber: number
+  ): SeedBibleState {
+    const chapterAnnotations = signal([
+      {
+        id: "a1",
+        bookId,
+        chapterNumber,
+        verseNumber,
+        data: { type: "comment", html: "<p>Note</p>" },
+      },
+    ]);
+    return {
+      ...createMobileState(),
+      annotations: {
+        getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
+      },
+    } as any as SeedBibleState;
+  }
+
+  it("boxes the verse number of a verse with a covering annotation", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerse = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number'
+    );
+    const plainVerse = container.querySelector(
+      '.sb-verse[data-verse-number="2"] .sb-verse-number'
+    );
+    expect(
+      annotatedVerse?.classList.contains("sb-verse-number-annotated")
+    ).toBe(true);
+    expect(plainVerse?.classList.contains("sb-verse-number-annotated")).toBe(
+      false
+    );
+  });
+
+  it("shows a sticky_note_2 icon instead of the number for an annotated verse when verse numbers are hidden", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+          scriptureElements={{
+            showHeadings: true,
+            showVerseNumbers: false,
+            showFootnotes: true,
+            showHighlights: true,
+            showRedLettering: true,
+          }}
+        />,
+        container
+      );
+    });
+
+    const icon = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-annotation-icon'
+    );
+    expect(icon?.textContent).toBe("sticky_note_2");
+    expect(
+      container.querySelector(
+        '.sb-verse[data-verse-number="2"] .sb-verse-number'
+      )
+    ).toBeNull();
+    expect(container.querySelectorAll(".sb-verse-number")).toHaveLength(1);
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {

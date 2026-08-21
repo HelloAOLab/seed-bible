@@ -1,4 +1,4 @@
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import { computed, signal, type ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -19,13 +19,16 @@ export type Platform = "android" | "ios" | "pc";
 export type OnboardingStep = "install" | "done";
 
 const INSTALL_DISMISSED_KEY = "sb-install-dismissed";
-const APP_INSTALLED_KEY = "sb-app-installed";
 
 // Stored unprefixed on profile.config, matching the pattern set by
-// SettingsManager for `fontSize`, `lang`, etc. These are the
-// backend records of whether the user already has the app installed and
-// whether they've dismissed the install prompt ("Maybe later").
-const PROFILE_APP_INSTALLED = "appInstalled";
+// SettingsManager for `fontSize`, `lang`, etc. Records that the user
+// dismissed the install prompt ("Maybe later").
+//
+// Note: we intentionally do *not* persist "app installed" to localStorage or
+// the profile. Browsers have no reliable cross-platform signal that a PWA was
+// uninstalled, and sticky storage hid the Settings entry forever after a
+// one-time install. "Installed" is only true while this session is standalone
+// (or right after markInstalled() in the current page session).
 const PROFILE_INSTALL_DISMISSED = "installPromptDismissed";
 
 /**
@@ -100,10 +103,10 @@ export interface OnboardingManager {
   /** Whether the current session is running standalone (installed PWA). */
   standalone: boolean;
   /**
-   * Whether the user already has the app installed. True when the session is
-   * standalone, or when a previous install was recorded on the user's profile
-   * (backend) or in the local cache. Reactive so the install prompt/option
-   * disappear as soon as the profile loads or an install completes.
+   * Whether the app is treated as installed for this session. True when the
+   * session is already standalone, or after markInstalled() completes in this
+   * page load. Not persisted — so a browser visit after uninstalling the PWA
+   * shows install affordances again.
    */
   installed: ReadonlySignal<boolean>;
   /** The onboarding modal that should currently be shown. */
@@ -119,16 +122,18 @@ export interface OnboardingManager {
   /** Re-opens the install prompt on demand (e.g. from Settings, or once the tutorial is resolved). */
   openInstall: () => void;
   /**
-   * Records that the user has the app installed, persisting to their profile
-   * (backend) and the local cache. Called when an install completes.
+   * Records that the user installed the app in this session (hides the
+   * prompt/Settings entry until the next page load in a non-standalone tab).
+   * Called when an install completes.
    */
   markInstalled: () => void;
 }
 
 /**
  * Drives the first-run onboarding flow: a device-appropriate "install to home
- * screen" prompt. Whether the user already has the app is recorded on their
- * profile so the prompt — and the Settings entry — are hidden once installed.
+ * screen" prompt. Install is considered current only while running as a
+ * standalone PWA (or immediately after an install in this session) — not via
+ * sticky local/profile flags, so uninstalling the PWA restores install UI.
  *
  * The prompt does not show itself on startup — the caller decides when to
  * call `openInstall()` (e.g. once the tutorial has been resolved and the
@@ -140,49 +145,20 @@ export function createOnboardingManager(
   const platform = getPlatform();
   const standalone = isStandalone();
 
-  // Local cache of the installed flag. Seeded from localStorage and from a
-  // standalone session (which proves an install). The profile is the source
-  // of truth when logged in; this cache covers anonymous/offline use.
-  const installedLocally = signal<boolean>(
-    standalone || readFlag(APP_INSTALLED_KEY)
-  );
+  // Only true when this session is the installed app, or the user just
+  // finished installing in this tab. Do not seed from localStorage/profile:
+  // those outlive PWA uninstall and incorrectly hide Settings forever.
+  const installedLocally = signal<boolean>(standalone);
 
-  const installed = computed<boolean>(() => {
-    if (installedLocally.value) {
-      return true;
-    }
-    const fromProfile = getProfileConfigValue(
-      login.profile.value,
-      PROFILE_APP_INSTALLED
-    );
-    return fromProfile === true || fromProfile === "true";
-  });
+  const installed = computed<boolean>(() => installedLocally.value);
 
   const markInstalled = () => {
-    writeFlag(APP_INSTALLED_KEY);
     installedLocally.value = true;
-    saveProfileConfigValue(login, PROFILE_APP_INSTALLED, true);
   };
 
-  // A standalone session means the user installed the app on this device.
-  // Persist that to the backend (once the profile is available) so it's
-  // remembered across sessions/devices even if localStorage is cleared.
-  effect(() => {
-    if (!standalone || !login.userId.value) {
-      return;
-    }
-    const fromProfile = getProfileConfigValue(
-      login.profile.value,
-      PROFILE_APP_INSTALLED
-    );
-    if (fromProfile !== true) {
-      saveProfileConfigValue(login, PROFILE_APP_INSTALLED, true);
-    }
-  });
-
-  // Whether the user dismissed the install prompt ("Maybe later"). Like the
-  // installed flag, the profile is the source of truth when logged in, with a
-  // localStorage cache for anonymous/offline use.
+  // Whether the user dismissed the install prompt ("Maybe later"). Profile is
+  // the source of truth when logged in, with a localStorage cache for
+  // anonymous/offline use.
   const dismissedLocally = signal<boolean>(readFlag(INSTALL_DISMISSED_KEY));
 
   const dismissed = computed<boolean>(() => {

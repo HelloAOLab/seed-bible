@@ -1054,15 +1054,124 @@
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   box-shadow: 0 -8px 24px var(--sb-shadow-color);
+  /* The whole panel is a drag surface for the expand/collapse/dismiss
+     gesture (see the pointer handlers on this element), not just the handle
+     below. Without this, the browser can win the race against our handler
+     on the first pointermove or two and start a native scroll instead,
+     which it then follows up with a `pointercancel` — the drag looks like
+     it starts, then snaps back to where it began. The color-swatch strip
+     opts back into horizontal panning below since it needs its own native
+     scroll. */
+  touch-action: none;
 }
 
-/* Grab-handle pill at the top of the mobile verse sheet (visual affordance). */
+/* Drag target around the grab handle. The pill is only 4px tall, so the
+   pointer gesture lives on this taller strip. `touch-action: none` stops the
+   browser turning an upward drag into a page scroll before our handler sees
+   it. */
+.sb-verse-toolbar-handle-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5rem;
+  margin: -0.25rem 0 0.25rem;
+  flex: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.sb-verse-toolbar-handle-area:active {
+  cursor: grabbing;
+}
+
+.sb-verse-toolbar-handle-area:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* The sheet slides down under a dismiss drag and eases back if the drag is
+   released short of the threshold. Both are suppressed while a finger is down
+   (see `.sb-verse-sheet-dragging`) so the sheet tracks the finger exactly. */
+.sb-verse-toolbar-mobile {
+  transition: transform 0.2s ease;
+}
+
+/* The overflow row of actions, revealed by dragging the handle up. Its height is
+   set inline — from the finger's position mid-drag, and from the resting
+   expanded/collapsed state otherwise — so it must be clipped rather than laid
+   out freely. `flex-basis: 100%` puts it on its own line in the card grid. */
+.sb-verse-toolbar-cards .sb-verse-toolbar-overflow {
+  flex: 0 0 100%;
+  min-width: 100%;
+  overflow: hidden;
+  transition: height 0.22s ease;
+}
+
+/* Fully closed: hidden rather than just clipped, so the actions inside leave the
+   tab order and the accessibility tree instead of being invisibly focusable. Any
+   drag or expansion gives the row a height and brings it back. */
+.sb-verse-toolbar-cards .sb-verse-toolbar-overflow-closed {
+  visibility: hidden;
+}
+
+.sb-verse-toolbar-overflow-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+/* Same four-per-row sizing as the primary cards, so a revealed action is
+   indistinguishable from one that was already showing. */
+.sb-verse-toolbar-overflow-row .sb-verse-toolbar-action-item {
+  flex: 1 1 20%;
+  min-width: 4.5rem;
+}
+
+/* Forces the annotation groups onto their own full-width line below any
+   overflow action cards, inside the same measured/animated overflow row.
+   Each group/item below reuses DiscoverPane's `.sb-annotation-group*`/
+   `.sb-annotation-item*` classes (its CSS loads automatically here since this
+   file imports `AnnotationPreview`/`AnnotationCommentMeta` from that module)
+   so the grouped display matches the Discover pane's look exactly. */
+.sb-verse-toolbar-annotations {
+  flex: 0 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* No click-to-navigate here (unlike DiscoverPane's row, which jumps to the
+   verse on click) — the row itself isn't a button, so the pointer cursor
+   DiscoverPane's clickable row uses isn't appropriate. The edit/delete menu
+   button inside still gets its own cursor via `.sb-context-menu-button`. */
+.sb-verse-toolbar-annotations .sb-annotation-item {
+  cursor: default;
+}
+
+/* While dragging, height and transform follow the pointer directly; easing
+   towards the finger would feel like lag. The animations come back on release,
+   which is what carries the sheet the rest of the way to its resting position. */
+.sb-verse-toolbar-mobile.sb-verse-sheet-dragging,
+.sb-verse-toolbar-mobile.sb-verse-sheet-dragging .sb-verse-toolbar-overflow {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-verse-toolbar-mobile,
+  .sb-verse-toolbar-cards .sb-verse-toolbar-overflow {
+    transition: none;
+  }
+}
+
+/* Grab-handle pill at the top of the mobile verse sheet. */
 .sb-verse-toolbar-handle {
   width: 2.25rem;
   height: 0.25rem;
   border-radius: 62.4375rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  margin: 0.125rem auto 0.5rem;
+  margin: 0 auto;
   flex: none;
 }
 
@@ -1095,17 +1204,25 @@
   line-height: 1;
 }
 
-/* "Swipe to see more" under the mobile color strip. Hidden by default on the
-   base class; only the color-picker variant is shown. */
+/* "Swipe up to see more" at the foot of the sheet — the affordance that replaced
+   the "More" card, naming the handle gesture without spending a card slot on a
+   button. Only rendered while the sheet is collapsed and has an overflow row. */
 .sb-verse-toolbar-swipe-hint {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  margin-top: 0.625rem;
+  margin-top: 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  /* Tapping/dragging the hint also expands the sheet, as a shortcut alongside
+     the drag/tap handle above it (which remains the accessible control — this
+     text stays `aria-hidden`). `touch-action: none` is required here too —
+     without it the browser turns an upward drag into a page scroll after the
+     first pixel, same as the handle above it. */
+  touch-action: none;
+  cursor: pointer;
 }
 
 .sb-verse-toolbar-swipe-hint .material-symbols-outlined {
@@ -1185,6 +1302,11 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
+  /* Opts back into native horizontal panning against the panel's
+     `touch-action: none` — this strip owns its own swipe gesture and isn't
+     part of the sheet's drag-to-expand surface (see the pointer-handler
+     ignore list in the component). */
+  touch-action: pan-x;
 }
 
 .sb-verse-toolbar-mobile .sb-verse-toolbar-swatches::-webkit-scrollbar {
@@ -1289,13 +1411,6 @@
 
 .sb-verse-toolbar-cards .sb-verse-toolbar-action-label {
   font-size: 0.75rem;
-}
-
-/* The More/Less toggle reads as the same card, with a visible outline when the
-   sheet is expanded (matching the "Less" state in the design). */
-.sb-verse-toolbar-cards .sb-verse-toolbar-more-toggle-active {
-  background: transparent;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
 }
 
 /* The card grid hosts its own dismiss control (the corner X), and the ref label

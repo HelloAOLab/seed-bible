@@ -60,6 +60,9 @@ catalogs:
     '@tiptap/starter-kit':
       specifier: 3.27.1
       version: 3.27.1
+    '@types/json-schema':
+      specifier: 7.0.15
+      version: 7.0.15
     axios:
       specifier: 1.13.5
       version: 1.13.5
@@ -246,6 +249,12 @@ importers:
       '@testing-library/preact':
         specifier: ^3.2.4
         version: 3.2.4(preact@10.29.2)
+      '@tiptap/core':
+        specifier: 'catalog:'
+        version: 3.27.1(@tiptap/pm@3.27.1)
+      '@tiptap/starter-kit':
+        specifier: 'catalog:'
+        version: 3.27.1
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
@@ -258,6 +267,9 @@ importers:
       '@types/jsdom':
         specifier: ^28.0.3
         version: 28.0.3
+      '@types/json-schema':
+        specifier: 'catalog:'
+        version: 7.0.15
       '@types/luxon':
         specifier: ^3.7.2
         version: 3.7.2

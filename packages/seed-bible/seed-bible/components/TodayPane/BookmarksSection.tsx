@@ -10,7 +10,10 @@ import { BookmarkIcon } from "../icons";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useI18n } from "../../i18n";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
-import type { Bookmark as BookmarkRecord } from "../../managers/BookmarksManager";
+import {
+  getBookmarkCategories,
+  type Bookmark as BookmarkRecord,
+} from "../../managers/BookmarksManager";
 import type {
   TodayManager,
   TodayPassageTarget,
@@ -72,11 +75,6 @@ export const BookmarksSection = (props: {
     const categorized: CategorizedBookmarks = new Map();
     for (const bookmark of bookmarks.value) {
       const { bookId, chapterNumber, translationId, category } = bookmark;
-      let categoryBookmarks = categorized.get(category);
-      if (!categoryBookmarks) {
-        categoryBookmarks = [];
-        categorized.set(category, categoryBookmarks);
-      }
       const translationBooks = booksByTranslation.value.get(translationId);
       // Falls back to the raw bookId until the books for this translation load.
       const name =
@@ -84,13 +82,23 @@ export const BookmarksSection = (props: {
           return book.id === bookId;
         })?.name ?? bookId;
 
-      categoryBookmarks.push({
+      const data: BookmarkData = {
         text: `${name} ${chapterNumber}`,
         handleClick: () => {
           onOpenPassage({ bookId, chapter: chapterNumber, translationId });
         },
         key: bookmark.id,
-      });
+      };
+
+      // A bookmark can belong to several folders, so it shows up under each.
+      for (const categoryName of getBookmarkCategories(category)) {
+        let categoryBookmarks = categorized.get(categoryName);
+        if (!categoryBookmarks) {
+          categoryBookmarks = [];
+          categorized.set(categoryName, categoryBookmarks);
+        }
+        categoryBookmarks.push(data);
+      }
     }
     return categorized;
   });

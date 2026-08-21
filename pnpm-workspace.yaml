@@ -65,11 +65,12 @@ catalog:
   "prosemirror-model": "1.25.9"
   "prosemirror-transform": "1.12.0"
   "prosemirror-view": "1.42.0"
-# The prosemirror packages and zod each resolved to two versions, so the bundle
-# carried both copies (prosemirror-view alone cost 94 KB twice over). Vite's
-# `resolve.dedupe` cannot fix this: it resolves to the copy in the project root
-# `node_modules`, and pnpm does not hoist transitive dependencies there. Pinning
-# via `overrides` is what actually collapses them.
+  # The prosemirror packages and zod each resolved to two versions, so the bundle
+  # carried both copies (prosemirror-view alone cost 94 KB twice over). Vite's
+  # `resolve.dedupe` cannot fix this: it resolves to the copy in the project root
+  # `node_modules`, and pnpm does not hoist transitive dependencies there. Pinning
+  # via `overrides` is what actually collapses them.
+  "@types/json-schema": "7.0.15"
 overrides:
   "prosemirror-model": "catalog:"
   "prosemirror-transform": "catalog:"

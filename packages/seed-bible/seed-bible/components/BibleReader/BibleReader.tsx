@@ -38,6 +38,11 @@ import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import {
+  annotationVerseNumbers,
+  type Annotation,
+  type AnnotationsManager,
+} from "../../managers/AnnotationsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
@@ -51,6 +56,7 @@ import {
   openBookmarkCategoryModal,
 } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
+import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -126,6 +132,60 @@ function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
           stroke-linejoin="round"
         />
       </svg>
+    </button>
+  );
+}
+
+interface ChapterNotesButtonProps {
+  state: SeedBibleState;
+  bookId: string | null;
+  chapterNumber: number | null;
+}
+
+/**
+ * Shows the note count for the chapter currently in view; hidden entirely
+ * when the chapter has no annotations. Opens the Discover pane, which lists
+ * the chapter's annotations grouped by verse range.
+ */
+function ChapterNotesButton(props: ChapterNotesButtonProps) {
+  const { state, bookId, chapterNumber } = props;
+  const { t } = useI18n();
+  const noteCount =
+    bookId && chapterNumber
+      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+          .length
+      : 0;
+
+  if (noteCount === 0) {
+    return null;
+  }
+
+  const label = t("chapter-notes-count", {
+    defaultValue: "{{count}} notes for this chapter",
+    count: noteCount,
+  });
+
+  return (
+    <button
+      type="button"
+      className="sb-bible-reader-mobile-header-notes"
+      // Mirrors the account button below: stop the tap here so the reader
+      // pane wrapper's pointerdown handler doesn't interfere with opening
+      // Discover.
+      onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+        state.app.openDiscover();
+      }}
+      aria-label={label}
+      title={label}
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        sticky_note_2
+      </span>
+      <span className="sb-bible-reader-mobile-header-notes-count">
+        {noteCount}
+      </span>
     </button>
   );
 }
@@ -536,7 +596,13 @@ function renderChapterContent(
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void,
   highlights: ChapterHighlight[],
   decorations: VerseDecoration[],
-  scriptureElements: ScriptureElementsBehavior
+  chapterAnnotations: Annotation[],
+  scriptureElements: ScriptureElementsBehavior,
+  onAnnotationVerseClick: (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => void
 ) {
   if (!chapterData) {
     return null;
@@ -695,6 +761,60 @@ function renderChapterContent(
     return `${prefix}${highlight.colorId}`;
   };
 
+  // Only matches an annotation to the verse number it *starts* at (the
+  // lowest verse it targets), not every verse it spans — a Genesis 1:3-6
+  // note marks verse 3 only, not 4, 5, and 6 too.
+  const getVerseAnnotations = (verseNumber: number): Annotation[] =>
+    chapterAnnotations.filter((annotation) => {
+      const verseNumbers = annotationVerseNumbers(annotation);
+      return (
+        verseNumbers.length > 0 && Math.min(...verseNumbers) === verseNumber
+      );
+    });
+
+  // Renders a verse's number when shown, boxed if the verse has a covering
+  // annotation; when verse numbers are hidden, an annotated verse still shows
+  // a `sticky_note_2` icon in that spot so the indicator survives the setting.
+  // An annotated number/icon is clickable, jumping straight to its note.
+  const renderVerseNumberOrIcon = (
+    verseNumber: number,
+    verse: BibleSelectedVerse
+  ) => {
+    const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
+    const handleAnnotationClick = (event: MouseEvent) =>
+      onAnnotationVerseClick(verse, verseNumber, event);
+
+    if (scriptureElements.showVerseNumbers) {
+      return (
+        <sup
+          className={
+            hasAnnotation
+              ? "sb-verse-number sb-verse-number-annotated"
+              : "sb-verse-number"
+          }
+          onClick={hasAnnotation ? handleAnnotationClick : undefined}
+          role={hasAnnotation ? "button" : undefined}
+          tabIndex={hasAnnotation ? 0 : undefined}
+        >
+          {verseNumber}
+        </sup>
+      );
+    }
+    if (!hasAnnotation) {
+      return null;
+    }
+    return (
+      <sup
+        className="sb-verse-number sb-verse-annotation-icon"
+        onClick={handleAnnotationClick}
+        role="button"
+        tabIndex={0}
+      >
+        <span className="material-symbols-outlined">sticky_note_2</span>
+      </sup>
+    );
+  };
+
   // Renders a single verse's `<span class="sb-verse">`. The highlight background
   // is never painted here — an enclosing run wrapper (below) carries it and the
   // ribbon layer draws it behind the text. Verse decorations still apply here.
@@ -768,9 +888,8 @@ function renderChapterContent(
                   className={verseDecoratorClassName}
                   style={verseDecoratorStyle}
                 >
-                  {segIndex === 0 && scriptureElements.showVerseNumbers && (
-                    <sup className="sb-verse-number">{value.number}</sup>
-                  )}
+                  {segIndex === 0 &&
+                    renderVerseNumberOrIcon(value.number, verse)}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -803,9 +922,7 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    scriptureElements.showVerseNumbers && (
-                      <sup className="sb-verse-number">{value.number}</sup>
-                    )}
+                    renderVerseNumberOrIcon(value.number, verse)}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -841,9 +958,7 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {scriptureElements.showVerseNumbers && (
-            <sup className="sb-verse-number">{value.number}</sup>
-          )}
+          {renderVerseNumberOrIcon(value.number, verse)}
           {value.content.map((part, index) =>
             renderInlineContent(
               part,
@@ -1074,7 +1189,9 @@ function renderStaticChapterContent(
     () => {},
     [],
     [],
-    scriptureElements
+    [],
+    scriptureElements,
+    () => {}
   );
 }
 
@@ -1139,6 +1256,7 @@ interface ChapterContentProps {
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
+  annotations?: AnnotationsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1148,6 +1266,11 @@ interface ChapterContentProps {
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
+  onAnnotationVerseClick: (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => void;
   /**
    * True while this is the chapter the reader has *left* — shown dimmed until
    * the chapter they navigated to arrives.
@@ -1163,12 +1286,23 @@ function ChapterContent(props: ChapterContentProps) {
     selectedVerses,
     highlights,
     decorations,
+    annotations,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
     justConvertedSelectionRef,
     scriptureElements,
+    onAnnotationVerseClick,
   } = props;
+
+  const currentChapter = chapterData.value;
+  const chapterAnnotations =
+    currentChapter && annotations
+      ? annotations.getAnnotationsForChapter(
+          currentChapter.book.id,
+          currentChapter.chapter.number
+        ).value
+      : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [ribbons, setRibbons] = useState<Ribbon[]>([]);
@@ -1464,7 +1598,9 @@ function ChapterContent(props: ChapterContentProps) {
         (noteId) => selectFootnote(noteId),
         highlights.value.highlights,
         decorations.value,
-        scriptureElements
+        chapterAnnotations,
+        scriptureElements,
+        onAnnotationVerseClick
       )}
     </div>
   );
@@ -1528,6 +1664,43 @@ export function BibleReader(props: BibleReaderProps) {
   );
 
   const isMobile = state?.app.isMobile.value ?? false;
+
+  // Clicking an annotated verse number selects the verse (like clicking its
+  // text does) and jumps straight to its note: expands and scrolls to it in
+  // the mobile verse toolbar, or opens/scrolls the Discover pane on desktop,
+  // where that toolbar isn't used.
+  const handleAnnotationVerseClick = (
+    verse: BibleSelectedVerse,
+    verseNumber: number,
+    event: MouseEvent
+  ) => {
+    // The <sup> sits inside the verse's own clickable <span>; stop the tap
+    // here so selectVerse (a toggle) doesn't run twice and immediately undo
+    // itself.
+    event.stopPropagation();
+    selectVerse(verse, event.clientX, event.clientY);
+    if (!state) {
+      return;
+    }
+
+    if (isMobile) {
+      readingState.pendingAnnotationScrollVerse.value = verseNumber;
+      return;
+    }
+
+    // Set the target before (maybe) opening: if Discover is already open,
+    // openDiscover() would just toggle it *closed* — only open when it isn't
+    // already showing, and let the effect in AnnotationsSection react to the
+    // target either way.
+    state.discover.scrollToVerse.value = {
+      bookId: verse.bookId,
+      chapterNumber: verse.chapterNumber,
+      verseNumber,
+    };
+    if (!state.discover.isDiscoverOpen.value) {
+      state.app.openDiscover();
+    }
+  };
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
   // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
@@ -1814,9 +1987,11 @@ export function BibleReader(props: BibleReaderProps) {
               justConvertedSelectionRef={justConvertedSelectionRef}
               highlights={highlights}
               decorations={decorations}
+              annotations={state?.annotations}
               selectVerse={selectVerse}
               selectFootnote={selectFootnote}
               scriptureElements={scriptureElements}
+              onAnnotationVerseClick={handleAnnotationVerseClick}
             />
           </Suspense>
         ))}
@@ -1890,55 +2065,66 @@ export function BibleReader(props: BibleReaderProps) {
                 </span>
               </h1>
             </div>
-            <QuickToolbar
-              toolsManager={state.tools}
-              readingState={readingState}
-              playlists={state.playlists}
-              features={state.features}
-              className="sb-quick-toolbar-mobile-header"
+            <ChapterNotesButton
+              state={state}
+              bookId={bookId.value}
+              chapterNumber={chapterNumber.value}
             />
-            {!state.playlists.playing.value && (
-              <ReaderBookmarkButton
-                state={state}
-                translationId={translationId.value}
-                bookId={bookId.value}
-                chapterNumber={chapterNumber.value}
+            <div className="sb-bible-reader-mobile-header-actions">
+              {!state.playlists.playing.value && (
+                <ReaderBookmarkButton
+                  state={state}
+                  translationId={translationId.value}
+                  bookId={bookId.value}
+                  chapterNumber={chapterNumber.value}
+                />
+              )}
+              <QuickToolbar
+                toolsManager={state.tools}
+                readingState={readingState}
+                playlists={state.playlists}
+                features={state.features}
+                sharedSession={sharedSession ?? null}
+                toast={state.app.toast}
+                modals={state.modals}
+                app={state.app}
+                className="sb-quick-toolbar-mobile-header"
               />
-            )}
-            {sharedSession ? (
-              <MobileSessionParticipants
-                state={state}
-                session={sharedSession}
-              />
-            ) : (
+              {sharedSession ? (
+                <MobileSessionParticipants
+                  state={state}
+                  session={sharedSession}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="sb-bible-reader-mobile-header-account"
+                  aria-label={`Open account settings (${getSelfDisplayName(
+                    state
+                  )})`}
+                  // The reader pane wrapper selects the pane on pointerdown/click
+                  // (which runs closeSidebarAndSettings). Stop the tap here so it
+                  // doesn't immediately dismiss the account view we're opening.
+                  onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    state.sidebar.openSidebar();
+                    state.sidebar.openSettingsToView("account");
+                  }}
+                >
+                  <SelfAvatarVisual state={state} />
+                </button>
+              )}
               <button
                 type="button"
-                className="sb-bible-reader-mobile-header-account"
-                aria-label={`Open account settings (${getSelfDisplayName(
-                  state
-                )})`}
-                // The reader pane wrapper selects the pane on pointerdown/click
-                // (which runs closeSidebarAndSettings). Stop the tap here so it
-                // doesn't immediately dismiss the account view we're opening.
-                onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                onClick={(e: MouseEvent) => {
-                  e.stopPropagation();
-                  state.sidebar.openSidebar();
-                  state.sidebar.openSettingsToView("account");
-                }}
+                className="sb-bible-reader-mobile-header-settings"
+                onClick={() => mobileChrome?.onOpenMobileSettings()}
+                aria-label={t("settings", { defaultValue: "Settings" })}
+                title={t("settings", { defaultValue: "Settings" })}
               >
-                <SelfAvatarVisual state={state} />
+                <InfoSettingsIcon />
               </button>
-            )}
-            <button
-              type="button"
-              className="sb-bible-reader-mobile-header-settings"
-              onClick={() => mobileChrome?.onOpenMobileSettings()}
-              aria-label={t("settings", { defaultValue: "Settings" })}
-              title={t("settings", { defaultValue: "Settings" })}
-            >
-              <InfoSettingsIcon />
-            </button>
+            </div>
           </div>
 
           <div
@@ -2002,7 +2188,9 @@ export function BibleReader(props: BibleReaderProps) {
         <>
           <div className="sb-bible-reader-header">
             <h2
-              onClick={() => selectorState.setOpen(true, currentSlot)}
+              {...flingSafeTapHandlers(() => {
+                void selectorState.setOpen(true, currentSlot);
+              })}
               className="sb-bible-reader-title"
             >
               <span className="sb-bible-reader-book">
@@ -2028,6 +2216,10 @@ export function BibleReader(props: BibleReaderProps) {
                   readingState={readingState}
                   playlists={state.playlists}
                   features={state.features}
+                  sharedSession={sharedSession ?? null}
+                  toast={state.app.toast}
+                  modals={state.modals}
+                  app={state.app}
                   className="sb-quick-toolbar-reader"
                 />
                 {!state.playlists.playing.value && (

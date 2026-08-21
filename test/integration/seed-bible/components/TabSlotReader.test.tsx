@@ -170,6 +170,8 @@ function createFixture(): ReaderFixture {
     shortTitle: signal<string>(""),
     subTitle: signal<string>(""),
     title: signal<string>(""),
+    selectionAnnotations: signal([]),
+    pendingAnnotationScrollVerse: signal<number | null>(null),
   } as BibleReadingState;
 
   const selectorState = {
@@ -238,6 +240,9 @@ function createMobileState(): SeedBibleState {
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    annotations: {
+      getAnnotationsForChapter: vi.fn(() => signal([])),
+    },
   } as any as SeedBibleState;
 }
 
@@ -267,6 +272,9 @@ function createDesktopState(): SeedBibleState {
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
+    },
+    annotations: {
+      getAnnotationsForChapter: vi.fn(() => signal([])),
     },
   } as any as SeedBibleState;
 }

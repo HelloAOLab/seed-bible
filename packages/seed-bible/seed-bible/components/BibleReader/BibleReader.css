@@ -246,16 +246,30 @@
 }
 
 /* The chapter-bookmark toggle joins the header's right-hand icon cluster on
- * mobile. Reset the desktop absolute positioning and let it (as the first
- * item of the cluster) consume the free space so it and the settings button
- * sit together on the right. */
+ * mobile. The cluster wrapper consumes the free space so bookmark, share,
+ * account, and settings stay together on the right even when bookmark is
+ * hidden during playlist playback. */
+.sb-bible-reader-mobile-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
 .sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
   position: static;
   flex-shrink: 0;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  margin-inline-start: auto;
+}
+
+/* Match the 2rem circular header buttons (bookmark, account, settings)
+ * rather than the desktop quick-toolbar's 2.25rem size. */
+.sb-bible-reader-mobile-header .sb-quick-toolbar-button {
+  width: 2rem;
+  height: 2rem;
 }
 
 .sb-bible-reader-mobile-header-settings {
@@ -276,6 +290,31 @@
 
 .sb-bible-reader-mobile-header-settings:active {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-bible-reader-mobile-header-notes {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  height: 2rem;
+  border-radius: 1rem;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  padding: 0 0.375rem;
+  margin-inline-start: 0;
+}
+
+.sb-bible-reader-mobile-header-notes:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-bible-reader-mobile-header-notes-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* Account ("You") avatar button — sits between the bookmark and settings
@@ -597,6 +636,21 @@
   margin-inline-end: 0.3125em;
   color: inherit;
   opacity: 0.7;
+}
+
+.sb-verse-number-annotated {
+  border: 1px solid var(--sb-verse-font-color);
+  border-radius: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.sb-verse-annotation-icon {
+  cursor: pointer;
+}
+
+.sb-verse-number .material-symbols-outlined {
+  font-size: 1em;
 }
 
 .sb-poem-line-1 {
