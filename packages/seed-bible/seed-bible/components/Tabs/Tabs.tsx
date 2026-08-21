@@ -15,7 +15,11 @@ import {
   ContextMenuWithButton,
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { MaterialIcon, SettingsIcon } from "../../components/icons";
+import {
+  BookmarkIcon,
+  MaterialIcon,
+  SettingsIcon,
+} from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import {
@@ -928,31 +932,6 @@ export function Settings(props: SettingsProps) {
   );
 }
 
-/**
- * Compact bookmark icon used by category headers and bookmark rows. Sized to
- * match the per-row text height so categories sit comfortably inside the tab
- * list without their own taller hit-targets.
- */
-function BookmarkIconGlyph() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linejoin="round"
-      />
-    </svg>
-  );
-}
-
 interface TabRowProps {
   // Allow JSX `key` to pass through without TS extra-property errors when
   // mapping a list of tabs. Preact strips it before the component sees props.
@@ -1719,7 +1698,17 @@ function BookmarksSection(props: BookmarksSectionProps) {
                 aria-label={category.name}
               >
                 <span className="sb-bookmark-category-icon" aria-hidden="true">
-                  <BookmarkIconGlyph />
+                  {/*
+                    Filled rather than outlined, and sized to the row's text
+                    height so category headers don't get a taller hit-target
+                    than the tabs around them.
+                  */}
+                  <BookmarkIcon
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    stroke-width="1.5"
+                  />
                 </span>
                 {isRenaming ? (
                   <input

@@ -143,6 +143,24 @@ describe("BookmarksSection", () => {
     });
   });
 
+  describe("the chip's bookmark glyph", () => {
+    // The glyph is shared with the tab sidebar, which draws it filled and
+    // thinner. The chip's chunky outline only survives because it overrides
+    // both, and nothing else here would notice if it stopped.
+    it("draws a heavier outline than the shared default", () => {
+      setup();
+      const icon = firstChip().querySelector("svg")!;
+      expect(icon.getAttribute("stroke-width")).toBe("3");
+      expect(icon.getAttribute("fill")).toBe("none");
+    });
+
+    it("takes its colour from the chip so the theme reaches it", () => {
+      setup();
+      const icon = firstChip().querySelector("svg")!;
+      expect(icon.getAttribute("stroke")).toBe("currentColor");
+    });
+  });
+
   describe("categories", () => {
     it("groups bookmarks by their category, in first-appearance order", () => {
       setup({

@@ -789,14 +789,6 @@
 .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-bookmark
-  > svg
-  > path {
-  stroke: var(--sb-secondary-font-color);
-}
-
-.sb-today-container
-  .sb-today-bookmarks-section
-  .sb-today-bookmarks-section-bookmark
   > span {
   font-size: 1rem;
 }

@@ -6,6 +6,7 @@ import {
 } from "@preact/signals";
 import { useLayoutEffect, useRef } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
+import { BookmarkIcon } from "../icons";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useI18n } from "../../i18n";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
@@ -185,31 +186,18 @@ function Bookmark(props: { text: string; handleClick: () => void }) {
       className={"sb-today-bookmarks-section-bookmark sb-today-clickable"}
       onClick={props.handleClick}
     >
-      <BookmarkIcon />
+      {/*
+        A heavier stroke than core's default, which is what gives the chip its
+        chunky look at this size. Colour comes from the button's own `color`
+        through `currentColor`.
+      */}
+      <BookmarkIcon
+        width="16"
+        height="16"
+        stroke-width="3"
+        aria-hidden="true"
+      />
       {props.text}
     </button>
   );
 }
-
-// Not core's exported `BookMarkIcon`: that one is 14x20 in a 14x20 viewBox with
-// a 1px stroke, so swapping would visibly change this chip. See chunk B/E.
-const BookmarkIcon = () => {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill={"none"}
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-        stroke="black"
-        stroke-width="3"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </svg>
-  );
-};
