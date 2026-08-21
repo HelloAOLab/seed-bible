@@ -7,6 +7,7 @@ import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeM
 import { todayStub } from "../../testUtils/todayStubs";
 import { useSocialSectionContext } from "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext";
 import { useTimeContext } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
+import { mockI18nState, resetMockI18n } from "../../testUtils/mockI18n";
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext",
@@ -19,8 +20,24 @@ vi.mock(
   })
 );
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../../testUtils/mockI18n");
-  return mockI18nManager();
+  const { mockI18nManager, mockTranslate, mockI18nState } =
+    await import("../../testUtils/mockI18n");
+  return mockI18nManager({
+    /**
+     * The shared stub returns each call site's `defaultValue` regardless of
+     * language, which makes a language switch invisible to any assertion on a
+     * `t()` result — and this hook resolves the whole timeline footer that way.
+     * So mark non-English output with the active language. English stays
+     * unmarked, so every other assertion in this file still reads as the string
+     * a user actually sees.
+     */
+    t: (key: string, options?: Record<string, unknown>) => {
+      const text = mockTranslate(key, options);
+      return mockI18nState.language === "en"
+        ? text
+        : `${text}[${mockI18nState.language}]`;
+    },
+  });
 });
 
 // The hook imports these directly, so they are stubbed at the module boundary
@@ -132,6 +149,7 @@ describe("useReadingHistoryTimeline", () => {
     }));
     getColorByReadingTime.mockImplementation(() => "#abc");
     THEME.value = DEFAULT_THEME;
+    resetMockI18n();
   });
 
   afterEach(() => {
@@ -147,15 +165,28 @@ describe("useReadingHistoryTimeline", () => {
   ) {
     (useSocialSectionContext as Mock).mockReturnValue(makeSocial(social));
     const result = { current: null as unknown as Result };
-    function TestComponent() {
+    function TestComponent(_props: { nonce: number }) {
       result.current = useReadingHistoryTimeline({
         today: makeToday(today),
         theme: THEME,
       });
       return null;
     }
-    act(() => render(<TestComponent />, container));
-    return result;
+    let nonce = 0;
+    /**
+     * Re-renders in place, keeping the hook's memo state.
+     *
+     * The bumped `nonce` is load-bearing, not decoration: `@preact/signals`
+     * installs a `shouldComponentUpdate` on every component that reads a
+     * signal, and it bails out when props are unchanged — so calling `render`
+     * again with identical props is a silent no-op that renders nothing and
+     * fails no assertion. The changing prop stands in for whatever causes the
+     * re-render in the real app (for a language switch, the i18n signal).
+     */
+    const rerender = () =>
+      act(() => render(<TestComponent nonce={++nonce} />, container));
+    rerender();
+    return Object.assign(result, { rerender });
   }
 
   const items = (result: { current: Result }) =>
@@ -249,6 +280,31 @@ describe("useReadingHistoryTimeline", () => {
       expect(tooltip.content).toMatch(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/);
     });
 
+    it("re-formats tooltip dates when the language changes", () => {
+      const result = setup();
+      const timeMs = items(result)[0]!.range.start * 1000;
+      const formatIn = (lang: string) =>
+        new Intl.DateTimeFormat(lang, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }).format(timeMs);
+
+      // Guards the test against being vacuous: if these two agreed, the
+      // assertion below would pass no matter what the hook did.
+      expect(formatIn("en")).not.toBe(formatIn("fr"));
+      expect(items(result)[0]!.tooltipContentsData[0]!.content).toBe(
+        formatIn("en")
+      );
+
+      mockI18nState.language = "fr";
+      result.rerender();
+
+      expect(items(result)[0]!.tooltipContentsData[0]!.content).toBe(
+        formatIn("fr")
+      );
+    });
+
     it("selects the day's range on click, and clears it on null", () => {
       const result = setup();
       const item = items(result)[0]!;
@@ -312,6 +368,25 @@ describe("useReadingHistoryTimeline", () => {
       expect(result.current.footer.moreText).toBe("More");
       expect(result.current.footer.yearSelectorLabelTextContent).toBe(
         "Year: 1999"
+      );
+    });
+
+    // Regression: every string here is resolved through `t`, and the footer
+    // memo used to leave `language` out of its dependencies. It only looked
+    // correct because an unstable `selectYear` recomputed the memo on every
+    // render; stabilising that callback froze the legend and the year label in
+    // whichever language loaded first.
+    it("re-resolves its translated labels when the language changes", () => {
+      const result = setup();
+      expect(result.current.footer.lessText).toBe("Less");
+
+      mockI18nState.language = "es";
+      result.rerender();
+
+      expect(result.current.footer.lessText).toBe("Less[es]");
+      expect(result.current.footer.moreText).toBe("More[es]");
+      expect(result.current.footer.yearSelectorLabelTextContent).toBe(
+        "Year: 1999[es]"
       );
     });
   });

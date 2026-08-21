@@ -2,8 +2,8 @@ import type {
   ReadingHistoryContentData,
   ReadingHistoryTimelineFooterData,
 } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
-import type { ReadonlySignal } from "@preact/signals";
-import { useState, useMemo, useEffect, useRef } from "preact/hooks";
+import { useSignal, type ReadonlySignal } from "@preact/signals";
+import { useMemo, useEffect, useRef } from "preact/hooks";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
 import { useHorizontalScroll } from "../useHorizontalScroll";
@@ -127,10 +127,10 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     return range;
   }, [yearTimespanMap, year]);
 
-  const [yearlyReadingHistorySummary, setYearlyReadingHistorySummary] =
-    useState<ReadingHistorySummary | null>(null);
-  const [dailyReadingHistorySummaries, setDailyReadingHistorySummaries] =
-    useState<DailyReadingHistorySummaries | null>(null);
+  const yearlySummarySignal = useSignal<ReadingHistorySummary | null>(null);
+  const dailySummariesSignal = useSignal<DailyReadingHistorySummaries | null>(
+    null
+  );
 
   const { startDateStartOfWeek, weeksCount, dayRangesMap } = useMemo(() => {
     const getStartOfWeek = (date: Date) => {
@@ -187,8 +187,8 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     })
       .then(({ summariesByDay, total }) => {
         if (!isMounted) return;
-        setYearlyReadingHistorySummary(total);
-        setDailyReadingHistorySummaries(summariesByDay);
+        yearlySummarySignal.value = total;
+        dailySummariesSignal.value = summariesByDay;
       })
       .catch((error) => {
         console.warn(
@@ -203,12 +203,15 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
 
   const prevItemsColorMapRef = useRef<ItemsColorMap>(new Map());
 
-  // Unwrapped here in the render body, never inside the memo below. `useMemo` is
-  // not a reactive scope, so a `theme.value` read in there would neither
-  // subscribe this component to a theme change nor invalidate the memo — the
-  // signal's own identity never changes, only the value it holds. Reading it out
-  // here is what makes a theme switch recolour the timeline immediately.
+  // All three unwrapped here in the render body, never inside the memo below.
+  // `useMemo` is not a reactive scope, so a `.value` read in there would neither
+  // subscribe this component to a change nor invalidate the memo — a signal's
+  // own identity never changes, only the value it holds. Reading them out here
+  // is what makes a theme switch recolour the timeline immediately, and what
+  // lets the fetched summaries reach the memo's dependency list at all.
   const currentTheme = theme.value;
+  const dailyReadingHistorySummaries = dailySummariesSignal.value;
+  const yearlyReadingHistorySummary = yearlySummarySignal.value;
 
   const itemsColorMap = useMemo<ItemsColorMap>(() => {
     const colorMap: ItemsColorMap = new Map();
@@ -279,6 +282,8 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     dailyReadingHistorySummaries,
     yearlyReadingHistorySummary,
     currentTheme,
+    weeksCount,
+    timelineRange,
   ]);
 
   const itemsData = useMemo<
@@ -423,7 +428,21 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     }
 
     return items;
-  }, [weeksCount, dayRangesMap, selectDay, itemsColorMap, timespan]);
+    // `language` and `t` are load-bearing: every month label and every tooltip
+    // date is formatted through them, so omitting them left the grid stuck in
+    // whichever language it first rendered in. There is no `exhaustive-deps`
+    // rule configured in this repo, so this list is maintained by hand.
+  }, [
+    weeksCount,
+    dayRangesMap,
+    startDateStartOfWeek,
+    timelineRange,
+    selectDay,
+    itemsColorMap,
+    timespan,
+    language,
+    t,
+  ]);
 
   // The year selector sets the timeline year (and clears the timespan via
   // selectYear). Legend is currently placeholder data.
@@ -456,7 +475,10 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
       }),
       yearSelectorOptionsData,
     };
-  }, [yearTimespanMap, year, selectYear, t]);
+    // `language` for the same reason as `itemsData` above: all three strings
+    // here are resolved through `t`, so without it the legend and the year
+    // label keep whichever language they first rendered in.
+  }, [yearTimespanMap, year, selectYear, t, language]);
 
   // Wheel → horizontal scroll is shared via the injected hook.
   useHorizontalScroll(timelineRef);

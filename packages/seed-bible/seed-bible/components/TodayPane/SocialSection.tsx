@@ -3,7 +3,7 @@ import {
   useSignalEffect,
   type ReadonlySignal,
 } from "@preact/signals";
-import { useMemo, useEffect, useRef } from "preact/hooks";
+import { useMemo, useEffect, useRef, useCallback } from "preact/hooks";
 import { Fragment } from "preact/jsx-runtime";
 import {
   SocialSectionProvider,
@@ -76,14 +76,19 @@ export const SocialSection = (props: {
   const timespan = useSignal<Timespan | undefined>(initialOption.timespan);
   const communityReading = useSignal<FilteredReadingData>({});
 
-  const selectYear = (selectedYear: number) => {
+  // Stable identities, and that is load-bearing rather than tidiness: the
+  // timeline hook memoises ~370 grid items against `selectDay`, so a fresh
+  // function each render made that memo recompute every time. These close over
+  // nothing but signals, whose own identities never change, so an empty
+  // dependency list is correct.
+  const selectYear = useCallback((selectedYear: number) => {
     year.value = selectedYear;
     timespan.value = undefined;
-  };
+  }, []);
 
-  const selectDay = (selectedTimespan: Timespan | undefined) => {
+  const selectDay = useCallback((selectedTimespan: Timespan | undefined) => {
     timespan.value = selectedTimespan;
-  };
+  }, []);
 
   // Reactive data fetching: fetch the community reading for the exact selected
   // period. When `timespan` is undefined ("all"), clear it — no fetch.
@@ -126,11 +131,11 @@ export const SocialSection = (props: {
     userFilters.value = next;
   }, [userProfileMap]);
 
-  const toggleUserFilter = (id: string) => {
+  const toggleUserFilter = useCallback((id: string) => {
     const next = new Map(userFilters.peek());
     next.set(id, !next.get(id));
     userFilters.value = next;
-  };
+  }, []);
 
   return (
     <SocialSectionProvider
