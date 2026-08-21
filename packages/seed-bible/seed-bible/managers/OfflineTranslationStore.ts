@@ -27,6 +27,7 @@ import type {
   TranslationBook,
   TranslationBookChapterAudioLinks,
 } from "./FreeUseBibleAPI";
+import { requestToPromise, transactionToPromise } from "./indexedDbUtils";
 
 export const OFFLINE_DB_NAME = "seed-bible-offline";
 export const OFFLINE_DB_VERSION = 1;
@@ -169,24 +170,6 @@ function chapterKey(
   chapterNumber: number
 ): string {
   return `${translationId}/${bookId}/${chapterNumber}`;
-}
-
-function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () =>
-      reject(request.error ?? new Error("IndexedDB request failed."));
-  });
-}
-
-function transactionToPromise(transaction: IDBTransaction): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () =>
-      reject(transaction.error ?? new Error("IndexedDB transaction failed."));
-    transaction.onabort = () =>
-      reject(transaction.error ?? new Error("IndexedDB transaction aborted."));
-  });
 }
 
 /** A stored chapter record, i.e. a chapter plus its lookup columns. */
