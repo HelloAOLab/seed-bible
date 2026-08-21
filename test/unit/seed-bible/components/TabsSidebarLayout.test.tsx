@@ -1,4 +1,4 @@
-import { render, type ComponentChildren } from "preact";
+import { render } from "preact";
 import { act } from "preact/test-utils";
 import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import {
@@ -6,47 +6,6 @@ import {
   type CreateTestSeedBibleStateOptions,
 } from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
-
-vi.mock("../components/ContextMenu", () => ({
-  closeContextMenus: vi.fn(),
-  ContextMenuItem: ({
-    children,
-    onClick,
-    className,
-  }: {
-    children: ComponentChildren;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <button className={className} onClick={onClick}>
-      {children}
-    </button>
-  ),
-  ContextMenuWithButton: ({
-    children,
-    buttonClassName,
-    onClick,
-  }: {
-    children: ComponentChildren;
-    buttonClassName?: string;
-    onClick?: () => void;
-  }) => (
-    <div>
-      <button className={buttonClassName} onClick={onClick}>
-        Menu
-      </button>
-      <div>{children}</div>
-    </div>
-  ),
-}));
-
-vi.mock("../components/SettingsPage", () => ({
-  SettingsPage: () => <div>Settings Page</div>,
-}));
-
-vi.mock("../components/SidebarSearch", () => ({
-  SidebarSearch: () => <div>Sidebar Search</div>,
-}));
 
 describe("Sidebar collapsed layout", () => {
   let container: HTMLDivElement;
@@ -106,7 +65,7 @@ describe("Sidebar collapsed layout", () => {
     expect(collapsedTile).not.toBeNull();
     expect(collapsedTile?.textContent).toContain("GEN");
     expect(collapsedTile?.textContent).toContain("1");
-    expect(container.textContent).not.toContain("Sidebar Search");
+    expect(container.querySelector(".sb-sidebar-search-shell")).toBeNull();
     expect(container.querySelector(".sb-sidebar-tabs-header")).toBeNull();
   });
 
@@ -142,6 +101,33 @@ describe("Sidebar collapsed layout", () => {
     });
 
     expect(container.querySelector(".sb-pane-layout-anchor")).not.toBeNull();
+    expect(container.querySelector(".sb-sidebar-search-shell")).not.toBeNull();
+  });
+
+  it("opens the Today screen from the sidebar's header button", async () => {
+    const state = await createState();
+    state.sidebar.isSidebarCollapsed.value = false;
+    expect(state.today.isOpen.value).toBe(false);
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      ".sb-sidebar-tabs-header-tasks-button"
+    );
+    expect(button).not.toBeNull();
+
+    act(() => {
+      button!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.today.isOpen.value).toBe(true);
   });
 
   it("marks bottom actions as collapsed for vertical stacking", async () => {
