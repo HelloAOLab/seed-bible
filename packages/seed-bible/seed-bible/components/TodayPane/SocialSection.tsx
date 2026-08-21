@@ -392,8 +392,8 @@ function Book(props: {
   // Both reads sit in the render body, which is a reactive scope, so the row
   // relabels and its chapter grid fills in as the translation's books arrive.
   // Inside a `useMemo` they would neither subscribe nor invalidate — the memo
-  // this replaced depended on `readerIds` alone and went stale (see the C5 note
-  // in the work journal).
+  // this replaced listed `readerIds` alone, so it kept the book id as its label
+  // once the names loaded a moment later.
   const name = bookNames.value.get(bookId) ?? bookId;
   const numberOfChapters =
     translationBooksMap.value.get(bookId)?.numberOfChapters ?? 0;

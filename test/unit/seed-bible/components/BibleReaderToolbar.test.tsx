@@ -780,8 +780,8 @@ describe("BibleReaderToolbar — the mobile Today tab", () => {
    *
    * It deliberately does *not* claim to cover `panes.closeAll()`: on a mobile
    * viewport `openPane` treats every pane as fullscreen and already evicts the
-   * others (firing their `onClose` the same way), so removing that call changes
-   * nothing observable here. See the chunk-H note in the work journal.
+   * others, firing their `onClose` the same way, so removing that call changes
+   * nothing observable here.
    */
   it("leaves Today as the only thing covering the reader", async () => {
     const { state, tab } = await renderToolbar();

@@ -347,8 +347,9 @@ describe("SocialSection", () => {
 
       selectTimespanByLabel("This week");
       await flush();
-      // The superseded fetch settles last; resolving both in one flush would let
-      // ordering alone decide the winner (see the C3 note in the journal).
+      // The superseded fetch settles last, which is the case worth pinning:
+      // resolving both in one flush would let ordering alone decide the winner,
+      // so the guard against a stale response would pass either way.
       resolveStale({ GEN: { 1: [CURRENT_USER_ID] } } as FilteredReading);
       await flush();
 
