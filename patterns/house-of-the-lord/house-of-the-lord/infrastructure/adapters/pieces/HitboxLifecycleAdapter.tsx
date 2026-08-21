@@ -4,6 +4,8 @@ import type {
 } from "../../../application/ports/out/hitboxLifecycle";
 import type { HitboxData, Hitbox } from "../../../domain/models/hitbox";
 import type { Piece } from "../../../domain/models/piece";
+import type { BaseEventManager } from "../../../application/services/BaseEventManager";
+import type { InfrastructureEventMap } from "../../models/events";
 import type { HitboxMapper } from "../../mappers/HitboxMapper";
 import type { HitboxBot, HitboxBotTags } from "../../models/casualos";
 
@@ -11,21 +13,25 @@ interface AdapterParams {
   getDimension: () => string;
   hitboxProviderPort: HitboxProviderPort;
   hitboxMapperPort: HitboxMapper;
+  eventManager: BaseEventManager<InfrastructureEventMap>;
 }
 
 export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
   #getDimension: AdapterParams["getDimension"];
   #hitboxProvider: HitboxProviderPort;
   #hitboxMapper: HitboxMapper;
+  #eventManager: AdapterParams["eventManager"];
 
   constructor({
     getDimension,
     hitboxProviderPort: hitboxProvider,
     hitboxMapperPort: hitboxMapper,
+    eventManager,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#hitboxProvider = hitboxProvider;
     this.#hitboxMapper = hitboxMapper;
+    this.#eventManager = eventManager;
   }
 
   spawn({ data, piece }: { data: HitboxData; piece: Piece }): Hitbox {
@@ -48,9 +54,7 @@ export class HitboxLifecycleAdapter implements HitboxSpawnerPort {
     const hitboxBot = create(mod) as HitboxBot;
 
     os.addBotListener(hitboxBot, "onClick", () => {
-      // TODO: Call an OnHitboxClicked event or get the hitbox's piece and handle a click for it
-      //   @import { piecesInteractionController } from "house-of-the-lord.infrastructure.di.bootstrap";
-      // piecesInteractionController?.handlePieceClick(links.piece.tags.key);
+      this.#eventManager.emit("OnHitboxClicked", hitboxBot.tags.pieceKey);
     });
 
     return this.#hitboxMapper.toDomain(hitboxBot);

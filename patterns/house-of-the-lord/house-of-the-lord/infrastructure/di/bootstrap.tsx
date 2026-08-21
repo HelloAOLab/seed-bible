@@ -51,6 +51,8 @@ import { LayerConfigProvider } from "../config/layers/LayerConfigProvider";
 import { HitboxConfigProvider } from "../config/hitboxes/HitboxConfigProvider";
 import { HitboxLifecycleService } from "../../application/services/HitboxLifecycleService";
 import { HitboxLifecycleAdapter } from "../adapters/pieces/HitboxLifecycleAdapter";
+import { BaseEventManager } from "../../application/services/BaseEventManager";
+import type { InfrastructureEventMap } from "../models/events";
 import { HitboxMapper } from "../mappers/HitboxMapper";
 import {
   EXPERIENCE_KEYS,
@@ -201,10 +203,12 @@ export const bootstrapExtension = () => {
     pieceMapper,
   });
   const hitboxMapper = new HitboxMapper();
+  const eventManager = new BaseEventManager<InfrastructureEventMap>();
   const hitboxLifecycleAdapter = new HitboxLifecycleAdapter({
     getDimension,
     hitboxMapperPort: hitboxMapper,
     hitboxProviderPort: hitboxConfigProvider,
+    eventManager,
   });
 
   // 2. Application service
@@ -288,6 +292,10 @@ export const bootstrapExtension = () => {
       piecesInteractionController.handlePieceClick(pieceBot.tags.key);
     });
   });
+
+  eventManager.subscribe("OnHitboxClicked", (pieceKey) =>
+    piecesInteractionController.handlePieceClick(pieceKey)
+  );
 
   os.addBotListener(entrypointBot, "onGridClick", () => {
     environmentInteractionController.handleGridClick();
