@@ -264,6 +264,53 @@ describe("the 24-hour rule, once something is already downloaded", () => {
   });
 });
 
+describe("the stored timestamp maps", () => {
+  it("keeps only the five most recently used translations", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-01T09:00:00Z"));
+
+    const manager = await startSession();
+
+    // Seven translations, each first used an hour after the last, so the map
+    // has an unambiguous order to trim by.
+    const ids = ["T1", "T2", "T3", "T4", "T5", "T6", "T7"];
+    for (const id of ids) {
+      manager.offline.noteTranslationInUse(id);
+      vi.advanceTimersByTime(60 * 60 * 1000);
+    }
+
+    const stored = JSON.parse(
+      localStorage.getItem("sb-translation-first-used") as string
+    ) as Record<string, number>;
+
+    expect(Object.keys(stored).sort()).toEqual(["T3", "T4", "T5", "T6", "T7"]);
+  });
+
+  it("keeps only the five most recent download offers", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-01T09:00:00Z"));
+
+    const ids = ["T1", "T2", "T3", "T4", "T5", "T6"];
+    for (const id of ids) {
+      // One offer per session, and each translation needs a day of tenure
+      // before it can be offered at all (only the very first offer is free).
+      const manager = await startSession();
+      manager.offline.noteTranslationInUse(id);
+      vi.advanceTimersByTime(25 * 60 * 60 * 1000);
+      expect(
+        manager.offline.offerDownloadPrompt({ ...aabBooks.translation, id })
+      ).toBe(true);
+      manager.offline.dismissDownloadPrompt();
+    }
+
+    const stored = JSON.parse(
+      localStorage.getItem("sb-offline-prompt-shown") as string
+    ) as Record<string, number>;
+
+    expect(Object.keys(stored).sort()).toEqual(["T2", "T3", "T4", "T5", "T6"]);
+  });
+});
+
 describe("download size estimates", () => {
   it("estimates a full Bible at a plausible download size", () => {
     const bytes = estimateTranslationSizeBytes(aabBooks.translation);
