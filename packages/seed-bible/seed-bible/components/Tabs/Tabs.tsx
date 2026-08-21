@@ -35,6 +35,7 @@ import {
 } from "../../app/keyboardNav";
 import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import {
+  Avatar,
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
@@ -42,6 +43,7 @@ import {
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { getExtensionExports } from "../../managers";
+import { chatHasOtherPeople } from "../../managers/ChatsManager";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -2503,10 +2505,12 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
 }
 
 /**
- * Just the avatar visual — the image (when the user has a profile picture)
- * or the deterministic animal icon + color (otherwise). Reused by the
- * sidebar bottom-right avatar button and by the mobile bottom-bar "You"
- * tab so the two surfaces always show the same identity.
+ * Just the avatar visual — the image (when the user has a profile picture),
+ * a generic account icon (when they don't, and nobody else is around), or
+ * the deterministic animal icon + color (when they don't, and other people
+ * are present). Reused by the sidebar bottom-right avatar button and by the
+ * mobile header account button so the two surfaces always show the same
+ * identity.
  */
 export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const { state } = props;
@@ -2521,28 +2525,27 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const visual = getUserAnimalVisual(visualKey);
   const imageUrl = profile?.pictureUrl ?? null;
 
-  if (imageUrl) {
-    return (
-      <span
-        className="sb-tab-user-icon sb-tab-user-icon-has-image"
-        style={{
-          borderColor: visual.color,
-          backgroundImage: `url(${imageUrl})`,
-        }}
-      />
-    );
-  }
-
   return (
-    <span
-      className="sb-tab-user-icon sb-tab-user-icon-animal"
-      style={{
-        borderColor: visual.color,
-        backgroundColor: visual.color,
-      }}
-    >
-      <span className="material-symbols-outlined">{visual.defaultIcon}</span>
-    </span>
+    <Avatar
+      imageUrl={imageUrl}
+      visual={visual}
+      title={getSelfDisplayName(state)}
+      genericFallback={!isInMultiUserIdentityContext(state)}
+    />
+  );
+}
+
+/**
+ * True when the current user is in a context where other people can see
+ * them — a shared reading session, or a chat that includes another person.
+ * That's when the animal+color fallback is needed to tell people apart.
+ */
+function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
+  if (state.tabs.tabs.value.some((tab) => tab.sharedSession != null)) {
+    return true;
+  }
+  return state.chats.chats.value.some((chat) =>
+    chatHasOtherPeople(chat.participants.value)
   );
 }
 
@@ -2554,9 +2557,9 @@ export function getSelfDisplayName(state: SeedBibleState): string {
 }
 
 /**
- * Button at the bottom-right of the sidebar showing the current user's own
- * animal icon + color. Opens account settings when clicked (matches the
- * bottom-of-sidebar avatar slot in develop).
+ * Button at the bottom-right of the sidebar showing the current user's
+ * avatar. Opens account settings when clicked (matches the bottom-of-sidebar
+ * avatar slot in develop).
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;

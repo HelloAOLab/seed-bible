@@ -70,6 +70,17 @@
   font-weight: 600;
 }
 
+.sb-tab-user-icon-generic {
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+}
+
+.sb-tab-user-icon-generic .material-symbols-outlined {
+  font-size: 1.375rem;
+  line-height: 1;
+}
+
 .sb-tab-user-icon-self {
   box-shadow: 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 72%);

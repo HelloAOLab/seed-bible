@@ -163,6 +163,27 @@ export function findAnnotationChapterData(
   );
 }
 
+/**
+ * True when any comment in the list was written by someone other than the
+ * current user. Used to decide whether author avatars need the animal+color
+ * combo so people can tell each other apart.
+ */
+export function annotationListHasOtherAuthors(
+  annotations: readonly Annotation[],
+  selfUserId: string | null | undefined
+): boolean {
+  for (const annotation of annotations) {
+    if (annotation.data.type !== "comment") {
+      continue;
+    }
+    const authorId = annotation.data.userId;
+    if (authorId && authorId !== selfUserId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function formatAnnotationVerseNumbers(verseNumbers: number[]): string {
   const sorted = Array.from(new Set(verseNumbers)).sort((a, b) => a - b);
   const groups: string[] = [];

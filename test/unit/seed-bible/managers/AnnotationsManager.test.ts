@@ -1,5 +1,6 @@
 import {
   annotationVerseNumbers,
+  annotationListHasOtherAuthors,
   createAnnotationsManager,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
@@ -779,6 +780,57 @@ describe("annotationVerseNumbers", () => {
     expect(
       annotationVerseNumbers({ verseNumber: null, endVerseNumber: null })
     ).toEqual([]);
+  });
+});
+
+describe("annotationListHasOtherAuthors", () => {
+  it("is false when the list is empty or every comment is the current user's", () => {
+    expect(annotationListHasOtherAuthors([], "user-1")).toBe(false);
+    expect(
+      annotationListHasOtherAuthors(
+        [
+          createCommentAnnotation({
+            data: { type: "comment", html: "<p>Hi</p>", userId: "user-1" },
+          }),
+        ],
+        "user-1"
+      )
+    ).toBe(false);
+  });
+
+  it("ignores comments with no author id, including when signed out", () => {
+    const noAuthor = createCommentAnnotation({
+      data: { type: "comment", html: "<p>Hi</p>", userId: null },
+    });
+    expect(annotationListHasOtherAuthors([noAuthor], "user-1")).toBe(false);
+    expect(annotationListHasOtherAuthors([noAuthor], null)).toBe(false);
+  });
+
+  it("is true when any comment was written by someone else", () => {
+    expect(
+      annotationListHasOtherAuthors(
+        [
+          createCommentAnnotation({
+            data: { type: "comment", html: "<p>Hi</p>", userId: "user-1" },
+          }),
+          createCommentAnnotation({
+            id: "ann-2",
+            data: { type: "comment", html: "<p>Yo</p>", userId: "user-2" },
+          }),
+        ],
+        "user-1"
+      )
+    ).toBe(true);
+    expect(
+      annotationListHasOtherAuthors(
+        [
+          createCommentAnnotation({
+            data: { type: "comment", html: "<p>Hi</p>", userId: "user-2" },
+          }),
+        ],
+        "user-1"
+      )
+    ).toBe(true);
   });
 });
 

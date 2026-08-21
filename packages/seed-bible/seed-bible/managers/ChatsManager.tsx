@@ -324,6 +324,17 @@ export interface AIChatParticipant extends BaseChatParticipant {
 
 export type ChatParticipant = UserChatParticipant | AIChatParticipant;
 
+/**
+ * True when this chat currently includes someone other than the local user
+ * and AI providers. Used to decide whether the local user's avatar needs the
+ * animal+color combo so people can tell each other apart.
+ */
+export function chatHasOtherPeople(
+  participants: readonly ChatParticipant[]
+): boolean {
+  return participants.some((p) => !p.isSelf && !p.isAI);
+}
+
 const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
   providerId: z.string(),

@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import {
   createChatsManager,
+  chatHasOtherPeople,
   resolveMessageTargets,
   type ChatMessage,
   type ChatMessageOptions,
@@ -281,6 +282,30 @@ function createSharedSessionMock(options?: {
     translationBooks,
   };
 }
+
+describe("chatHasOtherPeople", () => {
+  it("is false when the only participants are the current user and AI", () => {
+    expect(chatHasOtherPeople([])).toBe(false);
+    expect(
+      chatHasOtherPeople([{ isSelf: true, isAI: false }] as ChatParticipant[])
+    ).toBe(false);
+    expect(
+      chatHasOtherPeople([
+        { isSelf: true, isAI: false },
+        { isSelf: false, isAI: true },
+      ] as ChatParticipant[])
+    ).toBe(false);
+  });
+
+  it("is true when another person is in the chat", () => {
+    expect(
+      chatHasOtherPeople([
+        { isSelf: true, isAI: false },
+        { isSelf: false, isAI: false },
+      ] as ChatParticipant[])
+    ).toBe(true);
+  });
+});
 
 describe("createChatsManager", () => {
   beforeEach(() => {

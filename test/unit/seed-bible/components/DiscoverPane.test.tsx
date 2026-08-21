@@ -1398,7 +1398,147 @@ describe("DiscoverPane", () => {
     expect(avatarIndex).toBeLessThan(nameIndex);
   });
 
-  it("shows a deterministic fallback avatar (derived from the user id) when the author has no profile picture", () => {
+  it("shows a generic account icon for the current user's own notes when nobody else has annotated", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-self",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+    state.login.userId.value = "user-self";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-tab-user-icon-generic")?.textContent
+    ).toContain("account_circle");
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the current user's profile picture on their own notes even when nobody else has annotated", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-self-with-picture",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const getUserProfile = vi.fn().mockResolvedValue({
+      name: "Ada",
+      pictureUrl: "https://example.com/ada.png",
+    });
+    const state = createMockState(false, { getUserProfile });
+    state.login.userId.value = "user-self-with-picture";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    await vi.waitFor(() => {
+      const avatar = container.querySelector(
+        ".sb-tab-user-icon-has-image"
+      ) as HTMLElement;
+      expect(avatar).not.toBeNull();
+      expect(avatar?.style.backgroundImage).toContain(
+        "https://example.com/ada.png"
+      );
+    });
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for the current user's notes when other people have also annotated", () => {
+    const { playlists } = createMockPlaylists();
+    const own = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Mine</p>",
+        userId: "user-self",
+      },
+    });
+    const other = createAnnotation({
+      id: "a2",
+      verseNumber: 4,
+      data: {
+        type: "comment",
+        html: "<p>Theirs</p>",
+        userId: "user-other",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [own, other],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+    state.login.userId.value = "user-self";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const animals = container.querySelectorAll(".sb-tab-user-icon-animal");
+    expect(animals.length).toBe(2);
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  it("shows a deterministic fallback avatar (derived from the user id) when another author has no profile picture", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
       id: "a1",

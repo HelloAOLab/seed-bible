@@ -30,6 +30,14 @@
       font-size: 0.9375rem;
     }
   }
+
+  .sb-chat-view-message-avatar-shell > .sb-tab-user-icon-generic {
+    border: none;
+
+    > .material-symbols-outlined {
+      font-size: 1.875rem;
+    }
+  }
 }
 
 .sb-chat-view-empty {
@@ -155,6 +163,14 @@
 
     > .material-symbols-outlined {
       font-size: 0.625rem;
+    }
+  }
+
+  > .sb-tab-user-icon-generic {
+    border: none;
+
+    > .material-symbols-outlined {
+      font-size: 0.875rem;
     }
   }
 }

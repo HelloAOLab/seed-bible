@@ -8,6 +8,8 @@
 
 ### 🔧 Changed
 
+- Show a generic account icon instead of a random animal-and-color avatar when you aren't logged in or don't have a profile picture, and nobody else is around. The animal-and-color combo still appears in shared sessions, chats with other people, and annotation lists that include other authors, so people can tell each other apart.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
