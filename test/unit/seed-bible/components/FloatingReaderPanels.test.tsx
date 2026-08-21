@@ -267,6 +267,7 @@ function createMockChatListState(
     chats: {
       providers: signal(overrides.providers ?? []),
       selectChat: overrides.selectChat ?? vi.fn(),
+      composerDraft: signal(""),
     },
   } as unknown as SeedBibleState;
 }
@@ -536,6 +537,7 @@ function createMockFloatingChatPanelState(
       selectChat,
       providers: signal(opts.providers ?? []),
       activeContexts: signal(opts.activeContexts ?? []),
+      composerDraft: signal(""),
     },
   } as unknown as SeedBibleState;
   return { state, closeChatPanel, selectChat };

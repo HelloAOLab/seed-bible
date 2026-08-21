@@ -1,5 +1,5 @@
 import "./ChatView.css";
-import { useSignal } from "@preact/signals";
+import { effect, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   ChatParticipant,
@@ -69,13 +69,17 @@ interface JoinEvent {
 }
 
 /** Compose field grows with content, then scrolls past this many lines. */
-const COMPOSE_INPUT_MAX_LINES = 5;
+const COMPOSE_INPUT_MAX_LINES = 8;
 
 /**
  * Sizes the compose textarea to its content, capped at
  * {@link COMPOSE_INPUT_MAX_LINES} lines (overflow then scrolls).
  */
 function resizeComposeInput(el: HTMLTextAreaElement) {
+  if (!el.value) {
+    el.style.height = "";
+    return;
+  }
   el.style.height = "auto";
   const style = getComputedStyle(el);
   const lineHeight = parseFloat(style.lineHeight);
@@ -600,6 +604,7 @@ export function ChatView(props: ChatViewProps) {
     chat.totalParticipants.value
   );
   const draft = useSignal("");
+  const draftText = draft.value;
   const cursorPosition = useSignal(0);
   const isSubmitting = useSignal(false);
   const submitError = useSignal<string | null>(null);
@@ -708,11 +713,58 @@ export function ChatView(props: ChatViewProps) {
     inputRef.current?.focus();
   }, []);
 
+  // Verse-toolbar Ask AI (and similar) stash text on `chats.composerDraft`.
+  // Copy it into the local draft once, then clear the signal so a later
+  // chat switch doesn't replay the same prefill.
+  useEffect(() => {
+    const composerDraft = state.chats?.composerDraft;
+    if (!composerDraft) {
+      return;
+    }
+    return effect(() => {
+      const value = composerDraft.value;
+      if (!value) {
+        return;
+      }
+      draft.value = value;
+      composerDraft.value = "";
+      window.queueMicrotask(() => {
+        const input = inputRef.current;
+        if (!input) {
+          return;
+        }
+        const caret = value.length;
+        input.setSelectionRange(caret, caret);
+        cursorPosition.value = caret;
+        if (!state.app.isMobile.value) {
+          input.focus();
+        }
+      });
+    });
+  }, []);
+
   useEffect(() => {
     return () => {
       chat.setTypingStatus(false);
     };
   }, []);
+
+  // Grow the field after programmatic draft changes (Ask AI prefill) as well
+  // as typing. Measuring in render is too early: the textarea still has the
+  // previous value, so it would stay one line tall when verses are inserted.
+  // An empty draft clears the inline height so the original one-line `rows={1}`
+  // layout is unchanged.
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    if (!draftText) {
+      input.style.height = "";
+      return;
+    }
+    resizeComposeInput(input);
+  }, [draftText]);
 
   useEffect(() => {
     const container = messagesRef.current;

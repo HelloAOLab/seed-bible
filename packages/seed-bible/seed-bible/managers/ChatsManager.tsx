@@ -464,6 +464,14 @@ export interface ChatsManager {
    * @param id The id of the context to remove.
    */
   removeContext: (id: string) => void;
+
+  /**
+   * Text waiting to be inserted into the chat compose field. ChatView consumes
+   * a non-empty value once (copies it into the draft, then clears this signal)
+   * so callers like the verse toolbar's Ask AI tool can prefill a question
+   * without owning the compose UI.
+   */
+  composerDraft: Signal<string>;
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
@@ -2236,6 +2244,7 @@ export function createChatsManager(
       .peek()
       .filter((c) => c.id !== id);
   };
+  const composerDraft = signal("");
   const selectedChatId = signal<string | null>(null);
   const selectedChat = computed(
     () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
@@ -2322,5 +2331,6 @@ export function createChatsManager(
     setContext,
     addContext,
     removeContext,
+    composerDraft,
   };
 }

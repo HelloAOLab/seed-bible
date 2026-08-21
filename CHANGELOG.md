@@ -5,6 +5,7 @@
 ### ✨ Added
 
 - Analytics for common playlist actions like creating and finishing playlists.
+- Add an Ask AI action to the verse toolbar: select verses, pick an agent when more than one is available, and start a chat with those verses already in the input.
 
 ### 🔧 Changed
 

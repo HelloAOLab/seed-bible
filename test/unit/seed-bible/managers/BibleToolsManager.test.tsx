@@ -3,6 +3,8 @@ import { signal } from "@preact/signals";
 vi.mock("@packages/seed-bible/seed-bible/components/icons", () => ({
   MaterialIcon: () => null,
   SeedBibleIcon: () => null,
+  StopIcon: () => null,
+  AskIcon: () => null,
 }));
 
 import {
@@ -27,7 +29,35 @@ const testBranding: BrandingConfig = {
   disabledToolbarTools: [],
 };
 
-function createContext(): BibleToolContext {
+function createMockChats(overrides?: {
+  providers?: Array<{ id: string; name?: string }>;
+  chats?: unknown[];
+  composerDraft?: string;
+}) {
+  const addParticipant = vi.fn();
+  const createdChat = {
+    id: "ask-ai-chat",
+    addParticipant,
+    participants: signal([]),
+  };
+  return {
+    chats: signal(overrides?.chats ?? []),
+    providers: signal(overrides?.providers ?? []),
+    composerDraft: signal(overrides?.composerDraft ?? ""),
+    createLocalSession: vi.fn(() => createdChat),
+    selectChat: vi.fn(),
+    createdChat,
+    addParticipant,
+  };
+}
+
+function createContext(
+  overrides?: Partial<Omit<BibleToolContext, "chats">> & {
+    chats?: ReturnType<typeof createMockChats>;
+  }
+): BibleToolContext {
+  const { chats: chatsOverride, ...rest } = overrides ?? {};
+  const chats = chatsOverride ?? createMockChats();
   return {
     readingState: {
       chapterData: signal(null),
@@ -45,6 +75,7 @@ function createContext(): BibleToolContext {
     } as any,
     openSidebar: vi.fn(),
     openSearch: vi.fn(),
+    openChat: vi.fn(),
     panesManager: {} as any,
     tabsLayoutManager: {
       slots: signal([]),
@@ -59,13 +90,11 @@ function createContext(): BibleToolContext {
     } as any,
     tabs: {} as any,
     toast: vi.fn(),
-    chats: {
-      chats: signal([]),
-      providers: signal([]),
-    } as any,
+    chats: chats as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    ...rest,
   };
 }
 
@@ -694,6 +723,382 @@ describe("createBibleToolsManager", () => {
       );
     });
   });
+
+  describe("ask-ai verse tool", () => {
+    const selectedVerse = {
+      bookId: "PSA",
+      chapterNumber: 2,
+      translationId: "NIV",
+      verse: {
+        number: 2,
+        content: [
+          "The kings of the earth take their stand ",
+          "and the rulers gather together, ",
+          "against the LORD ",
+          "and against His Anointed One:",
+        ],
+      },
+    };
+
+    function createAskAiContext(
+      chats: ReturnType<typeof createMockChats>,
+      readingOverrides?: Record<string, unknown>
+    ) {
+      return {
+        ...createContext({ chats }),
+        readingState: {
+          chapterData: signal({
+            book: { id: "PSA", name: "Psalms" },
+          }),
+          loading: signal(false),
+          translation: signal({ id: "NIV", shortName: "NIV" }),
+          bookId: signal("PSA"),
+          chapterNumber: signal(2),
+          selectedVerses: signal([selectedVerse]),
+          clearSelectedVerses: vi.fn(),
+          loadPreviousChapter: vi.fn(),
+          loadNextChapter: vi.fn(),
+          ...readingOverrides,
+        } as any,
+      };
+    }
+
+    function getAskAiTool(context: ReturnType<typeof createAskAiContext>) {
+      return createBibleToolsManager(testBranding)
+        .getVerseToolbarTools(context)
+        .find((tool) => tool.id === "ask-ai");
+    }
+
+    it("is listed among verse toolbar tools", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const listed = manager.listVerseToolbarTools();
+      expect(listed.some((tool) => tool.id === "ask-ai")).toBe(true);
+      expect(listed.find((tool) => tool.id === "ask-ai")?.title).toEqual({
+        key: "ask-ai",
+        defaultValue: "Ask AI",
+      });
+    });
+
+    it("is hidden when no AI providers are registered", () => {
+      const context = createAskAiContext(createMockChats());
+      expect(getAskAiTool(context)?.visible.value).toBe(false);
+    });
+
+    it("is hidden when no verses are selected, even if providers exist", () => {
+      const context = createAskAiContext(
+        createMockChats({
+          providers: [{ id: "apologist", name: "Apologist" }],
+        }),
+        { selectedVerses: signal([]) }
+      );
+      expect(getAskAiTool(context)?.visible.value).toBe(false);
+    });
+
+    it("is visible when verses are selected and at least one provider exists", () => {
+      const context = createAskAiContext(
+        createMockChats({ providers: [{ id: "apologist", name: "Apologist" }] })
+      );
+      expect(getAskAiTool(context)?.visible.value).toBe(true);
+    });
+
+    it("returns no picker items when only one agent is available", () => {
+      const context = createAskAiContext(
+        createMockChats({ providers: [{ id: "apologist", name: "Apologist" }] })
+      );
+      expect(getAskAiTool(context)?.getItems?.()).toEqual([]);
+    });
+
+    it("opens a chat for the only available agent, prefills verses with two newlines, and clears the selection", () => {
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+      });
+      const context = createAskAiContext(chats);
+      const openChat = vi.fn();
+      context.openChat = openChat;
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chats.addParticipant).toHaveBeenCalledWith("apologist");
+      expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
+      expect(openChat).toHaveBeenCalledTimes(1);
+      expect(chats.composerDraft.value).toBe(
+        `${formatSelectedVerses(context.readingState)}\n\n`
+      );
+      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
+    });
+
+    it("does nothing when the single-agent shortcut is invoked with no selected verses", () => {
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+      });
+      const context = createAskAiContext(chats, {
+        selectedVerses: signal([]),
+      });
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.createLocalSession).not.toHaveBeenCalled();
+      expect(chats.selectChat).not.toHaveBeenCalled();
+      expect(chats.composerDraft.value).toBe("");
+      expect(context.readingState.clearSelectedVerses).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the single-agent shortcut is invoked with multiple agents", () => {
+      const chats = createMockChats({
+        providers: [
+          { id: "apologist", name: "Apologist" },
+          { id: "scholar", name: "Scholar" },
+        ],
+      });
+      const context = createAskAiContext(chats);
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.createLocalSession).not.toHaveBeenCalled();
+      expect(chats.selectChat).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the only provider disappears before the tool is used", () => {
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+      });
+      const context = createAskAiContext(chats);
+      const tool = getAskAiTool(context);
+      chats.providers.value = [];
+
+      tool?.onSelect();
+
+      expect(chats.createLocalSession).not.toHaveBeenCalled();
+      expect(chats.composerDraft.value).toBe("");
+    });
+
+    it("lists each available agent when more than one is registered", () => {
+      const context = createAskAiContext(
+        createMockChats({
+          providers: [
+            { id: "apologist", name: "Apologist" },
+            { id: "scholar", name: "Scholar" },
+          ],
+        })
+      );
+
+      const items = getAskAiTool(context)?.getItems?.() ?? [];
+      expect(items.map((item) => item.id)).toEqual([
+        "ask-ai-apologist",
+        "ask-ai-scholar",
+      ]);
+      expect(items.map((item) => item.title)).toEqual(["Apologist", "Scholar"]);
+    });
+
+    it("opens a chat for the agent chosen from the picker", () => {
+      const chats = createMockChats({
+        providers: [
+          { id: "apologist", name: "Apologist" },
+          { id: "scholar", name: "Scholar" },
+        ],
+      });
+      const context = createAskAiContext(chats);
+      const openChat = vi.fn();
+      context.openChat = openChat;
+
+      const scholarItem = getAskAiTool(context)
+        ?.getItems?.()
+        .find((item) => item.id === "ask-ai-scholar");
+      scholarItem?.onSelect();
+
+      expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chats.addParticipant).toHaveBeenCalledWith("scholar");
+      expect(chats.addParticipant).not.toHaveBeenCalledWith("apologist");
+      expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
+      expect(openChat).toHaveBeenCalledTimes(1);
+      expect(chats.composerDraft.value).toBe(
+        `${formatSelectedVerses(context.readingState)}\n\n`
+      );
+    });
+
+    it("does nothing if the chosen provider is removed before the picker item is used", () => {
+      const chats = createMockChats({
+        providers: [
+          { id: "apologist", name: "Apologist" },
+          { id: "scholar", name: "Scholar" },
+        ],
+      });
+      const context = createAskAiContext(chats);
+      const scholarItem = getAskAiTool(context)
+        ?.getItems?.()
+        .find((item) => item.id === "ask-ai-scholar");
+
+      chats.providers.value = [{ id: "apologist", name: "Apologist" } as any];
+      scholarItem?.onSelect();
+
+      expect(chats.createLocalSession).not.toHaveBeenCalled();
+      expect(chats.composerDraft.value).toBe("");
+    });
+
+    it("reuses the most recent local chat that already includes the chosen agent", () => {
+      const addParticipant = vi.fn();
+      const olderChat = {
+        id: "older-apologist-chat",
+        addParticipant: vi.fn(),
+        participants: signal([
+          { isSelf: true, isAI: false, isRemote: false },
+          { isAI: true, isRemote: false, providerId: "apologist" },
+        ]),
+      };
+      const recentChat = {
+        id: "recent-apologist-chat",
+        addParticipant,
+        participants: signal([
+          { isSelf: true, isAI: false, isRemote: false },
+          { isAI: true, isRemote: false, providerId: "apologist" },
+        ]),
+      };
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+        chats: [olderChat, recentChat],
+      });
+      const context = createAskAiContext(chats);
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.createLocalSession).not.toHaveBeenCalled();
+      expect(addParticipant).toHaveBeenCalledWith("apologist");
+      expect(chats.selectChat).toHaveBeenCalledWith("recent-apologist-chat");
+    });
+
+    it("does not reuse a shared chat or a local chat for a different agent", () => {
+      const sharedChat = {
+        id: "shared-chat",
+        addParticipant: vi.fn(),
+        participants: signal([
+          { isSelf: true, isAI: false, isRemote: false },
+          { isAI: true, isRemote: true, providerId: "apologist" },
+        ]),
+      };
+      const otherAgentChat = {
+        id: "scholar-chat",
+        addParticipant: vi.fn(),
+        participants: signal([
+          { isSelf: true, isAI: false, isRemote: false },
+          { isAI: true, isRemote: false, providerId: "scholar" },
+        ]),
+      };
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+        chats: [sharedChat, otherAgentChat],
+      });
+      const context = createAskAiContext(chats);
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
+      expect(sharedChat.addParticipant).not.toHaveBeenCalled();
+      expect(otherAgentChat.addParticipant).not.toHaveBeenCalled();
+    });
+
+    it("still creates the chat and prefills the draft when openChat is missing", () => {
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+      });
+      const context = createAskAiContext(chats);
+      delete (context as { openChat?: unknown }).openChat;
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
+      expect(chats.composerDraft.value).toContain("\n\n");
+    });
+
+    it("does not throw when the chats mock is missing createLocalSession and composerDraft", () => {
+      const context = createAskAiContext({
+        chats: signal([]),
+        providers: signal([{ id: "apologist", name: "Apologist" }]),
+        selectChat: vi.fn(),
+      } as any);
+
+      expect(() => getAskAiTool(context)?.onSelect()).not.toThrow();
+    });
+
+    it("prefills consecutive verses as one block, then two newlines", () => {
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+      });
+      const context = createAskAiContext(chats, {
+        selectedVerses: signal([
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verse: {
+              type: "verse",
+              number: 1,
+              content: [
+                "In the beginning God created the heavens and the earth.",
+              ],
+            },
+          },
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verse: {
+              type: "verse",
+              number: 2,
+              content: ["Now the earth was formless and empty."],
+            },
+          },
+        ]),
+        chapterData: signal({ book: { id: "GEN", name: "Genesis" } }),
+        translation: signal({ shortName: "NIV" }),
+      });
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.composerDraft.value).toBe(
+        "In the beginning God created the heavens and the earth. Now the earth was formless and empty. (Genesis 1:1-2 NIV)\n\n"
+      );
+    });
+
+    it("keeps blank lines between non-consecutive verse groups and still adds two trailing newlines", () => {
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+      });
+      const context = createAskAiContext(chats, {
+        selectedVerses: signal([
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verse: {
+              type: "verse",
+              number: 1,
+              content: [
+                "In the beginning God created the heavens and the earth.",
+              ],
+            },
+          },
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            verse: {
+              type: "verse",
+              number: 3,
+              content: ["And God said, Let there be light."],
+            },
+          },
+        ]),
+        chapterData: signal({ book: { id: "GEN", name: "Genesis" } }),
+        translation: signal({ shortName: "NIV" }),
+      });
+
+      getAskAiTool(context)?.onSelect();
+
+      expect(chats.composerDraft.value).toBe(
+        "In the beginning God created the heavens and the earth. (Genesis 1:1 NIV)\n\nAnd God said, Let there be light. (Genesis 1:3 NIV)\n\n"
+      );
+    });
+  });
+
   describe("formatSelectedVerses", () => {
     function createReadingState(
       selectedVerses: any[],
@@ -989,13 +1394,9 @@ describe("createBibleToolsManager", () => {
 
     it("is visible when there are providers", () => {
       const manager = createBibleToolsManager(testBranding);
-      const context: ReturnType<typeof createContext> = {
-        ...createContext(),
-        chats: {
-          chats: signal([]),
-          providers: signal([{ id: "provider-1" }] as any),
-        } as any,
-      };
+      const context = createContext({
+        chats: createMockChats({ providers: [{ id: "provider-1" }] }),
+      });
 
       const tool = manager
         .getToolbarTools(context)
@@ -1007,13 +1408,9 @@ describe("createBibleToolsManager", () => {
 
     it("is visible when there are chats", () => {
       const manager = createBibleToolsManager(testBranding);
-      const context: ReturnType<typeof createContext> = {
-        ...createContext(),
-        chats: {
-          chats: signal([{ id: "chat-1" }] as any),
-          providers: signal([]),
-        } as any,
-      };
+      const context = createContext({
+        chats: createMockChats({ chats: [{ id: "chat-1" }] }),
+      });
 
       const tool = manager
         .getToolbarTools(context)
