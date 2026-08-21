@@ -371,6 +371,34 @@ export default defineConfig(({ isSsrBuild }) => ({
       // instance. preact/compat ships useSyncExternalStore natively.
       "use-sync-external-store/shim/index.js": "preact/compat",
       "use-sync-external-store/shim": "preact/compat",
+      // Keeps every in-repo consumer of the "seed-bible" package specifier
+      // (the app, every `*-extension` package) resolving straight to source,
+      // matching the `@packages/seed-bible/seed-bible/*` alias below —
+      // otherwise this would follow `packages/seed-bible/package.json`'s
+      // `exports` (there for external, published consumption) to its built
+      // `dist/`, which needs a build step to stay in sync and would silently
+      // serve stale code after editing a manager/component. The more specific
+      // subpaths must come before the bare `seed-bible` entry: Vite's alias
+      // matching (`@rollup/plugin-alias`) treats a `find` string as matching
+      // itself *or* anything starting with `${find}/`, so a bare "seed-bible"
+      // listed first would also swallow "seed-bible/managers" etc. Mirrored
+      // in `tsconfig.json`'s `paths` for type resolution.
+      "seed-bible/managers": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/managers/index.tsx"
+      ),
+      "seed-bible/components": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/components/index.tsx"
+      ),
+      "seed-bible/i18n": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/i18n/index.tsx"
+      ),
+      "seed-bible": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/app/api.tsx"
+      ),
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },

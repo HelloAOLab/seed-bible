@@ -478,12 +478,21 @@ importers:
       '@casual-simulation/aux-common':
         specifier: 'catalog:'
         version: 4.2.3
+      '@casual-simulation/aux-records':
+        specifier: ^4.2.3
+        version: 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-websocket':
         specifier: 'catalog:'
         version: 4.2.3
+      '@casual-simulation/fast-json-stable-stringify':
+        specifier: ^4.0.5
+        version: 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
       '@casual-simulation/websocket':
         specifier: 'catalog:'
         version: 4.0.0
+      '@preact/signals':
+        specifier: ^2.9.1
+        version: 2.9.1(preact@10.29.2)
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.27.1(@tiptap/pm@3.27.1)
@@ -535,9 +544,18 @@ importers:
       dompurify:
         specifier: 'catalog:'
         version: 3.4.11
+      es-toolkit:
+        specifier: 1.39.10
+        version: 1.39.10
+      hash.js:
+        specifier: ^1.1.7
+        version: 1.1.7
       i18next:
         specifier: 'catalog:'
         version: 26.2.0(typescript@6.0.3)
+      i18next-resources-to-backend:
+        specifier: 'catalog:'
+        version: 1.2.1
       preact:
         specifier: 'catalog:'
         version: 10.29.2
@@ -559,9 +577,25 @@ importers:
       typesense:
         specifier: 'catalog:'
         version: 3.0.5(@babel/runtime@7.29.2)
+      uuid:
+        specifier: 'catalog:'
+        version: 13.0.0
       zod:
         specifier: 4.4.3
         version: 4.4.3
+    devDependencies:
+      '@preact/preset-vite':
+        specifier: ^2.10.5
+        version: 2.10.5(@babel/core@7.28.6)(preact@10.29.2)(rollup@4.62.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
+      tsc-silent:
+        specifier: 1.2.2
+        version: 1.2.2(typescript@6.0.3)(yargs@17.7.2)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.13
+        version: 8.0.13(@types/node@24.10.9)(esbuild@0.27.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
 
   packages/seed-bible-extension-scripts:
     dependencies:
@@ -939,11 +973,6 @@ packages:
   '@babel/helpers@7.28.6':
     resolution: {integrity: sha512-xOBvwq86HHdB7WUDTfKfT/Vuxh7gElQ+Sfti2Cy6yIWNW05P8iUslOVcZ4/sKbE+/jQaukQAdz/gf3724kYdqw==}
     engines: {node: '>=6.9.0'}
-
-  '@babel/parser@7.28.6':
-    resolution: {integrity: sha512-TeR9zWR18BvbfPmGbLampPMW+uW1NZnJlRuuHso8i87QZNq2JRF9i6RgxRqtEq+wQGsS19NNTWr2duhnE49mfQ==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
 
   '@babel/parser@7.29.7':
     resolution: {integrity: sha512-hnORnjP/1P/zFEndoeX+n+t1RwWRJiJpM/jO7FW32Kn9r5+sJB2JWOdYo4L6k78j15eCwY3Gm/7364B1EMwtNg==}
@@ -7672,7 +7701,7 @@ snapshots:
 
   '@babel/code-frame@7.28.6':
     dependencies:
-      '@babel/helper-validator-identifier': 7.28.5
+      '@babel/helper-validator-identifier': 7.29.7
       js-tokens: 4.0.0
       picocolors: 1.1.1
 
@@ -7685,10 +7714,10 @@ snapshots:
       '@babel/helper-compilation-targets': 7.28.6
       '@babel/helper-module-transforms': 7.28.6(@babel/core@7.28.6)
       '@babel/helpers': 7.28.6
-      '@babel/parser': 7.28.6
+      '@babel/parser': 7.29.7
       '@babel/template': 7.28.6
       '@babel/traverse': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
       '@jridgewell/remapping': 2.3.5
       convert-source-map: 2.0.0
       debug: 4.4.3
@@ -7700,8 +7729,8 @@ snapshots:
 
   '@babel/generator@7.28.6':
     dependencies:
-      '@babel/parser': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/parser': 7.29.7
+      '@babel/types': 7.29.7
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
       jsesc: 3.1.0
@@ -7761,7 +7790,7 @@ snapshots:
   '@babel/helper-module-imports@7.28.6':
     dependencies:
       '@babel/traverse': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
     transitivePeerDependencies:
       - supports-color
 
@@ -7769,7 +7798,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.28.6
       '@babel/helper-module-imports': 7.28.6
-      '@babel/helper-validator-identifier': 7.28.5
+      '@babel/helper-validator-identifier': 7.29.7
       '@babel/traverse': 7.28.6
     transitivePeerDependencies:
       - supports-color
@@ -7826,11 +7855,7 @@ snapshots:
   '@babel/helpers@7.28.6':
     dependencies:
       '@babel/template': 7.28.6
-      '@babel/types': 7.28.6
-
-  '@babel/parser@7.28.6':
-    dependencies:
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
 
   '@babel/parser@7.29.7':
     dependencies:
@@ -8455,17 +8480,17 @@ snapshots:
   '@babel/template@7.28.6':
     dependencies:
       '@babel/code-frame': 7.28.6
-      '@babel/parser': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/parser': 7.29.7
+      '@babel/types': 7.29.7
 
   '@babel/traverse@7.28.6':
     dependencies:
       '@babel/code-frame': 7.28.6
       '@babel/generator': 7.28.6
       '@babel/helper-globals': 7.28.0
-      '@babel/parser': 7.28.6
+      '@babel/parser': 7.29.7
       '@babel/template': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.7
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color

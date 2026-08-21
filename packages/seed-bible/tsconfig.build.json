@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rootDir": "./seed-bible",
+    "outDir": "./dist",
+    "types": ["node"]
+  },
+  // Scoped to the package's public entry points (plus the CSS-only `styles`
+  // entry and the ambient declarations they need) rather than every file
+  // under `seed-bible/**` — tsc pulls in everything each one imports
+  // transitively, but this keeps out files the public exports never reach,
+  // like `components/Tabs/Tabs.tsx`, which type-imports from the `today-screen`
+  // extension package via the monorepo-only `@packages/*` alias.
+  "include": [
+    "seed-bible/app/api.tsx",
+    "seed-bible/managers/index.tsx",
+    "seed-bible/components/index.tsx",
+    "seed-bible/i18n/index.tsx",
+    "seed-bible/styles.ts",
+    "seed-bible/ambient.d.ts"
+  ]
+}

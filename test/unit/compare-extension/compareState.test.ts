@@ -2,17 +2,13 @@ import { signal } from "@preact/signals";
 import type {
   LoginManager,
   UserProfile,
-} from "@packages/seed-bible/seed-bible/managers/LoginManager";
-import type {
   BibleReadingState,
   BibleSelectedVerse,
-} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type {
+  SeedBibleState,
   ChapterVerse,
   Translation,
   TranslationBookChapter,
-} from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+} from "seed-bible/managers";
 import {
   addId,
   chapterCacheKey,
