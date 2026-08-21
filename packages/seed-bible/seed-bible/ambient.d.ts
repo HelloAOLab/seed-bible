@@ -23,4 +23,5 @@ interface ImportMeta {
   env: Record<string, string | boolean | undefined>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const posthog: any;

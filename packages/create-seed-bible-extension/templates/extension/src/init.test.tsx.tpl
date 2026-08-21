@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { signal } from "@preact/signals";
 
-// There's no real "seed-bible" package to import at test time (see
-// docs/developer-guide.md in the seed-bible repo for why) — mock it and
-// build just the slice of `SeedBibleState` this extension actually reads,
-// using real `@preact/signals` signals. This mirrors how extensions inside
-// the seed-bible monorepo itself test against a mocked app state (see e.g.
+// Mock "seed-bible" rather than calling the real `registerExtension` (which
+// talks to a real, running app's extension registry) and build just the
+// slice of `SeedBibleState` this extension actually reads, using real
+// `@preact/signals` signals. This mirrors how extensions inside the
+// seed-bible monorepo itself test against a mocked app state (see e.g.
 // test/unit/twitchSub-extension/).
 const registerExtension = vi.fn();
 vi.mock("seed-bible", () => ({ registerExtension }));

@@ -3,6 +3,7 @@ export interface TemplateContext {
   packageName: string;
   extensionPascalName: string;
   scriptsVersion: string;
+  seedBibleVersion: string;
 }
 
 const PLACEHOLDER_KEYS = [
@@ -10,6 +11,7 @@ const PLACEHOLDER_KEYS = [
   "packageName",
   "extensionPascalName",
   "scriptsVersion",
+  "seedBibleVersion",
 ] as const satisfies readonly (keyof TemplateContext)[];
 
 // Matches only these exact, known placeholder names — not any arbitrary

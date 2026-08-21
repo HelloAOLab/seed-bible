@@ -17,7 +17,6 @@ const EXCLUDED_TOP_LEVEL_DIRS = new Set([
   "dist",
   ".git",
   "coverage",
-  "vendor-types",
 ]);
 
 async function copyProjectSource(

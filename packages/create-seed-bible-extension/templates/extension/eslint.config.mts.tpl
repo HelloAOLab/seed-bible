@@ -24,7 +24,7 @@ const i18nJsonPlugin = {
 // other i18n rules, which check this project's translations against the
 // *app's* own translation directory and don't apply outside it.
 export default defineConfig([
-  globalIgnores(["**/node_modules/**", "**/dist/**", "types/vendor/**"]),
+  globalIgnores(["**/node_modules/**", "**/dist/**"]),
   {
     files: ["**/*.{js,mjs,cjs,ts,tsx,jsx}"],
     ...pluginJs.configs.recommended,

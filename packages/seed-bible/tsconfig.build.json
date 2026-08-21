@@ -10,12 +10,6 @@
     "outDir": "./dist",
     "types": ["node"]
   },
-  // Scoped to the package's public entry points (plus the CSS-only `styles`
-  // entry and the ambient declarations they need) rather than every file
-  // under `seed-bible/**` — tsc pulls in everything each one imports
-  // transitively, but this keeps out files the public exports never reach,
-  // like `components/Tabs/Tabs.tsx`, which type-imports from the `today-screen`
-  // extension package via the monorepo-only `@packages/*` alias.
   "include": [
     "seed-bible/app/api.tsx",
     "seed-bible/managers/index.tsx",

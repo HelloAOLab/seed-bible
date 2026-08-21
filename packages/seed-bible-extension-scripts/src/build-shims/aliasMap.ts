@@ -5,11 +5,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Bare specifiers the standalone build (`build --standalone`) must not let
- * Rollup resolve normally — either because there's no real npm package to
- * resolve them to (`seed-bible`, `seed-bible/components`, `seed-bible/i18n`
- * — nothing is published), or because resolving to a *second* copy would
- * break at runtime (`preact`/`@preact/signals` — bundling a second Preact
- * instance breaks hooks; see `preact.shim.ts`). Each maps to a small shim in
+ * Rollup resolve normally: bundling the real package for any of them would
+ * mean a *second*, disconnected copy at runtime — `seed-bible` would
+ * register into an extension registry the host page never sees, and
+ * `preact`/`@preact/signals` would break hooks with a second instance
+ * (see `preact.shim.ts`) — because a standalone bundle gets its own module
+ * graph, separate from the host page's. Each maps to a small shim in
  * this directory that proxies to `window.__seedBibleExtensionRuntime`
  * instead, defined once here so the Vite alias config
  * (`commands/build.ts`) and this directory's actual shim files can't drift

@@ -15,6 +15,10 @@
 // standalone distribution paths.
 import { getSeedBibleExtensionRuntime } from "./runtimeAccess.js";
 
-export function loadSeedBibleComponents(): Promise<unknown> {
-  return getSeedBibleExtensionRuntime().loadComponents();
+export function loadSeedBibleComponents(): Promise<
+  typeof import("seed-bible/components")
+> {
+  return getSeedBibleExtensionRuntime().loadComponents() as Promise<
+    typeof import("seed-bible/components")
+  >;
 }

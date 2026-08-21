@@ -20,12 +20,7 @@
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
     "noEmit": true,
-    "types": ["vitest/globals"],
-    "paths": {
-      "seed-bible": ["./types/vendor/app/api.d.ts"],
-      "seed-bible/components": ["./types/vendor/components/index.d.ts"],
-      "seed-bible/i18n": ["./types/vendor/i18n-entry.d.ts"]
-    }
+    "types": ["vitest/globals"]
   },
-  "include": ["index.ts", "src", "types"]
+  "include": ["index.ts", "src"]
 }

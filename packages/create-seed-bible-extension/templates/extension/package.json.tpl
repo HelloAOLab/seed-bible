@@ -13,6 +13,7 @@
     "dev": "seed-bible-extension-scripts dev"
   },
   "dependencies": {
+    "seed-bible": "{{seedBibleVersion}}",
     "preact": "10.29.2",
     "@preact/signals": "2.9.1"
   },

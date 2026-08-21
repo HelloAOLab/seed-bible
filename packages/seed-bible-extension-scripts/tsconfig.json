@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "lib": ["es2022", "dom"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -17,5 +17,5 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["src", "scripts"]
+  "include": ["src"]
 }

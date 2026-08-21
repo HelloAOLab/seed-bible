@@ -1,31 +1,21 @@
-// Standalone-build alias target for the bare `"seed-bible"` specifier. No
-// real "seed-bible" runtime package exists to depend on (and even if one
-// did, bundling it would risk a second Preact/signals instance — see
-// preact.shim.ts) — this proxies straight to the two functions the host
-// exposes for exactly this purpose.
+// Standalone-build alias target for the bare `"seed-bible"` specifier.
+// Bundling the real "seed-bible" package here would risk a second
+// Preact/signals instance (see preact.shim.ts) and would register into a
+// disconnected copy of the extension registry, since a standalone bundle
+// gets its own module graph, separate from the host page's — so this proxies
+// straight to the two functions the host exposes for exactly this purpose.
 //
-// Typed loosely (not against the exact `ExtensionRegistration`/
-// `SeedBibleState` generic shape) since this package intentionally has no
-// dependency on the real `seed-bible` package's types. An extension author
-// building the standalone target still gets full `SeedBibleState` typing
-// inside their own `init()` body via the vendored `types/` the scaffolder
-// installs — this loosening only affects the registration call's own
-// signature, not the context object it receives.
+// Typed against the real `seed-bible` package (a type-only import, erased at
+// this package's own build time — no runtime dependency on it) so this
+// shim's signature can't silently drift from what `registerExtension`/
+// `unregisterExtension` actually look like.
 import { getSeedBibleExtensionRuntime } from "./runtimeAccess.js";
-
-type CleanupFunction = () => void;
-
-interface ExtensionRegistrationLike {
-  id: string;
-  dependencies?: string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  init: (context: any, dependencies: Record<string, object>) => any;
-}
+import type { ExtensionRegistration, CleanupFunction } from "seed-bible";
 
 const runtime = getSeedBibleExtensionRuntime();
 
 export const registerExtension = runtime.registerExtension as (
-  registration: ExtensionRegistrationLike
+  registration: ExtensionRegistration
 ) => CleanupFunction;
 
 export const unregisterExtension = runtime.unregisterExtension as (
