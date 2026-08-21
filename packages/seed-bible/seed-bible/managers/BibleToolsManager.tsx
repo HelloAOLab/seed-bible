@@ -513,41 +513,11 @@ function AskAiIcon() {
 }
 
 /**
- * Most recent local (non-shared) chat that already includes this AI provider.
- * Shared/remote chats are skipped so asking about verses stays a personal
- * conversation. Returns null when none exists so the caller can create one.
- */
-function findLocalChatForProvider(chats: ChatsManager, providerId: string) {
-  const sessions = chats.chats?.value ?? [];
-  for (let i = sessions.length - 1; i >= 0; i--) {
-    const chat = sessions[i];
-    if (!chat) {
-      continue;
-    }
-    const participants = chat.participants?.value;
-    if (
-      !participants ||
-      participants.some((participant) => participant.isRemote)
-    ) {
-      continue;
-    }
-    if (
-      participants.some(
-        (participant) =>
-          participant.isAI && participant.providerId === providerId
-      )
-    ) {
-      return chat;
-    }
-  }
-  return null;
-}
-
-/**
- * Opens (or reuses) a local chat with `providerId`, prefills the compose field
- * with the selected verses plus two trailing newlines, then dismisses the
- * verse selection. No-ops when there is nothing to ask about, the provider is
- * gone, or a chat cannot be created.
+ * Opens a new local chat with `providerId`, prefills the compose field with
+ * the selected verses plus two trailing newlines, then dismisses the verse
+ * selection. Always starts a fresh conversation so asking about a new passage
+ * does not inherit an earlier thread. No-ops when there is nothing to ask
+ * about, the provider is gone, or a chat cannot be created.
  */
 function openAskAiForSelectedVerses(
   context: BibleToolContext,
@@ -569,8 +539,7 @@ function openAskAiForSelectedVerses(
     context.chats.composerDraft.value = verseText ? `${verseText}\n\n` : "";
   }
 
-  const existingChat = findLocalChatForProvider(context.chats, providerId);
-  const chat = existingChat ?? context.chats.createLocalSession?.();
+  const chat = context.chats.createLocalSession?.();
   if (!chat) {
     return;
   }

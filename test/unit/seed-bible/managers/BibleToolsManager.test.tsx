@@ -936,19 +936,11 @@ describe("createBibleToolsManager", () => {
       expect(chats.composerDraft.value).toBe("");
     });
 
-    it("reuses the most recent local chat that already includes the chosen agent", () => {
-      const addParticipant = vi.fn();
-      const olderChat = {
-        id: "older-apologist-chat",
-        addParticipant: vi.fn(),
-        participants: signal([
-          { isSelf: true, isAI: false, isRemote: false },
-          { isAI: true, isRemote: false, providerId: "apologist" },
-        ]),
-      };
-      const recentChat = {
-        id: "recent-apologist-chat",
-        addParticipant,
+    it("starts a new chat even when a local chat with that agent already exists", () => {
+      const existingAddParticipant = vi.fn();
+      const existingChat = {
+        id: "existing-apologist-chat",
+        addParticipant: existingAddParticipant,
         participants: signal([
           { isSelf: true, isAI: false, isRemote: false },
           { isAI: true, isRemote: false, providerId: "apologist" },
@@ -956,46 +948,16 @@ describe("createBibleToolsManager", () => {
       };
       const chats = createMockChats({
         providers: [{ id: "apologist", name: "Apologist" }],
-        chats: [olderChat, recentChat],
-      });
-      const context = createAskAiContext(chats);
-
-      getAskAiTool(context)?.onSelect();
-
-      expect(chats.createLocalSession).not.toHaveBeenCalled();
-      expect(addParticipant).toHaveBeenCalledWith("apologist");
-      expect(chats.selectChat).toHaveBeenCalledWith("recent-apologist-chat");
-    });
-
-    it("does not reuse a shared chat or a local chat for a different agent", () => {
-      const sharedChat = {
-        id: "shared-chat",
-        addParticipant: vi.fn(),
-        participants: signal([
-          { isSelf: true, isAI: false, isRemote: false },
-          { isAI: true, isRemote: true, providerId: "apologist" },
-        ]),
-      };
-      const otherAgentChat = {
-        id: "scholar-chat",
-        addParticipant: vi.fn(),
-        participants: signal([
-          { isSelf: true, isAI: false, isRemote: false },
-          { isAI: true, isRemote: false, providerId: "scholar" },
-        ]),
-      };
-      const chats = createMockChats({
-        providers: [{ id: "apologist", name: "Apologist" }],
-        chats: [sharedChat, otherAgentChat],
+        chats: [existingChat],
       });
       const context = createAskAiContext(chats);
 
       getAskAiTool(context)?.onSelect();
 
       expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chats.addParticipant).toHaveBeenCalledWith("apologist");
       expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
-      expect(sharedChat.addParticipant).not.toHaveBeenCalled();
-      expect(otherAgentChat.addParticipant).not.toHaveBeenCalled();
+      expect(existingAddParticipant).not.toHaveBeenCalled();
     });
 
     it("still creates the chat and prefills the draft when openChat is missing", () => {
