@@ -776,7 +776,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   const inactiveParticipants =
     selectedChat?.inactiveParticipants.value.filter((p) => p.name) ?? [];
   const otherPeoplePresent = selectedChat
-    ? chatHasOtherPeople(selectedChat.totalParticipants.value)
+    ? chatHasOtherPeople(selectedChat)
     : false;
 
   return (
@@ -1033,7 +1033,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
   const toShow = pool.slice(0, 3);
   const overflowCount = pool.length - toShow.length;
   const count = overflowCount > 0 ? 4 : Math.max(toShow.length, 1);
-  const otherPeoplePresent = chatHasOtherPeople(chat.totalParticipants.value);
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   return (
     <div

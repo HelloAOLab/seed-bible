@@ -243,6 +243,7 @@ describe("ChatView", () => {
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
       participants: signal([self]),
+      totalParticipants: signal([self]),
       getMessageAuthors: vi.fn().mockReturnValue([self]),
     });
     const state = createMockState();
@@ -279,6 +280,7 @@ describe("ChatView", () => {
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
       participants: signal([self, other]),
+      totalParticipants: signal([self, other]),
       getMessageAuthors: vi.fn().mockReturnValue([self]),
     });
     const state = createMockState();
@@ -320,6 +322,7 @@ describe("ChatView", () => {
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
       participants: signal([self, ai]),
+      totalParticipants: signal([self, ai]),
       getMessageAuthors: vi.fn().mockReturnValue([self]),
     });
     const state = createMockState();
@@ -330,6 +333,41 @@ describe("ChatView", () => {
 
     expect(container.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
     expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for your own messages when the other person is inactive", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const other = createMockParticipant({
+      id: "other",
+      name: "Alice",
+      isSelf: false,
+      isRemote: true,
+      isActive: false,
+    });
+    const message = createMockMessage({
+      id: "msg-self",
+      authors: ["self"],
+      text: "Hello Alice",
+      parts: ["Hello Alice"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self]),
+      totalParticipants: signal([self, other]),
+      getMessageAuthors: vi.fn().mockReturnValue([self]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
   });
 
   it("shows your profile picture on your own messages even when no other people are in the chat", () => {
@@ -348,6 +386,7 @@ describe("ChatView", () => {
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
       participants: signal([self]),
+      totalParticipants: signal([self]),
       getMessageAuthors: vi.fn().mockReturnValue([self]),
     });
     const state = createMockState();
@@ -387,6 +426,7 @@ describe("ChatView", () => {
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
       participants: signal([self, other]),
+      totalParticipants: signal([self, other]),
       getMessageAuthors: vi.fn().mockReturnValue([other]),
     });
     const state = createMockState();

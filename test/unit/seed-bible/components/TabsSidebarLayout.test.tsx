@@ -302,6 +302,39 @@ describe("Sidebar self avatar", () => {
           { isSelf: true, isAI: false },
           { isSelf: false, isAI: false },
         ]),
+        totalParticipants: signal([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: false },
+        ]),
+      } as ChatSession,
+    ];
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const avatar = container.querySelector(".sb-sidebar-self-avatar");
+    expect(avatar?.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(avatar?.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  it("shows the animal fallback when the other person in the chat is inactive", async () => {
+    const state = await createTestSeedBibleState();
+    state.settings.setDisablePanels(false);
+    (
+      state.chats as unknown as { chats: { value: ChatSession[] } }
+    ).chats.value = [
+      {
+        participants: signal([{ isSelf: true, isAI: false }]),
+        totalParticipants: signal([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: false },
+        ]),
       } as ChatSession,
     ];
 

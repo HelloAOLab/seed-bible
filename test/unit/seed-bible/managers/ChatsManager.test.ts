@@ -283,26 +283,49 @@ function createSharedSessionMock(options?: {
   };
 }
 
+function chatWithParticipants(participants: ChatParticipant[]) {
+  return { totalParticipants: { value: participants } };
+}
+
 describe("chatHasOtherPeople", () => {
   it("is false when the only participants are the current user and AI", () => {
-    expect(chatHasOtherPeople([])).toBe(false);
+    expect(chatHasOtherPeople(chatWithParticipants([]))).toBe(false);
     expect(
-      chatHasOtherPeople([{ isSelf: true, isAI: false }] as ChatParticipant[])
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+        ] as ChatParticipant[])
+      )
     ).toBe(false);
     expect(
-      chatHasOtherPeople([
-        { isSelf: true, isAI: false },
-        { isSelf: false, isAI: true },
-      ] as ChatParticipant[])
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: true },
+        ] as ChatParticipant[])
+      )
     ).toBe(false);
   });
 
   it("is true when another person is in the chat", () => {
     expect(
-      chatHasOtherPeople([
-        { isSelf: true, isAI: false },
-        { isSelf: false, isAI: false },
-      ] as ChatParticipant[])
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+
+  it("is true when the other person is inactive", () => {
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false, isActive: true },
+          { isSelf: false, isAI: false, isActive: false },
+        ] as ChatParticipant[])
+      )
     ).toBe(true);
   });
 });

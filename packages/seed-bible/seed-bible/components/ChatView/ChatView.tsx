@@ -363,7 +363,7 @@ export function getMessageAvatar(
 } {
   const authors = chat.getMessageAuthors(message);
   const primaryAuthor = authors[0] ?? null;
-  const otherPeoplePresent = chatHasOtherPeople(chat.participants.value);
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   if (!primaryAuthor) {
     const anonymous = t("anonymous", { defaultValue: "Anonymous" });
@@ -921,9 +921,7 @@ export function ChatView(props: ChatViewProps) {
                   <div className="sb-chat-view-event-avatar-shell">
                     {group.participants.slice(0, 3).map((p) => {
                       const avatar = getParticipantAvatar(p, t, {
-                        otherPeoplePresent: chatHasOtherPeople(
-                          chat.participants.value
-                        ),
+                        otherPeoplePresent: chatHasOtherPeople(chat),
                       });
                       return (
                         <Avatar

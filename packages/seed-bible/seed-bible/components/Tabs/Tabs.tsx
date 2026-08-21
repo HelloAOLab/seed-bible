@@ -2537,8 +2537,9 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
 
 /**
  * True when the current user is in a context where other people can see
- * them — a shared reading session, or a chat that includes another person.
- * That's when the animal+color fallback is needed to tell people apart.
+ * them — a shared reading session, or a chat that includes another person
+ * (including someone who is currently inactive). That's when the
+ * animal+color fallback is needed to tell people apart.
  */
 function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
   const tabs = state.tabs?.tabs?.value;
@@ -2546,9 +2547,7 @@ function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
     return true;
   }
   const chats = state.chats?.chats?.value;
-  return (
-    chats?.some((chat) => chatHasOtherPeople(chat.participants.value)) ?? false
-  );
+  return chats?.some((chat) => chatHasOtherPeople(chat)) ?? false;
 }
 
 /** Display name for the current user — used as the avatar tooltip / aria-label. */
