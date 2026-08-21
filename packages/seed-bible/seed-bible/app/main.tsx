@@ -23,8 +23,10 @@ import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
   DEFAULT_APP_CONFIG,
+  useAppConfig,
   type AppConfig,
 } from "./appConfig";
+import { isWebKit } from "./ssrEnv";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
@@ -77,10 +79,51 @@ export function Main({
 
   initialState?: ReturnType<typeof createSeedBibleState>;
 } = {}) {
-  const state =
-    initialState ??
-    useMemo(() => createSeedBibleState({ config: appConfig, initialHref }), []);
+  // Split into two components rather than conditionally skipping `useMemo`
+  // below (`initialState ?? useMemo(...)`): every real caller always passes
+  // `initialState`, but if one ever didn't across a re-render, that would
+  // change which hooks this component instance calls, which Preact requires
+  // to stay identical for the component's lifetime. Choosing which of two
+  // components to render carries no such requirement — each has its own,
+  // internally-fixed hook sequence.
+  return initialState ? (
+    <MainWithState appConfig={appConfig} initialState={initialState} />
+  ) : (
+    <MainCreatingState appConfig={appConfig} initialHref={initialHref} />
+  );
+}
 
+function MainWithState({
+  appConfig,
+  initialState,
+}: {
+  appConfig: AppConfig;
+  initialState: ReturnType<typeof createSeedBibleState>;
+}) {
+  return <MainBody appConfig={appConfig} state={initialState} />;
+}
+
+function MainCreatingState({
+  appConfig,
+  initialHref,
+}: {
+  appConfig: AppConfig;
+  initialHref?: string;
+}) {
+  const state = useMemo(
+    () => createSeedBibleState({ config: appConfig, initialHref }),
+    []
+  );
+  return <MainBody appConfig={appConfig} state={state} />;
+}
+
+function MainBody({
+  appConfig,
+  state,
+}: {
+  appConfig: AppConfig;
+  state: ReturnType<typeof createSeedBibleState>;
+}) {
   // Dev-only escape hatch for poking at live managers from the browser
   // console (e.g. `window.__seedBible.login`) — never runs in production.
   if (import.meta.env.DEV && typeof window !== "undefined") {
@@ -106,25 +149,13 @@ export function Main({
   );
 }
 
-// From https://rnwest.engineer/detect-webkit/
-function isWebKit() {
-  const ua = navigator.userAgent;
-  // As far as I can tell, Chromium-based desktop browsers are the only browsers
-  // that pretend to be WebKit-based but aren't.
-  return (
-    (/AppleWebKit/.test(ua) && !/Chrome/.test(ua)) ||
-    /\b(iPad|iPhone|iPod)\b/.test(ua)
-  );
-}
-
-const isWebKitBrowser = isWebKit();
-const webkitClass = isWebKitBrowser ? "is-webkit" : "";
-
 function MainContent(props: {
   state: ReturnType<typeof createSeedBibleState>;
 }) {
   const { state } = props;
   const { isRtl } = useI18n();
+  const { renderedAsWebKit } = useAppConfig();
+  const webkitClass = isWebKit(renderedAsWebKit) ? "is-webkit" : "";
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
   const sidePane =

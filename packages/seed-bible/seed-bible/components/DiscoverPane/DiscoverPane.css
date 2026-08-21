@@ -295,6 +295,13 @@
   margin-top: 4px;
 }
 
+.sb-annotations-pending-sync {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+
 .sb-confirm-delete {
   display: flex;
   flex-direction: column;

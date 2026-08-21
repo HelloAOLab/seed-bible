@@ -253,7 +253,10 @@ export function Tutorial({
             {isLast
               ? t("tutorial.done", { defaultValue: "Done" })
               : t("tutorial.next", { defaultValue: "Next" })}
-            <span className="sb-tour-next-arrow" aria-hidden="true">
+            {/* `dir="ltr"` isolates the glyph from the surrounding RTL run so
+                Arabic-capable fallback fonts can't mirror it — the arrow points
+                right in every language. */}
+            <span className="sb-tour-next-arrow" dir="ltr" aria-hidden="true">
               →
             </span>
           </button>
