@@ -1439,7 +1439,9 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
   });
 
   it("shows a generic account icon on the current user's notes when nobody else has annotated the selection", async () => {
-    state.highlights.getChapterHighlights = vi.fn(() => signal([]));
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
     state.login.userId = signal("toolbar-user-self");
     state.login.getUserProfile = vi.fn().mockResolvedValue({});
 
@@ -1482,7 +1484,9 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
   });
 
   it("shows the animal fallback on verse-sheet notes when other people have also annotated the selection", async () => {
-    state.highlights.getChapterHighlights = vi.fn(() => signal([]));
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
     state.login.userId = signal("toolbar-user-self");
     state.login.getUserProfile = vi.fn().mockResolvedValue({});
 
