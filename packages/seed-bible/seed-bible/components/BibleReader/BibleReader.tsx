@@ -56,6 +56,7 @@ import {
   openBookmarkCategoryModal,
 } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
+import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -2181,7 +2182,9 @@ export function BibleReader(props: BibleReaderProps) {
         <>
           <div className="sb-bible-reader-header">
             <h2
-              onClick={() => selectorState.setOpen(true, currentSlot)}
+              {...flingSafeTapHandlers(() => {
+                void selectorState.setOpen(true, currentSlot);
+              })}
               className="sb-bible-reader-title"
             >
               <span className="sb-bible-reader-book">
