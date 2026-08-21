@@ -1115,29 +1115,18 @@ describe("createBibleToolsManager", () => {
       };
     }
 
-    it("hides the main-toolbar Share button on mobile", () => {
+    it("hides Share on the main toolbar", () => {
       const manager = createBibleToolsManager(testBranding);
-      const tool = manager
-        .getToolbarTools(
-          createShareToolbarContext({ window: { isMobile: true } })
-        )
-        .find((entry) => entry.id === "share");
-
-      expect(tool?.visible.value).toBe(false);
-    });
-
-    it("keeps the main-toolbar Share button on desktop", () => {
-      const manager = createBibleToolsManager(testBranding);
-      const tool = manager
+      const ids = manager
         .getToolbarTools(
           createShareToolbarContext({ window: { isMobile: false } })
         )
-        .find((entry) => entry.id === "share");
+        .map((entry) => entry.id);
 
-      expect(tool?.visible.value).toBe(true);
+      expect(ids).not.toContain("share");
     });
 
-    it("shows Share on the quick toolbar only on mobile", () => {
+    it("shows Share on the quick toolbar on desktop and mobile", () => {
       const manager = createBibleToolsManager(testBranding);
       const isMobile = signal(false);
       const context = createQuickContext({
@@ -1153,7 +1142,7 @@ describe("createBibleToolsManager", () => {
         .getQuickTools(context)
         .find((entry) => entry.id === "share");
 
-      expect(tool?.visible.value).toBe(false);
+      expect(tool?.visible.value).toBe(true);
 
       isMobile.value = true;
       expect(tool?.visible.value).toBe(true);

@@ -10,9 +10,9 @@ const MOBILE_VIEWPORT_WIDTH = 400;
 const DESKTOP_VIEWPORT_WIDTH = 1280;
 
 /**
- * Covers the mobile Share move at the call sites: the tool is visible only
- * when QuickToolbar actually forwards modals/app, and hidden from the More
- * menu only when the toolbar context reports a mobile window.
+ * Covers the Share move at the call sites: the tool is visible only when
+ * QuickToolbar actually forwards modals/app, and it is kept off the main
+ * reader toolbar on both mobile and desktop.
  */
 describe("share button — surface wiring", () => {
   let container: HTMLDivElement;
@@ -83,16 +83,16 @@ describe("share button — surface wiring", () => {
     expect(container.querySelector('[aria-label="Share"]')).not.toBeNull();
   });
 
-  it("keeps Share out of the quick toolbar on desktop", async () => {
+  it("puts Share in the quick toolbar on desktop", async () => {
     await setupState(DESKTOP_VIEWPORT_WIDTH);
     expect(state.app.isMobile.value).toBe(false);
 
     await renderQuickToolbar();
 
-    expect(container.querySelector('[aria-label="Share"]')).toBeNull();
+    expect(container.querySelector('[aria-label="Share"]')).not.toBeNull();
   });
 
-  it("keeps Share on the labeled desktop toolbar", async () => {
+  it("keeps Share off the labeled desktop toolbar", async () => {
     await setupState(DESKTOP_VIEWPORT_WIDTH);
 
     await renderReaderToolbar();
@@ -100,6 +100,6 @@ describe("share button — surface wiring", () => {
     const shareButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.getAttribute("aria-label") === "Share"
     );
-    expect(shareButton).not.toBeUndefined();
+    expect(shareButton).toBeUndefined();
   });
 });

@@ -616,17 +616,16 @@ function getDefaultQuickToolbarTools(
       priority: 100,
       title: { key: "share", defaultValue: "Share" },
       icon: () => <MaterialIcon>share</MaterialIcon>,
-      // Mobile-only: on phones Share lives in the header so it stays visible
-      // instead of sitting in the bottom More menu. Desktop keeps it on the
-      // main reader toolbar. Hidden on the mobile-navigation-bar surface,
-      // which is reserved for the audio play control.
+      // Header-level so Share stays visible instead of sitting in the bottom
+      // toolbar (desktop) or More menu (mobile). Hidden on the
+      // mobile-navigation-bar surface, which is reserved for the audio play
+      // control.
       isVisible: (context) =>
         computed(
           () =>
             context.surface === "quick-toolbar" &&
             !!context.modals &&
-            !!context.app &&
-            context.playlists.isMobile.value
+            !!context.app
         ),
       onSelect: (context) => {
         openShareModal(context, getShareUrl(context.readingState));
@@ -827,21 +826,6 @@ function getDefaultToolbarTools(
           return;
         }
         context.openDiscover();
-      },
-    },
-    {
-      id: "share",
-      priority: 130,
-      title: { key: "share", defaultValue: "Share" },
-      icon: () => <MaterialIcon>share</MaterialIcon>,
-      // Desktop-only: on mobile this same action is a quick-toolbar button in
-      // the chapter header, so it does not also appear in the bottom More menu.
-      isVisible: (context) =>
-        !!context.modals &&
-        !!context.app &&
-        !(context.window?.isMobile ?? false),
-      onSelect: (context) => {
-        openShareModal(context, getShareUrl(context.readingState));
       },
     },
     {
