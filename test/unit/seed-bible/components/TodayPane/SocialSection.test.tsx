@@ -28,11 +28,41 @@ vi.mock(
   })
 );
 
+/** The day a timeline click selects. Noon UTC, so no timezone lands it on a
+ *  different date than the one the assertion formats. */
+const SELECTED_DAY = vi.hoisted(() => {
+  const to = Math.floor(Date.UTC(2026, 6, 21, 12) / 1000);
+  return { from: to - 86399, to };
+});
+
+// Clicking a day inside the timeline is the *only* thing that sets a window
+// while "all" is selected, so the stub exposes that one interaction rather than
+// rendering an inert element. Its second button stands in for a click that
+// clears the selection, which the real timeline does on `handleItemClick(null)`.
+// Everything else about the timeline belongs to its own suite.
 vi.mock(
   "@packages/seed-bible/seed-bible/components/ReadingHistoryTimeline/ReadingHistoryTimeline",
-  () => ({
-    ReadingHistoryTimeline: () => <div data-testid="timeline" />,
-  })
+  async () => {
+    const { useSocialSectionContext } =
+      await import("@packages/seed-bible/seed-bible/components/TodayPane/SocialSectionContext");
+    return {
+      ReadingHistoryTimeline: () => {
+        const { selectDay } = useSocialSectionContext();
+        return (
+          <div data-testid="timeline">
+            <button
+              data-testid="pick-day"
+              onClick={() => selectDay(SELECTED_DAY)}
+            />
+            <button
+              data-testid="clear-day"
+              onClick={() => selectDay(undefined)}
+            />
+          </div>
+        );
+      },
+    };
+  }
 );
 
 const { useHorizontalScroll } = vi.hoisted(() => ({
@@ -342,11 +372,65 @@ describe("SocialSection", () => {
       selectTimespanByLabel("All");
 
       expect(q("[data-testid='timeline']")).not.toBeNull();
-      // Picking "all" clears the window, and `.sb-today-date-label` only renders while
-      // one is set. The single path that sets it back is a day click inside the
-      // timeline, which is stubbed out here — so the label is deliberately not
-      // covered by this suite (see the C5 note in the work journal).
+      // Picking "all" clears the window, and the date label only renders while
+      // one is set — so it stays absent until a day is picked in the timeline.
       expect(q(".sb-today-date-label")).toBeNull();
+    });
+  });
+
+  // ─── the selected-day label ───────────────────────────────────────────────
+
+  /** Selects "all", then clicks a day inside the timeline. */
+  function pickTimelineDay() {
+    selectTimespanByLabel("All");
+    act(() => q<HTMLButtonElement>("[data-testid='pick-day']")!.click());
+  }
+
+  const dateLabel = () => q(".sb-today-date-label")?.textContent ?? null;
+
+  const formatSelectedDay = (lang: string) =>
+    new Intl.DateTimeFormat(lang, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(SELECTED_DAY.to * 1000));
+
+  describe("the selected-day label", () => {
+    it("names the day picked in the timeline", () => {
+      setup();
+      pickTimelineDay();
+      expect(dateLabel()).toBe(formatSelectedDay("en"));
+    });
+
+    it("goes away when the day selection is cleared", () => {
+      setup();
+      pickTimelineDay();
+      expect(dateLabel()).not.toBeNull();
+
+      act(() => q<HTMLButtonElement>("[data-testid='clear-day']")!.click());
+      expect(dateLabel()).toBeNull();
+    });
+
+    it("is scoped to the timeline view, not to having a window at all", () => {
+      setup();
+      pickTimelineDay();
+      expect(dateLabel()).not.toBeNull();
+
+      // "This week" sets a window too, so the label would still have something
+      // to show — it is the timeline view it belongs to, not the window.
+      selectTimespanByLabel("This week");
+      expect(q("[data-testid='timeline']")).toBeNull();
+      expect(dateLabel()).toBeNull();
+    });
+
+    it("formats the date in the active language", () => {
+      mockI18nState.language = "fr";
+      setup();
+      pickTimelineDay();
+
+      // Guards against a vacuous assertion if the two ever agreed.
+      expect(formatSelectedDay("en")).not.toBe(formatSelectedDay("fr"));
+      expect(dateLabel()).toBe(formatSelectedDay("fr"));
     });
   });
 
