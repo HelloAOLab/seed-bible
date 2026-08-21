@@ -68,6 +68,8 @@ const PROMPT_TENURE_MS = 24 * 60 * 60 * 1000;
  */
 const BYTES_PER_VERSE_ESTIMATE = 240;
 
+const MAX_TRACKED_TIMESTAMPS = 5;
+
 /** Reads a translation-ID -> timestamp map from local storage. */
 function readTimestamps(key: string): Record<string, number> {
   try {
@@ -88,10 +90,19 @@ function readTimestamps(key: string): Record<string, number> {
   }
 }
 
-/** Writes a translation-ID -> timestamp map to local storage. Best-effort. */
+/**
+ * Writes a translation-ID -> timestamp map to local storage, keeping only the
+ * {@link MAX_TRACKED_TIMESTAMPS} newest entries. Best-effort.
+ */
 function writeTimestamps(key: string, value: Record<string, number>): void {
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    const trimmed = Object.entries(value)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, MAX_TRACKED_TIMESTAMPS);
+    window.localStorage.setItem(
+      key,
+      JSON.stringify(Object.fromEntries(trimmed))
+    );
   } catch {
     // Storage can be full or blocked; losing the record only means the user
     // may be offered the download again on a later visit.
