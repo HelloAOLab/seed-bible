@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Personalized daily home screen for the reader: time-based greeting, resume-reading shortcut, bookmarks, verse search, a community panel with live sessions and other readers' activity, a reading-history timeline, and chapter recommendations.",
   "type": "module",
+  "private": true,
   "exports": {
     ".": {
       "import": "./index.ts"
