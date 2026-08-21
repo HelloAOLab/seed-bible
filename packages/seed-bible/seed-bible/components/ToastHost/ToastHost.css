@@ -122,7 +122,7 @@
   left: 50%;
   bottom: 6rem;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 10002; /* was 1000 — above every overlay, incl. the raised tutorial (10001) */
   display: flex;
   justify-content: center;
   max-width: min(90vw, 26.25rem);

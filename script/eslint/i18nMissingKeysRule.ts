@@ -1,5 +1,6 @@
 import { createRule, analyzeProject, getContextCwd } from "./i18nRuleShared";
 import type { TSESTree } from "@typescript-eslint/utils";
+import { TUTORIAL_STEP_TEXT_PROPERTIES } from "../getTranslationUsageStats";
 
 type MessageIds = "missing_key" | "missing_key_in_extension" | "config_error";
 type Options = [];
@@ -122,6 +123,39 @@ function getTitleTranslationInfo(node: TSESTree.ObjectExpression): {
     namespace,
     keyNode: keyProperty.value,
   };
+}
+
+/**
+ * Tutorial steps hold their translation keys as `titleKey`/`bodyKey` data that
+ * the tour resolves at render time, so there's no `t("...")` call for the
+ * CallExpression check above to catch. Match the same shape the usage-stats
+ * extractor does — all four text properties present — so an unrelated object
+ * that happens to name a `titleKey` isn't reported.
+ */
+function getTutorialStepTranslationInfo(node: TSESTree.ObjectExpression): {
+  key: string;
+  keyNode: TSESTree.Node;
+}[] {
+  const found: { key: string; keyNode: TSESTree.Node }[] = [];
+
+  for (const {
+    keyProperty,
+    defaultProperty,
+  } of TUTORIAL_STEP_TEXT_PROPERTIES) {
+    const keyPropertyNode = getObjectProperty(node, keyProperty);
+    if (!keyPropertyNode) {
+      return [];
+    }
+
+    const key = getStaticString(keyPropertyNode.value);
+    if (!key || !getObjectProperty(node, defaultProperty)) {
+      return [];
+    }
+
+    found.push({ key, keyNode: keyPropertyNode.value });
+  }
+
+  return found;
 }
 
 function isUseI18nCall(
@@ -365,6 +399,18 @@ const i18nMissingKeysRule = createRule<Options, MessageIds>({
       ObjectExpression(node): void {
         if (analysis.error) {
           return;
+        }
+
+        for (const step of getTutorialStepTranslationInfo(node)) {
+          if (analysis.englishKeys.has(step.key)) {
+            continue;
+          }
+
+          context.report({
+            node: step.keyNode,
+            messageId: "missing_key",
+            data: { key: step.key },
+          });
         }
 
         const titleInfo = getTitleTranslationInfo(node);

@@ -322,7 +322,10 @@
 .sb-pane-layout-menu {
   position: absolute;
   top: calc(100% + 0.5rem);
-  left: 0;
+  /* The menu is wider than the sidebar it hangs off, so it has to open into the
+     reader. Logical inset, not `left`: in RTL the sidebar is on the right edge
+     and a physical `left: 0` would push the menu off the screen. */
+  inset-inline-start: 0;
   width: 23.25rem;
   padding: 1.25rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
