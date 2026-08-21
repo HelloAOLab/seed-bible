@@ -10,6 +10,9 @@
 
 ### 🔧 Changed
 
+- Show Share in the chapter header instead of the reader toolbar, so it is always visible without opening a menu.
+- Open the share sheet for the current tab from the tabs screen instead of immediately starting a shared session.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
