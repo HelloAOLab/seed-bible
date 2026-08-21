@@ -371,6 +371,63 @@ describe("useReadingHistoryTimeline", () => {
       );
     });
 
+    /**
+     * The legend used to be five even `color-mix` steps at 20/40/60/80/100% of
+     * the primary colour, while the cells land on 25/50/75/100% over a base --
+     * so it described a scale the grid never used, and its lightest swatch was
+     * tinted where an unread day is plain. These assert the two now agree.
+     */
+    describe("the legend", () => {
+      it("starts from the same base colour an unread day paints with", () => {
+        THEME.value = {
+          variables: { secondaryColor: "#sec" },
+        } as unknown as BibleTheme;
+        const result = setup();
+        expect(
+          result.current.footer.legendSquaresData[0]!.style.backgroundColor
+        ).toBe("#dfdede");
+      });
+
+      it("asks the shared colour function for each quantisation band", () => {
+        getColorByReadingTime.mockImplementation(
+          (data) =>
+            `band:${String(data.readingTimeSeconds)}/${String(
+              data.fullColorTimeSeconds
+            )}`
+        );
+        const result = setup();
+        const swatches = result.current.footer.legendSquaresData.map(
+          (s) => s.style.backgroundColor
+        );
+        // Base, then the four bands `step = 0.25` actually produces. Expressed
+        // as a ratio out of 1, which is all the function reads.
+        expect(swatches).toEqual([
+          "#dfdede",
+          "band:0.25/1",
+          "band:0.5/1",
+          "band:0.75/1",
+          "band:1/1",
+        ]);
+      });
+
+      it("recolours when the theme changes", () => {
+        const result = setup();
+        const before =
+          result.current.footer.legendSquaresData[0]!.style.backgroundColor;
+        expect(before).toBe("#dfdede");
+
+        act(() => {
+          THEME.value = {
+            variables: { dividerColor: "#123456" },
+          } as unknown as BibleTheme;
+        });
+
+        expect(
+          result.current.footer.legendSquaresData[0]!.style.backgroundColor
+        ).not.toBe(before);
+      });
+    });
+
     // Regression: every string here is resolved through `t`, and the footer
     // memo used to leave `language` out of its dependencies. It only looked
     // correct because an unstable `selectYear` recomputed the memo on every

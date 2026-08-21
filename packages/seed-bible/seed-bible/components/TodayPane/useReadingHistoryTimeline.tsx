@@ -213,6 +213,32 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
   const dailyReadingHistorySummaries = dailySummariesSignal.value;
   const yearlyReadingHistorySummary = yearlySummarySignal.value;
 
+  // Resolved once and shared by the day cells and the legend below, so the two
+  // cannot describe different scales. Keyed on the theme because `ColorParser`
+  // composites against the reader background, which the theme owns.
+  const { baseColor, userColor } = useMemo(() => {
+    const backgroundRgb = ColorParser(
+      currentTheme.variables.readerBackground ?? "#FFFFFF",
+      "arrayRGB"
+    );
+    return {
+      baseColor: currentTheme.variables.dividerColor
+        ? ColorParser(
+            currentTheme.variables.dividerColor,
+            "longHex",
+            backgroundRgb
+          )
+        : "#dfdede",
+      userColor: currentTheme.variables.primaryColor
+        ? ColorParser(
+            currentTheme.variables.primaryColor,
+            "longHex",
+            backgroundRgb
+          )
+        : "#D2691E",
+    };
+  }, [currentTheme]);
+
   const itemsColorMap = useMemo<ItemsColorMap>(() => {
     const colorMap: ItemsColorMap = new Map();
     if (!dailyReadingHistorySummaries || !yearlyReadingHistorySummary)
@@ -224,25 +250,6 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
 
     let shouldReassign = false;
     const fullColorTimeSeconds = yearlySummaryUsersCount * SEC_PER_HOUR; // 1 hour per selected user
-
-    const backgroundRgb = ColorParser(
-      currentTheme.variables.readerBackground ?? "#FFFFFF",
-      "arrayRGB"
-    );
-    const baseColor = currentTheme.variables.dividerColor
-      ? ColorParser(
-          currentTheme.variables.dividerColor,
-          "longHex",
-          backgroundRgb
-        )
-      : "#dfdede";
-    const userColor = currentTheme.variables.primaryColor
-      ? ColorParser(
-          currentTheme.variables.primaryColor,
-          "longHex",
-          backgroundRgb
-        )
-      : "#D2691E";
 
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
@@ -281,7 +288,8 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     tick,
     dailyReadingHistorySummaries,
     yearlyReadingHistorySummary,
-    currentTheme,
+    baseColor,
+    userColor,
     weeksCount,
     timelineRange,
   ]);
@@ -458,12 +466,30 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
       })
     );
 
-    const legendSquaresData = Array.from({ length: 5 }, (_, index) => ({
-      key: index,
-      style: {
-        backgroundColor: `color-mix(in srgb, var(--sb-primary-color) ${(index + 1) * 20}%, var(--sb-divider-color))`,
-      },
-    }));
+    // One swatch for an untouched day, then one per quantisation band, each
+    // painted by the same function as the cells. Generated from `step` rather
+    // than restating it, so the legend cannot describe a scale the grid does
+    // not use -- it previously showed even 20/40/60/80/100% mixes while the
+    // cells landed on 25/50/75/100% over a base, and its lightest swatch was
+    // already tinted where an unread day is plain.
+    const legendSquaresData = [
+      { key: 0, style: { backgroundColor: baseColor } },
+      ...Array.from({ length: Math.round(1 / step) }, (_, index) => ({
+        key: index + 1,
+        style: {
+          backgroundColor: getColorByReadingTime({
+            baseColor,
+            userColor,
+            step,
+            // A ratio expressed as "seconds out of one second": the function
+            // only ever uses the quotient, and this asks it for the exact
+            // band boundary rather than reimplementing the interpolation.
+            readingTimeSeconds: (index + 1) * step,
+            fullColorTimeSeconds: 1,
+          }),
+        },
+      })),
+    ];
 
     return {
       legendSquaresData,
@@ -477,8 +503,11 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     };
     // `language` for the same reason as `itemsData` above: all three strings
     // here are resolved through `t`, so without it the legend and the year
-    // label keep whichever language they first rendered in.
-  }, [yearTimespanMap, year, selectYear, t, language]);
+    // label keep whichever language they first rendered in. `baseColor` and
+    // `userColor` because the legend now resolves real theme colours instead of
+    // deferring to CSS variables, which used to follow a theme switch on their
+    // own.
+  }, [yearTimespanMap, year, selectYear, t, language, baseColor, userColor]);
 
   // Wheel → horizontal scroll is shared via the injected hook.
   useHorizontalScroll(timelineRef);
