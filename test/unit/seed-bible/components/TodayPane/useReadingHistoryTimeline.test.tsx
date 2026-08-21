@@ -41,7 +41,6 @@ const {
       time: number,
       lang?: string
     ) => {
-      weekday: string | undefined;
       day: number;
       month: number;
       monthName: string;
@@ -126,7 +125,6 @@ describe("useReadingHistoryTimeline", () => {
       return { start, end: start + 86399 };
     });
     GetPastDateInfo.mockImplementation(() => ({
-      weekday: undefined,
       day: 18,
       month: 4,
       monthName: "may",
@@ -215,7 +213,6 @@ describe("useReadingHistoryTimeline", () => {
       GetPastDateInfo.mockImplementation((time: number) => {
         const d = new Date(time);
         return {
-          weekday: undefined,
           day: d.getDate(),
           month: d.getMonth(),
           monthName: months[d.getMonth()]!,

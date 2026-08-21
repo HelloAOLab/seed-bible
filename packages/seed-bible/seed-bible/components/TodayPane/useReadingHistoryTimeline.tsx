@@ -3,6 +3,7 @@ import type {
   ReadingHistoryTimelineFooterData,
 } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
 import type { ReadonlySignal } from "@preact/signals";
+import { useState, useMemo, useEffect, useRef } from "preact/hooks";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
 import { useHorizontalScroll } from "../useHorizontalScroll";
@@ -55,12 +56,28 @@ type UseReadingHistoryTimeline = (props: {
   footer: ReadingHistoryTimelineFooterData;
 };
 
-import { useState, useMemo, useEffect, useRef } from "preact/hooks";
+/**
+ * The earliest year the year selector offers.
+ *
+ * Hardcoded because nothing can currently derive it: there is no query for
+ * "the year of this reader's first event", so the timeline has no way to know
+ * when a given history actually begins. The consequence is that a reader with
+ * events older than this cannot reach them from here.
+ */
+const TIMELINE_EARLIEST_YEAR = 2024;
 
-const timelineMinYear = 2023;
+/**
+ * Quantises a day's colour into `1 / step` bands between the base colour and
+ * full colour, so days with similar reading times share a shade instead of
+ * each getting a marginally different one.
+ */
 const step = 0.25;
 
-// const initialTimelineYear = new Date().getFullYear();
+const SEC_PER_MINUTE = 60;
+const SEC_PER_HOUR = SEC_PER_MINUTE * 60;
+const SEC_PER_DAY = SEC_PER_HOUR * 24;
+const SEC_PER_WEEK = SEC_PER_DAY * 7;
+const MS_PER_WEEK = SEC_PER_WEEK * 1000;
 
 export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
   today,
@@ -79,10 +96,12 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     const timespanMap = new Map<number, DateRange>();
 
     const nowDate = new Date();
-    const endOfToday = new Date(nowDate);
-    endOfToday.setHours(23, 59, 59, 999);
 
-    for (let year = nowDate.getFullYear(); year > timelineMinYear; year--) {
+    for (
+      let year = nowDate.getFullYear();
+      year >= TIMELINE_EARLIEST_YEAR;
+      year--
+    ) {
       const startDate = new Date(nowDate);
       const endDate = new Date(nowDate);
       endDate.setFullYear(year);
@@ -90,12 +109,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
 
       startDate.setFullYear(year - 1);
       startDate.setHours(0, 0, 0, 0);
-      if (startDate && endDate) {
-        timespanMap.set(year, {
-          startDate,
-          endDate,
-        });
-      }
+      timespanMap.set(year, { startDate, endDate });
     }
 
     return timespanMap;
@@ -118,13 +132,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
   const [dailyReadingHistorySummaries, setDailyReadingHistorySummaries] =
     useState<DailyReadingHistorySummaries | null>(null);
 
-  const {
-    startDateStartOfWeek,
-    weeksCount,
-    SEC_PER_MINUTE,
-    SEC_PER_HOUR,
-    dayRangesMap,
-  } = useMemo(() => {
+  const { startDateStartOfWeek, weeksCount, dayRangesMap } = useMemo(() => {
     const getStartOfWeek = (date: Date) => {
       const tempDate = new Date(date);
       tempDate.setDate(tempDate.getDate() - tempDate.getDay());
@@ -134,17 +142,6 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
 
     const startDateStartOfWeek = getStartOfWeek(timelineRange.startDate);
     const endDateStartOfWeek = getStartOfWeek(timelineRange.endDate);
-
-    const SEC_PER_MINUTE = 60;
-    const SEC_PER_HOUR = SEC_PER_MINUTE * 60;
-    const SEC_PER_DAY = SEC_PER_HOUR * 24;
-    const SEC_PER_WEEK = SEC_PER_DAY * 7;
-
-    const MS_PER_SECOND = 1000;
-    // const MS_PER_MINUTE = MS_PER_SECOND * SEC_PER_MINUTE;
-    // const MS_PER_HOUR = MS_PER_SECOND * SEC_PER_HOUR;
-    // const MS_PER_DAY = MS_PER_SECOND * SEC_PER_DAY;
-    const MS_PER_WEEK = MS_PER_SECOND * SEC_PER_WEEK;
 
     const weeksCount =
       Math.floor(
@@ -164,21 +161,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
       }
     }
 
-    return {
-      startDateStartOfWeek,
-      // endDateStartOfWeek,
-      weeksCount,
-      // MS_PER_SECOND,
-      // MS_PER_MINUTE,
-      // MS_PER_HOUR,
-      // MS_PER_DAY,
-      // MS_PER_WEEK,
-      SEC_PER_MINUTE,
-      SEC_PER_HOUR,
-      SEC_PER_DAY,
-      SEC_PER_WEEK,
-      dayRangesMap,
-    };
+    return { startDateStartOfWeek, weeksCount, dayRangesMap };
   }, [timelineRange]);
 
   useEffect(() => {
@@ -209,7 +192,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
       })
       .catch((error) => {
         console.warn(
-          `[Debug] ReadingHistoryContext error fetching reading events`,
+          `[useReadingHistoryTimeline] error fetching reading events`,
           error
         );
       });
@@ -465,8 +448,8 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
 
     return {
       legendSquaresData,
-      lessText: "Less",
-      moreText: "More",
+      lessText: t("less", { defaultValue: "Less" }),
+      moreText: t("more", { defaultValue: "More" }),
       yearSelectorLabelTextContent: t("selected-year", {
         year,
         defaultValue: "Year: {{year}}",

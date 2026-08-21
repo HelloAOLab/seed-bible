@@ -21,7 +21,6 @@ export type GetPastDateInfoType = (
   time: number,
   lang?: string
 ) => {
-  weekday: string | undefined;
   day: number;
   month: number;
   monthName: string;
@@ -46,23 +45,10 @@ export const GetDayRangeSeconds: GetDayRangeSecondsType = (timestamp) => {
 export const GetPastDateInfo: GetPastDateInfoType = (time, lang = "en-US") => {
   const date = new Date(time);
 
-  // `weekday` is hardcoded English and is not read by any current consumer —
-  // `monthName` below is the localized one. Don't start using `weekday` without
-  // replacing this with an Intl-based lookup.
-  const weekdays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const weekday = weekdays[date.getDay()];
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
   const monthName = date.toLocaleString(lang, { month: "short" });
 
-  return { weekday, day, month, monthName, year };
+  return { day, month, monthName, year };
 };
