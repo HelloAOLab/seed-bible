@@ -144,9 +144,9 @@ describe("SearchSection", () => {
 
     it("colours the seed-bible icon from the theme", () => {
       setup();
-      expect(
-        q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.backgroundColor
-      ).toBe("rgb(17, 34, 51)");
+      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.fill).toBe(
+        "rgb(17, 34, 51)"
+      );
     });
 
     it("recolours the icon when the theme changes", () => {
@@ -158,22 +158,22 @@ describe("SearchSection", () => {
         } as unknown as BibleTheme;
       });
 
-      expect(
-        q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.backgroundColor
-      ).toBe("rgb(68, 85, 102)");
+      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.fill).toBe(
+        "rgb(68, 85, 102)"
+      );
     });
 
     it("uses a smaller icon on mobile", () => {
       isMobile.value = true;
       setup();
-      expect(q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
+      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
         "1.25rem"
       );
     });
 
     it("resizes the icon when the viewport crosses the breakpoint", () => {
       setup();
-      expect(q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
+      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
         "1.5rem"
       );
 
@@ -181,7 +181,7 @@ describe("SearchSection", () => {
         isMobile.value = true;
       });
 
-      expect(q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
+      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.width).toBe(
         "1.25rem"
       );
     });

@@ -235,8 +235,8 @@ describe("Welcome", () => {
         "Open Bible"
       );
 
-      const icon = q<HTMLDivElement>(".sb-today-seed-bible-icon")!;
-      expect(icon.style.backgroundColor).toBe("rgb(17, 34, 51)");
+      const icon = q<SVGSVGElement>(".sb-today-seed-bible-icon")!;
+      expect(icon.style.fill).toBe("rgb(17, 34, 51)");
       expect(icon.style.width).toBe("1.25rem");
     });
 
@@ -249,9 +249,9 @@ describe("Welcome", () => {
         } as unknown as BibleTheme;
       });
 
-      expect(
-        q<HTMLDivElement>(".sb-today-seed-bible-icon")!.style.backgroundColor
-      ).toBe("rgb(68, 85, 102)");
+      expect(q<SVGSVGElement>(".sb-today-seed-bible-icon")!.style.fill).toBe(
+        "rgb(68, 85, 102)"
+      );
     });
 
     it("opens the book selector when clicked", () => {

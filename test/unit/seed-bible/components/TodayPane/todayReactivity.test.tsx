@@ -176,19 +176,19 @@ describe("Today screen reactivity", () => {
   // immediately, without waiting for an unrelated re-render to carry it.
   it("restyles on a theme switch", () => {
     setup();
-    const icon = () => q(".sb-today-seed-bible-icon") as HTMLElement;
-    expect(icon().style.backgroundColor).toBe("rgb(1, 2, 3)");
+    const icon = () => q(".sb-today-seed-bible-icon") as SVGSVGElement;
+    expect(icon().style.fill).toBe("rgb(1, 2, 3)");
 
     act(() => {
       theme.value = themeWith({ secondaryFontColor: "rgb(9, 9, 9)" });
     });
 
-    expect(icon().style.backgroundColor).toBe("rgb(9, 9, 9)");
+    expect(icon().style.fill).toBe("rgb(9, 9, 9)");
   });
 
   it("resizes chrome when the viewport crosses the mobile breakpoint", () => {
     setup();
-    const icon = () => q(".sb-today-seed-bible-icon") as HTMLElement;
+    const icon = () => q(".sb-today-seed-bible-icon") as SVGSVGElement;
     expect(icon().style.width).toBe("1.5rem");
 
     act(() => {

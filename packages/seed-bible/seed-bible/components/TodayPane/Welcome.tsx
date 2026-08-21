@@ -1,7 +1,6 @@
 import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import { SeedBibleIcon } from "./SeedBibleIcon";
-import { MaterialIcon } from "../icons";
+import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { useI18n } from "../../i18n";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { BibleTheme } from "../../managers/ThemeManager";
@@ -94,10 +93,11 @@ export const Welcome = (props: {
           onClick={props.onOpenBookSelector}
         >
           <SeedBibleIcon
+            className="sb-today-seed-bible-icon"
             style={{
               width: "1.25rem",
               height: "1.25rem",
-              backgroundColor: theme.variables.readerFontColor,
+              fill: theme.variables.readerFontColor,
             }}
           />
           {t("open-bible", { defaultValue: "Open Bible" })}

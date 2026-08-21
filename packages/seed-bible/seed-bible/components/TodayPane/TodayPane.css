@@ -23,29 +23,12 @@
   overflow-y: scroll;
   scrollbar-width: none;
   padding-bottom: 4rem;
-  --sb-today-seed-bible-icon-url: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAETAQMAAAB6HCwRAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAZQTFRFGRkZAQEBroFsmgAAAAJ0Uk5T/QI5jzPkAAACwUlEQVR4nO2aS5KjMAyGlWHBbjgCNxkfzT4aR+EIWbKgkiEYbEsWNuChk57Wv0mVLH9+ApK64cnKwC1jWAWstQOAOjT0k6HaD4BZyhsGa9kLsN7hiB1sEvBMg9Em6dX0cKaWeveBm9XdOUOTsnk03l0I5FpMaEXuc0uwiAGQNF0BXUaPRyLdneuWPZhZRedpVaNx6Oq62My58ei90swWHFLLbsEBNeQWHNZ8m7sCANC7dVi6bA/nR3osAjRlezjfxb4IUBUewusYyvqDLjuE6RjKDmF6GkqehJeaslOczrEvBFRdIeBmCgEikUgkmj7r94wh159+VI8FWyqKT+tD8Z6KI2Rr2vmh5SJ/zraIrsynDyZjnNUAiYFUlAy8FKQUeBn1K+nquJHwJrShPehf2axt4LqjsRRuMQEXnC9xQiGqpm2+A5+5kg3byHqzALc5fNKbB7hjiJLTnQB3RZqEUwrgzrF9F8BdBHUS4C6CPglwlzbpcynA5C9iGtDlL+LFgD5/ky8G3POPwtcA2tOA4VMA6jRg/P6AR/59IoCfA0i5bACWAMQDxs2JsIBx+Rp4gNm80hzAvckcIPFuY7BrXHHzAANbhDH+bq3O05toBfiIkfNukSGsfNUroA+MuP9Ajzl0BVgByFjHw7HDv/TH/tAo34+IoXE+8dv+xKlKy0yX0y/702UdRSKRSCQSiUQ/RFERWh37Iz6O2mGJ0nd3v6G0YVbzPEComMh7ia87xj2yufzB0DnRac2jAd0b5WL5AO2LYVHoD9gUls02/gcITVk98YGFyctmbf0R9rdp3x0vNHbUpMn4eaXyWg9IOSXazNpfauvfuTT+AbV1k79HUlu/HPD+2vrHlMbPA95f2f5XAH0a8DFVXQG8pzQugC8GiEQikUgkEolEItFl2pGx6GtTHgEIQAACEIAABCCA/w/wF5ZauGWYASsuAAAAAElFTkSuQmCC");
 
   /* A third, more muted text tier than `--sb-secondary-font-color`: the
      resume card deliberately pairs the two, so they are not interchangeable.
      Local rather than a theme token because core has no equivalent, and this
      mid-grey is legible on both themes as-is. */
   --sb-today-muted-font-color: #989898;
-}
-
-.sb-today-seed-bible-icon {
-  width: 2rem;
-  height: 2rem;
-  -webkit-mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-size: contain;
-  mask-repeat: no-repeat;
-  mask-position: center;
-}
-
-.sb-today-seed-bible-icon {
-  -webkit-mask-image: var(--sb-today-seed-bible-icon-url);
-  mask-image: var(--sb-today-seed-bible-icon-url);
 }
 
 .sb-today-container .sb-today-divider {
@@ -894,13 +877,6 @@
     .sb-today-book-selector-button {
     font-size: 0.85rem;
     padding: 0.4rem 0.65rem;
-  }
-  .sb-today-container
-    .sb-today-search-container
-    .sb-today-book-selector-button
-    > .sb-today-seed-bible-icon {
-    width: 1rem;
-    height: 1rem;
   }
   .sb-today-container
     .sb-today-history-card

@@ -1,9 +1,8 @@
 import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useRef, useEffect } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
-import { SeedBibleIcon } from "./SeedBibleIcon";
 import { useClickOutside } from "../useClickOutside";
-import { MaterialIcon } from "../icons";
+import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { useI18n } from "../../i18n";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
@@ -38,10 +37,11 @@ export const SearchSection = (props: {
           onClick={props.onOpenBookSelector}
         >
           <SeedBibleIcon
+            className="sb-today-seed-bible-icon"
             style={{
               width: iconSize,
               height: iconSize,
-              backgroundColor: theme.variables.secondaryFontColor,
+              fill: theme.variables.secondaryFontColor,
             }}
           />
           {t("books", { defaultValue: "Books" })}
