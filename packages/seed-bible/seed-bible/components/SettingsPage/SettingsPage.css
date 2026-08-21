@@ -36,6 +36,19 @@
   border: 0;
 }
 
+.sb-settings-empty-state {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  font-size: 0.875rem;
+}
+
+.sb-settings-empty-state p {
+  margin: 0;
+}
+
 .sb-extensions-list {
   list-style: none;
   margin: 0;

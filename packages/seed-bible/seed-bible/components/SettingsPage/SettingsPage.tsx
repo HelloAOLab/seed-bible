@@ -1180,12 +1180,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
     const stateLabel =
       installState === "installed"
-        ? "Installed"
+        ? t("extension-state-installed", { defaultValue: "Installed" })
         : installState === "downloaded"
-          ? "Downloaded"
+          ? t("extension-state-downloaded", { defaultValue: "Downloaded" })
           : installState === "pending"
-            ? "Installing…"
-            : "Not installed";
+            ? t("extension-state-pending", { defaultValue: "Installing…" })
+            : t("extension-state-none", { defaultValue: "Not installed" });
 
     return (
       <li key={id} className="sb-extension-row">
