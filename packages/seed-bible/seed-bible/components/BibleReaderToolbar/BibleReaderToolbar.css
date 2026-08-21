@@ -1054,6 +1054,15 @@
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   box-shadow: 0 -8px 24px var(--sb-shadow-color);
+  /* The whole panel is a drag surface for the expand/collapse/dismiss
+     gesture (see the pointer handlers on this element), not just the handle
+     below. Without this, the browser can win the race against our handler
+     on the first pointermove or two and start a native scroll instead,
+     which it then follows up with a `pointercancel` — the drag looks like
+     it starts, then snaps back to where it began. The color-swatch strip
+     opts back into horizontal panning below since it needs its own native
+     scroll. */
+  touch-action: none;
 }
 
 /* Drag target around the grab handle. The pill is only 4px tall, so the
@@ -1293,6 +1302,11 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
+  /* Opts back into native horizontal panning against the panel's
+     `touch-action: none` — this strip owns its own swipe gesture and isn't
+     part of the sheet's drag-to-expand surface (see the pointer-handler
+     ignore list in the component). */
+  touch-action: pan-x;
 }
 
 .sb-verse-toolbar-mobile .sb-verse-toolbar-swatches::-webkit-scrollbar {
