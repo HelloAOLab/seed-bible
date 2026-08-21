@@ -17,6 +17,7 @@ import {
   extensionsPlugin,
   parseExtraExtensionDirs,
 } from "./script/lib/vite-plugin-extensions";
+import { htmlMetaAssetsPlugin } from "./script/lib/vite-plugin-html-meta-assets";
 
 // Directories outside `packages/` that hold an out-of-tree extension under
 // active development (see `seed-bible-extension-scripts dev`). Empty by
@@ -138,6 +139,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     preact(),
     patternPlugin(),
     extensionsPlugin(),
+    htmlMetaAssetsPlugin(),
     // Only the root build ships a service worker (see `isRootBuild` above).
     ...(isRootBuild
       ? [

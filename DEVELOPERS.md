@@ -59,3 +59,47 @@ context.panes.openPane({
   },
 });
 ```
+
+### Messaging with a Portal
+
+`query` only gets data into a pattern once, at the moment its iframe is created — changing `query` on a later render does not reach an already-open portal. To send and receive messages after the portal has opened, use `PortalComponent`'s `ref` and `onMessage`:
+
+```typescript
+const portalRef = useRef<PortalComponentHandle>(null);
+
+context.panes.openPane({
+  placement: "floating",
+  title: "My Portal",
+  component: () => (
+    <PortalComponent
+      ref={portalRef}
+      portal="map"
+      portalType="map"
+      pattern={myPattern}
+      inst={inst}
+      onMessage={(message) => {
+        // handle a message sent from inside the pattern via os.sendEmbedMessage
+      }}
+    />
+  ),
+});
+
+// later, send a message into the pattern:
+portalRef.current?.sendMessage({ type: "highlightFeature", featureId });
+```
+
+On the pattern side (the code that runs inside the portal's iframe), use CasualOS's built-in embed-message APIs:
+
+```typescript
+// send a message out to the host page
+await os.sendEmbedMessage({ type: "featureClicked", featureId });
+
+// onEmbedMessage.tsx
+// receive messages sent from the host page
+let data = that;
+if (data.message?.type === "highlightFeature") {
+  highlightFeature(data.message.featureId);
+}
+```
+
+The iframe loads asynchronously, so a pattern should send a `{ type: "ready" }`-style message once its `onInstJoined`/`onEggHatch` handler has run, and the host should wait to see that before calling `sendMessage` for the first time — otherwise the very first message can be sent before the pattern is listening and will be silently dropped.

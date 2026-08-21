@@ -133,6 +133,9 @@ describe("Sidebar collapsed layout", () => {
 
     expect(container.textContent).not.toContain("New shared session");
     expect(container.textContent).not.toContain("Join shared session");
+    expect(
+      container.querySelector(".sb-sidebar-tabs-header-share-button")
+    ).toBeNull();
   });
 
   it("shows pane layout button when sidebar is expanded", async () => {
@@ -198,5 +201,106 @@ describe("Sidebar collapsed layout", () => {
       bottomActions?.classList.contains("sb-sidebar-bottom-actions-collapsed")
     ).toBe(false);
     expect(container.textContent).toContain("Settings");
+  });
+});
+
+function isShareSheetOpen(
+  state: Awaited<ReturnType<typeof createTestSeedBibleState>>
+) {
+  return state.modals.modals.value.some(
+    (modal) =>
+      typeof modal.title === "object" && modal.title.key === "share-sheet-title"
+  );
+}
+
+describe("tabs Share control", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    vi.useFakeTimers();
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+    vi.useRealTimers();
+  });
+
+  async function createState(options?: CreateTestSeedBibleStateOptions) {
+    const state = await createTestSeedBibleState(options);
+    state.settings.setDisablePanels(false);
+    return state;
+  }
+
+  it("opens the share sheet from the sidebar More menu instead of creating a session", async () => {
+    const state = await createState();
+    const createSharedSession = vi.spyOn(state.app, "createSharedSession");
+    state.sidebar.isSidebarCollapsed.value = false;
+    state.sidebar.isMobileOpen.value = false;
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const moreButton = container.querySelector(
+      '.sb-sidebar-top-actions button[aria-label="More"]'
+    ) as HTMLButtonElement | null;
+    expect(moreButton).not.toBeNull();
+
+    act(() => {
+      moreButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const shareItem = Array.from(
+      document.querySelectorAll('.sb-context-menu [role="menuitem"]')
+    ).find((item) => item.textContent?.includes("Share"));
+    expect(shareItem).toBeDefined();
+
+    act(() => {
+      shareItem!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(createSharedSession).not.toHaveBeenCalled();
+    expect(isShareSheetOpen(state)).toBe(true);
+  });
+
+  it("opens the share sheet from the mobile tabs header instead of creating a session", async () => {
+    window.innerWidth = 400;
+    const state = await createState();
+    expect(state.app.isMobile.value).toBe(true);
+    const createSharedSession = vi.spyOn(state.app, "createSharedSession");
+    state.sidebar.isMobileOpen.value = true;
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const shareButton = container.querySelector(
+      ".sb-sidebar-tabs-header-share-button"
+    ) as HTMLButtonElement | null;
+    expect(shareButton).not.toBeNull();
+    expect(shareButton?.getAttribute("aria-label")).toBe("Share");
+
+    act(() => {
+      shareButton!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(createSharedSession).not.toHaveBeenCalled();
+    expect(isShareSheetOpen(state)).toBe(true);
   });
 });

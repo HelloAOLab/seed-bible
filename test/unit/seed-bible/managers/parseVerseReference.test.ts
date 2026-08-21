@@ -272,3 +272,166 @@ describe("parseVerseReferences", () => {
     expect(parseVerseReference("Phil 1", BOOKS)).toBeNull();
   });
 });
+
+describe("parseVerseReference with optional translation books", () => {
+  // spa_onbv-style names; commonName/name differ to exercise both fields.
+  const spaBooks: TranslationBook[] = [
+    book("GEN", "Génesis", "Genesis", 50),
+    book("EZR", "Esdras", "Esdras", 10),
+    book("NEH", "Nehemías", "Nehemías", 13),
+    book("1CO", "1 Corintios", "1 Corintios", 16),
+    book("PHP", "Filipenses", "Filipenses", 4),
+    book("PHM", "Filemón", "Filemón", 1),
+    book("JHN", "Juan", "Juan", 21),
+    book("1JN", "1 Juan", "1 Juan", 5),
+  ];
+
+  it("matches localized common/name before English", () => {
+    expect(parseVerseReference("Esdras 3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+    });
+    expect(parseVerseReferences("Esdras 3", spaBooks)).toEqual([
+      { bookId: "EZR", chapter: 3 },
+    ]);
+    expect(parseVerseReference("1 Corintios 13:4", spaBooks)).toEqual({
+      bookId: "1CO",
+      chapter: 13,
+      verse: 4,
+    });
+  });
+
+  it("matches localized names case-insensitively", () => {
+    expect(parseVerseReference("esdras 3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+    });
+    expect(parseVerseReference("ESDRAS 3:1", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+      verse: 1,
+    });
+  });
+
+  it("prefix-matches a unique localized name", () => {
+    // "Esd" uniquely prefixes Esdras among spaBooks.
+    expect(parseVerseReference("Esd 3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+    });
+    // "Filip" uniquely prefixes Filipenses (Filemón does not start with "filip").
+    expect(parseVerseReference("Filip 2", spaBooks)).toEqual({
+      bookId: "PHP",
+      chapter: 2,
+    });
+  });
+
+  it("returns every prefix match when the localized prefix is ambiguous", () => {
+    // "Fil" prefixes both Filipenses and Filemón; both have chapter 1.
+    expect(parseVerseReferences("Fil 1", spaBooks)).toEqual([
+      { bookId: "PHP", chapter: 1 },
+      { bookId: "PHM", chapter: 1 },
+    ]);
+    expect(parseVerseReference("Fil 1", spaBooks)).toBeNull();
+    // Chapter 2 only exists on Filipenses.
+    expect(parseVerseReference("Fil 2", spaBooks)).toEqual({
+      bookId: "PHP",
+      chapter: 2,
+    });
+  });
+
+  it("applies single-chapter verse shorthand for a unique localized name", () => {
+    // Filemón has one chapter, so "Filemón 2" is verse 2, not chapter 2.
+    expect(parseVerseReference("Filemón 2", spaBooks)).toEqual({
+      bookId: "PHM",
+      chapter: 1,
+      verse: 2,
+    });
+  });
+
+  it("falls back to English / book id when books are omitted", () => {
+    expect(parseVerseReference("John 3:16")).toEqual({
+      bookId: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
+    expect(parseVerseReference("GEN 1:1")).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 1,
+    });
+    expect(parseVerseReferences("Esdras 3")).toEqual([]);
+    expect(parseVerseReference("Esdras 3")).toBeNull();
+  });
+
+  it("falls back to English when books is an empty list", () => {
+    expect(parseVerseReference("John 3:16", [])).toEqual({
+      bookId: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
+    expect(parseVerseReferences("Esdras 3", [])).toEqual([]);
+  });
+
+  it("falls back to English when the localized list has no match", () => {
+    // "John" is not among Spanish names, but the English map still resolves.
+    expect(parseVerseReference("John 3:16", spaBooks)).toEqual({
+      bookId: "JHN",
+      chapter: 3,
+      verse: 16,
+    });
+    // English "Ezra" resolves via getBookId, then reuses spa book metadata.
+    expect(parseVerseReference("Ezra 3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+    });
+  });
+
+  it("reuses translation metadata when falling back through English names", () => {
+    // "Philemon" is English; spa list has Filemón (PHM, one chapter). After the
+    // English id resolves, metadata from spaBooks makes the verse shorthand apply.
+    expect(parseVerseReference("Philemon 2", spaBooks)).toEqual({
+      bookId: "PHM",
+      chapter: 1,
+      verse: 2,
+    });
+  });
+
+  it("parses verse and chapter ranges with localized names", () => {
+    expect(parseVerseReference("Esdras 3:1-5", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+      verse: 1,
+      endVerse: 5,
+    });
+    expect(parseVerseReference("Esdras 1:1-2:3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 1,
+      verse: 1,
+      endChapter: 2,
+      endVerse: 3,
+    });
+    expect(parseVerseReference("Esdras 1-3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 1,
+      endChapter: 3,
+    });
+  });
+
+  it("matches by book id when listed in the translation", () => {
+    expect(parseVerseReference("EZR 3", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+    });
+    expect(parseVerseReference("ezr 3:1", spaBooks)).toEqual({
+      bookId: "EZR",
+      chapter: 3,
+      verse: 1,
+    });
+  });
+
+  it("returns null for a fully unknown localized name", () => {
+    expect(parseVerseReference("Nopeón 1", spaBooks)).toBeNull();
+    expect(parseVerseReferences("Nopeón 1", spaBooks)).toEqual([]);
+  });
+});

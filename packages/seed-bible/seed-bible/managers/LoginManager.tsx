@@ -348,6 +348,10 @@ export function createLoginManager({
    * parse — so the call could only fail; it costs a round trip on a path often taken
    * while connectivity is poor; and for a banned account it can never succeed.
    *
+   * Also opens the login screen. A forced sign-out only happens when there was a real
+   * session, so the user was not anonymous — offering sign-in again is a convenience,
+   * not a hindrance. (A deliberate `logout()` does not go through here.)
+   *
    * `sessionEnded` is left set rather than reset, which is what lets a sign-out during
    * construction still reach the toast: `SeedBibleStateManager` wires that effect much
    * later, and an effect reads its dependencies eagerly on its first run. Don't
@@ -370,6 +374,10 @@ export function createLoginManager({
       reason,
       id: ++sessionEndedCount,
     };
+    // Skip during SSR — there is no interactive login surface to show.
+    if (!import.meta.env.SSR) {
+      isLoginOpen.value = true;
+    }
   };
 
   /** Signs the user out because the server reported the session key dead. */
@@ -600,6 +608,7 @@ export function createLoginManager({
   }
 
   async function cancelLogin() {
+    isLoginOpen.value = false;
     if (loginPromise && rejectLoginPromise) {
       rejectLoginPromise(new Error("Login cancelled"));
       loginPromise = null;
@@ -668,6 +677,9 @@ export function createLoginManager({
         id: userId.value,
         email: result.email,
       };
+      // Close even when login was opened by a forced sign-out (no `login()`
+      // promise) — that path never reaches `loginCore`'s `finally`.
+      isLoginOpen.value = false;
       if (resolveLoginPromise) {
         resolveLoginPromise(userInfo.value);
         resolveLoginPromise = null;
@@ -828,6 +840,9 @@ export function createLoginManager({
           cachedProfile.value = p;
           cachedProfileUserId = loadingForUserId;
           writeCachedProfile(loadingForUserId, p);
+          if (import.meta.env.DEV) {
+            console.log("[LoginManager] Profile loaded:", p);
+          }
         }
         return p;
       })

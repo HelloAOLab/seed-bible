@@ -9,13 +9,24 @@ import {
   createBibleToolsManager,
   getShareUrl,
   type BibleToolContext,
+  type QuickToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
+import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
 const CUSTOM_ITEMS_TOOL_ID = "test-toolbar-tool-items";
+const testBranding: BrandingConfig = {
+  appName: "Test App",
+  shortName: "Test",
+  logo: "",
+  icon: "",
+  websiteUrl: "https://example.com",
+  disabledToolbarTools: [],
+};
 
 function createContext(): BibleToolContext {
   return {
@@ -206,14 +217,14 @@ describe("getShareUrl", () => {
 
 describe("createBibleToolsManager", () => {
   afterEach(() => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     manager.unregisterToolbarTool(CUSTOM_TOOL_ID);
     manager.unregisterToolbarTool(CUSTOM_ITEMS_TOOL_ID);
     manager.unregisterVerseToolbarTool(CUSTOM_VERSE_TOOL_ID);
   });
 
   it("registerToolbarTool() registers a toolbar tool", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
 
     manager.registerToolbarTool({
@@ -232,7 +243,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("unregisterToolbarTool() removes a toolbar tool", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
 
     manager.registerToolbarTool({
@@ -252,7 +263,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("getToolbarTools() returns visible mapped tools", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
 
     manager.registerToolbarTool({
@@ -290,7 +301,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("getToolbarTools() supports signal results for visibility and disabled", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
     const isVisible = signal(true);
     const isDisabled = signal(false);
@@ -324,9 +335,40 @@ describe("createBibleToolsManager", () => {
       tools.find((tool) => tool.id === CUSTOM_TOOL_ID)?.visible.value
     ).toBe(false);
   });
+  it("omits tools listed in disabledToolbarTools", () => {
+    const manager = createBibleToolsManager({
+      ...testBranding,
+      disabledToolbarTools: ["open-search", "share"],
+    });
+
+    const context = createContext();
+    const ids = manager.getToolbarTools(context).map((tool) => tool.id);
+
+    expect(ids).not.toContain("open-search");
+    expect(ids).not.toContain("share");
+    expect(ids).toContain("previous-chapter");
+    expect(manager.listQuickTools().map((tool) => tool.id)).not.toContain(
+      "share"
+    );
+  });
+
+  it("keeps all default tools when disabledToolbarTools is empty", () => {
+    const context = createContext();
+
+    const withNone = createBibleToolsManager(testBranding);
+    const withSome = createBibleToolsManager({
+      ...testBranding,
+      disabledToolbarTools: ["open-search"],
+    });
+
+    const withoutDisabled = withNone.getToolbarTools(context);
+    const withDisabled = withSome.getToolbarTools(context);
+
+    expect(withoutDisabled.length).toBe(withDisabled.length + 1);
+  });
 
   it("registerVerseToolbarTool() registers a verse toolbar tool", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
 
     manager.registerVerseToolbarTool({
@@ -345,7 +387,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("unregisterVerseToolbarTool() removes a verse toolbar tool", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
 
     manager.registerVerseToolbarTool({
@@ -365,7 +407,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("getVerseToolbarTools() returns visible mapped tools", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
 
     manager.registerVerseToolbarTool({
@@ -403,7 +445,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("getToolbarTools() resolves getItems() in declared order", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
     const firstItemOnSelect = vi.fn();
     const secondItemOnSelect = vi.fn();
@@ -449,7 +491,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("registerToolbarTool() throws when both onSelect() and getItems() are provided", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
 
     expect(() => {
       manager.registerToolbarTool({
@@ -466,7 +508,7 @@ describe("createBibleToolsManager", () => {
   });
 
   it("tool getItems() throws when an item defines nested getItems()", () => {
-    const manager = createBibleToolsManager();
+    const manager = createBibleToolsManager(testBranding);
     const context = createContext();
 
     manager.registerToolbarTool({
@@ -546,7 +588,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("copy-verse uses the full book name instead of the book ID", async () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createVerseContext();
 
       const tool = manager
@@ -561,7 +603,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("copy-verse falls back to the book ID when chapter data is unavailable", async () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createVerseContext({
         chapterData: signal(null),
       });
@@ -578,7 +620,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("copy-verse collapses whitespace around non-text parts and poem FormattedText", async () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createVerseContext({
         chapterData: signal({
           book: { id: "GEN", name: "Genesis" },
@@ -629,7 +671,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("share-verse uses the full book name instead of the book ID", () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createVerseContext();
 
       const tool = manager
@@ -905,9 +947,40 @@ describe("createBibleToolsManager", () => {
     });
   });
 
+  describe("extractVerseContentText", () => {
+    it("joins plain strings and formatted text", () => {
+      expect(
+        extractContentText([
+          "In the beginning",
+          { text: "was the Word", wordsOfJesus: true },
+        ])
+      ).toBe("In the beginning was the Word");
+    });
+
+    it("drops parts that carry no text of their own", () => {
+      expect(
+        extractContentText([
+          "Jesus wept",
+          { noteId: 0 },
+          { lineBreak: true },
+        ] as never)
+      ).toBe("Jesus wept");
+    });
+
+    it("collapses whitespace and tightens spacing before punctuation", () => {
+      expect(extractContentText(["Hello", ",", "world", "."])).toBe(
+        "Hello, world."
+      );
+    });
+
+    it("returns an empty string for empty content", () => {
+      expect(extractContentText([])).toBe("");
+    });
+  });
+
   describe("open-chat tool visibility", () => {
     it("is invisible when there are no providers and no chats", () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createContext();
 
       const tool = manager
@@ -919,7 +992,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("is visible when there are providers", () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context: ReturnType<typeof createContext> = {
         ...createContext(),
         chats: {
@@ -937,7 +1010,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("is visible when there are chats", () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context: ReturnType<typeof createContext> = {
         ...createContext(),
         chats: {
@@ -971,7 +1044,7 @@ describe("createBibleToolsManager", () => {
     }
 
     it("does not disable previous-chapter while a request is in flight", () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createNavigableContext();
 
       const tool = manager
@@ -983,7 +1056,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("does not disable next-chapter while a request is in flight", () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createNavigableContext();
 
       const tool = manager
@@ -995,7 +1068,7 @@ describe("createBibleToolsManager", () => {
     });
 
     it("does not disable open-selector while a request is in flight", () => {
-      const manager = createBibleToolsManager();
+      const manager = createBibleToolsManager(testBranding);
       const context = createNavigableContext();
 
       const tool = manager
@@ -1004,6 +1077,119 @@ describe("createBibleToolsManager", () => {
 
       expect(tool).toBeDefined();
       expect(tool?.disabled.value).toBe(false);
+    });
+  });
+
+  describe("share tool surfaces", () => {
+    function createShareToolbarContext(
+      overrides?: Partial<BibleToolContext>
+    ): BibleToolContext {
+      return {
+        ...createContext(),
+        modals: {
+          openModal: vi.fn().mockReturnValue("modal-1"),
+          closeModal: vi.fn(),
+        } as any,
+        app: {} as any,
+        ...overrides,
+      };
+    }
+
+    function createQuickContext(
+      overrides?: Partial<QuickToolContext>
+    ): QuickToolContext {
+      return {
+        readingState: {
+          translation: signal({ id: "NIV" }),
+          bookId: signal("GEN"),
+          chapterNumber: signal(1),
+          selectedVerses: signal([]),
+        } as any,
+        playlists: {
+          playing: signal(null),
+          isMobile: signal(false),
+        } as any,
+        features: {} as any,
+        surface: "quick-toolbar",
+        ...overrides,
+      };
+    }
+
+    it("hides Share on the main toolbar", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const ids = manager
+        .getToolbarTools(
+          createShareToolbarContext({ window: { isMobile: false } })
+        )
+        .map((entry) => entry.id);
+
+      expect(ids).not.toContain("share");
+    });
+
+    it("shows Share on the quick toolbar on desktop and mobile", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const isMobile = signal(false);
+      const context = createQuickContext({
+        playlists: {
+          playing: signal(null),
+          isMobile,
+        } as any,
+        modals: { openModal: vi.fn(), closeModal: vi.fn() } as any,
+        app: {} as any,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((entry) => entry.id === "share");
+
+      expect(tool?.visible.value).toBe(true);
+
+      isMobile.value = true;
+      expect(tool?.visible.value).toBe(true);
+    });
+
+    it("hides quick-toolbar Share on the mobile navigation bar surface", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const tool = manager
+        .getQuickTools(
+          createQuickContext({
+            surface: "mobile-navigation-bar",
+            playlists: {
+              playing: signal(null),
+              isMobile: signal(true),
+            } as any,
+            modals: { openModal: vi.fn(), closeModal: vi.fn() } as any,
+            app: {} as any,
+          })
+        )
+        .find((entry) => entry.id === "share");
+
+      expect(tool?.visible.value).toBe(false);
+    });
+
+    it("opens the share sheet from the quick-toolbar Share button", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const openModal = vi.fn().mockReturnValue("modal-1");
+      const tool = manager
+        .getQuickTools(
+          createQuickContext({
+            playlists: {
+              playing: signal(null),
+              isMobile: signal(true),
+            } as any,
+            modals: { openModal, closeModal: vi.fn() } as any,
+            app: {} as any,
+          })
+        )
+        .find((entry) => entry.id === "share");
+
+      tool?.onSelect();
+
+      expect(openModal).toHaveBeenCalledTimes(1);
+      expect(openModal.mock.calls[0]?.[0]?.title).toEqual({
+        key: "share-sheet-title",
+        defaultValue: "Share",
+      });
     });
   });
 });

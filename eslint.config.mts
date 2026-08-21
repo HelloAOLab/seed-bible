@@ -97,6 +97,7 @@ export default defineConfig([
     files: [
       "packages/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
       "script/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
+      "test/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
     ],
 
     rules: {
@@ -104,7 +105,14 @@ export default defineConfig([
       "no-constant-binary-expression": "error",
       "no-constant-condition": "error",
       "@typescript-eslint/no-unused-expressions": "error",
-      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
       "@typescript-eslint/no-explicit-any": "error",
       "no-empty": "error",
       "no-prototype-builtins": "error",
@@ -116,6 +124,8 @@ export default defineConfig([
         "warn",
         {
           destructuring: "all",
+          // Allows a closure to read a `let` before its one assignment.
+          ignoreReadBeforeAssign: true,
         },
       ],
       "no-useless-escape": "off",
@@ -204,7 +214,12 @@ export default defineConfig([
   },
   {
     files: ["test/**/*.{js,mjs,cjs,ts,tsx,jsx,css}"],
-
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.vitest,
+      },
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
     },

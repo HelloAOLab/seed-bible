@@ -206,7 +206,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             <span>
               {t("go-to-all-settings", { defaultValue: "Go to all settings" })}
             </span>
-            <span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron">
+            <span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron rtl-mirror">
               chevron_right
             </span>
           </button>

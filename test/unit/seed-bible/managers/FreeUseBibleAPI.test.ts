@@ -305,6 +305,66 @@ describe("FreeUseBibleAPI", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  describe("snapshotResponseCache() / seedResponseCache()", () => {
+    it("snapshots only successfully resolved responses", async () => {
+      const payload = { translations: [{ id: "eng_kjv" }] };
+      fetchMock.mockResolvedValue(createResponse(payload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      expect(api.snapshotResponseCache()).toEqual({});
+
+      await api.getAvailableTranslations();
+
+      expect(api.snapshotResponseCache()).toEqual({
+        "https://example.com/api/available_translations.json": payload,
+      });
+    });
+
+    it("does not snapshot a request that failed", async () => {
+      fetchMock.mockResolvedValue(
+        createResponse({ error: true }, 500, "Server Error")
+      );
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      await expect(api.getAvailableTranslations()).rejects.toThrow();
+
+      expect(api.snapshotResponseCache()).toEqual({});
+    });
+
+    it("seeds a fresh instance so a matching request resolves without fetching", async () => {
+      const payload = { translations: [{ id: "eng_kjv" }] };
+      const seededApi = new FreeUseBibleAPI("https://example.com/");
+      seededApi.seedResponseCache({
+        "https://example.com/api/available_translations.json": payload,
+      });
+
+      const result = await seededApi.getAvailableTranslations();
+
+      expect(result).toEqual(payload);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(seededApi.snapshotResponseCache()).toEqual({
+        "https://example.com/api/available_translations.json": payload,
+      });
+    });
+
+    it("does not let a seeded value override an already-cached response", async () => {
+      const fetchedPayload = { translations: [{ id: "fetched" }] };
+      fetchMock.mockResolvedValue(createResponse(fetchedPayload));
+
+      const api = new FreeUseBibleAPI("https://example.com/");
+      await api.getAvailableTranslations();
+
+      api.seedResponseCache({
+        "https://example.com/api/available_translations.json": {
+          translations: [{ id: "stale-seed" }],
+        },
+      });
+
+      const result = await api.getAvailableTranslations();
+      expect(result).toEqual(fetchedPayload);
+    });
+  });
+
   describe("getCompleteTranslation()", () => {
     function createStreamingResponse<T>(
       payload: T,

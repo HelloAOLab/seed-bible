@@ -104,7 +104,6 @@ describe("useClickOutside", () => {
 
   it("removes the listeners on unmount", () => {
     const ref = { current: makeEl() };
-    const outside = makeEl();
     const callback = vi.fn();
     setup([ref], callback);
 
