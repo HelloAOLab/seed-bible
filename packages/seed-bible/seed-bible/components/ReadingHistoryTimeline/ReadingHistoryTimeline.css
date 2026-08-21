@@ -7,12 +7,22 @@
 .reading-history-timeline {
   width: 100%;
   display: grid;
+  /* One explicit column for the weekday labels, then a fixed track per week.
+     Pinning the week tracks is what keeps the day squares evenly spaced: with
+     every column left as an auto track, a month label -- which spans two of
+     them -- grew both to fit its own text, and the 16px squares inside did not
+     grow with them. Locales whose abbreviated month names render wider than
+     two tracks (34px) therefore pushed the squares apart underneath each
+     label, which is why the grid looked broken in ar and bn but fine in en.
+     Labels now overflow their box instead; there is roughly a month's worth of
+     empty header space (~78px) before the next one. */
+  grid-template-columns: auto;
+  grid-auto-columns: var(--timelineItemSize);
   gap: 2px;
   align-items: start;
   overflow-x: scroll;
   scroll-behavior: smooth;
   justify-content: start;
-  /* scrollbar-width: thin !important; */
 }
 
 .reading-history-timeline-item {
@@ -49,10 +59,15 @@
 
 .reading-history-timeline-label-month {
   margin-bottom: 4px;
+  /* Its box can no longer grow, so without this a long month name wraps onto a
+     second line and pushes the whole grid down. */
+  white-space: nowrap;
 }
 
 .reading-history-timeline-label-day {
-  margin-right: 4px;
+  /* Logical, not `margin-right`: this gap belongs between the label and the
+     first square, which sits to the label's left in an RTL locale. */
+  margin-inline-end: 4px;
   height: var(--timelineItemSize);
 }
 
