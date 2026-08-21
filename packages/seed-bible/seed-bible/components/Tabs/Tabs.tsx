@@ -2541,11 +2541,13 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
  * That's when the animal+color fallback is needed to tell people apart.
  */
 function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
-  if (state.tabs.tabs.value.some((tab) => tab.sharedSession != null)) {
+  const tabs = state.tabs?.tabs?.value;
+  if (tabs?.some((tab) => tab.sharedSession != null)) {
     return true;
   }
-  return state.chats.chats.value.some((chat) =>
-    chatHasOtherPeople(chat.participants.value)
+  const chats = state.chats?.chats?.value;
+  return (
+    chats?.some((chat) => chatHasOtherPeople(chat.participants.value)) ?? false
   );
 }
 
