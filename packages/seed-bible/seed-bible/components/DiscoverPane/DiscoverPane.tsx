@@ -479,9 +479,8 @@ function PlaylistSection({
 }
 
 /**
- * Past play sessions for playlists the user has opened (including shared ones).
- * Rows match the Discover playlist list: play resumes or restarts, and a
- * menu removes the session from history.
+ * Recently played playlists (including shared ones), one row per playlist.
+ * Play resumes or restarts, and a menu removes the playlist from history.
  */
 function playlistTitle(
   entry: PlaylistPlayHistory,

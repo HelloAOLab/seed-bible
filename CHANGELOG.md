@@ -12,7 +12,7 @@
 
 ### 🔧 Changed
 
-- Keep every playlist play in Discover history, grouped by day, instead of only the latest play per playlist. Continuing within 30 minutes resumes the same session instead of adding a duplicate. Deleting a playlist also clears its history.
+- Keep one Playlist history entry per playlist in Discover, grouped by day, so you can resume or restart what you last played instead of browsing a full log of every play. Playing a playlist again replaces that playlist's history with the latest session. Deleting a playlist also clears its history.
 - Show each playlist history row like a playlist: play to resume or restart, a menu to remove it, and status as time, percent complete, and last item, instead of an expandable details panel.
 
 ### 🐛 Fixed
