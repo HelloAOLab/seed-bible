@@ -695,6 +695,22 @@ export function createPlaylistManager(
   };
 
   /**
+   * Patches the currently-edited playlist's title and/or description. No-op
+   * when there is no playlist being edited. Persisting happens later via
+   * `saveEditingPlaylist`.
+   */
+  const updateEditingPlaylistMetadata = (
+    updates: Partial<Pick<Playlist, "title" | "description">>
+  ): string => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return "error: no playlist is currently being edited";
+    }
+    editingPlaylist.value = { ...current, ...updates };
+    return "success";
+  };
+
+  /**
    * Appends an item to the currently-edited playlist. No-op when there is no
    * playlist being edited. Persisting happens later via `saveEditingPlaylist`.
    */
@@ -1290,13 +1306,10 @@ export function createPlaylistManager(
           return "error: no playlist is currently being edited";
         }
 
-        editingPlaylist.value = {
-          ...current,
+        return updateEditingPlaylistMetadata({
           title: args.title,
           description: args.description ?? current.description ?? null,
-        };
-
-        return "success";
+        });
       },
     });
 
@@ -1363,6 +1376,7 @@ export function createPlaylistManager(
     createNewPlaylist,
     editPlaylist,
     saveEditingPlaylist,
+    updateEditingPlaylistMetadata,
     addEditingPlaylistItem,
     insertEditingPlaylistItem,
     updateEditingPlaylistItem,

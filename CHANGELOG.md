@@ -4,6 +4,7 @@
 
 ### ✨ Added
 
+- Edit a playlist's description from the playlist editor. Descriptions can span multiple lines, and long ones in the list collapse behind Read more.
 - Analytics for common playlist actions like creating and finishing playlists.
 - Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
 - Ask which version to keep when a note changed in two places at once — edited on your phone while your laptop was offline, say. Previously whichever change was saved last silently replaced the other. Now the two versions are shown side by side with when each was written, and you choose: keep yours, keep the other one, or keep both (yours is saved as a second note, so nothing you wrote is thrown away). Nothing is overwritten until you decide.

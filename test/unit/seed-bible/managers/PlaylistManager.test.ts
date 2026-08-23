@@ -576,6 +576,55 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value[0]!.title).toBe("New");
   });
 
+  it("updateEditingPlaylistMetadata patches the draft title and description", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    expect(manager.updateEditingPlaylistMetadata({ title: "Favorites" })).toBe(
+      "success"
+    );
+    expect(
+      manager.updateEditingPlaylistMetadata({
+        description: "Verses I keep coming back to",
+      })
+    ).toBe("success");
+
+    expect(manager.editingPlaylist.value!.title).toBe("Favorites");
+    expect(manager.editingPlaylist.value!.description).toBe(
+      "Verses I keep coming back to"
+    );
+    expect(manager.editingPlaylist.value!.items).toEqual([]);
+  });
+
+  it("updateEditingPlaylistMetadata reports an error when nothing is being edited", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(manager.updateEditingPlaylistMetadata({ title: "Too late" })).toBe(
+      "error: no playlist is currently being edited"
+    );
+  });
+
+  it("saveEditingPlaylist persists a description change", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+    manager.updateEditingPlaylistMetadata({
+      title: "Favorites",
+      description: "Verses I keep coming back to",
+    });
+    recordDataMock.mockClear();
+
+    await manager.saveEditingPlaylist();
+
+    const saved = recordDataMock.mock.calls.at(-1)![2] as Playlist;
+    expect(saved.description).toBe("Verses I keep coming back to");
+    expect(manager.userPlaylists.value[0]!.description).toBe(
+      "Verses I keep coming back to"
+    );
+  });
+
   it("addEditingPlaylistItem appends an item to the current draft", async () => {
     const manager = makeManager("user-1");
     await flush();

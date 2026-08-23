@@ -122,6 +122,7 @@ interface MockPlaylistsResult {
   playlists: PlaylistManager;
   cancelEditingPlaylist: ReturnType<typeof vi.fn>;
   saveEditingPlaylist: ReturnType<typeof vi.fn>;
+  updateEditingPlaylistMetadata: ReturnType<typeof vi.fn>;
   addEditingPlaylistItem: ReturnType<typeof vi.fn>;
   updateEditingPlaylistItem: ReturnType<typeof vi.fn>;
   removeEditingPlaylistItem: ReturnType<typeof vi.fn>;
@@ -132,6 +133,13 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
   const editingPlaylist = signal(editing);
   const cancelEditingPlaylist = vi.fn();
   const saveEditingPlaylist = vi.fn().mockResolvedValue(undefined);
+  const updateEditingPlaylistMetadata = vi.fn(
+    (updates: Partial<Pick<Playlist, "title" | "description">>) => {
+      const current = editingPlaylist.value;
+      if (!current) return;
+      editingPlaylist.value = { ...current, ...updates };
+    }
+  );
   const addEditingPlaylistItem = vi.fn();
   const updateEditingPlaylistItem = vi.fn();
   const removeEditingPlaylistItem = vi.fn((index: number) => {
@@ -156,6 +164,7 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
     editingPlaylist,
     cancelEditingPlaylist,
     saveEditingPlaylist,
+    updateEditingPlaylistMetadata,
     addEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
@@ -166,6 +175,7 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
     playlists,
     cancelEditingPlaylist,
     saveEditingPlaylist,
+    updateEditingPlaylistMetadata,
     addEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
@@ -213,6 +223,101 @@ describe("CreatePlaylistForm", () => {
 
   // The title input and the header back button now live in the pane header
   // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
+
+  it("shows the current description and writes edits back to the draft", () => {
+    const { playlists, updateEditingPlaylistMetadata } = createMockPlaylists(
+      createPlaylist({ description: "Evening study" })
+    );
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-description-input"
+    ) as HTMLTextAreaElement;
+    expect(input.tagName).toBe("TEXTAREA");
+    expect(input.value).toBe("Evening study");
+
+    act(() => {
+      input.value = "Morning devotion";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(updateEditingPlaylistMetadata).toHaveBeenCalledWith({
+      description: "Morning devotion",
+    });
+    expect(playlists.editingPlaylist.value?.description).toBe(
+      "Morning devotion"
+    );
+  });
+
+  it("stores a whitespace-only description as null", () => {
+    const { playlists } = createMockPlaylists(
+      createPlaylist({ description: "Something" })
+    );
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-description-input"
+    ) as HTMLTextAreaElement;
+    act(() => {
+      input.value = "   ";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(playlists.editingPlaylist.value?.description).toBeNull();
+  });
+
+  it("keeps line breaks when editing a description", () => {
+    const { playlists } = createMockPlaylists(createPlaylist());
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-description-input"
+    ) as HTMLTextAreaElement;
+    act(() => {
+      input.value = "Line one\nLine two";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(playlists.editingPlaylist.value?.description).toBe(
+      "Line one\nLine two"
+    );
+  });
 
   it("shows the empty-items message for a fresh playlist", () => {
     const { playlists } = createMockPlaylists(createPlaylist());
