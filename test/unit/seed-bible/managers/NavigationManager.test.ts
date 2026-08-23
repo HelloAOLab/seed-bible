@@ -1,6 +1,30 @@
-import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import {
+  createNavigationManager as createUntrackedNavigationManager,
+  type NavigationManager,
+  type NavigationManagerOptions,
+} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+
+const liveManagers: NavigationManager[] = [];
+
+/**
+ * Every manager patches the shared `window.history` and listens for
+ * `popstate`, so one left alive keeps reacting to the navigations of every
+ * test that follows. Creating them through here disposes them afterwards.
+ */
+function createNavigationManager(
+  options?: NavigationManagerOptions
+): NavigationManager {
+  const navigation = createUntrackedNavigationManager(options);
+  liveManagers.push(navigation);
+  return navigation;
+}
 
 afterEach(() => {
+  // Newest first: each manager's teardown only unwinds its own `history`
+  // patch while it is still the outermost one.
+  for (const navigation of liveManagers.splice(0).reverse()) {
+    navigation.dispose();
+  }
   window.history.replaceState(null, "", window.location.pathname);
 });
 
@@ -212,6 +236,24 @@ describe("createNavigationManager batchWrites", () => {
 
     navigation.batchWrites(() => {
       navigation.updateQueryParams({ book: "GEN" });
+    });
+
+    expect(window.location.href).toBe(hrefBefore);
+    expect(window.history.length).toBe(historyLengthBefore);
+  });
+
+  it("writes nothing when the batch ends back where it started", () => {
+    const navigation = createNavigationManager();
+    navigation.updatePathAndQueryParams("/genesis/1", { sidebar: "open" });
+    const hrefBefore = window.location.href;
+    const historyLengthBefore = window.history.length;
+
+    // Each write is measured against the live, mid-batch URL, so both halves
+    // of a round trip look like real changes. Only the batch as a whole can
+    // tell that the URL never actually moved.
+    navigation.batchWrites(() => {
+      navigation.updateQueryParams({ sidebar: null });
+      navigation.updateQueryParams({ sidebar: "open" });
     });
 
     expect(window.location.href).toBe(hrefBefore);

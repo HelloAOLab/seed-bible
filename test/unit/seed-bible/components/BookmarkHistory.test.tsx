@@ -74,6 +74,12 @@ const EXODUS_2_BOOKMARK: Bookmark = {
   category: DEFAULT_BOOKMARK_CATEGORY,
 };
 
+const EXODUS_2_VERSE_BOOKMARK: Bookmark = {
+  ...EXODUS_2_BOOKMARK,
+  id: "bookmark-exodus-2-verse-3",
+  verse: 3,
+};
+
 // A tab created after startup resolves its data against the app's default
 // (private) endpoint, so the bookmark's chapter has to be mocked there too.
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
@@ -228,7 +234,50 @@ describe("opening a bookmark from the mobile sidebar", () => {
     expect(window.location.href).toBe(sidebarEntryHref);
   });
 
+  it("costs a single history entry when a bookmark with a verse opens in an already-open tab", async () => {
+    // The existing-tab branch reaches the verse through an async
+    // `selectTranslationAndChapter()` that resolves after the batch has already
+    // flushed, so whatever it writes to the URL escapes the batch. It costs no
+    // entry today only because the tab is matched on chapter and the verse
+    // never reaches the URL, leaving that write with nothing to change — an
+    // invariant worth pinning, since either half of it could change.
+    seedBookmarks(state, [EXODUS_2_VERSE_BOOKMARK]);
+
+    await act(async () => {
+      state.sidebar.openSidebar();
+    });
+    await renderSidebar();
+    await tapBookmark();
+    await waitFor(() => window.location.pathname.includes("exodus/2"), 2000);
+
+    await act(async () => {
+      state.sidebar.openSidebar();
+    });
+    const sidebarEntryHref = window.location.href;
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
+    await tapBookmark();
+    await waitFor(() => !window.location.href.includes("sidebar=open"), 2000);
+
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(replaceSpy).not.toHaveBeenCalled();
+    expect(window.location.pathname).toContain("exodus/2");
+
+    pushSpy.mockRestore();
+    replaceSpy.mockRestore();
+
+    await act(async () => {
+      window.history.back();
+    });
+    await waitFor(() => window.location.href === sidebarEntryHref, 2000);
+    expect(window.location.href).toBe(sidebarEntryHref);
+  });
+
   it("returns to the sidebar over the previous chapter when going back", async () => {
+    const readerEntryHref = window.location.href;
+    expect(readerEntryHref).toContain("genesis/1");
+
     await act(async () => {
       state.sidebar.openSidebar();
     });
@@ -245,5 +294,14 @@ describe("opening a bookmark from the mobile sidebar", () => {
 
     expect(window.location.href).toBe(sidebarEntryHref);
     expect(window.location.pathname).toContain("genesis/1");
+
+    // ...and back once more lands on the chapter the user was reading before
+    // they ever opened the sidebar.
+    await act(async () => {
+      window.history.back();
+    });
+    await waitFor(() => !window.location.href.includes("sidebar=open"), 2000);
+
+    expect(window.location.href).toBe(readerEntryHref);
   });
 });

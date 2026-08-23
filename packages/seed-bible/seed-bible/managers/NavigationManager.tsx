@@ -217,6 +217,11 @@ export function createNavigationManager(
    * look like it does nothing.
    */
   const batchWrites = <T,>(fn: () => T): T => {
+    // Where the URL stood before the outermost batch opened. Each write inside
+    // the batch is only checked for changes against the live, mid-batch URL, so
+    // a value that is set and then reverted looks like two real changes — and
+    // would flush a history write for a URL identical to the one already shown.
+    const startHref = batchDepth === 0 ? currentUrl.peek().href : null;
     batchDepth++;
     try {
       return fn();
@@ -227,7 +232,7 @@ export function createNavigationManager(
         const isPush = pendingIsPush;
         pendingHref = null;
         pendingIsPush = false;
-        if (href !== null) {
+        if (href !== null && href !== startHref) {
           writeHistory(href, isPush);
         }
       }
