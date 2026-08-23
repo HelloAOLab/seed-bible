@@ -16,6 +16,8 @@
 
 ### 🐛 Fixed
 
+- Show a focus ring on playlist Read more / Read less when navigating with the keyboard, instead of leaving the control with no visible focus.
+
 ### 🗑️ Removed
 
 ## v1.5.0 — 2026-08-17

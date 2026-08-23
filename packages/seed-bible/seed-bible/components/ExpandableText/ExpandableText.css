@@ -62,3 +62,9 @@
 .sb-expandable-text-toggle:hover {
   text-decoration: underline;
 }
+
+.sb-expandable-text-toggle:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
