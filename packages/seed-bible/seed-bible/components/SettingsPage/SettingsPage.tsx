@@ -991,6 +991,27 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           />
         </div>
 
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-ask-to-switch-ui-language"
+          >
+            {t("ask-to-switch-ui-language", {
+              defaultValue: "Offer to switch language with translation",
+            })}
+          </label>
+          <input
+            id="sb-ask-to-switch-ui-language"
+            type="checkbox"
+            checked={current.askToSwitchUiLanguage}
+            onChange={(event: Event) => {
+              settings.setAskToSwitchUiLanguage(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
+        </div>
+
         <h3 className="sb-settings-subheading">
           {t("selection-ui", { defaultValue: "Selection UI" })}
         </h3>
