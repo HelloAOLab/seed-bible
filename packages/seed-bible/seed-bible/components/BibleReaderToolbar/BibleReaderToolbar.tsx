@@ -1882,6 +1882,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   label={t("bible", { defaultValue: "Bible" })}
                   active={activeMobileTab.value === "bible"}
                   onClick={() => {
+                    // The Bible text is already showing, so there's nothing to
+                    // dismiss — open the book selector instead of doing nothing.
+                    if (activeMobileTab.value === "bible") {
+                      openSelectorTool.value?.onSelect();
+                      return;
+                    }
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
