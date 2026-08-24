@@ -25,6 +25,9 @@ const makeTab = (overrides: any = {}): any => ({
 
 const makeSharedSession = (overrides: any = {}): any => ({
   connectedUsers: { value: [] },
+  // Empty by default, so these cases exercise the fallback to the session's
+  // own reading state; the tests below that care pass positions explicitly.
+  participantPositions: { value: new Map() },
   readingState: {
     bookId: { value: "GEN" },
     chapterNumber: { value: 1 },
@@ -189,7 +192,7 @@ describe("getRemotesPresence", () => {
     );
   });
 
-  it("sets bookId from the session's readingState.bookId.value", () => {
+  it("falls back to the session's bookId when the user has not broadcast a position", () => {
     const user = makeConnectedUser({ connectionId: "u1" });
     const session = makeSharedSession({
       connectedUsers: { value: [user] },
@@ -203,7 +206,7 @@ describe("getRemotesPresence", () => {
     );
   });
 
-  it("sets chapter from the session's readingState.chapterNumber.value", () => {
+  it("falls back to the session's chapter when the user has not broadcast a position", () => {
     const user = makeConnectedUser({ connectionId: "u1" });
     const session = makeSharedSession({
       connectedUsers: { value: [user] },
@@ -260,6 +263,78 @@ describe("getRemotesPresence", () => {
       tabs: { tabs: { value: [makeTab({ sharedSession: session })] } },
     });
     expect(makeProvider(state).getRemotesPresence().size).toBe(2);
+  });
+
+  it("uses each user's own broadcast position instead of the session's", () => {
+    const user = makeConnectedUser({ connectionId: "u1" });
+    const session = makeSharedSession({
+      connectedUsers: { value: [user] },
+      participantPositions: {
+        value: new Map([["u1", { bookId: "REV", chapterNumber: 22 }]]),
+      },
+      // The local reader's position, which used to be reported for everyone.
+      readingState: { bookId: { value: "GEN" }, chapterNumber: { value: 1 } },
+    });
+    const state = makeState({
+      tabs: { tabs: { value: [makeTab({ sharedSession: session })] } },
+    });
+    expect(makeProvider(state).getRemotesPresence().get("u1")).toEqual({
+      bookId: "REV",
+      chapter: 22,
+      readingInstanceId: "tab-1",
+    });
+  });
+
+  it("keeps two users in the same session at their own separate positions", () => {
+    const session = makeSharedSession({
+      connectedUsers: {
+        value: [
+          makeConnectedUser({ connectionId: "ua" }),
+          makeConnectedUser({ connectionId: "ub" }),
+        ],
+      },
+      participantPositions: {
+        value: new Map([
+          ["ua", { bookId: "MAT", chapterNumber: 5 }],
+          ["ub", { bookId: "PSA", chapterNumber: 119 }],
+        ]),
+      },
+    });
+    const state = makeState({
+      tabs: { tabs: { value: [makeTab({ sharedSession: session })] } },
+    });
+    const result = makeProvider(state).getRemotesPresence();
+    expect(result.get("ua")).toMatchObject({ bookId: "MAT", chapter: 5 });
+    expect(result.get("ub")).toMatchObject({ bookId: "PSA", chapter: 119 });
+  });
+
+  it("skips the current user, whose position comes from the selected tab", () => {
+    const session = makeSharedSession({
+      connectedUsers: {
+        value: [
+          makeConnectedUser({ connectionId: "config-bot-id" }),
+          makeConnectedUser({ connectionId: "u1" }),
+        ],
+      },
+    });
+    const state = makeState({
+      tabs: { tabs: { value: [makeTab({ sharedSession: session })] } },
+    });
+    const result = makeProvider(state).getRemotesPresence();
+    expect(result.has("config-bot-id")).toBe(false);
+    expect(result.has("u1")).toBe(true);
+  });
+
+  it("skips a user with no position anywhere to read one from", () => {
+    const user = makeConnectedUser({ connectionId: "u1" });
+    const session = makeSharedSession({
+      connectedUsers: { value: [user] },
+      readingState: { bookId: { value: null }, chapterNumber: { value: 0 } },
+    });
+    const state = makeState({
+      tabs: { tabs: { value: [makeTab({ sharedSession: session })] } },
+    });
+    expect(makeProvider(state).getRemotesPresence().size).toBe(0);
   });
 
   it("overwrites a duplicate connectionId with the last session's data (Map.set semantics)", () => {

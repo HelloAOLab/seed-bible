@@ -34,7 +34,7 @@ import {
   SkeletonContainer,
 } from "../../components/Skeleton/Skeleton";
 import { ExtensionInitalizer } from "../../managers/ExtensionManager";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n, type I18nHook } from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
@@ -127,7 +127,7 @@ function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
       {props.trail.map((item, index) => (
         <span key={index} className="sb-settings-breadcrumbs-item">
           {index > 0 && (
-            <span className="material-symbols-outlined sb-settings-breadcrumbs-sep">
+            <span className="material-symbols-outlined sb-settings-breadcrumbs-sep rtl-mirror">
               chevron_right
             </span>
           )}
@@ -555,6 +555,27 @@ function ScriptureLineHeightIcon({ index }: { index: number }) {
   );
 }
 
+/**
+ * Built-in theme names are authored in English on the theme object, so they'd
+ * otherwise render untranslated. Spelled out as separate `t()` calls (rather
+ * than a computed `theme-${id}` key) so the i18n lint rules can see them.
+ * User-supplied themes keep whatever name they were given.
+ *
+ * Exported for tests.
+ */
+export function localizedThemeName(
+  t: I18nHook["t"],
+  theme: { id: string; name: string }
+): string {
+  if (theme.id === "light") {
+    return t("theme-light", { defaultValue: theme.name });
+  }
+  if (theme.id === "dark") {
+    return t("theme-dark", { defaultValue: theme.name });
+  }
+  return theme.name;
+}
+
 function ThemesGallerySection(props: { state: SeedBibleState }) {
   const { themes, selectedThemeId, setTheme } = props.state.theme;
   const { t } = useI18n();
@@ -607,7 +628,7 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
                 />
               </div>
               <div className="sb-theme-ready-label">
-                <span>{theme.name}</span>
+                <span>{localizedThemeName(t, theme)}</span>
                 {isSelected && (
                   <span
                     className="material-symbols-outlined sb-theme-ready-check"
@@ -1041,7 +1062,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           onClick={onOpenAllSettings}
         >
           <span>{t("all-settings", { defaultValue: "All settings" })}</span>
-          <span className="material-symbols-outlined">chevron_right</span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
         </button>
       </section>
     </div>
@@ -2037,7 +2060,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("account-settings", { defaultValue: "Account settings" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
@@ -2051,7 +2076,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("display-and-theme", { defaultValue: "Display & Theme" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
@@ -2065,7 +2092,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("toolbar", { defaultValue: "Toolbar" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
@@ -2079,7 +2108,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("extensions", { defaultValue: "Extensions" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           {/* Shown in normal browser tabs when not already treated as installed.
@@ -2097,7 +2128,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                 <span className="sb-settings-nav-label">
                   {t("install-app", { defaultValue: "Install app" })}
                 </span>
-                <span className="material-symbols-outlined">chevron_right</span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
               </button>
             </li>
           )}
@@ -2115,7 +2148,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("launch-tutorial", { defaultValue: "Launch tutorial" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
