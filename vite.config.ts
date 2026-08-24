@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { execSync } from "child_process";
@@ -13,8 +13,18 @@ import {
   type PrecacheManifestEntry,
   type ViteManifestChunk,
 } from "./script/lib/precacheManifest";
-import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
+import {
+  extensionsPlugin,
+  parseExtraExtensionDirs,
+} from "./script/lib/vite-plugin-extensions";
 import { htmlMetaAssetsPlugin } from "./script/lib/vite-plugin-html-meta-assets";
+
+// Directories outside `packages/` that hold an out-of-tree extension under
+// active development (see `seed-bible-extension-scripts dev`). Empty by
+// default — every normal dev/build run is unaffected. When set, the dev
+// server's filesystem allowlist needs to include them too, since Vite checks
+// the *realpath* of any `/@fs/`-served file against `server.fs.allow`.
+const extraExtensionDirs = parseExtraExtensionDirs();
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
 // asset URL is namespaced by branch and build id: assets for a build live at
@@ -361,6 +371,34 @@ export default defineConfig(({ isSsrBuild }) => ({
       // instance. preact/compat ships useSyncExternalStore natively.
       "use-sync-external-store/shim/index.js": "preact/compat",
       "use-sync-external-store/shim": "preact/compat",
+      // Keeps every in-repo consumer of the "seed-bible" package specifier
+      // (the app, every `*-extension` package) resolving straight to source,
+      // matching the `@packages/seed-bible/seed-bible/*` alias below —
+      // otherwise this would follow `packages/seed-bible/package.json`'s
+      // `exports` (there for external, published consumption) to its built
+      // `dist/`, which needs a build step to stay in sync and would silently
+      // serve stale code after editing a manager/component. The more specific
+      // subpaths must come before the bare `seed-bible` entry: Vite's alias
+      // matching (`@rollup/plugin-alias`) treats a `find` string as matching
+      // itself *or* anything starting with `${find}/`, so a bare "seed-bible"
+      // listed first would also swallow "seed-bible/managers" etc. Mirrored
+      // in `tsconfig.json`'s `paths` for type resolution.
+      "seed-bible/managers": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/managers/index.tsx"
+      ),
+      "seed-bible/components": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/components/index.tsx"
+      ),
+      "seed-bible/i18n": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/i18n/index.tsx"
+      ),
+      "seed-bible": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/app/api.tsx"
+      ),
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },
@@ -414,5 +452,19 @@ export default defineConfig(({ isSsrBuild }) => ({
 
   server: {
     middlewareMode: true,
+    // Only set an explicit allowlist when there's actually an external
+    // extension directory to add — an explicit `fs.allow` replaces Vite's
+    // default rather than merging with it, so the default workspace root is
+    // included by hand here to avoid narrowing access for the common case.
+    ...(extraExtensionDirs.length > 0
+      ? {
+          fs: {
+            allow: [
+              searchForWorkspaceRoot(process.cwd()),
+              ...extraExtensionDirs,
+            ],
+          },
+        }
+      : {}),
   },
 }));

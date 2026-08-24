@@ -1,8 +1,20 @@
 import { effect, signal } from "@preact/signals";
+import * as PreactSignalsNamespace from "@preact/signals";
+import * as PreactNamespace from "preact";
+import * as PreactHooksNamespace from "preact/hooks";
+import * as PreactJsxRuntimeNamespace from "preact/jsx-runtime";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { addTranslations, i18n } from "../i18n/I18nManager";
+// The whole `../i18n` barrel is already reachable via a static import chain
+// from several other files (e.g. `SeedBibleStateManager.tsx`), so it's always
+// part of the main bundle regardless — importing it eagerly here (unlike
+// `../components`, see `loadComponents` below) doesn't add real weight, and a
+// dynamic import of an already-statically-reachable module just produces a
+// harmless "ineffective dynamic import" build warning instead of an actual
+// lazy chunk.
+import * as SeedBibleI18nNamespace from "../i18n";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   getProfileConfigValue,
@@ -384,6 +396,57 @@ export function unregisterExtension(id: string): boolean {
   return ExtensionInitalizer.getInstance().unregisterExtension(id);
 }
 
+/**
+ * A small, stable surface exposed on `window` for extension bundles that
+ * genuinely can't be part of this app's own Vite module graph — i.e. a
+ * standalone bundle built by `seed-bible-extension-scripts build --standalone`
+ * and loaded via `extensions.loadExtension({ meta, url })`. Such a bundle
+ * can't have a bare `import ... from "seed-bible"` (there's no import map, and
+ * a raw browser `import(url)` can't resolve one), and it must not bring its
+ * own copy of Preact/signals — this codebase has already hit the "two Preact
+ * instances" bug once (see `vite.config.ts`'s `resolve.dedupe` comment). By
+ * reading `registerExtension`/`preact`/`@preact/signals` off this global
+ * instead, such a bundle shares the exact instances already running on the
+ * page rather than a second, disconnected copy.
+ *
+ * `components` is exposed as a lazy loader (not an eager namespace import) so
+ * referencing this runtime object doesn't force the entire
+ * `seed-bible/components` barrel — effectively the whole app's UI surface —
+ * into this module's own eager import graph, which loads very early in boot.
+ * `i18n` is exposed eagerly since it's already reachable from several other
+ * eager import chains (see the import above), so there's no lazy-loading
+ * benefit to gain by deferring it.
+ */
+export interface SeedBibleExtensionRuntime {
+  registerExtension: typeof registerExtension;
+  unregisterExtension: typeof unregisterExtension;
+  preact: typeof PreactNamespace;
+  preactHooks: typeof PreactHooksNamespace;
+  preactJsxRuntime: typeof PreactJsxRuntimeNamespace;
+  preactSignals: typeof PreactSignalsNamespace;
+  i18n: typeof SeedBibleI18nNamespace;
+  loadComponents: () => Promise<typeof import("../components")>;
+}
+
+declare global {
+  interface Window {
+    __seedBibleExtensionRuntime?: SeedBibleExtensionRuntime;
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.__seedBibleExtensionRuntime = {
+    registerExtension,
+    unregisterExtension,
+    preact: PreactNamespace,
+    preactHooks: PreactHooksNamespace,
+    preactJsxRuntime: PreactJsxRuntimeNamespace,
+    preactSignals: PreactSignalsNamespace,
+    i18n: SeedBibleI18nNamespace,
+    loadComponents: () => import("../components"),
+  };
+}
+
 export function setupExtensionContext(context: SeedBibleState) {
   ExtensionInitalizer.getInstance().setupExtensionContext(context);
 }
@@ -411,6 +474,83 @@ function isExtensionModule(value: unknown): value is ExtensionModule {
     value !== null &&
     "default" in value &&
     typeof (value as { default: unknown }).default === "function"
+  );
+}
+
+/**
+ * Runtime type guard for `ExtensionTranslation`, used by `isExtensionMeta`.
+ */
+function isExtensionTranslation(value: unknown): value is ExtensionTranslation {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Partial<ExtensionTranslation>).title === "string" &&
+    typeof (value as Partial<ExtensionTranslation>).description === "string"
+  );
+}
+
+/**
+ * Runtime type guard for `ExtensionMeta`, used by `isUploadedExtension`.
+ */
+function isExtensionMeta(value: unknown): value is ExtensionMeta {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const meta = value as Partial<ExtensionMeta>;
+  if (typeof meta.id !== "string") {
+    return false;
+  }
+  if (
+    typeof meta.translations !== "object" ||
+    meta.translations === null ||
+    !isExtensionTranslation(meta.translations.en)
+  ) {
+    return false;
+  }
+  if (
+    meta.dependencies !== undefined &&
+    (!Array.isArray(meta.dependencies) ||
+      !meta.dependencies.every((dep) => typeof dep === "string"))
+  ) {
+    return false;
+  }
+  if (meta.autoinstall !== undefined && typeof meta.autoinstall !== "boolean") {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Runtime type guard for `UploadedExtension` — the only `Extension` variant
+ * that can survive a round-trip through `JSON.parse` (`ImportExtension.import`
+ * is a function, which JSON can never carry), so this is what a fetched
+ * `ExtensionSet`'s entries are checked against.
+ */
+function isUploadedExtension(value: unknown): value is UploadedExtension {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Partial<UploadedExtension>).url === "string" &&
+    isExtensionMeta((value as Partial<UploadedExtension>).meta)
+  );
+}
+
+/**
+ * Runtime type guard for a fetched `ExtensionSet`. Used by
+ * `discoverExtensionSet` to validate arbitrary JSON from a URL before
+ * tracking it — `loadListTranslations` isn't checked since it's
+ * function-valued and can never appear in real JSON, so a fetched set simply
+ * never has it.
+ */
+function isExtensionSet(value: unknown): value is ExtensionSet {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const set = value as Partial<ExtensionSet>;
+  return (
+    typeof set.id === "string" &&
+    Array.isArray(set.extensions) &&
+    set.extensions.every(isUploadedExtension)
   );
 }
 
@@ -1198,6 +1338,45 @@ export function createExtensionManager(
   };
 
   /**
+   * Fetches an `ExtensionSet` published as JSON at `url` (see
+   * `seed-bible-extension-scripts publish`) and tracks its extensions —
+   * `loadExtensionSet(set, () => false)`'s existing "list but don't install"
+   * behavior — so they show up in the extensions list as available, the same
+   * way this app's own bundled set does. Returns the fetched set on success,
+   * or `null` (logging why) if the URL doesn't respond, isn't JSON, or isn't
+   * shaped like a real `ExtensionSet` — a set's entries must all be
+   * `UploadedExtension`s (`{ url, meta }`), since `ImportExtension.import` is
+   * a function and can never come from real JSON.
+   */
+  const discoverExtensionSet = async (
+    url: string
+  ): Promise<ExtensionSet | null> => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(
+          `Failed to discover extension set at '${url}': ${response.status} ${response.statusText}`
+        );
+        return null;
+      }
+
+      const data: unknown = await response.json();
+      if (!isExtensionSet(data)) {
+        console.error(
+          `Failed to discover extension set at '${url}': the fetched JSON is not a valid ExtensionSet.`
+        );
+        return null;
+      }
+
+      await loadExtensionSet(data, () => false);
+      return data;
+    } catch (err) {
+      console.error("Failed to discover extension set:", url, err);
+      return null;
+    }
+  };
+
+  /**
    * Loads the extensions that the user previously installed. The saved set
    * merges the IDs persisted in local storage with the IDs stored in the
    * logged-in user's profile config via `mergeInstalledExtensionIds` — so
@@ -1400,6 +1579,7 @@ export function createExtensionManager(
     loadExtensionSet,
     loadExtension,
     unloadExtension,
+    discoverExtensionSet,
 
     extensions: extensionsSignal,
     getExtensions,

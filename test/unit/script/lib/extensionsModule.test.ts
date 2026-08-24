@@ -10,7 +10,8 @@ import {
 } from "../../../../script/lib/extensionsModule";
 
 const apologist: DiscoveredExtension = {
-  folder: "apologist-extension",
+  dir: "/repo/packages/apologist-extension",
+  importBase: "@packages/apologist-extension",
   meta: {
     id: "ext_Apologist",
     autoinstall: true,
@@ -24,7 +25,8 @@ const apologist: DiscoveredExtension = {
 };
 
 const bonfire: DiscoveredExtension = {
-  folder: "bonfire-extension",
+  dir: "/repo/packages/bonfire-extension",
+  importBase: "@packages/bonfire-extension",
   meta: {
     id: "ext_Bonfire",
     dependencies: ["ext_Apologist"],
@@ -86,7 +88,11 @@ describe("listExtensionLanguages", () => {
   it("handles an extension with no translations", () => {
     expect(
       listExtensionLanguages([
-        { folder: "x", meta: { id: "ext_X", translations: {} } },
+        {
+          dir: "/repo/packages/x",
+          importBase: "@packages/x",
+          meta: { id: "ext_X", translations: {} },
+        },
       ])
     ).toEqual([]);
   });

@@ -21,7 +21,22 @@
     "noEmit": true,
     "lib": ["es2024", "dom", "dom.iterable"],
     "paths": {
-      "@packages/*": ["./packages/*"]
+      "@packages/*": ["./packages/*"],
+      // Keeps the "seed-bible" package specifier resolving to source inside
+      // this monorepo, the same as the `@packages/seed-bible/seed-bible/*`
+      // alias — otherwise it would follow `packages/seed-bible/package.json`'s
+      // `exports` (needed for external, published consumption) to the built
+      // `packages/seed-bible/dist/**/*.d.ts`, a second, separately-emitted
+      // copy of the same types. Mirrored in `vite.config.ts`'s `resolve.alias`
+      // for the runtime build/dev/test resolution.
+      "seed-bible": ["./packages/seed-bible/seed-bible/app/api.tsx"],
+      "seed-bible/managers": [
+        "./packages/seed-bible/seed-bible/managers/index.tsx"
+      ],
+      "seed-bible/components": [
+        "./packages/seed-bible/seed-bible/components/index.tsx"
+      ],
+      "seed-bible/i18n": ["./packages/seed-bible/seed-bible/i18n/index.tsx"]
     },
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -45,5 +60,25 @@
   // `standalone/sw.ts` needs the `webworker` lib, which conflicts with `dom`.
   // It has its own project (`standalone/tsconfig.sw.json`, run by
   // `pnpm check:ts:sw`), the same way `patterns/` does.
-  "exclude": ["obsolete", "patterns", "standalone/sw.ts"]
+  //
+  // `seed-bible-extension-scripts`/`create-seed-bible-extension` are plain
+  // Node/CLI tooling, not `preact`+`dom`-typed app code, and their own
+  // `build-shims` declare a `Window.__seedBibleExtensionRuntime` global that
+  // (by design — see ExtensionManager.tsx) shadows the real app's own
+  // declaration of the same global with a deliberately looser type; folding
+  // both into one project trips "subsequent property declaration must have
+  // the same type". Each has its own project (`check:ts:extension-tools`).
+  "exclude": [
+    "obsolete",
+    "patterns",
+    "standalone/sw.ts",
+    "packages/seed-bible-extension-scripts",
+    "packages/create-seed-bible-extension",
+    // Built output of `packages/seed-bible`'s own publish build (see its
+    // `vite.config.ts`/`tsconfig.build.json`). Left in, this gets swept into
+    // the same program as the source tree it was built from (both match the
+    // "packages" include above), producing a second, incompatible copy of
+    // every type and `declare global` augmentation the source already has.
+    "packages/seed-bible/dist"
+  ]
 }

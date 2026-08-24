@@ -18,10 +18,27 @@ export interface ExtensionMetaFile {
   autoinstall?: boolean;
 }
 
-/** An extension package discovered under `packages/`, with its parsed meta. */
+/**
+ * An extension package discovered either under `packages/` or, for local
+ * development of an out-of-tree extension (see `seed-bible-extension-scripts
+ * dev`), in an external directory named by `SEED_BIBLE_EXTRA_EXTENSION_DIRS`.
+ */
 export interface DiscoveredExtension {
-  /** The directory name under `packages/`, used to build import specifiers. */
-  folder: string;
+  /**
+   * Absolute filesystem path to the extension's root directory (the one
+   * containing its `extension.json`). Used for reading and file-watching, not
+   * for import specifiers — see `importBase`.
+   */
+  dir: string;
+  /**
+   * Import-specifier prefix for this extension's code and full translations:
+   * `` `${importBase}/extension.json` `` and `` `${importBase}/index` ``.
+   * Bundled extensions use the `@packages/<folder>` alias; external ones use a
+   * Vite `/@fs/<absolute-path>` URL, since the `@packages` alias can't reach
+   * outside `packages/`. Resolving which convention applies is the plugin's
+   * job (see `vite-plugin-extensions.ts`) — this module stays Vite-agnostic.
+   */
+  importBase: string;
   meta: ExtensionMetaFile;
 }
 
@@ -146,10 +163,10 @@ export function generateEntryModuleSource(
 ): string {
   const entries = extensions
     .map(
-      ({ folder, meta }) => `  {
+      ({ importBase, meta }) => `  {
     meta: ${toJsLiteral(trimMeta(meta))},
-    loadFullTranslations: () => import("@packages/${folder}/extension.json").then((m) => m.default.translations),
-    import: () => import("@packages/${folder}/index"),
+    loadFullTranslations: () => import(${toJsLiteral(`${importBase}/extension.json`)}).then((m) => m.default.translations),
+    import: () => import(${toJsLiteral(`${importBase}/index`)}),
   },`
     )
     .join("\n");

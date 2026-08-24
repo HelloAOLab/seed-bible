@@ -638,6 +638,135 @@ describe("createExtensionManager", () => {
     );
   });
 
+  describe("discoverExtensionSet()", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("fetches, validates, and tracks a published ExtensionSet without installing it", async () => {
+      const manager = createExtensionManager(login);
+      const published: ExtensionSet = {
+        id: "discovered-set",
+        extensions: [
+          {
+            url: "https://files.example.com/discovered.js",
+            meta: {
+              id: "ext.discovered",
+              translations: {
+                en: {
+                  title: "Discovered",
+                  description: "A discovered extension",
+                },
+              },
+            },
+          },
+        ],
+      };
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(published),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/discovered-set.json"
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://files.example.com/discovered-set.json"
+      );
+      expect(result).toEqual(published);
+      // Tracked (listed), not installed — no module was ever imported.
+      expect(loadedModules).toEqual([]);
+      expect(
+        manager.getExtensions().find((entry) => entry.id === "ext.discovered")
+      ).toMatchObject({ id: "ext.discovered", installed: false });
+      expect(addTranslationsMock).toHaveBeenCalledWith(
+        "ext.discovered",
+        published.extensions[0]!.meta.translations
+      );
+    });
+
+    it("returns null and logs, without throwing, when the URL responds with a non-2xx status", async () => {
+      const manager = createExtensionManager(login);
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValue({
+            ok: false,
+            status: 404,
+            statusText: "Not Found",
+          })
+      );
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/missing.json"
+      );
+
+      expect(result).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("returns null and logs, without throwing, when the response isn't valid JSON", async () => {
+      const manager = createExtensionManager(login);
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () => Promise.reject(new Error("not json")),
+        })
+      );
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/not-json"
+      );
+
+      expect(result).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("returns null and tracks nothing when the fetched JSON isn't a valid ExtensionSet", async () => {
+      const manager = createExtensionManager(login);
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      // Shaped like an `ImportExtension` (a function-valued `import`), which
+      // can never survive a real JSON.parse — the fetched value below is
+      // what that would actually look like once it did.
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: "bad-set",
+              extensions: [{ meta: { id: "ext.bad" } }],
+            }),
+        })
+      );
+
+      const result = await manager.discoverExtensionSet(
+        "https://files.example.com/bad-set.json"
+      );
+
+      expect(result).toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+      expect(
+        manager.getExtensions().find((entry) => entry.id === "ext.bad")
+      ).toBeUndefined();
+      errorSpy.mockRestore();
+    });
+  });
+
   it("loadExtensionSet() fetches only the active language's list translations", async () => {
     const manager = createExtensionManager(login);
     const loadEn = vi.fn().mockResolvedValue({

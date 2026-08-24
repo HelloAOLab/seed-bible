@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Shared service layer for Bible visualization extensions, providing arrangement management, scripture reference mapping, and user presence tracking.",
   "type": "module",
+  "private": true,
   "exports": {
     ".": {
       "import": "./index.ts"

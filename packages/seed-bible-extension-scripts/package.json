@@ -1,0 +1,34 @@
+{
+  "name": "seed-bible-extension-scripts",
+  "version": "0.1.0",
+  "description": "Toolkit for checking, testing, building, and running Seed Bible extensions from a standalone, out-of-tree project. Installed as a devDependency by projects scaffolded with create-seed-bible-extension.",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "bin": {
+    "seed-bible-extension-scripts": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc-silent --project tsconfig.build.json --suppressConfig ../../tsc-silent.config.cjs",
+    "test": "echo \"seed-bible-extension-scripts has no unit tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@casual-simulation/aux-records": "^4.2.3",
+    "@casual-simulation/fast-json-stable-stringify": "^4.0.5",
+    "@preact/preset-vite": "^2.10.5",
+    "commander": "^12.1.0",
+    "hash.js": "^1.1.7",
+    "vite": "^8.0.13"
+  },
+  "devDependencies": {
+    "@preact/signals": "2.9.1",
+    "@types/node": "^24.0.0",
+    "preact": "10.29.2",
+    "seed-bible": "workspace:*",
+    "tsc-silent": "1.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
