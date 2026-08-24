@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
+  TICK_INTERVAL_MS,
   TimeProvider,
   useTimeContext,
   type TimeContextType,
@@ -61,19 +62,19 @@ describe("TimeContext", () => {
     const received = setup();
 
     // Advancing the fake timers also advances `Date.now()`.
-    act(() => void vi.advanceTimersByTime(10000));
+    act(() => void vi.advanceTimersByTime(TICK_INTERVAL_MS));
 
-    expect(received.current!.tick).toBe(T0 + 10000);
+    expect(received.current!.tick).toBe(T0 + TICK_INTERVAL_MS);
   });
 
   it("keeps ticking on each interval", () => {
     const received = setup();
 
-    act(() => void vi.advanceTimersByTime(10000));
-    expect(received.current!.tick).toBe(T0 + 10000);
+    act(() => void vi.advanceTimersByTime(TICK_INTERVAL_MS));
+    expect(received.current!.tick).toBe(T0 + TICK_INTERVAL_MS);
 
-    act(() => void vi.advanceTimersByTime(10000));
-    expect(received.current!.tick).toBe(T0 + 20000);
+    act(() => void vi.advanceTimersByTime(TICK_INTERVAL_MS));
+    expect(received.current!.tick).toBe(T0 + TICK_INTERVAL_MS * 2);
   });
 
   it("does not tick before the interval elapses", () => {

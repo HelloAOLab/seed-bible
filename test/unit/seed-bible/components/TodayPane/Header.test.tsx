@@ -1,6 +1,10 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { Header } from "@packages/seed-bible/seed-bible/components/TodayPane/Header";
+import {
+  TICK_INTERVAL_MS,
+  TimeProvider,
+} from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
 import { loginWithName } from "../../testUtils/todayStubs";
 import { mockI18nState } from "../../testUtils/mockI18n";
 
@@ -30,7 +34,13 @@ describe("Header", () => {
   ) {
     mockI18nState.language = options.language ?? "en";
     act(() =>
-      render(<Header login={loginWithName(options.username)} />, container)
+      render(
+        // The real parent: `Header` reads the tick that keeps its clock current.
+        <TimeProvider>
+          <Header login={loginWithName(options.username)} />
+        </TimeProvider>,
+        container
+      )
     );
   }
 
@@ -55,6 +65,22 @@ describe("Header", () => {
         .toLocaleString("en", { month: "short" })
         .toUpperCase();
       expect(date()).toBe(`15 ${expectedMonth}`);
+    });
+
+    it("rolls over at midnight while Today is open", () => {
+      vi.setSystemTime(new Date(2026, 5, 15, 23, 59, 50));
+      setup({ language: "en" });
+      const month = new Date(2026, 5, 15)
+        .toLocaleString("en", { month: "short" })
+        .toUpperCase();
+      expect(date()).toBe(`15 ${month}`);
+
+      vi.setSystemTime(new Date(2026, 5, 16, 0, 0, 5));
+      act(() => {
+        vi.advanceTimersByTime(TICK_INTERVAL_MS);
+      });
+
+      expect(date()).toBe(`16 ${month}`);
     });
   });
 
@@ -82,6 +108,21 @@ describe("Header", () => {
     it("is night in the small hours", () => {
       setupAtHour(3);
       expect(heading()).toContain("Good night,");
+    });
+
+    // The greeting was computed once and never again: the memo took no time
+    // input, so it stayed on whatever the clock said when Today was opened.
+    it("moves on when the hour crosses a boundary while Today is open", () => {
+      vi.setSystemTime(new Date(2026, 5, 15, 11, 59, 0));
+      setup();
+      expect(heading()).toContain("Good morning,");
+
+      vi.setSystemTime(new Date(2026, 5, 15, 12, 0, 1));
+      act(() => {
+        vi.advanceTimersByTime(TICK_INTERVAL_MS);
+      });
+
+      expect(heading()).toContain("Good afternoon,");
     });
   });
 

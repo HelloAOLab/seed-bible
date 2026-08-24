@@ -5,7 +5,11 @@ export interface TimeContextType {
   tick: number;
 }
 
-const TICK_INTERVAL_MS = 10000;
+/**
+ * How often {@link TimeProvider} re-renders its subtree. Exported so tests can
+ * advance the clock by the real cadence instead of a copy that could drift.
+ */
+export const TICK_INTERVAL_MS = 10000;
 
 const TimeContext = createContext<TimeContextType | undefined>(undefined);
 

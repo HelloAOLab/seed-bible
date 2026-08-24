@@ -1,10 +1,15 @@
 import type { LoginManager } from "../../managers/LoginManager";
 import { useI18n } from "../../i18n";
 import { useMemo } from "preact/hooks";
+import { useTimeContext } from "./TimeContext";
 
 export const Header = (props: { login: LoginManager }) => {
   const username = props.login.profile.value?.name;
   const { t, language } = useI18n();
+  // `TimeProvider` re-renders this subtree every ten seconds so the date and
+  // greeting stay current; without `tick` in the memo below they would be
+  // fixed at whatever the clock said when Today was first opened.
+  const { tick } = useTimeContext();
 
   const { date, greeting } = useMemo(() => {
     const now = new Date();
@@ -24,7 +29,7 @@ export const Header = (props: { login: LoginManager }) => {
             : t("greeting-night", { defaultValue: "Good night" });
 
     return { date: `${now.getDate()} ${month}`, greeting };
-  }, [language, t]);
+  }, [language, t, tick]);
 
   return (
     <div className="sb-today-header">
