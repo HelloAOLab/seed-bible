@@ -129,13 +129,15 @@ export const PROFILE_TRANSLATION_ID = "translationId";
 function getInitialTranslationId(
   url: URL,
   basePath: string,
-  language: string
+  language: string,
+  brandingDefaultTranslationId?: string
 ): string {
   const parsed = parseReadingPath(url.pathname, basePath);
   return (
     parsed?.translationId ??
     url.searchParams.get("translationId") ??
     url.searchParams.get("translation") ??
+    brandingDefaultTranslationId ??
     getDefaultTranslationForLanguage(language).id
   );
 }
@@ -478,7 +480,8 @@ export function createTabs(
     const initialTranslationId = getInitialTranslationId(
       navigation.initialUrl,
       navigation.basePath,
-      i18nManager.defaultLanguage
+      i18nManager.defaultLanguage,
+      branding?.defaultTranslationId
     );
     const initialBookId = getInitialFirstTabBookId(
       navigation.initialUrl,
@@ -494,7 +497,7 @@ export function createTabs(
       highlightsManager,
       i18nManager,
       {
-        translationId: branding?.defaultTranslationId || initialTranslationId,
+        translationId: initialTranslationId,
         bookId: initialBookId,
         chapter: initialChapter,
         highlightedVerses,
