@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.6.0 — 2026-08-24
+
+### ✨ Added
+
 - Analytics for common playlist actions like creating and finishing playlists. ([#1643](https://github.com/HelloAOLab/seed-bible/pull/1643))
 - Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
 - Ask which version to keep when a note changed in two places at once — edited on your phone while your laptop was offline, say. Previously whichever change was saved last silently replaced the other. Now the two versions are shown side by side with when each was written, and you choose: keep yours, keep the other one, or keep both (yours is saved as a second note, so nothing you wrote is thrown away). Nothing is overwritten until you decide.
@@ -30,8 +40,6 @@
 - Fix a visible scrollbar in the mobile chat panel. ([#1639](https://github.com/HelloAOLab/seed-bible/pull/1639))
 - Fix layout and mirroring issues for right-to-left languages such as Arabic across Settings, Tabs, the Tutorial, the Share modal, and session participants. ([#1615](https://github.com/HelloAOLab/seed-bible/pull/1615))
 - Fix Safari/WebKit-specific behavior being detected incorrectly on the initial server-rendered page, since the check ran on the server where it could never correctly identify WebKit. ([#1617](https://github.com/HelloAOLab/seed-bible/pull/1617))
-
-### 🗑️ Removed
 
 ## v1.5.0 — 2026-08-17
 
