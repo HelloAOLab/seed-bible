@@ -401,9 +401,12 @@ function Book(props: {
   const shownReaders: ReaderIcon[] = [];
   for (const id of readerIds.slice(0, MAX_ICONS)) {
     const profile = userProfileMap.get(id);
-    // A reader with no profile yet: `communityReading` and `userProfileMap`
-    // arrive from separate async sources and can disagree for a frame, so an
-    // unknown id counts into the "+N" overflow rather than throwing mid-render.
+    // Unreachable today: `userProfileMap` holds only the signed-in user, and
+    // `readerIds` is filtered through `userFilters`, which tracks exactly its
+    // keys. It stops being unreachable once you can subscribe to other
+    // readers, which is coming — then a reader can appear in the reading data
+    // before their profile has loaded. Skipping costs one avatar; the
+    // `get(id)!` this replaced threw mid-render and took the whole pane down.
     if (!profile) continue;
     shownReaders.push({
       id,
@@ -448,6 +451,10 @@ function Book(props: {
         >
           {Array.from({ length: numberOfChapters }, (_, index) => {
             const chapter = index + 1;
+            // `readersById` holds only the first MAX_ICONS readers, so a
+            // chapter read by someone past the cap has no entry here. Also
+            // unreachable while community reading is just the signed-in
+            // user, and also waiting on subscriptions.
             const readers = (chaptersReading[chapter] ?? [])
               .map((id) => readersById.get(id))
               .filter((reader): reader is ReaderIcon => Boolean(reader));
