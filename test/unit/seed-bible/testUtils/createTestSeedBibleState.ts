@@ -8,6 +8,7 @@ import {
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
 // the glob backend in I18nManager. Without this, `changeLanguage("ar")` (etc.)
@@ -102,6 +103,44 @@ function installFreeUseBibleApiMock(
   }) as typeof globalThis.fetch;
 }
 
+/**
+ * Points `os.getSharedDocument` at a purely local Yjs document.
+ *
+ * The real implementation calls `doc.connect()` and then waits for a sync, so an
+ * unmocked call opens a real WebSocket to the records server. That is easy to
+ * reach by accident: signing a user in makes `TodayManager`'s resume effect read
+ * reading history, which resolves one shared document per year. When the
+ * handshake completes, undici dispatches an `open` event built from jsdom's
+ * `Event` onto a Node `EventTarget`, which rejects it with `ERR_INVALID_ARG_TYPE`
+ * — an unhandled error that fails the run without failing any test, and only
+ * when the network cooperates, which is why it surfaces in CI and not locally.
+ *
+ * A local document rather than a throw, because a signed-in app is *supposed* to
+ * read reading history: callers get an empty document that keeps whatever is
+ * written into it, keyed the way the real client keys them.
+ */
+function installSharedDocumentMock(state: SeedBibleState): void {
+  const documents = new Map<string, SharedDocument>();
+
+  vi.spyOn(state.os, "getSharedDocument").mockImplementation(
+    async (recordName, inst, docName) => {
+      const key = `${recordName ?? ""}/${inst}/${docName}`;
+      const existing = documents.get(key);
+      if (existing) {
+        return existing;
+      }
+
+      const { YjsSharedDocument } =
+        await import("@casual-simulation/aux-common/documents/YjsSharedDocument");
+      // No `branch`, so the document never reaches for IndexedDB — absent in
+      // jsdom — and stays entirely in memory.
+      const document = new YjsSharedDocument({});
+      documents.set(key, document);
+      return document;
+    }
+  );
+}
+
 async function ensureI18nInitialized(): Promise<void> {
   if (i18n.isInitialized) {
     return;
@@ -194,6 +233,9 @@ export async function createTestSeedBibleState(
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
   const state = createSeedBibleState({ offlineStore: options.offlineStore });
+  // Before anything can sign in: the resume effect fires the moment a session
+  // key lands, and it is the path that would otherwise open a socket.
+  installSharedDocumentMock(state);
   liveTestStates.push(state);
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
