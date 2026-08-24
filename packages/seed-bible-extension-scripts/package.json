@@ -11,12 +11,15 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc-silent --project tsconfig.build.json --suppressConfig ../../tsc-silent.config.cjs",
     "test": "echo \"seed-bible-extension-scripts has no unit tests yet\" && exit 0"
   },
   "dependencies": {
+    "@casual-simulation/aux-records": "^4.2.3",
+    "@casual-simulation/fast-json-stable-stringify": "^4.0.5",
     "@preact/preset-vite": "^2.10.5",
     "commander": "^12.1.0",
+    "hash.js": "^1.1.7",
     "vite": "^8.0.13"
   },
   "devDependencies": {
@@ -24,6 +27,7 @@
     "@types/node": "^24.0.0",
     "preact": "10.29.2",
     "seed-bible": "workspace:*",
+    "tsc-silent": "1.2.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

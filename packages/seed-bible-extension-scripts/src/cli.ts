@@ -5,6 +5,7 @@ import { runTest } from "./commands/test.js";
 import { runBuild } from "./commands/build.js";
 import { runDev } from "./commands/dev.js";
 import { runLint } from "./commands/lint.js";
+import { runPublish } from "./commands/publish.js";
 
 const program = new Command();
 
@@ -48,6 +49,19 @@ program
   )
   .action(async (opts: { standalone?: boolean }) => {
     process.exitCode = await runBuild({ standalone: Boolean(opts.standalone) });
+  });
+
+program
+  .command("publish")
+  .description(
+    "Build the extension standalone and publish it as a hosted, discoverable ExtensionSet (see context.extensions.discoverExtensionSet)."
+  )
+  .option(
+    "--dry-run",
+    "build and print the ExtensionSet manifest without uploading anything"
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exitCode = await runPublish({ dryRun: Boolean(opts.dryRun) });
   });
 
 program

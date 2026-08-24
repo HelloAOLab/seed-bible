@@ -478,6 +478,83 @@ function isExtensionModule(value: unknown): value is ExtensionModule {
 }
 
 /**
+ * Runtime type guard for `ExtensionTranslation`, used by `isExtensionMeta`.
+ */
+function isExtensionTranslation(value: unknown): value is ExtensionTranslation {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Partial<ExtensionTranslation>).title === "string" &&
+    typeof (value as Partial<ExtensionTranslation>).description === "string"
+  );
+}
+
+/**
+ * Runtime type guard for `ExtensionMeta`, used by `isUploadedExtension`.
+ */
+function isExtensionMeta(value: unknown): value is ExtensionMeta {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const meta = value as Partial<ExtensionMeta>;
+  if (typeof meta.id !== "string") {
+    return false;
+  }
+  if (
+    typeof meta.translations !== "object" ||
+    meta.translations === null ||
+    !isExtensionTranslation(meta.translations.en)
+  ) {
+    return false;
+  }
+  if (
+    meta.dependencies !== undefined &&
+    (!Array.isArray(meta.dependencies) ||
+      !meta.dependencies.every((dep) => typeof dep === "string"))
+  ) {
+    return false;
+  }
+  if (meta.autoinstall !== undefined && typeof meta.autoinstall !== "boolean") {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Runtime type guard for `UploadedExtension` — the only `Extension` variant
+ * that can survive a round-trip through `JSON.parse` (`ImportExtension.import`
+ * is a function, which JSON can never carry), so this is what a fetched
+ * `ExtensionSet`'s entries are checked against.
+ */
+function isUploadedExtension(value: unknown): value is UploadedExtension {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Partial<UploadedExtension>).url === "string" &&
+    isExtensionMeta((value as Partial<UploadedExtension>).meta)
+  );
+}
+
+/**
+ * Runtime type guard for a fetched `ExtensionSet`. Used by
+ * `discoverExtensionSet` to validate arbitrary JSON from a URL before
+ * tracking it — `loadListTranslations` isn't checked since it's
+ * function-valued and can never appear in real JSON, so a fetched set simply
+ * never has it.
+ */
+function isExtensionSet(value: unknown): value is ExtensionSet {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const set = value as Partial<ExtensionSet>;
+  return (
+    typeof set.id === "string" &&
+    Array.isArray(set.extensions) &&
+    set.extensions.every(isUploadedExtension)
+  );
+}
+
+/**
  * Per-store metadata for the installed-extensions ID list: when each
  * currently-installed extension was installed, and when this store's ID list
  * was last mutated (an install or uninstall). Used by
@@ -1261,6 +1338,45 @@ export function createExtensionManager(
   };
 
   /**
+   * Fetches an `ExtensionSet` published as JSON at `url` (see
+   * `seed-bible-extension-scripts publish`) and tracks its extensions —
+   * `loadExtensionSet(set, () => false)`'s existing "list but don't install"
+   * behavior — so they show up in the extensions list as available, the same
+   * way this app's own bundled set does. Returns the fetched set on success,
+   * or `null` (logging why) if the URL doesn't respond, isn't JSON, or isn't
+   * shaped like a real `ExtensionSet` — a set's entries must all be
+   * `UploadedExtension`s (`{ url, meta }`), since `ImportExtension.import` is
+   * a function and can never come from real JSON.
+   */
+  const discoverExtensionSet = async (
+    url: string
+  ): Promise<ExtensionSet | null> => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(
+          `Failed to discover extension set at '${url}': ${response.status} ${response.statusText}`
+        );
+        return null;
+      }
+
+      const data: unknown = await response.json();
+      if (!isExtensionSet(data)) {
+        console.error(
+          `Failed to discover extension set at '${url}': the fetched JSON is not a valid ExtensionSet.`
+        );
+        return null;
+      }
+
+      await loadExtensionSet(data, () => false);
+      return data;
+    } catch (err) {
+      console.error("Failed to discover extension set:", url, err);
+      return null;
+    }
+  };
+
+  /**
    * Loads the extensions that the user previously installed. The saved set
    * merges the IDs persisted in local storage with the IDs stored in the
    * logged-in user's profile config via `mergeInstalledExtensionIds` — so
@@ -1463,6 +1579,7 @@ export function createExtensionManager(
     loadExtensionSet,
     loadExtension,
     unloadExtension,
+    discoverExtensionSet,
 
     extensions: extensionsSignal,
     getExtensions,

@@ -19,6 +19,14 @@ A Seed Bible extension, scaffolded by `create-seed-bible-extension`.
   module for hosting outside the seed-bible monorepo. **Experimental** — see
   the README generated alongside it (`dist/standalone/README.md`) for what
   that means in practice.
+- `npm run publish` — build standalone, upload the bundle, and upload a small
+  manifest (an `ExtensionSet`) describing it, then print that manifest's URL.
+  Anyone can make this extension discoverable — listed, not yet installed —
+  by calling `context.extensions.discoverExtensionSet(url)` with it. The
+  first run prompts you to log in once (an email + the code it sends you) and
+  prints a `SEED_BIBLE_RECORD_KEY` to save for non-interactive publishes
+  after that (e.g. in CI) — treat it like a password. Pass `--dry-run` to see
+  the manifest without uploading anything.
 
 Replace `npm run` above with `pnpm run`/`yarn run` if you're using a
 different package manager — every command here works the same way with any
