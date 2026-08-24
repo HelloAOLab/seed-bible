@@ -53,6 +53,8 @@ import {
   generateThemeCssClasses,
 } from "../managers/ThemeManager";
 import type { ThemeManager } from "../managers/ThemeManager";
+import { createCustomizationsManager } from "../managers/CustomizationsManager";
+import type { CustomizationsManager } from "../managers/CustomizationsManager";
 import {
   batch,
   computed,
@@ -308,6 +310,8 @@ export interface SeedBibleState {
     themeCssVariables: ReadonlySignal<string>;
     themeCssClasses: ReadonlySignal<string>;
   };
+  /** Saved, named "look and feel" color profiles the user can create/activate. */
+  customizations: CustomizationsManager;
   /** Sidebar/settings visibility manager. */
   sidebar: SidebarManager;
   /** Reader tab lifecycle manager. */
@@ -496,6 +500,7 @@ export function createSeedBibleState(
   i18n.setLanguagePersister(settings.persistLanguage);
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
+  const customizations = createCustomizationsManager(os, login, themeManager);
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
     undefined
@@ -1925,6 +1930,7 @@ export function createSeedBibleState(
       themeCssVariables,
       themeCssClasses,
     },
+    customizations,
     sidebar,
     tabs,
     tabsLayout,

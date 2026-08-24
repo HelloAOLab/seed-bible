@@ -47,9 +47,10 @@ import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
-import { useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
+import type { CustomizationColorKey } from "../../managers/CustomizationsManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -2012,6 +2013,268 @@ function SettingsVersionFooter() {
   );
 }
 
+const CUSTOMIZATION_COLOR_FIELDS: {
+  key: CustomizationColorKey;
+  label: string;
+}[] = [
+  { key: "primaryColor", label: "Primary" },
+  { key: "secondaryColor", label: "Secondary" },
+  { key: "tertiaryColor", label: "Tertiary" },
+  { key: "textColor", label: "Text" },
+];
+
+function CustomizationsSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+
+  useEffect(() => {
+    void customizations.load();
+  }, []);
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "main";
+  };
+
+  const openCustomization = (id: string) => {
+    customizations.editingCustomizationId.value = id;
+    state.sidebar.requestedSettingsView.value = "customization-edit";
+  };
+
+  const handleCreate = async () => {
+    const created = await customizations.create();
+    openCustomization(created.id);
+  };
+
+  const list = customizations.customizations.value;
+  const isEmpty = list.length === 0;
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("customize", { defaultValue: "Customize" }),
+        ]}
+      />
+      <section className="sb-settings-section">
+        {isEmpty ? (
+          <div className="sb-settings-empty-state">
+            <p>
+              {customizations.isLoading.value
+                ? t("loading", { defaultValue: "Loading…" })
+                : t("no-customizations", {
+                    defaultValue:
+                      "You don't have any customizations yet. Create one to get started.",
+                  })}
+            </p>
+          </div>
+        ) : (
+          <ul className="sb-settings-list">
+            {list.map((customization) => (
+              <li key={customization.id}>
+                <button
+                  className="sb-settings-nav-item sb-customization-row"
+                  onClick={() => openCustomization(customization.id)}
+                >
+                  <span
+                    className="sb-customization-swatches"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="sb-customization-swatch"
+                      style={{ background: customization.colors.primaryColor }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: customization.colors.secondaryColor,
+                      }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{ background: customization.colors.tertiaryColor }}
+                    />
+                  </span>
+                  <span className="sb-settings-nav-label">
+                    {customization.name}
+                  </span>
+                  {customization.active && (
+                    <span className="sb-customization-active-badge">
+                      {t("active", { defaultValue: "Active" })}
+                    </span>
+                  )}
+                  <span className="material-symbols-outlined rtl-mirror">
+                    chevron_right
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="sb-settings-actions">
+          <button
+            type="button"
+            className="sb-settings-save-button"
+            onClick={() => void handleCreate()}
+          >
+            {t("create-customization", {
+              defaultValue: "Create Customization",
+            })}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+  const confirmingDelete = useSignal(false);
+
+  const record = customizations.customizations.value.find(
+    (c) => c.id === customizations.editingCustomizationId.value
+  );
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "customizations";
+  };
+
+  if (!record) {
+    return (
+      <div className="sb-settings-page">
+        <SettingsBreadcrumbs
+          onBack={onBack}
+          trail={[
+            t("page-settings", { defaultValue: "Page settings" }),
+            t("customize", { defaultValue: "Customize" }),
+          ]}
+        />
+        <section className="sb-settings-section">
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("customization-not-found", {
+                defaultValue: "This customization could not be found.",
+              })}
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("customize", { defaultValue: "Customize" }),
+          record.name,
+        ]}
+      />
+      <section className="sb-settings-section">
+        <div className="sb-settings-field-row">
+          <label className="sb-settings-field-label">
+            {t("customization-name", { defaultValue: "Name" })}
+          </label>
+          <input
+            type="text"
+            className="sb-settings-text-input"
+            value={record.name}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLInputElement;
+              void customizations.rename(record.id, target.value);
+            }}
+          />
+        </div>
+
+        <ul className="sb-theme-colors-list">
+          {CUSTOMIZATION_COLOR_FIELDS.map((field) => {
+            const value = record.colors[field.key] ?? "";
+            const label = t(`customization-${field.key}`, {
+              defaultValue: field.label,
+            });
+            return (
+              <li key={field.key} className="sb-theme-color-row">
+                <div className="sb-theme-color-row-main">
+                  <span className="sb-theme-color-label">{label}</span>
+                  <span className="sb-theme-color-value">{value || "—"}</span>
+                </div>
+                <div className="sb-theme-color-row-controls">
+                  <input
+                    type="color"
+                    className="sb-theme-color-input"
+                    value={toHexInputValue(value)}
+                    aria-label={label}
+                    onInput={(event: Event) => {
+                      const target = event.currentTarget as HTMLInputElement;
+                      void customizations.setColor(
+                        record.id,
+                        field.key,
+                        target.value
+                      );
+                    }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="sb-settings-actions">
+          {record.active ? (
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => void customizations.deactivate(record.id)}
+            >
+              {t("deactivate", { defaultValue: "Deactivate" })}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="sb-settings-save-button"
+              onClick={() => void customizations.setActive(record.id)}
+            >
+              {t("set-as-active", { defaultValue: "Set as active" })}
+            </button>
+          )}
+
+          {confirmingDelete.value ? (
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => {
+                void customizations.remove(record.id);
+                onBack();
+              }}
+            >
+              {t("confirm-delete-customization", {
+                defaultValue: "Confirm delete",
+              })}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => {
+                confirmingDelete.value = true;
+              }}
+            >
+              {t("delete-customization", { defaultValue: "Delete" })}
+            </button>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
@@ -2147,6 +2410,22 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
               <span className="sb-settings-nav-label">
                 {t("launch-tutorial", { defaultValue: "Launch tutorial" })}
+              </span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
+            </button>
+          </li>
+          <li>
+            <button
+              className="sb-settings-nav-item"
+              onClick={() => onNavigate("customizations")}
+            >
+              <span className="sb-settings-nav-icon">
+                <MaterialIcon>palette</MaterialIcon>
+              </span>
+              <span className="sb-settings-nav-label">
+                {t("customize", { defaultValue: "Customize" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right
@@ -2360,6 +2639,14 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "extensions") {
     return <ExtensionsSettingsView state={state} />;
+  }
+
+  if (currentView.value === "customizations") {
+    return <CustomizationsSettingsView state={state} />;
+  }
+
+  if (currentView.value === "customization-edit") {
+    return <CustomizationEditSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;

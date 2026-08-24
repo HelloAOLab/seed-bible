@@ -1469,3 +1469,37 @@
     display: none;
   }
 }
+
+/* Customizations list rows */
+.sb-customization-row {
+  gap: 0.625rem;
+}
+
+.sb-customization-swatches {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sb-customization-swatch {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, black, transparent 80%);
+  margin-left: -0.375rem;
+}
+
+.sb-customization-swatch:first-child {
+  margin-left: 0;
+}
+
+.sb-customization-active-badge {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 1rem;
+  color: var(--sb-primary-font-color);
+  background: var(--sb-primary-color);
+}
