@@ -556,14 +556,12 @@
   "today-search-verses": "বই, অধ্যায়, শ্লোক অনুসন্ধান করুন...",
   "anonymous-greeting": "স্বাগতম!",
   "community": "সম্প্রদায়",
-  "friday-short": "শুক্রবার",
   "go-somewhere-new": "নতুন কোনো জায়গায় যান",
   "greeting-afternoon": "শুভ অপরাহ্ন",
   "greeting-evening": "শুভ সন্ধ্যা",
   "greeting-morning": "শুভ সকাল",
   "greeting-night": "শুভ রাত্রি",
   "last-48-hours": "গত ৪৮ ঘন্টা",
-  "monday-short": "সোমবার",
   "open-bible": "বাইবেল খুলুন",
   "personal-greeting": "স্বাগতম, {{name}} !",
   "read-first-chapter": "প্রথম অধ্যায়টি পড়ুন",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "আপনার পঠন ইতিহাস লোড হচ্ছে…",
   "selected-year": "বছর: {{year}}",
   "this-month": "এই মাসে",
-  "this-week": "এই সপ্তাহে",
-  "wednesday-short": "বুধবার"
+  "this-week": "এই সপ্তাহে"
 }

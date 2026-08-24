@@ -556,14 +556,12 @@
   "today-search-verses": "Sykje boeken, haadstikken, fersen....",
   "anonymous-greeting": "Wolkom!",
   "community": "MIENSKIP",
-  "friday-short": "fre",
   "go-somewhere-new": "GEAN EARNE NIJS",
   "greeting-afternoon": "Goeiemiddei",
   "greeting-evening": "Goejûn",
   "greeting-morning": "Goedei",
   "greeting-night": "Goeienacht",
   "last-48-hours": "Lêste 48 oeren",
-  "monday-short": "mo",
   "open-bible": "Iepen Bibel",
   "personal-greeting": "Wolkom, {{name}} !",
   "read-first-chapter": "Lês it earste haadstik",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Dyn lêshistoarje oan it laden…",
   "selected-year": "Jier: {{year}}",
   "this-month": "Dizze moanne",
-  "this-week": "Dizze wike",
-  "wednesday-short": "wo"
+  "this-week": "Dizze wike"
 }

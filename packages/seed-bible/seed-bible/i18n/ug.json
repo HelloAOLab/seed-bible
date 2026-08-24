@@ -556,14 +556,12 @@
   "today-search-verses": "كىتابلار، بابلار، ئايەتلەرنى ئىزدەڭ...",
   "anonymous-greeting": "خۇش كەپسىز!",
   "community": "جەمئىيەت",
-  "friday-short": "جۈمە",
   "go-somewhere-new": "يېڭى بىر يەرگە بېرىڭ",
   "greeting-afternoon": "خەيرلىك چۈشتىن كېيىن",
   "greeting-evening": "خەيرلىك كەچ",
   "greeting-morning": "خەيرلىك ئەتىگەن",
   "greeting-night": "خەيرلىك كېچە",
   "last-48-hours": "ئاخىرقى 48 سائەت",
-  "monday-short": "دۈشەنبە",
   "open-bible": "ئوچۇق ئىنجىل",
   "personal-greeting": "خۇش كەپسىز، {{name}} !",
   "read-first-chapter": "بىرىنچى بابنى ئوقۇڭ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "ئوقۇش تارىخىڭىز يۈكلەنمەكتە…",
   "selected-year": "يىل: {{year}}",
   "this-month": "بۇ ئايدا",
-  "this-week": "بۇ ھەپتە",
-  "wednesday-short": "چارشەنبە"
+  "this-week": "بۇ ھەپتە"
 }

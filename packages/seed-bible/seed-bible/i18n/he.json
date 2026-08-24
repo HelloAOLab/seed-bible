@@ -556,14 +556,12 @@
   "today-search-verses": "חיפוש ספרים, פרקים, פסוקים....",
   "anonymous-greeting": "קַבָּלַת פָּנִים!",
   "community": "קהילה",
-  "friday-short": "שישי",
   "go-somewhere-new": "לך למקום חדש",
   "greeting-afternoon": "אחר צהריים טובים",
   "greeting-evening": "ערב טוב",
   "greeting-morning": "בוקר טוב",
   "greeting-night": "לילה טוב",
   "last-48-hours": "48 השעות האחרונות",
-  "monday-short": "שני",
   "open-bible": "תנ\"ך פתוח",
   "personal-greeting": "ברוך הבא, {{name}} !",
   "read-first-chapter": "קרא את הפרק הראשון",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "טוען את היסטוריית הקריאה שלך…",
   "selected-year": "שנה: {{year}}",
   "this-month": "החודש הזה",
-  "this-week": "השבוע",
-  "wednesday-short": "לְהִתְחַתֵן"
+  "this-week": "השבוע"
 }

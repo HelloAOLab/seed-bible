@@ -556,14 +556,12 @@
   "today-search-verses": "Išči knjige, poglavja, verze ...",
   "anonymous-greeting": "Dobrodošli!",
   "community": "SKUPNOST",
-  "friday-short": "pet",
   "go-somewhere-new": "POJDI NEKAM NA NOVO",
   "greeting-afternoon": "Dober dan",
   "greeting-evening": "Dober večer",
   "greeting-morning": "Dobro jutro",
   "greeting-night": "Lahko noč",
   "last-48-hours": "Zadnjih 48 ur",
-  "monday-short": "Pon",
   "open-bible": "Odprta Biblija",
   "personal-greeting": "Dobrodošel/dobrodošla, {{name}} !",
   "read-first-chapter": "Preberite prvo poglavje",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Nalaganje zgodovine branja …",
   "selected-year": "Leto: {{year}}",
   "this-month": "Ta mesec",
-  "this-week": "Ta teden",
-  "wednesday-short": "sre"
+  "this-week": "Ta teden"
 }

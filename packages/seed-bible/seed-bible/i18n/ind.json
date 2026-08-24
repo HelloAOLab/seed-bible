@@ -556,14 +556,12 @@
   "today-search-verses": "Cari buku, bab, ayat....",
   "anonymous-greeting": "Selamat datang!",
   "community": "MASYARAKAT",
-  "friday-short": "Jumat",
   "go-somewhere-new": "PERGI KE TEMPAT BARU",
   "greeting-afternoon": "Selamat siang",
   "greeting-evening": "Selamat malam",
   "greeting-morning": "Selamat pagi",
   "greeting-night": "Selamat malam",
   "last-48-hours": "48 jam terakhir",
-  "monday-short": "Senin",
   "open-bible": "Alkitab Terbuka",
   "personal-greeting": "Selamat datang, {{name}} !",
   "read-first-chapter": "Bacalah bab pertama",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Memuat riwayat bacaan Anda…",
   "selected-year": "Tahun: {{year}}",
   "this-month": "Bulan ini",
-  "this-week": "Minggu ini",
-  "wednesday-short": "Menikahi"
+  "this-week": "Minggu ini"
 }

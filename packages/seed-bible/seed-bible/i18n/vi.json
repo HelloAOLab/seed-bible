@@ -556,14 +556,12 @@
   "today-search-verses": "Tìm kiếm sách, chương, câu...",
   "anonymous-greeting": "Chào mừng!",
   "community": "CỘNG ĐỒNG",
-  "friday-short": "Thứ Sáu",
   "go-somewhere-new": "HÃY ĐI ĐẾN MỘT NƠI MỚI",
   "greeting-afternoon": "Chào buổi chiều",
   "greeting-evening": "Buổi tối vui vẻ",
   "greeting-morning": "Chào buổi sáng",
   "greeting-night": "Chúc ngủ ngon",
   "last-48-hours": "48 giờ qua",
-  "monday-short": "Thứ Hai",
   "open-bible": "Kinh Thánh Mở",
   "personal-greeting": "Chào mừng, {{name}} !",
   "read-first-chapter": "Hãy đọc chương đầu tiên",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Đang tải lịch sử đọc của bạn…",
   "selected-year": "Năm: {{year}}",
   "this-month": "Tháng này",
-  "this-week": "Tuần này",
-  "wednesday-short": "Thứ Tư"
+  "this-week": "Tuần này"
 }

@@ -556,14 +556,12 @@
   "today-search-verses": "પુસ્તકો, પ્રકરણ, શ્લોકો શોધો....",
   "anonymous-greeting": "સ્વાગત છે!",
   "community": "સમુદાય",
-  "friday-short": "શુક્ર",
   "go-somewhere-new": "ક્યાંક નવી જગ્યાએ જાઓ",
   "greeting-afternoon": "શુભ બપોર",
   "greeting-evening": "શુભ સાંજ",
   "greeting-morning": "સુપ્રભાત",
   "greeting-night": "શુભ રાત્રિ",
   "last-48-hours": "છેલ્લા ૪૮ કલાક",
-  "monday-short": "સોમ",
   "open-bible": "બાઇબલ ખોલો",
   "personal-greeting": "સ્વાગત છે, {{name}} !",
   "read-first-chapter": "પહેલો પ્રકરણ વાંચો",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "તમારો વાંચન ઇતિહાસ લોડ કરી રહ્યું છે…",
   "selected-year": "વર્ષ: {{year}}",
   "this-month": "આ મહિને",
-  "this-week": "આ અઠવાડિયે",
-  "wednesday-short": "બુધ"
+  "this-week": "આ અઠવાડિયે"
 }

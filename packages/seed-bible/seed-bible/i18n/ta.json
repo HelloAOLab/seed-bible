@@ -556,14 +556,12 @@
   "today-search-verses": "புத்தகங்கள், அதிகாரம், வசனங்களைத் தேடுங்கள்....",
   "anonymous-greeting": "வரவேற்கிறோம்!",
   "community": "சமூகம்",
-  "friday-short": "வெள்ளி",
   "go-somewhere-new": "புதிய இடத்திற்குச் செல்லுங்கள்",
   "greeting-afternoon": "மதிய வணக்கம்",
   "greeting-evening": "மாலை வணக்கம்",
   "greeting-morning": "காலை வணக்கம்",
   "greeting-night": "இனிய இரவு",
   "last-48-hours": "கடந்த 48 மணி நேரம்",
-  "monday-short": "திங்கள்",
   "open-bible": "திறந்த புத்தகம்",
   "personal-greeting": "வரவேற்கிறோம், {{name}} !",
   "read-first-chapter": "முதல் அத்தியாயத்தைப் படிக்கவும்",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "உங்கள் வாசிப்பு வரலாறு ஏற்றப்படுகிறது…",
   "selected-year": "ஆண்டு: {{year}}",
   "this-month": "இந்த மாதம்",
-  "this-week": "இந்த வாரம்",
-  "wednesday-short": "புதன்"
+  "this-week": "இந்த வாரம்"
 }

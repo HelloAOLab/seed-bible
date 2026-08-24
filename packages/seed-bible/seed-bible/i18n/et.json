@@ -556,14 +556,12 @@
   "today-search-verses": "Otsi raamatuid, peatükke, salme...",
   "anonymous-greeting": "Tere tulemast!",
   "community": "KOGUKOND",
-  "friday-short": "Reede",
   "go-somewhere-new": "MINE KUSKILLE UUT KOHTA",
   "greeting-afternoon": "Tere päevast",
   "greeting-evening": "Tere õhtust",
   "greeting-morning": "Tere hommikust",
   "greeting-night": "Head ööd",
   "last-48-hours": "Viimased 48 tundi",
-  "monday-short": "Esmaspäev",
   "open-bible": "Avatud Piibel",
   "personal-greeting": "Tere tulemast, {{name}} !",
   "read-first-chapter": "Loe esimest peatükki",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Lugemisajaloo laadimine…",
   "selected-year": "Aasta: {{year}}",
   "this-month": "Sel kuul",
-  "this-week": "Sel nädalal",
-  "wednesday-short": "Kolmapäev"
+  "this-week": "Sel nädalal"
 }

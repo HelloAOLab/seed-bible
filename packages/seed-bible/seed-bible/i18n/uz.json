@@ -556,14 +556,12 @@
   "today-search-verses": "Kitoblar, boblar, oyatlarni qidiring....",
   "anonymous-greeting": "Xush kelibsiz!",
   "community": "JAMOAT",
-  "friday-short": "Juma",
   "go-somewhere-new": "YANGI YERGA BORING",
   "greeting-afternoon": "Hayrli kun",
   "greeting-evening": "Hayrli kech",
   "greeting-morning": "Xayrli tong",
   "greeting-night": "Hayrli tun",
   "last-48-hours": "So'nggi 48 soat",
-  "monday-short": "Dushanba",
   "open-bible": "Ochiq Muqaddas Kitob",
   "personal-greeting": "Xush kelibsiz, {{name}} !",
   "read-first-chapter": "Birinchi bobni o'qing",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "O'qish tarixingiz yuklanmoqda…",
   "selected-year": "Yil: {{year}}",
   "this-month": "Bu oy",
-  "this-week": "Ushbu hafta",
-  "wednesday-short": "Chorshanba"
+  "this-week": "Ushbu hafta"
 }

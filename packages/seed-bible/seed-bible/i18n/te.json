@@ -556,14 +556,12 @@
   "today-search-verses": "పుస్తకాలు, అధ్యాయాలు, వచనాలు వెతకండి....",
   "anonymous-greeting": "స్వాగతం!",
   "community": "సంఘం",
-  "friday-short": "శుక్రవారం",
   "go-somewhere-new": "కొత్త ప్రదేశానికి వెళ్లండి",
   "greeting-afternoon": "శుభ మధ్యాహ్నం",
   "greeting-evening": "శుభ సాయంకాలం",
   "greeting-morning": "శుభోదయం",
   "greeting-night": "శుభరాత్రి",
   "last-48-hours": "గత 48 గంటల్లో",
-  "monday-short": "సోమవారం",
   "open-bible": "ఓపెన్ బైబిల్",
   "personal-greeting": "స్వాగతం, {{name}} !",
   "read-first-chapter": "మొదటి అధ్యాయం చదవండి",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "మీ పఠన చరిత్ర లోడ్ అవుతోంది…",
   "selected-year": "సంవత్సరం: {{year}}",
   "this-month": "ఈ నెల",
-  "this-week": "ఈ వారం",
-  "wednesday-short": "బుధవారం"
+  "this-week": "ఈ వారం"
 }

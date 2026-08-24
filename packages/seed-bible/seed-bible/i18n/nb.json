@@ -556,14 +556,12 @@
   "today-search-verses": "Søk etter bøker, kapitler, vers ...",
   "anonymous-greeting": "Velkomst!",
   "community": "FELLESSKAP",
-  "friday-short": "Fre",
   "go-somewhere-new": "DRA ET NYTT STED",
   "greeting-afternoon": "God ettermiddag",
   "greeting-evening": "God kveld",
   "greeting-morning": "God morgen",
   "greeting-night": "God natt",
   "last-48-hours": "Siste 48 timer",
-  "monday-short": "man",
   "open-bible": "Åpne Bibelen",
   "personal-greeting": "Velkommen, {{name}} !",
   "read-first-chapter": "Les det første kapittelet",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Laster inn leseloggen din …",
   "selected-year": "År: {{year}}",
   "this-month": "Denne måneden",
-  "this-week": "Denne uken",
-  "wednesday-short": "Ons"
+  "this-week": "Denne uken"
 }

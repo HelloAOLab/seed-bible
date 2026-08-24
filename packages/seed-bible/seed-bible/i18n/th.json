@@ -556,14 +556,12 @@
   "today-search-verses": "ค้นหาหนังสือ บท ข้อ...",
   "anonymous-greeting": "ยินดีต้อนรับ!",
   "community": "ชุมชน",
-  "friday-short": "ศุกร์",
   "go-somewhere-new": "ไปสู่สถานที่ใหม่",
   "greeting-afternoon": "สวัสดีตอนบ่าย",
   "greeting-evening": "สวัสดีตอนเย็น",
   "greeting-morning": "สวัสดีตอนเช้า",
   "greeting-night": "ราตรีสวัสดิ์",
   "last-48-hours": "48 ชั่วโมงที่ผ่านมา",
-  "monday-short": "จันทร์",
   "open-bible": "เปิดพระคัมภีร์",
   "personal-greeting": "ยินดีต้อนรับ {{name}} !",
   "read-first-chapter": "อ่านบทแรก",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "กำลังโหลดประวัติการอ่านของคุณ…",
   "selected-year": "ปี: {{year}}",
   "this-month": "เดือนนี้",
-  "this-week": "สัปดาห์นี้",
-  "wednesday-short": "วันพุธ"
+  "this-week": "สัปดาห์นี้"
 }

@@ -556,14 +556,12 @@
   "today-search-verses": "Ieškoti knygų, skyrių, eilučių...",
   "anonymous-greeting": "Sveiki atvykę!",
   "community": "BENDRUOMENĖ",
-  "friday-short": "Penktadienis",
   "go-somewhere-new": "Eik į naują vietą",
   "greeting-afternoon": "Laba diena",
   "greeting-evening": "Labas vakaras",
   "greeting-morning": "Labas rytas",
   "greeting-night": "Labos nakties",
   "last-48-hours": "Paskutinės 48 valandos",
-  "monday-short": "Pirmadienis",
   "open-bible": "Atvira Biblija",
   "personal-greeting": "Sveiki atvykę, {{name}} !",
   "read-first-chapter": "Perskaitykite pirmąjį skyrių",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Įkeliama jūsų skaitymo istorija…",
   "selected-year": "Metai: {{year}}",
   "this-month": "Šį mėnesį",
-  "this-week": "Šią savaitę",
-  "wednesday-short": "Trečiadienis"
+  "this-week": "Šią savaitę"
 }

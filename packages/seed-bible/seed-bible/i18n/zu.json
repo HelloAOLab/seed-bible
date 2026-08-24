@@ -556,14 +556,12 @@
   "today-search-verses": "Sesha izincwadi, izahluko, amavesi....",
   "anonymous-greeting": "Siyakwamukela!",
   "community": "UMPHAKATHI",
-  "friday-short": "ngoLwesihlanu",
   "go-somewhere-new": "HAMBA ESINYE ISIKHATHI ESISHA",
   "greeting-afternoon": "Sawubona",
   "greeting-evening": "Sawubona",
   "greeting-morning": "Sawubona",
   "greeting-night": "Ulale kahle",
   "last-48-hours": "Amahora angu-48 okugcina",
-  "monday-short": "UMsombuluko",
   "open-bible": "Vula iBhayibheli",
   "personal-greeting": "Siyakwamukela, {{name}} !",
   "read-first-chapter": "Funda isahluko sokuqala",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Ilayisha umlando wakho wokufunda…",
   "selected-year": "Unyaka: {{year}}",
   "this-month": "Kule nyanga",
-  "this-week": "Kuleli viki",
-  "wednesday-short": "ULwesithathu"
+  "this-week": "Kuleli viki"
 }

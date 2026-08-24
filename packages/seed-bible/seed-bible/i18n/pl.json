@@ -556,14 +556,12 @@
   "today-search-verses": "Szukaj ksiąg, rozdziałów, wersetów....",
   "anonymous-greeting": "Powitanie!",
   "community": "WSPÓLNOTA",
-  "friday-short": "Pt",
   "go-somewhere-new": "IDŹ GDZIEŚ NOWEGO",
   "greeting-afternoon": "Dzień dobry",
   "greeting-evening": "Dobry wieczór",
   "greeting-morning": "Dzień dobry",
   "greeting-night": "Dobranoc",
   "last-48-hours": "Ostatnie 48 godzin",
-  "monday-short": "Poniedziałek",
   "open-bible": "Otwarta Biblia",
   "personal-greeting": "Witaj, {{name}} !",
   "read-first-chapter": "Przeczytaj pierwszy rozdział",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Ładowanie historii odczytów…",
   "selected-year": "Rok: {{year}}",
   "this-month": "W tym miesiącu",
-  "this-week": "W tym tygodniu",
-  "wednesday-short": "Poślubić"
+  "this-week": "W tym tygodniu"
 }

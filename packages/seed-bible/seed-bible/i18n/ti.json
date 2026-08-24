@@ -556,14 +556,12 @@
   "today-search-verses": "መጽሓፍቲ፡ ምዕራፍ፡ ጥቕስታት ድለዩ....",
   "anonymous-greeting": "እንኳዕ ደሓን መፁ!",
   "community": "ማሕበረሰብ",
-  "friday-short": "ዓርቢ 2019 ዓ.ም",
   "go-somewhere-new": "ሓድሽ ቦታ ኪድ",
   "greeting-afternoon": "ከመይ ውዒሎም",
   "greeting-evening": "ከመይ ኣምሽዮም",
   "greeting-morning": "ከመይ ሓዲርኩም",
   "greeting-night": "ልዋም ለይቲ",
   "last-48-hours": "ዝሓለፉ 48 ሰዓታት",
-  "monday-short": "ሰኑይ",
   "open-bible": "መጽሓፍ ቅዱስ ክፈት",
   "personal-greeting": "እንቋዕ ደሓን መጻእካ {{name}} !",
   "read-first-chapter": "ቀዳመይቲ ምዕራፍ ኣንብባ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "ታሪኽ ንባብካ ኣብ ምጽዓን...",
   "selected-year": "ዓመት {{year}}",
   "this-month": "ኣብዚ ወርሒ",
-  "this-week": "ኣብዚ ሰሙን እዚ",
-  "wednesday-short": "ረቡዕ"
+  "this-week": "ኣብዚ ሰሙን እዚ"
 }

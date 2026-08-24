@@ -556,14 +556,12 @@
   "today-search-verses": "ਕਿਤਾਬਾਂ, ਅਧਿਆਇ, ਆਇਤਾਂ ਖੋਜੋ....",
   "anonymous-greeting": "ਜੀ ਆਇਆਂ ਨੂੰ!",
   "community": "ਭਾਈਚਾਰਾ",
-  "friday-short": "ਸ਼ੁੱਕਰ",
   "go-somewhere-new": "ਕਿਤੇ ਨਵਾਂ ਜਾਓ",
   "greeting-afternoon": "ਨਮਸਕਾਰ",
   "greeting-evening": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ",
   "greeting-morning": "ਸ਼ੁਭ ਸਵੇਰ",
   "greeting-night": "ਸ਼ੁਭ ਰਾਤ",
   "last-48-hours": "ਪਿਛਲੇ 48 ਘੰਟੇ",
-  "monday-short": "ਸੋਮ",
   "open-bible": "ਬਾਈਬਲ ਖੋਲ੍ਹੋ",
   "personal-greeting": "ਜੀ ਆਇਆਂ ਨੂੰ, {{name}} !",
   "read-first-chapter": "ਪਹਿਲਾ ਅਧਿਆਇ ਪੜ੍ਹੋ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "ਤੁਹਾਡਾ ਪੜ੍ਹਨ ਦਾ ਇਤਿਹਾਸ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
   "selected-year": "ਸਾਲ: {{year}}",
   "this-month": "ਇਸ ਮਹੀਨੇ",
-  "this-week": "ਇਸ ਹਫ਼ਤੇ",
-  "wednesday-short": "ਬੁੱਧ"
+  "this-week": "ਇਸ ਹਫ਼ਤੇ"
 }

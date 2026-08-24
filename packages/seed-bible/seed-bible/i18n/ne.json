@@ -556,14 +556,12 @@
   "today-search-verses": "किताबहरू, अध्यायहरू, पदहरू खोज्नुहोस्....",
   "anonymous-greeting": "स्वागत छ!",
   "community": "समुदाय",
-  "friday-short": "शुक्रबार",
   "go-somewhere-new": "कतै नयाँ जानुहोस्",
   "greeting-afternoon": "शुभ दिउँसो",
   "greeting-evening": "शुभ साँझ",
   "greeting-morning": "शुभ प्रभात",
   "greeting-night": "शुभ रात्री",
   "last-48-hours": "पछिल्लो ४८ घण्टा",
-  "monday-short": "सोमबार",
   "open-bible": "बाइबल खोल्नुहोस्",
   "personal-greeting": "स्वागत छ, {{name}} !",
   "read-first-chapter": "पहिलो अध्याय पढ्नुहोस्",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "तपाईंको पठन इतिहास लोड गर्दै...",
   "selected-year": "वर्ष: {{year}}",
   "this-month": "यो महिना",
-  "this-week": "यो हप्ता",
-  "wednesday-short": "बुधबार"
+  "this-week": "यो हप्ता"
 }

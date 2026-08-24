@@ -556,14 +556,12 @@
   "today-search-verses": "Kitap, bölüm, ayet araması yapın...",
   "anonymous-greeting": "Hoş geldin!",
   "community": "TOPLUM",
-  "friday-short": "Cuma",
   "go-somewhere-new": "YENİ BİR YERE GİT",
   "greeting-afternoon": "Tünaydın",
   "greeting-evening": "İyi akşamlar",
   "greeting-morning": "Günaydın",
   "greeting-night": "İyi geceler",
   "last-48-hours": "Son 48 saat",
-  "monday-short": "Pazartesi",
   "open-bible": "Açık İncil",
   "personal-greeting": "Hoş geldin, {{name}} !",
   "read-first-chapter": "Birinci bölümü okuyun",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Okuma geçmişiniz yükleniyor…",
   "selected-year": "Yıl: {{year}}",
   "this-month": "Bu ay",
-  "this-week": "Bu hafta",
-  "wednesday-short": "Çarşamba"
+  "this-week": "Bu hafta"
 }

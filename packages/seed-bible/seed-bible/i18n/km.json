@@ -556,14 +556,12 @@
   "today-search-verses": "ស្វែងរកសៀវភៅ ជំពូក ខគម្ពីរ....",
   "anonymous-greeting": "សូមស្វាគមន៍!",
   "community": "សហគមន៍",
-  "friday-short": "សុក្រ",
   "go-somewhere-new": "ទៅកន្លែងថ្មី",
   "greeting-afternoon": "សួស្តីរសៀល",
   "greeting-evening": "សួស្តីពេលល្ងាច",
   "greeting-morning": "អរុណសួស្តី",
   "greeting-night": "រាត្រីសួស្តី",
   "last-48-hours": "៤៨ ម៉ោងចុងក្រោយ",
-  "monday-short": "ច័ន្ទ",
   "open-bible": "បើកព្រះគម្ពីរ",
   "personal-greeting": "សូមស្វាគមន៍, {{name}} !",
   "read-first-chapter": "សូមអានជំពូកទីមួយ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "កំពុងផ្ទុកប្រវត្តិអានរបស់អ្នក...",
   "selected-year": "ឆ្នាំ៖ {{year}}",
   "this-month": "ខែនេះ",
-  "this-week": "សប្តាហ៍នេះ",
-  "wednesday-short": "ថ្ងៃពុធ"
+  "this-week": "សប្តាហ៍នេះ"
 }

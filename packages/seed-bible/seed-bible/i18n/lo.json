@@ -556,14 +556,12 @@
   "today-search-verses": "ຄົ້ນຫາປຶ້ມ, ບົດ, ຂໍ້ພຣະຄຳພີ....",
   "anonymous-greeting": "ຍິນດີຕ້ອນຮັບ!",
   "community": "ຊຸມຊົນ",
-  "friday-short": "ວັນສຸກ",
   "go-somewhere-new": "ໄປບ່ອນໃໝ່",
   "greeting-afternoon": "ສະບາຍດີຕອນບ່າຍ",
   "greeting-evening": "ສະບາຍດີຕອນແລງ",
   "greeting-morning": "ສະບາຍດີຕອນເຊົ້າ",
   "greeting-night": "ສະບາຍດີຕອນກາງຄືນ",
   "last-48-hours": "48 ຊົ່ວໂມງທີ່ຜ່ານມາ",
-  "monday-short": "ຈັນ",
   "open-bible": "ເປີດຄຳພີໄບເບິນ",
   "personal-greeting": "ຍິນດີຕ້ອນຮັບ, {{name}} !",
   "read-first-chapter": "ອ່ານບົດທຳອິດ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "ກຳລັງໂຫຼດປະຫວັດການອ່ານຂອງທ່ານ…",
   "selected-year": "ປີ: {{year}}",
   "this-month": "ເດືອນນີ້",
-  "this-week": "ອາທິດນີ້",
-  "wednesday-short": "ວັນພຸດ"
+  "this-week": "ອາທິດນີ້"
 }

@@ -556,14 +556,12 @@
   "today-search-verses": "Ном, бүлэг, шүлгүүдийг хайх....",
   "anonymous-greeting": "Тавтай морил!",
   "community": "НИЙГЭМЛЭГ",
-  "friday-short": "Баасан гараг",
   "go-somewhere-new": "ШИНЭ ХААНА Ч ЯВАХ",
   "greeting-afternoon": "Өдрийн мэнд",
   "greeting-evening": "Оройн мэнд",
   "greeting-morning": "Өглөөний мэнд",
   "greeting-night": "Сайхан амраарай",
   "last-48-hours": "Сүүлийн 48 цаг",
-  "monday-short": "Даваа гараг",
   "open-bible": "Нээлттэй Библи",
   "personal-greeting": "Тавтай морил, {{name}} !",
   "read-first-chapter": "Эхний бүлгийг уншина уу",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Уншлагын түүхийг тань ачаалж байна...",
   "selected-year": "Жил: {{year}}",
   "this-month": "Энэ сард",
-  "this-week": "Энэ долоо хоногт",
-  "wednesday-short": "Лхагва гараг"
+  "this-week": "Энэ долоо хоногт"
 }

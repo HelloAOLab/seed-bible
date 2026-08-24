@@ -556,14 +556,12 @@
   "today-search-verses": "Cerca llibres, capítols, versos...",
   "anonymous-greeting": "Benvingut/da!",
   "community": "COMUNITAT",
-  "friday-short": "divendres",
   "go-somewhere-new": "VÉS A UN LLOC NOU",
   "greeting-afternoon": "Bona tarda",
   "greeting-evening": "Bona nit",
   "greeting-morning": "Bon dia",
   "greeting-night": "Bona nit",
   "last-48-hours": "Últimes 48 hores",
-  "monday-short": "Dll.",
   "open-bible": "Bíblia Oberta",
   "personal-greeting": "Benvingut/da, {{name}} !",
   "read-first-chapter": "Llegeix el primer capítol",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "S'està carregant l'historial de lectura…",
   "selected-year": "Any: {{year}}",
   "this-month": "Aquest mes",
-  "this-week": "Aquesta setmana",
-  "wednesday-short": "dimecres"
+  "this-week": "Aquesta setmana"
 }

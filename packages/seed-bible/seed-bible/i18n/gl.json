@@ -556,14 +556,12 @@
   "today-search-verses": "Buscar libros, capítulos, versos...",
   "anonymous-greeting": "Benvido/a!",
   "community": "COMUNIDADE",
-  "friday-short": "Venres",
   "go-somewhere-new": "VAIA A ALGÚN LUGAR NOVO",
   "greeting-afternoon": "Boas tardes",
   "greeting-evening": "Boas noites",
   "greeting-morning": "Bos días",
   "greeting-night": "Boas noites",
   "last-48-hours": "Últimas 48 horas",
-  "monday-short": "Luns",
   "open-bible": "Biblia aberta",
   "personal-greeting": "Benvido/a, {{name}} !",
   "read-first-chapter": "Ler o primeiro capítulo",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Cargando o historial de lectura…",
   "selected-year": "Ano: {{year}}",
   "this-month": "Este mes",
-  "this-week": "Esta semana",
-  "wednesday-short": "mércores"
+  "this-week": "Esta semana"
 }

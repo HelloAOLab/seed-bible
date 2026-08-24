@@ -556,14 +556,12 @@
   "today-search-verses": "መጽሐፍትን፣ ምዕራፍን፣ ጥቅሶችን ፈልግ....",
   "anonymous-greeting": "እንኳን ደህና መጣህ!",
   "community": "ማህበረሰብ",
-  "friday-short": "አርብ",
   "go-somewhere-new": "አዲስ ወደሆነ ቦታ ሂድ",
   "greeting-afternoon": "እንደምን አረፈድክ",
   "greeting-evening": "አንደምን አመሸህ",
   "greeting-morning": "ምልካም እድል",
   "greeting-night": "ደህና እደር",
   "last-48-hours": "ባለፉት 48 ሰዓታት",
-  "monday-short": "ሰኞ",
   "open-bible": "ክፍት መጽሐፍ ቅዱስ",
   "personal-greeting": "እንኳን ደህና መጡ፣ {{name}} !",
   "read-first-chapter": "የመጀመሪያውን ምዕራፍ ያንብቡ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "የንባብ ታሪክዎን በመጫን ላይ…",
   "selected-year": "ዓመት፦ {{year}}",
   "this-month": "በዚህ ወር",
-  "this-week": "በዚህ ሳምንት",
-  "wednesday-short": "ረቡዕ"
+  "this-week": "በዚህ ሳምንት"
 }

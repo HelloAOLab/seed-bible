@@ -556,14 +556,12 @@
   "today-search-verses": "Kërko libra, kapituj, vargje....",
   "anonymous-greeting": "Mirë se vini!",
   "community": "KOMUNITETI",
-  "friday-short": "E premte",
   "go-somewhere-new": "SHKO DIKU NË NJË VEND TË RI",
   "greeting-afternoon": "Mirëdita",
   "greeting-evening": "Mirëmbrëma",
   "greeting-morning": "Mirëmëngjes",
   "greeting-night": "Natën e mirë",
   "last-48-hours": "48 orët e fundit",
-  "monday-short": "E hënë",
   "open-bible": "Bibla e Hapur",
   "personal-greeting": "Mirë se erdhe, {{name}} !",
   "read-first-chapter": "Lexoni kapitullin e parë",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Duke ngarkuar historikun tënd të leximit…",
   "selected-year": "Viti: {{year}}",
   "this-month": "Këtë muaj",
-  "this-week": "Këtë javë",
-  "wednesday-short": "E mërkurë"
+  "this-week": "Këtë javë"
 }

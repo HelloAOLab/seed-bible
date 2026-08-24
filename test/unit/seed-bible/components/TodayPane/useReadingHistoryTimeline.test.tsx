@@ -216,6 +216,30 @@ describe("useReadingHistoryTimeline", () => {
         "Fri",
       ]);
     });
+
+    // These used to come from translation keys, where a bare "Wed" was read as
+    // the verb and came back as "Heiraten" in German and "Casarse" in Spanish.
+    it("localizes the day labels", () => {
+      const result = setup();
+      const labelsFor = (language: string) =>
+        [1, 3, 5].map((day) =>
+          new Intl.DateTimeFormat(language, { weekday: "short" }).format(
+            new Date(2024, 0, day)
+          )
+        );
+      const rendered = () =>
+        dayLabels(result).map((l) => (l as { children: string }).children);
+
+      // Guards the test against being vacuous: if the two languages agreed,
+      // the assertion below would pass no matter what the hook did.
+      expect(labelsFor("en")).not.toEqual(labelsFor("de"));
+      expect(rendered()).toEqual(labelsFor("en"));
+
+      mockI18nState.language = "de";
+      result.rerender();
+
+      expect(rendered()).toEqual(labelsFor("de"));
+    });
   });
 
   describe("month labels", () => {

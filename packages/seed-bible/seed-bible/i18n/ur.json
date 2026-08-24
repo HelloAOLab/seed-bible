@@ -556,14 +556,12 @@
   "today-search-verses": "کتابیں، باب، آیات تلاش کریں۔",
   "anonymous-greeting": "خوش آمدید!",
   "community": "کمیونٹی",
-  "friday-short": "جمعہ",
   "go-somewhere-new": "نئی جگہ پر جائیں۔",
   "greeting-afternoon": "صبح بخیر",
   "greeting-evening": "شب بخیر",
   "greeting-morning": "صبح بخیر",
   "greeting-night": "شب بخیر",
   "last-48-hours": "آخری 48 گھنٹے",
-  "monday-short": "پیر",
   "open-bible": "بائبل کھولیں۔",
   "personal-greeting": "خوش آمدید، {{name}} !",
   "read-first-chapter": "پہلا باب پڑھیں",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "آپ کی پڑھنے کی سرگزشت لوڈ ہو رہی ہے…",
   "selected-year": "سال: {{year}}",
   "this-month": "اس مہینے",
-  "this-week": "اس ہفتے",
-  "wednesday-short": "بدھ"
+  "this-week": "اس ہفتے"
 }

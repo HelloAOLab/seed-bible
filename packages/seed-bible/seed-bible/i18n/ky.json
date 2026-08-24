@@ -556,14 +556,12 @@
   "today-search-verses": "Китептер, бөлүмдөр, аяттар боюнча издөө...",
   "anonymous-greeting": "Кош келдиңиз!",
   "community": "КООМЧУЛУК",
-  "friday-short": "Жума",
   "go-somewhere-new": "ЖАҢЫ ЖЕРГЕ БАРЫҢЫЗ",
   "greeting-afternoon": "Кайырдуу күн",
   "greeting-evening": "Кайырдуу кеч",
   "greeting-morning": "Кайырдуу таң",
   "greeting-night": "Кайырдуу түн",
   "last-48-hours": "Акыркы 48 саат",
-  "monday-short": "Дүйшөмбү",
   "open-bible": "Ачык Ыйык Китеп",
   "personal-greeting": "Кош келиңиз, {{name}} !",
   "read-first-chapter": "Биринчи бөлүмдү окуңуз",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Окуу тарыхыңыз жүктөлүүдө…",
   "selected-year": "Жыл: {{year}}",
   "this-month": "Бул айда",
-  "this-week": "Бул аптада",
-  "wednesday-short": "Шаршемби"
+  "this-week": "Бул аптада"
 }

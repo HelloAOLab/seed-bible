@@ -556,14 +556,12 @@
   "today-search-verses": "Hae kirjoja, lukuja, jakeita...",
   "anonymous-greeting": "Tervetuloa!",
   "community": "YHTEISÖ",
-  "friday-short": "pe",
   "go-somewhere-new": "MENE JONNEKIN UUTEEN PAIKASTA",
   "greeting-afternoon": "Hyvää iltapäivää",
   "greeting-evening": "Hyvää iltaa",
   "greeting-morning": "Hyvää huomenta",
   "greeting-night": "Hyvää yötä",
   "last-48-hours": "Viimeiset 48 tuntia",
-  "monday-short": "Ma",
   "open-bible": "Avoin Raamattu",
   "personal-greeting": "Tervetuloa, {{name}} !",
   "read-first-chapter": "Lue ensimmäinen luku",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Ladataan lukuhistoriaasi…",
   "selected-year": "Vuosi: {{year}}",
   "this-month": "Tässä kuussa",
-  "this-week": "Tällä viikolla",
-  "wednesday-short": "keskiviikko"
+  "this-week": "Tällä viikolla"
 }

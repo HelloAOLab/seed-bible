@@ -556,14 +556,12 @@
   "today-search-verses": "Soek boeke, hoofstukke, verse....",
   "anonymous-greeting": "Welkom!",
   "community": "GEMEENSKAP",
-  "friday-short": "Vry",
   "go-somewhere-new": "GAAN IEWERS NUUT",
   "greeting-afternoon": "Goeiemiddag",
   "greeting-evening": "Goeienaand",
   "greeting-morning": "Goeiemôre",
   "greeting-night": "Goeie nag",
   "last-48-hours": "Laaste 48 uur",
-  "monday-short": "Ma",
   "open-bible": "Oop Bybel",
   "personal-greeting": "Welkom, {{name}} !",
   "read-first-chapter": "Lees die eerste hoofstuk",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Laai jou leesgeskiedenis…",
   "selected-year": "Jaar: {{year}}",
   "this-month": "Hierdie maand",
-  "this-week": "Hierdie week",
-  "wednesday-short": "Woe"
+  "this-week": "Hierdie week"
 }

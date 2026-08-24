@@ -302,9 +302,18 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
     const dayLabelGridColumn = `1 / 2`;
     const todayDate = new Date();
 
-    const translatedMonday = t("monday-short", { defaultValue: "Mon" });
-    const translatedWednesday = t("wednesday-short", { defaultValue: "Wed" });
-    const translatedFriday = t("friday-short", { defaultValue: "Fri" });
+    // Weekday labels come from `Intl`, not translation keys. A bare "Mon" or
+    // "Wed" is too ambiguous to hand to a translator -- "Wed" was read as the
+    // verb and came back as "Heiraten" / "Casarse" / "Épouser" -- and `Intl`
+    // already returns a properly abbreviated name per locale, which is what
+    // the single-column label needs. Months on this grid resolve the same way.
+    // The dates below are only a known Monday, Wednesday and Friday.
+    const weekdayFormatter = new Intl.DateTimeFormat(language, {
+      weekday: "short",
+    });
+    const translatedMonday = weekdayFormatter.format(new Date(2024, 0, 1));
+    const translatedWednesday = weekdayFormatter.format(new Date(2024, 0, 3));
+    const translatedFriday = weekdayFormatter.format(new Date(2024, 0, 5));
 
     const items: ReadingHistoryContentData<TimelineTooltipContent>[] = [
       {

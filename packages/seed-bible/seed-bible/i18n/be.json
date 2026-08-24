@@ -556,14 +556,12 @@
   "today-search-verses": "Пошук кніг, раздзелаў, вершаў...",
   "anonymous-greeting": "Вітаем!",
   "community": "СУПОЛЬНАСЦЬ",
-  "friday-short": "Пятніца",
   "go-somewhere-new": "АДПРАЎЛЯЙЦЕСЯ Ў НОВАЕ МЕСЦА",
   "greeting-afternoon": "Добры дзень",
   "greeting-evening": "Добры вечар",
   "greeting-morning": "Добрай раніцы",
   "greeting-night": "Дабранач",
   "last-48-hours": "Апошнія 48 гадзін",
-  "monday-short": "Пн",
   "open-bible": "Адкрытая Біблія",
   "personal-greeting": "Вітаем, {{name}} !",
   "read-first-chapter": "Прачытайце першы раздзел",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Загрузка гісторыі чытання…",
   "selected-year": "Год: {{year}}",
   "this-month": "У гэтым месяцы",
-  "this-week": "На гэтым тыдні",
-  "wednesday-short": "серада"
+  "this-week": "На гэтым тыдні"
 }

@@ -556,14 +556,12 @@
   "today-search-verses": "Keresés könyvek, fejezetek, versek között...",
   "anonymous-greeting": "Üdvözöljük!",
   "community": "KÖZÖSSÉG",
-  "friday-short": "Péntek",
   "go-somewhere-new": "MENJ VALAHA ÚJ HELYRE",
   "greeting-afternoon": "Jó napot",
   "greeting-evening": "Jó estét",
   "greeting-morning": "Jó reggelt",
   "greeting-night": "Jó éjszakát",
   "last-48-hours": "Utolsó 48 óra",
-  "monday-short": "Hétfő",
   "open-bible": "Nyitott Biblia",
   "personal-greeting": "Üdvözlünk, {{name}} !",
   "read-first-chapter": "Olvasd el az első fejezetet",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Olvasási előzmények betöltése…",
   "selected-year": "Év: {{year}}",
   "this-month": "Ebben a hónapban",
-  "this-week": "Ezen a héten",
-  "wednesday-short": "Házasodik"
+  "this-week": "Ezen a héten"
 }

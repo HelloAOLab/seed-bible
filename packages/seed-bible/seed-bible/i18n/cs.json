@@ -556,14 +556,12 @@
   "today-search-verses": "Hledat knihy, kapitoly, verše...",
   "anonymous-greeting": "Vítejte!",
   "community": "SPOLEČENSTVÍ",
-  "friday-short": "Pá",
   "go-somewhere-new": "JDI NĚKDE NOVĚ",
   "greeting-afternoon": "Dobré odpoledne",
   "greeting-evening": "Dobrý večer",
   "greeting-morning": "Dobré ráno",
   "greeting-night": "Dobrou noc",
   "last-48-hours": "Posledních 48 hodin",
-  "monday-short": "Po",
   "open-bible": "Otevřená Bible",
   "personal-greeting": "Vítej, {{name}} !",
   "read-first-chapter": "Přečtěte si první kapitolu",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Načítání historie čtení…",
   "selected-year": "Rok: {{year}}",
   "this-month": "Tento měsíc",
-  "this-week": "Tento týden",
-  "wednesday-short": "St"
+  "this-week": "Tento týden"
 }

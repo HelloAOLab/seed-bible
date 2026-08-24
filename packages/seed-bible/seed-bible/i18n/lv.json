@@ -556,14 +556,12 @@
   "today-search-verses": "Meklēt grāmatas, nodaļas, pantus...",
   "anonymous-greeting": "Laipni lūgti!",
   "community": "KOPIENA",
-  "friday-short": "Piektdiena",
   "go-somewhere-new": "Dodieties kaut kur jaunā vietā",
   "greeting-afternoon": "Labdien",
   "greeting-evening": "Labvakar",
   "greeting-morning": "Labrīt",
   "greeting-night": "Arlabunakti",
   "last-48-hours": "Pēdējās 48 stundas",
-  "monday-short": "Pirmdiena",
   "open-bible": "Atvērtā Bībele",
   "personal-greeting": "Sveicināti, {{name}} !",
   "read-first-chapter": "Izlasiet pirmo nodaļu",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Notiek lasīšanas vēstures ielāde…",
   "selected-year": "Gads: {{year}}",
   "this-month": "Šomēnes",
-  "this-week": "Šonedēļ",
-  "wednesday-short": "Trešdiena"
+  "this-week": "Šonedēļ"
 }

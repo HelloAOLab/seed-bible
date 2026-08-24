@@ -556,14 +556,12 @@
   "today-search-verses": "Chwiliwch am lyfrau, penodau, penillion....",
   "anonymous-greeting": "Croeso!",
   "community": "CYMUNED",
-  "friday-short": "Gwener",
   "go-somewhere-new": "EWCH I RYWLE NEWYDD",
   "greeting-afternoon": "Prynhawn da",
   "greeting-evening": "Noswaith dda",
   "greeting-morning": "Bore da",
   "greeting-night": "Nos da",
   "last-48-hours": "48 awr ddiwethaf",
-  "monday-short": "Llun",
   "open-bible": "Beibl Agored",
   "personal-greeting": "Croeso, {{name}} !",
   "read-first-chapter": "Darllenwch y bennod gyntaf",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Wrthi'n llwytho eich hanes darllen…",
   "selected-year": "Blwyddyn: {{year}}",
   "this-month": "Y mis hwn",
-  "this-week": "Yr wythnos hon",
-  "wednesday-short": "Mer"
+  "this-week": "Yr wythnos hon"
 }

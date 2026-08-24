@@ -556,14 +556,12 @@
   "today-search-verses": "Αναζήτηση βιβλίων, κεφαλαίων, στίχων....",
   "anonymous-greeting": "Καλωσόρισμα!",
   "community": "ΚΟΙΝΟΤΗΤΑ",
-  "friday-short": "Παρ",
   "go-somewhere-new": "ΠΗΓΑΙΝΕ ΚΑΠΟΥ ΚΑΙΝΟΥΡΙΟ ΜΕΡΟΣ",
   "greeting-afternoon": "Καλημέρα",
   "greeting-evening": "Καλησπέρα",
   "greeting-morning": "Καλημέρα",
   "greeting-night": "Καληνύχτα",
   "last-48-hours": "Τελευταίες 48 ώρες",
-  "monday-short": "Δευ",
   "open-bible": "Ανοιχτή Βίβλος",
   "personal-greeting": "Καλώς ήρθες, {{name}} !",
   "read-first-chapter": "Διαβάστε το πρώτο κεφάλαιο",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Φόρτωση του ιστορικού ανάγνωσής σας…",
   "selected-year": "Έτος: {{year}}",
   "this-month": "Αυτόν τον μήνα",
-  "this-week": "Αυτή την εβδομάδα",
-  "wednesday-short": "Νυμφεύομαι"
+  "this-week": "Αυτή την εβδομάδα"
 }

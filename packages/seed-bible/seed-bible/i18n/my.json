@@ -556,14 +556,12 @@
   "today-search-verses": "စာအုပ်များ၊ အခန်းကြီးများ၊ အခန်းငယ်များကို ရှာဖွေပါ....",
   "anonymous-greeting": "ကြိုဆိုပါတယ်။",
   "community": "အသိုင်းအဝိုင်း",
-  "friday-short": "သောကြာနေ့",
   "go-somewhere-new": "နေရာအသစ်တစ်ခုကိုသွားပါ",
   "greeting-afternoon": "မင်္ဂလာနေ့လည်ခင်းပါ",
   "greeting-evening": "မင်္ဂလာညနေခင်းပါ",
   "greeting-morning": "မင်္ဂလာနံနက်ခင်းပါ",
   "greeting-night": "ကောင်းသောညပါ",
   "last-48-hours": "ပြီးခဲ့တဲ့ ၄၈ နာရီ",
-  "monday-short": "တနင်္လာ",
   "open-bible": "သမ္မာကျမ်းစာဖွင့်ပါ",
   "personal-greeting": "ကြိုဆိုပါတယ်၊ {{name}} !",
   "read-first-chapter": "ပထမအခန်းကိုဖတ်ပါ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "သင့်ဖတ်ရှုမှုမှတ်တမ်းကို တင်နေသည်…",
   "selected-year": "ခုနှစ်: {{year}}",
   "this-month": "ဒီလ",
-  "this-week": "ဒီတစ်ပတ်",
-  "wednesday-short": "ဗုဒ္ဓဟူးနေ့"
+  "this-week": "ဒီတစ်ပတ်"
 }

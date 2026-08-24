@@ -556,14 +556,12 @@
   "today-search-verses": "Caută cărți, capitole, versete...",
   "anonymous-greeting": "Bun venit!",
   "community": "COMUNITATE",
-  "friday-short": "Vin",
   "go-somewhere-new": "DU-TE ÎNTR-UN LOC NOU",
   "greeting-afternoon": "Bună ziua",
   "greeting-evening": "Bună seara",
   "greeting-morning": "Bună dimineaţa",
   "greeting-night": "Noapte bună",
   "last-48-hours": "Ultimele 48 de ore",
-  "monday-short": "Luni",
   "open-bible": "Biblia deschisă",
   "personal-greeting": "Bun venit, {{name}} !",
   "read-first-chapter": "Citește primul capitol",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Se încarcă istoricul de lectură…",
   "selected-year": "An: {{year}}",
   "this-month": "Luna aceasta",
-  "this-week": "În această săptămână",
-  "wednesday-short": "Miercuri"
+  "this-week": "În această săptămână"
 }

@@ -556,14 +556,12 @@
   "today-search-verses": "ಪುಸ್ತಕಗಳು, ಅಧ್ಯಾಯ, ಪದ್ಯಗಳನ್ನು ಹುಡುಕಿ....",
   "anonymous-greeting": "ಸ್ವಾಗತ!",
   "community": "ಸಮುದಾಯ",
-  "friday-short": "ಶುಕ್ರ",
   "go-somewhere-new": "ಹೊಸದಕ್ಕೆ ಹೋಗಿ",
   "greeting-afternoon": "ಶುಭ ಅಪರಾಹ್ನ",
   "greeting-evening": "ಶುಭ ಸಂಜೆ",
   "greeting-morning": "ಶುಭೋದಯ",
   "greeting-night": "ಶುಭ ರಾತ್ರಿ",
   "last-48-hours": "ಕಳೆದ 48 ಗಂಟೆಗಳು",
-  "monday-short": "ಸೋಮ",
   "open-bible": "ಬೈಬಲ್ ತೆರೆಯಿರಿ",
   "personal-greeting": "ಸ್ವಾಗತ, {{name}} !",
   "read-first-chapter": "ಮೊದಲ ಅಧ್ಯಾಯವನ್ನು ಓದಿ",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "ನಿಮ್ಮ ಓದುವ ಇತಿಹಾಸವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
   "selected-year": "ವರ್ಷ: {{year}}",
   "this-month": "ಈ ತಿಂಗಳು",
-  "this-week": "ಈ ವಾರ",
-  "wednesday-short": "ಬುಧ"
+  "this-week": "ಈ ವಾರ"
 }

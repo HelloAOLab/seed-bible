@@ -556,14 +556,12 @@
   "today-search-verses": "Tafuta vitabu, sura, mistari....",
   "anonymous-greeting": "Karibu!",
   "community": "JAMII",
-  "friday-short": "Ijumaa",
   "go-somewhere-new": "NENDA MAHALI PYA",
   "greeting-afternoon": "Habari za mchana",
   "greeting-evening": "Jioni njema",
   "greeting-morning": "Habari za asubuhi",
   "greeting-night": "Usiku mwema",
   "last-48-hours": "Saa 48 zilizopita",
-  "monday-short": "Jumatatu",
   "open-bible": "Biblia Iliyofunguliwa",
   "personal-greeting": "Karibu, {{name}} !",
   "read-first-chapter": "Soma sura ya kwanza",
@@ -571,6 +569,5 @@
   "resume-reading-loading": "Inapakia historia yako ya usomaji…",
   "selected-year": "Mwaka: {{year}}",
   "this-month": "Mwezi huu",
-  "this-week": "Wiki hii",
-  "wednesday-short": "Jumatano"
+  "this-week": "Wiki hii"
 }
