@@ -9,11 +9,15 @@
 - On mobile, add, edit, and delete notes directly from the verse selection toolbar, with the verses the note covers shown alongside it as you write. ([#1593](https://github.com/HelloAOLab/seed-bible/pull/1593))
 - Let you remove a play from Playlist history.
 - Analytics for common playlist actions like creating and finishing playlists.
+- Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
+- Ask which version to keep when a note changed in two places at once — edited on your phone while your laptop was offline, say. Previously whichever change was saved last silently replaced the other. Now the two versions are shown side by side with when each was written, and you choose: keep yours, keep the other one, or keep both (yours is saved as a second note, so nothing you wrote is thrown away). Nothing is overwritten until you decide.
 
 ### 🔧 Changed
 
 - Keep one Playlist history entry per playlist in Discover, grouped by day, so you can resume or restart what you last played instead of browsing a full log of every play. Playing a playlist again replaces that playlist's history with the latest session. Deleting a playlist also clears its history.
 - Show each playlist history row like a playlist: play to resume or restart, a menu to remove it, and status as time, percent complete, and last item, instead of an expandable details panel.
+- Show Share in the chapter header instead of the reader toolbar, so it is always visible without opening a menu.
+- Open the share sheet for the current tab from the tabs screen instead of immediately starting a shared session.
 
 ### 🐛 Fixed
 

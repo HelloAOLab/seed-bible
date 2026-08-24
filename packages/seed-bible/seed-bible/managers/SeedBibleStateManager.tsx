@@ -93,6 +93,7 @@ import {
   createAnnotationsManager,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
+import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
 import {
   createModalManager,
   type ModalManager,
@@ -438,6 +439,14 @@ export interface CreateSeedBibleStateOptions {
    * IndexedDB; tests pass an in-memory store, and null disables the feature.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
+   * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
+   * instance already fetched. The client uses this to seed its own API cache
+   * with whatever the server already fetched for the SSR render — see
+   * `readInjectedApiResponseSnapshot` in `app/apiResponseSeed.ts`.
+   */
+  apiResponseSnapshot?: Record<string, unknown>;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -466,6 +475,9 @@ export function createSeedBibleState(
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
+  if (options.apiResponseSnapshot) {
+    api.seedResponseCache(options.apiResponseSnapshot);
+  }
   const i18n = createI18nManager(
     navigation,
     options.config?.acceptedLanguages ?? []
@@ -1687,6 +1699,39 @@ export function createSeedBibleState(
         : t("signed-out-message", {
             defaultValue: "You've been signed out. Please sign in again.",
           })
+    );
+  });
+
+  // Ask which version to keep whenever a sync pass finds a note that changed in
+  // two places. Nothing is overwritten until the user answers, so this prompt is
+  // the only thing standing between a queued offline edit and someone else's
+  // writing.
+  effect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    syncAnnotationConflictModal(modals, annotations.sync, toast);
+  });
+
+  // Say something when a note can't be saved to the account. The composer now
+  // closes as soon as the note is on the device, so without this a server
+  // refusal would only ever appear in the console — the note would look saved.
+  let reportedSyncErrors = 0;
+  effect(() => {
+    const count = annotations.sync.syncErrors.value.size;
+    const isNew = count > reportedSyncErrors;
+    reportedSyncErrors = count;
+    if (!isNew || typeof window === "undefined") {
+      return;
+    }
+    // Destructured for the translation lint rules, which only recognise a bare
+    // `t` — see the sign-out toast above.
+    const { t } = i18n;
+    toast(
+      t("annotation-sync-failed", {
+        defaultValue:
+          "Couldn't save a note to your account. It's still on this device.",
+      })
     );
   });
 

@@ -158,6 +158,13 @@
   line-height: 1;
 }
 
+/* RTL reverses the button's flex row, which would park the right-pointing
+   arrow on the label's left. Reverse it back so the arrow stays trailing the
+   label and pointing right, as it does in LTR. */
+[dir="rtl"] .sb-tour-btn-next {
+  flex-direction: row-reverse;
+}
+
 /* Pointer arrow — a rotated square that merges with the card edge. */
 .sb-tour-arrow {
   position: absolute;

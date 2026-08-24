@@ -13,6 +13,9 @@
   flex-shrink: 0;
 }
 
+/* Mobile: sits in the header's right cluster, just after the bookmark
+   button, so Share (and any other quick tools) stay next to chapter
+   actions instead of floating beside the translation pill. */
 .sb-quick-toolbar-mobile-header {
   flex-shrink: 0;
 }

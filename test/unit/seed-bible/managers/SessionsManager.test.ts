@@ -340,6 +340,7 @@ describe("SessionsManager", () => {
     profile: ReturnType<typeof signal<UserProfile | null>>;
   };
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
+  let mockReadingPositionsMap: ReturnType<typeof createMockSharedMap>;
   let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
@@ -357,7 +358,14 @@ describe("SessionsManager", () => {
     uuid.mockImplementation(() => `uuid-${uuidCount++}`);
     uuid.mockReturnValueOnce("test-config-bot-id");
 
+    // `os` is real here — only `getSharedDocument` is stubbed — so every other
+    // method it exposes has to be safe to call. Stubbed for the whole file
+    // rather than per-describe: any test that drives a sync recovery reaches
+    // this, and reaching the real one used to build the inst client and open
+    // a websocket to auth.seedbible.org. That connection resolving mid-run
+    // fails the suite with an unhandled error even when every test passes.
     os = CasualOSManager();
+    
     // Stub the cache purge for every test, not just the presence ones: the
     // real one lazily builds the inst client, which opens a websocket to the
     // live server. Any test that takes a session through a resync (sync false
@@ -370,6 +378,7 @@ describe("SessionsManager", () => {
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
     mockUserProfilesMap = createMockSharedMap();
+    mockReadingPositionsMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockStatusUpdated = createMockStatusUpdatedObservable();
@@ -385,6 +394,10 @@ describe("SessionsManager", () => {
 
         if (name === "user_profiles") {
           return mockUserProfilesMap;
+        }
+
+        if (name === "reading_positions") {
+          return mockReadingPositionsMap;
         }
 
         if (name === "reading_extensions") {
@@ -717,7 +730,7 @@ describe("SessionsManager", () => {
     });
 
     mockMap.set.mockClear();
-    mockDocument.transact.mockClear();
+    mockReadingPositionsMap.set.mockClear();
 
     session.readingState.translationId.value = "NIV";
     session.readingState.bookId.value = "EXO";
@@ -725,7 +738,13 @@ describe("SessionsManager", () => {
     await flushPublishDebounce();
 
     expect(mockMap.set).not.toHaveBeenCalled();
-    expect(mockDocument.transact).not.toHaveBeenCalled();
+    // Presence is not navigation: a participant who may not move the session
+    // for everyone still reports where they themselves are, or peers would
+    // render them at the session's position instead of their own.
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "EXO",
+      chapterNumber: 8,
+    });
   });
 
   it("does not sync reading state changes when the current connection is not an allowed navigator", async () => {
@@ -745,7 +764,7 @@ describe("SessionsManager", () => {
     });
 
     mockMap.set.mockClear();
-    mockDocument.transact.mockClear();
+    mockReadingPositionsMap.set.mockClear();
 
     session.readingState.translationId.value = "NIV";
     session.readingState.bookId.value = "EXO";
@@ -753,7 +772,10 @@ describe("SessionsManager", () => {
     await flushPublishDebounce();
 
     expect(mockMap.set).not.toHaveBeenCalled();
-    expect(mockDocument.transact).not.toHaveBeenCalled();
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "EXO",
+      chapterNumber: 8,
+    });
   });
 
   it("syncs local decorations to the shared decorations map", async () => {
@@ -1242,9 +1264,11 @@ describe("SessionsManager", () => {
 
     // Three position changes, but one shared-document write of where the
     // reader ended up: the shared document never shrinks, so a fast skim must
-    // not leave a transaction per chapter in it.
-    expect(mockDocument.transact).toHaveBeenCalledTimes(1);
+    // not leave a transaction per chapter in it. Two transactions total — the
+    // reading state, and our own presence entry, which coalesces the same way.
+    expect(mockDocument.transact).toHaveBeenCalledTimes(2);
     expect(mockMap.set).toHaveBeenCalledTimes(3);
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledTimes(1);
     expect(session.readingState.translationId.value).toBe("NIV");
     expect(session.readingState.bookId.value).toBe("EXO");
     expect(session.readingState.chapterNumber.value).toBe(8);
@@ -1858,6 +1882,132 @@ describe("SessionsManager", () => {
           joinedAtMs: null,
         },
       ])
+    );
+  });
+
+  it("exposes each participant's own broadcast position, not the session's", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-1",
+        userId: "user-1",
+      },
+    });
+
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", { bookId: "REV", chapterNumber: 22 });
+    mockReadingPositionsMap.emitChange();
+
+    await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+    expect(session.participantPositions.value.get("conn-1")).toEqual({
+      bookId: "REV",
+      chapterNumber: 22,
+    });
+    // The local reader never left GEN 1, so a peer's position that tracked the
+    // session's reading state would report GEN 1 for them too.
+    expect(session.readingState.bookId.value).toBe("GEN");
+  });
+
+  it("ignores malformed position entries", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-1",
+        userId: "user-1",
+      },
+    });
+
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", { bookId: null, chapterNumber: 0 });
+    mockReadingPositionsMap.emitChange();
+    await idleTicks(3);
+
+    expect(session.participantPositions.value.has("conn-1")).toBe(false);
+  });
+
+  it("drops position entries for participants that are no longer connected", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-1",
+        userId: "user-1",
+      },
+    });
+
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", { bookId: "REV", chapterNumber: 22 });
+    mockReadingPositionsMap.emitChange();
+    await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+    mockRemoteClients.emit({
+      type: "client_disconnected",
+      isSelf: false,
+      client: {
+        connectionId: "conn-1",
+        userId: "user-1",
+      },
+    });
+
+    // The entry itself lingers in a document that never shrinks, so being gone
+    // has to be decided by connectivity.
+    await waitFor(() => !session.participantPositions.value.has("conn-1"));
+  });
+
+  it("broadcasts the local position and drops the entry on dispose", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+
+    session.dispose();
+
+    expect(mockReadingPositionsMap.delete).toHaveBeenCalledWith(
+      os.connectionId
     );
   });
 
