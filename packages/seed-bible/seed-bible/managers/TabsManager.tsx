@@ -86,6 +86,7 @@ import {
   type PersistedTab,
   type QueryReadingParams,
 } from "./TabsPersistence";
+import type { BrandingConfig } from "../app/appConfig";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -386,7 +387,8 @@ export function createTabs(
    * can't exist yet when the first tab below is created; the caller passes a
    * getter that resolves once its own `AnnotationsManager` does.
    */
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  branding?: BrandingConfig
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -492,7 +494,7 @@ export function createTabs(
       highlightsManager,
       i18nManager,
       {
-        translationId: initialTranslationId,
+        translationId: branding?.defaultTranslationId || initialTranslationId,
         bookId: initialBookId,
         chapter: initialChapter,
         highlightedVerses,

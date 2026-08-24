@@ -17,6 +17,7 @@ export interface BrandingConfig {
   icon: string;
   websiteUrl: string;
   disabledToolbarTools?: string[];
+  defaultTranslationId?: string;
 }
 export interface AppConfig {
   /**
@@ -61,20 +62,37 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
  * config the server rendered with (avoids hydration mismatches).
  */
 export function readInjectedConfig(): AppConfig {
+  console.log("document exists:", typeof document !== "undefined");
+
   if (typeof document === "undefined") {
+    console.log("SSR → DEFAULT_APP_CONFIG");
     return DEFAULT_APP_CONFIG;
   }
+
   const el = document.getElementById("app-config");
+
+  console.log("app-config element:", el);
+  console.log("app-config text:", el?.textContent);
+
   if (!el?.textContent) {
+    console.log("NO CONFIG SCRIPT → DEFAULT_APP_CONFIG");
     return DEFAULT_APP_CONFIG;
   }
+
   try {
-    return { ...DEFAULT_APP_CONFIG, ...JSON.parse(el.textContent) };
-  } catch {
+    const parsed = JSON.parse(el.textContent);
+
+    console.log("PARSED CONFIG:", parsed);
+
+    return {
+      ...DEFAULT_APP_CONFIG,
+      ...parsed,
+    };
+  } catch (error) {
+    console.error("CONFIG JSON PARSE FAILED:", error);
     return DEFAULT_APP_CONFIG;
   }
 }
-
 /** Prefixes a root-relative app path with the deployment base path. */
 export function withBasePath(config: AppConfig, path: string): string {
   if (!config.basePath) return path;
