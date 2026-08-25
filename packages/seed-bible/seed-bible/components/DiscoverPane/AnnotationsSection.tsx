@@ -42,6 +42,11 @@ const AnnotationOverrideBanner = lazy(
   () => import("./AnnotationOverrideBanner")
 );
 
+/** How long a just-jumped-to annotation group stays flashed (see
+ * `AnnotationsSection`'s `highlightedGroupKey`). Matches the CSS fade in
+ * DiscoverPane.css's `.sb-annotation-group--highlighted` rule. */
+const HIGHLIGHT_DURATION_MS = 2000;
+
 /**
  * Resolves the display name of the book an annotation targets, using
  * whichever open tab currently has that chapter loaded. Falls back to the
@@ -267,6 +272,10 @@ function AnnotationGroupSection(props: {
   panes: PanesManager;
   onReferenceClick?: (ref: VerseRef) => void;
   otherPeoplePresent?: boolean;
+  /** True while this group is the target of a just-clicked annotated verse
+   * number (see `AnnotationsSection`'s `scrollToVerse` effect) — briefly
+   * flashes a highlight so the reader can find the note it jumped to. */
+  highlighted?: boolean;
 }) {
   const {
     id,
@@ -279,13 +288,19 @@ function AnnotationGroupSection(props: {
     panes,
     onReferenceClick,
     otherPeoplePresent,
+    highlighted,
   } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
 
   return (
-    <div className="sb-annotation-group" id={id}>
+    <div
+      className={`sb-annotation-group${
+        highlighted ? " sb-annotation-group--highlighted" : ""
+      }`}
+      id={id}
+    >
       <button
         type="button"
         className="sb-annotation-group-header"
@@ -442,14 +457,20 @@ export function AnnotationsSection(props: {
   const groupElementId = (groupKey: string) =>
     `sb-annotation-group-${tab?.id ?? "no-tab"}-${groupKey}`;
 
+  // Which group just got scrolled to, so it can flash a highlight — cleared
+  // after HIGHLIGHT_DURATION_MS so a second click on the same verse re-flashes
+  // instead of leaving the highlight permanently on.
+  const highlightedGroupKey = useSignal<string | null>(null);
+
   // Clicking an annotated verse number on desktop (BibleReader.tsx) sets
-  // this once; scroll to that verse's annotation group if it's this tab's
-  // chapter, then clear it. Mirrors the mobile equivalent in
+  // this once; scroll to and highlight that verse's annotation group if it's
+  // this tab's chapter, then clear it. Mirrors the mobile equivalent in
   // BibleReaderToolbar.tsx.
   useEffect(() => {
     if (!tab) return;
 
     let frame = 0;
+    let highlightTimer = 0;
     const dispose = effect(() => {
       const target = discover.scrollToVerse.value;
       if (!target) return;
@@ -482,10 +503,17 @@ export function AnnotationsSection(props: {
           .getElementById(groupElementId(groupKey))
           ?.scrollIntoView({ block: "nearest" });
       });
+
+      window.clearTimeout(highlightTimer);
+      highlightedGroupKey.value = groupKey;
+      highlightTimer = window.setTimeout(() => {
+        highlightedGroupKey.value = null;
+      }, HIGHLIGHT_DURATION_MS);
     });
 
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(highlightTimer);
       dispose();
     };
   }, [tab, discover, annotations]);
@@ -567,6 +595,7 @@ export function AnnotationsSection(props: {
               panes={panes}
               onReferenceClick={onReferenceClick}
               otherPeoplePresent={otherPeoplePresent}
+              highlighted={groupKey === highlightedGroupKey.value}
             />
           );
         })

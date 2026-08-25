@@ -1925,7 +1925,8 @@ describe("BibleReader", () => {
   function createStateWithAnnotatedVerse(
     bookId: string,
     chapterNumber: number,
-    verseNumber: number
+    verseNumber: number,
+    isMobile = true
   ): SeedBibleState {
     const chapterAnnotations = signal([
       {
@@ -1936,8 +1937,10 @@ describe("BibleReader", () => {
         data: { type: "comment", html: "<p>Note</p>" },
       },
     ]);
+    const state = createMobileState();
     return {
-      ...createMobileState(),
+      ...state,
+      app: { ...state.app, isMobile: signal(isMobile) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
       },
@@ -2007,6 +2010,73 @@ describe("BibleReader", () => {
       )
     ).toBeNull();
     expect(container.querySelectorAll(".sb-verse-number")).toHaveLength(1);
+  });
+
+  it("clicking an annotated verse number on desktop forces the compact discover panel inline and targets its note", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(readingState.discoverContentPanelInline.value).toBe(true);
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
+  });
+
+  it("clicking an annotated verse number on mobile leaves the compact discover panel placement alone", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, true);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(readingState.discoverContentPanelInline.value).toBe(false);
+    expect(state.discover.scrollToVerse.value).toBeNull();
+    expect(readingState.pendingAnnotationScrollVerse.value).toBe(1);
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {

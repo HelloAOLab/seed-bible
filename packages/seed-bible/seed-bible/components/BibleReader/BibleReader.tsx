@@ -1676,8 +1676,9 @@ export function BibleReader(props: BibleReaderProps) {
 
   // Clicking an annotated verse number selects the verse (like clicking its
   // text does) and jumps straight to its note: expands and scrolls to it in
-  // the mobile verse toolbar, or opens/scrolls the Discover pane on desktop,
-  // where that toolbar isn't used.
+  // the mobile verse toolbar, or — on desktop, where that toolbar isn't used —
+  // forces the compact discover panel beside the scripture text and scrolls/
+  // highlights the note there.
   const handleAnnotationVerseClick = (
     verse: BibleSelectedVerse,
     verseNumber: number,
@@ -1697,18 +1698,15 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    // Set the target before (maybe) opening: if Discover is already open,
-    // openDiscover() would just toggle it *closed* — only open when it isn't
-    // already showing, and let the effect in AnnotationsSection react to the
-    // target either way.
+    readingState.discoverContentPanelInline.value = true;
+    // AnnotationsSection's shared effect reacts to this target either way —
+    // scrolling to and highlighting the note's group — whether it's mounted
+    // in this tab's compact panel or the toolbar-toggled Discover pane.
     state.discover.scrollToVerse.value = {
       bookId: verse.bookId,
       chapterNumber: verse.chapterNumber,
       verseNumber,
     };
-    if (!state.discover.isDiscoverOpen.value) {
-      state.app.openDiscover();
-    }
   };
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
