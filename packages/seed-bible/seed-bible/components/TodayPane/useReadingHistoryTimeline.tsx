@@ -462,7 +462,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
   ]);
 
   // The year selector sets the timeline year (and clears the timespan via
-  // selectYear). Legend is currently placeholder data.
+  // selectYear).
   const footer = useMemo<ReadingHistoryTimelineFooterData>(() => {
     const yearSelectorOptionsData = [...yearTimespanMap.keys()].map(
       (selectableYear) => ({
