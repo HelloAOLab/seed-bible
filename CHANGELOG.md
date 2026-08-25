@@ -4,9 +4,13 @@
 
 ### ✨ Added
 
+- Edit a playlist's description from the playlist editor. Descriptions can span multiple lines, and long ones in the list collapse behind Read more.
+- Analytics for common playlist actions like creating and finishing playlists.
 - Offer to switch the app's language when you pick a Bible translation written in another one. Previously, choosing a Spanish translation left every menu and button in English, and you had to find the language setting yourself. Now a prompt appears — written in the language it is offering — asking whether to switch, with "Switch", "Don't Switch", and "Never Ask Again". It asks at most once per visit, and "Never Ask Again" is remembered; you can turn it back on under Settings.
 
 ### 🔧 Changed
+
+- Show a focus ring on playlist Read more / Read less when navigating with the keyboard, instead of leaving the control with no visible focus.
 
 ### 🐛 Fixed
 
@@ -35,8 +39,7 @@
 - Reuse the Bible content the server already fetched to render the page instead of the client re-fetching those same translations, book catalogs, and chapters, for a faster initial load. ([#1617](https://github.com/HelloAOLab/seed-bible/pull/1617))
 - Automatically open the login screen after a forced sign-out, such as an invalidated session, instead of leaving you signed out with no prompt to sign back in. ([#1641](https://github.com/HelloAOLab/seed-bible/pull/1641))
 
-### 🐛 Fixed
-
+### 🗑️ Removed
 - Fix a bookmark's first tap sometimes not registering on mobile, requiring a second tap. ([#1664](https://github.com/HelloAOLab/seed-bible/pull/1664))
 - Fix tapping a toolbar button on Android sometimes only stopping the page's scroll instead of registering as a tap, requiring a second tap to activate it. ([#1642](https://github.com/HelloAOLab/seed-bible/pull/1642))
 - Fix toast notifications appearing behind other UI elements. ([#1641](https://github.com/HelloAOLab/seed-bible/pull/1641))

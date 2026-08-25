@@ -162,12 +162,13 @@ function createMockPlaylists(
   const removePlayHistory = vi.fn().mockResolvedValue(undefined);
 
   const view = signal(overrides.view ?? "discover");
+  const editingPlaylist = signal(overrides.editingPlaylist ?? null);
   const playlists = {
     view,
     actualView: view,
     userPlaylists: signal(overrides.userPlaylists ?? []),
+    editingPlaylist,
     userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
-    editingPlaylist: signal(overrides.editingPlaylist ?? null),
     playing: signal(overrides.playing ?? null),
     createNewPlaylist,
     startPlaying,
@@ -179,6 +180,13 @@ function createMockPlaylists(
     replayFromHistory,
     removePlayHistory,
     saveEditingPlaylist: vi.fn().mockResolvedValue(undefined),
+    updateEditingPlaylistMetadata: vi.fn(
+      (updates: Partial<Pick<Playlist, "title" | "description">>) => {
+        const current = editingPlaylist.value;
+        if (!current) return;
+        editingPlaylist.value = { ...current, ...updates };
+      }
+    ),
     addEditingPlaylistItem: vi.fn(),
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
@@ -506,7 +514,7 @@ describe("DiscoverPane", () => {
       items[0]?.querySelector(".sb-discover-item-title")?.textContent
     ).toBe("Evening Reading");
     expect(
-      items[0]?.querySelector(".sb-discover-item-description")?.textContent
+      items[0]?.querySelector(".sb-expandable-text-body")?.textContent
     ).toBe("A short evening study");
     expect(
       items[1]?.querySelector(".sb-discover-item-title")?.textContent
