@@ -1,6 +1,9 @@
 import {
   createCustomizationsManager,
   CUSTOMIZATION_MARKER,
+  lightenColor,
+  SECONDARY_LIGHTEN_AMOUNT,
+  TERTIARY_LIGHTEN_AMOUNT,
 } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
@@ -12,6 +15,11 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
+
+function hexToRgbTuple(hex: string): [number, number, number] {
+  const num = parseInt(hex.replace("#", ""), 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
 
 describe("CustomizationsManager", () => {
   let recordDataMock: Mock;
@@ -147,7 +155,7 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value[0]?.id).toBe("customization_good");
   });
 
-  it("create() persists a new record pre-filled from the current theme and does not apply it live", async () => {
+  it("create() persists a new record pre-filled from the current theme, with secondary/tertiary lightened from primary", async () => {
     const theme = createTheme(settings);
     const manager = createCustomizationsManager(os, login, theme, navigation);
     const lightThemeVariables = theme.currentTheme.value.variables;
@@ -157,8 +165,14 @@ describe("CustomizationsManager", () => {
     expect(created.active).toBe(false);
     expect(created.themes).toEqual({
       primaryColor: lightThemeVariables.primaryColor,
-      secondaryColor: lightThemeVariables.secondaryColor,
-      tertiaryColor: lightThemeVariables.tertiaryColor,
+      secondaryColor: lightenColor(
+        lightThemeVariables.primaryColor,
+        SECONDARY_LIGHTEN_AMOUNT
+      ),
+      tertiaryColor: lightenColor(
+        lightThemeVariables.primaryColor,
+        TERTIARY_LIGHTEN_AMOUNT
+      ),
       fontColor: lightThemeVariables.fontColor,
     });
     expect(recordDataMock).toHaveBeenCalledWith("user-1", created.id, created, {
@@ -167,6 +181,56 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value).toEqual([created]);
     expect(manager.activeThemeOverrides.value).toEqual({});
     expect(theme.customOverrides.value).toEqual({});
+  });
+
+  it("lightenColor() moves a color's lightness toward white by the given amount", () => {
+    const [r1, g1, b1] = hexToRgbTuple(lightenColor("#000000", 0.5));
+    expect(r1).toBeGreaterThan(0);
+    expect(r1).toBeLessThan(255);
+    expect(r1).toBe(g1);
+    expect(g1).toBe(b1);
+
+    expect(lightenColor("#ffffff", 0.5)).toBe("#ffffff");
+
+    const [r2, g2, b2] = hexToRgbTuple(lightenColor("#e07b4c", 0.35));
+    // Lightening moves every channel toward 255, never past it.
+    expect(r2).toBeGreaterThanOrEqual(0xe0);
+    expect(g2).toBeGreaterThanOrEqual(0x7b);
+    expect(b2).toBeGreaterThanOrEqual(0x4c);
+    expect(r2).toBeLessThanOrEqual(255);
+    expect(g2).toBeLessThanOrEqual(255);
+    expect(b2).toBeLessThanOrEqual(255);
+  });
+
+  it("setColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const created = await manager.create();
+
+    await manager.setColor(created.id, "primaryColor", "#123456");
+
+    const updated = manager.customizations.value[0];
+    expect(updated?.themes.secondaryColor).toBe(
+      lightenColor("#123456", SECONDARY_LIGHTEN_AMOUNT)
+    );
+    expect(updated?.themes.tertiaryColor).toBe(
+      lightenColor("#123456", TERTIARY_LIGHTEN_AMOUNT)
+    );
+  });
+
+  it("setColor() leaves a manually-picked secondary/tertiary alone when the primary changes", async () => {
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const created = await manager.create();
+
+    await manager.setColor(created.id, "secondaryColor", "#abcdef");
+    await manager.setColor(created.id, "primaryColor", "#123456");
+
+    const updated = manager.customizations.value[0];
+    expect(updated?.themes.secondaryColor).toBe("#abcdef");
+    expect(updated?.themes.tertiaryColor).toBe(
+      lightenColor("#123456", TERTIARY_LIGHTEN_AMOUNT)
+    );
   });
 
   it("setColor() on a non-active customization persists but does not touch the live theme", async () => {
@@ -186,8 +250,6 @@ describe("CustomizationsManager", () => {
   it("setActive() applies the customization's colors to the live theme without persisting them to the user's theme settings", async () => {
     const theme = createTheme(settings);
     const manager = createCustomizationsManager(os, login, theme, navigation);
-    const originalSecondaryColor =
-      theme.currentTheme.value.variables.secondaryColor;
     const created = await manager.create();
     await manager.setColor(created.id, "primaryColor", "#111111");
     await manager.setColor(created.id, "fontColor", "#222222");
@@ -197,8 +259,10 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value[0]?.active).toBe(true);
     expect(manager.activeThemeOverrides.value.primaryColor).toBe("#111111");
     expect(manager.activeThemeOverrides.value.fontColor).toBe("#222222");
+    // Secondary was still following the primary color (never manually set),
+    // so it re-derived along with it.
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe(
-      originalSecondaryColor
+      lightenColor("#111111", SECONDARY_LIGHTEN_AMOUNT)
     );
     // Regression check: activating a customization must never write into the
     // user's persisted, settings-backed theme overrides — only refreshing

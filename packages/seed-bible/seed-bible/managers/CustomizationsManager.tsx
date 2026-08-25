@@ -18,6 +18,95 @@ import {
 
 export const CUSTOMIZATION_MARKER = "publicRead:seedBibleCustomization";
 
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "");
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
+  const num = parseInt(full, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+function rgbToHex([r, g, b]: [number, number, number]): string {
+  return (
+    "#" +
+    [r, g, b]
+      .map((c) =>
+        Math.round(Math.min(255, Math.max(0, c)))
+          .toString(16)
+          .padStart(2, "0")
+      )
+      .join("")
+  );
+}
+
+function rgbToHsl([r, g, b]: [number, number, number]): [
+  number,
+  number,
+  number,
+] {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) {
+    return [0, 0, l];
+  }
+  const s = d / (1 - Math.abs(2 * l - 1));
+  let h: number;
+  if (max === rn) {
+    h = ((gn - bn) / d) % 6;
+  } else if (max === gn) {
+    h = (bn - rn) / d + 2;
+  } else {
+    h = (rn - gn) / d + 4;
+  }
+  h *= 60;
+  if (h < 0) {
+    h += 360;
+  }
+  return [h, s, l];
+}
+
+function hslToRgb([h, s, l]: [number, number, number]): [
+  number,
+  number,
+  number,
+] {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r1, g1, b1] =
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
+              : [c, 0, x];
+  return [(r1 + m) * 255, (g1 + m) * 255, (b1 + m) * 255];
+}
+
+/** Lightens a hex color toward white by `amount` (0-1) of its remaining headroom. */
+export function lightenColor(hex: string, amount: number): string {
+  const [h, s, l] = rgbToHsl(hexToRgb(hex));
+  return rgbToHex(hslToRgb([h, s, l + (1 - l) * amount]));
+}
+
+export const SECONDARY_LIGHTEN_AMOUNT = 0.35;
+export const TERTIARY_LIGHTEN_AMOUNT = 0.55;
+
 const customizationSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -187,13 +276,14 @@ export function createCustomizationsManager(
 
     const now = Date.now();
     const currentVariables = theme.currentTheme.value.variables;
+    const primaryColor = currentVariables.primaryColor;
     const record: SeedBibleCustomization = {
       id: `customization_${uuid()}`,
       name: `Customization ${customizations.value.length + 1}`,
       themes: {
-        primaryColor: currentVariables.primaryColor,
-        secondaryColor: currentVariables.secondaryColor,
-        tertiaryColor: currentVariables.tertiaryColor,
+        primaryColor,
+        secondaryColor: lightenColor(primaryColor, SECONDARY_LIGHTEN_AMOUNT),
+        tertiaryColor: lightenColor(primaryColor, TERTIARY_LIGHTEN_AMOUNT),
         fontColor: currentVariables.fontColor,
       },
       logoUrl: null,
@@ -238,11 +328,43 @@ export function createCustomizationsManager(
     key: ThemeColorKey,
     value: string
   ): Promise<void> => {
-    await updateRecord(id, (record) => ({
-      ...record,
-      themes: { ...record.themes, [key]: value },
-      updatedAt: Date.now(),
-    }));
+    await updateRecord(id, (record) => {
+      if (key !== "primaryColor") {
+        return {
+          ...record,
+          themes: { ...record.themes, [key]: value },
+          updatedAt: Date.now(),
+        };
+      }
+
+      // Secondary/tertiary follow the primary color as long as they still
+      // match its lightened derivation — the moment a user manually picks
+      // one, it stops matching and is left alone on future primary edits.
+      const previousPrimary = record.themes.primaryColor;
+      const nextThemes: ThemeOverrides = {
+        ...record.themes,
+        primaryColor: value,
+      };
+      if (
+        previousPrimary &&
+        record.themes.secondaryColor ===
+          lightenColor(previousPrimary, SECONDARY_LIGHTEN_AMOUNT)
+      ) {
+        nextThemes.secondaryColor = lightenColor(
+          value,
+          SECONDARY_LIGHTEN_AMOUNT
+        );
+      }
+      if (
+        previousPrimary &&
+        record.themes.tertiaryColor ===
+          lightenColor(previousPrimary, TERTIARY_LIGHTEN_AMOUNT)
+      ) {
+        nextThemes.tertiaryColor = lightenColor(value, TERTIARY_LIGHTEN_AMOUNT);
+      }
+
+      return { ...record, themes: nextThemes, updatedAt: Date.now() };
+    });
   };
 
   const setActive = async (id: string): Promise<void> => {
