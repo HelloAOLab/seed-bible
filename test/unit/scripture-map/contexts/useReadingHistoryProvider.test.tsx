@@ -21,17 +21,25 @@ vi.mock("../../../../packages/scripture-map/contexts/Time/TimeContext", () => ({
   useTimeContext: vi.fn(),
 }));
 
+// Partial mock: `getReadingHistoryEvents` is the real boundary (it reaches
+// CasualOS), so only it is faked. The aggregation around it —
+// `loadDailyReadingHistory` and `calculateReadingHistorySummary` — runs for
+// real, so these tests exercise the actual bucketing rather than a stub of it.
 vi.mock(
   "../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
-  () => ({
-    getReadingHistoryEvents: vi.fn(async () => []),
-    // `flat` flattens the per-user event arrays; iterable result is fine.
-    flat: vi.fn((arrays: unknown[][]) => arrays.flat()),
-    calculateReadingHistorySummary: vi.fn(() => ({
-      totalTimeSpentReading: 0,
-      users: {},
-    })),
-  })
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager")
+      >();
+    return {
+      ...actual,
+      getReadingHistoryEvents: vi.fn(async () => []),
+      calculateReadingHistorySummary: vi.fn(
+        actual.calculateReadingHistorySummary
+      ),
+    };
+  }
 );
 
 const MY_AUTH_ID = "me";

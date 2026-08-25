@@ -86,6 +86,7 @@ import {
   type PersistedTab,
   type QueryReadingParams,
 } from "./TabsPersistence";
+import type { BrandingConfig } from "../app/appConfig";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -128,13 +129,15 @@ export const PROFILE_TRANSLATION_ID = "translationId";
 function getInitialTranslationId(
   url: URL,
   basePath: string,
-  language: string
+  language: string,
+  brandingDefaultTranslationId?: string
 ): string {
   const parsed = parseReadingPath(url.pathname, basePath);
   return (
     parsed?.translationId ??
     url.searchParams.get("translationId") ??
     url.searchParams.get("translation") ??
+    brandingDefaultTranslationId ??
     getDefaultTranslationForLanguage(language).id
   );
 }
@@ -386,7 +389,8 @@ export function createTabs(
    * can't exist yet when the first tab below is created; the caller passes a
    * getter that resolves once its own `AnnotationsManager` does.
    */
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  branding?: BrandingConfig
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -476,7 +480,8 @@ export function createTabs(
     const initialTranslationId = getInitialTranslationId(
       navigation.initialUrl,
       navigation.basePath,
-      i18nManager.defaultLanguage
+      i18nManager.defaultLanguage,
+      branding?.defaultTranslationId
     );
     const initialBookId = getInitialFirstTabBookId(
       navigation.initialUrl,

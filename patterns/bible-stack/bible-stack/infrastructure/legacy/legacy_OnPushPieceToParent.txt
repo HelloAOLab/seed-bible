@@ -1,0 +1,46 @@
+const {piece, data, parentData} = that;
+const {testamentData, sectionData, bookData} = thisBot.GetPieceData({biblePiece: piece});
+const dimension = os.getCurrentDimension();
+setTagMask(thisBot, "isBibleAnimating", true);
+setTagMask(piece, "isBeingPushedToParent", true);
+setTagMask(piece, 'isBeingDragged', false)
+setTagMask(piece, "isDraggableToParent", false);
+let parent;
+switch (true)
+{
+    case parentData instanceof StackData:
+        parent = parentData.staticBiblePieces.bibleTransformer;
+        data.isInsideBible = true;
+        if(data instanceof StackSectionData || data instanceof StackBookData)
+        {
+            data.isInsideTestament = testamentData.isInsideBible;
+            if(data instanceof StackBookData) data.isInsideSection = sectionData.isInsideBible;
+        }
+        break;
+    case parentData instanceof StackTestamentData:
+        parent = parentData.testament;
+        data.isInsideBible = parentData.isInsideBible;
+        data.isInsideTestament = true;
+        if(data instanceof StackBookData) data.isInsideSection = sectionData.isInsideBible;
+        break;
+    case parentData instanceof StackSectionData:
+        parent = parentData.section;
+        data.isInsideSection = true;
+        data.isInsideTestament = parentData.isInsideTestament;
+        data.isInsideBible = parentData.isInsideBible;
+        break;
+    default: break;
+}
+if(!piece.tags.transformer)
+{
+    const piecePosition = getBotPosition(piece, dimension);
+    const parentPosition = getBotPosition(parent, dimension);
+    setTag(piece, "transformer", getID(parent));
+    const newPosition = piecePosition.subtract(parentPosition);
+    setTagMask(piece, dimension + "X", newPosition.x);
+    setTagMask(piece, dimension + "Y", newPosition.y);
+    setTagMask(piece, dimension + "Z", newPosition.z);
+}
+data.positionOutsideBible = null;
+
+thisBot.UpdateStacks().then(() => {setTagMask(thisBot, "isBibleAnimating", false)});
