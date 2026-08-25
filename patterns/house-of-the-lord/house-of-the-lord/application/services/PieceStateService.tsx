@@ -44,8 +44,7 @@ export class PieceStateService {
     for (const key of Object.keys(
       pieceStates
     ) as (keyof typeof pieceStates)[]) {
-      const state = pieceStates[key];
-      if (!state) continue;
+      const state = pieceStates[key]!;
       this.#pieceState.applyMeshState({ experience, key, state });
     }
   }

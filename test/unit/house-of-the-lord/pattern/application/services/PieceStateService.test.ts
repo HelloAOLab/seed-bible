@@ -30,7 +30,7 @@ describe("application.services.PieceStateService", () => {
       getCurrentReading: vi.fn(),
       setCurrentReading: vi.fn(),
     };
-    getExperienceKey = () => experience;
+    getExperienceKey = vi.fn(() => experience);
     service = new PieceStateService({
       pieceState,
       pieceStateConfigProviderPort,

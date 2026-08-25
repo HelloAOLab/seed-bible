@@ -1,6 +1,11 @@
-import { RoundToStep } from "./math";
-import type { RGB, WeightedColor } from "../models/commonTypes";
-import type { CSSProperties } from "preact";
+// TODO: Port this hardened logic (input normalization, GetColorType validation,
+// clamping) and its test suite to packages/seed-bible-utils/domain/functions/colors.tsx
+// once this branch is merged. Only ClampRGBColor/HexToRgb/RgbToHex are actually used
+// by this pattern; the rest are kept here solely to preserve that hardened logic +
+// tests until the port. Verify the app's callers before adopting in utils — behavior
+// changed (e.g. HexToRgb dropped its default, RgbToHex now clamps, several functions
+// now strip spaces / lower-case their input).
+import type { RGB } from "../models/commonTypes";
 
 export type ClampRGBColorType = (colorToClamp: RGB) => RGB;
 export type HexToRgbType = (params: { hexColor: string }) => RGB;
@@ -16,33 +21,6 @@ export interface ColorParserMap {
   longHex: string;
   shortHex: string;
 }
-export type GetTextColorBasedOnBackgroundType = (params: {
-  backgroundColor: WeightedColor[] | string;
-}) => string;
-export type GetDarkerColorType = (color: string, offset?: number) => string;
-export type GetChildrenLevelColorsType = (params: {
-  sectionColorRGB: RGB;
-  colorRange: number;
-  levelsLength: number;
-}) => string[];
-export type ComputeConicGradientType = (
-  colors: string[],
-  offset?: number,
-  diffuse?: number
-) => CSSProperties["background"];
-export type ComputeLinearGradientType = (
-  colors: WeightedColor[]
-) => CSSProperties["background"];
-export type InterpolateHexColorsType = (
-  baseColor: string,
-  targetColor: string,
-  progress: number,
-  step?: number
-) => string;
-export type ComputeRawGradientColorsType = (params: {
-  colors: string[];
-  diffuse?: number;
-}) => CSSProperties["backgroundImage"];
 
 export const ClampRGBColor: ClampRGBColorType = (colorToClamp) => {
   const colorClamped: RGB = [
@@ -87,19 +65,27 @@ export const GetColorType: GetColorTypeType = (color) => {
   if (Array.isArray(color)) return "arrayRGB";
   const s = color.trim();
   if (/^rgba?\s*\(/.test(s)) return "stringRGB";
-  const hex = s.startsWith("#") ? s.slice(1) : s;
+  const hex = (s.startsWith("#") ? s.slice(1) : s)
+    .replaceAll(" ", "")
+    .toLowerCase();
   if (/^[0-9A-Fa-f]{6}$/.test(hex)) return "longHex";
   if (/^[0-9A-Fa-f]{3}$/.test(hex)) return "shortHex";
   return false;
 };
 
 export const HexShortToLong: HexShortToLongType = (hex) => {
-  const clean = hex.startsWith("#") ? hex.slice(1) : hex;
+  const fixed = hex.replaceAll(" ", "").toLowerCase();
+  const type = GetColorType(fixed);
+  if (type !== "shortHex") return hex;
+  const clean = fixed.startsWith("#") ? fixed.slice(1) : fixed;
   return `#${clean[0]}${clean[0]}${clean[1]}${clean[1]}${clean[2]}${clean[2]}` as string;
 };
 
 export const HexLongToShort: HexLongToShortType = (hex) => {
-  const clean = hex.startsWith("#") ? hex.slice(1) : hex;
+  const fixed = hex.replaceAll(" ", "").toLowerCase();
+  const type = GetColorType(fixed);
+  if (type !== "longHex") return hex;
+  const clean = fixed.startsWith("#") ? fixed.slice(1) : fixed;
   if (clean[0] === clean[1] && clean[2] === clean[3] && clean[4] === clean[5]) {
     return `#${clean[0]}${clean[2]}${clean[4]}`;
   }
@@ -107,13 +93,16 @@ export const HexLongToShort: HexLongToShortType = (hex) => {
 };
 
 export const RGBStringToArray: RGBStringToArrayType = (color) => {
-  const match = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  const match = color
+    .replaceAll(" ", "")
+    .toLowerCase()
+    .match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
   if (!match) return [0, 0, 0];
-  return [
+  return ClampRGBColor([
     parseInt(match[1]!, 10),
     parseInt(match[2]!, 10),
     parseInt(match[3]!, 10),
-  ];
+  ]);
 };
 
 export function ColorParser<T extends ColorType>(
@@ -133,7 +122,7 @@ export function ColorParser<T extends ColorType>(
     const long =
       sourceType === "shortHex"
         ? HexShortToLong(value as string)
-        : (value as string);
+        : (value as string).replaceAll(" ", "").toLowerCase();
     rgb = HexToRgb({ hexColor: long as string });
   }
 
@@ -148,188 +137,3 @@ export function ColorParser<T extends ColorType>(
       return HexLongToShort(RgbToHex({ rgbColor: rgb })) as ColorParserMap[T];
   }
 }
-
-export type ColorParserType = typeof ColorParser;
-
-export const GetTextColorBasedOnBackground: GetTextColorBasedOnBackgroundType =
-  ({ backgroundColor }) => {
-    /* For further reference visit https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio */
-
-    const fixedBackgroundColor: WeightedColor[] = Array.isArray(backgroundColor)
-      ? backgroundColor
-      : [{ color: backgroundColor, value: 1 }];
-
-    let totalWeightedLuminance = 0;
-    let totalWeight = 0;
-
-    for (const { color, value = 1 } of fixedBackgroundColor) {
-      const backgroundColorRGB = HexToRgb({ hexColor: color });
-      const srgb = backgroundColorRGB.map((c) => c / 255) as RGB;
-      const linearRGB = srgb.map((i) =>
-        i <= 0.04045 ? i / 12.92 : Math.pow((i + 0.055) / 1.055, 2.4)
-      ) as RGB;
-      const relativeLuminance =
-        0.2126 * linearRGB[0] + 0.7152 * linearRGB[1] + 0.0722 * linearRGB[2];
-
-      totalWeightedLuminance += relativeLuminance * value;
-      totalWeight += value;
-    }
-
-    const averageRelativeLuminance = totalWeightedLuminance / totalWeight;
-
-    return averageRelativeLuminance > 0.179 ? "#000000" : "#ffffff";
-  };
-
-export const GetDarkerColor: GetDarkerColorType = (color, offset = 55) => {
-  const rgbColor = HexToRgb({ hexColor: color });
-  const darkerColorRGB: RGB = [
-    Math.max(rgbColor[0] - offset, 0),
-    Math.max(rgbColor[1] - offset, 0),
-    Math.max(rgbColor[2] - offset, 0),
-  ];
-  const darkerColorHex = RgbToHex({ rgbColor: darkerColorRGB });
-
-  return darkerColorHex;
-};
-
-export const GetChildrenLevelColors: GetChildrenLevelColorsType = ({
-  sectionColorRGB,
-  colorRange,
-  levelsLength,
-}) => {
-  const levelsColors: string[] = [];
-  const levelsColorRange: { min: RGB; max: RGB } = {
-    min: [
-      Math.max(sectionColorRGB[0] - colorRange, 0),
-      Math.max(sectionColorRGB[1] - colorRange, 0),
-      Math.max(sectionColorRGB[2] - colorRange, 0),
-    ],
-    max: [
-      Math.min(sectionColorRGB[0] + colorRange, 255),
-      Math.min(sectionColorRGB[1] + colorRange, 255),
-      Math.min(sectionColorRGB[2] + colorRange, 255),
-    ],
-  };
-  const deltaRed = Math.floor(
-    (levelsColorRange.max[0] - levelsColorRange.min[0]) / levelsLength
-  );
-  const deltaGreen = Math.floor(
-    (levelsColorRange.max[1] - levelsColorRange.min[1]) / levelsLength
-  );
-  const deltaBlue = Math.floor(
-    (levelsColorRange.max[2] - levelsColorRange.min[2]) / levelsLength
-  );
-
-  for (let i = 0; i < levelsLength; i++) {
-    const levelColorRGB: RGB = [
-      levelsColorRange.min[0] + deltaRed * i,
-      levelsColorRange.min[1] + deltaGreen * i,
-      levelsColorRange.min[2] + deltaBlue * i,
-    ];
-    const levelColorHex: string = RgbToHex({ rgbColor: levelColorRGB });
-    levelsColors.push(levelColorHex);
-  }
-  return levelsColors;
-};
-
-export const ComputeConicGradient: ComputeConicGradientType = (
-  colors,
-  offset = 45,
-  diffuse = 0
-) => {
-  const fixedColors = [...colors, colors[0]];
-  const step = 360 / colors.length;
-  const gradient = `conic-gradient(from ${offset}deg, ${fixedColors
-    .map((color, index) => {
-      return `${color} ${Math.max(0, Math.min(360, step * index - offset + (index === 0 ? 0 : diffuse)))}deg ${Math.max(0, Math.min(360, step * (index + 1) - diffuse - offset))}deg`;
-    })
-    .join(", ")})`;
-  return gradient;
-};
-
-export const ComputeLinearGradient: ComputeLinearGradientType = (colors) => {
-  let accumulated = 0;
-  const gradient = `linear-gradient(0deg, ${colors
-    .map(({ color, value = 1 }) => {
-      const result = `${color} ${Math.min(100, Math.max(0, Math.round(accumulated * 100)))}%, ${color} ${Math.min(100, Math.max(0, Math.round((accumulated + value) * 100)))}%`;
-      accumulated += value;
-      return result;
-    })
-    .join(", ")})`;
-
-  return gradient;
-};
-
-export const InterpolateHexColors: InterpolateHexColorsType = (
-  baseColor,
-  targetColor,
-  progress,
-  step
-) => {
-  let finalProgress = Math.min(1, Math.max(0, progress));
-
-  if (step) {
-    finalProgress = RoundToStep(Math.max(finalProgress, step), step);
-  }
-
-  const baseColorRgb = HexToRgb({ hexColor: baseColor });
-  const targetColorRgb = HexToRgb({ hexColor: targetColor });
-
-  const colorToAdd: RGB = [
-    (targetColorRgb[0] - baseColorRgb[0]) * finalProgress,
-    (targetColorRgb[1] - baseColorRgb[1]) * finalProgress,
-    (targetColorRgb[2] - baseColorRgb[2]) * finalProgress,
-  ];
-
-  const finalColor = ClampRGBColor([
-    baseColorRgb[0] + colorToAdd[0],
-    baseColorRgb[1] + colorToAdd[1],
-    baseColorRgb[2] + colorToAdd[2],
-  ]);
-
-  return RgbToHex({ rgbColor: finalColor });
-};
-
-export const GetRandomColor: () => string = () => {
-  const hexadecimalCharacters = [
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "F",
-  ];
-  let randomColor = "#";
-  for (let i = 0; i < 6; i++) {
-    const randomCharacter = Math.floor(
-      Math.random() * hexadecimalCharacters.length
-    );
-    randomColor += hexadecimalCharacters[randomCharacter];
-  }
-  return randomColor;
-};
-
-export const ComputeRawGradientColors: ComputeRawGradientColorsType = ({
-  colors,
-  diffuse = 0,
-}) => {
-  const fixedColors = [...colors, colors[0]];
-  const step = 360 / colors.length;
-  const offset = 45;
-  const gradientColors = fixedColors
-    .map((color, index) => {
-      return `${color} ${Math.max(0, Math.min(360, step * index - offset + (index === 0 ? 0 : diffuse)))}deg ${Math.max(0, Math.min(360, step * (index + 1) - diffuse - offset))}deg`;
-    })
-    .join(", ");
-  return gradientColors;
-};
