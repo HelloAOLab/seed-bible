@@ -11,11 +11,22 @@ export interface HydrationGateContext {
   container: Element;
 }
 
+/**
+ * Why the client isn't hydrating. All but `chapter-load-timed-out` are
+ * decided by `decideHydration` below; that one is decided by the caller
+ * (`app/init.tsx`), which owns the wait for the initial chapter loads.
+ */
+export type HydrationDeclineReason =
+  | "no-ssr-content"
+  | "chapter-load-incomplete"
+  | "chapter-load-timed-out"
+  | "url-mismatch";
+
 export type HydrationDecision =
   | { hydrate: true }
   | {
       hydrate: false;
-      reason: "no-ssr-content" | "chapter-load-incomplete" | "url-mismatch";
+      reason: HydrationDeclineReason;
     };
 
 /**

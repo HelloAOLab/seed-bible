@@ -139,8 +139,28 @@ cleanupOutdatedCaches();
  */
 async function warmAppShellCache(): Promise<void> {
   try {
-    const clients = await self.clients.matchAll({ type: "window" });
-    const url = clients[0]?.url ?? "/";
+    // `includeUncontrolled` is what makes this work on a *first* install: a
+    // worker that is still installing controls nothing yet (control only
+    // arrives at activate/`clientsClaim()`), so without it `matchAll` comes
+    // back empty on exactly the visit this function exists for, and the
+    // fallback to `/` leaves the page the user is actually reading uncached.
+    const clients = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    });
+    // Same-origin windows the worker doesn't control also include branch
+    // previews under `/b/...`, which this worker deliberately stays out of
+    // (see the route below). Warming one of those would cache a shell the
+    // route will never serve *and* still miss the real page, so pick the
+    // first client the shell route would actually answer for.
+    const url =
+      clients.find((client) =>
+        isAppShellNavigation({
+          url: new URL(client.url),
+          requestMode: "navigate",
+          origin: self.location.origin,
+        })
+      )?.url ?? "/";
     const response = await fetch(url, { cache: "no-cache" });
     // Same acceptance rule as the route's `CacheableResponsePlugin` below, so
     // this can't seed the cache with something the route would have rejected.

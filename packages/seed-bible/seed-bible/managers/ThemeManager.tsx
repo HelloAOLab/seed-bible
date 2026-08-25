@@ -490,6 +490,18 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
  * server-side (see `entry-ssr.tsx`'s `THEME_STYLE_TAG` substitution), so an
  * override containing `</style` could otherwise break out of that tag.
  */
+/**
+ * Whether the `#sb-theme-styles` tag already holds a real theme (rendered by
+ * the server and possibly corrected by the pre-hydration inline script in
+ * `index.html`), as opposed to being absent, empty, or the un-substituted
+ * placeholder the dev server leaves behind. Detected by the `--sb-` custom
+ * properties every composed theme emits — see `composeThemeStyleText`.
+ */
+function hasRenderedThemeStyles(): boolean {
+  const tag = document.getElementById("sb-theme-styles");
+  return !!tag?.textContent?.includes("--sb-");
+}
+
 export function composeThemeStyleText(theme: BibleTheme): string {
   const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${generateThemeCssClasses(theme)}`;
   return css.replace(/</g, "");
@@ -1106,15 +1118,32 @@ export function createTheme(settings: SettingsManager): ThemeManager {
   // before Preact's first render/hydrate pass), same as the in-tree
   // <style> this replaced used to, but the target (document.head) is never
   // diffed by Preact, so there is no hydration-mismatch class of bug here
-  // at all — unlike theme id (see LoginManager.hydrateLocalConfig), this
-  // needs no deferral.
+  // at all.
   //
   // Reuses id "sb-theme-styles" — the SAME id the SSR-rendered <style> tag
   // in index.html carries, and the same id the pre-hydration inline script
-  // writes to. All three converge on one element; each overwrite is
-  // idempotent, and whichever runs last simply wins.
+  // writes to. All three converge on one element.
+  //
+  // The first run does NOT write, though, whenever that element already
+  // holds real theme CSS. Being outside the diffed tree means no
+  // *mismatch* risk, but it does not exempt this from the *flash* the
+  // deferred `localConfig` seed creates: at `createTheme()` time
+  // `login.localConfig` is still empty (see LoginManager), so `themeId` is
+  // the default "light" even for a visitor whose saved theme is dark, and
+  // writing it here would clobber the dark CSS the pre-hydration inline
+  // script just put in that tag — painting light until
+  // `hydrateLocalConfig()` restores the real id post-mount. Whatever is
+  // already in the tag (server-rendered, then corrected by that inline
+  // script from `localStorage`) is the better answer until then, so this
+  // takes over only from the first real *change* onwards.
   if (typeof document !== "undefined") {
+    let skipWrite = hasRenderedThemeStyles();
     effect(() => {
+      const text = themeStyleText.value;
+      if (skipWrite) {
+        skipWrite = false;
+        return;
+      }
       let tag = document.getElementById(
         "sb-theme-styles"
       ) as HTMLStyleElement | null;
@@ -1123,7 +1152,7 @@ export function createTheme(settings: SettingsManager): ThemeManager {
         tag.id = "sb-theme-styles";
         document.head.appendChild(tag);
       }
-      tag.textContent = themeStyleText.value;
+      tag.textContent = text;
     });
   }
 

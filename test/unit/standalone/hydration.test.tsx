@@ -9,6 +9,7 @@ import {
 import { readInjectedApiResponseSnapshot } from "@packages/seed-bible/seed-bible/app/apiResponseSeed";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { decideHydration } from "@packages/seed-bible/seed-bible/app/hydrationGate";
+import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
 import { createDefaultManagerResponseMap } from "../seed-bible/managers/testUtils/mockBibleApiData";
 
 const TEMPLATE = [
@@ -416,3 +417,64 @@ describe("client hydration", () => {
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
   });
 });
+
+describe("waitForInitialChapterLoads()", () => {
+  it("waits for every initial tab's chapter load", async () => {
+    let resolveFirst!: () => void;
+    let resolveSecond!: () => void;
+    const first = new Promise<void>((resolve) => (resolveFirst = resolve));
+    const second = new Promise<void>((resolve) => (resolveSecond = resolve));
+
+    let result: string | null = null;
+    void waitForInitialChapterLoads([first, second], 10_000).then((value) => {
+      result = value;
+    });
+
+    resolveFirst();
+    await Promise.resolve();
+    expect(result).toBeNull();
+
+    resolveSecond();
+    await waitForCondition(() => result !== null);
+    expect(result).toBe("settled");
+  });
+
+  it("gives up on a chapter load that never settles, so the app can still mount", async () => {
+    // A fetch whose connection stays open but never completes. Mounting is
+    // gated on this wait (see `app/init.tsx`), so without the bound the whole
+    // app — sidebar, menus, tab switching, not just the reader — would stay
+    // uninteractive forever.
+    const neverSettles = new Promise<void>(() => {});
+
+    const result = await waitForInitialChapterLoads([neverSettles], 5);
+
+    expect(result).toBe("timed-out");
+  });
+
+  it("treats a rejected chapter load as settled rather than hanging or throwing", async () => {
+    const failed = Promise.reject(new Error("network down"));
+
+    await expect(waitForInitialChapterLoads([failed], 10_000)).resolves.toBe(
+      "settled"
+    );
+  });
+
+  it("doesn't wait at all when there are no initial tabs", async () => {
+    await expect(waitForInitialChapterLoads([], 10_000)).resolves.toBe(
+      "settled"
+    );
+  });
+});
+
+async function waitForCondition(
+  condition: () => boolean,
+  timeoutMs = 1000
+): Promise<void> {
+  const start = Date.now();
+  while (!condition()) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error("Timed out waiting for condition");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}

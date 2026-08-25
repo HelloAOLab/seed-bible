@@ -491,9 +491,11 @@ export function createLoginManager({
   let cachedProfileUserId: string | null = null;
 
   // Persist `localConfig` on every change. Skip the effect's first,
-  // unconditional run — `localConfig` was just seeded from `readLocalConfig()`
-  // above, so writing it back immediately would just re-serialize the exact
-  // data that was read a moment ago.
+  // unconditional run: `localConfig` is seeded EMPTY above (to match SSR) and
+  // only gets the device's real saved settings later, in
+  // `hydrateLocalConfig()`. Without this guard the first run would persist
+  // that empty seed straight over `localStorage`, wiping every returning
+  // visitor's settings before they were ever read back. Do not remove it.
   let isFirstLocalConfigWrite = true;
   effect(() => {
     const config = localConfig.value;
