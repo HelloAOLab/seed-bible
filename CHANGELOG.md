@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Offer to switch the app's language when you pick a Bible translation written in another one. Previously, choosing a Spanish translation left every menu and button in English, and you had to find the language setting yourself. Now a prompt appears — written in the language it is offering — asking whether to switch, with "Switch", "Don't Switch", and "Never Ask Again". It asks at most once per visit, and "Never Ask Again" is remembered; you can turn it back on under Settings.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
@@ -16,7 +18,6 @@
 
 - Analytics for common playlist actions like creating and finishing playlists. ([#1643](https://github.com/HelloAOLab/seed-bible/pull/1643))
 - Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
-- Offer to switch the app's language when you pick a Bible translation written in another one. Previously, choosing a Spanish translation left every menu and button in English, and you had to find the language setting yourself. Now a prompt appears — written in the language it is offering — asking whether to switch, with "Switch", "Don't Switch", and "Never Ask Again". It asks at most once per visit, and "Never Ask Again" is remembered; you can turn it back on under Settings.
 - Ask which version to keep when a note changed in two places at once — edited on your phone while your laptop was offline, say. Previously whichever change was saved last silently replaced the other. Now the two versions are shown side by side with when each was written, and you choose: keep yours, keep the other one, or keep both (yours is saved as a second note, so nothing you wrote is thrown away). Nothing is overwritten until you decide.
 - Add a bookmark to more than one category at once, create a new category while doing so, and remove a bookmark from a single category or from all of them in one step. ([#1612](https://github.com/HelloAOLab/seed-bible/pull/1612))
 - Add support for two-way messaging between the app and embedded pattern portals, so a pattern can send messages to the app and receive replies back instead of only sending one way. ([#1644](https://github.com/HelloAOLab/seed-bible/pull/1644))
