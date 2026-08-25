@@ -49,6 +49,7 @@ import {
   type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
+import { isCompleteTranslation } from "../managers/translationGrouping";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -667,6 +668,24 @@ export function uiLocaleForDefaultTranslation(
   return UI_LOCALE_BY_DEFAULT_TRANSLATION_ID.get(translationId) ?? null;
 }
 
+/**
+ * The Bible language of a translation that some UI locale treats as its
+ * default (e.g. `AAB` → "eng"), or null if it isn't one of those.
+ *
+ * Like `uiLocaleForDefaultTranslation`, this is static: it answers for a
+ * translation the reader already has open even when the catalog — the usual
+ * source of a translation's `language` — hasn't loaded yet.
+ */
+export function bibleLanguageForDefaultTranslation(
+  translationId: string | null | undefined
+): string | null {
+  const uiLocale = uiLocaleForDefaultTranslation(translationId);
+  if (!uiLocale) {
+    return null;
+  }
+  return DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(uiLocale)?.language ?? null;
+}
+
 function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
   if (mapped?.length) {
@@ -676,37 +695,92 @@ function bibleLanguageCodesForUi(uiLanguage: string): string[] {
   return preferred ? [preferred] : [];
 }
 
-function findAvailableTranslationForUiLanguage(
+/**
+ * Whether a translation's Bible language is one that the given UI locale reads
+ * in.
+ *
+ * Goes through `bibleLanguageCodesForUi` rather than comparing UI locales so
+ * aliases line up: `he` and `iw` both read `heb`, `fil` and `tl` both read
+ * `tgl`, `no` and `nb` both read `nob`. Comparing
+ * `bibleLanguageToUiLocale(...)` against the locale directly would call those
+ * pairs different languages, since that map keeps only one locale per code.
+ */
+export function isTranslationInUiLanguage(
   uiLanguage: string,
-  availableTranslations: readonly Translation[] | null | undefined
-): TranslationWithLanguage | null {
+  bibleLanguage: string | null | undefined
+): boolean {
+  if (!bibleLanguage) {
+    return false;
+  }
+  const normalized = bibleLanguage.toLowerCase();
+  return bibleLanguageCodesForUi(uiLanguage).some(
+    (code) => code.toLowerCase() === normalized
+  );
+}
+
+/**
+ * The catalog's translation for a UI language: that language's hardcoded
+ * default when the catalog carries it, otherwise the first entry in a Bible
+ * language the locale reads in. Null when the catalog is absent or has nothing
+ * for the language.
+ *
+ * `accept` narrows both steps at once, so a caller that needs more than "any
+ * text in this language" (see `findCompleteTranslationForUiLanguage`) still
+ * gets the same preference order rather than a second, subtly different walk.
+ */
+function findCatalogTranslationForUiLanguage(
+  uiLanguage: string,
+  availableTranslations: readonly Translation[] | null | undefined,
+  accept: (translation: Translation) => boolean = () => true
+): Translation | null {
   if (!availableTranslations?.length) {
     return null;
   }
 
-  const preferred = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(uiLanguage);
-  if (preferred) {
-    const byId = availableTranslations.find((t) => t.id === preferred.id);
-    if (byId) {
-      return { id: byId.id, language: byId.language };
+  const preferredId = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(uiLanguage)?.id;
+  if (preferredId) {
+    const preferred = availableTranslations.find((t) => t.id === preferredId);
+    if (preferred && accept(preferred)) {
+      return preferred;
     }
   }
 
-  const codes = new Set(
-    bibleLanguageCodesForUi(uiLanguage).map((code) => code.toLowerCase())
+  return (
+    availableTranslations.find(
+      (t) => isTranslationInUiLanguage(uiLanguage, t.language) && accept(t)
+    ) ?? null
   );
-  if (codes.size === 0) {
-    return null;
-  }
+}
 
-  const byLanguage = availableTranslations.find((t) =>
-    codes.has(t.language.toLowerCase())
+/**
+ * The catalog's complete (full-canon) translation for a UI language, or null
+ * when only partial translations exist for it.
+ *
+ * Unlike `findAvailableTranslationForUiLanguage`, this never settles for a
+ * partial text — it answers "do we have a whole Bible to offer here?". So a
+ * language whose hardcoded default is only partial resolves to a complete
+ * sibling instead of stopping at the default.
+ */
+export function findCompleteTranslationForUiLanguage(
+  uiLanguage: string,
+  availableTranslations: readonly Translation[] | null | undefined
+): Translation | null {
+  return findCatalogTranslationForUiLanguage(
+    uiLanguage,
+    availableTranslations,
+    isCompleteTranslation
   );
-  if (!byLanguage) {
-    return null;
-  }
+}
 
-  return { id: byLanguage.id, language: byLanguage.language };
+function findAvailableTranslationForUiLanguage(
+  uiLanguage: string,
+  availableTranslations: readonly Translation[] | null | undefined
+): TranslationWithLanguage | null {
+  const found = findCatalogTranslationForUiLanguage(
+    uiLanguage,
+    availableTranslations
+  );
+  return found ? { id: found.id, language: found.language } : null;
 }
 
 /**

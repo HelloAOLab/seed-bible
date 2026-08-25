@@ -7,10 +7,13 @@ import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
 import {
+  findCompleteTranslationForUiLanguage,
   getNearestBibleTranslationForUiLanguage,
+  isTranslationInUiLanguage,
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { Translation } from "../managers/FreeUseBibleAPI";
+import { translationLanguageLabel } from "../managers/translationGrouping";
 import {
   DEFAULT_UI_LANGUAGE,
   parseReadingPath,
@@ -155,6 +158,39 @@ export type LanguageFallbackPrompt = {
   fallbackTranslation: TranslationWithLanguage;
 };
 
+/**
+ * Shown when a UI language change *could* also switch the reader's Bible text
+ * to a complete translation in that language. The complement of
+ * {@link LanguageFallbackPrompt}: this is the direct-match case, where the
+ * chosen language really is supported and the only question is whether the
+ * user wants their scripture to follow their menus.
+ */
+export type TranslationSwitchPrompt = {
+  language: string;
+  translation: TranslationWithLanguage;
+  translationName: string;
+  languageSearchTerm: string;
+};
+
+/**
+ * The reader-side facts `applyBibleTranslationForUiLanguage` needs to decide
+ * whether asking is appropriate, plus the two side effects it can't perform
+ * itself. Injected by `SeedBibleState` (see
+ * `setTranslationSwitchPromptContext`) because tabs, login, and the selector
+ * are all built *after* this manager.
+ *
+ * While this is unset — unit tests, embedders — a UI language change keeps
+ * silently applying the nearest translation, the behavior that predates the
+ * prompt.
+ */
+export type TranslationSwitchPromptContext = {
+  getVisibleTabCount: () => number;
+  getSelectedTabBibleLanguage: () => string | null;
+  hasOptedOut: () => boolean;
+  saveOptOut: () => void;
+  openTranslationPicker: (prompt: TranslationSwitchPrompt) => void;
+};
+
 export function createI18nManager(
   navigation: NavigationManager,
   acceptedLanguages: string[]
@@ -272,7 +308,68 @@ export function createI18nManager(
     persistLanguage = persister;
   };
 
+  const translationSwitchPrompt = signal<TranslationSwitchPrompt | null>(null);
+
+  /**
+   * Whether the open prompt's "never ask again" box is ticked. Starts ticked,
+   * and is re-ticked each time a prompt goes up: answering the question once is
+   * taken as settling it, and Settings offers a way back.
+   *
+   * Kept here rather than inside the dialog so that every way out of it honours
+   * what the box says — including the host's close button and a click on the
+   * backdrop, which never reach the dialog's own buttons.
+   */
+  const translationSwitchNeverAskAgain = signal(true);
+
+  let translationSwitchContext: TranslationSwitchPromptContext | null = null;
+  const setTranslationSwitchPromptContext = (
+    context: TranslationSwitchPromptContext | null
+  ) => {
+    translationSwitchContext = context;
+  };
+
+  const promptedLanguages = new Set<string>([defaultLanguage]);
+
   const changeLanguage = i18n.changeLanguage.bind(i18n);
+
+  /**
+   * The prompt to put in front of the user for a language they've just chosen,
+   * or null when asking isn't appropriate. Every null is a reason to leave the
+   * reader's text exactly as it is — never a reason to switch it silently.
+   */
+  const buildTranslationSwitchPrompt = (
+    context: TranslationSwitchPromptContext,
+    uiLanguage: string,
+    available: readonly Translation[] | null
+  ): TranslationSwitchPrompt | null => {
+    if (promptedLanguages.has(uiLanguage)) {
+      return null;
+    }
+
+    if (context.getVisibleTabCount() !== 1) {
+      return null;
+    }
+
+    const tabLanguage = context.getSelectedTabBibleLanguage();
+    if (!tabLanguage || isTranslationInUiLanguage(uiLanguage, tabLanguage)) {
+      return null;
+    }
+
+    const complete = findCompleteTranslationForUiLanguage(
+      uiLanguage,
+      available
+    );
+    if (!complete) {
+      return null;
+    }
+
+    return {
+      language: uiLanguage,
+      translation: { id: complete.id, language: complete.language },
+      translationName: complete.name || complete.englishName || complete.id,
+      languageSearchTerm: translationLanguageLabel(complete),
+    };
+  };
 
   const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
     let available = getAvailableTranslations?.() ?? null;
@@ -285,7 +382,6 @@ export function createI18nManager(
       available
     );
 
-    // Direct support: apply silently. Nearest suggestion: ask first.
     if (nearest.usedFallback) {
       languageFallbackPrompt.value = {
         requestedLanguage: uiLanguage,
@@ -296,10 +392,53 @@ export function createI18nManager(
     }
 
     languageFallbackPrompt.value = null;
-    if (!applyBibleTranslation) {
+
+    const context = translationSwitchContext;
+    if (!context || context.hasOptedOut()) {
+      await applyBibleTranslation?.(nearest.translation);
       return;
     }
-    await applyBibleTranslation(nearest.translation);
+
+    const prompt = buildTranslationSwitchPrompt(context, uiLanguage, available);
+    if (!prompt) {
+      return;
+    }
+
+    promptedLanguages.add(prompt.language);
+    translationSwitchNeverAskAgain.value = true;
+    translationSwitchPrompt.value = prompt;
+  };
+
+  const answerTranslationSwitchPrompt = (): TranslationSwitchPrompt | null => {
+    const prompt = translationSwitchPrompt.value;
+    if (!prompt) {
+      return null;
+    }
+    if (translationSwitchNeverAskAgain.peek()) {
+      translationSwitchContext?.saveOptOut();
+    }
+    translationSwitchPrompt.value = null;
+    return prompt;
+  };
+
+  const confirmTranslationSwitch = async () => {
+    const prompt = answerTranslationSwitchPrompt();
+    if (!prompt) {
+      return;
+    }
+    await applyBibleTranslation?.(prompt.translation);
+  };
+
+  const chooseTranslationManually = () => {
+    const prompt = answerTranslationSwitchPrompt();
+    if (!prompt) {
+      return;
+    }
+    translationSwitchContext?.openTranslationPicker(prompt);
+  };
+
+  const dismissTranslationSwitch = () => {
+    answerTranslationSwitchPrompt();
   };
 
   const requestLanguageChange = async (nextLanguage: string) => {
@@ -335,7 +474,13 @@ export function createI18nManager(
     cancelLanguageFallback,
     setBibleTranslationApplicator,
     setLanguagePersister,
+    setTranslationSwitchPromptContext,
     languageFallbackPrompt,
+    translationSwitchPrompt,
+    translationSwitchNeverAskAgain,
+    confirmTranslationSwitch,
+    chooseTranslationManually,
+    dismissTranslationSwitch,
     defaultLanguage,
     availableLanguages,
     language,
@@ -428,6 +573,12 @@ export function useI18n(ns?: string) {
       confirmLanguageFallback: i18nManager.confirmLanguageFallback,
       cancelLanguageFallback: i18nManager.cancelLanguageFallback,
       languageFallbackPrompt: i18nManager.languageFallbackPrompt,
+      translationSwitchPrompt: i18nManager.translationSwitchPrompt,
+      translationSwitchNeverAskAgain:
+        i18nManager.translationSwitchNeverAskAgain,
+      confirmTranslationSwitch: i18nManager.confirmTranslationSwitch,
+      chooseTranslationManually: i18nManager.chooseTranslationManually,
+      dismissTranslationSwitch: i18nManager.dismissTranslationSwitch,
       i18n: i18n,
     }),
     [t, i18n.language]

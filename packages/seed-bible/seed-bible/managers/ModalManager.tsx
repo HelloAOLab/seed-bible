@@ -7,6 +7,7 @@ export interface ManagedModal {
   title: TranslatableTitle;
   content: (props: ModalContentProps) => ComponentChildren;
   useCasualOSApp: boolean;
+  onClose?: () => void;
 }
 
 export interface ModalContentProps {
@@ -25,6 +26,17 @@ export interface ModalRegistration {
    * Defaults to true.
    */
   useCasualOSApp?: boolean;
+
+  /**
+   * Called once when the modal is closed, however that happens — the header's
+   * close button, a click on the backdrop, `closeModal`, or `closeAllModals`.
+   *
+   * Needed by modals whose visibility is driven by state outside the manager:
+   * without it, dismissing via the backdrop would remove the dialog while
+   * leaving that state saying it is still open. Mirrors `onClose` on
+   * `PanesManager`'s pane registrations.
+   */
+  onClose?: () => void;
 }
 
 export interface ModalManager {
@@ -60,18 +72,35 @@ export function createModalManager(): ModalManager {
         title: modal.title,
         content: toContentRenderer(modal.content),
         useCasualOSApp: modal.useCasualOSApp ?? true,
+        onClose: modal.onClose,
       },
     ];
 
     return id;
   };
 
+  // Both closers drop the modal from the list *before* invoking `onClose`, so a
+  // handler that reacts by calling back in (clearing the state that opened the
+  // dialog, which re-runs a sync effect that calls `closeModal` again) finds
+  // nothing left to remove and stops instead of recursing.
   const closeModal = (id: string) => {
+    const closing = modals.peek().find((m) => m.id === id);
+    if (!closing) {
+      return;
+    }
+
     modals.value = modals.peek().filter((m) => m.id !== id);
+    closing.onClose?.();
   };
 
   const closeAllModals = () => {
+    const closing = modals.peek();
+    if (closing.length === 0) {
+      return;
+    }
+
     modals.value = [];
+    closing.forEach((modal) => modal.onClose?.());
   };
 
   return {

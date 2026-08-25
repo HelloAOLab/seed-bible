@@ -55,6 +55,47 @@ const HIN_TRANSLATION: Translation = {
   totalNumberOfVerses: 31102,
 };
 
+// Gujarati has a complete Bible in the real catalog, so a UI switch to `gu`
+// takes the direct-match path (the prompt), not the nearest-fallback path.
+// Kept out of the default fixture on purpose: the fallback-prompt test below
+// needs a `gu` with no Bible at all.
+const GUJ_TRANSLATION: Translation = {
+  id: "guj_irv",
+  name: "Gujarati Indian Revised Version",
+  englishName: "Gujarati Indian Revised Version Bible",
+  website: "https://example.com",
+  licenseUrl: "https://example.com/license",
+  shortName: "IRV",
+  language: "guj",
+  languageEnglishName: "Gujarati",
+  textDirection: "ltr",
+  availableFormats: ["json"],
+  listOfBooksApiLink: "/api/guj_irv/books.json",
+  numberOfBooks: 66,
+  totalNumberOfChapters: 1189,
+  totalNumberOfVerses: 31102,
+};
+
+// A complete translation in a language the picker's "Popular" shortlist does
+// NOT cover (unlike eng/spa/hin) — the case where a seeded language search
+// would come back empty unless the view mode is widened.
+const DEU_TRANSLATION: Translation = {
+  id: "deu_obv",
+  name: "Offene Bibel",
+  englishName: "Open German Bible",
+  website: "https://example.com",
+  licenseUrl: "https://example.com/license",
+  shortName: "OBV",
+  language: "deu",
+  languageEnglishName: "German",
+  textDirection: "ltr",
+  availableFormats: ["json"],
+  listOfBooksApiLink: "/api/deu_obv/books.json",
+  numberOfBooks: 66,
+  totalNumberOfChapters: 1189,
+  totalNumberOfVerses: 31102,
+};
+
 function booksForTranslation(
   base: TranslationBooks,
   translation: Translation
@@ -75,6 +116,8 @@ function privateUrl(path: string): string {
 
 function createLanguageSwitchResponses(options?: {
   spaBooks?: TranslationBooks;
+  /** Extra catalog entries. No books/chapter endpoints are stubbed for these. */
+  extraTranslations?: Translation[];
 }): Record<string, ReturnType<typeof createResponse>> {
   const spaBooks =
     options?.spaBooks ?? booksForTranslation(aabBooks, SPA_TRANSLATION);
@@ -86,6 +129,7 @@ function createLanguageSwitchResponses(options?: {
         ...translations.translations,
         SPA_TRANSLATION,
         HIN_TRANSLATION,
+        ...(options?.extraTranslations ?? []),
       ],
     }),
     [privateUrl("/api/AAB/books.json")]: createResponse(aabBooks),
@@ -1761,6 +1805,7 @@ describe("createSeedBibleState", () => {
       expect(readingState.chapterNumber.value).toBe(2);
 
       await state.i18n.requestLanguageChange("es");
+      await state.i18n.confirmTranslationSwitch();
       await waitForInitialLoad(readingState, 1000);
 
       expect(readingState.translationId.value).toBe("spa_onbv");
@@ -1808,6 +1853,7 @@ describe("createSeedBibleState", () => {
       );
 
       await state.i18n.requestLanguageChange("es");
+      await state.i18n.confirmTranslationSwitch();
       await waitForInitialLoad(readingState, 1000);
 
       expect(selectTranslationAndChapterSpy).toHaveBeenCalledWith(
@@ -1840,6 +1886,7 @@ describe("createSeedBibleState", () => {
       expect(readingState.bookId.value).toBe("EXO");
 
       await state.i18n.requestLanguageChange("es");
+      await state.i18n.confirmTranslationSwitch();
       await waitForInitialLoad(readingState, 1000);
 
       expect(readingState.translationId.value).toBe("spa_onbv");
@@ -1869,6 +1916,9 @@ describe("createSeedBibleState", () => {
 
       await expect(
         state.i18n.requestLanguageChange("es")
+      ).resolves.toBeUndefined();
+      await expect(
+        state.i18n.confirmTranslationSwitch()
       ).resolves.toBeUndefined();
       await waitForInitialLoad(readingState, 1000);
 
@@ -1903,6 +1953,269 @@ describe("createSeedBibleState", () => {
       expect(readingState.translationId.value).toBe("hin_cvb");
       expect(readingState.bookId.value).toBe("EXO");
       expect(readingState.chapterNumber.value).toBe(2);
+    });
+
+    // Regression for #1197: a UI language change used to rewrite the reader's
+    // Bible text on the spot. It has to ask first now.
+    it("asks before switching the Bible text, and keeps the position once confirmed", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      await state.i18n.requestLanguageChange("es");
+
+      expect(state.i18n.translationSwitchPrompt.value).toEqual({
+        language: "es",
+        translation: { id: "spa_onbv", language: "spa" },
+        translationName: "Open Nueva Biblia Viva",
+        // The SPA fixture carries no language name, so the code stands in.
+        languageSearchTerm: "spa",
+      });
+      // ...and it reaches the screen through the shared modal host.
+      expect(state.modals.modals.value.map((modal) => modal.id)).toContain(
+        "translation-switch-prompt"
+      );
+      // The interface followed, the scripture did not.
+      expect(state.i18n.language.value).toBe("es");
+      expect(readingState.translationId.value).toBe("AAB");
+
+      await state.i18n.confirmTranslationSwitch();
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+      // Answering it takes the dialog back down again.
+      expect(state.modals.modals.value.map((modal) => modal.id)).not.toContain(
+        "translation-switch-prompt"
+      );
+      expect(readingState.translationId.value).toBe("spa_onbv");
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+    });
+
+    // Regression: the "once per session" rule used to be a single flag, so
+    // answering the Hindi prompt silently swallowed the Gujarati one and the
+    // user's text stayed English with nothing to click.
+    it("asks again after a first answer when the next language is a new one", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({
+          extraTranslations: [GUJ_TRANSLATION],
+        }),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForInitialLoad(readingState, 1000);
+      // "Never ask again" is ticked by default, and answering with it ticked
+      // would end the prompts altogether. Untick each time so the only thing
+      // holding later prompts back is the once-per-language rule.
+      const dismissKeepingPrompts = () => {
+        state.i18n.translationSwitchNeverAskAgain.value = false;
+        state.i18n.dismissTranslationSwitch();
+      };
+
+      await state.i18n.requestLanguageChange("hi");
+      expect(state.i18n.translationSwitchPrompt.value?.translation.id).toBe(
+        "hin_cvb"
+      );
+      dismissKeepingPrompts();
+
+      await state.i18n.requestLanguageChange("gu");
+
+      expect(state.i18n.translationSwitchPrompt.value?.translation.id).toBe(
+        "guj_irv"
+      );
+      // Gujarati is directly supported here, so this is the switch prompt —
+      // not the "no Bible for this language" fallback modal.
+      expect(state.i18n.languageFallbackPrompt.value).toBeNull();
+      dismissKeepingPrompts();
+
+      // Hindi was already answered, so returning to it stays quiet.
+      await state.i18n.requestLanguageChange("hi");
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+    });
+
+    // The box is ticked when the prompt opens, so one answer settles the
+    // question: from then on a language change moves the text with no dialog.
+    it("switches silently once an answer leaves never-ask-again ticked", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForInitialLoad(readingState, 1000);
+
+      await state.i18n.requestLanguageChange("hi");
+      expect(state.i18n.translationSwitchNeverAskAgain.value).toBe(true);
+      await state.i18n.confirmTranslationSwitch();
+      await waitForInitialLoad(readingState, 1000);
+      expect(readingState.translationId.value).toBe("hin_cvb");
+      expect(state.settings.neverAskToSwitchTranslation.value).toBe(true);
+
+      // Spanish is a language this session has never been asked about, so only
+      // the opt-out can explain both the silence and the switch.
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+      expect(readingState.translationId.value).toBe("spa_onbv");
+    });
+
+    // Regression: returning to the language the session opened in used to
+    // prompt, because "already asked" only covered languages that had actually
+    // raised a prompt — and loading the app never does.
+    it("stays quiet on returning to the language the session started in", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+      expect(state.i18n.language.value).toBe("en");
+
+      // Out to Hindi and take the switch, so the tab really is reading a
+      // non-English text on the way back. Untick "never ask again" first, or
+      // the quiet return would prove nothing beyond the opt-out.
+      await state.i18n.requestLanguageChange("hi");
+      expect(state.i18n.translationSwitchPrompt.value?.translation.id).toBe(
+        "hin_cvb"
+      );
+      state.i18n.translationSwitchNeverAskAgain.value = false;
+      await state.i18n.confirmTranslationSwitch();
+      await waitForInitialLoad(readingState, 1000);
+      expect(readingState.translationId.value).toBe("hin_cvb");
+
+      await state.i18n.requestLanguageChange("en");
+
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+      // Nothing was switched behind their back either.
+      expect(readingState.translationId.value).toBe("hin_cvb");
+    });
+
+    // Closing from the host (its X or the backdrop) has to mean the same thing
+    // as "No, keep reading". The close hook clears the prompt, which re-runs
+    // the sync effect and closes the dialog again — so this also covers that
+    // round trip settling instead of recursing.
+    it("treats dismissing the dialog from the modal host as keeping the text", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      await state.i18n.requestLanguageChange("es");
+      expect(state.i18n.translationSwitchPrompt.value).not.toBeNull();
+
+      state.modals.closeModal("translation-switch-prompt");
+
+      // The dialog and the state that drives it agree it is gone.
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+      expect(state.modals.modals.value.map((modal) => modal.id)).not.toContain(
+        "translation-switch-prompt"
+      );
+      // Nothing was switched, and Spanish counts as answered either way.
+      expect(readingState.translationId.value).toBe("AAB");
+      await state.i18n.requestLanguageChange("es");
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+    });
+
+    // The harness is signed out, so this is the anonymous path: the choice has
+    // nowhere to go but the device-local config, and it has to be honoured from
+    // there or the checkbox would do nothing.
+    it("honours never-ask-again for a signed-out visitor", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({
+          extraTranslations: [GUJ_TRANSLATION],
+        }),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForInitialLoad(readingState, 1000);
+      expect(state.login.userId.value).toBeNull();
+
+      await state.i18n.requestLanguageChange("hi");
+      expect(state.i18n.translationSwitchPrompt.value).not.toBeNull();
+
+      state.i18n.dismissTranslationSwitch();
+
+      expect(state.settings.neverAskToSwitchTranslation.value).toBe(true);
+      // A brand-new language would otherwise be a fresh question.
+      await state.i18n.requestLanguageChange("gu");
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+    });
+
+    it("opens the selector's translation list when the user wants to pick themselves", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+
+      await readingState.selectChapter("EXO", 2);
+      await waitForInitialLoad(readingState, 1000);
+
+      await state.i18n.requestLanguageChange("es");
+      state.i18n.chooseTranslationManually();
+      await waitFor(() => state.selector.selectingTranslation.value === true);
+
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+      expect(state.selector.isOpen.value).toBe(true);
+      // Pre-filtered to the language they picked, so the Spanish options are
+      // what they see rather than the whole catalog.
+      expect(state.selector.languageQuery.value).toBe("spa");
+      expect(
+        state.selector.filteredApiTranslations.value.flatMap(
+          (group) => group.translations
+        )
+      ).toContainEqual(expect.objectContaining({ id: "spa_onbv" }));
+      // The text is untouched — the user is choosing it themselves now.
+      expect(readingState.translationId.value).toBe("AAB");
+    });
+
+    it("widens the picker away from Popular when it would hide the language", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses({
+          extraTranslations: [DEU_TRANSLATION],
+        }),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForInitialLoad(readingState, 1000);
+      // German is not on the popular shortlist (unlike eng/spa/hin), so a
+      // seeded search would come back empty while this mode is active.
+      state.selector.showAllLanguages.value = "popular";
+
+      await state.i18n.requestLanguageChange("de");
+      state.i18n.chooseTranslationManually();
+      await waitFor(() => state.selector.selectingTranslation.value === true);
+
+      expect(state.selector.showAllLanguages.value).toBe("complete");
+      expect(state.selector.languageQuery.value).toBe("German");
+      expect(
+        state.selector.filteredApiTranslations.value.flatMap(
+          (group) => group.translations
+        )
+      ).toContainEqual(expect.objectContaining({ id: "deu_obv" }));
+    });
+
+    // A popular language is visible in every mode, so the user's stored
+    // "Popular" preference must be left alone.
+    it("leaves the picker's view mode alone when the language is already visible", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForInitialLoad(readingState, 1000);
+      state.selector.showAllLanguages.value = "popular";
+
+      await state.i18n.requestLanguageChange("es");
+      state.i18n.chooseTranslationManually();
+      await waitFor(() => state.selector.selectingTranslation.value === true);
+
+      expect(state.selector.showAllLanguages.value).toBe("popular");
+      expect(
+        state.selector.filteredApiTranslations.value.flatMap(
+          (group) => group.translations
+        )
+      ).toContainEqual(expect.objectContaining({ id: "spa_onbv" }));
     });
   });
 

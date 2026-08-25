@@ -19,6 +19,12 @@ export interface TranslationLanguageGroup {
  */
 export type TranslationViewMode = "complete" | "all" | "popular";
 
+export const CANON_BOOK_COUNT = 66;
+
+export function isCompleteTranslation(translation: Translation): boolean {
+  return translation.numberOfBooks >= CANON_BOOK_COUNT;
+}
+
 /** Languages treated as "popular" by the picker's default filter. */
 export const DEFAULT_POPULAR_LANGUAGES = [
   "eng",
@@ -163,10 +169,8 @@ export function filterTranslationGroups(
       if (viewMode === "complete") {
         const filteredTranslations = group.translations.filter(
           (translation) =>
-            !(
-              translation.numberOfBooks < 66 &&
-              translation.id !== selectedTranslation?.id
-            )
+            isCompleteTranslation(translation) ||
+            translation.id === selectedTranslation?.id
         );
 
         if (filteredTranslations.length > 0) {

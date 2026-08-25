@@ -1,0 +1,68 @@
+.sb-translation-switch-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sb-translation-switch-prompt-body {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.sb-translation-switch-prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-translation-switch-prompt-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: filter 0.15s ease;
+}
+
+.sb-translation-switch-prompt-btn:hover {
+  filter: brightness(1.05);
+}
+
+.sb-translation-switch-prompt-btn-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-translation-switch-prompt-btn-secondary {
+  background: transparent;
+  color: var(--sb-font-color);
+  border-color: var(--sb-secondary-color);
+}
+
+.sb-translation-switch-prompt-btn-tertiary {
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.75;
+}
+
+.sb-translation-switch-prompt-never {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.sb-translation-switch-prompt-never-checkbox {
+  accent-color: var(--sb-primary-color);
+  cursor: pointer;
+  margin: 0;
+}

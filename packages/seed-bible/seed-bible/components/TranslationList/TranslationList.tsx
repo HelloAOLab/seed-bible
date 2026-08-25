@@ -5,9 +5,10 @@ import type { ComponentChild } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import { TickIcon } from "../icons";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
-import type {
-  TranslationLanguageGroup,
-  TranslationViewMode,
+import {
+  CANON_BOOK_COUNT,
+  type TranslationLanguageGroup,
+  type TranslationViewMode,
 } from "../../managers/translationGrouping";
 
 export interface TranslationListProps {
@@ -159,9 +160,6 @@ export function TranslationList(props: TranslationListProps) {
     </div>
   );
 }
-
-/** Books in the Protestant canon, the whole a translation is measured against. */
-const CANON_BOOK_COUNT = 66;
 
 /**
  * Ring showing how much of the canon a translation covers: the filled arc is

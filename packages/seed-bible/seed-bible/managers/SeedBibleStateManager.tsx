@@ -8,6 +8,7 @@ import {
 } from "../managers/BibleDataManager";
 import {
   bibleLanguageToUiLocale,
+  bibleLanguageForDefaultTranslation,
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
@@ -94,6 +95,7 @@ import {
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
+import { syncTranslationSwitchPromptModal } from "../components/TranslationSwitchPrompt/TranslationSwitchPrompt";
 import {
   createModalManager,
   type ModalManager,
@@ -420,6 +422,7 @@ import {
 } from "./AIManager";
 import { z } from "zod";
 import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
+import { DEFAULT_POPULAR_LANGUAGES } from "./translationGrouping";
 import { captureEvent } from "./Utils";
 
 /**
@@ -1713,6 +1716,16 @@ export function createSeedBibleState(
     syncAnnotationConflictModal(modals, annotations.sync, toast);
   });
 
+  // Offer to move the Bible text to a newly chosen UI language. The decision of
+  // *whether* to ask lives in I18nManager; this only mirrors the resulting
+  // prompt into the modal host.
+  effect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    syncTranslationSwitchPromptModal(modals, i18n);
+  });
+
   // Say something when a note can't be saved to the account. The composer now
   // closes as soon as the note is on the device, so without this a server
   // refusal would only ever appear in the console — the note would look saved.
@@ -2119,6 +2132,53 @@ export function createSeedBibleState(
       return data.availableTranslations.value;
     }
   );
+
+  // Everything I18nManager needs to decide whether to *ask* before switching
+  // the Bible text, rather than doing it silently. All reads are `peek()`ed
+  // like the applicator above: they run inside `requestLanguageChange`'s async
+  // chain, and registering signal dependencies from there would be meaningless
+  // at best.
+  i18n.setTranslationSwitchPromptContext({
+    getVisibleTabCount: () =>
+      tabs.tabs.peek().filter((tab) => !tab.slotOnly).length,
+    getSelectedTabBibleLanguage: () => {
+      const readingState = selectedTab.peek()?.readingState;
+      if (!readingState) {
+        return null;
+      }
+
+      const translationId = readingState.translationId.peek();
+      return (
+        readingState.translation.peek()?.language ||
+        data.availableTranslations
+          .peek()
+          .find((translation) => translation.id === translationId)?.language ||
+        bibleLanguageForDefaultTranslation(translationId)
+      );
+    },
+    hasOptedOut: () => settings.neverAskToSwitchTranslation.peek(),
+    saveOptOut: () => settings.setNeverAskToSwitchTranslation(true),
+    openTranslationPicker: (prompt) => {
+      const targetSlot =
+        tabsLayout.slots
+          .peek()
+          .find((slot) => slot.id === tabsLayout.selectedSlotId.peek()) ??
+        tabsLayout.slots.peek()[0];
+      if (!targetSlot) {
+        return;
+      }
+      void selector.setOpen(true, targetSlot).then(() => {
+        selector.selectingTranslation.value = true;
+        selector.languageQuery.value = prompt.languageSearchTerm;
+        if (
+          selector.showAllLanguages.peek() === "popular" &&
+          !DEFAULT_POPULAR_LANGUAGES.includes(prompt.translation.language)
+        ) {
+          selector.showAllLanguages.value = "complete";
+        }
+      });
+    },
+  });
 
   setupExtensionContext(state);
 

@@ -6,6 +6,7 @@ import {
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { TranslationWithLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import {
   createNavigationManager,
   type NavigationManager,
@@ -221,6 +222,348 @@ describe("I18nManager language fallback prompt", () => {
       id: "spa_onbv",
       language: "spa",
     });
+  });
+});
+
+describe("I18nManager translation switch prompt", () => {
+  const SPA_COMPLETE = {
+    id: "spa_onbv",
+    name: "Open Nueva Biblia Viva",
+    englishName: "Open Nueva Biblia Viva",
+    language: "spa",
+    languageEnglishName: "Spanish",
+    numberOfBooks: 66,
+  } as Translation;
+
+  const FRA_COMPLETE = {
+    id: "fra_onbv",
+    name: "Ouverte Nouvelle Bible Vivante",
+    englishName: "Open New Living Bible",
+    language: "fra",
+    languageEnglishName: "French",
+    numberOfBooks: 66,
+  } as Translation;
+
+  const ENG_COMPLETE = {
+    id: "AAB",
+    name: "Accessible Ancients Bible",
+    englishName: "Accessible Ancients Bible",
+    language: "eng",
+    languageEnglishName: "English",
+    numberOfBooks: 66,
+  } as Translation;
+
+  /** A one-tab, English-text reader who hasn't opted out — should prompt. */
+  function makeContext() {
+    return {
+      getVisibleTabCount: vi.fn((): number => 1),
+      getSelectedTabBibleLanguage: vi.fn((): string | null => "eng"),
+      hasOptedOut: vi.fn((): boolean => false),
+      saveOptOut: vi.fn(),
+      openTranslationPicker: vi.fn(),
+    };
+  }
+
+  function makeApply() {
+    return vi.fn((_translation: TranslationWithLanguage) => Promise.resolve());
+  }
+
+  let nav: NavigationManager;
+  let manager: I18nManager;
+  let apply: ReturnType<typeof makeApply>;
+  let context: ReturnType<typeof makeContext>;
+
+  /** Re-points the manager at a different catalog than the default Spanish one. */
+  function withCatalog(...translations: Translation[]) {
+    manager.setBibleTranslationApplicator(apply, () => translations, null);
+  }
+
+  beforeEach(() => {
+    const currentUrl = signal(new URL("https://example.com/"));
+    nav = {
+      currentUrl,
+      initialUrl: currentUrl.peek(),
+      basePath: "",
+      syncSignalsToUrl: vi.fn(),
+      go: vi.fn(),
+      replace: vi.fn(),
+      push: vi.fn(),
+      updateQueryParam: vi.fn(),
+      updateQueryParams: vi.fn(),
+      updatePathAndQueryParams: vi.fn(),
+      linkToQuery: vi.fn(),
+      dispose: vi.fn(),
+    } as NavigationManager;
+    manager = createI18nManager(nav, ["en"]);
+    apply = makeApply();
+    withCatalog(SPA_COMPLETE);
+    context = makeContext();
+    manager.setTranslationSwitchPromptContext(context);
+  });
+
+  it("asks instead of switching, and switches only once confirmed", async () => {
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toEqual({
+      language: "es",
+      translation: { id: "spa_onbv", language: "spa" },
+      translationName: "Open Nueva Biblia Viva",
+      languageSearchTerm: "Spanish",
+    });
+    expect(apply).not.toHaveBeenCalled();
+
+    await manager.confirmTranslationSwitch();
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).toHaveBeenCalledWith({ id: "spa_onbv", language: "spa" });
+  });
+
+  it("switches silently with no prompt context wired at all", async () => {
+    manager.setTranslationSwitchPromptContext(null);
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).toHaveBeenCalledWith({ id: "spa_onbv", language: "spa" });
+  });
+
+  // Honoured whether or not anyone is signed in — the context resolves the
+  // choice from the profile or the device store, and this layer doesn't care
+  // which.
+  it("switches silently for a user who chose never ask again", async () => {
+    context.hasOptedOut.mockReturnValue(true);
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).toHaveBeenCalledWith({ id: "spa_onbv", language: "spa" });
+  });
+
+  // Turning "Ask before switching the Bible text" back on in Settings has to
+  // actually bring the prompt back — including for a language that was
+  // silently switched while the opt-out was in force, which must not have been
+  // quietly recorded as already asked.
+  it("asks again once the opt-out is cleared", async () => {
+    context.hasOptedOut.mockReturnValue(true);
+
+    await manager.requestLanguageChange("es");
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).toHaveBeenCalledTimes(1);
+
+    context.hasOptedOut.mockReturnValue(false);
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toEqual(
+      expect.objectContaining({ language: "es" })
+    );
+  });
+
+  // Opening the app in English is not a language *change*, so it never
+  // prompts. Coming back to English later is therefore returning to where the
+  // session started, not landing somewhere new.
+  it("does not ask about the language the session started in", async () => {
+    withCatalog(SPA_COMPLETE, ENG_COMPLETE);
+    // A Hindi text under an English UI, so the tab-language gate can't be what
+    // keeps this quiet — only the seeded starting language can.
+    context.getSelectedTabBibleLanguage.mockReturnValue("hin");
+
+    await manager.requestLanguageChange("en");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it("does not ask twice about the same language in one session", async () => {
+    await manager.requestLanguageChange("es");
+    expect(manager.translationSwitchPrompt.value).not.toBeNull();
+    manager.dismissTranslationSwitch();
+
+    // Back to English and then to Spanish again: already answered for Spanish.
+    await manager.requestLanguageChange("en");
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  // The per-session rule is per language, not one prompt for the whole visit:
+  // a language the user hasn't landed on yet is a question they haven't been
+  // asked, and staying silent there loses their text switch with no way to ask
+  // for it.
+  it("asks again for a language it has not offered yet this session", async () => {
+    // French has to be genuinely promptable, or this would pass merely because
+    // the catalog has no complete French text to offer.
+    withCatalog(SPA_COMPLETE, FRA_COMPLETE);
+
+    await manager.requestLanguageChange("es");
+    expect(manager.translationSwitchPrompt.value?.language).toBe("es");
+    manager.dismissTranslationSwitch();
+
+    await manager.requestLanguageChange("fr");
+
+    expect(manager.translationSwitchPrompt.value).toEqual(
+      expect.objectContaining({
+        language: "fr",
+        translation: { id: "fra_onbv", language: "fra" },
+      })
+    );
+    // Still nothing applied — the second prompt is an offer, not a switch.
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it("stops asking about a language once answered, but not about the others", async () => {
+    withCatalog(SPA_COMPLETE, FRA_COMPLETE);
+
+    await manager.requestLanguageChange("es");
+    manager.dismissTranslationSwitch();
+    await manager.requestLanguageChange("fr");
+    manager.dismissTranslationSwitch();
+
+    // Both have now been answered, so neither asks again.
+    await manager.requestLanguageChange("es");
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    await manager.requestLanguageChange("fr");
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+  });
+
+  it("does not ask when a second tab is open", async () => {
+    context.getVisibleTabCount.mockReturnValue(2);
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it("does not ask when the tab is already reading that language", async () => {
+    context.getSelectedTabBibleLanguage.mockReturnValue("spa");
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  // `he` and `iw` are both Hebrew, so a Hebrew text is not "a different
+  // language" from either of them.
+  it("treats aliased locales as the same language as the tab's text", async () => {
+    withCatalog({
+      id: "heb_x",
+      language: "heb",
+      numberOfBooks: 66,
+    } as Translation);
+    context.getSelectedTabBibleLanguage.mockReturnValue("heb");
+
+    await manager.requestLanguageChange("iw");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it("does not ask when the tab's text language can't be determined", async () => {
+    context.getSelectedTabBibleLanguage.mockReturnValue(null);
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it("does not ask when only a partial translation exists for the language", async () => {
+    withCatalog({ ...SPA_COMPLETE, numberOfBooks: 27 } as Translation);
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it("hands off to the translation picker without changing the text", async () => {
+    await manager.requestLanguageChange("es");
+
+    manager.chooseTranslationManually();
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    // The picker is told which language to filter to, so the user lands on
+    // that language's options rather than the whole catalog.
+    expect(context.openTranslationPicker).toHaveBeenCalledWith(
+      expect.objectContaining({ languageSearchTerm: "Spanish" })
+    );
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  // The picker's search matches against catalog fields, so the term has to come
+  // from the catalog. Falls back to the raw language code when the catalog
+  // carries no name for it.
+  it("falls back to the language code when the catalog has no language name", async () => {
+    withCatalog({ ...SPA_COMPLETE, languageEnglishName: undefined });
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value?.languageSearchTerm).toBe(
+      "spa"
+    );
+  });
+
+  it("dismisses without changing the text", async () => {
+    await manager.requestLanguageChange("es");
+
+    manager.dismissTranslationSwitch();
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(context.openTranslationPicker).not.toHaveBeenCalled();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  // The box is ticked when the prompt goes up, so answering at all settles the
+  // question unless the user unticks it first.
+  it("offers never-ask-again already ticked", async () => {
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchNeverAskAgain.value).toBe(true);
+  });
+
+  // Unticking is per prompt, not a standing choice: the next question starts
+  // from the default again.
+  it("re-ticks the box for the next prompt", async () => {
+    withCatalog(SPA_COMPLETE, FRA_COMPLETE);
+    await manager.requestLanguageChange("es");
+    manager.translationSwitchNeverAskAgain.value = false;
+    manager.dismissTranslationSwitch();
+
+    await manager.requestLanguageChange("fr");
+
+    expect(manager.translationSwitchNeverAskAgain.value).toBe(true);
+  });
+
+  it.each([
+    ["confirm", (m: I18nManager) => m.confirmTranslationSwitch],
+    ["choose another", (m: I18nManager) => m.chooseTranslationManually],
+    ["dismiss", (m: I18nManager) => m.dismissTranslationSwitch],
+  ] as const)(
+    "saves the never-ask-again choice when answering with %s",
+    async (_label, getAction) => {
+      await manager.requestLanguageChange("es");
+
+      await getAction(manager)();
+
+      expect(context.saveOptOut).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it("saves nothing when the choice is unticked", async () => {
+    await manager.requestLanguageChange("es");
+
+    manager.translationSwitchNeverAskAgain.value = false;
+    manager.dismissTranslationSwitch();
+
+    expect(context.saveOptOut).not.toHaveBeenCalled();
+  });
+
+  it("saves nothing when there was no prompt to answer", () => {
+    manager.dismissTranslationSwitch();
+
+    expect(context.saveOptOut).not.toHaveBeenCalled();
   });
 });
 

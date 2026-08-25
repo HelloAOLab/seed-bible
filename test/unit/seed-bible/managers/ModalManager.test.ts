@@ -110,6 +110,65 @@ describe("closeModal", () => {
 
     expect(manager.modals.value).toHaveLength(1);
   });
+
+  it("calls the modal's onClose", () => {
+    const onClose = vi.fn();
+    manager.openModal({ id: "a", title: "A", content: "", onClose });
+
+    manager.closeModal("a");
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call onClose for an unknown id", () => {
+    const onClose = vi.fn();
+    manager.openModal({ id: "a", title: "A", content: "", onClose });
+
+    manager.closeModal("nonexistent");
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("does not call a closed modal's onClose a second time", () => {
+    const onClose = vi.fn();
+    manager.openModal({ id: "a", title: "A", content: "", onClose });
+
+    manager.closeModal("a");
+    manager.closeModal("a");
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  // Handlers that react by clearing the state that opened the dialog commonly
+  // re-enter through a sync effect. The modal is dropped before `onClose` runs
+  // so that second call finds nothing and stops, rather than recursing.
+  it("does not recurse when onClose closes the same modal again", () => {
+    let calls = 0;
+    manager.openModal({
+      id: "a",
+      title: "A",
+      content: "",
+      onClose: () => {
+        calls += 1;
+        manager.closeModal("a");
+      },
+    });
+
+    manager.closeModal("a");
+
+    expect(calls).toBe(1);
+    expect(manager.modals.value).toHaveLength(0);
+  });
+
+  it("leaves another modal's onClose alone", () => {
+    const onClose = vi.fn();
+    manager.openModal({ id: "keep", title: "Keep", content: "", onClose });
+    manager.openModal({ id: "remove", title: "Remove", content: "" });
+
+    manager.closeModal("remove");
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });
 
 describe("closeAllModals", () => {
@@ -127,5 +186,17 @@ describe("closeAllModals", () => {
     manager.closeAllModals();
 
     expect(manager.modals.value).toHaveLength(0);
+  });
+
+  it("calls onClose for every modal it closes", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    manager.openModal({ id: "a", title: "A", content: "", onClose: first });
+    manager.openModal({ id: "b", title: "B", content: "", onClose: second });
+
+    manager.closeAllModals();
+
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
   });
 });
