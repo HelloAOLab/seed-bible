@@ -1,5 +1,6 @@
 import {
   createCustomizationsManager,
+  CUSTOMIZATION_COLOR_FIELDS,
   CUSTOMIZATION_MARKER,
   lightenColor,
   SECONDARY_LIGHTEN_AMOUNT,
@@ -218,18 +219,36 @@ describe("CustomizationsManager", () => {
     expect(created.variants).toHaveLength(1);
     expect(created.defaultVariantId).toBe(created.variants[0]?.id);
     expect(created.variants[0]?.name).toBe(theme.basePresetTheme.value.name);
-    expect(created.variants[0]?.themes).toEqual({
-      primaryColor: lightThemeVariables.primaryColor,
-      secondaryColor: lightenColor(
-        lightThemeVariables.primaryColor,
-        SECONDARY_LIGHTEN_AMOUNT
-      ),
-      tertiaryColor: lightenColor(
-        lightThemeVariables.primaryColor,
-        TERTIARY_LIGHTEN_AMOUNT
-      ),
-      fontColor: lightThemeVariables.fontColor,
-    });
+    expect(created.variants[0]?.themes.primaryColor).toBe(
+      lightThemeVariables.primaryColor
+    );
+    expect(created.variants[0]?.themes.secondaryColor).toBe(
+      lightenColor(lightThemeVariables.primaryColor, SECONDARY_LIGHTEN_AMOUNT)
+    );
+    expect(created.variants[0]?.themes.tertiaryColor).toBe(
+      lightenColor(lightThemeVariables.primaryColor, TERTIARY_LIGHTEN_AMOUNT)
+    );
+    expect(created.variants[0]?.themes.fontColor).toBe(
+      lightThemeVariables.fontColor
+    );
+    // Every customizable field is seeded from the current theme, not just
+    // the original 4 — spot-check a few of the newer ones.
+    expect(created.variants[0]?.themes.readerBackground).toBe(
+      lightThemeVariables.readerBackground
+    );
+    expect(created.variants[0]?.themes.sidebarFontColor).toBe(
+      lightThemeVariables.sidebarFontColor
+    );
+    expect(created.variants[0]?.themes.linkColor).toBe(
+      lightThemeVariables.linkColor
+    );
+    expect(created.variants[0]?.themes.selectedVerseTextDecorationColor).toBe(
+      lightThemeVariables.selectedVerseTextDecorationColor
+    );
+    const seededKeys = Object.keys(created.variants[0]!.themes);
+    for (const field of CUSTOMIZATION_COLOR_FIELDS) {
+      expect(seededKeys).toContain(field.key);
+    }
     expect(recordDataMock).toHaveBeenCalledWith("user-1", created.id, created, {
       marker: CUSTOMIZATION_MARKER,
     });
@@ -391,6 +410,28 @@ describe("CustomizationsManager", () => {
     const record = manager.editingCustomization.value!;
     const untouchedB = record.variants.find((v) => v.id === variantB!.id);
     expect(untouchedB?.themes).toEqual(variantB!.themes);
+  });
+
+  it("setEditingVariantColor() works generically for a newly-added color field (e.g. readerBackground), and persists it through save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.setEditingVariantColor(variantId, "readerBackground", "#f0f0f0");
+    expect(
+      manager.editingCustomization.value?.variants[0]?.themes.readerBackground
+    ).toBe("#f0f0f0");
+    // Not persisted yet.
+    expect(
+      manager.customizations.value[0]?.variants[0]?.themes.readerBackground
+    ).not.toBe("#f0f0f0");
+
+    await manager.saveEditingCustomization();
+
+    expect(
+      manager.customizations.value[0]?.variants[0]?.themes.readerBackground
+    ).toBe("#f0f0f0");
   });
 
   it("setEditingVariantColor() on a non-active customization is not reflected in the live theme, before or after saving", async () => {
@@ -594,6 +635,13 @@ describe("CustomizationsManager", () => {
     expect(added!.themes.primaryColor).toBe(
       theme.currentTheme.value.variables.primaryColor
     );
+    expect(added!.themes.readerBackground).toBe(
+      theme.currentTheme.value.variables.readerBackground
+    );
+    const seededKeys = Object.keys(added!.themes);
+    for (const field of CUSTOMIZATION_COLOR_FIELDS) {
+      expect(seededKeys).toContain(field.key);
+    }
     // The base preset name ("Light") is already taken by the first variant,
     // so the new one falls back to a generic name.
     expect(added!.name).toBe("Variant 2");

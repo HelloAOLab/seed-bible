@@ -20,7 +20,10 @@ import {
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
-import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
+import {
+  CUSTOMIZATION_COLOR_GROUPS,
+  type SeedBibleCustomization,
+} from "../../managers/CustomizationsManager";
 import { download, translateTitle } from "../../app/utils";
 // The picture editor pulls in `react-avatar-editor`, and it is only reachable
 // through the "Update picture" button — so it is fetched on that click rather
@@ -2127,16 +2130,6 @@ function SettingsVersionFooter() {
   );
 }
 
-const CUSTOMIZATION_COLOR_FIELDS: {
-  key: ThemeColorKey;
-  label: string;
-}[] = [
-  { key: "primaryColor", label: "Primary" },
-  { key: "secondaryColor", label: "Secondary" },
-  { key: "tertiaryColor", label: "Tertiary" },
-  { key: "fontColor", label: "Text" },
-];
-
 function CustomizationsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { customizations } = state;
@@ -2660,38 +2653,46 @@ function CustomizationVariantEditSettingsView(props: {
           />
         </div>
 
-        <ul className="sb-theme-colors-list">
-          {CUSTOMIZATION_COLOR_FIELDS.map((field) => {
-            const value = variant.themes[field.key] ?? "";
-            const label = t(`customization-${field.key}`, {
-              defaultValue: field.label,
-            });
-            return (
-              <li key={field.key} className="sb-theme-color-row">
-                <div className="sb-theme-color-row-main">
-                  <span className="sb-theme-color-label">{label}</span>
-                  <span className="sb-theme-color-value">{value || "—"}</span>
-                </div>
-                <div className="sb-theme-color-row-controls">
-                  <input
-                    type="color"
-                    className="sb-theme-color-input"
-                    value={toHexInputValue(value)}
-                    aria-label={label}
-                    onInput={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      customizations.setEditingVariantColor(
-                        variant.id,
-                        field.key,
-                        target.value
-                      );
-                    }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        {CUSTOMIZATION_COLOR_GROUPS.map((group) => (
+          <div key={group.id} className="sb-theme-colors-group">
+            <h3 className="sb-settings-subheading">{group.title}</h3>
+            <ul className="sb-theme-colors-list">
+              {group.fields.map((field) => {
+                const value = variant.themes[field.key] ?? "";
+                const label = t(`customization-${field.key}`, {
+                  defaultValue: field.label,
+                });
+                return (
+                  <li key={field.key} className="sb-theme-color-row">
+                    <div className="sb-theme-color-row-main">
+                      <span className="sb-theme-color-label">{label}</span>
+                      <span className="sb-theme-color-value">
+                        {value || "—"}
+                      </span>
+                    </div>
+                    <div className="sb-theme-color-row-controls">
+                      <input
+                        type="color"
+                        className="sb-theme-color-input"
+                        value={toHexInputValue(value)}
+                        aria-label={label}
+                        onInput={(event: Event) => {
+                          const target =
+                            event.currentTarget as HTMLInputElement;
+                          customizations.setEditingVariantColor(
+                            variant.id,
+                            field.key,
+                            target.value
+                          );
+                        }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
 
         <div className="sb-settings-actions">
           <button

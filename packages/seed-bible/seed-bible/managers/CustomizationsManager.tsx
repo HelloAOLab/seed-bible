@@ -12,6 +12,7 @@ import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import {
   filterValidColorOverrides,
+  type BibleThemeVariables,
   type ThemeColorKey,
   type ThemeManager,
   type ThemeOverrides,
@@ -172,21 +173,98 @@ function narrowVariants(
   }));
 }
 
+export interface CustomizationColorGroup {
+  id: string;
+  title: string;
+  fields: { key: ThemeColorKey; label: string }[];
+}
+
+export const CUSTOMIZATION_COLOR_GROUPS: CustomizationColorGroup[] = [
+  {
+    id: "brand",
+    title: "Brand",
+    fields: [
+      { key: "primaryColor", label: "Primary" },
+      { key: "secondaryColor", label: "Secondary" },
+      { key: "tertiaryColor", label: "Tertiary" },
+      { key: "linkColor", label: "Link" },
+      { key: "linkVisitedColor", label: "Visited link" },
+    ],
+  },
+  {
+    id: "surfaces",
+    title: "Surfaces",
+    fields: [
+      { key: "background", label: "App background" },
+      { key: "readerBackground", label: "Reader background" },
+      { key: "sidebarBackground", label: "Sidebar background" },
+      { key: "readerToolbarBackground", label: "Reader toolbar background" },
+      {
+        key: "readerToolbarFloatingButtonBackground",
+        label: "Floating button background",
+      },
+    ],
+  },
+  {
+    id: "text",
+    title: "Text",
+    fields: [
+      { key: "fontColor", label: "Text" },
+      { key: "readerFontColor", label: "Reader text" },
+      { key: "sidebarFontColor", label: "Sidebar text" },
+      { key: "bookTitleFontColor", label: "Book title" },
+      { key: "chapterHeadingFontColor", label: "Chapter heading" },
+      {
+        key: "readerToolbarFloatingButtonFontColor",
+        label: "Floating button text",
+      },
+    ],
+  },
+  {
+    id: "selection",
+    title: "Verse selection",
+    fields: [
+      {
+        key: "selectedVerseTextDecorationColor",
+        label: "Selected verse decoration",
+      },
+    ],
+  },
+];
+
+export const CUSTOMIZATION_COLOR_FIELDS: {
+  key: ThemeColorKey;
+  label: string;
+}[] = CUSTOMIZATION_COLOR_GROUPS.flatMap((group) => group.fields);
+
 function buildVariant(
   name: string,
-  currentVariables: { primaryColor: string; fontColor: string }
+  currentVariables: BibleThemeVariables
 ): CustomizationThemeVariant {
   const now = Date.now();
   const primaryColor = currentVariables.primaryColor;
+  const themes: ThemeOverrides = {
+    primaryColor,
+    secondaryColor: lightenColor(primaryColor, SECONDARY_LIGHTEN_AMOUNT),
+    tertiaryColor: lightenColor(primaryColor, TERTIARY_LIGHTEN_AMOUNT),
+  };
+  for (const field of CUSTOMIZATION_COLOR_FIELDS) {
+    if (
+      field.key === "primaryColor" ||
+      field.key === "secondaryColor" ||
+      field.key === "tertiaryColor"
+    ) {
+      continue;
+    }
+    const value = currentVariables[field.key];
+    if (typeof value === "string" && value.length > 0) {
+      themes[field.key] = value;
+    }
+  }
   return {
     id: `variant_${uuid()}`,
     name,
-    themes: {
-      primaryColor,
-      secondaryColor: lightenColor(primaryColor, SECONDARY_LIGHTEN_AMOUNT),
-      tertiaryColor: lightenColor(primaryColor, TERTIARY_LIGHTEN_AMOUNT),
-      fontColor: currentVariables.fontColor,
-    },
+    themes,
     createdAt: now,
     updatedAt: now,
   };
