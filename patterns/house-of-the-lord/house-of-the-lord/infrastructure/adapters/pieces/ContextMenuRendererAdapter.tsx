@@ -14,6 +14,9 @@ interface AdapterParams {
   pieceMapper: PieceMapper;
 }
 
+// TODO: Context menu should not work for now.
+const doesContextMenusWork = false;
+
 // prettier-ignore
 export class ContextMenuRendererAdapter
   implements PieceInteractionContextMenuRendererPort, EnvironmentContextMenuRendererPort
@@ -35,44 +38,47 @@ export class ContextMenuRendererAdapter
     versesInChapter: VerseReference[],
     versesInOtherChapters: VerseReference[]
   ): void {
-    const dimension = this.#getDimension();
-    const currMenu = this.#currentContextMenuBot;
-
-    if (currMenu) {
-      if (currMenu.tags.key === key) {
-        destroy(currMenu);
-        this.#currentContextMenuBot = null;
-        return;
-      } else {
-        this.#buildContextMenu(
-          currMenu,
-          experience,
-          key,
-          versesInChapter,
-          versesInOtherChapters
-        );
-        return;
+    if(doesContextMenusWork) {
+      const dimension = this.#getDimension();
+      const currMenu = this.#currentContextMenuBot;
+  
+      if (currMenu) {
+  
+        if (currMenu.tags.key === key) {
+          destroy(currMenu);
+          this.#currentContextMenuBot = null;
+          return;
+        } else {
+          this.#buildContextMenu(
+            currMenu,
+            experience,
+            key,
+            versesInChapter,
+            versesInOtherChapters
+          );
+          return;
+        }
       }
+  
+      const newMenuBot = create({
+        isTabernaclePieceContextMenuTransformer: true,
+        space: "tempLocal",
+        pointable: false,
+        [dimension]: true,
+        color: "clear",
+        orientationMode: "billboard",
+        onDestroy: `@destroy(thisBot.vars.lines); destroy(thisBot.vars.menu)`,
+      });
+      const menuBot = newMenuBot as Bot;
+      this.#currentContextMenuBot = menuBot;
+      this.#buildContextMenu(
+        menuBot,
+        experience,
+        key,
+        versesInChapter,
+        versesInOtherChapters
+      );
     }
-
-    const newMenuBot = create({
-      isTabernaclePieceContextMenuTransformer: true,
-      space: "tempLocal",
-      pointable: false,
-      [dimension]: true,
-      color: "clear",
-      orientationMode: "billboard",
-      onDestroy: `@destroy(thisBot.vars.lines); destroy(thisBot.vars.menu)`,
-    });
-    const menuBot = newMenuBot as Bot;
-    this.#currentContextMenuBot = menuBot;
-    this.#buildContextMenu(
-      menuBot,
-      experience,
-      key,
-      versesInChapter,
-      versesInOtherChapters
-    );
   }
 
   hideContextMenu(): void {
