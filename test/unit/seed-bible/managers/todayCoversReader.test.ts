@@ -61,19 +61,18 @@ describe("reader visibility while Today is open", () => {
     expect(state.tutorial.promptVisible.value).toBe(true);
   });
 
-  it("never offers the tutorial while Today covers the reader", async () => {
+  it("holds the offer back while Today covers the reader, and makes it once Today closes", async () => {
     const state = await createStateWithLoadedChapter(true);
 
     expect(state.today.isOpen.value).toBe(true);
-    // Long enough for the chapter-loaded effect to have run and re-run.
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.tutorial.promptVisible.value).toBe(false);
-  });
-
-  it("offers the tutorial after Today is closed", async () => {
-    const state = await createStateWithLoadedChapter(true);
     expect(state.tutorial.promptVisible.value).toBe(false);
 
+    // Closing Today is what turns the assertion above from "not yet" into "not
+    // while covered". The offer appears from this same state with nothing else
+    // changing, so everything else it waits on — the loaded chapter, the
+    // profile — was already in place while that assertion ran, and Today was
+    // the only thing holding it back. Waiting a fixed number of milliseconds
+    // instead could only ever have established "not yet".
     state.today.close();
 
     await waitFor(() => state.tutorial.promptVisible.value, 2000);
