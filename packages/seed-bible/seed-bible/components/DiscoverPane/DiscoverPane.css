@@ -117,6 +117,7 @@
 
 .sb-playlist-item {
   cursor: pointer;
+  align-items: flex-start;
 }
 
 .sb-annotation-group {
@@ -237,6 +238,7 @@
 .sb-discover-item-description {
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  width: 100%;
 }
 
 /* One verse-range group of annotations (see `AnnotationGroupSection`): a

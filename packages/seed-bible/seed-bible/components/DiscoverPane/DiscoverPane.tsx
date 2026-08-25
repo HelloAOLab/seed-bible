@@ -46,6 +46,7 @@ import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -235,12 +236,9 @@ export function DiscoverPaneTitle(props: {
           dir="auto"
           onInput={(event: Event) => {
             const value = (event.currentTarget as HTMLInputElement).value;
-            if (editing) {
-              playlists.editingPlaylist.value = {
-                ...editing,
-                title: value.trim() ? value : null,
-              };
-            }
+            playlists.updateEditingPlaylistMetadata({
+              title: value.trim() ? value : null,
+            });
           }}
           placeholder={t("playlist-title_placeholder", {
             defaultValue: "Playlist title",
@@ -400,9 +398,17 @@ function PlaylistSection({
                     })}
                 </span>
                 {playlist.description ? (
-                  <span className="sb-discover-item-description">
+                  <ExpandableText
+                    className="sb-discover-item-description"
+                    readMoreLabel={t("read-more", {
+                      defaultValue: "Read more",
+                    })}
+                    readLessLabel={t("read-less", {
+                      defaultValue: "Read less",
+                    })}
+                  >
                     {playlist.description}
-                  </span>
+                  </ExpandableText>
                 ) : null}
               </div>
               <button

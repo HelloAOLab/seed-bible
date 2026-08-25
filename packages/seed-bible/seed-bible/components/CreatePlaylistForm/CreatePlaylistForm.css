@@ -30,3 +30,9 @@
 .sb-discover-item--editing .sb-discover-item-title {
   color: var(--sb-primary-color);
 }
+
+.sb-playlist-description-input {
+  min-height: 4.5rem;
+  resize: vertical;
+  line-height: 1.4;
+}
