@@ -141,8 +141,19 @@ export function createSidebar(options: CreateSidebarOptions) {
    * open settings view and collapses the sidebar back to its rail. Wired to the
    * scrim rendered behind the overlay so clicking anywhere on the page outside
    * the sidebar collapses it again.
+   *
+   * No-ops while a customization/variant editor is open, so an accidental
+   * outside click can't silently discard unsaved edits — every other way of
+   * leaving Settings (the close button, breadcrumb back navigation) still
+   * works normally.
    */
   const collapseSidebarOverlay = () => {
+    if (
+      requestedSettingsView.value === "customization-edit" ||
+      requestedSettingsView.value === "customization-edit-variant"
+    ) {
+      return;
+    }
     requestedSettingsView.value = null;
     isMobileOpen.value = false;
     isSidebarCollapsed.value = true;

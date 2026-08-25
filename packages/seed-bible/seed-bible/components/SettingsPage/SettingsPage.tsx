@@ -2151,7 +2151,7 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const openCustomization = (id: string) => {
-    customizations.editingCustomizationId.value = id;
+    customizations.startEditing(id);
     state.sidebar.requestedSettingsView.value = "customization-edit";
   };
 
@@ -2287,11 +2287,10 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
   const confirmingDelete = useSignal(false);
   const isUploadingLogo = useSignal(false);
 
-  const record = customizations.customizations.value.find(
-    (c) => c.id === customizations.editingCustomizationId.value
-  );
+  const record = customizations.editingCustomization.value;
 
   const onBack = () => {
+    customizations.stopEditing();
     state.sidebar.requestedSettingsView.value = "customizations";
   };
 
@@ -2300,17 +2299,21 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
     state.sidebar.requestedSettingsView.value = "customization-edit-variant";
   };
 
-  const handleAddVariant = async () => {
-    if (!record) {
-      return;
-    }
-    const variant = await customizations.addVariant(record.id);
+  const handleAddVariant = () => {
+    const variant = customizations.addEditingVariant();
     if (variant) {
       openVariant(variant.id);
     }
   };
 
-  const handleUploadLogo = (customizationId: string) => {
+  const handleSave = async () => {
+    await customizations.saveEditingCustomization();
+    state.app.toast(
+      t("customization-saved", { defaultValue: "Customization saved" })
+    );
+  };
+
+  const handleUploadLogo = () => {
     const modalId = state.modals.openModal({
       title: { key: "upload-logo", defaultValue: "Upload logo" },
       content: () => (
@@ -2330,7 +2333,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
             onUpload={async (file) => {
               isUploadingLogo.value = true;
               try {
-                await customizations.uploadLogo(customizationId, file);
+                await customizations.uploadLogo(file);
               } catch (error) {
                 console.error("Failed to upload logo.", error);
                 throw error;
@@ -2388,7 +2391,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
             value={record.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
-              void customizations.rename(record.id, target.value);
+              customizations.updateEditingName(target.value);
             }}
           />
         </div>
@@ -2415,7 +2418,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
             <button
               type="button"
               className="sb-settings-action-button"
-              onClick={() => handleUploadLogo(record.id)}
+              onClick={handleUploadLogo}
               disabled={isUploadingLogo.value}
             >
               {t("upload-logo", { defaultValue: "Upload logo" })}
@@ -2424,7 +2427,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
               <button
                 type="button"
                 className="sb-settings-action-button"
-                onClick={() => void customizations.removeLogo(record.id)}
+                onClick={() => customizations.removeEditingLogo()}
                 disabled={isUploadingLogo.value}
               >
                 {t("remove-logo", { defaultValue: "Remove logo" })}
@@ -2475,10 +2478,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
                     <ContextMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
-                        void customizations.setDefaultVariant(
-                          record.id,
-                          variant.id
-                        );
+                        customizations.setEditingDefaultVariant(variant.id);
                       }}
                     >
                       <MaterialIcon className="sb-context-menu-item-icon">
@@ -2502,7 +2502,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
             <button
               type="button"
               className="sb-settings-action-button"
-              onClick={() => void handleAddVariant()}
+              onClick={handleAddVariant}
             >
               {t("add-variant", { defaultValue: "Add variant" })}
             </button>
@@ -2510,6 +2510,14 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
         </section>
 
         <div className="sb-settings-actions">
+          <button
+            type="button"
+            className="sb-settings-save-button"
+            onClick={() => void handleSave()}
+          >
+            {t("save", { defaultValue: "Save" })}
+          </button>
+
           <button
             type="button"
             className="sb-settings-action-button"
@@ -2538,7 +2546,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
           ) : (
             <button
               type="button"
-              className="sb-settings-save-button"
+              className="sb-settings-action-button"
               onClick={() => void customizations.setActive(record.id)}
             >
               {t("set-as-active", { defaultValue: "Set as active" })}
@@ -2583,15 +2591,20 @@ function CustomizationVariantEditSettingsView(props: {
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
 
-  const record = customizations.customizations.value.find(
-    (c) => c.id === customizations.editingCustomizationId.value
-  );
+  const record = customizations.editingCustomization.value;
   const variant = record?.variants.find(
     (v) => v.id === customizations.editingVariantId.value
   );
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "customization-edit";
+  };
+
+  const handleSave = async () => {
+    await customizations.saveEditingCustomization();
+    state.app.toast(
+      t("customization-saved", { defaultValue: "Customization saved" })
+    );
   };
 
   if (!record || !variant) {
@@ -2642,11 +2655,7 @@ function CustomizationVariantEditSettingsView(props: {
             value={variant.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
-              void customizations.renameVariant(
-                record.id,
-                variant.id,
-                target.value
-              );
+              customizations.renameEditingVariant(variant.id, target.value);
             }}
           />
         </div>
@@ -2671,8 +2680,7 @@ function CustomizationVariantEditSettingsView(props: {
                     aria-label={label}
                     onInput={(event: Event) => {
                       const target = event.currentTarget as HTMLInputElement;
-                      void customizations.setVariantColor(
-                        record.id,
+                      customizations.setEditingVariantColor(
                         variant.id,
                         field.key,
                         target.value
@@ -2686,12 +2694,20 @@ function CustomizationVariantEditSettingsView(props: {
         </ul>
 
         <div className="sb-settings-actions">
+          <button
+            type="button"
+            className="sb-settings-save-button"
+            onClick={() => void handleSave()}
+          >
+            {t("save", { defaultValue: "Save" })}
+          </button>
+
           {!isDefault && (
             <button
               type="button"
-              className="sb-settings-save-button"
+              className="sb-settings-action-button"
               onClick={() =>
-                void customizations.setDefaultVariant(record.id, variant.id)
+                customizations.setEditingDefaultVariant(variant.id)
               }
             >
               {t("set-as-default-variant", { defaultValue: "Set as default" })}
@@ -2704,7 +2720,7 @@ function CustomizationVariantEditSettingsView(props: {
                 type="button"
                 className="sb-settings-action-button"
                 onClick={() => {
-                  void customizations.removeVariant(record.id, variant.id);
+                  customizations.removeEditingVariant(variant.id);
                   onBack();
                 }}
               >

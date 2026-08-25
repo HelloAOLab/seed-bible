@@ -195,7 +195,7 @@ function buildVariant(
 export interface CustomizationsManager {
   customizations: Signal<SeedBibleCustomization[]>;
   isLoading: Signal<boolean>;
-  /** The customization currently applied to the live theme, if any. */
+  /** The customization currently applied to the live theme, if any. Prefers the in-progress edit draft over the persisted record when they're the same customization, so unsaved color edits preview live. */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
   /** The variant of the active customization currently in effect (viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
@@ -211,43 +211,45 @@ export interface CustomizationsManager {
    * customization in `activeCustomization`.
    */
   linkedCustomization: ReadonlySignal<SeedBibleCustomization | null>;
-  /** The customization id the editor settings page should show. */
-  editingCustomizationId: Signal<string | null>;
+  /**
+   * The local, unpersisted draft of the customization currently open in the
+   * editor settings pages, or null when none is open. Edits accumulate here
+   * and are only written to CasualOS by `saveEditingCustomization`.
+   */
+  editingCustomization: Signal<SeedBibleCustomization | null>;
   /** The variant id the variant editor settings page should show. */
   editingVariantId: Signal<string | null>;
   load: () => Promise<void>;
   /** Loads a customization by its `{recordName}.{id}` locator into `linkedCustomization`. */
   loadByLocator: (locator: string) => Promise<void>;
   create: () => Promise<SeedBibleCustomization>;
-  rename: (id: string, name: string) => Promise<void>;
+  /** Seeds `editingCustomization` from the persisted record with this id. No-ops if not found. */
+  startEditing: (id: string) => void;
+  /** Clears `editingCustomization` and `editingVariantId`, discarding any unsaved edits. */
+  stopEditing: () => void;
+  /** Persists `editingCustomization` and upserts it into `customizations`. No-op if there's no draft or the user is signed out. */
+  saveEditingCustomization: () => Promise<void>;
   setActive: (id: string) => Promise<void>;
   deactivate: (id: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
-  uploadLogo: (id: string, file: File) => Promise<void>;
-  removeLogo: (id: string) => Promise<void>;
+  /** Uploads the file immediately, then stages the resulting URL onto the open draft only — call `saveEditingCustomization` to persist it. */
+  uploadLogo: (file: File) => Promise<void>;
   /** A shareable link that auto-loads this customization via `loadByLocator`. */
   getShareLink: (customization: SeedBibleCustomization) => string;
-  /** Adds a new variant seeded from the current live theme. */
-  addVariant: (
-    customizationId: string
-  ) => Promise<CustomizationThemeVariant | null>;
-  renameVariant: (
-    customizationId: string,
-    variantId: string,
-    name: string
-  ) => Promise<void>;
-  setVariantColor: (
-    customizationId: string,
+  // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is null.
+  updateEditingName: (name: string) => void;
+  removeEditingLogo: () => void;
+  /** Adds a new variant to the draft, seeded from the current live theme. */
+  addEditingVariant: () => CustomizationThemeVariant | null;
+  renameEditingVariant: (variantId: string, name: string) => void;
+  setEditingVariantColor: (
     variantId: string,
     key: ThemeColorKey,
     value: string
-  ) => Promise<void>;
-  setDefaultVariant: (
-    customizationId: string,
-    variantId: string
-  ) => Promise<void>;
-  /** Removes a variant. No-ops if it's the only remaining variant on the customization. */
-  removeVariant: (customizationId: string, variantId: string) => Promise<void>;
+  ) => void;
+  setEditingDefaultVariant: (variantId: string) => void;
+  /** Removes a variant from the draft. No-op if it's the only remaining variant. */
+  removeEditingVariant: (variantId: string) => void;
   /** Persists the viewer's variant choice for the currently active customization. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
 }
@@ -261,7 +263,7 @@ export function createCustomizationsManager(
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
-  const editingCustomizationId = signal<string | null>(null);
+  const editingCustomization = signal<SeedBibleCustomization | null>(null);
   const editingVariantId = signal<string | null>(null);
   const linkedCustomization = signal<SeedBibleCustomization | null>(null);
   const linkedCustomizationLocator = signal<string | null>(null);
@@ -312,12 +314,22 @@ export function createCustomizationsManager(
     void loadByLocator(initialLocator);
   }
 
-  const activeCustomization = computed(
-    () =>
-      linkedCustomization.value ??
-      customizations.value.find((c) => c.active) ??
-      null
-  );
+  const activeCustomization = computed<SeedBibleCustomization | null>(() => {
+    if (linkedCustomization.value) {
+      return linkedCustomization.value;
+    }
+    const own = customizations.value.find((c) => c.active) ?? null;
+    if (!own) {
+      return null;
+    }
+    // Prefer the in-progress edit draft for display purposes, so unsaved
+    // color/variant edits preview live on the app while it's still active —
+    // "don't save after every change" is about the network write, not the
+    // live preview. Nothing is persisted here; only saveEditingCustomization
+    // writes to CasualOS.
+    const draft = editingCustomization.value;
+    return draft && draft.id === own.id ? draft : own;
+  });
 
   const activeCustomizationLocator = computed<string | null>(() => {
     if (linkedCustomization.value) {
@@ -420,6 +432,36 @@ export function createCustomizationsManager(
     return record;
   };
 
+  const startEditing = (id: string): void => {
+    const existing = customizations.value.find((c) => c.id === id);
+    if (!existing) {
+      return;
+    }
+    editingCustomization.value = existing;
+  };
+
+  const stopEditing = (): void => {
+    editingCustomization.value = null;
+    editingVariantId.value = null;
+  };
+
+  const saveEditingCustomization = async (): Promise<void> => {
+    const userId = login.userId.value;
+    const current = editingCustomization.value;
+    if (!userId || !current) {
+      return;
+    }
+
+    const saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
+    await persist(userId, saved);
+    customizations.value = customizations.value.some((c) => c.id === saved.id)
+      ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
+      : [...customizations.value, saved];
+    editingCustomization.value = saved;
+  };
+
+  // Only used by setActive/deactivate/remove, which stay immediate (they're
+  // one-click actions, not staged field edits).
   const updateRecord = async (
     id: string,
     patch: (record: SeedBibleCustomization) => SeedBibleCustomization
@@ -438,65 +480,61 @@ export function createCustomizationsManager(
     return updated;
   };
 
-  const updateVariants = async (
-    customizationId: string,
-    patch: (
-      variants: CustomizationThemeVariant[]
-    ) => CustomizationThemeVariant[]
-  ): Promise<SeedBibleCustomization | null> =>
-    updateRecord(customizationId, (record) => ({
-      ...record,
-      variants: patch(record.variants),
-      updatedAt: Date.now(),
-    }));
-
-  const rename = async (id: string, name: string): Promise<void> => {
-    await updateRecord(id, (record) => ({
-      ...record,
-      name,
-      updatedAt: Date.now(),
-    }));
+  const updateEditingName = (name: string): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = { ...current, name, updatedAt: Date.now() };
   };
 
-  const addVariant = async (
-    customizationId: string
-  ): Promise<CustomizationThemeVariant | null> => {
-    const existing = customizations.value.find((c) => c.id === customizationId);
-    if (!existing) {
+  const addEditingVariant = (): CustomizationThemeVariant | null => {
+    const current = editingCustomization.value;
+    if (!current) {
       return null;
     }
 
     const baseName = theme.basePresetTheme.value.name;
-    const usedNames = new Set(existing.variants.map((v) => v.name));
+    const usedNames = new Set(current.variants.map((v) => v.name));
     const name = usedNames.has(baseName)
-      ? `Variant ${existing.variants.length + 1}`
+      ? `Variant ${current.variants.length + 1}`
       : baseName;
     const variant = buildVariant(name, theme.currentTheme.value.variables);
 
-    await updateVariants(customizationId, (variants) => [...variants, variant]);
+    editingCustomization.value = {
+      ...current,
+      variants: [...current.variants, variant],
+      updatedAt: Date.now(),
+    };
     return variant;
   };
 
-  const renameVariant = async (
-    customizationId: string,
-    variantId: string,
-    name: string
-  ): Promise<void> => {
-    await updateVariants(customizationId, (variants) =>
-      variants.map((v) =>
+  const renameEditingVariant = (variantId: string, name: string): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      variants: current.variants.map((v) =>
         v.id === variantId ? { ...v, name, updatedAt: Date.now() } : v
-      )
-    );
+      ),
+      updatedAt: Date.now(),
+    };
   };
 
-  const setVariantColor = async (
-    customizationId: string,
+  const setEditingVariantColor = (
     variantId: string,
     key: ThemeColorKey,
     value: string
-  ): Promise<void> => {
-    await updateVariants(customizationId, (variants) =>
-      variants.map((variant) => {
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      variants: current.variants.map((variant) => {
         if (variant.id !== variantId) {
           return variant;
         }
@@ -538,49 +576,44 @@ export function createCustomizationsManager(
         }
 
         return { ...variant, themes: nextThemes, updatedAt: Date.now() };
-      })
-    );
+      }),
+      updatedAt: Date.now(),
+    };
   };
 
-  const setDefaultVariant = async (
-    customizationId: string,
-    variantId: string
-  ): Promise<void> => {
-    const existing = customizations.value.find((c) => c.id === customizationId);
-    if (!existing || !existing.variants.some((v) => v.id === variantId)) {
+  const setEditingDefaultVariant = (variantId: string): void => {
+    const current = editingCustomization.value;
+    if (!current || !current.variants.some((v) => v.id === variantId)) {
       return;
     }
-    await updateRecord(customizationId, (record) => ({
-      ...record,
+    editingCustomization.value = {
+      ...current,
       defaultVariantId: variantId,
       updatedAt: Date.now(),
-    }));
+    };
   };
 
-  const removeVariant = async (
-    customizationId: string,
-    variantId: string
-  ): Promise<void> => {
-    const existing = customizations.value.find((c) => c.id === customizationId);
-    if (!existing || existing.variants.length <= 1) {
+  const removeEditingVariant = (variantId: string): void => {
+    const current = editingCustomization.value;
+    if (!current || current.variants.length <= 1) {
       return;
     }
-    if (!existing.variants.some((v) => v.id === variantId)) {
+    if (!current.variants.some((v) => v.id === variantId)) {
       return;
     }
 
-    const remaining = existing.variants.filter((v) => v.id !== variantId);
+    const remaining = current.variants.filter((v) => v.id !== variantId);
     const nextDefaultVariantId =
-      existing.defaultVariantId === variantId
+      current.defaultVariantId === variantId
         ? remaining[0]!.id
-        : existing.defaultVariantId;
+        : current.defaultVariantId;
 
-    await updateRecord(customizationId, (record) => ({
-      ...record,
+    editingCustomization.value = {
+      ...current,
       variants: remaining,
       defaultVariantId: nextDefaultVariantId,
       updatedAt: Date.now(),
-    }));
+    };
   };
 
   const setActive = async (id: string): Promise<void> => {
@@ -598,6 +631,12 @@ export function createCustomizationsManager(
         active: false,
         updatedAt: Date.now(),
       }));
+      if (editingCustomization.value?.id === previouslyActive.id) {
+        editingCustomization.value = {
+          ...editingCustomization.value,
+          active: false,
+        };
+      }
     }
 
     await updateRecord(id, (record) => ({
@@ -605,6 +644,12 @@ export function createCustomizationsManager(
       active: true,
       updatedAt: Date.now(),
     }));
+    if (editingCustomization.value?.id === id) {
+      editingCustomization.value = {
+        ...editingCustomization.value,
+        active: true,
+      };
+    }
   };
 
   const deactivate = async (id: string): Promise<void> => {
@@ -618,6 +663,12 @@ export function createCustomizationsManager(
       active: false,
       updatedAt: Date.now(),
     }));
+    if (editingCustomization.value?.id === id) {
+      editingCustomization.value = {
+        ...editingCustomization.value,
+        active: false,
+      };
+    }
   };
 
   const remove = async (id: string): Promise<void> => {
@@ -629,12 +680,18 @@ export function createCustomizationsManager(
 
     await os.eraseData(userId, id);
     customizations.value = customizations.value.filter((c) => c.id !== id);
+    if (editingCustomization.value?.id === id) {
+      editingCustomization.value = null;
+    }
   };
 
-  const uploadLogo = async (id: string, file: File): Promise<void> => {
+  const uploadLogo = async (file: File): Promise<void> => {
     const userId = login.userId.value;
     if (!userId) {
       throw new Error("Cannot upload a logo while signed out.");
+    }
+    if (!editingCustomization.value) {
+      return;
     }
 
     const result = await os.recordFile(userId, file, {
@@ -645,19 +702,30 @@ export function createCustomizationsManager(
       throw new Error("Failed to upload logo.");
     }
 
-    await updateRecord(id, (record) => ({
-      ...record,
+    // Re-read after the await: editing may have been cancelled while the
+    // upload was in flight. Only stage the URL onto the draft — the record
+    // itself isn't persisted until saveEditingCustomization() is called.
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
       logoUrl: result.url,
       updatedAt: Date.now(),
-    }));
+    };
   };
 
-  const removeLogo = async (id: string): Promise<void> => {
-    await updateRecord(id, (record) => ({
-      ...record,
+  const removeEditingLogo = (): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
       logoUrl: null,
       updatedAt: Date.now(),
-    }));
+    };
   };
 
   const getShareLink = (customization: SeedBibleCustomization): string => {
@@ -682,23 +750,26 @@ export function createCustomizationsManager(
     activeVariant,
     activeThemeOverrides,
     linkedCustomization,
-    editingCustomizationId,
+    editingCustomization,
     editingVariantId,
     load,
     loadByLocator,
     create,
-    rename,
+    startEditing,
+    stopEditing,
+    saveEditingCustomization,
     setActive,
     deactivate,
     remove,
     uploadLogo,
-    removeLogo,
     getShareLink,
-    addVariant,
-    renameVariant,
-    setVariantColor,
-    setDefaultVariant,
-    removeVariant,
+    updateEditingName,
+    removeEditingLogo,
+    addEditingVariant,
+    renameEditingVariant,
+    setEditingVariantColor,
+    setEditingDefaultVariant,
+    removeEditingVariant,
     selectActiveVariant,
   };
 }

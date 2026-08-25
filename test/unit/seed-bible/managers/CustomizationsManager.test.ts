@@ -257,19 +257,103 @@ describe("CustomizationsManager", () => {
     expect(b2).toBeLessThanOrEqual(255);
   });
 
-  it("setVariantColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
+  it("startEditing() seeds editingCustomization from the persisted record, and no-ops for an unknown id", async () => {
     const { manager } = createManager();
     const created = await manager.create();
-    const variantId = created.variants[0]!.id;
 
-    await manager.setVariantColor(
-      created.id,
-      variantId,
+    manager.startEditing(created.id);
+    expect(manager.editingCustomization.value).toEqual(created);
+
+    manager.startEditing("customization_does_not_exist");
+    // Still the previously-seeded draft — no-op leaves it untouched.
+    expect(manager.editingCustomization.value).toEqual(created);
+  });
+
+  it("stopEditing() clears editingCustomization and editingVariantId", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.editingVariantId.value = created.variants[0]!.id;
+
+    manager.stopEditing();
+
+    expect(manager.editingCustomization.value).toBeNull();
+    expect(manager.editingVariantId.value).toBeNull();
+  });
+
+  it("draft mutators never call os.recordData — only saveEditingCustomization() persists the accumulated edits", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+    manager.startEditing(created.id);
+    manager.updateEditingName("Renamed");
+    manager.setEditingVariantColor(
+      created.variants[0]!.id,
       "primaryColor",
       "#123456"
     );
+    manager.addEditingVariant();
 
-    const updated = manager.customizations.value[0]?.variants[0];
+    // None of the draft edits above triggered a network write.
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(manager.customizations.value[0]?.name).toBe(created.name);
+
+    await manager.saveEditingCustomization();
+
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
+    const savedRecord = recordDataMock.mock.calls[1]?.[2];
+    expect(savedRecord.name).toBe("Renamed");
+    expect(savedRecord.variants[0].themes.primaryColor).toBe("#123456");
+    expect(savedRecord.variants).toHaveLength(2);
+    expect(manager.customizations.value[0]?.name).toBe("Renamed");
+  });
+
+  it("saveEditingCustomization() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+    await manager.create();
+    recordDataMock.mockClear();
+
+    await manager.saveEditingCustomization();
+
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("saveEditingCustomization() no-ops when signed out", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.updateEditingName("Renamed");
+    recordDataMock.mockClear();
+    login.userId.value = null;
+
+    await manager.saveEditingCustomization();
+
+    expect(recordDataMock).not.toHaveBeenCalled();
+    expect(manager.customizations.value[0]?.name).toBe(created.name);
+  });
+
+  it("updateEditingName() updates the draft's name without persisting or touching the live theme", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+
+    manager.updateEditingName("My colors");
+
+    expect(manager.editingCustomization.value?.name).toBe("My colors");
+    expect(manager.customizations.value[0]?.name).toBe(created.name);
+    expect(theme.customOverrides.value).toEqual({});
+  });
+
+  it("setEditingVariantColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.setEditingVariantColor(variantId, "primaryColor", "#123456");
+
+    const updated = manager.editingCustomization.value?.variants[0];
     expect(updated?.themes.secondaryColor).toBe(
       lightenColor("#123456", SECONDARY_LIGHTEN_AMOUNT)
     );
@@ -278,93 +362,67 @@ describe("CustomizationsManager", () => {
     );
   });
 
-  it("setVariantColor() leaves a manually-picked secondary/tertiary alone when the primary changes", async () => {
+  it("setEditingVariantColor() leaves a manually-picked secondary/tertiary alone when the primary changes", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
 
-    await manager.setVariantColor(
-      created.id,
-      variantId,
-      "secondaryColor",
-      "#abcdef"
-    );
-    await manager.setVariantColor(
-      created.id,
-      variantId,
-      "primaryColor",
-      "#123456"
-    );
+    manager.setEditingVariantColor(variantId, "secondaryColor", "#abcdef");
+    manager.setEditingVariantColor(variantId, "primaryColor", "#123456");
 
-    const updated = manager.customizations.value[0]?.variants[0];
+    const updated = manager.editingCustomization.value?.variants[0];
     expect(updated?.themes.secondaryColor).toBe("#abcdef");
     expect(updated?.themes.tertiaryColor).toBe(
       lightenColor("#123456", TERTIARY_LIGHTEN_AMOUNT)
     );
   });
 
-  it("setVariantColor() on one variant never touches a sibling variant's colors", async () => {
+  it("setEditingVariantColor() on one variant never touches a sibling variant's colors", async () => {
     const { manager } = createManager();
     const created = await manager.create();
-    const variantA = created.variants[0]!;
-    const variantB = await manager.addVariant(created.id);
+    manager.startEditing(created.id);
+    const variantA = manager.editingCustomization.value!.variants[0]!;
+    const variantB = manager.addEditingVariant();
     expect(variantB).not.toBeNull();
 
-    await manager.setVariantColor(
-      created.id,
-      variantA.id,
-      "primaryColor",
-      "#123456"
-    );
+    manager.setEditingVariantColor(variantA.id, "primaryColor", "#123456");
 
-    const record = manager.customizations.value[0]!;
+    const record = manager.editingCustomization.value!;
     const untouchedB = record.variants.find((v) => v.id === variantB!.id);
     expect(untouchedB?.themes).toEqual(variantB!.themes);
   });
 
-  it("setVariantColor() on a non-active customization persists but does not touch the live theme", async () => {
+  it("setEditingVariantColor() on a non-active customization is not reflected in the live theme, before or after saving", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
 
-    await manager.setVariantColor(
-      created.id,
-      variantId,
-      "primaryColor",
-      "#123456"
-    );
+    manager.setEditingVariantColor(variantId, "primaryColor", "#123456");
+    expect(manager.activeThemeOverrides.value.primaryColor).toBeUndefined();
 
-    expect(
-      manager.customizations.value[0]?.variants[0]?.themes.primaryColor
-    ).toBe("#123456");
+    await manager.saveEditingCustomization();
     expect(manager.activeThemeOverrides.value.primaryColor).toBeUndefined();
     expect(theme.customOverrides.value.primaryColor).toBeUndefined();
   });
 
-  it("setActive() applies the customization's colors to the live theme without persisting them to the user's theme settings", async () => {
+  it("setActive() applies the draft's unsaved colors to the live theme without persisting them to the user's theme settings", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
-    await manager.setVariantColor(
-      created.id,
-      variantId,
-      "primaryColor",
-      "#111111"
-    );
-    await manager.setVariantColor(
-      created.id,
-      variantId,
-      "fontColor",
-      "#222222"
-    );
+    manager.startEditing(created.id);
+    manager.setEditingVariantColor(variantId, "primaryColor", "#111111");
+    manager.setEditingVariantColor(variantId, "fontColor", "#222222");
 
     await manager.setActive(created.id);
 
     expect(manager.customizations.value[0]?.active).toBe(true);
+    // The unsaved draft edits preview live once the customization is active
+    // — "don't save after every change" is about the network write, not the
+    // live preview.
     expect(manager.activeThemeOverrides.value.primaryColor).toBe("#111111");
     expect(manager.activeThemeOverrides.value.fontColor).toBe("#222222");
-    // Secondary was still following the primary color (never manually set),
-    // so it re-derived along with it.
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe(
       lightenColor("#111111", SECONDARY_LIGHTEN_AMOUNT)
     );
@@ -372,6 +430,21 @@ describe("CustomizationsManager", () => {
     // user's persisted, settings-backed theme overrides — only refreshing
     // this in-memory signal.
     expect(theme.customOverrides.value).toEqual({});
+  });
+
+  it("setActive() syncs editingCustomization.active only when it's the customization being edited", async () => {
+    const { manager } = createManager();
+    const editing = await manager.create();
+    const other = await manager.create();
+    manager.startEditing(editing.id);
+
+    await manager.setActive(other.id);
+
+    expect(manager.editingCustomization.value?.active).toBe(false);
+
+    await manager.setActive(editing.id);
+
+    expect(manager.editingCustomization.value?.active).toBe(true);
   });
 
   it("setActive() deactivates the previously active customization", async () => {
@@ -392,18 +465,14 @@ describe("CustomizationsManager", () => {
     expect(secondNow?.active).toBe(true);
   });
 
-  it("setVariantColor() on the active customization's variant also previews the change live, without persisting it to the user's theme", async () => {
+  it("setEditingVariantColor() on the active customization's variant also previews the change live, without persisting it to the user's theme", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
     await manager.setActive(created.id);
+    manager.startEditing(created.id);
 
-    await manager.setVariantColor(
-      created.id,
-      variantId,
-      "secondaryColor",
-      "#abcdef"
-    );
+    manager.setEditingVariantColor(variantId, "secondaryColor", "#abcdef");
 
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe("#abcdef");
     expect(theme.customOverrides.value.secondaryColor).toBeUndefined();
@@ -421,6 +490,17 @@ describe("CustomizationsManager", () => {
     expect(theme.customOverrides.value).toEqual({});
   });
 
+  it("deactivate() syncs editingCustomization.active when editing the deactivated customization", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    await manager.setActive(created.id);
+    manager.startEditing(created.id);
+
+    await manager.deactivate(created.id);
+
+    expect(manager.editingCustomization.value?.active).toBe(false);
+  });
+
   it("remove() erases the record and resets the live theme if it was active", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
@@ -434,14 +514,17 @@ describe("CustomizationsManager", () => {
     expect(theme.customOverrides.value).toEqual({});
   });
 
-  it("rename() updates the name without touching the live theme", async () => {
-    const { manager, theme } = createManager();
-    const created = await manager.create();
+  it("remove() clears editingCustomization only when the removed id matches", async () => {
+    const { manager } = createManager();
+    const editing = await manager.create();
+    const other = await manager.create();
+    manager.startEditing(editing.id);
 
-    await manager.rename(created.id, "My colors");
+    await manager.remove(other.id);
+    expect(manager.editingCustomization.value?.id).toBe(editing.id);
 
-    expect(manager.customizations.value[0]?.name).toBe("My colors");
-    expect(theme.customOverrides.value).toEqual({});
+    await manager.remove(editing.id);
+    expect(manager.editingCustomization.value).toBeNull();
   });
 
   it("create() defaults logoUrl to null", async () => {
@@ -452,35 +535,40 @@ describe("CustomizationsManager", () => {
     expect(created.logoUrl).toBeNull();
   });
 
-  it("uploadLogo() records the file under the customization marker and persists the returned URL", async () => {
+  it("uploadLogo() uploads the file immediately but only stages the URL on the draft, without persisting the record", async () => {
     const { manager } = createManager();
     const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
     const file = new File(["fake image bytes"], "logo.png", {
       type: "image/png",
     });
 
-    await manager.uploadLogo(created.id, file);
+    await manager.uploadLogo(file);
 
     expect(recordFileMock).toHaveBeenCalledWith("user-1", file, {
       mimeType: "image/png",
       marker: CUSTOMIZATION_MARKER,
     });
-    expect(manager.customizations.value[0]?.logoUrl).toBe(
+    expect(manager.editingCustomization.value?.logoUrl).toBe(
       "https://files.example.com/logo.png"
     );
+    expect(recordDataMock).not.toHaveBeenCalled();
+    expect(manager.customizations.value[0]?.logoUrl).toBeNull();
   });
 
-  it("removeLogo() clears the logo URL and persists the change", async () => {
+  it("removeEditingLogo() clears the draft's logo URL without persisting", async () => {
     const { manager } = createManager();
     const created = await manager.create();
+    manager.startEditing(created.id);
     const file = new File(["fake image bytes"], "logo.png", {
       type: "image/png",
     });
-    await manager.uploadLogo(created.id, file);
+    await manager.uploadLogo(file);
 
-    await manager.removeLogo(created.id);
+    manager.removeEditingLogo();
 
-    expect(manager.customizations.value[0]?.logoUrl).toBeNull();
+    expect(manager.editingCustomization.value?.logoUrl).toBeNull();
   });
 
   it("getShareLink() builds a link with the owner's recordName and the customization's id", async () => {
@@ -492,14 +580,15 @@ describe("CustomizationsManager", () => {
     expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
   });
 
-  it("addVariant() appends a new variant seeded from the current theme", async () => {
+  it("addEditingVariant() appends a new variant to the draft, seeded from the current theme", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
+    manager.startEditing(created.id);
 
-    const added = await manager.addVariant(created.id);
+    const added = manager.addEditingVariant();
 
     expect(added).not.toBeNull();
-    const record = manager.customizations.value[0]!;
+    const record = manager.editingCustomization.value!;
     expect(record.variants).toHaveLength(2);
     expect(record.variants[1]?.id).toBe(added!.id);
     expect(added!.themes.primaryColor).toBe(
@@ -508,77 +597,98 @@ describe("CustomizationsManager", () => {
     // The base preset name ("Light") is already taken by the first variant,
     // so the new one falls back to a generic name.
     expect(added!.name).toBe("Variant 2");
+    // Not persisted yet.
+    expect(manager.customizations.value[0]?.variants).toHaveLength(1);
   });
 
-  it("renameVariant() updates only the targeted variant", async () => {
+  it("addEditingVariant() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+
+    const added = manager.addEditingVariant();
+
+    expect(added).toBeNull();
+  });
+
+  it("renameEditingVariant() updates only the targeted variant in the draft", async () => {
     const { manager } = createManager();
     const created = await manager.create();
-    const second = await manager.addVariant(created.id);
+    manager.startEditing(created.id);
+    const second = manager.addEditingVariant();
 
-    await manager.renameVariant(created.id, second!.id, "Festive");
+    manager.renameEditingVariant(second!.id, "Festive");
 
-    const record = manager.customizations.value[0]!;
+    const record = manager.editingCustomization.value!;
     expect(record.variants.find((v) => v.id === second!.id)?.name).toBe(
       "Festive"
     );
     expect(record.variants[0]?.name).toBe(created.variants[0]!.name);
   });
 
-  it("setDefaultVariant() updates the default variant id, and no-ops for an unknown id", async () => {
+  it("setEditingDefaultVariant() updates the draft's default variant id, and no-ops for an unknown id", async () => {
     const { manager } = createManager();
     const created = await manager.create();
-    const second = await manager.addVariant(created.id);
+    manager.startEditing(created.id);
+    const second = manager.addEditingVariant();
 
-    await manager.setDefaultVariant(created.id, second!.id);
-    expect(manager.customizations.value[0]?.defaultVariantId).toBe(second!.id);
+    manager.setEditingDefaultVariant(second!.id);
+    expect(manager.editingCustomization.value?.defaultVariantId).toBe(
+      second!.id
+    );
 
-    await manager.setDefaultVariant(created.id, "variant_does_not_exist");
-    expect(manager.customizations.value[0]?.defaultVariantId).toBe(second!.id);
+    manager.setEditingDefaultVariant("variant_does_not_exist");
+    expect(manager.editingCustomization.value?.defaultVariantId).toBe(
+      second!.id
+    );
   });
 
-  it("removeVariant() removes a non-default variant and leaves defaultVariantId untouched", async () => {
+  it("removeEditingVariant() removes a non-default variant and leaves defaultVariantId untouched", async () => {
     const { manager } = createManager();
     const created = await manager.create();
-    const second = await manager.addVariant(created.id);
+    manager.startEditing(created.id);
+    const second = manager.addEditingVariant();
 
-    await manager.removeVariant(created.id, second!.id);
+    manager.removeEditingVariant(second!.id);
 
-    const record = manager.customizations.value[0]!;
+    const record = manager.editingCustomization.value!;
     expect(record.variants).toHaveLength(1);
     expect(record.defaultVariantId).toBe(created.variants[0]!.id);
   });
 
-  it("removeVariant() reassigns defaultVariantId to the first remaining variant when the default is removed", async () => {
+  it("removeEditingVariant() reassigns defaultVariantId to the first remaining variant when the default is removed", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     const originalDefaultId = created.variants[0]!.id;
-    const second = await manager.addVariant(created.id);
+    manager.startEditing(created.id);
+    const second = manager.addEditingVariant();
 
-    await manager.removeVariant(created.id, originalDefaultId);
+    manager.removeEditingVariant(originalDefaultId);
 
-    const record = manager.customizations.value[0]!;
+    const record = manager.editingCustomization.value!;
     expect(record.variants).toHaveLength(1);
     expect(record.variants[0]?.id).toBe(second!.id);
     expect(record.defaultVariantId).toBe(second!.id);
   });
 
-  it("removeVariant() is a no-op when only one variant remains", async () => {
+  it("removeEditingVariant() is a no-op when only one variant remains", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     const onlyVariantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
 
-    await manager.removeVariant(created.id, onlyVariantId);
+    manager.removeEditingVariant(onlyVariantId);
 
-    const record = manager.customizations.value[0]!;
+    const record = manager.editingCustomization.value!;
     expect(record.variants).toHaveLength(1);
     expect(record.variants[0]?.id).toBe(onlyVariantId);
   });
 
-  it("activeThemeOverrides falls back to the customization's default variant, not necessarily the first one, when the viewer hasn't picked one", async () => {
+  it("activeThemeOverrides falls back to the saved customization's default variant, not necessarily the first one, when the viewer hasn't picked one", async () => {
     const { manager } = createManager();
     const created = await manager.create();
-    const second = await manager.addVariant(created.id);
-    await manager.setDefaultVariant(created.id, second!.id);
+    manager.startEditing(created.id);
+    const second = manager.addEditingVariant();
+    manager.setEditingDefaultVariant(second!.id);
+    await manager.saveEditingCustomization();
 
     await manager.setActive(created.id);
 
@@ -589,7 +699,9 @@ describe("CustomizationsManager", () => {
   it("selectActiveVariant() persists the viewer's own choice, separate from the customization record and the user's default theme settings", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
-    const second = await manager.addVariant(created.id);
+    manager.startEditing(created.id);
+    const second = manager.addEditingVariant();
+    await manager.saveEditingCustomization();
     await manager.setActive(created.id);
     recordDataMock.mockClear();
 

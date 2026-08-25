@@ -138,6 +138,7 @@
   "delete-customization": "Delete",
   "confirm-delete-customization": "Confirm delete",
   "customization-link-copied": "Customization link copied to clipboard",
+  "customization-saved": "Customization saved",
   "customization-options": "Customization options",
   "variants": "Variants",
   "add-variant": "Add variant",
