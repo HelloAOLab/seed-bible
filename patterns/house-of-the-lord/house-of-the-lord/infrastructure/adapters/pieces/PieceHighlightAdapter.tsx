@@ -7,7 +7,11 @@ import type { PiecesProvider } from "./PiecesProvider";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import { AnimateStrictTag, ApplyStrictMod } from "../../functions/casualos";
 import type { VFXBotFactory } from "../vfx/VFXBotFactory";
-import type { VFXBot, VFXBotTags } from "../../models/casualos";
+import type {
+  VFXBot,
+  VFXBotTags,
+  ColorLerpablePieceBot,
+} from "../../models/casualos";
 import type { ColorLerper } from "../casualos/ColorLerper";
 import { HexToRgb } from "../../../domain/functions/colors";
 import type {
@@ -31,7 +35,7 @@ interface AdapterParams {
 export class PieceHighlightAdapter
   implements PieceInteractionPieceHighlightPort, EnvironmentPieceHighlightPort
 {
-  #focusedBots: Bot[] = [];
+  #focusedBots: ColorLerpablePieceBot[] = [];
   #lastInteractionId: string | null = null;
   #getDimension: AdapterParams["getDimension"];
   #piecesProvider: AdapterParams["piecesProvider"];
@@ -81,7 +85,7 @@ export class PieceHighlightAdapter
     this.#lastInteractionId = interactionId;
 
     if (this.#focusedBots.length > 0) {
-      this.#clearFocus();
+      this.#clearFocus(bot);
     }
 
     this.#focusedBots = [bot];
@@ -163,7 +167,8 @@ export class PieceHighlightAdapter
           this.#focusedBots = [];
           this.#lastInteractionId = null;
         }
-      });
+      })
+      .catch(() => {});
 
     // Cone animation
     if (cone) {
@@ -189,13 +194,17 @@ export class PieceHighlightAdapter
     this.#clearFocus();
   }
 
-  #clearFocus(): void {
+  #clearFocus(nextBot?: ColorLerpablePieceBot): void {
     for (const bot of this.#focusedBots) {
-      AnimateStrictTag(bot, "color", {
-        toValue: "#ffffff",
-        duration: 0.3,
-        tagMaskSpace: false,
-      });
+      if (nextBot && bot.id === nextBot.id) continue;
+      this.#colorLerper
+        .lerp({
+          end: HexToRgb({ hexColor: "#ffffff" }),
+          durationSec: 0.3,
+          bot,
+          tag: "color",
+        })
+        .catch(() => {});
     }
     this.#focusedBots = [];
     this.#lastInteractionId = null;
