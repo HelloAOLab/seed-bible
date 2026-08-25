@@ -827,6 +827,79 @@ describe("BibleReaderToolbar mobile More menu", () => {
   });
 });
 
+describe("BibleReaderToolbar — mobile Bible tab", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar(): Promise<{
+    state: SeedBibleState;
+    bibleButton: HTMLButtonElement;
+  }> {
+    const state = await createTestSeedBibleState();
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const bibleButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        ".sb-reader-toolbar-mobile-tab-button"
+      )
+    ).find((button) => button.getAttribute("aria-label") === "Bible");
+    if (!bibleButton) {
+      throw new Error("The mobile Bible tab did not render.");
+    }
+    return { state, bibleButton };
+  }
+
+  async function tap(button: HTMLButtonElement): Promise<void> {
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  it("opens the book selector when the Bible text is already showing", async () => {
+    const { state, bibleButton } = await renderToolbar();
+    expect(state.selector.isOpen.value).toBe(false);
+
+    await tap(bibleButton);
+
+    await waitFor(() => state.selector.isOpen.value === true);
+  });
+
+  it("shows the Bible text instead of the selector when another screen covers the reader", async () => {
+    const { state, bibleButton } = await renderToolbar();
+
+    await act(async () => {
+      state.sidebar.openSearchPanel();
+    });
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    await tap(bibleButton);
+
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
+    expect(state.selector.isOpen.value).toBe(false);
+  });
+});
+
 /**
  * Height jsdom reports for the sheet's overflow row. jsdom does no layout, so
  * every element measures 0 and the sheet would believe it has nothing to reveal.
@@ -1519,6 +1592,102 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
       expect(annotationItems()[0]?.textContent).toContain("Just this verse");
       expect(annotationItems()[1]?.textContent).toContain("A short range");
     });
+  });
+
+  it("shows a generic account icon on the current user's notes when nobody else has annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+        )
+      ).not.toBeNull();
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )?.textContent
+    ).toContain("account_circle");
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+      )
+    ).toBeNull();
+  });
+
+  it("shows the animal fallback on verse-sheet notes when other people have also annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+      {
+        id: "a2",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Theirs</p>",
+          userId: "toolbar-user-other",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelectorAll(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+        )
+      ).toHaveLength(2);
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )
+    ).toBeNull();
   });
 });
 

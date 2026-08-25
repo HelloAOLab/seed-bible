@@ -39,12 +39,14 @@ import {
   handleHorizontalListKeyNav,
 } from "../../app/keyboardNav";
 import {
+  Avatar,
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
   sessionRoleRank,
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
+import { chatHasOtherPeople } from "../../managers/ChatsManager";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -929,7 +931,6 @@ export function Settings(props: SettingsProps) {
   const { state } = props;
   const { sidebar } = state;
   const { t } = useI18n();
-  const isAccountView = sidebar.requestedSettingsView.value === "account";
 
   return (
     <div className="sb-sidebar-settings-view">
@@ -937,9 +938,7 @@ export function Settings(props: SettingsProps) {
         <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
         <button
           onClick={sidebar.closeSettings}
-          className={`sb-sidebar-settings-close-button${
-            isAccountView ? " sb-sidebar-settings-close-button-account" : ""
-          }`}
+          className="sb-sidebar-settings-close-button"
           aria-label={t("close-settings", { defaultValue: "Close Settings" })}
           title={t("close-settings", { defaultValue: "Close Settings" })}
         >
@@ -2477,10 +2476,12 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
 }
 
 /**
- * Just the avatar visual — the image (when the user has a profile picture)
- * or the deterministic animal icon + color (otherwise). Reused by the
- * sidebar bottom-right avatar button and by the mobile bottom-bar "You"
- * tab so the two surfaces always show the same identity.
+ * Just the avatar visual — the image (when the user has a profile picture),
+ * a generic account icon (when they don't, and nobody else is around), or
+ * the deterministic animal icon + color (when they don't, and other people
+ * are present). Reused by the sidebar bottom-right avatar button and by the
+ * mobile header account button so the two surfaces always show the same
+ * identity.
  */
 export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const { state } = props;
@@ -2495,29 +2496,29 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const visual = getUserAnimalVisual(visualKey);
   const imageUrl = profile?.pictureUrl ?? null;
 
-  if (imageUrl) {
-    return (
-      <span
-        className="sb-tab-user-icon sb-tab-user-icon-has-image"
-        style={{
-          borderColor: visual.color,
-          backgroundImage: `url(${imageUrl})`,
-        }}
-      />
-    );
-  }
-
   return (
-    <span
-      className="sb-tab-user-icon sb-tab-user-icon-animal"
-      style={{
-        borderColor: visual.color,
-        backgroundColor: visual.color,
-      }}
-    >
-      <span className="material-symbols-outlined">{visual.defaultIcon}</span>
-    </span>
+    <Avatar
+      imageUrl={imageUrl}
+      visual={visual}
+      title={getSelfDisplayName(state)}
+      genericFallback={!isInMultiUserIdentityContext(state)}
+    />
   );
+}
+
+/**
+ * True when the current user is in a context where other people can see
+ * them — a shared reading session, or a chat that includes another person
+ * (including someone who is currently inactive). That's when the
+ * animal+color fallback is needed to tell people apart.
+ */
+function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
+  const tabs = state.tabs?.tabs?.value;
+  if (tabs?.some((tab) => tab.sharedSession != null)) {
+    return true;
+  }
+  const chats = state.chats?.chats?.value;
+  return chats?.some((chat) => chatHasOtherPeople(chat)) ?? false;
 }
 
 /** Display name for the current user — used as the avatar tooltip / aria-label. */
@@ -2528,9 +2529,9 @@ export function getSelfDisplayName(state: SeedBibleState): string {
 }
 
 /**
- * Button at the bottom-right of the sidebar showing the current user's own
- * animal icon + color. Opens account settings when clicked (matches the
- * bottom-of-sidebar avatar slot in develop).
+ * Button at the bottom-right of the sidebar showing the current user's
+ * avatar. Opens account settings when clicked (matches the bottom-of-sidebar
+ * avatar slot in develop).
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;

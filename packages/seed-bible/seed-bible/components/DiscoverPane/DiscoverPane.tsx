@@ -14,6 +14,7 @@ import {
   playlistPlayHistoryPercent,
 } from "../../managers/PlaylistManager";
 import { effect, useSignal } from "@preact/signals";
+import { lazy, Suspense } from "preact/compat";
 import { useEffect, useRef } from "preact/hooks";
 import type { JSX } from "preact";
 import type {
@@ -28,6 +29,7 @@ import { v4 as uuid } from "uuid";
 import type { LoginManager } from "../../managers/LoginManager";
 import {
   annotationVerseNumbers,
+  annotationListHasOtherAuthors,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
   type Annotation,
@@ -45,6 +47,7 @@ import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -54,6 +57,13 @@ import {
   type BookId,
   type VerseRef,
 } from "../../managers/BibleDataManager";
+
+// Loaded lazily so its (and its CSS's) bundle is only fetched for the rare
+// visitor who actually has a `recordOverride` active - see
+// `AnnotationOverrideBanner`.
+const AnnotationOverrideBanner = lazy(
+  () => import("./AnnotationOverrideBanner")
+);
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -234,12 +244,9 @@ export function DiscoverPaneTitle(props: {
           dir="auto"
           onInput={(event: Event) => {
             const value = (event.currentTarget as HTMLInputElement).value;
-            if (editing) {
-              playlists.editingPlaylist.value = {
-                ...editing,
-                title: value.trim() ? value : null,
-              };
-            }
+            playlists.updateEditingPlaylistMetadata({
+              title: value.trim() ? value : null,
+            });
           }}
           placeholder={t("playlist-title_placeholder", {
             defaultValue: "Playlist title",
@@ -399,9 +406,17 @@ function PlaylistSection({
                     })}
                 </span>
                 {playlist.description ? (
-                  <span className="sb-discover-item-description">
+                  <ExpandableText
+                    className="sb-discover-item-description"
+                    readMoreLabel={t("read-more", {
+                      defaultValue: "Read more",
+                    })}
+                    readLessLabel={t("read-less", {
+                      defaultValue: "Read less",
+                    })}
+                  >
                     {playlist.description}
-                  </span>
+                  </ExpandableText>
                 ) : null}
               </div>
               <button
@@ -857,8 +872,9 @@ const annotationAuthorProfileCache = new Map<
 function AnnotationAuthor(props: {
   userId: string | null | undefined;
   login: LoginManager;
+  otherPeoplePresent?: boolean;
 }) {
-  const { userId, login } = props;
+  const { userId, login, otherPeoplePresent = false } = props;
   const name = useSignal("");
   const pictureUrl = useSignal<string | null>(null);
   const isSelf = userId === login.userId.value;
@@ -904,6 +920,7 @@ function AnnotationAuthor(props: {
         imageUrl={pictureUrl.value}
         visual={getUserAnimalVisual(userId)}
         title={name.value}
+        genericFallback={isSelf && !otherPeoplePresent}
       />
       {isSelf || name.value ? (
         <span className="sb-annotation-comment-author-name">
@@ -939,8 +956,9 @@ export function AnnotationCommentMeta(props: {
   login: LoginManager;
   t: ReturnType<typeof useI18n>["t"];
   language: string;
+  otherPeoplePresent?: boolean;
 }) {
-  const { annotation, login, language } = props;
+  const { annotation, login, language, otherPeoplePresent } = props;
   if (annotation.data.type !== "comment") {
     return null;
   }
@@ -950,7 +968,11 @@ export function AnnotationCommentMeta(props: {
 
   return (
     <span className="sb-annotation-comment-meta">
-      <AnnotationAuthor userId={annotation.data.userId} login={login} />
+      <AnnotationAuthor
+        userId={annotation.data.userId}
+        login={login}
+        otherPeoplePresent={otherPeoplePresent}
+      />
       {updatedAtMs != null ? (
         <span className="sb-annotation-comment-updated">
           |{" "}
@@ -978,6 +1000,7 @@ function AnnotationGroupSection(props: {
   tabs: TabsManager;
   panes: PanesManager;
   onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
 }) {
   const {
     id,
@@ -989,6 +1012,7 @@ function AnnotationGroupSection(props: {
     tabs,
     panes,
     onReferenceClick,
+    otherPeoplePresent,
   } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
@@ -1068,6 +1092,7 @@ function AnnotationGroupSection(props: {
                   login={login}
                   t={t}
                   language={language}
+                  otherPeoplePresent={otherPeoplePresent}
                 />
               </div>
               <ContextMenuWithButton
@@ -1138,6 +1163,11 @@ function AnnotationsSection(props: {
   } = props;
   const { t } = useI18n();
   const title = t("notes", { defaultValue: "Notes" });
+  const overrideBanner = annotations.hasRecordOverride ? (
+    <Suspense fallback={null}>
+      <AnnotationOverrideBanner />
+    </Suspense>
+  ) : null;
 
   // Clicking an annotated verse number on desktop (BibleReader.tsx) sets
   // this once; scroll to that verse's annotation group if it's this tab's
@@ -1188,13 +1218,23 @@ function AnnotationsSection(props: {
   }, [tab, discover, annotations]);
 
   if (!tab) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+    return (
+      <DiscoverSection title={title}>
+        {overrideBanner}
+        {noTabHint(t)}
+      </DiscoverSection>
+    );
   }
 
   const bookId = tab.readingState.bookId.value;
   const chapterNumber = tab.readingState.chapterNumber.value;
   if (!bookId || !chapterNumber) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+    return (
+      <DiscoverSection title={title}>
+        {overrideBanner}
+        {noTabHint(t)}
+      </DiscoverSection>
+    );
   }
 
   const chapterAnnotations = annotations.getAnnotationsForChapter(
@@ -1202,6 +1242,12 @@ function AnnotationsSection(props: {
     chapterNumber
   ).value;
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
+  
+  const otherPeoplePresent = annotationListHasOtherAuthors(
+    chapterAnnotations,
+    login.userId.value
+  );
+  
   const pending = annotations.sync.pendingCountForChapter(
     bookId,
     chapterNumber
@@ -1209,6 +1255,7 @@ function AnnotationsSection(props: {
 
   return (
     <DiscoverSection title={title}>
+      {overrideBanner}
       {pending > 0 ? (
         <p className="sb-annotations-pending-sync">
           {t(
@@ -1248,6 +1295,7 @@ function AnnotationsSection(props: {
               tabs={tabs}
               panes={panes}
               onReferenceClick={onReferenceClick}
+              otherPeoplePresent={otherPeoplePresent}
             />
           );
         })

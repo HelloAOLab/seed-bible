@@ -162,12 +162,13 @@ function createMockPlaylists(
   const removePlayHistory = vi.fn().mockResolvedValue(undefined);
 
   const view = signal(overrides.view ?? "discover");
+  const editingPlaylist = signal(overrides.editingPlaylist ?? null);
   const playlists = {
     view,
     actualView: view,
     userPlaylists: signal(overrides.userPlaylists ?? []),
+    editingPlaylist,
     userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
-    editingPlaylist: signal(overrides.editingPlaylist ?? null),
     playing: signal(overrides.playing ?? null),
     createNewPlaylist,
     startPlaying,
@@ -179,6 +180,13 @@ function createMockPlaylists(
     replayFromHistory,
     removePlayHistory,
     saveEditingPlaylist: vi.fn().mockResolvedValue(undefined),
+    updateEditingPlaylistMetadata: vi.fn(
+      (updates: Partial<Pick<Playlist, "title" | "description">>) => {
+        const current = editingPlaylist.value;
+        if (!current) return;
+        editingPlaylist.value = { ...current, ...updates };
+      }
+    ),
     addEditingPlaylistItem: vi.fn(),
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
@@ -214,6 +222,7 @@ function createMockAnnotations(
     editingAnnotation?: Annotation | null;
     annotationsForChapter?: Annotation[];
     deleteAnnotationAndRefreshImpl?: () => Promise<void>;
+    hasRecordOverride?: boolean;
     pendingSyncCount?: number;
   } = {}
 ): MockAnnotationsResult {
@@ -236,6 +245,7 @@ function createMockAnnotations(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    hasRecordOverride: overrides.hasRecordOverride ?? false,
     // The pane shows how much is waiting to sync, so this has to be present.
     sync: {
       pendingCount: signal(overrides.pendingSyncCount ?? 0),
@@ -506,7 +516,7 @@ describe("DiscoverPane", () => {
       items[0]?.querySelector(".sb-discover-item-title")?.textContent
     ).toBe("Evening Reading");
     expect(
-      items[0]?.querySelector(".sb-discover-item-description")?.textContent
+      items[0]?.querySelector(".sb-expandable-text-body")?.textContent
     ).toBe("A short evening study");
     expect(
       items[1]?.querySelector(".sb-discover-item-title")?.textContent
@@ -768,6 +778,102 @@ describe("DiscoverPane", () => {
 
     render(null, modalContainer);
     modalContainer.remove();
+  });
+
+  it("hides the record-override banner when annotations are not routed through an override", () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      hasRecordOverride: false,
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-annotation-override-banner")
+    ).toBeNull();
+  });
+
+  it("shows the record-override banner when annotations are routed through a team record, with a button that reloads the URL without the query param", async () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      hasRecordOverride: true,
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      value: new URL(
+        "https://example.com/read?book=GEN&annotationRecordKey=team-record"
+      ),
+      writable: true,
+      configurable: true,
+    });
+
+    try {
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={tabs}
+            playlists={playlists}
+            annotations={annotations}
+            modals={modals}
+            state={state}
+            toast={state.app.toast}
+          />,
+          container
+        );
+      });
+
+      // The banner is lazily loaded, so it only mounts once the dynamic
+      // import resolves - which (being a real, unmocked import rather than a
+      // pre-resolved one) can take more than a single tick.
+      await vi.waitFor(() => {
+        expect(
+          container.querySelector(".sb-annotation-override-banner")
+        ).not.toBeNull();
+      });
+
+      const banner = container.querySelector(".sb-annotation-override-banner");
+      expect(banner?.textContent).toContain(
+        "Notes are being saved and loaded from your team's account."
+      );
+
+      const button = container.querySelector(
+        ".sb-annotation-override-banner-button"
+      ) as HTMLButtonElement;
+      expect(button?.textContent).toBe("Save to my account");
+
+      act(() => {
+        button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(window.location.href).toBe("https://example.com/read?book=GEN");
+    } finally {
+      Object.defineProperty(window, "location", {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      });
+    }
   });
 
   it("shows the empty-annotations message when there are no annotations for the chapter", () => {
@@ -1441,7 +1547,147 @@ describe("DiscoverPane", () => {
     expect(avatarIndex).toBeLessThan(nameIndex);
   });
 
-  it("shows a deterministic fallback avatar (derived from the user id) when the author has no profile picture", () => {
+  it("shows a generic account icon for the current user's own notes when nobody else has annotated", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-self",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+    state.login.userId.value = "user-self";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-tab-user-icon-generic")?.textContent
+    ).toContain("account_circle");
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the current user's profile picture on their own notes even when nobody else has annotated", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-self-with-picture",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const getUserProfile = vi.fn().mockResolvedValue({
+      name: "Ada",
+      pictureUrl: "https://example.com/ada.png",
+    });
+    const state = createMockState(false, { getUserProfile });
+    state.login.userId.value = "user-self-with-picture";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    await vi.waitFor(() => {
+      const avatar = container.querySelector(
+        ".sb-tab-user-icon-has-image"
+      ) as HTMLElement;
+      expect(avatar).not.toBeNull();
+      expect(avatar?.style.backgroundImage).toContain(
+        "https://example.com/ada.png"
+      );
+    });
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for the current user's notes when other people have also annotated", () => {
+    const { playlists } = createMockPlaylists();
+    const own = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Mine</p>",
+        userId: "user-self",
+      },
+    });
+    const other = createAnnotation({
+      id: "a2",
+      verseNumber: 4,
+      data: {
+        type: "comment",
+        html: "<p>Theirs</p>",
+        userId: "user-other",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [own, other],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+    state.login.userId.value = "user-self";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const animals = container.querySelectorAll(".sb-tab-user-icon-animal");
+    expect(animals.length).toBe(2);
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  it("shows a deterministic fallback avatar (derived from the user id) when another author has no profile picture", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
       id: "a1",

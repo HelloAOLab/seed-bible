@@ -499,6 +499,15 @@ export function createSeedBibleState(
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
   // listener) keeps URL-driven language changes view-only.
   i18n.setLanguagePersister(settings.persistLanguage);
+
+  // "Never ask again" on the UI-language switch prompt is an ordinary setting,
+  // so it rides on the same profile-when-logged-in / device-when-not storage
+  // as every other one.
+  i18n.setUiLanguagePromptPreference({
+    isEnabled: () => settings.settings.value.askToSwitchUiLanguage,
+    disable: () => settings.setAskToSwitchUiLanguage(false),
+  });
+
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
   // Filled once tabs exist so local chat can resolve localized book names.
@@ -530,11 +539,22 @@ export function createSeedBibleState(
     sidebar,
     bookmarks,
     navigation,
-    login
+    login,
+    i18n
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login, tabs, discover);
+
+  const annotationRecordKey =
+    navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
+    undefined;
+  const annotations = createAnnotationsManager(
+    os,
+    login,
+    tabs,
+    discover,
+    annotationRecordKey
+  );
   const sessions = createSessionsManager(
     os,
     data,
