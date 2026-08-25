@@ -1,0 +1,42 @@
+const sectionBooks = getBots(byTag("isBook", true), byTag("sectionName", thisBot.tags.sectionName));
+const mainWord = getBot("isMainWord", true);
+let currentBibleStructure = mainWord.masks.bibleStructure.slice();
+const isConvertedIntoBooks = currentBibleStructure.find((testament) => {
+    return testament.sections.some((section) => {
+        return section.botID === getID(thisBot);
+    })
+}).sections.find((section) => {
+    return section.botID === getID(thisBot);
+}).convertedIntoBooks;
+
+if(isConvertedIntoBooks)
+{
+    sectionBooks.forEach((book) => {
+        book.tryToIncludeInTheBible({callingFrom: "reformSection"})
+    });
+    setTagMask(thisBot, "isInsideBible", true);
+    for(let testament of currentBibleStructure)
+    {
+        for(let section of testament.sections)
+        {
+            if(section.botID === getID(thisBot))
+            {
+                setTagMask(thisBot, "isInsideTestament", testament.isInsideBible);
+                section.isInsideBible = true;
+                section.isInsideArrangement = testament.isInsideBible;
+                section.positionOutsideBible = null;
+                section.hasBookStackBeenModified = true
+                setTagMask(mainWord, "bibleStructure", currentBibleStructure);
+            }
+        }
+    }
+}
+else
+{
+    await thisBot.forceUnhighlight({isInstantaneous: true});
+    thisBot.tryToIncludeInTheBible();
+}
+
+await mainWord.resizeBible();
+
+setTagMask(thisBot, "isBeingIncludedInParent", false);
