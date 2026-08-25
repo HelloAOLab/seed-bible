@@ -85,7 +85,7 @@ describe("ResumeReadingSection", () => {
     it("renders the card title", () => {
       setup();
       expect(card()!.querySelector(":scope > span")!.textContent).toBe(
-        "CONTINUE WHERE YOU LEFT"
+        "CONTINUE WHERE YOU LEFT OFF"
       );
     });
 

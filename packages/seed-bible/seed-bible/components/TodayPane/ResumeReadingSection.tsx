@@ -40,7 +40,7 @@ export const ResumeReadingSection = (props: {
   return (
     <div className="sb-today-resume-card">
       <span>
-        {t("resume-reading", { defaultValue: "CONTINUE WHERE YOU LEFT" })}
+        {t("resume-reading", { defaultValue: "CONTINUE WHERE YOU LEFT OFF" })}
       </span>
       <h1>
         {`${bookNames.value.get(lastReading.bookId) ?? lastReading.bookId} `}

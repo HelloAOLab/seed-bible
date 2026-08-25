@@ -145,7 +145,7 @@ function SearchBar(props: {
       <input
         type="text"
         placeholder={t("today-search-verses", {
-          defaultValue: "Search books, chapter, verses....",
+          defaultValue: "Search books, chapters, verses...",
         })}
         value={query.value}
         onInput={(e) => runSearch((e.target as HTMLInputElement).value)}

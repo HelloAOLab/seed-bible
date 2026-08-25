@@ -193,7 +193,7 @@ describe("SearchSection", () => {
       expect(
         q(".sb-today-searchbar .material-symbols-outlined")!.textContent
       ).toBe("search");
-      expect(input().placeholder).toBe("Search books, chapter, verses....");
+      expect(input().placeholder).toBe("Search books, chapters, verses...");
       expect(input().value).toBe("");
     });
 
