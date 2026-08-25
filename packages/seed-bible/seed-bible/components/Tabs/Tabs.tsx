@@ -746,8 +746,9 @@ export function TabsHeader(props: TabsHeaderProps) {
     closeLayoutMenu,
     setLayout,
   } = props;
-  const { sidebar, settings } = state;
+  const { sidebar, settings, customizations } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
+  const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
   const { t } = useI18n();
   const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
 
@@ -768,18 +769,28 @@ export function TabsHeader(props: TabsHeaderProps) {
 
   return (
     <div className="sb-sidebar-top-row">
-      <button
-        onClick={sidebar.toggleSidebarCollapsed}
-        className="sb-sidebar-collapse-button"
-        aria-label={
-          effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
-        }
-        title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        <span className="material-symbols-outlined">
-          {effectivelyCollapsed ? "menu" : "menu_open"}
-        </span>
-      </button>
+      <div className="sb-sidebar-top-start">
+        <button
+          onClick={sidebar.toggleSidebarCollapsed}
+          className="sb-sidebar-collapse-button"
+          aria-label={
+            effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+          }
+          title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <span className="material-symbols-outlined">
+            {effectivelyCollapsed ? "menu" : "menu_open"}
+          </span>
+        </button>
+
+        {activeLogoUrl && (
+          <span
+            className="sb-sidebar-logo sb-tab-user-icon sb-tab-user-icon-has-image"
+            style={{ backgroundImage: `url(${activeLogoUrl})` }}
+            aria-hidden="true"
+          />
+        )}
+      </div>
 
       <div className="sb-sidebar-top-actions">
         {panelsEnabled && !effectivelyCollapsed && (

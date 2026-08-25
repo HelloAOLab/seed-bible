@@ -13,6 +13,7 @@ describe("CustomizationsManager", () => {
   let recordDataMock: Mock;
   let eraseDataMock: Mock;
   let listAllDataByMarkerMock: Mock;
+  let recordFileMock: Mock;
   let warnSpy: Mock;
   let login: Mocked<LoginManager>;
   let os: CasualOSManager;
@@ -29,6 +30,10 @@ describe("CustomizationsManager", () => {
     listAllDataByMarkerMock = vi
       .spyOn(os, "listAllDataByMarker")
       .mockResolvedValue({ success: true, items: [] });
+    recordFileMock = vi.spyOn(os, "recordFile").mockResolvedValue({
+      success: true,
+      url: "https://files.example.com/logo.png",
+    });
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     login = {
@@ -247,5 +252,47 @@ describe("CustomizationsManager", () => {
 
     expect(manager.customizations.value[0]?.name).toBe("My colors");
     expect(theme.customOverrides.value).toEqual({});
+  });
+
+  it("create() defaults logoUrl to null", async () => {
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme);
+
+    const created = await manager.create();
+
+    expect(created.logoUrl).toBeNull();
+  });
+
+  it("uploadLogo() records the file under the customization marker and persists the returned URL", async () => {
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme);
+    const created = await manager.create();
+    const file = new File(["fake image bytes"], "logo.png", {
+      type: "image/png",
+    });
+
+    await manager.uploadLogo(created.id, file);
+
+    expect(recordFileMock).toHaveBeenCalledWith("user-1", file, {
+      mimeType: "image/png",
+      marker: CUSTOMIZATION_MARKER,
+    });
+    expect(manager.customizations.value[0]?.logoUrl).toBe(
+      "https://files.example.com/logo.png"
+    );
+  });
+
+  it("removeLogo() clears the logo URL and persists the change", async () => {
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme);
+    const created = await manager.create();
+    const file = new File(["fake image bytes"], "logo.png", {
+      type: "image/png",
+    });
+    await manager.uploadLogo(created.id, file);
+
+    await manager.removeLogo(created.id);
+
+    expect(manager.customizations.value[0]?.logoUrl).toBeNull();
   });
 });

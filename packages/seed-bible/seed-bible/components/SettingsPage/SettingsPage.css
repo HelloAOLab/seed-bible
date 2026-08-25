@@ -1503,3 +1503,35 @@
   color: var(--sb-primary-font-color);
   background: var(--sb-primary-color);
 }
+
+/* Customization logo upload (editor page) */
+.sb-customization-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.sb-customization-logo-preview,
+.sb-customization-logo-placeholder {
+  width: 3.875rem;
+  height: 3.875rem !important;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+}
+
+.sb-customization-logo-preview {
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+}
+
+.sb-customization-logo-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--sb-primary-color), #000 26%);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-customization-logo-placeholder .material-symbols-outlined {
+  font-size: 1.875rem;
+}

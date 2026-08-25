@@ -29,6 +29,11 @@ const ProfilePictureModalContent = lazy(() =>
     (m) => ({ default: m.ProfilePictureModalContent })
   )
 );
+const LogoCropModalContent = lazy(() =>
+  import("../../components/LogoCropModal/LogoCropModal").then((m) => ({
+    default: m.LogoCropModalContent,
+  }))
+);
 import {
   Skeleton,
   SkeletonContainer,
@@ -2135,6 +2140,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
   const { customizations } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
+  const isUploadingLogo = useSignal(false);
 
   const record = customizations.customizations.value.find(
     (c) => c.id === customizations.editingCustomizationId.value
@@ -2142,6 +2148,40 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "customizations";
+  };
+
+  const handleUploadLogo = (customizationId: string) => {
+    const modalId = state.modals.openModal({
+      title: { key: "upload-logo", defaultValue: "Upload logo" },
+      content: () => (
+        <Suspense
+          fallback={
+            <SkeletonContainer
+              label={t("loading-picture-editor", {
+                defaultValue: "Loading the picture editor…",
+              })}
+            >
+              <Skeleton width="100%" height="16rem" radius="0.625rem" />
+            </SkeletonContainer>
+          }
+        >
+          <LogoCropModalContent
+            onClose={() => state.modals.closeModal(modalId)}
+            onUpload={async (file) => {
+              isUploadingLogo.value = true;
+              try {
+                await customizations.uploadLogo(customizationId, file);
+              } catch (error) {
+                console.error("Failed to upload logo.", error);
+                throw error;
+              } finally {
+                isUploadingLogo.value = false;
+              }
+            }}
+          />
+        </Suspense>
+      ),
+    });
   };
 
   if (!record) {
@@ -2191,6 +2231,46 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
               void customizations.rename(record.id, target.value);
             }}
           />
+        </div>
+
+        <div className="sb-settings-field-row">
+          <label className="sb-settings-field-label">
+            {t("logo", { defaultValue: "Logo" })}
+          </label>
+          <div className="sb-customization-logo-row">
+            {record.logoUrl ? (
+              <img
+                className="sb-customization-logo-preview"
+                src={record.logoUrl}
+                alt={t("logo", { defaultValue: "Logo" })}
+              />
+            ) : (
+              <div
+                className="sb-customization-logo-placeholder"
+                aria-hidden="true"
+              >
+                <span className="material-symbols-outlined">image</span>
+              </div>
+            )}
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => handleUploadLogo(record.id)}
+              disabled={isUploadingLogo.value}
+            >
+              {t("upload-logo", { defaultValue: "Upload logo" })}
+            </button>
+            {record.logoUrl && (
+              <button
+                type="button"
+                className="sb-settings-action-button"
+                onClick={() => void customizations.removeLogo(record.id)}
+                disabled={isUploadingLogo.value}
+              >
+                {t("remove-logo", { defaultValue: "Remove logo" })}
+              </button>
+            )}
+          </div>
         </div>
 
         <ul className="sb-theme-colors-list">

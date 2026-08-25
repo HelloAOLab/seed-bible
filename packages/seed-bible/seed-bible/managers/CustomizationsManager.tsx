@@ -43,6 +43,7 @@ const customizationSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   colors: customizationColorsSchema,
+  logoUrl: z.url().max(1024).optional().nullable(),
   active: z.boolean(),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -68,6 +69,8 @@ export interface CustomizationsManager {
   setActive: (id: string) => Promise<void>;
   deactivate: (id: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  uploadLogo: (id: string, file: File) => Promise<void>;
+  removeLogo: (id: string) => Promise<void>;
 }
 
 function applyColorsToTheme(
@@ -157,6 +160,7 @@ export function createCustomizationsManager(
         tertiaryColor: currentVariables.tertiaryColor,
         textColor: currentVariables.fontColor,
       },
+      logoUrl: null,
       active: false,
       createdAt: now,
       updatedAt: now,
@@ -266,6 +270,35 @@ export function createCustomizationsManager(
     }
   };
 
+  const uploadLogo = async (id: string, file: File): Promise<void> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot upload a logo while signed out.");
+    }
+
+    const result = await os.recordFile(userId, file, {
+      mimeType: file.type,
+      marker: CUSTOMIZATION_MARKER,
+    });
+    if (result.success === false) {
+      throw new Error("Failed to upload logo.");
+    }
+
+    await updateRecord(id, (record) => ({
+      ...record,
+      logoUrl: result.url,
+      updatedAt: Date.now(),
+    }));
+  };
+
+  const removeLogo = async (id: string): Promise<void> => {
+    await updateRecord(id, (record) => ({
+      ...record,
+      logoUrl: null,
+      updatedAt: Date.now(),
+    }));
+  };
+
   return {
     customizations,
     isLoading,
@@ -278,5 +311,7 @@ export function createCustomizationsManager(
     setActive,
     deactivate,
     remove,
+    uploadLogo,
+    removeLogo,
   };
 }
