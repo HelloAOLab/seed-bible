@@ -245,6 +245,9 @@ describe("CustomizationsManager", () => {
     expect(created.variants[0]?.themes.verseFontColor).toBe(
       lightThemeVariables.verseFontColor
     );
+    expect(created.variants[0]?.themes.readerToolbarFontColor).toBe(
+      lightThemeVariables.readerToolbarFontColor
+    );
     expect(created.variants[0]?.themes.selectedVerseTextDecorationColor).toBe(
       lightThemeVariables.selectedVerseTextDecorationColor
     );

@@ -858,6 +858,7 @@ export type ThemeColorKey =
   | "selectedVerseTextDecorationColor"
   | "hebrewSubtitleFontColor"
   | "readerToolbarBackground"
+  | "readerToolbarFontColor"
   | "readerToolbarFloatingButtonBackground"
   | "readerToolbarFloatingButtonFontColor"
   | "tabFontColor"
@@ -915,6 +916,7 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "chapterHeadingFontColor", label: "Chapter heading" },
       { key: "verseFontColor", label: "Verse" },
       { key: "hebrewSubtitleFontColor", label: "Hebrew subtitle" },
+      { key: "readerToolbarFontColor", label: "Reader toolbar text" },
       {
         key: "readerToolbarFloatingButtonFontColor",
         label: "Floating button text",

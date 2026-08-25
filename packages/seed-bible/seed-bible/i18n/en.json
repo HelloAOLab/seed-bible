@@ -145,6 +145,7 @@
   "customization-bookTitleFontColor": "Book title",
   "customization-chapterHeadingFontColor": "Chapter heading",
   "customization-verseFontColor": "Verse",
+  "customization-readerToolbarFontColor": "Reader toolbar text",
   "customization-readerToolbarFloatingButtonFontColor": "Floating button text",
   "customization-selectedVerseTextDecorationColor": "Selected verse decoration",
   "set-as-active": "Set as active",
