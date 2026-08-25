@@ -436,6 +436,12 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/bible-stack:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
   packages/bonfire-extension:
     dependencies:
       seed-bible:
@@ -557,12 +563,6 @@ importers:
         version: link:../seed-bible
 
   packages/seed-bible-utils:
-    dependencies:
-      seed-bible:
-        specifier: workspace:*
-        version: link:../seed-bible
-
-  packages/today-screen:
     dependencies:
       seed-bible:
         specifier: workspace:*

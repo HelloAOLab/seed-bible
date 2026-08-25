@@ -5,6 +5,7 @@ import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/B
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -826,6 +827,79 @@ describe("BibleReaderToolbar mobile More menu", () => {
   });
 });
 
+describe("BibleReaderToolbar — mobile Bible tab", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar(): Promise<{
+    state: SeedBibleState;
+    bibleButton: HTMLButtonElement;
+  }> {
+    const state = await createTestSeedBibleState();
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const bibleButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        ".sb-reader-toolbar-mobile-tab-button"
+      )
+    ).find((button) => button.getAttribute("aria-label") === "Bible");
+    if (!bibleButton) {
+      throw new Error("The mobile Bible tab did not render.");
+    }
+    return { state, bibleButton };
+  }
+
+  async function tap(button: HTMLButtonElement): Promise<void> {
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  it("opens the book selector when the Bible text is already showing", async () => {
+    const { state, bibleButton } = await renderToolbar();
+    expect(state.selector.isOpen.value).toBe(false);
+
+    await tap(bibleButton);
+
+    await waitFor(() => state.selector.isOpen.value === true);
+  });
+
+  it("shows the Bible text instead of the selector when another screen covers the reader", async () => {
+    const { state, bibleButton } = await renderToolbar();
+
+    await act(async () => {
+      state.sidebar.openSearchPanel();
+    });
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    await tap(bibleButton);
+
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
+    expect(state.selector.isOpen.value).toBe(false);
+  });
+});
+
 /**
  * Height jsdom reports for the sheet's overflow row. jsdom does no layout, so
  * every element measures 0 and the sheet would believe it has nothing to reveal.
@@ -1627,5 +1701,109 @@ describe("BibleReaderToolbar floating chapter nav", () => {
     });
 
     expect(state.selector.isOpen.value).toBe(false);
+  });
+});
+
+/**
+ * On mobile, the toolbar is the only way into the Today screen from the reader, and it had
+ * no coverage at all — the migration replaced an install-on-demand path (and a
+ * second, divergent copy in the sidebar) with a single `today.open()` call.
+ */
+describe("BibleReaderToolbar — the mobile Today tab", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    // Seeded into `viewportWidth` at creation, so it has to precede the state.
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar() {
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    const tab = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Today"]'
+    );
+    if (!tab) throw new Error("The Today bottom tab did not render.");
+    return { state, tab };
+  }
+
+  const tapTab = async (tab: HTMLButtonElement) => {
+    await act(async () => {
+      tab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  it("opens the Today screen when tapped", async () => {
+    const { state, tab } = await renderToolbar();
+    expect(state.today.isOpen.value).toBe(false);
+
+    await tapTab(tab);
+
+    expect(state.today.isOpen.value).toBe(true);
+  });
+
+  it("highlights itself while Today is open", async () => {
+    const { state, tab } = await renderToolbar();
+    const isActive = () =>
+      container
+        .querySelector('button[aria-label="Today"]')!
+        .classList.contains("sb-reader-toolbar-mobile-tab-button-active");
+    expect(isActive()).toBe(false);
+
+    await tapTab(tab);
+    expect(isActive()).toBe(true);
+
+    // Closing from anywhere else has to un-highlight it too: the tab reads the
+    // manager signal rather than tracking its own taps.
+    await act(async () => state.today.close());
+    expect(isActive()).toBe(false);
+  });
+
+  /**
+   * An ordering guard. `openTodayScreen` closes what is on screen before
+   * calling `today.open()`; swap those two and the close sweeps away the pane
+   * Today just opened, so the tab does nothing visible. Both assertions below
+   * have to hold at once to rule that out — verified by making the swap.
+   *
+   * It deliberately does *not* claim to cover `panes.closeAll()`: on a mobile
+   * viewport `openPane` treats every pane as fullscreen and already evicts the
+   * others, firing their `onClose` the same way, so removing that call changes
+   * nothing observable here.
+   */
+  it("leaves Today as the only thing covering the reader", async () => {
+    const { state, tab } = await renderToolbar();
+
+    await act(async () => {
+      state.panes.openPane({
+        placement: "fullscreen",
+        title: "Jerusalem",
+        component: () => <div className="test-pane-body" />,
+      });
+    });
+    expect(state.panes.panes.value).toHaveLength(1);
+
+    await tapTab(tab);
+
+    expect(state.today.isOpen.value).toBe(true);
+    const ids = state.panes.panes.value.map((pane) => pane.id);
+    expect(ids).toContain(TODAY_PANE_ID);
+    expect(ids).toHaveLength(1);
   });
 });

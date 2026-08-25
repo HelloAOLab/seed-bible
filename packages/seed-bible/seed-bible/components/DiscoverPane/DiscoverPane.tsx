@@ -1,11 +1,21 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
+import { useI18n } from "../../i18n/I18nManager";
+import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
+import type {
+  Playlist,
+  PlaylistManager,
+  PlaylistPlayHistory,
+} from "../../managers/PlaylistManager";
+import {
+  groupPlaylistPlayHistoryByDay,
+  isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryDayKind,
+  playlistPlayHistoryPercent,
+} from "../../managers/PlaylistManager";
 import { effect, useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
 import type { JSX } from "preact";
-import { useI18n } from "../../i18n/I18nManager";
-import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
-import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type {
   DiscoverManager,
   DiscoverReference,
@@ -36,6 +46,7 @@ import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationFo
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
+import { playlistItemLabel } from "../playlistItemLabel";
 import { Avatar } from "../Avatar/Avatar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { emphasizeVerses, type PanesManager } from "../../managers";
@@ -310,6 +321,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   // Reading `.value` during render subscribes the component to updates.
   const userPlaylists = playlists.userPlaylists.value;
+  const playlistHistory = playlists.userPlaylistHistory.value;
   const selectedTab =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
 
@@ -319,6 +331,13 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         userPlaylists={userPlaylists}
         playlists={playlists}
         modals={modals}
+        toast={props.toast}
+      />
+
+      <PlaylistHistorySection
+        history={playlistHistory}
+        playlists={playlists}
+        tabs={tabs}
         toast={props.toast}
       />
 
@@ -460,6 +479,207 @@ function PlaylistSection({
             </li>
           ))}
         </ul>
+      )}
+    </DiscoverSection>
+  );
+}
+
+/**
+ * Recently played playlists (including shared ones), one row per playlist.
+ * Play resumes or restarts, and a menu removes the playlist from history.
+ */
+function playlistTitle(
+  entry: PlaylistPlayHistory,
+  t: ReturnType<typeof useI18n>["t"]
+): string {
+  return (
+    entry.playlistTitle ??
+    t("untitled-playlist", { defaultValue: "Untitled playlist" })
+  );
+}
+
+function formatHistoryDayLabel(
+  dayKey: string,
+  language: string,
+  t: ReturnType<typeof useI18n>["t"],
+  nowMs: number = Date.now()
+): string {
+  const kind = playlistPlayHistoryDayKind(dayKey, nowMs);
+  if (kind === "today") {
+    return t("today", { defaultValue: "Today" });
+  }
+  if (kind === "yesterday") {
+    return t("yesterday", { defaultValue: "Yesterday" });
+  }
+  const [year, month, day] = dayKey.split("-").map(Number);
+  if (year == null || month == null || day == null) {
+    return dayKey;
+  }
+  return new Date(year, month - 1, day).toLocaleDateString(language, {
+    dateStyle: "medium",
+  });
+}
+
+const historySessionTimeFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function formatHistorySessionTime(
+  startedAtMs: number,
+  language: string
+): string {
+  let formatter = historySessionTimeFormatterCache.get(language);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(language, { timeStyle: "short" });
+    historySessionTimeFormatterCache.set(language, formatter);
+  }
+  return formatter.format(new Date(startedAtMs));
+}
+
+function playFromHistory(
+  playlists: PlaylistManager,
+  entry: PlaylistPlayHistory,
+  toast: SeedBibleState["app"]["toast"],
+  t: ReturnType<typeof useI18n>["t"]
+): void {
+  const action = isPlaylistPlayHistoryComplete(entry)
+    ? playlists.replayFromHistory(entry)
+    : playlists.continueFromHistory(entry);
+  void action.catch(() => {
+    toast(
+      t("playlist-history-open-failed", {
+        defaultValue: "Couldn't open that playlist. It may have been deleted.",
+      })
+    );
+  });
+}
+
+function PlaylistHistorySection({
+  history,
+  playlists,
+  tabs,
+  toast,
+}: {
+  history: PlaylistPlayHistory[];
+  playlists: PlaylistManager;
+  tabs: TabsManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { t, language } = useI18n();
+  const dayGroups = groupPlaylistPlayHistoryByDay(history);
+
+  const selectedTab =
+    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
+  const books = selectedTab?.readingState.translationBooks.value?.books ?? [];
+  const resolveBookName = (bookId: string): string => {
+    const book = books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
+
+  return (
+    <DiscoverSection
+      title={t("playlist-history", { defaultValue: "Playlist history" })}
+    >
+      {history.length === 0 ? (
+        <DiscoverEmpty
+          text={t("discover-playlist-history-empty", {
+            defaultValue:
+              "Play a saved playlist while signed in and it will show up here.",
+          })}
+        />
+      ) : (
+        dayGroups.map((group) => (
+          <div key={group.dayKey} className="sb-playlist-history-day-group">
+            <h4 className="sb-playlist-history-day">
+              {formatHistoryDayLabel(group.dayKey, language, t)}
+            </h4>
+            <ul className="sb-discover-list">
+              {group.entries.map((entry) => {
+                const percent = Math.round(
+                  playlistPlayHistoryPercent(entry) * 100
+                );
+                const complete = isPlaylistPlayHistoryComplete(entry);
+                const lastLabel = entry.lastItem
+                  ? playlistItemLabel(entry.lastItem, t, resolveBookName)
+                  : null;
+                const sessionTime = formatHistorySessionTime(
+                  entry.startedAtMs,
+                  language
+                );
+                const summary = lastLabel
+                  ? t("playlist-history-session-summary", {
+                      defaultValue:
+                        "{{time}} - {{percent}}% complete - {{item}}",
+                      time: sessionTime,
+                      percent,
+                      item: lastLabel,
+                    })
+                  : t("playlist-history-session-summary-no-item", {
+                      defaultValue: "{{time}} - {{percent}}% complete",
+                      time: sessionTime,
+                      percent,
+                    });
+
+                return (
+                  <li
+                    key={entry.id}
+                    className="sb-discover-item sb-discover-item--row sb-playlist-item sb-playlist-history-item"
+                    dir="auto"
+                    onClick={() => playFromHistory(playlists, entry, toast, t)}
+                  >
+                    <div className="sb-discover-item-main">
+                      <span className="sb-discover-item-title">
+                        {playlistTitle(entry, t)}
+                      </span>
+                      <span className="sb-discover-item-description">
+                        {summary}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="sb-discover-item-play"
+                      aria-label={
+                        complete
+                          ? t("playlist-history-replay", {
+                              defaultValue: "Replay",
+                            })
+                          : t("playlist-history-continue", {
+                              defaultValue: "Continue",
+                            })
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playFromHistory(playlists, entry, toast, t);
+                      }}
+                    >
+                      <MaterialIcon>play_arrow</MaterialIcon>
+                    </button>
+                    <ContextMenuWithButton
+                      buttonClassName="sb-discover-item-menu"
+                      aria-label={t("playlist-history-options", {
+                        defaultValue: "Playlist history options",
+                      })}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ContextMenuItem
+                        className="sb-context-menu-item--danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void playlists.removePlayHistory(entry);
+                        }}
+                      >
+                        <MaterialIcon className="sb-context-menu-item-icon">
+                          delete
+                        </MaterialIcon>
+                        {t("playlist-history-remove", {
+                          defaultValue: "Remove from history",
+                        })}
+                      </ContextMenuItem>
+                    </ContextMenuWithButton>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))
       )}
     </DiscoverSection>
   );

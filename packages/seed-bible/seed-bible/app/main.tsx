@@ -35,9 +35,11 @@ import "./styles/utilities.css";
 import {
   OnboardingModals,
   LanguageUnavailableModal,
+  UiLanguageSwitchModal,
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -252,6 +254,12 @@ function MainContent(props: {
           className={`${webkitClass}`}
         />
 
+        <OfflineDownloadPrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
         <Tutorial
           tutorial={state.tutorial}
           className={`${webkitClass}`}
@@ -259,6 +267,8 @@ function MainContent(props: {
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />
+
+        <UiLanguageSwitchModal className={`${webkitClass}`} />
       </div>
     </>
   );

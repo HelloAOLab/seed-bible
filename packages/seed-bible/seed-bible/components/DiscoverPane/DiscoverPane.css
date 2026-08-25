@@ -324,3 +324,31 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* Playlist play-history rows: same shell as playlist items, grouped by day. */
+.sb-playlist-history-day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-playlist-history-day-group + .sb-playlist-history-day-group {
+  margin-top: 10px;
+}
+
+.sb-playlist-history-day {
+  margin: 0 0 2px;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-playlist-history-item .sb-discover-item-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}

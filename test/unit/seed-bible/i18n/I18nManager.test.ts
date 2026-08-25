@@ -11,6 +11,7 @@ import {
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { signal, type Signal } from "@preact/signals";
+import type { Mock } from "vitest";
 
 const i18nFolder = path.resolve(
   __dirname,
@@ -221,6 +222,115 @@ describe("I18nManager language fallback prompt", () => {
       id: "spa_onbv",
       language: "spa",
     });
+  });
+});
+
+describe("I18nManager UI language switch prompt", () => {
+  let nav: NavigationManager;
+  let manager: I18nManager;
+  let currentUrl: Signal<URL>;
+  let persistLanguage: Mock<(language: string) => void>;
+  let askEnabled: boolean;
+
+  beforeEach(async () => {
+    window.sessionStorage.clear();
+    currentUrl = signal(new URL("https://example.com/"));
+    nav = {
+      currentUrl,
+      initialUrl: currentUrl.peek(),
+      basePath: "",
+      syncSignalsToUrl: vi.fn(),
+      go: vi.fn(),
+      replace: vi.fn(),
+      push: vi.fn(),
+      updateQueryParam: vi.fn(),
+      updateQueryParams: vi.fn(),
+      updatePathAndQueryParams: vi.fn(),
+      linkToQuery: vi.fn(),
+      dispose: vi.fn(),
+    } as NavigationManager;
+    manager = createI18nManager(nav, ["en"]);
+    // The i18next instance is a module singleton shared across tests, so pin
+    // the starting UI language rather than inheriting whatever ran last.
+    await manager.changeLanguage("en");
+
+    persistLanguage = vi.fn<(language: string) => void>();
+    manager.setLanguagePersister(persistLanguage);
+    manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
+
+    askEnabled = true;
+    manager.setUiLanguagePromptPreference({
+      isEnabled: () => askEnabled,
+      disable: () => {
+        askEnabled = false;
+      },
+    });
+  });
+
+  it("prompts to switch the UI when the picked translation is in another supported language", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+
+    expect(manager.uiLanguageSwitchPrompt.value?.targetLanguage).toBe("es");
+  });
+
+  it("stays silent when the translation is already in the current UI language", () => {
+    manager.maybePromptUiLanguageSwitch("eng");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("stays silent for a Bible language with no supported UI language", () => {
+    manager.maybePromptUiLanguageSwitch("zzz");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("only prompts once per session, even after being dismissed", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+    manager.dismissUiLanguageSwitch();
+
+    manager.maybePromptUiLanguageSwitch("fra");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("switches and persists the UI language when confirmed, leaving the Bible translation alone", async () => {
+    const applyTranslation = vi.fn();
+    manager.setBibleTranslationApplicator(applyTranslation, () => null, null);
+
+    manager.maybePromptUiLanguageSwitch("spa");
+    await manager.confirmUiLanguageSwitch();
+
+    expect(manager.language.value).toBe("es");
+    expect(persistLanguage).toHaveBeenCalledWith("es");
+    // The user just picked this translation; confirming must not swap it for
+    // the new UI language's default.
+    expect(applyTranslation).not.toHaveBeenCalled();
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("leaves the UI language unchanged when dismissed", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+    manager.dismissUiLanguageSwitch();
+
+    expect(manager.language.value).toBe("en");
+    expect(persistLanguage).not.toHaveBeenCalled();
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+  });
+
+  it("stops asking in later sessions once 'never ask again' is chosen", () => {
+    manager.maybePromptUiLanguageSwitch("spa");
+    manager.neverAskUiLanguageSwitch();
+
+    expect(askEnabled).toBe(false);
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
+
+    // A fresh session (new tab) would clear the once-per-session marker, but
+    // the stored preference must still keep the prompt away.
+    window.sessionStorage.clear();
+    manager.maybePromptUiLanguageSwitch("spa");
+
+    expect(manager.uiLanguageSwitchPrompt.value).toBeNull();
   });
 });
 

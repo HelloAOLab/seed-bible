@@ -11,11 +11,14 @@ import {
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
+import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
 import {
-  buildReadingPath,
-  hasReadingUrlPosition,
-  parseReadingPath,
-} from "../managers/ReadingUrlPath";
+  TODAY_PANE_ID,
+  createTodayManager,
+  openTodayPassage,
+  type TodayManager,
+} from "../managers/TodayManager";
+import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
@@ -356,6 +359,8 @@ export interface SeedBibleState {
   readingPlans: ReadingPlansManager;
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
+  /** The Today screen: its open state and the data its cards read. */
+  today: TodayManager;
   /**
    * Registry of reading extensions that can be enabled per reading state to
    * enhance navigation, discovered content, and session-synced custom data.
@@ -494,6 +499,15 @@ export function createSeedBibleState(
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
   // listener) keeps URL-driven language changes view-only.
   i18n.setLanguagePersister(settings.persistLanguage);
+
+  // "Never ask again" on the UI-language switch prompt is an ordinary setting,
+  // so it rides on the same profile-when-logged-in / device-when-not storage
+  // as every other one.
+  i18n.setUiLanguagePromptPreference({
+    isEnabled: () => settings.settings.value.askToSwitchUiLanguage,
+    disable: () => settings.setAskToSwitchUiLanguage(false),
+  });
+
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
   // Filled once tabs exist so local chat can resolve localized book names.
@@ -513,7 +527,8 @@ export function createSeedBibleState(
     login,
     discover,
     readingExtensions,
-    () => annotations
+    () => annotations,
+    branding
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -524,7 +539,8 @@ export function createSeedBibleState(
     sidebar,
     bookmarks,
     navigation,
-    login
+    login,
+    i18n
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
@@ -723,35 +739,18 @@ export function createSeedBibleState(
     panes.closeFullscreenPanes();
   });
 
-  // Whether Today will auto-open over the reader on this cold load — mirrors
-  // the predicate in `today-screen`'s bootstrap (an explicit `?today` param
-  // wins; otherwise it opens unless the boot URL already points somewhere
-  // specific). Read from `initialUrl`, not the live `currentUrl`, for the same
-  // reason today-screen does: TabsManager echoes the reader's book/chapter
-  // into the live URL before extensions finish loading.
-  const initialUrlParams = navigation.initialUrl.searchParams;
-  const todayWillAutoOpen =
-    initialUrlParams.get("today") !== null
-      ? initialUrlParams.get("today") === "open"
-      : !(
-          hasReadingUrlPosition(navigation.initialUrl, navigation.basePath) ||
-          initialUrlParams.has("sessionId")
-        );
-
-  // Latches true the first time Today's pane is observed open, so the
-  // "about to be covered by Today" window (the gap between the chapter
-  // loading and Today's pane actually opening) doesn't read as reader-visible.
-  const todayHasOpened = signal(false);
-  effect(() => {
-    if (panes.panes.value.some((pane) => pane.id === "today-screen-pane")) {
-      todayHasOpened.value = true;
-    }
-  });
-
-  // The reader is visible when a chapter is loaded, no fullscreen pane covers
-  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
-  // any open pane covers the reader), and Today isn't about to auto-open over
-  // it for this load.
+  // The reader is visible when a chapter is loaded and no fullscreen pane
+  // covers it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on
+  // mobile any open pane covers the reader).
+  //
+  // Today needs no special case here even though it auto-opens over the reader:
+  // its pane opens synchronously while this state is being built, whereas a
+  // chapter can only arrive from an async fetch afterwards. So by the time
+  // `chapterLoaded` can turn true, Today's pane is already in `panes` and the
+  // check below sees it. While Today was an extension that was not true — panes
+  // loaded in a later `useEffect`, leaving a window where the chapter had
+  // loaded and nothing covered it yet, which a `todayHasOpened` latch papered
+  // over. `todayCoversReader.test.ts` guards the ordering this now relies on.
   const readerVisible = computed<boolean>(() => {
     const chapterLoaded =
       selectedTab.value?.readingState.chapterData.value != null;
@@ -762,9 +761,6 @@ export function createSeedBibleState(
       (pane) => pane.placement === "fullscreen" || isMobile.value
     );
     if (coveredByPane) {
-      return false;
-    }
-    if (todayWillAutoOpen && !todayHasOpened.value) {
       return false;
     }
     return true;
@@ -785,6 +781,12 @@ export function createSeedBibleState(
   // not-yet-installed user, logged in or not. Deferring past the tutorial
   // means the profile has had time to load, so there's no "stale prompt"
   // concern the way there was on startup. One-shot via `installOfferChecked`.
+  //
+  // `installOfferResolved` flips once that check has had its turn, whether or
+  // not it showed anything. The offline-download offer waits on it so the two
+  // never stack, and so "offer the download after the install prompt" holds.
+  const installOfferResolved = signal(false);
+
   let installOfferChecked = false;
   effect(() => {
     if (installOfferChecked) {
@@ -810,6 +812,7 @@ export function createSeedBibleState(
     if (onboarding.installAvailable.value) {
       onboarding.openInstall();
     }
+    installOfferResolved.value = true;
   });
 
   // A phone held sideways: landscape orientation with the short viewport
@@ -1224,6 +1227,11 @@ export function createSeedBibleState(
       return;
     }
 
+    // Reading history records book and chapter but not which translation they
+    // were read in, so the offline manager keeps its own first-seen stamp —
+    // that's what the "used for a day" download offer is judged against.
+    data.offline.noteTranslationInUse(chapter.translation.id);
+
     const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(
         chapter.book.id,
@@ -1243,6 +1251,36 @@ export function createSeedBibleState(
       clearInterval(readingHistoryTimeoutId);
       clearTimeout(posthogTimeoutId);
     };
+  });
+
+  // Offer to save the current translation for offline reading, once the
+  // tutorial and install prompts have had their turn so we never stack two
+  // dialogs. One-shot per load via `downloadOfferChecked`; the manager decides
+  // whether the offer is actually warranted.
+  let downloadOfferChecked = false;
+  effect(() => {
+    if (downloadOfferChecked) {
+      return;
+    }
+    if (openedViaContentLink) {
+      return;
+    }
+    if (!installOfferResolved.value) {
+      return;
+    }
+    // The install modal is up until the user resolves it.
+    if (onboarding.step.value !== "done") {
+      return;
+    }
+    if (tutorial.promptVisible.value || tutorial.running.value) {
+      return;
+    }
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+    if (!chapter) {
+      return;
+    }
+    downloadOfferChecked = true;
+    data.offline.offerDownloadPrompt(chapter.translation);
   });
 
   const closeSidebarAndSettings = () => {
@@ -1917,6 +1955,18 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  // Constructed here rather than beside the other managers because it needs
+  // `currentReadingState`, which is defined well below them.
+  const today = createTodayManager({
+    os,
+    login,
+    navigation,
+    search,
+    bibleData: data,
+    defaultLanguage: i18n.defaultLanguage,
+    currentReadingState,
+  });
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -1945,6 +1995,7 @@ export function createSeedBibleState(
     navigation,
     i18n,
     discover,
+    today,
     readingExtensions,
     extensions,
     readingPlans,
@@ -2062,6 +2113,64 @@ export function createSeedBibleState(
     );
     if (!paneOpen && playlists.view.peek()) {
       playlists.view.value = null;
+    }
+  });
+
+  // Today is the app's fullscreen "home" pane, mirrored from `today.isOpen`
+  // (which is itself bound to `?today=`). Same reconciling-effect pair as
+  // Discover above, and here too the pane -> state direction must `peek()` so
+  // closing the pane can't retrigger the opening effect.
+  //
+  // The thunks are hoisted out of the effect so their identity is stable —
+  // rebuilding them on every reopen would remount the whole Today tree.
+  // Hoisted out of the render thunk so their identity is stable — rebuilding
+  // them per render would defeat the `memo` on `TodayPane`.
+  const openTodayBookSelector = () => {
+    const slot =
+      tabsLayout.slots.value.find(
+        (candidate) => candidate.id === tabsLayout.selectedSlotId.value
+      ) ?? null;
+    if (slot) {
+      selector.setOpen(true, slot);
+    }
+  };
+  const showTodayBookmarksList = () => {
+    sidebar.isSidebarCollapsed.value = false;
+    bookmarks.isFilterActive.value = true;
+  };
+  const renderTodayPane = () => (
+    <TodayPane
+      today={today}
+      login={login}
+      bookmarks={bookmarks.bookmarks}
+      theme={theme}
+      isMobile={isMobile}
+      onOpenPassage={(target) => openTodayPassage(state, today, target)}
+      onOpenBookSelector={openTodayBookSelector}
+      onShowBookmarksList={showTodayBookmarksList}
+    />
+  );
+  const renderTodayPaneTitle = () => <TodayPaneTitle />;
+
+  effect(() => {
+    if (today.isOpen.value) {
+      panes.openPane({
+        id: TODAY_PANE_ID,
+        placement: "fullscreen",
+        title: renderTodayPaneTitle,
+        component: renderTodayPane,
+      });
+    } else {
+      panes.closePane(TODAY_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === TODAY_PANE_ID
+    );
+    if (!paneOpen && today.isOpen.peek()) {
+      today.close();
     }
   });
 

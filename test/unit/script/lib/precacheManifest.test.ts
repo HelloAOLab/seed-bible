@@ -28,7 +28,7 @@ function createViteManifest(): Record<string, ViteManifestChunk> {
     },
     "_I18nManager-CCC.js": { file: "assets/I18nManager-CCC.js" },
     "_shared-FFF.js": { file: "assets/shared-FFF.js" },
-    "packages/today-screen/extension.tsx": { file: "assets/extension-GGG.js" },
+    "packages/scripture-map/extension.tsx": { file: "assets/extension-GGG.js" },
   };
 }
 
