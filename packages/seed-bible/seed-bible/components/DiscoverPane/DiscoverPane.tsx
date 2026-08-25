@@ -14,6 +14,7 @@ import {
   playlistPlayHistoryPercent,
 } from "../../managers/PlaylistManager";
 import { effect, useSignal } from "@preact/signals";
+import { lazy, Suspense } from "preact/compat";
 import { useEffect, useRef } from "preact/hooks";
 import type { JSX } from "preact";
 import type {
@@ -56,6 +57,13 @@ import {
   type BookId,
   type VerseRef,
 } from "../../managers/BibleDataManager";
+
+// Loaded lazily so its (and its CSS's) bundle is only fetched for the rare
+// visitor who actually has a `recordOverride` active - see
+// `AnnotationOverrideBanner`.
+const AnnotationOverrideBanner = lazy(
+  () => import("./AnnotationOverrideBanner")
+);
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -1155,6 +1163,11 @@ function AnnotationsSection(props: {
   } = props;
   const { t } = useI18n();
   const title = t("notes", { defaultValue: "Notes" });
+  const overrideBanner = annotations.hasRecordOverride ? (
+    <Suspense fallback={null}>
+      <AnnotationOverrideBanner />
+    </Suspense>
+  ) : null;
 
   // Clicking an annotated verse number on desktop (BibleReader.tsx) sets
   // this once; scroll to that verse's annotation group if it's this tab's
@@ -1205,13 +1218,23 @@ function AnnotationsSection(props: {
   }, [tab, discover, annotations]);
 
   if (!tab) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+    return (
+      <DiscoverSection title={title}>
+        {overrideBanner}
+        {noTabHint(t)}
+      </DiscoverSection>
+    );
   }
 
   const bookId = tab.readingState.bookId.value;
   const chapterNumber = tab.readingState.chapterNumber.value;
   if (!bookId || !chapterNumber) {
-    return <DiscoverSection title={title}>{noTabHint(t)}</DiscoverSection>;
+    return (
+      <DiscoverSection title={title}>
+        {overrideBanner}
+        {noTabHint(t)}
+      </DiscoverSection>
+    );
   }
 
   const chapterAnnotations = annotations.getAnnotationsForChapter(
@@ -1232,6 +1255,7 @@ function AnnotationsSection(props: {
 
   return (
     <DiscoverSection title={title}>
+      {overrideBanner}
       {pending > 0 ? (
         <p className="sb-annotations-pending-sync">
           {t(

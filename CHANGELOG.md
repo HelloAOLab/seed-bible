@@ -32,6 +32,7 @@
 - Automatically open the login screen after a forced sign-out, such as an invalidated session, instead of leaving you signed out with no prompt to sign back in. ([#1641](https://github.com/HelloAOLab/seed-bible/pull/1641))
 
 ### 🗑️ Removed
+
 - Fix a bookmark's first tap sometimes not registering on mobile, requiring a second tap. ([#1664](https://github.com/HelloAOLab/seed-bible/pull/1664))
 - Fix tapping a toolbar button on Android sometimes only stopping the page's scroll instead of registering as a tap, requiring a second tap to activate it. ([#1642](https://github.com/HelloAOLab/seed-bible/pull/1642))
 - Fix toast notifications appearing behind other UI elements. ([#1641](https://github.com/HelloAOLab/seed-bible/pull/1641))

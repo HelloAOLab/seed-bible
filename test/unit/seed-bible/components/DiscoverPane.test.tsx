@@ -222,6 +222,7 @@ function createMockAnnotations(
     editingAnnotation?: Annotation | null;
     annotationsForChapter?: Annotation[];
     deleteAnnotationAndRefreshImpl?: () => Promise<void>;
+    hasRecordOverride?: boolean;
     pendingSyncCount?: number;
   } = {}
 ): MockAnnotationsResult {
@@ -244,6 +245,7 @@ function createMockAnnotations(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    hasRecordOverride: overrides.hasRecordOverride ?? false,
     // The pane shows how much is waiting to sync, so this has to be present.
     sync: {
       pendingCount: signal(overrides.pendingSyncCount ?? 0),
@@ -776,6 +778,102 @@ describe("DiscoverPane", () => {
 
     render(null, modalContainer);
     modalContainer.remove();
+  });
+
+  it("hides the record-override banner when annotations are not routed through an override", () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      hasRecordOverride: false,
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-annotation-override-banner")
+    ).toBeNull();
+  });
+
+  it("shows the record-override banner when annotations are routed through a team record, with a button that reloads the URL without the query param", async () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      hasRecordOverride: true,
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      value: new URL(
+        "https://example.com/read?book=GEN&annotationRecordKey=team-record"
+      ),
+      writable: true,
+      configurable: true,
+    });
+
+    try {
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={tabs}
+            playlists={playlists}
+            annotations={annotations}
+            modals={modals}
+            state={state}
+            toast={state.app.toast}
+          />,
+          container
+        );
+      });
+
+      // The banner is lazily loaded, so it only mounts once the dynamic
+      // import resolves - which (being a real, unmocked import rather than a
+      // pre-resolved one) can take more than a single tick.
+      await vi.waitFor(() => {
+        expect(
+          container.querySelector(".sb-annotation-override-banner")
+        ).not.toBeNull();
+      });
+
+      const banner = container.querySelector(".sb-annotation-override-banner");
+      expect(banner?.textContent).toContain(
+        "Notes are being saved and loaded from your team's account."
+      );
+
+      const button = container.querySelector(
+        ".sb-annotation-override-banner-button"
+      ) as HTMLButtonElement;
+      expect(button?.textContent).toBe("Save to my account");
+
+      act(() => {
+        button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(window.location.href).toBe("https://example.com/read?book=GEN");
+    } finally {
+      Object.defineProperty(window, "location", {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      });
+    }
   });
 
   it("shows the empty-annotations message when there are no annotations for the chapter", () => {

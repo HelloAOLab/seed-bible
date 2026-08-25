@@ -648,6 +648,8 @@
   "annotation-group-expand": "Expand group",
   "annotation-group-collapse": "Collapse group",
   "annotation-comment-updated": "Updated {{date}}",
+  "annotation-override-banner": "Notes are being saved and loaded from your team's account.",
+  "annotation-override-save-to-my-account": "Save to my account",
   "notes": "Notes",
   "note": "Note",
   "show-more-verse-actions": "Show more actions",
