@@ -1042,6 +1042,14 @@
     flex-direction: row;
     align-items: flex-start;
   }
+
+  /* The "discover-content-panel" quick tool is off for this tab: keep the
+     discover panel stacked below the scripture text (after the license
+     notice) instead of letting it sit beside it. */
+  .sb-bible-reader-content.sb-bible-reader-content--discover-below {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .sb-bible-reader-discover-panel {

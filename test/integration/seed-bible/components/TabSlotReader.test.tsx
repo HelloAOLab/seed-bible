@@ -160,7 +160,7 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences,
     discoveredStudyNotes: signal([]),
-    discoverContentPanelVisible: signal(true),
+    discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
@@ -1451,6 +1451,72 @@ describe("TabSlotReader integration", () => {
       renderTabSlotReader(slot, readingState, state, container);
 
       expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+    });
+  });
+
+  describe("discover-content-panel quick tool placement", () => {
+    const crossReferenceFixture = [
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ];
+
+    it("keeps the panel beside the scripture text by default (tool on)", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const content = container.querySelector(".sb-bible-reader-content");
+      expect(content).not.toBeNull();
+      expect(
+        content?.classList.contains("sb-bible-reader-content--discover-below")
+      ).toBe(false);
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
+    });
+
+    it("forces the panel below the scripture text, after the license notice, when the tool is off", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      (readingState.translation.value as any).licenseNotice =
+        "Used by permission.";
+      readingState.discoverContentPanelInline.value = false;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const content = container.querySelector(".sb-bible-reader-content");
+      expect(
+        content?.classList.contains("sb-bible-reader-content--discover-below")
+      ).toBe(true);
+
+      // The panel still renders — the tool no longer hides it, only moves it.
+      const panel = container.querySelector(".sb-discover-content-panel");
+      expect(panel).not.toBeNull();
+
+      // Placed after the license notice in document order.
+      const license = container.querySelector(".sb-translation-license-notice");
+      expect(license).not.toBeNull();
+      expect(
+        !!(
+          license!.compareDocumentPosition(panel!) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+        )
+      ).toBe(true);
     });
   });
 });

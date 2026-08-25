@@ -31,9 +31,10 @@ interface DiscoverContentPanelProps {
 /**
  * Automatically-visible discover content — the reader's own notes
  * (annotations) plus discovered cross references/study notes/content — for
- * one reading tab. Rendered once per visible tab, in whichever `variant` its
- * slot has room for. Hides itself entirely when there's no tab, the tab's
- * toggle is off, or there's nothing to show for the chapter.
+ * one reading tab. Rendered once per visible tab. Hides itself entirely when
+ * there's no tab or there's nothing to show for the chapter; otherwise always
+ * renders — the "discover-content-panel" quick tool only controls whether the
+ * caller places it beside the scripture text or below it (see BibleReader).
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const { tab, state } = props;
@@ -41,11 +42,6 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
   const activeFilter = useSignal<FilterKey>("all");
 
   if (!tab) {
-    return null;
-  }
-
-  const isHidden = tab.readingState.discoverContentPanelVisible.value === false;
-  if (isHidden) {
     return null;
   }
 
@@ -91,7 +87,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   return (
     <div
-      className={`sb-discover-content-panel ${isHidden ? "sb-discover-content-panel--hidden" : ""}`}
+      className="sb-discover-content-panel"
       aria-label={t("discover-content-panel", {
         defaultValue: "Discover content",
       })}

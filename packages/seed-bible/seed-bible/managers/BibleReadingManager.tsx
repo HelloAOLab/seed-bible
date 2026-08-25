@@ -413,12 +413,15 @@ export interface BibleReadingState {
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
   /**
-   * Per-tab visibility toggle for the compact discover content panel (cross
-   * references/study notes/content). Defaults to visible; flipped by the
-   * "discover-content-panel" quick tool. In-memory only for the tab's
+   * Per-tab placement toggle for the compact discover content panel (cross
+   * references/study notes/content), which is otherwise always shown when
+   * there's something to show. True (the default) lets the panel sit beside
+   * the scripture text when there's room; false forces it below the
+   * scripture text, after the license notice, at any viewport width. Flipped
+   * by the "discover-content-panel" quick tool. In-memory only for the tab's
    * lifetime — not persisted, mirroring `selectedVerses`/`scrollPosition`.
    */
-  discoverContentPanelVisible: Signal<boolean>;
+  discoverContentPanelInline: Signal<boolean>;
 
   /**
    * True while this reading state is part of a shared/multiplayer session.
@@ -2851,7 +2854,7 @@ export function createBibleReadingState(
       .filter((providerResults) => providerResults.results.length > 0);
   });
 
-  const discoverContentPanelVisible = signal<boolean>(true);
+  const discoverContentPanelInline = signal<boolean>(true);
 
   if (discoverManager) {
     let discoverGeneration = 0;
@@ -3132,7 +3135,7 @@ export function createBibleReadingState(
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
-    discoverContentPanelVisible,
+    discoverContentPanelInline,
     title,
     shortTitle,
     subTitle,

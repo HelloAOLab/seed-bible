@@ -626,7 +626,7 @@ function getDefaultQuickToolbarTools(
       icon: (c) => (
         <MaterialIcon
           className={
-            c.readingState.discoverContentPanelVisible.value
+            c.readingState.discoverContentPanelInline.value
               ? "sb-quick-tool-icon-active"
               : undefined
           }
@@ -649,8 +649,8 @@ function getDefaultQuickToolbarTools(
         );
       },
       onSelect: (c) => {
-        c.readingState.discoverContentPanelVisible.value =
-          !c.readingState.discoverContentPanelVisible.value;
+        c.readingState.discoverContentPanelInline.value =
+          !c.readingState.discoverContentPanelInline.value;
       },
     },
     {

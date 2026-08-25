@@ -75,7 +75,7 @@ function createQuickToolContext(
     discoveredCrossReferences?: unknown[];
     discoveredStudyNotes?: unknown[];
     discoveredContent?: unknown[];
-    discoverContentPanelVisible?: boolean;
+    discoverContentPanelInline?: boolean;
     annotationsForChapter?: unknown[];
   } = {}
 ): QuickToolContext {
@@ -88,8 +88,8 @@ function createQuickToolContext(
       ),
       discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
       discoveredContent: signal(overrides.discoveredContent ?? []),
-      discoverContentPanelVisible: signal(
-        overrides.discoverContentPanelVisible ?? true
+      discoverContentPanelInline: signal(
+        overrides.discoverContentPanelInline ?? true
       ),
     } as any,
     playlists: {
@@ -1108,10 +1108,10 @@ describe("createBibleToolsManager", () => {
       expect(tool?.visible.value).toBe(true);
     });
 
-    it("flips the tab's discoverContentPanelVisible signal when selected", () => {
+    it("flips the tab's discoverContentPanelInline signal when selected", () => {
       const manager = createBibleToolsManager(testBranding);
       const context = createQuickToolContext({
-        discoverContentPanelVisible: true,
+        discoverContentPanelInline: true,
       });
 
       const tool = manager
@@ -1119,12 +1119,10 @@ describe("createBibleToolsManager", () => {
         .find((t) => t.id === "discover-content-panel");
 
       tool?.onSelect();
-      expect(context.readingState.discoverContentPanelVisible.value).toBe(
-        false
-      );
+      expect(context.readingState.discoverContentPanelInline.value).toBe(false);
 
       tool?.onSelect();
-      expect(context.readingState.discoverContentPanelVisible.value).toBe(true);
+      expect(context.readingState.discoverContentPanelInline.value).toBe(true);
     });
   });
 
@@ -1204,7 +1202,7 @@ describe("createBibleToolsManager", () => {
           bookId: signal("GEN"),
           chapterNumber: signal(1),
           selectedVerses: signal([]),
-          discoverContentPanelVisible: signal(false),
+          discoverContentPanelInline: signal(false),
           discoveredCrossReferences: signal([]),
           discoveredStudyNotes: signal([]),
           discoveredContent: signal([]),

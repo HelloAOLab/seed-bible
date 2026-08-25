@@ -2718,8 +2718,8 @@ describe("createBibleReadingState", () => {
     });
   });
 
-  describe("discoverContentPanelVisible", () => {
-    it("defaults to visible and round-trips writes", async () => {
+  describe("discoverContentPanelInline", () => {
+    it("defaults to inline (beside the scripture text) and round-trips writes", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const state = createRawBibleReadingState(
         createDataManager(),
@@ -2728,13 +2728,13 @@ describe("createBibleReadingState", () => {
       );
       await waitForInitialLoad(state);
 
-      expect(state.discoverContentPanelVisible.value).toBe(true);
+      expect(state.discoverContentPanelInline.value).toBe(true);
 
-      state.discoverContentPanelVisible.value = false;
-      expect(state.discoverContentPanelVisible.value).toBe(false);
+      state.discoverContentPanelInline.value = false;
+      expect(state.discoverContentPanelInline.value).toBe(false);
 
-      state.discoverContentPanelVisible.value = true;
-      expect(state.discoverContentPanelVisible.value).toBe(true);
+      state.discoverContentPanelInline.value = true;
+      expect(state.discoverContentPanelInline.value).toBe(true);
     });
   });
 

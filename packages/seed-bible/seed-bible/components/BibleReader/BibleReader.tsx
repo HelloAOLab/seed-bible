@@ -1154,8 +1154,10 @@ interface BibleReaderProps {
    * participants stack. Null/undefined for a normal, non-shared tab. */
   sharedSession?: BibleReadingSession | null;
   /** Optional panel rendered at the inline end of the reader, below the
-   * header. Floats to the right (in LTR) so chapter text wraps around it.
-   * Desktop-only — callers should not pass this on mobile. */
+   * header. On desktop it sits beside the scripture text (chapter text wraps
+   * around it) when `readingState.discoverContentPanelInline` is true, and
+   * below the scripture text — after the license notice — when false. On
+   * mobile it always renders below, inside the swipe panel's own scroll. */
   discoverPanel?: ComponentChildren;
 
   readingPlanBelongs?: ComponentChildren;
@@ -2247,7 +2249,13 @@ export function BibleReader(props: BibleReaderProps) {
               </div>
             )}
           </div>
-          <div className="sb-bible-reader-content">
+          <div
+            className={`sb-bible-reader-content${
+              readingState.discoverContentPanelInline.value === false
+                ? " sb-bible-reader-content--discover-below"
+                : ""
+            }`}
+          >
             <div className="sb-bible-reader-main-content">
               {renderMainContent()}
             </div>
