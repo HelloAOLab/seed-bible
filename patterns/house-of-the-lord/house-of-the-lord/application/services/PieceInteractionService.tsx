@@ -1,5 +1,5 @@
 import type { ReadingStatePort } from "../ports/in/readingState";
-import type { PieceKey } from "../../domain/models/piece";
+import type { PieceKey, VerseReference } from "../../domain/models/piece";
 import type { ExperienceKey } from "../../domain/models/experience";
 import type {
   ContextMenuRendererPort,
@@ -16,10 +16,10 @@ interface PieceInteractionServiceParams {
 }
 
 export class PieceInteractionService {
-  #pieceHighlight: PieceHighlightPort;
-  #contextMenu: ContextMenuRendererPort;
-  #readingState: ReadingStatePort;
-  #getExperienceKey: () => ExperienceKey;
+  #pieceHighlight: PieceInteractionServiceParams["pieceHighlight"];
+  #contextMenu: PieceInteractionServiceParams["contextMenu"];
+  #readingState: PieceInteractionServiceParams["readingState"];
+  #getExperienceKey: PieceInteractionServiceParams["getExperienceKey"];
   #verseReferenceConfigProviderPort: PieceInteractionServiceParams["verseReferenceConfigProviderPort"];
 
   constructor({
@@ -39,13 +39,17 @@ export class PieceInteractionService {
   handlePieceSelection(key: PieceKey): void {
     const experience = this.#getExperienceKey();
     const reading = this.#readingState.getCurrentReading();
-    const { inChapter, inOtherChapters } =
-      this.#verseReferenceConfigProviderPort.getVersesForPiece({
-        experienceKey: experience,
-        pieceKey: key,
-        currentBookId: reading?.bookId ?? "",
-        currentChapter: reading?.chapterNumber ?? 0,
-      });
+    let inChapter: VerseReference[] = [];
+    let inOtherChapters: VerseReference[] = [];
+    if (reading) {
+      ({ inChapter, inOtherChapters } =
+        this.#verseReferenceConfigProviderPort.getVersesForPiece({
+          experienceKey: experience,
+          pieceKey: key,
+          currentBookId: reading.bookId,
+          currentChapter: reading.chapterNumber,
+        }));
+    }
 
     this.#pieceHighlight.highlightPiece(experience, key);
 

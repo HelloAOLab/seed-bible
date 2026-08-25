@@ -17,8 +17,9 @@ export class ExperienceService implements ExperienceDisplayerPort {
   #piecesSetUpPort: ServiceParams["piecesSetUpPort"];
   #environmentSetUpPort: ServiceParams["environmentSetUpPort"];
   #logger: ServiceParams["logger"];
-  #isExperienceDisplayed = false;
   #getExperienceKey: ServiceParams["getExperienceKey"];
+  #isExperienceDisplayed = false;
+  #isDisplayingExperience = false;
 
   constructor({
     piecesSequencePort,
@@ -35,7 +36,7 @@ export class ExperienceService implements ExperienceDisplayerPort {
   }
 
   async tryDisplayExperience(): Promise<boolean> {
-    if (this.#isExperienceDisplayed) {
+    if (this.#isExperienceDisplayed || this.#isDisplayingExperience) {
       return true;
     }
 
@@ -43,13 +44,14 @@ export class ExperienceService implements ExperienceDisplayerPort {
   }
 
   async #displayExperience(): Promise<boolean> {
+    this.#isDisplayingExperience = true;
     const experience = this.#getExperienceKey();
-    this.#isExperienceDisplayed = true;
     this.#environmentSetUpPort.setUp(experience);
     this.#piecesSetUpPort.setUpPieces(experience);
     try {
       await this.#piecesSequencePort.displayDropSequence(experience);
       this.#logger.log("house-of-the-lord experience displayed");
+      this.#isExperienceDisplayed = true;
       return true;
     } catch (error) {
       this.#logger.error(
@@ -57,6 +59,8 @@ export class ExperienceService implements ExperienceDisplayerPort {
         error
       );
       return false;
+    } finally {
+      this.#isDisplayingExperience = false;
     }
   }
 

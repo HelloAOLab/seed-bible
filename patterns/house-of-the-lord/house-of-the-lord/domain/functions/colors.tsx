@@ -53,7 +53,7 @@ export const ClampRGBColor: ClampRGBColorType = (colorToClamp) => {
   return colorClamped;
 };
 
-export const HexToRgb: HexToRgbType = ({ hexColor = "000000" }) => {
+export const HexToRgb: HexToRgbType = ({ hexColor }) => {
   const cleanHex = hexColor.trim();
   let hex = cleanHex.startsWith("#") ? cleanHex.slice(1) : cleanHex;
 
@@ -73,10 +73,11 @@ export const HexToRgb: HexToRgbType = ({ hexColor = "000000" }) => {
   return [r, g, b];
 };
 
-export const RgbToHex: RgbToHexType = ({ rgbColor = [255, 255, 255] }) => {
+export const RgbToHex: RgbToHexType = ({ rgbColor }) => {
+  const clamped = ClampRGBColor(rgbColor);
   return (
     "#" +
-    ((1 << 24) + (rgbColor[0] << 16) + (rgbColor[1] << 8) + rgbColor[2])
+    ((1 << 24) + (clamped[0] << 16) + (clamped[1] << 8) + clamped[2])
       .toString(16)
       .slice(1)
   );
