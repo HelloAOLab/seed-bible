@@ -500,7 +500,12 @@ export function createSeedBibleState(
   i18n.setLanguagePersister(settings.persistLanguage);
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
-  const customizations = createCustomizationsManager(os, login, themeManager);
+  const customizations = createCustomizationsManager(
+    os,
+    login,
+    themeManager,
+    navigation
+  );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
     undefined

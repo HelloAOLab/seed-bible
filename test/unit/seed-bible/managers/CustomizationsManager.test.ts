@@ -6,6 +6,10 @@ import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/Logi
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { createTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { SettingsManager } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import {
+  createNavigationManager,
+  type NavigationManager,
+} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 
@@ -14,13 +18,21 @@ describe("CustomizationsManager", () => {
   let eraseDataMock: Mock;
   let listAllDataByMarkerMock: Mock;
   let recordFileMock: Mock;
+  let getDataMock: Mock;
   let warnSpy: Mock;
   let login: Mocked<LoginManager>;
   let os: CasualOSManager;
   let settings: Mocked<SettingsManager>;
+  let navigation: NavigationManager;
 
   beforeEach(() => {
     os = CasualOSManager();
+    getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    });
+    navigation = createNavigationManager({ initialHref: "http://localhost/" });
     recordDataMock = vi
       .spyOn(os, "recordData")
       .mockResolvedValue(undefined as never);
@@ -96,7 +108,7 @@ describe("CustomizationsManager", () => {
 
   it("load() lists customizations under the seedBibleCustomization marker for the signed-in user", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
 
     await manager.load();
 
@@ -126,7 +138,7 @@ describe("CustomizationsManager", () => {
       ],
     });
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
 
     await manager.load();
 
@@ -137,7 +149,7 @@ describe("CustomizationsManager", () => {
 
   it("create() persists a new record pre-filled from the current theme and does not apply it live", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const lightThemeVariables = theme.currentTheme.value.variables;
 
     const created = await manager.create();
@@ -159,7 +171,7 @@ describe("CustomizationsManager", () => {
 
   it("setColor() on a non-active customization persists but does not touch the live theme", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const created = await manager.create();
 
     await manager.setColor(created.id, "primaryColor", "#123456");
@@ -173,7 +185,7 @@ describe("CustomizationsManager", () => {
 
   it("setActive() applies the customization's colors to the live theme without persisting them to the user's theme settings", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const originalSecondaryColor =
       theme.currentTheme.value.variables.secondaryColor;
     const created = await manager.create();
@@ -197,7 +209,7 @@ describe("CustomizationsManager", () => {
 
   it("setActive() deactivates the previously active customization", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const first = await manager.create();
     const second = await manager.create();
 
@@ -216,7 +228,7 @@ describe("CustomizationsManager", () => {
 
   it("setColor() on the active customization also previews the change live, without persisting it", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const created = await manager.create();
     await manager.setActive(created.id);
 
@@ -228,7 +240,7 @@ describe("CustomizationsManager", () => {
 
   it("deactivate() resets the live theme's overrides", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const created = await manager.create();
     await manager.setActive(created.id);
 
@@ -241,7 +253,7 @@ describe("CustomizationsManager", () => {
 
   it("remove() erases the record and resets the live theme if it was active", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const created = await manager.create();
     await manager.setActive(created.id);
 
@@ -255,7 +267,7 @@ describe("CustomizationsManager", () => {
 
   it("rename() updates the name without touching the live theme", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const created = await manager.create();
 
     await manager.rename(created.id, "My colors");
@@ -266,7 +278,7 @@ describe("CustomizationsManager", () => {
 
   it("create() defaults logoUrl to null", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
 
     const created = await manager.create();
 
@@ -275,7 +287,7 @@ describe("CustomizationsManager", () => {
 
   it("uploadLogo() records the file under the customization marker and persists the returned URL", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const created = await manager.create();
     const file = new File(["fake image bytes"], "logo.png", {
       type: "image/png",
@@ -294,7 +306,7 @@ describe("CustomizationsManager", () => {
 
   it("removeLogo() clears the logo URL and persists the change", async () => {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
     const created = await manager.create();
     const file = new File(["fake image bytes"], "logo.png", {
       type: "image/png",
@@ -304,5 +316,95 @@ describe("CustomizationsManager", () => {
     await manager.removeLogo(created.id);
 
     expect(manager.customizations.value[0]?.logoUrl).toBeNull();
+  });
+
+  it("auto-loads a customization from the ?customization= query param on construction", async () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      themes: { primaryColor: "#abc123" },
+      logoUrl: null,
+      active: false,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+    const theme = createTheme(settings);
+
+    const manager = createCustomizationsManager(
+      os,
+      login,
+      theme,
+      linkedNavigation
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(getDataMock).toHaveBeenCalledWith(
+      "other-user",
+      "customization_shared"
+    );
+    expect(manager.activeCustomization.value?.id).toBe("customization_shared");
+    expect(manager.activeThemeOverrides.value).toEqual({
+      primaryColor: "#abc123",
+    });
+  });
+
+  it("a locator-loaded customization takes priority over the signed-in user's own active customization", async () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      themes: { primaryColor: "#abc123" },
+      logoUrl: null,
+      active: false,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(
+      os,
+      login,
+      theme,
+      linkedNavigation
+    );
+    const ownCustomization = await manager.create();
+    await manager.setActive(ownCustomization.id);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(manager.activeCustomization.value?.id).toBe("customization_shared");
+  });
+
+  it("loadByLocator() ignores a malformed locator", async () => {
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
+
+    await manager.loadByLocator("no-dot-here");
+
+    expect(manager.linkedCustomization.value).toBeNull();
+    expect(getDataMock).not.toHaveBeenCalled();
+  });
+
+  it("loadByLocator() ignores a locator for a record that doesn't exist", async () => {
+    getDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    });
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
+
+    await manager.loadByLocator("owner.customization_missing");
+
+    expect(manager.linkedCustomization.value).toBeNull();
   });
 });

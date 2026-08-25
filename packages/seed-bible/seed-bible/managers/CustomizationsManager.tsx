@@ -8,6 +8,7 @@ import {
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import type { NavigationManager } from "./NavigationManager";
 import {
   filterValidColorOverrides,
   type ThemeColorKey,
@@ -49,9 +50,17 @@ export interface CustomizationsManager {
    * `SettingsManager` — a refresh always reverts to the user's real theme.
    */
   activeThemeOverrides: ReadonlySignal<ThemeOverrides>;
+  /**
+   * A customization loaded via the `?customization={recordName}.{id}` share
+   * link, if any. Takes priority over the signed-in user's own active
+   * customization in `activeCustomization`.
+   */
+  linkedCustomization: ReadonlySignal<SeedBibleCustomization | null>;
   /** The customization id the editor settings page should show. */
   editingCustomizationId: Signal<string | null>;
   load: () => Promise<void>;
+  /** Loads a customization by its `{recordName}.{id}` locator into `linkedCustomization`. */
+  loadByLocator: (locator: string) => Promise<void>;
   create: () => Promise<SeedBibleCustomization>;
   rename: (id: string, name: string) => Promise<void>;
   setColor: (id: string, key: ThemeColorKey, value: string) => Promise<void>;
@@ -65,14 +74,64 @@ export interface CustomizationsManager {
 export function createCustomizationsManager(
   os: CasualOSManager,
   login: LoginManager,
-  theme: ThemeManager
+  theme: ThemeManager,
+  navigation: NavigationManager
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
   const editingCustomizationId = signal<string | null>(null);
+  const linkedCustomization = signal<SeedBibleCustomization | null>(null);
+
+  const loadByLocator = async (locator: string): Promise<void> => {
+    // `id` is always `customization_<uuid>` (no dots); split on the LAST dot
+    // so a recordName that happens to contain one still parses correctly.
+    const dotIndex = locator.lastIndexOf(".");
+    if (dotIndex <= 0 || dotIndex === locator.length - 1) {
+      console.warn("Invalid customization locator:", locator);
+      return;
+    }
+    const recordName = locator.slice(0, dotIndex);
+    const id = locator.slice(dotIndex + 1);
+
+    try {
+      const result = await os.getData(recordName, id);
+      if (!result.success || !result.data) {
+        console.warn("Customization not found for locator:", locator);
+        return;
+      }
+      const parsed = customizationSchema.safeParse(result.data);
+      if (!parsed.success) {
+        console.warn(
+          "Invalid customization record for locator:",
+          locator,
+          parsed.error
+        );
+        return;
+      }
+      linkedCustomization.value = {
+        ...parsed.data,
+        themes: filterValidColorOverrides(parsed.data.themes),
+      };
+    } catch (error) {
+      console.error(
+        "Failed to load customization from locator:",
+        locator,
+        error
+      );
+    }
+  };
+
+  const initialLocator =
+    navigation.initialUrl.searchParams.get("customization");
+  if (initialLocator) {
+    void loadByLocator(initialLocator);
+  }
 
   const activeCustomization = computed(
-    () => customizations.value.find((c) => c.active) ?? null
+    () =>
+      linkedCustomization.value ??
+      customizations.value.find((c) => c.active) ??
+      null
   );
 
   const activeThemeOverrides = computed<ThemeOverrides>(
@@ -266,8 +325,10 @@ export function createCustomizationsManager(
     isLoading,
     activeCustomization,
     activeThemeOverrides,
+    linkedCustomization,
     editingCustomizationId,
     load,
+    loadByLocator,
     create,
     rename,
     setColor,
