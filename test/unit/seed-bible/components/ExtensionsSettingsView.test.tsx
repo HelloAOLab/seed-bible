@@ -71,69 +71,85 @@ describe("ExtensionsSettingsView", () => {
     return state;
   }
 
-  const allGroups = () =>
-    Array.from(container.querySelectorAll<HTMLElement>(".sb-extensions-group"));
-
-  /** The Installed and Available group elements, asserting both are present. */
-  const groups = (): [HTMLElement, HTMLElement] => {
-    const [installedGroup, availableGroup] = allGroups();
-    expect(installedGroup).toBeDefined();
-    expect(availableGroup).toBeDefined();
-    return [installedGroup!, availableGroup!];
-  };
-
-  const rowNamesIn = (group: HTMLElement) =>
-    Array.from(group.querySelectorAll(".sb-extension-name")).map(
+  const installedTab = () =>
+    container.querySelector<HTMLButtonElement>("#sb-extensions-tab-installed")!;
+  const availableTab = () =>
+    container.querySelector<HTMLButtonElement>("#sb-extensions-tab-available")!;
+  const rowNames = () =>
+    Array.from(container.querySelectorAll(".sb-extension-name")).map(
       (el) => el.textContent
     );
 
-  it("puts installed extensions under Installed and the rest under Available", () => {
+  it("shows the Installed tab by default with only installed extensions listed", () => {
     renderExtensions([
       makeEntry("installed-one", true),
       makeEntry("available-one", false),
       makeEntry("installed-two", true),
     ]);
 
-    const [installedGroup, availableGroup] = groups();
-
-    expect(installedGroup.querySelector("h3")?.textContent).toBe("Installed");
-    expect(rowNamesIn(installedGroup)).toEqual([
-      "installed-one",
-      "installed-two",
-    ]);
-
-    expect(availableGroup.querySelector("h3")?.textContent).toBe("Available");
-    expect(rowNamesIn(availableGroup)).toEqual(["available-one"]);
+    expect(installedTab().getAttribute("aria-selected")).toBe("true");
+    expect(availableTab().getAttribute("aria-selected")).toBe("false");
+    expect(rowNames()).toEqual(["installed-one", "installed-two"]);
   });
 
-  it("shows the no-available-extensions message when everything is installed", () => {
+  it("switches to the Available tab and shows only uninstalled extensions", () => {
+    renderExtensions([
+      makeEntry("installed-one", true),
+      makeEntry("available-one", false),
+      makeEntry("installed-two", true),
+    ]);
+
+    act(() => {
+      availableTab().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(availableTab().getAttribute("aria-selected")).toBe("true");
+    expect(installedTab().getAttribute("aria-selected")).toBe("false");
+    expect(rowNames()).toEqual(["available-one"]);
+  });
+
+  it("labels each tab with the count of extensions it holds", () => {
+    renderExtensions([
+      makeEntry("installed-one", true),
+      makeEntry("available-one", false),
+      makeEntry("available-two", false),
+    ]);
+
+    expect(
+      installedTab().querySelector(".sb-extensions-tab-count")?.textContent
+    ).toBe("1");
+    expect(
+      availableTab().querySelector(".sb-extensions-tab-count")?.textContent
+    ).toBe("2");
+  });
+
+  it("shows the no-available-extensions message on the Available tab when everything is installed", () => {
     renderExtensions([makeEntry("installed-one", true)]);
 
-    const [installedGroup, availableGroup] = groups();
+    act(() => {
+      availableTab().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
 
-    expect(rowNamesIn(installedGroup)).toEqual(["installed-one"]);
-    expect(availableGroup.querySelector(".sb-extensions-list")).toBeNull();
-    expect(availableGroup.textContent).toContain(
+    expect(container.querySelector(".sb-extensions-list")).toBeNull();
+    expect(container.textContent).toContain(
       "There are no more extensions available to install."
     );
   });
 
-  it("shows the no-installed-extensions message when nothing is installed", () => {
+  it("shows the no-installed-extensions message on the Installed tab when nothing is installed", () => {
     renderExtensions([makeEntry("available-one", false)]);
 
-    const [installedGroup, availableGroup] = groups();
-
-    expect(installedGroup.querySelector(".sb-extensions-list")).toBeNull();
-    expect(installedGroup.textContent).toContain(
+    expect(installedTab().getAttribute("aria-selected")).toBe("true");
+    expect(container.querySelector(".sb-extensions-list")).toBeNull();
+    expect(container.textContent).toContain(
       "You haven't installed any extensions yet."
     );
-    expect(rowNamesIn(availableGroup)).toEqual(["available-one"]);
   });
 
-  it("shows the outer empty state (not the group headings) when there are no extensions at all", () => {
+  it("shows the outer empty state (no tabs) when there are no extensions at all", () => {
     renderExtensions([]);
 
-    expect(allGroups()).toHaveLength(0);
+    expect(container.querySelector(".sb-extensions-tabs")).toBeNull();
     expect(container.textContent).toContain("No extensions available.");
   });
 });

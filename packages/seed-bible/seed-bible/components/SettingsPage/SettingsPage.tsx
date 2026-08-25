@@ -1091,6 +1091,8 @@ function getExtensionInstallState(
   return "none";
 }
 
+type ExtensionsTab = "installed" | "available";
+
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { extensions } = state;
@@ -1098,6 +1100,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
+  const activeTab = useSignal<ExtensionsTab>("installed");
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
@@ -1261,6 +1264,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const installedExtensions = extensionsList.filter((e) => e.installed);
   const availableExtensions = extensionsList.filter((e) => !e.installed);
+  const activeExtensions =
+    activeTab.value === "installed" ? installedExtensions : availableExtensions;
+  const activeEmptyMessage =
+    activeTab.value === "installed"
+      ? t("no-installed-extensions", {
+          defaultValue: "You haven't installed any extensions yet.",
+        })
+      : t("no-available-extensions", {
+          defaultValue: "There are no more extensions available to install.",
+        });
 
   return (
     <div className="sb-settings-page">
@@ -1282,41 +1295,61 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <>
-            <div className="sb-extensions-group">
-              <h3 className="sb-settings-subheading">
+            <div
+              className="sb-extensions-tabs"
+              role="tablist"
+              aria-label={t("extensions", { defaultValue: "Extensions" })}
+            >
+              <button
+                type="button"
+                role="tab"
+                id="sb-extensions-tab-installed"
+                aria-selected={activeTab.value === "installed"}
+                aria-controls="sb-extensions-tabpanel"
+                className={`sb-extensions-tab${
+                  activeTab.value === "installed"
+                    ? " sb-extensions-tab-active"
+                    : ""
+                }`}
+                onClick={() => (activeTab.value = "installed")}
+              >
                 {t("installed-extensions", { defaultValue: "Installed" })}
-              </h3>
-              {installedExtensions.length === 0 ? (
-                <div className="sb-settings-empty-state">
-                  <p>
-                    {t("no-installed-extensions", {
-                      defaultValue: "You haven't installed any extensions yet.",
-                    })}
-                  </p>
-                </div>
-              ) : (
-                <ul className="sb-extensions-list">
-                  {installedExtensions.map(renderExtensionRow)}
-                </ul>
-              )}
+                <span className="sb-extensions-tab-count">
+                  {installedExtensions.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="sb-extensions-tab-available"
+                aria-selected={activeTab.value === "available"}
+                aria-controls="sb-extensions-tabpanel"
+                className={`sb-extensions-tab${
+                  activeTab.value === "available"
+                    ? " sb-extensions-tab-active"
+                    : ""
+                }`}
+                onClick={() => (activeTab.value = "available")}
+              >
+                {t("available-extensions", { defaultValue: "Available" })}
+                <span className="sb-extensions-tab-count">
+                  {availableExtensions.length}
+                </span>
+              </button>
             </div>
 
-            <div className="sb-extensions-group">
-              <h3 className="sb-settings-subheading">
-                {t("available-extensions", { defaultValue: "Available" })}
-              </h3>
-              {availableExtensions.length === 0 ? (
+            <div
+              id="sb-extensions-tabpanel"
+              role="tabpanel"
+              aria-labelledby={`sb-extensions-tab-${activeTab.value}`}
+            >
+              {activeExtensions.length === 0 ? (
                 <div className="sb-settings-empty-state">
-                  <p>
-                    {t("no-available-extensions", {
-                      defaultValue:
-                        "There are no more extensions available to install.",
-                    })}
-                  </p>
+                  <p>{activeEmptyMessage}</p>
                 </div>
               ) : (
                 <ul className="sb-extensions-list">
-                  {availableExtensions.map(renderExtensionRow)}
+                  {activeExtensions.map(renderExtensionRow)}
                 </ul>
               )}
             </div>
