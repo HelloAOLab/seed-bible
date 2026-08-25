@@ -250,6 +250,7 @@ describe("I18nManager UI language switch prompt", () => {
       updatePathAndQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
       dispose: vi.fn(),
+      batchWrites: vi.fn((fn: () => unknown) => fn()),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
     // The i18next instance is a module singleton shared across tests, so pin
