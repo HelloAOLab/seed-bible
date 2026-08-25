@@ -58,7 +58,11 @@
   margin: 0;
 }
 
-.sb-about-content a {
+/* Excludes the CTA button below: `--sb-link-color` and `--sb-primary-color`
+   are themed to the same value (see ThemeManager.tsx), so without this
+   exclusion this rule's higher specificity would win over `.sb-about-cta`'s
+   own color and paint its text the same as its own background. */
+.sb-about-content a:not(.sb-about-cta) {
   color: var(--sb-link-color);
 }
 
