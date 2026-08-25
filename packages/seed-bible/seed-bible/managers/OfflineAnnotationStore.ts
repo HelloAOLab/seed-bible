@@ -439,12 +439,23 @@ export function createIndexedDbAnnotationStore(): OfflineAnnotationStore | null 
     listedAtMs: number
   ): Promise<void> => {
     const database = await openDatabase();
-    const existing = await listForChapter(owner, bookId, chapterNumber);
     const transaction = database.transaction(
       [ANNOTATIONS_STORE, CHAPTERS_STORE],
       "readwrite"
     );
     const store = transaction.objectStore(ANNOTATIONS_STORE);
+
+    // Read inside the same read-write transaction as the writes, not before it.
+    // Reading separately left a gap the event loop could fill with a local edit,
+    // and the decision about what to overwrite is made from `existing` — so an
+    // edit landing in that gap looked unpending and got replaced by the server's
+    // older copy, silently dropping it. A transaction stays alive across the
+    // await of its own request, so this is still one atomic unit.
+    const existing = (await requestToPromise(
+      store
+        .index(CHAPTER_INDEX)
+        .getAll(IDBKeyRange.only([owner, bookId, chapterNumber]))
+    )) as StoredAnnotation[];
 
     applyReconcile(existing, serverAnnotations, owner, {
       put: (row) => void store.put(row),
@@ -598,17 +609,32 @@ export function createInMemoryAnnotationStore(): OfflineAnnotationStore {
   const rows = new Map<string, StoredAnnotation>();
   const chapters = new Map<string, StoredAnnotationChapter>();
 
-  const listForChapter = async (
+  /**
+   * Synchronous so {@link reconcileChapter} can read and write without yielding.
+   *
+   * That matters for more than tidiness: this store stands in for the IndexedDB
+   * one in tests, so it has to share its atomicity. Awaiting between the read and
+   * the writes would reintroduce the very gap a concurrent local edit used to
+   * fall into and get overwritten in.
+   */
+  const rowsForChapter = (
     owner: string,
     bookId: string,
     chapterNumber: number
-  ): Promise<StoredAnnotation[]> =>
+  ): StoredAnnotation[] =>
     [...rows.values()].filter(
       (row) =>
         row.owner === owner &&
         row.bookId === bookId &&
         row.chapterNumber === chapterNumber
     );
+
+  const listForChapter = async (
+    owner: string,
+    bookId: string,
+    chapterNumber: number
+  ): Promise<StoredAnnotation[]> =>
+    rowsForChapter(owner, bookId, chapterNumber);
 
   return {
     listForChapter,
@@ -644,7 +670,7 @@ export function createInMemoryAnnotationStore(): OfflineAnnotationStore {
       serverAnnotations,
       listedAtMs
     ) {
-      const existing = await listForChapter(owner, bookId, chapterNumber);
+      const existing = rowsForChapter(owner, bookId, chapterNumber);
       applyReconcile(existing, serverAnnotations, owner, {
         put: (row) => rows.set(row.key, row),
         delete: (key) => rows.delete(key),

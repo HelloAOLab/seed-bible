@@ -11,11 +11,14 @@ import {
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
+import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
 import {
-  buildReadingPath,
-  hasReadingUrlPosition,
-  parseReadingPath,
-} from "../managers/ReadingUrlPath";
+  TODAY_PANE_ID,
+  createTodayManager,
+  openTodayPassage,
+  type TodayManager,
+} from "../managers/TodayManager";
+import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
 import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
@@ -28,6 +31,7 @@ import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
+  type TranslationBook,
 } from "../managers/FreeUseBibleAPI";
 import { createPanes } from "../managers/PanesManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
@@ -355,6 +359,8 @@ export interface SeedBibleState {
   readingPlans: ReadingPlansManager;
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
+  /** The Today screen: its open state and the data its cards read. */
+  today: TodayManager;
   /**
    * Registry of reading extensions that can be enabled per reading state to
    * enhance navigation, discovered content, and session-synced custom data.
@@ -400,13 +406,26 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
-import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import {
+  createPlaylistManager,
+  type PlaylistManager,
+  type PlaylistItemData,
+} from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
   DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
+import {
+  AIBibleVerseRefSchema,
+  convertToPlaylistItem,
+  GeneratedPlaylistSchema,
+  generateFunctionTool,
+} from "./AIManager";
+import { z } from "zod";
+import { getDefaultTranslationForLanguage } from "./BibleReadingManager";
+import { captureEvent } from "./Utils";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -425,6 +444,14 @@ export interface CreateSeedBibleStateOptions {
    * IndexedDB; tests pass an in-memory store, and null disables the feature.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
+   * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
+   * instance already fetched. The client uses this to seed its own API cache
+   * with whatever the server already fetched for the SSR render — see
+   * `readInjectedApiResponseSnapshot` in `app/apiResponseSeed.ts`.
+   */
+  apiResponseSnapshot?: Record<string, unknown>;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -453,6 +480,9 @@ export function createSeedBibleState(
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
+  if (options.apiResponseSnapshot) {
+    api.seedResponseCache(options.apiResponseSnapshot);
+  }
   const i18n = createI18nManager(
     navigation,
     options.config?.acceptedLanguages ?? []
@@ -469,9 +499,22 @@ export function createSeedBibleState(
   // through `requestLanguageChange` (rather than a blanket `languageChanged`
   // listener) keeps URL-driven language changes view-only.
   i18n.setLanguagePersister(settings.persistLanguage);
+
+  // "Never ask again" on the UI-language switch prompt is an ordinary setting,
+  // so it rides on the same profile-when-logged-in / device-when-not storage
+  // as every other one.
+  i18n.setUiLanguagePromptPreference({
+    isEnabled: () => settings.settings.value.askToSwitchUiLanguage,
+    disable: () => settings.setAskToSwitchUiLanguage(false),
+  });
+
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
-  const chats = createChatsManager(login, i18n);
+  // Filled once tabs exist so local chat can resolve localized book names.
+  const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
+    undefined
+  );
+  const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
   const readingExtensions = createBibleReadingExtensionManager();
@@ -484,7 +527,8 @@ export function createSeedBibleState(
     login,
     discover,
     readingExtensions,
-    () => annotations
+    () => annotations,
+    branding
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -495,11 +539,22 @@ export function createSeedBibleState(
     sidebar,
     bookmarks,
     navigation,
-    login
+    login,
+    i18n
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
-  const annotations = createAnnotationsManager(os, login, tabs, discover);
+
+  const annotationRecordKey =
+    navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
+    undefined;
+  const annotations = createAnnotationsManager(
+    os,
+    login,
+    tabs,
+    discover,
+    annotationRecordKey
+  );
   const sessions = createSessionsManager(
     os,
     data,
@@ -617,6 +672,12 @@ export function createSeedBibleState(
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
 
+  // Keep local-chat scripture parsing in sync with the open reading tab.
+  effect(() => {
+    selectedTabTranslationBooks.value =
+      selectedTab.value?.readingState.translationBooks.value?.books;
+  });
+
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
   const isSSR = import.meta.env.SSR as boolean;
 
@@ -649,7 +710,8 @@ export function createSeedBibleState(
     modals,
     i18n,
     readingExtensions,
-    discover
+    discover,
+    chats
   );
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
@@ -687,35 +749,18 @@ export function createSeedBibleState(
     panes.closeFullscreenPanes();
   });
 
-  // Whether Today will auto-open over the reader on this cold load — mirrors
-  // the predicate in `today-screen`'s bootstrap (an explicit `?today` param
-  // wins; otherwise it opens unless the boot URL already points somewhere
-  // specific). Read from `initialUrl`, not the live `currentUrl`, for the same
-  // reason today-screen does: TabsManager echoes the reader's book/chapter
-  // into the live URL before extensions finish loading.
-  const initialUrlParams = navigation.initialUrl.searchParams;
-  const todayWillAutoOpen =
-    initialUrlParams.get("today") !== null
-      ? initialUrlParams.get("today") === "open"
-      : !(
-          hasReadingUrlPosition(navigation.initialUrl, navigation.basePath) ||
-          initialUrlParams.has("sessionId")
-        );
-
-  // Latches true the first time Today's pane is observed open, so the
-  // "about to be covered by Today" window (the gap between the chapter
-  // loading and Today's pane actually opening) doesn't read as reader-visible.
-  const todayHasOpened = signal(false);
-  effect(() => {
-    if (panes.panes.value.some((pane) => pane.id === "today-screen-pane")) {
-      todayHasOpened.value = true;
-    }
-  });
-
-  // The reader is visible when a chapter is loaded, no fullscreen pane covers
-  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
-  // any open pane covers the reader), and Today isn't about to auto-open over
-  // it for this load.
+  // The reader is visible when a chapter is loaded and no fullscreen pane
+  // covers it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on
+  // mobile any open pane covers the reader).
+  //
+  // Today needs no special case here even though it auto-opens over the reader:
+  // its pane opens synchronously while this state is being built, whereas a
+  // chapter can only arrive from an async fetch afterwards. So by the time
+  // `chapterLoaded` can turn true, Today's pane is already in `panes` and the
+  // check below sees it. While Today was an extension that was not true — panes
+  // loaded in a later `useEffect`, leaving a window where the chapter had
+  // loaded and nothing covered it yet, which a `todayHasOpened` latch papered
+  // over. `todayCoversReader.test.ts` guards the ordering this now relies on.
   const readerVisible = computed<boolean>(() => {
     const chapterLoaded =
       selectedTab.value?.readingState.chapterData.value != null;
@@ -726,9 +771,6 @@ export function createSeedBibleState(
       (pane) => pane.placement === "fullscreen" || isMobile.value
     );
     if (coveredByPane) {
-      return false;
-    }
-    if (todayWillAutoOpen && !todayHasOpened.value) {
       return false;
     }
     return true;
@@ -749,6 +791,12 @@ export function createSeedBibleState(
   // not-yet-installed user, logged in or not. Deferring past the tutorial
   // means the profile has had time to load, so there's no "stale prompt"
   // concern the way there was on startup. One-shot via `installOfferChecked`.
+  //
+  // `installOfferResolved` flips once that check has had its turn, whether or
+  // not it showed anything. The offline-download offer waits on it so the two
+  // never stack, and so "offer the download after the install prompt" holds.
+  const installOfferResolved = signal(false);
+
   let installOfferChecked = false;
   effect(() => {
     if (installOfferChecked) {
@@ -774,6 +822,7 @@ export function createSeedBibleState(
     if (onboarding.installAvailable.value) {
       onboarding.openInstall();
     }
+    installOfferResolved.value = true;
   });
 
   // A phone held sideways: landscape orientation with the short viewport
@@ -1188,6 +1237,11 @@ export function createSeedBibleState(
       return;
     }
 
+    // Reading history records book and chapter but not which translation they
+    // were read in, so the offline manager keeps its own first-seen stamp —
+    // that's what the "used for a day" download offer is judged against.
+    data.offline.noteTranslationInUse(chapter.translation.id);
+
     const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(
         chapter.book.id,
@@ -1196,10 +1250,7 @@ export function createSeedBibleState(
     }, 5000);
 
     const posthogTimeoutId = setTimeout(() => {
-      if (typeof posthog === "undefined" || !posthog) {
-        return;
-      }
-      posthog?.capture("user_chapter_read", {
+      captureEvent("user_chapter_read", {
         translationId: chapter.translation.id,
         bookId: chapter.book.id,
         chapter: String(chapter.chapter.number),
@@ -1210,6 +1261,36 @@ export function createSeedBibleState(
       clearInterval(readingHistoryTimeoutId);
       clearTimeout(posthogTimeoutId);
     };
+  });
+
+  // Offer to save the current translation for offline reading, once the
+  // tutorial and install prompts have had their turn so we never stack two
+  // dialogs. One-shot per load via `downloadOfferChecked`; the manager decides
+  // whether the offer is actually warranted.
+  let downloadOfferChecked = false;
+  effect(() => {
+    if (downloadOfferChecked) {
+      return;
+    }
+    if (openedViaContentLink) {
+      return;
+    }
+    if (!installOfferResolved.value) {
+      return;
+    }
+    // The install modal is up until the user resolves it.
+    if (onboarding.step.value !== "done") {
+      return;
+    }
+    if (tutorial.promptVisible.value || tutorial.running.value) {
+      return;
+    }
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+    if (!chapter) {
+      return;
+    }
+    downloadOfferChecked = true;
+    data.offline.offerDownloadPrompt(chapter.translation);
   });
 
   const closeSidebarAndSettings = () => {
@@ -1256,6 +1337,28 @@ export function createSeedBibleState(
   const handleSelectPane = (paneId: string) => {
     closeSidebarAndSettings();
     panes.selectPane(paneId);
+  };
+
+  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
+  // A new call overwrites the current toast and restarts the timer, so only the
+  // most recent message is ever visible. The incrementing id keys the render so
+  // the slide-in animation replays even for a repeated message.
+  //
+  // Defined here (rather than further down, where it's exposed on `state`)
+  // because the host-disconnect handling below also calls it, and that
+  // effect runs immediately when constructed.
+  const currentToast = signal<{ id: number; message: string } | null>(null);
+  let toastSeq = 0;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  const toast = (message: string) => {
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+    }
+    currentToast.value = { id: ++toastSeq, message };
+    toastTimer = setTimeout(() => {
+      currentToast.value = null;
+      toastTimer = null;
+    }, 3500);
   };
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
@@ -1324,6 +1427,39 @@ export function createSeedBibleState(
   // never through the disconnect heuristic.
   const locallyHostedSessionIds = new Set<string>();
 
+  // Suppresses the host-disconnect grace timer for a short window right
+  // after the tab returns to the foreground. On mobile, backgrounding the
+  // app lets its own connection go stale; right as it resumes, this
+  // client's own `connectedUsers` view can still read "host missing" for a
+  // few seconds even though the host never left. `session.isSynced` (below)
+  // covers most of this, but the underlying connection can briefly report
+  // itself synced again a beat before it's actually caught up, so this is
+  // extra insurance layered on top of it.
+  const RESUME_GRACE_MS = 5000;
+  const justResumedFromBackground = signal(false);
+  let resumeGraceTimer: ReturnType<typeof setTimeout> | null = null;
+  if (typeof document !== "undefined" && !import.meta.env.SSR) {
+    effect(() => {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState !== "visible") return;
+        justResumedFromBackground.value = true;
+        if (resumeGraceTimer !== null) {
+          clearTimeout(resumeGraceTimer);
+        }
+        resumeGraceTimer = setTimeout(() => {
+          justResumedFromBackground.value = false;
+          resumeGraceTimer = null;
+        }, RESUME_GRACE_MS);
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () =>
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+    });
+  }
+
   // Auto-close participant tabs when the host goes away. Two signals:
   //  (a) `options.endedAt` was written by the host (clean "End Session"
   //      action — works when the CRDT flushes before the host disconnects).
@@ -1337,19 +1473,44 @@ export function createSeedBibleState(
   // host who logs in mid-session will briefly look disconnected (their
   // OS connection re-establishes with a new identity), and we want their
   // updated `hostUserId` to land via the CRDT before we close the tab.
+  //
+  // Signal (b) is judged from THIS client's own `connectedUsers` view,
+  // which is only trustworthy while this client's own connection is
+  // synced (`session.isSynced`) and not still catching up right after a
+  // mobile resume (`justResumedFromBackground`). Otherwise a client's own
+  // stale/resyncing connection can make the host look gone when it never
+  // left — see issue #1346.
   const sessionsWhereHostWasSeen = new Set<string>();
-  const HOST_DISCONNECT_GRACE_MS = 8000;
+  const HOST_DISCONNECT_GRACE_MS = 30000;
   const pendingHostDisconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
-  const clearPendingHostDisconnect = (sessionId: string) => {
+  const clearPendingHostDisconnect = (sessionId: string): boolean => {
     const timer = pendingHostDisconnectTimers.get(sessionId);
     if (timer !== undefined) {
       clearTimeout(timer);
       pendingHostDisconnectTimers.delete(sessionId);
+      return true;
     }
+    return false;
   };
+  const sessionHostIsConnected = (session: BibleReadingSession): boolean =>
+    session.connectedUsers.value.some(
+      (user) =>
+        isSessionHost(session.options.value, user.userId) ||
+        isSessionHost(session.options.value, user.connectionId)
+    );
+  // Whether this client's view of who's present is worth acting on. We are
+  // definitionally present in our own session, so a list that doesn't even
+  // include us means the presence channel is broken (it can go permanently
+  // silent after a dropped connection) — and "the host isn't in the list"
+  // tells us nothing at all. Never eject anyone on that basis.
+  const sessionPresenceIsTrustworthy = (
+    session: BibleReadingSession
+  ): boolean =>
+    session.isSynced.value &&
+    session.connectedUsers.value.some((user) => user.isSelf);
   effect(() => {
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
@@ -1370,34 +1531,71 @@ export function createSeedBibleState(
       const hostId = session.options.value.hostUserId;
       if (!hostId) continue;
 
-      const users = session.connectedUsers.value;
       // A session stays alive as long as the host OR any co-host is present,
       // so appointing a co-host lets the original host leave without kicking
       // everyone else out.
-      const hostIsConnected = users.some(
-        (user) =>
-          isSessionHost(session.options.value, user.userId) ||
-          isSessionHost(session.options.value, user.connectionId)
-      );
+      const hostIsConnected = sessionHostIsConnected(session);
+      const { t } = i18n;
 
       if (hostIsConnected) {
         sessionsWhereHostWasSeen.add(session.id);
         // Host came back (e.g. reconnected after their login flow) — cancel
         // any pending close so the tab survives the round-trip.
-        clearPendingHostDisconnect(session.id);
+        if (clearPendingHostDisconnect(session.id)) {
+          toast(
+            t("session-host-reconnected", {
+              defaultValue: "Reconnected to the session",
+            })
+          );
+        }
       } else if (
         sessionsWhereHostWasSeen.has(session.id) &&
-        !pendingHostDisconnectTimers.has(session.id)
+        !pendingHostDisconnectTimers.has(session.id) &&
+        sessionPresenceIsTrustworthy(session) &&
+        !justResumedFromBackground.value
       ) {
         // Host appears to have left, but it may be a transient reconnect
         // (host logging in/out) — wait briefly to give the CRDT time to
         // deliver a new `hostUserId` or for the host's connection to
-        // re-appear before tearing down.
+        // re-appear before tearing down. We only get here once THIS
+        // client's own connection is synced and past its post-resume grace
+        // window, so this reading is trustworthy enough to start the timer
+        // (though it's re-verified again below right before acting on it).
         const tabId = tab.id;
         const sessionId = session.id;
+        toast(
+          t("session-host-reconnecting", {
+            defaultValue: "Reconnecting to the session…",
+          })
+        );
         const timer = setTimeout(() => {
           pendingHostDisconnectTimers.delete(sessionId);
+          const currentTab = tabs.tabs.value.find(
+            (candidateTab) => candidateTab.id === tabId
+          );
+          const currentSession = currentTab?.sharedSession;
+          if (!currentSession || currentSession.id !== sessionId) {
+            // Tab/session already gone (e.g. closed some other way).
+            sessionsWhereHostWasSeen.delete(sessionId);
+            return;
+          }
+          if (
+            !sessionPresenceIsTrustworthy(currentSession) ||
+            sessionHostIsConnected(currentSession)
+          ) {
+            // Our own connection is still resyncing, our presence view is
+            // unreliable, or the host is actually back — don't tear down on
+            // stale/incomplete information. The effect above will
+            // re-evaluate and re-arm this timer if the host is still
+            // genuinely gone once presence is trustworthy again.
+            return;
+          }
           sessionsWhereHostWasSeen.delete(sessionId);
+          toast(
+            t("session-host-left", {
+              defaultValue: "The host left — you were removed from the session",
+            })
+          );
           tabs.removeTab(tabId);
         }, HOST_DISCONNECT_GRACE_MS);
         pendingHostDisconnectTimers.set(sessionId, timer);
@@ -1438,11 +1636,9 @@ export function createSeedBibleState(
         ? getSessionStartPosition(activeReadingState)
         : undefined
     );
-    if (typeof posthog !== "undefined" && posthog) {
-      posthog.capture("create_session", {
-        sessionId: session.id,
-      });
-    }
+    captureEvent("create_session", {
+      sessionId: session.id,
+    });
     locallyHostedSessionIds.add(session.id);
     wrapSessionLifecycle(session);
     // Auto-publish: the moment a shared tab is created, other logged-in
@@ -1457,11 +1653,9 @@ export function createSeedBibleState(
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
-    if (typeof posthog !== "undefined" && posthog) {
-      posthog.capture("join_session", {
-        sessionId: session.id,
-      });
-    }
+    captureEvent("join_session", {
+      sessionId: session.id,
+    });
     wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
     tabsLayout.setSelectedSlotTab(tab.id);
@@ -1529,24 +1723,6 @@ export function createSeedBibleState(
     }
 
     await handleJoinSharedSession(initialSessionId);
-  };
-
-  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
-  // A new call overwrites the current toast and restarts the timer, so only the
-  // most recent message is ever visible. The incrementing id keys the render so
-  // the slide-in animation replays even for a repeated message.
-  const currentToast = signal<{ id: number; message: string } | null>(null);
-  let toastSeq = 0;
-  let toastTimer: ReturnType<typeof setTimeout> | null = null;
-  const toast = (message: string) => {
-    if (toastTimer !== null) {
-      clearTimeout(toastTimer);
-    }
-    currentToast.value = { id: ++toastSeq, message };
-    toastTimer = setTimeout(() => {
-      currentToast.value = null;
-      toastTimer = null;
-    }, 3500);
   };
 
   // Tell the user when we signed them out for them. `login.sessionEnded` only fires
@@ -1629,6 +1805,125 @@ export function createSeedBibleState(
     }
   });
 
+  /**
+   * Builds the AI tools that let a provider interact with the core app state.
+   */
+  const getCoreTools = () => {
+    const goToReference = generateFunctionTool({
+      name: "goToReference",
+      description:
+        "Navigates the user to a specific book, chapter, and verse in the Bible.",
+      parameters: AIBibleVerseRefSchema,
+      function: async (args) => {
+        const readingState = currentReadingState.peek();
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        await readingState.tab.readingState.selectTranslationAndChapter(
+          readingState.translationId,
+          args.ref.bookId,
+          args.ref.chapter,
+          {
+            scrollToVerse: args.ref.verse ?? undefined,
+          }
+        );
+
+        if (args.ref.verse) {
+          readingState.tab.readingState.decorateVerses(
+            args.ref.bookId,
+            args.ref.chapter,
+            args.ref.endVerse
+              ? range(args.ref.verse, args.ref.endVerse + 1)
+              : args.ref.verse,
+            {
+              className: "sb-verse-decoration-diminish",
+              containerClassName: "sb-chapter-decoration-diminish",
+              removeAfterMs: 3000,
+            }
+          );
+        }
+
+        return "success";
+      },
+    });
+
+    const searchVerses = generateFunctionTool({
+      name: "searchVerses",
+      description:
+        "Searches the Bible for verses matching the given query. Returns a list of results.",
+      parameters: z.object({
+        q: z.string().describe("The search query to look for in the Bible."),
+      }),
+      function: async (args) => {
+        const readingState = currentReadingState.peek()?.tab.readingState;
+        if (!readingState) {
+          return "error: no reading state available";
+        }
+
+        const activeLanguage =
+          readingState?.translation.value?.language ??
+          readingState?.defaultTranslation.language ??
+          getDefaultTranslationForLanguage(i18n.defaultLanguage).language;
+        const results = await search.searchVerses(
+          activeLanguage,
+          readingState.translationId.peek(),
+          args.q
+        );
+
+        const verses = (results.hits ?? []).map((hit) => ({
+          translationId: hit.document.translation,
+          translationLabel: hit.document.translation,
+          bookId: hit.document.book,
+          bookLabel: hit.document.book,
+          chapterNumber: hit.document.chapter,
+          verseNumber: hit.document.verse,
+          text: hit.document.text,
+        }));
+
+        return JSON.stringify(verses);
+      },
+    });
+
+    const createPlaylist = generateFunctionTool({
+      name: "createPlaylist",
+      description:
+        "Opens the playlist editor pre-filled with the given generated playlist so the user can review, edit, and save it themselves. Does not play or save anything on its own. Each call opens a brand-new, independent playlist that has no relationship to any playlist discussed earlier in this conversation (including one already open in the editor) — it is never used to modify an existing playlist.",
+      parameters: GeneratedPlaylistSchema,
+      function: async (args) => {
+        let items: PlaylistItemData[];
+        try {
+          items = args.items.map((i) => convertToPlaylistItem(i));
+        } catch (err) {
+          return `error: ${err instanceof Error ? err.message : String(err)}`;
+        }
+
+        const editing = await playlists.createNewPlaylist({
+          title: args.title,
+          description: args.description,
+          items,
+        });
+        if (!editing) {
+          return "error: could not open the playlist editor — sign-in was required and did not complete";
+        }
+
+        return "success";
+      },
+    });
+
+    return [goToReference.tool, searchVerses.tool, createPlaylist.tool];
+  };
+
+  const enableCoreChatContext = () => {
+    chats.addContext({
+      id: "core",
+      label: { key: "seed-bible", defaultValue: "Seed Bible" },
+      tools: getCoreTools(),
+    });
+  };
+
+  enableCoreChatContext();
+
   // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
   // // load that playlist and start playing it immediately. The locator's `id` is
   // // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
@@ -1670,6 +1965,18 @@ export function createSeedBibleState(
   void setupInitialSession();
   //.then(() => setupInitialPlaylist());
 
+  // Constructed here rather than beside the other managers because it needs
+  // `currentReadingState`, which is defined well below them.
+  const today = createTodayManager({
+    os,
+    login,
+    navigation,
+    search,
+    bibleData: data,
+    defaultLanguage: i18n.defaultLanguage,
+    currentReadingState,
+  });
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -1698,6 +2005,7 @@ export function createSeedBibleState(
     navigation,
     i18n,
     discover,
+    today,
     readingExtensions,
     extensions,
     readingPlans,
@@ -1773,6 +2081,8 @@ export function createSeedBibleState(
             playlists={playlists}
             annotations={annotations}
             tabs={tabs}
+            chats={chats}
+            openChatPanel={sidebar.openChatPanel}
           />
         ),
         header: () => (
@@ -1813,6 +2123,64 @@ export function createSeedBibleState(
     );
     if (!paneOpen && playlists.view.peek()) {
       playlists.view.value = null;
+    }
+  });
+
+  // Today is the app's fullscreen "home" pane, mirrored from `today.isOpen`
+  // (which is itself bound to `?today=`). Same reconciling-effect pair as
+  // Discover above, and here too the pane -> state direction must `peek()` so
+  // closing the pane can't retrigger the opening effect.
+  //
+  // The thunks are hoisted out of the effect so their identity is stable —
+  // rebuilding them on every reopen would remount the whole Today tree.
+  // Hoisted out of the render thunk so their identity is stable — rebuilding
+  // them per render would defeat the `memo` on `TodayPane`.
+  const openTodayBookSelector = () => {
+    const slot =
+      tabsLayout.slots.value.find(
+        (candidate) => candidate.id === tabsLayout.selectedSlotId.value
+      ) ?? null;
+    if (slot) {
+      selector.setOpen(true, slot);
+    }
+  };
+  const showTodayBookmarksList = () => {
+    sidebar.isSidebarCollapsed.value = false;
+    bookmarks.isFilterActive.value = true;
+  };
+  const renderTodayPane = () => (
+    <TodayPane
+      today={today}
+      login={login}
+      bookmarks={bookmarks.bookmarks}
+      theme={theme}
+      isMobile={isMobile}
+      onOpenPassage={(target) => openTodayPassage(state, today, target)}
+      onOpenBookSelector={openTodayBookSelector}
+      onShowBookmarksList={showTodayBookmarksList}
+    />
+  );
+  const renderTodayPaneTitle = () => <TodayPaneTitle />;
+
+  effect(() => {
+    if (today.isOpen.value) {
+      panes.openPane({
+        id: TODAY_PANE_ID,
+        placement: "fullscreen",
+        title: renderTodayPaneTitle,
+        component: renderTodayPane,
+      });
+    } else {
+      panes.closePane(TODAY_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === TODAY_PANE_ID
+    );
+    if (!paneOpen && today.isOpen.peek()) {
+      today.close();
     }
   });
 

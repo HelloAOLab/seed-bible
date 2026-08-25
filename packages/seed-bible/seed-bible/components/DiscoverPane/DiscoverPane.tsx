@@ -1,9 +1,23 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
 import { useI18n } from "../../i18n/I18nManager";
-import type { TabsManager } from "../../managers/TabsManager";
-import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
+import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
+import type {
+  Playlist,
+  PlaylistManager,
+  PlaylistPlayHistory,
+} from "../../managers/PlaylistManager";
+import {
+  groupPlaylistPlayHistoryByDay,
+  isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryDayKind,
+  playlistPlayHistoryPercent,
+} from "../../managers/PlaylistManager";
+import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { ChatsManager } from "../../managers/ChatsManager";
+import { translateTitle } from "../../app/utils";
+import { v4 as uuid } from "uuid";
 import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import { MaterialIcon } from "../icons";
 import {
@@ -14,6 +28,9 @@ import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
+import { playlistItemLabel } from "../playlistItemLabel";
+import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   CrossReferencesSection,
   StudyNotesSection,
@@ -23,7 +40,6 @@ import {
   AnnotationsSection,
   annotationLocationLabel,
 } from "./AnnotationsSection";
-import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -87,8 +103,10 @@ export function DiscoverPaneTitle(props: {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
   tabs: TabsManager;
+  chats: ChatsManager;
+  openChatPanel: () => void;
 }) {
-  const { playlists, annotations, tabs } = props;
+  const { playlists, annotations, tabs, chats, openChatPanel } = props;
   const { t } = useI18n();
   const view = playlists.actualView.value;
 
@@ -139,6 +157,50 @@ export function DiscoverPaneTitle(props: {
 
   if (view === "create_playlist") {
     const editing = playlists.editingPlaylist.value;
+    const providers = chats.providers.value.filter(
+      (p) => p.supportsToolCalling
+    );
+    // Opens the chat panel on a fresh local chat, seeded with an anonymous
+    // prompt message inviting the user to describe what they want changed,
+    // with the given AI provider (if any) already added as a participant.
+    // `PlaylistManager` already exposes the playlist-editing tools to every
+    // chat while a playlist is being edited, so replying here lets the AI
+    // add/update/remove items and edit the title/description.
+    const startAiChat = (providerId: string | null) => {
+      let chat = chats.chats.value.find(
+        (c) =>
+          c.participants.value.every((p) => !p.isRemote) &&
+          c.participants.value.some(
+            (p) => p.isAI && p.providerId === providerId
+          )
+      );
+      if (!chat) {
+        chat = chats.createLocalSession({
+          messages: [
+            {
+              id: uuid(),
+              authors: providerId ? [providerId] : [],
+              timeMs: Date.now(),
+              targets: [],
+              type: "text",
+              text: t("ai-playlist-chat-prompt", {
+                defaultValue: "What do you want to add/change?",
+              }),
+            },
+          ],
+          providerIds: [],
+        });
+      }
+      if (providerId) {
+        chat.addParticipant(providerId);
+      }
+      chats.selectChat(chat.id);
+      openChatPanel();
+    };
+    const aiButtonLabel = t("ai", { defaultValue: "AI" });
+    const aiButtonAriaLabel = t("ai-edit-playlist", {
+      defaultValue: "Edit playlist with AI",
+    });
     return (
       <div className="sb-discover-title-row">
         <button
@@ -156,17 +218,49 @@ export function DiscoverPaneTitle(props: {
           dir="auto"
           onInput={(event: Event) => {
             const value = (event.currentTarget as HTMLInputElement).value;
-            if (editing) {
-              playlists.editingPlaylist.value = {
-                ...editing,
-                title: value.trim() ? value : null,
-              };
-            }
+            playlists.updateEditingPlaylistMetadata({
+              title: value.trim() ? value : null,
+            });
           }}
           placeholder={t("playlist-title_placeholder", {
             defaultValue: "Playlist title",
           })}
         />
+        {providers.length > 1 ? (
+          // Multiple providers: let the user pick which one starts the chat.
+          <ContextMenuWithButton
+            buttonClassName="sb-discover-title-ai"
+            aria-label={aiButtonAriaLabel}
+            title={aiButtonLabel}
+            icon={
+              <>
+                <MaterialIcon>auto_awesome</MaterialIcon>
+              </>
+            }
+          >
+            {providers.map((provider) => (
+              <ContextMenuItem
+                key={provider.id}
+                onClick={() => startAiChat(provider.id)}
+              >
+                {translateTitle(t, provider.name)}
+              </ContextMenuItem>
+            ))}
+          </ContextMenuWithButton>
+        ) : (
+          // Zero or one provider: no choice to make, so skip the menu. A
+          // single provider is added automatically; with none, the chat opens
+          // with just the prompt message.
+          <button
+            type="button"
+            className="sb-discover-title-ai"
+            aria-label={aiButtonAriaLabel}
+            title={aiButtonLabel}
+            onClick={() => startAiChat(providers[0]?.id ?? null)}
+          >
+            <MaterialIcon>auto_awesome</MaterialIcon>
+          </button>
+        )}
       </div>
     );
   }
@@ -210,6 +304,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   // Reading `.value` during render subscribes the component to updates.
   const userPlaylists = playlists.userPlaylists.value;
+  const playlistHistory = playlists.userPlaylistHistory.value;
   const selectedTab =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
 
@@ -219,6 +314,13 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         userPlaylists={userPlaylists}
         playlists={playlists}
         modals={modals}
+        toast={props.toast}
+      />
+
+      <PlaylistHistorySection
+        history={playlistHistory}
+        playlists={playlists}
+        tabs={tabs}
         toast={props.toast}
       />
 
@@ -278,9 +380,17 @@ function PlaylistSection({
                     })}
                 </span>
                 {playlist.description ? (
-                  <span className="sb-discover-item-description">
+                  <ExpandableText
+                    className="sb-discover-item-description"
+                    readMoreLabel={t("read-more", {
+                      defaultValue: "Read more",
+                    })}
+                    readLessLabel={t("read-less", {
+                      defaultValue: "Read less",
+                    })}
+                  >
                     {playlist.description}
-                  </span>
+                  </ExpandableText>
                 ) : null}
               </div>
               <button
@@ -352,6 +462,207 @@ function PlaylistSection({
             </li>
           ))}
         </ul>
+      )}
+    </DiscoverSection>
+  );
+}
+
+/**
+ * Recently played playlists (including shared ones), one row per playlist.
+ * Play resumes or restarts, and a menu removes the playlist from history.
+ */
+function playlistTitle(
+  entry: PlaylistPlayHistory,
+  t: ReturnType<typeof useI18n>["t"]
+): string {
+  return (
+    entry.playlistTitle ??
+    t("untitled-playlist", { defaultValue: "Untitled playlist" })
+  );
+}
+
+function formatHistoryDayLabel(
+  dayKey: string,
+  language: string,
+  t: ReturnType<typeof useI18n>["t"],
+  nowMs: number = Date.now()
+): string {
+  const kind = playlistPlayHistoryDayKind(dayKey, nowMs);
+  if (kind === "today") {
+    return t("today", { defaultValue: "Today" });
+  }
+  if (kind === "yesterday") {
+    return t("yesterday", { defaultValue: "Yesterday" });
+  }
+  const [year, month, day] = dayKey.split("-").map(Number);
+  if (year == null || month == null || day == null) {
+    return dayKey;
+  }
+  return new Date(year, month - 1, day).toLocaleDateString(language, {
+    dateStyle: "medium",
+  });
+}
+
+const historySessionTimeFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function formatHistorySessionTime(
+  startedAtMs: number,
+  language: string
+): string {
+  let formatter = historySessionTimeFormatterCache.get(language);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(language, { timeStyle: "short" });
+    historySessionTimeFormatterCache.set(language, formatter);
+  }
+  return formatter.format(new Date(startedAtMs));
+}
+
+function playFromHistory(
+  playlists: PlaylistManager,
+  entry: PlaylistPlayHistory,
+  toast: SeedBibleState["app"]["toast"],
+  t: ReturnType<typeof useI18n>["t"]
+): void {
+  const action = isPlaylistPlayHistoryComplete(entry)
+    ? playlists.replayFromHistory(entry)
+    : playlists.continueFromHistory(entry);
+  void action.catch(() => {
+    toast(
+      t("playlist-history-open-failed", {
+        defaultValue: "Couldn't open that playlist. It may have been deleted.",
+      })
+    );
+  });
+}
+
+function PlaylistHistorySection({
+  history,
+  playlists,
+  tabs,
+  toast,
+}: {
+  history: PlaylistPlayHistory[];
+  playlists: PlaylistManager;
+  tabs: TabsManager;
+  toast: SeedBibleState["app"]["toast"];
+}) {
+  const { t, language } = useI18n();
+  const dayGroups = groupPlaylistPlayHistoryByDay(history);
+
+  const selectedTab =
+    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
+  const books = selectedTab?.readingState.translationBooks.value?.books ?? [];
+  const resolveBookName = (bookId: string): string => {
+    const book = books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
+
+  return (
+    <DiscoverSection
+      title={t("playlist-history", { defaultValue: "Playlist history" })}
+    >
+      {history.length === 0 ? (
+        <DiscoverEmpty
+          text={t("discover-playlist-history-empty", {
+            defaultValue:
+              "Play a saved playlist while signed in and it will show up here.",
+          })}
+        />
+      ) : (
+        dayGroups.map((group) => (
+          <div key={group.dayKey} className="sb-playlist-history-day-group">
+            <h4 className="sb-playlist-history-day">
+              {formatHistoryDayLabel(group.dayKey, language, t)}
+            </h4>
+            <ul className="sb-discover-list">
+              {group.entries.map((entry) => {
+                const percent = Math.round(
+                  playlistPlayHistoryPercent(entry) * 100
+                );
+                const complete = isPlaylistPlayHistoryComplete(entry);
+                const lastLabel = entry.lastItem
+                  ? playlistItemLabel(entry.lastItem, t, resolveBookName)
+                  : null;
+                const sessionTime = formatHistorySessionTime(
+                  entry.startedAtMs,
+                  language
+                );
+                const summary = lastLabel
+                  ? t("playlist-history-session-summary", {
+                      defaultValue:
+                        "{{time}} - {{percent}}% complete - {{item}}",
+                      time: sessionTime,
+                      percent,
+                      item: lastLabel,
+                    })
+                  : t("playlist-history-session-summary-no-item", {
+                      defaultValue: "{{time}} - {{percent}}% complete",
+                      time: sessionTime,
+                      percent,
+                    });
+
+                return (
+                  <li
+                    key={entry.id}
+                    className="sb-discover-item sb-discover-item--row sb-playlist-item sb-playlist-history-item"
+                    dir="auto"
+                    onClick={() => playFromHistory(playlists, entry, toast, t)}
+                  >
+                    <div className="sb-discover-item-main">
+                      <span className="sb-discover-item-title">
+                        {playlistTitle(entry, t)}
+                      </span>
+                      <span className="sb-discover-item-description">
+                        {summary}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="sb-discover-item-play"
+                      aria-label={
+                        complete
+                          ? t("playlist-history-replay", {
+                              defaultValue: "Replay",
+                            })
+                          : t("playlist-history-continue", {
+                              defaultValue: "Continue",
+                            })
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playFromHistory(playlists, entry, toast, t);
+                      }}
+                    >
+                      <MaterialIcon>play_arrow</MaterialIcon>
+                    </button>
+                    <ContextMenuWithButton
+                      buttonClassName="sb-discover-item-menu"
+                      aria-label={t("playlist-history-options", {
+                        defaultValue: "Playlist history options",
+                      })}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ContextMenuItem
+                        className="sb-context-menu-item--danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void playlists.removePlayHistory(entry);
+                        }}
+                      >
+                        <MaterialIcon className="sb-context-menu-item-icon">
+                          delete
+                        </MaterialIcon>
+                        {t("playlist-history-remove", {
+                          defaultValue: "Remove from history",
+                        })}
+                      </ContextMenuItem>
+                    </ContextMenuWithButton>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))
       )}
     </DiscoverSection>
   );

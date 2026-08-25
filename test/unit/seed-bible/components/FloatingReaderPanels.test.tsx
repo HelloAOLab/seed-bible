@@ -7,26 +7,21 @@ import {
   FloatingReaderPanels,
 } from "@packages/seed-bible/seed-bible/components/FloatingReaderPanels/FloatingReaderPanels";
 import type {
+  AIChatParticipant,
+  ChatProvider,
   ChatSession,
+  IdentifiedLocalChatContext,
   TextChatMessage,
   UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 vi.mock(
@@ -239,6 +234,7 @@ function createMockChatSession(
     addParticipant: vi.fn(),
     removeParticipant: vi.fn(),
     getMessageAuthors: vi.fn().mockReturnValue([]),
+    context: signal({}),
     ...overrides,
   };
 }
@@ -327,6 +323,56 @@ describe("ChatList", () => {
     expect(
       container.querySelectorAll(".sb-floating-chat-list-item")
     ).toHaveLength(2);
+  });
+
+  it("shows a generic account icon for your own avatar when you are the only person in the chat", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const chat = createMockChatSession({
+      participants: signal([self]),
+      totalParticipants: signal([self]),
+    });
+    const state = createMockChatListState();
+
+    act(() => {
+      render(<ChatList chats={[chat]} state={state} />, container);
+    });
+
+    const cluster = container.querySelector(".sb-chat-list-avatar-cluster");
+    expect(cluster?.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(cluster?.textContent).toContain("account_circle");
+    expect(cluster?.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for your own avatar when the other person is inactive", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const other = createMockParticipant({
+      id: "other",
+      name: "Alice",
+      isSelf: false,
+      isRemote: true,
+      isActive: false,
+    });
+    const chat = createMockChatSession({
+      participants: signal([self]),
+      totalParticipants: signal([self, other]),
+    });
+    const state = createMockChatListState();
+
+    act(() => {
+      render(<ChatList chats={[chat]} state={state} />, container);
+    });
+
+    const cluster = container.querySelector(".sb-chat-list-avatar-cluster");
+    expect(cluster?.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(cluster?.querySelector(".sb-tab-user-icon-generic")).toBeNull();
   });
 
   it("shows the chat title derived from the participant's name", () => {
@@ -505,6 +551,8 @@ function createMockFloatingChatPanelState(
     isChatPanelOpen?: boolean;
     selectedChat?: ChatSession | null;
     chats?: ChatSession[];
+    activeContexts?: IdentifiedLocalChatContext[];
+    providers?: ChatProvider[];
   } = {}
 ): MockFloatingChatPanelResult {
   const closeChatPanel = vi.fn();
@@ -518,10 +566,40 @@ function createMockFloatingChatPanelState(
       selectedChat: signal(opts.selectedChat ?? null),
       chats: signal(opts.chats ?? []),
       selectChat,
-      providers: signal([]),
+      providers: signal(opts.providers ?? []),
+      activeContexts: signal(opts.activeContexts ?? []),
     },
   } as unknown as SeedBibleState;
   return { state, closeChatPanel, selectChat };
+}
+
+function createMockAIParticipant(
+  overrides: Partial<AIChatParticipant> = {}
+): AIChatParticipant {
+  return {
+    id: "ai-participant-1",
+    name: "AI",
+    isSelf: false,
+    isAI: true,
+    isRemote: false,
+    isActive: true,
+    joinTimeMs: 0,
+    userId: null,
+    connectionId: null,
+    ownerParticipantId: "participant-1",
+    providerId: "provider-1",
+    ...overrides,
+  };
+}
+
+function makeTool(name: string): AIProviderFunctionTool {
+  return {
+    name,
+    type: "function",
+    description: `${name} tool`,
+    parameters: {} as AIProviderFunctionTool["parameters"],
+    function: async () => "ok",
+  };
 }
 
 describe("FloatingChatPanel", () => {
@@ -692,6 +770,154 @@ describe("FloatingChatPanel", () => {
 
     expect(
       container.querySelector(".sb-floating-chat-header-members-button")
+    ).not.toBeNull();
+  });
+
+  it("shows no AI context button when there are no active contexts", () => {
+    const { state } = createMockFloatingChatPanelState({ activeContexts: [] });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-floating-chat-header-ai-context-button")
+    ).toBeNull();
+  });
+
+  it("shows the AI context button with no count badge for a single active context", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const button = container.querySelector(
+      ".sb-floating-chat-header-ai-context-button"
+    );
+    expect(button).not.toBeNull();
+    expect(button?.textContent).not.toMatch(/\d/);
+  });
+
+  it("shows a count badge on the AI context button when more than one context is active", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+        {
+          id: "other",
+          label: "Other Context",
+          tools: [],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const button = container.querySelector(
+      ".sb-floating-chat-header-ai-context-button"
+    );
+    expect(button?.textContent).toContain("2");
+  });
+
+  it("lists each active context's label and tool count in the AI context menu", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist"), makeTool("insertPlaylistItem")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const item = container.querySelector(".sb-floating-chat-ai-context-item");
+    expect(item?.textContent).toContain("Playlist Editor");
+    expect(item?.textContent).toContain("2 tools");
+  });
+
+  it("hides the AI context button when the selected chat's only AI participant doesn't support tool calling", () => {
+    const chat = createMockChatSession({
+      participants: signal([
+        createMockAIParticipant({ providerId: "provider-1" }),
+      ]),
+    });
+    const { state } = createMockFloatingChatPanelState({
+      selectedChat: chat,
+      providers: [
+        {
+          id: "provider-1",
+          name: "No Tools",
+          supportsSharedChats: false,
+          supportsToolCalling: false,
+        } as ChatProvider,
+      ],
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-floating-chat-header-ai-context-button")
+    ).toBeNull();
+  });
+
+  it("shows the AI context button when the selected chat has a tool-calling AI participant", () => {
+    const chat = createMockChatSession({
+      participants: signal([
+        createMockAIParticipant({ providerId: "provider-1" }),
+      ]),
+    });
+    const { state } = createMockFloatingChatPanelState({
+      selectedChat: chat,
+      providers: [
+        {
+          id: "provider-1",
+          name: "Tool User",
+          supportsSharedChats: false,
+          supportsToolCalling: true,
+        } as ChatProvider,
+      ],
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-floating-chat-header-ai-context-button")
     ).not.toBeNull();
   });
 });

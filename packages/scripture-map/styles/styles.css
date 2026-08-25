@@ -143,8 +143,8 @@
 }
 
 /* The reading-history footer (legend + year selector) moved into the shared
-   ReadingHistoryTimeline component (Bible Visualization Utils). Its styles now
-   live in readingHistoryTimelineStyles.css. */
+   ReadingHistoryTimeline component (Seed Bible core). Its styles now live in
+   ReadingHistoryTimeline.css. */
 
 .project-state-setter {
   width: 100%;
@@ -273,8 +273,8 @@
 }
 
 /* Scripture-Map-specific placement for the shared ReadingHistoryTimeline.
-   The timeline's intrinsic appearance now lives in Bible Visualization Utils
-   (readingHistoryTimelineStyles.css), injected by the shared component. */
+   The timeline's intrinsic appearance now lives in Seed Bible core
+   (ReadingHistoryTimeline.css), injected by the shared component. */
 .reading-history-timeline-container {
   grid-column: 2 / 5;
   grid-row: 4 / 5;
@@ -794,44 +794,11 @@
   border: solid calc(3px * var(--scale-factor));
 }
 
-.tooltip {
-  width: auto;
-  /* max-width: 140px; */
-  background-color: var(--sb-reader-font-color);
-  color: var(--sb-reader-background);
-  text-align: center;
-  z-index: 100;
-  border-radius: 0.75rem;
-  position: fixed;
-  padding: 0.75rem;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  transition:
-    color 0.3s ease,
-    background-color 0.3s ease;
-  box-sizing: border-box;
-  scrollbar-width: none;
-}
-
-.tooltip *:not(.material-symbols-outlined) {
+.sb-tooltip *:not(.material-symbols-outlined) {
   font-family: system-ui, sans-serif;
 }
 
-.tooltip.tooltip-up {
-  transform: translate(-50%, calc((100% + 8px) * (-1)));
-}
-
-.tooltip.tooltip-down {
-  transform: translate(-50%, 8px);
-}
-
-.tooltip > span {
+.sb-tooltip > span {
   width: 100%;
   display: flex;
   justify-content: flex-start;
@@ -842,7 +809,7 @@
   text-overflow: ellipsis;
 }
 
-.tooltip .user-presence-tooltip-content {
+.sb-tooltip .user-presence-tooltip-content {
   width: 100%;
   display: flex;
   justify-content: center;
@@ -850,12 +817,12 @@
   /* overflow: hidden; */
 }
 
-.tooltip .user-presence-tooltip-content > div {
+.sb-tooltip .user-presence-tooltip-content > div {
   display: flex;
   padding-left: 0.75rem;
 }
 
-.tooltip .user-presence-tooltip-content > div > div {
+.sb-tooltip .user-presence-tooltip-content > div > div {
   height: 1.5rem;
   width: 1.5rem;
   border-radius: 0.75rem;
@@ -863,23 +830,23 @@
   border: solid 3px var(--sb-reader-font-color);
 }
 
-.tooltip .user-presence-tooltip-content > span {
+.sb-tooltip .user-presence-tooltip-content > span {
   /* padding-bottom: 4px; */
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.tooltip .tooltip-reading-history-content > span:nth-of-type(1) {
+.sb-tooltip .tooltip-reading-history-content > span:nth-of-type(1) {
   border-radius: 0.625rem;
   width: 0.875rem;
   height: 0.875rem;
 }
 
-.tooltip .tooltip-reading-history-content > span:nth-of-type(2) {
+.sb-tooltip .tooltip-reading-history-content > span:nth-of-type(2) {
   font-size: 0.875rem;
 }
 
-.tooltip .tooltip-reading-history-content > span:nth-of-type(3) {
+.sb-tooltip .tooltip-reading-history-content > span:nth-of-type(3) {
   font-size: 0.6875rem;
   color: var(--gray2-color);
 }

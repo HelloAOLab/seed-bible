@@ -1174,9 +1174,43 @@ export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
   private _requestSubscriptions = new Map<string, PendingRequestSubscription>();
+  /**
+   * Successfully resolved responses, keyed the same as `_responseCache`. Kept
+   * separate from that cache of promises because a promise can't be read back
+   * out synchronously — this is what `snapshotResponseCache` hands the SSR
+   * render for embedding in the page.
+   */
+  private _resolvedResponses = new Map<string, unknown>();
 
   constructor(endpoint: string) {
     this.endpoint = endpoint;
+  }
+
+  /**
+   * Snapshot of every response fetched (and resolved) so far, keyed by full
+   * request URL. The SSR render embeds this in the page so the client's own
+   * `FreeUseBibleAPI` — a separate instance with an empty cache — can seed
+   * itself via `seedResponseCache` instead of re-fetching data the response
+   * already contains.
+   */
+  snapshotResponseCache(): Record<string, unknown> {
+    return Object.fromEntries(this._resolvedResponses);
+  }
+
+  /**
+   * Pre-populates the response cache from a snapshot produced by
+   * `snapshotResponseCache`, so a later request for one of these URLs
+   * resolves immediately instead of hitting the network. Never overwrites a
+   * URL this instance already has an answer (or in-flight request) for.
+   */
+  seedResponseCache(responses: Record<string, unknown>): void {
+    for (const [url, value] of Object.entries(responses)) {
+      if (this._responseCache.has(url)) {
+        continue;
+      }
+      this._responseCache.set(url, Promise.resolve(value));
+      this._resolvedResponses.set(url, value);
+    }
   }
 
   /**
@@ -1342,6 +1376,7 @@ export class FreeUseBibleAPI {
     const url = this._buildUrl(path, endpoint);
     if (options?.refresh) {
       this._responseCache.delete(url);
+      this._resolvedResponses.delete(url);
     }
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
@@ -1363,7 +1398,9 @@ export class FreeUseBibleAPI {
             `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
           );
         }
-        return await response.json();
+        const json = await response.json();
+        this._resolvedResponses.set(url, json);
+        return json;
       })
       .catch((error) => {
         this._responseCache.delete(url);

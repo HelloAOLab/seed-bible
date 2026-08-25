@@ -13,8 +13,8 @@ import { TimelineRangeMethod } from "../../models/readingHistory";
 import { useTimeContext } from "../Time/TimeContext";
 import {
   getReadingHistoryEvents,
-  flat,
   calculateReadingHistorySummary,
+  loadDailyReadingHistory,
 } from "../../../seed-bible/seed-bible/managers/ReadingHistoryManager";
 import type { ReadingHistorySummary } from "../../../seed-bible/seed-bible/managers/ReadingHistoryManager";
 import { useScriptureMapContext } from "../ScriptureMap/ScriptureMapContext";
@@ -375,105 +375,57 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
 
     setSelectedUsersCount(selectedUsers.length);
 
-    let summary;
-    const rangedEventsByBook: RangedReadingEventsByBook = new Map();
-    const eventsByDay: ReadingEventsByDay = new Map();
-    const dailySummaries: DailyReadingHistorySummaries = new Map();
-
     if (selectedUsers.length === 0) {
-      summary = calculateReadingHistorySummary([]);
-      setYearlyReadingHistorySummary(summary);
-      setRangedReadingEventsByBook(rangedEventsByBook);
-      setReadingEventsByDay(eventsByDay);
-      setDailyReadingHistorySummaries(dailySummaries);
+      setYearlyReadingHistorySummary(calculateReadingHistorySummary([]));
+      setRangedReadingEventsByBook(new Map());
+      setReadingEventsByDay(new Map());
+      setDailyReadingHistorySummaries(new Map());
       return;
     }
 
     const startDateStartOfWeekSeconds = startDateStartOfWeek.getTime() / 1000;
     const endSeconds = timelineRange.endDate.getTime() / 1000;
 
-    const allEventPromises = selectedUsers.map((recordName) =>
-      getReadingHistoryEvents(
-        seedBibleState.os,
-        recordName,
-        startDateStartOfWeekSeconds,
-        endSeconds
-      )
-    );
-
-    const dayKeys = Array.from(dayRangesMap.keys());
     const {
       start: rangeStart = startDateStartOfWeekSeconds,
       end: rangeEnd = endSeconds,
     } = readingHistoryRangeSeconds ?? {};
 
-    const yieldToMain = () =>
-      new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-    Promise.all(allEventPromises)
-      .then(async (allEvents) => {
-        if (!isMounted) return;
-        const flattenedEvents = Array.from(flat(allEvents));
-
-        for (const event of flattenedEvents) {
-          const { start, end, /*chapter,*/ bookId } = event;
-          const duration = end - start;
-          if (duration < SEC_PER_MINUTE) continue;
-          if (start >= rangeStart && start <= rangeEnd) {
-            // if (bookId === "PSA") {
-            //   const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
-            //     scriptureService.convertCompletePsalmsToDivided({
-            //       chapter,
-            //     });
-            //   event = {
-            //     ...event,
-            //     bookId: dividedPsalmId,
-            //     chapter: dividedPsalmChapter,
-            //   };
-            //   bookId = dividedPsalmId;
-            // }
-            if (!rangedEventsByBook.has(bookId)) {
-              rangedEventsByBook.set(bookId, []);
-            }
-            rangedEventsByBook.get(bookId)?.push(event);
-          }
-
-          const dayIndex = Math.floor(
-            (start - startDateStartOfWeekSeconds) / SEC_PER_DAY
-          );
-
-          if (dayIndex >= 0 && dayIndex < dayKeys.length) {
-            const key = dayKeys[dayIndex];
-
-            if (key) {
-              if (!eventsByDay.has(key)) {
-                eventsByDay.set(key, []);
-              }
-              eventsByDay.get(key)?.push(event);
-            }
-          }
-        }
-
-        let iterations = 0;
-        for (const [dayKey, events] of eventsByDay) {
-          const daySummary = calculateReadingHistorySummary(events);
-          dailySummaries.set(dayKey, daySummary);
-          iterations++;
-          if (iterations % 30 === 0) {
-            await yieldToMain();
-          }
-        }
-
-        await yieldToMain();
-
-        summary = calculateReadingHistorySummary(flattenedEvents);
-
+    loadDailyReadingHistory({
+      fetchEvents: (recordName, startSeconds, endTimeSeconds) =>
+        getReadingHistoryEvents(
+          seedBibleState.os,
+          recordName,
+          startSeconds,
+          endTimeSeconds
+        ),
+      readerIds: selectedUsers,
+      dayKeys: Array.from(dayRangesMap.keys()),
+      startSeconds: startDateStartOfWeekSeconds,
+      endSeconds,
+      minDurationSeconds: SEC_PER_MINUTE,
+    })
+      .then(({ events, eventsByDay, summariesByDay, total }) => {
         if (!isMounted) return;
 
-        setYearlyReadingHistorySummary(summary);
+        // Books read inside the selected sub-range, which is narrower than the
+        // timeline window and so can't come out of the day bucketing.
+        const rangedEventsByBook: RangedReadingEventsByBook = new Map();
+        for (const event of events) {
+          if (event.end - event.start < SEC_PER_MINUTE) continue;
+          if (event.start < rangeStart || event.start > rangeEnd) continue;
+          let forBook = rangedEventsByBook.get(event.bookId);
+          if (!forBook) {
+            forBook = [];
+            rangedEventsByBook.set(event.bookId, forBook);
+          }
+          forBook.push(event);
+        }
+
+        setYearlyReadingHistorySummary(total);
         setRangedReadingEventsByBook(rangedEventsByBook);
         setReadingEventsByDay(eventsByDay);
-        setDailyReadingHistorySummaries(dailySummaries);
+        setDailyReadingHistorySummaries(summariesByDay);
       })
       .catch((error) => {
         console.warn(

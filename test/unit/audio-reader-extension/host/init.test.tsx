@@ -22,6 +22,7 @@ function createContext(overrides: {
       playing: signal(overrides.playing ?? null),
       isMobile: signal(overrides.isMobile),
     } as any,
+    annotations: {} as any,
     features: {} as any,
     surface: overrides.surface,
   };

@@ -112,23 +112,47 @@ describe("AnnotationConflictModal", () => {
     return { sync, resolveConflict };
   }
 
-  function buttonLabels(): string[] {
+  function versionCards(): HTMLElement[] {
     return Array.from(
-      container.querySelectorAll(".sb-annotation-conflict-actions button")
-    ).map((el) => el.textContent ?? "");
+      container.querySelectorAll<HTMLElement>(".sb-annotation-conflict-version")
+    );
   }
 
-  function clickButton(label: string) {
-    const button = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(
-        ".sb-annotation-conflict-actions button"
-      )
-    ).find((el) => el.textContent === label);
-    if (!button) {
-      throw new Error(`No button labelled "${label}"`);
+  function versionLabels(): string[] {
+    return versionCards().map(
+      (el) =>
+        el.querySelector(".sb-annotation-conflict-version-label")
+          ?.textContent ?? ""
+    );
+  }
+
+  function clickVersion(label: string) {
+    const card = versionCards().find((el) =>
+      el
+        .querySelector(".sb-annotation-conflict-version-label")
+        ?.textContent?.startsWith(label)
+    );
+    if (!card) {
+      throw new Error(`No version card labelled "${label}"`);
     }
     act(() => {
-      button.click();
+      card.click();
+    });
+  }
+
+  function confirmButton(): HTMLButtonElement {
+    const button = container.querySelector<HTMLButtonElement>(
+      ".sb-annotation-conflict-actions button"
+    );
+    if (!button) {
+      throw new Error("No confirm button rendered");
+    }
+    return button;
+  }
+
+  function clickConfirm() {
+    act(() => {
+      confirmButton().click();
     });
   }
 
@@ -142,44 +166,70 @@ describe("AnnotationConflictModal", () => {
     expect(bodies).toEqual(["mine", "theirs"]);
   });
 
-  it("offers all three choices when both versions exist", () => {
+  it("shows a version for each side, selectable rather than a fixed choice", () => {
     renderConflict(makeConflict());
 
-    expect(buttonLabels()).toEqual([
-      "Keep mine",
-      "Keep the other version",
-      "Keep both",
-    ]);
+    const labels = versionLabels();
+    expect(labels[0]).toMatch(/^Your version/);
+    expect(labels[1]).toMatch(/^The other version/);
   });
 
-  it("drops 'keep both' when the note was deleted elsewhere", () => {
+  it("disables confirm until a version is checked, and clicking doesn't resolve anything by itself", () => {
+    const { resolveConflict } = renderConflict(makeConflict());
+
+    expect(confirmButton().disabled).toBe(true);
+
+    clickVersion("Your version");
+
+    expect(confirmButton().disabled).toBe(false);
+    expect(resolveConflict).not.toHaveBeenCalled();
+  });
+
+  it("lets both versions be checked at once when both exist, and confirms as 'keep both'", () => {
+    const { resolveConflict } = renderConflict(makeConflict());
+
+    clickVersion("Your version");
+    clickVersion("The other version");
+    clickConfirm();
+
+    expect(resolveConflict).toHaveBeenCalledWith("user-1/ann-1", "keep_both");
+  });
+
+  it("checking the other version unchecks the first when 'keep both' isn't meaningful", () => {
     renderConflict(makeConflict({ kind: "deleted_elsewhere", server: null }));
 
-    // Theirs is gone, so there is no second version to keep.
-    expect(buttonLabels()).toEqual(["Keep mine", "Keep the other version"]);
-  });
+    clickVersion("Your version");
+    clickVersion("The other version");
 
-  it("offers a delete label when the local change was a deletion", () => {
-    renderConflict(
-      makeConflict({
-        kind: "deleted_locally_edited_elsewhere",
-        local: null,
-      })
-    );
-
-    expect(buttonLabels()).toEqual(["Delete it", "Keep the other version"]);
+    const cards = versionCards();
+    expect(cards[0]?.getAttribute("aria-checked")).toBe("false");
+    expect(cards[1]?.getAttribute("aria-checked")).toBe("true");
   });
 
   it.each([
-    ["Keep mine", "keep_mine"],
-    ["Keep the other version", "keep_theirs"],
-    ["Keep both", "keep_both"],
-  ])("passes %s through as %s", (label, resolution) => {
+    [["Your version"], "keep_mine"],
+    [["The other version"], "keep_theirs"],
+    [["Your version", "The other version"], "keep_both"],
+  ])("checking %s confirms as %s", (labels, resolution) => {
     const { resolveConflict } = renderConflict(makeConflict());
 
-    clickButton(label);
+    for (const label of labels) {
+      clickVersion(label);
+    }
+    clickConfirm();
 
     expect(resolveConflict).toHaveBeenCalledWith("user-1/ann-1", resolution);
+  });
+
+  it("confirms a local deletion by checking your version when the local change was a deletion", () => {
+    const { resolveConflict } = renderConflict(
+      makeConflict({ kind: "deleted_locally_edited_elsewhere", local: null })
+    );
+
+    clickVersion("Your version");
+    clickConfirm();
+
+    expect(resolveConflict).toHaveBeenCalledWith("user-1/ann-1", "keep_mine");
   });
 
   it("explains what happened for each kind of clash", () => {
@@ -257,7 +307,8 @@ describe("AnnotationConflictModal", () => {
       );
     });
 
-    clickButton("Keep mine");
+    clickVersion("Your version");
+    clickConfirm();
     await vi.waitFor(() =>
       expect(toast).toHaveBeenCalledWith(
         "Couldn't apply that choice. It'll be tried again."

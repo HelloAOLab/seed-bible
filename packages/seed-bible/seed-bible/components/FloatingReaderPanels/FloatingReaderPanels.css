@@ -386,8 +386,32 @@
   font-size: 0.875rem;
 }
 
+.sb-floating-chat-header-ai-context-button-icon {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
 .sb-floating-chat-members-menu {
   min-width: 13.75rem;
+}
+
+.sb-floating-chat-ai-context-menu {
+  min-width: 13.75rem;
+}
+
+.sb-floating-chat-ai-context-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  color: var(--sb-menu-font-color);
+}
+
+.sb-floating-chat-ai-context-item-tools {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-menu-font-color), transparent 40%);
 }
 
 .sb-floating-chat-members-item {
@@ -536,6 +560,12 @@
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
   font-size: 1.25rem;
+}
+
+.sb-chat-list-avatar-cluster-1
+  .sb-tab-user-icon-generic
+  .material-symbols-outlined {
+  font-size: 2.25rem;
 }
 
 /* Two avatars: side by side, first overlaps second */

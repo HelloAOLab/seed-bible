@@ -1,14 +1,17 @@
 import { signal } from "@preact/signals";
 import {
   createChatsManager,
+  chatHasOtherPeople,
   resolveMessageTargets,
   type ChatMessage,
   type ChatMessageOptions,
   type ChatParticipant,
   type UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { I18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { i18n } from "i18next";
 import {
   getUserAnimalVisual,
@@ -20,6 +23,44 @@ import {
 // existing behavior of these tests intact.
 const mockI18n = { t: (key: string) => key } as unknown as i18n;
 const mockI18nManager = { i18n: mockI18n } as unknown as I18nManager;
+
+// Spanish book names for the localized-parsing tests. "Esdras" and "Génesis"
+// are the discriminators: neither resolves through the English-only fallback,
+// so a reference only becomes a link when these books reach the parser.
+const SPA_BOOKS = [
+  {
+    id: "GEN",
+    name: "Génesis",
+    commonName: "Génesis",
+    title: null,
+    order: 1,
+    numberOfChapters: 50,
+    firstChapterNumber: 1,
+    totalNumberOfVerses: 1533,
+  },
+  {
+    id: "EZR",
+    name: "Esdras",
+    commonName: "Esdras",
+    title: null,
+    order: 15,
+    numberOfChapters: 10,
+    firstChapterNumber: 1,
+    totalNumberOfVerses: 280,
+  },
+] as TranslationBook[];
+
+// Builds a minimal AIProviderFunctionTool for asserting that custom context
+// flows through to a chat provider. The `function` is never invoked here.
+function makeTool(name: string): AIProviderFunctionTool {
+  return {
+    name,
+    type: "function",
+    description: `${name} tool`,
+    parameters: {} as AIProviderFunctionTool["parameters"],
+    function: async () => "ok",
+  };
+}
 
 // ChatsManager generates ids via `v4` from the "uuid" package, so mock the
 // module to produce deterministic, sequential ids.
@@ -143,6 +184,7 @@ function createSharedSessionMock(options?: {
     isSelf: boolean;
   }>;
   currentUserId?: string | null;
+  translationBooks?: TranslationBook[];
 }) {
   const sharedChats = new MockSharedArray<unknown>(options?.initialChats ?? []);
   const sharedChatProviders = new MockSharedMap<unknown>();
@@ -197,6 +239,10 @@ function createSharedSessionMock(options?: {
       : null
   );
 
+  const translationBooks = signal<{ books: TranslationBook[] } | null>(
+    options?.translationBooks ? { books: options.translationBooks } : null
+  );
+
   const session = {
     id: "session-1",
     document: {
@@ -218,6 +264,10 @@ function createSharedSessionMock(options?: {
     connectedUsers,
     allUsers,
     currentUser,
+    // Shared chat parses verse refs against the session's books when available.
+    readingState: {
+      translationBooks,
+    },
   } as unknown as BibleReadingSession;
 
   return {
@@ -229,8 +279,56 @@ function createSharedSessionMock(options?: {
     connectedUsers,
     allUsers,
     currentUser,
+    translationBooks,
   };
 }
+
+function chatWithParticipants(participants: ChatParticipant[]) {
+  return { totalParticipants: { value: participants } };
+}
+
+describe("chatHasOtherPeople", () => {
+  it("is false when the only participants are the current user and AI", () => {
+    expect(chatHasOtherPeople(chatWithParticipants([]))).toBe(false);
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(false);
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: true },
+        ] as ChatParticipant[])
+      )
+    ).toBe(false);
+  });
+
+  it("is true when another person is in the chat", () => {
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+
+  it("is true when the other person is inactive", () => {
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false, isActive: true },
+          { isSelf: false, isAI: false, isActive: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+});
 
 describe("createChatsManager", () => {
   beforeEach(() => {
@@ -1917,6 +2015,319 @@ describe("createChatsManager", () => {
     expect(providerResponse).toHaveBeenCalledTimes(1);
   });
 
+  it("setContext() on the manager passes custom instructions and tools to the provider", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const tool = makeTool("addItem");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    chats.setContext({ instructions: "Be concise.", tools: [tool] });
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    // Both the manager and each session expose the same merged context.
+    expect(chats.context.value).toEqual({
+      instructions: "Be concise.",
+      tools: [tool],
+    });
+    expect(session.context.value).toEqual(chats.context.value);
+
+    await session.sendMessage({ type: "text", text: "Hello @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledTimes(1);
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: "Be concise.",
+        tools: [tool],
+      })
+    );
+  });
+
+  it("setContext() merges fields and applies on the next message", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const tool = makeTool("addItem");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    chats.setContext({ tools: [tool] });
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    // Merge in instructions; the previously-set tools must be preserved.
+    chats.setContext({ instructions: "Updated instructions." });
+    expect(chats.context.value).toEqual({
+      instructions: "Updated instructions.",
+      tools: [tool],
+    });
+
+    await session.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: "Updated instructions.",
+        tools: [tool],
+      })
+    );
+  });
+
+  it("passes undefined context fields when no context is set", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    expect(chats.context.value).toEqual({});
+
+    await session.sendMessage({ type: "text", text: "Hello @provider-1" });
+
+    const call = providerResponse.mock.calls[0]![0];
+    expect(call.instructions).toBeUndefined();
+    expect(call.tools).toBeUndefined();
+  });
+
+  it("addContext() merges additional instructions and tools into the default context", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const baseTool = makeTool("baseTool");
+    const playlistTool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    chats.setContext({ instructions: "Be concise.", tools: [baseTool] });
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Current playlist: {}",
+      tools: [playlistTool],
+    });
+
+    await session.sendMessage({ type: "text", text: "Edit it @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: "Be concise.\n\nCurrent playlist: {}",
+        tools: [baseTool, playlistTool],
+      })
+    );
+    // The merged context reflects both the default and the added context.
+    expect(chats.context.value).toEqual({
+      instructions: "Be concise.\n\nCurrent playlist: {}",
+      tools: [baseTool, playlistTool],
+    });
+  });
+
+  it("addContext() replaces a context with the same id", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "First playlist.",
+    });
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Second playlist.",
+    });
+
+    await session.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ instructions: "Second playlist." })
+    );
+  });
+
+  it("removeContext() drops an added context from subsequent messages", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const playlistTool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Current playlist: {}",
+      tools: [playlistTool],
+    });
+    chats.removeContext("playlist");
+
+    await session.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    const call = providerResponse.mock.calls[0]![0];
+    expect(call.instructions).toBeUndefined();
+    expect(call.tools).toBeUndefined();
+  });
+
+  it("makes a manager context available to providers in every chat", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const tool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+
+    const sessionA = chats.createLocalSession();
+    const sessionB = chats.createLocalSession();
+    sessionA.addParticipant("provider-1");
+    sessionB.addParticipant("provider-1");
+
+    // A context added to the manager is visible to both sessions.
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Shared",
+      tools: [tool],
+    });
+    expect(sessionA.context.value).toEqual(sessionB.context.value);
+    expect(sessionA.context.value).toEqual({
+      instructions: "Shared",
+      tools: [tool],
+    });
+
+    await sessionA.sendMessage({ type: "text", text: "Hi @provider-1" });
+    await sessionB.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    expect(providerResponse).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ instructions: "Shared", tools: [tool] })
+    );
+    expect(providerResponse).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ instructions: "Shared", tools: [tool] })
+    );
+  });
+
+  it("activeContexts reflects added/replaced/removed contexts with their id, label, and tools intact", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const playlistTool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    expect(chats.activeContexts.value).toEqual([]);
+
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Current playlist: {}",
+      tools: [playlistTool],
+    });
+
+    // The raw context is exposed as-is, unlike the merged `context` signal.
+    expect(chats.activeContexts.value).toEqual([
+      {
+        id: "playlist",
+        label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+        instructions: "Current playlist: {}",
+        tools: [playlistTool],
+      },
+    ]);
+
+    // Adding a context with the same id replaces the existing entry.
+    chats.addContext({
+      id: "playlist",
+      label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+      instructions: "Updated playlist: {}",
+      tools: [playlistTool],
+    });
+    expect(chats.activeContexts.value).toHaveLength(1);
+    expect(chats.activeContexts.value[0]?.instructions).toEqual(
+      "Updated playlist: {}"
+    );
+
+    chats.removeContext("playlist");
+    expect(chats.activeContexts.value).toEqual([]);
+  });
+
   it("sendMessage() defaults to first local AI target when no targets are resolved", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";
@@ -2098,6 +2509,9 @@ describe("createChatsManager", () => {
       text: "Provider reply",
     });
     await sendPromise;
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(session.typingParticipants.value).not.toContainEqual(
       expect.objectContaining({
@@ -2157,10 +2571,107 @@ describe("createChatsManager", () => {
     });
     await sendPromise;
     await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(chat.typingParticipants.value).not.toContainEqual(
       expect.objectContaining({
         id: "conn-user-a_provider-1",
+      })
+    );
+  });
+
+  it("sendMessage() surfaces an error message when the local provider's generateResponse rejects", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi
+        .fn()
+        .mockRejectedValue(new Error("Tool not found: doStuff")),
+    });
+    session.addParticipant("provider-1");
+
+    await session.sendMessage({
+      type: "text",
+      text: "Hello there",
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(session.typingParticipants.value).not.toContainEqual(
+      expect.objectContaining({
+        id: "provider-1",
+      })
+    );
+    expect(session.messages.value).toContainEqual(
+      expect.objectContaining({
+        authors: ["provider-1"],
+        type: "text",
+        text: "chat-ai-error",
+      })
+    );
+  });
+
+  it("createSharedSession() surfaces an error message when the provider's generateResponse rejects", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi
+        .fn()
+        .mockRejectedValue(new Error("Tool not found: doStuff")),
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+    chat.addParticipant("conn-user-a_provider-1");
+    await Promise.resolve();
+
+    await chat.sendMessage({
+      type: "text",
+      text: "Hello @conn-user-a_provider-1",
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(chat.typingParticipants.value).not.toContainEqual(
+      expect.objectContaining({
+        id: "conn-user-a_provider-1",
+      })
+    );
+    expect(chat.messages.value).toContainEqual(
+      expect.objectContaining({
+        authors: ["conn-user-a_provider-1"],
+        type: "text",
+        text: "chat-ai-error",
       })
     );
   });
@@ -2299,6 +2810,151 @@ describe("createChatsManager", () => {
       type: "text",
       text: "Shared",
     });
+  });
+
+  it("sendMessage() appends every message yielded by a local provider's message stream", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn().mockImplementation(async function* () {
+        yield { type: "text", text: "Thinking..." };
+        yield { type: "text", text: "Here's the answer." };
+      }),
+    });
+    session.addParticipant("provider-1");
+
+    await session.sendMessage({ type: "text", text: "Hello there" });
+
+    await vi.waitFor(() => {
+      expect(session.messages.value).toHaveLength(3);
+    });
+    expect(session.messages.value[1]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Thinking...",
+    });
+    expect(session.messages.value[2]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Here's the answer.",
+    });
+    expect(session.messages.value[1]!.id).not.toBe(
+      session.messages.value[2]!.id
+    );
+  });
+
+  it("sendMessage() streams the text of a message yielded mid-stream by a local provider", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chunk = createDeferred<IteratorResult<string>>();
+    const textStream = {
+      next: vi
+        .fn<() => Promise<IteratorResult<string>>>()
+        .mockImplementationOnce(() => chunk.promise)
+        .mockResolvedValue({ done: true, value: undefined as any }),
+    };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn().mockImplementation(async function* () {
+        yield { type: "text", text: "Thinking..." };
+        yield { type: "text", text: textStream };
+      }),
+    });
+    session.addParticipant("provider-1");
+
+    const sendPromise = session.sendMessage({
+      type: "text",
+      text: "Hello there",
+    });
+
+    await vi.waitFor(() => {
+      expect(session.messages.value).toHaveLength(2);
+    });
+    expect(session.messages.value[1]).toMatchObject({ text: "Thinking..." });
+
+    chunk.resolve({ done: false, value: "Streamed answer" });
+    await sendPromise;
+
+    await vi.waitFor(() => {
+      expect(session.messages.value).toHaveLength(3);
+    });
+    expect(session.messages.value[1]).toMatchObject({ text: "Thinking..." });
+    expect(session.messages.value[2]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Streamed answer",
+    });
+  });
+
+  it("createSharedSession() appends every message yielded by a provider's message stream", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn().mockImplementation(async function* () {
+        yield { type: "text", text: "Thinking..." };
+        yield { type: "text", text: "Here's the shared answer." };
+      }),
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+    chat.addParticipant("conn-user-a_provider-1");
+    await Promise.resolve();
+
+    await chat.sendMessage({
+      type: "text",
+      text: "Hello @conn-user-a_provider-1",
+    });
+
+    await vi.waitFor(() => {
+      expect(chat.messages.value).toHaveLength(3);
+    });
+    expect(chat.messages.value[1]).toMatchObject({
+      authors: ["conn-user-a_provider-1"],
+      type: "text",
+      text: "Thinking...",
+    });
+    expect(chat.messages.value[2]).toMatchObject({
+      authors: ["conn-user-a_provider-1"],
+      type: "text",
+      text: "Here's the shared answer.",
+    });
+    expect(chat.messages.value[1]!.id).not.toBe(chat.messages.value[2]!.id);
   });
 
   it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {
@@ -3566,6 +4222,140 @@ describe("createChatsManager", () => {
           {
             type: "verse_reference",
             text: "GEN 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("resolves a localized book name from the injected translation books", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(
+        loginManager,
+        mockI18nManager,
+        signal<TranslationBook[] | undefined>(SPA_BOOKS)
+      );
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Lee Esdras 3:1 hoy" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Lee ",
+          {
+            type: "verse_reference",
+            text: "Esdras 3:1",
+            ref: { book: "EZR", chapter: 3, verse: 1 },
+          },
+          " hoy",
+        ],
+      });
+    });
+
+    it("leaves a localized book name as plain text without translation books", async () => {
+      // Guards the plumbing above: "Esdras" has no English fallback, so this
+      // only becomes a link when the books signal is wired through.
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Lee Esdras 3:1 hoy" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Lee Esdras 3:1 hoy"],
+      });
+    });
+
+    it("re-parses existing messages when the injected translation books change", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const translationBooks = signal<TranslationBook[] | undefined>(undefined);
+      const chats = createChatsManager(
+        loginManager,
+        mockI18nManager,
+        translationBooks
+      );
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Ver Génesis 1:1" });
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Ver Génesis 1:1"],
+      });
+
+      translationBooks.value = SPA_BOOKS;
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            text: "Génesis 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("resolves a localized book name from the session's books (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats } = createSharedSessionMock({
+        translationBooks: SPA_BOOKS,
+      });
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const chatSession = chats.createSharedSession(session);
+
+      sharedChats.push({
+        id: "m1",
+        authors: [],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Lee Esdras 3:1 hoy",
+      });
+
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Lee ",
+          {
+            type: "verse_reference",
+            text: "Esdras 3:1",
+            ref: { book: "EZR", chapter: 3, verse: 1 },
+          },
+          " hoy",
+        ],
+      });
+    });
+
+    it("re-parses when the session's books arrive after the message (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats, translationBooks } =
+        createSharedSessionMock();
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const chatSession = chats.createSharedSession(session);
+
+      sharedChats.push({
+        id: "m1",
+        authors: [],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Ver Génesis 1:1",
+      });
+
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        parts: ["Ver Génesis 1:1"],
+      });
+
+      translationBooks.value = { books: SPA_BOOKS };
+
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Ver ",
+          {
+            type: "verse_reference",
+            text: "Génesis 1:1",
             ref: { book: "GEN", chapter: 1, verse: 1 },
           },
         ],

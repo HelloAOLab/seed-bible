@@ -57,6 +57,32 @@
   background: var(--sb-primary-color);
 }
 
+/* "AI" button shown next to the title input while editing/creating a
+   playlist (see `DiscoverPaneTitle`). Sits at the end of the flexed title
+   row, so it stays a fixed size while the input truncates around it. */
+.sb-discover-title-ai {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-discover-title-ai:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-discover-title-ai .material-symbols-outlined {
+  font-size: 1rem;
+}
+
 /*
  * List/item primitives below back the "discover list" markup pattern (a
  * `.sb-discover-list` of `.sb-discover-item`s) rendered by this file's own
@@ -91,6 +117,7 @@
 
 .sb-playlist-item {
   cursor: pointer;
+  align-items: flex-start;
 }
 
 .sb-annotation-group {
@@ -211,6 +238,7 @@
 .sb-discover-item-description {
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  width: 100%;
 }
 
 /* One verse-range group of annotations (see `AnnotationGroupSection`): a
@@ -295,4 +323,32 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* Playlist play-history rows: same shell as playlist items, grouped by day. */
+.sb-playlist-history-day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-playlist-history-day-group + .sb-playlist-history-day-group {
+  margin-top: 10px;
+}
+
+.sb-playlist-history-day {
+  margin: 0 0 2px;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-playlist-history-item .sb-discover-item-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }

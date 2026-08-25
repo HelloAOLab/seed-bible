@@ -17,6 +17,7 @@ export interface BrandingConfig {
   icon: string;
   websiteUrl: string;
   disabledToolbarTools?: string[];
+  defaultTranslationId?: string;
 }
 export interface AppConfig {
   /**
@@ -33,6 +34,14 @@ export interface AppConfig {
   /** Whether the app was rendered as a mobile version on the server */
   renderedAsMobile: boolean;
 
+  /**
+   * Whether the requesting `User-Agent` is WebKit-based (Safari, or any iOS
+   * browser — all of which use WebKit regardless of what they call
+   * themselves). Computed once from the request header so the client doesn't
+   * need its own `navigator.userAgent` check.
+   */
+  renderedAsWebKit: boolean;
+
   /** The list of languages included in the `Accept-Language` header */
   acceptedLanguages: string[];
   /** Client branding configuration. */
@@ -43,6 +52,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   basePath: "",
   assetHost: "",
   renderedAsMobile: false,
+  renderedAsWebKit: false,
   acceptedLanguages: [],
 };
 
@@ -60,12 +70,16 @@ export function readInjectedConfig(): AppConfig {
     return DEFAULT_APP_CONFIG;
   }
   try {
-    return { ...DEFAULT_APP_CONFIG, ...JSON.parse(el.textContent) };
-  } catch {
+    const parsed = JSON.parse(el.textContent);
+    return {
+      ...DEFAULT_APP_CONFIG,
+      ...parsed,
+    };
+  } catch (error) {
+    console.error("CONFIG JSON PARSE FAILED:", error);
     return DEFAULT_APP_CONFIG;
   }
 }
-
 /** Prefixes a root-relative app path with the deployment base path. */
 export function withBasePath(config: AppConfig, path: string): string {
   if (!config.basePath) return path;

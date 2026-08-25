@@ -17,17 +17,18 @@ import {
   type BookReferenceMatch,
 } from "../../managers/SearchManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import type {
-  ChatMessage,
-  ChatProvider,
-  ChatSession,
+import {
+  chatHasOtherPeople,
+  type ChatMessage,
+  type ChatProvider,
+  type ChatSession,
 } from "../../managers/ChatsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { useEffect, useRef } from "preact/hooks";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
-import { ChatParticipantsIcon } from "../icons";
+import { ChatParticipantsIcon, MaterialIcon } from "../icons";
 
 interface SearchResult {
   id: string;
@@ -724,6 +725,20 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   const isOpen = sidebar.isChatPanelOpen.value;
   const selectedChat = state.chats.selectedChat.value;
   const chats = state.chats.chats.value;
+  const providers = state.chats.providers.value;
+  // The AI context button surfaces tools that only a tool-calling provider can
+  // invoke, so hide it once every AI participant left in the chat is one that
+  // can't call tools.
+  const selectedChatHasToolCallingProvider = selectedChat
+    ? selectedChat.participants.value.some(
+        (p) =>
+          p.isAI &&
+          providers.some(
+            (provider) =>
+              provider.id === p.providerId && provider.supportsToolCalling
+          )
+      )
+    : true;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -760,6 +775,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   // Only display non-anonymous inactive participants
   const inactiveParticipants =
     selectedChat?.inactiveParticipants.value.filter((p) => p.name) ?? [];
+  const otherPeoplePresent = selectedChat
+    ? chatHasOtherPeople(selectedChat)
+    : false;
 
   return (
     <div
@@ -823,7 +841,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           >
             {selectedChat.participants.value.map((participant) => {
               const label = getParticipantDisplayLabel(participant, t);
-              const avatar = getParticipantAvatar(participant, t);
+              const avatar = getParticipantAvatar(participant, t, {
+                otherPeoplePresent,
+              });
               return (
                 <ContextMenuItem
                   key={participant.id}
@@ -837,6 +857,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                     visual={avatar.visual}
                     title={avatar.label}
                     isSelf={avatar.isSelf}
+                    genericFallback={avatar.genericFallback}
                   />
                   <span className="sb-floating-chat-members-name">{label}</span>
                 </ContextMenuItem>
@@ -855,7 +876,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 </span>
                 {inactiveParticipants.map((participant) => {
                   const label = getParticipantDisplayLabel(participant, t);
-                  const avatar = getParticipantAvatar(participant, t);
+                  const avatar = getParticipantAvatar(participant, t, {
+                    otherPeoplePresent,
+                  });
                   return (
                     <ContextMenuItem
                       key={participant.id}
@@ -869,6 +892,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                         visual={avatar.visual}
                         title={avatar.label}
                         isSelf={avatar.isSelf}
+                        genericFallback={avatar.genericFallback}
                       />
                       <span className="sb-floating-chat-members-name">
                         {label}
@@ -878,6 +902,52 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 })}
               </>
             )}
+          </ContextMenuWithButton>
+        ) : null}
+
+        {state.chats.activeContexts.value.length > 0 &&
+        selectedChatHasToolCallingProvider ? (
+          <ContextMenuWithButton
+            anchorClassName="sb-floating-chat-header-ai-context-anchor"
+            buttonClassName="sb-floating-chat-header-ai-context-button"
+            menuClassName="sb-floating-chat-ai-context-menu"
+            icon={
+              <span className="sb-floating-chat-header-ai-context-button-icon">
+                <MaterialIcon>auto_awesome</MaterialIcon>
+                {state.chats.activeContexts.value.length > 1 && (
+                  <span>{state.chats.activeContexts.value.length}</span>
+                )}
+              </span>
+            }
+            aria-label={t("ai-context-button-label", {
+              defaultValue: "Active AI context",
+            })}
+            title={t("ai-context-button-label", {
+              defaultValue: "Active AI context",
+            })}
+            onClick={() => {
+              closeContextMenus();
+            }}
+          >
+            {state.chats.activeContexts.value.map((ctx) => (
+              <ContextMenuItem
+                key={ctx.id}
+                className="sb-floating-chat-ai-context-item"
+                onClick={(event) => {
+                  event.preventDefault();
+                }}
+              >
+                <span className="sb-floating-chat-ai-context-item-label">
+                  {translateTitle(t, ctx.label)}
+                </span>
+                <span className="sb-floating-chat-ai-context-item-tools">
+                  {t("ai-context-tool-count", {
+                    defaultValue: "{{count}} tools",
+                    count: ctx.tools?.length ?? 0,
+                  })}
+                </span>
+              </ContextMenuItem>
+            ))}
           </ContextMenuWithButton>
         ) : null}
 
@@ -963,6 +1033,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
   const toShow = pool.slice(0, 3);
   const overflowCount = pool.length - toShow.length;
   const count = overflowCount > 0 ? 4 : Math.max(toShow.length, 1);
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   return (
     <div
@@ -970,7 +1041,9 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
       aria-hidden="true"
     >
       {toShow.map((participant) => {
-        const av = getParticipantAvatar(participant, t);
+        const av = getParticipantAvatar(participant, t, {
+          otherPeoplePresent,
+        });
         return (
           <Avatar
             key={participant.id}
@@ -978,6 +1051,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
             visual={av.visual}
             title={av.label}
             isSelf={av.isSelf}
+            genericFallback={av.genericFallback}
           />
         );
       })}

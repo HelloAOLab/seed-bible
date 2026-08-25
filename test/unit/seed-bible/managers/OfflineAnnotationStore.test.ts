@@ -305,6 +305,37 @@ describe("createInMemoryAnnotationStore()", () => {
       expect(row?.deleted).toBe(true);
     });
 
+    it("does not overwrite an edit that lands while it is running", async () => {
+      const store = createInMemoryAnnotationStore();
+      const serverCopy = makeAnnotation("ann-1");
+      await store.put(syncedRow("user-1", serverCopy));
+
+      const mine = makeAnnotation("ann-1");
+      mine.data.html = "<p>mine</p>";
+
+      // Fired without awaiting, then a local edit is queued behind it. Reading
+      // the rows and writing them back has to be one atomic step: reading first
+      // and writing after a yield let this edit land in the gap, look unpending
+      // to the reconcile, and get replaced by the server's older copy.
+      const reconciling = store.reconcileChapter(
+        "user-1",
+        "GEN",
+        1,
+        [serverCopy],
+        1
+      );
+      await store.put({
+        ...syncedRow("user-1", mine),
+        pendingOp: "upsert",
+        updatedAtMs: 9_999,
+      });
+      await reconciling;
+
+      const row = await store.get("user-1", "ann-1");
+      expect(row?.annotation?.data.html).toBe("<p>mine</p>");
+      expect(row?.pendingOp).toBe("upsert");
+    });
+
     it("does not touch another chapter's rows", async () => {
       const store = createInMemoryAnnotationStore();
       await store.put(

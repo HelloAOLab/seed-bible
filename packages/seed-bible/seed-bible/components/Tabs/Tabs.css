@@ -437,28 +437,34 @@
   font-weight: 500;
 }
 
-.sb-bookmark-picker-radio {
+.sb-bookmark-picker-checkbox {
   width: 1.125rem;
   height: 1.125rem;
-  border-radius: 50%;
+  border-radius: 0.2rem;
   border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
   flex-shrink: 0;
   position: relative;
+  box-sizing: border-box;
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease;
 }
 
-.sb-bookmark-picker-radio-checked {
+.sb-bookmark-picker-checkbox-checked {
   border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
 }
 
-.sb-bookmark-picker-radio-checked::after {
+.sb-bookmark-picker-checkbox-checked::after {
   content: "";
   position: absolute;
-  inset: 0.1875rem;
-  border-radius: 50%;
-  background: var(--sb-primary-color);
+  left: 0.25rem;
+  top: 0.0625rem;
+  width: 0.3125rem;
+  height: 0.5625rem;
+  border: solid var(--sb-primary-font-color);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .sb-bookmark-picker-divider {
@@ -519,6 +525,61 @@
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.25rem;
+}
+
+/* Sits opposite Save so the destructive action is nowhere near the primary
+ * one the user reaches for. */
+.sb-bookmark-picker-remove {
+  margin-right: auto;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #b91c1c;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.sb-bookmark-picker-remove:hover:not(:disabled) {
+  background: color-mix(in srgb, #b91c1c, transparent 92%);
+}
+
+.sb-bookmark-picker-remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sb-bookmark-picker-stage-folder {
+  min-width: 5.25rem;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
+  background: transparent;
+  color: var(--sb-font-color);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.sb-bookmark-picker-stage-folder:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+}
+
+.sb-bookmark-picker-stage-folder:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .sb-bookmark-picker-category:disabled {
@@ -632,7 +693,8 @@
   align-items: stretch;
   position: relative;
 
-  padding: 0.5rem 0.375rem 0.5rem 0.75rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem 0.375rem;
   border-radius: 0.5rem;
   border: 1px solid transparent;
   background: var(--sb-tab-background);
@@ -653,7 +715,7 @@
 }
 
 .sb-tab-button {
-  text-align: left;
+  text-align: start;
 
   border: none;
   background: none;
@@ -1041,6 +1103,14 @@
   font-size: 1.125rem;
 }
 
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic {
+  border: none;
+}
+
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic .material-symbols-outlined {
+  font-size: 2rem;
+}
+
 .sb-tab-title {
   font-size: 0.75rem;
   opacity: 0.75;
@@ -1138,7 +1208,7 @@
   cursor: pointer;
   width: 2rem;
   height: 2rem;
-  margin-left: auto;
+  margin-inline-start: auto;
   align-items: center;
   justify-content: center;
   padding: 0;
@@ -1257,12 +1327,6 @@
     display: inline-flex;
   }
 
-  /* On mobile the account panel is dismissed via the bottom bar of options
-   * (e.g. the "Bible" tab), so the redundant X close button is hidden. */
-  .sb-sidebar-settings-close-button-account {
-    display: none;
-  }
-
   /* The desktop bottom-actions row (settings cog + self avatar) is hidden
    * on mobile — the bottom is now the Bible/Tabs switcher. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-bottom-actions {
@@ -1288,6 +1352,20 @@
     color: var(--sb-book-title-font-color);
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  /* The settings sidebar (main list, and every settings subpage, including
+   * Account) shares .sb-sidebar-tabs-title with the tab-list header above,
+   * but its "Settings" heading isn't a book title — restore the plain
+   * heading style so it renders the same as on desktop. */
+  .sb-tabs-sidebar-mobile-open
+    .sb-sidebar-settings-view
+    .sb-sidebar-tabs-title {
+    flex: initial;
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--sb-font-color);
   }
 
   /* Tab list takes the body of the sidebar; leave room at the bottom for

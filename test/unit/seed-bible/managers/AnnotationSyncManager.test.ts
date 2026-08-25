@@ -468,6 +468,42 @@ describe("AnnotationSyncManager", () => {
       expect(onSynced).toHaveBeenCalledWith(theirs, OWNER);
     });
 
+    it("keep_both reports the new copy immediately, without waiting for it to sync", async () => {
+      const onSynced = vi.fn();
+      const base = makeAnnotation("ann-1");
+      const theirs = makeAnnotation("ann-1", {
+        html: "<p>theirs</p>",
+        updatedAtMs: 5_000,
+      });
+      await store.put(
+        pendingUpsert(
+          makeAnnotation("ann-1", { html: "<p>mine</p>", updatedAtMs: 9_000 }),
+          base
+        )
+      );
+      serverHas(theirs);
+      const sync = createSync({ onSynced });
+      await sync.sync();
+      const conflictId = sync.conflicts.value[0]!.id;
+
+      // Offline for the resolution itself, so nothing gets pushed - matching
+      // the real bug's repro ("choose keep both; stay offline"). Reported
+      // only because a push happened to follow would still leave the copy
+      // invisible for as long as the device stays offline.
+      window.dispatchEvent(new Event("offline"));
+      recordDataMock.mockClear();
+
+      await sync.resolveConflict(conflictId, "keep_both");
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(onSynced).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ html: "<p>mine</p>" }),
+        }),
+        OWNER
+      );
+    });
+
     it("keep_mine on a deleted-here conflict carries out the deletion", async () => {
       const base = makeAnnotation("ann-1");
       const theirs = makeAnnotation("ann-1", {
@@ -643,6 +679,190 @@ describe("AnnotationSyncManager", () => {
       expect(row?.attempts).toBe(1);
       expect(row?.pendingOp).toBe("upsert");
     });
+
+    it.each(["session_expired", "invalid_key", "user_is_banned"])(
+      "keeps the change queued when the session ended (%s)",
+      async (errorCode) => {
+        await store.put(pendingUpsert(makeAnnotation("ann-1"), null));
+        recordDataMock.mockResolvedValue({
+          success: false,
+          errorCode,
+          errorMessage: "session over",
+        } as never);
+
+        await createSync().sync();
+
+        // `SessionGuard` spots these with `.then`, so the request *resolves*
+        // with the failure rather than rejecting. Treating that as a permanent
+        // server rejection cleared `pendingOp` and destroyed the edit — signing
+        // back in would never retry it.
+        const row = await store.get(OWNER, "ann-1");
+        expect(row?.pendingOp).toBe("upsert");
+        expect(row?.attempts).toBe(0);
+      }
+    );
+
+    it("stops the pass when the session ended, leaving later rows queued too", async () => {
+      await store.put(
+        pendingUpsert(makeAnnotation("ann-1"), null, { updatedAtMs: 1 })
+      );
+      await store.put(
+        pendingUpsert(makeAnnotation("ann-2"), null, { updatedAtMs: 2 })
+      );
+      recordDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "session_expired",
+      } as never);
+
+      await createSync().sync();
+
+      expect(
+        (await store.listPending(OWNER)).map((r) => r.annotationId)
+      ).toEqual(["ann-1", "ann-2"]);
+    });
+
+    it("does not revert a newer edit when a failed push records its attempt", async () => {
+      const started = pendingUpsert(makeAnnotation("ann-1"), null);
+      await store.put(started);
+
+      recordDataMock.mockImplementation(async () => {
+        // The user saves again while the failing request is in the air.
+        await store.put({
+          ...started,
+          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          updatedAtMs: started.updatedAtMs + 1,
+        });
+        return {
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "boom",
+        };
+      });
+
+      await createSync().sync();
+
+      // The bookkeeping write is a blind overwrite by key, so spreading the
+      // pre-push snapshot would have reverted "v2" back to the older content.
+      const row = await store.get(OWNER, "ann-1");
+      expect(row?.annotation?.data.html).toBe("<p>v2</p>");
+      expect(row?.pendingOp).toBe("upsert");
+    });
+  });
+
+  describe("a save landing during a push", () => {
+    it("does not overwrite the newer edit with the content it pushed", async () => {
+      const started = pendingUpsert(
+        makeAnnotation("ann-1", { html: "<p>v1</p>" }),
+        null
+      );
+      await store.put(started);
+
+      recordDataMock.mockImplementation(async () => {
+        // Reproduces the everyday "edit, save, edit again on a slow connection"
+        // path: the second save lands while the first push is still in flight.
+        await store.put({
+          ...started,
+          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          updatedAtMs: started.updatedAtMs + 1,
+        });
+        return { success: true };
+      });
+
+      await createSync().sync();
+
+      const row = await store.get(OWNER, "ann-1");
+      expect(row?.annotation?.data.html).toBe("<p>v2</p>");
+    });
+
+    it("keeps the newer edit queued so it still reaches the server", async () => {
+      const started = pendingUpsert(
+        makeAnnotation("ann-1", { html: "<p>v1</p>" }),
+        null
+      );
+      await store.put(started);
+
+      let injected = false;
+      recordDataMock.mockImplementation(async () => {
+        if (!injected) {
+          injected = true;
+          await store.put({
+            ...started,
+            annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+            updatedAtMs: started.updatedAtMs + 1,
+          });
+        }
+        return { success: true };
+      });
+
+      await createSync().sync();
+
+      expect((await store.get(OWNER, "ann-1"))?.pendingOp).toBe("upsert");
+    });
+
+    it("rebases the newer edit onto what was just pushed, so it is not a conflict", async () => {
+      const pushed = makeAnnotation("ann-1", {
+        html: "<p>v1</p>",
+        updatedAtMs: 7_000,
+      });
+      const started = pendingUpsert(pushed, null);
+      await store.put(started);
+
+      recordDataMock.mockImplementationOnce(async () => {
+        await store.put({
+          ...started,
+          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          updatedAtMs: started.updatedAtMs + 1,
+        });
+        return { success: true };
+      });
+
+      await createSync().sync();
+
+      // Leaving the stale base in place would make the next pass read our own
+      // push back and report it as somebody else's edit.
+      const row = await store.get(OWNER, "ann-1");
+      expect(row?.baseUpdatedAtMs).toBe(7_000);
+      expect(row?.baseFingerprint).toBe(annotationFingerprint(pushed));
+    });
+
+    it("does not leave a readable synced row behind when the account signs out mid-push", async () => {
+      await store.put(pendingUpsert(makeAnnotation("ann-1"), null));
+
+      recordDataMock.mockImplementation(async () => {
+        // Signing out while the push is in the air. `clearSynced` correctly
+        // spares the row because it still looks pending at that moment — so the
+        // push completing afterwards must not write a synced, readable copy back
+        // for an account that has left a possibly shared device.
+        login.userId.value = null;
+        return { success: true };
+      });
+
+      await createSync().sync();
+
+      expect(await store.get(OWNER, "ann-1")).toBeNull();
+    });
+
+    it("keeps an unsent edit made during a push even when the account signs out", async () => {
+      const started = pendingUpsert(makeAnnotation("ann-1"), null);
+      await store.put(started);
+
+      recordDataMock.mockImplementation(async () => {
+        await store.put({
+          ...started,
+          annotation: makeAnnotation("ann-1", { html: "<p>v2</p>" }),
+          updatedAtMs: started.updatedAtMs + 1,
+        });
+        login.userId.value = null;
+        return { success: true };
+      });
+
+      await createSync().sync();
+
+      // Sign-out keeps unsent writing; only synced rows are dropped.
+      const row = await store.get(OWNER, "ann-1");
+      expect(row?.annotation?.data.html).toBe("<p>v2</p>");
+      expect(row?.pendingOp).toBe("upsert");
+    });
   });
 
   describe("scoping and scheduling", () => {
@@ -739,6 +959,25 @@ describe("AnnotationSyncManager", () => {
 
       await sync.sync();
       expect(sync.pendingCount.value).toBe(0);
+    });
+
+    it("scopes the pending count to one chapter", async () => {
+      await store.put(pendingUpsert(makeAnnotation("ann-1"), null));
+      await store.put(
+        pendingUpsert(
+          { ...makeAnnotation("ann-2"), bookId: "EXO", chapterNumber: 3 },
+          null
+        )
+      );
+      const sync = createSync();
+
+      await sync.refreshPendingCount();
+
+      // Account-wide, both count - but a chapter should only see its own.
+      expect(sync.pendingCount.value).toBe(2);
+      expect(sync.pendingCountForChapter("GEN", 1)).toBe(1);
+      expect(sync.pendingCountForChapter("EXO", 3)).toBe(1);
+      expect(sync.pendingCountForChapter("GEN", 2)).toBe(0);
     });
 
     it("stops listening after dispose", async () => {

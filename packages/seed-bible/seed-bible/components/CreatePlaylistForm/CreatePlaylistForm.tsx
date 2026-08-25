@@ -182,6 +182,27 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
 
   return (
     <div className="sb-discover-pane">
+      <DiscoverSection
+        title={t("description", { defaultValue: "Description" })}
+      >
+        <textarea
+          className="sb-settings-text-input sb-playlist-input sb-playlist-description-input"
+          rows={3}
+          value={editing?.description ?? ""}
+          dir="auto"
+          onInput={(event: Event) => {
+            const value = (event.currentTarget as HTMLTextAreaElement).value;
+            playlists.updateEditingPlaylistMetadata({
+              description: value.trim() ? value : null,
+            });
+          }}
+          placeholder={t("playlist-description_placeholder", {
+            defaultValue: "What is this playlist about?",
+          })}
+          aria-label={t("description", { defaultValue: "Description" })}
+        />
+      </DiscoverSection>
+
       <DiscoverSection title={t("items", { defaultValue: "Items" })}>
         {!editing?.items.length ? (
           <DiscoverEmpty
@@ -271,7 +292,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         onCancelEdit={() => setEditingIndex(null)}
       />
 
-      <div>
+      <div className="sb-discover-actions">
         <button
           type="button"
           className="sb-reading-plans-back"

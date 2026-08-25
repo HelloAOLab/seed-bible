@@ -24,6 +24,15 @@ export const bookmarkVerseSchema = z.union([
 ]);
 
 /**
+ * A bookmark's category membership: a single folder name (legacy / single-
+ * folder bookmarks) or an array of folder names (multi-folder).
+ */
+export const bookmarkCategoryFieldSchema = z.union([
+  z.string().min(1),
+  z.array(z.string().min(1)).min(1),
+]);
+
+/**
  * Schema for one bookmark entry.
  *
  * A bookmark is a saved Bible location (translation + book + chapter, optionally
@@ -32,8 +41,8 @@ export const bookmarkVerseSchema = z.union([
  * clicking one navigates the active tab there. They are persisted per user
  * under the `"bookmarks"` storage key so they survive across sessions /
  * devices and are restored when the user logs back in. Each bookmark belongs
- * to exactly one category (folder) — newly added bookmarks land in the
- * default category and can be moved or grouped from there.
+ * to one or more categories (folders) — newly added bookmarks land in the
+ * default category and can be assigned to additional folders from there.
  */
 export const bookmarkSchema = z.object({
   id: z.string().min(1),
@@ -42,7 +51,7 @@ export const bookmarkSchema = z.object({
   chapterNumber: z.number().int().positive(),
   verse: bookmarkVerseSchema.optional(),
   createdAt: z.number().int().nonnegative(),
-  category: z.string().min(1),
+  category: bookmarkCategoryFieldSchema,
 });
 
 export const bookmarkCategorySchema = z.object({
@@ -53,7 +62,7 @@ export const bookmarkCategorySchema = z.object({
 // the `verse` field, and the `categories` list. We normalize them on load
 // before they ever surface to the rest of the app.
 const persistedBookmarkSchema = bookmarkSchema.extend({
-  category: z.string().min(1).optional(),
+  category: bookmarkCategoryFieldSchema.optional(),
   verse: bookmarkVerseSchema.optional(),
 });
 
@@ -71,6 +80,54 @@ const STORAGE_ADDRESS = "bookmarks";
 
 /** Category every new bookmark lands in if none is specified. */
 export const DEFAULT_BOOKMARK_CATEGORY = "My Bookmarks";
+
+/**
+ * Returns the category names a bookmark belongs to as a flat string array.
+ * Accepts both the legacy single-string form and the multi-category array form.
+ */
+export function getBookmarkCategories(
+  category: string | readonly string[]
+): string[] {
+  if (typeof category === "string") {
+    return [category];
+  }
+  return [...category];
+}
+
+/**
+ * True when `bookmark` is a member of the given category name.
+ */
+export function bookmarkBelongsToCategory(
+  bookmark: Bookmark,
+  categoryName: string
+): boolean {
+  return getBookmarkCategories(bookmark.category).includes(categoryName);
+}
+
+/**
+ * Serializes a list of category names into the storage form: a single string
+ * when only one category is selected (keeps older clients happy), an array
+ * when the bookmark spans multiple folders.
+ */
+export function serializeBookmarkCategories(
+  categories: readonly string[]
+): string | string[] {
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of categories) {
+    const name = raw.trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    unique.push(name);
+  }
+  if (unique.length === 0) {
+    return DEFAULT_BOOKMARK_CATEGORY;
+  }
+  if (unique.length === 1) {
+    return unique[0]!;
+  }
+  return unique;
+}
 
 function makeBookmarkId(): string {
   if (
@@ -151,6 +208,7 @@ export function bookmarkVerseFromSelection(
 /**
  * Migrates a raw persisted payload into the current shape:
  *   - bookmarks without a `category` get assigned the default
+ *   - empty category arrays collapse to the default
  *   - any category referenced by a bookmark but missing from `categories`
  *     gets appended, preserving order
  *   - the default category is always present (added first if absent) so the
@@ -162,7 +220,11 @@ function normalizePayload(payload: BookmarksPayload): {
 } {
   const bookmarks: Bookmark[] = payload.bookmarks.map((b) => ({
     ...b,
-    category: b.category ?? DEFAULT_BOOKMARK_CATEGORY,
+    category: serializeBookmarkCategories(
+      b.category === undefined
+        ? [DEFAULT_BOOKMARK_CATEGORY]
+        : getBookmarkCategories(b.category)
+    ),
   }));
 
   const categories: BookmarkCategory[] = (payload.categories ?? []).map(
@@ -178,9 +240,11 @@ function normalizePayload(payload: BookmarksPayload): {
   }
 
   for (const bookmark of bookmarks) {
-    if (!seen.has(bookmark.category)) {
-      categories.push({ name: bookmark.category });
-      seen.add(bookmark.category);
+    for (const name of getBookmarkCategories(bookmark.category)) {
+      if (!seen.has(name)) {
+        categories.push({ name });
+        seen.add(name);
+      }
     }
   }
 
@@ -237,6 +301,19 @@ export interface BookmarksManager {
   ) => boolean;
 
   /**
+   * Returns the bookmark saved at the given location, or undefined when there
+   * is none. Matches on the same rules as `isLocationBookmarked` — callers
+   * that need the bookmark's id (to edit its folders, say) use this instead of
+   * re-deriving the match themselves.
+   */
+  getBookmarkForLocation: (
+    translationId: string | null | undefined,
+    bookId: string | null | undefined,
+    chapterNumber: number | null | undefined,
+    verse?: BookmarkVerse
+  ) => Bookmark | undefined;
+
+  /**
    * Returns true if any bookmark (chapter- or verse-level) exists for the
    * given chapter. Used by the tab row dot indicator to flag any saved
    * reference into that chapter.
@@ -251,13 +328,14 @@ export interface BookmarksManager {
    * Adds the given location as a bookmark if not already saved.
    * Requires the user to be logged in; will trigger login otherwise.
    * Defaults to the default category when none is provided. Pass `verse` to
-   * scope the bookmark to a single verse or `[start, end]` range.
+   * scope the bookmark to a single verse or `[start, end]` range. `category`
+   * may be a single name or a list of names (multi-folder membership).
    */
   addBookmark: (
     translationId: string,
     bookId: string,
     chapterNumber: number,
-    options?: { verse?: BookmarkVerse; category?: string }
+    options?: { verse?: BookmarkVerse; category?: string | string[] }
   ) => Promise<void>;
 
   /**
@@ -272,15 +350,28 @@ export interface BookmarksManager {
     verse?: BookmarkVerse
   ) => Promise<void>;
 
-  /** Removes a specific bookmark by id. */
+  /** Removes a specific bookmark by id, from every category it belongs to. */
   removeBookmark: (id: string) => Promise<void>;
 
   /**
-   * Moves an existing bookmark into another category (creating the category
-   * first when needed). No-op when the bookmark id is unknown or the target
-   * category is already the bookmark's current folder.
+   * Drops a bookmark's membership in a single category. The bookmark itself is
+   * only deleted when that category was its last one. No-op when the bookmark
+   * id is unknown or it does not belong to the category.
    */
-  moveBookmark: (id: string, category: string) => Promise<void>;
+  removeBookmarkFromCategory: (
+    id: string,
+    categoryName: string
+  ) => Promise<void>;
+
+  /**
+   * Sets the categories an existing bookmark belongs to (creating any missing
+   * categories). No-op when the bookmark id is unknown, the list is empty, or
+   * the membership list is unchanged. Accepts a single name or a list.
+   */
+  setBookmarkCategories: (
+    id: string,
+    category: string | string[]
+  ) => Promise<void>;
 
   /**
    * Toggles a chapter-level bookmark for a tab's current location. If the
@@ -316,14 +407,16 @@ export interface BookmarksManager {
   createCategory: (name: string) => Promise<void>;
 
   /**
-   * Renames a category and updates every bookmark inside it. No-op if the
-   * target name is already taken (other than by the category itself).
+   * Renames a category and updates every bookmark that belongs to it. No-op if
+   * the target name is already taken (other than by the category itself).
    */
   renameCategory: (oldName: string, newName: string) => Promise<void>;
 
   /**
-   * Deletes a category and every bookmark inside it. The default category
-   * cannot be deleted — it stays as the always-available landing folder.
+   * Deletes a category. Bookmarks that only belonged to it are removed;
+   * bookmarks that also belong to other categories keep those memberships.
+   * The default category cannot be deleted — it stays as the always-available
+   * landing folder.
    */
   deleteCategory: (name: string) => Promise<void>;
 }
@@ -417,13 +510,13 @@ export function createBookmarksManager(
     void loadBookmarks(userId);
   });
 
-  const isLocationBookmarked: BookmarksManager["isLocationBookmarked"] = (
+  const getBookmarkForLocation: BookmarksManager["getBookmarkForLocation"] = (
     translationId,
     bookId,
     chapterNumber,
     verse
   ) => {
-    return bookmarks.value.some((bookmark) =>
+    return bookmarks.value.find((bookmark) =>
       bookmarkMatchesLocation(
         bookmark,
         translationId,
@@ -431,6 +524,18 @@ export function createBookmarksManager(
         chapterNumber,
         verse
       )
+    );
+  };
+
+  const isLocationBookmarked: BookmarksManager["isLocationBookmarked"] = (
+    translationId,
+    bookId,
+    chapterNumber,
+    verse
+  ) => {
+    return (
+      getBookmarkForLocation(translationId, bookId, chapterNumber, verse) !==
+      undefined
     );
   };
 
@@ -470,24 +575,34 @@ export function createBookmarksManager(
     if (isLocationBookmarked(translationId, bookId, chapterNumber, verse)) {
       return;
     }
-    const targetCategory = options?.category ?? DEFAULT_BOOKMARK_CATEGORY;
+    const targetCategories = serializeBookmarkCategories(
+      options?.category === undefined
+        ? [DEFAULT_BOOKMARK_CATEGORY]
+        : getBookmarkCategories(options.category)
+    );
+    const categoryNames = getBookmarkCategories(targetCategories);
     const newBookmark: Bookmark = {
       id: makeBookmarkId(),
       translationId,
       bookId,
       chapterNumber,
       createdAt: Date.now(),
-      category: targetCategory,
+      category: targetCategories,
       ...(verse !== undefined ? { verse } : {}),
     };
     const nextBookmarks: Bookmark[] = [...bookmarks.value, newBookmark];
-    const nextCategories = ensureCategory(categories.value, targetCategory);
+    let nextCategories = categories.value;
+    for (const name of categoryNames) {
+      nextCategories = ensureCategory(nextCategories, name);
+    }
     bookmarks.value = nextBookmarks;
     categories.value = nextCategories;
-    // Auto-expand the category that just received a bookmark so the user
+    // Auto-expand every category that just received a bookmark so the user
     // sees the new entry without having to click open the folder.
     const nextExpanded = new Set(expandedCategories.value);
-    nextExpanded.add(targetCategory);
+    for (const name of categoryNames) {
+      nextExpanded.add(name);
+    }
     expandedCategories.value = nextExpanded;
     await persist(nextBookmarks, nextCategories);
   };
@@ -501,27 +616,65 @@ export function createBookmarksManager(
     await persist(next, categories.value);
   };
 
-  const moveBookmark: BookmarksManager["moveBookmark"] = async (
-    id,
-    category
-  ) => {
-    const trimmed = category.trim();
-    if (!trimmed) return;
-    const existing = bookmarks.value.find((bookmark) => bookmark.id === id);
-    if (!existing || existing.category === trimmed) {
-      return;
-    }
-    const nextBookmarks = bookmarks.value.map((bookmark) =>
-      bookmark.id === id ? { ...bookmark, category: trimmed } : bookmark
-    );
-    const nextCategories = ensureCategory(categories.value, trimmed);
-    bookmarks.value = nextBookmarks;
-    categories.value = nextCategories;
-    const nextExpanded = new Set(expandedCategories.value);
-    nextExpanded.add(trimmed);
-    expandedCategories.value = nextExpanded;
-    await persist(nextBookmarks, nextCategories);
-  };
+  const removeBookmarkFromCategory: BookmarksManager["removeBookmarkFromCategory"] =
+    async (id, categoryName) => {
+      const existing = bookmarks.value.find((bookmark) => bookmark.id === id);
+      if (!existing) return;
+
+      const names = getBookmarkCategories(existing.category);
+      if (!names.includes(categoryName)) return;
+
+      const remaining = names.filter((name) => name !== categoryName);
+      const next =
+        remaining.length === 0
+          ? bookmarks.value.filter((bookmark) => bookmark.id !== id)
+          : bookmarks.value.map((bookmark) =>
+              bookmark.id === id
+                ? {
+                    ...bookmark,
+                    category: serializeBookmarkCategories(remaining),
+                  }
+                : bookmark
+            );
+      bookmarks.value = next;
+      await persist(next, categories.value);
+    };
+
+  const setBookmarkCategories: BookmarksManager["setBookmarkCategories"] =
+    async (id, category) => {
+      const nextCategory = serializeBookmarkCategories(
+        getBookmarkCategories(category)
+      );
+      const nextNames = getBookmarkCategories(nextCategory);
+      if (nextNames.length === 0) return;
+
+      const existing = bookmarks.value.find((bookmark) => bookmark.id === id);
+      if (!existing) return;
+
+      const existingNames = getBookmarkCategories(existing.category);
+      const sameMembership =
+        existingNames.length === nextNames.length &&
+        nextNames.every((name) => existingNames.includes(name));
+      if (sameMembership) {
+        return;
+      }
+
+      let nextCategories = categories.value;
+      for (const name of nextNames) {
+        nextCategories = ensureCategory(nextCategories, name);
+      }
+      const nextBookmarks = bookmarks.value.map((bookmark) =>
+        bookmark.id === id ? { ...bookmark, category: nextCategory } : bookmark
+      );
+      bookmarks.value = nextBookmarks;
+      categories.value = nextCategories;
+      const nextExpanded = new Set(expandedCategories.value);
+      for (const name of nextNames) {
+        nextExpanded.add(name);
+      }
+      expandedCategories.value = nextExpanded;
+      await persist(nextBookmarks, nextCategories);
+    };
 
   const removeBookmarkForLocation: BookmarksManager["removeBookmarkForLocation"] =
     async (translationId, bookId, chapterNumber, verse) => {
@@ -638,9 +791,18 @@ export function createBookmarksManager(
     const nextCategories = categories.value.map((c) =>
       c.name === oldName ? { ...c, name: trimmed } : c
     );
-    const nextBookmarks = bookmarks.value.map((b) =>
-      b.category === oldName ? { ...b, category: trimmed } : b
-    );
+    const nextBookmarks = bookmarks.value.map((b) => {
+      const names = getBookmarkCategories(b.category);
+      if (!names.includes(oldName)) {
+        return b;
+      }
+      return {
+        ...b,
+        category: serializeBookmarkCategories(
+          names.map((n) => (n === oldName ? trimmed : n))
+        ),
+      };
+    });
     categories.value = nextCategories;
     bookmarks.value = nextBookmarks;
     const nextExpanded = new Set(expandedCategories.value);
@@ -660,7 +822,23 @@ export function createBookmarksManager(
     }
     if (!categories.value.some((c) => c.name === name)) return;
     const nextCategories = categories.value.filter((c) => c.name !== name);
-    const nextBookmarks = bookmarks.value.filter((b) => b.category !== name);
+    const nextBookmarks: Bookmark[] = [];
+    for (const b of bookmarks.value) {
+      const names = getBookmarkCategories(b.category);
+      if (!names.includes(name)) {
+        nextBookmarks.push(b);
+        continue;
+      }
+      const remaining = names.filter((n) => n !== name);
+      if (remaining.length === 0) {
+        // Sole membership was the deleted folder — drop the bookmark.
+        continue;
+      }
+      nextBookmarks.push({
+        ...b,
+        category: serializeBookmarkCategories(remaining),
+      });
+    }
     categories.value = nextCategories;
     bookmarks.value = nextBookmarks;
     const nextExpanded = new Set(expandedCategories.value);
@@ -679,10 +857,12 @@ export function createBookmarksManager(
     closeView,
     toggleCategoryExpanded,
     isLocationBookmarked,
+    getBookmarkForLocation,
     isChapterBookmarked,
     addBookmark,
     removeBookmark,
-    moveBookmark,
+    removeBookmarkFromCategory,
+    setBookmarkCategories,
     removeBookmarkForLocation,
     toggleBookmarkForTab,
     toggleBookmarkAtLocation,

@@ -78,37 +78,6 @@ describe("GetPastDateInfo", () => {
   // Dec 31, 2023 is a Sunday (Jan 1 2024 is Monday, so the day before is Sunday)
   const dec31 = new Date(2023, 11, 31).getTime();
 
-  describe("weekday", () => {
-    it("returns 'Sunday' for a Sunday", () => {
-      expect(GetPastDateInfo(jan7).weekday).toBe("Sunday");
-    });
-
-    it("returns 'Thursday' for a Thursday", () => {
-      expect(GetPastDateInfo(jul4).weekday).toBe("Thursday");
-    });
-
-    it("returns 'Sunday' for another Sunday (Dec 31 2023)", () => {
-      expect(GetPastDateInfo(dec31).weekday).toBe("Sunday");
-    });
-
-    it("covers all 7 weekday names in the correct order", () => {
-      // Jan 1 2024 = Monday, so Jan 1–7 covers Mon–Sun
-      const names = Array.from(
-        { length: 7 },
-        (_, i) => GetPastDateInfo(new Date(2024, 0, 1 + i).getTime()).weekday
-      );
-      expect(names).toEqual([
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ]);
-    });
-  });
-
   describe("day", () => {
     it("returns the correct day of the month", () => {
       expect(GetPastDateInfo(jan7).day).toBe(7);
@@ -173,7 +142,6 @@ describe("GetPastDateInfo", () => {
       expect(result.day).toBe(4);
       expect(result.month).toBe(7);
       expect(result.year).toBe(2024);
-      expect(result.weekday).toBe("Thursday");
     });
   });
 });

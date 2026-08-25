@@ -35,16 +35,9 @@ type ReaderFixture = {
 };
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
-    }),
-  };
+  const { mockI18nManager } =
+    await import("../../../unit/seed-bible/testUtils/mockI18n");
+  return mockI18nManager();
 });
 const testBranding: BrandingConfig = {
   appName: "Test App",
@@ -258,7 +251,10 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
-      sync: { pendingCount: signal(0) },
+      sync: {
+        pendingCount: signal(0),
+        pendingCountForChapter: vi.fn(() => 0),
+      },
     },
   } as any as SeedBibleState;
 }
@@ -311,7 +307,10 @@ function createDesktopState(
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
-      sync: { pendingCount: signal(0) },
+      sync: {
+        pendingCount: signal(0),
+        pendingCountForChapter: vi.fn(() => 0),
+      },
     },
   } as any as SeedBibleState;
 }

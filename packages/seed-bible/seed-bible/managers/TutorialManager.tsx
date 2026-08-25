@@ -14,7 +14,7 @@ const TUTORIAL_SEEN_KEY = "sb-tutorial-seen";
 const TUTORIAL_OPTED_OUT_KEY = "sb-tutorial-opted-out";
 const TUTORIAL_FEATURES_KEY = "sb-tutorial-features-seen";
 
-// Stored unprefixed on profile.config (matching `fontSize`, `appInstalled`,
+// Stored unprefixed on profile.config (matching `fontSize`, `lang`,
 // etc.) — the backend record that the user has completed/skipped the tour.
 const PROFILE_TUTORIAL_SEEN = "tutorialSeen";
 const PROFILE_TUTORIAL_OPTED_OUT = "tutorialOptedOut";
@@ -51,6 +51,14 @@ export interface TutorialStep {
    * instead of behind it. Used by contextual tips that fire while a panel is up.
    */
   elevated?: boolean;
+  /**
+   * How the target is picked out. `"spotlight"` (the default) dims the whole
+   * UI around it, which suits a tour that has taken over the screen.
+   * `"glow"` leaves the page alone and rings the target in the accent colour
+   * instead — for a one-off tip about a single small control, where blacking
+   * out the page says more than the tip is worth.
+   */
+  highlight?: "spotlight" | "glow";
 }
 
 /**
@@ -226,6 +234,24 @@ export const CONTEXTUAL_TUTORIALS: Record<string, TutorialStep[]> = {
       bodyDefault:
         "Add a new tab to read several books or translations side by side.",
       placement: "left",
+    },
+  ],
+  "offline-download": [
+    {
+      id: "offline-download",
+      // Fired when the translation list opens, which is the only place the
+      // download control exists. Grouped as "selector" so the selector draws
+      // it: its nodes live in a CasualOS shadow root the generic overlay can't
+      // measure.
+      target: ".sb-offline-btn",
+      titleKey: "tutorial.offlineDownloadTitle",
+      titleDefault: "Tap to keep it on your device",
+      bodyKey: "tutorial.offlineDownloadBody",
+      bodyDefault:
+        "Any translation with this icon can be saved for offline reading.",
+      placement: "bottom",
+      group: "selector",
+      highlight: "glow",
     },
   ],
   search: [

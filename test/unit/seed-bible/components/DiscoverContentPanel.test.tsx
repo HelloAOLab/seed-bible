@@ -99,8 +99,13 @@ function createMockState(
         signal(overrides.annotationsForChapter ?? [])
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
-      sync: { pendingCount: signal(0) },
+      hasRecordOverride: false,
+      sync: {
+        pendingCount: signal(0),
+        pendingCountForChapter: vi.fn(() => 0),
+      },
     },
+    features: { isFeatureEnabled: vi.fn().mockReturnValue(false) },
   } as unknown as SeedBibleState;
 }
 
@@ -120,11 +125,7 @@ describe("DiscoverContentPanel", () => {
   it("renders nothing when there is no tab", () => {
     act(() => {
       render(
-        <DiscoverContentPanel
-          tab={null}
-          state={createMockState()}
-          variant="side"
-        />,
+        <DiscoverContentPanel tab={null} state={createMockState()} />,
         container
       );
     });
@@ -140,11 +141,7 @@ describe("DiscoverContentPanel", () => {
 
     act(() => {
       render(
-        <DiscoverContentPanel
-          tab={tab}
-          state={createMockState()}
-          variant="side"
-        />,
+        <DiscoverContentPanel tab={tab} state={createMockState()} />,
         container
       );
     });
@@ -157,11 +154,7 @@ describe("DiscoverContentPanel", () => {
 
     act(() => {
       render(
-        <DiscoverContentPanel
-          tab={tab}
-          state={createMockState()}
-          variant="side"
-        />,
+        <DiscoverContentPanel tab={tab} state={createMockState()} />,
         container
       );
     });
@@ -169,45 +162,19 @@ describe("DiscoverContentPanel", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("renders the discovered content with the side variant class", () => {
+  it("renders the discovered content", () => {
     const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
 
     act(() => {
       render(
-        <DiscoverContentPanel
-          tab={tab}
-          state={createMockState()}
-          variant="side"
-        />,
+        <DiscoverContentPanel tab={tab} state={createMockState()} />,
         container
       );
     });
 
     const panel = container.querySelector(".sb-discover-content-panel");
-    expect(panel?.classList.contains("sb-discover-content-panel--side")).toBe(
-      true
-    );
+    expect(panel).not.toBeNull();
     expect(container.textContent).toContain("Exodus 5:3");
-  });
-
-  it("renders the discovered content with the inline variant class", () => {
-    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
-
-    act(() => {
-      render(
-        <DiscoverContentPanel
-          tab={tab}
-          state={createMockState()}
-          variant="inline"
-        />,
-        container
-      );
-    });
-
-    const panel = container.querySelector(".sb-discover-content-panel");
-    expect(panel?.classList.contains("sb-discover-content-panel--inline")).toBe(
-      true
-    );
   });
 
   it("renders the tab's notes (annotations) even when there are no other discovered results", () => {
@@ -217,10 +184,7 @@ describe("DiscoverContentPanel", () => {
     });
 
     act(() => {
-      render(
-        <DiscoverContentPanel tab={tab} state={state} variant="side" />,
-        container
-      );
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
     });
 
     expect(
@@ -238,10 +202,7 @@ describe("DiscoverContentPanel", () => {
     const state = createMockState({ annotationsForChapter: [] });
 
     act(() => {
-      render(
-        <DiscoverContentPanel tab={tab} state={state} variant="side" />,
-        container
-      );
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
     });
 
     expect(container.innerHTML).toBe("");

@@ -3,6 +3,7 @@ import {
   parseVerseReferences,
   type VerseRef,
 } from "../managers/BibleDataManager";
+import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { type ComponentChildren, type ComponentProps, type JSX } from "preact";
 import { buildReadingUrl, parseReadingPath } from "../managers/ReadingUrlPath";
 import { uiLocaleForDefaultTranslation } from "../managers/BibleReadingManager";
@@ -79,15 +80,18 @@ export function VerseReferenceLink({
  */
 export function VerseReferenceText({
   text,
+  books,
   onReferenceClick,
 }: {
   text: string;
+  /** Current translation books; used so localized names (e.g. "Esdras") link. */
+  books?: TranslationBook[];
   onReferenceClick?: (
     ref: VerseRef,
     event: JSX.TargetedMouseEvent<HTMLAnchorElement>
   ) => void;
 }) {
-  const matches = parseVerseReferences(text);
+  const matches = parseVerseReferences(text, books);
   if (matches.length === 0) {
     return <>{text}</>;
   }
