@@ -214,6 +214,7 @@ export const CUSTOMIZATION_COLOR_GROUPS: CustomizationColorGroup[] = [
       { key: "sidebarFontColor", label: "Sidebar text" },
       { key: "bookTitleFontColor", label: "Book title" },
       { key: "chapterHeadingFontColor", label: "Chapter heading" },
+      { key: "verseFontColor", label: "Verse" },
       {
         key: "readerToolbarFloatingButtonFontColor",
         label: "Floating button text",

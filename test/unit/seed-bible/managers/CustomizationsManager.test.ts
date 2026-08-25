@@ -242,6 +242,9 @@ describe("CustomizationsManager", () => {
     expect(created.variants[0]?.themes.linkColor).toBe(
       lightThemeVariables.linkColor
     );
+    expect(created.variants[0]?.themes.verseFontColor).toBe(
+      lightThemeVariables.verseFontColor
+    );
     expect(created.variants[0]?.themes.selectedVerseTextDecorationColor).toBe(
       lightThemeVariables.selectedVerseTextDecorationColor
     );
