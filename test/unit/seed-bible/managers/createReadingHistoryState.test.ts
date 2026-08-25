@@ -80,7 +80,48 @@ describe("createReadingHistoryState", () => {
     dispose();
   });
 
-  it("resets to loading on an account switch and ignores the previous user's late result", async () => {
+  // Split from the stale-result test below, where the reset had nothing to
+  // undo: account A's fetch never resolved there, so the state was still
+  // `loading` when the switch happened and the assertion held either way.
+  it("clears the previous account's card while the new account loads", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const dA = deferred<UserLastReading>();
+    const dB = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn((id: string) =>
+      id === "A" ? dA.promise : dB.promise
+    );
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    // A gets all the way to a shown card first, so there is a real position on
+    // screen for the switch to clear.
+    dA.resolve({ bookId: "GEN", chapter: 9 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 9 },
+    });
+
+    // B's fetch is still in flight: until it lands, the screen must not be
+    // showing A's chapter to whoever just signed in.
+    userId.value = "B";
+    expect(readingHistory.value).toEqual({ status: "loading" });
+
+    dB.resolve({ bookId: "JHN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "JHN", chapter: 1 },
+    });
+    dispose();
+  });
+
+  it("ignores the previous account's result when it lands after the switch", async () => {
     const userId = signal<string | null>("A");
     const refetchTrigger = signal(0);
     const dA = deferred<UserLastReading>();
@@ -99,7 +140,6 @@ describe("createReadingHistoryState", () => {
 
     // Switch to a second account before A's fetch resolves.
     userId.value = "B";
-    expect(readingHistory.value).toEqual({ status: "loading" });
 
     // B resolves first and becomes the live state.
     dB.resolve({ bookId: "JHN", chapter: 1 });
