@@ -2313,11 +2313,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </div>
             </div>
           </li>
-          {/* Only a way back from "never ask again": asking is the default, so
-              until someone turns it off there is nothing here to decide. That
-              also fixes the box as unchecked — ticking it restores asking, at
-              which point the row has served its purpose and goes away. */}
-          {state.settings.neverAskToSwitchTranslation.value && (
+          {state.settings.translationSwitchPreference.value !== "ask" && (
             <li>
               <div className="sb-settings-toggle-row">
                 <label
@@ -2333,7 +2329,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                   type="checkbox"
                   checked={false}
                   onChange={() => {
-                    state.settings.setNeverAskToSwitchTranslation(false);
+                    state.settings.setTranslationSwitchPreference("ask");
                   }}
                 />
               </div>

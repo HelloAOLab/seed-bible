@@ -4,6 +4,8 @@ import {
   createI18nManager,
   getPreferredSupportedLanguage,
   type I18nManager,
+  type SettledTranslationSwitch,
+  type TranslationSwitchPreference,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { TranslationWithLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -253,13 +255,15 @@ describe("I18nManager translation switch prompt", () => {
     numberOfBooks: 66,
   } as Translation;
 
-  /** A one-tab, English-text reader who hasn't opted out — should prompt. */
+  /** A one-tab, English-text reader who hasn't settled the question yet. */
   function makeContext() {
     return {
       getVisibleTabCount: vi.fn((): number => 1),
       getSelectedTabBibleLanguage: vi.fn((): string | null => "eng"),
-      hasOptedOut: vi.fn((): boolean => false),
-      saveOptOut: vi.fn(),
+      getSwitchPreference: vi.fn((): TranslationSwitchPreference => "ask"),
+      saveSwitchPreference: vi.fn(
+        (_preference: SettledTranslationSwitch) => {}
+      ),
       openTranslationPicker: vi.fn(),
     };
   }
@@ -330,8 +334,8 @@ describe("I18nManager translation switch prompt", () => {
   // Honoured whether or not anyone is signed in — the context resolves the
   // choice from the profile or the device store, and this layer doesn't care
   // which.
-  it("switches silently for a user who chose never ask again", async () => {
-    context.hasOptedOut.mockReturnValue(true);
+  it("switches silently for a user who settled on always", async () => {
+    context.getSwitchPreference.mockReturnValue("always");
 
     await manager.requestLanguageChange("es");
 
@@ -339,23 +343,75 @@ describe("I18nManager translation switch prompt", () => {
     expect(apply).toHaveBeenCalledWith({ id: "spa_onbv", language: "spa" });
   });
 
-  // Turning "Ask before switching the Bible text" back on in Settings has to
-  // actually bring the prompt back — including for a language that was
-  // silently switched while the opt-out was in force, which must not have been
-  // quietly recorded as already asked.
-  it("asks again once the opt-out is cleared", async () => {
-    context.hasOptedOut.mockReturnValue(true);
+  // The whole point of answering "No, keep reading" and stopping the
+  // questions: neither a dialog nor a switch. Silence here must not be
+  // mistaken for permission.
+  it("leaves the text alone for a user who settled on never", async () => {
+    context.getSwitchPreference.mockReturnValue("never");
 
     await manager.requestLanguageChange("es");
-    expect(manager.translationSwitchPrompt.value).toBeNull();
-    expect(apply).toHaveBeenCalledTimes(1);
 
-    context.hasOptedOut.mockReturnValue(false);
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  // Turning "Ask before switching the Bible text" back on in Settings has to
+  // actually bring the prompt back — including for a language that was
+  // silently switched while the preference was settled, which must not have
+  // been quietly recorded as already asked.
+  it.each(["always", "never"] as const)(
+    "asks again once %s is cleared",
+    async (settled) => {
+      context.getSwitchPreference.mockReturnValue(settled);
+
+      await manager.requestLanguageChange("es");
+      expect(manager.translationSwitchPrompt.value).toBeNull();
+
+      context.getSwitchPreference.mockReturnValue("ask");
+      await manager.requestLanguageChange("es");
+
+      expect(manager.translationSwitchPrompt.value).toEqual(
+        expect.objectContaining({ language: "es" })
+      );
+    }
+  );
+
+  // Asking to be asked again has to outrank "you already answered this one",
+  // or every language settled earlier in the visit would stay silent.
+  it("asks again about an already-answered language once reset", async () => {
+    await manager.requestLanguageChange("es");
+    manager.dismissTranslationSwitch();
+    // Back to English, the way someone would be before opening Settings.
+    await manager.requestLanguageChange("en");
+    await manager.requestLanguageChange("es");
+    expect(manager.translationSwitchPrompt.value).toBeNull();
+    manager.dismissTranslationSwitch();
+    await manager.requestLanguageChange("en");
+
+    manager.resetTranslationSwitchPrompts();
     await manager.requestLanguageChange("es");
 
     expect(manager.translationSwitchPrompt.value).toEqual(
       expect.objectContaining({ language: "es" })
     );
+  });
+
+  // The language on screen at the time is not somewhere the user is moving to,
+  // so a reset must not turn it into a question of its own.
+  it("keeps quiet about the language showing when it was reset", async () => {
+    withCatalog(SPA_COMPLETE, ENG_COMPLETE);
+    context.getSelectedTabBibleLanguage.mockReturnValue("hin");
+    await manager.requestLanguageChange("es");
+    manager.dismissTranslationSwitch();
+
+    // Reset while Spanish is the current language, then come back to it.
+    manager.resetTranslationSwitchPrompts();
+    await manager.requestLanguageChange("en");
+    expect(manager.translationSwitchPrompt.value).not.toBeNull();
+    manager.dismissTranslationSwitch();
+    await manager.requestLanguageChange("es");
+
+    expect(manager.translationSwitchPrompt.value).toBeNull();
   });
 
   // Opening the app in English is not a language *change*, so it never
@@ -536,18 +592,28 @@ describe("I18nManager translation switch prompt", () => {
     expect(manager.translationSwitchNeverAskAgain.value).toBe(true);
   });
 
+  // "Never ask again" means the opposite thing depending on the answer it is
+  // given with. Taking the switch settles on switching from now on; keeping
+  // the current text — or going off to pick one — settles on the text being
+  // left alone, which is the only reading of "No, keep reading" that doesn't
+  // contradict itself.
   it.each([
-    ["confirm", (m: I18nManager) => m.confirmTranslationSwitch],
-    ["choose another", (m: I18nManager) => m.chooseTranslationManually],
-    ["dismiss", (m: I18nManager) => m.dismissTranslationSwitch],
+    ["confirm", (m: I18nManager) => m.confirmTranslationSwitch, "always"],
+    [
+      "choose another",
+      (m: I18nManager) => m.chooseTranslationManually,
+      "never",
+    ],
+    ["dismiss", (m: I18nManager) => m.dismissTranslationSwitch, "never"],
   ] as const)(
-    "saves the never-ask-again choice when answering with %s",
-    async (_label, getAction) => {
+    "answering with %s settles on %s",
+    async (_label, getAction, settled) => {
       await manager.requestLanguageChange("es");
 
       await getAction(manager)();
 
-      expect(context.saveOptOut).toHaveBeenCalledTimes(1);
+      expect(context.saveSwitchPreference).toHaveBeenCalledTimes(1);
+      expect(context.saveSwitchPreference).toHaveBeenCalledWith(settled);
     }
   );
 
@@ -557,13 +623,13 @@ describe("I18nManager translation switch prompt", () => {
     manager.translationSwitchNeverAskAgain.value = false;
     manager.dismissTranslationSwitch();
 
-    expect(context.saveOptOut).not.toHaveBeenCalled();
+    expect(context.saveSwitchPreference).not.toHaveBeenCalled();
   });
 
   it("saves nothing when there was no prompt to answer", () => {
     manager.dismissTranslationSwitch();
 
-    expect(context.saveOptOut).not.toHaveBeenCalled();
+    expect(context.saveSwitchPreference).not.toHaveBeenCalled();
   });
 });
 

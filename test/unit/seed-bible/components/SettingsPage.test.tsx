@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { SettingsPage } from "@packages/seed-bible/seed-bible/components/SettingsPage/SettingsPage";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type { TranslationSwitchPreference } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 // Match the i18n mock used by the other component tests: return the
 // defaultValue (or key) so assertions can rely on the English strings.
@@ -22,8 +23,8 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   };
 });
 
-function createMockState(neverAsk: boolean) {
-  const setNeverAskToSwitchTranslation = vi.fn();
+function createMockState(preference: TranslationSwitchPreference) {
+  const setTranslationSwitchPreference = vi.fn();
   const state = {
     // "" is the no-deep-link case, which lands on the main settings list.
     sidebar: {
@@ -31,8 +32,9 @@ function createMockState(neverAsk: boolean) {
       closeSettings: vi.fn(),
     },
     settings: {
-      neverAskToSwitchTranslation: signal<boolean>(neverAsk),
-      setNeverAskToSwitchTranslation,
+      translationSwitchPreference:
+        signal<TranslationSwitchPreference>(preference),
+      setTranslationSwitchPreference,
     },
     onboarding: {
       installed: signal<boolean>(true),
@@ -40,7 +42,7 @@ function createMockState(neverAsk: boolean) {
     },
     tutorial: { start: vi.fn() },
   } as unknown as SeedBibleState;
-  return { state, setNeverAskToSwitchTranslation };
+  return { state, setTranslationSwitchPreference };
 }
 
 function renderSettings(state: SeedBibleState) {
@@ -58,7 +60,7 @@ function askToggleIn(container: HTMLElement) {
   );
 }
 
-describe("SettingsPage translation-switch opt-out", () => {
+describe("SettingsPage translation-switch preference", () => {
   afterEach(() => {
     document.body.innerHTML = "";
   });
@@ -66,7 +68,7 @@ describe("SettingsPage translation-switch opt-out", () => {
   // Asking is the default, so there is nothing to undo until the user has
   // turned it off from the prompt itself.
   it("hides the toggle while the prompt is still being shown", () => {
-    const { state } = createMockState(false);
+    const { state } = createMockState("ask");
 
     const container = renderSettings(state);
 
@@ -76,19 +78,22 @@ describe("SettingsPage translation-switch opt-out", () => {
     );
   });
 
-  it("offers the toggle once the user has chosen never ask again", () => {
-    const { state } = createMockState(true);
+  it.each(["always", "never"] as const)(
+    "offers the toggle once the user has settled on %s",
+    (preference) => {
+      const { state } = createMockState(preference);
 
-    const container = renderSettings(state);
+      const container = renderSettings(state);
 
-    expect(askToggleIn(container)).not.toBeNull();
-    expect(container.textContent).toContain(
-      "Ask before switching the Bible text"
-    );
-  });
+      expect(askToggleIn(container)).not.toBeNull();
+      expect(container.textContent).toContain(
+        "Ask before switching the Bible text"
+      );
+    }
+  );
 
-  it("clears the opt-out when the toggle is ticked", () => {
-    const { state, setNeverAskToSwitchTranslation } = createMockState(true);
+  it("returns to asking when the toggle is ticked", () => {
+    const { state, setTranslationSwitchPreference } = createMockState("never");
     const container = renderSettings(state);
     const toggle = askToggleIn(container);
 
@@ -98,19 +103,21 @@ describe("SettingsPage translation-switch opt-out", () => {
       toggle!.dispatchEvent(new Event("change", { bubbles: true }));
     });
 
-    expect(setNeverAskToSwitchTranslation).toHaveBeenCalledWith(false);
+    expect(setTranslationSwitchPreference).toHaveBeenCalledWith("ask");
   });
 
   // The row is driven by the signal, not by a local copy of it, so restoring
   // the choice elsewhere (or answering another prompt) keeps it in step.
-  it("drops the toggle again as soon as the opt-out is cleared", () => {
-    const { state } = createMockState(true);
+  it("drops the toggle again as soon as asking is restored", () => {
+    const { state } = createMockState("never");
     const container = renderSettings(state);
     expect(askToggleIn(container)).not.toBeNull();
 
     act(() => {
-      (state.settings.neverAskToSwitchTranslation as Signal<boolean>).value =
-        false;
+      (
+        state.settings
+          .translationSwitchPreference as Signal<TranslationSwitchPreference>
+      ).value = "ask";
     });
 
     expect(askToggleIn(container)).toBeNull();

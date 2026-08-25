@@ -2036,6 +2036,30 @@ describe("createSeedBibleState", () => {
       expect(state.i18n.translationSwitchPrompt.value).toBeNull();
     });
 
+    // The mirror image of the test below, and the reason the preference has to
+    // carry more than "stop asking": someone who kept their text and stopped
+    // the questions asked for their text to be left alone, so switching it for
+    // them afterwards is the one thing they ruled out.
+    it("never switches again once the text was kept with the box ticked", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForInitialLoad(readingState, 1000);
+
+      await state.i18n.requestLanguageChange("hi");
+      expect(state.i18n.translationSwitchNeverAskAgain.value).toBe(true);
+      state.i18n.dismissTranslationSwitch();
+      expect(state.settings.translationSwitchPreference.value).toBe("never");
+      expect(readingState.translationId.value).toBe("AAB");
+
+      await state.i18n.requestLanguageChange("es");
+      await waitForInitialLoad(readingState, 1000);
+
+      expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+      expect(readingState.translationId.value).toBe("AAB");
+    });
+
     // The box is ticked when the prompt opens, so one answer settles the
     // question: from then on a language change moves the text with no dialog.
     it("switches silently once an answer leaves never-ask-again ticked", async () => {
@@ -2050,7 +2074,7 @@ describe("createSeedBibleState", () => {
       await state.i18n.confirmTranslationSwitch();
       await waitForInitialLoad(readingState, 1000);
       expect(readingState.translationId.value).toBe("hin_cvb");
-      expect(state.settings.neverAskToSwitchTranslation.value).toBe(true);
+      expect(state.settings.translationSwitchPreference.value).toBe("always");
 
       // Spanish is a language this session has never been asked about, so only
       // the opt-out can explain both the silence and the switch.
@@ -2138,10 +2162,38 @@ describe("createSeedBibleState", () => {
 
       state.i18n.dismissTranslationSwitch();
 
-      expect(state.settings.neverAskToSwitchTranslation.value).toBe(true);
+      expect(state.settings.translationSwitchPreference.value).toBe("never");
       // A brand-new language would otherwise be a fresh question.
       await state.i18n.requestLanguageChange("gu");
       expect(state.i18n.translationSwitchPrompt.value).toBeNull();
+    });
+
+    // Turning the Settings toggle back on is a request to be asked again, so
+    // it has to override both the opt-out and the languages already answered
+    // this visit — otherwise the toggle would look like it did nothing.
+    it("asks again about an answered language once asking is switched back on", async () => {
+      const state = await createStateWithOptions({
+        responses: createLanguageSwitchResponses(),
+      });
+      const readingState = state.tabs.tabs.value[0]!.readingState;
+      await waitForInitialLoad(readingState, 1000);
+
+      await state.i18n.requestLanguageChange("hi");
+      expect(state.i18n.translationSwitchPrompt.value).not.toBeNull();
+      // Keeping the text with the box ticked settles on "never", and marks
+      // Hindi as answered for the visit.
+      state.i18n.dismissTranslationSwitch();
+      expect(state.settings.translationSwitchPreference.value).toBe("never");
+      await state.i18n.requestLanguageChange("en");
+
+      state.settings.setTranslationSwitchPreference("ask");
+      await state.i18n.requestLanguageChange("hi");
+
+      expect(state.i18n.translationSwitchPrompt.value?.translation.id).toBe(
+        "hin_cvb"
+      );
+      // Still an offer, not a switch.
+      expect(readingState.translationId.value).toBe("AAB");
     });
 
     it("opens the selector's translation list when the user wants to pick themselves", async () => {

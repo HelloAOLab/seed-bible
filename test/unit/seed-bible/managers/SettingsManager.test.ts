@@ -166,7 +166,7 @@ describe("SettingsManager language handling", () => {
   });
 });
 
-describe("SettingsManager never-ask-again for the translation switch prompt", () => {
+describe("SettingsManager translation switch preference", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
   });
@@ -175,23 +175,34 @@ describe("SettingsManager never-ask-again for the translation switch prompt", ()
     return { name: "Test", config } as unknown as UserProfile;
   }
 
-  function optOutFromProfile(login: LoginManager): unknown {
+  function preferenceFromProfile(login: LoginManager): unknown {
     return (login.profile.value as { config?: Record<string, unknown> } | null)
-      ?.config?.translationSwitchOptedOut;
+      ?.config?.translationSwitchPreference;
   }
 
-  it("defaults to false when nothing is saved", () => {
+  it("defaults to asking when nothing is saved", () => {
     const login = makeFakeLogin(profileWithConfig({}));
     const settings = createSettings(CasualOSManager(), login, navWith());
 
-    expect(settings.neverAskToSwitchTranslation.value).toBe(false);
+    expect(settings.translationSwitchPreference.value).toBe("ask");
   });
 
-  it("defaults to false for a signed-out visitor", () => {
+  it("defaults to asking for a signed-out visitor", () => {
     const login = makeFakeLogin(null);
     const settings = createSettings(CasualOSManager(), login, navWith());
 
-    expect(settings.neverAskToSwitchTranslation.value).toBe(false);
+    expect(settings.translationSwitchPreference.value).toBe("ask");
+  });
+
+  // Anything that isn't one of the two settled values means the user has not
+  // settled it — a stale boolean from an earlier build included.
+  it("falls back to asking on a value it does not recognise", () => {
+    const login = makeFakeLogin(
+      profileWithConfig({ translationSwitchPreference: true })
+    );
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.translationSwitchPreference.value).toBe("ask");
   });
 
   // The checkbox is offered signed out too, and `saveProfileConfigValue` puts
@@ -201,88 +212,80 @@ describe("SettingsManager never-ask-again for the translation switch prompt", ()
     const login = makeFakeLogin(null);
     const settings = createSettings(CasualOSManager(), login, navWith());
 
-    settings.setNeverAskToSwitchTranslation(true);
+    settings.setTranslationSwitchPreference("never");
 
-    expect(login.localConfig.value.translationSwitchOptedOut).toBe(true);
-    expect(settings.neverAskToSwitchTranslation.value).toBe(true);
+    expect(login.localConfig.value.translationSwitchPreference).toBe("never");
+    expect(settings.translationSwitchPreference.value).toBe("never");
   });
 
   it("reads a choice already stored on the device", () => {
     const login = makeFakeLogin(null);
-    login.localConfig.value = { translationSwitchOptedOut: true };
+    login.localConfig.value = { translationSwitchPreference: "always" };
     const settings = createSettings(CasualOSManager(), login, navWith());
 
-    expect(settings.neverAskToSwitchTranslation.value).toBe(true);
+    expect(settings.translationSwitchPreference.value).toBe("always");
   });
 
   // Same precedence as every other setting: the account's answer beats
   // whatever this particular device happens to remember.
   it("lets the profile override a stale device value", () => {
     const login = makeFakeLogin(
-      profileWithConfig({ translationSwitchOptedOut: false })
+      profileWithConfig({ translationSwitchPreference: "never" })
     );
-    login.localConfig.value = { translationSwitchOptedOut: true };
+    login.localConfig.value = { translationSwitchPreference: "always" };
     const settings = createSettings(CasualOSManager(), login, navWith());
 
-    expect(settings.neverAskToSwitchTranslation.value).toBe(false);
+    expect(settings.translationSwitchPreference.value).toBe("never");
   });
 
-  it("reads a saved opt-out from the profile", () => {
-    const login = makeFakeLogin(
-      profileWithConfig({ translationSwitchOptedOut: true })
-    );
-    const settings = createSettings(CasualOSManager(), login, navWith());
+  it.each(["always", "never"] as const)(
+    "reads a saved %s from the profile",
+    (preference) => {
+      const login = makeFakeLogin(
+        profileWithConfig({ translationSwitchPreference: preference })
+      );
+      const settings = createSettings(CasualOSManager(), login, navWith());
 
-    expect(settings.neverAskToSwitchTranslation.value).toBe(true);
-  });
+      expect(settings.translationSwitchPreference.value).toBe(preference);
+    }
+  );
 
-  // Profile config round-trips through JSON in some paths, so a stringified
-  // boolean has to count too.
-  it("accepts a stringified true from the profile", () => {
-    const login = makeFakeLogin(
-      profileWithConfig({ translationSwitchOptedOut: "true" })
-    );
-    const settings = createSettings(CasualOSManager(), login, navWith());
-
-    expect(settings.neverAskToSwitchTranslation.value).toBe(true);
-  });
-
-  it("saves the opt-out to the profile and reflects it back", () => {
+  it("saves the choice to the profile and reflects it back", () => {
     const login = makeFakeLogin(profileWithConfig({}));
     const settings = createSettings(CasualOSManager(), login, navWith());
 
-    settings.setNeverAskToSwitchTranslation(true);
+    settings.setTranslationSwitchPreference("always");
 
-    expect(optOutFromProfile(login)).toBe(true);
-    expect(settings.neverAskToSwitchTranslation.value).toBe(true);
+    expect(preferenceFromProfile(login)).toBe("always");
+    expect(settings.translationSwitchPreference.value).toBe("always");
   });
 
   // The way back out. Without this the checkbox is a one-way door: it lives on
   // the profile, so neither signing out nor resetToDefaults clears it.
-  it("clears a saved opt-out again", () => {
+  it("returns to asking again", () => {
     const login = makeFakeLogin(
-      profileWithConfig({ translationSwitchOptedOut: true })
+      profileWithConfig({ translationSwitchPreference: "never" })
     );
     const settings = createSettings(CasualOSManager(), login, navWith());
-    expect(settings.neverAskToSwitchTranslation.value).toBe(true);
+    expect(settings.translationSwitchPreference.value).toBe("never");
 
-    settings.setNeverAskToSwitchTranslation(false);
+    settings.setTranslationSwitchPreference("ask");
 
-    expect(optOutFromProfile(login)).toBe(false);
-    expect(settings.neverAskToSwitchTranslation.value).toBe(false);
+    expect(preferenceFromProfile(login)).toBe("ask");
+    expect(settings.translationSwitchPreference.value).toBe("ask");
   });
 
-  // It's an opt-out flag, not a display setting — a settings reset must not
+  // It's a settled choice, not a display setting — a settings reset must not
   // silently start nagging the user again.
   it("survives resetToDefaults", () => {
     const login = makeFakeLogin(
-      profileWithConfig({ translationSwitchOptedOut: true })
+      profileWithConfig({ translationSwitchPreference: "never" })
     );
     const settings = createSettings(CasualOSManager(), login, navWith());
 
     settings.resetToDefaults();
 
-    expect(settings.neverAskToSwitchTranslation.value).toBe(true);
+    expect(settings.translationSwitchPreference.value).toBe("never");
   });
 });
 

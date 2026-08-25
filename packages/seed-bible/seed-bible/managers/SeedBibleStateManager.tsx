@@ -2156,8 +2156,9 @@ export function createSeedBibleState(
         bibleLanguageForDefaultTranslation(translationId)
       );
     },
-    hasOptedOut: () => settings.neverAskToSwitchTranslation.peek(),
-    saveOptOut: () => settings.setNeverAskToSwitchTranslation(true),
+    getSwitchPreference: () => settings.translationSwitchPreference.peek(),
+    saveSwitchPreference: (preference) =>
+      settings.setTranslationSwitchPreference(preference),
     openTranslationPicker: (prompt) => {
       const targetSlot =
         tabsLayout.slots
@@ -2178,6 +2179,16 @@ export function createSeedBibleState(
         }
       });
     },
+  });
+
+  let lastTranslationSwitchPreference =
+    settings.translationSwitchPreference.peek();
+  effect(() => {
+    const preference = settings.translationSwitchPreference.value;
+    if (lastTranslationSwitchPreference !== "ask" && preference === "ask") {
+      i18n.resetTranslationSwitchPrompts();
+    }
+    lastTranslationSwitchPreference = preference;
   });
 
   setupExtensionContext(state);

@@ -6,6 +6,7 @@ import {
   type Signal,
 } from "@preact/signals";
 import i18n from "i18next";
+import type { TranslationSwitchPreference } from "../i18n/I18nManager";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -252,7 +253,7 @@ const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
 const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
-const PROFILE_TRANSLATION_SWITCH_OPT_OUT = "translationSwitchOptedOut";
+const PROFILE_TRANSLATION_SWITCH_PREFERENCE = "translationSwitchPreference";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -707,8 +708,10 @@ export interface SettingsManager {
    * sync effect (which would just write the value straight back).
    */
   persistLanguage: (language: string) => void;
-  neverAskToSwitchTranslation: ReadonlySignal<boolean>;
-  setNeverAskToSwitchTranslation: (value: boolean) => void;
+  translationSwitchPreference: ReadonlySignal<TranslationSwitchPreference>;
+  setTranslationSwitchPreference: (
+    preference: TranslationSwitchPreference
+  ) => void;
   setBookOrientation: (orientation: BookOrientation) => void;
   setUISize: (size: UISize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
@@ -893,20 +896,24 @@ export function createSettings(
     void saveProfileConfigValue(login, "lang", language);
   };
 
-  const neverAskToSwitchTranslation = computed<boolean>(() => {
-    const stored =
-      getProfileConfigValue(
-        login.profile.value,
-        PROFILE_TRANSLATION_SWITCH_OPT_OUT
-      ) ?? login.localConfig.value[PROFILE_TRANSLATION_SWITCH_OPT_OUT];
-    return stored === true || stored === "true";
-  });
+  const translationSwitchPreference = computed<TranslationSwitchPreference>(
+    () => {
+      const stored =
+        getProfileConfigValue(
+          login.profile.value,
+          PROFILE_TRANSLATION_SWITCH_PREFERENCE
+        ) ?? login.localConfig.value[PROFILE_TRANSLATION_SWITCH_PREFERENCE];
+      return stored === "always" || stored === "never" ? stored : "ask";
+    }
+  );
 
-  const setNeverAskToSwitchTranslation = (value: boolean) => {
+  const setTranslationSwitchPreference = (
+    preference: TranslationSwitchPreference
+  ) => {
     void saveProfileConfigValue(
       login,
-      PROFILE_TRANSLATION_SWITCH_OPT_OUT,
-      value
+      PROFILE_TRANSLATION_SWITCH_PREFERENCE,
+      preference
     );
   };
 
@@ -1201,8 +1208,8 @@ export function createSettings(
     setFontSize,
     setDisablePanels,
     persistLanguage,
-    neverAskToSwitchTranslation,
-    setNeverAskToSwitchTranslation,
+    translationSwitchPreference,
+    setTranslationSwitchPreference,
     setBookOrientation,
     setUISize: setUISize,
     setSelectionUI,

@@ -186,10 +186,22 @@ export type TranslationSwitchPrompt = {
 export type TranslationSwitchPromptContext = {
   getVisibleTabCount: () => number;
   getSelectedTabBibleLanguage: () => string | null;
-  hasOptedOut: () => boolean;
-  saveOptOut: () => void;
+  getSwitchPreference: () => TranslationSwitchPreference;
+  saveSwitchPreference: (preference: SettledTranslationSwitch) => void;
   openTranslationPicker: (prompt: TranslationSwitchPrompt) => void;
 };
+
+/**
+ * What "never ask again" settled on, which depends on the answer it was given
+ * with. Saying yes to the switch and then stopping the questions means "just
+ * switch it from now on"; saying no means the opposite, and the user's text
+ * must be left alone. One flag can't carry both, so the preference records
+ * which.
+ */
+export type SettledTranslationSwitch = "always" | "never";
+
+/** `"ask"` — the default — is the un-settled state that raises the prompt. */
+export type TranslationSwitchPreference = SettledTranslationSwitch | "ask";
 
 export function createI18nManager(
   navigation: NavigationManager,
@@ -330,6 +342,20 @@ export function createI18nManager(
 
   const promptedLanguages = new Set<string>([defaultLanguage]);
 
+  /**
+   * Forgets which languages have already been asked about, so every one of
+   * them can raise the prompt again. Turning asking back on is a request to be
+   * asked, and that has to outrank "you have answered this before" — otherwise
+   * the languages the user had already settled would stay silent forever.
+   *
+   * The language currently on screen is kept on the list: the user is reading
+   * in it rather than moving to it, so there is nothing to offer.
+   */
+  const resetTranslationSwitchPrompts = () => {
+    promptedLanguages.clear();
+    promptedLanguages.add(language.peek());
+  };
+
   const changeLanguage = i18n.changeLanguage.bind(i18n);
 
   /**
@@ -394,8 +420,16 @@ export function createI18nManager(
     languageFallbackPrompt.value = null;
 
     const context = translationSwitchContext;
-    if (!context || context.hasOptedOut()) {
+    if (!context) {
       await applyBibleTranslation?.(nearest.translation);
+      return;
+    }
+    const preference = context.getSwitchPreference();
+    if (preference === "always") {
+      await applyBibleTranslation?.(nearest.translation);
+      return;
+    }
+    if (preference === "never") {
       return;
     }
 
@@ -409,20 +443,28 @@ export function createI18nManager(
     translationSwitchPrompt.value = prompt;
   };
 
-  const answerTranslationSwitchPrompt = (): TranslationSwitchPrompt | null => {
+  /**
+   * Answers the open prompt and hands back its payload. `settles` is what
+   * "never ask again" should mean for the answer being given — taking the
+   * switch settles on switching from now on, while keeping the current text
+   * settles on leaving it alone.
+   */
+  const answerTranslationSwitchPrompt = (
+    settles: SettledTranslationSwitch
+  ): TranslationSwitchPrompt | null => {
     const prompt = translationSwitchPrompt.value;
     if (!prompt) {
       return null;
     }
     if (translationSwitchNeverAskAgain.peek()) {
-      translationSwitchContext?.saveOptOut();
+      translationSwitchContext?.saveSwitchPreference(settles);
     }
     translationSwitchPrompt.value = null;
     return prompt;
   };
 
   const confirmTranslationSwitch = async () => {
-    const prompt = answerTranslationSwitchPrompt();
+    const prompt = answerTranslationSwitchPrompt("always");
     if (!prompt) {
       return;
     }
@@ -430,7 +472,7 @@ export function createI18nManager(
   };
 
   const chooseTranslationManually = () => {
-    const prompt = answerTranslationSwitchPrompt();
+    const prompt = answerTranslationSwitchPrompt("never");
     if (!prompt) {
       return;
     }
@@ -438,7 +480,7 @@ export function createI18nManager(
   };
 
   const dismissTranslationSwitch = () => {
-    answerTranslationSwitchPrompt();
+    answerTranslationSwitchPrompt("never");
   };
 
   const requestLanguageChange = async (nextLanguage: string) => {
@@ -475,6 +517,7 @@ export function createI18nManager(
     setBibleTranslationApplicator,
     setLanguagePersister,
     setTranslationSwitchPromptContext,
+    resetTranslationSwitchPrompts,
     languageFallbackPrompt,
     translationSwitchPrompt,
     translationSwitchNeverAskAgain,
