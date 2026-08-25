@@ -179,6 +179,55 @@ describe("loadDailyReadingHistory", () => {
     expect(Object.keys(result.total.users).sort()).toEqual(["u1", "u2"]);
   });
 
+  // Summarizing a year of history is enough work to drop frames if it runs in
+  // one go, so the loop hands the main thread back every `yieldEvery` days.
+  // "Hands back" means a real turn of the event loop, not a microtask — that
+  // is what lets a click or a paint in between actually run.
+  it("summarizes in batches, giving the main thread a turn between them", async () => {
+    const dayKeys = Array.from({ length: 6 }, (_, index) => `d${index}`);
+    const fetchEvents = fetcherReturning({
+      u1: dayKeys.map((_key, index) =>
+        event({ start: START + index * DAY, end: START + index * DAY + 600 })
+      ),
+    });
+
+    // Counts the turns of the event loop that other work gets while the
+    // summary runs, using a task that reschedules itself. It can only run when
+    // the summary has actually handed the thread back.
+    const turnsDuring = async (yieldEvery: number) => {
+      let turns = 0;
+      let running = true;
+      let timer: ReturnType<typeof setTimeout>;
+      const tick = () => {
+        turns++;
+        if (running) {
+          timer = setTimeout(tick, 0);
+        }
+      };
+      timer = setTimeout(tick, 0);
+
+      await loadDailyReadingHistory({
+        fetchEvents,
+        readerIds: ["u1"],
+        dayKeys,
+        startSeconds: START,
+        endSeconds: START + 6 * DAY,
+        yieldEvery,
+      });
+
+      running = false;
+      clearTimeout(timer);
+      return turns;
+    };
+
+    // Six days in batches of two: a turn between each batch, plus the one the
+    // function always takes before returning.
+    expect(await turnsDuring(2)).toBe(4);
+    // The same six days summarized in a single batch only take that last turn,
+    // so the count above is measuring the batching and not a fixed overhead.
+    expect(await turnsDuring(1000)).toBe(1);
+  });
+
   it("rejects when a reader's fetch fails, rather than reporting partial data", async () => {
     const fetchEvents = vi.fn(async (readerId: string) => {
       if (readerId === "u2") throw new Error("network");

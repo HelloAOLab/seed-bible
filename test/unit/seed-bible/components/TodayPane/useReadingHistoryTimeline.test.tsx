@@ -622,7 +622,7 @@ describe("useReadingHistoryTimeline", () => {
       expect(dayZero.style.background).toBe("#abc");
     });
 
-    it("yields to the main thread while summarizing many days", async () => {
+    it("colours every day of a range too large to summarize in one batch", async () => {
       const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) =>
           Array.from({ length: 30 }, (_, i) => ({
@@ -633,7 +633,10 @@ describe("useReadingHistoryTimeline", () => {
             userId: "u1",
           }))
       );
-      // A full-year range gives enough distinct days to cross the 30-iteration yield.
+      // A full-year range gives enough distinct days to cross the 30-day batch
+      // `loadDailyReadingHistory` yields on, so the summary arrives in more
+      // than one turn of the event loop. Every day still has to be coloured —
+      // a batch dropped along the way would leave a gap on the timeline.
       const result = setup(
         { userFilters: new Map([["u1", true]]), year: 2026 },
         { getReadingHistoryEvents }
@@ -643,7 +646,10 @@ describe("useReadingHistoryTimeline", () => {
         await vi.advanceTimersByTimeAsync(100);
       });
 
-      expect(items(result).length).toBeGreaterThan(0);
+      const coloured = items(result).filter(
+        (item) => item.style.background === "#abc"
+      );
+      expect(coloured).toHaveLength(30);
     });
 
     it("warns when fetching reading events fails", async () => {
