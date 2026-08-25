@@ -1,5 +1,6 @@
 import type { TabernaclePieceKey } from "./piece";
 
+// EXPERIENCE_KEYS duplicated in packages/house-of-the-lord/experience.ts — separate runtimes, keep in sync.
 export const EXPERIENCE_KEYS = {
   TABERNACLE: "tabernacle",
 } as const;

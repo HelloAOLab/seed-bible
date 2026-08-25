@@ -1,3 +1,4 @@
+// Duplicate of patterns/house-of-the-lord/.../verseReference/referenceMap.tsx — separate runtimes, keep in sync.
 import {
   EXPERIENCE_KEYS,
   type ExperienceKey,

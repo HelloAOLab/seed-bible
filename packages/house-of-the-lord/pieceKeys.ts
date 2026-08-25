@@ -1,3 +1,4 @@
+// Duplicate of TABERNACLE_PIECE_KEYS in patterns/house-of-the-lord/.../domain/models/piece.tsx — separate runtimes, keep in sync.
 export const TABERNACLE_PIECE_KEYS = {
   ALTAR_OF_SACRIFICE: "altar-of-sacrifice",
   ARK_OF_COVENANT: "ark-of-covenant",

@@ -1,3 +1,4 @@
+// Duplicate of packages/house-of-the-lord/referenceMap.ts — separate runtimes, keep in sync.
 import type { VerseReferenceMap } from "../../../domain/models/scripture";
 import { EXPERIENCE_KEYS } from "../../../domain/models/experience";
 import { TABERNACLE_PIECE_KEYS } from "../../../domain/models/piece";

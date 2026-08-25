@@ -1,3 +1,4 @@
+// TABERNACLE_PIECE_KEYS duplicated in packages/house-of-the-lord/pieceKeys.ts — separate runtimes, keep in sync.
 export const TABERNACLE_PIECE_KEYS = {
   ALTAR_OF_SACRIFICE: "altar-of-sacrifice",
   ARK_OF_COVENANT: "ark-of-covenant",
