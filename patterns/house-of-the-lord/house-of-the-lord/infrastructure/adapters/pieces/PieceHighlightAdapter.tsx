@@ -177,6 +177,7 @@ export class PieceHighlightAdapter
         duration: BLINK_DURATION / 2,
         easing,
         tagMaskSpace: false,
+        ignoreCancellation: true,
       })
         .then(() =>
           AnimateStrictTag(cone, "formOpacity", {
@@ -184,6 +185,7 @@ export class PieceHighlightAdapter
             duration: BLINK_DURATION / 2,
             easing,
             tagMaskSpace: false,
+            ignoreCancellation: true,
           })
         )
         .finally(() => destroy([cone]));
