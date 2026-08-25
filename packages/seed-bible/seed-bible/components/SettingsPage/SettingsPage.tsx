@@ -55,7 +55,6 @@ import {
 import { useEffect, useRef } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
-import type { CustomizationColorKey } from "../../managers/CustomizationsManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -2019,13 +2018,13 @@ function SettingsVersionFooter() {
 }
 
 const CUSTOMIZATION_COLOR_FIELDS: {
-  key: CustomizationColorKey;
+  key: ThemeColorKey;
   label: string;
 }[] = [
   { key: "primaryColor", label: "Primary" },
   { key: "secondaryColor", label: "Secondary" },
   { key: "tertiaryColor", label: "Tertiary" },
-  { key: "textColor", label: "Text" },
+  { key: "fontColor", label: "Text" },
 ];
 
 function CustomizationsSettingsView(props: { state: SeedBibleState }) {
@@ -2089,17 +2088,17 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
                   >
                     <span
                       className="sb-customization-swatch"
-                      style={{ background: customization.colors.primaryColor }}
+                      style={{ background: customization.themes.primaryColor }}
                     />
                     <span
                       className="sb-customization-swatch"
                       style={{
-                        background: customization.colors.secondaryColor,
+                        background: customization.themes.secondaryColor,
                       }}
                     />
                     <span
                       className="sb-customization-swatch"
-                      style={{ background: customization.colors.tertiaryColor }}
+                      style={{ background: customization.themes.tertiaryColor }}
                     />
                   </span>
                   <span className="sb-settings-nav-label">
@@ -2275,7 +2274,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
 
         <ul className="sb-theme-colors-list">
           {CUSTOMIZATION_COLOR_FIELDS.map((field) => {
-            const value = record.colors[field.key] ?? "";
+            const value = record.themes[field.key] ?? "";
             const label = t(`customization-${field.key}`, {
               defaultValue: field.label,
             });

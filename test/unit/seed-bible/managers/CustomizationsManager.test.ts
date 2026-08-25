@@ -117,7 +117,7 @@ describe("CustomizationsManager", () => {
           data: {
             id: "customization_good",
             name: "Good",
-            colors: {},
+            themes: {},
             active: false,
             createdAt: 1,
             updatedAt: 1,
@@ -143,16 +143,17 @@ describe("CustomizationsManager", () => {
     const created = await manager.create();
 
     expect(created.active).toBe(false);
-    expect(created.colors).toEqual({
+    expect(created.themes).toEqual({
       primaryColor: lightThemeVariables.primaryColor,
       secondaryColor: lightThemeVariables.secondaryColor,
       tertiaryColor: lightThemeVariables.tertiaryColor,
-      textColor: lightThemeVariables.fontColor,
+      fontColor: lightThemeVariables.fontColor,
     });
     expect(recordDataMock).toHaveBeenCalledWith("user-1", created.id, created, {
       marker: CUSTOMIZATION_MARKER,
     });
     expect(manager.customizations.value).toEqual([created]);
+    expect(manager.activeThemeOverrides.value).toEqual({});
     expect(theme.customOverrides.value).toEqual({});
   });
 
@@ -163,29 +164,35 @@ describe("CustomizationsManager", () => {
 
     await manager.setColor(created.id, "primaryColor", "#123456");
 
-    expect(manager.customizations.value[0]?.colors.primaryColor).toBe(
+    expect(manager.customizations.value[0]?.themes.primaryColor).toBe(
       "#123456"
     );
+    expect(manager.activeThemeOverrides.value.primaryColor).toBeUndefined();
     expect(theme.customOverrides.value.primaryColor).toBeUndefined();
   });
 
-  it("setActive() applies all four mapped colors to the live theme", async () => {
+  it("setActive() applies the customization's colors to the live theme without persisting them to the user's theme settings", async () => {
     const theme = createTheme(settings);
     const manager = createCustomizationsManager(os, login, theme);
     const originalSecondaryColor =
       theme.currentTheme.value.variables.secondaryColor;
     const created = await manager.create();
     await manager.setColor(created.id, "primaryColor", "#111111");
-    await manager.setColor(created.id, "textColor", "#222222");
+    await manager.setColor(created.id, "fontColor", "#222222");
 
     await manager.setActive(created.id);
 
     expect(manager.customizations.value[0]?.active).toBe(true);
-    expect(theme.customOverrides.value.primaryColor).toBe("#111111");
-    expect(theme.customOverrides.value.fontColor).toBe("#222222");
-    expect(theme.customOverrides.value.secondaryColor).toBe(
+    expect(manager.activeThemeOverrides.value.primaryColor).toBe("#111111");
+    expect(manager.activeThemeOverrides.value.fontColor).toBe("#222222");
+    expect(manager.activeThemeOverrides.value.secondaryColor).toBe(
       originalSecondaryColor
     );
+    // Regression check: activating a customization must never write into the
+    // user's persisted, settings-backed theme overrides — only refreshing
+    // this in-memory signal. Fails on the pre-fix code, which called
+    // `theme.setCustomColor(...)` here.
+    expect(theme.customOverrides.value).toEqual({});
   });
 
   it("setActive() deactivates the previously active customization", async () => {
@@ -207,7 +214,7 @@ describe("CustomizationsManager", () => {
     expect(secondNow?.active).toBe(true);
   });
 
-  it("setColor() on the active customization also previews the change live", async () => {
+  it("setColor() on the active customization also previews the change live, without persisting it", async () => {
     const theme = createTheme(settings);
     const manager = createCustomizationsManager(os, login, theme);
     const created = await manager.create();
@@ -215,10 +222,11 @@ describe("CustomizationsManager", () => {
 
     await manager.setColor(created.id, "secondaryColor", "#abcdef");
 
-    expect(theme.customOverrides.value.secondaryColor).toBe("#abcdef");
+    expect(manager.activeThemeOverrides.value.secondaryColor).toBe("#abcdef");
+    expect(theme.customOverrides.value.secondaryColor).toBeUndefined();
   });
 
-  it("deactivate() resets the live theme's mapped colors", async () => {
+  it("deactivate() resets the live theme's overrides", async () => {
     const theme = createTheme(settings);
     const manager = createCustomizationsManager(os, login, theme);
     const created = await manager.create();
@@ -227,6 +235,7 @@ describe("CustomizationsManager", () => {
     await manager.deactivate(created.id);
 
     expect(manager.customizations.value[0]?.active).toBe(false);
+    expect(manager.activeThemeOverrides.value).toEqual({});
     expect(theme.customOverrides.value).toEqual({});
   });
 
@@ -240,6 +249,7 @@ describe("CustomizationsManager", () => {
 
     expect(eraseDataMock).toHaveBeenCalledWith("user-1", created.id);
     expect(manager.customizations.value).toEqual([]);
+    expect(manager.activeThemeOverrides.value).toEqual({});
     expect(theme.customOverrides.value).toEqual({});
   });
 

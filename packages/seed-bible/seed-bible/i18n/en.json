@@ -132,7 +132,7 @@
   "customization-primaryColor": "Primary",
   "customization-secondaryColor": "Secondary",
   "customization-tertiaryColor": "Tertiary",
-  "customization-textColor": "Text",
+  "customization-fontColor": "Text",
   "set-as-active": "Set as active",
   "deactivate": "Deactivate",
   "delete-customization": "Delete",

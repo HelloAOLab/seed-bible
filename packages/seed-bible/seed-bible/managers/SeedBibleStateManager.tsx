@@ -630,7 +630,22 @@ export function createSeedBibleState(
   const readingPlans = createReadingPlansManager(os, login);
 
   const { currentTheme } = themeManager;
-  const theme = computed(() => currentTheme.value);
+  // Layers the active Customization's colors on top of the user's real,
+  // persisted theme — session-only, since `activeThemeOverrides` is derived
+  // from in-memory customization data, never written to `SettingsManager`.
+  // `themeManager.currentTheme` itself (exposed as `state.theme.currentTheme`)
+  // stays unblended so Display & Theme settings keep showing/editing the
+  // user's actual theme, decoupled from whichever Customization is active.
+  const theme = computed(() => {
+    const overrides = customizations.activeThemeOverrides.value;
+    if (Object.keys(overrides).length === 0) {
+      return currentTheme.value;
+    }
+    return {
+      ...currentTheme.value,
+      variables: { ...currentTheme.value.variables, ...overrides },
+    };
+  });
   const themeCssVariables = computed(() =>
     generateThemeCssVariables(theme.value)
   );

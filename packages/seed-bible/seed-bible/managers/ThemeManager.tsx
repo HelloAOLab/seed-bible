@@ -958,7 +958,7 @@ export const DEFAULT_HIGHLIGHT_IDS = [
 
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
 
-type ThemeOverrides = Partial<Record<ThemeColorKey, string>>;
+export type ThemeOverrides = Partial<Record<ThemeColorKey, string>>;
 type HighlightOverrides = Record<string, Partial<ThemeHighlightColor>>;
 
 const THEME_COLOR_KEYS: ThemeColorKey[] = THEME_COLOR_GROUPS.flatMap((group) =>
@@ -986,7 +986,7 @@ function applyHighlightOverrides(
  * raw `Record<string, string>` (it doesn't know about `ThemeColorKey`); this
  * is the theme-domain validation layered on top of that generic storage.
  */
-function filterValidColorOverrides(
+export function filterValidColorOverrides(
   raw: Record<string, string>
 ): ThemeOverrides {
   const overrides: ThemeOverrides = {};
