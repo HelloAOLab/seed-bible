@@ -46,7 +46,6 @@ import {
   sessionRoleRank,
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
-import { getExtensionExports } from "../../managers";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 
 interface SidebarProps {
