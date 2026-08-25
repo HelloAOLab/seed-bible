@@ -155,86 +155,88 @@ function MainContent(props: {
           themeCssVariables={theme.themeCssVariables}
           themeCssClasses={theme.themeCssClasses}
         />
-        {state.app.isAboutPage.value ? (
-          <AboutPage state={state} />
-        ) : (
-          <>
-            <Sidebar state={state} />
+        <Sidebar state={state} />
 
-            <div className="sb-content-row">
-              <main className="sb-main-content">
-                <TabsLayout state={state} />
-              </main>
-              {sidePane && <SidePane state={state} pane={sidePane} />}
-              {fullscreenPane && (
-                <FullscreenPane state={state} pane={fullscreenPane} />
-              )}
+        <div className="sb-content-row">
+          <main className="sb-main-content">
+            <TabsLayout state={state} />
+          </main>
+          {sidePane && <SidePane state={state} pane={sidePane} />}
+          {fullscreenPane && (
+            <FullscreenPane state={state} pane={fullscreenPane} />
+          )}
+          {state.app.isAboutPage.value && (
+            <div
+              className="sb-pane-shell sb-pane-shell-detached"
+              data-placement="fullscreen"
+            >
+              <AboutPage state={state} />
             </div>
+          )}
+        </div>
 
-            <PaneLayout state={state} />
+        <PaneLayout state={state} />
 
-            <ToastHost app={state.app} />
+        <ToastHost app={state.app} />
 
-            {/* The selector draws its own tour spotlight/popover internally
+        {/* The selector draws its own tour spotlight/popover internally
               (CSS dim toggled off the tutorial signals), since its elements
               live in this portal's shadow root and can't be measured from
               the main tour overlay. */}
-            <BibleSelector
-              className={`${webkitClass}`}
-              isOpen={selector.isOpen.value}
-              onClose={() => selector.setOpen(false)}
-              app={state.app}
-              selectorState={selector}
-              bibleDataManager={state.bibleData}
-              tutorial={state.tutorial}
-            />
+        <BibleSelector
+          className={`${webkitClass}`}
+          isOpen={selector.isOpen.value}
+          onClose={() => selector.setOpen(false)}
+          app={state.app}
+          selectorState={selector}
+          bibleDataManager={state.bibleData}
+          tutorial={state.tutorial}
+        />
 
-            <FloatingReaderPanels state={state} />
+        <FloatingReaderPanels state={state} />
 
-            <BibleReaderToolbar state={state} />
+        <BibleReaderToolbar state={state} />
 
-            <SharedSessionsToasts state={state} />
+        <SharedSessionsToasts state={state} />
 
-            <ModalHost manager={state.modals} />
+        <ModalHost manager={state.modals} />
 
-            <LoginModal login={state.login} navigation={state.navigation} />
+        <LoginModal login={state.login} navigation={state.navigation} />
 
-            <TermsOfServiceModal
-              isOpen={state.isTermsOpen.value}
-              onClose={() => state.closeTerms()}
-            />
+        <TermsOfServiceModal
+          isOpen={state.isTermsOpen.value}
+          onClose={() => state.closeTerms()}
+        />
 
-            <PrivacyPolicyModal
-              isOpen={state.isPrivacyOpen.value}
-              onClose={() => state.closePrivacy()}
-            />
+        <PrivacyPolicyModal
+          isOpen={state.isPrivacyOpen.value}
+          onClose={() => state.closePrivacy()}
+        />
 
-            <CodeOfConductModal
-              isOpen={state.isCodeOfConductOpen.value}
-              onClose={() => state.closeCodeOfConduct()}
-            />
+        <CodeOfConductModal
+          isOpen={state.isCodeOfConductOpen.value}
+          onClose={() => state.closeCodeOfConduct()}
+        />
 
-            <OnboardingModals
-              onboarding={state.onboarding}
-              os={state.os}
-              toast={state.app.toast}
-              className={`${webkitClass}`}
-            />
+        <OnboardingModals
+          onboarding={state.onboarding}
+          os={state.os}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
 
-            <TutorialPrompt
-              tutorial={state.tutorial}
-              className={`${webkitClass}`}
-            />
+        <TutorialPrompt
+          tutorial={state.tutorial}
+          className={`${webkitClass}`}
+        />
 
-            <Tutorial
-              tutorial={state.tutorial}
-              className={`${webkitClass}`}
-              groupFilter="non-selector"
-            />
+        <Tutorial
+          tutorial={state.tutorial}
+          className={`${webkitClass}`}
+          groupFilter="non-selector"
+        />
 
-            <LanguageUnavailableModal className={`${webkitClass}`} />
-          </>
-        )}
+        <LanguageUnavailableModal className={`${webkitClass}`} />
       </div>
     </>
   );
