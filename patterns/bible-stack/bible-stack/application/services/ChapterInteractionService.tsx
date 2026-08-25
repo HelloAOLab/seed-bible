@@ -1,0 +1,138 @@
+import { type Piece } from "../../domain/models/canvas";
+import type {
+  ChapterDataRepositoryPort,
+  ChapterNavigationServicePort,
+  UserPresenceServicePort,
+} from "../ports/chapters";
+import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
+import {
+  HighlightRequestSources,
+  HighlightPacings,
+  UnhighlightRequestSources,
+} from "../../domain/models/pieces";
+import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
+import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
+import type { PaintPort } from "../ports/in/Paint";
+
+interface ServiceParams {
+  chapterDataRepositoryPort: ChapterDataRepositoryPort;
+  pieceHierarchyServicePort: PieceHierarchyServicePort;
+  chapterSelectionServicePort: ChapterSelectionPort;
+  pieceHighlighterPort: PieceHighlighterPort;
+  chapterNavigationServicePort: ChapterNavigationServicePort;
+  userPresenceServicePort: UserPresenceServicePort;
+  paintPort: PaintPort;
+}
+
+export class ChapterInteractionService implements ChapterInteractionServicePort {
+  #chapterDataRepositoryPort: ServiceParams["chapterDataRepositoryPort"];
+  #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
+  #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
+  #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
+  #chapterNavigationServicePort: ServiceParams["chapterNavigationServicePort"];
+  #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
+  #paintPort: ServiceParams["paintPort"];
+
+  constructor({
+    chapterDataRepositoryPort,
+    pieceHierarchyServicePort,
+    chapterSelectionServicePort,
+    pieceHighlighterPort,
+    chapterNavigationServicePort,
+    userPresenceServicePort,
+    paintPort,
+  }: ServiceParams) {
+    this.#chapterDataRepositoryPort = chapterDataRepositoryPort;
+    this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
+    this.#chapterSelectionServicePort = chapterSelectionServicePort;
+    this.#pieceHighlighterPort = pieceHighlighterPort;
+    this.#chapterNavigationServicePort = chapterNavigationServicePort;
+    this.#userPresenceServicePort = userPresenceServicePort;
+    this.#paintPort = paintPort;
+  }
+
+  handleChapterSelection({
+    chapter,
+  }: {
+    chapter: Piece<"StackChapter">;
+  }): void {
+    const chapterData = this.#chapterDataRepositoryPort.getPieceData(chapter);
+
+    if (!chapterData) {
+      throw new Error(
+        "ChapterInteractionService: chapterData not found at handleChapterSelection."
+      );
+    }
+
+    const { sectionBookData, bookData } =
+      this.#pieceHierarchyServicePort.getParentDataChain(
+        chapterData.parentDataIds as StackParentDataIds
+      );
+    const actualData = sectionBookData ?? bookData;
+
+    if (this.#paintPort.isActive) {
+      this.#paintPort.paint(chapterData);
+      return;
+    }
+
+    if (chapterData.selectionState === "Selected") {
+      if (!actualData) {
+        this.#chapterSelectionServicePort.deselectChapter({
+          data: chapterData,
+          pacing: "Regular",
+        });
+      }
+    } else if (chapterData.selectionState === "Idle") {
+      if (chapterData.isOnTheGround) {
+        this.#chapterSelectionServicePort
+          .trySelectChapter({
+            data: chapterData,
+            bookData: actualData,
+            pacing: "Regular",
+          })
+          .then(() => this.#userPresenceServicePort.updateUserPresence());
+      } else {
+        this.#chapterNavigationServicePort.openChapter(chapter);
+      }
+    }
+  }
+
+  handleChapterFocusBegin(chapter: Piece<"StackChapter">): void {
+    const chapterData = this.#chapterDataRepositoryPort.getPieceData(chapter);
+
+    if (!chapterData) {
+      throw new Error(
+        "ChapterInteractionService: chapterData not found at handleChapterFocusBegin."
+      );
+    }
+
+    chapterData.beginFocus();
+
+    this.#pieceHighlighterPort.tryHighlightPiece({
+      piece: chapter,
+      source: HighlightRequestSources.UserFocus,
+    });
+  }
+
+  handleChapterFocusEnd(chapter: Piece<"StackChapter">): void {
+    const chapterData = this.#chapterDataRepositoryPort.getPieceData(chapter);
+
+    if (!chapterData) {
+      throw new Error(
+        "ChapterInteractionService: chapterData not found at handleChapterFocusEnd."
+      );
+    }
+
+    chapterData.endFocus();
+
+    if (chapterData.isBeingDragged) return;
+
+    this.#pieceHighlighterPort.tryUnhighlightPiece({
+      piece: chapter,
+      source: UnhighlightRequestSources.UserUnfocus,
+      pacing: HighlightPacings.Regular,
+    });
+  }
+}

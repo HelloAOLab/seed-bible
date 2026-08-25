@@ -38,6 +38,7 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -249,6 +250,12 @@ function MainContent(props: {
 
         <TutorialPrompt
           tutorial={state.tutorial}
+          className={`${webkitClass}`}
+        />
+
+        <OfflineDownloadPrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
           className={`${webkitClass}`}
         />
 
