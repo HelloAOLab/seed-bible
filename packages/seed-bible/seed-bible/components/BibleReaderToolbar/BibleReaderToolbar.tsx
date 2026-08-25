@@ -2796,23 +2796,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 )}
               </div>
             )}
-          {isSmallScreen.value &&
-            isHighlightPickerOpen.value &&
-            showHighlightColorSwipeHint.value && (
-              <div
-                className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
-                aria-hidden="true"
-              >
-                <span className="material-symbols-outlined">
-                  keyboard_double_arrow_right
-                </span>
-                <span>
-                  {t("swipe-to-see-more", {
-                    defaultValue: "Swipe to see more",
-                  })}
-                </span>
-              </div>
-            )}
+          {isSmallScreen.value && isHighlightPickerOpen.value && (
+            <div
+              className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
+              aria-hidden="true"
+              style={{
+                opacity: showHighlightColorSwipeHint.value ? 1 : 0,
+              }}
+            >
+              <span className="material-symbols-outlined">
+                keyboard_double_arrow_right
+              </span>
+
+              <span>
+                {t("swipe-to-see-more", {
+                  defaultValue: "Swipe to see more",
+                })}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </>
