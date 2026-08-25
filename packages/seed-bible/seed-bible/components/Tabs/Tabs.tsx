@@ -1725,16 +1725,6 @@ function BookmarksSection(props: BookmarksSectionProps) {
       // getting an entry of its own.
       app.selectTab(newTab.id);
     });
-    if (scrollVerse !== undefined) {
-      // Queue the scroll-to-verse against the freshly created tab so when
-      // initial chapter data lands the reader scrolls to the bookmarked verse.
-      newTab.readingState.scrollToVerse.value = scrollVerse;
-    }
-    // `addTab()` only marks the tab selected inside TabsManager — it doesn't
-    // place it in a layout slot or dismiss the sidebar. Without this the mobile
-    // bookmarks screen stays on top of the reader, so the bookmark looks
-    // unopened until a second tap takes the `existing` branch above.
-    app.selectTab(newTab.id);
   };
 
   const formatVerseRef = (
