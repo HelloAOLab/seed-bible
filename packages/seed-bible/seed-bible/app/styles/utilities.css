@@ -14,6 +14,13 @@
   transform: scaleX(-1);
 }
 
+/* Disclosure and "go forward" chevrons follow the reading direction, but
+   `chevron_right` is a fixed glyph that Material Symbols won't mirror on its
+   own. Flipping it here keeps one icon name at every call site. */
+[dir="rtl"] .rtl-mirror {
+  transform: scaleX(-1);
+}
+
 /* Flex utilities */
 .flex-gap-md {
   display: flex;

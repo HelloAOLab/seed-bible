@@ -1,0 +1,34 @@
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
+import { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
+
+const {
+  data,
+}: {
+  data: StackSectionBookData | StackBookData;
+} = that;
+
+if (data.selectionState === 'Selected' && data.piece) {
+  let scaleX: number | undefined = undefined;
+  switch(data.type) {
+    case "StackBook": {
+      scaleX = data.piece.tags.singleBooksScales.x; // TODO: get from piece visual state
+    }
+    break;
+    case "StackSectionBook": {
+      scaleX = data.piece.tags.initialScaleX // TODO: get from piece visual state
+    }
+    break;
+  }
+  const columns = Math.floor(scaleX / (BibleVizDataRepository.getStackPieceMeasurement("ChapterWidth") +
+    BibleVizDataRepository.getStackSpacing("ChapterGap") * 2))
+  const rows =
+    Math.ceil(data.piece.tags.numberOfChapters / columns) + 1;
+  const height =
+    rows *
+    (BibleVizDataRepository.getStackPieceMeasurement("ChapterHeight") +
+      BibleVizDataRepository.getStackSpacing("ChapterGap") * 2);
+  return { columns, rows, height };
+} else {
+  return {};
+}

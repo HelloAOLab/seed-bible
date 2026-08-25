@@ -36,7 +36,7 @@ vi.mock(
   })
 );
 
-vi.mock("../../../../../packages/scripture-map/hooks/useClickOutside", () => ({
+vi.mock("@packages/seed-bible/seed-bible/components/useClickOutside", () => ({
   useClickOutside: vi.fn(),
 }));
 
@@ -72,13 +72,6 @@ vi.mock(
       itemsData: [],
       timelineRef: { current: null },
     })),
-  })
-);
-
-vi.mock(
-  "../../../../../packages/scripture-map/components/containers/Tooltip",
-  () => ({
-    Tooltip: () => null,
   })
 );
 

@@ -1,10 +1,10 @@
 import { ProjectFiltersSelector } from "./ProjectFiltersSelector";
 import { ProjectStateSetter } from "./ProjectStateSetter";
 import { ReadingHistoryUserFiltersSelector } from "./ReadingHistoryUserFiltersSelector";
-import { Tooltip } from "./Tooltip";
+import { ScriptureMapTooltip } from "./ScriptureMapTooltip";
 import { useReadingHistoryTimeline } from "../../hooks/useReadingHistoryTimeline";
 import { useSettings } from "../../hooks/useSettings";
-import { useClickOutside } from "../../hooks/useClickOutside";
+import { useClickOutside } from "@packages/seed-bible/seed-bible/components/useClickOutside";
 import type { Dispatch, MutableRef, StateUpdater } from "preact/hooks";
 import { ScriptureMapModes } from "../../models/scriptureMap";
 import { useScriptureMapContext } from "../../contexts/ScriptureMap/ScriptureMapContext";
@@ -225,7 +225,7 @@ const ReadingHistoryTimelineSection = ({
     <ReadingHistoryTimeline
       itemsData={itemsData}
       timelineRef={timelineRef}
-      Tooltip={Tooltip}
+      Tooltip={ScriptureMapTooltip}
       footer={footer}
     />
   );
