@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Offer to switch the app's language when you pick a Bible translation written in another one. Previously, choosing a Spanish translation left every menu and button in English, and you had to find the language setting yourself. Now a prompt appears — written in the language it is offering — asking whether to switch, with "Switch", "Don't Switch", and "Never Ask Again". It asks at most once per visit, and "Never Ask Again" is remembered; you can turn it back on under Settings.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
