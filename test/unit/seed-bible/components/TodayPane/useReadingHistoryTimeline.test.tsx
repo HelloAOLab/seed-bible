@@ -512,6 +512,13 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("ignores out-of-range and sub-minute events", async () => {
+      // Echo the accumulated seconds back through the colour, so a counted
+      // event and a skipped one produce different output. A constant colour
+      // here would render the whole test vacuous: every day that gets any
+      // colour at all would look the same.
+      getColorByReadingTime.mockImplementation(
+        (data) => `seconds:${String(data.readingTimeSeconds)}`
+      );
       const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) => [
           // Before the window → dayIndex < 0 → skipped.
@@ -557,8 +564,11 @@ describe("useReadingHistoryTimeline", () => {
         await vi.advanceTimersByTimeAsync(50);
       });
 
+      // Only the two valid 120-second events on day 0 are counted. Counting
+      // the 10-second one would read 250, and the out-of-range one would move
+      // the day's total somewhere else entirely.
       const dayZero = items(result).find((i) => i.id === "0-0")!;
-      expect(dayZero.style.background).toBe("#abc");
+      expect(dayZero.style.background).toBe("seconds:240");
     });
 
     it("ignores results that resolve after unmount", async () => {
