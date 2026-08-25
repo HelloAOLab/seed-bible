@@ -571,7 +571,77 @@ describe("useReadingHistoryTimeline", () => {
       expect(dayZero.style.background).toBe("seconds:240");
     });
 
-    it("ignores results that resolve after unmount", async () => {
+    // The `isMounted` flag the effect keeps is torn down before every re-run,
+    // not only on unmount, so what it really guards is a superseded fetch —
+    // and unlike the unmount case, that one is visible from outside the hook.
+    it("ignores a superseded fetch even when it resolves last", async () => {
+      getColorByReadingTime.mockImplementation(
+        (data) => `seconds:${String(data.readingTimeSeconds)}`
+      );
+      // Each reader's events are held until the test releases them, so the
+      // superseded fetch can be made to settle *after* the one that replaced
+      // it — the ordering a "last write wins" bug needs to survive.
+      const release: Record<string, () => void> = {};
+      const getReadingHistoryEvents = vi.fn(
+        (readerId: string, startTime: number) =>
+          new Promise<
+            {
+              start: number;
+              end: number;
+              bookId: string;
+              chapter: number;
+              userId: string;
+            }[]
+          >((resolve) => {
+            release[readerId] = () =>
+              resolve([
+                {
+                  start: startTime + 100,
+                  // u1 reads for 600 seconds, u2 for 300.
+                  end: startTime + 100 + (readerId === "u1" ? 600 : 300),
+                  bookId: "GEN",
+                  chapter: 1,
+                  userId: readerId,
+                },
+              ]);
+          })
+      );
+
+      const result = setup(
+        { userFilters: new Map([["u1", true]]) },
+        { getReadingHistoryEvents }
+      );
+
+      // Switch readers while u1's fetch is still in flight.
+      (useSocialSectionContext as Mock).mockReturnValue(
+        makeSocial({ userFilters: new Map([["u2", true]]) })
+      );
+      result.rerender();
+
+      release.u2!();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+      const dayZero = () => items(result).find((i) => i.id === "0-0")!;
+      expect(dayZero().style.background).toBe("seconds:300");
+
+      // u1's abandoned fetch lands last. It must not repaint the timeline with
+      // a reader nobody is looking at any more.
+      release.u1!();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+      expect(dayZero().style.background).toBe("seconds:300");
+    });
+
+    // Unmounting takes the same path, but there is nothing left to observe by
+    // then: the signals the guard skips writing belong to the component that
+    // just went away. What is observable is that the abandoned fetch settles
+    // without complaint rather than warning or throwing.
+    it("settles quietly when the component unmounts mid-fetch", async () => {
+      const consoleWarn = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
       const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) => [
           {
@@ -594,6 +664,8 @@ describe("useReadingHistoryTimeline", () => {
       });
 
       expect(getReadingHistoryEvents).toHaveBeenCalled();
+      expect(consoleWarn).not.toHaveBeenCalled();
+      consoleWarn.mockRestore();
     });
 
     it("colors a day that has enough reading time", async () => {
