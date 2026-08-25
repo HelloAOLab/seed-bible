@@ -137,6 +137,8 @@
   "deactivate": "Deactivate",
   "delete-customization": "Delete",
   "confirm-delete-customization": "Confirm delete",
+  "customization-link-copied": "Customization link copied to clipboard",
+  "customization-options": "Customization options",
   "logo": "Logo",
   "upload-logo": "Upload logo",
   "remove-logo": "Remove logo",

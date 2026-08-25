@@ -55,6 +55,10 @@ import {
 import { useEffect, useRef } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
+import {
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "../ContextMenu/ContextMenu";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -2077,42 +2081,65 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
         ) : (
           <ul className="sb-settings-list">
             {list.map((customization) => (
-              <li key={customization.id}>
-                <button
-                  className="sb-settings-nav-item sb-customization-row"
-                  onClick={() => openCustomization(customization.id)}
-                >
+              <li
+                key={customization.id}
+                className="sb-settings-nav-item sb-customization-row"
+                onClick={() => openCustomization(customization.id)}
+              >
+                <span className="sb-customization-swatches" aria-hidden="true">
                   <span
-                    className="sb-customization-swatches"
-                    aria-hidden="true"
+                    className="sb-customization-swatch"
+                    style={{ background: customization.themes.primaryColor }}
+                  />
+                  <span
+                    className="sb-customization-swatch"
+                    style={{
+                      background: customization.themes.secondaryColor,
+                    }}
+                  />
+                  <span
+                    className="sb-customization-swatch"
+                    style={{ background: customization.themes.tertiaryColor }}
+                  />
+                </span>
+                <span className="sb-settings-nav-label">
+                  {customization.name}
+                </span>
+                {customization.active && (
+                  <span className="sb-customization-active-badge">
+                    {t("active", { defaultValue: "Active" })}
+                  </span>
+                )}
+                <ContextMenuWithButton
+                  buttonClassName="sb-extension-row-action-button"
+                  aria-label={t("customization-options", {
+                    defaultValue: "Customization options",
+                  })}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ContextMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(
+                        customizations.getShareLink(customization)
+                      );
+                      state.app.toast(
+                        t("customization-link-copied", {
+                          defaultValue:
+                            "Customization link copied to clipboard",
+                        })
+                      );
+                    }}
                   >
-                    <span
-                      className="sb-customization-swatch"
-                      style={{ background: customization.themes.primaryColor }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{
-                        background: customization.themes.secondaryColor,
-                      }}
-                    />
-                    <span
-                      className="sb-customization-swatch"
-                      style={{ background: customization.themes.tertiaryColor }}
-                    />
-                  </span>
-                  <span className="sb-settings-nav-label">
-                    {customization.name}
-                  </span>
-                  {customization.active && (
-                    <span className="sb-customization-active-badge">
-                      {t("active", { defaultValue: "Active" })}
-                    </span>
-                  )}
-                  <span className="material-symbols-outlined rtl-mirror">
-                    chevron_right
-                  </span>
-                </button>
+                    <MaterialIcon className="sb-context-menu-item-icon">
+                      share
+                    </MaterialIcon>
+                    <span>{t("share", { defaultValue: "Share" })}</span>
+                  </ContextMenuItem>
+                </ContextMenuWithButton>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
               </li>
             ))}
           </ul>
@@ -2306,6 +2333,23 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
         </ul>
 
         <div className="sb-settings-actions">
+          <button
+            type="button"
+            className="sb-settings-action-button"
+            onClick={() => {
+              navigator.clipboard.writeText(
+                customizations.getShareLink(record)
+              );
+              state.app.toast(
+                t("customization-link-copied", {
+                  defaultValue: "Customization link copied to clipboard",
+                })
+              );
+            }}
+          >
+            {t("share", { defaultValue: "Share" })}
+          </button>
+
           {record.active ? (
             <button
               type="button"

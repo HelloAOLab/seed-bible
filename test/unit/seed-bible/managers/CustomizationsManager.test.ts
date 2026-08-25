@@ -318,6 +318,16 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value[0]?.logoUrl).toBeNull();
   });
 
+  it("getShareLink() builds a link with the owner's recordName and the customization's id", async () => {
+    const theme = createTheme(settings);
+    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
   it("auto-loads a customization from the ?customization= query param on construction", async () => {
     const sharedRecord = {
       id: "customization_shared",

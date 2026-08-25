@@ -69,6 +69,8 @@ export interface CustomizationsManager {
   remove: (id: string) => Promise<void>;
   uploadLogo: (id: string, file: File) => Promise<void>;
   removeLogo: (id: string) => Promise<void>;
+  /** A shareable link that auto-loads this customization via `loadByLocator`. */
+  getShareLink: (customization: SeedBibleCustomization) => string;
 }
 
 export function createCustomizationsManager(
@@ -320,6 +322,13 @@ export function createCustomizationsManager(
     }));
   };
 
+  const getShareLink = (customization: SeedBibleCustomization): string => {
+    const recordName = login.userId.value ?? "";
+    return navigation.linkToQuery({
+      customization: `${recordName}.${customization.id}`,
+    });
+  };
+
   return {
     customizations,
     isLoading,
@@ -337,5 +346,6 @@ export function createCustomizationsManager(
     remove,
     uploadLogo,
     removeLogo,
+    getShareLink,
   };
 }
