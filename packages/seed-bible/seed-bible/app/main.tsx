@@ -35,6 +35,7 @@ import "./styles/utilities.css";
 import {
   OnboardingModals,
   LanguageUnavailableModal,
+  UiLanguageSwitchModal,
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
@@ -266,6 +267,8 @@ function MainContent(props: {
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />
+
+        <UiLanguageSwitchModal className={`${webkitClass}`} />
       </div>
     </>
   );

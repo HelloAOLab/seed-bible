@@ -4,12 +4,7 @@
 
 ### ✨ Added
 
-- Keep one Playlist history entry per playlist in Discover, grouped by day, so you can resume or restart what you last played instead of browsing a full log of every play. Playing a playlist again replaces that playlist's history with the latest session. Deleting a playlist also clears its history.
-- Show each playlist history row like a playlist: play to resume or restart, a menu to remove it, and status as time, percent complete, and last item, instead of an expandable details panel.
-
 ### 🔧 Changed
-
-- Show a generic account icon instead of a random animal-and-color avatar when you aren't logged in or don't have a profile picture, and nobody else is around. The animal-and-color combo still appears in shared sessions, chats with other people, and annotation lists that include other authors, so people can tell each other apart.
 
 ### 🐛 Fixed
 
