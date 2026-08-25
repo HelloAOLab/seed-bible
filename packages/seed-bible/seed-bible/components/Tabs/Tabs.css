@@ -1103,6 +1103,14 @@
   font-size: 1.125rem;
 }
 
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic {
+  border: none;
+}
+
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic .material-symbols-outlined {
+  font-size: 2rem;
+}
+
 .sb-tab-title {
   font-size: 0.75rem;
   opacity: 0.75;

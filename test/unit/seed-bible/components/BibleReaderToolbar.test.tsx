@@ -1593,6 +1593,102 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
       expect(annotationItems()[1]?.textContent).toContain("A short range");
     });
   });
+
+  it("shows a generic account icon on the current user's notes when nobody else has annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+        )
+      ).not.toBeNull();
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )?.textContent
+    ).toContain("account_circle");
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+      )
+    ).toBeNull();
+  });
+
+  it("shows the animal fallback on verse-sheet notes when other people have also annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+      {
+        id: "a2",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Theirs</p>",
+          userId: "toolbar-user-other",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelectorAll(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+        )
+      ).toHaveLength(2);
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )
+    ).toBeNull();
+  });
 });
 
 describe("BibleReaderToolbar floating chapter nav", () => {

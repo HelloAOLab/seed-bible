@@ -479,7 +479,7 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
  * One function, one rule: a given user key always maps to the same
  * `(icon, color)` pair — everywhere on every client. No list context, no
  * walk-forward. Used for:
- *   - The sidebar self-avatar (bottom-right)
+ *   - The sidebar self-avatar (bottom-right), when other people are present
  *   - The connected-users list inside a shared tab
  *   - The "Shared with you" toasts
  *

@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { ChatView } from "@packages/seed-bible/seed-bible/components/ChatView/ChatView";
 import type {
+  AIChatParticipant,
   ChatMessage,
   ChatSession,
   ParsedChatTextMessage,
@@ -207,6 +208,239 @@ describe("ChatView", () => {
 
     const bodyEl = container.querySelector(".sb-chat-view-message-body");
     expect(bodyEl?.textContent).toContain("Hello world");
+  });
+
+  it("shows a generic account icon for your own messages when no other people are in the chat", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const message = createMockMessage({
+      id: "msg-self",
+      authors: ["self"],
+      text: "Just me",
+      parts: ["Just me"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self]),
+      totalParticipants: signal([self]),
+      getMessageAuthors: vi.fn().mockReturnValue([self]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-tab-user-icon-generic")?.textContent
+    ).toContain("account_circle");
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for your own messages when other people are in the chat", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const other = createMockParticipant({
+      id: "other",
+      name: "Alice",
+      isSelf: false,
+      isRemote: true,
+    });
+    const message = createMockMessage({
+      id: "msg-self",
+      authors: ["self"],
+      text: "Hello Alice",
+      parts: ["Hello Alice"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self, other]),
+      totalParticipants: signal([self, other]),
+      getMessageAuthors: vi.fn().mockReturnValue([self]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  it("shows a generic account icon for your own messages in an AI-only chat", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const ai: AIChatParticipant = {
+      id: "ai-1",
+      name: "Helper",
+      isSelf: false,
+      isAI: true,
+      isRemote: false,
+      isActive: true,
+      joinTimeMs: 0,
+      userId: null,
+      connectionId: null,
+      ownerParticipantId: "self",
+      providerId: "provider-1",
+      iconUrl: "https://example.com/ai.png",
+    };
+    const message = createMockMessage({
+      id: "msg-self",
+      authors: ["self"],
+      text: "Hi bot",
+      parts: ["Hi bot"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self, ai]),
+      totalParticipants: signal([self, ai]),
+      getMessageAuthors: vi.fn().mockReturnValue([self]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for your own messages when the other person is inactive", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const other = createMockParticipant({
+      id: "other",
+      name: "Alice",
+      isSelf: false,
+      isRemote: true,
+      isActive: false,
+    });
+    const message = createMockMessage({
+      id: "msg-self",
+      authors: ["self"],
+      text: "Hello Alice",
+      parts: ["Hello Alice"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self]),
+      totalParticipants: signal([self, other]),
+      getMessageAuthors: vi.fn().mockReturnValue([self]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  it("shows your profile picture on your own messages even when no other people are in the chat", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+      profile: { name: "Me", pictureUrl: "https://example.com/me.png" },
+    });
+    const message = createMockMessage({
+      id: "msg-self",
+      authors: ["self"],
+      text: "Just me",
+      parts: ["Just me"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self]),
+      totalParticipants: signal([self]),
+      getMessageAuthors: vi.fn().mockReturnValue([self]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const image = container.querySelector(
+      ".sb-tab-user-icon-has-image"
+    ) as HTMLElement | null;
+    expect(image?.style.backgroundImage).toContain(
+      "https://example.com/me.png"
+    );
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for another person's messages even when you have no profile picture", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const other = createMockParticipant({
+      id: "other",
+      name: "Alice",
+      isSelf: false,
+      isRemote: true,
+    });
+    const message = createMockMessage({
+      id: "msg-other",
+      authors: ["other"],
+      text: "Hello",
+      parts: ["Hello"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([self, other]),
+      totalParticipants: signal([self, other]),
+      getMessageAuthors: vi.fn().mockReturnValue([other]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  it("shows the animal fallback for a message with no author", () => {
+    const message = createMockMessage({
+      id: "msg-anon",
+      authors: [],
+      text: "Hello",
+      parts: ["Hello"],
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([message]),
+      participants: signal([]),
+      getMessageAuthors: vi.fn().mockReturnValue([]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
   });
 
   it("renders typing indicators", () => {

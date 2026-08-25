@@ -29,6 +29,7 @@ import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
   annotationVerseNumbers,
+  annotationListHasOtherAuthors,
   groupAnnotationsByVerseRange,
   type AnnotationGroup,
   type AnnotationsManager,
@@ -437,6 +438,7 @@ function VerseToolbarAnnotationGroup(props: {
   toast: SeedBibleState["app"]["toast"];
   openDiscover: () => void;
   onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
 }) {
   const {
     id,
@@ -447,6 +449,7 @@ function VerseToolbarAnnotationGroup(props: {
     modals,
     toast,
     onReferenceClick,
+    otherPeoplePresent,
   } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
@@ -492,6 +495,7 @@ function VerseToolbarAnnotationGroup(props: {
                   login={login}
                   t={t}
                   language={language}
+                  otherPeoplePresent={otherPeoplePresent}
                 />
               </div>
               <ContextMenuWithButton
@@ -2735,6 +2739,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     onReferenceClick={
                                       props.state.app.openVerseReference
                                     }
+                                    otherPeoplePresent={annotationListHasOtherAuthors(
+                                      selectionAnnotations.value,
+                                      props.state.login.userId.value
+                                    )}
                                   />
                                 );
                               })}

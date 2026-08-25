@@ -4,13 +4,7 @@
 
 ### ✨ Added
 
-- Edit a playlist's description from the playlist editor. Descriptions can span multiple lines, and long ones in the list collapse behind Read more.
-- Analytics for common playlist actions like creating and finishing playlists.
-- Offer to switch the app's language when you pick a Bible translation written in another one. Previously, choosing a Spanish translation left every menu and button in English, and you had to find the language setting yourself. Now a prompt appears — written in the language it is offering — asking whether to switch, with "Switch", "Don't Switch", and "Never Ask Again". It asks at most once per visit, and "Never Ask Again" is remembered; you can turn it back on under Settings.
-
 ### 🔧 Changed
-
-- Show a focus ring on playlist Read more / Read less when navigating with the keyboard, instead of leaving the control with no visible focus.
 
 ### 🐛 Fixed
 
@@ -29,8 +23,6 @@
 
 ### 🔧 Changed
 
-- Keep one Playlist history entry per playlist in Discover, grouped by day, so you can resume or restart what you last played instead of browsing a full log of every play. Playing a playlist again replaces that playlist's history with the latest session. Deleting a playlist also clears its history.
-- Show each playlist history row like a playlist: play to resume or restart, a menu to remove it, and status as time, percent complete, and last item, instead of an expandable details panel.
 - Show Share in the chapter header instead of the reader toolbar, so it is always visible without opening a menu.
 - Open the share sheet for the current tab from the tabs screen instead of immediately starting a shared session.
 - Dragging the expanded mobile verse toolbar down now closes it directly, instead of needing to drag it closed halfway, release, and drag again. ([#1671](https://github.com/HelloAOLab/seed-bible/pull/1671))

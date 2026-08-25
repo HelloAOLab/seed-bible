@@ -28,6 +28,7 @@ import { v4 as uuid } from "uuid";
 import type { LoginManager } from "../../managers/LoginManager";
 import {
   annotationVerseNumbers,
+  annotationListHasOtherAuthors,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
   type Annotation,
@@ -863,8 +864,9 @@ const annotationAuthorProfileCache = new Map<
 function AnnotationAuthor(props: {
   userId: string | null | undefined;
   login: LoginManager;
+  otherPeoplePresent?: boolean;
 }) {
-  const { userId, login } = props;
+  const { userId, login, otherPeoplePresent = false } = props;
   const name = useSignal("");
   const pictureUrl = useSignal<string | null>(null);
   const isSelf = userId === login.userId.value;
@@ -910,6 +912,7 @@ function AnnotationAuthor(props: {
         imageUrl={pictureUrl.value}
         visual={getUserAnimalVisual(userId)}
         title={name.value}
+        genericFallback={isSelf && !otherPeoplePresent}
       />
       {isSelf || name.value ? (
         <span className="sb-annotation-comment-author-name">
@@ -945,8 +948,9 @@ export function AnnotationCommentMeta(props: {
   login: LoginManager;
   t: ReturnType<typeof useI18n>["t"];
   language: string;
+  otherPeoplePresent?: boolean;
 }) {
-  const { annotation, login, language } = props;
+  const { annotation, login, language, otherPeoplePresent } = props;
   if (annotation.data.type !== "comment") {
     return null;
   }
@@ -956,7 +960,11 @@ export function AnnotationCommentMeta(props: {
 
   return (
     <span className="sb-annotation-comment-meta">
-      <AnnotationAuthor userId={annotation.data.userId} login={login} />
+      <AnnotationAuthor
+        userId={annotation.data.userId}
+        login={login}
+        otherPeoplePresent={otherPeoplePresent}
+      />
       {updatedAtMs != null ? (
         <span className="sb-annotation-comment-updated">
           |{" "}
@@ -984,6 +992,7 @@ function AnnotationGroupSection(props: {
   tabs: TabsManager;
   panes: PanesManager;
   onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
 }) {
   const {
     id,
@@ -995,6 +1004,7 @@ function AnnotationGroupSection(props: {
     tabs,
     panes,
     onReferenceClick,
+    otherPeoplePresent,
   } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
@@ -1074,6 +1084,7 @@ function AnnotationGroupSection(props: {
                   login={login}
                   t={t}
                   language={language}
+                  otherPeoplePresent={otherPeoplePresent}
                 />
               </div>
               <ContextMenuWithButton
@@ -1208,6 +1219,12 @@ function AnnotationsSection(props: {
     chapterNumber
   ).value;
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
+  
+  const otherPeoplePresent = annotationListHasOtherAuthors(
+    chapterAnnotations,
+    login.userId.value
+  );
+  
   const pending = annotations.sync.pendingCountForChapter(
     bookId,
     chapterNumber
@@ -1254,6 +1271,7 @@ function AnnotationsSection(props: {
               tabs={tabs}
               panes={panes}
               onReferenceClick={onReferenceClick}
+              otherPeoplePresent={otherPeoplePresent}
             />
           );
         })
