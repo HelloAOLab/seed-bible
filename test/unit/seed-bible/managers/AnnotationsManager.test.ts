@@ -5,6 +5,12 @@ import {
   groupAnnotationsByVerseRange,
   type Annotation,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import {
+  createInMemoryAnnotationStore,
+  LOCAL_OWNER,
+  syncedRow,
+  type OfflineAnnotationStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineAnnotationStore";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
@@ -84,6 +90,12 @@ describe("AnnotationsManager", () => {
     listDataByMarkerMock = vi
       .spyOn(os, "listDataByMarker")
       .mockResolvedValue({ success: true, items: [] } as never);
+    // The sync engine reads the server's copy before writing, so this has to be
+    // stubbed or it reaches the real records client.
+    vi.spyOn(os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+    } as never);
 
     login = {
       authBot: signal(null),
@@ -128,17 +140,47 @@ describe("AnnotationsManager", () => {
 
     const saved = await manager.saveAnnotation(annotation);
 
-    expect(saved).toEqual(annotation);
-    expect(recordDataMock).toHaveBeenCalledWith("user-1", "ann-1", annotation, {
+    expect(saved).toEqual({
+      ...annotation,
+      data: {
+        ...annotation.data,
+        createdAtMs: expect.any(Number),
+        updatedAtMs: expect.any(Number),
+      },
+    });
+    expect(recordDataMock).toHaveBeenCalledWith("user-1", "ann-1", saved, {
       marker: "publicRead:annotations/GEN/1",
     });
+  });
+
+  it("saveAnnotation() stamps timestamps even when the caller supplies none", async () => {
+    const manager = createManager();
+
+    // The conflict check has nothing to compare without these, so every path
+    // that persists an annotation has to set them — not just the editor flow.
+    const saved = await manager.saveAnnotation(createCommentAnnotation());
+
+    expect(saved.data.createdAtMs).toEqual(expect.any(Number));
+    expect(saved.data.updatedAtMs).toEqual(expect.any(Number));
+  });
+
+  it("saveAnnotation() keeps an existing createdAtMs and refreshes updatedAtMs", async () => {
+    const manager = createManager();
+    const annotation = createCommentAnnotation({
+      data: { type: "comment", html: "<p>Hi</p>", createdAtMs: 1000 },
+    });
+
+    const saved = await manager.saveAnnotation(annotation);
+
+    expect(saved.data.createdAtMs).toBe(1000);
+    expect(saved.data.updatedAtMs).toBeGreaterThan(1000);
   });
 
   it("saveAnnotation() supports custom record and marker group", async () => {
     const manager = createManager();
     const annotation = createCommentAnnotation({ id: "ann-2" });
 
-    await manager.saveAnnotation(annotation, {
+    const saved = await manager.saveAnnotation(annotation, {
       recordName: "shared-record",
       group: "team_notes",
     });
@@ -146,32 +188,26 @@ describe("AnnotationsManager", () => {
     expect(recordDataMock).toHaveBeenCalledWith(
       "shared-record",
       "ann-2",
-      annotation,
+      saved,
       {
         marker: "publicRead:team_notes/GEN/1",
       }
     );
   });
 
-  it("saveAnnotation() logs in when no user is authenticated", async () => {
+  it("saveAnnotation() fails rather than prompting to log in when signed out", async () => {
     login.userId.value = null;
-    login.login.mockImplementation(async () => {
-      login.userId.value = "user-after-login";
-      return { id: "user-after-login", email: "test@example.com" };
-    });
     const manager = createManager();
 
-    await manager.saveAnnotation(createCommentAnnotation());
-
-    expect(login.login).toHaveBeenCalledTimes(1);
-    expect(recordDataMock).toHaveBeenCalledWith(
-      "user-after-login",
-      "ann-1",
-      expect.any(Object),
-      {
-        marker: "publicRead:annotations/GEN/1",
-      }
-    );
+    // Prompting for a sign-in mid-save is wrong: offline the request can't
+    // succeed anyway, and with a local store the note belongs on the device
+    // until the user chooses to sign in. The prompt lives in
+    // `createNewAnnotation`, where the user is present and expecting it.
+    await expect(
+      manager.saveAnnotation(createCommentAnnotation())
+    ).rejects.toThrow("User is not authenticated");
+    expect(login.login).not.toHaveBeenCalled();
+    expect(recordDataMock).not.toHaveBeenCalled();
   });
 
   it("deleteAnnotation() deletes the record by annotation id", async () => {
@@ -345,12 +381,12 @@ describe("AnnotationsManager", () => {
       const manager = createManagerWithOverride("override-record");
       const annotation = createCommentAnnotation();
 
-      await manager.saveAnnotation(annotation);
+      const saved = await manager.saveAnnotation(annotation);
 
       expect(recordDataMock).toHaveBeenCalledWith(
         "override-record",
         "ann-1",
-        annotation,
+        saved,
         { marker: "publicRead:annotations/GEN/1" }
       );
     });
@@ -359,14 +395,14 @@ describe("AnnotationsManager", () => {
       const manager = createManagerWithOverride("override-record");
       const annotation = createCommentAnnotation();
 
-      await manager.saveAnnotation(annotation, {
+      const saved = await manager.saveAnnotation(annotation, {
         recordName: "explicit-record",
       });
 
       expect(recordDataMock).toHaveBeenCalledWith(
         "explicit-record",
         "ann-1",
-        annotation,
+        saved,
         { marker: "publicRead:annotations/GEN/1" }
       );
     });
@@ -559,6 +595,22 @@ describe("AnnotationsManager", () => {
 
       expect(manager.editingAnnotation.value).toBeNull();
       expect(warn).toHaveBeenCalled();
+    });
+
+    it("does not prompt to sign in while offline, where it could only fail", async () => {
+      login.userId.value = null;
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = createManager();
+      window.dispatchEvent(new Event("offline"));
+
+      await manager.createNewAnnotation();
+
+      // No store here (jsdom has no IndexedDB), so there is nowhere to put the
+      // note either — say so rather than opening a sign-in that cannot work.
+      expect(login.login).not.toHaveBeenCalled();
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(warn).toHaveBeenCalled();
+      manager.sync.dispose();
     });
 
     it("no-ops and warns when there is no active tab", async () => {
@@ -895,6 +947,348 @@ describe("AnnotationsManager", () => {
       await expect(
         manager.deleteAnnotationAndRefresh(createCommentAnnotation())
       ).rejects.toThrow();
+    });
+  });
+
+  // The default store is IndexedDB, which jsdom doesn't have — so the tests
+  // above all exercise the no-store fallback that talks straight to the server.
+  // These inject the in-memory store to cover the offline paths.
+  describe("with a local store", () => {
+    let store: OfflineAnnotationStore;
+
+    beforeEach(() => {
+      store = createInMemoryAnnotationStore();
+    });
+
+    function createOfflineManager() {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { store }
+      );
+      offlineManagers.push(manager);
+      return manager;
+    }
+
+    const offlineManagers: ReturnType<typeof createAnnotationsManager>[] = [];
+    afterEach(() => {
+      for (const manager of offlineManagers) {
+        manager.sync.dispose();
+      }
+      offlineManagers.length = 0;
+    });
+
+    /** Lets any in-flight load finish before asserting on it. */
+    function settle() {
+      return new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    /** Puts the manager in the state of having no connection. */
+    function goOffline() {
+      window.dispatchEvent(new Event("offline"));
+    }
+
+    /**
+     * Makes `listDataByMarker` return one page of annotations and then stop.
+     *
+     * `listFromServer` pages until it sees an empty response, so a plain
+     * `mockResolvedValue` of a non-empty page would loop forever.
+     */
+    function serverList(annotations: Annotation[]) {
+      listDataByMarkerMock.mockImplementation(
+        async (_record: string, _marker: string, lastAddress?: string) =>
+          lastAddress
+            ? { success: true, items: [] }
+            : {
+                success: true,
+                items: annotations.map((a) => ({ address: a.id, data: a })),
+              }
+      );
+    }
+
+    it("saves a note with no connection instead of failing", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+
+      const saved = await manager.saveAnnotation(
+        createCommentAnnotation({ id: "offline-1" })
+      );
+
+      // Resolving is what lets the composer close cleanly rather than showing
+      // an error the user can do nothing about.
+      expect(saved.id).toBe("offline-1");
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect((await store.get("user-1", "offline-1"))?.pendingOp).toBe(
+        "upsert"
+      );
+    });
+
+    it("shows a note saved offline when the chapter is read back", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+      await manager.saveAnnotation(
+        createCommentAnnotation({ id: "offline-1" })
+      );
+
+      const listed = await manager.listAnnotationsForChapter("GEN", 1);
+
+      expect(listed.map((a) => a.id)).toEqual(["offline-1"]);
+      expect(listDataByMarkerMock).not.toHaveBeenCalled();
+    });
+
+    it("coalesces repeated offline edits into one pending change", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+      const annotation = createCommentAnnotation({ id: "offline-1" });
+
+      await manager.saveAnnotation(annotation);
+      await manager.saveAnnotation({
+        ...annotation,
+        data: { ...annotation.data, html: "<p>second</p>" },
+      });
+      await manager.saveAnnotation({
+        ...annotation,
+        data: { ...annotation.data, html: "<p>third</p>" },
+      });
+
+      expect(await store.listPending("user-1")).toHaveLength(1);
+      expect(
+        (await store.get("user-1", "offline-1"))?.annotation?.data.html
+      ).toBe("<p>third</p>");
+    });
+
+    it("records a tombstone when deleting a note the server knows about", async () => {
+      const manager = createOfflineManager();
+      // Pretend the server already has it, so there is something to delete.
+      await store.put(
+        syncedRow("user-1", createCommentAnnotation({ id: "known" }))
+      );
+      goOffline();
+
+      await manager.deleteAnnotation("known");
+
+      const row = await store.get("user-1", "known");
+      expect(row?.deleted).toBe(true);
+      expect(row?.pendingOp).toBe("delete");
+      expect(eraseDataMock).not.toHaveBeenCalled();
+    });
+
+    it("hides a note deleted offline from the chapter listing", async () => {
+      const manager = createOfflineManager();
+      await store.put(
+        syncedRow("user-1", createCommentAnnotation({ id: "known" }))
+      );
+      goOffline();
+
+      await manager.deleteAnnotation("known");
+
+      expect(await manager.listAnnotationsForChapter("GEN", 1)).toEqual([]);
+    });
+
+    it("costs no requests at all to create and then delete a note offline", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+
+      await manager.saveAnnotation(
+        createCommentAnnotation({ id: "throwaway" })
+      );
+      await manager.deleteAnnotation("throwaway");
+
+      // It never reached the server, so there is nothing to tombstone.
+      expect(await store.get("user-1", "throwaway")).toBeNull();
+      expect(await store.listPending("user-1")).toEqual([]);
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(eraseDataMock).not.toHaveBeenCalled();
+    });
+
+    it("pushes offline work once the connection returns", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+      await manager.saveAnnotation(
+        createCommentAnnotation({ id: "offline-1" })
+      );
+
+      window.dispatchEvent(new Event("online"));
+      await manager.sync.sync();
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        "offline-1",
+        expect.objectContaining({ id: "offline-1" }),
+        { marker: "publicRead:annotations/GEN/1" }
+      );
+      expect(await store.listPending("user-1")).toEqual([]);
+    });
+
+    it("writes a signed-out note to the local bucket", async () => {
+      login.userId.value = null;
+      const manager = createOfflineManager();
+
+      await manager.saveAnnotation(createCommentAnnotation({ id: "draft" }));
+
+      expect(await store.get(LOCAL_OWNER, "draft")).not.toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("starts a signed-out draft offline without prompting to sign in", async () => {
+      login.userId.value = null;
+      const manager = createOfflineManager();
+      goOffline();
+
+      await manager.createNewAnnotation();
+
+      // With somewhere local to put it, the note is drafted straight away and
+      // becomes the account's when the user signs in later.
+      expect(login.login).not.toHaveBeenCalled();
+      expect(manager.editingAnnotation.value).not.toBeNull();
+    });
+
+    it("shows signed-out drafts in the chapter listing", async () => {
+      login.userId.value = null;
+      const manager = createOfflineManager();
+      await manager.saveAnnotation(createCommentAnnotation({ id: "draft" }));
+
+      const listed = await manager.listAnnotationsForChapter("GEN", 1);
+
+      expect(listed.map((a) => a.id)).toEqual(["draft"]);
+      // `LOCAL_OWNER` is not a record name, so nothing should be asked of the
+      // server on this path.
+      expect(listDataByMarkerMock).not.toHaveBeenCalled();
+    });
+
+    it("retries a failed load once the connection returns, instead of caching it as empty", async () => {
+      // A refresh failure leaves the mirror empty but unsettled. The old
+      // behaviour settled it, so the chapter read as "you have no annotations"
+      // for the rest of the page's life even after the connection came back.
+      listDataByMarkerMock.mockRejectedValue(new Error("offline"));
+      const manager = createOfflineManager();
+
+      const view = manager.getAnnotationsForChapter("GEN", 1);
+      expect(view.value).toEqual([]);
+      // Waits for the failed load to finish, not merely to start.
+      await settle();
+      expect(listDataByMarkerMock).toHaveBeenCalledTimes(1);
+
+      // Reading again must not spin up another request while still failing —
+      // reads happen inside a `computed`, so retrying per read would spin.
+      expect(view.value).toEqual([]);
+      expect(view.value).toEqual([]);
+      expect(listDataByMarkerMock).toHaveBeenCalledTimes(1);
+
+      serverList([createCommentAnnotation({ id: "later" })]);
+      goOffline();
+      window.dispatchEvent(new Event("online"));
+
+      await vi.waitFor(() =>
+        expect(view.value.map((a) => a.id)).toEqual(["later"])
+      );
+    });
+
+    it("keeps an unsent edit when the server list is refreshed", async () => {
+      const manager = createOfflineManager();
+      const mine = createCommentAnnotation({
+        id: "ann-1",
+        data: { type: "comment", html: "<p>mine</p>" },
+      });
+      goOffline();
+      await manager.saveAnnotation(mine);
+      window.dispatchEvent(new Event("online"));
+
+      serverList([
+        createCommentAnnotation({
+          id: "ann-1",
+          data: { type: "comment", html: "<p>theirs</p>" },
+        }),
+      ]);
+
+      const listed = await manager.listAnnotationsForChapter("GEN", 1);
+
+      // The unsent edit wins locally; deciding between the two is the sync
+      // pass's job, not the refresh's.
+      expect(listed[0]?.data.html).toBe("<p>mine</p>");
+    });
+
+    it("drops a note the server no longer has when refreshing", async () => {
+      const manager = createOfflineManager();
+      await store.put(
+        syncedRow("user-1", createCommentAnnotation({ id: "gone" }))
+      );
+      serverList([]);
+
+      const listed = await manager.listAnnotationsForChapter("GEN", 1);
+
+      expect(listed).toEqual([]);
+      expect(await store.get("user-1", "gone")).toBeNull();
+    });
+
+    it("still writes straight to the server for another account's record", async () => {
+      const manager = createOfflineManager();
+
+      await manager.saveAnnotation(createCommentAnnotation({ id: "shared" }), {
+        recordName: "shared-record",
+        group: "team_notes",
+      });
+
+      // Not this device's note to queue.
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "shared-record",
+        "shared",
+        expect.anything(),
+        { marker: "publicRead:team_notes/GEN/1" }
+      );
+      expect(await store.get("user-1", "shared")).toBeNull();
+    });
+
+    it("files a save under the account it started as, not whoever signs in next", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+      manager.editAnnotation(createCommentAnnotation({ id: "alice-note" }));
+
+      // The account changes while the save is mid-flight (two IndexedDB round
+      // trips). The durable row was always written correctly; it was the UI
+      // cache that re-read the *current* login and filed it under the newcomer.
+      const savePromise = manager.saveEditingAnnotation();
+      login.userId.value = "user-2";
+      await savePromise;
+
+      // Nothing of Alice's may appear in the account now signed in.
+      const view = manager.getAnnotationsForChapter("GEN", 1);
+      await settle();
+      expect(view.value.map((a) => a.id)).not.toContain("alice-note");
+      expect(await store.get("user-1", "alice-note")).not.toBeNull();
+      expect(await store.get("user-2", "alice-note")).toBeNull();
+    });
+
+    it("removes a deleted note from the account it started as", async () => {
+      const manager = createOfflineManager();
+      const annotation = createCommentAnnotation({ id: "known" });
+      await store.put(syncedRow("user-1", annotation));
+      goOffline();
+
+      const deletePromise = manager.deleteAnnotationAndRefresh(annotation);
+      login.userId.value = "user-2";
+      await deletePromise;
+
+      // The tombstone belongs to user-1, and user-2's view must be unaffected.
+      const row = await store.get("user-1", "known");
+      expect(row?.deleted).toBe(true);
+      expect(await store.get("user-2", "known")).toBeNull();
+    });
+
+    it("reports how many changes are waiting", async () => {
+      const manager = createOfflineManager();
+      goOffline();
+
+      await manager.saveAnnotation(createCommentAnnotation({ id: "a" }));
+      await manager.saveAnnotation(
+        createCommentAnnotation({ id: "b", verseNumber: 2 })
+      );
+      await manager.sync.refreshPendingCount();
+
+      expect(manager.sync.pendingCount.value).toBe(2);
     });
   });
 });

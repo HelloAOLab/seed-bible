@@ -387,6 +387,9 @@ export default defineConfig(({ isSsrBuild }) => ({
   test: {
     environment: "jsdom",
     globals: true,
+    // Blocks real WebSocket connections, so a test that reaches the network
+    // fails in its own file instead of as an unattributed async error.
+    setupFiles: ["./test/setup/blockRealSockets.ts"],
     // Inline react-i18next so the use-sync-external-store alias above applies
     // to its imports (aliases don't reach externalized modules, which are
     // loaded directly by Node).
@@ -397,8 +400,12 @@ export default defineConfig(({ isSsrBuild }) => ({
     },
     exclude: ["**/node_modules/**", "**/.git/**", "**/obsolete/**"],
     // Suites that bootstrap the full SeedBibleState pay a one-time ~6s
-    // dynamic import of the entire app graph in their first test.
+    // dynamic import of the entire app graph in their first test. Both limits
+    // need the allowance: a suite that builds the state in `beforeEach` is
+    // judged by `hookTimeout`, not `testTimeout` (BibleReaderToolbar's first
+    // hook lands at ~9.5s, against a 10s default).
     testTimeout: 20000,
+    hookTimeout: 20000,
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov", "json-summary"],
