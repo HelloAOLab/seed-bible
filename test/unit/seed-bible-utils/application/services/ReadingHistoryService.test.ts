@@ -2,15 +2,17 @@ import type { Mock } from "vitest";
 import { ReadingHistoryService } from "../../../../../packages/seed-bible-utils/application/services/ReadingHistoryService";
 
 // Mock InterpolateHexColors so we can verify the arguments the service passes to it
-// without coupling the tests to the color-interpolation implementation.
+// without coupling the tests to the color-interpolation implementation. The
+// service delegates to core's ReadingHistoryColors, which imports the
+// interpolator from core's Colors — so that is the module to intercept.
 vi.mock(
-  "../../../../../packages/seed-bible-utils/domain/functions/colors",
+  "../../../../../packages/seed-bible/seed-bible/managers/Colors",
   () => ({
     InterpolateHexColors: vi.fn().mockReturnValue("#mocked"),
   })
 );
 
-import { InterpolateHexColors } from "../../../../../packages/seed-bible-utils/domain/functions/colors";
+import { InterpolateHexColors } from "../../../../../packages/seed-bible/seed-bible/managers/Colors";
 const mockInterpolate = InterpolateHexColors as Mock;
 
 afterEach(() => mockInterpolate.mockClear());

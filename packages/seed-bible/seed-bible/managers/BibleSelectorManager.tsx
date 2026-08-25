@@ -26,6 +26,7 @@ import type {
 } from "../managers/SettingsManager";
 import { createSidebar } from "../managers/SidebarManager";
 import type { NavigationManager } from "../managers/NavigationManager";
+import type { I18nManager } from "../i18n/I18nManager";
 import { type BookmarksManager } from "../managers/BookmarksManager";
 import {
   computed,
@@ -260,7 +261,8 @@ export function createBibleSelectorState(
   sidebar: SidebarManager,
   bookmarks: BookmarksManager,
   navigation: NavigationManager,
-  login: LoginManager
+  login: LoginManager,
+  i18n: I18nManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const slot = signal<TabSlot | null>(null);
@@ -537,6 +539,15 @@ export function createBibleSelectorState(
       PROFILE_TRANSLATION_ID,
       nextTranslationId
     );
+
+    // Only this deliberate-pick path offers to move the UI to the
+    // translation's language. Programmatic changes (selector sync on open, a
+    // deep link, the language-driven translation switch) aren't the user
+    // saying "I want to read in this language", so they shouldn't ask.
+    const picked = availableTranslations.value.find(
+      (translation) => translation.id === nextTranslationId
+    );
+    i18n.maybePromptUiLanguageSwitch(picked?.language);
   };
 
   const languageQuery = signal<string>("");

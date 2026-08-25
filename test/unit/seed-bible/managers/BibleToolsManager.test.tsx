@@ -9,6 +9,7 @@ import {
   createBibleToolsManager,
   getShareUrl,
   type BibleToolContext,
+  type QuickToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -346,6 +347,9 @@ describe("createBibleToolsManager", () => {
     expect(ids).not.toContain("open-search");
     expect(ids).not.toContain("share");
     expect(ids).toContain("previous-chapter");
+    expect(manager.listQuickTools().map((tool) => tool.id)).not.toContain(
+      "share"
+    );
   });
 
   it("keeps all default tools when disabledToolbarTools is empty", () => {
@@ -1073,6 +1077,119 @@ describe("createBibleToolsManager", () => {
 
       expect(tool).toBeDefined();
       expect(tool?.disabled.value).toBe(false);
+    });
+  });
+
+  describe("share tool surfaces", () => {
+    function createShareToolbarContext(
+      overrides?: Partial<BibleToolContext>
+    ): BibleToolContext {
+      return {
+        ...createContext(),
+        modals: {
+          openModal: vi.fn().mockReturnValue("modal-1"),
+          closeModal: vi.fn(),
+        } as any,
+        app: {} as any,
+        ...overrides,
+      };
+    }
+
+    function createQuickContext(
+      overrides?: Partial<QuickToolContext>
+    ): QuickToolContext {
+      return {
+        readingState: {
+          translation: signal({ id: "NIV" }),
+          bookId: signal("GEN"),
+          chapterNumber: signal(1),
+          selectedVerses: signal([]),
+        } as any,
+        playlists: {
+          playing: signal(null),
+          isMobile: signal(false),
+        } as any,
+        features: {} as any,
+        surface: "quick-toolbar",
+        ...overrides,
+      };
+    }
+
+    it("hides Share on the main toolbar", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const ids = manager
+        .getToolbarTools(
+          createShareToolbarContext({ window: { isMobile: false } })
+        )
+        .map((entry) => entry.id);
+
+      expect(ids).not.toContain("share");
+    });
+
+    it("shows Share on the quick toolbar on desktop and mobile", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const isMobile = signal(false);
+      const context = createQuickContext({
+        playlists: {
+          playing: signal(null),
+          isMobile,
+        } as any,
+        modals: { openModal: vi.fn(), closeModal: vi.fn() } as any,
+        app: {} as any,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((entry) => entry.id === "share");
+
+      expect(tool?.visible.value).toBe(true);
+
+      isMobile.value = true;
+      expect(tool?.visible.value).toBe(true);
+    });
+
+    it("hides quick-toolbar Share on the mobile navigation bar surface", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const tool = manager
+        .getQuickTools(
+          createQuickContext({
+            surface: "mobile-navigation-bar",
+            playlists: {
+              playing: signal(null),
+              isMobile: signal(true),
+            } as any,
+            modals: { openModal: vi.fn(), closeModal: vi.fn() } as any,
+            app: {} as any,
+          })
+        )
+        .find((entry) => entry.id === "share");
+
+      expect(tool?.visible.value).toBe(false);
+    });
+
+    it("opens the share sheet from the quick-toolbar Share button", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const openModal = vi.fn().mockReturnValue("modal-1");
+      const tool = manager
+        .getQuickTools(
+          createQuickContext({
+            playlists: {
+              playing: signal(null),
+              isMobile: signal(true),
+            } as any,
+            modals: { openModal, closeModal: vi.fn() } as any,
+            app: {} as any,
+          })
+        )
+        .find((entry) => entry.id === "share");
+
+      tool?.onSelect();
+
+      expect(openModal).toHaveBeenCalledTimes(1);
+      expect(openModal.mock.calls[0]?.[0]?.title).toEqual({
+        key: "share-sheet-title",
+        defaultValue: "Share",
+      });
     });
   });
 });

@@ -1,0 +1,124 @@
+// Intentional duplicate of packages/seed-bible-utils/application/services/ScriptureService.tsx —
+// patterns and packages don't share a runtime, so it can't be imported. Keep both copies in sync.
+import type {
+  BookInfo,
+  ArrangementInfo,
+  SubsetBookInfo,
+} from "../../domain/models/arrangement";
+import type {
+  CompleteBookChapter,
+  SubsetBookChapter,
+} from "../../domain/models/arrangement";
+import type { ScripturePort } from "../ports/in/Scripture";
+
+interface DataRepositoryPort {
+  getBookStaticInfo: (bookId: string) =>
+    | {
+        chaptersVerseCount: readonly number[];
+        numberOfChapters: number;
+      }
+    | undefined;
+}
+
+export class ScriptureService implements ScripturePort {
+  #dataRepositoryPort: DataRepositoryPort;
+  #biggerChapter: number | undefined;
+  #arrangement: ArrangementInfo;
+
+  constructor(
+    dataRepositoryPort: DataRepositoryPort,
+    arrangement: ArrangementInfo
+  ) {
+    this.#dataRepositoryPort = dataRepositoryPort;
+    this.#arrangement = arrangement;
+  }
+
+  mapSubsetToCompleteBook({
+    book,
+    chapter,
+  }: {
+    book: SubsetBookInfo;
+    chapter: number;
+  }): CompleteBookChapter {
+    return {
+      chapter: chapter + book.startIndex,
+      bookId: book.completeBookId,
+    };
+  }
+
+  mapCompleteToSubsetBook({
+    chapter,
+    subsets,
+  }: {
+    chapter: number;
+    subsets: readonly SubsetBookInfo[];
+  }): SubsetBookChapter {
+    const subset = subsets.find((s) => {
+      const start = s.startIndex + 1;
+      const end = s.startIndex + s.numberOfChapters;
+      return start <= chapter && chapter <= end;
+    });
+
+    if (!subset) {
+      throw new Error(
+        `ScriptureService: no subset found for chapter ${chapter} at mapCompleteToSubsetBook`
+      );
+    }
+
+    return {
+      chapter: chapter - subset.startIndex,
+      bookId: subset.bookId,
+      completeBookId: subset.completeBookId,
+    };
+  }
+
+  getBiggerChapter: () => number = () => {
+    if (this.#biggerChapter === undefined) {
+      this.#biggerChapter = 0;
+
+      if (!this.#arrangement) {
+        throw new Error(
+          "ScriptureService: arrangement not found at getBiggerChapter"
+        );
+      }
+
+      let currentCount = 0;
+
+      for (const testament of this.#arrangement.testaments) {
+        for (const sectionInfo of testament.sections) {
+          for (const book of sectionInfo.books) {
+            const { chaptersVerseCount } = book;
+            for (let i = 0; i < chaptersVerseCount.length; i++) {
+              currentCount = chaptersVerseCount[i]!;
+              if (currentCount > this.#biggerChapter!) {
+                this.#biggerChapter = currentCount;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return this.#biggerChapter;
+  };
+
+  getSectionChapterCount: (section: readonly BookInfo[]) => number = (
+    section
+  ) => {
+    const values = section.map((bookInfo) => {
+      return bookInfo.numberOfChapters ?? 0;
+    });
+    return values.reduce((accumulator, currentValue) => {
+      return accumulator + currentValue;
+    }, 0);
+  };
+
+  getBookChapterCount(bookId: string): number {
+    const bookInfo = this.#dataRepositoryPort.getBookStaticInfo(bookId);
+    if (!bookInfo)
+      throw new Error(
+        `ScriptureService: bookStaticInfo not found at getBookChapterCount for ${bookId}`
+      );
+    return bookInfo.numberOfChapters;
+  }
+}

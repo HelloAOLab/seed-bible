@@ -2,7 +2,7 @@ import { useScriptureMapContext } from "../contexts/ScriptureMap/ScriptureMapCon
 import { useTestamentContext } from "../contexts/Testament/TestamentContext";
 import type { ChapterProps } from "../components/containers/Chapter";
 import { useClickAndHold } from "./useClickAndHold";
-import type { TooltipAnchor } from "../components/containers/Tooltip";
+import type { TooltipAnchor } from "../components/containers/ScriptureMapTooltip";
 import { ScriptureMapModes } from "../models/scriptureMap";
 
 type UseChapterProps = Pick<

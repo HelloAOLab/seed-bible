@@ -302,25 +302,6 @@ export const MarginIcon = (props: any) => (
     />
   </svg>
 );
-export const BookMarkIcon = (props: any) => (
-  <svg
-    width={14}
-    height={20}
-    viewBox="0 0 14 20"
-    fill="none"
-    stroke="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <path
-      d="M13 5V19L7 15L1 19V5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H9C10.0609 1 11.0783 1.42143 11.8284 2.17157C12.5786 2.92172 13 3.93913 13 5Z"
-      stroke="currentColor"
-      strokeWidth={1}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 export const Eraser = (props: any) => (
   <svg
     width={14}
@@ -1361,7 +1342,19 @@ const BibleIcon = (props: any) => (
   </svg>
 );
 
-export const MaterialIcon = ({ children, className, ...props }: any) => (
+export interface MaterialIconProps extends Omit<
+  preact.JSX.HTMLAttributes<HTMLSpanElement>,
+  "children"
+> {
+  /** The Material Symbols glyph name, e.g. `arrow_right_alt`. */
+  children: string;
+}
+
+export const MaterialIcon = ({
+  children,
+  className,
+  ...props
+}: MaterialIconProps) => (
   <span className={`material-symbols-outlined ${className ?? ""}`} {...props}>
     {children}
   </span>
@@ -1556,6 +1549,16 @@ const MinusIcon = (props: any) => {
   );
 };
 
+/**
+ * Bookmark glyph, drawn as an outline by default. `fill`, `stroke` and
+ * `stroke-width` sit on the `<svg>` rather than the `<path>` so a caller can
+ * pass its own -- all three are inherited SVG properties, so whatever lands
+ * here reaches the path. That is what lets one glyph serve both Today's
+ * outline chip and the sidebar's filled category row.
+ *
+ * No `stroke-linecap`: the path is a single closed subpath, so it has no ends
+ * for a cap to draw.
+ */
 const BookmarkIcon = (props: any) => {
   return (
     <svg
@@ -1563,14 +1566,13 @@ const BookmarkIcon = (props: any) => {
       height="24"
       viewBox="0 0 24 24"
       fill="none"
+      stroke="currentColor"
+      stroke-width="2"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
       <path
         d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
         stroke-linejoin="round"
       />
     </svg>

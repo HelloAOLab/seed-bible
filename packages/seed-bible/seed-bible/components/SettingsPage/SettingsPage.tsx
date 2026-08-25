@@ -33,8 +33,11 @@ import {
   Skeleton,
   SkeletonContainer,
 } from "../../components/Skeleton/Skeleton";
-import { ExtensionInitalizer } from "../../managers/ExtensionManager";
-import { useI18n } from "../../i18n/I18nManager";
+import {
+  ExtensionInitalizer,
+  type ExtensionListEntry,
+} from "../../managers/ExtensionManager";
+import { useI18n, type I18nHook } from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
@@ -127,7 +130,7 @@ function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
       {props.trail.map((item, index) => (
         <span key={index} className="sb-settings-breadcrumbs-item">
           {index > 0 && (
-            <span className="material-symbols-outlined sb-settings-breadcrumbs-sep">
+            <span className="material-symbols-outlined sb-settings-breadcrumbs-sep rtl-mirror">
               chevron_right
             </span>
           )}
@@ -555,6 +558,27 @@ function ScriptureLineHeightIcon({ index }: { index: number }) {
   );
 }
 
+/**
+ * Built-in theme names are authored in English on the theme object, so they'd
+ * otherwise render untranslated. Spelled out as separate `t()` calls (rather
+ * than a computed `theme-${id}` key) so the i18n lint rules can see them.
+ * User-supplied themes keep whatever name they were given.
+ *
+ * Exported for tests.
+ */
+export function localizedThemeName(
+  t: I18nHook["t"],
+  theme: { id: string; name: string }
+): string {
+  if (theme.id === "light") {
+    return t("theme-light", { defaultValue: theme.name });
+  }
+  if (theme.id === "dark") {
+    return t("theme-dark", { defaultValue: theme.name });
+  }
+  return theme.name;
+}
+
 function ThemesGallerySection(props: { state: SeedBibleState }) {
   const { themes, selectedThemeId, setTheme } = props.state.theme;
   const { t } = useI18n();
@@ -607,7 +631,7 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
                 />
               </div>
               <div className="sb-theme-ready-label">
-                <span>{theme.name}</span>
+                <span>{localizedThemeName(t, theme)}</span>
                 {isSelected && (
                   <span
                     className="material-symbols-outlined sb-theme-ready-check"
@@ -970,6 +994,27 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           />
         </div>
 
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-ask-to-switch-ui-language"
+          >
+            {t("ask-to-switch-ui-language", {
+              defaultValue: "Offer to switch language with translation",
+            })}
+          </label>
+          <input
+            id="sb-ask-to-switch-ui-language"
+            type="checkbox"
+            checked={current.askToSwitchUiLanguage}
+            onChange={(event: Event) => {
+              settings.setAskToSwitchUiLanguage(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
+        </div>
+
         <h3 className="sb-settings-subheading">
           {t("selection-ui", { defaultValue: "Selection UI" })}
         </h3>
@@ -1041,7 +1086,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           onClick={onOpenAllSettings}
         >
           <span>{t("all-settings", { defaultValue: "All settings" })}</span>
-          <span className="material-symbols-outlined">chevron_right</span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
         </button>
       </section>
     </div>
@@ -1065,6 +1112,8 @@ function getExtensionInstallState(
   return "none";
 }
 
+type ExtensionsTab = "installed" | "available";
+
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { extensions } = state;
@@ -1072,6 +1121,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
+  const activeTab = useSignal<ExtensionsTab>("installed");
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
@@ -1156,6 +1206,96 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
   const { t } = useI18n();
 
+  const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
+    const { id, installed, pendingInstallation } = extensionEntry;
+    const isRegistered =
+      ExtensionInitalizer.getInstance().isExtensionRegistered(id);
+    const installState = getExtensionInstallState(
+      installed,
+      pendingInstallation,
+      isRegistered
+    );
+
+    const stateIcon =
+      installState === "installed"
+        ? "check_circle"
+        : installState === "downloaded"
+          ? "download_done"
+          : installState === "pending"
+            ? "downloading"
+            : "extension";
+
+    const stateLabel =
+      installState === "installed"
+        ? t("extension-state-installed", { defaultValue: "Installed" })
+        : installState === "downloaded"
+          ? t("extension-state-downloaded", { defaultValue: "Downloaded" })
+          : installState === "pending"
+            ? t("extension-state-pending", { defaultValue: "Installing…" })
+            : t("extension-state-none", { defaultValue: "Not installed" });
+
+    return (
+      <li key={id} className="sb-extension-row">
+        <div className="sb-extension-row-body">
+          <span
+            className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
+            title={stateLabel}
+          >
+            {stateIcon}
+          </span>
+          <div className="sb-extension-row-content">
+            <span className="sb-extension-name">
+              {t("title", { ns: id, defaultValue: id })}
+            </span>
+            <span className="sb-extension-description">
+              {t("description", { ns: id, defaultValue: "" })}
+            </span>
+          </div>
+          <div className="sb-extension-row-actions">
+            {installState === "none" && (
+              <button
+                type="button"
+                className="sb-extension-row-action-button"
+                onClick={() => void handleInstall(id)}
+                aria-label={t("install", { defaultValue: "Install" })}
+                title={t("install", { defaultValue: "Install" })}
+              >
+                <span className="material-symbols-outlined">download</span>
+              </button>
+            )}
+            {(installState === "installed" ||
+              installState === "downloaded") && (
+              <button
+                type="button"
+                className="sb-extension-row-action-button"
+                onClick={() => handleUninstall(id)}
+                aria-label={t("uninstall", {
+                  defaultValue: "Uninstall",
+                })}
+                title={t("uninstall", { defaultValue: "Uninstall" })}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </li>
+    );
+  };
+
+  const installedExtensions = extensionsList.filter((e) => e.installed);
+  const availableExtensions = extensionsList.filter((e) => !e.installed);
+  const activeExtensions =
+    activeTab.value === "installed" ? installedExtensions : availableExtensions;
+  const activeEmptyMessage =
+    activeTab.value === "installed"
+      ? t("no-installed-extensions", {
+          defaultValue: "You haven't installed any extensions yet.",
+        })
+      : t("no-available-extensions", {
+          defaultValue: "There are no more extensions available to install.",
+        });
+
   return (
     <div className="sb-settings-page">
       <SettingsBreadcrumbs
@@ -1175,89 +1315,66 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             </p>
           </div>
         ) : (
-          <ul className="sb-extensions-list">
-            {extensionsList.map((extensionEntry) => {
-              const { id, installed, pendingInstallation } = extensionEntry;
-              const isRegistered =
-                ExtensionInitalizer.getInstance().isExtensionRegistered(id);
-              const installState = getExtensionInstallState(
-                installed,
-                pendingInstallation,
-                isRegistered
-              );
+          <>
+            <div
+              className="sb-extensions-tabs"
+              role="tablist"
+              aria-label={t("extensions", { defaultValue: "Extensions" })}
+            >
+              <button
+                type="button"
+                role="tab"
+                id="sb-extensions-tab-installed"
+                aria-selected={activeTab.value === "installed"}
+                aria-controls="sb-extensions-tabpanel"
+                className={`sb-extensions-tab${
+                  activeTab.value === "installed"
+                    ? " sb-extensions-tab-active"
+                    : ""
+                }`}
+                onClick={() => (activeTab.value = "installed")}
+              >
+                {t("installed-extensions", { defaultValue: "Installed" })}
+                <span className="sb-extensions-tab-count">
+                  {installedExtensions.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="sb-extensions-tab-available"
+                aria-selected={activeTab.value === "available"}
+                aria-controls="sb-extensions-tabpanel"
+                className={`sb-extensions-tab${
+                  activeTab.value === "available"
+                    ? " sb-extensions-tab-active"
+                    : ""
+                }`}
+                onClick={() => (activeTab.value = "available")}
+              >
+                {t("available-extensions", { defaultValue: "Available" })}
+                <span className="sb-extensions-tab-count">
+                  {availableExtensions.length}
+                </span>
+              </button>
+            </div>
 
-              const stateIcon =
-                installState === "installed"
-                  ? "check_circle"
-                  : installState === "downloaded"
-                    ? "download_done"
-                    : installState === "pending"
-                      ? "downloading"
-                      : "extension";
-
-              const stateLabel =
-                installState === "installed"
-                  ? "Installed"
-                  : installState === "downloaded"
-                    ? "Downloaded"
-                    : installState === "pending"
-                      ? "Installing…"
-                      : "Not installed";
-
-              return (
-                <li key={id} className="sb-extension-row">
-                  <div className="sb-extension-row-body">
-                    <span
-                      className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
-                      title={stateLabel}
-                    >
-                      {stateIcon}
-                    </span>
-                    <div className="sb-extension-row-content">
-                      <span className="sb-extension-name">
-                        {}
-                        {t("title", { ns: id, defaultValue: id })}
-                      </span>
-                      <span className="sb-extension-description">
-                        {t("description", { ns: id, defaultValue: "" })}
-                      </span>
-                    </div>
-                    <div className="sb-extension-row-actions">
-                      {installState === "none" && (
-                        <button
-                          type="button"
-                          className="sb-extension-row-action-button"
-                          onClick={() => void handleInstall(id)}
-                          aria-label={t("install", { defaultValue: "Install" })}
-                          title={t("install", { defaultValue: "Install" })}
-                        >
-                          <span className="material-symbols-outlined">
-                            download
-                          </span>
-                        </button>
-                      )}
-                      {(installState === "installed" ||
-                        installState === "downloaded") && (
-                        <button
-                          type="button"
-                          className="sb-extension-row-action-button"
-                          onClick={() => handleUninstall(id)}
-                          aria-label={t("uninstall", {
-                            defaultValue: "Uninstall",
-                          })}
-                          title={t("uninstall", { defaultValue: "Uninstall" })}
-                        >
-                          <span className="material-symbols-outlined">
-                            delete
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+            <div
+              id="sb-extensions-tabpanel"
+              role="tabpanel"
+              aria-labelledby={`sb-extensions-tab-${activeTab.value}`}
+            >
+              {activeExtensions.length === 0 ? (
+                <div className="sb-settings-empty-state">
+                  <p>{activeEmptyMessage}</p>
+                </div>
+              ) : (
+                <ul className="sb-extensions-list">
+                  {activeExtensions.map(renderExtensionRow)}
+                </ul>
+              )}
+            </div>
+          </>
         )}
 
         <div className="sb-extension-footer-actions">
@@ -2037,7 +2154,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("account-settings", { defaultValue: "Account settings" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
@@ -2051,7 +2170,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("display-and-theme", { defaultValue: "Display & Theme" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
@@ -2065,7 +2186,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("toolbar", { defaultValue: "Toolbar" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
@@ -2079,7 +2202,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("extensions", { defaultValue: "Extensions" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           {/* Shown in normal browser tabs when not already treated as installed.
@@ -2097,7 +2222,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                 <span className="sb-settings-nav-label">
                   {t("install-app", { defaultValue: "Install app" })}
                 </span>
-                <span className="material-symbols-outlined">chevron_right</span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
               </button>
             </li>
           )}
@@ -2115,7 +2242,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="sb-settings-nav-label">
                 {t("launch-tutorial", { defaultValue: "Launch tutorial" })}
               </span>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
             </button>
           </li>
           <li>
