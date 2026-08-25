@@ -996,9 +996,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await release(hintEl, 500);
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
-    // Nothing left to reveal, so the hint is invisible but remains in the layout.
-    expect(hint()).not.toBeNull();
-    expect(hint()?.style.opacity).toBe("0");
+    expect(hint()).toBeNull();
   });
 
   it("opens the drawer by the distance the finger has travelled when dragging the swipe-up hint", async () => {
@@ -1109,9 +1107,8 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
     expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
-    // Nothing left to reveal, so the hint is invisible but remains in the layout.
-    expect(hint()).not.toBeNull();
-    expect(hint()?.style.opacity).toBe("0");
+    // Nothing left to reveal, so the hint stands down.
+    expect(hint()).toBeNull();
   });
 
   it("falls back closed when released short of halfway", async () => {

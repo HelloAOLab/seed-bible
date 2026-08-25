@@ -2827,16 +2827,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 )}
               </div>
             )}
-          {isSmallScreen.value && (
+          {isSmallScreen.value && isHighlightPickerOpen.value && (
             <div
               className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
               aria-hidden="true"
               style={{
-                opacity:
-                  isHighlightPickerOpen.value &&
-                  showHighlightColorSwipeHint.value
-                    ? 1
-                    : 0,
+                opacity: showHighlightColorSwipeHint.value ? 1 : 0,
               }}
             >
               <span className="material-symbols-outlined">
