@@ -39,6 +39,103 @@ import {
   type StoredChapterEntry,
 } from "./OfflineTranslationStore";
 
+/** Translation ID -> when the offline download prompt was shown, in epoch ms. */
+const PROMPT_SHOWN_KEY = "sb-offline-prompt-shown";
+
+/** Translation ID -> when the user first read in it, in epoch ms. */
+const TRANSLATION_FIRST_USED_KEY = "sb-translation-first-used";
+
+/**
+ * How long a translation must have been in use before we offer to save it.
+ *
+ * The very first offer on a device skips this — a reader with nothing saved is
+ * worth telling about the feature as soon as they settle in. Every offer after
+ * that has to earn its place with a day of the user actually staying with the
+ * translation, so that flicking through translations can't produce a run of
+ * prompts.
+ */
+const PROMPT_TENURE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Rough bytes per verse in a complete translation download.
+ *
+ * Nothing reports a translation's download size ahead of time: `sizeBytes` is
+ * only known once a download finishes, and the complete-translation endpoint
+ * doesn't expose `Content-Length` to cross-origin JS (see the note in
+ * `OfflineTranslationControls`). Verse count is the one size-proportional
+ * number the API does give us, so the prompt estimates from that and says
+ * "about". Calibrated against a full Bible: 31,102 verses ≈ 7.1 MB on disk.
+ */
+const BYTES_PER_VERSE_ESTIMATE = 240;
+
+const MAX_TRACKED_TIMESTAMPS = 5;
+
+/** Reads a translation-ID -> timestamp map from local storage. */
+function readTimestamps(key: string): Record<string, number> {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return {};
+    }
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    const entries = Object.entries(parsed as Record<string, unknown>).filter(
+      (entry): entry is [string, number] => typeof entry[1] === "number"
+    );
+    return Object.fromEntries(entries);
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Writes a translation-ID -> timestamp map to local storage, keeping only the
+ * {@link MAX_TRACKED_TIMESTAMPS} newest entries. Best-effort.
+ */
+function writeTimestamps(key: string, value: Record<string, number>): void {
+  try {
+    const trimmed = Object.entries(value)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, MAX_TRACKED_TIMESTAMPS);
+    window.localStorage.setItem(
+      key,
+      JSON.stringify(Object.fromEntries(trimmed))
+    );
+  } catch {
+    // Storage can be full or blocked; losing the record only means the user
+    // may be offered the download again on a later visit.
+  }
+}
+
+/** Renders a byte count as a short, human-readable size like "7.1 MB". */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  const kilobytes = bytes / 1024;
+  if (kilobytes < 1024) {
+    return `${Math.round(kilobytes)} KB`;
+  }
+  return `${(kilobytes / 1024).toFixed(1)} MB`;
+}
+
+/**
+ * Approximate download size for a translation, in bytes, or null when the API
+ * didn't report a verse count to estimate from. See
+ * {@link BYTES_PER_VERSE_ESTIMATE} for why this is an estimate at all.
+ */
+export function estimateTranslationSizeBytes(
+  translation: Translation
+): number | null {
+  const verses = translation.totalNumberOfVerses;
+  if (typeof verses !== "number" || verses <= 0) {
+    return null;
+  }
+  return verses * BYTES_PER_VERSE_ESTIMATE;
+}
+
 /** Which half of a download is currently running. */
 export type OfflineDownloadPhase = "downloading" | "saving";
 
@@ -131,6 +228,36 @@ export interface OfflineTranslationsManager {
 
   /** Whether the given translation has a complete copy on this device. */
   isDownloaded: (translationId: string) => boolean;
+
+  /**
+   * The translation currently being offered for offline download, or null when
+   * no offer is on screen.
+   */
+  downloadPrompt: ReadonlySignal<Translation | null>;
+
+  /**
+   * Records that the user is reading in a translation, stamping the first time
+   * it was seen. Idempotent — later calls keep the original timestamp, since
+   * {@link offerDownloadPrompt} asks how long a translation has been in use,
+   * not when it was last used.
+   */
+  noteTranslationInUse: (translationId: string) => void;
+
+  /**
+   * Offers to save a translation for offline reading, if every condition is
+   * met: the device can store downloads, no prompt has been shown yet this
+   * session, the device is online, this translation isn't already downloaded or
+   * downloading, it has never been offered before, and — unless this is the
+   * first offer the device has ever made — the user has been reading this
+   * translation for at least a day.
+   *
+   * Returns whether the offer was actually opened. Showing it also records the
+   * offer, so declining doesn't bring it back on the next visit.
+   */
+  offerDownloadPrompt: (translation: Translation) => boolean;
+
+  /** Closes the download offer without downloading anything. */
+  dismissDownloadPrompt: () => void;
 
   /**
    * Downloads a translation to the device, replacing any existing copy.
@@ -890,6 +1017,81 @@ export function createOfflineTranslationsManager(
     return await buildChapter(record, ref.book, ref.chapter);
   };
 
+  const downloadPrompt = signal<Translation | null>(null);
+
+  // "When we show one prompt, we should never show any more download prompts
+  // for that session." Deliberately a closure rather than storage: it resets on
+  // the next load, while the per-translation record in PROMPT_SHOWN_KEY is what
+  // stops the same translation being offered again.
+  let promptedThisSession = false;
+
+  const noteTranslationInUse = (translationId: string) => {
+    if (!translationId) {
+      return;
+    }
+    const stamps = readTimestamps(TRANSLATION_FIRST_USED_KEY);
+    if (stamps[translationId]) {
+      return;
+    }
+    writeTimestamps(TRANSLATION_FIRST_USED_KEY, {
+      ...stamps,
+      [translationId]: Date.now(),
+    });
+  };
+
+  const offerDownloadPrompt = (translation: Translation): boolean => {
+    if (store === null) {
+      return false;
+    }
+    if (promptedThisSession || downloadPrompt.value) {
+      return false;
+    }
+    // Offering a download with no connection would only fail.
+    if (!isOnline.value) {
+      return false;
+    }
+
+    const translationId = translation?.id;
+    if (!translationId) {
+      return false;
+    }
+    if (isDownloaded(translationId) || downloads.value.has(translationId)) {
+      return false;
+    }
+
+    const shown = readTimestamps(PROMPT_SHOWN_KEY);
+    if (shown[translationId]) {
+      return false;
+    }
+
+    // Only the very first offer is made on sight, and only on a device with
+    // nothing saved. Every later one waits for the user to have stayed with the
+    // translation for a day — otherwise switching translations would be enough
+    // to earn another prompt.
+    const isFirstEverOffer =
+      Object.keys(shown).length === 0 && downloaded.value.size === 0;
+    if (!isFirstEverOffer) {
+      const firstUsed = readTimestamps(TRANSLATION_FIRST_USED_KEY)[
+        translationId
+      ];
+      if (!firstUsed || Date.now() - firstUsed < PROMPT_TENURE_MS) {
+        return false;
+      }
+    }
+
+    promptedThisSession = true;
+    writeTimestamps(PROMPT_SHOWN_KEY, {
+      ...shown,
+      [translationId]: Date.now(),
+    });
+    downloadPrompt.value = translation;
+    return true;
+  };
+
+  const dismissDownloadPrompt = () => {
+    downloadPrompt.value = null;
+  };
+
   return {
     supported: store !== null,
     ready,
@@ -899,6 +1101,10 @@ export function createOfflineTranslationsManager(
     errors,
     isOnline,
     isDownloaded,
+    downloadPrompt,
+    noteTranslationInUse,
+    offerDownloadPrompt,
+    dismissDownloadPrompt,
     downloadTranslation,
     cancelDownload,
     deleteTranslation,

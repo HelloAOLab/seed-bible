@@ -771,6 +771,12 @@ export function createSeedBibleState(
   // not-yet-installed user, logged in or not. Deferring past the tutorial
   // means the profile has had time to load, so there's no "stale prompt"
   // concern the way there was on startup. One-shot via `installOfferChecked`.
+  //
+  // `installOfferResolved` flips once that check has had its turn, whether or
+  // not it showed anything. The offline-download offer waits on it so the two
+  // never stack, and so "offer the download after the install prompt" holds.
+  const installOfferResolved = signal(false);
+
   let installOfferChecked = false;
   effect(() => {
     if (installOfferChecked) {
@@ -796,6 +802,7 @@ export function createSeedBibleState(
     if (onboarding.installAvailable.value) {
       onboarding.openInstall();
     }
+    installOfferResolved.value = true;
   });
 
   // A phone held sideways: landscape orientation with the short viewport
@@ -1210,6 +1217,11 @@ export function createSeedBibleState(
       return;
     }
 
+    // Reading history records book and chapter but not which translation they
+    // were read in, so the offline manager keeps its own first-seen stamp —
+    // that's what the "used for a day" download offer is judged against.
+    data.offline.noteTranslationInUse(chapter.translation.id);
+
     const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(
         chapter.book.id,
@@ -1229,6 +1241,36 @@ export function createSeedBibleState(
       clearInterval(readingHistoryTimeoutId);
       clearTimeout(posthogTimeoutId);
     };
+  });
+
+  // Offer to save the current translation for offline reading, once the
+  // tutorial and install prompts have had their turn so we never stack two
+  // dialogs. One-shot per load via `downloadOfferChecked`; the manager decides
+  // whether the offer is actually warranted.
+  let downloadOfferChecked = false;
+  effect(() => {
+    if (downloadOfferChecked) {
+      return;
+    }
+    if (openedViaContentLink) {
+      return;
+    }
+    if (!installOfferResolved.value) {
+      return;
+    }
+    // The install modal is up until the user resolves it.
+    if (onboarding.step.value !== "done") {
+      return;
+    }
+    if (tutorial.promptVisible.value || tutorial.running.value) {
+      return;
+    }
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+    if (!chapter) {
+      return;
+    }
+    downloadOfferChecked = true;
+    data.offline.offerDownloadPrompt(chapter.translation);
   });
 
   const closeSidebarAndSettings = () => {
