@@ -1057,6 +1057,36 @@
   justify-self: flex-end;
 }
 
+/* On mobile the panel is a plain block inside the swipe panel's own scroll
+   (not a flex child), so it otherwise sits flush against the screen edges
+   and the bottom of the reader. Give it the same breathing room as the rest
+   of the mobile chrome.
+
+   `justify-self: flex-end` above (needed on desktop, to hug the end of the
+   `.sb-bible-reader-content` row) also applies to plain block boxes per the
+   CSS Box Alignment spec — it makes the box size to its fit-content width
+   (pulled wide by the `flex-basis: 22.5rem` it carries as a sizing hint,
+   even outside a flex container) and right-align within its container,
+   instead of stretching to fill it. On phones as narrow as 320-375px that
+   fit-content width is wider than the screen, so the box's left edge renders
+   off-screen; reset back to the normal stretch-to-fill behavior here. */
+.sb-bible-reader-mobile .sb-bible-reader-discover-panel {
+  margin: 2.5rem 1rem 2rem;
+  overflow-x: hidden;
+  justify-self: auto;
+}
+
+/* Belt-and-suspenders alongside the `justify-self` reset above: without this,
+   `.sb-discover-content-panel`'s own `min-width: 18rem` (see
+   DiscoverContentPanel.css — a floor meant to keep it readable as a flex item
+   in the desktop side-by-side layout) can still leave it a few pixels wider
+   than its now-correctly-stretched mobile container. */
+.sb-bible-reader-mobile .sb-discover-content-panel {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .sb-bible-reader-main-content {
   max-width: var(--sb-scripture-width, 48rem);
   padding-bottom: var(--sb-reader-bottom-inset);
