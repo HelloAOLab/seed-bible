@@ -6,6 +6,8 @@ import type { SeedBibleUtilsEvents } from "@packages/seed-bible-utils/domain/mod
 import type { UserColorStore } from "../adapters/userPresence/UserColorStore";
 import type { UserPresenceService } from "../../application/services/UserPresenceService";
 import type { ArrangementService } from "../../application/services/ArrangementService";
+import type { ArrangementsConfigProvider } from "../config/arrangements/ArrangementsConfigProvider";
+import type { CustomArrangementStore } from "../adapters/arrangement/CustomArrangementStore";
 import type {
   GetDayRangeSecondsType,
   GetPastDateInfoType,
@@ -75,6 +77,8 @@ export interface UtilsAPI {
   userColorStore: UserColorStore;
   userPresenceService: UserPresenceService;
   arrangementService: ArrangementService;
+  arrangementConfigProvider: ArrangementsConfigProvider;
+  customArrangementStore: CustomArrangementStore;
   getDayRangeSeconds: GetDayRangeSecondsType;
   GetTextColorBasedOnBackground: GetTextColorBasedOnBackgroundType;
   IsValueBetween: IsValueBetweenType;

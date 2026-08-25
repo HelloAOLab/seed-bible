@@ -251,6 +251,8 @@ export const bootstrapExtension = () => {
         userColorStore,
         userPresenceService,
         arrangementService,
+        arrangementConfigProvider: arrangementsConfigProvider,
+        customArrangementStore: customArrangementStore,
         getDayRangeSeconds: GetDayRangeSeconds,
         GetPastDateInfo,
         CapitalizeFirstLetter,
