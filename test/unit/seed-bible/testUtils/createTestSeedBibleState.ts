@@ -45,8 +45,12 @@ export interface CreateTestSeedBibleStateOptions {
    *
    * Applied through the real `?today=` param rather than a bespoke flag, so
    * tests exercise the same path a user's URL would.
+   *
+   * `"fromUrl"` stamps no param at all and lets the boot heuristic decide from
+   * whatever URL the test navigated to — which is the only way to reach that
+   * heuristic, since an explicit `?today=` short-circuits it.
    */
-  todayOpen?: boolean;
+  todayOpen?: boolean | "fromUrl";
 }
 
 export async function waitFor(
@@ -224,7 +228,7 @@ export async function createTestSeedBibleState(
   // Pin Today's initial state before the state is built: `TodayManager` latches
   // it from `initialUrl` at construction, so it cannot be set afterwards. Keeps
   // whatever path the caller already navigated to.
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && options.todayOpen !== "fromUrl") {
     const url = new URL(window.location.href);
     url.searchParams.set("today", options.todayOpen ? "open" : "closed");
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);

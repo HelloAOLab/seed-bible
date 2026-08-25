@@ -111,11 +111,25 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
+  // `todayOpen: "fromUrl"` leaves the `?today` param off, which is what lets
+  // these two reach the boot heuristic at all: an explicit param short-circuits
+  // it before the URL is ever looked at.
   it("auto-opens over the reader when the boot URL has no reading position", async () => {
-    const state = await createTestSeedBibleState({ todayOpen: true });
+    window.history.replaceState(null, "", "/");
+
+    const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
 
     await waitFor(() => paneIsOpen(state));
     expect(state.today.isOpen.value).toBe(true);
+  });
+
+  it("stays out of the way when the boot URL already points at a chapter", async () => {
+    window.history.replaceState(null, "", "/en/AAB/exodus/2");
+
+    const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
+
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIsOpen(state)).toBe(false);
   });
 
   // Reopening must reuse the same component thunk: a fresh one would remount
