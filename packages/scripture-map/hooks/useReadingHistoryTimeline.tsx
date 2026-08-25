@@ -1,4 +1,4 @@
-import type { TooltipContentData } from "../components/containers/Tooltip";
+import type { TooltipContentData } from "../components/containers/ScriptureMapTooltip";
 import type { HexString } from "../../seed-bible-utils/domain/models/commonTypes";
 import { useTimeContext } from "../contexts/Time/TimeContext";
 import { useScriptureMapContext } from "../contexts/ScriptureMap/ScriptureMapContext";

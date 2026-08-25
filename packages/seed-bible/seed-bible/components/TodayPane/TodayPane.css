@@ -1,0 +1,900 @@
+.sb-today-clickable {
+  cursor: pointer;
+}
+
+.sb-today-book-selector-button {
+  border-style: solid;
+  border-width: 1px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-today-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  padding-bottom: 4rem;
+
+  /* A third, more muted text tier than `--sb-secondary-font-color`: the
+     resume card deliberately pairs the two, so they are not interchangeable.
+     Local rather than a theme token because core has no equivalent, and this
+     mid-grey is legible on both themes as-is. */
+  --sb-today-muted-font-color: #989898;
+}
+
+.sb-today-container .sb-today-divider {
+  width: 100%;
+  height: 0.5px;
+  background-color: var(--sb-divider-color);
+}
+
+.sb-today-content,
+.sb-today-welcome-screen {
+  width: 90%;
+  max-width: 51.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 2.25rem 0;
+  gap: 2rem;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting,
+.sb-today-welcome-screen .sb-today-welcome-screen-book,
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
+  font-weight: 500;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting,
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
+  font-size: 1.75rem;
+  font-family: var(--sb-book-title-font-family);
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting,
+.sb-today-welcome-screen .sb-today-welcome-screen-book {
+  color: var(--sb-today-muted-font-color);
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-greeting {
+  margin: 0;
+  text-box: auto;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-book {
+  font-size: 0.75rem;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
+  color: var(--sb-font-color);
+  line-height: 2.75rem;
+  text-align: center;
+}
+
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-verse
+  .sb-today-welcome-screen-verse-highlight {
+  color: var(--sb-primary-color);
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
+  height: 2.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  appearance: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+}
+
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-navigation
+  .sb-today-book-selector-button {
+  background-color: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
+  border-color: var(--sb-reader-font-color);
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-start-button {
+  border: none;
+  background-color: var(--sb-primary-color);
+  color: var(--sb-reader-background);
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-start-button > span {
+  font-size: 1rem;
+}
+
+/* Drag-to-scroll surfaces and sb-today-clickable chrome only — `user-select`
+   inherits, so a container covers its chips. The blanket `.sb-today-content *`
+   this replaced also caught search-result verse text and the resume card's
+   reference, which a reader has every reason to want to copy. */
+.sb-today-container .sb-today-bookmarks-section-container,
+.sb-today-container .sb-today-timespan-filter-container,
+.sb-today-container .sb-today-user-filter-container,
+.sb-today-container .reading-history-timeline-container,
+.sb-today-content button {
+  user-select: none;
+}
+
+.sb-today-content h1 {
+  line-height: 2rem;
+}
+
+.sb-today-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  grid-template-rows: auto auto;
+  width: 100%;
+  row-gap: 0.25rem;
+  column-gap: 0.5rem;
+}
+
+.sb-today-header > span {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  font-size: 0.75rem;
+  color: var(--sb-font-color);
+}
+
+.sb-today-header > h1 {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  margin: 0;
+  text-box: auto;
+  font-size: 1.5625rem;
+  font-weight: 500;
+  color: var(--sb-font-color);
+}
+
+.sb-today-header > h1 > span {
+  color: var(--sb-primary-color);
+}
+
+.sb-today-header > button {
+  grid-row: 1 / 3;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  justify-self: end;
+  align-self: self-start;
+  background-color: #f1ece4;
+  background-color: var(--sb-tertiary-color);
+  color: var(--sb-reader-font-color);
+}
+
+.sb-today-header > button:nth-of-type(1) {
+  grid-column: 2 / 3;
+}
+
+.sb-today-header > button:nth-of-type(2) {
+  grid-column: 3 / 4;
+}
+
+.sb-today-header > button > span {
+  font-size: 1.25rem;
+}
+
+.sb-today-container .sb-today-resume-card {
+  width: 100%;
+  background-color: var(--sb-secondary-color);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+}
+
+.sb-today-container .sb-today-resume-card > span {
+  font-size: 0.75rem;
+  color: var(--sb-primary-color);
+  font-weight: 500;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.sb-today-container .sb-today-resume-card > h1 {
+  margin: 0;
+  text-box: auto;
+  font-size: 1.5rem;
+  color: var(--sb-secondary-font-color);
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+.sb-today-container .sb-today-resume-card > h1 > span {
+  color: var(--sb-today-muted-font-color);
+}
+
+.sb-today-container .sb-today-resume-card > button {
+  grid-column: 2 / 3;
+  grid-row: 1 / 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 3rem;
+  height: 3rem;
+  align-self: center;
+  border: none;
+  background-color: var(--sb-primary-color);
+  border-radius: 50%;
+}
+
+.sb-today-container .sb-today-resume-card > button > span {
+  color: var(--sb-background);
+}
+
+/* Loading placeholder for the resume card — shown while the reading-history
+   fetch is in flight so a returning user sees the personalized layout rather
+   than the Welcome page. Overrides the card's grid with a simple row so the
+   shared <Skeleton> blocks (text stack + round button) mirror the real card. */
+.sb-today-container .sb-today-resume-card--loading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sb-today-container
+  .sb-today-resume-card--loading
+  .sb-today-resume-card-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.sb-today-container .sb-today-titled-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > h5,
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > button {
+  margin: 0;
+  color: var(--sb-today-muted-font-color);
+}
+
+.sb-today-container .sb-today-titled-section .sb-today-titled-section-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > button {
+  font-weight: 400;
+  flex-shrink: 0;
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+  cursor: pointer;
+}
+
+.sb-today-container .sb-today-search-container {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem;
+}
+
+.sb-today-container .sb-today-search-container .sb-today-book-selector-button {
+  background-color: var(--sb-secondary-color);
+  border-color: var(--sb-primary-color);
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-today-container .sb-today-search-container .sb-today-searchbar {
+  width: 100%;
+  height: 100%;
+  border: solid 1px var(--sb-divider-color);
+  padding: 0.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
+  background-color: var(--sb-tertiary-color);
+  border-radius: 0.5rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.sb-today-container .sb-today-search-container .sb-today-searchbar > span {
+  color: var(--sb-reader-font-color);
+}
+
+.sb-today-container .sb-today-search-container .sb-today-searchbar > input {
+  background-color: transparent;
+  border: none;
+  color: var(--sb-reader-font-color);
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  > input:focus {
+  outline: none;
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown {
+  position: absolute;
+  width: 100%;
+  top: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background-color: var(--sb-reader-toolbar-background);
+  border: 1px solid var(--sb-divider-color);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  border-radius: 0.875rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-status {
+  padding: 0.875rem 0.75rem;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-status-error {
+  color: #b42318;
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.75rem;
+  background: var(--sb-reader-background);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result-ref {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--sb-font-color);
+}
+
+.sb-today-container
+  .sb-today-search-container
+  .sb-today-searchbar
+  .sb-today-searchbar-dropdown
+  .sb-today-searchbar-result-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
+.sb-today-container .sb-today-section-card {
+  padding: 0.75rem 1rem;
+  border: solid 1px var(--sb-divider-color);
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+.sb-today-container .sb-today-history-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto;
+  gap: 0.5rem;
+}
+
+.sb-today-container .sb-today-history-card .sb-today-user-filter-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  height: max-content;
+  color: var(--sb-font-color);
+}
+
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-user-filter-container
+  .sb-today-user-filter-label {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-user-filter-container
+  .sb-today-user-filter-options {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  overflow-y: scroll;
+  max-height: 7.5rem;
+  scrollbar-width: none;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  box-shadow: 0 0 12px 0 #00000038;
+  z-index: 10;
+  border-radius: 0.25rem;
+  cursor: default;
+  background-color: var(--sb-reader-background);
+}
+
+.sb-today-container .sb-today-history-card .sb-today-date-label {
+  color: var(--sb-font-color);
+}
+
+.sb-today-container .sb-today-user-filter-option {
+  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1.5625rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  border: solid 1px var(--sb-divider-color);
+  background-color: var(--sb-tertiary-color);
+  color: var(--sb-font-color);
+  width: auto;
+  font-size: 0.75rem;
+}
+
+.sb-today-container .sb-today-user-filter-option > div {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+}
+
+.sb-today-container
+  .sb-today-user-filter-option.sb-today-user-filter-option-selected {
+  background-color: var(--sb-secondary-color);
+  border-color: var(--sb-primary-color);
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-today-container .sb-today-history-card .sb-today-timespan-filter-container {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: safe flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  padding: 0 0.5rem;
+}
+
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-timespan-filter-container
+  .sb-today-timespan-filter-option {
+  border: none;
+  background-color: var(--sb-tertiary-color);
+  border-radius: 1.875rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  min-width: 3.25rem;
+  font-weight: 500;
+  color: var(--sb-reader-font-color);
+  flex-shrink: 0;
+}
+
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-timespan-filter-container
+  .sb-today-timespan-filter-option:hover {
+  background-color: var(--sb-secondary-color);
+}
+
+.sb-today-container
+  .sb-today-history-card
+  .sb-today-timespan-filter-container
+  .sb-today-timespan-filter-option.sb-today-timespan-filter-option-selected {
+  color: var(--sb-reader-background);
+  background-color: var(--sb-primary-color);
+}
+
+.sb-today-container .sb-today-filtered-reading-container {
+  grid-column: 1 / 3;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sb-today-container .sb-today-filtered-reading-book {
+  display: flex;
+  flex-direction: column;
+  border: solid 1px var(--sb-divider-color);
+  padding: 0.75rem;
+  background-color: var(--sb-reader-background);
+  border-radius: 1rem;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: 18.875rem;
+  height: fit-content;
+}
+
+.sb-today-container .sb-today-filtered-reading-book.sb-today-expanded {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-today-container
+  .sb-today-filtered-reading-book
+  > .sb-today-icons-container {
+  display: flex;
+  align-items: center;
+}
+
+.sb-today-container
+  .sb-today-filtered-reading-book
+  > .sb-today-chapters-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  cursor: default;
+}
+
+.sb-today-container .sb-today-filtered-reading-book > span {
+  font-weight: 600;
+  color: var(--sb-font-color);
+}
+
+.sb-today-container .sb-today-filtered-reading-book-icon {
+  border: solid 2px var(--sb-reader-background);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-left: -0.75rem;
+}
+
+.sb-today-container .sb-today-filtered-reading-book-icon > span {
+  font-size: 1rem;
+}
+
+.sb-today-container .sb-today-filtered-reading-book-icon:first-child {
+  margin-left: 0;
+}
+
+.sb-today-container .sb-today-filtered-reading-book-extra {
+  margin-left: 0.25rem;
+  font-weight: 600;
+}
+
+.sb-today-container .sb-today-filtered-reading-chapter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: var(--sb-divider-color);
+  color: var(--sb-font-color);
+  border-radius: 0.125rem;
+  font-size: 0.75rem;
+  position: relative;
+}
+
+.sb-today-container
+  .sb-today-filtered-reading-chapter.sb-today-filtered-reading-chapter-highlighted {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-reader-background);
+}
+
+.sb-today-container .sb-today-filtered-reading-chapter > div {
+  position: absolute;
+  display: flex;
+  top: -0.5rem;
+  left: calc(100% - 0.5rem);
+  z-index: 1;
+}
+
+.sb-today-container .sb-today-filtered-reading-chapter > div > *:first-child {
+  margin-left: 0;
+}
+
+.sb-today-container .sb-today-filtered-reading-chapter > div > * {
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  border: solid 1px var(--sb-reader-background);
+  margin-left: -0.75rem;
+}
+
+.sb-today-container .sb-today-filtered-reading-chapter > div > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sb-today-container .sb-today-filtered-reading-chapter > div > img {
+  object-fit: cover;
+}
+
+.sb-today-container .sb-today-filtered-reading-chapter > div > div > span {
+  font-size: 0.5rem;
+  color: var(--sb-reader-font-color);
+}
+
+.sb-today-container .reading-history-timeline-container {
+  grid-column: 1 / 3;
+  grid-row: unset;
+}
+
+.sb-today-container .reading-history-timeline {
+  scrollbar-width: none;
+}
+
+.sb-today-container .sb-today-bookmarks-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.sb-today-container .sb-today-bookmarks-section > div {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-label {
+  flex-shrink: 0;
+  margin: 0;
+  color: var(--sb-font-color);
+}
+
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-container {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1;
+  gap: 0.75rem;
+  margin: 0 1rem;
+  height: 2rem;
+  overflow: hidden;
+}
+
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-bookmark {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  appearance: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 1.25rem;
+  gap: 0.25rem;
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  white-space: nowrap;
+}
+
+.sb-today-container
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-bookmark
+  > span {
+  font-size: 1rem;
+}
+
+@media (width <= 480px) {
+  .sb-today-content,
+  .sb-today-welcome-screen {
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+  .sb-today-header > h1 {
+    font-size: 1.2rem;
+  }
+  .sb-today-welcome-screen .sb-today-welcome-screen-navigation {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
+    font-size: 2rem;
+  }
+  .sb-today-welcome-screen .sb-today-welcome-screen-book {
+    font-size: 1rem;
+  }
+  .sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
+    height: 3rem;
+  }
+  .sb-today-container
+    .sb-today-history-card
+    .sb-today-timespan-filter-container {
+    overflow-x: scroll;
+    scrollbar-width: none;
+    padding: 0 0.5rem;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0px,
+      black 8px,
+      black calc(100% - 8px),
+      transparent 100%
+    );
+  }
+
+  .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-bookmark {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.7rem;
+    gap: 0.25rem;
+  }
+  .sb-today-container .sb-today-search-container .sb-today-searchbar {
+    gap: 0.3rem;
+  }
+  .sb-today-container .sb-today-search-container .sb-today-searchbar > span {
+    font-size: 1.2rem;
+  }
+
+  .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-bookmark
+    > svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+  .sb-today-container .sb-today-search-container .sb-today-searchbar > input {
+    font-size: 0.9rem;
+  }
+
+  .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-container {
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+    scrollbar-width: none;
+  }
+  .sb-today-container
+    .sb-today-search-container
+    .sb-today-book-selector-button {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.65rem;
+  }
+  .sb-today-container
+    .sb-today-history-card
+    .sb-today-user-filter-container
+    .sb-today-user-filter-label {
+    font-size: 0.95rem;
+  }
+
+  .sb-today-container
+    .sb-today-history-card
+    .sb-today-timespan-filter-container
+    .sb-today-timespan-filter-option {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.6rem;
+    font-weight: 400;
+    min-width: 3.25rem;
+  }
+
+  .sb-today-container .sb-today-filtered-reading-book > span {
+    font-size: 0.8rem;
+  }
+
+  .sb-today-container
+    .sb-today-titled-section
+    .sb-today-titled-section-header
+    > button {
+    font-size: 0.75rem;
+  }
+}

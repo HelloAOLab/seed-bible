@@ -4,7 +4,7 @@ import { useReadingHistoryContext } from "../contexts/ReadingHistory/ReadingHist
 import type {
   TooltipContentData,
   TooltipAnchor,
-} from "../components/containers/Tooltip";
+} from "../components/containers/ScriptureMapTooltip";
 import type {
   HexString,
   WeightedColor,
