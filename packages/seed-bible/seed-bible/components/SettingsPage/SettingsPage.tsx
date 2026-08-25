@@ -37,7 +37,7 @@ import {
   ExtensionInitalizer,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n, type I18nHook } from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
