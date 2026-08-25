@@ -327,7 +327,6 @@ export const DEFAULT_EXTENSIONS = [
   "Scripture Map",
   "twitchSub-extension",
   "twitchPub-extension",
-  "today-screen",
   "audio-reader-extension",
   "apologist-extension",
   // "BookSelector",

@@ -25,8 +25,6 @@ import {
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 import { openBookmarkCategoryModal } from "../Tabs/Tabs";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
@@ -553,7 +551,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     bookmarks,
-    extensions,
     login,
   } = props.state;
   const selectedTab = useComputed(
@@ -777,9 +774,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       !bookmarks.isFilterActive.value
   );
 
-  const isTodayOpen = useComputed(() =>
-    panes.panes.value.some((p) => p.id === "today-screen-pane")
-  );
+  const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
   const activeMobileTab = useComputed<
     "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
   >(() => {
@@ -1532,46 +1527,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
-  // Opens the Today screen. If the `today-screen` extension isn't installed
-  // yet, install it (the same path Settings uses — this persists the install)
-  // and then open it once it has initialized.
-  const openTodayScreen = async () => {
+  const openTodayScreen = () => {
     isMoreMenuOpen.value = false;
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-
-    const existing = getExtensionExports<TodayScreenAPI>("today-screen");
-    if (existing) {
-      existing.open();
-      return;
-    }
-
-    const entry = extensions.extensions.value.find(
-      (e) => e.id === "today-screen"
-    );
-    const todayPackage = entry?.extension;
-    if (!todayPackage) {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-      return;
-    }
-
-    const installed = await extensions.loadExtension(todayPackage);
-    if (installed) {
-      getExtensionExports<TodayScreenAPI>("today-screen")?.open();
-    } else {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-    }
+    props.state.today.open();
   };
 
   // Opens (or closes) the tabs list in the sidebar drawer. Shared by the Tabs
@@ -1887,7 +1850,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    // Close any fullscreen extension pane (e.g. Today).
+                    // Close any fullscreen pane (e.g. Today).
                     panes.closeAll();
                     selectedToolbarToolId.value = null;
                   }}

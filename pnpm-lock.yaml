@@ -562,12 +562,6 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
-  packages/today-screen:
-    dependencies:
-      seed-bible:
-        specifier: workspace:*
-        version: link:../seed-bible
-
   packages/transcript-extension:
     dependencies:
       '@ffmpeg/ffmpeg':
