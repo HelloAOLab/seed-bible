@@ -5,6 +5,10 @@ import {
   SECONDARY_LIGHTEN_AMOUNT,
   TERTIARY_LIGHTEN_AMOUNT,
 } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
+import {
+  createCustomizationVariantSelectionsManager,
+  VARIANT_SELECTIONS_ADDRESS,
+} from "@packages/seed-bible/seed-bible/managers/CustomizationVariantSelectionsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { createTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
@@ -114,9 +118,24 @@ describe("CustomizationsManager", () => {
     warnSpy.mockRestore();
   });
 
-  it("load() lists customizations under the seedBibleCustomization marker for the signed-in user", async () => {
+  function createManager(nav: NavigationManager = navigation) {
     const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const variantSelections = createCustomizationVariantSelectionsManager(
+      os,
+      login
+    );
+    const manager = createCustomizationsManager(
+      os,
+      login,
+      theme,
+      nav,
+      variantSelections
+    );
+    return { theme, variantSelections, manager };
+  }
+
+  it("load() lists customizations under the seedBibleCustomization marker for the signed-in user", async () => {
+    const { manager } = createManager();
 
     await manager.load();
 
@@ -137,7 +156,16 @@ describe("CustomizationsManager", () => {
           data: {
             id: "customization_good",
             name: "Good",
-            themes: {},
+            variants: [
+              {
+                id: "variant_1",
+                name: "Default",
+                themes: {},
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            ],
+            defaultVariantId: "variant_1",
             active: false,
             createdAt: 1,
             updatedAt: 1,
@@ -145,8 +173,7 @@ describe("CustomizationsManager", () => {
         },
       ],
     });
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
 
     await manager.load();
 
@@ -155,15 +182,43 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value[0]?.id).toBe("customization_good");
   });
 
-  it("create() persists a new record pre-filled from the current theme, with secondary/tertiary lightened from primary", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+  it("load() skips a record persisted under the old flat-themes shape", async () => {
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [
+        {
+          address: "customization_old",
+          data: {
+            id: "customization_old",
+            name: "Old shape",
+            themes: { primaryColor: "#111111" },
+            logoUrl: null,
+            active: false,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ],
+    });
+    const { manager } = createManager();
+
+    await manager.load();
+
+    expect(warnSpy).toHaveBeenCalled();
+    expect(manager.customizations.value).toEqual([]);
+  });
+
+  it("create() persists a new record with one variant pre-filled from the current theme, secondary/tertiary lightened from primary", async () => {
+    const { manager, theme } = createManager();
     const lightThemeVariables = theme.currentTheme.value.variables;
 
     const created = await manager.create();
 
     expect(created.active).toBe(false);
-    expect(created.themes).toEqual({
+    expect(created.variants).toHaveLength(1);
+    expect(created.defaultVariantId).toBe(created.variants[0]?.id);
+    expect(created.variants[0]?.name).toBe(theme.basePresetTheme.value.name);
+    expect(created.variants[0]?.themes).toEqual({
       primaryColor: lightThemeVariables.primaryColor,
       secondaryColor: lightenColor(
         lightThemeVariables.primaryColor,
@@ -202,14 +257,19 @@ describe("CustomizationsManager", () => {
     expect(b2).toBeLessThanOrEqual(255);
   });
 
-  it("setColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+  it("setVariantColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
+    const { manager } = createManager();
     const created = await manager.create();
+    const variantId = created.variants[0]!.id;
 
-    await manager.setColor(created.id, "primaryColor", "#123456");
+    await manager.setVariantColor(
+      created.id,
+      variantId,
+      "primaryColor",
+      "#123456"
+    );
 
-    const updated = manager.customizations.value[0];
+    const updated = manager.customizations.value[0]?.variants[0];
     expect(updated?.themes.secondaryColor).toBe(
       lightenColor("#123456", SECONDARY_LIGHTEN_AMOUNT)
     );
@@ -218,41 +278,85 @@ describe("CustomizationsManager", () => {
     );
   });
 
-  it("setColor() leaves a manually-picked secondary/tertiary alone when the primary changes", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+  it("setVariantColor() leaves a manually-picked secondary/tertiary alone when the primary changes", async () => {
+    const { manager } = createManager();
     const created = await manager.create();
+    const variantId = created.variants[0]!.id;
 
-    await manager.setColor(created.id, "secondaryColor", "#abcdef");
-    await manager.setColor(created.id, "primaryColor", "#123456");
+    await manager.setVariantColor(
+      created.id,
+      variantId,
+      "secondaryColor",
+      "#abcdef"
+    );
+    await manager.setVariantColor(
+      created.id,
+      variantId,
+      "primaryColor",
+      "#123456"
+    );
 
-    const updated = manager.customizations.value[0];
+    const updated = manager.customizations.value[0]?.variants[0];
     expect(updated?.themes.secondaryColor).toBe("#abcdef");
     expect(updated?.themes.tertiaryColor).toBe(
       lightenColor("#123456", TERTIARY_LIGHTEN_AMOUNT)
     );
   });
 
-  it("setColor() on a non-active customization persists but does not touch the live theme", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+  it("setVariantColor() on one variant never touches a sibling variant's colors", async () => {
+    const { manager } = createManager();
     const created = await manager.create();
+    const variantA = created.variants[0]!;
+    const variantB = await manager.addVariant(created.id);
+    expect(variantB).not.toBeNull();
 
-    await manager.setColor(created.id, "primaryColor", "#123456");
-
-    expect(manager.customizations.value[0]?.themes.primaryColor).toBe(
+    await manager.setVariantColor(
+      created.id,
+      variantA.id,
+      "primaryColor",
       "#123456"
     );
+
+    const record = manager.customizations.value[0]!;
+    const untouchedB = record.variants.find((v) => v.id === variantB!.id);
+    expect(untouchedB?.themes).toEqual(variantB!.themes);
+  });
+
+  it("setVariantColor() on a non-active customization persists but does not touch the live theme", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+
+    await manager.setVariantColor(
+      created.id,
+      variantId,
+      "primaryColor",
+      "#123456"
+    );
+
+    expect(
+      manager.customizations.value[0]?.variants[0]?.themes.primaryColor
+    ).toBe("#123456");
     expect(manager.activeThemeOverrides.value.primaryColor).toBeUndefined();
     expect(theme.customOverrides.value.primaryColor).toBeUndefined();
   });
 
   it("setActive() applies the customization's colors to the live theme without persisting them to the user's theme settings", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager, theme } = createManager();
     const created = await manager.create();
-    await manager.setColor(created.id, "primaryColor", "#111111");
-    await manager.setColor(created.id, "fontColor", "#222222");
+    const variantId = created.variants[0]!.id;
+    await manager.setVariantColor(
+      created.id,
+      variantId,
+      "primaryColor",
+      "#111111"
+    );
+    await manager.setVariantColor(
+      created.id,
+      variantId,
+      "fontColor",
+      "#222222"
+    );
 
     await manager.setActive(created.id);
 
@@ -266,14 +370,12 @@ describe("CustomizationsManager", () => {
     );
     // Regression check: activating a customization must never write into the
     // user's persisted, settings-backed theme overrides — only refreshing
-    // this in-memory signal. Fails on the pre-fix code, which called
-    // `theme.setCustomColor(...)` here.
+    // this in-memory signal.
     expect(theme.customOverrides.value).toEqual({});
   });
 
   it("setActive() deactivates the previously active customization", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
     const first = await manager.create();
     const second = await manager.create();
 
@@ -290,21 +392,25 @@ describe("CustomizationsManager", () => {
     expect(secondNow?.active).toBe(true);
   });
 
-  it("setColor() on the active customization also previews the change live, without persisting it", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+  it("setVariantColor() on the active customization's variant also previews the change live, without persisting it to the user's theme", async () => {
+    const { manager, theme } = createManager();
     const created = await manager.create();
+    const variantId = created.variants[0]!.id;
     await manager.setActive(created.id);
 
-    await manager.setColor(created.id, "secondaryColor", "#abcdef");
+    await manager.setVariantColor(
+      created.id,
+      variantId,
+      "secondaryColor",
+      "#abcdef"
+    );
 
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe("#abcdef");
     expect(theme.customOverrides.value.secondaryColor).toBeUndefined();
   });
 
   it("deactivate() resets the live theme's overrides", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager, theme } = createManager();
     const created = await manager.create();
     await manager.setActive(created.id);
 
@@ -316,8 +422,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("remove() erases the record and resets the live theme if it was active", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager, theme } = createManager();
     const created = await manager.create();
     await manager.setActive(created.id);
 
@@ -330,8 +435,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("rename() updates the name without touching the live theme", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager, theme } = createManager();
     const created = await manager.create();
 
     await manager.rename(created.id, "My colors");
@@ -341,8 +445,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("create() defaults logoUrl to null", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
 
     const created = await manager.create();
 
@@ -350,8 +453,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("uploadLogo() records the file under the customization marker and persists the returned URL", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
     const created = await manager.create();
     const file = new File(["fake image bytes"], "logo.png", {
       type: "image/png",
@@ -369,8 +471,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("removeLogo() clears the logo URL and persists the change", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
     const created = await manager.create();
     const file = new File(["fake image bytes"], "logo.png", {
       type: "image/png",
@@ -383,8 +484,7 @@ describe("CustomizationsManager", () => {
   });
 
   it("getShareLink() builds a link with the owner's recordName and the customization's id", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
     const created = await manager.create();
 
     const link = manager.getShareLink(created);
@@ -392,11 +492,145 @@ describe("CustomizationsManager", () => {
     expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
   });
 
+  it("addVariant() appends a new variant seeded from the current theme", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+
+    const added = await manager.addVariant(created.id);
+
+    expect(added).not.toBeNull();
+    const record = manager.customizations.value[0]!;
+    expect(record.variants).toHaveLength(2);
+    expect(record.variants[1]?.id).toBe(added!.id);
+    expect(added!.themes.primaryColor).toBe(
+      theme.currentTheme.value.variables.primaryColor
+    );
+    // The base preset name ("Light") is already taken by the first variant,
+    // so the new one falls back to a generic name.
+    expect(added!.name).toBe("Variant 2");
+  });
+
+  it("renameVariant() updates only the targeted variant", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const second = await manager.addVariant(created.id);
+
+    await manager.renameVariant(created.id, second!.id, "Festive");
+
+    const record = manager.customizations.value[0]!;
+    expect(record.variants.find((v) => v.id === second!.id)?.name).toBe(
+      "Festive"
+    );
+    expect(record.variants[0]?.name).toBe(created.variants[0]!.name);
+  });
+
+  it("setDefaultVariant() updates the default variant id, and no-ops for an unknown id", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const second = await manager.addVariant(created.id);
+
+    await manager.setDefaultVariant(created.id, second!.id);
+    expect(manager.customizations.value[0]?.defaultVariantId).toBe(second!.id);
+
+    await manager.setDefaultVariant(created.id, "variant_does_not_exist");
+    expect(manager.customizations.value[0]?.defaultVariantId).toBe(second!.id);
+  });
+
+  it("removeVariant() removes a non-default variant and leaves defaultVariantId untouched", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const second = await manager.addVariant(created.id);
+
+    await manager.removeVariant(created.id, second!.id);
+
+    const record = manager.customizations.value[0]!;
+    expect(record.variants).toHaveLength(1);
+    expect(record.defaultVariantId).toBe(created.variants[0]!.id);
+  });
+
+  it("removeVariant() reassigns defaultVariantId to the first remaining variant when the default is removed", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const originalDefaultId = created.variants[0]!.id;
+    const second = await manager.addVariant(created.id);
+
+    await manager.removeVariant(created.id, originalDefaultId);
+
+    const record = manager.customizations.value[0]!;
+    expect(record.variants).toHaveLength(1);
+    expect(record.variants[0]?.id).toBe(second!.id);
+    expect(record.defaultVariantId).toBe(second!.id);
+  });
+
+  it("removeVariant() is a no-op when only one variant remains", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const onlyVariantId = created.variants[0]!.id;
+
+    await manager.removeVariant(created.id, onlyVariantId);
+
+    const record = manager.customizations.value[0]!;
+    expect(record.variants).toHaveLength(1);
+    expect(record.variants[0]?.id).toBe(onlyVariantId);
+  });
+
+  it("activeThemeOverrides falls back to the customization's default variant, not necessarily the first one, when the viewer hasn't picked one", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const second = await manager.addVariant(created.id);
+    await manager.setDefaultVariant(created.id, second!.id);
+
+    await manager.setActive(created.id);
+
+    expect(manager.activeVariant.value?.id).toBe(second!.id);
+    expect(manager.activeThemeOverrides.value).toEqual(second!.themes);
+  });
+
+  it("selectActiveVariant() persists the viewer's own choice, separate from the customization record and the user's default theme settings", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    const second = await manager.addVariant(created.id);
+    await manager.setActive(created.id);
+    recordDataMock.mockClear();
+
+    await manager.selectActiveVariant(second!.id);
+
+    expect(manager.activeVariant.value?.id).toBe(second!.id);
+    expect(manager.activeThemeOverrides.value).toEqual(second!.themes);
+    // Persisted only to the new, separate variant-selections record...
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      VARIANT_SELECTIONS_ADDRESS,
+      { selections: { [`user-1.${created.id}`]: second!.id } },
+      { marker: "publicRead" }
+    );
+    // ...never to the customization's own record...
+    expect(recordDataMock).not.toHaveBeenCalledWith(
+      "user-1",
+      created.id,
+      expect.anything(),
+      expect.anything()
+    );
+    // ...and never to the user's regular, persisted theme settings.
+    expect(theme.customOverrides.value).toEqual({});
+    expect(settings.setThemeId).not.toHaveBeenCalled();
+    expect(settings.setCustomTheme).not.toHaveBeenCalled();
+  });
+
   it("auto-loads a customization from the ?customization= query param on construction", async () => {
     const sharedRecord = {
       id: "customization_shared",
       name: "Shared",
-      themes: { primaryColor: "#abc123" },
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: { primaryColor: "#abc123" },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
       logoUrl: null,
       active: false,
       createdAt: 1,
@@ -407,14 +641,8 @@ describe("CustomizationsManager", () => {
       initialHref:
         "http://localhost/?customization=other-user.customization_shared",
     });
-    const theme = createTheme(settings);
 
-    const manager = createCustomizationsManager(
-      os,
-      login,
-      theme,
-      linkedNavigation
-    );
+    const { manager } = createManager(linkedNavigation);
     await Promise.resolve();
     await Promise.resolve();
 
@@ -432,7 +660,16 @@ describe("CustomizationsManager", () => {
     const sharedRecord = {
       id: "customization_shared",
       name: "Shared",
-      themes: { primaryColor: "#abc123" },
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: { primaryColor: "#abc123" },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
       logoUrl: null,
       active: false,
       createdAt: 1,
@@ -443,13 +680,7 @@ describe("CustomizationsManager", () => {
       initialHref:
         "http://localhost/?customization=other-user.customization_shared",
     });
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(
-      os,
-      login,
-      theme,
-      linkedNavigation
-    );
+    const { manager } = createManager(linkedNavigation);
     const ownCustomization = await manager.create();
     await manager.setActive(ownCustomization.id);
     await Promise.resolve();
@@ -459,8 +690,8 @@ describe("CustomizationsManager", () => {
   });
 
   it("loadByLocator() ignores a malformed locator", async () => {
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
+    getDataMock.mockClear();
 
     await manager.loadByLocator("no-dot-here");
 
@@ -474,8 +705,7 @@ describe("CustomizationsManager", () => {
       errorCode: "data_not_found",
       errorMessage: "Data not found",
     });
-    const theme = createTheme(settings);
-    const manager = createCustomizationsManager(os, login, theme, navigation);
+    const { manager } = createManager();
 
     await manager.loadByLocator("owner.customization_missing");
 

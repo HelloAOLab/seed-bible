@@ -55,6 +55,7 @@ import {
 import type { ThemeManager } from "../managers/ThemeManager";
 import { createCustomizationsManager } from "../managers/CustomizationsManager";
 import type { CustomizationsManager } from "../managers/CustomizationsManager";
+import { createCustomizationVariantSelectionsManager } from "../managers/CustomizationVariantSelectionsManager";
 import {
   batch,
   computed,
@@ -500,11 +501,14 @@ export function createSeedBibleState(
   i18n.setLanguagePersister(settings.persistLanguage);
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
   const themeManager = createTheme(settings);
+  const customizationVariantSelections =
+    createCustomizationVariantSelectionsManager(os, login);
   const customizations = createCustomizationsManager(
     os,
     login,
     themeManager,
-    navigation
+    navigation,
+    customizationVariantSelections
   );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(

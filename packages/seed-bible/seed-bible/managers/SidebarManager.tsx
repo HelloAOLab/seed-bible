@@ -16,7 +16,8 @@ export type RequestedSettingsView =
   | "toolbar"
   | "extensions"
   | "customizations"
-  | "customization-edit";
+  | "customization-edit"
+  | "customization-edit-variant";
 
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;

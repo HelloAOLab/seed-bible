@@ -20,6 +20,7 @@ import {
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
+import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import { download, translateTitle } from "../../app/utils";
 // The picture editor pulls in `react-avatar-editor`, and it is only reachable
 // through the "Update picture" button — so it is fetched on that click rather
@@ -655,6 +656,80 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
   );
 }
 
+function CustomizationVariantGallery(props: {
+  state: SeedBibleState;
+  customization: SeedBibleCustomization;
+}) {
+  const { state, customization } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+
+  if (customization.variants.length <= 1) {
+    return null;
+  }
+
+  return (
+    <section className="sb-settings-section">
+      <h3 className="sb-settings-subheading">
+        {t("variants", { defaultValue: "Variants" })}
+      </h3>
+      <div
+        className="sb-theme-ready-gallery"
+        role="radiogroup"
+        onKeyDown={(event) => {
+          handleGridKeyNav(event, event.currentTarget);
+        }}
+      >
+        {customization.variants.map((variant) => {
+          const isSelected =
+            variant.id === customizations.activeVariant.value?.id;
+          return (
+            <button
+              key={variant.id}
+              type="button"
+              className={`sb-theme-ready-card${
+                isSelected ? " sb-theme-ready-card-selected" : ""
+              }`}
+              onClick={() =>
+                void customizations.selectActiveVariant(variant.id)
+              }
+            >
+              <div
+                className="sb-theme-ready-preview"
+                style={{ background: variant.themes.tertiaryColor }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: variant.themes.primaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
+                  style={{ background: variant.themes.secondaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
+                  style={{ background: variant.themes.fontColor }}
+                />
+              </div>
+              <div className="sb-theme-ready-label">
+                <span>{variant.name}</span>
+                {isSelected && (
+                  <span
+                    className="material-symbols-outlined sb-theme-ready-check"
+                    aria-label={t("selected", { defaultValue: "Selected" })}
+                  >
+                    check_circle
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const settings = state.settings;
@@ -732,7 +807,14 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         })}
       />
 
-      <ThemesGallerySection state={state} />
+      {state.customizations.activeCustomization.value ? (
+        <CustomizationVariantGallery
+          state={state}
+          customization={state.customizations.activeCustomization.value}
+        />
+      ) : (
+        <ThemesGallerySection state={state} />
+      )}
 
       <section className="sb-settings-section">
         <h3 className="sb-settings-subheading">
@@ -1944,7 +2026,31 @@ function AllSettingsView(props: { state: SeedBibleState }) {
         })}
       />
       <TextSettingsContent state={state} />
-      <ThemeCustomColorsContent state={state} />
+      {state.customizations.activeCustomization.value ? (
+        <section className="sb-settings-section">
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("colors-controlled-by-customization", {
+                defaultValue:
+                  "Colors are controlled by the active Customization. Change which variant you're using from Display & Theme.",
+              })}
+            </p>
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => {
+                state.sidebar.requestedSettingsView.value = "display-and-theme";
+              }}
+            >
+              {t("go-to-display-and-theme", {
+                defaultValue: "Go to Display & Theme",
+              })}
+            </button>
+          </div>
+        </section>
+      ) : (
+        <ThemeCustomColorsContent state={state} />
+      )}
       <div className="sb-extension-footer-actions">
         <button
           className="sb-settings-action-button"
@@ -2080,68 +2186,81 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <ul className="sb-settings-list">
-            {list.map((customization) => (
-              <li
-                key={customization.id}
-                className="sb-settings-nav-item sb-customization-row"
-                onClick={() => openCustomization(customization.id)}
-              >
-                <span className="sb-customization-swatches" aria-hidden="true">
-                  <span
-                    className="sb-customization-swatch"
-                    style={{ background: customization.themes.primaryColor }}
-                  />
-                  <span
-                    className="sb-customization-swatch"
-                    style={{
-                      background: customization.themes.secondaryColor,
-                    }}
-                  />
-                  <span
-                    className="sb-customization-swatch"
-                    style={{ background: customization.themes.tertiaryColor }}
-                  />
-                </span>
-                <span className="sb-settings-nav-label">
-                  {customization.name}
-                </span>
-                {customization.active && (
-                  <span className="sb-customization-active-badge">
-                    {t("active", { defaultValue: "Active" })}
-                  </span>
-                )}
-                <ContextMenuWithButton
-                  buttonClassName="sb-extension-row-action-button"
-                  aria-label={t("customization-options", {
-                    defaultValue: "Customization options",
-                  })}
-                  onClick={(e) => e.stopPropagation()}
+            {list.map((customization) => {
+              const previewVariant =
+                customization.variants.find(
+                  (v) => v.id === customization.defaultVariantId
+                ) ?? customization.variants[0];
+              return (
+                <li
+                  key={customization.id}
+                  className="sb-settings-nav-item sb-customization-row"
+                  onClick={() => openCustomization(customization.id)}
                 >
-                  <ContextMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigator.clipboard.writeText(
-                        customizations.getShareLink(customization)
-                      );
-                      state.app.toast(
-                        t("customization-link-copied", {
-                          defaultValue:
-                            "Customization link copied to clipboard",
-                        })
-                      );
-                    }}
+                  <span
+                    className="sb-customization-swatches"
+                    aria-hidden="true"
                   >
-                    <MaterialIcon className="sb-context-menu-item-icon">
-                      share
-                    </MaterialIcon>
-                    <span>{t("share", { defaultValue: "Share" })}</span>
-                  </ContextMenuItem>
-                </ContextMenuWithButton>
-                <span className="material-symbols-outlined rtl-mirror">
-                  chevron_right
-                </span>
-              </li>
-            ))}
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.primaryColor,
+                      }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.secondaryColor,
+                      }}
+                    />
+                    <span
+                      className="sb-customization-swatch"
+                      style={{
+                        background: previewVariant?.themes.tertiaryColor,
+                      }}
+                    />
+                  </span>
+                  <span className="sb-settings-nav-label">
+                    {customization.name}
+                  </span>
+                  {customization.active && (
+                    <span className="sb-customization-active-badge">
+                      {t("active", { defaultValue: "Active" })}
+                    </span>
+                  )}
+                  <ContextMenuWithButton
+                    buttonClassName="sb-extension-row-action-button"
+                    aria-label={t("customization-options", {
+                      defaultValue: "Customization options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(
+                          customizations.getShareLink(customization)
+                        );
+                        state.app.toast(
+                          t("customization-link-copied", {
+                            defaultValue:
+                              "Customization link copied to clipboard",
+                          })
+                        );
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        share
+                      </MaterialIcon>
+                      <span>{t("share", { defaultValue: "Share" })}</span>
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                  <span className="material-symbols-outlined rtl-mirror">
+                    chevron_right
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
 
@@ -2174,6 +2293,21 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "customizations";
+  };
+
+  const openVariant = (variantId: string) => {
+    customizations.editingVariantId.value = variantId;
+    state.sidebar.requestedSettingsView.value = "customization-edit-variant";
+  };
+
+  const handleAddVariant = async () => {
+    if (!record) {
+      return;
+    }
+    const variant = await customizations.addVariant(record.id);
+    if (variant) {
+      openVariant(variant.id);
+    }
   };
 
   const handleUploadLogo = (customizationId: string) => {
@@ -2299,38 +2433,81 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
           </div>
         </div>
 
-        <ul className="sb-theme-colors-list">
-          {CUSTOMIZATION_COLOR_FIELDS.map((field) => {
-            const value = record.themes[field.key] ?? "";
-            const label = t(`customization-${field.key}`, {
-              defaultValue: field.label,
-            });
-            return (
-              <li key={field.key} className="sb-theme-color-row">
-                <div className="sb-theme-color-row-main">
-                  <span className="sb-theme-color-label">{label}</span>
-                  <span className="sb-theme-color-value">{value || "—"}</span>
-                </div>
-                <div className="sb-theme-color-row-controls">
-                  <input
-                    type="color"
-                    className="sb-theme-color-input"
-                    value={toHexInputValue(value)}
-                    aria-label={label}
-                    onInput={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      void customizations.setColor(
-                        record.id,
-                        field.key,
-                        target.value
-                      );
-                    }}
+        <section className="sb-settings-section">
+          <h3 className="sb-settings-subheading">
+            {t("variants", { defaultValue: "Variants" })}
+          </h3>
+          <ul className="sb-settings-list">
+            {record.variants.map((variant) => (
+              <li
+                key={variant.id}
+                className="sb-settings-nav-item sb-customization-row"
+                onClick={() => openVariant(variant.id)}
+              >
+                <span className="sb-customization-swatches" aria-hidden="true">
+                  <span
+                    className="sb-customization-swatch"
+                    style={{ background: variant.themes.primaryColor }}
                   />
-                </div>
+                  <span
+                    className="sb-customization-swatch"
+                    style={{ background: variant.themes.secondaryColor }}
+                  />
+                  <span
+                    className="sb-customization-swatch"
+                    style={{ background: variant.themes.tertiaryColor }}
+                  />
+                </span>
+                <span className="sb-settings-nav-label">{variant.name}</span>
+                {variant.id === record.defaultVariantId && (
+                  <span className="sb-customization-active-badge">
+                    {t("default", { defaultValue: "Default" })}
+                  </span>
+                )}
+                {variant.id !== record.defaultVariantId && (
+                  <ContextMenuWithButton
+                    buttonClassName="sb-extension-row-action-button"
+                    aria-label={t("variant-options", {
+                      defaultValue: "Variant options",
+                    })}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContextMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void customizations.setDefaultVariant(
+                          record.id,
+                          variant.id
+                        );
+                      }}
+                    >
+                      <MaterialIcon className="sb-context-menu-item-icon">
+                        star
+                      </MaterialIcon>
+                      <span>
+                        {t("set-as-default-variant", {
+                          defaultValue: "Set as default",
+                        })}
+                      </span>
+                    </ContextMenuItem>
+                  </ContextMenuWithButton>
+                )}
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+          <div className="sb-settings-actions">
+            <button
+              type="button"
+              className="sb-settings-action-button"
+              onClick={() => void handleAddVariant()}
+            >
+              {t("add-variant", { defaultValue: "Add variant" })}
+            </button>
+          </div>
+        </section>
 
         <div className="sb-settings-actions">
           <button
@@ -2392,6 +2569,160 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
               {t("delete-customization", { defaultValue: "Delete" })}
             </button>
           )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CustomizationVariantEditSettingsView(props: {
+  state: SeedBibleState;
+}) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+  const confirmingDelete = useSignal(false);
+
+  const record = customizations.customizations.value.find(
+    (c) => c.id === customizations.editingCustomizationId.value
+  );
+  const variant = record?.variants.find(
+    (v) => v.id === customizations.editingVariantId.value
+  );
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "customization-edit";
+  };
+
+  if (!record || !variant) {
+    return (
+      <div className="sb-settings-page">
+        <SettingsBreadcrumbs
+          onBack={onBack}
+          trail={[
+            t("page-settings", { defaultValue: "Page settings" }),
+            t("customize", { defaultValue: "Customize" }),
+          ]}
+        />
+        <section className="sb-settings-section">
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("variant-not-found", {
+                defaultValue: "This variant could not be found.",
+              })}
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  const isDefault = variant.id === record.defaultVariantId;
+  const canDelete = record.variants.length > 1;
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("customize", { defaultValue: "Customize" }),
+          record.name,
+          variant.name,
+        ]}
+      />
+      <section className="sb-settings-section">
+        <div className="sb-settings-field-row">
+          <label className="sb-settings-field-label">
+            {t("variant-name", { defaultValue: "Name" })}
+          </label>
+          <input
+            type="text"
+            className="sb-settings-text-input"
+            value={variant.name}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLInputElement;
+              void customizations.renameVariant(
+                record.id,
+                variant.id,
+                target.value
+              );
+            }}
+          />
+        </div>
+
+        <ul className="sb-theme-colors-list">
+          {CUSTOMIZATION_COLOR_FIELDS.map((field) => {
+            const value = variant.themes[field.key] ?? "";
+            const label = t(`customization-${field.key}`, {
+              defaultValue: field.label,
+            });
+            return (
+              <li key={field.key} className="sb-theme-color-row">
+                <div className="sb-theme-color-row-main">
+                  <span className="sb-theme-color-label">{label}</span>
+                  <span className="sb-theme-color-value">{value || "—"}</span>
+                </div>
+                <div className="sb-theme-color-row-controls">
+                  <input
+                    type="color"
+                    className="sb-theme-color-input"
+                    value={toHexInputValue(value)}
+                    aria-label={label}
+                    onInput={(event: Event) => {
+                      const target = event.currentTarget as HTMLInputElement;
+                      void customizations.setVariantColor(
+                        record.id,
+                        variant.id,
+                        field.key,
+                        target.value
+                      );
+                    }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="sb-settings-actions">
+          {!isDefault && (
+            <button
+              type="button"
+              className="sb-settings-save-button"
+              onClick={() =>
+                void customizations.setDefaultVariant(record.id, variant.id)
+              }
+            >
+              {t("set-as-default-variant", { defaultValue: "Set as default" })}
+            </button>
+          )}
+
+          {canDelete &&
+            (confirmingDelete.value ? (
+              <button
+                type="button"
+                className="sb-settings-action-button"
+                onClick={() => {
+                  void customizations.removeVariant(record.id, variant.id);
+                  onBack();
+                }}
+              >
+                {t("confirm-delete-variant", {
+                  defaultValue: "Confirm delete",
+                })}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="sb-settings-action-button"
+                onClick={() => {
+                  confirmingDelete.value = true;
+                }}
+              >
+                {t("delete-variant", { defaultValue: "Delete" })}
+              </button>
+            ))}
         </div>
       </section>
     </div>
@@ -2770,6 +3101,10 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "customization-edit") {
     return <CustomizationEditSettingsView state={state} />;
+  }
+
+  if (currentView.value === "customization-edit-variant") {
+    return <CustomizationVariantEditSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;
