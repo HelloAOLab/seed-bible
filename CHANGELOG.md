@@ -4,6 +4,8 @@
 
 ### ✨ Added
 
+- Add `?chatFirst=true` so mobile shows Chat as the fourth toolbar tab instead of Bookmarks (Bookmarks moves into More), and desktop/laptop keeps Chat visible and prominent in the labeled toolbar.
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
