@@ -50,6 +50,15 @@ const SWIPE_LOCK_THRESHOLD_PX = 10;
  */
 const SWIPE_SETTLE_BUDGET_MS = CHAPTER_SKELETON_DELAY_MS / 2;
 
+// The discover panel scrolls its own filter chip row horizontally and its own
+// content vertically — a touch that starts there must not be claimed by the
+// chapter-swipe gesture below, or the gesture's preventDefault() steals the
+// filter row's native horizontal scroll.
+const DISCOVER_PANEL_SELECTOR = ".sb-bible-reader-discover-panel";
+
+const isInsideDiscoverPanel = (target: EventTarget | null) =>
+  target instanceof Element && target.closest(DISCOVER_PANEL_SELECTOR) !== null;
+
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
@@ -333,6 +342,16 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
       if (!touch) {
+        return;
+      }
+
+      if (isInsideDiscoverPanel(event.target)) {
+        // Leave the start coordinates unset — `onTouchMove` bails out on that
+        // for the rest of this gesture, so the panel's own scrolling proceeds
+        // untouched.
+        swipeTouchStartX.current = null;
+        swipeTouchStartY.current = null;
+        swipeDirectionLocked.current = null;
         return;
       }
 
