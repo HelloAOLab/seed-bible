@@ -4,6 +4,7 @@ import {
   CUSTOMIZATION_COLOR_FIELDS,
   CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_MARKER,
+  getFontPresetsForField,
   lightenColor,
   SECONDARY_LIGHTEN_AMOUNT,
   TERTIARY_LIGHTEN_AMOUNT,
@@ -410,6 +411,34 @@ describe("CustomizationsManager", () => {
     expect(buildCustomFontValue("")).toBe("");
     expect(buildCustomFontValue("   ")).toBe("");
     expect(buildCustomFontValue(";;;")).toBe("");
+  });
+
+  it('getFontPresetsForField() prepends a field-specific "Default" entry using the Light theme\'s own value, ahead of the 6 named presets', () => {
+    const chapterHeadingPresets = getFontPresetsForField(
+      "chapterHeadingFontFamily"
+    );
+    expect(chapterHeadingPresets[0]).toEqual({
+      name: "Default",
+      value: "Plus Jakarta Sans, sans-serif",
+    });
+    expect(chapterHeadingPresets.slice(1)).toEqual([
+      { name: "Newsreader", value: "Newsreader, serif" },
+      { name: "System UI", value: "system-ui, sans-serif" },
+      { name: "Roboto", value: "Roboto, sans-serif" },
+      { name: "Open Sans", value: "Open Sans, sans-serif" },
+      { name: "Playfair Display", value: "Playfair Display, serif" },
+      { name: "Cormorant Garamond", value: "Cormorant Garamond, serif" },
+    ]);
+
+    // Different fields have different Light-theme defaults.
+    expect(getFontPresetsForField("fontFamily")[0]).toEqual({
+      name: "Default",
+      value: "system-ui, sans-serif",
+    });
+    expect(getFontPresetsForField("bookTitleFontFamily")[0]).toEqual({
+      name: "Default",
+      value: "Newsreader, serif",
+    });
   });
 
   it("startEditing() seeds editingCustomization from the persisted record, and no-ops for an unknown id", async () => {

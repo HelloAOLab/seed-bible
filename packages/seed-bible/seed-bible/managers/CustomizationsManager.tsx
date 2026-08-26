@@ -14,6 +14,7 @@ import type { CustomizationExtensionPreferencesManager } from "./CustomizationEx
 import {
   filterValidColorOverrides,
   filterValidFontFamilyOverrides,
+  LIGHT_THEME_FONT_DEFAULTS,
   type BibleThemeVariables,
   type ThemeColorKey,
   type ThemeFontFamilyKey,
@@ -312,6 +313,22 @@ export const CUSTOMIZATION_FONT_PRESETS: CustomizationFontPreset[] = [
   { name: "Playfair Display", value: "Playfair Display, serif" },
   { name: "Cormorant Garamond", value: "Cormorant Garamond, serif" },
 ];
+
+/**
+ * The presets for one font field, with a "Default" entry (that field's
+ * value in the Seed Bible Light theme) prepended. "Default" is
+ * field-specific — unlike the 6 named presets, which apply the exact same
+ * value regardless of which of the 5 fields is being edited — so it can't
+ * live in `CUSTOMIZATION_FONT_PRESETS` itself.
+ */
+export function getFontPresetsForField(
+  key: ThemeFontFamilyKey
+): CustomizationFontPreset[] {
+  return [
+    { name: "Default", value: LIGHT_THEME_FONT_DEFAULTS[key] },
+    ...CUSTOMIZATION_FONT_PRESETS,
+  ];
+}
 
 /**
  * Builds a font-family CSS value for a manually-typed Google Font name.

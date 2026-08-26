@@ -649,6 +649,20 @@ const LIGHT_THEME: BibleTheme = {
   },
 };
 
+/**
+ * The Light theme's own font-family values, keyed by `ThemeFontFamilyKey`.
+ * Used to offer a "Default" option in a customization's font picker that
+ * always means "the Seed Bible Light theme's font," regardless of which
+ * theme the editor happens to be previewing.
+ */
+export const LIGHT_THEME_FONT_DEFAULTS: Record<ThemeFontFamilyKey, string> = {
+  fontFamily: LIGHT_THEME.variables.fontFamily,
+  bookTitleFontFamily: LIGHT_THEME.variables.bookTitleFontFamily!,
+  chapterHeadingFontFamily: LIGHT_THEME.variables.chapterHeadingFontFamily!,
+  verseFontFamily: LIGHT_THEME.variables.verseFontFamily!,
+  hebrewSubtitleFontFamily: LIGHT_THEME.variables.hebrewSubtitleFontFamily!,
+};
+
 const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
