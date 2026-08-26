@@ -34,6 +34,7 @@ import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
+import { trimmedOrNull } from "../../managers/Utils";
 
 const TIMESPAN_OPTION_IDS = ["twoDays", "week", "month", "all"] as const;
 
@@ -62,9 +63,9 @@ export const SocialSection = (props: {
       [
         userId,
         {
-          // `||` not `??`, so an empty profile name reads as anonymous
-          // rather than rendering a nameless reader in the list.
-          name: profile?.name || t("anonymous", { defaultValue: "Anonymous" }),
+          name:
+            trimmedOrNull(profile?.name) ??
+            t("anonymous", { defaultValue: "Anonymous" }),
           pictureUrl: profile?.pictureUrl,
           color: visual.color,
           icon: visual.defaultIcon,

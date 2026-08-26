@@ -47,6 +47,7 @@ import {
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
+import { trimmedOrNull } from "../../managers/Utils";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -2520,11 +2521,8 @@ export function getSelfDisplayName(
 ): string {
   const userId = state.login.userId.value;
   const profile = state.login.profile.value;
-  // `||` rather than `??`: a profile can carry an empty name, and an empty
-  // tooltip is worse than a short id or "Anonymous". Matches how the chat
-  // participant labels and the Scripture Map filter list already test a name.
   return (
-    profile?.name ||
+    trimmedOrNull(profile?.name) ??
     (userId
       ? userId.slice(0, 8)
       : t("anonymous", { defaultValue: "Anonymous" }))

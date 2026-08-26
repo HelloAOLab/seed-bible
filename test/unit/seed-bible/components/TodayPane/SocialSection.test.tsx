@@ -250,6 +250,13 @@ describe("SocialSection", () => {
       expect(options[0]!.textContent).toBe("Anonymous");
     });
 
+    it("labels a reader with a whitespace-only profile name as anonymous", () => {
+      setup({ profileName: "   " });
+      openUserFilter();
+
+      expect(filterOptions()[0]!.textContent).toBe("Anonymous");
+    });
+
     it("lists nobody when signed out", () => {
       setup({ signedIn: false });
       openUserFilter();

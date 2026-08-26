@@ -159,6 +159,16 @@ describe("Header", () => {
       expect(nameElement()).toBeNull();
     });
 
+    it("greets a reader with a whitespace-only name without naming them", () => {
+      setup({ username: "   " });
+      expect(heading()).toBe("Good morning!");
+    });
+
+    it("trims a padded name rather than greeting the padding", () => {
+      setup({ username: "  Alice  " });
+      expect(heading()).toBe("Good morning, Alice!");
+    });
+
     // The comma and "!" used to be hardcoded in the JSX, where no translator
     // could reach them. They belong to the string now, so a locale is free to
     // punctuate its own way — and to lead with the name.

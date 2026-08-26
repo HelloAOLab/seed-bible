@@ -84,6 +84,21 @@ describe("getSelfDisplayName", () => {
     );
   });
 
+  it("treats a whitespace-only profile name as no name", () => {
+    const state = createState({
+      userId: "abcdefghijklmnop",
+      profileName: "   ",
+    });
+
+    expect(getSelfDisplayName(state, createT())).toBe("abcdefgh");
+  });
+
+  it("trims a padded profile name rather than showing the padding", () => {
+    const state = createState({ userId: "user-1", profileName: "  Alice  " });
+
+    expect(getSelfDisplayName(state, createT())).toBe("Alice");
+  });
+
   it("prefers the profile name over the userId", () => {
     const state = createState({
       userId: "abcdefghijklmnop",

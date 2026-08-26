@@ -2,6 +2,7 @@ import type { LoginManager } from "../../managers/LoginManager";
 import { useI18n } from "../../i18n";
 import { useMemo } from "preact/hooks";
 import { useTimeContext } from "./TimeContext";
+import { trimmedOrNull } from "../../managers/Utils";
 
 /**
  * Stands in for the name while the greeting is translated, so the finished
@@ -15,7 +16,7 @@ import { useTimeContext } from "./TimeContext";
 const NAME_PLACEHOLDER = "\uE000";
 
 export const Header = (props: { login: LoginManager }) => {
-  const username = props.login.profile.value?.name;
+  const username = trimmedOrNull(props.login.profile.value?.name);
   const { t, language } = useI18n();
   // `TimeProvider` re-renders this subtree every ten seconds so the date and
   // greeting stay current; without `tick` in the memo below they would be
