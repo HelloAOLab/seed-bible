@@ -311,21 +311,19 @@ function renderTabSlotReader(
   state: SeedBibleState,
   container: HTMLDivElement
 ) {
+  // Mirrors production (TabsLayout renders `<TabSlotReader tab={slot.tab} />`)
+  // so components that read `currentSlot.tab` (e.g. DiscoverContentPanel via
+  // BibleReader) see the same tab object the test configured.
+  const tab = {
+    id: "tab-1",
+    title: "Tab 1",
+    readingState,
+    sharedSession: null,
+    sharedChat: null,
+  };
+  slot.tab = tab;
   act(() => {
-    render(
-      <TabSlotReader
-        tab={{
-          id: "tab-1",
-          title: "Tab 1",
-          readingState,
-          sharedSession: null,
-          sharedChat: null,
-        }}
-        state={state}
-        slot={slot}
-      />,
-      container
-    );
+    render(<TabSlotReader tab={tab} state={state} slot={slot} />, container);
   });
 }
 
