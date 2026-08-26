@@ -77,6 +77,7 @@ function createQuickToolContext(
     discoveredContent?: unknown[];
     discoverContentPanelInline?: boolean;
     annotationsForChapter?: unknown[];
+    isMobile?: boolean;
   } = {}
 ): QuickToolContext {
   return {
@@ -105,6 +106,9 @@ function createQuickToolContext(
       isFeatureEnabled: vi.fn(() => signal(true)),
     } as any,
     surface: "quick-toolbar",
+    app: {
+      isMobile: signal(overrides.isMobile ?? false),
+    } as any,
   };
 }
 
@@ -1106,6 +1110,21 @@ describe("createBibleToolsManager", () => {
         .find((t) => t.id === "discover-content-panel");
 
       expect(tool?.visible.value).toBe(true);
+    });
+
+    it("is hidden on mobile even when there are discovered results or annotations", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+        annotationsForChapter: [{ id: "ann-1" }],
+        isMobile: true,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool?.visible.value).toBe(false);
     });
 
     it("flips the tab's discoverContentPanelInline signal when selected", () => {

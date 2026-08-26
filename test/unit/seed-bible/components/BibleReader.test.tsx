@@ -233,6 +233,7 @@ function createMobileState(): SeedBibleState {
       isMobile: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      openDiscover: vi.fn(),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),
@@ -2079,6 +2080,80 @@ describe("BibleReader", () => {
     expect(state.discover.scrollToVerse.value).toBeNull();
     expect(readingState.pendingAnnotationScrollVerse.value).toBe(1);
     expect(selectVerse).toHaveBeenCalledTimes(1);
+  });
+
+  it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
+    expect(state.app.openDiscover).not.toHaveBeenCalled();
+  });
+
+  it("falls back to opening the full Discover pane when no annotation targets a specific verse", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    // Whole-chapter annotation: no verseNumber, so there's nothing for the
+    // compact panel to scroll to.
+    (state.annotations.getAnnotationsForChapter as any) = vi.fn(() =>
+      signal([
+        {
+          id: "a1",
+          bookId: "GEN",
+          chapterNumber: 1,
+          data: { type: "comment", html: "<p>Note</p>" },
+        },
+      ])
+    );
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toBeNull();
+    expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {

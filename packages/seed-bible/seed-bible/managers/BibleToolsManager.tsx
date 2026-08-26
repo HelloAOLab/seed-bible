@@ -635,6 +635,9 @@ function getDefaultQuickToolbarTools(
         </MaterialIcon>
       ),
       isVisible: (c) => {
+        if (c.app?.isMobile?.value) {
+          return false;
+        }
         if (hasAnyDiscoverResults(c.readingState)) {
           return true;
         }
