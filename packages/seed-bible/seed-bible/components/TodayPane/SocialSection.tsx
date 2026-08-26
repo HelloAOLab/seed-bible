@@ -62,7 +62,7 @@ export const SocialSection = (props: {
       [
         userId,
         {
-          name: profile?.name ?? "Guest",
+          name: profile?.name ?? "Friend",
           pictureUrl: profile?.pictureUrl,
           color: visual.color,
           icon: visual.defaultIcon,

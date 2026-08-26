@@ -132,14 +132,14 @@ describe("Header", () => {
       expect(heading()).toContain("Alice!");
     });
 
-    it("falls back to 'Guest' for an empty username", () => {
+    it("falls back to 'Friend' for an empty username", () => {
       setup({ username: "" });
-      expect(heading()).toContain("Guest!");
+      expect(heading()).toContain("Friend!");
     });
 
-    it("falls back to 'Guest' when the username is undefined", () => {
+    it("falls back to 'Friend' when the username is undefined", () => {
       setup({ username: undefined });
-      expect(heading()).toContain("Guest!");
+      expect(heading()).toContain("Friend!");
     });
   });
 });

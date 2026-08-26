@@ -661,7 +661,7 @@ describe("useBook", () => {
       ).toBe("linear-gradient(red, blue)");
     });
 
-    it("uses guest translation for non-self users", () => {
+    it("uses the anonymous-name translation for non-self users", () => {
       const translate = vi.fn((key: string) => key);
       const readingSummary = {
         totalTimeSpentReading: 120,
@@ -685,7 +685,7 @@ describe("useBook", () => {
         })
       );
       setup({ readingSummary: readingSummary as never });
-      expect(translate).toHaveBeenCalledWith("guest");
+      expect(translate).toHaveBeenCalledWith("anonymous-name");
     });
   });
 

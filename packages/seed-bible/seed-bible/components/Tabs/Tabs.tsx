@@ -2516,7 +2516,7 @@ function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
 export function getSelfDisplayName(state: SeedBibleState): string {
   const userId = state.login.userId.value;
   const profile = state.login.profile.value;
-  return profile?.name ?? (userId ? userId.slice(0, 8) : "Guest");
+  return profile?.name ?? (userId ? userId.slice(0, 8) : "Friend");
 }
 
 /**

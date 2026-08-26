@@ -35,7 +35,7 @@ export const Header = (props: { login: LoginManager }) => {
     <div className="sb-today-header">
       <span>{date}</span>
       <h1>
-        {greeting}, <span>{username || "Guest"}!</span>
+        {greeting}, <span>{username || "Friend"}!</span>
       </h1>
     </div>
   );
