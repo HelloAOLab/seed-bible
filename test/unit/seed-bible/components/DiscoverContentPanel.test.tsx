@@ -55,7 +55,6 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
 
 function createMockTab(
   overrides: {
-    discoverContentPanelInline?: boolean;
     discoveredCrossReferences?: unknown[];
   } = {}
 ): ReaderTab {
@@ -65,9 +64,7 @@ function createMockTab(
       bookId: signal("GEN"),
       chapterNumber: signal(1),
       chapterData: signal(null),
-      discoverContentPanelInline: signal(
-        overrides.discoverContentPanelInline ?? true
-      ),
+      discoverContentPanelInline: signal(true),
       discoveredCrossReferences: signal(
         overrides.discoveredCrossReferences ?? []
       ),
@@ -126,37 +123,6 @@ describe("DiscoverContentPanel", () => {
     act(() => {
       render(
         <DiscoverContentPanel tab={null} state={createMockState()} />,
-        container
-      );
-    });
-
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("still renders discovered content when the placement toggle is off", () => {
-    const tab = createMockTab({
-      discoverContentPanelInline: false,
-      discoveredCrossReferences: RESULTS_FIXTURE,
-    });
-
-    act(() => {
-      render(
-        <DiscoverContentPanel tab={tab} state={createMockState()} />,
-        container
-      );
-    });
-
-    const panel = container.querySelector(".sb-discover-content-panel");
-    expect(panel).not.toBeNull();
-    expect(container.textContent).toContain("Exodus 5:3");
-  });
-
-  it("renders nothing when there are no discovered results or annotations, even with the toggle on", () => {
-    const tab = createMockTab({ discoverContentPanelInline: true });
-
-    act(() => {
-      render(
-        <DiscoverContentPanel tab={tab} state={createMockState()} />,
         container
       );
     });

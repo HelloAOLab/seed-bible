@@ -2082,6 +2082,36 @@ describe("BibleReader", () => {
     expect(selectVerse).toHaveBeenCalledTimes(1);
   });
 
+  it("moves the compact discover panel below the content when the placement toggle is off, and keeps it inline when on", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const content = () => container.querySelector(".sb-bible-reader-content");
+    expect(
+      content()?.classList.contains("sb-bible-reader-content--discover-below")
+    ).toBe(false);
+
+    act(() => {
+      readingState.discoverContentPanelInline.value = false;
+    });
+
+    expect(
+      content()?.classList.contains("sb-bible-reader-content--discover-below")
+    ).toBe(true);
+  });
+
   it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
