@@ -1,0 +1,31 @@
+.sb-tooltip {
+  width: auto;
+  background-color: var(--sb-reader-font-color);
+  color: var(--sb-reader-background);
+  text-align: center;
+  z-index: 100;
+  border-radius: 0.75rem;
+  position: fixed;
+  padding: 0.75rem;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.sb-tooltip.sb-tooltip-up {
+  transform: translate(-50%, calc((100% + 8px) * (-1)));
+}
+
+.sb-tooltip.sb-tooltip-down {
+  transform: translate(-50%, 8px);
+}

@@ -65,6 +65,7 @@ import {
   withSpan,
   type Telemetry,
 } from "./telemetry";
+import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PORT = Number(process.env.PORT ?? 3002);
@@ -110,6 +111,7 @@ export type RenderFn = (opts: {
     renderedAsMobile: boolean;
     renderedAsWebKit: boolean;
     acceptedLanguages: string[];
+    branding?: BrandingConfig;
   };
   html: string;
 }) => Promise<

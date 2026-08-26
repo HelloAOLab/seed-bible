@@ -2065,60 +2065,66 @@ export function BibleReader(props: BibleReaderProps) {
                 </span>
               </h1>
             </div>
-            <QuickToolbar
-              toolsManager={state.tools}
-              readingState={readingState}
-              playlists={state.playlists}
-              features={state.features}
-              className="sb-quick-toolbar-mobile-header"
-            />
             <ChapterNotesButton
               state={state}
               bookId={bookId.value}
               chapterNumber={chapterNumber.value}
             />
-            {!state.playlists.playing.value && (
-              <ReaderBookmarkButton
-                state={state}
-                translationId={translationId.value}
-                bookId={bookId.value}
-                chapterNumber={chapterNumber.value}
+            <div className="sb-bible-reader-mobile-header-actions">
+              {!state.playlists.playing.value && (
+                <ReaderBookmarkButton
+                  state={state}
+                  translationId={translationId.value}
+                  bookId={bookId.value}
+                  chapterNumber={chapterNumber.value}
+                />
+              )}
+              <QuickToolbar
+                toolsManager={state.tools}
+                readingState={readingState}
+                playlists={state.playlists}
+                features={state.features}
+                sharedSession={sharedSession ?? null}
+                toast={state.app.toast}
+                modals={state.modals}
+                app={state.app}
+                className="sb-quick-toolbar-mobile-header"
               />
-            )}
-            {sharedSession ? (
-              <MobileSessionParticipants
-                state={state}
-                session={sharedSession}
-              />
-            ) : (
+              {sharedSession ? (
+                <MobileSessionParticipants
+                  state={state}
+                  session={sharedSession}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="sb-bible-reader-mobile-header-account"
+                  aria-label={`Open account settings (${getSelfDisplayName(
+                    state
+                  )})`}
+                  // The reader pane wrapper selects the pane on pointerdown/click
+                  // (which runs closeSidebarAndSettings). Stop the tap here so it
+                  // doesn't immediately dismiss the account view we're opening.
+                  onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    state.sidebar.openSidebar();
+                    state.sidebar.openSettingsToView("account");
+                  }}
+                >
+                  <SelfAvatarVisual state={state} />
+                </button>
+              )}
               <button
                 type="button"
-                className="sb-bible-reader-mobile-header-account"
-                aria-label={`Open account settings (${getSelfDisplayName(
-                  state
-                )})`}
-                // The reader pane wrapper selects the pane on pointerdown/click
-                // (which runs closeSidebarAndSettings). Stop the tap here so it
-                // doesn't immediately dismiss the account view we're opening.
-                onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                onClick={(e: MouseEvent) => {
-                  e.stopPropagation();
-                  state.sidebar.openSidebar();
-                  state.sidebar.openSettingsToView("account");
-                }}
+                className="sb-bible-reader-mobile-header-settings"
+                onClick={() => mobileChrome?.onOpenMobileSettings()}
+                aria-label={t("settings", { defaultValue: "Settings" })}
+                title={t("settings", { defaultValue: "Settings" })}
               >
-                <SelfAvatarVisual state={state} />
+                <InfoSettingsIcon />
               </button>
-            )}
-            <button
-              type="button"
-              className="sb-bible-reader-mobile-header-settings"
-              onClick={() => mobileChrome?.onOpenMobileSettings()}
-              aria-label={t("settings", { defaultValue: "Settings" })}
-              title={t("settings", { defaultValue: "Settings" })}
-            >
-              <InfoSettingsIcon />
-            </button>
+            </div>
           </div>
 
           <div
@@ -2210,6 +2216,10 @@ export function BibleReader(props: BibleReaderProps) {
                   readingState={readingState}
                   playlists={state.playlists}
                   features={state.features}
+                  sharedSession={sharedSession ?? null}
+                  toast={state.app.toast}
+                  modals={state.modals}
+                  app={state.app}
                   className="sb-quick-toolbar-reader"
                 />
                 {!state.playlists.playing.value && (

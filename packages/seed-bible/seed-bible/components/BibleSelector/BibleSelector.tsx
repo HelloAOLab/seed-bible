@@ -15,7 +15,8 @@ import {
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { TranslationList } from "../TranslationList/TranslationList";
 import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
-import { computed } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
+import { computePopover, type Rect } from "../Tutorial/Tutorial";
 import type { JSX } from "preact";
 import type { BibleDataManager, BookId } from "../../managers/BibleDataManager";
 import {
@@ -29,7 +30,10 @@ import {
   parseReadingPath,
 } from "../../managers/ReadingUrlPath";
 import { readInjectedConfig } from "../../app/appConfig";
-import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
+import {
+  formatBytes,
+  type OfflineTranslationsManager,
+} from "../../managers/OfflineTranslationsManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
@@ -51,6 +55,30 @@ const SPOTLIGHT_STYLE = {
   borderRadius: "0.5rem",
   boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)",
 } as const;
+
+/**
+ * The `highlight: "glow"` treatment: the page stays as it is and the target
+ * wears the accent instead — a filled circle with a soft ring around it.
+ */
+const GLOW_STYLE = {
+  position: "relative",
+  zIndex: 2,
+  borderRadius: "50%",
+  background: "var(--sb-secondary-color)",
+  color: "var(--sb-primary-color)",
+  boxShadow:
+    "0 0 0 0.375rem color-mix(in srgb, var(--sb-primary-color), transparent 86%)",
+} as const;
+
+/**
+ * Where the glow-highlighted control sits on screen, in viewport coordinates,
+ * published by the row that owns it so the tour popover can sit beside it.
+ *
+ * A module-level signal because the button is four layers below the popover
+ * (row → list → translation modal → selector) and only ever one selector is on
+ * screen. Null whenever no glow step is showing.
+ */
+const tourAnchorRect = signal<Rect | null>(null);
 
 interface BibleSelectorProps {
   isOpen: boolean;
@@ -85,6 +113,57 @@ export function BibleSelector(props: BibleSelectorProps) {
   const isLastStep = tutorial ? tutorial.isLast.value : false;
   const canGoBack = tutorial ? tutorial.canGoBack.value : false;
 
+  // A glow step keeps the page visible, so nothing behind the panel is dimmed
+  // and the card sits against the control it's describing rather than pinned to
+  // the bottom of the screen.
+  const glowing = tourStep?.highlight === "glow";
+  const anchor = glowing ? tourAnchorRect.value : null;
+
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [popoverSize, setPopoverSize] = useState<{
+    w: number;
+    h: number;
+  } | null>(null);
+
+  // Feed the card's real height back into placement, so a wrapped body can't
+  // leave it sitting over the button. Guarded so it settles instead of looping.
+  useEffect(() => {
+    const element = popoverRef.current;
+    if (!element) {
+      return;
+    }
+    const box = element.getBoundingClientRect();
+    const w = Math.round(box.width);
+    const h = Math.round(box.height);
+    if (!w && !h) {
+      return;
+    }
+    if (
+      !popoverSize ||
+      Math.abs(popoverSize.w - w) > 1 ||
+      Math.abs(popoverSize.h - h) > 1
+    ) {
+      setPopoverSize({ w, h });
+    }
+  });
+
+  // Padded so the card clears the glow ring rather than butting against it.
+  const anchorPad = 8;
+  const layout = anchor
+    ? computePopover(
+        {
+          top: anchor.top - anchorPad,
+          left: anchor.left - anchorPad,
+          width: anchor.width + anchorPad * 2,
+          height: anchor.height + anchorPad * 2,
+        },
+        tourStep?.placement,
+        null,
+        popoverSize,
+        12
+      )
+    : null;
+
   return (
     <>
       <div
@@ -93,8 +172,10 @@ export function BibleSelector(props: BibleSelectorProps) {
           className ? ` ${className}` : ""
         }`}
         dir={isRtl ? "rtl" : "ltr"}
-        // Dim the app behind the panel only while a selector tour step is up.
-        style={tourStepId ? { background: "rgba(0,0,0,0.6)" } : undefined}
+        // Dim the app behind the panel only while a spotlight tour step is up.
+        style={
+          tourStepId && !glowing ? { background: "rgba(0,0,0,0.6)" } : undefined
+        }
       >
         <div
           onClick={(event: Event) => {
@@ -107,25 +188,48 @@ export function BibleSelector(props: BibleSelectorProps) {
             bibleSelectorState={selectorState}
             bibleDataManager={bibleDataManager}
             tourStepId={tourStepId}
+            tutorial={tutorial}
           />
         </div>
       </div>
 
       {tourStep && (
         <div
+          ref={popoverRef}
           className={`sb-tour-popover${className ? ` ${className}` : ""}`}
-          style={{
-            position: "fixed",
-            bottom: "1.75rem",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "100%",
-            maxWidth: "28.625rem",
-            boxSizing: "border-box",
-            zIndex: 10000,
-          }}
+          style={
+            // Beside the control it describes when we know where that is;
+            // otherwise pinned to the bottom, which is where every spotlight
+            // step sits and where a glow step lands if its target scrolled out
+            // of the list.
+            layout
+              ? {
+                  position: "fixed",
+                  boxSizing: "border-box",
+                  zIndex: 10000,
+                  ...layout.style,
+                }
+              : {
+                  position: "fixed",
+                  bottom: "1.75rem",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "100%",
+                  maxWidth: "28.625rem",
+                  boxSizing: "border-box",
+                  zIndex: 10000,
+                }
+          }
           onClick={(event: MouseEvent) => event.stopPropagation()}
         >
+          {layout?.side && (
+            <span
+              className={`sb-tour-arrow sb-tour-arrow-${layout.side}`}
+              style={layout.arrowStyle}
+              aria-hidden="true"
+            />
+          )}
+
           <h3 className="sb-tour-popover-title">
             {t(tourStep.titleKey, { defaultValue: tourStep.titleDefault })}
           </h3>
@@ -133,6 +237,28 @@ export function BibleSelector(props: BibleSelectorProps) {
             {t(tourStep.bodyKey, { defaultValue: tourStep.bodyDefault })}
           </p>
           <div className="sb-tour-popover-actions">
+            {tutorial && tutorial.steps.length > 1 && (
+              <div
+                className="sb-tour-popover-dots"
+                role="img"
+                aria-label={t("tutorial.stepProgress", {
+                  current: tutorial.index.value + 1,
+                  total: tutorial.steps.length,
+                  defaultValue: "Step {{current}} of {{total}}",
+                })}
+              >
+                {tutorial.steps.map((step, position) => (
+                  <span
+                    key={step.id}
+                    className={`sb-tour-dot${
+                      position === tutorial.index.value
+                        ? " sb-tour-dot-active"
+                        : ""
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
             <button
               type="button"
               className="sb-tour-btn sb-tour-btn-text"
@@ -182,8 +308,10 @@ const SearchBar = (props: {
   bibleDataManager: BibleDataManager;
   /** Active selector-group tour step id, or null when no step is active. */
   tourStepId?: string | null;
+  tutorial?: TutorialManager;
 }) => {
-  const { app, bibleSelectorState, bibleDataManager, tourStepId } = props;
+  const { app, bibleSelectorState, bibleDataManager, tourStepId, tutorial } =
+    props;
   const { t } = useI18n();
   const {
     search,
@@ -339,6 +467,8 @@ const SearchBar = (props: {
             app={app}
             bibleSelectorState={bibleSelectorState}
             bibleDataManager={bibleDataManager}
+            tourStepId={tourStepId}
+            tutorial={tutorial}
           />
         )}
       </div>
@@ -1010,18 +1140,6 @@ const SideBarChapters = (props: {
   );
 };
 
-/** Renders a byte count as a short, human-readable size like "7.1 MB". */
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-  const kilobytes = bytes / 1024;
-  if (kilobytes < 1024) {
-    return `${Math.round(kilobytes)} KB`;
-  }
-  return `${(kilobytes / 1024).toFixed(1)} MB`;
-}
-
 /**
  * The per-translation offline download controls shown in the translation list.
  *
@@ -1041,14 +1159,70 @@ const OfflineTranslationControls = (props: {
   offline: OfflineTranslationsManager;
   bibleSelectorState: BibleSelectorState;
   app: AppState;
+  /** Active selector-group tour step id, or null when no step is active. */
+  tourStepId?: string | null;
 }) => {
-  const { translation, offline, bibleSelectorState, app } = props;
+  const { translation, offline, bibleSelectorState, app, tourStepId } = props;
   const { pendingOfflineDelete } = bibleSelectorState;
   const { t } = useI18n();
+
+  // The offline tip highlights one button, not every row's: the translation the
+  // reader is actually in, which is the row the user came here already using.
+  const isTourTarget =
+    tourStepId === "offline-download" &&
+    bibleSelectorState.selectedTranslation.value?.id === translation.id;
+
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Publish where the button is so the tour card can sit against it. The list
+  // scrolls and the selector opens with an animation, so this keeps measuring
+  // for as long as the tip is up rather than trusting one reading.
+  useEffect(() => {
+    if (!isTourTarget) {
+      return;
+    }
+    const measure = () => {
+      const box = buttonRef.current?.getBoundingClientRect();
+      if (!box || (!box.width && !box.height)) {
+        return;
+      }
+      // Only publish real movement. Writing an equal-but-new object every tick
+      // would re-render the whole translation list four times a second.
+      const previous = tourAnchorRect.value;
+      if (
+        previous &&
+        Math.abs(previous.top - box.top) < 0.5 &&
+        Math.abs(previous.left - box.left) < 0.5 &&
+        Math.abs(previous.width - box.width) < 0.5 &&
+        Math.abs(previous.height - box.height) < 0.5
+      ) {
+        return;
+      }
+      tourAnchorRect.value = {
+        top: box.top,
+        left: box.left,
+        width: box.width,
+        height: box.height,
+      };
+    };
+
+    measure();
+    const interval = window.setInterval(measure, 150);
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+      tourAnchorRect.value = null;
+    };
+  }, [isTourTarget]);
 
   if (!offline.supported) {
     return null;
   }
+
+  const highlightStyle = isTourTarget ? GLOW_STYLE : undefined;
 
   const progress = offline.downloads.value.get(translation.id) ?? null;
   const summary = offline.downloaded.value.get(translation.id) ?? null;
@@ -1169,7 +1343,9 @@ const OfflineTranslationControls = (props: {
       {summary ? (
         <button
           type="button"
+          ref={buttonRef}
           class="sb-offline-btn downloaded flex-center"
+          style={highlightStyle}
           title={downloadedLabel}
           aria-label={downloadedLabel}
           onClick={(e: MouseEvent) => {
@@ -1184,7 +1360,9 @@ const OfflineTranslationControls = (props: {
       ) : (
         <button
           type="button"
+          ref={buttonRef}
           class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
+          style={highlightStyle}
           title={downloadTitle}
           aria-label={downloadTitle}
           onClick={(e: MouseEvent) => {
@@ -1283,8 +1461,12 @@ const TranslationModal = (props: {
   app: AppState;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
+  /** Active selector-group tour step id, or null when no step is active. */
+  tourStepId?: string | null;
+  tutorial?: TutorialManager;
 }) => {
-  const { app, bibleSelectorState, bibleDataManager } = props;
+  const { app, bibleSelectorState, bibleDataManager, tourStepId, tutorial } =
+    props;
   const { isMobile } = app;
   const {
     languageQuery,
@@ -1309,6 +1491,13 @@ const TranslationModal = (props: {
   // device is offline.
   useEffect(() => {
     void bibleDataManager.offline.checkForUpdates();
+
+    // Opening the list is also the first time the download control is on
+    // screen, so it's where we teach it. Skipped where downloads aren't
+    // supported, since then there's no control to point at.
+    if (bibleDataManager.offline.supported) {
+      tutorial?.startContextual("offline-download");
+    }
   }, []);
 
   // Judged against how many groups actually match the current search and view
@@ -1368,6 +1557,7 @@ const TranslationModal = (props: {
           translation={translation}
           bibleSelectorState={bibleSelectorState}
           bibleDataManager={bibleDataManager}
+          tourStepId={tourStepId}
         />
       )}
     />
@@ -1518,8 +1708,11 @@ const TranslationRowActions = (props: {
   translation: Translation;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
+  /** Active selector-group tour step id, or null when no step is active. */
+  tourStepId?: string | null;
 }) => {
-  const { app, translation, bibleSelectorState, bibleDataManager } = props;
+  const { app, translation, bibleSelectorState, bibleDataManager, tourStepId } =
+    props;
   const { t } = useI18n();
 
   const shareTranslatation = async (props: { translation: Translation }) => {
@@ -1567,6 +1760,7 @@ const TranslationRowActions = (props: {
         offline={bibleDataManager.offline}
         bibleSelectorState={bibleSelectorState}
         app={app}
+        tourStepId={tourStepId}
       />
       <button
         onClick={(e) => {
