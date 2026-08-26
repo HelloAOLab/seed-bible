@@ -17,10 +17,15 @@ export function bookHasChapter(
 /**
  * Whether a resolved reference's chapter/verse numbers exist for the book.
  *
- * Prefers the current translation's chapter range when `books` is provided;
- * otherwise (and for per-chapter verse counts) falls back to static
- * Protestant-canon bounds. Unknown books (e.g. apocrypha without static data)
- * only reject clearly impossible numbers (chapter/verse < 1).
+ * Chapter bounds prefer the current translation when `books` is provided;
+ * otherwise they use static Protestant-canon chapter counts.
+ *
+ * Verse bounds use the static Protestant table only when no translation book
+ * is available. TranslationBook has no per-chapter verse counts, so imposing
+ * Protestant maxima on a loaded translation would reject valid Catholic/
+ * Orthodox (and other) versifications. With a translation book present we
+ * only require verse ≥ 1; chapter gating still kills impossible refs like
+ * Genesis 999. Unknown books without static data likewise accept verse ≥ 1.
  */
 export function isVerseReferenceInBounds(
   bookId: string,
@@ -56,9 +61,13 @@ export function isVerseReferenceInBounds(
     if (v < 1) {
       return false;
     }
+    // Translation metadata has no per-chapter verse counts — don't reject on
+    // Protestant assumptions when a translation book is loaded.
+    if (fromTranslation) {
+      return true;
+    }
     const max = getChapterVerseCount(bookId, ch);
     if (max === undefined) {
-      // No static verse data (and TranslationBook has none) — accept verse ≥ 1.
       return true;
     }
     return v <= max;

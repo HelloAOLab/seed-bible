@@ -604,6 +604,51 @@ describe("scanVerseReferencesInText()", () => {
     expect(parseVerseReference("Genesis 1:999")).toBeNull();
     expect(parseVerseReference("Jude 5:1")).toBeNull();
   });
+
+  it("still links valid last-verse boundary references", () => {
+    // Locks the static verse table: undercounting (e.g. Psalm 150 as 5)
+    // would silently drop these after bounds were added.
+    const cases: Array<
+      [string, { book: BookId; chapter: number; verse: number }]
+    > = [
+      ["Psalm 117:2", { book: "PSA", chapter: 117, verse: 2 }],
+      ["Psalm 119:176", { book: "PSA", chapter: 119, verse: 176 }],
+      ["Psalm 150:6", { book: "PSA", chapter: 150, verse: 6 }],
+      ["Genesis 50:26", { book: "GEN", chapter: 50, verse: 26 }],
+      ["Revelation 22:21", { book: "REV", chapter: 22, verse: 21 }],
+      ["Jude 1:25", { book: "JUD", chapter: 1, verse: 25 }],
+    ];
+    for (const [text, ref] of cases) {
+      expect(scanVerseReferencesInText(text)).toContainEqual(
+        expect.objectContaining({ ref })
+      );
+    }
+  });
+
+  it("does not impose Protestant verse maxima when a translation book is loaded", () => {
+    // Daniel 3 in editions with the Song of the Three Young Men has ~100
+    // verses; the static Protestant table only has 30. With translation
+    // metadata present, chapter gating still applies but verse maxima do not.
+    const danBooks = [
+      {
+        id: "DAN",
+        name: "Daniel",
+        commonName: "Daniel",
+        title: null,
+        order: 27,
+        numberOfChapters: 12,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 357,
+      },
+    ] as TranslationBook[];
+    expect(scanVerseReferencesInText("Daniel 3:57", danBooks)).toContainEqual(
+      expect.objectContaining({
+        ref: { book: "DAN", chapter: 3, verse: 57 },
+      })
+    );
+    // Without a translation list, Protestant static maxima still apply.
+    expect(scanVerseReferencesInText("Daniel 3:57")).toEqual([]);
+  });
 });
 
 /**

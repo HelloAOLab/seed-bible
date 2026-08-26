@@ -1,10 +1,11 @@
 /**
  * Per-chapter verse counts for Protestant-canon books (USFM ids).
- * Used by the free-text verse scanner to reject out-of-range chapters/verses
- * when translation metadata is missing or lacks per-chapter verse data.
+ * Used by the free-text verse scanner for verse bounds when no translation
+ * book list is available. Psalms counts follow English Protestant
+ * versification (KJV/ESV/NIV); total 2461 verses.
  *
- * Sourced from seed-bible-utils BooksStaticInfo; kept local to avoid a
- * circular package dependency (seed-bible-utils depends on seed-bible).
+ * Mirrors seed-bible-utils BooksStaticInfo; kept local to avoid a circular
+ * package dependency (seed-bible-utils depends on seed-bible).
  */
 export const BOOK_CHAPTER_VERSE_COUNTS: Readonly<
   Record<string, readonly number[]>
@@ -73,14 +74,14 @@ export const BOOK_CHAPTER_VERSE_COUNTS: Readonly<
     30, 24, 34, 17,
   ],
   PSA: [
-    6, 12, 8, 8, 12, 10, 17, 9, 20, 17, 7, 8, 6, 7, 5, 11, 15, 50, 14, 9, 13,
-    31, 6, 10, 22, 12, 14, 9, 11, 12, 24, 11, 21, 22, 28, 12, 40, 22, 13, 17,
-    13, 11, 4, 26, 17, 11, 9, 14, 20, 23, 19, 9, 6, 7, 23, 13, 11, 11, 17, 12,
-    8, 12, 11, 10, 13, 20, 7, 35, 36, 5, 23, 20, 28, 23, 10, 12, 20, 72, 13, 19,
-    16, 8, 18, 12, 13, 17, 7, 18, 52, 17, 15, 15, 4, 22, 10, 12, 11, 9, 8, 5, 8,
-    28, 22, 34, 44, 47, 42, 13, 31, 7, 9, 9, 8, 7, 17, 18, 1, 28, 175, 7, 8, 9,
-    4, 8, 5, 6, 5, 6, 8, 8, 3, 18, 3, 3, 20, 25, 8, 8, 24, 13, 10, 7, 12, 15,
-    21, 9, 19, 13, 8, 5,
+    6, 12, 8, 8, 12, 10, 17, 9, 20, 18, 7, 8, 6, 7, 5, 11, 15, 50, 14, 9, 13,
+    31, 6, 10, 22, 12, 14, 9, 11, 12, 24, 11, 22, 22, 28, 12, 40, 22, 13, 17,
+    13, 11, 5, 26, 17, 11, 9, 14, 20, 23, 19, 9, 6, 7, 23, 13, 11, 11, 17, 12,
+    8, 12, 11, 10, 13, 20, 7, 35, 36, 5, 24, 20, 28, 23, 10, 12, 20, 72, 13, 19,
+    16, 8, 18, 12, 13, 17, 7, 18, 52, 17, 16, 15, 5, 23, 11, 13, 12, 9, 9, 5, 8,
+    28, 22, 35, 45, 48, 43, 13, 31, 7, 10, 10, 9, 8, 18, 19, 2, 29, 176, 7, 8,
+    9, 4, 8, 5, 6, 5, 6, 8, 8, 3, 18, 3, 3, 21, 26, 9, 8, 24, 13, 10, 7, 12, 15,
+    21, 10, 20, 14, 9, 6,
   ],
   PRO: [
     33, 22, 35, 27, 23, 35, 27, 36, 18, 32, 31, 28, 25, 35, 33, 33, 28, 24, 29,
