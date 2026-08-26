@@ -1520,6 +1520,19 @@ export function BibleReader(props: BibleReaderProps) {
       bookId.value !== null &&
       currentBook.value === null
   );
+  // Display name for the header/title: the catalog entry's name, falling
+  // back to the loaded chapter's own book record while the catalog is still
+  // in flight. The book catalog and the chapter content load independently
+  // (see `loadInitialData`'s comment on the raw position signals firing the
+  // content effect before the catalog-backed check completes), so — same as
+  // `SeedBibleStateManager`'s `resolveCurrentBook` for the document title —
+  // `currentBook` can still be null here even after SSR has suspended on
+  // (and resolved) `chapterDataPromise`. Without this, the header would show
+  // the raw book id ("GEN") instead of its name whenever that race lands the
+  // chapter first.
+  const currentBookName = computed(
+    () => currentBook.value?.name ?? chapterData.value?.book.name ?? null
+  );
   const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
@@ -1707,7 +1720,7 @@ export function BibleReader(props: BibleReaderProps) {
     <>
       {isMobile &&
         renderMobileChapterTitle(
-          currentBook.value?.name ?? bookId.value ?? "",
+          currentBookName.value ?? bookId.value ?? "",
           chapterNumber.value ?? ""
         )}
 
@@ -1876,7 +1889,7 @@ export function BibleReader(props: BibleReaderProps) {
                   className="sb-bible-reader-mobile-header-book"
                   onClick={openBookSelector}
                 >
-                  {currentBook.value?.name ?? bookId.value ?? ""}{" "}
+                  {currentBookName.value ?? bookId.value ?? ""}{" "}
                   {chapterNumber.value}
                 </span>
                 <span
@@ -2006,7 +2019,7 @@ export function BibleReader(props: BibleReaderProps) {
               className="sb-bible-reader-title"
             >
               <span className="sb-bible-reader-book">
-                {currentBook.value?.name ?? bookId.value ?? "Select a book"}
+                {currentBookName.value ?? bookId.value ?? "Select a book"}
               </span>
               <span className="sb-bible-reader-title-sep" aria-hidden="true">
                 {" "}
