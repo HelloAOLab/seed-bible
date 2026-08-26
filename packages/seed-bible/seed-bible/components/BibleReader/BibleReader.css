@@ -1094,3 +1094,26 @@
     padding-bottom: 5rem;
   }
 }
+
+/* Flex-wrap's line-fitting check runs on each item's *unshrunk* flex basis,
+   not its post-shrink size. Left at their default `flex-basis` (content-sized
+   for the scripture column, 22.5rem for the panel), the two items'
+   hypothetical size is their full preferred width — together almost always
+   wider than the row actually has, so the browser wraps the panel below
+   before either side gets a chance to shrink, even in a plain single-pane
+   desktop window. Basing both at 0 instead makes their hypothetical size
+   collapse to their `min-width` floor, so wrapping only kicks in once the row
+   genuinely can't fit both at their minimum comfortable widths — e.g. a
+   narrow multi-pane layout. Placed after their base rules above (same
+   specificity, later wins) so this actually overrides them at this width. */
+@media (min-width: 1024px) {
+  .sb-bible-reader-main-content {
+    flex: 1 1 0;
+    min-width: min(20rem, var(--sb-scripture-width, 48rem));
+  }
+
+  .sb-bible-reader-discover-panel {
+    flex: 1 1 0;
+    min-width: 18rem;
+  }
+}
