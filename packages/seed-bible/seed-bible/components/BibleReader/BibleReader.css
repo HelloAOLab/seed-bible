@@ -1092,6 +1092,6 @@
   padding-bottom: var(--sb-reader-bottom-inset);
 
   &:has(+ .sb-bible-reader-discover-panel) {
-    padding-bottom: 1rem;
+    padding-bottom: 5rem;
   }
 }
