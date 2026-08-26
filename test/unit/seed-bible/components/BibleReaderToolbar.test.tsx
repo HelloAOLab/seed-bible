@@ -2149,15 +2149,15 @@ describe("BibleReaderToolbar — chat-first mobile tab", () => {
       container.querySelectorAll(".sb-mobile-more-menu-label")
     ).map((el) => el.textContent);
 
-    // Chat-first front-loads pinned items so demoted Bookmarks stay first,
-    // even when an extension tool is also in More.
-    expect(labels[0]).toBe("Bookmarks");
+    expect(labels).toContain("Bookmarks");
     expect(labels).toContain("Tabs");
     expect(labels).toContain("Extension Tool");
     expect(labels).not.toContain("Chat");
-    expect(labels.indexOf("Bookmarks")).toBeLessThan(
-      labels.indexOf("Extension Tool")
+    // Same menu order as default: extension tools first, then pinned app items.
+    expect(labels.indexOf("Extension Tool")).toBeLessThan(
+      labels.indexOf("Bookmarks")
     );
+    expect(labels.indexOf("Bookmarks")).toBeLessThan(labels.indexOf("Tabs"));
   });
 
   it("always shows More under chat-first so demoted Bookmarks have a home", async () => {

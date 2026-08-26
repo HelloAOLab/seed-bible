@@ -174,10 +174,9 @@ interface MobileMoreMenuProps {
   onClose: () => void;
   tools: BibleReaderToolbarTool[];
   /**
-   * App-level items (not extension tools), e.g. Tabs, or Bookmarks when it has
-   * been demoted off the bottom toolbar. Each item's `onClick` is responsible
-   * for closing the menu. Rendered after extension tools by default; set
-   * `pinItemsFirst` to put them above extension tools (chat-first).
+   * App-level items (not extension tools) appended after extension tools, e.g.
+   * Tabs, or Bookmarks when chat-first has demoted it off the bottom toolbar.
+   * Each item's `onClick` is responsible for closing the menu.
    */
   pinnedItems?: Array<{
     id: string;
@@ -186,12 +185,6 @@ interface MobileMoreMenuProps {
     iconNode?: preact.ComponentChildren;
     onClick: () => void;
   }>;
-  /**
-   * When true, `pinnedItems` render above extension tools so demoted Bookmarks
-   * stays at the top under chat-first. Default (false) keeps the historical
-   * order: extension tools first, then Tabs.
-   */
-  pinItemsFirst?: boolean;
   /**
    * New-message indicator for the chat tool (`id === "open-chat"`), mirroring
    * the badge shown on the expanded toolbar. `unreadChatIndicator` is the badge
@@ -204,7 +197,7 @@ interface MobileMoreMenuProps {
 }
 
 function MobileMoreMenu(props: MobileMoreMenuProps) {
-  const { onClose, tools, pinnedItems, pinItemsFirst = false } = props;
+  const { onClose, tools, pinnedItems } = props;
   const { t } = useI18n();
 
   const extraItems = tools
@@ -245,9 +238,8 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     //     );
     //   },
     // },
-    ...(pinItemsFirst
-      ? [...(pinnedItems ?? []), ...extraItems]
-      : [...extraItems, ...(pinnedItems ?? [])]),
+    ...extraItems,
+    ...(pinnedItems ?? []),
   ];
 
   return (
@@ -2121,7 +2113,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         unreadChatIndicator={unreadChatIndicator.value}
                         chatWasMentioned={chats.wasMentioned.value}
                         hasTypingInChats={hasTypingInChats.value}
-                        pinItemsFirst={isChatFirst}
                         pinnedItems={[
                           ...(isChatFirst
                             ? [
