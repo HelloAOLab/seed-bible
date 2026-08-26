@@ -62,7 +62,9 @@ export const SocialSection = (props: {
       [
         userId,
         {
-          name: profile?.name ?? t("anonymous", { defaultValue: "Anonymous" }),
+          // `||` not `??`, so an empty profile name reads as anonymous
+          // rather than rendering a nameless reader in the list.
+          name: profile?.name || t("anonymous", { defaultValue: "Anonymous" }),
           pictureUrl: profile?.pictureUrl,
           color: visual.color,
           icon: visual.defaultIcon,

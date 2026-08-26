@@ -65,6 +65,25 @@ describe("getSelfDisplayName", () => {
     expect(getSelfDisplayName(state, createT())).toBe("Anonymous");
   });
 
+  // A profile can carry an empty name, and an empty tooltip tells the reader
+  // nothing. `??` used to let it through.
+  it("treats an empty profile name as no name, falling back to the userId", () => {
+    const state = createState({
+      userId: "abcdefghijklmnop",
+      profileName: "",
+    });
+
+    expect(getSelfDisplayName(state, createT())).toBe("abcdefgh");
+  });
+
+  it("falls back to anonymous when the profile name is empty and there is no userId", () => {
+    const state = createState({ userId: null, profileName: "" });
+
+    expect(getSelfDisplayName(state, createT({ anonymous: "Anónimo" }))).toBe(
+      "Anónimo"
+    );
+  });
+
   it("prefers the profile name over the userId", () => {
     const state = createState({
       userId: "abcdefghijklmnop",

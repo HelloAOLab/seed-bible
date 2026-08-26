@@ -102,7 +102,13 @@ describe("SocialSection", () => {
     vi.clearAllMocks();
   });
 
-  function setup(options: { signedIn?: boolean; pictureUrl?: string } = {}) {
+  function setup(
+    options: {
+      signedIn?: boolean;
+      pictureUrl?: string;
+      profileName?: string;
+    } = {}
+  ) {
     const signedIn = options.signedIn ?? true;
     const today = todayStub({
       getCommunityReading,
@@ -113,7 +119,10 @@ describe("SocialSection", () => {
       userId: signal(signedIn ? CURRENT_USER_ID : null),
       profile: signal(
         signedIn
-          ? ({ name: "Me", pictureUrl: options.pictureUrl } as UserProfile)
+          ? ({
+              name: options.profileName ?? "Me",
+              pictureUrl: options.pictureUrl,
+            } as UserProfile)
           : null
       ),
     });
@@ -228,6 +237,17 @@ describe("SocialSection", () => {
       expect(options[0]!.className).toContain(
         "sb-today-user-filter-option-selected"
       );
+    });
+
+    // A profile can carry an empty name. `??` let it through, leaving a reader
+    // row with a colour swatch and no label at all.
+    it("labels a reader with an empty profile name as anonymous", () => {
+      setup({ profileName: "" });
+      openUserFilter();
+
+      const options = filterOptions();
+      expect(options).toHaveLength(1);
+      expect(options[0]!.textContent).toBe("Anonymous");
     });
 
     it("lists nobody when signed out", () => {
