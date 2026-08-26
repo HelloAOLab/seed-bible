@@ -688,5 +688,7 @@
   "greeting-morning": "காலை வணக்கம்!",
   "greeting-morning-named": "காலை வணக்கம், {{name}} !",
   "greeting-night": "இனிய இரவு!",
-  "greeting-night-named": "இனிய இரவு, {{name}} !"
+  "greeting-night-named": "இனிய இரவு, {{name}} !",
+  "annotation-override-banner": "உங்கள் குழுவின் கணக்கிலிருந்து குறிப்புகள் சேமிக்கப்பட்டு ஏற்றப்படுகின்றன.",
+  "annotation-override-save-to-my-account": "எனது கணக்கில் சேமிக்கவும்"
 }

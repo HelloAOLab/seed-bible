@@ -688,5 +688,7 @@
   "greeting-morning": "Bon dia!",
   "greeting-morning-named": "Bon dia, {{name}} !",
   "greeting-night": "Bona nit!",
-  "greeting-night-named": "Bona nit, {{name}} !"
+  "greeting-night-named": "Bona nit, {{name}} !",
+  "annotation-override-banner": "Les notes s'estan desant i carregant des del compte del vostre equip.",
+  "annotation-override-save-to-my-account": "Desa al meu compte"
 }

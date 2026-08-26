@@ -688,5 +688,7 @@
   "greeting-morning": "Mbote!",
   "greeting-morning-named": "Ntongo malamu, {{name}} !",
   "greeting-night": "Butu malamu!",
-  "greeting-night-named": "Butu malamu, {{name}} !"
+  "greeting-night-named": "Butu malamu, {{name}} !",
+  "annotation-override-banner": "Ba notes ezali kobombama mpe ko charger na compte ya équipe na yo.",
+  "annotation-override-save-to-my-account": "Bomba na compte na ngai"
 }

@@ -688,5 +688,7 @@
   "greeting-morning": "Magandang umaga!",
   "greeting-morning-named": "Magandang umaga, {{name}} !",
   "greeting-night": "Magandang gabi!",
-  "greeting-night-named": "Magandang gabi, {{name}} !"
+  "greeting-night-named": "Magandang gabi, {{name}} !",
+  "annotation-override-banner": "Sine-save at nilo-load ang mga tala mula sa account ng iyong team.",
+  "annotation-override-save-to-my-account": "I-save sa aking account"
 }

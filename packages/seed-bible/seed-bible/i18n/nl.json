@@ -688,5 +688,7 @@
   "greeting-morning": "Goedemorgen!",
   "greeting-morning-named": "Goedemorgen, {{name}} !",
   "greeting-night": "Welterusten!",
-  "greeting-night-named": "Goedenacht, {{name}} !"
+  "greeting-night-named": "Goedenacht, {{name}} !",
+  "annotation-override-banner": "Notities worden opgeslagen en geladen vanuit het account van uw team.",
+  "annotation-override-save-to-my-account": "Opslaan in mijn account"
 }

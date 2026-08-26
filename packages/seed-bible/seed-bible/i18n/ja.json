@@ -688,5 +688,7 @@
   "greeting-morning": "おはよう！",
   "greeting-morning-named": "おはようございます、 {{name}} ！",
   "greeting-night": "おやすみ！",
-  "greeting-night-named": "おやすみなさい、 {{name}} ！"
+  "greeting-night-named": "おやすみなさい、 {{name}} ！",
+  "annotation-override-banner": "メモはチームのアカウントから保存および読み込まれています。",
+  "annotation-override-save-to-my-account": "マイアカウントに保存"
 }

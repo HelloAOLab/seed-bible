@@ -688,5 +688,7 @@
   "greeting-morning": "Dzień dobry!",
   "greeting-morning-named": "Dzień dobry, {{name}} !",
   "greeting-night": "Dobranoc!",
-  "greeting-night-named": "Dobranoc, {{name}} !"
+  "greeting-night-named": "Dobranoc, {{name}} !",
+  "annotation-override-banner": "Notatki są zapisywane i ładowane z konta Twojego zespołu.",
+  "annotation-override-save-to-my-account": "Zapisz na moim koncie"
 }

@@ -688,5 +688,7 @@
   "greeting-morning": "ਸ਼ੁਭ ਸਵੇਰ!",
   "greeting-morning-named": "ਸ਼ੁਭ ਸਵੇਰ, {{name}} !",
   "greeting-night": "ਸ਼ੁਭ ਰਾਤ!",
-  "greeting-night-named": "ਸ਼ੁਭ ਰਾਤਰੀ, {{name}} !"
+  "greeting-night-named": "ਸ਼ੁਭ ਰਾਤਰੀ, {{name}} !",
+  "annotation-override-banner": "ਨੋਟਸ ਤੁਹਾਡੀ ਟੀਮ ਦੇ ਖਾਤੇ ਤੋਂ ਸੇਵ ਅਤੇ ਲੋਡ ਕੀਤੇ ਜਾ ਰਹੇ ਹਨ।",
+  "annotation-override-save-to-my-account": "ਮੇਰੇ ਖਾਤੇ ਵਿੱਚ ਸੇਵ ਕਰੋ"
 }

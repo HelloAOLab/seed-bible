@@ -688,5 +688,7 @@
   "greeting-morning": "god morgon!",
   "greeting-morning-named": "God morgon, {{name}} !",
   "greeting-night": "God natt!",
-  "greeting-night-named": "God natt, {{name}} !"
+  "greeting-night-named": "God natt, {{name}} !",
+  "annotation-override-banner": "Anteckningar sparas och laddas från ditt teams konto.",
+  "annotation-override-save-to-my-account": "Spara på mitt konto"
 }

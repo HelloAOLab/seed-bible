@@ -688,5 +688,7 @@
   "greeting-morning": "早上好！",
   "greeting-morning-named": "早上好， {{name}} ！",
   "greeting-night": "晚安！",
-  "greeting-night-named": "晚安， {{name}} ！"
+  "greeting-night-named": "晚安， {{name}} ！",
+  "annotation-override-banner": "笔记正在从您团队的帐户保存和加载。",
+  "annotation-override-save-to-my-account": "保存到我的帐户"
 }

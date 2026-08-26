@@ -688,5 +688,7 @@
   "greeting-morning": "Добро утро!",
   "greeting-morning-named": "Добро утро, {{name}} !",
   "greeting-night": "Добра ноќ!",
-  "greeting-night-named": "Добра ноќ, {{name}} !"
+  "greeting-night-named": "Добра ноќ, {{name}} !",
+  "annotation-override-banner": "Белешките се зачувуваат и вчитуваат од сметката на вашиот тим.",
+  "annotation-override-save-to-my-account": "Зачувај на мојата сметка"
 }

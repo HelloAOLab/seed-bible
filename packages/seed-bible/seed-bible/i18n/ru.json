@@ -688,5 +688,7 @@
   "greeting-morning": "Доброе утро!",
   "greeting-morning-named": "Доброе утро, {{name}} !",
   "greeting-night": "Спокойной ночи!",
-  "greeting-night-named": "Спокойной ночи, {{name}} !"
+  "greeting-night-named": "Спокойной ночи, {{name}} !",
+  "annotation-override-banner": "Заметки сохраняются и загружаются из учетной записи вашей команды.",
+  "annotation-override-save-to-my-account": "Сохранить в мой аккаунт"
 }

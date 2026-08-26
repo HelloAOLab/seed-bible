@@ -688,5 +688,7 @@
   "greeting-morning": "Добро утро!",
   "greeting-morning-named": "Добро утро, {{name}} !",
   "greeting-night": "Лека нощ!",
-  "greeting-night-named": "Лека нощ, {{name}} !"
+  "greeting-night-named": "Лека нощ, {{name}} !",
+  "annotation-override-banner": "Бележките се запазват и зареждат от акаунта на вашия екип.",
+  "annotation-override-save-to-my-account": "Запазване в моя акаунт"
 }

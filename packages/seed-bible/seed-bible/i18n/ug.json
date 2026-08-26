@@ -688,5 +688,7 @@
   "greeting-morning": "خەيرلىك ئەتىگەن!",
   "greeting-morning-named": "خەيرلىك ئەتىگەن، {{name}} !",
   "greeting-night": "خەيرلىك كېچە!",
-  "greeting-night-named": "خەيرلىك كېچە، {{name}} !"
+  "greeting-night-named": "خەيرلىك كېچە، {{name}} !",
+  "annotation-override-banner": "خاتىرىلەر سىزنىڭ گۇرۇپپىڭىزنىڭ ھېساباتىدىن ساقلانماقتا ۋە يۈكلەنمەكتە.",
+  "annotation-override-save-to-my-account": "ھېساباتىمغا ساقلاڭ"
 }

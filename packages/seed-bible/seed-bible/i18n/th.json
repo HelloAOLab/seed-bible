@@ -688,5 +688,7 @@
   "greeting-morning": "สวัสดีตอนเช้า!",
   "greeting-morning-named": "อรุณสวัสดิ์ค่ะ {{name}} !",
   "greeting-night": "ราตรีสวัสดิ์!",
-  "greeting-night-named": "ฝันดีนะ {{name}} !"
+  "greeting-night-named": "ฝันดีนะ {{name}} !",
+  "annotation-override-banner": "บันทึกต่างๆ กำลังถูกบันทึกและโหลดจากบัญชีของทีมคุณ",
+  "annotation-override-save-to-my-account": "บันทึกไปยังบัญชีของฉัน"
 }

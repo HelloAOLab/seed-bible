@@ -688,5 +688,7 @@
   "greeting-morning": "Sabahınız xeyir!",
   "greeting-morning-named": "Sabahınız xeyir, {{name}} !",
   "greeting-night": "Gecəniz xeyirə qalsın!",
-  "greeting-night-named": "Gecəniz xeyirə, {{name}} !"
+  "greeting-night-named": "Gecəniz xeyirə, {{name}} !",
+  "annotation-override-banner": "Qeydlər komandanızın hesabından yadda saxlanılır və yüklənir.",
+  "annotation-override-save-to-my-account": "Hesabıma yadda saxla"
 }

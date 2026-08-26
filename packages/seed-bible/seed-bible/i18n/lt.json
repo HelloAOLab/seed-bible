@@ -688,5 +688,7 @@
   "greeting-morning": "Labas rytas!",
   "greeting-morning-named": "Labas rytas, {{name}} !",
   "greeting-night": "Labos nakties!",
-  "greeting-night-named": "Labos nakties, {{name}} !"
+  "greeting-night-named": "Labos nakties, {{name}} !",
+  "annotation-override-banner": "Užrašai išsaugomi ir įkeliami iš jūsų komandos paskyros.",
+  "annotation-override-save-to-my-account": "Išsaugoti mano paskyroje"
 }

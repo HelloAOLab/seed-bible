@@ -688,5 +688,7 @@
   "greeting-morning": "Добрай раніцы!",
   "greeting-morning-named": "Добрай раніцы, {{name}} !",
   "greeting-night": "Дабранач!",
-  "greeting-night-named": "Дабранач, {{name}} !"
+  "greeting-night-named": "Дабранач, {{name}} !",
+  "annotation-override-banner": "Нататкі захоўваюцца і загружаюцца з уліковага запісу вашай каманды.",
+  "annotation-override-save-to-my-account": "Захаваць у маім акаўнце"
 }

@@ -688,5 +688,7 @@
   "greeting-morning": "ከመይ ሓዲርኩም!",
   "greeting-morning-named": "ሰናይ ንጉሆ {{name}} !",
   "greeting-night": "ልዋም ለይቲ!",
-  "greeting-night-named": "ሰናይ ለይቲ {{name}} !"
+  "greeting-night-named": "ሰናይ ለይቲ {{name}} !",
+  "annotation-override-banner": "መዘኻኸሪታት ካብ ኣካውንት ጋንታኻ ይቕመጡን ይጽዓኑን ኣለዉ።",
+  "annotation-override-save-to-my-account": "ኣብ ኣካውንተይ ኣቐምጥ"
 }

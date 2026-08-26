@@ -688,5 +688,7 @@
   "greeting-morning": "God morgen!",
   "greeting-morning-named": "God morgen, {{name}} !",
   "greeting-night": "God natt!",
-  "greeting-night-named": "God natt, {{name}} !"
+  "greeting-night-named": "God natt, {{name}} !",
+  "annotation-override-banner": "Notater lagres og lastes inn fra teamets konto.",
+  "annotation-override-save-to-my-account": "Lagre på kontoen min"
 }

@@ -688,5 +688,7 @@
   "greeting-morning": "Mirëmëngjes!",
   "greeting-morning-named": "Mirëmëngjes, {{name}} !",
   "greeting-night": "Natën e mirë!",
-  "greeting-night-named": "Natën e mirë, {{name}} !"
+  "greeting-night-named": "Natën e mirë, {{name}} !",
+  "annotation-override-banner": "Shënimet po ruhen dhe ngarkohen nga llogaria e ekipit tuaj.",
+  "annotation-override-save-to-my-account": "Ruaj në llogarinë time"
 }

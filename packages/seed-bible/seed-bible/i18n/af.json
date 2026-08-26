@@ -688,5 +688,7 @@
   "greeting-morning": "Goeiemôre!",
   "greeting-morning-named": "Goeiemôre, {{name}} !",
   "greeting-night": "Goeie nag!",
-  "greeting-night-named": "Goeienag, {{name}} !"
+  "greeting-night-named": "Goeienag, {{name}} !",
+  "annotation-override-banner": "Notas word gestoor en gelaai vanaf jou span se rekening.",
+  "annotation-override-save-to-my-account": "Stoor in my rekening"
 }

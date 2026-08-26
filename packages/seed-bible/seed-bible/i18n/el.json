@@ -688,5 +688,7 @@
   "greeting-morning": "Καλημέρα!",
   "greeting-morning-named": "Καλημέρα, {{name}} !",
   "greeting-night": "Καληνύχτα!",
-  "greeting-night-named": "Καληνύχτα, {{name}} !"
+  "greeting-night-named": "Καληνύχτα, {{name}} !",
+  "annotation-override-banner": "Οι σημειώσεις αποθηκεύονται και φορτώνονται από τον λογαριασμό της ομάδας σας.",
+  "annotation-override-save-to-my-account": "Αποθήκευση στον λογαριασμό μου"
 }

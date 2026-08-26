@@ -688,5 +688,7 @@
   "greeting-morning": "בוקר טוב!",
   "greeting-morning-named": "בוקר טוב, {{name}} !",
   "greeting-night": "לילה טוב!",
-  "greeting-night-named": "לילה טוב, {{name}} !"
+  "greeting-night-named": "לילה טוב, {{name}} !",
+  "annotation-override-banner": "הערות נשמרות ונטענות מחשבון הצוות שלך.",
+  "annotation-override-save-to-my-account": "שמור בחשבון שלי"
 }

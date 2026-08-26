@@ -688,5 +688,7 @@
   "greeting-morning": "Dobré ráno!",
   "greeting-morning-named": "Dobré ráno, {{name}} !",
   "greeting-night": "Dobrou noc!",
-  "greeting-night-named": "Dobrou noc, {{name}} !"
+  "greeting-night-named": "Dobrou noc, {{name}} !",
+  "annotation-override-banner": "Poznámky se ukládají a načítají z účtu vašeho týmu.",
+  "annotation-override-save-to-my-account": "Uložit do mého účtu"
 }

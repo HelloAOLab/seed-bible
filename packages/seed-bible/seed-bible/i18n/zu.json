@@ -688,5 +688,7 @@
   "greeting-morning": "Sawubona!",
   "greeting-morning-named": "Sawubona, {{name}} !",
   "greeting-night": "Ulale kahle!",
-  "greeting-night-named": "Ulale kahle, {{name}} !"
+  "greeting-night-named": "Ulale kahle, {{name}} !",
+  "annotation-override-banner": "Amanothi ayalondolozwa futhi alayishwa kusuka ku-akhawunti yethimba lakho.",
+  "annotation-override-save-to-my-account": "Londoloza ku-akhawunti yami"
 }

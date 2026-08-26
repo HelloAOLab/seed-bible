@@ -688,5 +688,7 @@
   "greeting-morning": "Chào buổi sáng!",
   "greeting-morning-named": "Chào buổi sáng, {{name}} !",
   "greeting-night": "Chúc ngủ ngon!",
-  "greeting-night-named": "Chúc ngủ ngon, {{name}} !"
+  "greeting-night-named": "Chúc ngủ ngon, {{name}} !",
+  "annotation-override-banner": "Các ghi chú đang được lưu và tải từ tài khoản của nhóm bạn.",
+  "annotation-override-save-to-my-account": "Lưu vào tài khoản của tôi"
 }

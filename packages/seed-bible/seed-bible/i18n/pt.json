@@ -688,5 +688,7 @@
   "greeting-morning": "Bom dia!",
   "greeting-morning-named": "Bom dia, {{name}} !",
   "greeting-night": "Boa noite!",
-  "greeting-night-named": "Boa noite, {{name}} !"
+  "greeting-night-named": "Boa noite, {{name}} !",
+  "annotation-override-banner": "As anotações estão sendo salvas e carregadas da conta da sua equipe.",
+  "annotation-override-save-to-my-account": "Salvar na minha conta"
 }

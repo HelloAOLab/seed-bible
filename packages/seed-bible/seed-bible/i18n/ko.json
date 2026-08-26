@@ -688,5 +688,7 @@
   "greeting-morning": "좋은 아침이에요!",
   "greeting-morning-named": "좋은 아침입니다, {{name}} !",
   "greeting-night": "안녕히 주무세요!",
-  "greeting-night-named": "잘 자요, {{name}} !"
+  "greeting-night-named": "잘 자요, {{name}} !",
+  "annotation-override-banner": "팀 계정에서 메모를 저장하고 불러오고 있습니다.",
+  "annotation-override-save-to-my-account": "내 계정에 저장"
 }

@@ -688,5 +688,7 @@
   "greeting-morning": "Godmorgen!",
   "greeting-morning-named": "Godmorgen, {{name}} !",
   "greeting-night": "Godnat!",
-  "greeting-night-named": "Godnat, {{name}} !"
+  "greeting-night-named": "Godnat, {{name}} !",
+  "annotation-override-banner": "Noter gemmes og indlæses fra dit teams konto.",
+  "annotation-override-save-to-my-account": "Gem på min konto"
 }

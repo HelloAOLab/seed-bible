@@ -688,5 +688,7 @@
   "greeting-morning": "Tere hommikust!",
   "greeting-morning-named": "Tere hommikust, {{name}} !",
   "greeting-night": "Head ööd!",
-  "greeting-night-named": "Head ööd, {{name}} !"
+  "greeting-night-named": "Head ööd, {{name}} !",
+  "annotation-override-banner": "Märkmeid salvestatakse ja laaditakse teie meeskonna kontolt.",
+  "annotation-override-save-to-my-account": "Salvesta minu kontole"
 }

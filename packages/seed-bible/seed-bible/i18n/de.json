@@ -688,5 +688,7 @@
   "greeting-morning": "Guten Morgen!",
   "greeting-morning-named": "Guten Morgen, {{name}} !",
   "greeting-night": "Gute Nacht!",
-  "greeting-night-named": "Gute Nacht, {{name}} !"
+  "greeting-night-named": "Gute Nacht, {{name}} !",
+  "annotation-override-banner": "Notizen werden im Konto Ihres Teams gespeichert und geladen.",
+  "annotation-override-save-to-my-account": "In meinem Konto speichern"
 }

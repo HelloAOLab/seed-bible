@@ -688,5 +688,7 @@
   "greeting-morning": "ສະບາຍດີຕອນເຊົ້າ!",
   "greeting-morning-named": "ສະບາຍດີຕອນເຊົ້າ, {{name}} !",
   "greeting-night": "ສະບາຍດີ!",
-  "greeting-night-named": "ສະບາຍດີຕອນກາງຄືນ, {{name}} !"
+  "greeting-night-named": "ສະບາຍດີຕອນກາງຄືນ, {{name}} !",
+  "annotation-override-banner": "ບັນທຶກກຳລັງຖືກບັນທຶກ ແລະ ໂຫຼດຈາກບັນຊີຂອງທີມທ່ານ.",
+  "annotation-override-save-to-my-account": "ບັນທຶກໄວ້ໃນບັນຊີຂອງຂ້ອຍ"
 }
