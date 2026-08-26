@@ -6,7 +6,11 @@ import {
   TimeProvider,
 } from "@packages/seed-bible/seed-bible/components/TodayPane/TimeContext";
 import { loginWithName } from "../../testUtils/todayStubs";
-import { mockI18nState } from "../../testUtils/mockI18n";
+import {
+  mockI18nState,
+  mockI18nTranslations,
+  resetMockI18n,
+} from "../../testUtils/mockI18n";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
@@ -20,6 +24,9 @@ describe("Header", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     vi.useFakeTimers();
+    // Per-key translation overrides are module-level, so without this a test
+    // that sets one leaks it into every test that follows.
+    resetMockI18n();
   });
 
   afterEach(() => {
@@ -53,6 +60,7 @@ describe("Header", () => {
     container.querySelector<HTMLDivElement>(".sb-today-header")!;
   const date = () => header().querySelector(":scope > span")!.textContent;
   const heading = () => header().querySelector("h1")!.textContent;
+  // The name gets its own element so it can carry the accent colour.
   const nameElement = () => header().querySelector("h1 > span");
 
   describe("date", () => {
@@ -128,7 +136,7 @@ describe("Header", () => {
   });
 
   describe("name", () => {
-    // Fixed so the whole heading can be asserted, comma and all.
+    // Fixed so the whole sentence can be asserted, punctuation and all.
     beforeEach(() => {
       vi.setSystemTime(new Date(2026, 5, 15, 8, 0, 0));
     });
@@ -136,7 +144,7 @@ describe("Header", () => {
     it("greets a signed-in reader by name", () => {
       setup({ username: "Alice" });
       expect(heading()).toBe("Good morning, Alice!");
-      expect(nameElement()?.textContent).toBe("Alice!");
+      expect(nameElement()?.textContent).toBe("Alice");
     });
 
     it("greets an anonymous reader without naming them", () => {
@@ -149,6 +157,36 @@ describe("Header", () => {
       setup({ username: "" });
       expect(heading()).toBe("Good morning!");
       expect(nameElement()).toBeNull();
+    });
+
+    // The comma and "!" used to be hardcoded in the JSX, where no translator
+    // could reach them. They belong to the string now, so a locale is free to
+    // punctuate its own way — and to lead with the name.
+    it("takes its punctuation and the name's position from the translation", () => {
+      mockI18nTranslations["greeting-morning-named"] = "{{name}}、おはよう！";
+      setup({ username: "アリス" });
+
+      expect(heading()).toBe("アリス、おはよう！");
+      // Still its own element, even though the sentence now starts with it.
+      expect(nameElement()?.textContent).toBe("アリス");
+    });
+
+    // A locale that drops the placeholder is making a choice, not a mistake:
+    // some languages would not name the reader in a greeting at all.
+    it("omits the name element when a translation drops the placeholder", () => {
+      mockI18nTranslations["greeting-morning-named"] = "おはようございます";
+      setup({ username: "アリス" });
+
+      expect(heading()).toBe("おはようございます");
+      expect(nameElement()).toBeNull();
+    });
+
+    // The name is interpolated as a sentinel and split back out, so a name that
+    // looks like the sentinel's neighbours must not disturb the split.
+    it("handles a name containing punctuation the sentence also uses", () => {
+      setup({ username: "Al, ice!" });
+      expect(heading()).toBe("Good morning, Al, ice!!");
+      expect(nameElement()?.textContent).toBe("Al, ice!");
     });
   });
 });
