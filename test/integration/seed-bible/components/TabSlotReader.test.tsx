@@ -1401,6 +1401,35 @@ describe("TabSlotReader integration", () => {
 
       expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
     });
+
+    it("lets a touch gesture starting inside the panel scroll it instead of swiping the chapter", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createMobileState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const panel = container.querySelector(
+        ".sb-discover-content-panel"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+      expect(panel).not.toBeNull();
+
+      act(() => {
+        dispatchTouch(panel, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(panel, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(panel, "touchend", []);
+      });
+
+      // The track never picks up the gesture, so it's left free for the
+      // panel's own scrolling instead of being dragged toward a neighbouring
+      // chapter.
+      expect(track.style.transform).toBe("");
+      expect(readingState.loadNextChapter).not.toHaveBeenCalled();
+      expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
+    });
   });
 
   describe("discover-content-panel quick tool placement", () => {
