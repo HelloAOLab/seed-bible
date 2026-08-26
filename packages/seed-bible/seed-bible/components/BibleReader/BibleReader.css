@@ -1038,9 +1038,18 @@
 }
 
 @media (min-width: 1024px) {
+  /* `align-items: stretch` (the flex default) is required here, not just
+     cosmetic: it makes this row's cross-axis size (and so the discover
+     panel's wrapper) match the height of the scripture column instead of
+     shrink-wrapping to the sticky panel's own content height. Without that
+     extra room in its containing block, `position: sticky` on
+     `.sb-discover-content-panel` (see DiscoverContentPanel.css) has nowhere
+     to lag behind the scroll, so the panel just scrolls off with the page
+     instead of sticking. The panel's own `max-height`/`overflow: hidden`
+     already cap how tall it visually renders, so stretching its wrapper
+     doesn't make it any taller. */
   .sb-bible-reader-content {
     flex-direction: row;
-    align-items: flex-start;
   }
 
   /* The "discover-content-panel" quick tool is off for this tab: keep the
