@@ -62,14 +62,14 @@ export const SocialSection = (props: {
       [
         userId,
         {
-          name: profile?.name ?? "Friend",
+          name: profile?.name ?? t("anonymous", { defaultValue: "Anonymous" }),
           pictureUrl: profile?.pictureUrl,
           color: visual.color,
           icon: visual.defaultIcon,
         },
       ],
     ]);
-  }, [userId, profile?.name, profile?.pictureUrl]);
+  }, [userId, profile?.name, profile?.pictureUrl, t]);
 
   const initialOption = useMemo(() => buildTimespanOptions().twoDays, []);
   const year = useSignal<number>(initialOption.year);

@@ -2477,6 +2477,7 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
 export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const { state } = props;
   const { login } = state;
+  const { t } = useI18n();
   const profile = login.profile.value;
   // Share identity with connected-user rendering so the avatar shows the
   // same icon/color as the user's row inside a shared session.
@@ -2491,7 +2492,7 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
     <Avatar
       imageUrl={imageUrl}
       visual={visual}
-      title={getSelfDisplayName(state)}
+      title={getSelfDisplayName(state, t)}
       genericFallback={!isInMultiUserIdentityContext(state)}
     />
   );
@@ -2513,10 +2514,18 @@ function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
 }
 
 /** Display name for the current user — used as the avatar tooltip / aria-label. */
-export function getSelfDisplayName(state: SeedBibleState): string {
+export function getSelfDisplayName(
+  state: SeedBibleState,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   const userId = state.login.userId.value;
   const profile = state.login.profile.value;
-  return profile?.name ?? (userId ? userId.slice(0, 8) : "Friend");
+  return (
+    profile?.name ??
+    (userId
+      ? userId.slice(0, 8)
+      : t("anonymous", { defaultValue: "Anonymous" }))
+  );
 }
 
 /**
@@ -2527,7 +2536,8 @@ export function getSelfDisplayName(state: SeedBibleState): string {
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
   const { sidebar } = state;
-  const displayName = getSelfDisplayName(state);
+  const { t } = useI18n();
+  const displayName = getSelfDisplayName(state, t);
 
   return (
     <button

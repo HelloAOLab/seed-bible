@@ -141,10 +141,10 @@ describe("useReadingHistoryUserFiltersSelector", () => {
     expect(option?.content.title).toBe("Alice");
   });
 
-  it("falls back to 'Friend' when profile name is empty", () => {
+  it("falls back to 'Anonymous' when profile name is empty", () => {
     (useScriptureMapContext as Mock).mockReturnValue(
       makeScriptureMapContext((key) =>
-        key === "anonymous-name" ? "friend" : key
+        key === "anonymous" ? "Anonymous" : key
       )
     );
     const filters = new Map([["user1", true]]);
@@ -153,13 +153,13 @@ describe("useReadingHistoryUserFiltersSelector", () => {
     const option = result.current.selectorOptionsData.find(
       (o) => o.key === "user1"
     );
-    expect(option?.content.title).toBe("Friend");
+    expect(option?.content.title).toBe("Anonymous");
   });
 
-  it("falls back to 'Friend' when profile is undefined", () => {
+  it("falls back to 'Anonymous' when profile is undefined", () => {
     (useScriptureMapContext as Mock).mockReturnValue(
       makeScriptureMapContext((key) =>
-        key === "anonymous-name" ? "friend" : key
+        key === "anonymous" ? "Anonymous" : key
       )
     );
     const filters = new Map([["user1", true]]);
@@ -168,7 +168,7 @@ describe("useReadingHistoryUserFiltersSelector", () => {
     const option = result.current.selectorOptionsData.find(
       (o) => o.key === "user1"
     );
-    expect(option?.content.title).toBe("Friend");
+    expect(option?.content.title).toBe("Anonymous");
   });
 
   it("skips users not present in usersDataMap", () => {

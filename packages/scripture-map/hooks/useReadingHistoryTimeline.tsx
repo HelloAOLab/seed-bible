@@ -263,7 +263,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
             const userSummary = daySummary.users[userId];
             const isMe = userId === myAuthBotId;
             const userName = CapitalizeFirstLetter(
-              isMe ? translate("you") : translate("anonymous-name")
+              isMe ? translate("you") : translate("anonymous")
             );
             const userColor = userColorStore.getUserColor({ authId: userId });
             const dotStyle = { backgroundColor: userColor };

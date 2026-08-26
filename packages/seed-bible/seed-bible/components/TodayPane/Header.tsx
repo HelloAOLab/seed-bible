@@ -35,7 +35,10 @@ export const Header = (props: { login: LoginManager }) => {
     <div className="sb-today-header">
       <span>{date}</span>
       <h1>
-        {greeting}, <span>{username || "Friend"}!</span>
+        {greeting},{" "}
+        <span>
+          {username || t("anonymous", { defaultValue: "Anonymous" })}!
+        </span>
       </h1>
     </div>
   );
