@@ -361,13 +361,14 @@ export interface CustomizationsManager {
   setActive: (id: string) => Promise<void>;
   deactivate: (id: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
-  /** Uploads the file immediately, then stages the resulting URL onto the open draft only — call `saveEditingCustomization` to persist it. */
+  /** Uploads the file, stages the resulting URL onto the open draft, and immediately persists it (unlike every other draft field, which waits for an explicit Save). */
   uploadLogo: (file: File) => Promise<void>;
   /** A shareable link that auto-loads this customization via `loadByLocator`. */
   getShareLink: (customization: SeedBibleCustomization) => string;
   // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is null.
   updateEditingName: (name: string) => void;
-  removeEditingLogo: () => void;
+  /** Clears the draft's logo and immediately persists it (unlike every other draft field, which waits for an explicit Save). No-op with no open draft. */
+  removeEditingLogo: () => Promise<void>;
   /** Adds a new variant to the draft, seeded from the current live theme. */
   addEditingVariant: () => CustomizationThemeVariant | null;
   renameEditingVariant: (variantId: string, name: string) => void;
@@ -881,9 +882,10 @@ export function createCustomizationsManager(
       logoUrl: result.url,
       updatedAt: Date.now(),
     };
+    await saveEditingCustomization();
   };
 
-  const removeEditingLogo = (): void => {
+  const removeEditingLogo = async (): Promise<void> => {
     const current = editingCustomization.value;
     if (!current) {
       return;
@@ -893,6 +895,7 @@ export function createCustomizationsManager(
       logoUrl: null,
       updatedAt: Date.now(),
     };
+    await saveEditingCustomization();
   };
 
   const setEditingExtensionAvailability = (

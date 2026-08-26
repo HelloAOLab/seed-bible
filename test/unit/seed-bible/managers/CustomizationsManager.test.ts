@@ -672,7 +672,7 @@ describe("CustomizationsManager", () => {
     expect(created.logoUrl).toBeNull();
   });
 
-  it("uploadLogo() uploads the file immediately but only stages the URL on the draft, without persisting the record", async () => {
+  it("uploadLogo() uploads the file, stages the URL on the draft, and immediately persists it", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
@@ -690,11 +690,13 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value?.logoUrl).toBe(
       "https://files.example.com/logo.png"
     );
-    expect(recordDataMock).not.toHaveBeenCalled();
-    expect(manager.customizations.value[0]?.logoUrl).toBeNull();
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(manager.customizations.value[0]?.logoUrl).toBe(
+      "https://files.example.com/logo.png"
+    );
   });
 
-  it("removeEditingLogo() clears the draft's logo URL without persisting", async () => {
+  it("removeEditingLogo() clears the draft's logo URL and immediately persists it", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
@@ -702,10 +704,32 @@ describe("CustomizationsManager", () => {
       type: "image/png",
     });
     await manager.uploadLogo(file);
+    recordDataMock.mockClear();
 
-    manager.removeEditingLogo();
+    await manager.removeEditingLogo();
 
     expect(manager.editingCustomization.value?.logoUrl).toBeNull();
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(manager.customizations.value[0]?.logoUrl).toBeNull();
+  });
+
+  it("uploadLogo() persists the whole draft, including other unsaved edits, not just the logo", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.updateEditingName("Renamed before logo upload");
+    const file = new File(["fake image bytes"], "logo.png", {
+      type: "image/png",
+    });
+
+    await manager.uploadLogo(file);
+
+    expect(manager.customizations.value[0]?.name).toBe(
+      "Renamed before logo upload"
+    );
+    expect(manager.customizations.value[0]?.logoUrl).toBe(
+      "https://files.example.com/logo.png"
+    );
   });
 
   it("getShareLink() builds a link with the owner's recordName and the customization's id", async () => {

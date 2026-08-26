@@ -2453,7 +2453,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
               <button
                 type="button"
                 className="sb-settings-action-button"
-                onClick={() => customizations.removeEditingLogo()}
+                onClick={() => void customizations.removeEditingLogo()}
                 disabled={isUploadingLogo.value}
               >
                 {t("remove-logo", { defaultValue: "Remove logo" })}
