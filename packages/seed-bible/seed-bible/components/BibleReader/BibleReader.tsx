@@ -1674,11 +1674,12 @@ export function BibleReader(props: BibleReaderProps) {
 
   const isMobile = state?.app.isMobile.value ?? false;
 
-  // Clicking an annotated verse number selects the verse (like clicking its
-  // text does) and jumps straight to its note: expands and scrolls to it in
-  // the mobile verse toolbar, or — on desktop, where that toolbar isn't used —
-  // forces the compact discover panel beside the scripture text and scrolls/
-  // highlights the note there.
+  // Clicking an annotated verse number jumps straight to its note: on
+  // mobile, it also selects the verse (like clicking its text does) and
+  // expands/scrolls to the note in the mobile verse toolbar. On desktop,
+  // where that toolbar isn't used, it leaves the verse selection alone and
+  // just forces the compact discover panel beside the scripture text and
+  // scrolls/highlights the note there.
   const handleAnnotationVerseClick = (
     verse: BibleSelectedVerse,
     verseNumber: number,
@@ -1688,12 +1689,12 @@ export function BibleReader(props: BibleReaderProps) {
     // here so selectVerse (a toggle) doesn't run twice and immediately undo
     // itself.
     event.stopPropagation();
-    selectVerse(verse, event.clientX, event.clientY);
     if (!state) {
       return;
     }
 
     if (isMobile) {
+      selectVerse(verse, event.clientX, event.clientY);
       readingState.pendingAnnotationScrollVerse.value = verseNumber;
       return;
     }

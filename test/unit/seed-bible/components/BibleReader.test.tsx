@@ -2012,8 +2012,8 @@ describe("BibleReader", () => {
     expect(container.querySelectorAll(".sb-verse-number")).toHaveLength(1);
   });
 
-  it("clicking an annotated verse number on desktop forces the compact discover panel inline and targets its note", () => {
-    const { slot, selectorState, readingState } = createFixture();
+  it("clicking an annotated verse number on desktop forces the compact discover panel inline and targets its note, without selecting the verse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
     readingState.discoverContentPanelInline.value = false;
     const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
 
@@ -2045,10 +2045,11 @@ describe("BibleReader", () => {
       chapterNumber: 1,
       verseNumber: 1,
     });
+    expect(selectVerse).not.toHaveBeenCalled();
   });
 
-  it("clicking an annotated verse number on mobile leaves the compact discover panel placement alone", () => {
-    const { slot, selectorState, readingState } = createFixture();
+  it("clicking an annotated verse number on mobile leaves the compact discover panel placement alone and selects the verse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
     readingState.discoverContentPanelInline.value = false;
     const state = createStateWithAnnotatedVerse("GEN", 1, 1, true);
 
@@ -2077,6 +2078,7 @@ describe("BibleReader", () => {
     expect(readingState.discoverContentPanelInline.value).toBe(false);
     expect(state.discover.scrollToVerse.value).toBeNull();
     expect(readingState.pendingAnnotationScrollVerse.value).toBe(1);
+    expect(selectVerse).toHaveBeenCalledTimes(1);
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {
