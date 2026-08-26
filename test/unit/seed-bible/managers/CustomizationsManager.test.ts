@@ -218,7 +218,7 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value).toEqual([]);
   });
 
-  it("load() defaults extensionIds to [] for a record persisted before the field existed", async () => {
+  it("load() defaults extensionSettings to {} for a record persisted before the field existed", async () => {
     listAllDataByMarkerMock.mockResolvedValue({
       success: true,
       items: [
@@ -241,7 +241,7 @@ describe("CustomizationsManager", () => {
             active: false,
             createdAt: 1,
             updatedAt: 1,
-            // No extensionIds field at all.
+            // No extensionSettings field at all.
           },
         },
       ],
@@ -251,7 +251,7 @@ describe("CustomizationsManager", () => {
     await manager.load();
 
     expect(manager.customizations.value).toHaveLength(1);
-    expect(manager.customizations.value[0]?.extensionIds).toEqual([]);
+    expect(manager.customizations.value[0]?.extensionSettings).toEqual({});
   });
 
   it("create() persists a new record with one variant pre-filled from the current theme, secondary/tertiary lightened from primary", async () => {
@@ -300,7 +300,7 @@ describe("CustomizationsManager", () => {
     for (const field of CUSTOMIZATION_COLOR_FIELDS) {
       expect(seededKeys).toContain(field.key);
     }
-    expect(created.extensionIds).toEqual([]);
+    expect(created.extensionSettings).toEqual({});
     expect(recordDataMock).toHaveBeenCalledWith("user-1", created.id, created, {
       marker: CUSTOMIZATION_MARKER,
     });
@@ -365,7 +365,7 @@ describe("CustomizationsManager", () => {
       "#123456"
     );
     manager.addEditingVariant();
-    manager.toggleEditingExtensionId("ext.example");
+    manager.setEditingExtensionAvailability("ext.example", "auto-installed");
 
     // None of the draft edits above triggered a network write.
     expect(recordDataMock).toHaveBeenCalledTimes(1);
@@ -378,7 +378,9 @@ describe("CustomizationsManager", () => {
     expect(savedRecord.name).toBe("Renamed");
     expect(savedRecord.variants[0].themes.primaryColor).toBe("#123456");
     expect(savedRecord.variants).toHaveLength(2);
-    expect(savedRecord.extensionIds).toEqual(["ext.example"]);
+    expect(savedRecord.extensionSettings).toEqual({
+      "ext.example": "auto-installed",
+    });
     expect(manager.customizations.value[0]?.name).toBe("Renamed");
   });
 
@@ -418,29 +420,42 @@ describe("CustomizationsManager", () => {
     expect(theme.customOverrides.value).toEqual({});
   });
 
-  it("toggleEditingExtensionId() adds and removes an id from the draft's extensionIds without persisting", async () => {
+  it("setEditingExtensionAvailability() sets an id's availability on the draft without persisting", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
     recordDataMock.mockClear();
 
-    manager.toggleEditingExtensionId("ext.example");
+    manager.setEditingExtensionAvailability("ext.example", "auto-installed");
 
-    expect(manager.editingCustomization.value?.extensionIds).toEqual([
-      "ext.example",
-    ]);
+    expect(manager.editingCustomization.value?.extensionSettings).toEqual({
+      "ext.example": "auto-installed",
+    });
     expect(recordDataMock).not.toHaveBeenCalled();
 
-    manager.toggleEditingExtensionId("ext.example");
+    manager.setEditingExtensionAvailability("ext.example", "hidden");
 
-    expect(manager.editingCustomization.value?.extensionIds).toEqual([]);
+    expect(manager.editingCustomization.value?.extensionSettings).toEqual({
+      "ext.example": "hidden",
+    });
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
-  it("toggleEditingExtensionId() no-ops when there is no open draft", async () => {
+  it('setEditingExtensionAvailability() removes the entry when set back to "available" (the default)', async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingExtensionAvailability("ext.example", "hidden");
+
+    manager.setEditingExtensionAvailability("ext.example", "available");
+
+    expect(manager.editingCustomization.value?.extensionSettings).toEqual({});
+  });
+
+  it("setEditingExtensionAvailability() no-ops when there is no open draft", async () => {
     const { manager } = createManager();
 
-    manager.toggleEditingExtensionId("ext.example");
+    manager.setEditingExtensionAvailability("ext.example", "hidden");
 
     expect(manager.editingCustomization.value).toBeNull();
   });
@@ -864,11 +879,11 @@ describe("CustomizationsManager", () => {
     expect(manager.activeExtensionIds.value).toEqual([]);
   });
 
-  it("activeExtensionIds reflects the active customization's own extensionIds, and the viewer can add extras on top", async () => {
+  it("activeExtensionIds reflects the active customization's auto-installed extensions, and the viewer can add available extras on top", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
-    manager.toggleEditingExtensionId("ext.base");
+    manager.setEditingExtensionAvailability("ext.base", "auto-installed");
     await manager.saveEditingCustomization();
     await manager.setActive(created.id);
 
@@ -883,6 +898,45 @@ describe("CustomizationsManager", () => {
     await manager.removeExtensionFromActiveCustomization("ext.extra");
 
     expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+  });
+
+  it("activeExtensionIds never includes a hidden extension, even one the viewer previously added as an extra", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    await manager.saveEditingCustomization();
+    await manager.setActive(created.id);
+    await manager.addExtensionToActiveCustomization("ext.was-available");
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.was-available"]);
+
+    // The owner later marks it hidden — a stale extra pick from before that
+    // change must not keep forcing it into the active set.
+    manager.startEditing(created.id);
+    manager.setEditingExtensionAvailability("ext.was-available", "hidden");
+    await manager.saveEditingCustomization();
+
+    expect(manager.activeExtensionIds.value).toEqual([]);
+  });
+
+  it("addExtensionToActiveCustomization() no-ops for an extension the active customization marks hidden", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingExtensionAvailability("ext.hidden", "hidden");
+    await manager.saveEditingCustomization();
+    await manager.setActive(created.id);
+    recordDataMock.mockClear();
+
+    await manager.addExtensionToActiveCustomization("ext.hidden");
+
+    expect(manager.activeExtensionIds.value).toEqual([]);
+    expect(recordDataMock).not.toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_PREFERENCES_ADDRESS,
+      expect.anything(),
+      expect.anything()
+    );
   });
 
   it("addExtensionToActiveCustomization()/removeExtensionFromActiveCustomization() persist to the viewer's own extension-preferences record, not the customization's own record", async () => {
@@ -963,7 +1017,7 @@ describe("CustomizationsManager", () => {
     expect(manager.activeThemeOverrides.value).toEqual({
       primaryColor: "#abc123",
     });
-    expect(manager.activeCustomization.value?.extensionIds).toEqual([]);
+    expect(manager.activeCustomization.value?.extensionSettings).toEqual({});
   });
 
   it("a locator-loaded customization takes priority over the signed-in user's own active customization", async () => {

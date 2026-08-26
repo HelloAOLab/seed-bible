@@ -22,6 +22,8 @@ import {
 } from "../../managers/ThemeManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
+  getExtensionAvailability,
+  type ExtensionAvailability,
   type SeedBibleCustomization,
 } from "../../managers/CustomizationsManager";
 import { download, translateTitle } from "../../app/utils";
@@ -1186,6 +1188,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
   const activeCustomization = customizations.activeCustomization.value;
+  // Extensions the active customization has marked "hidden" don't appear in
+  // this list at all — not installable, not shown as installed, nothing.
+  const visibleExtensionsList = extensionsList.filter(
+    (entry) =>
+      customizations.getActiveExtensionAvailability(entry.id) !== "hidden"
+  );
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
@@ -1302,7 +1310,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
             })}
           </p>
         )}
-        {extensionsList.length === 0 ? (
+        {visibleExtensionsList.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
               {t("no-extensions-available", {
@@ -1312,10 +1320,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </div>
         ) : (
           <ul className="sb-extensions-list">
-            {extensionsList.map((extensionEntry) => {
+            {visibleExtensionsList.map((extensionEntry) => {
               const { id, installed, pendingInstallation } = extensionEntry;
               const isBaseExtension =
-                activeCustomization?.extensionIds.includes(id) ?? false;
+                customizations.getActiveExtensionAvailability(id) ===
+                "auto-installed";
               const isRegistered =
                 ExtensionInitalizer.getInstance().isExtensionRegistered(id);
               const installState = getExtensionInstallState(
@@ -2671,7 +2680,7 @@ function CustomizationEditExtensionsSettingsView(props: {
         <p className="sb-settings-field-description">
           {t("customization-extensions-description", {
             defaultValue:
-              "Extensions that install automatically for anyone using this customization — no confirmation prompt.",
+              "Choose how each extension behaves for anyone using this customization: available to install themselves, installed automatically with no prompt, or hidden from the extensions list entirely.",
           })}
         </p>
         {installableExtensions.length === 0 ? (
@@ -2684,21 +2693,41 @@ function CustomizationEditExtensionsSettingsView(props: {
           </div>
         ) : (
           installableExtensions.map((entry) => (
-            <div className="sb-settings-toggle-row" key={entry.id}>
+            <div className="sb-settings-field-row" key={entry.id}>
               <label
-                className="sb-settings-toggle-label"
+                className="sb-settings-field-label"
                 htmlFor={`sb-customization-extension-${entry.id}`}
               >
                 {t("title", { ns: entry.id, defaultValue: entry.id })}
               </label>
-              <input
+              <select
                 id={`sb-customization-extension-${entry.id}`}
-                type="checkbox"
-                checked={record.extensionIds.includes(entry.id)}
-                onChange={() =>
-                  customizations.toggleEditingExtensionId(entry.id)
-                }
-              />
+                className="sb-settings-language-select"
+                value={getExtensionAvailability(record, entry.id)}
+                onChange={(event: Event) => {
+                  const target = event.currentTarget as HTMLSelectElement;
+                  customizations.setEditingExtensionAvailability(
+                    entry.id,
+                    target.value as ExtensionAvailability
+                  );
+                }}
+              >
+                <option value="available">
+                  {t("extension-availability-available", {
+                    defaultValue: "Available",
+                  })}
+                </option>
+                <option value="auto-installed">
+                  {t("extension-availability-auto-installed", {
+                    defaultValue: "Auto-installed",
+                  })}
+                </option>
+                <option value="hidden">
+                  {t("extension-availability-hidden", {
+                    defaultValue: "Hidden",
+                  })}
+                </option>
+              </select>
             </div>
           ))
         )}

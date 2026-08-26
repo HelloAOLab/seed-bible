@@ -118,6 +118,26 @@ const customizationVariantSchema = z.object({
   updatedAt: z.number(),
 });
 
+/**
+ * How a customization treats one extension from the app's known catalog
+ * while it's active:
+ * - `available` (the default for any extension with no explicit entry):
+ *   shown in Settings → Extensions; the viewer may install/uninstall it
+ *   themselves, same as outside any customization.
+ * - `auto-installed`: force-installed with no prompt while the
+ *   customization is active; shown but can't be uninstalled from there.
+ * - `hidden`: not shown in Settings → Extensions at all while the
+ *   customization is active.
+ */
+export const EXTENSION_AVAILABILITY_VALUES = [
+  "available",
+  "auto-installed",
+  "hidden",
+] as const;
+export type ExtensionAvailability =
+  (typeof EXTENSION_AVAILABILITY_VALUES)[number];
+const extensionAvailabilitySchema = z.enum(EXTENSION_AVAILABILITY_VALUES);
+
 const customizationSchema = z
   .object({
     id: z.string().min(1),
@@ -129,13 +149,16 @@ const customizationSchema = z
     createdAt: z.number(),
     updatedAt: z.number(),
     /**
-     * IDs of extensions this customization installs automatically while
-     * active. Every id must reference the app's own known extension
-     * catalog — never a URL or other free-form identity, since install
-     * happens with no confirmation step. Only ever written from the
-     * checklist in CustomizationEditSettingsView.
+     * Per-extension availability while this customization is active,
+     * keyed by extension id. Every id must reference the app's own known
+     * extension catalog — never a URL or other free-form identity, since
+     * `auto-installed` installs with no confirmation step. An id with no
+     * entry here defaults to `available`. Only ever written from the
+     * select in CustomizationEditExtensionsSettingsView.
      */
-    extensionIds: z.array(z.string()).default([]),
+    extensionSettings: z
+      .record(z.string(), extensionAvailabilitySchema)
+      .default({}),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
@@ -161,8 +184,16 @@ export interface SeedBibleCustomization {
   active: boolean;
   createdAt: number;
   updatedAt: number;
-  /** Extension ids this customization installs automatically while active. */
-  extensionIds: string[];
+  /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
+  extensionSettings: Record<string, ExtensionAvailability>;
+}
+
+/** Resolves an extension's effective availability for a customization, defaulting to "available" when unset. */
+export function getExtensionAvailability(
+  customization: SeedBibleCustomization | null,
+  extensionId: string
+): ExtensionAvailability {
+  return customization?.extensionSettings[extensionId] ?? "available";
 }
 
 function buildCustomizationLocator(recordName: string, id: string): string {
@@ -298,8 +329,8 @@ export interface CustomizationsManager {
   activeThemeOverrides: ReadonlySignal<ThemeOverrides>;
   /**
    * The extension ids that should be installed while the active
-   * customization is in effect: its own declared `extensionIds`, unioned
-   * with any extras the viewer added for it via
+   * customization is in effect: its own `auto-installed` extensions,
+   * unioned with any `available` extras the viewer added for it via
    * `addExtensionToActiveCustomization`. Empty when nothing is active.
    */
   activeExtensionIds: ReadonlySignal<string[]>;
@@ -350,9 +381,16 @@ export interface CustomizationsManager {
   removeEditingVariant: (variantId: string) => void;
   /** Persists the viewer's variant choice for the currently active customization. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
-  /** Toggles an extension id on the draft's base `extensionIds` list. No-op with no open draft. */
-  toggleEditingExtensionId: (extensionId: string) => void;
-  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active. */
+  /** Sets an extension's availability on the draft. No-op with no open draft. */
+  setEditingExtensionAvailability: (
+    extensionId: string,
+    availability: ExtensionAvailability
+  ) => void;
+  /** The active customization's effective availability for an extension id. "available" when nothing is active or the id has no explicit entry. */
+  getActiveExtensionAvailability: (
+    extensionId: string
+  ) => ExtensionAvailability;
+  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active or the extension's availability there isn't "available". */
   addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
   /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
   removeExtensionFromActiveCustomization: (
@@ -455,11 +493,20 @@ export function createCustomizationsManager(
     if (!customization) {
       return [];
     }
+    const autoInstalled = Object.entries(customization.extensionSettings)
+      .filter(([, availability]) => availability === "auto-installed")
+      .map(([id]) => id);
     const locator = activeCustomizationLocator.value;
     const extra = locator
       ? extensionPreferences.getExtraExtensionIds(locator)
       : [];
-    return Array.from(new Set([...customization.extensionIds, ...extra]));
+    // An extra id only applies while its availability is still "available" —
+    // if the owner later marks it hidden or auto-installed, a stale extra
+    // pick from before that change is ignored rather than force-applied.
+    const validExtra = extra.filter(
+      (id) => getExtensionAvailability(customization, id) === "available"
+    );
+    return Array.from(new Set([...autoInstalled, ...validExtra]));
   });
 
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
@@ -544,7 +591,7 @@ export function createCustomizationsManager(
       active: false,
       createdAt: now,
       updatedAt: now,
-      extensionIds: [],
+      extensionSettings: {},
     };
 
     await persist(userId, record);
@@ -848,26 +895,42 @@ export function createCustomizationsManager(
     };
   };
 
-  const toggleEditingExtensionId = (extensionId: string): void => {
+  const setEditingExtensionAvailability = (
+    extensionId: string,
+    availability: ExtensionAvailability
+  ): void => {
     const current = editingCustomization.value;
     if (!current) {
       return;
     }
-    const has = current.extensionIds.includes(extensionId);
+    // "available" is the default for any id with no entry, so setting it
+    // explicitly just removes the entry rather than storing a redundant one.
+    const nextSettings = { ...current.extensionSettings };
+    if (availability === "available") {
+      delete nextSettings[extensionId];
+    } else {
+      nextSettings[extensionId] = availability;
+    }
     editingCustomization.value = {
       ...current,
-      extensionIds: has
-        ? current.extensionIds.filter((id) => id !== extensionId)
-        : [...current.extensionIds, extensionId],
+      extensionSettings: nextSettings,
       updatedAt: Date.now(),
     };
   };
+
+  const getActiveExtensionAvailability = (
+    extensionId: string
+  ): ExtensionAvailability =>
+    getExtensionAvailability(activeCustomization.value, extensionId);
 
   const addExtensionToActiveCustomization = async (
     extensionId: string
   ): Promise<void> => {
     const locator = activeCustomizationLocator.value;
     if (!locator) {
+      return;
+    }
+    if (getActiveExtensionAvailability(extensionId) === "hidden") {
       return;
     }
     await extensionPreferences.addExtraExtensionId(locator, extensionId);
@@ -927,7 +990,8 @@ export function createCustomizationsManager(
     setEditingDefaultVariant,
     removeEditingVariant,
     selectActiveVariant,
-    toggleEditingExtensionId,
+    setEditingExtensionAvailability,
+    getActiveExtensionAvailability,
     addExtensionToActiveCustomization,
     removeExtensionFromActiveCustomization,
   };
