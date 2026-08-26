@@ -2792,6 +2792,59 @@ describe("createBibleReadingState", () => {
         false
       );
     });
+
+    it("picks up changes made to the settings manager from elsewhere (e.g. another tab)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(true);
+
+      // Simulate another tab persisting a change through the shared
+      // `SettingsManager`, without going through this tab's signal.
+      settingsManager.settings.value = {
+        ...settingsManager.settings.value,
+        discoverContentPanelInline: false,
+      };
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+    });
+
+    it("doesn't write the setting back to the settings manager when applying an externally-made change", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      settingsManager.settings.value = {
+        ...settingsManager.settings.value,
+        discoverContentPanelInline: false,
+      };
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+      expect(
+        settingsManager.setDiscoverContentPanelInline
+      ).not.toHaveBeenCalled();
+    });
   });
 
   describe("reading extensions", () => {

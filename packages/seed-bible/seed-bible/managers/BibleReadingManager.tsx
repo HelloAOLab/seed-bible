@@ -2868,7 +2868,7 @@ export function createBibleReadingState(
   );
 
   if (settingsManager) {
-    // Persists every change (the quick tool's explicit toggle, and
+    // Persists every local change (the quick tool's explicit toggle, and
     // BibleReader's "force inline to reveal a note" nudge alike) to the
     // user's settings, mirroring how other per-tab UI toggles write through.
     // Skips the first run so re-seeding this same value back on construction
@@ -2881,14 +2881,39 @@ export function createBibleReadingState(
           isFirstRun = false;
           return;
         }
-        // `untracked` matters here, not just style: `setDiscoverContentPanelInline`
-        // reads `settings.value` (to spread it) before writing a new object back.
-        // Left tracked, that read — made synchronously inside this very effect's
-        // evaluation — would silently subscribe the effect to the *entire*
+        // `untracked` matters here, not just style: it also guards the loop
+        // with the "settings -> local" effect below — when *that* effect
+        // applies an externally-changed setting to `discoverContentPanelInline`,
+        // this effect re-runs, but the value it's about to write is already
+        // what `settings.value` holds, so the equality check no-ops instead of
+        // writing it straight back out. Left tracked, the read of
+        // `settings.value` — made synchronously inside this very effect's
+        // evaluation — would also silently subscribe the effect to the *entire*
         // settings signal, and the write that follows would then immediately
-        // re-trigger this same effect, forever (an infinite loop from what looks
-        // like a one-way write).
-        untracked(() => settingsManager.setDiscoverContentPanelInline(value));
+        // re-trigger this same effect, forever.
+        untracked(() => {
+          if (
+            settingsManager.settings.value.discoverContentPanelInline === value
+          ) {
+            return;
+          }
+          settingsManager.setDiscoverContentPanelInline(value);
+        });
+      })
+    );
+
+    // Pulls in changes made elsewhere — another tab, another device synced
+    // through the profile — so this reading state's signal doesn't go stale
+    // once construction is done.
+    effectDisposers.push(
+      effect(() => {
+        const settingValue =
+          settingsManager.settings.value.discoverContentPanelInline;
+        untracked(() => {
+          if (discoverContentPanelInline.value !== settingValue) {
+            discoverContentPanelInline.value = settingValue;
+          }
+        });
       })
     );
   }
