@@ -1033,7 +1033,7 @@
 .sb-bible-reader-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
@@ -1117,7 +1117,7 @@
    specificity, later wins) so this actually overrides them at this width. */
 @media (min-width: 1024px) {
   .sb-bible-reader-main-content {
-    flex: 1 1 0;
+    flex: 1.5 1 0;
     min-width: min(20rem, var(--sb-scripture-width, 48rem));
   }
 
