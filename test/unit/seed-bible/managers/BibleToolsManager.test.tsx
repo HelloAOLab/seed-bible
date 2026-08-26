@@ -808,7 +808,7 @@ describe("createBibleToolsManager", () => {
       expect(getAskAiTool(context)?.getItems?.()).toEqual([]);
     });
 
-    it("opens a chat for the only available agent, prefills verses with two newlines, and clears the selection", () => {
+    it("opens a chat for the only available agent, prefills verses with two newlines, and clears the selection", async () => {
       const chats = createMockChats({
         providers: [{ id: "apologist", name: "Apologist" }],
       });
@@ -817,6 +817,7 @@ describe("createBibleToolsManager", () => {
       context.openChat = openChat;
 
       getAskAiTool(context)?.onSelect();
+      await Promise.resolve();
 
       expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
       expect(chats.addParticipant).toHaveBeenCalledWith("apologist");
@@ -891,7 +892,7 @@ describe("createBibleToolsManager", () => {
       expect(items.map((item) => item.title)).toEqual(["Apologist", "Scholar"]);
     });
 
-    it("opens a chat for the agent chosen from the picker", () => {
+    it("opens a chat for the agent chosen from the picker", async () => {
       const chats = createMockChats({
         providers: [
           { id: "apologist", name: "Apologist" },
@@ -906,6 +907,7 @@ describe("createBibleToolsManager", () => {
         ?.getItems?.()
         .find((item) => item.id === "ask-ai-scholar");
       scholarItem?.onSelect();
+      await Promise.resolve();
 
       expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
       expect(chats.addParticipant).toHaveBeenCalledWith("scholar");
@@ -936,11 +938,19 @@ describe("createBibleToolsManager", () => {
       expect(chats.composerDraft.value).toBe("");
     });
 
-    it("starts a new chat even when a local chat with that agent already exists", () => {
-      const existingAddParticipant = vi.fn();
-      const existingChat = {
-        id: "existing-apologist-chat",
-        addParticipant: existingAddParticipant,
+    it("reuses the most recent local chat that already includes the chosen agent", async () => {
+      const addParticipant = vi.fn();
+      const olderChat = {
+        id: "older-apologist-chat",
+        addParticipant: vi.fn(),
+        participants: signal([
+          { isSelf: true, isAI: false, isRemote: false },
+          { isAI: true, isRemote: false, providerId: "apologist" },
+        ]),
+      };
+      const recentChat = {
+        id: "recent-apologist-chat",
+        addParticipant,
         participants: signal([
           { isSelf: true, isAI: false, isRemote: false },
           { isAI: true, isRemote: false, providerId: "apologist" },
@@ -948,19 +958,52 @@ describe("createBibleToolsManager", () => {
       };
       const chats = createMockChats({
         providers: [{ id: "apologist", name: "Apologist" }],
-        chats: [existingChat],
+        chats: [olderChat, recentChat],
       });
       const context = createAskAiContext(chats);
 
       getAskAiTool(context)?.onSelect();
+      await Promise.resolve();
 
-      expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
-      expect(chats.addParticipant).toHaveBeenCalledWith("apologist");
-      expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
-      expect(existingAddParticipant).not.toHaveBeenCalled();
+      expect(chats.createLocalSession).not.toHaveBeenCalled();
+      expect(addParticipant).toHaveBeenCalledWith("apologist");
+      expect(chats.selectChat).toHaveBeenCalledWith("recent-apologist-chat");
+      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
-    it("still creates the chat and prefills the draft when openChat is missing", () => {
+    it("does not reuse a shared chat or a local chat for a different agent", async () => {
+      const sharedChat = {
+        id: "shared-chat",
+        addParticipant: vi.fn(),
+        participants: signal([
+          { isSelf: true, isAI: false, isRemote: false },
+          { isAI: true, isRemote: true, providerId: "apologist" },
+        ]),
+      };
+      const otherAgentChat = {
+        id: "scholar-chat",
+        addParticipant: vi.fn(),
+        participants: signal([
+          { isSelf: true, isAI: false, isRemote: false },
+          { isAI: true, isRemote: false, providerId: "scholar" },
+        ]),
+      };
+      const chats = createMockChats({
+        providers: [{ id: "apologist", name: "Apologist" }],
+        chats: [sharedChat, otherAgentChat],
+      });
+      const context = createAskAiContext(chats);
+
+      getAskAiTool(context)?.onSelect();
+      await Promise.resolve();
+
+      expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
+      expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
+      expect(sharedChat.addParticipant).not.toHaveBeenCalled();
+      expect(otherAgentChat.addParticipant).not.toHaveBeenCalled();
+    });
+
+    it("still creates the chat and prefills the draft when openChat is missing", async () => {
       const chats = createMockChats({
         providers: [{ id: "apologist", name: "Apologist" }],
       });
@@ -968,6 +1011,7 @@ describe("createBibleToolsManager", () => {
       delete (context as { openChat?: unknown }).openChat;
 
       getAskAiTool(context)?.onSelect();
+      await Promise.resolve();
 
       expect(chats.createLocalSession).toHaveBeenCalledTimes(1);
       expect(chats.selectChat).toHaveBeenCalledWith("ask-ai-chat");
