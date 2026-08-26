@@ -1494,7 +1494,7 @@ describe("DiscoverPane", () => {
 
       // Consumed once, immediately.
       expect(state.discover.scrollToVerse.value).toBeNull();
-      expect(scrollIntoViewSpy).toHaveBeenCalledWith({ block: "nearest" });
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({ block: "center" });
 
       const groups = container.querySelectorAll(".sb-annotation-group");
       expect(

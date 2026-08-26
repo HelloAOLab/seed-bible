@@ -259,22 +259,12 @@ function createMobileState(): SeedBibleState {
   } as any as SeedBibleState;
 }
 
-function createDesktopState(
-  options: { slotCount?: number; sidePaneOpen?: boolean } = {}
-): SeedBibleState {
-  const slotCount = options.slotCount ?? 1;
+function createDesktopState(): SeedBibleState {
   return {
     app: {
       isMobile: signal(false),
-      effectiveSlots: signal(
-        Array.from({ length: slotCount }, (_, i) => ({
-          id: `slot-${i + 1}`,
-          tab: null,
-        }))
-      ),
-      effectivePanes: signal(
-        options.sidePaneOpen ? [{ id: "other-pane", placement: "side" }] : []
-      ),
+      effectiveSlots: signal([{ id: "slot-1", tab: null }]),
+      effectivePanes: signal([]),
     },
     selector: {
       selectingTranslation: signal(false),
@@ -1377,58 +1367,19 @@ describe("TabSlotReader integration", () => {
       },
     ];
 
-    it("renders the side variant beside the reader for a sole desktop slot with no side pane open", () => {
+    it("renders the panel inside the reader's own scroll on desktop", () => {
       const { slot, readingState, discoveredCrossReferences } = createFixture();
       discoveredCrossReferences.value = crossReferenceFixture;
       const state = createDesktopState();
 
       renderTabSlotReader(slot, readingState, state, container);
 
-      const sidePanel = container.querySelector(
-        ".sb-discover-content-panel--side"
-      );
-      expect(sidePanel).not.toBeNull();
-      expect(sidePanel?.closest(".sb-pane-reader")).toBeNull();
-      expect(
-        container.querySelector(".sb-discover-content-panel--inline")
-      ).toBeNull();
+      const panel = container.querySelector(".sb-discover-content-panel");
+      expect(panel).not.toBeNull();
+      expect(panel?.closest(".sb-pane-reader")).not.toBeNull();
     });
 
-    it("falls back to the inline variant for a sole desktop slot when a side pane is already open", () => {
-      const { slot, readingState, discoveredCrossReferences } = createFixture();
-      discoveredCrossReferences.value = crossReferenceFixture;
-      const state = createDesktopState({ sidePaneOpen: true });
-
-      renderTabSlotReader(slot, readingState, state, container);
-
-      const inlinePanel = container.querySelector(
-        ".sb-discover-content-panel--inline"
-      );
-      expect(inlinePanel).not.toBeNull();
-      expect(inlinePanel?.closest(".sb-pane-reader")).not.toBeNull();
-      expect(
-        container.querySelector(".sb-discover-content-panel--side")
-      ).toBeNull();
-    });
-
-    it("renders the inline variant inside the reader's own scroll for a multi-slot desktop layout", () => {
-      const { slot, readingState, discoveredCrossReferences } = createFixture();
-      discoveredCrossReferences.value = crossReferenceFixture;
-      const state = createDesktopState({ slotCount: 2 });
-
-      renderTabSlotReader(slot, readingState, state, container);
-
-      const inlinePanel = container.querySelector(
-        ".sb-discover-content-panel--inline"
-      );
-      expect(inlinePanel).not.toBeNull();
-      expect(inlinePanel?.closest(".sb-pane-reader")).not.toBeNull();
-      expect(
-        container.querySelector(".sb-discover-content-panel--side")
-      ).toBeNull();
-    });
-
-    it("renders the inline variant inside the mobile swipe panel's own scroll", () => {
+    it("renders the panel inside the mobile swipe panel's own scroll", () => {
       const { slot, readingState, discoveredCrossReferences } = createFixture();
       discoveredCrossReferences.value = crossReferenceFixture;
       const state = createMobileState();
@@ -1438,13 +1389,11 @@ describe("TabSlotReader integration", () => {
       const scroller = container.querySelector(
         ".sb-reader-swipe-panel-current"
       );
-      const inlinePanel = scroller?.querySelector(
-        ".sb-discover-content-panel--inline"
-      );
-      expect(inlinePanel).not.toBeNull();
+      const panel = scroller?.querySelector(".sb-discover-content-panel");
+      expect(panel).not.toBeNull();
     });
 
-    it("renders neither variant when there is nothing discovered for the chapter", () => {
+    it("renders nothing when there is nothing discovered for the chapter", () => {
       const { slot, readingState } = createFixture();
       const state = createDesktopState();
 
