@@ -144,17 +144,22 @@ interface ChapterNotesButtonProps {
 
 /**
  * Shows the note count for the chapter currently in view; hidden entirely
- * when the chapter has no annotations. Opens the Discover pane, which lists
- * the chapter's annotations grouped by verse range.
+ * when the chapter has no annotations. Jumps to (scrolls to and highlights)
+ * the earliest annotated verse's group in the compact discover panel, which
+ * is always visible inline below the scripture text on mobile — see
+ * `AnnotationsSection`'s `scrollToVerse` consumer. Falls back to opening the
+ * full Discover pane when none of the chapter's annotations target a
+ * specific verse (whole-chapter annotations only), since there's nothing for
+ * the compact panel to scroll to in that case.
  */
 function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { state, bookId, chapterNumber } = props;
   const { t } = useI18n();
-  const noteCount =
+  const chapterAnnotations =
     bookId && chapterNumber
       ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
-          .length
-      : 0;
+      : [];
+  const noteCount = chapterAnnotations.length;
 
   if (noteCount === 0) {
     return null;
@@ -165,17 +170,32 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
     count: noteCount,
   });
 
+  const annotatedVerseNumbers = chapterAnnotations.flatMap((annotation) =>
+    annotationVerseNumbers(annotation)
+  );
+  const firstAnnotatedVerse =
+    annotatedVerseNumbers.length > 0
+      ? Math.min(...annotatedVerseNumbers)
+      : null;
+
   return (
     <button
       type="button"
       className="sb-bible-reader-mobile-header-notes"
       // Mirrors the account button below: stop the tap here so the reader
-      // pane wrapper's pointerdown handler doesn't interfere with opening
-      // Discover.
+      // pane wrapper's pointerdown handler doesn't interfere.
       onPointerDown={(e: PointerEvent) => e.stopPropagation()}
       onClick={(e: MouseEvent) => {
         e.stopPropagation();
-        state.app.openDiscover();
+        if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
+          state.app.openDiscover();
+          return;
+        }
+        state.discover.scrollToVerse.value = {
+          bookId,
+          chapterNumber,
+          verseNumber: firstAnnotatedVerse,
+        };
       }}
       aria-label={label}
       title={label}

@@ -141,6 +141,14 @@ export interface AppSettings {
   customTheme: Record<string, string>;
   /** User highlight-color overrides layered on top of the preset highlights. */
   customHighlights: Record<string, Partial<ThemeHighlightColor>>;
+  /**
+   * Whether the compact discover panel sits beside the scripture text
+   * (true, the default) when there's room, or is forced below it, after the
+   * license notice, at any viewport width (false). Flipped by the
+   * "discover-content-panel" quick tool; consumed by `BibleReadingManager`'s
+   * per-tab `discoverContentPanelInline` signal.
+   */
+  discoverContentPanelInline: boolean;
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
@@ -226,6 +234,9 @@ export const AppSettingsSchema = z.object({
       wordsOfJesusFontColor: z.string().optional(),
     })
   ),
+  // Defaulted rather than required so settings exported before this option
+  // existed still import.
+  discoverContentPanelInline: z.boolean().default(true),
 });
 
 export const MOBILE_SCRIPTURE_MARGIN = 5;
@@ -247,6 +258,7 @@ const TAG_SCRIPTURE_WIDTH = "app.scriptureWidth";
 const TAG_THEME_ID = "app.themeId";
 const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
+const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -264,6 +276,7 @@ const PROFILE_SCRIPTURE_WIDTH = "scriptureWidth";
 const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
+const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -376,6 +389,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   themeId: "light",
   customTheme: {},
   customHighlights: {},
+  discoverContentPanelInline: true,
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -756,6 +770,12 @@ export interface SettingsManager {
   setCustomHighlights: (
     next: Record<string, Partial<ThemeHighlightColor>>
   ) => void;
+  /**
+   * Persists whether the compact discover panel sits inline beside the
+   * scripture text. Consumed by `BibleReadingManager`'s per-tab
+   * `discoverContentPanelInline` signal.
+   */
+  setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
 }
 
 export function createSettings(
@@ -855,6 +875,13 @@ export function createSettings(
       ),
       customHighlights: parseHighlightOverrides(
         read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
+      ),
+      discoverContentPanelInline: parseBoolean(
+        read(
+          PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
+          TAG_DISCOVER_CONTENT_PANEL_INLINE
+        ),
+        DEFAULT_SETTINGS.discoverContentPanelInline
       ),
     };
   };
@@ -1098,6 +1125,19 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 
+  const setDiscoverContentPanelInline = (
+    discoverContentPanelInline: boolean
+  ) => {
+    settings.value = { ...settings.value, discoverContentPanelInline };
+    sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
+      discoverContentPanelInline;
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
+      discoverContentPanelInline
+    );
+  };
+
   const setAllSettings = (next: AppSettings) => {
     next = AppSettingsSchema.parse(next);
     settings.value = next;
@@ -1131,6 +1171,8 @@ export function createSettings(
     sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
     sessionOverrides[TAG_CUSTOM_THEME] = {};
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
+    sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
+      DEFAULT_SETTINGS.discoverContentPanelInline;
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1178,6 +1220,11 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_THEME_ID, DEFAULT_SETTINGS.themeId);
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, {});
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, {});
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
+      DEFAULT_SETTINGS.discoverContentPanelInline
+    );
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
@@ -1245,5 +1292,6 @@ export function createSettings(
     setThemeId,
     setCustomTheme,
     setCustomHighlights,
+    setDiscoverContentPanelInline,
   };
 }

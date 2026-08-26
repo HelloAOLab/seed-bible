@@ -2736,6 +2736,62 @@ describe("createBibleReadingState", () => {
       state.discoverContentPanelInline.value = true;
       expect(state.discoverContentPanelInline.value).toBe(true);
     });
+
+    function createSettingsManagerMock(discoverContentPanelInline: boolean) {
+      const settings = signal({ discoverContentPanelInline } as any);
+      return {
+        settings,
+        setDiscoverContentPanelInline: vi.fn((value: boolean) => {
+          settings.value = {
+            ...settings.value,
+            discoverContentPanelInline: value,
+          };
+        }),
+      };
+    }
+
+    it("seeds its initial value from a persisted settings manager", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(false);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+    });
+
+    it("persists changes through to the settings manager", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      state.discoverContentPanelInline.value = false;
+
+      expect(
+        settingsManager.setDiscoverContentPanelInline
+      ).toHaveBeenCalledWith(false);
+      expect(settingsManager.settings.value.discoverContentPanelInline).toBe(
+        false
+      );
+    });
   });
 
   describe("reading extensions", () => {

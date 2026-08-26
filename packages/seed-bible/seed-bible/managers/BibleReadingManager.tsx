@@ -29,6 +29,7 @@ import type {
   HighlightsManager,
 } from "../managers/HighlightsManager";
 import { v4 as uuid } from "uuid";
+import type { SettingsManager } from "./SettingsManager";
 import type { I18nManager } from "../i18n";
 import { LANG_META } from "../i18n/languageMeta";
 import type {
@@ -413,13 +414,15 @@ export interface BibleReadingState {
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
   /**
-   * Per-tab placement toggle for the compact discover content panel (cross
+   * Placement toggle for the compact discover content panel (cross
    * references/study notes/content), which is otherwise always shown when
    * there's something to show. True (the default) lets the panel sit beside
    * the scripture text when there's room; false forces it below the
    * scripture text, after the license notice, at any viewport width. Flipped
-   * by the "discover-content-panel" quick tool. In-memory only for the tab's
-   * lifetime — not persisted, mirroring `selectedVerses`/`scrollPosition`.
+   * by the "discover-content-panel" quick tool. Seeded from — and, when a
+   * `SettingsManager` was passed to `createBibleReadingState`, kept in sync
+   * with — the user's persisted `discoverContentPanelInline` setting; other
+   * callers (e.g. shared sessions) get an in-memory-only signal.
    */
   discoverContentPanelInline: Signal<boolean>;
 
@@ -1215,7 +1218,13 @@ export function createBibleReadingState(
    * By the time anything actually reads `selectionAnnotations.value`, the
    * caller's `AnnotationsManager` already exists.
    */
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  /**
+   * Backs `discoverContentPanelInline` with the user's persisted setting when
+   * provided. Omitted for reading states that shouldn't persist it (e.g.
+   * shared sessions), which fall back to an in-memory-only signal.
+   */
+  settingsManager?: SettingsManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -2854,7 +2863,33 @@ export function createBibleReadingState(
       .filter((providerResults) => providerResults.results.length > 0);
   });
 
-  const discoverContentPanelInline = signal<boolean>(true);
+  const discoverContentPanelInline = signal<boolean>(
+    settingsManager?.settings.value.discoverContentPanelInline ?? true
+  );
+
+  if (settingsManager) {
+    // Persists every change (the quick tool's explicit toggle, and
+    // BibleReader's "force inline to reveal a note" nudge alike) to the
+    // user's settings, mirroring how other per-tab UI toggles write through.
+    // Skips the first run so re-seeding this same value back on construction
+    // isn't a redundant profile write.
+    let isFirstRun = true;
+    effect(() => {
+      const value = discoverContentPanelInline.value;
+      if (isFirstRun) {
+        isFirstRun = false;
+        return;
+      }
+      // `untracked` matters here, not just style: `setDiscoverContentPanelInline`
+      // reads `settings.value` (to spread it) before writing a new object back.
+      // Left tracked, that read — made synchronously inside this very effect's
+      // evaluation — would silently subscribe the effect to the *entire*
+      // settings signal, and the write that follows would then immediately
+      // re-trigger this same effect, forever (an infinite loop from what looks
+      // like a one-way write).
+      untracked(() => settingsManager.setDiscoverContentPanelInline(value));
+    });
+  }
 
   if (discoverManager) {
     let discoverGeneration = 0;
