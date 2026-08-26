@@ -1072,7 +1072,6 @@
    off-screen; reset back to the normal stretch-to-fill behavior here. */
 .sb-bible-reader-mobile .sb-bible-reader-discover-panel {
   margin: 2.5rem 1rem 2rem;
-  overflow-x: hidden;
   justify-self: auto;
 }
 
