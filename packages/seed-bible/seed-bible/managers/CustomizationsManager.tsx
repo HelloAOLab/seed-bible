@@ -10,6 +10,7 @@ import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
+import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
 import {
   filterValidColorOverrides,
   type BibleThemeVariables,
@@ -127,6 +128,14 @@ const customizationSchema = z
     active: z.boolean(),
     createdAt: z.number(),
     updatedAt: z.number(),
+    /**
+     * IDs of extensions this customization installs automatically while
+     * active. Every id must reference the app's own known extension
+     * catalog — never a URL or other free-form identity, since install
+     * happens with no confirmation step. Only ever written from the
+     * checklist in CustomizationEditSettingsView.
+     */
+    extensionIds: z.array(z.string()).default([]),
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
@@ -152,6 +161,8 @@ export interface SeedBibleCustomization {
   active: boolean;
   createdAt: number;
   updatedAt: number;
+  /** Extension ids this customization installs automatically while active. */
+  extensionIds: string[];
 }
 
 function buildCustomizationLocator(recordName: string, id: string): string {
@@ -286,6 +297,13 @@ export interface CustomizationsManager {
    */
   activeThemeOverrides: ReadonlySignal<ThemeOverrides>;
   /**
+   * The extension ids that should be installed while the active
+   * customization is in effect: its own declared `extensionIds`, unioned
+   * with any extras the viewer added for it via
+   * `addExtensionToActiveCustomization`. Empty when nothing is active.
+   */
+  activeExtensionIds: ReadonlySignal<string[]>;
+  /**
    * A customization loaded via the `?customization={recordName}.{id}` share
    * link, if any. Takes priority over the signed-in user's own active
    * customization in `activeCustomization`.
@@ -332,6 +350,14 @@ export interface CustomizationsManager {
   removeEditingVariant: (variantId: string) => void;
   /** Persists the viewer's variant choice for the currently active customization. No-op if none is active. */
   selectActiveVariant: (variantId: string) => Promise<void>;
+  /** Toggles an extension id on the draft's base `extensionIds` list. No-op with no open draft. */
+  toggleEditingExtensionId: (extensionId: string) => void;
+  /** Adds an extra extension id to the viewer's own preferences for the active customization. No-op if none is active. */
+  addExtensionToActiveCustomization: (extensionId: string) => Promise<void>;
+  /** Removes an extra extension id from the viewer's own preferences for the active customization. No-op if none is active or the id isn't one of the viewer's extras. */
+  removeExtensionFromActiveCustomization: (
+    extensionId: string
+  ) => Promise<void>;
 }
 
 export function createCustomizationsManager(
@@ -339,7 +365,8 @@ export function createCustomizationsManager(
   login: LoginManager,
   theme: ThemeManager,
   navigation: NavigationManager,
-  variantSelections: CustomizationVariantSelectionsManager
+  variantSelections: CustomizationVariantSelectionsManager,
+  extensionPreferences: CustomizationExtensionPreferencesManager
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
@@ -421,6 +448,18 @@ export function createCustomizationsManager(
     }
     const recordName = login.userId.value;
     return recordName ? buildCustomizationLocator(recordName, own.id) : null;
+  });
+
+  const activeExtensionIds = computed<string[]>(() => {
+    const customization = activeCustomization.value;
+    if (!customization) {
+      return [];
+    }
+    const locator = activeCustomizationLocator.value;
+    const extra = locator
+      ? extensionPreferences.getExtraExtensionIds(locator)
+      : [];
+    return Array.from(new Set([...customization.extensionIds, ...extra]));
   });
 
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
@@ -505,6 +544,7 @@ export function createCustomizationsManager(
       active: false,
       createdAt: now,
       updatedAt: now,
+      extensionIds: [],
     };
 
     await persist(userId, record);
@@ -808,6 +848,41 @@ export function createCustomizationsManager(
     };
   };
 
+  const toggleEditingExtensionId = (extensionId: string): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    const has = current.extensionIds.includes(extensionId);
+    editingCustomization.value = {
+      ...current,
+      extensionIds: has
+        ? current.extensionIds.filter((id) => id !== extensionId)
+        : [...current.extensionIds, extensionId],
+      updatedAt: Date.now(),
+    };
+  };
+
+  const addExtensionToActiveCustomization = async (
+    extensionId: string
+  ): Promise<void> => {
+    const locator = activeCustomizationLocator.value;
+    if (!locator) {
+      return;
+    }
+    await extensionPreferences.addExtraExtensionId(locator, extensionId);
+  };
+
+  const removeExtensionFromActiveCustomization = async (
+    extensionId: string
+  ): Promise<void> => {
+    const locator = activeCustomizationLocator.value;
+    if (!locator) {
+      return;
+    }
+    await extensionPreferences.removeExtraExtensionId(locator, extensionId);
+  };
+
   const getShareLink = (customization: SeedBibleCustomization): string => {
     const recordName = login.userId.value ?? "";
     return navigation.linkToQuery({
@@ -829,6 +904,7 @@ export function createCustomizationsManager(
     activeCustomization,
     activeVariant,
     activeThemeOverrides,
+    activeExtensionIds,
     linkedCustomization,
     editingCustomization,
     editingVariantId,
@@ -851,5 +927,8 @@ export function createCustomizationsManager(
     setEditingDefaultVariant,
     removeEditingVariant,
     selectActiveVariant,
+    toggleEditingExtensionId,
+    addExtensionToActiveCustomization,
+    removeExtensionFromActiveCustomization,
   };
 }

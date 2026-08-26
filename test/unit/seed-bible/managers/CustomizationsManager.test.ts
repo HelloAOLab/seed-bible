@@ -10,6 +10,10 @@ import {
   createCustomizationVariantSelectionsManager,
   VARIANT_SELECTIONS_ADDRESS,
 } from "@packages/seed-bible/seed-bible/managers/CustomizationVariantSelectionsManager";
+import {
+  createCustomizationExtensionPreferencesManager,
+  EXTENSION_PREFERENCES_ADDRESS,
+} from "@packages/seed-bible/seed-bible/managers/CustomizationExtensionPreferencesManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { createTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
@@ -125,14 +129,19 @@ describe("CustomizationsManager", () => {
       os,
       login
     );
+    const extensionPreferences = createCustomizationExtensionPreferencesManager(
+      os,
+      login
+    );
     const manager = createCustomizationsManager(
       os,
       login,
       theme,
       nav,
-      variantSelections
+      variantSelections,
+      extensionPreferences
     );
-    return { theme, variantSelections, manager };
+    return { theme, variantSelections, extensionPreferences, manager };
   }
 
   it("load() lists customizations under the seedBibleCustomization marker for the signed-in user", async () => {
@@ -209,6 +218,42 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value).toEqual([]);
   });
 
+  it("load() defaults extensionIds to [] for a record persisted before the field existed", async () => {
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [
+        {
+          address: "customization_pre-extensions",
+          data: {
+            id: "customization_pre-extensions",
+            name: "Pre-extensions",
+            variants: [
+              {
+                id: "variant_a",
+                name: "Default",
+                themes: { primaryColor: "#111111" },
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            ],
+            defaultVariantId: "variant_a",
+            logoUrl: null,
+            active: false,
+            createdAt: 1,
+            updatedAt: 1,
+            // No extensionIds field at all.
+          },
+        },
+      ],
+    });
+    const { manager } = createManager();
+
+    await manager.load();
+
+    expect(manager.customizations.value).toHaveLength(1);
+    expect(manager.customizations.value[0]?.extensionIds).toEqual([]);
+  });
+
   it("create() persists a new record with one variant pre-filled from the current theme, secondary/tertiary lightened from primary", async () => {
     const { manager, theme } = createManager();
     const lightThemeVariables = theme.currentTheme.value.variables;
@@ -255,6 +300,7 @@ describe("CustomizationsManager", () => {
     for (const field of CUSTOMIZATION_COLOR_FIELDS) {
       expect(seededKeys).toContain(field.key);
     }
+    expect(created.extensionIds).toEqual([]);
     expect(recordDataMock).toHaveBeenCalledWith("user-1", created.id, created, {
       marker: CUSTOMIZATION_MARKER,
     });
@@ -319,6 +365,7 @@ describe("CustomizationsManager", () => {
       "#123456"
     );
     manager.addEditingVariant();
+    manager.toggleEditingExtensionId("ext.example");
 
     // None of the draft edits above triggered a network write.
     expect(recordDataMock).toHaveBeenCalledTimes(1);
@@ -331,6 +378,7 @@ describe("CustomizationsManager", () => {
     expect(savedRecord.name).toBe("Renamed");
     expect(savedRecord.variants[0].themes.primaryColor).toBe("#123456");
     expect(savedRecord.variants).toHaveLength(2);
+    expect(savedRecord.extensionIds).toEqual(["ext.example"]);
     expect(manager.customizations.value[0]?.name).toBe("Renamed");
   });
 
@@ -368,6 +416,33 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value?.name).toBe("My colors");
     expect(manager.customizations.value[0]?.name).toBe(created.name);
     expect(theme.customOverrides.value).toEqual({});
+  });
+
+  it("toggleEditingExtensionId() adds and removes an id from the draft's extensionIds without persisting", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.toggleEditingExtensionId("ext.example");
+
+    expect(manager.editingCustomization.value?.extensionIds).toEqual([
+      "ext.example",
+    ]);
+    expect(recordDataMock).not.toHaveBeenCalled();
+
+    manager.toggleEditingExtensionId("ext.example");
+
+    expect(manager.editingCustomization.value?.extensionIds).toEqual([]);
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("toggleEditingExtensionId() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+
+    manager.toggleEditingExtensionId("ext.example");
+
+    expect(manager.editingCustomization.value).toBeNull();
   });
 
   it("setEditingVariantColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
@@ -783,6 +858,74 @@ describe("CustomizationsManager", () => {
     expect(settings.setCustomTheme).not.toHaveBeenCalled();
   });
 
+  it("activeExtensionIds is empty when no customization is active", async () => {
+    const { manager } = createManager();
+
+    expect(manager.activeExtensionIds.value).toEqual([]);
+  });
+
+  it("activeExtensionIds reflects the active customization's own extensionIds, and the viewer can add extras on top", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.toggleEditingExtensionId("ext.base");
+    await manager.saveEditingCustomization();
+    await manager.setActive(created.id);
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+
+    await manager.addExtensionToActiveCustomization("ext.extra");
+
+    expect(manager.activeExtensionIds.value.sort()).toEqual(
+      ["ext.base", "ext.extra"].sort()
+    );
+
+    await manager.removeExtensionFromActiveCustomization("ext.extra");
+
+    expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
+  });
+
+  it("addExtensionToActiveCustomization()/removeExtensionFromActiveCustomization() persist to the viewer's own extension-preferences record, not the customization's own record", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    await manager.setActive(created.id);
+    recordDataMock.mockClear();
+
+    await manager.addExtensionToActiveCustomization("ext.extra");
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_PREFERENCES_ADDRESS,
+      { extraExtensionIds: { [`user-1.${created.id}`]: ["ext.extra"] } },
+      { marker: "publicRead" }
+    );
+    expect(recordDataMock).not.toHaveBeenCalledWith(
+      "user-1",
+      created.id,
+      expect.anything(),
+      expect.anything()
+    );
+
+    await manager.removeExtensionFromActiveCustomization("ext.extra");
+
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      EXTENSION_PREFERENCES_ADDRESS,
+      { extraExtensionIds: { [`user-1.${created.id}`]: [] } },
+      { marker: "publicRead" }
+    );
+  });
+
+  it("addExtensionToActiveCustomization()/removeExtensionFromActiveCustomization() no-op when no customization is active", async () => {
+    const { manager } = createManager();
+    recordDataMock.mockClear();
+
+    await manager.addExtensionToActiveCustomization("ext.extra");
+    await manager.removeExtensionFromActiveCustomization("ext.extra");
+
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
   it("auto-loads a customization from the ?customization= query param on construction", async () => {
     const sharedRecord = {
       id: "customization_shared",
@@ -820,6 +963,7 @@ describe("CustomizationsManager", () => {
     expect(manager.activeThemeOverrides.value).toEqual({
       primaryColor: "#abc123",
     });
+    expect(manager.activeCustomization.value?.extensionIds).toEqual([]);
   });
 
   it("a locator-loaded customization takes priority over the signed-in user's own active customization", async () => {

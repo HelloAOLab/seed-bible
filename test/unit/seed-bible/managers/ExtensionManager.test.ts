@@ -2048,6 +2048,215 @@ describe("createExtensionManager", () => {
     // keys land in the same `updateProfile` call, so this is still 1.
     expect(updateProfileSpy).toHaveBeenCalledTimes(1);
   });
+
+  it("loadExtension(ext, undefined, { persist: false }) installs without writing to local storage or the profile config", async () => {
+    login = createTestLogin({
+      userId: "user-1",
+      profile: { name: "Test" } as UserProfile,
+    });
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://scoped-install");
+
+    const loaded = await manager.loadExtension(
+      {
+        url: "pkg://scoped-install",
+        meta: {
+          id: "ext.scoped-install",
+          translations: {
+            en: { title: "Scoped", description: "Scoped extension" },
+          },
+        },
+      },
+      undefined,
+      { persist: false }
+    );
+
+    expect(loaded).toBe(true);
+    expect(manager.getExtensions()[0]?.installed).toBe(true);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+    expect(getProfileInstalled(login)).toBeUndefined();
+  });
+
+  it("loadExtension(..., { persist: false }) does not persist an unregistered dependency it installs either", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://scoped-dependent");
+    mockExtensionModule("pkg://scoped-dependency");
+
+    const dependency = {
+      url: "pkg://scoped-dependency",
+      meta: {
+        id: "ext.scoped-dependency",
+        translations: {
+          en: { title: "Dependency", description: "Dependency" },
+        },
+      },
+    };
+    // Register the dependency as known (via a set) without installing it,
+    // so `loadExtension` below has to install it as a side effect of
+    // installing the dependent.
+    await manager.loadExtensionSet(
+      { id: "set.scoped-dependency", extensions: [dependency] },
+      () => false
+    );
+
+    const loaded = await manager.loadExtension(
+      {
+        url: "pkg://scoped-dependent",
+        meta: {
+          id: "ext.scoped-dependent",
+          translations: {
+            en: { title: "Dependent", description: "Dependent" },
+          },
+          dependencies: ["ext.scoped-dependency"],
+        },
+      },
+      undefined,
+      { persist: false }
+    );
+
+    expect(loaded).toBe(true);
+    expect(
+      manager.getExtensions().find((e) => e.id === "ext.scoped-dependency")
+        ?.installed
+    ).toBe(true);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+  });
+
+  it("unloadExtension(id, { persist: false }) uninstalls without touching local storage or the profile config", async () => {
+    login = createTestLogin({
+      userId: "user-1",
+      profile: { name: "Test" } as UserProfile,
+    });
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://scoped-uninstall");
+
+    await manager.loadExtension({
+      url: "pkg://scoped-uninstall",
+      meta: {
+        id: "ext.scoped-uninstall",
+        translations: {
+          en: { title: "Scoped Uninstall", description: "Scoped Uninstall" },
+        },
+      },
+    });
+    expect(getProfileInstalled(login)).toEqual(["ext.scoped-uninstall"]);
+
+    manager.unloadExtension("ext.scoped-uninstall", { persist: false });
+
+    expect(manager.getExtensions()[0]?.installed).toBe(false);
+    // The default-persisted install from before the scoped uninstall is
+    // still there — a scoped uninstall must never touch storage.
+    expect(getProfileInstalled(login)).toEqual(["ext.scoped-uninstall"]);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual(["ext.scoped-uninstall"]);
+  });
+
+  it("reconcileInstalledExtensions() swaps the installed set to exactly the target ids, without persisting", async () => {
+    const defaultExtensions: ExtensionSet = {
+      id: "set.reconcile",
+      extensions: [
+        {
+          url: "pkg://reconcile-default",
+          meta: {
+            id: "ext.reconcile-default",
+            translations: {
+              en: { title: "Default", description: "Default" },
+            },
+          },
+        },
+        {
+          url: "pkg://reconcile-target",
+          meta: {
+            id: "ext.reconcile-target",
+            translations: { en: { title: "Target", description: "Target" } },
+          },
+        },
+      ],
+    };
+    mockExtensionModule("pkg://reconcile-default");
+    mockExtensionModule("pkg://reconcile-target");
+
+    const manager = createExtensionManager(login, { defaultExtensions });
+    await manager.loadExtensionSet(defaultExtensions, () => false); // register as known, install nothing
+    await manager.loadExtension(defaultExtensions.extensions[0]!);
+    expect(
+      manager.getExtensions().find((e) => e.id === "ext.reconcile-default")
+        ?.installed
+    ).toBe(true);
+
+    await manager.reconcileInstalledExtensions(["ext.reconcile-target"]);
+
+    const extensions = manager.getExtensions();
+    expect(
+      extensions.find((e) => e.id === "ext.reconcile-default")?.installed
+    ).toBe(false);
+    expect(
+      extensions.find((e) => e.id === "ext.reconcile-target")?.installed
+    ).toBe(true);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual(["ext.reconcile-default"]);
+  });
+
+  it("reconcileInstalledExtensions(null) restores exactly the viewer's saved default set, without re-persisting it", async () => {
+    localStorage.setItem(
+      "sb-installed-extensions",
+      JSON.stringify(["ext.reconcile-null-default"])
+    );
+    const defaultExtensions: ExtensionSet = {
+      id: "set.reconcile-null",
+      extensions: [
+        {
+          url: "pkg://reconcile-null-default",
+          meta: {
+            id: "ext.reconcile-null-default",
+            translations: { en: { title: "Default", description: "Default" } },
+          },
+        },
+      ],
+    };
+    mockExtensionModule("pkg://reconcile-null-default");
+
+    const manager = createExtensionManager(login, { defaultExtensions });
+    // Simulate having entered a customization: uninstall the default (scoped)
+    // and install something else in its place.
+    await manager.loadDefaultExtensions();
+    manager.unloadExtension("ext.reconcile-null-default", { persist: false });
+
+    await manager.reconcileInstalledExtensions(null);
+
+    expect(
+      manager.getExtensions().find((e) => e.id === "ext.reconcile-null-default")
+        ?.installed
+    ).toBe(true);
+    // Restoring the default set didn't re-write storage — it was already there.
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual(["ext.reconcile-null-default"]);
+  });
+
+  it("reconcileInstalledExtensions() warns and skips an id with no matching known extension", async () => {
+    const manager = createExtensionManager(login);
+    const warnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+
+    await expect(
+      manager.reconcileInstalledExtensions(["ext.does-not-exist"])
+    ).resolves.toBeUndefined();
+
+    expect(
+      warnSpy.mock.calls.some((call) =>
+        String(call[0] ?? "").includes("ext.does-not-exist")
+      )
+    ).toBe(true);
+    warnSpy.mockRestore();
+  });
 });
 
 describe("mergeInstalledExtensionIds()", () => {

@@ -1180,17 +1180,27 @@ function getExtensionInstallState(
 
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { extensions } = state;
+  const { extensions, customizations } = state;
   const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
+  const activeCustomization = customizations.activeCustomization.value;
 
   const onBack = () => {
     state.sidebar.requestedSettingsView.value = "main";
   };
 
   const handleInstall = async (extensionId: string) => {
+    // While a customization is active, installs are customization-scoped:
+    // the actual install happens automatically via the reconcile effect in
+    // SeedBibleStateManager reacting to activeExtensionIds, not as a direct
+    // result of this click.
+    if (activeCustomization) {
+      await customizations.addExtensionToActiveCustomization(extensionId);
+      return;
+    }
+
     const extensionData = extensionsList.find(
       (e) => e.extension?.meta.id === extensionId
     );
@@ -1204,6 +1214,10 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUninstall = (extensionId: string) => {
+    if (activeCustomization) {
+      void customizations.removeExtensionFromActiveCustomization(extensionId);
+      return;
+    }
     extensions.unloadExtension(extensionId);
   };
 
@@ -1279,6 +1293,15 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
+        {activeCustomization && (
+          <p className="sb-settings-field-description">
+            {t("extensions-for-active-customization", {
+              defaultValue:
+                "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
+              name: activeCustomization.name,
+            })}
+          </p>
+        )}
         {extensionsList.length === 0 ? (
           <div className="sb-settings-empty-state">
             <p>
@@ -1291,6 +1314,8 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           <ul className="sb-extensions-list">
             {extensionsList.map((extensionEntry) => {
               const { id, installed, pendingInstallation } = extensionEntry;
+              const isBaseExtension =
+                activeCustomization?.extensionIds.includes(id) ?? false;
               const isRegistered =
                 ExtensionInitalizer.getInstance().isExtensionRegistered(id);
               const installState = getExtensionInstallState(
@@ -1350,21 +1375,24 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                         </button>
                       )}
                       {(installState === "installed" ||
-                        installState === "downloaded") && (
-                        <button
-                          type="button"
-                          className="sb-extension-row-action-button"
-                          onClick={() => handleUninstall(id)}
-                          aria-label={t("uninstall", {
-                            defaultValue: "Uninstall",
-                          })}
-                          title={t("uninstall", { defaultValue: "Uninstall" })}
-                        >
-                          <span className="material-symbols-outlined">
-                            delete
-                          </span>
-                        </button>
-                      )}
+                        installState === "downloaded") &&
+                        !isBaseExtension && (
+                          <button
+                            type="button"
+                            className="sb-extension-row-action-button"
+                            onClick={() => handleUninstall(id)}
+                            aria-label={t("uninstall", {
+                              defaultValue: "Uninstall",
+                            })}
+                            title={t("uninstall", {
+                              defaultValue: "Uninstall",
+                            })}
+                          >
+                            <span className="material-symbols-outlined">
+                              delete
+                            </span>
+                          </button>
+                        )}
                     </div>
                   </div>
                 </li>
@@ -2497,6 +2525,42 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
             </button>
           </div>
         </section>
+
+        {state.extensions.extensions.value.filter(
+          (entry) => entry.extension !== null
+        ).length > 0 && (
+          <section className="sb-settings-section">
+            <h3 className="sb-settings-subheading">
+              {t("customization-extensions", { defaultValue: "Extensions" })}
+            </h3>
+            <p className="sb-settings-field-description">
+              {t("customization-extensions-description", {
+                defaultValue:
+                  "Extensions that install automatically for anyone using this customization — no confirmation prompt.",
+              })}
+            </p>
+            {state.extensions.extensions.value
+              .filter((entry) => entry.extension !== null)
+              .map((entry) => (
+                <div className="sb-settings-toggle-row" key={entry.id}>
+                  <label
+                    className="sb-settings-toggle-label"
+                    htmlFor={`sb-customization-extension-${entry.id}`}
+                  >
+                    {t("title", { ns: entry.id, defaultValue: entry.id })}
+                  </label>
+                  <input
+                    id={`sb-customization-extension-${entry.id}`}
+                    type="checkbox"
+                    checked={record.extensionIds.includes(entry.id)}
+                    onChange={() =>
+                      customizations.toggleEditingExtensionId(entry.id)
+                    }
+                  />
+                </div>
+              ))}
+          </section>
+        )}
 
         <div className="sb-settings-actions">
           <button

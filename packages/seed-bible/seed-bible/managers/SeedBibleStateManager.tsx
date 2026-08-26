@@ -56,6 +56,7 @@ import type { ThemeManager } from "../managers/ThemeManager";
 import { createCustomizationsManager } from "../managers/CustomizationsManager";
 import type { CustomizationsManager } from "../managers/CustomizationsManager";
 import { createCustomizationVariantSelectionsManager } from "../managers/CustomizationVariantSelectionsManager";
+import { createCustomizationExtensionPreferencesManager } from "../managers/CustomizationExtensionPreferencesManager";
 import {
   batch,
   computed,
@@ -503,12 +504,15 @@ export function createSeedBibleState(
   const themeManager = createTheme(settings);
   const customizationVariantSelections =
     createCustomizationVariantSelectionsManager(os, login);
+  const customizationExtensionPreferences =
+    createCustomizationExtensionPreferencesManager(os, login);
   const customizations = createCustomizationsManager(
     os,
     login,
     themeManager,
     navigation,
-    customizationVariantSelections
+    customizationVariantSelections,
+    customizationExtensionPreferences
   );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(
@@ -554,6 +558,31 @@ export function createSeedBibleState(
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
+  });
+  // Swaps the live installed-extension set over to whichever customization is
+  // active (its own extensionIds plus anything the viewer added for it), and
+  // back to the viewer's real default profile when none is active. Guarded
+  // so it stays a no-op until a customization has genuinely gone active at
+  // least once this session — effect() runs synchronously on registration,
+  // and without the guard this would fire on every page load and race
+  // app/main.tsx's own initial `loadDefaultExtensions()` call.
+  let previousExtensionTargetKey: string | null = null;
+  let hasEnteredCustomizationExtensionMode = false;
+  effect(() => {
+    const active = customizations.activeCustomization.value;
+    const targetIds = active ? customizations.activeExtensionIds.value : null;
+    if (targetIds === null && !hasEnteredCustomizationExtensionMode) {
+      return;
+    }
+    const key = targetIds === null ? " default" : [...targetIds].sort().join("");
+    if (key === previousExtensionTargetKey) {
+      return;
+    }
+    previousExtensionTargetKey = key;
+    if (targetIds !== null) {
+      hasEnteredCustomizationExtensionMode = true;
+    }
+    void extensions.reconcileInstalledExtensions(targetIds);
   });
   const modals = createModalManager();
   const search = createSearchManager();
