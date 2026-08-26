@@ -3,7 +3,6 @@ import {
   CHAPTER_SKELETON_DELAY_MS,
 } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
-import { DiscoverContentPanel } from "./DiscoverContentPanel/DiscoverContentPanel";
 import type {
   ApiRequestOptions,
   TranslationBookChapter,
