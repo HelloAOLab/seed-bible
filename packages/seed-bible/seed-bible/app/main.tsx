@@ -46,20 +46,34 @@ import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 export function ExternalResourceDependencies({
   themeCssVariables,
   themeCssClasses,
+  googleFontFamilies,
 }: {
   themeCssVariables: ReadonlySignal<string>;
   themeCssClasses: ReadonlySignal<string>;
+  googleFontFamilies: ReadonlySignal<string[]>;
 }) {
   return (
     <>
       <link
-        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap"
         rel="stylesheet"
       />
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
+      {googleFontFamilies.value.length > 0 && (
+        // A customization variant can name any Google Font by typing its
+        // exact name — this loads whatever isn't already covered by the
+        // static presets above. See CustomizationsManager.buildCustomFontValue
+        // for why the name is already restricted to safe characters.
+        <link
+          rel="stylesheet"
+          href={`https://fonts.googleapis.com/css2?${googleFontFamilies.value
+            .map((name) => `family=${name.replace(/ /g, "+")}`)
+            .join("&")}&display=swap`}
+        />
+      )}
       <style>{`body {\n${themeCssVariables}\n}`}</style>
       <style>{themeCssClasses}</style>
     </>
@@ -184,6 +198,7 @@ function MainContent(props: {
         <ExternalResourceDependencies
           themeCssVariables={theme.themeCssVariables}
           themeCssClasses={theme.themeCssClasses}
+          googleFontFamilies={theme.googleFontFamiliesToLoad}
         />
         <Sidebar state={state} />
 

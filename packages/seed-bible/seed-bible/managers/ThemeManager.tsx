@@ -960,7 +960,9 @@ export const DEFAULT_HIGHLIGHT_IDS = [
 
 export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
 
-export type ThemeOverrides = Partial<Record<ThemeColorKey, string>>;
+export type ThemeOverrides = Partial<
+  Record<ThemeColorKey | ThemeFontFamilyKey, string>
+>;
 type HighlightOverrides = Record<string, Partial<ThemeHighlightColor>>;
 
 const THEME_COLOR_KEYS: ThemeColorKey[] = THEME_COLOR_GROUPS.flatMap((group) =>
@@ -993,6 +995,44 @@ export function filterValidColorOverrides(
 ): ThemeOverrides {
   const overrides: ThemeOverrides = {};
   for (const key of THEME_COLOR_KEYS) {
+    const value = raw[key];
+    if (typeof value === "string" && value.length > 0) {
+      overrides[key] = value;
+    }
+  }
+  return overrides;
+}
+
+/**
+ * Keys of `BibleThemeVariables` that hold a font-family stack and are safe
+ * to expose in a font-picker UI (as opposed to a plain color picker).
+ */
+export type ThemeFontFamilyKey =
+  | "fontFamily"
+  | "bookTitleFontFamily"
+  | "chapterHeadingFontFamily"
+  | "verseFontFamily"
+  | "hebrewSubtitleFontFamily";
+
+const THEME_FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = [
+  "fontFamily",
+  "bookTitleFontFamily",
+  "chapterHeadingFontFamily",
+  "verseFontFamily",
+  "hebrewSubtitleFontFamily",
+];
+
+/**
+ * Same purpose as `filterValidColorOverrides`, scoped to font-family keys.
+ * Kept as its own function (rather than folded into `filterValidColorOverrides`)
+ * so it isn't accidentally reachable from the app's own color-only
+ * "Customize colors" feature, which only ever narrows against `ThemeColorKey`.
+ */
+export function filterValidFontFamilyOverrides(
+  raw: Record<string, string>
+): Partial<Record<ThemeFontFamilyKey, string>> {
+  const overrides: Partial<Record<ThemeFontFamilyKey, string>> = {};
+  for (const key of THEME_FONT_FAMILY_KEYS) {
     const value = raw[key];
     if (typeof value === "string" && value.length > 0) {
       overrides[key] = value;

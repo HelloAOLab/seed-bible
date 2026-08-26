@@ -1,5 +1,6 @@
 import {
   createTheme as createThemeManager,
+  filterValidFontFamilyOverrides,
   generateThemeCssClasses,
   generateThemeCssVariables,
   type BibleTheme,
@@ -113,6 +114,33 @@ describe("ThemeManager CSS helpers", () => {
         "color: var(--sb-highlight-yellow-words-of-jesus-font-color);"
       );
     });
+  });
+});
+
+describe("filterValidFontFamilyOverrides", () => {
+  it("keeps only known font-family keys and drops everything else", () => {
+    const overrides = filterValidFontFamilyOverrides({
+      fontFamily: "Roboto, sans-serif",
+      bookTitleFontFamily: "Newsreader, serif",
+      chapterHeadingFontFamily: "",
+      verseFontFamily: "Lora, sans-serif",
+      hebrewSubtitleFontFamily: "Newsreader, serif",
+      primaryColor: "#111111",
+      someUnknownKey: "whatever",
+    });
+
+    expect(overrides).toEqual({
+      fontFamily: "Roboto, sans-serif",
+      bookTitleFontFamily: "Newsreader, serif",
+      verseFontFamily: "Lora, sans-serif",
+      hebrewSubtitleFontFamily: "Newsreader, serif",
+    });
+  });
+
+  it("returns an empty object when nothing matches", () => {
+    expect(filterValidFontFamilyOverrides({ primaryColor: "#111111" })).toEqual(
+      {}
+    );
   });
 });
 

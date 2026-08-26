@@ -1,6 +1,8 @@
 import {
   createCustomizationsManager,
+  buildCustomFontValue,
   CUSTOMIZATION_COLOR_FIELDS,
+  CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_MARKER,
   lightenColor,
   SECONDARY_LIGHTEN_AMOUNT,
@@ -254,6 +256,49 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value[0]?.extensionSettings).toEqual({});
   });
 
+  it("load() narrows a variant's persisted themes to known color and font-family keys, dropping anything else", async () => {
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [
+        {
+          address: "customization_fonts",
+          data: {
+            id: "customization_fonts",
+            name: "Has fonts",
+            variants: [
+              {
+                id: "variant_a",
+                name: "Default",
+                themes: {
+                  primaryColor: "#111111",
+                  verseFontFamily: "Playfair Display, serif",
+                  hebrewSubtitleFontFamily: "Newsreader, serif",
+                  someUnknownKey: "should be dropped",
+                },
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            ],
+            defaultVariantId: "variant_a",
+            logoUrl: null,
+            active: false,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ],
+    });
+    const { manager } = createManager();
+
+    await manager.load();
+
+    expect(manager.customizations.value[0]?.variants[0]?.themes).toEqual({
+      primaryColor: "#111111",
+      verseFontFamily: "Playfair Display, serif",
+      hebrewSubtitleFontFamily: "Newsreader, serif",
+    });
+  });
+
   it("create() persists a new record with one variant pre-filled from the current theme, secondary/tertiary lightened from primary", async () => {
     const { manager, theme } = createManager();
     const lightThemeVariables = theme.currentTheme.value.variables;
@@ -296,8 +341,28 @@ describe("CustomizationsManager", () => {
     expect(created.variants[0]?.themes.selectedVerseTextDecorationColor).toBe(
       lightThemeVariables.selectedVerseTextDecorationColor
     );
+    // Font-family fields are seeded from the current theme the same way
+    // color fields are.
+    expect(created.variants[0]?.themes.fontFamily).toBe(
+      lightThemeVariables.fontFamily
+    );
+    expect(created.variants[0]?.themes.bookTitleFontFamily).toBe(
+      lightThemeVariables.bookTitleFontFamily
+    );
+    expect(created.variants[0]?.themes.chapterHeadingFontFamily).toBe(
+      lightThemeVariables.chapterHeadingFontFamily
+    );
+    expect(created.variants[0]?.themes.verseFontFamily).toBe(
+      lightThemeVariables.verseFontFamily
+    );
+    expect(created.variants[0]?.themes.hebrewSubtitleFontFamily).toBe(
+      lightThemeVariables.hebrewSubtitleFontFamily
+    );
     const seededKeys = Object.keys(created.variants[0]!.themes);
     for (const field of CUSTOMIZATION_COLOR_FIELDS) {
+      expect(seededKeys).toContain(field.key);
+    }
+    for (const field of CUSTOMIZATION_FONT_FIELDS) {
       expect(seededKeys).toContain(field.key);
     }
     expect(created.extensionSettings).toEqual({});
@@ -326,6 +391,25 @@ describe("CustomizationsManager", () => {
     expect(r2).toBeLessThanOrEqual(255);
     expect(g2).toBeLessThanOrEqual(255);
     expect(b2).toBeLessThanOrEqual(255);
+  });
+
+  it("buildCustomFontValue() builds a font-family CSS value with a sans-serif fallback", () => {
+    expect(buildCustomFontValue("Lora")).toBe("Lora, sans-serif");
+    expect(buildCustomFontValue("IBM Plex Sans")).toBe(
+      "IBM Plex Sans, sans-serif"
+    );
+  });
+
+  it("buildCustomFontValue() strips disallowed characters and collapses whitespace", () => {
+    expect(buildCustomFontValue("  Lora  ")).toBe("Lora, sans-serif");
+    expect(buildCustomFontValue("Lora<script>")).toBe("Lorascript, sans-serif");
+    expect(buildCustomFontValue("Font;   Name")).toBe("Font Name, sans-serif");
+  });
+
+  it("buildCustomFontValue() returns an empty string for a blank or all-invalid name", () => {
+    expect(buildCustomFontValue("")).toBe("");
+    expect(buildCustomFontValue("   ")).toBe("");
+    expect(buildCustomFontValue(";;;")).toBe("");
   });
 
   it("startEditing() seeds editingCustomization from the persisted record, and no-ops for an unknown id", async () => {
@@ -528,6 +612,64 @@ describe("CustomizationsManager", () => {
     expect(
       manager.customizations.value[0]?.variants[0]?.themes.readerBackground
     ).toBe("#f0f0f0");
+  });
+
+  it("setEditingVariantFont() sets a font-family value on the draft without persisting, then persists it on save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.setEditingVariantFont(
+      variantId,
+      "verseFontFamily",
+      "Playfair Display, serif"
+    );
+
+    expect(
+      manager.editingCustomization.value?.variants[0]?.themes.verseFontFamily
+    ).toBe("Playfair Display, serif");
+    expect(
+      manager.customizations.value[0]?.variants[0]?.themes.verseFontFamily
+    ).not.toBe("Playfair Display, serif");
+
+    await manager.saveEditingCustomization();
+
+    expect(
+      manager.customizations.value[0]?.variants[0]?.themes.verseFontFamily
+    ).toBe("Playfair Display, serif");
+  });
+
+  it("setEditingVariantFont() on one variant never touches a sibling variant's fonts", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const variantA = manager.editingCustomization.value!.variants[0]!;
+    const variantB = manager.addEditingVariant();
+    expect(variantB).not.toBeNull();
+
+    manager.setEditingVariantFont(
+      variantA.id,
+      "fontFamily",
+      "Roboto, sans-serif"
+    );
+
+    const record = manager.editingCustomization.value!;
+    const untouchedB = record.variants.find((v) => v.id === variantB!.id);
+    expect(untouchedB?.themes).toEqual(variantB!.themes);
+  });
+
+  it("setEditingVariantFont() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+
+    manager.setEditingVariantFont(
+      created.variants[0]!.id,
+      "fontFamily",
+      "Roboto, sans-serif"
+    );
+
+    expect(manager.editingCustomization.value).toBeNull();
   });
 
   it("setEditingVariantColor() on a non-active customization is not reflected in the live theme, before or after saving", async () => {

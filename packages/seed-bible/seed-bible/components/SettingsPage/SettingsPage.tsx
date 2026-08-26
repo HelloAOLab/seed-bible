@@ -22,6 +22,9 @@ import {
 } from "../../managers/ThemeManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
+  CUSTOMIZATION_FONT_FIELDS,
+  CUSTOMIZATION_FONT_PRESETS,
+  buildCustomFontValue,
   getExtensionAvailability,
   type ExtensionAvailability,
   type SeedBibleCustomization,
@@ -2853,6 +2856,88 @@ function CustomizationVariantEditSettingsView(props: {
             </ul>
           </div>
         ))}
+
+        <div className="sb-theme-colors-group">
+          <h3 className="sb-settings-subheading">
+            {t("customization-fonts", { defaultValue: "Fonts" })}
+          </h3>
+          <ul className="sb-theme-colors-list">
+            {CUSTOMIZATION_FONT_FIELDS.map((field) => {
+              const value = variant.themes[field.key] ?? "";
+              const label = t(`customization-${field.key}`, {
+                defaultValue: field.label,
+              });
+              const preset = CUSTOMIZATION_FONT_PRESETS.find(
+                (p) => p.value === value
+              );
+              const customName = value.split(",")[0]?.trim() ?? "";
+              return (
+                <li key={field.key} className="sb-theme-color-row">
+                  <div className="sb-theme-color-row-main">
+                    <span className="sb-theme-color-label">{label}</span>
+                    <span className="sb-theme-color-value">{value || "—"}</span>
+                  </div>
+                  <div className="sb-theme-color-row-controls">
+                    <select
+                      className="sb-settings-language-select"
+                      aria-label={label}
+                      value={preset ? preset.name : "__custom__"}
+                      onChange={(event: Event) => {
+                        const target = event.currentTarget as HTMLSelectElement;
+                        if (target.value === "__custom__") {
+                          customizations.setEditingVariantFont(
+                            variant.id,
+                            field.key,
+                            buildCustomFontValue(preset ? "" : customName)
+                          );
+                          return;
+                        }
+                        const nextPreset = CUSTOMIZATION_FONT_PRESETS.find(
+                          (p) => p.name === target.value
+                        );
+                        if (nextPreset) {
+                          customizations.setEditingVariantFont(
+                            variant.id,
+                            field.key,
+                            nextPreset.value
+                          );
+                        }
+                      }}
+                    >
+                      {CUSTOMIZATION_FONT_PRESETS.map((p) => (
+                        <option key={p.name} value={p.name}>
+                          {p.name}
+                        </option>
+                      ))}
+                      <option value="__custom__">
+                        {t("custom-font-option", { defaultValue: "Custom…" })}
+                      </option>
+                    </select>
+                    {!preset && (
+                      <input
+                        type="text"
+                        className="sb-settings-text-input"
+                        placeholder={t("custom-font-name-placeholder", {
+                          defaultValue: "Google Font name",
+                        })}
+                        value={customName}
+                        onInput={(event: Event) => {
+                          const target =
+                            event.currentTarget as HTMLInputElement;
+                          customizations.setEditingVariantFont(
+                            variant.id,
+                            field.key,
+                            buildCustomFontValue(target.value)
+                          );
+                        }}
+                      />
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
         <div className="sb-settings-actions">
           <button

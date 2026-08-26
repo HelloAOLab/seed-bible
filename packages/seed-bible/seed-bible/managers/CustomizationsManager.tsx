@@ -13,8 +13,10 @@ import type { CustomizationVariantSelectionsManager } from "./CustomizationVaria
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
 import {
   filterValidColorOverrides,
+  filterValidFontFamilyOverrides,
   type BibleThemeVariables,
   type ThemeColorKey,
+  type ThemeFontFamilyKey,
   type ThemeManager,
   type ThemeOverrides,
 } from "./ThemeManager";
@@ -211,7 +213,10 @@ function narrowVariants(
 ): CustomizationThemeVariant[] {
   return variants.map((variant) => ({
     ...variant,
-    themes: filterValidColorOverrides(variant.themes),
+    themes: {
+      ...filterValidColorOverrides(variant.themes),
+      ...filterValidFontFamilyOverrides(variant.themes),
+    },
   }));
 }
 
@@ -281,6 +286,47 @@ export const CUSTOMIZATION_COLOR_FIELDS: {
   label: string;
 }[] = CUSTOMIZATION_COLOR_GROUPS.flatMap((group) => group.fields);
 
+export interface CustomizationFontField {
+  key: ThemeFontFamilyKey;
+  label: string;
+}
+
+export const CUSTOMIZATION_FONT_FIELDS: CustomizationFontField[] = [
+  { key: "fontFamily", label: "Default" },
+  { key: "bookTitleFontFamily", label: "Book title" },
+  { key: "chapterHeadingFontFamily", label: "Chapter heading" },
+  { key: "verseFontFamily", label: "Verse" },
+  { key: "hebrewSubtitleFontFamily", label: "Hebrew subtitle" },
+];
+
+export interface CustomizationFontPreset {
+  name: string;
+  value: string;
+}
+
+export const CUSTOMIZATION_FONT_PRESETS: CustomizationFontPreset[] = [
+  { name: "Newsreader", value: "Newsreader, serif" },
+  { name: "System UI", value: "system-ui, sans-serif" },
+  { name: "Roboto", value: "Roboto, sans-serif" },
+  { name: "Open Sans", value: "Open Sans, sans-serif" },
+  { name: "Playfair Display", value: "Playfair Display, serif" },
+  { name: "Cormorant Garamond", value: "Cormorant Garamond, serif" },
+];
+
+/**
+ * Builds a font-family CSS value for a manually-typed Google Font name.
+ * Restricted to letters/digits/spaces (real font names never need more)
+ * both so the stored CSS value can't be broken and so it's safe to later
+ * reuse as a Google Fonts API query parameter with no further escaping.
+ */
+export function buildCustomFontValue(name: string): string {
+  const trimmed = name
+    .replace(/[^A-Za-z0-9 ]/g, "")
+    .trim()
+    .replace(/\s+/g, " ");
+  return trimmed ? `${trimmed}, sans-serif` : "";
+}
+
 function buildVariant(
   name: string,
   currentVariables: BibleThemeVariables
@@ -300,6 +346,12 @@ function buildVariant(
     ) {
       continue;
     }
+    const value = currentVariables[field.key];
+    if (typeof value === "string" && value.length > 0) {
+      themes[field.key] = value;
+    }
+  }
+  for (const field of CUSTOMIZATION_FONT_FIELDS) {
     const value = currentVariables[field.key];
     if (typeof value === "string" && value.length > 0) {
       themes[field.key] = value;
@@ -375,6 +427,11 @@ export interface CustomizationsManager {
   setEditingVariantColor: (
     variantId: string,
     key: ThemeColorKey,
+    value: string
+  ) => void;
+  setEditingVariantFont: (
+    variantId: string,
+    key: ThemeFontFamilyKey,
     value: string
   ) => void;
   setEditingDefaultVariant: (variantId: string) => void;
@@ -749,6 +806,30 @@ export function createCustomizationsManager(
     };
   };
 
+  const setEditingVariantFont = (
+    variantId: string,
+    key: ThemeFontFamilyKey,
+    value: string
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      variants: current.variants.map((variant) =>
+        variant.id === variantId
+          ? {
+              ...variant,
+              themes: { ...variant.themes, [key]: value },
+              updatedAt: Date.now(),
+            }
+          : variant
+      ),
+      updatedAt: Date.now(),
+    };
+  };
+
   const setEditingDefaultVariant = (variantId: string): void => {
     const current = editingCustomization.value;
     if (!current || !current.variants.some((v) => v.id === variantId)) {
@@ -990,6 +1071,7 @@ export function createCustomizationsManager(
     addEditingVariant,
     renameEditingVariant,
     setEditingVariantColor,
+    setEditingVariantFont,
     setEditingDefaultVariant,
     removeEditingVariant,
     selectActiveVariant,

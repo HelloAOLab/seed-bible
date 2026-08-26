@@ -52,8 +52,15 @@ import {
   createTheme,
   generateThemeCssClasses,
 } from "../managers/ThemeManager";
-import type { ThemeManager } from "../managers/ThemeManager";
-import { createCustomizationsManager } from "../managers/CustomizationsManager";
+import type {
+  ThemeManager,
+  ThemeFontFamilyKey,
+} from "../managers/ThemeManager";
+import {
+  createCustomizationsManager,
+  CUSTOMIZATION_FONT_FIELDS,
+  CUSTOMIZATION_FONT_PRESETS,
+} from "../managers/CustomizationsManager";
 import type { CustomizationsManager } from "../managers/CustomizationsManager";
 import { createCustomizationVariantSelectionsManager } from "../managers/CustomizationVariantSelectionsManager";
 import { createCustomizationExtensionPreferencesManager } from "../managers/CustomizationExtensionPreferencesManager";
@@ -311,6 +318,8 @@ export interface SeedBibleState {
   theme: ThemeManager & {
     themeCssVariables: ReadonlySignal<string>;
     themeCssClasses: ReadonlySignal<string>;
+    /** Google Font family names an active customization's variant needs that aren't already statically loaded. */
+    googleFontFamiliesToLoad: ReadonlySignal<string[]>;
   };
   /** Saved, named "look and feel" color profiles the user can create/activate. */
   customizations: CustomizationsManager;
@@ -688,6 +697,29 @@ export function createSeedBibleState(
     generateThemeCssVariables(theme.value)
   );
   const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
+
+  // Presets (statically loaded in app/main.tsx's ExternalResourceDependencies)
+  // plus the built-in themes' own defaults never need a dynamic <link> —
+  // only a manually-typed custom font name does.
+  const ALWAYS_LOADED_FONT_NAMES = new Set([
+    ...CUSTOMIZATION_FONT_PRESETS.map((preset) => preset.name),
+    "Plus Jakarta Sans", // default bookTitle/chapterHeading/verse font in the built-in themes
+  ]);
+  const FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = CUSTOMIZATION_FONT_FIELDS.map(
+    (field) => field.key
+  );
+  const googleFontFamiliesToLoad = computed<string[]>(() => {
+    const vars = theme.value.variables;
+    const names = new Set<string>();
+    for (const key of FONT_FAMILY_KEYS) {
+      const value = vars[key];
+      const name = value?.split(",")[0]?.trim();
+      if (name && !ALWAYS_LOADED_FONT_NAMES.has(name)) {
+        names.add(name);
+      }
+    }
+    return [...names];
+  });
 
   // Theme is the source of truth for text colors. When the user switches
   // theme presets, drop any per-section color override from the text editor
@@ -1982,6 +2014,7 @@ export function createSeedBibleState(
       ...themeManager,
       themeCssVariables,
       themeCssClasses,
+      googleFontFamiliesToLoad,
     },
     customizations,
     sidebar,
