@@ -2526,41 +2526,21 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
           </div>
         </section>
 
-        {state.extensions.extensions.value.filter(
-          (entry) => entry.extension !== null
-        ).length > 0 && (
-          <section className="sb-settings-section">
-            <h3 className="sb-settings-subheading">
-              {t("customization-extensions", { defaultValue: "Extensions" })}
-            </h3>
-            <p className="sb-settings-field-description">
-              {t("customization-extensions-description", {
-                defaultValue:
-                  "Extensions that install automatically for anyone using this customization — no confirmation prompt.",
-              })}
-            </p>
-            {state.extensions.extensions.value
-              .filter((entry) => entry.extension !== null)
-              .map((entry) => (
-                <div className="sb-settings-toggle-row" key={entry.id}>
-                  <label
-                    className="sb-settings-toggle-label"
-                    htmlFor={`sb-customization-extension-${entry.id}`}
-                  >
-                    {t("title", { ns: entry.id, defaultValue: entry.id })}
-                  </label>
-                  <input
-                    id={`sb-customization-extension-${entry.id}`}
-                    type="checkbox"
-                    checked={record.extensionIds.includes(entry.id)}
-                    onChange={() =>
-                      customizations.toggleEditingExtensionId(entry.id)
-                    }
-                  />
-                </div>
-              ))}
-          </section>
-        )}
+        <button
+          type="button"
+          className="sb-settings-nav-item"
+          onClick={() => {
+            state.sidebar.requestedSettingsView.value =
+              "customization-edit-extensions";
+          }}
+        >
+          <span>
+            {t("customization-extensions", { defaultValue: "Extensions" })}
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
 
         <div className="sb-settings-actions">
           <button
@@ -2631,6 +2611,97 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
             </button>
           )}
         </div>
+      </section>
+    </div>
+  );
+}
+
+function CustomizationEditExtensionsSettingsView(props: {
+  state: SeedBibleState;
+}) {
+  const { state } = props;
+  const { customizations, extensions } = state;
+  const { t } = useI18n();
+
+  const record = customizations.editingCustomization.value;
+
+  const onBack = () => {
+    state.sidebar.requestedSettingsView.value = "customization-edit";
+  };
+
+  if (!record) {
+    return (
+      <div className="sb-settings-page">
+        <SettingsBreadcrumbs
+          onBack={onBack}
+          trail={[
+            t("page-settings", { defaultValue: "Page settings" }),
+            t("customize", { defaultValue: "Customize" }),
+          ]}
+        />
+        <section className="sb-settings-section">
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("customization-not-found", {
+                defaultValue: "This customization could not be found.",
+              })}
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  const installableExtensions = extensions.extensions.value.filter(
+    (entry) => entry.extension !== null
+  );
+
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={onBack}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          t("customize", { defaultValue: "Customize" }),
+          record.name,
+          t("customization-extensions", { defaultValue: "Extensions" }),
+        ]}
+      />
+      <section className="sb-settings-section">
+        <p className="sb-settings-field-description">
+          {t("customization-extensions-description", {
+            defaultValue:
+              "Extensions that install automatically for anyone using this customization — no confirmation prompt.",
+          })}
+        </p>
+        {installableExtensions.length === 0 ? (
+          <div className="sb-settings-empty-state">
+            <p>
+              {t("no-extensions-available", {
+                defaultValue: "No extensions available.",
+              })}
+            </p>
+          </div>
+        ) : (
+          installableExtensions.map((entry) => (
+            <div className="sb-settings-toggle-row" key={entry.id}>
+              <label
+                className="sb-settings-toggle-label"
+                htmlFor={`sb-customization-extension-${entry.id}`}
+              >
+                {t("title", { ns: entry.id, defaultValue: entry.id })}
+              </label>
+              <input
+                id={`sb-customization-extension-${entry.id}`}
+                type="checkbox"
+                checked={record.extensionIds.includes(entry.id)}
+                onChange={() =>
+                  customizations.toggleEditingExtensionId(entry.id)
+                }
+              />
+            </div>
+          ))
+        )}
       </section>
     </div>
   );
@@ -3182,6 +3253,10 @@ export function SettingsPage(props: { state: SeedBibleState }) {
 
   if (currentView.value === "customization-edit-variant") {
     return <CustomizationVariantEditSettingsView state={state} />;
+  }
+
+  if (currentView.value === "customization-edit-extensions") {
+    return <CustomizationEditExtensionsSettingsView state={state} />;
   }
 
   return <SettingsMainView state={state} />;

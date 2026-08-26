@@ -17,7 +17,8 @@ export type RequestedSettingsView =
   | "extensions"
   | "customizations"
   | "customization-edit"
-  | "customization-edit-variant";
+  | "customization-edit-variant"
+  | "customization-edit-extensions";
 
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;
@@ -150,7 +151,8 @@ export function createSidebar(options: CreateSidebarOptions) {
   const collapseSidebarOverlay = () => {
     if (
       requestedSettingsView.value === "customization-edit" ||
-      requestedSettingsView.value === "customization-edit-variant"
+      requestedSettingsView.value === "customization-edit-variant" ||
+      requestedSettingsView.value === "customization-edit-extensions"
     ) {
       return;
     }
