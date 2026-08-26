@@ -574,6 +574,10 @@
 
 .sb-settings-actions {
   margin-top: 0.875rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
 }
 
 .sb-settings-save-button {
