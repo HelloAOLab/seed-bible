@@ -802,6 +802,33 @@ describe("BibleReaderToolbar mobile More menu", () => {
     expect(labels).not.toContain("Share");
   });
 
+  it("keeps extension tools above Tabs in the default (non-chat-first) More menu", async () => {
+    const { state, moreButton } = await renderToolbar();
+
+    await act(async () => {
+      state.tools.registerToolbarTool({
+        id: "test-extension-tool",
+        priority: 50,
+        title: "Extension Tool",
+        icon: () => <span>ext</span>,
+        isVisible: () => true,
+        onSelect: vi.fn(),
+      });
+    });
+
+    await openMenu(moreButton);
+
+    const labels = Array.from(
+      container.querySelectorAll(".sb-mobile-more-menu-label")
+    ).map((el) => el.textContent);
+
+    const extensionIndex = labels.indexOf("Extension Tool");
+    const tabsIndex = labels.indexOf("Tabs");
+    expect(extensionIndex).toBeGreaterThanOrEqual(0);
+    expect(tabsIndex).toBeGreaterThanOrEqual(0);
+    expect(extensionIndex).toBeLessThan(tabsIndex);
+  });
+
   it("stops listening once the menu is closed", async () => {
     const { moreButton } = await renderToolbar();
     await openMenu(moreButton);
@@ -2100,7 +2127,18 @@ describe("BibleReaderToolbar — chat-first mobile tab", () => {
   });
 
   it("moves Bookmarks into the More menu and omits Chat from it", async () => {
-    await renderToolbar({ chatFirst: true });
+    const { state } = await renderToolbar({ chatFirst: true });
+
+    await act(async () => {
+      state.tools.registerToolbarTool({
+        id: "test-extension-tool",
+        priority: 50,
+        title: "Extension Tool",
+        icon: () => <span>ext</span>,
+        isVisible: () => true,
+        onSelect: vi.fn(),
+      });
+    });
 
     const moreButton = tabButton("More");
     if (!moreButton) throw new Error("The More button did not render.");
@@ -2111,9 +2149,15 @@ describe("BibleReaderToolbar — chat-first mobile tab", () => {
       container.querySelectorAll(".sb-mobile-more-menu-label")
     ).map((el) => el.textContent);
 
+    // Chat-first front-loads pinned items so demoted Bookmarks stay first,
+    // even when an extension tool is also in More.
     expect(labels[0]).toBe("Bookmarks");
     expect(labels).toContain("Tabs");
+    expect(labels).toContain("Extension Tool");
     expect(labels).not.toContain("Chat");
+    expect(labels.indexOf("Bookmarks")).toBeLessThan(
+      labels.indexOf("Extension Tool")
+    );
   });
 
   it("always shows More under chat-first so demoted Bookmarks have a home", async () => {

@@ -174,9 +174,10 @@ interface MobileMoreMenuProps {
   onClose: () => void;
   tools: BibleReaderToolbarTool[];
   /**
-   * App-level items (not extension tools) pinned to the top of the menu, e.g.
-   * Bookmarks when it has been demoted off the bottom toolbar. Each item's
-   * `onClick` is responsible for closing the menu.
+   * App-level items (not extension tools), e.g. Tabs, or Bookmarks when it has
+   * been demoted off the bottom toolbar. Each item's `onClick` is responsible
+   * for closing the menu. Rendered after extension tools by default; set
+   * `pinItemsFirst` to put them above extension tools (chat-first).
    */
   pinnedItems?: Array<{
     id: string;
@@ -185,6 +186,12 @@ interface MobileMoreMenuProps {
     iconNode?: preact.ComponentChildren;
     onClick: () => void;
   }>;
+  /**
+   * When true, `pinnedItems` render above extension tools so demoted Bookmarks
+   * stays at the top under chat-first. Default (false) keeps the historical
+   * order: extension tools first, then Tabs.
+   */
+  pinItemsFirst?: boolean;
   /**
    * New-message indicator for the chat tool (`id === "open-chat"`), mirroring
    * the badge shown on the expanded toolbar. `unreadChatIndicator` is the badge
@@ -197,7 +204,7 @@ interface MobileMoreMenuProps {
 }
 
 function MobileMoreMenu(props: MobileMoreMenuProps) {
-  const { onClose, tools, pinnedItems } = props;
+  const { onClose, tools, pinnedItems, pinItemsFirst = false } = props;
   const { t } = useI18n();
 
   const extraItems = tools
@@ -238,8 +245,9 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     //     );
     //   },
     // },
-    ...(pinnedItems ?? []),
-    ...extraItems,
+    ...(pinItemsFirst
+      ? [...(pinnedItems ?? []), ...extraItems]
+      : [...extraItems, ...(pinnedItems ?? [])]),
   ];
 
   return (
@@ -271,8 +279,11 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
               className="sb-mobile-more-menu-unread-indicator"
               aria-label={
                 props.chatWasMentioned
-                  ? "Unread mention"
-                  : `Unread messages: ${props.unreadChatIndicator}`
+                  ? t("unread-mention", { defaultValue: "Unread mention" })
+                  : t("unread-messages", {
+                      defaultValue: "Unread messages: {{count}}",
+                      count: props.unreadChatIndicator,
+                    })
               }
             >
               {props.unreadChatIndicator}
@@ -2004,8 +2015,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           className="sb-reader-toolbar-unread-indicator"
                           aria-label={
                             chats.wasMentioned.value
-                              ? "Unread mention"
-                              : `Unread messages: ${unreadChatIndicator.value}`
+                              ? t("unread-mention", {
+                                  defaultValue: "Unread mention",
+                                })
+                              : t("unread-messages", {
+                                  defaultValue: "Unread messages: {{count}}",
+                                  count: unreadChatIndicator.value,
+                                })
                           }
                         >
                           {unreadChatIndicator.value}
@@ -2075,8 +2091,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             className="sb-reader-toolbar-unread-indicator"
                             aria-label={
                               chats.wasMentioned.value
-                                ? "Unread mention"
-                                : `Unread messages: ${unreadChatIndicator.value}`
+                                ? t("unread-mention", {
+                                    defaultValue: "Unread mention",
+                                  })
+                                : t("unread-messages", {
+                                    defaultValue: "Unread messages: {{count}}",
+                                    count: unreadChatIndicator.value,
+                                  })
                             }
                           >
                             {unreadChatIndicator.value}
@@ -2100,6 +2121,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         unreadChatIndicator={unreadChatIndicator.value}
                         chatWasMentioned={chats.wasMentioned.value}
                         hasTypingInChats={hasTypingInChats.value}
+                        pinItemsFirst={isChatFirst}
                         pinnedItems={[
                           ...(isChatFirst
                             ? [
@@ -2181,8 +2203,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           className="sb-reader-toolbar-unread-indicator"
                           aria-label={
                             chats.wasMentioned.value
-                              ? "Unread mention"
-                              : `Unread messages: ${unreadChatIndicator.value}`
+                              ? t("unread-mention", {
+                                  defaultValue: "Unread mention",
+                                })
+                              : t("unread-messages", {
+                                  defaultValue: "Unread messages: {{count}}",
+                                  count: unreadChatIndicator.value,
+                                })
                           }
                         >
                           {unreadChatIndicator.value}
