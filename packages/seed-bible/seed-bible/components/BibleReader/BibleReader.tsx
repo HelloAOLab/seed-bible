@@ -2130,7 +2130,8 @@ export function BibleReader(props: BibleReaderProps) {
                   type="button"
                   className="sb-bible-reader-mobile-header-account"
                   aria-label={`Open account settings (${getSelfDisplayName(
-                    state
+                    state,
+                    t
                   )})`}
                   // The reader pane wrapper selects the pane on pointerdown/click
                   // (which runs closeSidebarAndSettings). Stop the tap here so it

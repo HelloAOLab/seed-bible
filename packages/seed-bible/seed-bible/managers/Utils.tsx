@@ -1,3 +1,15 @@
+/**
+ * The value with surrounding whitespace removed, or null when nothing is left.
+ *
+ * For anywhere a blank string should behave the same as a missing one. A
+ * profile name that arrives as "" or "   " renders as an empty label, which
+ * tells a reader less than a fallback does; returning null rather than "" lets
+ * the caller reach for `??` and pick its own fallback.
+ */
+export function trimmedOrNull(value: string | null | undefined): string | null {
+  return value?.trim() || null;
+}
+
 export function parseNumber(value: unknown, fallback: number): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
