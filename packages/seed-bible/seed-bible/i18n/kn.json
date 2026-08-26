@@ -688,5 +688,7 @@
   "greeting-morning": "ಶುಭೋದಯ!",
   "greeting-morning-named": "ಶುಭೋದಯ, {{name}} !",
   "greeting-night": "ಶುಭ ರಾತ್ರಿ!",
-  "greeting-night-named": "ಶುಭ ರಾತ್ರಿ, {{name}} !"
+  "greeting-night-named": "ಶುಭ ರಾತ್ರಿ, {{name}} !",
+  "annotation-override-banner": "ಟಿಪ್ಪಣಿಗಳನ್ನು ನಿಮ್ಮ ತಂಡದ ಖಾತೆಯಿಂದ ಉಳಿಸಲಾಗುತ್ತಿದೆ ಮತ್ತು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ.",
+  "annotation-override-save-to-my-account": "ನನ್ನ ಖಾತೆಗೆ ಉಳಿಸಿ"
 }

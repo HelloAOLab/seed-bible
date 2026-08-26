@@ -688,5 +688,7 @@
   "greeting-morning": "శుభోదయం!",
   "greeting-morning-named": "శుభోదయం, {{name}} !",
   "greeting-night": "శుభరాత్రి!",
-  "greeting-night-named": "శుభరాత్రి, {{name}} !"
+  "greeting-night-named": "శుభరాత్రి, {{name}} !",
+  "annotation-override-banner": "మీ టీమ్ ఖాతా నుండి నోట్స్ సేవ్ చేయబడి, లోడ్ చేయబడుతున్నాయి.",
+  "annotation-override-save-to-my-account": "నా ఖాతాలో సేవ్ చేసుకోండి"
 }

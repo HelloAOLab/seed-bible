@@ -688,5 +688,7 @@
   "greeting-morning": "સુપ્રભાત!",
   "greeting-morning-named": "શુભ સવાર, {{name}} !",
   "greeting-night": "શુભ રાત્રી!",
-  "greeting-night-named": "શુભ રાત્રિ, {{name}} !"
+  "greeting-night-named": "શુભ રાત્રિ, {{name}} !",
+  "annotation-override-banner": "તમારી ટીમના ખાતામાંથી નોંધો સાચવવામાં અને લોડ કરવામાં આવી રહી છે.",
+  "annotation-override-save-to-my-account": "મારા એકાઉન્ટમાં સાચવો"
 }

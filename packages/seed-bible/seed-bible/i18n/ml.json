@@ -688,5 +688,7 @@
   "greeting-morning": "സുപ്രഭാതം!",
   "greeting-morning-named": "സുപ്രഭാതം, {{name}} !",
   "greeting-night": "ശുഭ രാത്രി!",
-  "greeting-night-named": "ശുഭരാത്രി, {{name}} !"
+  "greeting-night-named": "ശുഭരാത്രി, {{name}} !",
+  "annotation-override-banner": "നിങ്ങളുടെ ടീമിന്റെ അക്കൗണ്ടിൽ നിന്ന് കുറിപ്പുകൾ സംരക്ഷിക്കുകയും ലോഡ് ചെയ്യുകയും ചെയ്യുന്നു.",
+  "annotation-override-save-to-my-account": "എന്റെ അക്കൗണ്ടിലേക്ക് സംരക്ഷിക്കുക"
 }

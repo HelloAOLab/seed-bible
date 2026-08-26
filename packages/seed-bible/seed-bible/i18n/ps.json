@@ -688,5 +688,7 @@
   "greeting-morning": "سهار مو پخیر!",
   "greeting-morning-named": "سهار مو پخیر، {{name}} !",
   "greeting-night": "شپه مو پخیر!",
-  "greeting-night-named": "ښه شپه، {{name}} !"
+  "greeting-night-named": "ښه شپه، {{name}} !",
+  "annotation-override-banner": "یادښتونه ستاسو د ټیم له حساب څخه خوندي او پورته کیږي.",
+  "annotation-override-save-to-my-account": "زما حساب ته خوندي کړئ"
 }

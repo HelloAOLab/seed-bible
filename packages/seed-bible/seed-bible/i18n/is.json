@@ -688,5 +688,7 @@
   "greeting-morning": "Góðan daginn!",
   "greeting-morning-named": "Góðan daginn, {{name}} !",
   "greeting-night": "Góða nótt!",
-  "greeting-night-named": "Góða nótt, {{name}} !"
+  "greeting-night-named": "Góða nótt, {{name}} !",
+  "annotation-override-banner": "Glósur eru vistaðar og hlaðnar inn af reikningi teymisins þíns.",
+  "annotation-override-save-to-my-account": "Vista á reikninginn minn"
 }

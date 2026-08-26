@@ -688,5 +688,7 @@
   "greeting-morning": "Bună dimineaţa!",
   "greeting-morning-named": "Bună dimineața, {{name}} !",
   "greeting-night": "Noapte bună!",
-  "greeting-night-named": "Noapte bună, {{name}} !"
+  "greeting-night-named": "Noapte bună, {{name}} !",
+  "annotation-override-banner": "Notele sunt salvate și încărcate din contul echipei tale.",
+  "annotation-override-save-to-my-account": "Salvați în contul meu"
 }

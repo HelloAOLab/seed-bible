@@ -688,5 +688,7 @@
   "greeting-morning": "Bore da!",
   "greeting-morning-named": "Bore da, {{name}} !",
   "greeting-night": "Nos da!",
-  "greeting-night-named": "Nos da, {{name}} !"
+  "greeting-night-named": "Nos da, {{name}} !",
+  "annotation-override-banner": "Mae nodiadau'n cael eu cadw a'u llwytho o gyfrif eich tîm.",
+  "annotation-override-save-to-my-account": "Cadw i'm cyfrif"
 }

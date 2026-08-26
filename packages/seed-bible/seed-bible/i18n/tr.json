@@ -688,5 +688,7 @@
   "greeting-morning": "Günaydın!",
   "greeting-morning-named": "Günaydın, {{name}} !",
   "greeting-night": "İyi geceler!",
-  "greeting-night-named": "İyi geceler, {{name}} !"
+  "greeting-night-named": "İyi geceler, {{name}} !",
+  "annotation-override-banner": "Notlar ekibinizin hesabından kaydediliyor ve yükleniyor.",
+  "annotation-override-save-to-my-account": "Hesabıma kaydet"
 }

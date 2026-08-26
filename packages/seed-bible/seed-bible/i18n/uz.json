@@ -688,5 +688,7 @@
   "greeting-morning": "Xayrli tong!",
   "greeting-morning-named": "Xayrli tong, {{name}} !",
   "greeting-night": "Hayrli tun!",
-  "greeting-night-named": "Xayrli tun, {{name}} !"
+  "greeting-night-named": "Xayrli tun, {{name}} !",
+  "annotation-override-banner": "Qaydlar jamoangiz hisobidan saqlanmoqda va yuklanmoqda.",
+  "annotation-override-save-to-my-account": "Hisobimga saqlash"
 }

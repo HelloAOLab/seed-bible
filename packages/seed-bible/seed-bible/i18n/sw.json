@@ -688,5 +688,7 @@
   "greeting-morning": "Habari za asubuhi!",
   "greeting-morning-named": "Habari za asubuhi, {{name}} !",
   "greeting-night": "Usiku mwema!",
-  "greeting-night-named": "Usiku mwema, {{name}} !"
+  "greeting-night-named": "Usiku mwema, {{name}} !",
+  "annotation-override-banner": "Madokezo yanahifadhiwa na kupakiwa kutoka kwa akaunti ya timu yako.",
+  "annotation-override-save-to-my-account": "Hifadhi kwenye akaunti yangu"
 }

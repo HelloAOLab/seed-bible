@@ -688,5 +688,7 @@
   "greeting-morning": "صباح الخير!",
   "greeting-morning-named": "صباح الخير، {{name}} !",
   "greeting-night": "طاب مساؤك!",
-  "greeting-night-named": "ليلة سعيدة {{name}} !"
+  "greeting-night-named": "ليلة سعيدة {{name}} !",
+  "annotation-override-banner": "يتم حفظ الملاحظات وتحميلها من حساب فريقك.",
+  "annotation-override-save-to-my-account": "حفظ في حسابي"
 }

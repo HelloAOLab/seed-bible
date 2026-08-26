@@ -688,5 +688,7 @@
   "greeting-morning": "Goedei!",
   "greeting-morning-named": "Goeiemoarn, {{name}} !",
   "greeting-night": "Goeienacht!",
-  "greeting-night-named": "Goeie nacht, {{name}} !"
+  "greeting-night-named": "Goeie nacht, {{name}} !",
+  "annotation-override-banner": "Notysjes wurde bewarre en laden fan it akkount fan jo team.",
+  "annotation-override-save-to-my-account": "Bewarje yn myn akkount"
 }

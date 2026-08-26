@@ -688,5 +688,7 @@
   "greeting-morning": "မင်္ဂလာနံနက်ခင်းပါ!",
   "greeting-morning-named": "မင်္ဂလာနံနက်ခင်းပါရှင်၊ {{name}} !",
   "greeting-night": "ကောင်းသောညပါ!",
-  "greeting-night-named": "ကောင်းသောညပါရှင်၊ {{name}} !"
+  "greeting-night-named": "ကောင်းသောညပါရှင်၊ {{name}} !",
+  "annotation-override-banner": "မှတ်စုများကို သင့်အဖွဲ့၏အကောင့်မှ သိမ်းဆည်းပြီး တင်နေပါသည်။",
+  "annotation-override-save-to-my-account": "ကျွန်ုပ်၏အကောင့်သို့ သိမ်းဆည်းပါ"
 }

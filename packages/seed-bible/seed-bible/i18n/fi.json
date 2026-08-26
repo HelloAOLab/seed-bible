@@ -688,5 +688,7 @@
   "greeting-morning": "Hyvää huomenta!",
   "greeting-morning-named": "Hyvää huomenta, {{name}} !",
   "greeting-night": "Hyvää yötä!",
-  "greeting-night-named": "Hyvää yötä, {{name}} !"
+  "greeting-night-named": "Hyvää yötä, {{name}} !",
+  "annotation-override-banner": "Muistiinpanoja tallennetaan ja ladataan tiimisi tililtä.",
+  "annotation-override-save-to-my-account": "Tallenna tililleni"
 }

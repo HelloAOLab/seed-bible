@@ -688,5 +688,7 @@
   "greeting-morning": "អរុណសួស្តី!",
   "greeting-morning-named": "សួស្តីពេលព្រឹក, {{name}} !",
   "greeting-night": "រាត្រីសួស្តី!",
-  "greeting-night-named": "រាត្រីសួស្តី, {{name}} !"
+  "greeting-night-named": "រាត្រីសួស្តី, {{name}} !",
+  "annotation-override-banner": "កំណត់ចំណាំកំពុងត្រូវបានរក្សាទុក និងផ្ទុកពីគណនីក្រុមរបស់អ្នក។",
+  "annotation-override-save-to-my-account": "រក្សាទុកទៅក្នុងគណនីរបស់ខ្ញុំ"
 }

@@ -688,5 +688,7 @@
   "greeting-morning": "Кайырдуу таң!",
   "greeting-morning-named": "Кутман таң, {{name}} !",
   "greeting-night": "Кайырдуу түн!",
-  "greeting-night-named": "Кайырлы түн, {{name}} !"
+  "greeting-night-named": "Кайырлы түн, {{name}} !",
+  "annotation-override-banner": "Эскертүүлөр сиздин командаңыздын аккаунтунан сакталып жана жүктөлүүдө.",
+  "annotation-override-save-to-my-account": "Менин аккаунтума сактоо"
 }

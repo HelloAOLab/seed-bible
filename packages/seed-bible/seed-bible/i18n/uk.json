@@ -688,5 +688,7 @@
   "greeting-morning": "Доброго ранку!",
   "greeting-morning-named": "Доброго ранку, {{name}} !",
   "greeting-night": "На добраніч!",
-  "greeting-night-named": "На добраніч, {{name}} !"
+  "greeting-night-named": "На добраніч, {{name}} !",
+  "annotation-override-banner": "Нотатки зберігаються та завантажуються з облікового запису вашої команди.",
+  "annotation-override-save-to-my-account": "Зберегти в моєму обліковому записі"
 }

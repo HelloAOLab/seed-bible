@@ -688,5 +688,7 @@
   "greeting-morning": "Selamat pagi!",
   "greeting-morning-named": "Selamat pagi, {{name}} !",
   "greeting-night": "Selamat malam!",
-  "greeting-night-named": "Selamat malam, {{name}} !"
+  "greeting-night-named": "Selamat malam, {{name}} !",
+  "annotation-override-banner": "Catatan sedang disimpan dan dimuat dari akun tim Anda.",
+  "annotation-override-save-to-my-account": "Simpan ke akun saya"
 }

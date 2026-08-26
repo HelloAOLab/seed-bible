@@ -688,5 +688,7 @@
   "greeting-morning": "Dobro jutro!",
   "greeting-morning-named": "Dobro jutro, {{name}} !",
   "greeting-night": "Laku noć!",
-  "greeting-night-named": "Laku noć, {{name}} !"
+  "greeting-night-named": "Laku noć, {{name}} !",
+  "annotation-override-banner": "Bilješke se spremaju i učitavaju s računa vašeg tima.",
+  "annotation-override-save-to-my-account": "Spremi na moj račun"
 }

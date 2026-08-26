@@ -688,5 +688,7 @@
   "greeting-morning": "صبح بخیر!",
   "greeting-morning-named": "صبح بخیر، {{name}} !",
   "greeting-night": "شب بخیر!",
-  "greeting-night-named": "شب بخیر، {{name}} !"
+  "greeting-night-named": "شب بخیر، {{name}} !",
+  "annotation-override-banner": "یادداشت‌ها از حساب تیم شما ذخیره و بارگذاری می‌شوند.",
+  "annotation-override-save-to-my-account": "ذخیره در حساب من"
 }

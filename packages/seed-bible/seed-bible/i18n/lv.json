@@ -688,5 +688,7 @@
   "greeting-morning": "Labrīt!",
   "greeting-morning-named": "Labrīt, {{name}} !",
   "greeting-night": "Arlabunakti!",
-  "greeting-night-named": "Arlabunakti, {{name}} !"
+  "greeting-night-named": "Arlabunakti, {{name}} !",
+  "annotation-override-banner": "Piezīmes tiek saglabātas un ielādētas no jūsu komandas konta.",
+  "annotation-override-save-to-my-account": "Saglabāt manā kontā"
 }

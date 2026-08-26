@@ -688,5 +688,7 @@
   "greeting-morning": "ምልካም እድል!",
   "greeting-morning-named": "እንደምን አደርክ፣ {{name}} !",
   "greeting-night": "ደህና እደር!",
-  "greeting-night-named": "ደህና እደሩ፣ {{name}} !"
+  "greeting-night-named": "ደህና እደሩ፣ {{name}} !",
+  "annotation-override-banner": "ማስታወሻዎች ከቡድንዎ መለያ እየተቀመጡ እና እየተጫኑ ነው።",
+  "annotation-override-save-to-my-account": "ወደ መለያዬ አስቀምጥ"
 }

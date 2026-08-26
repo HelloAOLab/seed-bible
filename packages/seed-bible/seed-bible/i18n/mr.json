@@ -688,5 +688,7 @@
   "greeting-morning": "शुभ सकाळ!",
   "greeting-morning-named": "शुभ सकाळ, {{name}} !",
   "greeting-night": "शुभ रात्री!",
-  "greeting-night-named": "शुभ रात्री, {{name}} !"
+  "greeting-night-named": "शुभ रात्री, {{name}} !",
+  "annotation-override-banner": "तुमच्या टीमच्या खात्यातून नोट्स सेव्ह आणि लोड केल्या जात आहेत.",
+  "annotation-override-save-to-my-account": "माझ्या खात्यात जतन करा"
 }

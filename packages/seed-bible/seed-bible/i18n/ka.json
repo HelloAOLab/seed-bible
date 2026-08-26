@@ -688,5 +688,7 @@
   "greeting-morning": "დილა მშვიდობისა!",
   "greeting-morning-named": "დილა მშვიდობისა, {{name}} !",
   "greeting-night": "ღამე მშვიდობისა!",
-  "greeting-night-named": "ღამე მშვიდობისა, {{name}} !"
+  "greeting-night-named": "ღამე მშვიდობისა, {{name}} !",
+  "annotation-override-banner": "ჩანაწერები ინახება და იტვირთება თქვენი გუნდის ანგარიშიდან.",
+  "annotation-override-save-to-my-account": "შენახვა ჩემს ანგარიშზე"
 }

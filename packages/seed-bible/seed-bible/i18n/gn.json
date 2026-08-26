@@ -688,5 +688,7 @@
   "greeting-morning": "Mba'éichapa ndepyhare!",
   "greeting-morning-named": "Pyhareve porã, {{name}} !",
   "greeting-night": "Mba'éichapa ndepyhare!",
-  "greeting-night-named": "Pyhare porã, {{name}} !"
+  "greeting-night-named": "Pyhare porã, {{name}} !",
+  "annotation-override-banner": "Umi nota oñeñongatu ha ojekarga hína nde equipo cuenta-gui.",
+  "annotation-override-save-to-my-account": "Eñongatu che cuenta-pe"
 }
