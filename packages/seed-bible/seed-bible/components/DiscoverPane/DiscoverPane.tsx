@@ -1,7 +1,7 @@
 import "./DiscoverPane.css";
 import "./DiscoverShared.css";
 import { useI18n } from "../../i18n/I18nManager";
-import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
+import type { TabsManager } from "../../managers/TabsManager";
 import type {
   Playlist,
   PlaylistManager,
@@ -13,7 +13,6 @@ import {
   playlistPlayHistoryDayKind,
   playlistPlayHistoryPercent,
 } from "../../managers/PlaylistManager";
-import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { ChatsManager } from "../../managers/ChatsManager";
 import { translateTitle } from "../../app/utils";

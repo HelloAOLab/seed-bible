@@ -13,8 +13,6 @@ import {
   type ReadingPlanProgress,
   type ReadingPlanSession,
 } from "../../managers/ReadingPlansManager";
-import type { Signal, ReadonlySignal } from "@preact/signals";
-import type { PlaylistItemData } from "../../managers/PlaylistManager";
 
 interface ReadingPlanBelongsCardProps {
   state: SeedBibleState;
