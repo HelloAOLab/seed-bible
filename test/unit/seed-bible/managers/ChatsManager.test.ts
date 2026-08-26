@@ -4375,6 +4375,35 @@ describe("createChatsManager", () => {
       });
     });
 
+    it("does not link Bible-domain names that only share a book abbreviation prefix", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Isaac 24 and Judah 4 and Jerusalem 70 AD",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Isaac 24 and Judah 4 and Jerusalem 70 AD"],
+      });
+    });
+
+    it("does not link out-of-range chapter references in chat", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "See Genesis 999" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["See Genesis 999"],
+      });
+    });
+
     it("resolves mention by shared participant id alias (shared session)", async () => {
       const { loginManager } = createLoginManagerMock();
       const { session, sharedChats, sharedParticipantAliases } =
