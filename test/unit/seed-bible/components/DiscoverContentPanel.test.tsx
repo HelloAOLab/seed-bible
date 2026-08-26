@@ -204,4 +204,117 @@ describe("DiscoverContentPanel", () => {
 
     expect(container.querySelector(".sb-dcp-filters")).toBeNull();
   });
+
+  it("clicking a filter chip narrows the panel to only that content type", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const chips = Array.from(container.querySelectorAll(".sb-dcp-chip"));
+    const crossRefsChip = chips.find(
+      (el) => el.textContent === "Cross Refs"
+    ) as HTMLButtonElement;
+    expect(crossRefsChip).toBeTruthy();
+
+    act(() => {
+      crossRefsChip.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(crossRefsChip.getAttribute("aria-selected")).toBe("true");
+    expect(container.textContent).toContain("Exodus 5:3");
+    expect(container.textContent).not.toContain("A helpful note.");
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).not.toContain("Notes");
+  });
+
+  it("falls back to the 'all' filter when the active filter's content type disappears", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const getChip = (label: string) =>
+      Array.from(container.querySelectorAll(".sb-dcp-chip")).find(
+        (el) => el.textContent === label
+      ) as HTMLButtonElement;
+
+    act(() => {
+      getChip("Cross Refs").dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+    expect(getChip("Cross Refs").getAttribute("aria-selected")).toBe("true");
+
+    // Simulate navigating to a chapter with no cross references, still
+    // rendering into the same container so the component instance (and its
+    // activeFilter signal) is preserved rather than remounted.
+    const tabWithoutCrossReferences = createMockTab({
+      discoveredCrossReferences: [],
+    });
+
+    act(() => {
+      render(
+        <DiscoverContentPanel tab={tabWithoutCrossReferences} state={state} />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-dcp-filters")).toBeNull();
+    expect(container.textContent).toContain("A helpful note.");
+  });
+
+  it("clicking '+ Create' calls createNewAnnotation", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const createButton = container.querySelector(
+      ".sb-dcp-create-btn"
+    ) as HTMLButtonElement;
+    expect(createButton).toBeTruthy();
+
+    act(() => {
+      createButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.annotations.createNewAnnotation).toHaveBeenCalledTimes(1);
+  });
+
+  it("clicking 'Show All' calls openDiscover", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const showAllButton = container.querySelector(
+      ".sb-dcp-show-all"
+    ) as HTMLButtonElement;
+    expect(showAllButton).toBeTruthy();
+
+    act(() => {
+      showAllButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
+  });
 });
