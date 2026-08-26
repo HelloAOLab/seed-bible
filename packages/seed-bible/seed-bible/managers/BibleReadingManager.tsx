@@ -2874,21 +2874,23 @@ export function createBibleReadingState(
     // Skips the first run so re-seeding this same value back on construction
     // isn't a redundant profile write.
     let isFirstRun = true;
-    effect(() => {
-      const value = discoverContentPanelInline.value;
-      if (isFirstRun) {
-        isFirstRun = false;
-        return;
-      }
-      // `untracked` matters here, not just style: `setDiscoverContentPanelInline`
-      // reads `settings.value` (to spread it) before writing a new object back.
-      // Left tracked, that read — made synchronously inside this very effect's
-      // evaluation — would silently subscribe the effect to the *entire*
-      // settings signal, and the write that follows would then immediately
-      // re-trigger this same effect, forever (an infinite loop from what looks
-      // like a one-way write).
-      untracked(() => settingsManager.setDiscoverContentPanelInline(value));
-    });
+    effectDisposers.push(
+      effect(() => {
+        const value = discoverContentPanelInline.value;
+        if (isFirstRun) {
+          isFirstRun = false;
+          return;
+        }
+        // `untracked` matters here, not just style: `setDiscoverContentPanelInline`
+        // reads `settings.value` (to spread it) before writing a new object back.
+        // Left tracked, that read — made synchronously inside this very effect's
+        // evaluation — would silently subscribe the effect to the *entire*
+        // settings signal, and the write that follows would then immediately
+        // re-trigger this same effect, forever (an infinite loop from what looks
+        // like a one-way write).
+        untracked(() => settingsManager.setDiscoverContentPanelInline(value));
+      })
+    );
   }
 
   if (discoverManager) {
