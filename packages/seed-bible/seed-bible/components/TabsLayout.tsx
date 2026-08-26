@@ -711,7 +711,6 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           state={state}
           mobileChrome={mobileChrome}
           sharedSession={tab.sharedSession}
-          discoverPanel={<DiscoverContentPanel tab={tab} state={state} />}
         />
         {!isMobile && (
           <BelowReaderToolbar

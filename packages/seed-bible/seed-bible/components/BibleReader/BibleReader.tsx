@@ -57,6 +57,7 @@ import {
 } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
+import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -1173,12 +1174,6 @@ interface BibleReaderProps {
   /** The shared session backing this tab, if any — drives the mobile header
    * participants stack. Null/undefined for a normal, non-shared tab. */
   sharedSession?: BibleReadingSession | null;
-  /** Optional panel rendered at the inline end of the reader, below the
-   * header. On desktop it sits beside the scripture text (chapter text wraps
-   * around it) when `readingState.discoverContentPanelInline` is true, and
-   * below the scripture text — after the license notice — when false. On
-   * mobile it always renders below, inside the swipe panel's own scroll. */
-  discoverPanel?: ComponentChildren;
 
   readingPlanBelongs?: ComponentChildren;
 }
@@ -1642,7 +1637,6 @@ export function BibleReader(props: BibleReaderProps) {
     state,
     mobileChrome,
     sharedSession,
-    discoverPanel,
   } = props;
   const {
     translationId,
@@ -2057,9 +2051,12 @@ export function BibleReader(props: BibleReaderProps) {
     </>
   );
 
-  const extraContent = discoverPanel && (
-    <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
-  );
+  // const extraContent = discoverPanel ? (
+  //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
+  // ) : null;
+  const extraContent = state ? (
+    <DiscoverContentPanel tab={currentSlot.tab} state={state} />
+  ) : null;
 
   return (
     <div

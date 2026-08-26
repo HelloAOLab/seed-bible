@@ -126,87 +126,89 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     : "all";
 
   return (
-    <div
-      className="sb-discover-content-panel"
-      aria-label={t("discover-content-panel", {
-        defaultValue: "Discover content",
-      })}
-    >
-      <div className="sb-dcp-header">
-        <div className="sb-dcp-header-title">
-          <MaterialIcon className="sb-dcp-header-icon">explore</MaterialIcon>
-          <span>
-            {t("discover-book-title", {
-              defaultValue: "Discover {{book}}",
-              book: bookName,
-            })}
-          </span>
+    <div className="sb-bible-reader-discover-panel">
+      <div
+        className="sb-discover-content-panel"
+        aria-label={t("discover-content-panel", {
+          defaultValue: "Discover content",
+        })}
+      >
+        <div className="sb-dcp-header">
+          <div className="sb-dcp-header-title">
+            <MaterialIcon className="sb-dcp-header-icon">explore</MaterialIcon>
+            <span>
+              {t("discover-book-title", {
+                defaultValue: "Discover {{book}}",
+                book: bookName,
+              })}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="sb-dcp-create-btn"
+            onClick={() => void state.annotations.createNewAnnotation()}
+          >
+            + {t("create-playlist", { defaultValue: "Create" })}
+          </button>
         </div>
+
+        {filters.length > 2 && (
+          <div style={{ display: "contents" }}>
+            <div className="sb-dcp-filters" role="tablist">
+              {filters.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={f === key}
+                  className={`sb-dcp-chip${f === key ? " sb-dcp-chip--active" : ""}`}
+                  onClick={() => (activeFilter.value = key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="sb-discover-content-panel-scroll">
+          {(f === "all" || f === "annotations") && (
+            <AnnotationsSection
+              tab={tab}
+              annotations={state.annotations}
+              modals={state.modals}
+              toast={state.app.toast}
+              login={state.login}
+              tabs={state.tabs}
+              discover={state.discover}
+              panes={state.panes}
+              onReferenceClick={state.app.openVerseReference}
+            />
+          )}
+          {(f === "all" || f === "cross-references") && (
+            <CrossReferencesSection tab={tab} />
+          )}
+          {(f === "all" || f === "study-notes") && (
+            <StudyNotesSection tab={tab} />
+          )}
+          {(f === "all" || f === "content") && <ContentSection tab={tab} />}
+          {f === "all" && plans.length > 0 && (
+            <ReadingPlansSection
+              readingState={tab.readingState}
+              state={state}
+              plans={plans}
+            />
+          )}
+        </div>
+
         <button
           type="button"
-          className="sb-dcp-create-btn"
-          onClick={() => void state.annotations.createNewAnnotation()}
+          className="sb-dcp-show-all"
+          onClick={() => state.app.openDiscover()}
         >
-          + {t("create-playlist", { defaultValue: "Create" })}
+          {t("show-all", { defaultValue: "Show All" })}
         </button>
       </div>
-
-      {filters.length > 2 && (
-        <div style={{ display: "contents" }}>
-          <div className="sb-dcp-filters" role="tablist">
-            {filters.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={f === key}
-                className={`sb-dcp-chip${f === key ? " sb-dcp-chip--active" : ""}`}
-                onClick={() => (activeFilter.value = key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="sb-discover-content-panel-scroll">
-        {(f === "all" || f === "annotations") && (
-          <AnnotationsSection
-            tab={tab}
-            annotations={state.annotations}
-            modals={state.modals}
-            toast={state.app.toast}
-            login={state.login}
-            tabs={state.tabs}
-            discover={state.discover}
-            panes={state.panes}
-            onReferenceClick={state.app.openVerseReference}
-          />
-        )}
-        {(f === "all" || f === "cross-references") && (
-          <CrossReferencesSection tab={tab} />
-        )}
-        {(f === "all" || f === "study-notes") && (
-          <StudyNotesSection tab={tab} />
-        )}
-        {(f === "all" || f === "content") && <ContentSection tab={tab} />}
-        {f === "all" && plans.length > 0 && (
-          <ReadingPlansSection
-            readingState={tab.readingState}
-            state={state}
-            plans={plans}
-          />
-        )}
-      </div>
-
-      <button
-        type="button"
-        className="sb-dcp-show-all"
-        onClick={() => state.app.openDiscover()}
-      >
-        {t("show-all", { defaultValue: "Show All" })}
-      </button>
     </div>
   );
 }
