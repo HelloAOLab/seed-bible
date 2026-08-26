@@ -82,13 +82,11 @@ function applyChatFirstDesktopTools(
     visible: CHAT_FIRST_VISIBLE,
   };
   const withoutChat = customized.filter((tool) => tool.id !== "open-chat");
-  let insertAt = 0;
-  for (let i = 0; i < withoutChat.length; i++) {
-    if (withoutChat[i].isControllable) {
-      break;
-    }
-    insertAt = i + 1;
-  }
+  const firstControllable = withoutChat.findIndex(
+    (tool) => tool.isControllable
+  );
+  const insertAt =
+    firstControllable === -1 ? withoutChat.length : firstControllable;
   return [
     ...withoutChat.slice(0, insertAt),
     promoted,
