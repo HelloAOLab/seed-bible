@@ -1071,7 +1071,7 @@
    fit-content width is wider than the screen, so the box's left edge renders
    off-screen; reset back to the normal stretch-to-fill behavior here. */
 .sb-bible-reader-mobile .sb-bible-reader-discover-panel {
-  margin: 2.5rem 1rem 2rem;
+  margin: 6rem 1rem 2rem;
   justify-self: auto;
 }
 
