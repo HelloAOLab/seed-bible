@@ -69,21 +69,61 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     bookId ??
     "";
 
+  const hasCrossReferences =
+    tab.readingState.discoveredCrossReferences.value.flatMap(
+      (group) => group.results
+    ).length > 0;
+  const hasStudyNotes =
+    tab.readingState.discoveredStudyNotes.value.flatMap(
+      (group) => group.results
+    ).length > 0;
+  const hasContent =
+    tab.readingState.discoveredContent.value.flatMap((group) => group.results)
+      .length > 0;
+
   const filters: { key: FilterKey; label: string }[] = [
     { key: "all", label: t("all", { defaultValue: "All" }) },
-    { key: "annotations", label: t("notes", { defaultValue: "Notes" }) },
-    {
-      key: "cross-references",
-      label: t("cross-references", { defaultValue: "Cross Refs" }),
-    },
-    {
-      key: "study-notes",
-      label: t("study-notes", { defaultValue: "Study Notes" }),
-    },
-    { key: "content", label: t("content", { defaultValue: "Content" }) },
+    ...(hasAnnotations
+      ? [
+          {
+            key: "annotations" as const,
+            label: t("notes", { defaultValue: "Notes" }),
+          },
+        ]
+      : []),
+    ...(hasCrossReferences
+      ? [
+          {
+            key: "cross-references" as const,
+            label: t("cross-references", { defaultValue: "Cross Refs" }),
+          },
+        ]
+      : []),
+    ...(hasStudyNotes
+      ? [
+          {
+            key: "study-notes" as const,
+            label: t("study-notes", { defaultValue: "Study Notes" }),
+          },
+        ]
+      : []),
+    ...(hasContent
+      ? [
+          {
+            key: "content" as const,
+            label: t("content", { defaultValue: "Content" }),
+          },
+        ]
+      : []),
   ];
 
-  const f = activeFilter.value;
+  // Falls back to "all" when the previously-active filter's content type is
+  // no longer available (e.g. the user filtered to "Cross Refs" then
+  // navigated to a chapter with none), so the chip row and content area don't
+  // go blank.
+  const f = filters.some((filter) => filter.key === activeFilter.value)
+    ? activeFilter.value
+    : "all";
 
   return (
     <div
@@ -111,22 +151,24 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         </button>
       </div>
 
-      <div style={{ display: "contents" }}>
-        <div className="sb-dcp-filters" role="tablist">
-          {filters.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={activeFilter.value === key}
-              className={`sb-dcp-chip${activeFilter.value === key ? " sb-dcp-chip--active" : ""}`}
-              onClick={() => (activeFilter.value = key)}
-            >
-              {label}
-            </button>
-          ))}
+      {filters.length > 2 && (
+        <div style={{ display: "contents" }}>
+          <div className="sb-dcp-filters" role="tablist">
+            {filters.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={f === key}
+                className={`sb-dcp-chip${f === key ? " sb-dcp-chip--active" : ""}`}
+                onClick={() => (activeFilter.value = key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="sb-discover-content-panel-scroll">
         {(f === "all" || f === "annotations") && (

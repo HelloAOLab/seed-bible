@@ -209,4 +209,33 @@ describe("DiscoverContentPanel", () => {
 
     expect(container.innerHTML).toBe("");
   });
+
+  it("only shows filter chips for content that is actually available", () => {
+    const tab = createMockTab({ discoveredCrossReferences: RESULTS_FIXTURE });
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    const chipLabels = Array.from(
+      container.querySelectorAll(".sb-dcp-chip")
+    ).map((el) => el.textContent);
+    expect(chipLabels).toEqual(["All", "Notes", "Cross Refs"]);
+  });
+
+  it("hides the filter row entirely when there's only one kind of content", () => {
+    const tab = createMockTab();
+    const state = createMockState({
+      annotationsForChapter: [createAnnotation()],
+    });
+
+    act(() => {
+      render(<DiscoverContentPanel tab={tab} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-dcp-filters")).toBeNull();
+  });
 });
