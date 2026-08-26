@@ -2328,6 +2328,11 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
   const openVariant = (variantId: string) => {
     customizations.editingVariantId.value = variantId;
     state.sidebar.requestedSettingsView.value = "customization-edit-variant";
+    // Select this variant as the live-previewed one (only takes effect if
+    // this customization is the currently active one) so edits made in the
+    // variant editor are visible immediately, rather than requiring the
+    // user to separately go pick it from the theme gallery first.
+    void customizations.selectActiveVariant(variantId);
   };
 
   const handleAddVariant = () => {
