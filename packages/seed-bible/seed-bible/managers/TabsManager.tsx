@@ -644,7 +644,9 @@ export function createTabs(
    * and on tab switch / mount (replace) — never reactively off the underlying
    * position signals, so one navigation produces exactly one history entry.
    */
-  const commitSelectedTabToUrl = (options: { replace?: boolean } = {}) => {
+  const commitSelectedTabToUrl = (
+    options: { replace?: boolean; leaveStaticPage?: boolean } = {}
+  ) => {
     // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
     // translation/extension signals, and this runs inside a signals effect. If
     // those reads were tracked, the effect would re-run on every position
@@ -657,7 +659,13 @@ export function createTabs(
       // very first hydration of a static page — and any later language
       // switch while on it — would immediately replace the address bar with
       // a reading URL, since a reading tab always exists underneath.
+      //
+      // `leaveStaticPage` is the escape hatch: a genuine tab-focus change (the
+      // user picked a different tab, or navigated via search) should win over
+      // this guard and take the user back to the reader — see the tab-focus
+      // effect below, the only caller that ever passes it.
       if (
+        !options.leaveStaticPage &&
         parseStaticPagePath(
           navigation.currentUrl.peek().pathname,
           navigation.basePath
@@ -730,16 +738,26 @@ export function createTabs(
   // a `replace` so the URL reflects the newly-focused tab without adding a
   // history entry. Real navigations within the tab arrive via `onNavigate` and
   // push a single entry each.
+  let hasFocusedTabBefore = false;
   effect(() => {
     const readingState = selectedTab.value?.readingState;
     if (!readingState) {
       return undefined;
     }
 
+    // The first run is the initial mount — must not clobber a freshly loaded
+    // static page's own URL (e.g. "/en/about"), per the guard in
+    // `commitSelectedTabToUrl`. Every later run means the selected tab (or
+    // its content) actually changed after that — the user picked a different
+    // tab, or navigated via search — so it should leave a static page for the
+    // position now being shown instead of leaving it stuck behind the URL.
+    const leaveStaticPage = hasFocusedTabBefore;
+
     const dispose = readingState.onNavigate((options) =>
-      commitSelectedTabToUrl(options)
+      commitSelectedTabToUrl({ ...options, leaveStaticPage })
     );
-    commitSelectedTabToUrl({ replace: true });
+    commitSelectedTabToUrl({ replace: true, leaveStaticPage });
+    hasFocusedTabBefore = true;
     return dispose;
   });
 

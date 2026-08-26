@@ -1387,4 +1387,50 @@ describe("createTabs", () => {
 
     expect(new URL(window.location.href).pathname).toBe("/en/about");
   });
+
+  // Regression: the guard above must not block a genuine tab-focus change.
+  // Selecting a different (pre-existing) tab while viewing a static page is
+  // an explicit "go look at this tab" action — like a sidebar tab click —
+  // and should leave the static page for the position now being shown,
+  // rather than leaving the URL stuck on "/en/about" underneath it.
+  it("leaves a static page's URL when the user selects a different tab", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/about");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // Mount alone must still respect the guard.
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.selectTab("tab-2");
+
+    await waitFor(() => new URL(window.location.href).pathname !== "/en/about");
+    expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+  });
 });
