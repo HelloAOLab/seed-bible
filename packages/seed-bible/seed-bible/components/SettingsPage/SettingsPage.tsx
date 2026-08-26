@@ -667,10 +667,6 @@ function CustomizationVariantGallery(props: {
   const { customizations } = state;
   const { t } = useI18n();
 
-  if (customization.variants.length <= 1) {
-    return null;
-  }
-
   return (
     <section className="sb-settings-section">
       <h3 className="sb-settings-subheading">
