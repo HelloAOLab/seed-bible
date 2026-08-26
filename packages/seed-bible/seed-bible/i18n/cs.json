@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Zvýraznit pro",
   "end-session": "Ukončit relaci",
   "panels": "Panely",
-  "new-shared-session": "Nová sdílená relace",
+
   "open-in-new-panel": "Otevřít v novém panelu",
   "close-sidebar": "Zavřít postranní panel",
   "select-pane-layout": "Vyberte rozvržení panelu",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Vytvořte si čtenářský plán",
   "reading-plans-empty": "Zatím nemáte žádné čtecí plány. Vytvořte si jeden a začněte.",
   "untitled-reading-plan": "Bez názvu plán",
-  "title": "Titul",
-  "reading-plan-title_placeholder": "např. Bible za rok",
+
   "reading-plan-description_placeholder": "O čem je tento plán?",
   "anonymous": "Anonymní",
   "no-chat-messages": "Zatím žádné zprávy",
@@ -336,7 +335,7 @@
   "dont-show-again": "Tohle už znovu nezobrazovat",
   "discover": "Objevit",
   "playlists": "Seznamy skladeb",
-  "annotations": "Anotace",
+
   "cross-references": "Křížové odkazy",
   "study-notes": "Studijní poznámky",
   "content": "Obsah",
@@ -405,8 +404,7 @@
   "add-and-save": "Přidat a uložit",
   "loading-profile": "Načítání vašeho profilu…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Přesunout do složky",
-  "move-to-new": "Přesunout do nového",
+
   "share": "Podíl",
   "share-sheet-title": "Podíl",
   "share-link": "Sdílet odkaz",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Vytvořit nový plán",
   "edit-reading-plan": "Upravit plán",
   "reading-plan-step-name-title": "Pojmenujte svůj plán",
-  "reading-plan-step-name-hint": "Dejte svému plánu název, který lidé poznají",
+
   "reading-plan-name-placeholder": "např. Moje cesta za žalmy",
   "reading-plan-description-label": "Popis (volitelné)",
   "reading-plan-step-scripture-title": "Vyberte hodnoty",
   "reading-plan-step-cadences-title": "Čtení kadencí",
   "reading-plan-step-cadences-hint": "Vyberte si tempo čtení, které chcete nabídnout. Čtenáři si vždy mohou zvolit vlastní tempo.",
-  "reading-plan-cadence-once-daily": "Jedno sezení denně",
-  "reading-plan-cadence-twice-daily": "Dvě sezení denně",
-  "reading-plan-cadence-three-times-daily": "Tři sezení denně",
-  "reading-plan-cadence-every-other-day": "Jedno sezení obden",
+
   "reading-plan-cadence-length": "Končí za {{count}} dní",
   "reading-plan-cadence-length_one": "Končí za {{count}} den",
   "reading-plan-cadence-length_other": "Končí za {{count}} dní",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Ukládání…",
   "reading-plan-draft-saved": "Koncept uložen",
   "reading-plan-draft-save-failed": "Koncept se nepodařilo uložit",
-  "added-to-reading-plan-session": "Přidáno do sezení {{session}}",
-  "reading-plan-add-reading": "Přidat",
+
   "reading-plan-scripture-remove": "Odebrat čtení",
   "reading-plan-create-submit": "Vytvořit plán",
   "reading-plan-save-changes": "Uložit změny",
@@ -504,12 +498,11 @@
   "loading": "Načítání…",
   "reading-plan-not-started": "Nezahájeno",
   "reading-plan-start": "Zahájit plán",
-  "reading-plan-session-count": "{{count}} odečtů",
-  "reading-plan-progress-readings": "{{done}} z {{total}} odečtených hodnot",
+
   "reading-plan-streak": "{{count}} denní série",
-  "reading-plan-today": "Dnes",
+
   "reading-plan-mark-complete": "Označit jako dokončené",
-  "reading-plan-day-completed": "Dokončeno",
+
   "reading-plan-empty-sessions": "Tento plán zatím nemá žádné údaje.",
   "reading-plan-celebration-title": "Den {{day}} dokončen!",
   "reading-plan-complete-title": "Plán hotový!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Označit přečtení jako dokončené",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Toto čtení patří",
-  "reading-plan-read-nudge": "Přečetli jste si tuto pasáž – označte ji jako celou?",
+
   "reading-plan-mark-passage-complete": "Označit {{passage}} jako přečtené",
   "reading-plan-read-nudge-title": "Pěkné čtení!",
   "reading-plan-read-nudge-toast": "Označit {{passage}} jako dokončený?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "O čem je tento playlist?",
   "read-more": "Číst dále",
   "read-less": "Číst méně",
-  "switch-language-title": "Změnit jazyk?",
-  "switch-language-body": "Chcete přepnout jazyk na {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Přepínač",
-  "switch-language-dismiss": "Nepřepínat",
-  "switch-language-never": "Už se nikdy neptej",
+
   "ask-to-switch-ui-language": "Nabídka změny jazyka s překladem",
   "ai": "Umělá inteligence",
   "ai-edit-playlist": "Úprava playlistu pomocí umělé inteligence",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} použil {{count}} nástrojů",
   "chat-tool-used_one": "{{name}} použil(a) nástroj",
   "chat-tool-used_other": "{{name}} použil {{count}} nástrojů",
-  "chat-ai-error": "Omlouváme se, při generování odpovědi ( {{error}} ) se něco pokazilo.",
-  "playlist-editor": "Editor playlistů",
+
   "ai-context-button-label": "Aktivní kontext umělé inteligence",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Tato poznámka se změnila na dvou místech",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Žádný obsah.",
   "annotation-conflict-confirm": "Potvrdit",
   "annotation-conflict-resolve-failed": "Tuto volbu se nepodařilo použít. Zkusíme to znovu.",
-  "annotations-pending-sync": "{{count}} změna čeká na synchronizaci",
-  "annotations-pending-sync-plural": "{{count}} změn čeká na synchronizaci",
+
   "annotation-sync-failed": "Poznámku se nepodařilo uložit do vašeho účtu. Stále je v tomto zařízení.",
   "create-menu": "Vytvořit",
   "create-annotation-menu-item": "Anotace",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Anotaci se nepodařilo uložit.",
   "annotation-group-expand": "Rozbalit skupinu",
   "annotation-group-collapse": "Sbalit skupinu",
-  "annotation-comment-updated": "Aktualizováno {{date}}",
+
   "notes": "Poznámky",
   "note": "Poznámka",
   "show-more-verse-actions": "Zobrazit další akce",
@@ -680,7 +667,7 @@
   "create-folder": "Vytvořit složku",
   "edit-bookmark": "Upravit záložku",
   "remove-bookmark-from-all-folders": "Odebrat ze všech složek",
-  "add-bookmark-modal": "Přidat záložku",
+
   "greeting-afternoon": "Dobré odpoledne!",
   "greeting-afternoon-named": "Dobré odpoledne, {{name}} !",
   "greeting-evening": "Dobrý večer!",

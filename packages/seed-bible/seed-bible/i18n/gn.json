@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Resaltado para",
   "end-session": "Sesión paha",
   "panels": "Panel-kuéra rehegua",
-  "new-shared-session": "Sesión pyahu oñemboja’óva",
+
   "open-in-new-panel": "Ojepe'a panel pyahúpe",
   "close-sidebar": "Omboty barra lateral",
   "select-pane-layout": "Eiporavo panel ñemohenda",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Ojapo plan de lectura rehegua",
   "reading-plans-empty": "Ndereguerekói gueteri mba'eveichagua plan de lectura. Ejapo peteĩ reñepyrũ hag̃ua.",
   "untitled-reading-plan": "Plan ndorekóiva título",
-  "title": "Myakãha",
-  "reading-plan-title_placeholder": "p.e. Biblia peteĩ Año-pe",
+
   "reading-plan-description_placeholder": "Mba’érehepa oñe’ẽ ko plan?",
   "anonymous": "Kuaa'ỹva",
   "no-chat-messages": "Ndaipóri gueteri marandu",
@@ -336,7 +335,7 @@
   "dont-show-again": "Ani rehechauka jey ko mba'e",
   "discover": "Juhu",
   "playlists": "Ñembopu lista-kuéra",
-  "annotations": "Anotaciones rehegua",
+
   "cross-references": "Umi referencia cruzada rehegua",
   "study-notes": "Umi nóta ojestudia hag̃ua",
   "content": "Pypegua",
@@ -405,8 +404,7 @@
   "add-and-save": "Emoĩ ha eñongatu",
   "loading-profile": "Ojekargávo nde perfil...",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Emoinge carpeta-pe",
-  "move-to-new": "Eñemoambue pyahúpe",
+
   "share": "Mboja'o",
   "share-sheet-title": "Mboja'o",
   "share-link": "Embohasa peteĩ enlace",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Ojapo plan pyahu",
   "edit-reading-plan": "Editar plan rehegua",
   "reading-plan-step-name-title": "Emombe’u nde plan",
-  "reading-plan-step-name-hint": "Eme’ẽ nde plan-pe peteĩ téra tapichakuéra ohechakuaátava",
+
   "reading-plan-name-placeholder": "p.e. Che Salmos Viaje",
   "reading-plan-description-label": "Ñemombe’u (ojeporavóva) .",
   "reading-plan-step-scripture-title": "Eiporavo umi moñe’ẽrã",
   "reading-plan-step-cadences-title": "Omoñe’ẽvo umi cadencia",
   "reading-plan-step-cadences-hint": "Eiporavo umi ritmo de lectura reikuave’ẽséva. Umi omoñe’ẽva ikatu akóinte oiporavo oho haguã ritmo propio-pe hendaguépe.",
-  "reading-plan-cadence-once-daily": "Peteĩ sesión peteĩ árape",
-  "reading-plan-cadence-twice-daily": "Mokõi sesión peteĩ árape",
-  "reading-plan-cadence-three-times-daily": "Mbohapy sesión peteĩ árape",
-  "reading-plan-cadence-every-other-day": "Peteĩ sesión káda dos días",
+
   "reading-plan-cadence-length": "Omohu’ã {{count}} ára jave",
   "reading-plan-cadence-length_one": "Omohu’ã {{count}} árape",
   "reading-plan-cadence-length_other": "Omohu’ã {{count}} ára jave",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Oñongatúvo...",
   "reading-plan-draft-saved": "Borrador oñeñongatu",
   "reading-plan-draft-save-failed": "Ndaikatúi osalva borrador",
-  "added-to-reading-plan-session": "Oñemoĩve sesión {{session}}",
-  "reading-plan-add-reading": "Moinge",
+
   "reading-plan-scripture-remove": "Oipe’a moñe’ẽrã",
   "reading-plan-create-submit": "Ojapo plan",
   "reading-plan-save-changes": "Eñongatu umi ñemoambue",
@@ -504,12 +498,11 @@
   "loading": "Ojekarga hína...",
   "reading-plan-not-started": "Noñepyrũi",
   "reading-plan-start": "Eñepyrũ plan",
-  "reading-plan-session-count": "{{count}} moñe’ẽrã",
-  "reading-plan-progress-readings": "{{done}} umi {{total}} moñe’ẽrãgui",
+
   "reading-plan-streak": "{{count}} -ára racha",
-  "reading-plan-today": "Ko árape",
+
   "reading-plan-mark-complete": "Marca completo ramo",
-  "reading-plan-day-completed": "Oñemohu’ãma",
+
   "reading-plan-empty-sessions": "Ko plan ndorekói gueteri mba'eveichagua lectura.",
   "reading-plan-celebration-title": "Ára {{day}} oñembotýma!",
   "reading-plan-complete-title": "¡Plane completo!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Marca pe lectura completa",
   "reading-plan-link-video": "Techarã",
   "reading-belongs-to": "Ko moñe’ẽrã ha’e mba’e",
-  "reading-plan-read-nudge": "¿Remoñe’ẽmapa ko pasaje — ¿remarkápa completo?",
+
   "reading-plan-mark-passage-complete": "Emarka {{passage}} ojeleeháicha",
   "reading-plan-read-nudge-title": "¡Iporãiterei pe moñe’ẽrã!",
   "reading-plan-read-nudge-toast": "¿Marca {{passage}} oñembotýma?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Mba’érehepa oñe’ẽ ko lista de reproducción?",
   "read-more": "Emoñe’ẽve",
   "read-less": "Emoñe’ẽ sa’ive",
-  "switch-language-title": "¿Oñemoambue ñe’ẽ?",
-  "switch-language-body": "Embohasase ne ñe’ẽ {{nativeLanguageName}} pe ?",
-  "switch-language-confirm": "Myandyha",
-  "switch-language-dismiss": "Ani Reñemoambue",
-  "switch-language-never": "Araka’eve Ani Reporandu Jey",
+
   "ask-to-switch-ui-language": "Eikuaveʼẽ rekambia hag̃ua idióma traduksión rupive",
   "ai": "AI",
   "ai-edit-playlist": "Emohenda lista de reproducción AI rupive",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} oipuru {{count}} tembipuru",
   "chat-tool-used_one": "{{name}} oipuru peteĩ tembipuru",
   "chat-tool-used_other": "{{name}} oipuru {{count}} tembipuru",
-  "chat-ai-error": "Ñembyasy, peteĩ mba’e oho vai omoheñóivo peteĩ ñembohovái ( {{error}} ).",
-  "playlist-editor": "Ñembopu lista Editor rehegua",
+
   "ai-context-button-label": "Contexto AI activo rehegua",
   "ai-context-tool-count": "{{count}} tembipurukuéra",
   "annotation-conflict-title": "Ko nóta okambia mokõi hendápe",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Ndaipóri contenido.",
   "annotation-conflict-confirm": "Moneĩ",
   "annotation-conflict-resolve-failed": "Ndaikatúi ojeporu upe jeporavo. Oñeha'ã jeýta.",
-  "annotations-pending-sync": "{{count}} ñemoambue oha’arõva oñembojoaju hag̃ua",
-  "annotations-pending-sync-plural": "{{count}} oñemoambue oha’arõva oñembojoaju hag̃ua",
+
   "annotation-sync-failed": "Ndaikatúi oñongatu peteĩ nota nde cuenta-pe. Oĩ gueteri ko tembipuru’ípe.",
   "create-menu": "Mboypy",
   "create-annotation-menu-item": "Anotación rehegua",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Ndaikatúi oñongatu pe anotación.",
   "annotation-group-expand": "Ombotuichave aty",
   "annotation-group-collapse": "Aty ho’a haguã",
-  "annotation-comment-updated": "Oñemoambue {{date}}",
+
   "notes": "Notas rehegua",
   "note": "Haipy",
   "show-more-verse-actions": "Ehechauka hetave tembiapo",
@@ -680,7 +667,7 @@
   "create-folder": "Ojapo carpeta",
   "edit-bookmark": "Emohenda marcador",
   "remove-bookmark-from-all-folders": "Opaite kundahagui ojeipe’a",
-  "add-bookmark-modal": "Oñemoĩve peteĩ marcador",
+
   "greeting-afternoon": "Tandeka'aru porãite!",
   "greeting-afternoon-named": "Asaje porã, {{name}} !",
   "greeting-evening": "Mba'éichapa ndepyhare!",

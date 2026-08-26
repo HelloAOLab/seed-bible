@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "အတွက် မီးမောင်းထိုးပြရန်",
   "end-session": "အစည်းအဝေးကို အဆုံးသတ်ပါ",
   "panels": "ပြားများ",
-  "new-shared-session": "မျှဝေထားသော အစည်းအဝေးအသစ်",
+
   "open-in-new-panel": "panel အသစ်တွင်ဖွင့်ပါ",
   "close-sidebar": "ဘေးဘက်ဘားကို ပိတ်ရန်",
   "select-pane-layout": "ပန်နယ် အပြင်အဆင် ရွေးချယ်ပါ",
@@ -253,8 +253,7 @@
   "create-reading-plan": "စာဖတ်ခြင်းအစီအစဉ်ကို ဖန်တီးပါ",
   "reading-plans-empty": "သင်မှာ စာဖတ်အစီအစဉ် မရှိသေးပါဘူး။ စတင်ဖို့အတွက် တစ်ခု ဖန်တီးပါ။",
   "untitled-reading-plan": "ခေါင်းစဉ်မဲ့ အစီအစဉ်",
-  "title": "ခေါင်းစဉ်",
-  "reading-plan-title_placeholder": "ဥပမာ တစ်နှစ်တာအတွင်း သမ္မာကျမ်းစာ",
+
   "reading-plan-description_placeholder": "ဒီအစီအစဉ်က ဘာအကြောင်းလဲ။",
   "anonymous": "အမည်မဖော်လိုသူ",
   "no-chat-messages": "မက်ဆေ့ချ်များ မရှိသေးပါ",
@@ -336,7 +335,7 @@
   "dont-show-again": "ဒါကို ထပ်မပြပါနဲ့",
   "discover": "ရှာဖွေတွေ့ရှိပါ",
   "playlists": "သီချင်းစာရင်းများ",
-  "annotations": "မှတ်ချက်များ",
+
   "cross-references": "အပြန်အလှန်ကိုးကားချက်များ",
   "study-notes": "လေ့လာရန်မှတ်စုများ",
   "content": "အကြောင်းအရာ",
@@ -405,8 +404,7 @@
   "add-and-save": "ထည့်ပြီး သိမ်းမည်",
   "loading-profile": "သင့်ပရိုဖိုင်ကို တင်နေသည်…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "ဖိုလ်ဒါသို့ ရွှေ့ရန်",
-  "move-to-new": "အသစ်သို့ ရွှေ့ပါ",
+
   "share": "မျှဝေပါ",
   "share-sheet-title": "မျှဝေပါ",
   "share-link": "လင့်ခ်မျှဝေပါ",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "အစီအစဉ်အသစ် ဖန်တီးပါ",
   "edit-reading-plan": "အစီအစဉ်ကို တည်းဖြတ်ပါ",
   "reading-plan-step-name-title": "သင့်အစီအစဉ်ကို အမည်ပေးပါ",
-  "reading-plan-step-name-hint": "သင့်အစီအစဉ်ကို လူတွေမှတ်မိမယ့် နာမည်ပေးပါ",
+
   "reading-plan-name-placeholder": "ဥပမာ ကျွန်ုပ်၏ ဆာလံကျမ်းခရီးစဉ်",
   "reading-plan-description-label": "ဖော်ပြချက် (ရွေးချယ်နိုင်သည်)",
   "reading-plan-step-scripture-title": "ရွေးချယ်ဖတ်ရှုမှုများ",
   "reading-plan-step-cadences-title": "စာဖတ်ခြင်း စည်းချက်",
   "reading-plan-step-cadences-hint": "သင်ပေးလိုသော စာဖတ်နှုန်းကို ရွေးချယ်ပါ။ စာဖတ်သူများသည် ၎င်းတို့၏ကိုယ်ပိုင်နှုန်းဖြင့် သွားရန် အမြဲရွေးချယ်နိုင်သည်။",
-  "reading-plan-cadence-once-daily": "တစ်နေ့လျှင် အစည်းအဝေးတစ်ခု",
-  "reading-plan-cadence-twice-daily": "တစ်နေ့ကို နှစ်ကြိမ် အစည်းအဝေး",
-  "reading-plan-cadence-three-times-daily": "တစ်နေ့လျှင် သုံးကြိမ် အစည်းအဝေး",
-  "reading-plan-cadence-every-other-day": "တစ်ရက်ခြားတစ်ခါ အစည်းအဝေး",
+
   "reading-plan-cadence-length": "ရက် {{count}} အတွင်း ပြီးစီးမည်",
   "reading-plan-cadence-length_one": "{{count}} ရက်အတွင်း ပြီးစီးမည်",
   "reading-plan-cadence-length_other": "ရက် {{count}} အတွင်း ပြီးစီးမည်",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "သိမ်းဆည်းနေသည်…",
   "reading-plan-draft-saved": "မူကြမ်းကို သိမ်းဆည်းပြီးပါပြီ",
   "reading-plan-draft-save-failed": "မူကြမ်းကို သိမ်းဆည်း၍မရပါ",
-  "added-to-reading-plan-session": "{{session}} အစည်းအဝေးသို့ ထည့်သွင်းပြီးပါပြီ",
-  "reading-plan-add-reading": "ထည့်ရန်",
+
   "reading-plan-scripture-remove": "စာဖတ်ခြင်းကို ဖယ်ရှားပါ",
   "reading-plan-create-submit": "အစီအစဉ် ဖန်တီးပါ",
   "reading-plan-save-changes": "ပြောင်းလဲမှုများကို သိမ်းဆည်းပါ",
@@ -504,12 +498,11 @@
   "loading": "တင်နေသည်…",
   "reading-plan-not-started": "မစတင်ရသေးပါ",
   "reading-plan-start": "အစီအစဉ်စတင်ပါ",
-  "reading-plan-session-count": "{{count}} ဖတ်ရှုမှုများ",
-  "reading-plan-progress-readings": "ဖတ်ရှုမှု { {{total}} } အနက် {{done}} }",
+
   "reading-plan-streak": "{{count}} တစ်ရက်တာ ဆက်တိုက်",
-  "reading-plan-today": "ယနေ့",
+
   "reading-plan-mark-complete": "ပြီးမြောက်သည်ဟု မှတ်သားပါ",
-  "reading-plan-day-completed": "ပြီးစီးပါပြီ",
+
   "reading-plan-empty-sessions": "ဤအစီအစဉ်တွင် ဖတ်ရှုမှုများ မရှိသေးပါ။",
   "reading-plan-celebration-title": "နေ့ {{day}} ပြီးပါပြီ။",
   "reading-plan-complete-title": "အစီအစဉ် ပြီးပါပြီ!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "ဖတ်ပြီးကြောင်း မှတ်သားပါ",
   "reading-plan-link-video": "ဗီဒီယို",
   "reading-belongs-to": "ဒီစာဖတ်ခြင်းက သူ့ပိုင်",
-  "reading-plan-read-nudge": "ဒီစာပိုဒ်ကို ဖတ်ပြီးပြီလား - ပြီးပြီလို့ မှတ်သားထားလား။",
+
   "reading-plan-mark-passage-complete": "{{passage}} ကို ဖတ်ပြီးဟု မှတ်သားပါ",
   "reading-plan-read-nudge-title": "ဖတ်ရတာ ကောင်းတယ်!",
   "reading-plan-read-nudge-toast": "{{passage}} ပြီးပြီလို့ မှတ်သားမလား။",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "ဒီသီချင်းစာရင်းက ဘာအကြောင်းလဲ။",
   "read-more": "ပိုပြီးဖတ်ပါ",
   "read-less": "လျှော့ဖတ်ပါ",
-  "switch-language-title": "ဘာသာစကားပြောင်းမလား။",
-  "switch-language-body": "သင့်ဘာသာစကားကို {{nativeLanguageName}} သို့ ပြောင်းလိုပါသလား။",
-  "switch-language-confirm": "ပြောင်းလဲပါ",
-  "switch-language-dismiss": "မပြောင်းပါနဲ့",
-  "switch-language-never": "ဘယ်တော့မှ ထပ်မမေးပါနဲ့",
+
   "ask-to-switch-ui-language": "ဘာသာပြန်ဆိုချက်နှင့်အတူ ဘာသာစကားပြောင်းလဲရန် ကမ်းလှမ်းချက်",
   "ai": "ဉာဏ်ရည်တု",
   "ai-edit-playlist": "AI ဖြင့် သီချင်းစာရင်းကို တည်းဖြတ်ပါ",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} မှာ {{count}} ကိရိယာတွေကို အသုံးပြုခဲ့ပါတယ်",
   "chat-tool-used_one": "{{name}} ကိရိယာတစ်ခုကို အသုံးပြုခဲ့သည်",
   "chat-tool-used_other": "{{name}} မှာ {{count}} ကိရိယာတွေကို အသုံးပြုခဲ့ပါတယ်",
-  "chat-ai-error": "တောင်းပန်ပါတယ်၊ တုံ့ပြန်မှုတစ်ခု ထုတ်ပေးရာတွင် တစ်စုံတစ်ခု မှားယွင်းသွားပါသည် ( {{error}} )။",
-  "playlist-editor": "သီချင်းစာရင်း တည်းဖြတ်သူ",
+
   "ai-context-button-label": "တက်ကြွသော AI နောက်ခံအခြေအနေ",
   "ai-context-tool-count": "{{count}} ကိရိယာများ",
   "annotation-conflict-title": "ဤမှတ်စုသည် နေရာနှစ်ခုတွင် ပြောင်းလဲသွားခဲ့သည်။",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "အကြောင်းအရာ မရှိပါ။",
   "annotation-conflict-confirm": "အတည်ပြုပါ",
   "annotation-conflict-resolve-failed": "ထိုရွေးချယ်မှုကို အသုံးပြု၍မရပါ။ ၎င်းကို ထပ်မံကြိုးစားပါမည်။",
-  "annotations-pending-sync": "{{count}} ပြောင်းလဲမှုကို ထပ်တူပြုရန် စောင့်ဆိုင်းနေသည်",
-  "annotations-pending-sync-plural": "ထပ်တူပြုရန် စောင့်ဆိုင်းနေသော ပြောင်းလဲမှုများ {{count}}",
+
   "annotation-sync-failed": "သင့်အကောင့်သို့ မှတ်စုတစ်ခု သိမ်းဆည်း၍မရပါ။ ၎င်းသည် ဤစက်ပစ္စည်းပေါ်တွင် ရှိနေဆဲဖြစ်သည်။",
   "create-menu": "ဖန်တီးပါ",
   "create-annotation-menu-item": "မှတ်ချက်",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "မှတ်ချက်ကို သိမ်းဆည်း၍မရပါ။",
   "annotation-group-expand": "အဖွဲ့ကို ချဲ့ထွင်ပါ",
   "annotation-group-collapse": "အဖွဲ့ကို ခေါက်သိမ်းပါ",
-  "annotation-comment-updated": "အပ်ဒိတ်လုပ်ထားသည် {{date}}",
+
   "notes": "မှတ်စုများ",
   "note": "မှတ်ချက်",
   "show-more-verse-actions": "လုပ်ဆောင်ချက်များ ပိုမိုပြပါ",
@@ -680,7 +667,7 @@
   "create-folder": "ဖိုလ်ဒါ ဖန်တီးပါ",
   "edit-bookmark": "စာညှပ်ကို တည်းဖြတ်ပါ",
   "remove-bookmark-from-all-folders": "ဖိုင်တွဲအားလုံးမှ ဖယ်ရှားရန်",
-  "add-bookmark-modal": "စာညှပ်ထည့်ပါ",
+
   "greeting-afternoon": "မင်္ဂလာနေ့လည်ခင်းပါ!",
   "greeting-afternoon-named": "မင်္ဂလာပါခင်ဗျာ၊ {{name}} !",
   "greeting-evening": "မင်္ဂလာညနေခင်းပါ!",

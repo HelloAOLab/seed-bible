@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Paryškinti",
   "end-session": "Sesijos pabaiga",
   "panels": "Plokštės",
-  "new-shared-session": "Naujas bendras seansas",
+
   "open-in-new-panel": "Atidaryti naujame skydelyje",
   "close-sidebar": "Uždaryti šoninę juostą",
   "select-pane-layout": "Pasirinkite srities išdėstymą",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Sukurkite skaitymo planą",
   "reading-plans-empty": "Dar neturite jokių skaitymo planų. Sukurkite vieną, kad pradėtumėte.",
   "untitled-reading-plan": "Be pavadinimo planas",
-  "title": "Pavadinimas",
-  "reading-plan-title_placeholder": "pvz., Biblija per metus",
+
   "reading-plan-description_placeholder": "Apie ką šis planas?",
   "anonymous": "Anonimas",
   "no-chat-messages": "Kol kas nėra pranešimų",
@@ -336,7 +335,7 @@
   "dont-show-again": "Daugiau to nerodyti",
   "discover": "Atraskite",
   "playlists": "Grojaraščiai",
-  "annotations": "Anotacijos",
+
   "cross-references": "Kryžminės nuorodos",
   "study-notes": "Studijų užrašai",
   "content": "Turinys",
@@ -405,8 +404,7 @@
   "add-and-save": "Pridėti ir įrašyti",
   "loading-profile": "Įkeliamas jūsų profilis…",
   "app-version": "prieš {{version}} · {{commit}}",
-  "move-bookmark": "Perkelti į aplanką",
-  "move-to-new": "Perkelti į naują",
+
   "share": "Bendrinti",
   "share-sheet-title": "Bendrinti",
   "share-link": "Bendrinti nuorodą",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Sukurti naują planą",
   "edit-reading-plan": "Redaguoti planą",
   "reading-plan-step-name-title": "Pavadinkite savo planą",
-  "reading-plan-step-name-hint": "Suteikite savo planui pavadinimą, kurį žmonės atpažins",
+
   "reading-plan-name-placeholder": "pvz., Mano psalmių kelionė",
   "reading-plan-description-label": "Aprašymas (nebūtina)",
   "reading-plan-step-scripture-title": "Pasirinkite rodmenis",
   "reading-plan-step-cadences-title": "Skaitymo kadencijos",
   "reading-plan-step-cadences-hint": "Pasirinkite norimą skaitymo tempą. Skaitytojai visada gali pasirinkti skaityti savo tempu.",
-  "reading-plan-cadence-once-daily": "Vienas seansas per dieną",
-  "reading-plan-cadence-twice-daily": "Du užsiėmimai per dieną",
-  "reading-plan-cadence-three-times-daily": "Trys sesijos per dieną",
-  "reading-plan-cadence-every-other-day": "Vienas seansas kas antrą dieną",
+
   "reading-plan-cadence-length": "Baigsis po {{count}} dienų",
   "reading-plan-cadence-length_one": "Baigiama per {{count}} dieną",
   "reading-plan-cadence-length_other": "Baigsis po {{count}} dienų",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Įrašoma…",
   "reading-plan-draft-saved": "Juodraštis išsaugotas",
   "reading-plan-draft-save-failed": "Nepavyko išsaugoti juodraščio",
-  "added-to-reading-plan-session": "Pridėta prie sesijos {{session}}",
-  "reading-plan-add-reading": "Pridėti",
+
   "reading-plan-scripture-remove": "Pašalinti skaitymą",
   "reading-plan-create-submit": "Sukurti planą",
   "reading-plan-save-changes": "Išsaugoti pakeitimus",
@@ -504,12 +498,11 @@
   "loading": "Kraunama…",
   "reading-plan-not-started": "Nepradėta",
   "reading-plan-start": "Pradėti planą",
-  "reading-plan-session-count": "{{count}} rodmenys",
-  "reading-plan-progress-readings": "{{done}} iš {{total}} rodmenų",
+
   "reading-plan-streak": "{{count}} dienų serija",
-  "reading-plan-today": "Šiandien",
+
   "reading-plan-mark-complete": "Pažymėti kaip užbaigtą",
-  "reading-plan-day-completed": "Užbaigta",
+
   "reading-plan-empty-sessions": "Šis planas dar neturi jokių įvertinimų.",
   "reading-plan-celebration-title": "{{day}} diena baigta!",
   "reading-plan-complete-title": "Planas baigtas!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Pažymėti skaitymą kaip baigtą",
   "reading-plan-link-video": "Vaizdo įrašas",
   "reading-belongs-to": "Šis skaitymas priklauso",
-  "reading-plan-read-nudge": "Perskaitėte šią ištrauką – pažymėti ją kaip užbaigtą?",
+
   "reading-plan-mark-passage-complete": "Pažymėti {{passage}} kaip perskaitytą",
   "reading-plan-read-nudge-title": "Malonu skaityti!",
   "reading-plan-read-nudge-toast": "Pažymėti {{passage}} kaip užbaigtą?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Apie ką šis grojaraštis?",
   "read-more": "Skaityti daugiau",
   "read-less": "Skaityti mažiau",
-  "switch-language-title": "Pakeisti kalbą?",
-  "switch-language-body": "Ar norite pakeisti kalbą į {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Jungiklis",
-  "switch-language-dismiss": "Neperjungti",
-  "switch-language-never": "Niekada daugiau neklauskite",
+
   "ask-to-switch-ui-language": "Pasiūlymas pakeisti kalbą su vertimu",
   "ai": "Dirbtinis intelektas",
   "ai-edit-playlist": "Redaguoti grojaraštį naudojant dirbtinį intelektą",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} naudojo {{count}} įrankius",
   "chat-tool-used_one": "{{name}} naudojo įrankį",
   "chat-tool-used_other": "{{name}} naudojo {{count}} įrankius",
-  "chat-ai-error": "Atsiprašome, generuojant atsakymą kažkas nepavyko ( {{error}} ).",
-  "playlist-editor": "Grojaraščių redaktorius",
+
   "ai-context-button-label": "Aktyvus dirbtinio intelekto kontekstas",
   "ai-context-tool-count": "{{count}} įrankiai",
   "annotation-conflict-title": "Ši pastaba pakeista dviejose vietose",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Nėra turinio.",
   "annotation-conflict-confirm": "Patvirtinti",
   "annotation-conflict-resolve-failed": "Nepavyko pritaikyti šio pasirinkimo. Bus bandyta dar kartą.",
-  "annotations-pending-sync": "Sinchronizavimo laukiama {{count}} pakeitimo",
-  "annotations-pending-sync-plural": "Sinchronizavimo laukia {{count}} pakeitimų",
+
   "annotation-sync-failed": "Nepavyko išsaugoti užrašo jūsų paskyroje. Jis vis dar yra šiame įrenginyje.",
   "create-menu": "Sukurti",
   "create-annotation-menu-item": "Anotacija",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Nepavyko išsaugoti anotacijos.",
   "annotation-group-expand": "Išskleisti grupę",
   "annotation-group-collapse": "Sutraukti grupę",
-  "annotation-comment-updated": "Atnaujinta {{date}}",
+
   "notes": "Pastabos",
   "note": "Pastaba",
   "show-more-verse-actions": "Rodyti daugiau veiksmų",
@@ -680,7 +667,7 @@
   "create-folder": "Sukurti aplanką",
   "edit-bookmark": "Redaguoti žymę",
   "remove-bookmark-from-all-folders": "Pašalinti iš visų aplankų",
-  "add-bookmark-modal": "Pridėti žymę",
+
   "greeting-afternoon": "Laba diena!",
   "greeting-afternoon-named": "Laba diena, {{name}} !",
   "greeting-evening": "Labas vakaras!",

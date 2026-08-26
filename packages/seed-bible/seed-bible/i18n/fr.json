@@ -98,7 +98,7 @@
   "session-settings-highlight-duration": "Surligner pour",
   "end-session": "Fin de session",
   "panels": "Panneaux",
-  "new-shared-session": "Nouvelle session partagée",
+
   "open-in-new-panel": "Ouvrir dans un nouveau panneau",
   "close-sidebar": "Fermer la barre latérale",
   "select-pane-layout": "Sélectionner la disposition du volet",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Élaborer un plan de lecture",
   "reading-plans-empty": "Vous n'avez pas encore de plan de lecture. Créez-en un pour commencer.",
   "untitled-reading-plan": "Plan sans titre",
-  "title": "Titre",
-  "reading-plan-title_placeholder": "Par exemple, la Bible en un an",
+
   "reading-plan-description_placeholder": "De quoi s'agit-il ?",
   "anonymous": "Anonyme",
   "no-chat-messages": "Aucun message pour l'instant",
@@ -336,7 +335,7 @@
   "dont-show-again": "Ne plus afficher ceci",
   "discover": "Découvrir",
   "playlists": "Listes de lecture",
-  "annotations": "Annotations",
+
   "cross-references": "Références croisées",
   "study-notes": "Notes d'étude",
   "content": "Contenu",
@@ -405,8 +404,7 @@
   "add-and-save": "Ajouter et enregistrer",
   "loading-profile": "Chargement de votre profil…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Déplacer vers le dossier",
-  "move-to-new": "Déménager vers le nouveau",
+
   "share": "Partager",
   "share-sheet-title": "Partager",
   "share-link": "Partager un lien",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Créer un nouveau plan",
   "edit-reading-plan": "Modifier le plan",
   "reading-plan-step-name-title": "Nommez votre plan",
-  "reading-plan-step-name-hint": "Donnez à votre projet un nom que les gens reconnaîtront.",
+
   "reading-plan-name-placeholder": "par exemple Mon voyage à travers les Psaumes",
   "reading-plan-description-label": "Description (facultatif)",
   "reading-plan-step-scripture-title": "Lectures sélectionnées",
   "reading-plan-step-cadences-title": "cadences de lecture",
   "reading-plan-step-cadences-hint": "Choisissez les rythmes de lecture que vous souhaitez proposer. Les lecteurs peuvent toujours choisir de lire à leur propre rythme.",
-  "reading-plan-cadence-once-daily": "Une séance par jour",
-  "reading-plan-cadence-twice-daily": "Deux séances par jour",
-  "reading-plan-cadence-three-times-daily": "Trois séances par jour",
-  "reading-plan-cadence-every-other-day": "Une séance tous les deux jours",
+
   "reading-plan-cadence-length": "Se termine en {{count}} jours",
   "reading-plan-cadence-length_one": "Se termine en {{count}} jours",
   "reading-plan-cadence-length_other": "Se termine en {{count}} jours",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Économie…",
   "reading-plan-draft-saved": "Brouillon enregistré",
   "reading-plan-draft-save-failed": "Impossible d'enregistrer le brouillon",
-  "added-to-reading-plan-session": "Ajouté à la session {{session}}",
-  "reading-plan-add-reading": "Ajouter",
+
   "reading-plan-scripture-remove": "Supprimer la lecture",
   "reading-plan-create-submit": "Élaborer un plan",
   "reading-plan-save-changes": "Enregistrer les modifications",
@@ -504,12 +498,11 @@
   "loading": "Chargement…",
   "reading-plan-not-started": "Pas encore commencé",
   "reading-plan-start": "Plan de démarrage",
-  "reading-plan-session-count": "{{count}} lectures",
-  "reading-plan-progress-readings": "{{done}} de {{total}} lectures",
+
   "reading-plan-streak": "{{count}} -jours consécutifs",
-  "reading-plan-today": "Aujourd'hui",
+
   "reading-plan-mark-complete": "Marquer comme terminé",
-  "reading-plan-day-completed": "Complété",
+
   "reading-plan-empty-sessions": "Ce plan ne comporte pas encore de données.",
   "reading-plan-celebration-title": "Jour {{day}} terminé !",
   "reading-plan-complete-title": "Plan terminé !",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Lecture terminée",
   "reading-plan-link-video": "Vidéo",
   "reading-belongs-to": "Cette lecture appartient à",
-  "reading-plan-read-nudge": "Vous avez lu ce passage — cochez-le comme terminé ?",
+
   "reading-plan-mark-passage-complete": "Marquer {{passage}} comme lu",
   "reading-plan-read-nudge-title": "Bonne lecture !",
   "reading-plan-read-nudge-toast": "Marquer {{passage}} comme terminé ?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "De quoi parle cette playlist ?",
   "read-more": "En savoir plus",
   "read-less": "Lire moins",
-  "switch-language-title": "Changer de langue ?",
-  "switch-language-body": "Voulez-vous changer votre langue en {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Changer",
-  "switch-language-dismiss": "Ne changez pas",
-  "switch-language-never": "Ne demandez plus jamais",
+
   "ask-to-switch-ui-language": "Proposer un changement de langue avec traduction",
   "ai": "IA",
   "ai-edit-playlist": "Modifier la playlist avec l'IA",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} a utilisé {{count}} outils",
   "chat-tool-used_one": "{{name}} a utilisé un outil",
   "chat-tool-used_other": "{{name}} a utilisé {{count}} outils",
-  "chat-ai-error": "Désolé, une erreur s'est produite lors de la génération de la réponse ( {{error}} ).",
-  "playlist-editor": "Éditeur de listes de lecture",
+
   "ai-context-button-label": "Contexte d'IA active",
   "ai-context-tool-count": "{{count}} outils",
   "annotation-conflict-title": "Cette note a été modifiée à deux endroits.",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Aucun contenu.",
   "annotation-conflict-confirm": "Confirmer",
   "annotation-conflict-resolve-failed": "Ce choix n'a pas pu être appliqué. Nous allons réessayer.",
-  "annotations-pending-sync": "{{count}} modifications en attente de synchronisation",
-  "annotations-pending-sync-plural": "{{count}} modifications en attente de synchronisation",
+
   "annotation-sync-failed": "Impossible d'enregistrer la note sur votre compte. Elle se trouve encore sur cet appareil.",
   "create-menu": "Créer",
   "create-annotation-menu-item": "Annotation",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Impossible d'enregistrer l'annotation.",
   "annotation-group-expand": "Développer le groupe",
   "annotation-group-collapse": "Groupe d'effondrement",
-  "annotation-comment-updated": "Mise à jour {{date}}",
+
   "notes": "Notes",
   "note": "Note",
   "show-more-verse-actions": "Afficher plus d'actions",
@@ -680,7 +667,7 @@
   "create-folder": "Créer un dossier",
   "edit-bookmark": "Modifier le signet",
   "remove-bookmark-from-all-folders": "Supprimer de tous les dossiers",
-  "add-bookmark-modal": "Ajouter un signet",
+
   "greeting-afternoon": "Bon après-midi!",
   "greeting-afternoon-named": "Bonjour, {{name}} !",
   "greeting-evening": "Bonne soirée!",

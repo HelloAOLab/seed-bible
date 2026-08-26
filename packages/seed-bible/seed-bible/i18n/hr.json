@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Istakni za",
   "end-session": "Završi sesiju",
   "panels": "Paneli",
-  "new-shared-session": "Nova dijeljena sesija",
+
   "open-in-new-panel": "Otvori u novom panelu",
   "close-sidebar": "Zatvori bočnu traku",
   "select-pane-layout": "Odaberite raspored okna",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Napravite plan čitanja",
   "reading-plans-empty": "Još nemate planova čitanja. Izradite jedan za početak.",
   "untitled-reading-plan": "Plan bez naslova",
-  "title": "Titula",
-  "reading-plan-title_placeholder": "npr. Biblija u godini",
+
   "reading-plan-description_placeholder": "O čemu se radi u ovom planu?",
   "anonymous": "Anonimno",
   "no-chat-messages": "Još nema poruka",
@@ -336,7 +335,7 @@
   "dont-show-again": "Ne prikazuj ovo više",
   "discover": "Otkriti",
   "playlists": "Popisi za reprodukciju",
-  "annotations": "Anotacije",
+
   "cross-references": "Unakrsne reference",
   "study-notes": "Bilješke o učenju",
   "content": "Sadržaj",
@@ -405,8 +404,7 @@
   "add-and-save": "Dodaj i spremi",
   "loading-profile": "Učitavanje vašeg profila…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Premjesti u mapu",
-  "move-to-new": "Premjesti na novo",
+
   "share": "Udio",
   "share-sheet-title": "Udio",
   "share-link": "Podijeli poveznicu",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Izradi novi plan",
   "edit-reading-plan": "Uredi plan",
   "reading-plan-step-name-title": "Nazovite svoj plan",
-  "reading-plan-step-name-hint": "Dajte svom planu ime koje će ljudi prepoznati",
+
   "reading-plan-name-placeholder": "npr. Moje putovanje kroz Psalme",
   "reading-plan-description-label": "Opis (neobavezno)",
   "reading-plan-step-scripture-title": "Odaberite očitanja",
   "reading-plan-step-cadences-title": "Čitanje kadenca",
   "reading-plan-step-cadences-hint": "Odaberite tempo čitanja koji želite ponuditi. Čitatelji uvijek mogu odabrati vlastiti tempo.",
-  "reading-plan-cadence-once-daily": "Jedna sesija dnevno",
-  "reading-plan-cadence-twice-daily": "Dvije sesije dnevno",
-  "reading-plan-cadence-three-times-daily": "Tri sesije dnevno",
-  "reading-plan-cadence-every-other-day": "Jedna sesija svaki drugi dan",
+
   "reading-plan-cadence-length": "Završava za {{count}} dana",
   "reading-plan-cadence-length_one": "Završava za {{count}} dan",
   "reading-plan-cadence-length_other": "Završava za {{count}} dana",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Spremanje…",
   "reading-plan-draft-saved": "Nacrt spremljen",
   "reading-plan-draft-save-failed": "Nije moguće spremiti skicu",
-  "added-to-reading-plan-session": "Dodano u sesiju {{session}}",
-  "reading-plan-add-reading": "Dodati",
+
   "reading-plan-scripture-remove": "Ukloni čitanje",
   "reading-plan-create-submit": "Izradi plan",
   "reading-plan-save-changes": "Spremi promjene",
@@ -504,12 +498,11 @@
   "loading": "Učitavanje…",
   "reading-plan-not-started": "Nije započeto",
   "reading-plan-start": "Započni plan",
-  "reading-plan-session-count": "{{count}} očitanja",
-  "reading-plan-progress-readings": "{{done}} od {{total}} očitanja",
+
   "reading-plan-streak": "{{count}} -dnevni niz",
-  "reading-plan-today": "Danas",
+
   "reading-plan-mark-complete": "Označi kao dovršeno",
-  "reading-plan-day-completed": "Završeno",
+
   "reading-plan-empty-sessions": "Ovaj plan još nema nikakvih očitanja.",
   "reading-plan-celebration-title": "Dan {{day}} završen!",
   "reading-plan-complete-title": "Plan dovršen!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Označi čitanje kao završeno",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Ovo čitanje pripada",
-  "reading-plan-read-nudge": "Pročitali ste ovaj odlomak - označite ga kao dovršenog?",
+
   "reading-plan-mark-passage-complete": "Označi {{passage}} kao pročitano",
   "reading-plan-read-nudge-title": "Lijepo štivo!",
   "reading-plan-read-nudge-toast": "Označi {{passage}} kao dovršen?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "O čemu se radi na ovoj playlisti?",
   "read-more": "Pročitajte više",
   "read-less": "Čitaj manje",
-  "switch-language-title": "Promijeniti jezik?",
-  "switch-language-body": "Želite li promijeniti jezik na {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Prekidač",
-  "switch-language-dismiss": "Ne mijenjaj",
-  "switch-language-never": "Nikad više ne pitaj",
+
   "ask-to-switch-ui-language": "Ponudite promjenu jezika s prijevodom",
   "ai": "Umjetna inteligencija",
   "ai-edit-playlist": "Uredite popis za reprodukciju pomoću umjetne inteligencije",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} je koristio {{count}} alata",
   "chat-tool-used_one": "{{name}} je koristio/la alat",
   "chat-tool-used_other": "{{name}} je koristio {{count}} alata",
-  "chat-ai-error": "Žao nam je, došlo je do pogreške prilikom generiranja odgovora ( {{error}} ).",
-  "playlist-editor": "Uređivač popisa za reprodukciju",
+
   "ai-context-button-label": "Aktivni kontekst umjetne inteligencije",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Ova se bilješka promijenila na dva mjesta",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Nema sadržaja.",
   "annotation-conflict-confirm": "Potvrdi",
   "annotation-conflict-resolve-failed": "Nije moguće primijeniti tu opciju. Pokušat ćemo ponovno.",
-  "annotations-pending-sync": "{{count}} promjena čeka sinkronizaciju",
-  "annotations-pending-sync-plural": "{{count}} promjena čeka sinkronizaciju",
+
   "annotation-sync-failed": "Nije moguće spremiti bilješku na vaš račun. Još je na ovom uređaju.",
   "create-menu": "Stvoriti",
   "create-annotation-menu-item": "Napomena",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Nije moguće spremiti napomenu.",
   "annotation-group-expand": "Proširi grupu",
   "annotation-group-collapse": "Sažmi grupu",
-  "annotation-comment-updated": "Ažurirano {{date}}",
+
   "notes": "Bilješke",
   "note": "Bilješka",
   "show-more-verse-actions": "Prikaži više radnji",
@@ -680,7 +667,7 @@
   "create-folder": "Izradi mapu",
   "edit-bookmark": "Uredi oznaku",
   "remove-bookmark-from-all-folders": "Ukloni iz svih mapa",
-  "add-bookmark-modal": "Dodaj oznaku",
+
   "greeting-afternoon": "Dobar dan!",
   "greeting-afternoon-named": "Dobar dan, {{name}} !",
   "greeting-evening": "Dobra večer!",

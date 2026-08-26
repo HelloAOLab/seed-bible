@@ -98,7 +98,7 @@
   "session-settings-highlight-duration": "হাইলাইট করার জন্য",
   "end-session": "অধিবেশন শেষ করুন",
   "panels": "প্যানেল",
-  "new-shared-session": "নতুন যৌথ অধিবেশন",
+
   "open-in-new-panel": "নতুন প্যানেলে খুলুন",
   "close-sidebar": "সাইডবার বন্ধ করুন",
   "select-pane-layout": "প্যান লেআউট নির্বাচন করুন",
@@ -253,8 +253,7 @@
   "create-reading-plan": "পড়ার পরিকল্পনা তৈরি করুন",
   "reading-plans-empty": "আপনার এখনো কোনো পড়ার পরিকল্পনা নেই। শুরু করার জন্য একটি তৈরি করে নিন।",
   "untitled-reading-plan": "শিরোনামহীন পরিকল্পনা",
-  "title": "শিরোনাম",
-  "reading-plan-title_placeholder": "যেমন এক বছরে বাইবেল",
+
   "reading-plan-description_placeholder": "এই পরিকল্পনাটি কী বিষয়ে?",
   "anonymous": "বেনামী",
   "no-chat-messages": "এখনো কোনো বার্তা আসেনি",
@@ -336,7 +335,7 @@
   "dont-show-again": "এটা আবার দেখাবেন না",
   "discover": "আবিষ্কার করুন",
   "playlists": "প্লেলিস্ট",
-  "annotations": "টীকা",
+
   "cross-references": "ক্রস রেফারেন্স",
   "study-notes": "অধ্যয়ন নোট",
   "content": "বিষয়বস্তু",
@@ -405,8 +404,7 @@
   "add-and-save": "যোগ করুন এবং সংরক্ষণ করুন",
   "loading-profile": "আপনার প্রোফাইল লোড হচ্ছে…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "ফোল্ডারে সরান",
-  "move-to-new": "নতুন জায়গায় চলে যান",
+
   "share": "শেয়ার",
   "share-sheet-title": "শেয়ার",
   "share-link": "একটি লিঙ্ক শেয়ার করুন",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "নতুন পরিকল্পনা তৈরি করুন",
   "edit-reading-plan": "পরিকল্পনা সম্পাদনা করুন",
   "reading-plan-step-name-title": "আপনার পরিকল্পনার নাম দিন",
-  "reading-plan-step-name-hint": "আপনার পরিকল্পনাকে এমন একটি নাম দিন যা সবাই চিনতে পারবে।",
+
   "reading-plan-name-placeholder": "যেমন আমার গীতসংহিতা যাত্রা",
   "reading-plan-description-label": "বিবরণ (ঐচ্ছিক)",
   "reading-plan-step-scripture-title": "নির্বাচিত পাঠ",
   "reading-plan-step-cadences-title": "পড়ার ছন্দ",
   "reading-plan-step-cadences-hint": "আপনি যে পড়ার গতিগুলো দিতে চান, তা বেছে নিন। পাঠকরা চাইলে সবসময় নিজেদের গতিতেও পড়তে পারেন।",
-  "reading-plan-cadence-once-daily": "দিনে একটি সেশন",
-  "reading-plan-cadence-twice-daily": "দিনে দুটি সেশন",
-  "reading-plan-cadence-three-times-daily": "দিনে তিনটি সেশন",
-  "reading-plan-cadence-every-other-day": "একদিন পর পর একটি সেশন",
+
   "reading-plan-cadence-length": "{{count}} দিনে শেষ হবে",
   "reading-plan-cadence-length_one": "{{count}} দিনে শেষ হবে",
   "reading-plan-cadence-length_other": "{{count}} দিনে শেষ হবে",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "সঞ্চয়…",
   "reading-plan-draft-saved": "খসড়া সংরক্ষিত",
   "reading-plan-draft-save-failed": "খসড়া সংরক্ষণ করা যায়নি",
-  "added-to-reading-plan-session": "সেশনে যোগ করা হয়েছে {{session}}",
-  "reading-plan-add-reading": "যোগ করুন",
+
   "reading-plan-scripture-remove": "পড়া বন্ধ করুন",
   "reading-plan-create-submit": "পরিকল্পনা তৈরি করুন",
   "reading-plan-save-changes": "পরিবর্তনগুলি সংরক্ষণ করুন",
@@ -504,12 +498,11 @@
   "loading": "লোড হচ্ছে…",
   "reading-plan-not-started": "শুরু হয়নি",
   "reading-plan-start": "পরিকল্পনা শুরু করুন",
-  "reading-plan-session-count": "{{count}} টি পাঠ",
-  "reading-plan-progress-readings": "{{ {{total}} {{done}} }} টি।",
+
   "reading-plan-streak": "{{count}} -দিনের ধারা",
-  "reading-plan-today": "আজ",
+
   "reading-plan-mark-complete": "সম্পূর্ণ হিসাবে চিহ্নিত করুন",
-  "reading-plan-day-completed": "সম্পন্ন হয়েছে",
+
   "reading-plan-empty-sessions": "এই পরিকল্পনাটিতে এখনও কোনো পাঠ নেই।",
   "reading-plan-celebration-title": "দিন {{day}} সম্পন্ন!",
   "reading-plan-complete-title": "পরিকল্পনা সম্পন্ন!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "পড়া সম্পূর্ণ চিহ্নিত করুন।",
   "reading-plan-link-video": "ভিডিও",
   "reading-belongs-to": "এই পাঠটি এর অন্তর্গত",
-  "reading-plan-read-nudge": "আপনি এই অনুচ্ছেদটি পড়েছেন — এটিকে সম্পূর্ণ হিসেবে চিহ্নিত করবেন?",
+
   "reading-plan-mark-passage-complete": "{{passage}} পঠিত হিসাবে চিহ্নিত করুন।",
   "reading-plan-read-nudge-title": "পড়তে ভালো লাগলো!",
   "reading-plan-read-nudge-toast": "{{passage}} সম্পূর্ণ হয়েছে বলে চিহ্নিত করুন?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "এই প্লেলিস্টটি কী নিয়ে?",
   "read-more": "আরও পড়ুন",
   "read-less": "কম পড়ুন",
-  "switch-language-title": "ভাষা পরিবর্তন করবেন?",
-  "switch-language-body": "আপনি কি আপনার ভাষা {{nativeLanguageName}} -এ পরিবর্তন করতে চান?",
-  "switch-language-confirm": "সুইচ",
-  "switch-language-dismiss": "পরিবর্তন করবেন না",
-  "switch-language-never": "আর কখনো জিজ্ঞাসা করবেন না",
+
   "ask-to-switch-ui-language": "অনুবাদের সাথে ভাষা পরিবর্তনের প্রস্তাব",
   "ai": "এআই",
   "ai-edit-playlist": "এআই দিয়ে প্লেলিস্ট সম্পাদনা করুন",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} {{count}} টি সরঞ্জাম ব্যবহার করেছেন",
   "chat-tool-used_one": "{{name}} একটি সরঞ্জাম ব্যবহার করেছিল",
   "chat-tool-used_other": "{{name}} {{count}} টি সরঞ্জাম ব্যবহার করেছেন",
-  "chat-ai-error": "দুঃখিত, প্রতিক্রিয়া তৈরি করতে কিছু ভুল হয়েছে ( {{error}} )।",
-  "playlist-editor": "প্লেলিস্ট সম্পাদক",
+
   "ai-context-button-label": "সক্রিয় এআই প্রেক্ষাপট",
   "ai-context-tool-count": "{{count}} টি সরঞ্জাম",
   "annotation-conflict-title": "এই নোটটি দুটি জায়গায় পরিবর্তিত হয়েছে।",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "কোনো বিষয়বস্তু নেই।",
   "annotation-conflict-confirm": "নিশ্চিত করুন",
   "annotation-conflict-resolve-failed": "ওই বিকল্পটি প্রয়োগ করা যায়নি। আবার চেষ্টা করা হবে।",
-  "annotations-pending-sync": "সিঙ্ক হওয়ার জন্য {{count}} টি পরিবর্তন অপেক্ষায় আছে",
-  "annotations-pending-sync-plural": "সিঙ্ক হওয়ার জন্য {{count}} টি পরিবর্তন অপেক্ষায় আছে",
+
   "annotation-sync-failed": "আপনার অ্যাকাউন্টে নোটটি সংরক্ষণ করা যায়নি। এটি এখনও এই ডিভাইসে রয়েছে।",
   "create-menu": "তৈরি করুন",
   "create-annotation-menu-item": "টীকা",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "টীকাটি সংরক্ষণ করা যায়নি।",
   "annotation-group-expand": "গ্রুপ প্রসারিত করুন",
   "annotation-group-collapse": "দল ভেঙে ফেলুন",
-  "annotation-comment-updated": "{{date}} তারিখে হালনাগাদ করা হয়েছে",
+
   "notes": "নোট",
   "note": "দ্রষ্টব্য",
   "show-more-verse-actions": "আরও পদক্ষেপ দেখান",
@@ -680,7 +667,7 @@
   "create-folder": "ফোল্ডার তৈরি করুন",
   "edit-bookmark": "বুকমার্ক সম্পাদনা করুন",
   "remove-bookmark-from-all-folders": "সমস্ত ফোল্ডার থেকে মুছে ফেলুন",
-  "add-bookmark-modal": "বুকমার্ক যোগ করুন",
+
   "greeting-afternoon": "শুভ অপরাহ্ন!",
   "greeting-afternoon-named": "শুভ অপরাহ্ন, {{name}} !",
   "greeting-evening": "শুভ সন্ধ্যা!",

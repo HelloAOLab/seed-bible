@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "హైలైట్ కోసం",
   "end-session": "సెషన్ ముగింపు",
   "panels": "ప్యానెల్లు",
-  "new-shared-session": "కొత్త భాగస్వామ్య సెషన్",
+
   "open-in-new-panel": "కొత్త ప్యానెల్‌లో తెరవండి",
   "close-sidebar": "సైడ్‌బార్‌ను మూసివేయండి",
   "select-pane-layout": "ప్యానెల్ లేఅవుట్‌ను ఎంచుకోండి",
@@ -253,8 +253,7 @@
   "create-reading-plan": "పఠన ప్రణాళికను రూపొందించండి",
   "reading-plans-empty": "మీకు ఇంకా పఠన ప్రణాళికలు ఏవీ లేవు. ప్రారంభించడానికి ఒక ప్రణాళికను రూపొందించుకోండి.",
   "untitled-reading-plan": "పేరులేని ప్రణాళిక",
-  "title": "శీర్షిక",
-  "reading-plan-title_placeholder": "ఉదాహరణకు ఒక సంవత్సరంలో బైబిల్",
+
   "reading-plan-description_placeholder": "ఈ ప్రణాళిక దేని గురించి?",
   "anonymous": "అనామక",
   "no-chat-messages": "ఇంకా సందేశాలు లేవు",
@@ -336,7 +335,7 @@
   "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు",
   "discover": "కనుగొనండి",
   "playlists": "ప్లేజాబితాలు",
-  "annotations": "వ్యాఖ్యానాలు",
+
   "cross-references": "క్రాస్ రిఫరెన్సులు",
   "study-notes": "అధ్యయన గమనికలు",
   "content": "కంటెంట్",
@@ -405,8 +404,7 @@
   "add-and-save": "జోడించి సేవ్ చేయండి",
   "loading-profile": "మీ ప్రొఫైల్ లోడ్ అవుతోంది…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "ఫోల్డర్‌కు తరలించండి",
-  "move-to-new": "కొత్తదానికి వెళ్లండి",
+
   "share": "పంచుకోండి",
   "share-sheet-title": "పంచుకోండి",
   "share-link": "లింక్‌ను పంచుకోండి",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "కొత్త ప్రణాళికను సృష్టించండి",
   "edit-reading-plan": "ప్రణాళికను సవరించండి",
   "reading-plan-step-name-title": "మీ ప్రణాళికకు పేరు పెట్టండి",
-  "reading-plan-step-name-hint": "మీ ప్రణాళికకు ప్రజలు గుర్తించగలిగే పేరు పెట్టండి",
+
   "reading-plan-name-placeholder": "ఉదా: నా కీర్తనల ప్రయాణం",
   "reading-plan-description-label": "వివరణ (ఐచ్ఛికం)",
   "reading-plan-step-scripture-title": "రీడింగ్‌లను ఎంచుకోండి",
   "reading-plan-step-cadences-title": "పఠన లయలు",
   "reading-plan-step-cadences-hint": "మీరు అందించాలనుకుంటున్న పఠన వేగాలను ఎంచుకోండి. దానికి బదులుగా పాఠకులు ఎల్లప్పుడూ తమ సొంత వేగంతో చదవడాన్ని ఎంచుకోవచ్చు.",
-  "reading-plan-cadence-once-daily": "రోజుకు ఒక సెషన్",
-  "reading-plan-cadence-twice-daily": "రోజుకు రెండు సెషన్లు",
-  "reading-plan-cadence-three-times-daily": "రోజుకు మూడు సెషన్లు",
-  "reading-plan-cadence-every-other-day": "ఒక రోజు విడిచి ఒక రోజు ఒక సెషన్",
+
   "reading-plan-cadence-length": "{{count}} రోజులలో పూర్తవుతుంది",
   "reading-plan-cadence-length_one": "{{count}} రోజులలో ముగుస్తుంది",
   "reading-plan-cadence-length_other": "{{count}} రోజులలో పూర్తవుతుంది",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "సేవ్ అవుతోంది…",
   "reading-plan-draft-saved": "డ్రాఫ్ట్ సేవ్ చేయబడింది",
   "reading-plan-draft-save-failed": "డ్రాఫ్ట్‌ను సేవ్ చేయలేకపోయారు",
-  "added-to-reading-plan-session": "సెషన్‌కు జోడించబడింది {{session}}",
-  "reading-plan-add-reading": "జోడించండి",
+
   "reading-plan-scripture-remove": "చదవడం తొలగించండి",
   "reading-plan-create-submit": "ప్రణాళికను రూపొందించండి",
   "reading-plan-save-changes": "మార్పులను సేవ్ చేయండి",
@@ -504,12 +498,11 @@
   "loading": "లోడ్ అవుతోంది…",
   "reading-plan-not-started": "ప్రారంభించబడలేదు",
   "reading-plan-start": "ప్రణాళికను ప్రారంభించండి",
-  "reading-plan-session-count": "{{count}} రీడింగ్‌లు",
-  "reading-plan-progress-readings": "{ {{total}} రీడింగ్‌లలో {{done}}",
+
   "reading-plan-streak": "{{count}} -రోజుల పరంపర",
-  "reading-plan-today": "ఈరోజు",
+
   "reading-plan-mark-complete": "పూర్తయినట్లుగా గుర్తించండి",
-  "reading-plan-day-completed": "పూర్తయింది",
+
   "reading-plan-empty-sessions": "ఈ ప్లాన్‌లో ఇంకా ఎలాంటి రీడింగ్‌లు లేవు.",
   "reading-plan-celebration-title": "రోజు {{day}} పూర్తయింది!",
   "reading-plan-complete-title": "ప్రణాళిక పూర్తయింది!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "చదవడం పూర్తి చేసినట్లు గుర్తించండి",
   "reading-plan-link-video": "వీడియో",
   "reading-belongs-to": "ఈ పఠనం దీనికి చెందినది",
-  "reading-plan-read-nudge": "మీరు ఈ పేరాను చదివారు — పూర్తి అయినట్లుగా గుర్తించండి?",
+
   "reading-plan-mark-passage-complete": "{{passage}} ను చదివినట్లుగా గుర్తించండి",
   "reading-plan-read-nudge-title": "చదివి ఆనందించండి!",
   "reading-plan-read-nudge-toast": "{{passage}} పూర్తి చేసినట్లుగా గుర్తించాలా?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "ఈ ప్లేలిస్ట్ దేని గురించి?",
   "read-more": "మరింత చదవండి",
   "read-less": "తక్కువ చదవండి",
-  "switch-language-title": "భాష మార్చాలా?",
-  "switch-language-body": "మీరు మీ భాషను {{nativeLanguageName}} కు మార్చుకోవాలనుకుంటున్నారా?",
-  "switch-language-confirm": "స్విచ్",
-  "switch-language-dismiss": "మారవద్దు",
-  "switch-language-never": "మళ్ళీ అడగవద్దు",
+
   "ask-to-switch-ui-language": "అనువాదంతో పాటు భాషను మార్చుకోవడానికి ప్రతిపాదించండి",
   "ai": "AI",
   "ai-edit-playlist": "AIతో ప్లేలిస్ట్‌ను సవరించండి",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} {{count}} సాధనాలను ఉపయోగించారు",
   "chat-tool-used_one": "{{name}} ఒక సాధనాన్ని ఉపయోగించారు",
   "chat-tool-used_other": "{{name}} {{count}} సాధనాలను ఉపయోగించారు",
-  "chat-ai-error": "క్షమించండి, ప్రతిస్పందనను రూపొందించడంలో ఏదో పొరపాటు జరిగింది ( {{error}} ).",
-  "playlist-editor": "ప్లేలిస్ట్ ఎడిటర్",
+
   "ai-context-button-label": "క్రియాశీల AI సందర్భం",
   "ai-context-tool-count": "{{count}} సాధనాలు",
   "annotation-conflict-title": "ఈ గమనిక రెండు చోట్ల మారింది",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "కంటెంట్ లేదు.",
   "annotation-conflict-confirm": "నిర్ధారించండి",
   "annotation-conflict-resolve-failed": "ఆ ఎంపికను వర్తింపజేయలేకపోయాము. మళ్ళీ ప్రయత్నిస్తాము.",
-  "annotations-pending-sync": "{{count}} మార్పు సమకాలీకరణ కోసం వేచి ఉంది",
-  "annotations-pending-sync-plural": "సింక్ చేయడానికి వేచి {{count}} మార్పులు",
+
   "annotation-sync-failed": "మీ ఖాతాలో నోట్‌ను సేవ్ చేయలేకపోయాము. అది ఇంకా ఈ పరికరంలోనే ఉంది.",
   "create-menu": "సృష్టించండి",
   "create-annotation-menu-item": "వ్యాఖ్యానం",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "అనోటేషన్‌ను సేవ్ చేయలేకపోయాను.",
   "annotation-group-expand": "సమూహాన్ని విస్తరించండి",
   "annotation-group-collapse": "సమూహాన్ని కుదించండి",
-  "annotation-comment-updated": "నవీకరించబడింది {{date}}",
+
   "notes": "గమనికలు",
   "note": "గమనిక",
   "show-more-verse-actions": "మరిన్ని చర్యలను చూపించు",
@@ -680,7 +667,7 @@
   "create-folder": "ఫోల్డర్‌ను సృష్టించండి",
   "edit-bookmark": "బుక్‌మార్క్‌ను సవరించండి",
   "remove-bookmark-from-all-folders": "అన్ని ఫోల్డర్‌ల నుండి తొలగించండి",
-  "add-bookmark-modal": "బుక్‌మార్క్‌ను జోడించండి",
+
   "greeting-afternoon": "శుభ మధ్యాహ్నం!",
   "greeting-afternoon-named": "శుభ మధ్యాహ్నం, {{name}} !",
   "greeting-evening": "శుభ సాయం!",

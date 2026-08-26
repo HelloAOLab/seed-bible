@@ -98,7 +98,7 @@
   "session-settings-highlight-duration": "Angazia kwa",
   "end-session": "Mwisho wa Kipindi",
   "panels": "Paneli",
-  "new-shared-session": "Kipindi kipya kilichoshirikiwa",
+
   "open-in-new-panel": "Fungua kwenye paneli mpya",
   "close-sidebar": "Funga upau wa pembeni",
   "select-pane-layout": "Chagua mpangilio wa kidirisha",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Unda mpango wa kusoma",
   "reading-plans-empty": "Huna mipango yoyote ya kusoma bado. Unda moja ili kuanza.",
   "untitled-reading-plan": "Mpango usio na kichwa",
-  "title": "Kichwa",
-  "reading-plan-title_placeholder": "mfano Biblia katika Mwaka",
+
   "reading-plan-description_placeholder": "Mpango huu unahusu nini?",
   "anonymous": "Mtu Asiyejulikana",
   "no-chat-messages": "Hakuna ujumbe bado",
@@ -336,7 +335,7 @@
   "dont-show-again": "Usionyeshe hii tena",
   "discover": "Gundua",
   "playlists": "Orodha za kucheza",
-  "annotations": "Maelezo",
+
   "cross-references": "Marejeleo ya msalaba",
   "study-notes": "Maelezo ya utafiti",
   "content": "Maudhui",
@@ -405,8 +404,7 @@
   "add-and-save": "Ongeza na uhifadhi",
   "loading-profile": "Inapakia wasifu wako…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Hamisha hadi kwenye folda",
-  "move-to-new": "Hamia hadi mpya",
+
   "share": "Shiriki",
   "share-sheet-title": "Shiriki",
   "share-link": "Shiriki kiungo",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Unda mpango mpya",
   "edit-reading-plan": "Hariri mpango",
   "reading-plan-step-name-title": "Taja mpango wako",
-  "reading-plan-step-name-hint": "Mpe mpango wako jina ambalo watu watatambua",
+
   "reading-plan-name-placeholder": "mfano Safari Yangu ya Zaburi",
   "reading-plan-description-label": "Maelezo (hiari)",
   "reading-plan-step-scripture-title": "Chagua usomaji",
   "reading-plan-step-cadences-title": "Kasi za kusoma",
   "reading-plan-step-cadences-hint": "Chagua kasi za kusoma unazotaka kutoa. Wasomaji wanaweza kuchagua kwenda kwa kasi yao wenyewe badala yake.",
-  "reading-plan-cadence-once-daily": "Kipindi kimoja kwa siku",
-  "reading-plan-cadence-twice-daily": "Vipindi viwili kwa siku",
-  "reading-plan-cadence-three-times-daily": "Vipindi vitatu kwa siku",
-  "reading-plan-cadence-every-other-day": "Kipindi kimoja kila siku nyingine",
+
   "reading-plan-cadence-length": "Huisha ndani ya siku {{count}}",
   "reading-plan-cadence-length_one": "Inakamilika ndani ya siku {{count}}",
   "reading-plan-cadence-length_other": "Huisha ndani ya siku {{count}}",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Inahifadhi…",
   "reading-plan-draft-saved": "Rasimu imehifadhiwa",
   "reading-plan-draft-save-failed": "Haikuweza kuhifadhi rasimu",
-  "added-to-reading-plan-session": "Imeongezwa kwenye kipindi {{session}}",
-  "reading-plan-add-reading": "Ongeza",
+
   "reading-plan-scripture-remove": "Ondoa usomaji",
   "reading-plan-create-submit": "Unda mpango",
   "reading-plan-save-changes": "Hifadhi mabadiliko",
@@ -504,12 +498,11 @@
   "loading": "Inapakia…",
   "reading-plan-not-started": "Haijaanza",
   "reading-plan-start": "Anza mpango",
-  "reading-plan-session-count": "usomaji wa {{count}}",
-  "reading-plan-progress-readings": "{{done}} kati ya {{total}} ya usomaji",
+
   "reading-plan-streak": "{{count}} -mfululizo wa siku",
-  "reading-plan-today": "Leo",
+
   "reading-plan-mark-complete": "Weka alama kama imekamilika",
-  "reading-plan-day-completed": "Imekamilika",
+
   "reading-plan-empty-sessions": "Mpango huu hauna usomaji wowote bado.",
   "reading-plan-celebration-title": "Siku {{day}} imekamilika!",
   "reading-plan-complete-title": "Mpango umekamilika!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Weka alama ya usomaji umekamilika",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Usomaji huu ni wa",
-  "reading-plan-read-nudge": "Umesoma kifungu hiki — weka alama kuwa kimekamilika?",
+
   "reading-plan-mark-passage-complete": "Weka alama {{passage}} kama imesomwa",
   "reading-plan-read-nudge-title": "Usomaji mzuri!",
   "reading-plan-read-nudge-toast": "Weka alama kuwa {{passage}} imekamilika?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Orodha hii ya kucheza inahusu nini?",
   "read-more": "Soma zaidi",
   "read-less": "Soma kidogo",
-  "switch-language-title": "Badilisha lugha?",
-  "switch-language-body": "Je, unataka kubadilisha lugha yako kuwa {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Swichi",
-  "switch-language-dismiss": "Usibadilishe",
-  "switch-language-never": "Usiulize Tena",
+
   "ask-to-switch-ui-language": "Jitolee kubadilisha lugha na tafsiri",
   "ai": "AI",
   "ai-edit-playlist": "Hariri orodha ya kucheza ukitumia akili bandia (AI)",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} zana za {{count}} zilizotumika",
   "chat-tool-used_one": "{{name}} alitumia zana",
   "chat-tool-used_other": "{{name}} zana za {{count}} zilizotumika",
-  "chat-ai-error": "Samahani, kuna kitu kimeenda vibaya katika kutoa jibu ( {{error}} ).",
-  "playlist-editor": "Kihariri cha Orodha ya Kucheza",
+
   "ai-context-button-label": "Muktadha Amilifu wa AI",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Dokezo hili limebadilika katika sehemu mbili",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Hakuna maudhui.",
   "annotation-conflict-confirm": "Thibitisha",
   "annotation-conflict-resolve-failed": "Haikuweza kutumia chaguo hilo. Itajaribu tena.",
-  "annotations-pending-sync": "Mabadiliko {{count}} yanasubiri kusawazishwa",
-  "annotations-pending-sync-plural": "Mabadiliko {{count}} yanasubiri kusawazishwa",
+
   "annotation-sync-failed": "Haikuweza kuhifadhi dokezo kwenye akaunti yako. Bado lipo kwenye kifaa hiki.",
   "create-menu": "Unda",
   "create-annotation-menu-item": "Maelezo",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Haikuweza kuhifadhi maelezo.",
   "annotation-group-expand": "Panua kikundi",
   "annotation-group-collapse": "Kunja kikundi",
-  "annotation-comment-updated": "Imesasishwa {{date}}",
+
   "notes": "Vidokezo",
   "note": "Dokezo",
   "show-more-verse-actions": "Onyesha vitendo zaidi",
@@ -680,7 +667,7 @@
   "create-folder": "Unda folda",
   "edit-bookmark": "Hariri alamisho",
   "remove-bookmark-from-all-folders": "Ondoa kwenye folda zote",
-  "add-bookmark-modal": "Ongeza alamisho",
+
   "greeting-afternoon": "Mchana mwema!",
   "greeting-afternoon-named": "Habari za mchana, {{name}} !",
   "greeting-evening": "Jioni njema!",

@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "ไฮไลต์สำหรับ",
   "end-session": "สิ้นสุดเซสชั่น",
   "panels": "แผง",
-  "new-shared-session": "เซสชันที่ใช้ร่วมกันใหม่",
+
   "open-in-new-panel": "เปิดในหน้าต่างใหม่",
   "close-sidebar": "ปิดแถบด้านข้าง",
   "select-pane-layout": "เลือกเค้าโครงบานหน้าต่าง",
@@ -253,8 +253,7 @@
   "create-reading-plan": "จัดทำแผนการอ่าน",
   "reading-plans-empty": "คุณยังไม่มีแผนการอ่านใดๆ เลย เริ่มสร้างแผนการอ่านขึ้นมาก่อนก็ได้",
   "untitled-reading-plan": "แผนงานที่ไม่มีชื่อ",
-  "title": "ชื่อ",
-  "reading-plan-title_placeholder": "เช่น อ่านพระคัมภีร์จบในหนึ่งปี",
+
   "reading-plan-description_placeholder": "แผนนี้เกี่ยวกับอะไร?",
   "anonymous": "นิรนาม",
   "no-chat-messages": "ยังไม่มีข้อความใดๆ",
@@ -336,7 +335,7 @@
   "dont-show-again": "อย่าแสดงสิ่งนี้อีก",
   "discover": "ค้นพบ",
   "playlists": "เพลย์ลิสต์",
-  "annotations": "คำอธิบายประกอบ",
+
   "cross-references": "การอ้างอิงโยง",
   "study-notes": "บันทึกการเรียน",
   "content": "เนื้อหา",
@@ -405,8 +404,7 @@
   "add-and-save": "เพิ่มและบันทึก",
   "loading-profile": "กำลังโหลดโปรไฟล์ของคุณ…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "ย้ายไปยังโฟลเดอร์",
-  "move-to-new": "ย้ายไปยังที่ใหม่",
+
   "share": "แบ่งปัน",
   "share-sheet-title": "แบ่งปัน",
   "share-link": "แชร์ลิงก์",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "สร้างแผนใหม่",
   "edit-reading-plan": "แก้ไขแผน",
   "reading-plan-step-name-title": "ตั้งชื่อแผนของคุณ",
-  "reading-plan-step-name-hint": "ตั้งชื่อแผนของคุณให้เป็นชื่อที่คนจดจำได้ง่าย",
+
   "reading-plan-name-placeholder": "เช่น การเดินทางแห่งบทเพลงสดุดีของฉัน",
   "reading-plan-description-label": "คำอธิบาย (ไม่บังคับ)",
   "reading-plan-step-scripture-title": "เลือกอ่านบทความต่างๆ",
   "reading-plan-step-cadences-title": "จังหวะการอ่าน",
   "reading-plan-step-cadences-hint": "เลือกความเร็วในการอ่านที่คุณต้องการนำเสนอ ผู้อ่านสามารถเลือกที่จะอ่านตามจังหวะของตนเองได้เสมอ",
-  "reading-plan-cadence-once-daily": "วันละ 1 ครั้ง",
-  "reading-plan-cadence-twice-daily": "สองรอบต่อวัน",
-  "reading-plan-cadence-three-times-daily": "สามรอบต่อวัน",
-  "reading-plan-cadence-every-other-day": "หนึ่งครั้งทุกๆ สองวัน",
+
   "reading-plan-cadence-length": "เสร็จสิ้นในอีก {{count}} วัน",
   "reading-plan-cadence-length_one": "เสร็จสิ้นภายใน {{count}} วัน",
   "reading-plan-cadence-length_other": "เสร็จสิ้นในอีก {{count}} วัน",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "ประหยัด…",
   "reading-plan-draft-saved": "บันทึกฉบับร่างแล้ว",
   "reading-plan-draft-save-failed": "ไม่สามารถบันทึกฉบับร่างได้",
-  "added-to-reading-plan-session": "เพิ่มเข้าสู่เซสชัน {{session}}",
-  "reading-plan-add-reading": "เพิ่ม",
+
   "reading-plan-scripture-remove": "ลบการอ่าน",
   "reading-plan-create-submit": "สร้างแผน",
   "reading-plan-save-changes": "บันทึกการเปลี่ยนแปลง",
@@ -504,12 +498,11 @@
   "loading": "กำลังโหลด…",
   "reading-plan-not-started": "ยังไม่ได้เริ่ม",
   "reading-plan-start": "เริ่มวางแผน",
-  "reading-plan-session-count": "{{count}} การอ่าน",
-  "reading-plan-progress-readings": "อ่าน {{done}} จากทั้งหมด {{total}} ครั้ง",
+
   "reading-plan-streak": "สตรีค {{count}} วัน",
-  "reading-plan-today": "วันนี้",
+
   "reading-plan-mark-complete": "ทำเครื่องหมายว่าเสร็จสมบูรณ์",
-  "reading-plan-day-completed": "สมบูรณ์",
+
   "reading-plan-empty-sessions": "แผนนี้ยังไม่มีข้อมูลการอ่านใดๆ",
   "reading-plan-celebration-title": "เสร็จสิ้นวันที่ {{day}} แล้ว!",
   "reading-plan-complete-title": "แผนเสร็จสมบูรณ์แล้ว!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "ทำเครื่องหมายว่าอ่านเสร็จแล้ว",
   "reading-plan-link-video": "วิดีโอ",
   "reading-belongs-to": "เนื้อหานี้เป็นของ...",
-  "reading-plan-read-nudge": "คุณอ่านข้อความนี้จบแล้ว — โปรดทำเครื่องหมายว่าอ่านจบสมบูรณ์?",
+
   "reading-plan-mark-passage-complete": "ทำเครื่องหมาย {{passage}} ว่าอ่านแล้ว",
   "reading-plan-read-nudge-title": "ขอให้สนุกกับการอ่าน!",
   "reading-plan-read-nudge-toast": "ทำเครื่องหมาย {{passage}} เสร็จสมบูรณ์แล้ว?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "เพลย์ลิสต์นี้เกี่ยวกับอะไร?",
   "read-more": "อ่านเพิ่มเติม",
   "read-less": "อ่านน้อยลง",
-  "switch-language-title": "เปลี่ยนภาษา?",
-  "switch-language-body": "คุณต้องการเปลี่ยนภาษาเป็น {{nativeLanguageName}} หรือไม่?",
-  "switch-language-confirm": "สวิตช์",
-  "switch-language-dismiss": "อย่าเปลี่ยน",
-  "switch-language-never": "อย่าถามอีกเลย",
+
   "ask-to-switch-ui-language": "เสนอให้เปลี่ยนภาษาด้วยการแปล",
   "ai": "AI",
   "ai-edit-playlist": "แก้ไขเพลย์ลิสต์ด้วย AI",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} ใช้เครื่องมือ {{count}} รายการ",
   "chat-tool-used_one": "{{name}} ใช้เครื่องมือ",
   "chat-tool-used_other": "{{name}} ใช้เครื่องมือ {{count}} รายการ",
-  "chat-ai-error": "ขออภัย เกิดข้อผิดพลาดบางอย่างในการสร้างการตอบกลับ ( {{error}} )",
-  "playlist-editor": "โปรแกรมแก้ไขเพลย์ลิสต์",
+
   "ai-context-button-label": "บริบท AI ที่ใช้งานอยู่",
   "ai-context-tool-count": "เครื่องมือ {{count}} ชิ้น",
   "annotation-conflict-title": "ข้อความนี้มีการเปลี่ยนแปลงในสองจุด",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "ไม่มีเนื้อหา",
   "annotation-conflict-confirm": "ยืนยัน",
   "annotation-conflict-resolve-failed": "ไม่สามารถเลือกตัวเลือกนั้นได้ จะลองใหม่อีกครั้ง",
-  "annotations-pending-sync": "{{count}} การเปลี่ยนแปลงที่รอการซิงค์",
-  "annotations-pending-sync-plural": "{{count}} การเปลี่ยนแปลงที่รอการซิงค์",
+
   "annotation-sync-failed": "ไม่สามารถบันทึกบันทึกย่อลงในบัญชีของคุณได้ บันทึกย่อยังคงอยู่ในอุปกรณ์นี้",
   "create-menu": "สร้าง",
   "create-annotation-menu-item": "คำอธิบายประกอบ",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "ไม่สามารถบันทึกคำอธิบายประกอบได้",
   "annotation-group-expand": "ขยายกลุ่ม",
   "annotation-group-collapse": "ยุบกลุ่ม",
-  "annotation-comment-updated": "อัปเดตเมื่อ {{date}}",
+
   "notes": "หมายเหตุ",
   "note": "บันทึก",
   "show-more-verse-actions": "แสดงการดำเนินการเพิ่มเติม",
@@ -680,7 +667,7 @@
   "create-folder": "สร้างโฟลเดอร์",
   "edit-bookmark": "แก้ไขบุ๊กมาร์ก",
   "remove-bookmark-from-all-folders": "ลบออกจากทุกโฟลเดอร์",
-  "add-bookmark-modal": "เพิ่มบุ๊กมาร์ก",
+
   "greeting-afternoon": "สวัสดีตอนบ่าย!",
   "greeting-afternoon-named": "สวัสดีตอนบ่ายค่ะ {{name}} !",
   "greeting-evening": "สวัสดีตอนเย็น!",

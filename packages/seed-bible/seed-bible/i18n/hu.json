@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Kiemelés ehhez:",
   "end-session": "Munkamenet vége",
   "panels": "Panelek",
-  "new-shared-session": "Új megosztott munkamenet",
+
   "open-in-new-panel": "Megnyitás új panelen",
   "close-sidebar": "Oldalsáv bezárása",
   "select-pane-layout": "Válassza ki az ablaktábla elrendezését",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Olvasási terv létrehozása",
   "reading-plans-empty": "Még nincsenek olvasási terveid. Hozz létre egyet a kezdéshez.",
   "untitled-reading-plan": "Névtelen terv",
-  "title": "Cím",
-  "reading-plan-title_placeholder": "pl. Biblia egy év alatt",
+
   "reading-plan-description_placeholder": "Miről szól ez a terv?",
   "anonymous": "Névtelen",
   "no-chat-messages": "Még nincsenek üzenetek",
@@ -336,7 +335,7 @@
   "dont-show-again": "Ne mutasd ezt újra",
   "discover": "Felfedezés",
   "playlists": "Lejátszási listák",
-  "annotations": "Jegyzetek",
+
   "cross-references": "Kereszthivatkozások",
   "study-notes": "Tanulmányi jegyzetek",
   "content": "Tartalom",
@@ -405,8 +404,7 @@
   "add-and-save": "Hozzáadás és mentés",
   "loading-profile": "Profil betöltése…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Áthelyezés mappába",
-  "move-to-new": "Áthelyezés az új oldalra",
+
   "share": "Részesedés",
   "share-sheet-title": "Részesedés",
   "share-link": "Link megosztása",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Új terv létrehozása",
   "edit-reading-plan": "Terv szerkesztése",
   "reading-plan-step-name-title": "Nevezd el a terved",
-  "reading-plan-step-name-hint": "Adj a tervnek egy nevet, amelyet az emberek felismernek",
+
   "reading-plan-name-placeholder": "pl. Zsoltáros utam",
   "reading-plan-description-label": "Leírás (opcionális)",
   "reading-plan-step-scripture-title": "Válasszon leolvasásokat",
   "reading-plan-step-cadences-title": "Olvasási kadenciák",
   "reading-plan-step-cadences-hint": "Válaszd ki a kívánt olvasási tempót. Az olvasók mindig választhatják a saját tempójukat.",
-  "reading-plan-cadence-once-daily": "Naponta egy ülés",
-  "reading-plan-cadence-twice-daily": "Naponta két ülés",
-  "reading-plan-cadence-three-times-daily": "Napi három alkalom",
-  "reading-plan-cadence-every-other-day": "Minden második nap egy foglalkozás",
+
   "reading-plan-cadence-length": "{{count}} nap múlva befejeződik",
   "reading-plan-cadence-length_one": "{{count}} nap múlva befejeződik",
   "reading-plan-cadence-length_other": "{{count}} nap múlva befejeződik",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Megtakarítás…",
   "reading-plan-draft-saved": "Vázlat mentve",
   "reading-plan-draft-save-failed": "Nem sikerült menteni a vázlatot",
-  "added-to-reading-plan-session": "Hozzáadva {{session}} munkamenethez",
-  "reading-plan-add-reading": "Hozzáadás",
+
   "reading-plan-scripture-remove": "Olvasás eltávolítása",
   "reading-plan-create-submit": "Terv létrehozása",
   "reading-plan-save-changes": "Változtatások mentése",
@@ -504,12 +498,11 @@
   "loading": "Terhelés…",
   "reading-plan-not-started": "Nincs elkezdve",
   "reading-plan-start": "Terv indítása",
-  "reading-plan-session-count": "{{count}} leolvasás",
-  "reading-plan-progress-readings": "{{done}} / {{total}} leolvasás",
+
   "reading-plan-streak": "{{count}} napos sorozat",
-  "reading-plan-today": "Ma",
+
   "reading-plan-mark-complete": "Megjelölés befejezettként",
-  "reading-plan-day-completed": "Befejezve",
+
   "reading-plan-empty-sessions": "Ennek a tervnek még nincsenek elemzései.",
   "reading-plan-celebration-title": "A {{day}} teljes!",
   "reading-plan-complete-title": "Terv kész!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Olvasás megjelölése befejezettként",
   "reading-plan-link-video": "Videó",
   "reading-belongs-to": "Ez az olvasmány a következőhöz tartozik:",
-  "reading-plan-read-nudge": "Elolvastad ezt a részt – megjelölöd befejezettként?",
+
   "reading-plan-mark-passage-complete": "Jelöld meg olvasottként a következőt {{passage}}",
   "reading-plan-read-nudge-title": "Jó olvasmányt!",
   "reading-plan-read-nudge-toast": "Befejezettnek jelöli {{passage}} szöveget?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Miről szól ez a lejátszási lista?",
   "read-more": "További információ",
   "read-less": "Kevesebb olvasása",
-  "switch-language-title": "Nyelvváltás?",
-  "switch-language-body": "Át szeretnéd váltani a nyelvedet erre: {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Kapcsoló",
-  "switch-language-dismiss": "Ne váltson",
-  "switch-language-never": "Soha többé ne kérdezd meg",
+
   "ask-to-switch-ui-language": "Felajánlás nyelvváltásra fordítással",
   "ai": "MI",
   "ai-edit-playlist": "Lejátszási lista szerkesztése mesterséges intelligenciával",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} {{count}} eszközt használt",
   "chat-tool-used_one": "{{name}} használt egy eszközt",
   "chat-tool-used_other": "{{name}} {{count}} eszközt használt",
-  "chat-ai-error": "Sajnáljuk, hiba történt a válasz generálása során ( {{error}} ).",
-  "playlist-editor": "Lejátszási lista szerkesztő",
+
   "ai-context-button-label": "Aktív AI kontextus",
   "ai-context-tool-count": "{{count}} eszköz",
   "annotation-conflict-title": "Ez a megjegyzés két helyen változott",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Nincs tartalom.",
   "annotation-conflict-confirm": "Megerősítés",
   "annotation-conflict-resolve-failed": "Nem sikerült alkalmazni ezt a választást. Újrapróbáljuk.",
-  "annotations-pending-sync": "{{count}} módosítás szinkronizálásra vár",
-  "annotations-pending-sync-plural": "{{count}} módosítás vár szinkronizálásra",
+
   "annotation-sync-failed": "Nem sikerült menteni a jegyzetet a fiókodba. Még mindig ezen az eszközön van.",
   "create-menu": "Teremt",
   "create-annotation-menu-item": "Jegyzet",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Nem sikerült menteni a megjegyzést.",
   "annotation-group-expand": "Csoport kibontása",
   "annotation-group-collapse": "Csoport összecsukása",
-  "annotation-comment-updated": "Frissítve: {{date}}",
+
   "notes": "Megjegyzések",
   "note": "Jegyzet",
   "show-more-verse-actions": "További műveletek megjelenítése",
@@ -680,7 +667,7 @@
   "create-folder": "Mappa létrehozása",
   "edit-bookmark": "Könyvjelző szerkesztése",
   "remove-bookmark-from-all-folders": "Eltávolítás az összes mappából",
-  "add-bookmark-modal": "Könyvjelző hozzáadása",
+
   "greeting-afternoon": "Jó napot!",
   "greeting-afternoon-named": "Jó napot kívánok, {{name}} !",
   "greeting-evening": "Jó estét!",

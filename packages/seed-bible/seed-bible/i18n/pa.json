@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "ਲਈ ਹਾਈਲਾਈਟ ਕਰੋ",
   "end-session": "ਸੈਸ਼ਨ ਸਮਾਪਤ ਕਰੋ",
   "panels": "ਪੈਨਲ",
-  "new-shared-session": "ਨਵਾਂ ਸਾਂਝਾ ਸੈਸ਼ਨ",
+
   "open-in-new-panel": "ਨਵੇਂ ਪੈਨਲ ਵਿੱਚ ਖੋਲ੍ਹੋ",
   "close-sidebar": "ਸਾਈਡਬਾਰ ਬੰਦ ਕਰੋ",
   "select-pane-layout": "ਪੇਨ ਲੇਆਉਟ ਚੁਣੋ",
@@ -253,8 +253,7 @@
   "create-reading-plan": "ਪੜ੍ਹਨ ਦੀ ਯੋਜਨਾ ਬਣਾਓ",
   "reading-plans-empty": "ਤੁਹਾਡੇ ਕੋਲ ਅਜੇ ਪੜ੍ਹਨ ਦੀ ਕੋਈ ਯੋਜਨਾ ਨਹੀਂ ਹੈ। ਸ਼ੁਰੂਆਤ ਕਰਨ ਲਈ ਇੱਕ ਬਣਾਓ।",
   "untitled-reading-plan": "ਬਿਨਾਂ ਸਿਰਲੇਖ ਵਾਲਾ ਪਲਾਨ",
-  "title": "ਟਾਈਟਲ",
-  "reading-plan-title_placeholder": "ਜਿਵੇਂ ਕਿ ਇੱਕ ਸਾਲ ਵਿੱਚ ਬਾਈਬਲ",
+
   "reading-plan-description_placeholder": "ਇਹ ਯੋਜਨਾ ਕਿਸ ਬਾਰੇ ਹੈ?",
   "anonymous": "ਅਗਿਆਤ",
   "no-chat-messages": "ਹਾਲੇ ਕੋਈ ਸੁਨੇਹਾ ਨਹੀਂ ਹੈ",
@@ -336,7 +335,7 @@
   "dont-show-again": "ਇਸਨੂੰ ਦੁਬਾਰਾ ਨਾ ਦਿਖਾਓ",
   "discover": "ਖੋਜ ਕਰੋ",
   "playlists": "ਪਲੇਲਿਸਟਸ",
-  "annotations": "ਐਨੋਟੇਸ਼ਨ",
+
   "cross-references": "ਕ੍ਰਾਸ ਹਵਾਲੇ",
   "study-notes": "ਅਧਿਐਨ ਨੋਟਸ",
   "content": "ਸਮੱਗਰੀ",
@@ -405,8 +404,7 @@
   "add-and-save": "ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਸੇਵ ਕਰੋ",
   "loading-profile": "ਤੁਹਾਡਾ ਪ੍ਰੋਫਾਈਲ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "ਫੋਲਡਰ ਵਿੱਚ ਭੇਜੋ",
-  "move-to-new": "ਨਵੇਂ 'ਤੇ ਜਾਓ",
+
   "share": "ਸਾਂਝਾ ਕਰੋ",
   "share-sheet-title": "ਸਾਂਝਾ ਕਰੋ",
   "share-link": "ਇੱਕ ਲਿੰਕ ਸਾਂਝਾ ਕਰੋ",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "ਨਵੀਂ ਯੋਜਨਾ ਬਣਾਓ",
   "edit-reading-plan": "ਯੋਜਨਾ ਦਾ ਸੰਪਾਦਨ ਕਰੋ",
   "reading-plan-step-name-title": "ਆਪਣੀ ਯੋਜਨਾ ਨੂੰ ਨਾਮ ਦਿਓ",
-  "reading-plan-step-name-hint": "ਆਪਣੀ ਯੋਜਨਾ ਨੂੰ ਅਜਿਹਾ ਨਾਮ ਦਿਓ ਜੋ ਲੋਕ ਪਛਾਣਨ",
+
   "reading-plan-name-placeholder": "ਉਦਾਹਰਨ ਲਈ ਮੇਰੀ ਜ਼ਬੂਰ ਯਾਤਰਾ",
   "reading-plan-description-label": "ਵਰਣਨ (ਵਿਕਲਪਿਕ)",
   "reading-plan-step-scripture-title": "ਰੀਡਿੰਗਾਂ ਚੁਣੋ",
   "reading-plan-step-cadences-title": "ਪੜ੍ਹਨ ਦੇ ਤਾਲ",
   "reading-plan-step-cadences-hint": "ਉਹ ਪੜ੍ਹਨ ਦੀ ਗਤੀ ਚੁਣੋ ਜੋ ਤੁਸੀਂ ਪੇਸ਼ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ। ਪਾਠਕ ਹਮੇਸ਼ਾਂ ਆਪਣੀ ਰਫ਼ਤਾਰ ਨਾਲ ਜਾਣ ਦੀ ਚੋਣ ਕਰ ਸਕਦੇ ਹਨ।",
-  "reading-plan-cadence-once-daily": "ਇੱਕ ਦਿਨ ਵਿੱਚ ਇੱਕ ਸੈਸ਼ਨ",
-  "reading-plan-cadence-twice-daily": "ਦਿਨ ਵਿੱਚ ਦੋ ਸੈਸ਼ਨ",
-  "reading-plan-cadence-three-times-daily": "ਇੱਕ ਦਿਨ ਵਿੱਚ ਤਿੰਨ ਸੈਸ਼ਨ",
-  "reading-plan-cadence-every-other-day": "ਹਰ ਦੂਜੇ ਦਿਨ ਇੱਕ ਸੈਸ਼ਨ",
+
   "reading-plan-cadence-length": "{{count}} ਦਿਨਾਂ ਵਿੱਚ ਪੂਰਾ ਹੋਵੇਗਾ",
   "reading-plan-cadence-length_one": "{{count}} ਦਿਨ ਵਿੱਚ ਖਤਮ ਹੁੰਦਾ ਹੈ",
   "reading-plan-cadence-length_other": "{{count}} ਦਿਨਾਂ ਵਿੱਚ ਪੂਰਾ ਹੋਵੇਗਾ",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "ਸੇਵ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
   "reading-plan-draft-saved": "ਡਰਾਫਟ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਗਿਆ",
   "reading-plan-draft-save-failed": "ਡਰਾਫਟ ਨੂੰ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ",
-  "added-to-reading-plan-session": "ਸੈਸ਼ਨ {{session}} ਵਿੱਚ ਜੋੜਿਆ ਗਿਆ",
-  "reading-plan-add-reading": "ਜੋੜੋ",
+
   "reading-plan-scripture-remove": "ਪੜ੍ਹਨ ਨੂੰ ਹਟਾਓ",
   "reading-plan-create-submit": "ਯੋਜਨਾ ਬਣਾਓ",
   "reading-plan-save-changes": "ਬਦਲਾਅ ਸੁਰੱਖਿਅਤ ਕਰੋ",
@@ -504,12 +498,11 @@
   "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
   "reading-plan-not-started": "ਸ਼ੁਰੂ ਨਹੀਂ ਹੋਇਆ",
   "reading-plan-start": "ਯੋਜਨਾ ਸ਼ੁਰੂ ਕਰੋ",
-  "reading-plan-session-count": "{{count}} ਰੀਡਿੰਗਾਂ",
-  "reading-plan-progress-readings": "{ {{total}} ਰੀਡਿੰਗਾਂ ਵਿੱਚੋਂ {{done}}",
+
   "reading-plan-streak": "{{count}} -ਦਿਨ ਦੀ ਲੜੀ",
-  "reading-plan-today": "ਅੱਜ",
+
   "reading-plan-mark-complete": "ਮੁਕੰਮਲ ਵਜੋਂ ਨਿਸ਼ਾਨਦੇਹੀ ਕਰੋ",
-  "reading-plan-day-completed": "ਪੂਰਾ ਹੋਇਆ",
+
   "reading-plan-empty-sessions": "ਇਸ ਪਲਾਨ ਵਿੱਚ ਅਜੇ ਕੋਈ ਰੀਡਿੰਗ ਨਹੀਂ ਹੈ।",
   "reading-plan-celebration-title": "ਦਿਨ {{day}} ਪੂਰਾ ਹੋਇਆ!",
   "reading-plan-complete-title": "ਯੋਜਨਾ ਪੂਰੀ ਹੋਈ!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "ਪੜ੍ਹਨ ਨੂੰ ਪੂਰਾ ਹੋਣ 'ਤੇ ਨਿਸ਼ਾਨ ਲਗਾਓ",
   "reading-plan-link-video": "ਵੀਡੀਓ",
   "reading-belongs-to": "ਇਹ ਪੜ੍ਹਨਾ ਇਹਨਾਂ ਨਾਲ ਸਬੰਧਤ ਹੈ",
-  "reading-plan-read-nudge": "ਤੁਸੀਂ ਇਹ ਆਇਤ ਪੜ੍ਹ ਲਈ ਹੈ - ਇਸਨੂੰ ਪੂਰਾ ਨਿਸ਼ਾਨਬੱਧ ਕਰੋ?",
+
   "reading-plan-mark-passage-complete": "{{passage}} ਨੂੰ ਪੜ੍ਹਿਆ ਹੋਇਆ ਵਜੋਂ ਚਿੰਨ੍ਹਿਤ ਕਰੋ",
   "reading-plan-read-nudge-title": "ਵਧੀਆ ਪੜ੍ਹਿਆ!",
   "reading-plan-read-nudge-toast": "{{passage}} ਨੂੰ ਪੂਰਾ ਨਿਸ਼ਾਨਬੱਧ ਕਰਨਾ ਹੈ?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "ਇਹ ਪਲੇਲਿਸਟ ਕਿਸ ਬਾਰੇ ਹੈ?",
   "read-more": "ਹੋਰ ਪੜ੍ਹੋ",
   "read-less": "ਘੱਟ ਪੜ੍ਹੋ",
-  "switch-language-title": "ਭਾਸ਼ਾ ਬਦਲੀਏ?",
-  "switch-language-body": "ਕੀ ਤੁਸੀਂ ਆਪਣੀ ਭਾਸ਼ਾ ਨੂੰ {{nativeLanguageName}} ਵਿੱਚ ਬਦਲਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
-  "switch-language-confirm": "ਸਵਿੱਚ ਕਰੋ",
-  "switch-language-dismiss": "ਸਵਿੱਚ ਨਾ ਕਰੋ",
-  "switch-language-never": "ਦੁਬਾਰਾ ਕਦੇ ਨਾ ਪੁੱਛੋ",
+
   "ask-to-switch-ui-language": "ਅਨੁਵਾਦ ਦੇ ਨਾਲ ਭਾਸ਼ਾ ਬਦਲਣ ਦੀ ਪੇਸ਼ਕਸ਼ ਕਰੋ",
   "ai": "ਏ.ਆਈ.",
   "ai-edit-playlist": "AI ਨਾਲ ਪਲੇਲਿਸਟ ਸੰਪਾਦਿਤ ਕਰੋ",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} ਵਰਤੇ ਗਏ {{count}} ਔਜ਼ਾਰ",
   "chat-tool-used_one": "{{name}} ਨੇ ਇੱਕ ਟੂਲ ਵਰਤਿਆ",
   "chat-tool-used_other": "{{name}} ਵਰਤੇ ਗਏ {{count}} ਔਜ਼ਾਰ",
-  "chat-ai-error": "ਮਾਫ਼ ਕਰਨਾ, ਜਵਾਬ ਤਿਆਰ ਕਰਨ ਵਿੱਚ ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ ( {{error}} )।",
-  "playlist-editor": "ਪਲੇਲਿਸਟ ਸੰਪਾਦਕ",
+
   "ai-context-button-label": "ਸਰਗਰਮ AI ਸੰਦਰਭ",
   "ai-context-tool-count": "{{count}} ਔਜ਼ਾਰ",
   "annotation-conflict-title": "ਇਹ ਨੋਟ ਦੋ ਥਾਵਾਂ 'ਤੇ ਬਦਲਿਆ ਗਿਆ ਹੈ।",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "ਕੋਈ ਸਮੱਗਰੀ ਨਹੀਂ।",
   "annotation-conflict-confirm": "ਪੁਸ਼ਟੀ ਕਰੋ",
   "annotation-conflict-resolve-failed": "ਉਹ ਚੋਣ ਲਾਗੂ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ। ਇਸਨੂੰ ਦੁਬਾਰਾ ਅਜ਼ਮਾਇਆ ਜਾਵੇਗਾ।",
-  "annotations-pending-sync": "{{count}} ਬਦਲਾਅ ਸਿੰਕ ਹੋਣ ਦੀ ਉਡੀਕ ਕਰ ਰਿਹਾ ਹੈ",
-  "annotations-pending-sync-plural": "{{count}} ਬਦਲਾਅ ਸਿੰਕ ਹੋਣ ਦੀ ਉਡੀਕ ਵਿੱਚ ਹਨ।",
+
   "annotation-sync-failed": "ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਨੋਟ-ਕਥਨ ਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਇਹ ਅਜੇ ਵੀ ਇਸ ਡੀਵਾਈਸ 'ਤੇ ਹੈ।",
   "create-menu": "ਬਣਾਓ",
   "create-annotation-menu-item": "ਐਨੋਟੇਸ਼ਨ",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "ਐਨੋਟੇਸ਼ਨ ਨੂੰ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।",
   "annotation-group-expand": "ਗਰੁੱਪ ਦਾ ਵਿਸਤਾਰ ਕਰੋ",
   "annotation-group-collapse": "ਗਰੁੱਪ ਨੂੰ ਸਮੇਟੋ",
-  "annotation-comment-updated": "ਅੱਪਡੇਟ ਕੀਤਾ ਗਿਆ {{date}}",
+
   "notes": "ਨੋਟਸ",
   "note": "ਨੋਟ",
   "show-more-verse-actions": "ਹੋਰ ਕਾਰਵਾਈਆਂ ਦਿਖਾਓ",
@@ -680,7 +667,7 @@
   "create-folder": "ਫੋਲਡਰ ਬਣਾਓ",
   "edit-bookmark": "ਬੁੱਕਮਾਰਕ ਸੰਪਾਦਿਤ ਕਰੋ",
   "remove-bookmark-from-all-folders": "ਸਾਰੇ ਫੋਲਡਰਾਂ ਤੋਂ ਹਟਾਓ",
-  "add-bookmark-modal": "ਬੁੱਕਮਾਰਕ ਸ਼ਾਮਲ ਕਰੋ",
+
   "greeting-afternoon": "ਨਮਸਕਾਰ!",
   "greeting-afternoon-named": "ਸ਼ੁਭ ਦੁਪਹਿਰ, {{name}} !",
   "greeting-evening": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ!",

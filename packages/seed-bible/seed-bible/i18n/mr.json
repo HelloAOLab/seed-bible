@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "यासाठी हायलाइट करा",
   "end-session": "सत्र समाप्त करा",
   "panels": "पॅनेल",
-  "new-shared-session": "नवीन सामायिक सत्र",
+
   "open-in-new-panel": "नवीन पॅनलमध्ये उघडा",
   "close-sidebar": "साइडबार बंद करा",
   "select-pane-layout": "पेन लेआउट निवडा",
@@ -253,8 +253,7 @@
   "create-reading-plan": "वाचन योजना तयार करा",
   "reading-plans-empty": "तुमच्याकडे अद्याप कोणतीही वाचन योजना नाही. सुरुवात करण्यासाठी एक तयार करा.",
   "untitled-reading-plan": "शीर्षक नसलेली योजना",
-  "title": "शीर्षक",
-  "reading-plan-title_placeholder": "उदा. एका वर्षात बायबल",
+
   "reading-plan-description_placeholder": "ही योजना कशाबद्दल आहे?",
   "anonymous": "अनामिक",
   "no-chat-messages": "अद्याप कोणताही संदेश नाही",
@@ -336,7 +335,7 @@
   "dont-show-again": "हे पुन्हा दाखवू नका",
   "discover": "शोधा",
   "playlists": "प्लेलिस्ट",
-  "annotations": "भाष्ये",
+
   "cross-references": "क्रॉस संदर्भ",
   "study-notes": "अभ्यासाच्या नोट्स",
   "content": "सामग्री",
@@ -405,8 +404,7 @@
   "add-and-save": "जोडा आणि सेव्ह करा",
   "loading-profile": "तुमचे प्रोफाइल लोड होत आहे…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "फोल्डरमध्ये हलवा",
-  "move-to-new": "नवीन ठिकाणी जा",
+
   "share": "शेअर करा",
   "share-sheet-title": "शेअर करा",
   "share-link": "लिंक शेअर करा",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "नवीन योजना तयार करा",
   "edit-reading-plan": "संपादन योजना",
   "reading-plan-step-name-title": "तुमच्या योजनेला नाव द्या",
-  "reading-plan-step-name-hint": "तुमच्या योजनेला असे नाव द्या जे लोकांना ओळखता येईल.",
+
   "reading-plan-name-placeholder": "उदा. माझा स्तोत्रप्रवास",
   "reading-plan-description-label": "वर्णन (ऐच्छिक)",
   "reading-plan-step-scripture-title": "निवडक वाचन",
   "reading-plan-step-cadences-title": "वाचन लय",
   "reading-plan-step-cadences-hint": "तुम्ही देऊ इच्छित असलेला वाचनाचा वेग निवडा. वाचक त्याऐवजी नेहमीच त्यांच्या स्वतःच्या गतीने वाचण्याचा पर्याय निवडू शकतात.",
-  "reading-plan-cadence-once-daily": "दिवसातून एक सत्र",
-  "reading-plan-cadence-twice-daily": "दिवसातून दोन सत्रे",
-  "reading-plan-cadence-three-times-daily": "दिवसातून तीन सत्रे",
-  "reading-plan-cadence-every-other-day": "एक दिवसाआड एक सत्र",
+
   "reading-plan-cadence-length": "{{count}} दिवसांत पूर्ण होईल",
   "reading-plan-cadence-length_one": "{{count}} दिवसात पूर्ण होईल",
   "reading-plan-cadence-length_other": "{{count}} दिवसांत पूर्ण होईल",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "जतन करत आहे…",
   "reading-plan-draft-saved": "मसुदा जतन केला.",
   "reading-plan-draft-save-failed": "ड्राफ्ट सेव्ह करता आला नाही.",
-  "added-to-reading-plan-session": "सत्रात जोडले {{session}}",
-  "reading-plan-add-reading": "जोडा",
+
   "reading-plan-scripture-remove": "वाचन काढून टाका",
   "reading-plan-create-submit": "योजना तयार करा",
   "reading-plan-save-changes": "बदल जतन करा",
@@ -504,12 +498,11 @@
   "loading": "लोडिंग…",
   "reading-plan-not-started": "सुरू केले नाही",
   "reading-plan-start": "योजना सुरू करा",
-  "reading-plan-session-count": "वाचनांची {{count}}",
-  "reading-plan-progress-readings": "{{total}} वाचनांपैकी {{done}}",
+
   "reading-plan-streak": "{{count}} दिवसांची संख्या",
-  "reading-plan-today": "आज",
+
   "reading-plan-mark-complete": "पूर्ण झाले म्हणून चिन्हांकित करा",
-  "reading-plan-day-completed": "पूर्ण झाले",
+
   "reading-plan-empty-sessions": "या योजनेत अद्याप कोणतेही वाचन समाविष्ट नाही.",
   "reading-plan-celebration-title": "दिवस {{day}} पूर्ण झाला!",
   "reading-plan-complete-title": "योजना पूर्ण झाली!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "वाचन पूर्ण झाले असे चिन्हांकित करा",
   "reading-plan-link-video": "व्हिडिओ",
   "reading-belongs-to": "हे वाचन याचे आहे",
-  "reading-plan-read-nudge": "तुम्ही हा उतारा वाचला आहे — तो पूर्ण झाला असे चिन्हांकित करा?",
+
   "reading-plan-mark-passage-complete": "{{passage}} वाचलेला म्हणून चिन्हांकित करा",
   "reading-plan-read-nudge-title": "छान वाचन!",
   "reading-plan-read-nudge-toast": "{{passage}} पूर्ण झाला असे चिन्हांकित करा?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "ही प्लेलिस्ट कशाबद्दल आहे?",
   "read-more": "अधिक वाचा",
   "read-less": "कमी वाचा",
-  "switch-language-title": "भाषा बदलायची आहे का?",
-  "switch-language-body": "तुम्हाला तुमची भाषा {{nativeLanguageName}} मध्ये बदलायची आहे का?",
-  "switch-language-confirm": "स्विच",
-  "switch-language-dismiss": "बदलू ​​नका",
-  "switch-language-never": "पुन्हा कधीही विचारू नका",
+
   "ask-to-switch-ui-language": "भाषांतरासह भाषा बदलण्याचा प्रस्ताव",
   "ai": "एआय",
   "ai-edit-playlist": "एआय वापरून प्लेलिस्ट संपादित करा",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} ने {{count}} साधने वापरली",
   "chat-tool-used_one": "{{name}} ने एक साधन वापरले",
   "chat-tool-used_other": "{{name}} ने {{count}} साधने वापरली",
-  "chat-ai-error": "क्षमस्व, प्रतिसाद तयार करताना काहीतरी चूक झाली ( {{error}} ).",
-  "playlist-editor": "प्लेलिस्ट संपादक",
+
   "ai-context-button-label": "सक्रिय एआय संदर्भ",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "या नोटमध्ये दोन ठिकाणी बदल करण्यात आला.",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "कोणतीही सामग्री नाही.",
   "annotation-conflict-confirm": "पुष्टी करा",
   "annotation-conflict-resolve-failed": "तो पर्याय लागू करता आला नाही. पुन्हा प्रयत्न केला जाईल.",
-  "annotations-pending-sync": "सिंक होण्याची वाट {{count}} असलेला बदल",
-  "annotations-pending-sync-plural": "सिंक होण्याची वाट पाहत असलेले बदल {{count}}",
+
   "annotation-sync-failed": "तुमच्या खात्यात नोंद जतन करता आली नाही. ती अजूनही याच डिव्हाइसवर आहे.",
   "create-menu": "तयार करा",
   "create-annotation-menu-item": "टीप",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "टीप जतन करता आली नाही.",
   "annotation-group-expand": "गट विस्तार करा",
   "annotation-group-collapse": "गट संकुचित करा",
-  "annotation-comment-updated": "अद्यतनित {{date}}",
+
   "notes": "नोंदी",
   "note": "टीप",
   "show-more-verse-actions": "अधिक कृती दाखवा",
@@ -680,7 +667,7 @@
   "create-folder": "फोल्डर तयार करा",
   "edit-bookmark": "बुकमार्क संपादित करा",
   "remove-bookmark-from-all-folders": "सर्व फोल्डर्समधून काढून टाका",
-  "add-bookmark-modal": "बुकमार्क जोडा",
+
   "greeting-afternoon": "शुभ दुपार!",
   "greeting-afternoon-named": "शुभ दुपार, {{name}} !",
   "greeting-evening": "शुभ संध्या!",

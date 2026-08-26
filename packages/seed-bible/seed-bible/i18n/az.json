@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Vurğulayın",
   "end-session": "Sessiyanı bitirin",
   "panels": "Panellər",
-  "new-shared-session": "Yeni paylaşılan sessiya",
+
   "open-in-new-panel": "Yeni paneldə açın",
   "close-sidebar": "Yan paneli bağlayın",
   "select-pane-layout": "Panel düzeni seçin",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Oxu planı yaradın",
   "reading-plans-empty": "Hələlik heç bir oxu planınız yoxdur. Başlamaq üçün birini yaradın.",
   "untitled-reading-plan": "Başlıqsız plan",
-  "title": "Başlıq",
-  "reading-plan-title_placeholder": "məs. Bir ildə Müqəddəs Kitab",
+
   "reading-plan-description_placeholder": "Bu plan nə ilə bağlıdır?",
   "anonymous": "Anonim",
   "no-chat-messages": "Hələ mesaj yoxdur",
@@ -336,7 +335,7 @@
   "dont-show-again": "Bunu bir daha göstərməyin",
   "discover": "Kəşf edin",
   "playlists": "Pleylistlər",
-  "annotations": "Annotasiyalar",
+
   "cross-references": "Çarpaz istinadlar",
   "study-notes": "Tədqiqat qeydləri",
   "content": "Məzmun",
@@ -405,8 +404,7 @@
   "add-and-save": "Əlavə et və yadda saxla",
   "loading-profile": "Profiliniz yüklənir…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Qovluğa köçürün",
-  "move-to-new": "Yenisinə keçin",
+
   "share": "Paylaş",
   "share-sheet-title": "Paylaş",
   "share-link": "Link paylaşın",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Yeni plan yaradın",
   "edit-reading-plan": "Planı redaktə edin",
   "reading-plan-step-name-title": "Planınıza ad verin",
-  "reading-plan-step-name-hint": "Planınıza insanların tanıyacağı bir ad verin",
+
   "reading-plan-name-placeholder": "məs. Zəbur Səyahətim",
   "reading-plan-description-label": "Təsvir (isteğe bağlı)",
   "reading-plan-step-scripture-title": "Oxunuşları seçin",
   "reading-plan-step-cadences-title": "Oxu kadensiyaları",
   "reading-plan-step-cadences-hint": "Təklif etmək istədiyiniz oxu tempini seçin. Oxucular həmişə öz templəri ilə oxumağı seçə bilərlər.",
-  "reading-plan-cadence-once-daily": "Gündə bir seans",
-  "reading-plan-cadence-twice-daily": "Gündə iki seans",
-  "reading-plan-cadence-three-times-daily": "Gündə üç seans",
-  "reading-plan-cadence-every-other-day": "Hər iki gündən bir seans",
+
   "reading-plan-cadence-length": "{{count}} günə bitir",
   "reading-plan-cadence-length_one": "{{count}} günə bitir",
   "reading-plan-cadence-length_other": "{{count}} günə bitir",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Yadda saxlanılır…",
   "reading-plan-draft-saved": "Qaralama yadda saxlanıldı",
   "reading-plan-draft-save-failed": "Qaralama yadda saxlanıla bilmədi",
-  "added-to-reading-plan-session": "{{session}} sessiyasına əlavə edildi",
-  "reading-plan-add-reading": "Əlavə et",
+
   "reading-plan-scripture-remove": "Oxumanı silin",
   "reading-plan-create-submit": "Plan yaradın",
   "reading-plan-save-changes": "Dəyişiklikləri yadda saxla",
@@ -504,12 +498,11 @@
   "loading": "Yüklənir…",
   "reading-plan-not-started": "Başlanmayıb",
   "reading-plan-start": "Plana başlayın",
-  "reading-plan-session-count": "{{count}} göstərici",
-  "reading-plan-progress-readings": "{ {{total}} {{done}} }",
+
   "reading-plan-streak": "{{count}} -günlük seriya",
-  "reading-plan-today": "Bu gün",
+
   "reading-plan-mark-complete": "Tamamlanmış kimi qeyd edin",
-  "reading-plan-day-completed": "Tamamlandı",
+
   "reading-plan-empty-sessions": "Bu planın hələlik oxunuşu yoxdur.",
   "reading-plan-celebration-title": "Gün {{day}} tamamlandı!",
   "reading-plan-complete-title": "Plan tamamlandı!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Oxumağı tamamlanmış kimi qeyd edin",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Bu oxuma məxsusdur",
-  "reading-plan-read-nudge": "Bu parçanı oxumusunuz — onu tamamlanmış kimi qeyd edin?",
+
   "reading-plan-mark-passage-complete": "{{passage}} i oxunmuş kimi qeyd edin",
   "reading-plan-read-nudge-title": "Gözəl oxu!",
   "reading-plan-read-nudge-toast": "{{passage}} tamamlanmış kimi qeyd edilsin?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Bu pleylist nə haqqındadır?",
   "read-more": "Daha çox oxu",
   "read-less": "Daha az oxuyun",
-  "switch-language-title": "Dili dəyişmək?",
-  "switch-language-body": "Dilinizi {{nativeLanguageName}} dilinə keçirmək istəyirsiniz?",
-  "switch-language-confirm": "Keçid",
-  "switch-language-dismiss": "Dəyişdirməyin",
-  "switch-language-never": "Bir daha soruşma",
+
   "ask-to-switch-ui-language": "Tərcümə ilə dili dəyişdirməyi təklif edin",
   "ai": "Süni intellekt",
   "ai-edit-playlist": "Süni intellekt ilə pleylisti redaktə edin",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} {{count}} alətdən istifadə etdi",
   "chat-tool-used_one": "{{name}} alətdən istifadə etdi",
   "chat-tool-used_other": "{{name}} {{count}} alətdən istifadə etdi",
-  "chat-ai-error": "Bağışlayın, cavab yaradılarkən xəta baş verdi ( {{error}} ).",
-  "playlist-editor": "Pleylist Redaktoru",
+
   "ai-context-button-label": "Aktiv süni intellekt konteksti",
   "ai-context-tool-count": "{{count}} alətlər",
   "annotation-conflict-title": "Bu qeyd iki yerdə dəyişdi",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Məzmun yoxdur.",
   "annotation-conflict-confirm": "Təsdiqləyin",
   "annotation-conflict-resolve-failed": "Bu seçimi tətbiq etmək mümkün olmadı. Yenidən cəhd ediləcək.",
-  "annotations-pending-sync": "{{count}} dəyişiklik sinxronizasiyanı gözləyir",
-  "annotations-pending-sync-plural": "{{count}} dəyişiklik sinxronizasiyanı gözləyir",
+
   "annotation-sync-failed": "Hesabınızda qeyd yadda saxlanıla bilmədi. O, hələ də bu cihazdadır.",
   "create-menu": "Yarat",
   "create-annotation-menu-item": "Annotasiya",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Annotasiyanı yadda saxlamaq mümkün olmadı.",
   "annotation-group-expand": "Qrupu genişləndirin",
   "annotation-group-collapse": "Qrupu yığcamlaşdırın",
-  "annotation-comment-updated": "Yeniləndi {{date}}",
+
   "notes": "Qeydlər",
   "note": "Qeyd",
   "show-more-verse-actions": "Daha çox əməliyyat göstər",
@@ -680,7 +667,7 @@
   "create-folder": "Qovluq yaradın",
   "edit-bookmark": "Əlfəcini redaktə edin",
   "remove-bookmark-from-all-folders": "Bütün qovluqlardan silin",
-  "add-bookmark-modal": "Əlfəcin əlavə edin",
+
   "greeting-afternoon": "Axşamınız xeyir!",
   "greeting-afternoon-named": "Axşamınız xeyir, {{name}} !",
   "greeting-evening": "Axşamınız xeyir!",

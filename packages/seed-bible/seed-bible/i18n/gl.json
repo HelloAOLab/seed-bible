@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Destacar para",
   "end-session": "Finalizar sesión",
   "panels": "Paneis",
-  "new-shared-session": "Nova sesión compartida",
+
   "open-in-new-panel": "Abrir nun novo panel",
   "close-sidebar": "Pechar a barra lateral",
   "select-pane-layout": "Seleccionar deseño do panel",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Crear un plan de lectura",
   "reading-plans-empty": "Aínda non tes ningún plan de lectura. Crea un para comezar.",
   "untitled-reading-plan": "Plano sen título",
-  "title": "Título",
-  "reading-plan-title_placeholder": "por exemplo, a Biblia nun ano",
+
   "reading-plan-description_placeholder": "De que trata este plan?",
   "anonymous": "Anónimo",
   "no-chat-messages": "Aínda non hai mensaxes",
@@ -336,7 +335,7 @@
   "dont-show-again": "Non volver mostrar isto",
   "discover": "Descubrir",
   "playlists": "Listas de reprodución",
-  "annotations": "Anotacións",
+
   "cross-references": "Referencias cruzadas",
   "study-notes": "Notas de estudo",
   "content": "Contido",
@@ -405,8 +404,7 @@
   "add-and-save": "Engadir e gardar",
   "loading-profile": "Cargando o teu perfil…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Mover á carpeta",
-  "move-to-new": "Mover a novo",
+
   "share": "Compartir",
   "share-sheet-title": "Compartir",
   "share-link": "Compartir unha ligazón",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Crear un novo plan",
   "edit-reading-plan": "Editar plan",
   "reading-plan-step-name-title": "Nomea o teu plan",
-  "reading-plan-step-name-hint": "Ponlle ao teu plan un nome que a xente recoñeza",
+
   "reading-plan-name-placeholder": "por exemplo, A miña viaxe dos Salmos",
   "reading-plan-description-label": "Descrición (opcional)",
   "reading-plan-step-scripture-title": "Seleccionar lecturas",
   "reading-plan-step-cadences-title": "Cadencias de lectura",
   "reading-plan-step-cadences-hint": "Escolle os ritmos de lectura que queiras ofrecer. Os lectores sempre poden optar por ir ao seu propio ritmo.",
-  "reading-plan-cadence-once-daily": "Unha sesión ao día",
-  "reading-plan-cadence-twice-daily": "Dúas sesións ao día",
-  "reading-plan-cadence-three-times-daily": "Tres sesións ao día",
-  "reading-plan-cadence-every-other-day": "Unha sesión cada dous días",
+
   "reading-plan-cadence-length": "Remata en {{count}} días",
   "reading-plan-cadence-length_one": "Remata en {{count}} día",
   "reading-plan-cadence-length_other": "Remata en {{count}} días",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Gardando…",
   "reading-plan-draft-saved": "Borrador gardado",
   "reading-plan-draft-save-failed": "Non se puido gardar o borrador",
-  "added-to-reading-plan-session": "Engadido á sesión {{session}}",
-  "reading-plan-add-reading": "Engadir",
+
   "reading-plan-scripture-remove": "Eliminar lectura",
   "reading-plan-create-submit": "Crear plan",
   "reading-plan-save-changes": "Gardar cambios",
@@ -504,12 +498,11 @@
   "loading": "Cargando…",
   "reading-plan-not-started": "Non iniciado",
   "reading-plan-start": "Iniciar plan",
-  "reading-plan-session-count": "{{count}} lecturas",
-  "reading-plan-progress-readings": "{{done}} de {{total}} lecturas",
+
   "reading-plan-streak": "racha de {{count}} días",
-  "reading-plan-today": "Hoxe",
+
   "reading-plan-mark-complete": "Marcar como completado",
-  "reading-plan-day-completed": "Completado",
+
   "reading-plan-empty-sessions": "Este plan aínda non ten ningunha lectura.",
   "reading-plan-celebration-title": "Día {{day}} completouse!",
   "reading-plan-complete-title": "Plan completo!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Marcar lectura completa",
   "reading-plan-link-video": "Vídeo",
   "reading-belongs-to": "Esta lectura pertence a",
-  "reading-plan-read-nudge": "Liches esta pasaxe. Márcaa como completa?",
+
   "reading-plan-mark-passage-complete": "Marcar {{passage}} como lida",
   "reading-plan-read-nudge-title": "Boa lectura!",
   "reading-plan-read-nudge-toast": "Marcar {{passage}} como completa?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "De que trata esta lista de reprodución?",
   "read-more": "Ler máis",
   "read-less": "Ler menos",
-  "switch-language-title": "Cambiar de idioma?",
-  "switch-language-body": "Queres cambiar o teu idioma a {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Interruptor",
-  "switch-language-dismiss": "Non cambiar",
-  "switch-language-never": "Nunca máis preguntar",
+
   "ask-to-switch-ui-language": "Ofrecer o cambio de idioma con tradución",
   "ai": "IA",
   "ai-edit-playlist": "Editar lista de reprodución con IA",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} usou {{count}} ferramentas",
   "chat-tool-used_one": "{{name}} usou unha ferramenta",
   "chat-tool-used_other": "{{name}} usou {{count}} ferramentas",
-  "chat-ai-error": "Sentímolo, algo fallou ao xerar unha resposta ( {{error}} ).",
-  "playlist-editor": "Editor de listas de reprodución",
+
   "ai-context-button-label": "Contexto de IA activa",
   "ai-context-tool-count": "ferramentas {{count}}",
   "annotation-conflict-title": "Esta nota cambiou en dous lugares",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Sen contido.",
   "annotation-conflict-confirm": "Confirmar",
   "annotation-conflict-resolve-failed": "Non se puido aplicar esa opción. Tentarase de novo.",
-  "annotations-pending-sync": "{{count}} cambio á espera de sincronización",
-  "annotations-pending-sync-plural": "{{count}} cambios á espera de sincronización",
+
   "annotation-sync-failed": "Non se puido gardar unha nota na túa conta. Aínda está neste dispositivo.",
   "create-menu": "Crear",
   "create-annotation-menu-item": "Anotación",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Non se puido gardar a anotación.",
   "annotation-group-expand": "Expandir grupo",
   "annotation-group-collapse": "Contraer grupo",
-  "annotation-comment-updated": "Actualizado {{date}}",
+
   "notes": "Notas",
   "note": "Nota",
   "show-more-verse-actions": "Mostrar máis accións",
@@ -680,7 +667,7 @@
   "create-folder": "Crear cartafol",
   "edit-bookmark": "Editar marcador",
   "remove-bookmark-from-all-folders": "Eliminar de todas as carpetas",
-  "add-bookmark-modal": "Engadir marcador",
+
   "greeting-afternoon": "Boas tardes!",
   "greeting-afternoon-named": "Boas tardes, {{name}} !",
   "greeting-evening": "Boas noites!",

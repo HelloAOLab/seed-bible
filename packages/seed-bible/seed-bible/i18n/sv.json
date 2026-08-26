@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Markera för",
   "end-session": "Avsluta sessionen",
   "panels": "Paneler",
-  "new-shared-session": "Ny delad session",
+
   "open-in-new-panel": "Öppna i ny panel",
   "close-sidebar": "Stäng sidofältet",
   "select-pane-layout": "Välj rutans layout",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Skapa läsplan",
   "reading-plans-empty": "Du har inga läsplaner än. Skapa en för att komma igång.",
   "untitled-reading-plan": "Namnlös plan",
-  "title": "Titel",
-  "reading-plan-title_placeholder": "t.ex. Bibeln på ett år",
+
   "reading-plan-description_placeholder": "Vad handlar den här planen om?",
   "anonymous": "Anonym",
   "no-chat-messages": "Inga meddelanden ännu",
@@ -336,7 +335,7 @@
   "dont-show-again": "Visa inte detta igen",
   "discover": "Upptäcka",
   "playlists": "Spellistor",
-  "annotations": "Annoteringar",
+
   "cross-references": "Korsreferenser",
   "study-notes": "Studieanteckningar",
   "content": "Innehåll",
@@ -405,8 +404,7 @@
   "add-and-save": "Lägg till och spara",
   "loading-profile": "Laddar din profil…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Flytta till mapp",
-  "move-to-new": "Flytta till nytt",
+
   "share": "Dela",
   "share-sheet-title": "Dela",
   "share-link": "Dela en länk",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Skapa ny plan",
   "edit-reading-plan": "Redigera plan",
   "reading-plan-step-name-title": "Namnge din plan",
-  "reading-plan-step-name-hint": "Ge din plan ett namn som folk känner igen",
+
   "reading-plan-name-placeholder": "t.ex. Min Psalmresa",
   "reading-plan-description-label": "Beskrivning (valfritt)",
   "reading-plan-step-scripture-title": "Välj avläsningar",
   "reading-plan-step-cadences-title": "Läsning av kadenser",
   "reading-plan-step-cadences-hint": "Välj de lästakter du vill erbjuda. Läsarna kan alltid välja att fortsätta i sin egen takt istället.",
-  "reading-plan-cadence-once-daily": "En session om dagen",
-  "reading-plan-cadence-twice-daily": "Två sessioner om dagen",
-  "reading-plan-cadence-three-times-daily": "Tre sessioner om dagen",
-  "reading-plan-cadence-every-other-day": "En session varannan dag",
+
   "reading-plan-cadence-length": "Klar om {{count}} dagar",
   "reading-plan-cadence-length_one": "Avslutas om {{count}} dag",
   "reading-plan-cadence-length_other": "Klar om {{count}} dagar",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Sparande…",
   "reading-plan-draft-saved": "Utkast sparat",
   "reading-plan-draft-save-failed": "Det gick inte att spara utkastet",
-  "added-to-reading-plan-session": "Tillagd till session {{session}}",
-  "reading-plan-add-reading": "Tillägga",
+
   "reading-plan-scripture-remove": "Ta bort läsning",
   "reading-plan-create-submit": "Skapa plan",
   "reading-plan-save-changes": "Spara ändringar",
@@ -504,12 +498,11 @@
   "loading": "Belastning…",
   "reading-plan-not-started": "Inte påbörjad",
   "reading-plan-start": "Starta planen",
-  "reading-plan-session-count": "{{count}} avläsningar",
-  "reading-plan-progress-readings": "{{done}} av {{total}} avläsningar",
+
   "reading-plan-streak": "{{count}} dagar i rad",
-  "reading-plan-today": "I dag",
+
   "reading-plan-mark-complete": "Markera som klar",
-  "reading-plan-day-completed": "Avslutad",
+
   "reading-plan-empty-sessions": "Den här planen har inga avläsningar ännu.",
   "reading-plan-celebration-title": "Dag {{day}} avklarad!",
   "reading-plan-complete-title": "Planen är klar!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Markeringsläsning klar",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Denna läsning tillhör",
-  "reading-plan-read-nudge": "Du har läst det här stycket – markera det som färdigt?",
+
   "reading-plan-mark-passage-complete": "Markera {{passage}} som läst",
   "reading-plan-read-nudge-title": "Trevlig läsning!",
   "reading-plan-read-nudge-toast": "Markera {{passage}} som klar?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Vad handlar den här spellistan om?",
   "read-more": "Läs mer",
   "read-less": "Läs mindre",
-  "switch-language-title": "Byta språk?",
-  "switch-language-body": "Vill du byta språk till {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Växla",
-  "switch-language-dismiss": "Byt inte",
-  "switch-language-never": "Fråga aldrig igen",
+
   "ask-to-switch-ui-language": "Erbjud att byta språk med översättning",
   "ai": "AI",
   "ai-edit-playlist": "Redigera spellista med AI",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} använde {{count}} verktyg",
   "chat-tool-used_one": "{{name}} använde ett verktyg",
   "chat-tool-used_other": "{{name}} använde {{count}} verktyg",
-  "chat-ai-error": "Tyvärr gick något fel när ett svar genererades ( {{error}} ).",
-  "playlist-editor": "Spellisteredigerare",
+
   "ai-context-button-label": "Aktiv AI-kontext",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Denna anteckning har ändrats på två ställen",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Inget innehåll.",
   "annotation-conflict-confirm": "Bekräfta",
   "annotation-conflict-resolve-failed": "Kunde inte tillämpa det valet. Det kommer att försökas igen.",
-  "annotations-pending-sync": "{{count}} ändring väntar på synkronisering",
-  "annotations-pending-sync-plural": "{{count}} ändringar väntar på synkronisering",
+
   "annotation-sync-failed": "Det gick inte att spara en anteckning på ditt konto. Den finns fortfarande på den här enheten.",
   "create-menu": "Skapa",
   "create-annotation-menu-item": "Anteckning",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Kunde inte spara annoteringen.",
   "annotation-group-expand": "Expandera gruppen",
   "annotation-group-collapse": "Komprimera grupp",
-  "annotation-comment-updated": "Uppdaterad {{date}}",
+
   "notes": "Anteckningar",
   "note": "Notera",
   "show-more-verse-actions": "Visa fler åtgärder",
@@ -680,7 +667,7 @@
   "create-folder": "Skapa mapp",
   "edit-bookmark": "Redigera bokmärke",
   "remove-bookmark-from-all-folders": "Ta bort från alla mappar",
-  "add-bookmark-modal": "Lägg till bokmärke",
+
   "greeting-afternoon": "God eftermiddag!",
   "greeting-afternoon-named": "God eftermiddag, {{name}} !",
   "greeting-evening": "god afton!",

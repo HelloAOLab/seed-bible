@@ -98,7 +98,7 @@
   "session-settings-highlight-duration": "ለድምቀት",
   "end-session": "ክፍለ ጊዜን ጨርስ",
   "panels": "ፓነሎች",
-  "new-shared-session": "አዲስ የተጋራ ክፍለ ጊዜ",
+
   "open-in-new-panel": "በአዲስ ፓነል ውስጥ ክፈት",
   "close-sidebar": "የጎን አሞሌን ዝጋ",
   "select-pane-layout": "የፓነል አቀማመጥ ይምረጡ",
@@ -253,8 +253,7 @@
   "create-reading-plan": "የንባብ እቅድ ይፍጠሩ",
   "reading-plans-empty": "እስካሁን ምንም የንባብ እቅድ የለዎትም። ለመጀመር አንድ ይፍጠሩ።",
   "untitled-reading-plan": "ርዕስ የሌለው ዕቅድ",
-  "title": "ርዕስ",
-  "reading-plan-title_placeholder": "ለምሳሌ መጽሐፍ ቅዱስ በአንድ ዓመት ውስጥ",
+
   "reading-plan-description_placeholder": "ይህ እቅድ ስለምንድን ነው?",
   "anonymous": "ስም-አልባ",
   "no-chat-messages": "እስካሁን ምንም መልዕክቶች የሉም",
@@ -336,7 +335,7 @@
   "dont-show-again": "ይህንን ዳግመኛ አታሳይ",
   "discover": "ዲስከቨር",
   "playlists": "የአጫዋች ዝርዝሮች",
-  "annotations": "ማብራሪያዎች",
+
   "cross-references": "ተሻጋሪ ማጣቀሻዎች",
   "study-notes": "የጥናት ማስታወሻዎች",
   "content": "ይዘት",
@@ -405,8 +404,7 @@
   "add-and-save": "ጨምር እና አስቀምጥ",
   "loading-profile": "መገለጫዎን በመጫን ላይ…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "ወደ አቃፊ ውሰድ",
-  "move-to-new": "ወደ አዲስ ቀይር",
+
   "share": "አጋራ",
   "share-sheet-title": "አጋራ",
   "share-link": "አገናኝ አጋራ",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "አዲስ ዕቅድ ይፍጠሩ",
   "edit-reading-plan": "ዕቅድን ያርትዑ",
   "reading-plan-step-name-title": "ዕቅድዎን ይሰይሙ",
-  "reading-plan-step-name-hint": "ሰዎች የሚያውቁትን ስም ለዕቅድህ ስጠው",
+
   "reading-plan-name-placeholder": "ለምሳሌ የመዝሙረ ዳዊት ጉዞዬ",
   "reading-plan-description-label": "መግለጫ (አማራጭ)",
   "reading-plan-step-scripture-title": "ንባቦችን ይምረጡ",
   "reading-plan-step-cadences-title": "የንባብ ካዴንስ",
   "reading-plan-step-cadences-hint": "ሊያቀርቡት የሚፈልጉትን የንባብ ፍጥነት ይምረጡ። አንባቢዎች ሁልጊዜ በራሳቸው ፍጥነት መሄድ ይችላሉ።",
-  "reading-plan-cadence-once-daily": "በቀን አንድ ክፍለ ጊዜ",
-  "reading-plan-cadence-twice-daily": "በቀን ሁለት ክፍለ ጊዜዎች",
-  "reading-plan-cadence-three-times-daily": "በቀን ሦስት ክፍለ ጊዜዎች",
-  "reading-plan-cadence-every-other-day": "በየሁለት ቀኑ አንድ ክፍለ ጊዜ",
+
   "reading-plan-cadence-length": "በ {{count}} ቀናት ውስጥ ያበቃል",
   "reading-plan-cadence-length_one": "በ {{count}} ቀን ውስጥ ያበቃል",
   "reading-plan-cadence-length_other": "በ {{count}} ቀናት ውስጥ ያበቃል",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "በማስቀመጥ ላይ…",
   "reading-plan-draft-saved": "ረቂቅ ተቀምጧል",
   "reading-plan-draft-save-failed": "ረቂቅ ማስቀመጥ አልተቻለም",
-  "added-to-reading-plan-session": "ወደ ክፍለ ጊዜ {{session}} ታክሏል",
-  "reading-plan-add-reading": "ያክሉ",
+
   "reading-plan-scripture-remove": "ንባብን አስወግድ",
   "reading-plan-create-submit": "ዕቅድ ፍጠር",
   "reading-plan-save-changes": "ለውጦችን አስቀምጥ",
@@ -504,12 +498,11 @@
   "loading": "በመጫን ላይ…",
   "reading-plan-not-started": "አልተጀመረም",
   "reading-plan-start": "የመጀመሪያ ዕቅድ",
-  "reading-plan-session-count": "{{count}} ንባቦች",
-  "reading-plan-progress-readings": "{{done}} የ {{total}} ንባቦች",
+
   "reading-plan-streak": "{{count}} -ቀን ተከታታይ",
-  "reading-plan-today": "ዛሬ",
+
   "reading-plan-mark-complete": "እንደ ሙሉ ምልክት አድርግበት",
-  "reading-plan-day-completed": "ተጠናቋል",
+
   "reading-plan-empty-sessions": "ይህ እቅድ እስካሁን ምንም ንባቦች የሉትም።",
   "reading-plan-celebration-title": "ቀን {{day}} ተጠናቋል!",
   "reading-plan-complete-title": "ዕቅዱ ተጠናቋል!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "ማንበብ እንደተጠናቀቀ ምልክት ያድርጉበት",
   "reading-plan-link-video": "ቪዲዮ",
   "reading-belongs-to": "ይህ ንባብ የሚገባው ለ",
-  "reading-plan-read-nudge": "ይህንን ክፍል አንብበዋል - ሙሉ በሙሉ ምልክት ያድርጉበት?",
+
   "reading-plan-mark-passage-complete": "{{passage}} ን እንደተነበበ ምልክት አድርግበት",
   "reading-plan-read-nudge-title": "ጥሩ ንባብ!",
   "reading-plan-read-nudge-toast": "{{passage}} ተጠናቋል የሚል ምልክት አድርግበት?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "ይህ የአጫዋች ዝርዝር ስለምንድን ነው?",
   "read-more": "ተጨማሪ ያንብቡ",
   "read-less": "ያነሰ ያንብቡ",
-  "switch-language-title": "ቋንቋ ቀይር?",
-  "switch-language-body": "ቋንቋዎን ወደ {{nativeLanguageName}} መቀየር ይፈልጋሉ?",
-  "switch-language-confirm": "ማብሪያና ማጥፊያ",
-  "switch-language-dismiss": "አትቀይር",
-  "switch-language-never": "ዳግመኛ በፍጹም አትጠይቅ",
+
   "ask-to-switch-ui-language": "ቋንቋውን በትርጉም ለመቀየር ሀሳብ ያቅርቡ",
   "ai": "ኤአይ",
   "ai-edit-playlist": "አጫዋች ዝርዝርን በAI ያርትዑ",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} ጥቅም ላይ የዋሉ {{count}} መሳሪያዎች",
   "chat-tool-used_one": "{{name}} አንድ መሳሪያ ተጠቅመዋል",
   "chat-tool-used_other": "{{name}} ጥቅም ላይ የዋሉ {{count}} መሳሪያዎች",
-  "chat-ai-error": "ይቅርታ፣ ምላሽ በመፍጠር ላይ የሆነ ችግር ተፈጥሯል ( {{error}} )።",
-  "playlist-editor": "የአጫዋች ዝርዝር አርታኢ",
+
   "ai-context-button-label": "ንቁ የ AI አውድ",
   "ai-context-tool-count": "{{count}} መሳሪያዎች",
   "annotation-conflict-title": "ይህ ማስታወሻ በሁለት ቦታዎች ተቀይሯል",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "ምንም ይዘት የለም።",
   "annotation-conflict-confirm": "አረጋግጥ",
   "annotation-conflict-resolve-failed": "ያንን ምርጫ መተግበር አልተቻለም። እንደገና ይሞከራል።",
-  "annotations-pending-sync": "{{count}} ለውጥ ለማመሳሰል በመጠባበቅ ላይ",
-  "annotations-pending-sync-plural": "{{count}} ለውጦች ለማመሳሰል በመጠባበቅ ላይ ናቸው",
+
   "annotation-sync-failed": "ማስታወሻ ወደ መለያዎ ማስቀመጥ አልተቻለም። አሁንም በዚህ መሣሪያ ላይ ነው።",
   "create-menu": "ፍጠር",
   "create-annotation-menu-item": "ማብራሪያ",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "ማብራሪያውን ማስቀመጥ አልተቻለም።",
   "annotation-group-expand": "ቡድን ዘርጋ",
   "annotation-group-collapse": "ቡድን ሰብስብ",
-  "annotation-comment-updated": "የተዘመነ {{date}}",
+
   "notes": "ማስታወሻዎች",
   "note": "ማስታወሻ",
   "show-more-verse-actions": "ተጨማሪ እርምጃዎችን አሳይ",
@@ -680,7 +667,7 @@
   "create-folder": "አቃፊ ፍጠር",
   "edit-bookmark": "ዕልባት አርትዕ",
   "remove-bookmark-from-all-folders": "ከሁሉም አቃፊዎች ያስወግዱ",
-  "add-bookmark-modal": "ዕልባት ያክሉ",
+
   "greeting-afternoon": "እንደምን አረፈድክ!",
   "greeting-afternoon-named": "እንደምን አደርክ፣ {{name}} !",
   "greeting-evening": "አንደምን አመሸህ!",

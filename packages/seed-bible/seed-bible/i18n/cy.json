@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Amlygu ar gyfer",
   "end-session": "Diwedd y Sesiwn",
   "panels": "Paneli",
-  "new-shared-session": "Sesiwn newydd a rennir",
+
   "open-in-new-panel": "Agor mewn panel newydd",
   "close-sidebar": "Cau'r bar ochr",
   "select-pane-layout": "Dewis cynllun y panel",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Creu cynllun darllen",
   "reading-plans-empty": "Nid oes gennych unrhyw gynlluniau darllen eto. Crëwch un i ddechrau.",
   "untitled-reading-plan": "Cynllun di-deitl",
-  "title": "Teitl",
-  "reading-plan-title_placeholder": "e.e. Beibl mewn Blwyddyn",
+
   "reading-plan-description_placeholder": "Beth yw pwrpas y cynllun hwn?",
   "anonymous": "Anhysbys",
   "no-chat-messages": "Dim negeseuon eto",
@@ -336,7 +335,7 @@
   "dont-show-again": "Peidiwch â dangos hyn eto",
   "discover": "Darganfod",
   "playlists": "Rhestrau chwarae",
-  "annotations": "Anodiadau",
+
   "cross-references": "Croesgyfeiriadau",
   "study-notes": "Nodiadau astudio",
   "content": "Cynnwys",
@@ -405,8 +404,7 @@
   "add-and-save": "Ychwanegu a chadw",
   "loading-profile": "Wrthi'n llwytho eich proffil…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Symud i ffolder",
-  "move-to-new": "Symud i un newydd",
+
   "share": "Rhannu",
   "share-sheet-title": "Rhannu",
   "share-link": "Rhannu dolen",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Creu cynllun newydd",
   "edit-reading-plan": "Golygu cynllun",
   "reading-plan-step-name-title": "Enwch eich cynllun",
-  "reading-plan-step-name-hint": "Rhowch enw y bydd pobl yn ei adnabod i'ch cynllun",
+
   "reading-plan-name-placeholder": "e.e. Taith Fy Salmau",
   "reading-plan-description-label": "Disgrifiad (dewisol)",
   "reading-plan-step-scripture-title": "Dewis darlleniadau",
   "reading-plan-step-cadences-title": "Darllen cadansau",
   "reading-plan-step-cadences-hint": "Dewiswch y cyflymder darllen rydych chi am ei gynnig. Gall darllenwyr bob amser ddewis mynd ar eu cyflymder eu hunain yn lle hynny.",
-  "reading-plan-cadence-once-daily": "Un sesiwn y dydd",
-  "reading-plan-cadence-twice-daily": "Dwy sesiwn y dydd",
-  "reading-plan-cadence-three-times-daily": "Tair sesiwn y dydd",
-  "reading-plan-cadence-every-other-day": "Un sesiwn bob yn ail ddiwrnod",
+
   "reading-plan-cadence-length": "Yn gorffen mewn {{count}} diwrnod",
   "reading-plan-cadence-length_one": "Yn gorffen mewn {{count}} diwrnod",
   "reading-plan-cadence-length_other": "Yn gorffen mewn {{count}} diwrnod",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Yn cadw…",
   "reading-plan-draft-saved": "Drafft wedi'i gadw",
   "reading-plan-draft-save-failed": "Methwyd cadw'r drafft",
-  "added-to-reading-plan-session": "Ychwanegwyd at sesiwn {{session}}",
-  "reading-plan-add-reading": "Ychwanegu",
+
   "reading-plan-scripture-remove": "Dileu darlleniad",
   "reading-plan-create-submit": "Creu cynllun",
   "reading-plan-save-changes": "Cadw newidiadau",
@@ -504,12 +498,11 @@
   "loading": "Yn llwytho…",
   "reading-plan-not-started": "Heb ei ddechrau",
   "reading-plan-start": "Dechrau'r cynllun",
-  "reading-plan-session-count": "darlleniadau {{count}}",
-  "reading-plan-progress-readings": "{{done}} o {{total}} darlleniadau",
+
   "reading-plan-streak": "Rheswm o {{count}} diwrnod",
-  "reading-plan-today": "Heddiw",
+
   "reading-plan-mark-complete": "Marcio fel wedi'i gwblhau",
-  "reading-plan-day-completed": "Wedi'i gwblhau",
+
   "reading-plan-empty-sessions": "Nid oes gan y cynllun hwn unrhyw ddarlleniadau eto.",
   "reading-plan-celebration-title": "Diwrnod {{day}} wedi'i gwblhau!",
   "reading-plan-complete-title": "Cynllun wedi'i gwblhau!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Marcio darllen wedi'i gwblhau",
   "reading-plan-link-video": "Fideo",
   "reading-belongs-to": "Mae'r darlleniad hwn yn perthyn i",
-  "reading-plan-read-nudge": "Rydych chi wedi darllen y darn hwn — marciwch ef yn gyflawn?",
+
   "reading-plan-mark-passage-complete": "Marciwch {{passage}} fel wedi'i ddarllen",
   "reading-plan-read-nudge-title": "Darlleniad braf!",
   "reading-plan-read-nudge-toast": "Marcio {{passage}} yn gyflawn?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Am beth mae'r rhestr chwarae hon?",
   "read-more": "Darllen mwy",
   "read-less": "Darllen llai",
-  "switch-language-title": "Newid iaith?",
-  "switch-language-body": "Ydych chi eisiau newid eich iaith i {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Newid",
-  "switch-language-dismiss": "Peidiwch â Newid",
-  "switch-language-never": "Peidiwch byth â gofyn eto",
+
   "ask-to-switch-ui-language": "Cynnig newid iaith gyda chyfieithiad",
   "ai": "Deallusrwydd Artiffisial",
   "ai-edit-playlist": "Golygu rhestr chwarae gyda deallusrwydd artiffisial",
@@ -634,8 +623,7 @@
   "chat-tool-used": "Defnyddiodd {{name}} offer {{count}}",
   "chat-tool-used_one": "Defnyddiodd {{name}} offeryn",
   "chat-tool-used_other": "Defnyddiodd {{name}} offer {{count}}",
-  "chat-ai-error": "Mae'n ddrwg gennym, aeth rhywbeth o'i le wrth gynhyrchu ymateb ( {{error}} ).",
-  "playlist-editor": "Golygydd Rhestr Chwarae",
+
   "ai-context-button-label": "Cyd-destun AI gweithredol",
   "ai-context-tool-count": "{{count}} offer",
   "annotation-conflict-title": "Newidiodd y nodyn hwn mewn dau le",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Dim cynnwys.",
   "annotation-conflict-confirm": "Cadarnhau",
   "annotation-conflict-resolve-failed": "Methwyd â chymhwyso'r dewis hwnnw. Bydd yn cael ei geisio eto.",
-  "annotations-pending-sync": "{{count}} newid yn aros i gysoni",
-  "annotations-pending-sync-plural": "{{count}} newidiadau yn aros i gael eu cysoni",
+
   "annotation-sync-failed": "Methwyd cadw nodyn i'ch cyfrif. Mae'n dal ar y ddyfais hon.",
   "create-menu": "Creu",
   "create-annotation-menu-item": "Anodiad",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Methwyd cadw'r anodiad.",
   "annotation-group-expand": "Ehangu grŵp",
   "annotation-group-collapse": "Crebachu grŵp",
-  "annotation-comment-updated": "Diweddarwyd {{date}}",
+
   "notes": "Nodiadau",
   "note": "Nodyn",
   "show-more-verse-actions": "Dangos mwy o gamau gweithredu",
@@ -680,7 +667,7 @@
   "create-folder": "Creu ffolder",
   "edit-bookmark": "Golygu nod tudalen",
   "remove-bookmark-from-all-folders": "Dileu o bob ffolder",
-  "add-bookmark-modal": "Ychwanegu nod tudalen",
+
   "greeting-afternoon": "Prynhawn da!",
   "greeting-afternoon-named": "Prynhawn da, {{name}} !",
   "greeting-evening": "Noswaith dda!",

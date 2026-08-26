@@ -98,7 +98,7 @@
   "session-settings-highlight-duration": "کے لیے نمایاں کریں۔",
   "end-session": "سیشن ختم کریں۔",
   "panels": "پینلز",
-  "new-shared-session": "نیا مشترکہ سیشن",
+
   "open-in-new-panel": "نئے پینل میں کھولیں۔",
   "close-sidebar": "سائڈبار بند کریں۔",
   "select-pane-layout": "پین لے آؤٹ کو منتخب کریں۔",
@@ -253,8 +253,7 @@
   "create-reading-plan": "پڑھنے کا منصوبہ بنائیں",
   "reading-plans-empty": "آپ کا ابھی تک پڑھنے کا کوئی منصوبہ نہیں ہے۔ شروع کرنے کے لیے ایک بنائیں۔",
   "untitled-reading-plan": "بلا عنوان منصوبہ",
-  "title": "عنوان",
-  "reading-plan-title_placeholder": "مثال کے طور پر ایک سال میں بائبل",
+
   "reading-plan-description_placeholder": "یہ منصوبہ کیا ہے؟",
   "anonymous": "گمنام",
   "no-chat-messages": "ابھی تک کوئی پیغامات نہیں ہیں۔",
@@ -336,7 +335,7 @@
   "dont-show-again": "اسے دوبارہ مت دکھائیں۔",
   "discover": "دریافت کریں۔",
   "playlists": "پلے لسٹس",
-  "annotations": "تشریحات",
+
   "cross-references": "کراس حوالہ جات",
   "study-notes": "مطالعہ کے نوٹس",
   "content": "مواد",
@@ -405,8 +404,7 @@
   "add-and-save": "شامل کریں اور محفوظ کریں",
   "loading-profile": "آپ کا پروفائل لوڈ ہو رہا ہے…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "فولڈر میں منتقل کریں۔",
-  "move-to-new": "نئے پر منتقل کریں۔",
+
   "share": "شیئر کریں۔",
   "share-sheet-title": "شیئر کریں۔",
   "share-link": "ایک لنک شیئر کریں۔",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "نیا منصوبہ بنائیں",
   "edit-reading-plan": "پلان میں ترمیم کریں۔",
   "reading-plan-step-name-title": "اپنے منصوبے کو نام دیں۔",
-  "reading-plan-step-name-hint": "اپنے منصوبے کو ایک نام دیں جسے لوگ پہچانیں گے۔",
+
   "reading-plan-name-placeholder": "مثال کے طور پر میرا زبور کا سفر",
   "reading-plan-description-label": "تفصیل (اختیاری)",
   "reading-plan-step-scripture-title": "ریڈنگز کو منتخب کریں۔",
   "reading-plan-step-cadences-title": "کیڈینس پڑھنا",
   "reading-plan-step-cadences-hint": "پڑھنے کی رفتار کا انتخاب کریں جو آپ پیش کرنا چاہتے ہیں۔ اس کے بجائے قارئین ہمیشہ اپنی رفتار سے جانے کا انتخاب کر سکتے ہیں۔",
-  "reading-plan-cadence-once-daily": "دن میں ایک سیشن",
-  "reading-plan-cadence-twice-daily": "دن میں دو سیشن",
-  "reading-plan-cadence-three-times-daily": "دن میں تین سیشن",
-  "reading-plan-cadence-every-other-day": "ہر دوسرے دن ایک سیشن",
+
   "reading-plan-cadence-length": "{{count}} دنوں میں ختم ہو جائے گا۔",
   "reading-plan-cadence-length_one": "{{count}} دن میں ختم ہوگا۔",
   "reading-plan-cadence-length_other": "{{count}} دنوں میں ختم ہو جائے گا۔",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "محفوظ ہو رہا ہے…",
   "reading-plan-draft-saved": "مسودہ محفوظ ہو گیا۔",
   "reading-plan-draft-save-failed": "مسودہ محفوظ نہیں ہو سکا",
-  "added-to-reading-plan-session": "سیشن {{session}} میں شامل کیا گیا",
-  "reading-plan-add-reading": "شامل کریں۔",
+
   "reading-plan-scripture-remove": "پڑھنے کو ہٹا دیں۔",
   "reading-plan-create-submit": "منصوبہ بنائیں",
   "reading-plan-save-changes": "تبدیلیاں محفوظ کریں۔",
@@ -504,12 +498,11 @@
   "loading": "لوڈ ہو رہا ہے…",
   "reading-plan-not-started": "شروع نہیں ہوا۔",
   "reading-plan-start": "منصوبہ شروع کریں۔",
-  "reading-plan-session-count": "{{count}} ریڈنگز",
-  "reading-plan-progress-readings": "{ {{total}} {{done}}",
+
   "reading-plan-streak": "{{count}} - دن کا سلسلہ",
-  "reading-plan-today": "آج",
+
   "reading-plan-mark-complete": "مکمل کے بطور نشان زد کریں۔",
-  "reading-plan-day-completed": "مکمل",
+
   "reading-plan-empty-sessions": "اس پلان کی ابھی تک کوئی ریڈنگ نہیں ہے۔",
   "reading-plan-celebration-title": "دن {{day}} مکمل!",
   "reading-plan-complete-title": "منصوبہ مکمل!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "پڑھنا مکمل نشان زد کریں۔",
   "reading-plan-link-video": "ویڈیو",
   "reading-belongs-to": "یہ پڑھنے کا تعلق ہے۔",
-  "reading-plan-read-nudge": "آپ نے یہ اقتباس پڑھا ہے — اسے مکمل نشان زد کریں؟",
+
   "reading-plan-mark-passage-complete": "{{passage}} کو پڑھا ہوا نشان زد کریں۔",
   "reading-plan-read-nudge-title": "اچھا پڑھنا!",
   "reading-plan-read-nudge-toast": "{{passage}} کو مکمل نشان زد کریں؟",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "یہ پلے لسٹ کس بارے میں ہے؟",
   "read-more": "مزید پڑھیں",
   "read-less": "کم پڑھیں",
-  "switch-language-title": "زبان تبدیل کریں؟",
-  "switch-language-body": "کیا آپ اپنی زبان کو {{nativeLanguageName}} میں تبدیل کرنا چاہتے ہیں؟",
-  "switch-language-confirm": "سوئچ کریں۔",
-  "switch-language-dismiss": "سوئچ نہ کریں۔",
-  "switch-language-never": "کبھی دوبارہ نہ پوچھیں۔",
+
   "ask-to-switch-ui-language": "ترجمہ کے ساتھ زبان کو تبدیل کرنے کی پیشکش کریں۔",
   "ai": "اے آئی",
   "ai-edit-playlist": "AI کے ساتھ پلے لسٹ میں ترمیم کریں۔",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} نے {{count}} ٹولز کا استعمال کیا۔",
   "chat-tool-used_one": "{{name}} نے ایک ٹول استعمال کیا۔",
   "chat-tool-used_other": "{{name}} نے {{count}} ٹولز کا استعمال کیا۔",
-  "chat-ai-error": "معذرت، جواب پیدا کرنے میں کچھ غلط ہو گیا ( {{error}} )۔",
-  "playlist-editor": "پلے لسٹ ایڈیٹر",
+
   "ai-context-button-label": "فعال AI سیاق و سباق",
   "ai-context-tool-count": "{{count}} ٹولز",
   "annotation-conflict-title": "یہ نوٹ دو جگہ تبدیل ہوا۔",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "کوئی مواد نہیں۔",
   "annotation-conflict-confirm": "تصدیق کریں۔",
   "annotation-conflict-resolve-failed": "اس انتخاب کو لاگو نہیں کیا جا سکا۔ اسے دوبارہ آزمایا جائے گا۔",
-  "annotations-pending-sync": "{{count}} تبدیلی مطابقت پذیر ہونے کا انتظار کر رہی ہے۔",
-  "annotations-pending-sync-plural": "{{count}} تبدیلیاں مطابقت پذیری کے منتظر ہیں۔",
+
   "annotation-sync-failed": "آپ کے اکاؤنٹ میں نوٹ محفوظ نہیں کیا جا سکا۔ یہ اب بھی اس ڈیوائس پر ہے۔",
   "create-menu": "بنائیں",
   "create-annotation-menu-item": "تشریح",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "تشریح کو محفوظ نہیں کیا جا سکا۔",
   "annotation-group-expand": "گروپ کو پھیلائیں۔",
   "annotation-group-collapse": "گروپ کو سکیڑیں۔",
-  "annotation-comment-updated": "اپ ڈیٹ کیا گیا {{date}}",
+
   "notes": "نوٹس",
   "note": "نوٹ",
   "show-more-verse-actions": "مزید کارروائیاں دکھائیں۔",
@@ -680,7 +667,7 @@
   "create-folder": "فولڈر بنائیں",
   "edit-bookmark": "بک مارک میں ترمیم کریں۔",
   "remove-bookmark-from-all-folders": "تمام فولڈرز سے ہٹا دیں۔",
-  "add-bookmark-modal": "بک مارک شامل کریں۔",
+
   "greeting-afternoon": "شب بخیر!",
   "greeting-afternoon-named": "دوپہر بخیر، {{name}} !",
   "greeting-evening": "شب بخیر!",

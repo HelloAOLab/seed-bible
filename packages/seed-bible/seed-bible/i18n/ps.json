@@ -98,7 +98,7 @@
   "session-settings-highlight-duration": "لپاره روښانه کړئ",
   "end-session": "غونډه پای ته ورسوئ",
   "panels": "پینلونه",
-  "new-shared-session": "نوې شریکه شوې غونډه",
+
   "open-in-new-panel": "په نوي پینل کې پرانیزئ",
   "close-sidebar": "د اړخ پټه بنده کړئ",
   "select-pane-layout": "د پینل ترتیب غوره کړئ",
@@ -253,8 +253,7 @@
   "create-reading-plan": "د لوستلو پلان جوړ کړئ",
   "reading-plans-empty": "تاسو لا تر اوسه د لوستلو کوم پلان نلرئ. د پیل کولو لپاره یو جوړ کړئ.",
   "untitled-reading-plan": "بې سرلیکه پلان",
-  "title": "سرلیک",
-  "reading-plan-title_placeholder": "د مثال په توګه انجیل په یوه کال کې",
+
   "reading-plan-description_placeholder": "دا پلان د څه په اړه دی؟",
   "anonymous": "بې نومه",
   "no-chat-messages": "تراوسه کوم پیغام نشته",
@@ -336,7 +335,7 @@
   "dont-show-again": "دا بیا مه ښکاره کوه",
   "discover": "کشف کړئ",
   "playlists": "پلې لیستونه",
-  "annotations": "یادښتونه",
+
   "cross-references": "متقابل حوالې",
   "study-notes": "د مطالعې یادښتونه",
   "content": "منځپانګې",
@@ -405,8 +404,7 @@
   "add-and-save": "زیاتول او خوندي کول",
   "loading-profile": "ستاسو پروفایل پورته کیږي…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "فولډر ته ولېږئ",
-  "move-to-new": "نوي ته لاړ شئ",
+
   "share": "شریک کړئ",
   "share-sheet-title": "شریک کړئ",
   "share-link": "لینک شریک کړئ",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "نوی پلان جوړ کړئ",
   "edit-reading-plan": "پلان سم کړئ",
   "reading-plan-step-name-title": "خپل پلان نوم ورکړئ",
-  "reading-plan-step-name-hint": "خپل پلان ته داسې نوم ورکړئ چې خلک یې وپیژني",
+
   "reading-plan-name-placeholder": "د مثال په توګه زما د زبور سفر",
   "reading-plan-description-label": "تفصیل (اختیاري)",
   "reading-plan-step-scripture-title": "لوستل غوره کړئ",
   "reading-plan-step-cadences-title": "د لوستلو کیډنسونه",
   "reading-plan-step-cadences-hint": "د لوستلو هغه سرعتونه غوره کړئ چې تاسو یې وړاندې کول غواړئ. لوستونکي تل کولی شي د دې پرځای په خپل سرعت سره لاړ شي.",
-  "reading-plan-cadence-once-daily": "په ورځ کې یوه غونډه",
-  "reading-plan-cadence-twice-daily": "په ورځ کې دوه غونډې",
-  "reading-plan-cadence-three-times-daily": "په ورځ کې درې غونډې",
-  "reading-plan-cadence-every-other-day": "هره ورځ یوه غونډه",
+
   "reading-plan-cadence-length": "په {{count}} ورځو کې پای ته رسیږي",
   "reading-plan-cadence-length_one": "په {{count}} ورځو کې پای ته رسیږي",
   "reading-plan-cadence-length_other": "په {{count}} ورځو کې پای ته رسیږي",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "خوندي کول…",
   "reading-plan-draft-saved": "مسوده خوندي شوه",
   "reading-plan-draft-save-failed": "مسوده خوندي نشوه",
-  "added-to-reading-plan-session": "په {{session}} غونډه کې اضافه شوه",
-  "reading-plan-add-reading": "اضافه کول",
+
   "reading-plan-scripture-remove": "لوستل لرې کړئ",
   "reading-plan-create-submit": "پلان جوړ کړئ",
   "reading-plan-save-changes": "بدلونونه خوندي کړئ",
@@ -504,12 +498,11 @@
   "loading": "بارول…",
   "reading-plan-not-started": "نه دی پیل شوی",
   "reading-plan-start": "پلان پیل کړئ",
-  "reading-plan-session-count": "{{count}} لوستل",
-  "reading-plan-progress-readings": "{{done}} {{total}}",
+
   "reading-plan-streak": "{{count}} - ورځنی سلسله",
-  "reading-plan-today": "نن",
+
   "reading-plan-mark-complete": "د بشپړ شوي په توګه نښه کړئ",
-  "reading-plan-day-completed": "بشپړ شوی",
+
   "reading-plan-empty-sessions": "دا پلان لا تر اوسه هیڅ لوستل نلري.",
   "reading-plan-celebration-title": "ورځ {{day}} بشپړه شوه!",
   "reading-plan-complete-title": "پلان بشپړ شو!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "لوستل بشپړ شوي په نښه کړئ",
   "reading-plan-link-video": "ویډیو",
   "reading-belongs-to": "دا لوستل د",
-  "reading-plan-read-nudge": "تاسو دا برخه لوستلې ده - بشپړ یې په نښه کړئ؟",
+
   "reading-plan-mark-passage-complete": "{{passage}} د لوستل شوي په توګه په نښه کړئ",
   "reading-plan-read-nudge-title": "ښه لوستل!",
   "reading-plan-read-nudge-toast": "{{passage}} بشپړ په نښه کړئ؟",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "دا پلې لیست د څه په اړه دی؟",
   "read-more": "نور یی ولوله",
   "read-less": "لږ ولولئ",
-  "switch-language-title": "ژبه بدله کړئ؟",
-  "switch-language-body": "آیا غواړئ خپله ژبه {{nativeLanguageName}} ته واړوئ؟",
-  "switch-language-confirm": "ونجول",
-  "switch-language-dismiss": "مه بدلوئ",
-  "switch-language-never": "بیا هیڅکله پوښتنه مه کوئ",
+
   "ask-to-switch-ui-language": "د ژباړې سره د ژبې بدلولو وړاندیز وکړئ",
   "ai": "مصنوعي ذهانت",
   "ai-edit-playlist": "د AI سره د پلی لیست ایډیټ کړئ",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} کارول شوي {{count}} وسایل",
   "chat-tool-used_one": "{{name}} یوه وسیله کارولې ده",
   "chat-tool-used_other": "{{name}} کارول شوي {{count}} وسایل",
-  "chat-ai-error": "بخښنه غواړم، د ځواب په جوړولو کې یو څه غلط شو ( {{error}} ).",
-  "playlist-editor": "د پلی لیست مدیر",
+
   "ai-context-button-label": "د فعال AI شرایط",
   "ai-context-tool-count": "{{count}} وسایل",
   "annotation-conflict-title": "دا یادښت په دوو ځایونو کې بدل شوی دی",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "هیڅ محتوا نشته.",
   "annotation-conflict-confirm": "تایید کړئ",
   "annotation-conflict-resolve-failed": "دا انتخاب نه شو پلي کولی. دا به بیا هڅه وشي.",
-  "annotations-pending-sync": "{{count}} بدلون د همغږۍ په تمه دی",
-  "annotations-pending-sync-plural": "{{count}} بدلونونه د همغږۍ په تمه دي",
+
   "annotation-sync-failed": "ستاسو حساب ته یادښت خوندي نشو. دا لا هم په دې وسیله کې دی.",
   "create-menu": "جوړول",
   "create-annotation-menu-item": "تبصره",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "تشریح خوندي نشوه.",
   "annotation-group-expand": "ډله پراخه کړئ",
   "annotation-group-collapse": "ډله ړنګه کړئ",
-  "annotation-comment-updated": "تازه شوی {{date}}",
+
   "notes": "یادښتونه",
   "note": "یادښت",
   "show-more-verse-actions": "نورې کړنې وښایاست",
@@ -680,7 +667,7 @@
   "create-folder": "فولډر جوړ کړئ",
   "edit-bookmark": "بک مارک سم کړئ",
   "remove-bookmark-from-all-folders": "له ټولو فولډرونو څخه لرې کړئ",
-  "add-bookmark-modal": "بک مارک اضافه کړئ",
+
   "greeting-afternoon": "بعد له غرمه مو پخیر!",
   "greeting-afternoon-named": "ماسپښین مو پخیر، {{name}} !",
   "greeting-evening": "ماښام مو پخیر!",

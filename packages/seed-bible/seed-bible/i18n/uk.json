@@ -98,7 +98,7 @@
   "session-settings-highlight-duration": "Виділіть для",
   "end-session": "Закінчити сеанс",
   "panels": "Панелі",
-  "new-shared-session": "Новий спільний сеанс",
+
   "open-in-new-panel": "Відкрити в новій панелі",
   "close-sidebar": "Закрити бічну панель",
   "select-pane-layout": "Вибрати макет панелі",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Створіть план читання",
   "reading-plans-empty": "У вас ще немає планів читання. Створіть його, щоб розпочати.",
   "untitled-reading-plan": "Безіменний план",
-  "title": "Назва",
-  "reading-plan-title_placeholder": "наприклад, Біблія за рік",
+
   "reading-plan-description_placeholder": "Про що цей план?",
   "anonymous": "Анонім",
   "no-chat-messages": "Поки що немає повідомлень",
@@ -336,7 +335,7 @@
   "dont-show-again": "Не показувати це більше",
   "discover": "Відкрийте",
   "playlists": "Списки відтворення",
-  "annotations": "Анотації",
+
   "cross-references": "Перехресні посилання",
   "study-notes": "Нотатки до навчання",
   "content": "Зміст",
@@ -405,8 +404,7 @@
   "add-and-save": "Додати та зберегти",
   "loading-profile": "Завантаження вашого профілю…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Перемістити до папки",
-  "move-to-new": "Перейти до нового",
+
   "share": "Поділитися",
   "share-sheet-title": "Поділитися",
   "share-link": "Поділитися посиланням",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Створити новий план",
   "edit-reading-plan": "Редагувати план",
   "reading-plan-step-name-title": "Назвіть свій план",
-  "reading-plan-step-name-hint": "Дайте своєму плану назву, яку люди впізнають",
+
   "reading-plan-name-placeholder": "наприклад, Моя подорож за Псалмами",
   "reading-plan-description-label": "Опис (необов'язково)",
   "reading-plan-step-scripture-title": "Виберіть показники",
   "reading-plan-step-cadences-title": "Читання каденцій",
   "reading-plan-step-cadences-hint": "Оберіть темп читання, який ви хочете запропонувати. Читачі завжди можуть обрати власний темп.",
-  "reading-plan-cadence-once-daily": "Один сеанс на день",
-  "reading-plan-cadence-twice-daily": "Два сеанси на день",
-  "reading-plan-cadence-three-times-daily": "Три сеанси на день",
-  "reading-plan-cadence-every-other-day": "Один сеанс через день",
+
   "reading-plan-cadence-length": "Закінчується через {{count}} днів",
   "reading-plan-cadence-length_one": "Закінчується через {{count}} день",
   "reading-plan-cadence-length_other": "Закінчується через {{count}} днів",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Збереження…",
   "reading-plan-draft-saved": "Чернетку збережено",
   "reading-plan-draft-save-failed": "Не вдалося зберегти чернетку",
-  "added-to-reading-plan-session": "Додано до сесії {{session}}",
-  "reading-plan-add-reading": "Додати",
+
   "reading-plan-scripture-remove": "Видалити читання",
   "reading-plan-create-submit": "Створити план",
   "reading-plan-save-changes": "Зберегти зміни",
@@ -504,12 +498,11 @@
   "loading": "Завантаження…",
   "reading-plan-not-started": "Не розпочато",
   "reading-plan-start": "Початок плану",
-  "reading-plan-session-count": "{{count}} показників",
-  "reading-plan-progress-readings": "{{done}} з {{total}} показників",
+
   "reading-plan-streak": "{{count}} -денна серія",
-  "reading-plan-today": "Сьогодні",
+
   "reading-plan-mark-complete": "Позначити як завершене",
-  "reading-plan-day-completed": "Завершено",
+
   "reading-plan-empty-sessions": "Цей план ще не має жодних показників.",
   "reading-plan-celebration-title": "День {{day}} завершено!",
   "reading-plan-complete-title": "План виконано!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Позначити прочитане як завершене",
   "reading-plan-link-video": "Відео",
   "reading-belongs-to": "Це читання належить",
-  "reading-plan-read-nudge": "Ви прочитали цей уривок — позначте його як завершений?",
+
   "reading-plan-mark-passage-complete": "Позначити {{passage}} як прочитаний",
   "reading-plan-read-nudge-title": "Приємного читання!",
   "reading-plan-read-nudge-toast": "Позначити {{passage}} як завершений?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "Про що цей плейлист?",
   "read-more": "Читати далі",
   "read-less": "Читати менше",
-  "switch-language-title": "Змінити мову?",
-  "switch-language-body": "Ви хочете змінити мову на {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Перемикач",
-  "switch-language-dismiss": "Не перемикатися",
-  "switch-language-never": "Ніколи більше не питай",
+
   "ask-to-switch-ui-language": "Пропонувати змінити мову з перекладом",
   "ai": "Штучний інтелект",
   "ai-edit-playlist": "Редагування списку відтворення за допомогою штучного інтелекту",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} використовував {{count}} інструментів",
   "chat-tool-used_one": "{{name}} використовував інструмент",
   "chat-tool-used_other": "{{name}} використовував {{count}} інструментів",
-  "chat-ai-error": "Вибачте, щось пішло не так під час створення відповіді ( {{error}} ).",
-  "playlist-editor": "Редактор списків відтворення",
+
   "ai-context-button-label": "Активний контекст ШІ",
   "ai-context-tool-count": "інструменти {{count}}",
   "annotation-conflict-title": "Ця примітка змінилася у двох місцях",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Без контенту.",
   "annotation-conflict-confirm": "Підтвердити",
   "annotation-conflict-resolve-failed": "Не вдалося застосувати цей варіант. Спробуємо ще раз.",
-  "annotations-pending-sync": "{{count}} змін очікує синхронізації",
-  "annotations-pending-sync-plural": "{{count}} змін очікує синхронізації",
+
   "annotation-sync-failed": "Не вдалося зберегти нотатку у вашому обліковому записі. Вона все ще на цьому пристрої.",
   "create-menu": "Створити",
   "create-annotation-menu-item": "Анотація",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "Не вдалося зберегти анотацію.",
   "annotation-group-expand": "Розгорнути групу",
   "annotation-group-collapse": "Згорнути групу",
-  "annotation-comment-updated": "Оновлено {{date}}",
+
   "notes": "Нотатки",
   "note": "Примітка",
   "show-more-verse-actions": "Показати більше дій",
@@ -680,7 +667,7 @@
   "create-folder": "Створити папку",
   "edit-bookmark": "Редагувати закладку",
   "remove-bookmark-from-all-folders": "Видалити з усіх папок",
-  "add-bookmark-modal": "Додати закладку",
+
   "greeting-afternoon": "Доброго дня!",
   "greeting-afternoon-named": "Доброго дня, {{name}} !",
   "greeting-evening": "Доброго вечора!",

@@ -148,7 +148,7 @@
   "session-settings-highlight-duration": "Highlight for",
   "end-session": "End Session",
   "panels": "Panels",
-  "new-shared-session": "New shared session",
+
   "open-in-new-panel": "Open in new panel",
   "close-sidebar": "Close sidebar",
   "select-pane-layout": "Select pane layout",
@@ -294,8 +294,7 @@
   "create-reading-plan": "Create reading plan",
   "reading-plans-empty": "You don't have any reading plans yet. Create one to get started.",
   "untitled-reading-plan": "Untitled plan",
-  "title": "Title",
-  "reading-plan-title_placeholder": "e.g. Bible in a Year",
+
   "reading-plan-description_placeholder": "What is this plan about?",
   "discover": "Discover",
   "playlists": "Playlists",
@@ -309,7 +308,7 @@
   "playlist-history-options": "Playlist history options",
   "playlist-history-open-failed": "Couldn't open that playlist. It may have been deleted.",
   "yesterday": "Yesterday",
-  "annotations": "Annotations",
+
   "cross-references": "Cross references",
   "study-notes": "Study notes",
   "content": "Content",
@@ -450,11 +449,7 @@
   "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
   "languageUnavailable.yesContinue": "Yes, Continue",
   "languageUnavailable.noGoBack": "No, Go back",
-  "switch-language-title": "Switch language?",
-  "switch-language-body": "Do you want to switch your language to {{nativeLanguageName}}?",
-  "switch-language-confirm": "Switch",
-  "switch-language-dismiss": "Don't Switch",
-  "switch-language-never": "Never Ask Again",
+
   "ask-to-switch-ui-language": "Offer to switch language with translation",
   "ui-size": "UI size",
   "book-not-found-title": "Book not found",
@@ -479,8 +474,7 @@
   "remove-offline-translation-message": "Remove \"{{name}}\" from this device? You'll need a connection to read it again.",
   "remove-offline-translation-failed": "Couldn't remove the download.",
   "remove": "Remove",
-  "move-bookmark": "Move to folder",
-  "move-to-new": "Move to new",
+
   "drag-to-reorder-playlist-item": "Drag to reorder",
   "unsaved-item-confirm-title": "Unsaved item",
   "unsaved-item-confirm-message": "You've started adding an item that hasn't been added to the playlist yet. What would you like to do?",
@@ -510,16 +504,13 @@
   "create-reading-plan-wizard": "Create new plan",
   "edit-reading-plan": "Edit plan",
   "reading-plan-step-name-title": "Name your plan",
-  "reading-plan-step-name-hint": "Give your plan a name people will recognise",
+
   "reading-plan-name-placeholder": "e.g. My Psalms Journey",
   "reading-plan-description-label": "Description (optional)",
   "reading-plan-step-scripture-title": "Select readings",
   "reading-plan-step-cadences-title": "Reading cadences",
   "reading-plan-step-cadences-hint": "Choose the reading paces you want to offer. Readers can always choose to go at their own pace instead.",
-  "reading-plan-cadence-once-daily": "One session a day",
-  "reading-plan-cadence-twice-daily": "Two sessions a day",
-  "reading-plan-cadence-three-times-daily": "Three sessions a day",
-  "reading-plan-cadence-every-other-day": "One session every other day",
+
   "reading-plan-cadence-length": "Finishes in {{count}} days",
   "reading-plan-cadence-length_one": "Finishes in {{count}} day",
   "reading-plan-cadence-length_other": "Finishes in {{count}} days",
@@ -552,8 +543,7 @@
   "reading-plan-draft-saving": "Saving…",
   "reading-plan-draft-saved": "Draft saved",
   "reading-plan-draft-save-failed": "Couldn't save draft",
-  "added-to-reading-plan-session": "Added to session {{session}}",
-  "reading-plan-add-reading": "Add",
+
   "reading-plan-scripture-remove": "Remove reading",
   "reading-plan-create-submit": "Create plan",
   "reading-plan-save-changes": "Save changes",
@@ -566,12 +556,11 @@
   "loading": "Loading…",
   "reading-plan-not-started": "Not started",
   "reading-plan-start": "Start plan",
-  "reading-plan-session-count": "{{count}} readings",
-  "reading-plan-progress-readings": "{{done}} of {{total}} readings",
+
   "reading-plan-streak": "{{count}}-day streak",
-  "reading-plan-today": "Today",
+
   "reading-plan-mark-complete": "Mark as complete",
-  "reading-plan-day-completed": "Completed",
+
   "reading-plan-empty-sessions": "This plan doesn't have any readings yet.",
   "reading-plan-celebration-title": "Day {{day}} complete!",
   "reading-plan-complete-title": "Plan complete!",
@@ -604,7 +593,7 @@
   "reading-plan-mark-reading-complete": "Mark reading complete",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "This reading belongs to",
-  "reading-plan-read-nudge": "You've read this passage — mark it complete?",
+
   "reading-plan-mark-passage-complete": "Mark {{passage}} as read",
   "reading-plan-read-nudge-title": "Nice reading!",
   "reading-plan-read-nudge-toast": "Mark {{passage}} complete?",
@@ -615,8 +604,7 @@
   "chat-tool-used": "{{name}} used {{count}} tools",
   "chat-tool-used_one": "{{name}} used a tool",
   "chat-tool-used_other": "{{name}} used {{count}} tools",
-  "chat-ai-error": "Sorry, something went wrong generating a response ({{error}}).",
-  "playlist-editor": "Playlist Editor",
+
   "ai-context-button-label": "Active AI context",
   "ai-context-tool-count": "{{count}} tools",
   "annotation-conflict-title": "This note changed in two places",
@@ -631,8 +619,7 @@
   "annotation-conflict-no-content": "No content.",
   "annotation-conflict-confirm": "Confirm",
   "annotation-conflict-resolve-failed": "Couldn't apply that choice. It'll be tried again.",
-  "annotations-pending-sync": "{{count}} change waiting to sync",
-  "annotations-pending-sync-plural": "{{count}} changes waiting to sync",
+
   "annotation-sync-failed": "Couldn't save a note to your account. It's still on this device.",
   "create-menu": "Create",
   "create-annotation-menu-item": "Annotation",
@@ -647,7 +634,7 @@
   "save-annotation-failed": "Couldn't save the annotation.",
   "annotation-group-expand": "Expand group",
   "annotation-group-collapse": "Collapse group",
-  "annotation-comment-updated": "Updated {{date}}",
+
   "annotation-override-banner": "Notes are being saved and loaded from your team's account.",
   "annotation-override-save-to-my-account": "Save to my account",
   "notes": "Notes",
@@ -663,7 +650,7 @@
   "create-folder": "Create folder",
   "edit-bookmark": "Edit bookmark",
   "remove-bookmark-from-all-folders": "Remove from all folders",
-  "add-bookmark-modal": "Add bookmark",
+
   "all": "All",
   "none": "None",
   "view-more": "VIEW MORE",

@@ -113,7 +113,7 @@
   "session-settings-highlight-duration": "Destacar per a",
   "end-session": "Finalitzar sessió",
   "panels": "Panells",
-  "new-shared-session": "Nova sessió compartida",
+
   "open-in-new-panel": "Obre en un panell nou",
   "close-sidebar": "Tanca la barra lateral",
   "select-pane-layout": "Selecciona el disseny del panell",
@@ -253,8 +253,7 @@
   "create-reading-plan": "Crear un pla de lectura",
   "reading-plans-empty": "Encara no tens cap pla de lectura. Crea'n un per començar.",
   "untitled-reading-plan": "Pla sense títol",
-  "title": "Títol",
-  "reading-plan-title_placeholder": "p. ex. Bíblia en un any",
+
   "reading-plan-description_placeholder": "De què tracta aquest pla?",
   "anonymous": "Anònim",
   "no-chat-messages": "Encara no hi ha missatges",
@@ -336,7 +335,7 @@
   "dont-show-again": "No ho tornis a mostrar",
   "discover": "Descobreix",
   "playlists": "Llistes de reproducció",
-  "annotations": "Anotacions",
+
   "cross-references": "Referències creuades",
   "study-notes": "Notes d'estudi",
   "content": "Contingut",
@@ -405,8 +404,7 @@
   "add-and-save": "Afegeix i desa",
   "loading-profile": "S'està carregant el teu perfil…",
   "app-version": "v {{version}} · {{commit}}",
-  "move-bookmark": "Mou a la carpeta",
-  "move-to-new": "Moure a nou",
+
   "share": "Comparteix",
   "share-sheet-title": "Comparteix",
   "share-link": "Comparteix un enllaç",
@@ -448,16 +446,13 @@
   "create-reading-plan-wizard": "Crea un pla nou",
   "edit-reading-plan": "Edita el pla",
   "reading-plan-step-name-title": "Anomena el teu pla",
-  "reading-plan-step-name-hint": "Dóna al teu pla un nom que la gent reconegui",
+
   "reading-plan-name-placeholder": "p. ex. El meu viatge als Salms",
   "reading-plan-description-label": "Descripció (opcional)",
   "reading-plan-step-scripture-title": "Seleccioneu lectures",
   "reading-plan-step-cadences-title": "Cadències de lectura",
   "reading-plan-step-cadences-hint": "Trieu els ritmes de lectura que voleu oferir. Els lectors sempre poden optar per anar al seu propi ritme.",
-  "reading-plan-cadence-once-daily": "Una sessió al dia",
-  "reading-plan-cadence-twice-daily": "Dues sessions al dia",
-  "reading-plan-cadence-three-times-daily": "Tres sessions al dia",
-  "reading-plan-cadence-every-other-day": "Una sessió cada dos dies",
+
   "reading-plan-cadence-length": "Acaba en {{count}}",
   "reading-plan-cadence-length_one": "Acaba en {{count}} dia",
   "reading-plan-cadence-length_other": "Acaba en {{count}}",
@@ -490,8 +485,7 @@
   "reading-plan-draft-saving": "Desant…",
   "reading-plan-draft-saved": "Esborrany desat",
   "reading-plan-draft-save-failed": "No s'ha pogut desar l'esborrany",
-  "added-to-reading-plan-session": "Afegit a la sessió {{session}}",
-  "reading-plan-add-reading": "Afegeix",
+
   "reading-plan-scripture-remove": "Elimina la lectura",
   "reading-plan-create-submit": "Crea un pla",
   "reading-plan-save-changes": "Desa els canvis",
@@ -504,12 +498,11 @@
   "loading": "S'està carregant…",
   "reading-plan-not-started": "No iniciat",
   "reading-plan-start": "Inicia el pla",
-  "reading-plan-session-count": "{{count}} lectures",
-  "reading-plan-progress-readings": "{{done}} de {{total}} lectures",
+
   "reading-plan-streak": "ratxa de {{count}} dies",
-  "reading-plan-today": "Avui",
+
   "reading-plan-mark-complete": "Marca com a completat",
-  "reading-plan-day-completed": "Completat",
+
   "reading-plan-empty-sessions": "Aquest pla encara no té cap lectura.",
   "reading-plan-celebration-title": "Dia {{day}} completat!",
   "reading-plan-complete-title": "Pla complet!",
@@ -542,7 +535,7 @@
   "reading-plan-mark-reading-complete": "Marca la lectura completada",
   "reading-plan-link-video": "Vídeo",
   "reading-belongs-to": "Aquesta lectura pertany a",
-  "reading-plan-read-nudge": "Has llegit aquest passatge: el marques com a complet?",
+
   "reading-plan-mark-passage-complete": "Marca {{passage}} com a llegit",
   "reading-plan-read-nudge-title": "Bona lectura!",
   "reading-plan-read-nudge-toast": "Marcar {{passage}} com a completat?",
@@ -622,11 +615,7 @@
   "playlist-description_placeholder": "De què tracta aquesta llista de reproducció?",
   "read-more": "Llegir més",
   "read-less": "Llegeix menys",
-  "switch-language-title": "Canviar d'idioma?",
-  "switch-language-body": "Voleu canviar l'idioma a {{nativeLanguageName}} ?",
-  "switch-language-confirm": "Interruptor",
-  "switch-language-dismiss": "No canvieu",
-  "switch-language-never": "No ho tornis a preguntar mai més",
+
   "ask-to-switch-ui-language": "Oferir canviar d'idioma amb traducció",
   "ai": "IA",
   "ai-edit-playlist": "Edita la llista de reproducció amb IA",
@@ -634,8 +623,7 @@
   "chat-tool-used": "{{name}} ha utilitzat {{count}} eines",
   "chat-tool-used_one": "{{name}} ha utilitzat una eina",
   "chat-tool-used_other": "{{name}} ha utilitzat {{count}} eines",
-  "chat-ai-error": "Ho sentim, alguna cosa ha anat malament generant una resposta ( {{error}} ).",
-  "playlist-editor": "Editor de llistes de reproducció",
+
   "ai-context-button-label": "Context d'IA activa",
   "ai-context-tool-count": "{{count}} eines",
   "annotation-conflict-title": "Aquesta nota ha canviat en dos llocs",
@@ -650,8 +638,7 @@
   "annotation-conflict-no-content": "Sense contingut.",
   "annotation-conflict-confirm": "Confirma",
   "annotation-conflict-resolve-failed": "No s'ha pogut aplicar aquesta opció. Ho tornarem a intentar.",
-  "annotations-pending-sync": "{{count}} canvi esperant per sincronitzar-se",
-  "annotations-pending-sync-plural": "{{count}} canvis pendents de sincronització",
+
   "annotation-sync-failed": "No s'ha pogut desar una nota al teu compte. Encara és en aquest dispositiu.",
   "create-menu": "Crea",
   "create-annotation-menu-item": "Anotació",
@@ -666,7 +653,7 @@
   "save-annotation-failed": "No s'ha pogut desar l'anotació.",
   "annotation-group-expand": "Expandeix el grup",
   "annotation-group-collapse": "Replega el grup",
-  "annotation-comment-updated": "Actualitzat {{date}}",
+
   "notes": "Notes",
   "note": "Nota",
   "show-more-verse-actions": "Mostra més accions",
@@ -680,7 +667,7 @@
   "create-folder": "Crea una carpeta",
   "edit-bookmark": "Edita el marcador",
   "remove-bookmark-from-all-folders": "Elimina de totes les carpetes",
-  "add-bookmark-modal": "Afegeix un marcador",
+
   "greeting-afternoon": "Bona tarda!",
   "greeting-afternoon-named": "Bona tarda, {{name}} !",
   "greeting-evening": "Bona nit!",
