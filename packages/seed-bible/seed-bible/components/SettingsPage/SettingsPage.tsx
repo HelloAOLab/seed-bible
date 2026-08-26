@@ -19,6 +19,7 @@ import {
   DEFAULT_HIGHLIGHT_IDS,
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
+  type ThemeFontFamilyKey,
 } from "../../managers/ThemeManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
@@ -26,6 +27,7 @@ import {
   buildCustomFontValue,
   getExtensionAvailability,
   getFontPresetsForField,
+  type CustomizationsManager,
   type ExtensionAvailability,
   type SeedBibleCustomization,
 } from "../../managers/CustomizationsManager";
@@ -2861,86 +2863,18 @@ function CustomizationVariantEditSettingsView(props: {
           <h3 className="sb-settings-subheading">
             {t("customization-fonts", { defaultValue: "Fonts" })}
           </h3>
-          {CUSTOMIZATION_FONT_FIELDS.map((field) => {
-            const value = variant.themes[field.key] ?? "";
-            const label = t(`customization-${field.key}`, {
-              defaultValue: field.label,
-            });
-            const fieldPresets = getFontPresetsForField(field.key);
-            // No stored value at all (e.g. a customization from before the
-            // Fonts feature shipped) means nothing was ever explicitly
-            // chosen — show "Default" (always the first entry) rather than
-            // falling through to "Custom…" with a blank name field.
-            const preset = value
-              ? fieldPresets.find((p) => p.value === value)
-              : fieldPresets[0];
-            const customName = value.split(",")[0]?.trim() ?? "";
-            return (
-              <div key={field.key} className="sb-settings-field-row">
-                <label
-                  className="sb-settings-field-label"
-                  htmlFor={`sb-customization-font-${field.key}`}
-                >
-                  {label}
-                </label>
-                <select
-                  id={`sb-customization-font-${field.key}`}
-                  className="sb-settings-language-select"
-                  value={preset ? preset.name : "__custom__"}
-                  onChange={(event: Event) => {
-                    const target = event.currentTarget as HTMLSelectElement;
-                    if (target.value === "__custom__") {
-                      customizations.setEditingVariantFont(
-                        variant.id,
-                        field.key,
-                        buildCustomFontValue(preset ? "" : customName)
-                      );
-                      return;
-                    }
-                    const nextPreset = fieldPresets.find(
-                      (p) => p.name === target.value
-                    );
-                    if (nextPreset) {
-                      customizations.setEditingVariantFont(
-                        variant.id,
-                        field.key,
-                        nextPreset.value
-                      );
-                    }
-                  }}
-                >
-                  {fieldPresets.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.name === "Default"
-                        ? t("default", { defaultValue: "Default" })
-                        : p.name}
-                    </option>
-                  ))}
-                  <option value="__custom__">
-                    {t("custom-font-option", { defaultValue: "Custom…" })}
-                  </option>
-                </select>
-                {!preset && (
-                  <input
-                    type="text"
-                    className="sb-settings-text-input"
-                    placeholder={t("custom-font-name-placeholder", {
-                      defaultValue: "Google Font name",
-                    })}
-                    value={customName}
-                    onInput={(event: Event) => {
-                      const target = event.currentTarget as HTMLInputElement;
-                      customizations.setEditingVariantFont(
-                        variant.id,
-                        field.key,
-                        buildCustomFontValue(target.value)
-                      );
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
+          {CUSTOMIZATION_FONT_FIELDS.map((field) => (
+            <CustomizationFontFieldRow
+              key={field.key}
+              variantId={variant.id}
+              fieldKey={field.key}
+              value={variant.themes[field.key] ?? ""}
+              label={t(`customization-${field.key}`, {
+                defaultValue: field.label,
+              })}
+              customizations={customizations}
+            />
+          ))}
         </div>
 
         <div className="sb-settings-actions">
@@ -2991,6 +2925,101 @@ function CustomizationVariantEditSettingsView(props: {
             ))}
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * One font-family row in a customization variant's Fonts section. Custom
+ * mode is tracked as its own local signal, separate from the stored value —
+ * picking "Custom…" stores an empty value until a name is typed, and an
+ * empty value is also what "nothing selected, use Default" looks like
+ * (`CustomizationVariantEditSettingsView`'s field lookup falls back to the
+ * Default preset for it). Without a separate "the user is actively in
+ * custom mode" flag, storing that empty value would immediately read back
+ * as "nothing selected" and snap the row back to Default, hiding the name
+ * field before anything could be typed into it.
+ */
+function CustomizationFontFieldRow(props: {
+  variantId: string;
+  fieldKey: ThemeFontFamilyKey;
+  value: string;
+  label: string;
+  customizations: CustomizationsManager;
+}) {
+  const { variantId, fieldKey, value, label, customizations } = props;
+  const { t } = useI18n();
+  const forcedCustom = useSignal(false);
+
+  const fieldPresets = getFontPresetsForField(fieldKey);
+  const matchedPreset = value
+    ? fieldPresets.find((p) => p.value === value)
+    : fieldPresets[0];
+  // A stored value that doesn't match any preset is a real custom font
+  // (e.g. reopening an editor that already has one saved) — show custom
+  // mode for it even before the user has touched the select this session.
+  const isCustom = forcedCustom.value || (!!value && !matchedPreset);
+  const preset = isCustom ? undefined : matchedPreset;
+  const customName = value.split(",")[0]?.trim() ?? "";
+
+  return (
+    <div className="sb-settings-field-row">
+      <label
+        className="sb-settings-field-label"
+        htmlFor={`sb-customization-font-${fieldKey}`}
+      >
+        {label}
+      </label>
+      <select
+        id={`sb-customization-font-${fieldKey}`}
+        className="sb-settings-language-select"
+        value={preset ? preset.name : "__custom__"}
+        onChange={(event: Event) => {
+          const target = event.currentTarget as HTMLSelectElement;
+          if (target.value === "__custom__") {
+            forcedCustom.value = true;
+            return;
+          }
+          forcedCustom.value = false;
+          const nextPreset = fieldPresets.find((p) => p.name === target.value);
+          if (nextPreset) {
+            customizations.setEditingVariantFont(
+              variantId,
+              fieldKey,
+              nextPreset.value
+            );
+          }
+        }}
+      >
+        {fieldPresets.map((p) => (
+          <option key={p.name} value={p.name}>
+            {p.name === "Default"
+              ? t("default", { defaultValue: "Default" })
+              : p.name}
+          </option>
+        ))}
+        <option value="__custom__">
+          {t("custom-font-option", { defaultValue: "Custom…" })}
+        </option>
+      </select>
+      {isCustom && (
+        <input
+          type="text"
+          className="sb-settings-text-input"
+          placeholder={t("custom-font-name-placeholder", {
+            defaultValue: "Google Font name",
+          })}
+          value={customName}
+          onInput={(event: Event) => {
+            const target = event.currentTarget as HTMLInputElement;
+            customizations.setEditingVariantFont(
+              variantId,
+              fieldKey,
+              buildCustomFontValue(target.value)
+            );
+          }}
+        />
+      )}
     </div>
   );
 }
