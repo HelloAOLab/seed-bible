@@ -2867,7 +2867,13 @@ function CustomizationVariantEditSettingsView(props: {
               defaultValue: field.label,
             });
             const fieldPresets = getFontPresetsForField(field.key);
-            const preset = fieldPresets.find((p) => p.value === value);
+            // No stored value at all (e.g. a customization from before the
+            // Fonts feature shipped) means nothing was ever explicitly
+            // chosen — show "Default" (always the first entry) rather than
+            // falling through to "Custom…" with a blank name field.
+            const preset = value
+              ? fieldPresets.find((p) => p.value === value)
+              : fieldPresets[0];
             const customName = value.split(",")[0]?.trim() ?? "";
             return (
               <div key={field.key} className="sb-settings-field-row">
