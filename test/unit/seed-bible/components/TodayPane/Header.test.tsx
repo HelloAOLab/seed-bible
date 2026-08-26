@@ -53,6 +53,7 @@ describe("Header", () => {
     container.querySelector<HTMLDivElement>(".sb-today-header")!;
   const date = () => header().querySelector(":scope > span")!.textContent;
   const heading = () => header().querySelector("h1")!.textContent;
+  const nameElement = () => header().querySelector("h1 > span");
 
   describe("date", () => {
     it("formats the date as 'day MONTH'", () => {
@@ -87,27 +88,27 @@ describe("Header", () => {
   describe("greeting", () => {
     it("is morning between 05:00 and 11:59", () => {
       setupAtHour(8);
-      expect(heading()).toContain("Good morning,");
+      expect(heading()).toContain("Good morning");
     });
 
     it("is afternoon between 12:00 and 17:59", () => {
       setupAtHour(14);
-      expect(heading()).toContain("Good afternoon,");
+      expect(heading()).toContain("Good afternoon");
     });
 
     it("is evening between 18:00 and 20:59", () => {
       setupAtHour(19);
-      expect(heading()).toContain("Good evening,");
+      expect(heading()).toContain("Good evening");
     });
 
     it("is night late at night", () => {
       setupAtHour(23);
-      expect(heading()).toContain("Good night,");
+      expect(heading()).toContain("Good night");
     });
 
     it("is night in the small hours", () => {
       setupAtHour(3);
-      expect(heading()).toContain("Good night,");
+      expect(heading()).toContain("Good night");
     });
 
     // The greeting was computed once and never again: the memo took no time
@@ -115,31 +116,39 @@ describe("Header", () => {
     it("moves on when the hour crosses a boundary while Today is open", () => {
       vi.setSystemTime(new Date(2026, 5, 15, 11, 59, 0));
       setup();
-      expect(heading()).toContain("Good morning,");
+      expect(heading()).toContain("Good morning");
 
       vi.setSystemTime(new Date(2026, 5, 15, 12, 0, 1));
       act(() => {
         vi.advanceTimersByTime(TICK_INTERVAL_MS);
       });
 
-      expect(heading()).toContain("Good afternoon,");
+      expect(heading()).toContain("Good afternoon");
     });
   });
 
   describe("name", () => {
-    it("uses the username when present", () => {
+    // Fixed so the whole heading can be asserted, comma and all.
+    beforeEach(() => {
+      vi.setSystemTime(new Date(2026, 5, 15, 8, 0, 0));
+    });
+
+    it("greets a signed-in reader by name", () => {
       setup({ username: "Alice" });
-      expect(heading()).toContain("Alice!");
+      expect(heading()).toBe("Good morning, Alice!");
+      expect(nameElement()?.textContent).toBe("Alice!");
     });
 
-    it("falls back to 'Anonymous' for an empty username", () => {
-      setup({ username: "" });
-      expect(heading()).toContain("Anonymous!");
-    });
-
-    it("falls back to 'Anonymous' when the username is undefined", () => {
+    it("greets an anonymous reader without naming them", () => {
       setup({ username: undefined });
-      expect(heading()).toContain("Anonymous!");
+      expect(heading()).toBe("Good morning!");
+      expect(nameElement()).toBeNull();
+    });
+
+    it("greets a reader with an empty name without naming them", () => {
+      setup({ username: "" });
+      expect(heading()).toBe("Good morning!");
+      expect(nameElement()).toBeNull();
     });
   });
 });
