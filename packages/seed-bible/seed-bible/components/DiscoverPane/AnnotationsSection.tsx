@@ -501,7 +501,7 @@ export function AnnotationsSection(props: {
         frame = 0;
         document
           .getElementById(groupElementId(groupKey))
-          ?.scrollIntoView({ block: "nearest" });
+          ?.scrollIntoView({ block: "center" });
       });
 
       window.clearTimeout(highlightTimer);
