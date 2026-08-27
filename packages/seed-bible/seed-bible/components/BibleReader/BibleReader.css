@@ -1064,6 +1064,7 @@
 .sb-bible-reader-discover-panel {
   flex: 1 1 22.5rem;
   justify-self: flex-end;
+  max-width: 22.5rem;
 }
 
 /* On mobile the panel is a plain block inside the swipe panel's own scroll
