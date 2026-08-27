@@ -26,6 +26,7 @@ minimumReleaseAgeExclude:
   - "@aws-sdk/types@3.973.13"
   - "@aws-sdk/xml-builder@3.972.30"
 patchedDependencies:
+  "@casual-simulation/aux-records@4.2.7": patches/@casual-simulation__aux-records@4.2.7.patch
   "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch"
   "follow-redirects": "patches/follow-redirects.patch"
 catalog:
@@ -37,8 +38,8 @@ catalog:
   react-dom: "npm:@preact/compat@^18.3.2"
   zod: "4.4.3"
   axios: "1.13.5"
-  "@casual-simulation/aux-common": "4.2.3"
-  "@casual-simulation/aux-websocket": "4.2.3"
+  "@casual-simulation/aux-common": "4.2.7"
+  "@casual-simulation/aux-websocket": "4.2.7"
   "@casual-simulation/websocket": "4.0.0"
   typesense: "^3.0.5"
   base64-js: "1.5.1"

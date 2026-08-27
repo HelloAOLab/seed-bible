@@ -1,7 +1,6 @@
 import type { DiscoverContentResult } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import { ExpandableText, PlaylistLinkContent } from "seed-bible/components";
-import { useI18n } from "seed-bible/i18n";
+import { PlaylistLinkContent } from "seed-bible/components";
 import {
   findBibleProjectContentForChapter,
   findDiscoveredContentForChapter,
