@@ -37,7 +37,11 @@ import {
   ExtensionInitalizer,
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
-import { useI18n, type I18nHook } from "../../i18n/I18nManager";
+import {
+  getBrandedAppText,
+  useI18n,
+  type I18nHook,
+} from "../../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
@@ -83,6 +87,7 @@ const TEXT_COLOR_PALETTE = [
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
 
 import { LANG_META } from "../../i18n/languageMeta";
+import { useAppConfig } from "../../app/appConfig";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -1205,6 +1210,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const { t } = useI18n();
+  const { branding } = useAppConfig();
 
   const renderExtensionRow = (extensionEntry: ExtensionListEntry) => {
     const { id, installed, pendingInstallation } = extensionEntry;
@@ -1246,10 +1252,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           <div className="sb-extension-row-content">
             <span className="sb-extension-name">
               {/* eslint-disable-next-line seed-bible-i18n/translation-missing-keys */}
-              {t("title", { ns: id, defaultValue: id })}
+              {getBrandedAppText(t, "title", branding, {
+                ns: id,
+                defaultValue: id,
+              })}
             </span>
             <span className="sb-extension-description">
-              {t("description", { ns: id, defaultValue: "" })}
+              {getBrandedAppText(t, "description", branding, {
+                ns: id,
+                defaultValue: "",
+              })}
             </span>
           </div>
           <div className="sb-extension-row-actions">

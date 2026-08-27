@@ -1,6 +1,10 @@
 import "./Onboarding.css";
 import type { ComponentChildren } from "preact";
-import { isRightToLeftLanguage, useI18n } from "../../i18n/I18nManager";
+import {
+  isRightToLeftLanguage,
+  getBrandedAppText,
+  useI18n,
+} from "../../i18n/I18nManager";
 import { LANG_META } from "../../i18n/languageMeta";
 import { InstallAppsIcon, SafariIcon } from "../../components/icons";
 import type { OnboardingManager } from "../../managers/OnboardingManager";
@@ -277,8 +281,7 @@ function InstallContent({
       </div>
 
       <p className="sb-onboarding-body">
-        {t("onboarding.installBodyPre", {
-          appName: branding?.appName ?? "Seed Bible",
+        {getBrandedAppText(t, "onboarding.installBodyPre", branding, {
           defaultValue: "Add Seed Bible to your ",
         })}
         <strong>{target}</strong>

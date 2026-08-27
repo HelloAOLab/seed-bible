@@ -1,5 +1,5 @@
 import "./TutorialPrompt.css";
-import { useI18n } from "../../i18n/I18nManager";
+import { getBrandedAppText, useI18n } from "../../i18n/I18nManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import { useAppConfig } from "../../app/appConfig";
 
@@ -31,14 +31,12 @@ export function TutorialPrompt({
       aria-labelledby="sb-tutorial-prompt-title"
     >
       <h3 className="sb-tutorial-prompt-title" id="sb-tutorial-prompt-title">
-        {t("tutorial.promptTitle", {
-          appName: branding?.appName ?? "Seed Bible",
+        {getBrandedAppText(t, "tutorial.promptTitle", branding, {
           defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
         })}
       </h3>
       <p className="sb-tutorial-prompt-body">
-        {t("tutorial.promptBody", {
-          appName: branding?.appName ?? "Seed Bible",
+        {getBrandedAppText(t, "tutorial.promptBody", branding, {
           defaultValue:
             "A guided tour is available to help you learn the ins and outs of Seed Bible.",
         })}

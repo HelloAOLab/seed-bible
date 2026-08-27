@@ -16,6 +16,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
+import type { BrandingConfig } from "../app/appConfig";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -64,7 +65,21 @@ export function addTranslations(
     i18n.addResourceBundle(lang, ns, resources, true, options?.overwrite);
   }
 }
+type TranslationFn = (key: string, options?: Record<string, unknown>) => string;
+function getAppName(t: TranslationFn, branding?: BrandingConfig): string {
+  return branding?.appName ?? t("seed-bible", { defaultValue: "Seed Bible" });
+}
+export function getBrandedAppText(
+  t: TranslationFn,
+  key: string,
+  branding?: BrandingConfig,
+  options?: Record<string, unknown>
+): string {
+  const text = t(key, options);
+  const appName = getAppName(t, branding);
 
+  return text.replace(/Seed Bible/gi, appName);
+}
 // /**
 //  * Loads translations from the given bot's tags.
 //  * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
