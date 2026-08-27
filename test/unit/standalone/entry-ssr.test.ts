@@ -710,7 +710,7 @@ describe("render() server-rendered meta tags", () => {
     }
     expect(result.notFound).toBeFalsy();
     expect(result.html).toContain(
-      "<title>About the Seed Bible | Seed Bible</title>"
+      "<title>About Seed Bible | Seed Bible</title>"
     );
     expect(result.html).toContain('<link rel="canonical" href="/en/about"');
     expect(result.html).toContain(

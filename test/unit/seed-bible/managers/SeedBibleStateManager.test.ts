@@ -1583,11 +1583,11 @@ describe("createSeedBibleState", () => {
       const state = await createState();
 
       expect(state.app.isAboutPage.value).toBe(true);
-      expect(state.app.title.value).toBe("About the Seed Bible | Seed Bible");
+      expect(state.app.title.value).toBe("About Seed Bible | Seed Bible");
       expect(state.app.description.value).toBe(
-        "Seed Bible is a free Bible app with dozens of translations, reading plans, notes, highlights, and study tools."
+        "Seed Bible is a free Bible app built for reading Scripture together with your family, friends, and community — free forever, no ads or paywalls."
       );
-      expect(state.app.socialTitle.value).toBe("About the Seed Bible");
+      expect(state.app.socialTitle.value).toBe("About Seed Bible");
       expect(state.app.canonicalUrl.value).toBe("/en/about");
     });
 

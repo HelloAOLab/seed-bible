@@ -36,42 +36,55 @@
   margin: 0 0 1.5rem;
 }
 
-.sb-about-content h2 {
-  font-family: var(--sb-chapter-heading-font-family), sans-serif;
-  color: var(--sb-chapter-heading-font-color);
-  font-size: 1.25rem;
-  line-height: 1.3;
-  margin: 0 0 0.5rem;
-}
-
-.sb-about-content p,
-.sb-about-content li {
+.sb-about-content p {
   line-height: 1.7;
+  margin: 0 0 1.25rem;
 }
 
-.sb-about-content section {
-  margin-bottom: 2rem;
-}
-
-.sb-about-content ul {
-  padding-left: 1.4em;
-  margin: 0;
-}
-
-/* Excludes the CTA button below: `--sb-link-color` and `--sb-primary-color`
-   are themed to the same value (see ThemeManager.tsx), so without this
-   exclusion this rule's higher specificity would win over `.sb-about-cta`'s
-   own color and paint its text the same as its own background. */
-.sb-about-content a:not(.sb-about-cta) {
+.sb-about-content a {
   color: var(--sb-link-color);
 }
 
-.sb-about-cta {
+.sb-about-inline-action {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--sb-link-color);
+  cursor: pointer;
+}
+
+.sb-about-signature {
+  margin-top: 2rem;
+}
+
+.sb-about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.sb-about-action {
   display: inline-block;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
+}
+
+.sb-about-action-primary {
+  border: none;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-about-action-secondary {
+  border: 1px solid var(--sb-primary-color);
+  background: transparent;
+  color: var(--sb-primary-color);
 }
