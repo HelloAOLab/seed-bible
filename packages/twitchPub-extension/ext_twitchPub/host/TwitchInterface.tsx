@@ -79,14 +79,13 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             }`}
           >
             {getBrandedAppText(
-              t,
-              "twitchInterface.qrCodeInstructions",
-              branding,
-              {
+              t("twitchInterface.qrCodeInstructions", {
                 ns: "ext_twitchPub",
                 defaultValue:
                   "Your viewers can scan this to follow you on Seed Bible",
-              }
+              }),
+              t,
+              branding
             )}
           </span>
         </div>

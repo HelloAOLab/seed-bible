@@ -70,14 +70,11 @@ function getAppName(t: TranslationFn, branding?: BrandingConfig): string {
   return branding?.appName ?? t("seed-bible", { defaultValue: "Seed Bible" });
 }
 export function getBrandedAppText(
+  text: string,
   t: TranslationFn,
-  key: string,
-  branding?: BrandingConfig,
-  options?: Record<string, unknown>
+  branding?: BrandingConfig
 ): string {
-  const text = t(key, options);
   const appName = getAppName(t, branding);
-
   return text.replace(/Seed Bible/gi, appName);
 }
 // /**

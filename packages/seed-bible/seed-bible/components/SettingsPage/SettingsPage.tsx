@@ -1251,17 +1251,19 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </span>
           <div className="sb-extension-row-content">
             <span className="sb-extension-name">
-              {/* eslint-disable-next-line seed-bible-i18n/translation-missing-keys */}
-              {getBrandedAppText(t, "title", branding, {
-                ns: id,
-                defaultValue: id,
-              })}
+              {getBrandedAppText(
+                // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+                t("title", { ns: id, defaultValue: id }),
+                t,
+                branding
+              )}
             </span>
             <span className="sb-extension-description">
-              {getBrandedAppText(t, "description", branding, {
-                ns: id,
-                defaultValue: "",
-              })}
+              {getBrandedAppText(
+                t("description", { ns: id, defaultValue: "" }),
+                t,
+                branding
+              )}
             </span>
           </div>
           <div className="sb-extension-row-actions">

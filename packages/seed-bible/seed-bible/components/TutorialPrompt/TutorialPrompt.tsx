@@ -31,15 +31,23 @@ export function TutorialPrompt({
       aria-labelledby="sb-tutorial-prompt-title"
     >
       <h3 className="sb-tutorial-prompt-title" id="sb-tutorial-prompt-title">
-        {getBrandedAppText(t, "tutorial.promptTitle", branding, {
-          defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
-        })}
+        {getBrandedAppText(
+          t("tutorial.promptTitle", {
+            defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
+          }),
+          t,
+          branding
+        )}
       </h3>
       <p className="sb-tutorial-prompt-body">
-        {getBrandedAppText(t, "tutorial.promptBody", branding, {
-          defaultValue:
-            "A guided tour is available to help you learn the ins and outs of Seed Bible.",
-        })}
+        {getBrandedAppText(
+          t("tutorial.promptBody", {
+            defaultValue:
+              "A guided tour is available to help you learn the ins and outs of Seed Bible.",
+          }),
+          t,
+          branding
+        )}
       </p>
       <div className="sb-tutorial-prompt-actions">
         <button

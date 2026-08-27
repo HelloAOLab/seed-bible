@@ -1062,9 +1062,11 @@ export function createSeedBibleState(
 
     const { t } = i18n;
 
-    const seedBibleTitle = getBrandedAppText(t, "seed-bible", branding, {
-      defaultValue: "Seed Bible",
-    });
+    const seedBibleTitle = getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding
+    );
 
     const getTitle = () => {
       if (!selectedTab.value) {
@@ -1140,9 +1142,11 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    return getBrandedAppText(t, "seed-bible", branding, {
-      defaultValue: "Seed Bible",
-    });
+    return getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding
+    );
   });
 
   /**

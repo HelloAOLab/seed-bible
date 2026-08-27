@@ -281,9 +281,13 @@ function InstallContent({
       </div>
 
       <p className="sb-onboarding-body">
-        {getBrandedAppText(t, "onboarding.installBodyPre", branding, {
-          defaultValue: "Add Seed Bible to your ",
-        })}
+        {getBrandedAppText(
+          t("onboarding.installBodyPre", {
+            defaultValue: "Add Seed Bible to your ",
+          }),
+          t,
+          branding
+        )}
         <strong>{target}</strong>
         {t("onboarding.installBodyPost", {
           defaultValue:
