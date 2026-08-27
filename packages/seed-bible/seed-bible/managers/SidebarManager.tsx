@@ -137,23 +137,36 @@ export function createSidebar(options: CreateSidebarOptions) {
   };
 
   /**
+   * True while any part of the Customization Center is open — the list or
+   * one of its editors. Previewing a customization means clicking around
+   * and selecting verses in the reader while this settings view stays
+   * open, so both the scrim (Tabs.tsx, which would otherwise block input
+   * to the reader) and `collapseSidebarOverlay` below (which would close
+   * the view on that same click) need to stand down for all of these
+   * views, not just the editors.
+   */
+  const isCustomizationViewOpen = computed(
+    () =>
+      requestedSettingsView.value === "customizations" ||
+      requestedSettingsView.value === "customization-edit" ||
+      requestedSettingsView.value === "customization-edit-variant" ||
+      requestedSettingsView.value === "customization-edit-extensions"
+  );
+
+  /**
    * Dismisses the sidebar when it is shown as a floating overlay (the compact
    * desktop band, where an expanded sidebar floats over the reader). Closes any
    * open settings view and collapses the sidebar back to its rail. Wired to the
    * scrim rendered behind the overlay so clicking anywhere on the page outside
    * the sidebar collapses it again.
    *
-   * No-ops while a customization/variant editor is open, so an accidental
-   * outside click can't silently discard unsaved edits — every other way of
-   * leaving Settings (the close button, breadcrumb back navigation) still
-   * works normally.
+   * No-ops while the Customization Center is open, so an accidental outside
+   * click can't silently discard unsaved edits — every other way of leaving
+   * Settings (the close button, breadcrumb back navigation) still works
+   * normally.
    */
   const collapseSidebarOverlay = () => {
-    if (
-      requestedSettingsView.value === "customization-edit" ||
-      requestedSettingsView.value === "customization-edit-variant" ||
-      requestedSettingsView.value === "customization-edit-extensions"
-    ) {
+    if (isCustomizationViewOpen.value) {
       return;
     }
     requestedSettingsView.value = null;
@@ -187,6 +200,7 @@ export function createSidebar(options: CreateSidebarOptions) {
     isMobileOpen,
     tabsOpenedFromToolbar,
     requestedSettingsView,
+    isCustomizationViewOpen,
     toggleSettings,
     openSettings,
     openSettingsToView,

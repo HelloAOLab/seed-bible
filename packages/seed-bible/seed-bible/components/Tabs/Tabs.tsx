@@ -2593,7 +2593,16 @@ export function Sidebar(props: SidebarProps) {
   // an overlay (see Tabs.css). When it does, we render a scrim behind it so
   // that (a) input to the reader below is blocked while the overlay is up and
   // (b) clicking anywhere outside the sidebar collapses it back to the rail.
-  const isOverlay = app.isCompactDesktop.value && !effectivelyCollapsed;
+  //
+  // Neither is wanted while the Customization Center is open: previewing a
+  // customization means clicking around and selecting verses in the reader
+  // with the editor still open, so the scrim itself is skipped there rather
+  // than just no-op'ing its onClick — a still-present scrim would keep
+  // blocking those clicks from ever reaching the reader.
+  const isOverlay =
+    app.isCompactDesktop.value &&
+    !effectivelyCollapsed &&
+    !sidebar.isCustomizationViewOpen.value;
 
   // The guided tour opens the pane-layout menu while its step is active so the
   // layout options are visible behind the coachmark.
