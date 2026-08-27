@@ -173,6 +173,34 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
     expect(container.textContent).toContain("The full article.");
   });
 
+  it("renders a content result's description with ExpandableText", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "Some context",
+              content: "The full article.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const description = container.querySelector(
+      ".sb-discover-item-description"
+    );
+    expect(description?.classList.contains("sb-expandable-text")).toBe(true);
+    expect(description?.textContent).toContain("Some context");
+  });
+
   it("renders an item's image above its title when provided", () => {
     const tab = createMockTab({
       discoveredContent: [

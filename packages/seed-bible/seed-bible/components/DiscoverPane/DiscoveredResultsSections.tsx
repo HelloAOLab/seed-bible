@@ -6,6 +6,7 @@ import type {
   DiscoverReference,
 } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 
 type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
@@ -137,6 +138,8 @@ export function ContentSection(props: { tab: ReaderTab | null }) {
 }
 
 function ContentResultsList(props: { results: DiscoverContentResult[] }) {
+  const { t } = useI18n();
+
   return (
     <ul className="sb-discover-list">
       {props.results.map((result, index) => (
@@ -150,11 +153,17 @@ function ContentResultsList(props: { results: DiscoverContentResult[] }) {
           ) : null}
           <span className="sb-discover-item-title">{result.title}</span>
           {result.description ? (
-            <span className="sb-discover-item-description">
+            <ExpandableText
+              className="sb-discover-item-description"
+              readMoreLabel={t("read-more", { defaultValue: "Read more" })}
+              readLessLabel={t("read-less", { defaultValue: "Read less" })}
+            >
               {result.description}
-            </span>
+            </ExpandableText>
           ) : null}
-          <div className="sb-discover-item-content">{result.content}</div>
+          {result.content ? (
+            <div className="sb-discover-item-content">{result.content}</div>
+          ) : null}
         </li>
       ))}
     </ul>

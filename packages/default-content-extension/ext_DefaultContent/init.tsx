@@ -7,50 +7,50 @@ import {
   findDiscoveredContentForChapter,
 } from "./discoveredContent";
 
-export interface DiscoveredContentBodyProps {
-  description: string;
-  author?: string;
-  url: string;
-}
+// export interface DiscoveredContentBodyProps {
+//   description: string;
+//   author?: string;
+//   url: string;
+// }
 
-export function DiscoveredContentBody(props: DiscoveredContentBodyProps) {
-  const { t } = useI18n("default-content-extension");
-  // "Read more"/"Read less" are already translated app-wide, so borrow those
-  // instead of re-translating them into this extension's own namespace.
-  const { t: tShared } = useI18n();
-  const { description, author, url } = props;
+// export function DiscoveredContentBody(props: DiscoveredContentBodyProps) {
+//   const { t } = useI18n("default-content-extension");
+//   // "Read more"/"Read less" are already translated app-wide, so borrow those
+//   // instead of re-translating them into this extension's own namespace.
+//   const { t: tShared } = useI18n();
+//   const { description, author, url } = props;
 
-  return (
-    <div className="sb-default-content-item">
-      {description ? (
-        <ExpandableText
-          className="sb-discover-item-description"
-          readMoreLabel={tShared("read-more", { defaultValue: "Read more" })}
-          readLessLabel={tShared("read-less", { defaultValue: "Read less" })}
-        >
-          {description}
-        </ExpandableText>
-      ) : null}
-      {author ? (
-        <div className="sb-default-content-author">
-          {t("content-by-author", {
-            defaultValue: "By {{author}}",
-            author,
-          })}
-        </div>
-      ) : null}
-      <a
-        className="sb-default-content-link"
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {t("content-watch-link", { defaultValue: "Watch" })}
-      </a>
-    </div>
-  );
-}
+//   return (
+//     <div className="sb-default-content-item">
+//       {description ? (
+//         <ExpandableText
+//           className="sb-discover-item-description"
+//           readMoreLabel={tShared("read-more", { defaultValue: "Read more" })}
+//           readLessLabel={tShared("read-less", { defaultValue: "Read less" })}
+//         >
+//           {description}
+//         </ExpandableText>
+//       ) : null}
+//       {author ? (
+//         <div className="sb-default-content-author">
+//           {t("content-by-author", {
+//             defaultValue: "By {{author}}",
+//             author,
+//           })}
+//         </div>
+//       ) : null}
+//       <a
+//         className="sb-default-content-link"
+//         href={url}
+//         target="_blank"
+//         rel="noopener noreferrer"
+//         onClick={(e) => e.stopPropagation()}
+//       >
+//         {t("content-watch-link", { defaultValue: "Watch" })}
+//       </a>
+//     </div>
+//   );
+// }
 
 export default function initDefaultContentExtension() {
   registerExtension({
@@ -68,7 +68,7 @@ export default function initDefaultContentExtension() {
               // The description renders inside `content` via ExpandableText
               // instead, so the shared wrapper's plain (un-truncated) span
               // stays empty.
-              description: "",
+              description: item.description,
               reference,
               author: item.author,
               image: item.imageUrl,
@@ -84,13 +84,6 @@ export default function initDefaultContentExtension() {
                   ),
                 });
               },
-              content: (
-                <DiscoveredContentBody
-                  description={item.description}
-                  author={item.author}
-                  url={item.url}
-                />
-              ),
             })
           );
         },
@@ -109,7 +102,7 @@ export default function initDefaultContentExtension() {
               // The description renders inside `content` via ExpandableText
               // instead, so the shared wrapper's plain (un-truncated) span
               // stays empty.
-              description: "",
+              description: item.video.description,
               reference: {
                 book: item.bookId,
                 chapter: discoverContext.chapter,
@@ -129,12 +122,6 @@ export default function initDefaultContentExtension() {
                   ),
                 });
               },
-              content: (
-                <DiscoveredContentBody
-                  description={item.video.description}
-                  url={item.video.share_url}
-                />
-              ),
             })
           );
         },
