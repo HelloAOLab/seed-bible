@@ -173,6 +173,67 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
     expect(container.textContent).toContain("The full article.");
   });
 
+  it("renders an item's image above its title when provided", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+              image: "https://example.com/thumb.jpg",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const item = container.querySelector(".sb-discover-item");
+    const image = item?.querySelector(".sb-discover-item-image");
+    expect(image?.getAttribute("src")).toBe("https://example.com/thumb.jpg");
+
+    const children = Array.from(item?.children ?? []);
+    const imageIndex = children.findIndex((el) =>
+      el.classList.contains("sb-discover-item-image")
+    );
+    const titleIndex = children.findIndex((el) =>
+      el.classList.contains("sb-discover-item-title")
+    );
+    expect(imageIndex).toBe(0);
+    expect(imageIndex).toBeLessThan(titleIndex);
+  });
+
+  it("renders no image when the result doesn't provide one", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    expect(container.querySelector(".sb-discover-item-image")).toBeNull();
+  });
+
   it("groups content results into one section per author", () => {
     const tab = createMockTab({
       discoveredContent: [

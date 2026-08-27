@@ -141,6 +141,9 @@ function ContentResultsList(props: { results: DiscoverContentResult[] }) {
     <ul className="sb-discover-list">
       {props.results.map((result, index) => (
         <li key={index} className="sb-discover-item">
+          {result.image ? (
+            <img className="sb-discover-item-image" src={result.image} alt="" />
+          ) : null}
           <span className="sb-discover-item-title">{result.title}</span>
           {result.description ? (
             <span className="sb-discover-item-description">

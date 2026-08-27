@@ -131,6 +131,8 @@ export interface DiscoveredContentItem {
   author: string;
   description: string;
   url: string;
+  /** Preview image fetched from the link's metadata (e.g. `og:image`). Absent for older entries generated before link previews were added. */
+  imageUrl?: string;
   references: DiscoveredContentReference[];
 }
 

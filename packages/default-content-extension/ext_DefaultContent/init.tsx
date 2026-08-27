@@ -7,13 +7,13 @@ import {
   findDiscoveredContentForChapter,
 } from "./discoveredContent";
 
-interface DiscoveredContentBodyProps {
+export interface DiscoveredContentBodyProps {
   description: string;
   author?: string;
   url: string;
 }
 
-function DiscoveredContentBody(props: DiscoveredContentBodyProps) {
+export function DiscoveredContentBody(props: DiscoveredContentBodyProps) {
   const { t } = useI18n("default-content-extension");
   // "Read more"/"Read less" are already translated app-wide, so borrow those
   // instead of re-translating them into this extension's own namespace.
@@ -70,6 +70,7 @@ export default function initDefaultContentExtension() {
               description: "",
               reference,
               author: item.author,
+              image: item.imageUrl,
               content: (
                 <DiscoveredContentBody
                   description={item.description}
@@ -102,6 +103,7 @@ export default function initDefaultContentExtension() {
                 endChapter: item.chapter_end,
               },
               author: "Bible Project",
+              image: item.video.images.medium,
               content: (
                 <DiscoveredContentBody
                   description={item.video.description}
