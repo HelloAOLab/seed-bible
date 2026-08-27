@@ -997,7 +997,7 @@
   flex-shrink: 0;
 }
 
-.sb-session-settings-copy-id:hover {
+.sb-session-settings-copy-url:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
   color: var(--sb-font-color);
 }
