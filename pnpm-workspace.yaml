@@ -1,6 +1,7 @@
 packages:
   - "packages/*"
 allowBuilds:
+  "@google/genai": false
   esbuild: false
   protobufjs: false
   "puppeteer": true
@@ -26,7 +27,6 @@ minimumReleaseAgeExclude:
   - "@aws-sdk/xml-builder@3.972.30"
 patchedDependencies:
   "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch"
-  "@casual-simulation/aux-records": "patches/@casual-simulation__aux-records.patch"
   "follow-redirects": "patches/follow-redirects.patch"
 catalog:
   i18next: "26.2.0"

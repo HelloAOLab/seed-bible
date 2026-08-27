@@ -114,7 +114,6 @@ overrides:
   chromium-bidi>zod: 3.25.76
 
 patchedDependencies:
-  '@casual-simulation/aux-records': b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e
   '@casual-simulation/fast-json-stable-stringify': a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef
   follow-redirects: 6c86d1ca9b95ef9c8aca9f39dd13a02652b3d033c6067e152f056e89a3f67a66
 
@@ -205,17 +204,17 @@ importers:
         specifier: ^7.27.1
         version: 7.28.5(@babel/core@7.28.6)
       '@casual-simulation/aux-common':
-        specifier: ^4.2.3
-        version: 4.2.3
+        specifier: ^4.2.7
+        version: 4.2.7
       '@casual-simulation/aux-records':
-        specifier: ^4.2.3
-        version: 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: ^4.2.7
+        version: 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime':
-        specifier: ^4.2.3
-        version: 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: ^4.2.7
+        version: 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-vm':
-        specifier: ^4.2.3
-        version: 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
+        specifier: ^4.2.7
+        version: 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto':
         specifier: ^4.0.5
         version: 4.0.5
@@ -1447,14 +1446,26 @@ packages:
   '@casual-simulation/aux-common@4.2.3':
     resolution: {integrity: sha512-LBo+xDw5r4dA5OUisWqcCD74Xgs+SgMgcckxXZnuooZrT56pJ42s5JCeEli5Hjt2OmELxvPyC71hn5n4zfnZ3g==}
 
+  '@casual-simulation/aux-common@4.2.7':
+    resolution: {integrity: sha512-HMlBf07aB0PskBwi84tPBIN6UgsCH+/0zYshJspuwokwJlO9j02MeCKvCwaWSYKoVa7rML1lhPLjd7D/6I4bvA==}
+
   '@casual-simulation/aux-records@4.2.4':
     resolution: {integrity: sha512-fyQT/KX77wtUaY8dSb0Y2VpjRt968ouBzQMpo3ySpkA/LZzUt3Qfe9MOXGnlQ8K2Lp/3bQKAkj8YZly49QuQRQ==}
+
+  '@casual-simulation/aux-records@4.2.7':
+    resolution: {integrity: sha512-GeA22YUTFfmxv5XV+kcZOQNul+SUOldH0hPXlQ6Ug9eJ5OFR+GP5iZMmoVWh6Ejn40Gnr4+W09IXmqE4vnUcKg==}
 
   '@casual-simulation/aux-runtime@4.2.4':
     resolution: {integrity: sha512-FXkbC/P0e1RVPSow9kS0WTvmooUvWGodgSNm2Y9/US4WkE+dw8ybFcxbQ2z0d2RSc/xH7hLFvUN+csbLcPuRmA==}
 
+  '@casual-simulation/aux-runtime@4.2.7':
+    resolution: {integrity: sha512-rIr84PIUQVuCLO94G/mwLnL9yr/4i94MAl/XMGY2br6LdPmD5O9fPyg5uXXEHMbV6h2Fu2kiZPdFpVyUupaUpg==}
+
   '@casual-simulation/aux-vm@4.2.4':
     resolution: {integrity: sha512-Y4pxk1V/PVAy11hAn5h1Ag8XTCOQ4L6aqz5kKhFDvvUzMSGSaIKBlq092IdyKKF/hUTSUX/4+Q3955TAIuhVCA==}
+
+  '@casual-simulation/aux-vm@4.2.7':
+    resolution: {integrity: sha512-s1vQwSvVjr22HMu3rSW3NYeRejzSrbaC5wWMOQySsVNSAo9+R7oWp5+6uR7fuDfjy3Tw3Q21J10tGqdYScSAFw==}
 
   '@casual-simulation/aux-websocket@4.2.3':
     resolution: {integrity: sha512-rVsP2ZdoLdZp2MEBAfNkkX5tDgsH9oE7dPtzHHYg3FCmtCPomi7qR4f71hjxFd3EusRXbN20hhjuslXg4ERduA==}
@@ -2158,6 +2169,15 @@ packages:
   '@google-cloud/translate@9.3.0':
     resolution: {integrity: sha512-OgZ2bCu3P0ZzMhEdYubwyCo/eFFlJMYalozmgOxlVcD51vCYelYUJeVnGlS+3cFQTJQX4RE84bYTKu7W0wqByw==}
     engines: {node: '>=18'}
+
+  '@google/genai@2.19.0':
+    resolution: {integrity: sha512-IM3u1FjpOLyOPsPh0smGA6Ntj2olUWCPbTs/WQj7cA/2AKCGw/652W7IaySx0XtwuscFnMYBoraebQusSZ0zSQ==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.25.2
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
 
   '@google/generative-ai@0.11.3':
     resolution: {integrity: sha512-QtQ1hz6rcybbw35uxXlFF26KNnaTVr2oWwnmDkC1M35KdzN4tVc4wakgJp8uXbY9KDCNHksyp11DbFg0HPckZQ==}
@@ -3411,6 +3431,9 @@ packages:
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
+
+  '@types/retry@0.12.0':
+    resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
 
   '@types/scrypt-async@1.3.5':
     resolution: {integrity: sha512-WprBpDhqq8DemGI0QepdcLdfTfOuAgD85A0hz8PljDFlalRbnZ1Puy1qC8x8CoAzr5Ugnyerbu+mNQ4jk9dg/w==}
@@ -5956,6 +5979,10 @@ packages:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
 
+  p-retry@4.6.2:
+    resolution: {integrity: sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==}
+    engines: {node: '>=8'}
+
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
@@ -6320,6 +6347,10 @@ packages:
   retry-request@8.0.2:
     resolution: {integrity: sha512-JzFPAfklk1kjR1w76f0QOIhoDkNkSqW8wYKT08n9yysTmZfB+RQ2QoXoTAeOi1HD9ZipTyTAZg3c4pM/jeqgSw==}
     engines: {node: '>=18'}
+
+  retry@0.13.1:
+    resolution: {integrity: sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==}
+    engines: {node: '>= 4'}
 
   reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
@@ -8476,7 +8507,40 @@ snapshots:
       yjs: 13.6.8
       zod: 4.4.3
 
-  '@casual-simulation/aux-records@4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)':
+  '@casual-simulation/aux-common@4.2.7':
+    dependencies:
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@casual-simulation/expect': 4.0.0
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/js-interpreter': 4.0.0
+      '@casual-simulation/stacktrace': 4.0.0
+      '@casual-simulation/timesync': 4.0.0
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+      '@tweenjs/tween.js': 18.6.0
+      '@types/estraverse': 5.1.7
+      '@types/uuid': 10.0.0
+      astring: 1.7.5
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      estraverse: 5.3.0
+      expect: 27.3.1
+      hash.js: 1.1.7
+      htm: 3.1.0
+      lib0: 0.2.49
+      lru-cache: 5.1.1
+      luxon: 3.4.4
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      three: 0.182.0
+      uuid: 10.0.0
+      yjs: 13.6.8
+      zod: 4.4.3
+
+  '@casual-simulation/aux-records@4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
       '@casual-simulation/aux-common': 4.2.3
@@ -8486,9 +8550,9 @@ snapshots:
       '@casual-simulation/timesync': 4.0.0
       '@google/generative-ai': 0.11.3
       '@libsql/client': 0.15.15
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions': 1.39.0
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
       '@simplewebauthn/server': 9.0.3
       '@simplewebauthn/types': 9.0.1
       axios: 1.7.7
@@ -8518,10 +8582,55 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@casual-simulation/aux-records@4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)':
+    dependencies:
+      '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
+      '@casual-simulation/aux-common': 4.2.7
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/rate-limit-redis': 4.0.0
+      '@casual-simulation/timesync': 4.0.0
+      '@google/genai': 2.19.0
+      '@libsql/client': 0.15.15
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+      '@simplewebauthn/server': 9.0.3
+      '@simplewebauthn/types': 9.0.1
+      axios: 1.7.7
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      hash.js: 1.1.7
+      jose: 5.4.0
+      libsql: 0.5.22
+      livekit-server-sdk: 2.7.2
+      luxon: 3.4.4
+      mime: 2.4.6
+      node-html-parser: 6.1.13
+      openai: 4.89.0(ws@8.19.0)(zod@4.4.3)
+      openid-client: 5.6.1
+      preact: 10.28.4
+      preact-render-to-string: 6.6.3(preact@10.28.4)
+      tigerbeetle-node: 0.16.44
+      tweetnacl: 1.0.3
+      typesense: 3.0.5(@babel/runtime@7.29.2)
+      uuid: 10.0.0
+      yjs: 13.6.8
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+
   '@casual-simulation/aux-runtime@4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@casual-simulation/aux-common': 4.2.3
-      '@casual-simulation/aux-records': 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
       '@casual-simulation/error-stack-parser': 2.0.7
@@ -8564,10 +8673,58 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@casual-simulation/aux-runtime@4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)':
+    dependencies:
+      '@casual-simulation/aux-common': 4.2.7
+      '@casual-simulation/aux-records': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@casual-simulation/expect': 4.0.0
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/js-interpreter': 4.0.0
+      '@casual-simulation/stacktrace': 4.0.0
+      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.11.3)
+      '@tweenjs/tween.js': 18.6.0
+      '@types/estraverse': 5.1.7
+      '@types/seedrandom': 3.0.8
+      '@types/uuid': 10.0.0
+      acorn: 8.11.3
+      acorn-jsx: 5.3.2(acorn@8.11.3)
+      astring: 1.7.5
+      axios: 1.7.7
+      base64-js: 1.5.1
+      es-toolkit: 1.39.10
+      estraverse: 5.3.0
+      expect: 27.3.1
+      hash.js: 1.1.7
+      htm: 3.1.0
+      lib0: 0.2.49
+      lru-cache: 5.1.1
+      luxon: 3.4.4
+      mime: 2.4.6
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      seedrandom: 3.0.5
+      stackframe: 1.3.4
+      three: 0.182.0
+      typesense: 3.0.5(@babel/runtime@7.29.2)
+      uuid: 10.0.0
+      yjs: 13.6.8
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+
   '@casual-simulation/aux-vm@4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@casual-simulation/aux-common': 4.2.3
-      '@casual-simulation/aux-records': 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
@@ -8587,6 +8744,34 @@ snapshots:
       - bufferutil
       - debug
       - encoding
+      - utf-8-validate
+      - ws
+
+  '@casual-simulation/aux-vm@4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)':
+    dependencies:
+      '@casual-simulation/aux-common': 4.2.7
+      '@casual-simulation/aux-records': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-runtime': 4.2.7(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/crypto': 4.0.5
+      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
+      '@casual-simulation/timesync': 4.0.0
+      '@casual-simulation/undom': 4.0.0
+      axios: 1.7.7
+      comlink: 4.3.1
+      es-toolkit: 1.39.10
+      hash.js: 1.1.7
+      htm: 3.1.0
+      luxon: 3.4.4
+      preact: 10.28.4
+      rxjs: 8.0.0-alpha.14
+      uuid: 10.0.0
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
       - utf-8-validate
       - ws
 
@@ -9078,6 +9263,17 @@ snapshots:
       is-html: 2.0.0
     transitivePeerDependencies:
       - supports-color
+
+  '@google/genai@2.19.0':
+    dependencies:
+      google-auth-library: 10.6.2
+      p-retry: 4.6.2
+      protobufjs: 7.5.5
+      ws: 8.19.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   '@google/generative-ai@0.11.3': {}
 
@@ -9634,7 +9830,7 @@ snapshots:
 
   '@opentelemetry/api-logs@0.221.0':
     dependencies:
-      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/api': 1.9.1
 
   '@opentelemetry/api@1.9.0': {}
 
@@ -9649,10 +9845,15 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.28.0
 
+  '@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/semantic-conventions': 1.28.0
+
   '@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/semantic-conventions': 1.39.0
+      '@opentelemetry/semantic-conventions': 1.43.0
 
   '@opentelemetry/exporter-metrics-otlp-http@0.221.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -9692,6 +9893,12 @@ snapshots:
       '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.28.0
 
+  '@opentelemetry/resources@1.30.1(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.28.0
+
   '@opentelemetry/resources@2.10.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -9704,7 +9911,7 @@ snapshots:
       '@opentelemetry/api-logs': 0.221.0
       '@opentelemetry/core': 2.10.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.10.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.39.0
+      '@opentelemetry/semantic-conventions': 1.43.0
 
   '@opentelemetry/sdk-metrics@2.10.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -9732,7 +9939,7 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.10.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.10.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.39.0
+      '@opentelemetry/semantic-conventions': 1.43.0
 
   '@opentelemetry/semantic-conventions@1.28.0': {}
 
@@ -10385,7 +10592,7 @@ snapshots:
 
   '@types/estraverse@5.1.7':
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
 
   '@types/estree@1.0.0': {}
 
@@ -10469,6 +10676,8 @@ snapshots:
   '@types/range-parser@1.2.7': {}
 
   '@types/resolve@1.20.2': {}
+
+  '@types/retry@0.12.0': {}
 
   '@types/scrypt-async@1.3.5': {}
 
@@ -11168,7 +11377,7 @@ snapshots:
   casualos@4.2.4-alpha.25223847785(@babel/runtime@7.29.2)(ws@8.19.0):
     dependencies:
       '@casual-simulation/aux-common': 4.2.3
-      '@casual-simulation/aux-records': 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-vm': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@octokit/app': 15.1.6
@@ -13469,6 +13678,11 @@ snapshots:
     dependencies:
       p-limit: 3.1.0
 
+  p-retry@4.6.2:
+    dependencies:
+      '@types/retry': 0.12.0
+      retry: 0.13.1
+
   p-try@2.2.0: {}
 
   pac-proxy-agent@7.2.0:
@@ -13898,6 +14112,8 @@ snapshots:
       teeny-request: 10.1.2
     transitivePeerDependencies:
       - supports-color
+
+  retry@0.13.1: {}
 
   reusify@1.1.0: {}
 
