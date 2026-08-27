@@ -1,7 +1,16 @@
 import {
   buildDiscoveredContentList,
   parseCsv,
+  type LinkPreviewFetcher,
 } from "../../../../script/lib/discoveredContentList";
+
+const MOCK_IMAGE_URL = "https://example.com/mock-preview.png";
+
+/** Stands in for the real network-backed link preview fetch in every test. */
+const fetchLinkPreview: LinkPreviewFetcher = vi.fn().mockResolvedValue({
+  success: true,
+  meta: { "og:image": MOCK_IMAGE_URL },
+});
 
 describe("parseCsv", () => {
   it("splits simple rows on commas", () => {
@@ -43,13 +52,16 @@ describe("parseCsv", () => {
 describe("buildDiscoveredContentList", () => {
   const header = "Name,Author,Bible Reference,URL,Description";
 
-  it("parses a row with a single chapter reference", () => {
+  it("parses a row with a single chapter reference", async () => {
     const csv = [
       header,
       'BETHEL: Where Jacob Met God,Expedition Bible,Genesis 28,https://example.com/bethel,"Join Joel at the ancient site of Bethel."',
     ].join("\n");
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(warnings).toEqual([]);
     expect(items).toEqual([
@@ -59,31 +71,35 @@ describe("buildDiscoveredContentList", () => {
         author: "Expedition Bible",
         description: "Join Joel at the ancient site of Bethel.",
         url: "https://example.com/bethel",
+        imageUrl: MOCK_IMAGE_URL,
         references: [{ book: "GEN", chapter: 28 }],
       },
     ]);
   });
 
-  it("parses a chapter:verse reference", () => {
+  it("parses a chapter:verse reference", async () => {
     const csv = [
       header,
       "Great Witness Stone,Expedition Bible,Joshua 9:26,https://example.com/stone,Description here",
     ].join("\n");
 
-    const { items } = buildDiscoveredContentList(csv);
+    const { items } = await buildDiscoveredContentList(csv, fetchLinkPreview);
 
     expect(items[0]?.references).toEqual([
       { book: "JOS", chapter: 9, verse: 26 },
     ]);
   });
 
-  it("splits multiple comma-separated references in one cell", () => {
+  it("splits multiple comma-separated references in one cell", async () => {
     const csv = [
       header,
       '"Problem of Ai",Expedition Bible,"Joshua 7:1-15, Joshua 8:1-29",https://example.com/ai,Description here',
     ].join("\n");
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(warnings).toEqual([]);
     expect(items[0]?.references).toEqual([
@@ -92,14 +108,14 @@ describe("buildDiscoveredContentList", () => {
     ]);
   });
 
-  it("dedupes generated ids for rows with the same title", () => {
+  it("dedupes generated ids for rows with the same title", async () => {
     const csv = [
       header,
       "Same Title,Author One,Genesis 1,https://example.com/1,First",
       "Same Title,Author Two,Genesis 2,https://example.com/2,Second",
     ].join("\n");
 
-    const { items } = buildDiscoveredContentList(csv);
+    const { items } = await buildDiscoveredContentList(csv, fetchLinkPreview);
 
     expect(items.map((item) => item.id)).toEqual([
       "same-title",
@@ -107,25 +123,31 @@ describe("buildDiscoveredContentList", () => {
     ]);
   });
 
-  it("skips rows missing a Name and reports a warning", () => {
+  it("skips rows missing a Name and reports a warning", async () => {
     const csv = [
       header,
       ",Author,Genesis 1,https://example.com,Description",
     ].join("\n");
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(items).toEqual([]);
     expect(warnings).toEqual(["Row 2: missing Name; skipped."]);
   });
 
-  it("skips rows with an unparseable Bible reference and reports a warning", () => {
+  it("skips rows with an unparseable Bible reference and reports a warning", async () => {
     const csv = [
       header,
       "Some Title,Author,Not A Real Book 1,https://example.com,Description",
     ].join("\n");
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(items).toEqual([]);
     expect(warnings).toEqual([
@@ -134,13 +156,16 @@ describe("buildDiscoveredContentList", () => {
     ]);
   });
 
-  it("keeps references that do parse when only some in the cell fail", () => {
+  it("keeps references that do parse when only some in the cell fail", async () => {
     const csv = [
       header,
       '"Mixed refs",Author,"Genesis 1, Not A Real Book 1",https://example.com,Description',
     ].join("\n");
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(items[0]?.references).toEqual([{ book: "GEN", chapter: 1 }]);
     expect(warnings).toEqual([
@@ -148,7 +173,7 @@ describe("buildDiscoveredContentList", () => {
     ]);
   });
 
-  it("ignores blank rows", () => {
+  it("ignores blank rows", async () => {
     const csv = [
       header,
       "",
@@ -156,13 +181,16 @@ describe("buildDiscoveredContentList", () => {
       "",
     ].join("\n");
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(warnings).toEqual([]);
     expect(items).toHaveLength(1);
   });
 
-  it("strips a leading UTF-8 BOM before parsing", () => {
+  it("strips a leading UTF-8 BOM before parsing", async () => {
     const csv =
       "﻿" +
       [
@@ -170,17 +198,23 @@ describe("buildDiscoveredContentList", () => {
         "Some Title,Author,Genesis 1,https://example.com,Description",
       ].join("\n");
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(warnings).toEqual([]);
     expect(items).toHaveLength(1);
     expect(items[0]?.title).toBe("Some Title");
   });
 
-  it("reports a warning and produces no items when a required column is missing", () => {
+  it("reports a warning and produces no items when a required column is missing", async () => {
     const csv = "Name,Author,URL,Description\nTitle,Author,https://x,Desc";
 
-    const { items, warnings } = buildDiscoveredContentList(csv);
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
 
     expect(items).toEqual([]);
     expect(warnings).toEqual([

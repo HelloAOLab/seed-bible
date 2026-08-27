@@ -154,6 +154,17 @@ function findColumnIndex(header: string[], column: string): number {
 
 const UTF8_BOM_PATTERN = new RegExp("^\\uFEFF");
 
+/** Fetches a URL's link preview (title/image/etc). Swappable in tests so they don't hit the network. */
+export type LinkPreviewFetcher = (
+  url: string
+) => ReturnType<ReturnType<typeof createRecordsClient>["getLinkPreview"]>;
+
+function defaultFetchLinkPreview(url: string) {
+  const client = createRecordsClient("https://auth.ao.bot");
+  client.headers["Origin"] = "https://auth.ao.bot";
+  return client.getLinkPreview({ url, locale: "en-US" });
+}
+
 /**
  * Parses a "Seed Bible Discover Content Master List" CSV export (columns:
  * Name, Author, Bible Reference, URL, Description) into the flat item list
@@ -163,11 +174,9 @@ const UTF8_BOM_PATTERN = new RegExp("^\\uFEFF");
  * failing the whole run.
  */
 export async function buildDiscoveredContentList(
-  csvText: string
+  csvText: string,
+  fetchLinkPreview: LinkPreviewFetcher = defaultFetchLinkPreview
 ): Promise<BuildDiscoveredContentListResult> {
-  const client = createRecordsClient("https://auth.ao.bot");
-  client.headers["Origin"] = "https://auth.ao.bot";
-
   const rows = parseCsv(csvText.replace(UTF8_BOM_PATTERN, ""));
   const warnings: string[] = [];
 
@@ -260,10 +269,7 @@ export async function buildDiscoveredContentList(
       "url",
       url
     );
-    const linkPreview = await client.getLinkPreview({
-      url: url,
-      locale: "en-US",
-    });
+    const linkPreview = await fetchLinkPreview(url);
 
     if (!linkPreview.success) {
       console.warn(
