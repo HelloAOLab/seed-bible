@@ -98,7 +98,6 @@
   "session-settings-highlight-duration": "ハイライト",
   "end-session": "セッション終了",
   "panels": "パネル",
-
   "open-in-new-panel": "新しいパネルで開く",
   "close-sidebar": "サイドバーを閉じる",
   "select-pane-layout": "ペインのレイアウトを選択",
@@ -253,7 +252,6 @@
   "create-reading-plan": "読書プランを作成する",
   "reading-plans-empty": "読書プランがまだ作成されていません。まずは作成してみましょう。",
   "untitled-reading-plan": "無題の計画",
-
   "reading-plan-description_placeholder": "この計画は何に関するものですか？",
   "anonymous": "匿名",
   "no-chat-messages": "まだメッセージはありません",
@@ -335,7 +333,6 @@
   "dont-show-again": "今後表示しない",
   "discover": "発見する",
   "playlists": "プレイリスト",
-
   "cross-references": "相互参照",
   "study-notes": "学習ノート",
   "content": "コンテンツ",
@@ -404,7 +401,6 @@
   "add-and-save": "追加して保存",
   "loading-profile": "プロフィールを読み込んでいます…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "共有",
   "share-sheet-title": "共有",
   "share-link": "リンクを共有する",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "新しいプランを作成する",
   "edit-reading-plan": "編集プラン",
   "reading-plan-step-name-title": "プラン名を記入してください",
-
   "reading-plan-name-placeholder": "例：私の詩篇の旅",
   "reading-plan-description-label": "説明（任意）",
   "reading-plan-step-scripture-title": "おすすめの読み物",
   "reading-plan-step-cadences-title": "朗読のリズム",
   "reading-plan-step-cadences-hint": "読者は、希望する読書ペースを選択できます。もちろん、自分のペースで読むことも可能です。",
-
   "reading-plan-cadence-length": "{{count}}日で完了",
   "reading-plan-cadence-length_one": "{{count}}日で終了",
   "reading-plan-cadence-length_other": "{{count}}日で完了",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "保存中…",
   "reading-plan-draft-saved": "下書きを保存しました",
   "reading-plan-draft-save-failed": "下書きを保存できませんでした",
-
   "reading-plan-scripture-remove": "読み物を削除する",
   "reading-plan-create-submit": "プランを作成する",
   "reading-plan-save-changes": "変更を保存する",
@@ -498,11 +491,8 @@
   "loading": "読み込み中…",
   "reading-plan-not-started": "開始されていません",
   "reading-plan-start": "開始計画",
-
   "reading-plan-streak": "{{count}}日間連続記録",
-
   "reading-plan-mark-complete": "完了としてマークする",
-
   "reading-plan-empty-sessions": "この計画にはまだ読み上げデータが登録されていません。",
   "reading-plan-celebration-title": "{{day}}日目完了！",
   "reading-plan-complete-title": "計画完了！",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "読書完了をマークする",
   "reading-plan-link-video": "ビデオ",
   "reading-belongs-to": "この読書は",
-
   "reading-plan-mark-passage-complete": "{{passage}}を既読としてマークする",
   "reading-plan-read-nudge-title": "読み応えがありました！",
   "reading-plan-read-nudge-toast": "{{passage}}を完了としてマークしますか？",
@@ -553,7 +542,6 @@
   "last-48-hours": "過去48時間",
   "open-bible": "聖書を開く",
   "personal-greeting": "ようこそ、 {{name}}さん！",
-  "read-first-chapter": "最初の章を読んでください",
   "resume-reading": "前回中断したところから再開してください",
   "resume-reading-loading": "閲覧履歴を読み込んでいます…",
   "selected-year": "年: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "このプレイリストは何についてのものですか？",
   "read-more": "続きを読む",
   "read-less": "続きを読む",
-
   "ask-to-switch-ui-language": "翻訳機能を使って言語を切り替えることを提案する",
   "ai": "AI",
   "ai-edit-playlist": "AIでプレイリストを編集",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} {{count}}個のツールを使用しました",
   "chat-tool-used_one": "{{name}}はツールを使用しました",
   "chat-tool-used_other": "{{name}} {{count}}個のツールを使用しました",
-
   "ai-context-button-label": "アクティブAIコンテキスト",
   "ai-context-tool-count": "{{count}}個のツール",
   "annotation-conflict-title": "このメモは2箇所変更されました",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "コンテンツがありません。",
   "annotation-conflict-confirm": "確認する",
   "annotation-conflict-resolve-failed": "その選択肢は適用できませんでした。もう一度試してみます。",
-
   "annotation-sync-failed": "アカウントにメモを保存できませんでした。メモはまだこのデバイスに残っています。",
   "create-menu": "作成する",
   "create-annotation-menu-item": "注釈",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "注釈を保存できませんでした。",
   "annotation-group-expand": "グループを展開する",
   "annotation-group-collapse": "崩壊グループ",
-
   "notes": "注記",
   "note": "注記",
   "show-more-verse-actions": "その他のアクションを表示",
@@ -667,7 +651,6 @@
   "create-folder": "フォルダーを作成する",
   "edit-bookmark": "ブックマークを編集",
   "remove-bookmark-from-all-folders": "すべてのフォルダから削除",
-
   "greeting-afternoon": "こんにちは！",
   "greeting-afternoon-named": "こんにちは、 {{name}}さん！",
   "greeting-evening": "こんばんは！",
@@ -677,5 +660,6 @@
   "greeting-night": "おやすみ！",
   "greeting-night-named": "おやすみなさい、 {{name}} ！",
   "annotation-override-banner": "メモはチームのアカウントから保存および読み込まれています。",
-  "annotation-override-save-to-my-account": "マイアカウントに保存"
+  "annotation-override-save-to-my-account": "マイアカウントに保存",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}}を読んでください。"
 }

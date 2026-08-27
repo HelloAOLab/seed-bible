@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "Merk vir",
   "end-session": "Eindig Sessie",
   "panels": "Panele",
-
   "open-in-new-panel": "Maak oop in nuwe paneel",
   "close-sidebar": "Maak sybalk toe",
   "select-pane-layout": "Kies paneeluitleg",
@@ -253,7 +252,6 @@
   "create-reading-plan": "Skep leesplan",
   "reading-plans-empty": "Jy het nog geen leesplanne nie. Skep een om te begin.",
   "untitled-reading-plan": "Naamlose plan",
-
   "reading-plan-description_placeholder": "Waaroor gaan hierdie plan?",
   "anonymous": "Anoniem",
   "no-chat-messages": "Geen boodskappe nog nie",
@@ -335,7 +333,6 @@
   "dont-show-again": "Moenie dit weer wys nie",
   "discover": "Ontdek",
   "playlists": "Speellyste",
-
   "cross-references": "Kruisverwysings",
   "study-notes": "Studienotas",
   "content": "Inhoud",
@@ -404,7 +401,6 @@
   "add-and-save": "Voeg by en stoor",
   "loading-profile": "Laai jou profiel…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Deel",
   "share-sheet-title": "Deel",
   "share-link": "Deel 'n skakel",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "Skep nuwe plan",
   "edit-reading-plan": "Wysig plan",
   "reading-plan-step-name-title": "Noem jou plan",
-
   "reading-plan-name-placeholder": "bv. My Psalms Reis",
   "reading-plan-description-label": "Beskrywing (opsioneel)",
   "reading-plan-step-scripture-title": "Kies lesings",
   "reading-plan-step-cadences-title": "Leeskadense",
   "reading-plan-step-cadences-hint": "Kies die leestempo wat jy wil aanbied. Lesers kan altyd kies om teen hul eie tempo te gaan.",
-
   "reading-plan-cadence-length": "Voltooi in {{count}} dae",
   "reading-plan-cadence-length_one": "Voltooi in {{count}} dag",
   "reading-plan-cadence-length_other": "Voltooi in {{count}} dae",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "Stoor …",
   "reading-plan-draft-saved": "Konsep gestoor",
   "reading-plan-draft-save-failed": "Kon nie konsep stoor nie",
-
   "reading-plan-scripture-remove": "Verwyder lesing",
   "reading-plan-create-submit": "Skep plan",
   "reading-plan-save-changes": "Stoor veranderinge",
@@ -498,11 +491,8 @@
   "loading": "Laai tans…",
   "reading-plan-not-started": "Nie begin nie",
   "reading-plan-start": "Beginplan",
-
   "reading-plan-streak": "{{count}} -dag reeks",
-
   "reading-plan-mark-complete": "Merk as voltooid",
-
   "reading-plan-empty-sessions": "Hierdie plan het nog geen lesings nie.",
   "reading-plan-celebration-title": "Dag {{day}} voltooi!",
   "reading-plan-complete-title": "Plan voltooi!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "Merk lees voltooi",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Hierdie lesing behoort aan",
-
   "reading-plan-mark-passage-complete": "Merk {{passage}} as gelees",
   "reading-plan-read-nudge-title": "Lekker leesstof!",
   "reading-plan-read-nudge-toast": "Merk {{passage}} as voltooid?",
@@ -553,7 +542,6 @@
   "last-48-hours": "Laaste 48 uur",
   "open-bible": "Oop Bybel",
   "personal-greeting": "Welkom, {{name}} !",
-  "read-first-chapter": "Lees die eerste hoofstuk",
   "resume-reading": "GAAN VOORT WAAR JY OPGEHOU HET",
   "resume-reading-loading": "Laai jou leesgeskiedenis…",
   "selected-year": "Jaar: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "Waaroor gaan hierdie snitlys?",
   "read-more": "Lees meer",
   "read-less": "Lees minder",
-
   "ask-to-switch-ui-language": "Aanbod om taal te wissel met vertaling",
   "ai": "KI",
   "ai-edit-playlist": "Wysig snitlys met KI",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} het {{count}} gereedskap gebruik",
   "chat-tool-used_one": "{{name}} het 'n gereedskap gebruik",
   "chat-tool-used_other": "{{name}} het {{count}} gereedskap gebruik",
-
   "ai-context-button-label": "Aktiewe KI-konteks",
   "ai-context-tool-count": "{{count}} gereedskap",
   "annotation-conflict-title": "Hierdie nota het op twee plekke verander",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "Geen inhoud nie.",
   "annotation-conflict-confirm": "Bevestig",
   "annotation-conflict-resolve-failed": "Kon nie daardie keuse toepas nie. Dit sal weer probeer word.",
-
   "annotation-sync-failed": "Kon nie 'n nota in jou rekening stoor nie. Dit is steeds op hierdie toestel.",
   "create-menu": "Skep",
   "create-annotation-menu-item": "Annotasie",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "Kon nie die aantekening stoor nie.",
   "annotation-group-expand": "Vou groep uit",
   "annotation-group-collapse": "Vou groep in",
-
   "notes": "Notas",
   "note": "Nota",
   "show-more-verse-actions": "Wys meer aksies",
@@ -667,7 +651,6 @@
   "create-folder": "Skep vouer",
   "edit-bookmark": "Wysig boekmerk",
   "remove-bookmark-from-all-folders": "Verwyder uit alle vouers",
-
   "greeting-afternoon": "Goeiemiddag!",
   "greeting-afternoon-named": "Goeiemiddag, {{name}} !",
   "greeting-evening": "Goeienaand!",
@@ -677,5 +660,6 @@
   "greeting-night": "Goeie nag!",
   "greeting-night-named": "Goeienag, {{name}} !",
   "annotation-override-banner": "Notas word gestoor en gelaai vanaf jou span se rekening.",
-  "annotation-override-save-to-my-account": "Stoor in my rekening"
+  "annotation-override-save-to-my-account": "Stoor in my rekening",
+  "read-book-chapter-button": "Lees {{bookName}} {{chapterNumber}}"
 }

@@ -98,7 +98,6 @@
   "session-settings-highlight-duration": "Öne çıkar",
   "end-session": "Oturumu Sonlandır",
   "panels": "Paneller",
-
   "open-in-new-panel": "Yeni panelde aç",
   "close-sidebar": "Kenar çubuğunu kapat",
   "select-pane-layout": "Bölme düzenini seçin",
@@ -253,7 +252,6 @@
   "create-reading-plan": "Okuma planı oluşturun",
   "reading-plans-empty": "Henüz bir okuma planınız yok. Başlamak için bir tane oluşturun.",
   "untitled-reading-plan": "Başlıksız plan",
-
   "reading-plan-description_placeholder": "Bu plan neyle ilgili?",
   "anonymous": "Anonim",
   "no-chat-messages": "Henüz mesaj yok.",
@@ -335,7 +333,6 @@
   "dont-show-again": "Bunu bir daha gösterme",
   "discover": "Keşfetmek",
   "playlists": "Çalma listeleri",
-
   "cross-references": "Çapraz referanslar",
   "study-notes": "Çalışma notları",
   "content": "İçerik",
@@ -404,7 +401,6 @@
   "add-and-save": "Ekle ve kaydet",
   "loading-profile": "Profiliniz yükleniyor…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Paylaşmak",
   "share-sheet-title": "Paylaşmak",
   "share-link": "Bağlantıyı paylaş",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "Yeni plan oluştur",
   "edit-reading-plan": "Planı düzenle",
   "reading-plan-step-name-title": "Planınıza bir isim verin.",
-
   "reading-plan-name-placeholder": "Örneğin, Mezmurlar Yolculuğum",
   "reading-plan-description-label": "Açıklama (isteğe bağlı)",
   "reading-plan-step-scripture-title": "Seçilmiş okumalar",
   "reading-plan-step-cadences-title": "Okuma ritimleri",
   "reading-plan-step-cadences-hint": "Sunmak istediğiniz okuma hızlarını seçin. Okuyucular her zaman kendi hızlarında ilerlemeyi de tercih edebilirler.",
-
   "reading-plan-cadence-length": "{{count}} gün içinde tamamlanacak",
   "reading-plan-cadence-length_one": "{{count}} günde tamamlanıyor",
   "reading-plan-cadence-length_other": "{{count}} gün içinde tamamlanacak",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "Tasarruf…",
   "reading-plan-draft-saved": "Taslak kaydedildi",
   "reading-plan-draft-save-failed": "Taslağı kaydedemedim.",
-
   "reading-plan-scripture-remove": "Okumayı kaldır",
   "reading-plan-create-submit": "Plan oluşturun",
   "reading-plan-save-changes": "Değişiklikleri kaydet",
@@ -498,11 +491,8 @@
   "loading": "Yükleniyor…",
   "reading-plan-not-started": "Başlamadı",
   "reading-plan-start": "Başlangıç ​​planı",
-
   "reading-plan-streak": "{{count}} günlük seri",
-
   "reading-plan-mark-complete": "Tamamlandı olarak işaretle",
-
   "reading-plan-empty-sessions": "Bu planın henüz herhangi bir okuma değeri yok.",
   "reading-plan-celebration-title": "{{day}} günü tamamlandı!",
   "reading-plan-complete-title": "Plan tamamlandı!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "Okuma tamamlandı olarak işaretle",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Bu metin şuna aittir:",
-
   "reading-plan-mark-passage-complete": "{{passage}} okundu olarak işaretle",
   "reading-plan-read-nudge-title": "Keyifli okumalar!",
   "reading-plan-read-nudge-toast": "{{passage}} tamamlandı mı?",
@@ -553,7 +542,6 @@
   "last-48-hours": "Son 48 saat",
   "open-bible": "Açık İncil",
   "personal-greeting": "Hoş geldin, {{name}} !",
-  "read-first-chapter": "Birinci bölümü okuyun",
   "resume-reading": "KALDIĞINIZ YERDEN DEVAM EDİN",
   "resume-reading-loading": "Okuma geçmişiniz yükleniyor…",
   "selected-year": "Yıl: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "Bu çalma listesi ne hakkında?",
   "read-more": "Devamını oku",
   "read-less": "Daha az oku",
-
   "ask-to-switch-ui-language": "Çeviri ile dil değiştirme teklifi",
   "ai": "Yapay zeka",
   "ai-edit-playlist": "Yapay zeka ile oynatma listesini düzenle",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} {{count}} adet araç kullandı.",
   "chat-tool-used_one": "{{name}} bir araç kullandı",
   "chat-tool-used_other": "{{name}} {{count}} adet araç kullandı.",
-
   "ai-context-button-label": "Aktif yapay zeka bağlamı",
   "ai-context-tool-count": "{{count}} araç",
   "annotation-conflict-title": "Bu not iki yerde değişti.",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "İçerik yok.",
   "annotation-conflict-confirm": "Onaylamak",
   "annotation-conflict-resolve-failed": "Bu seçeneği uygulayamadım. Tekrar deneyeceğim.",
-
   "annotation-sync-failed": "Notu hesabınıza kaydedemedim. Not hala bu cihazda.",
   "create-menu": "Yaratmak",
   "create-annotation-menu-item": "Dipnot",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "Ek açıklamayı kaydedemedim.",
   "annotation-group-expand": "Grubu genişlet",
   "annotation-group-collapse": "Çökme grubu",
-
   "notes": "Notlar",
   "note": "Not",
   "show-more-verse-actions": "Daha fazla işlem göster",
@@ -667,7 +651,6 @@
   "create-folder": "Klasör oluştur",
   "edit-bookmark": "Yer işaretini düzenle",
   "remove-bookmark-from-all-folders": "Tüm klasörlerden kaldır",
-
   "greeting-afternoon": "Tünaydın!",
   "greeting-afternoon-named": "İyi günler, {{name}} !",
   "greeting-evening": "İyi akşamlar!",
@@ -677,5 +660,6 @@
   "greeting-night": "İyi geceler!",
   "greeting-night-named": "İyi geceler, {{name}} !",
   "annotation-override-banner": "Notlar ekibinizin hesabından kaydediliyor ve yükleniyor.",
-  "annotation-override-save-to-my-account": "Hesabıma kaydet"
+  "annotation-override-save-to-my-account": "Hesabıma kaydet",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} kitabını okuyun."
 }

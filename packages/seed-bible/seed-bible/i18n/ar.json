@@ -98,7 +98,6 @@
   "session-settings-highlight-duration": "أبرز لـ",
   "end-session": "إنهاء الجلسة",
   "panels": "ألواح",
-
   "open-in-new-panel": "افتح في لوحة جديدة",
   "close-sidebar": "إغلاق الشريط الجانبي",
   "select-pane-layout": "تحديد تخطيط اللوحة",
@@ -253,7 +252,6 @@
   "create-reading-plan": "وضع خطة قراءة",
   "reading-plans-empty": "ليس لديك أي خطط قراءة حتى الآن. أنشئ واحدة لتبدأ.",
   "untitled-reading-plan": "خطة بدون عنوان",
-
   "reading-plan-description_placeholder": "ما هي تفاصيل هذه الخطة؟",
   "anonymous": "مجهول",
   "no-chat-messages": "لم يتم إرسال أي رسالة بعد",
@@ -335,7 +333,6 @@
   "dont-show-again": "لا تعرض هذا مرة أخرى",
   "discover": "يكتشف",
   "playlists": "قوائم التشغيل",
-
   "cross-references": "المراجع المتقاطعة",
   "study-notes": "ملاحظات دراسية",
   "content": "محتوى",
@@ -404,7 +401,6 @@
   "add-and-save": "إضافة وحفظ",
   "loading-profile": "جارٍ تحميل ملفك الشخصي…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "يشارك",
   "share-sheet-title": "يشارك",
   "share-link": "شارك رابطًا",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "إنشاء خطة جديدة",
   "edit-reading-plan": "خطة التحرير",
   "reading-plan-step-name-title": "حدد خطتك",
-
   "reading-plan-name-placeholder": "مثال: رحلتي مع المزامير",
   "reading-plan-description-label": "الوصف (اختياري)",
   "reading-plan-step-scripture-title": "اختر القراءات",
   "reading-plan-step-cadences-title": "إيقاعات القراءة",
   "reading-plan-step-cadences-hint": "اختر سرعات القراءة التي ترغب في تقديمها. يمكن للقراء دائمًا اختيار القراءة بوتيرتهم الخاصة.",
-
   "reading-plan-cadence-length": "ينتهي في {{count}} يومًا",
   "reading-plan-cadence-length_one": "ينتهي في {{count}} يوم",
   "reading-plan-cadence-length_other": "ينتهي في {{count}} يومًا",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "توفير…",
   "reading-plan-draft-saved": "تم حفظ المسودة",
   "reading-plan-draft-save-failed": "تعذر حفظ المسودة",
-
   "reading-plan-scripture-remove": "إزالة القراءة",
   "reading-plan-create-submit": "وضع خطة",
   "reading-plan-save-changes": "حفظ التغييرات",
@@ -498,11 +491,8 @@
   "loading": "تحميل…",
   "reading-plan-not-started": "لم يبدأ بعد",
   "reading-plan-start": "ابدأ التخطيط",
-
   "reading-plan-streak": "سلسلة {{count}} يومًا",
-
   "reading-plan-mark-complete": "ضع علامة كمكتمل",
-
   "reading-plan-empty-sessions": "لا تحتوي هذه الخطة على أي قراءات حتى الآن.",
   "reading-plan-celebration-title": "اليوم {{day}} قد اكتمل!",
   "reading-plan-complete-title": "اكتملت الخطة!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "أكمل مارك القراءة",
   "reading-plan-link-video": "فيديو",
   "reading-belongs-to": "هذه القراءة تخص",
-
   "reading-plan-mark-passage-complete": "ضع علامة على {{passage}} كمقروء",
   "reading-plan-read-nudge-title": "قراءة ممتعة!",
   "reading-plan-read-nudge-toast": "هل تم إكمال {{passage}} ؟",
@@ -553,7 +542,6 @@
   "last-48-hours": "آخر 48 ساعة",
   "open-bible": "الكتاب المقدس المفتوح",
   "personal-greeting": "أهلاً وسهلاً، {{name}} !",
-  "read-first-chapter": "اقرأ الفصل الأول",
   "resume-reading": "تابع من حيث توقفت",
   "resume-reading-loading": "جارٍ تحميل سجل القراءة الخاص بك…",
   "selected-year": "السنة: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "ما هو موضوع قائمة التشغيل هذه؟",
   "read-more": "اقرأ المزيد",
   "read-less": "اقرأ أقل",
-
   "ask-to-switch-ui-language": "عرض تغيير اللغة مع الترجمة",
   "ai": "الذكاء الاصطناعي",
   "ai-edit-playlist": "قم بتحرير قائمة التشغيل باستخدام الذكاء الاصطناعي",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} استخدم {{count}} أداة",
   "chat-tool-used_one": "{{name}} استخدم أداة",
   "chat-tool-used_other": "{{name}} استخدم {{count}} أداة",
-
   "ai-context-button-label": "سياق الذكاء الاصطناعي النشط",
   "ai-context-tool-count": "{{count}} أدوات",
   "annotation-conflict-title": "تم تغيير هذه الملاحظة في موضعين",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "لا يوجد محتوى.",
   "annotation-conflict-confirm": "يتأكد",
   "annotation-conflict-resolve-failed": "لم نتمكن من تطبيق هذا الخيار. سنحاول مرة أخرى.",
-
   "annotation-sync-failed": "تعذر حفظ الملاحظة في حسابك. لا تزال موجودة على هذا الجهاز.",
   "create-menu": "يخلق",
   "create-annotation-menu-item": "شرح",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "تعذر حفظ التعليق.",
   "annotation-group-expand": "توسيع المجموعة",
   "annotation-group-collapse": "مجموعة الانهيار",
-
   "notes": "ملحوظات",
   "note": "ملحوظة",
   "show-more-verse-actions": "عرض المزيد من الإجراءات",
@@ -667,7 +651,6 @@
   "create-folder": "إنشاء مجلد",
   "edit-bookmark": "تعديل الإشارة المرجعية",
   "remove-bookmark-from-all-folders": "قم بإزالة جميع المجلدات",
-
   "greeting-afternoon": "مساء الخير!",
   "greeting-afternoon-named": "مساء الخير، {{name}} !",
   "greeting-evening": "مساء الخير!",
@@ -677,5 +660,6 @@
   "greeting-night": "طاب مساؤك!",
   "greeting-night-named": "ليلة سعيدة {{name}} !",
   "annotation-override-banner": "يتم حفظ الملاحظات وتحميلها من حساب فريقك.",
-  "annotation-override-save-to-my-account": "حفظ في حسابي"
+  "annotation-override-save-to-my-account": "حفظ في حسابي",
+  "read-book-chapter-button": "اقرأ {{bookName}} {{chapterNumber}}"
 }

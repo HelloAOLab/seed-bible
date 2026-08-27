@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "Korosta",
   "end-session": "Lopeta istunto",
   "panels": "Paneelit",
-
   "open-in-new-panel": "Avaa uudessa paneelissa",
   "close-sidebar": "Sulje sivupalkki",
   "select-pane-layout": "Valitse ruudun asettelu",
@@ -253,7 +252,6 @@
   "create-reading-plan": "Luo lukusuunnitelma",
   "reading-plans-empty": "Sinulla ei ole vielä lukusuunnitelmia. Luo sellainen aloittaaksesi.",
   "untitled-reading-plan": "Nimetön suunnitelma",
-
   "reading-plan-description_placeholder": "Mistä tässä suunnitelmassa on kyse?",
   "anonymous": "Anonyymi",
   "no-chat-messages": "Ei vielä viestejä",
@@ -335,7 +333,6 @@
   "dont-show-again": "Älä näytä tätä uudelleen",
   "discover": "Tutustu",
   "playlists": "Soittolistat",
-
   "cross-references": "Ristiviittaukset",
   "study-notes": "Opiskelumuistiinpanot",
   "content": "Sisältö",
@@ -404,7 +401,6 @@
   "add-and-save": "Lisää ja tallenna",
   "loading-profile": "Profiiliasi ladataan…",
   "app-version": "versio {{version}} · {{commit}}",
-
   "share": "Jakaa",
   "share-sheet-title": "Jakaa",
   "share-link": "Jaa linkki",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "Luo uusi suunnitelma",
   "edit-reading-plan": "Muokkaa suunnitelmaa",
   "reading-plan-step-name-title": "Nimeä suunnitelmasi",
-
   "reading-plan-name-placeholder": "esim. Psalmieni matka",
   "reading-plan-description-label": "Kuvaus (valinnainen)",
   "reading-plan-step-scripture-title": "Valitse lukemat",
   "reading-plan-step-cadences-title": "Kadenssien lukeminen",
   "reading-plan-step-cadences-hint": "Valitse haluamasi lukutahti. Lukijat voivat aina halutessaan edetä omaan tahtiinsa.",
-
   "reading-plan-cadence-length": "Valmis {{count}} päivän kuluttua",
   "reading-plan-cadence-length_one": "Valmis {{count}} päivän kuluttua",
   "reading-plan-cadence-length_other": "Valmis {{count}} päivän kuluttua",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "Tallennetaan…",
   "reading-plan-draft-saved": "Luonnos tallennettu",
   "reading-plan-draft-save-failed": "Luonnosta ei voitu tallentaa",
-
   "reading-plan-scripture-remove": "Poista lukema",
   "reading-plan-create-submit": "Luo suunnitelma",
   "reading-plan-save-changes": "Tallenna muutokset",
@@ -498,11 +491,8 @@
   "loading": "Ladataan…",
   "reading-plan-not-started": "Ei aloitettu",
   "reading-plan-start": "Aloita suunnitelma",
-
   "reading-plan-streak": "{{count}} päivän putki",
-
   "reading-plan-mark-complete": "Merkitse valmiiksi",
-
   "reading-plan-empty-sessions": "Tällä suunnitelmalla ei ole vielä lukemia.",
   "reading-plan-celebration-title": "Päivä {{day}} suoritettu!",
   "reading-plan-complete-title": "Suunnitelma valmis!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "Merkitse lukeminen valmiiksi",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Tämä lukema kuuluu",
-
   "reading-plan-mark-passage-complete": "Merkitse {{passage}} luetuksi",
   "reading-plan-read-nudge-title": "Mukavaa luettavaa!",
   "reading-plan-read-nudge-toast": "Merkitse {{passage}} valmiiksi?",
@@ -553,7 +542,6 @@
   "last-48-hours": "Viimeiset 48 tuntia",
   "open-bible": "Avoin Raamattu",
   "personal-greeting": "Tervetuloa, {{name}} !",
-  "read-first-chapter": "Lue ensimmäinen luku",
   "resume-reading": "JATKA SIINÄ, MISTÄ LÄHETIT",
   "resume-reading-loading": "Ladataan lukuhistoriaasi…",
   "selected-year": "Vuosi: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "Mistä tässä soittolistassa on kyse?",
   "read-more": "Lue lisää",
   "read-less": "Lue vähemmän",
-
   "ask-to-switch-ui-language": "Tarjoudu vaihtamaan kieltä käännöksen kera",
   "ai": "Tekoäly",
   "ai-edit-playlist": "Muokkaa soittolistaa tekoälyn avulla",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} käytti {{count}} työkalua",
   "chat-tool-used_one": "{{name}} käytti työkalua",
   "chat-tool-used_other": "{{name}} käytti {{count}} työkalua",
-
   "ai-context-button-label": "Aktiivinen tekoälykonteksti",
   "ai-context-tool-count": "{{count}} työkalua",
   "annotation-conflict-title": "Tämä huomautus muuttui kahdessa kohdassa",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "Ei sisältöä.",
   "annotation-conflict-confirm": "Vahvistaa",
   "annotation-conflict-resolve-failed": "Valinta ei onnistunut. Yritetään uudelleen.",
-
   "annotation-sync-failed": "Muistiinpanon tallentaminen tilillesi epäonnistui. Se on edelleen tällä laitteella.",
   "create-menu": "Luoda",
   "create-annotation-menu-item": "Merkintä",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "Merkintää ei voitu tallentaa.",
   "annotation-group-expand": "Laajenna ryhmää",
   "annotation-group-collapse": "Pienennä ryhmä",
-
   "notes": "Muistiinpanoja",
   "note": "Huomautus",
   "show-more-verse-actions": "Näytä lisää toimintoja",
@@ -667,7 +651,6 @@
   "create-folder": "Luo kansio",
   "edit-bookmark": "Muokkaa kirjanmerkkiä",
   "remove-bookmark-from-all-folders": "Poista kaikista kansioista",
-
   "greeting-afternoon": "Hyvää iltapäivää!",
   "greeting-afternoon-named": "Hyvää iltapäivää, {{name}} !",
   "greeting-evening": "Hyvää iltaa!",
@@ -677,5 +660,6 @@
   "greeting-night": "Hyvää yötä!",
   "greeting-night-named": "Hyvää yötä, {{name}} !",
   "annotation-override-banner": "Muistiinpanoja tallennetaan ja ladataan tiimisi tililtä.",
-  "annotation-override-save-to-my-account": "Tallenna tililleni"
+  "annotation-override-save-to-my-account": "Tallenna tililleni",
+  "read-book-chapter-button": "Lue {{bookName}} {{chapterNumber}}"
 }

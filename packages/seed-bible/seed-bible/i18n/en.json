@@ -670,7 +670,7 @@
   "last-48-hours": "Last 48 hours",
   "open-bible": "Open Bible",
   "personal-greeting": "Welcome, {{name}}!",
-  "read-first-chapter": "Read the first chapter",
+  "read-book-chapter-button": "Read {{bookName}} {{chapterNumber}}",
   "resume-reading": "CONTINUE WHERE YOU LEFT OFF",
   "resume-reading-loading": "Loading your reading history…",
   "selected-year": "Year: {{year}}",

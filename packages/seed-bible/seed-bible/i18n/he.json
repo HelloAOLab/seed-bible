@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "הדגש עבור",
   "end-session": "סיום המושב",
   "panels": "פאנלים",
-
   "open-in-new-panel": "פתח בפאנל חדש",
   "close-sidebar": "סגור את הצד",
   "select-pane-layout": "בחירת פריסת חלונית",
@@ -253,7 +252,6 @@
   "create-reading-plan": "צור תוכנית קריאה",
   "reading-plans-empty": "אין לך עדיין תוכניות קריאה. צור אחת כדי להתחיל.",
   "untitled-reading-plan": "תוכנית ללא שם",
-
   "reading-plan-description_placeholder": "על מה התוכנית הזאת?",
   "anonymous": "אֲנוֹנִימִי",
   "no-chat-messages": "אין עדיין הודעות",
@@ -335,7 +333,6 @@
   "dont-show-again": "אל תציג את זה שוב",
   "discover": "לְגַלוֹת",
   "playlists": "פלייליסטים",
-
   "cross-references": "הפניות צולבות",
   "study-notes": "הערות לימוד",
   "content": "תוֹכֶן",
@@ -404,7 +401,6 @@
   "add-and-save": "הוסף ושמור",
   "loading-profile": "טוען את הפרופיל שלך…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "לַחֲלוֹק",
   "share-sheet-title": "לַחֲלוֹק",
   "share-link": "שתף קישור",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "צור תוכנית חדשה",
   "edit-reading-plan": "עריכת תוכנית",
   "reading-plan-step-name-title": "תן שם לתוכנית שלך",
-
   "reading-plan-name-placeholder": "לדוגמה, מסע התהילים שלי",
   "reading-plan-description-label": "תיאור (אופציונלי)",
   "reading-plan-step-scripture-title": "בחירת קריאות",
   "reading-plan-step-cadences-title": "קריאת קצב",
   "reading-plan-step-cadences-hint": "בחרו את קצבי הקריאה שאתם רוצים להציע. קוראים תמיד יכולים לבחור להמשיך בקצב שלהם במקום זאת.",
-
   "reading-plan-cadence-length": "מסתיים בעוד {{count}} ימים",
   "reading-plan-cadence-length_one": "מסתיים בעוד יום {{count}}",
   "reading-plan-cadence-length_other": "מסתיים בעוד {{count}} ימים",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "חִסָכוֹן…",
   "reading-plan-draft-saved": "הטיוטה נשמרה",
   "reading-plan-draft-save-failed": "לא ניתן היה לשמור את הטיוטה",
-
   "reading-plan-scripture-remove": "הסר קריאה",
   "reading-plan-create-submit": "צור תוכנית",
   "reading-plan-save-changes": "שמירת שינויים",
@@ -498,11 +491,8 @@
   "loading": "טְעִינָה…",
   "reading-plan-not-started": "לא התחיל",
   "reading-plan-start": "התחלת תוכנית",
-
   "reading-plan-streak": "רצף של ימים {{count}}",
-
   "reading-plan-mark-complete": "סמן כשלם",
-
   "reading-plan-empty-sessions": "לתוכנית הזו עדיין אין קריאות.",
   "reading-plan-celebration-title": "יום {{day}} הושלם!",
   "reading-plan-complete-title": "התוכנית הושלמה!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "סמן קריאה הושלמה",
   "reading-plan-link-video": "וִידֵאוֹ",
   "reading-belongs-to": "קריאה זו שייכת ל",
-
   "reading-plan-mark-passage-complete": "סמן {{passage}} כנקרא",
   "reading-plan-read-nudge-title": "קריאה נעימה!",
   "reading-plan-read-nudge-toast": "לסמן {{passage}} כשלם?",
@@ -553,7 +542,6 @@
   "last-48-hours": "48 השעות האחרונות",
   "open-bible": "תנ\"ך פתוח",
   "personal-greeting": "ברוך הבא, {{name}} !",
-  "read-first-chapter": "קרא את הפרק הראשון",
   "resume-reading": "המשך מאיפה שהפסקת",
   "resume-reading-loading": "טוען את היסטוריית הקריאה שלך…",
   "selected-year": "שנה: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "על מה הפלייליסט הזה?",
   "read-more": "קרא עוד",
   "read-less": "קרא פחות",
-
   "ask-to-switch-ui-language": "הצעה להחליף שפה עם תרגום",
   "ai": "בינה מלאכותית",
   "ai-edit-playlist": "עריכת רשימת השמעה באמצעות בינה מלאכותית",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} השתמש בכלים של {{count}}",
   "chat-tool-used_one": "{{name}} השתמש בכלי",
   "chat-tool-used_other": "{{name}} השתמש בכלים של {{count}}",
-
   "ai-context-button-label": "הקשר פעיל של בינה מלאכותית",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "הערה זו השתנתה בשני מקומות",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "אין תוכן.",
   "annotation-conflict-confirm": "לְאַשֵׁר",
   "annotation-conflict-resolve-failed": "לא ניתן היה ליישם את הבחירה הזו. יינסה שוב.",
-
   "annotation-sync-failed": "לא ניתן היה לשמור הערה בחשבון שלך. היא עדיין במכשיר הזה.",
   "create-menu": "לִיצוֹר",
   "create-annotation-menu-item": "ביאור",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "לא ניתן היה לשמור את ההערה.",
   "annotation-group-expand": "הרחב את הקבוצה",
   "annotation-group-collapse": "כיווץ קבוצה",
-
   "notes": "הערות",
   "note": "פֶּתֶק",
   "show-more-verse-actions": "הצג פעולות נוספות",
@@ -667,7 +651,6 @@
   "create-folder": "צור תיקייה",
   "edit-bookmark": "עריכת סימניה",
   "remove-bookmark-from-all-folders": "הסר מכל התיקיות",
-
   "greeting-afternoon": "אחר צהריים טובים!",
   "greeting-afternoon-named": "אחר צהריים טובים, {{name}} !",
   "greeting-evening": "ערב טוב!",
@@ -677,5 +660,6 @@
   "greeting-night": "לילה טוב!",
   "greeting-night-named": "לילה טוב, {{name}} !",
   "annotation-override-banner": "הערות נשמרות ונטענות מחשבון הצוות שלך.",
-  "annotation-override-save-to-my-account": "שמור בחשבון שלי"
+  "annotation-override-save-to-my-account": "שמור בחשבון שלי",
+  "read-book-chapter-button": "קרא {{bookName}} {{chapterNumber}}"
 }

@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "Salá elembo na yango mpo na",
   "end-session": "Bosukisi ya Likita",
   "panels": "Ba panneaux",
-
   "open-in-new-panel": "Fungola na panneau ya sika",
   "close-sidebar": "Bokanga barre ya mopanzi",
   "select-pane-layout": "Pona layout ya panneau",
@@ -253,7 +252,6 @@
   "create-reading-plan": "Salá mwango ya kotánga",
   "reading-plans-empty": "Ozali naino na ba plans ya kotanga te. Salá moko mpo na kobanda.",
   "untitled-reading-plan": "Plan oyo ezangi titre",
-
   "reading-plan-description_placeholder": "Mwango oyo ezali kolobela nini?",
   "anonymous": "Kozanga kotanga nkombo",
   "no-chat-messages": "Messages moko te nanu",
@@ -335,7 +333,6 @@
   "dont-show-again": "Kolakisa lisusu likambo oyo te",
   "discover": "Komona",
   "playlists": "Ba liste ya ba nzembo",
-
   "cross-references": "Ba références croisées",
   "study-notes": "Banote ya boyekoli",
   "content": "Makambo eza na kati",
@@ -404,7 +401,6 @@
   "add-and-save": "Bakisa mpe bomba",
   "loading-profile": "Ko charger profil na yo...",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Kokabola",
   "share-sheet-title": "Kokabola",
   "share-link": "Bokabola lien moko",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "Salá mwango ya sika",
   "edit-reading-plan": "Bobongisi plan",
   "reading-plan-step-name-title": "Tángá nkombo ya mwango na yo",
-
   "reading-plan-name-placeholder": "ndakisa Mobembo na ngai ya Nzembo",
   "reading-plan-description-label": "Bolimbisi (ekoki kozala na bolingi) .",
   "reading-plan-step-scripture-title": "Pona botángi",
   "reading-plan-step-cadences-title": "Kotánga ba cadences",
   "reading-plan-step-cadences-hint": "Pona ba étapes ya botangi oyo olingi kopesa. Batangi bakoki ntango nyonso kopona kokende na mbangu na bango moko na esika na yango.",
-
   "reading-plan-cadence-length": "Esili na mikolo {{count}}",
   "reading-plan-cadence-length_one": "Esili na mokolo ya {{count}}",
   "reading-plan-cadence-length_other": "Esili na mikolo {{count}}",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "Kobomba mbongo...",
   "reading-plan-draft-saved": "Projet ebombami",
   "reading-plan-draft-save-failed": "Ekokaki ko sauver draft te",
-
   "reading-plan-scripture-remove": "Longola botangi",
   "reading-plan-create-submit": "Bosala plan",
   "reading-plan-save-changes": "Bomba mbongwana",
@@ -498,11 +491,8 @@
   "loading": "Ezali ko charger...",
   "reading-plan-not-started": "Ebandaki te",
   "reading-plan-start": "Bandá mwango",
-
   "reading-plan-streak": "{{count}} -mokolo ya molongo",
-
   "reading-plan-mark-complete": "Tyá elembo lokola moto mobimba",
-
   "reading-plan-empty-sessions": "Plan oyo ezali nanu na ba lectures te.",
   "reading-plan-celebration-title": "Mokolo {{day}} esili!",
   "reading-plan-complete-title": "Plan esili!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "Mark botangi esili",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Botangi oyo ezali ya",
-
   "reading-plan-mark-passage-complete": "Tyá elembo na {{passage}} lokola etángi",
   "reading-plan-read-nudge-title": "Botangi kitoko!",
   "reading-plan-read-nudge-toast": "Mark {{passage}} esili?",
@@ -553,7 +542,6 @@
   "last-48-hours": "Ngonga 48 oyo eleki",
   "open-bible": "Fungola Biblia",
   "personal-greeting": "Boyei malamu, {{name}} !",
-  "read-first-chapter": "Tángá mokapo ya liboso",
   "resume-reading": "CONTINUER ESIKA OLOKI",
   "resume-reading-loading": "Ko charger histoire ya botangi na yo...",
   "selected-year": "Mobu: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "Playlist oyo ezali kolobela nini?",
   "read-more": "Tanga makambo mosusu",
   "read-less": "Tanga moke",
-
   "ask-to-switch-ui-language": "Pesá ete obongola monɔkɔ na libongoli",
   "ai": "AI",
   "ai-edit-playlist": "Bobongisi liste ya ba nzembo na AI",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} esalelaki bisaleli ya {{count}}",
   "chat-tool-used_one": "{{name}} asalelaki esaleli moko",
   "chat-tool-used_other": "{{name}} esalelaki bisaleli ya {{count}}",
-
   "ai-context-button-label": "Contexte ya AI oyo ezali kosala",
   "ai-context-tool-count": "{{count}} bisaleli",
   "annotation-conflict-title": "Note oyo ebongwanaki na bisika mibale",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "Contenu te.",
   "annotation-conflict-confirm": "Kondimisa",
   "annotation-conflict-resolve-failed": "Ekokaki te kosalela boponi wana. Ekomekama lisusu.",
-
   "annotation-sync-failed": "Ekoki te kobomba note na compte na yo. Ezali kaka na appareil oyo.",
   "create-menu": "Kosala",
   "create-annotation-menu-item": "Annotation ya maloba",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "Ekokaki te kobomba annotation.",
   "annotation-group-expand": "Bopanzana ya groupe",
   "annotation-group-collapse": "Groupe ya kokweya",
-
   "notes": "Maloba ya ntina",
   "note": "Likebisi",
   "show-more-verse-actions": "Lakisa misala mosusu",
@@ -667,7 +651,6 @@
   "create-folder": "Bosala dossier",
   "edit-bookmark": "Bobongisi elembo ya elembo",
   "remove-bookmark-from-all-folders": "Longola na ba dossiers nionso",
-
   "greeting-afternoon": "Nsima ya nzanga malamu!",
   "greeting-afternoon-named": "Nsima ya midi malamu, {{name}} !",
   "greeting-evening": "Mpokwa malamu!",
@@ -677,5 +660,6 @@
   "greeting-night": "Butu malamu!",
   "greeting-night-named": "Butu malamu, {{name}} !",
   "annotation-override-banner": "Ba notes ezali kobombama mpe ko charger na compte ya équipe na yo.",
-  "annotation-override-save-to-my-account": "Bomba na compte na ngai"
+  "annotation-override-save-to-my-account": "Bomba na compte na ngai",
+  "read-book-chapter-button": "Tanga {{bookName}} {{chapterNumber}}"
 }

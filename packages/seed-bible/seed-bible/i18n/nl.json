@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "Markeer voor",
   "end-session": "Sessie beëindigen",
   "panels": "Panelen",
-
   "open-in-new-panel": "Openen in een nieuw paneel",
   "close-sidebar": "Zijbalk sluiten",
   "select-pane-layout": "Selecteer paneelindeling",
@@ -253,7 +252,6 @@
   "create-reading-plan": "Maak een leesplan",
   "reading-plans-empty": "Je hebt nog geen leesplannen. Maak er een aan om te beginnen.",
   "untitled-reading-plan": "Naamloos plan",
-
   "reading-plan-description_placeholder": "Waar gaat dit plan over?",
   "anonymous": "Anoniem",
   "no-chat-messages": "Nog geen berichten",
@@ -335,7 +333,6 @@
   "dont-show-again": "Niet meer laten zien",
   "discover": "Ontdekken",
   "playlists": "Afspeellijsten",
-
   "cross-references": "Kruisverwijzingen",
   "study-notes": "Studienotities",
   "content": "Inhoud",
@@ -404,7 +401,6 @@
   "add-and-save": "Toevoegen en opslaan",
   "loading-profile": "Je profiel wordt geladen...",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Deel",
   "share-sheet-title": "Deel",
   "share-link": "Deel een link",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "Maak een nieuw plan",
   "edit-reading-plan": "Plan bewerken",
   "reading-plan-step-name-title": "Geef je plan een naam.",
-
   "reading-plan-name-placeholder": "bijv. Mijn Psalmenreis",
   "reading-plan-description-label": "Beschrijving (optioneel)",
   "reading-plan-step-scripture-title": "Geselecteerde lezingen",
   "reading-plan-step-cadences-title": "Leesritmes",
   "reading-plan-step-cadences-hint": "Kies zelf het leestempo dat je wilt aanbieden. Lezers kunnen er natuurlijk ook voor kiezen om in hun eigen tempo te lezen.",
-
   "reading-plan-cadence-length": "Voltooid over {{count}} dagen",
   "reading-plan-cadence-length_one": "Eindigt over {{count}} dag",
   "reading-plan-cadence-length_other": "Voltooid over {{count}} dagen",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "Besparing…",
   "reading-plan-draft-saved": "Concept opgeslagen",
   "reading-plan-draft-save-failed": "Concept opslaan mislukt",
-
   "reading-plan-scripture-remove": "Verwijder de leestekst",
   "reading-plan-create-submit": "Maak een plan",
   "reading-plan-save-changes": "Wijzigingen opslaan",
@@ -498,11 +491,8 @@
   "loading": "Laden…",
   "reading-plan-not-started": "Nog niet begonnen",
   "reading-plan-start": "Startplan",
-
   "reading-plan-streak": "{{count}} dagenreeks",
-
   "reading-plan-mark-complete": "Markeer als voltooid",
-
   "reading-plan-empty-sessions": "Dit plan heeft nog geen metingen.",
   "reading-plan-celebration-title": "Dag {{day}} voltooid!",
   "reading-plan-complete-title": "Plan voltooid!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "Markeer als voltooid",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Deze lezing behoort tot",
-
   "reading-plan-mark-passage-complete": "Markeer {{passage}} als gelezen",
   "reading-plan-read-nudge-title": "Veel leesplezier!",
   "reading-plan-read-nudge-toast": "Markeer {{passage}} als voltooid?",
@@ -553,7 +542,6 @@
   "last-48-hours": "Afgelopen 48 uur",
   "open-bible": "Open Bijbel",
   "personal-greeting": "Welkom, {{name}} !",
-  "read-first-chapter": "Lees het eerste hoofdstuk.",
   "resume-reading": "GA VERDER WAAR JE GEBLEVEN BENT GEBLEVEN",
   "resume-reading-loading": "Je leesgeschiedenis wordt geladen...",
   "selected-year": "Jaar: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "Waar gaat deze afspeellijst over?",
   "read-more": "Lees meer",
   "read-less": "Lees minder",
-
   "ask-to-switch-ui-language": "Bied aan om de taal te wijzigen met vertaling.",
   "ai": "AI",
   "ai-edit-playlist": "Bewerk afspeellijsten met AI",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} gebruikte {{count}} gereedschappen",
   "chat-tool-used_one": "{{name}} gebruikte een gereedschap",
   "chat-tool-used_other": "{{name}} gebruikte {{count}} gereedschappen",
-
   "ai-context-button-label": "Actieve AI-context",
   "ai-context-tool-count": "{{count}} gereedschappen",
   "annotation-conflict-title": "Deze notitie is op twee plaatsen gewijzigd.",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "Geen inhoud.",
   "annotation-conflict-confirm": "Bevestigen",
   "annotation-conflict-resolve-failed": "Die optie kon niet worden toegepast. Het wordt opnieuw geprobeerd.",
-
   "annotation-sync-failed": "Het is niet gelukt om een ​​notitie in je account op te slaan. Deze staat nog steeds op dit apparaat.",
   "create-menu": "Creëren",
   "create-annotation-menu-item": "Annotatie",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "De annotatie kon niet worden opgeslagen.",
   "annotation-group-expand": "Groep uitbreiden",
   "annotation-group-collapse": "Instortgroep",
-
   "notes": "Notities",
   "note": "Opmerking",
   "show-more-verse-actions": "Meer acties weergeven",
@@ -667,7 +651,6 @@
   "create-folder": "Map aanmaken",
   "edit-bookmark": "Bladwijzer bewerken",
   "remove-bookmark-from-all-folders": "Verwijderen uit alle mappen",
-
   "greeting-afternoon": "Goedemiddag!",
   "greeting-afternoon-named": "Goedemiddag, {{name}} !",
   "greeting-evening": "Goedeavond!",
@@ -677,5 +660,6 @@
   "greeting-night": "Welterusten!",
   "greeting-night-named": "Goedenacht, {{name}} !",
   "annotation-override-banner": "Notities worden opgeslagen en geladen vanuit het account van uw team.",
-  "annotation-override-save-to-my-account": "Opslaan in mijn account"
+  "annotation-override-save-to-my-account": "Opslaan in mijn account",
+  "read-book-chapter-button": "Lees {{bookName}} {{chapterNumber}}"
 }

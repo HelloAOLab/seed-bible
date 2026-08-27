@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "માટે હાઇલાઇટ કરો",
   "end-session": "સત્ર સમાપ્ત કરો",
   "panels": "પેનલ્સ",
-
   "open-in-new-panel": "નવા પેનલમાં ખોલો",
   "close-sidebar": "સાઇડબાર બંધ કરો",
   "select-pane-layout": "ફલક લેઆઉટ પસંદ કરો",
@@ -253,7 +252,6 @@
   "create-reading-plan": "વાંચન યોજના બનાવો",
   "reading-plans-empty": "તમારી પાસે હજુ સુધી વાંચનનો કોઈ પ્લાન નથી. શરૂ કરવા માટે એક બનાવો.",
   "untitled-reading-plan": "શીર્ષક વિનાનો પ્લાન",
-
   "reading-plan-description_placeholder": "આ યોજના શેના વિશે છે?",
   "anonymous": "અનામી",
   "no-chat-messages": "હજુ સુધી કોઈ સંદેશા નથી.",
@@ -335,7 +333,6 @@
   "dont-show-again": "આ ફરી બતાવશો નહીં",
   "discover": "શોધો",
   "playlists": "પ્લેલિસ્ટ્સ",
-
   "cross-references": "ક્રોસ રેફરન્સ",
   "study-notes": "અભ્યાસ નોંધો",
   "content": "સામગ્રી",
@@ -404,7 +401,6 @@
   "add-and-save": "ઉમેરો અને સાચવો",
   "loading-profile": "તમારી પ્રોફાઇલ લોડ કરી રહ્યું છે…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "શેર કરો",
   "share-sheet-title": "શેર કરો",
   "share-link": "લિંક શેર કરો",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "નવો પ્લાન બનાવો",
   "edit-reading-plan": "યોજના સંપાદિત કરો",
   "reading-plan-step-name-title": "તમારા પ્લાનને નામ આપો",
-
   "reading-plan-name-placeholder": "દા.ત. માય સાલ્મ્સ જર્ની",
   "reading-plan-description-label": "વર્ણન (વૈકલ્પિક)",
   "reading-plan-step-scripture-title": "રીડિંગ્સ પસંદ કરો",
   "reading-plan-step-cadences-title": "વાંચન કેડેન્સ",
   "reading-plan-step-cadences-hint": "તમે જે વાંચન ગતિ આપવા માંગો છો તે પસંદ કરો. વાચકો હંમેશા પોતાની ગતિએ જવાનું પસંદ કરી શકે છે.",
-
   "reading-plan-cadence-length": "{{count}} દિવસમાં પૂર્ણ થાય છે",
   "reading-plan-cadence-length_one": "{{count}} દિવસમાં પૂર્ણ થાય છે",
   "reading-plan-cadence-length_other": "{{count}} દિવસમાં પૂર્ણ થાય છે",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "સાચવી રહ્યું છે...",
   "reading-plan-draft-saved": "ડ્રાફ્ટ સાચવ્યો",
   "reading-plan-draft-save-failed": "ડ્રાફ્ટ સાચવી શકાયો નથી",
-
   "reading-plan-scripture-remove": "વાંચન દૂર કરો",
   "reading-plan-create-submit": "યોજના બનાવો",
   "reading-plan-save-changes": "ફેરફારો સાચવો",
@@ -498,11 +491,8 @@
   "loading": "લોડ કરી રહ્યું છે...",
   "reading-plan-not-started": "શરૂ થયું નથી",
   "reading-plan-start": "યોજના શરૂ કરો",
-
   "reading-plan-streak": "{{count}} -દિવસનો દોર",
-
   "reading-plan-mark-complete": "પૂર્ણ તરીકે ચિહ્નિત કરો",
-
   "reading-plan-empty-sessions": "આ યોજનામાં હજુ સુધી કોઈ રીડિંગ્સ નથી.",
   "reading-plan-celebration-title": "દિવસ {{day}} પૂર્ણ થયો!",
   "reading-plan-complete-title": "યોજના પૂર્ણ!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "વાંચન પૂર્ણ થયું તરીકે ચિહ્નિત કરો",
   "reading-plan-link-video": "વિડિઓ",
   "reading-belongs-to": "આ વાંચન આનું છે",
-
   "reading-plan-mark-passage-complete": "{{passage}} ને વાંચેલા તરીકે ચિહ્નિત કરો",
   "reading-plan-read-nudge-title": "સરસ વાંચન!",
   "reading-plan-read-nudge-toast": "{{passage}} ને પૂર્ણ તરીકે ચિહ્નિત કરીએ?",
@@ -553,7 +542,6 @@
   "last-48-hours": "છેલ્લા ૪૮ કલાક",
   "open-bible": "બાઇબલ ખોલો",
   "personal-greeting": "સ્વાગત છે, {{name}} !",
-  "read-first-chapter": "પહેલો પ્રકરણ વાંચો",
   "resume-reading": "તમે જ્યાંથી ગયા હતા ત્યાં જ ચાલુ રાખો",
   "resume-reading-loading": "તમારો વાંચન ઇતિહાસ લોડ કરી રહ્યું છે…",
   "selected-year": "વર્ષ: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "આ પ્લેલિસ્ટ શેના વિશે છે?",
   "read-more": "વધુ વાંચો",
   "read-less": "ઓછું વાંચો",
-
   "ask-to-switch-ui-language": "અનુવાદ સાથે ભાષા બદલવાની ઑફર કરો",
   "ai": "કૃત્રિમ",
   "ai-edit-playlist": "AI સાથે પ્લેલિસ્ટ સંપાદિત કરો",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} એ {{count}} સાધનોનો ઉપયોગ કર્યો",
   "chat-tool-used_one": "{{name}} એ એક સાધનનો ઉપયોગ કર્યો",
   "chat-tool-used_other": "{{name}} એ {{count}} સાધનોનો ઉપયોગ કર્યો",
-
   "ai-context-button-label": "સક્રિય AI સંદર્ભ",
   "ai-context-tool-count": "{{count}} સાધનો",
   "annotation-conflict-title": "આ નોંધ બે જગ્યાએ બદલાઈ ગઈ છે.",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "કોઈ સામગ્રી નથી.",
   "annotation-conflict-confirm": "પુષ્ટિ કરો",
   "annotation-conflict-resolve-failed": "તે પસંદગી લાગુ કરી શકાઈ નથી. તેનો ફરીથી પ્રયાસ કરવામાં આવશે.",
-
   "annotation-sync-failed": "તમારા એકાઉન્ટમાં નોંધ સાચવી શકાઈ નથી. તે હજુ પણ આ ઉપકરણ પર છે.",
   "create-menu": "બનાવો",
   "create-annotation-menu-item": "ટીકા",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "ટીકા સાચવી શકાઈ નથી.",
   "annotation-group-expand": "જૂથ વિસ્તૃત કરો",
   "annotation-group-collapse": "જૂથ સંકુચિત કરો",
-
   "notes": "નોંધો",
   "note": "નોંધ",
   "show-more-verse-actions": "વધુ ક્રિયાઓ બતાવો",
@@ -667,7 +651,6 @@
   "create-folder": "ફોલ્ડર બનાવો",
   "edit-bookmark": "બુકમાર્ક સંપાદિત કરો",
   "remove-bookmark-from-all-folders": "બધા ફોલ્ડર્સમાંથી દૂર કરો",
-
   "greeting-afternoon": "શુભ બપોર!",
   "greeting-afternoon-named": "શુભ બપોર, {{name}} !",
   "greeting-evening": "શુભ સાંજ!",
@@ -677,5 +660,6 @@
   "greeting-night": "શુભ રાત્રી!",
   "greeting-night-named": "શુભ રાત્રિ, {{name}} !",
   "annotation-override-banner": "તમારી ટીમના ખાતામાંથી નોંધો સાચવવામાં અને લોડ કરવામાં આવી રહી છે.",
-  "annotation-override-save-to-my-account": "મારા એકાઉન્ટમાં સાચવો"
+  "annotation-override-save-to-my-account": "મારા એકાઉન્ટમાં સાચવો",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} વાંચો"
 }

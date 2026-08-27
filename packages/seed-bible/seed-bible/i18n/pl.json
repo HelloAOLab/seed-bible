@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "Podświetl dla",
   "end-session": "Zakończ sesję",
   "panels": "Panele",
-
   "open-in-new-panel": "Otwórz w nowym panelu",
   "close-sidebar": "Zamknij pasek boczny",
   "select-pane-layout": "Wybierz układ panelu",
@@ -253,7 +252,6 @@
   "create-reading-plan": "Utwórz plan czytania",
   "reading-plans-empty": "Nie masz jeszcze żadnych planów czytania. Utwórz jeden, aby zacząć.",
   "untitled-reading-plan": "Plan bez tytułu",
-
   "reading-plan-description_placeholder": "Na czym polega ten plan?",
   "anonymous": "Anonimowy",
   "no-chat-messages": "Brak wiadomości",
@@ -335,7 +333,6 @@
   "dont-show-again": "Nie pokazuj tego ponownie",
   "discover": "Odkryć",
   "playlists": "Listy odtwarzania",
-
   "cross-references": "Odnośniki krzyżowe",
   "study-notes": "Notatki do nauki",
   "content": "Treść",
@@ -404,7 +401,6 @@
   "add-and-save": "Dodaj i zapisz",
   "loading-profile": "Ładowanie Twojego profilu…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Udział",
   "share-sheet-title": "Udział",
   "share-link": "Udostępnij link",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "Utwórz nowy plan",
   "edit-reading-plan": "Edytuj plan",
   "reading-plan-step-name-title": "Nazwij swój plan",
-
   "reading-plan-name-placeholder": "np. Moja podróż przez Psalmy",
   "reading-plan-description-label": "Opis (opcjonalnie)",
   "reading-plan-step-scripture-title": "Wybierz lektury",
   "reading-plan-step-cadences-title": "Kadencje czytania",
   "reading-plan-step-cadences-hint": "Wybierz tempo czytania, które chcesz zaoferować. Czytelnicy zawsze mogą wybrać własne tempo.",
-
   "reading-plan-cadence-length": "Zakończenie za {{count}} dni",
   "reading-plan-cadence-length_one": "Zakończenie za {{count}} dzień",
   "reading-plan-cadence-length_other": "Zakończenie za {{count}} dni",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "Oszczędność…",
   "reading-plan-draft-saved": "Wersja robocza zapisana",
   "reading-plan-draft-save-failed": "Nie udało się zapisać wersji roboczej",
-
   "reading-plan-scripture-remove": "Usuń czytanie",
   "reading-plan-create-submit": "Utwórz plan",
   "reading-plan-save-changes": "Zapisz zmiany",
@@ -498,11 +491,8 @@
   "loading": "Załadunek…",
   "reading-plan-not-started": "Nie rozpoczęto",
   "reading-plan-start": "Rozpocznij plan",
-
   "reading-plan-streak": "{{count}} -dniowa seria",
-
   "reading-plan-mark-complete": "Oznacz jako ukończone",
-
   "reading-plan-empty-sessions": "Ten plan nie ma jeszcze żadnych odczytów.",
   "reading-plan-celebration-title": "Dzień {{day}} ukończony!",
   "reading-plan-complete-title": "Plan ukończony!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "Zaznacz odczyt zakończony",
   "reading-plan-link-video": "Wideo",
   "reading-belongs-to": "To czytanie należy do",
-
   "reading-plan-mark-passage-complete": "Oznacz {{passage}} jako przeczytany",
   "reading-plan-read-nudge-title": "Miłej lektury!",
   "reading-plan-read-nudge-toast": "Czy oznaczyć {{passage}} jako ukończony?",
@@ -553,7 +542,6 @@
   "last-48-hours": "Ostatnie 48 godzin",
   "open-bible": "Otwarta Biblia",
   "personal-greeting": "Witaj, {{name}} !",
-  "read-first-chapter": "Przeczytaj pierwszy rozdział",
   "resume-reading": "KONTYNUUJ TAM, GDZIE ZAKOŃCZYŁEŚ",
   "resume-reading-loading": "Ładowanie historii odczytów…",
   "selected-year": "Rok: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "O czym jest ta playlista?",
   "read-more": "Przeczytaj więcej",
   "read-less": "Przeczytaj mniej",
-
   "ask-to-switch-ui-language": "Zaproponuj zmianę języka z tłumaczeniem",
   "ai": "Sztuczna inteligencja",
   "ai-edit-playlist": "Edytuj playlistę za pomocą sztucznej inteligencji",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} użył {{count}} narzędzi",
   "chat-tool-used_one": "{{name}} użył(a) narzędzia",
   "chat-tool-used_other": "{{name}} użył {{count}} narzędzi",
-
   "ai-context-button-label": "Aktywny kontekst sztucznej inteligencji",
   "ai-context-tool-count": "{{count}} narzędzi",
   "annotation-conflict-title": "Ta notatka została zmieniona w dwóch miejscach",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "Brak treści.",
   "annotation-conflict-confirm": "Potwierdzać",
   "annotation-conflict-resolve-failed": "Nie udało się wybrać tej opcji. Spróbuję ponownie.",
-
   "annotation-sync-failed": "Nie udało się zapisać notatki na Twoim koncie. Nadal jest na tym urządzeniu.",
   "create-menu": "Tworzyć",
   "create-annotation-menu-item": "Adnotacja",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "Nie udało się zapisać adnotacji.",
   "annotation-group-expand": "Rozwiń grupę",
   "annotation-group-collapse": "Zwiń grupę",
-
   "notes": "Notatki",
   "note": "Notatka",
   "show-more-verse-actions": "Pokaż więcej akcji",
@@ -667,7 +651,6 @@
   "create-folder": "Utwórz folder",
   "edit-bookmark": "Edytuj zakładkę",
   "remove-bookmark-from-all-folders": "Usuń ze wszystkich folderów",
-
   "greeting-afternoon": "Dzień dobry!",
   "greeting-afternoon-named": "Dzień dobry, {{name}} !",
   "greeting-evening": "Dobry wieczór!",
@@ -677,5 +660,6 @@
   "greeting-night": "Dobranoc!",
   "greeting-night-named": "Dobranoc, {{name}} !",
   "annotation-override-banner": "Notatki są zapisywane i ładowane z konta Twojego zespołu.",
-  "annotation-override-save-to-my-account": "Zapisz na moim koncie"
+  "annotation-override-save-to-my-account": "Zapisz na moim koncie",
+  "read-book-chapter-button": "Przeczytaj {{bookName}} {{chapterNumber}}"
 }

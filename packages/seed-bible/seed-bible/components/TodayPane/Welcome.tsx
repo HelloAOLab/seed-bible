@@ -28,6 +28,7 @@ export const Welcome = (props: {
   const theme = props.theme.value;
 
   const welcomeVerse = useSignal("");
+  const johnBookName = bookNames.value.get("JHN") ?? "JHN";
 
   useEffect(() => {
     let isActive = true;
@@ -64,7 +65,7 @@ export const Welcome = (props: {
           : t("anonymous-greeting", { defaultValue: "Welcome!" })}
       </h1>
       <span className={"sb-today-welcome-screen-book"}>
-        {`${bookNames.value.get("JHN")?.toUpperCase()} 1:1`}
+        {`${johnBookName.toUpperCase()} 1:1`}
       </span>
       {/*
         Real nodes rather than `dangerouslySetInnerHTML`. The `<hl>` markers are
@@ -107,14 +108,16 @@ export const Welcome = (props: {
           onClick={() =>
             // `onOpenPassage` falls back to the default translation when unset.
             props.onOpenPassage({
-              bookId: "GEN",
+              bookId: "JHN",
               chapter: 1,
               translationId: lastTranslationId.value,
             })
           }
         >
-          {t("read-first-chapter", {
-            defaultValue: "Read the first chapter",
+          {t("read-book-chapter-button", {
+            defaultValue: "Read {{bookName}} {{chapterNumber}}",
+            bookName: johnBookName,
+            chapterNumber: 1,
           })}
           <MaterialIcon>arrow_right_alt</MaterialIcon>
         </button>

@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "சிறப்பித்துக் காட்டு",
   "end-session": "அமர்வை முடிக்கவும்",
   "panels": "பேனல்கள்",
-
   "open-in-new-panel": "புதிய பேனலில் திறக்கவும்",
   "close-sidebar": "பக்கப் பட்டியை மூடுக",
   "select-pane-layout": "பலக தளவமைப்பைத் தேர்ந்தெடுக்கவும்",
@@ -253,7 +252,6 @@
   "create-reading-plan": "வாசிப்புத் திட்டத்தை உருவாக்குங்கள்",
   "reading-plans-empty": "உங்களிடம் இன்னும் வாசிப்புத் திட்டங்கள் எதுவும் இல்லை. தொடங்குவதற்கு ஒன்றை உருவாக்குங்கள்.",
   "untitled-reading-plan": "பெயரிடப்படாத திட்டம்",
-
   "reading-plan-description_placeholder": "இந்தத் திட்டம் எதைப் பற்றியது?",
   "anonymous": "அநாமதேய",
   "no-chat-messages": "இன்னும் செய்திகள் வரவில்லை",
@@ -335,7 +333,6 @@
   "dont-show-again": "இதை மீண்டும் காட்ட வேண்டாம்",
   "discover": "கண்டுபிடிப்பாளர்",
   "playlists": "பிளேலிஸ்ட்கள்",
-
   "cross-references": "குறுக்கு குறிப்புகள்",
   "study-notes": "ஆய்வுக் குறிப்புகள்",
   "content": "உள்ளடக்கம்",
@@ -404,7 +401,6 @@
   "add-and-save": "சேர்த்து சேமி",
   "loading-profile": "உங்கள் சுயவிவரம் ஏற்றப்படுகிறது…",
   "app-version": "{{version}} · {{commit}}",
-
   "share": "பகிர்",
   "share-sheet-title": "பகிர்",
   "share-link": "இணைப்பைப் பகிரவும்",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "புதிய திட்டத்தை உருவாக்கு",
   "edit-reading-plan": "திட்டத்தைத் திருத்து",
   "reading-plan-step-name-title": "உங்கள் திட்டத்தின் பெயரைச் சொல்லுங்கள்",
-
   "reading-plan-name-placeholder": "உதாரணமாக, எனது சங்கீதப் பயணம்",
   "reading-plan-description-label": "விளக்கம் (விருப்பத்திற்குரியது)",
   "reading-plan-step-scripture-title": "வாசிப்புகளைத் தேர்ந்தெடுக்கவும்",
   "reading-plan-step-cadences-title": "வாசிப்பு தாளங்கள்",
   "reading-plan-step-cadences-hint": "நீங்கள் வழங்க விரும்பும் வாசிப்பு வேகத்தைத் தேர்ந்தெடுங்கள். வாசகர்கள் அதற்குப் பதிலாகத் தங்கள் சொந்த வேகத்தில் படிக்கவும் தேர்வு செய்யலாம்.",
-
   "reading-plan-cadence-length": "{{count}} நாட்களில் முடிவடைகிறது",
   "reading-plan-cadence-length_one": "{{count}} நாளில் முடிவடைகிறது",
   "reading-plan-cadence-length_other": "{{count}} நாட்களில் முடிவடைகிறது",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "சேமிப்பு…",
   "reading-plan-draft-saved": "வரைவு சேமிக்கப்பட்டது",
   "reading-plan-draft-save-failed": "வரைவைச் சேமிக்க முடியவில்லை",
-
   "reading-plan-scripture-remove": "வாசிப்பை நீக்கு",
   "reading-plan-create-submit": "திட்டத்தை உருவாக்கு",
   "reading-plan-save-changes": "மாற்றங்களைச் சேமிக்கவும்",
@@ -498,11 +491,8 @@
   "loading": "ஏற்றப்படுகிறது…",
   "reading-plan-not-started": "தொடங்கவில்லை",
   "reading-plan-start": "திட்டத்தைத் தொடங்குங்கள்",
-
   "reading-plan-streak": "{{count}} -நாள் தொடர்",
-
   "reading-plan-mark-complete": "நிறைவுற்றதாகக் குறிக்கவும்",
-
   "reading-plan-empty-sessions": "இந்தத் திட்டத்தில் இன்னும் எந்த அளவீடுகளும் இல்லை.",
   "reading-plan-celebration-title": "{{day}} நிறைவடைந்தது!",
   "reading-plan-complete-title": "திட்டம் நிறைவடைந்தது!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "வாசிப்பு நிறைவடைந்தது எனக் குறிக்கவும்",
   "reading-plan-link-video": "வீடியோ",
   "reading-belongs-to": "இந்த வாசிப்பு இதற்குச் சொந்தமானது",
-
   "reading-plan-mark-passage-complete": "{{passage}} படித்ததாகக் குறிக்கவும்",
   "reading-plan-read-nudge-title": "நல்ல வாசிப்பு!",
   "reading-plan-read-nudge-toast": "மார்க் {{passage}} நிறைவடைந்துவிட்டாரா?",
@@ -553,7 +542,6 @@
   "last-48-hours": "கடந்த 48 மணி நேரம்",
   "open-bible": "திறந்த புத்தகம்",
   "personal-greeting": "வரவேற்கிறோம், {{name}} !",
-  "read-first-chapter": "முதல் அத்தியாயத்தைப் படிக்கவும்",
   "resume-reading": "நீங்கள் விட்ட இடத்திலிருந்து தொடரவும்",
   "resume-reading-loading": "உங்கள் வாசிப்பு வரலாறு ஏற்றப்படுகிறது…",
   "selected-year": "ஆண்டு: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "இந்த பிளேலிஸ்ட் எதைப் பற்றியது?",
   "read-more": "மேலும் படிக்கவும்",
   "read-less": "குறைவாகப் படிக்கவும்",
-
   "ask-to-switch-ui-language": "மொழிபெயர்ப்புடன் மொழியை மாற்றிக்கொள்ள முன்வாருங்கள்.",
   "ai": "செயற்கை நுண்ணறிவு",
   "ai-edit-playlist": "AI மூலம் பிளேலிஸ்ட்டைத் திருத்தவும்",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} பயன்படுத்திய {{count}} கருவிகள்",
   "chat-tool-used_one": "{{name}} ஒரு கருவியைப் பயன்படுத்தினார்",
   "chat-tool-used_other": "{{name}} பயன்படுத்திய {{count}} கருவிகள்",
-
   "ai-context-button-label": "செயல்திறன் மிக்க AI சூழல்",
   "ai-context-tool-count": "{{count}} கருவிகள்",
   "annotation-conflict-title": "இந்தக் குறிப்பு இரண்டு இடங்களில் மாற்றப்பட்டது.",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "உள்ளடக்கம் இல்லை.",
   "annotation-conflict-confirm": "உறுதிப்படுத்து",
   "annotation-conflict-resolve-failed": "அந்தத் தேர்வைப் பயன்படுத்த முடியவில்லை. மீண்டும் முயற்சி செய்யப்படும்.",
-
   "annotation-sync-failed": "உங்கள் கணக்கில் ஒரு குறிப்பைச் சேமிக்க முடியவில்லை. அது இன்னும் இந்தச் சாதனத்தில்தான் உள்ளது.",
   "create-menu": "உருவாக்கு",
   "create-annotation-menu-item": "குறிப்புரை",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "குறிப்பைச் சேமிக்க முடியவில்லை.",
   "annotation-group-expand": "குழுவை விரிவாக்கு",
   "annotation-group-collapse": "சரிவு குழு",
-
   "notes": "குறிப்புகள்",
   "note": "குறிப்பு",
   "show-more-verse-actions": "மேலும் செயல்களைக் காட்டு",
@@ -667,7 +651,6 @@
   "create-folder": "கோப்புறையை உருவாக்கவும்",
   "edit-bookmark": "புக்மார்க்கைத் திருத்து",
   "remove-bookmark-from-all-folders": "அனைத்து கோப்புறைகளிலிருந்தும் அகற்றவும்",
-
   "greeting-afternoon": "மதிய வணக்கம்!",
   "greeting-afternoon-named": "மதிய வணக்கம், {{name}} !",
   "greeting-evening": "மாலை வணக்கம்!",
@@ -677,5 +660,6 @@
   "greeting-night": "இனிய இரவு!",
   "greeting-night-named": "இனிய இரவு, {{name}} !",
   "annotation-override-banner": "உங்கள் குழுவின் கணக்கிலிருந்து குறிப்புகள் சேமிக்கப்பட்டு ஏற்றப்படுகின்றன.",
-  "annotation-override-save-to-my-account": "எனது கணக்கில் சேமிக்கவும்"
+  "annotation-override-save-to-my-account": "எனது கணக்கில் சேமிக்கவும்",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} -ஐப் படிக்கவும்"
 }

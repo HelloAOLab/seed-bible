@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "Вылучыць для",
   "end-session": "Завяршыць сеанс",
   "panels": "Панэлі",
-
   "open-in-new-panel": "Адкрыць у новай панэлі",
   "close-sidebar": "Закрыць бакавую панэль",
   "select-pane-layout": "Выберыце макет панэлі",
@@ -253,7 +252,6 @@
   "create-reading-plan": "Стварыць план чытання",
   "reading-plans-empty": "У вас пакуль няма планаў чытання. Стварыце яго, каб пачаць.",
   "untitled-reading-plan": "План без назвы",
-
   "reading-plan-description_placeholder": "Што гэты план прадугледжвае?",
   "anonymous": "Ананімны",
   "no-chat-messages": "Пакуль няма паведамленняў",
@@ -335,7 +333,6 @@
   "dont-show-again": "Больш не паказваць",
   "discover": "Адкрыйце для сябе",
   "playlists": "Плэйлісты",
-
   "cross-references": "Перакрыжаваныя спасылкі",
   "study-notes": "Нататкі да вучобы",
   "content": "Змест",
@@ -404,7 +401,6 @@
   "add-and-save": "Дадаць і захаваць",
   "loading-profile": "Загрузка вашага профілю…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Падзяліцца",
   "share-sheet-title": "Падзяліцца",
   "share-link": "Падзяліцца спасылкай",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "Стварыць новы план",
   "edit-reading-plan": "Рэдагаваць план",
   "reading-plan-step-name-title": "Назавіце свой план",
-
   "reading-plan-name-placeholder": "напрыклад, Маё падарожжа па псалмах",
   "reading-plan-description-label": "Апісанне (неабавязкова)",
   "reading-plan-step-scripture-title": "Выберыце паказанні",
   "reading-plan-step-cadences-title": "Чытанне рытмаў",
   "reading-plan-step-cadences-hint": "Выберыце тэмп чытання, які вы хочаце прапанаваць. Чытачы заўсёды могуць выбраць свой уласны тэмп.",
-
   "reading-plan-cadence-length": "Заканчваецца праз {{count}} дзён",
   "reading-plan-cadence-length_one": "Заканчваецца праз {{count}} дзень",
   "reading-plan-cadence-length_other": "Заканчваецца праз {{count}} дзён",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "Захаванне…",
   "reading-plan-draft-saved": "Чарнавік захаваны",
   "reading-plan-draft-save-failed": "Не ўдалося захаваць чарнавік",
-
   "reading-plan-scripture-remove": "Выдаліць чытанне",
   "reading-plan-create-submit": "Стварыць план",
   "reading-plan-save-changes": "Захаваць змены",
@@ -498,11 +491,8 @@
   "loading": "Загрузка…",
   "reading-plan-not-started": "Не пачата",
   "reading-plan-start": "Пачаць план",
-
   "reading-plan-streak": "{{count}} -дзённая серыя",
-
   "reading-plan-mark-complete": "Адзначыць як завершанае",
-
   "reading-plan-empty-sessions": "Гэты план пакуль не мае ніякіх паказанняў.",
   "reading-plan-celebration-title": "Дзень {{day}} завершаны!",
   "reading-plan-complete-title": "План выкананы!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "Адзначыць прачытанае як завершанае",
   "reading-plan-link-video": "Відэа",
   "reading-belongs-to": "Гэтае чытанне належыць",
-
   "reading-plan-mark-passage-complete": "Адзначыць {{passage}} як прачытаны",
   "reading-plan-read-nudge-title": "Прыемнага чытання!",
   "reading-plan-read-nudge-toast": "Пазначыць {{passage}} як завершаны?",
@@ -553,7 +542,6 @@
   "last-48-hours": "Апошнія 48 гадзін",
   "open-bible": "Адкрытая Біблія",
   "personal-greeting": "Вітаем, {{name}} !",
-  "read-first-chapter": "Прачытайце першы раздзел",
   "resume-reading": "ПРАЦЯГВАЙЦЕ З МЕСЦА, ДЗЕ ВЫ СПЫНІЛІСЯ",
   "resume-reading-loading": "Загрузка гісторыі чытання…",
   "selected-year": "Год: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "Пра што гэты плэйліст?",
   "read-more": "Чытаць далей",
   "read-less": "Чытаць менш",
-
   "ask-to-switch-ui-language": "Прапанова змяніць мову з перакладам",
   "ai": "Штучны інтэлект",
   "ai-edit-playlist": "Рэдагаваць плэйліст з дапамогай штучнага інтэлекту",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} выкарыстаў {{count}} інструментаў",
   "chat-tool-used_one": "{{name}} выкарыстаў інструмент",
   "chat-tool-used_other": "{{name}} выкарыстаў {{count}} інструментаў",
-
   "ai-context-button-label": "Актыўны кантэкст штучнага інтэлекту",
   "ai-context-tool-count": "інструменты {{count}}",
   "annotation-conflict-title": "Гэтая заўвага змянілася ў двух месцах",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "Няма кантэнту.",
   "annotation-conflict-confirm": "Пацвердзіць",
   "annotation-conflict-resolve-failed": "Не атрымалася ўжыць гэты варыянт. Паспрабуем яшчэ раз.",
-
   "annotation-sync-failed": "Не атрымалася захаваць нататку ў вашым акаўнце. Яна ўсё яшчэ на гэтай прыладзе.",
   "create-menu": "Стварыць",
   "create-annotation-menu-item": "Анатацыя",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "Не атрымалася захаваць анатацыю.",
   "annotation-group-expand": "Разгарнуць групу",
   "annotation-group-collapse": "Згарнуць групу",
-
   "notes": "Заўвагі",
   "note": "Заўвага",
   "show-more-verse-actions": "Паказаць больш дзеянняў",
@@ -667,7 +651,6 @@
   "create-folder": "Стварыць папку",
   "edit-bookmark": "Рэдагаваць закладку",
   "remove-bookmark-from-all-folders": "Выдаліць з усіх папак",
-
   "greeting-afternoon": "Добры дзень!",
   "greeting-afternoon-named": "Добры дзень, {{name}} !",
   "greeting-evening": "Добры вечар!",
@@ -677,5 +660,6 @@
   "greeting-night": "Дабранач!",
   "greeting-night-named": "Дабранач, {{name}} !",
   "annotation-override-banner": "Нататкі захоўваюцца і загружаюцца з уліковага запісу вашай каманды.",
-  "annotation-override-save-to-my-account": "Захаваць у маім акаўнце"
+  "annotation-override-save-to-my-account": "Захаваць у маім акаўнце",
+  "read-book-chapter-button": "Прачытайце {{bookName}} {{chapterNumber}}"
 }

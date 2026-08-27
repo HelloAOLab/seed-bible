@@ -98,7 +98,6 @@
   "session-settings-highlight-duration": "ድምቀት ን...",
   "end-session": "ናይ መወዳእታ ክፍለ ግዜ",
   "panels": "ፓነላት",
-
   "open-in-new-panel": "ኣብ ሓድሽ ፓነል ክፈት",
   "close-sidebar": "ጎናዊ መስመር ዕጸዎ።",
   "select-pane-layout": "ኣቀማምጣ መስኮት ምረጽ",
@@ -253,7 +252,6 @@
   "create-reading-plan": "መደብ ንባብ ምፍጣር",
   "reading-plans-empty": "ክሳብ ሕጂ ዝኾነ ናይ ንባብ መደብ የብልካን። ንኽትጅምር ሓደ ፍጠር።",
   "untitled-reading-plan": "ኣርእስቲ ዘይብሉ ውጥን",
-
   "reading-plan-description_placeholder": "እዚ መደብ እዚ ብዛዕባ እንታይ እዩ፧",
   "anonymous": "ሽሙ ዘይተፈልጠ",
   "no-chat-messages": "ገና መልእኽቲ የለን",
@@ -335,7 +333,6 @@
   "dont-show-again": "እዚ ዳግማይ ኣይተርእይዎ።",
   "discover": "ረኸበ",
   "playlists": "ዝርዝር ደርፍታት",
-
   "cross-references": "መስቀላዊ መወከሲታት",
   "study-notes": "መጽናዕታዊ መዘኻኸሪታት",
   "content": "ትሕዝቶ",
@@ -404,7 +401,6 @@
   "add-and-save": "ወስኽ እሞ ኣቐምጥ",
   "loading-profile": "ፕሮፋይልካ ኣብ ምጽዓን...",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "ናይ ሓባር",
   "share-sheet-title": "ናይ ሓባር",
   "share-link": "ሊንክ ሼር ምግባር",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "ሓድሽ ትልሚ ምፍጣር",
   "edit-reading-plan": "ውጥን ኣርትዖት።",
   "reading-plan-step-name-title": "መደብካ ስመዮ",
-
   "reading-plan-name-placeholder": "ንኣብነት ጉዕዞ መዝሙረይ",
   "reading-plan-description-label": "መግለጺ (ኣማራጺ)",
   "reading-plan-step-scripture-title": "ንባባት ምረጽ",
   "reading-plan-step-cadences-title": "ንባብ ካደንስታት",
   "reading-plan-step-cadences-hint": "ክትህቦ እትደሊ ናህሪ ንባብ ምረጽ። ኣንበብቲ ኩሉ ግዜ ኣብ ክንድኡ ብናቶም ናህሪ ክኸዱ ክመርጹ ይኽእሉ።",
-
   "reading-plan-cadence-length": "ኣብ {{count}} መዓልታት ይውዳእ",
   "reading-plan-cadence-length_one": "ኣብ {{count}} መዓልቲ ይውዳእ",
   "reading-plan-cadence-length_other": "ኣብ {{count}} መዓልታት ይውዳእ",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "ዕቋር...",
   "reading-plan-draft-saved": "ድራፍት ተዓቂቡ።",
   "reading-plan-draft-save-failed": "ድራፍት ከድሕን ኣይከኣለን",
-
   "reading-plan-scripture-remove": "ንባብ ኣወግድ",
   "reading-plan-create-submit": "ትልሚ ምፍጣር",
   "reading-plan-save-changes": "ለውጢ ምዕቃብ",
@@ -498,11 +491,8 @@
   "loading": "ኣብ ምጽዓን...",
   "reading-plan-not-started": "ኣይተጀመረን።",
   "reading-plan-start": "ውጥን ምጅማር",
-
   "reading-plan-streak": "{{count}} -መዓልቲ መስርዕ",
-
   "reading-plan-mark-complete": "ከም ምሉእ ምልክት ግበር",
-
   "reading-plan-empty-sessions": "እዚ ትልሚ ገና ዝኾነ ንባባት የብሉን።",
   "reading-plan-celebration-title": "መዓልቲ {{day}} ተዛዚሙ!",
   "reading-plan-complete-title": "ትልሚ ተዛዚሙ!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "ማርክ ንባብ ምሉእ",
   "reading-plan-link-video": "ቪዲዮ",
   "reading-belongs-to": "እዚ ንባብ ናይ...",
-
   "reading-plan-mark-passage-complete": "{{passage}} ከም ዝተነበበ ምልክት ግበር",
   "reading-plan-read-nudge-title": "ደስ ዝብል ንባብ!",
   "reading-plan-read-nudge-toast": "ምልክት {{passage}} ምሉእ ድዩ?",
@@ -553,7 +542,6 @@
   "last-48-hours": "ዝሓለፉ 48 ሰዓታት",
   "open-bible": "መጽሓፍ ቅዱስ ክፈት",
   "personal-greeting": "እንቋዕ ደሓን መጻእካ {{name}} !",
-  "read-first-chapter": "ቀዳመይቲ ምዕራፍ ኣንብባ",
   "resume-reading": "ኣብቲ ዝወጻእካሉ ቦታ ቀጽል",
   "resume-reading-loading": "ታሪኽ ንባብካ ኣብ ምጽዓን...",
   "selected-year": "ዓመት {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "እዚ ዝርዝር ደርፍታት ብዛዕባ እንታይ እዩ?",
   "read-more": "ተወሳኺ ኣንብብ",
   "read-less": "ውሑድ ኣንብብ",
-
   "ask-to-switch-ui-language": "ምስ ትርጉም ቋንቋ ክትቅይር ምቕራብ",
   "ai": "ኤ.ኣይ",
   "ai-edit-playlist": "ብ AI ዝርዝር ደርፍታት ኣርትዕ",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} {{count}} መሳርሒታት ተጠቒሙ",
   "chat-tool-used_one": "{{name}} መሳርሒ ተጠቒሙ",
   "chat-tool-used_other": "{{name}} {{count}} መሳርሒታት ተጠቒሙ",
-
   "ai-context-button-label": "ንጡፍ AI ዓውደ-ጽሑፍ",
   "ai-context-tool-count": "{{count}} መሳርሒታት",
   "annotation-conflict-title": "እዚ ኖት ኣብ ክልተ ቦታ ተቐይሩ",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "ትሕዝቶ የለን።",
   "annotation-conflict-confirm": "ኣረጋግፅ",
   "annotation-conflict-resolve-failed": "ነቲ ምርጫ ኣብ ግብሪ ከውዕሎ ኣይከኣለን። ዳግማይ ክፍተን እዩ።",
-
   "annotation-sync-failed": "ኣብ ኣካውንትካ ኖት ክዕቅብ ኣይከኣለን። ሕጂ ውን ኣብዚ መሳርሒ ኣሎ።",
   "create-menu": "ፍጠር",
   "create-annotation-menu-item": "መግለጺ ጽሑፍ",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "ነቲ መግለጺ ክዕቅቦ ኣይከኣለን።",
   "annotation-group-expand": "ጉጅለ ኣስፍሕ",
   "annotation-group-collapse": "ጉጅለ ምፍራስ",
-
   "notes": "መተሓሳሰቢ",
   "note": "መዝገብ",
   "show-more-verse-actions": "ተወሳኺ ተግባራት ኣርእዩ",
@@ -667,7 +651,6 @@
   "create-folder": "ማህደር ምፍጣር",
   "edit-bookmark": "ዕልባ ኣርትዕ",
   "remove-bookmark-from-all-folders": "ካብ ኩሉ ማህደር ኣውጽእዎ።",
-
   "greeting-afternoon": "ከመይ ውዒሎም!",
   "greeting-afternoon-named": "ሰናይ ድሕሪ ቀትሪ {{name}} !",
   "greeting-evening": "ከመይ ኣምሽዮም!",
@@ -677,5 +660,6 @@
   "greeting-night": "ልዋም ለይቲ!",
   "greeting-night-named": "ሰናይ ለይቲ {{name}} !",
   "annotation-override-banner": "መዘኻኸሪታት ካብ ኣካውንት ጋንታኻ ይቕመጡን ይጽዓኑን ኣለዉ።",
-  "annotation-override-save-to-my-account": "ኣብ ኣካውንተይ ኣቐምጥ"
+  "annotation-override-save-to-my-account": "ኣብ ኣካውንተይ ኣቐምጥ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ኣንብብ"
 }

@@ -113,7 +113,6 @@
   "session-settings-highlight-duration": "ໄຮໄລ້ສຳລັບ",
   "end-session": "ສິ້ນສຸດກອງປະຊຸມ",
   "panels": "ແຜງ",
-
   "open-in-new-panel": "ເປີດໃນແຜງໃໝ່",
   "close-sidebar": "ປິດແຖບດ້ານຂ້າງ",
   "select-pane-layout": "ເລືອກຮູບແບບແຜງ",
@@ -253,7 +252,6 @@
   "create-reading-plan": "ສ້າງແຜນການອ່ານ",
   "reading-plans-empty": "ທ່ານຍັງບໍ່ມີແຜນການອ່ານເທື່ອ. ສ້າງແຜນການໜຶ່ງເພື່ອເລີ່ມຕົ້ນ.",
   "untitled-reading-plan": "ແຜນການບໍ່ມີຫົວຂໍ້",
-
   "reading-plan-description_placeholder": "ແຜນການນີ້ກ່ຽວກັບຫຍັງ?",
   "anonymous": "ບໍ່ປະສົງອອກນາມ",
   "no-chat-messages": "ຍັງບໍ່ມີຂໍ້ຄວາມເທື່ອ",
@@ -335,7 +333,6 @@
   "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ",
   "discover": "ຄົ້ນພົບ",
   "playlists": "ລາຍການເພງ",
-
   "cross-references": "ການອ້າງອີງຂ້າມ",
   "study-notes": "ບັນທຶກການສຶກສາ",
   "content": "ເນື້ອຫາ",
@@ -404,7 +401,6 @@
   "add-and-save": "ເພີ່ມ ແລະ ບັນທຶກ",
   "loading-profile": "ກຳລັງໂຫຼດໂປຣໄຟລ໌ຂອງທ່ານ…",
   "app-version": "ວ {{version}} · {{commit}}",
-
   "share": "ແບ່ງປັນ",
   "share-sheet-title": "ແບ່ງປັນ",
   "share-link": "ແບ່ງປັນລິ້ງ",
@@ -446,13 +442,11 @@
   "create-reading-plan-wizard": "ສ້າງແຜນໃໝ່",
   "edit-reading-plan": "ແກ້ໄຂແຜນການ",
   "reading-plan-step-name-title": "ຕັ້ງຊື່ແຜນການຂອງທ່ານ",
-
   "reading-plan-name-placeholder": "ຕົວຢ່າງ: ການເດີນທາງເພງສັນລະເສີນຂອງຂ້ອຍ",
   "reading-plan-description-label": "ລາຍລະອຽດ (ບໍ່ຈຳເປັນ)",
   "reading-plan-step-scripture-title": "ເລືອກການອ່ານ",
   "reading-plan-step-cadences-title": "ຈັງຫວະການອ່ານ",
   "reading-plan-step-cadences-hint": "ເລືອກຈັງຫວະການອ່ານທີ່ທ່ານຕ້ອງການສະເໜີ. ຜູ້ອ່ານສາມາດເລືອກທີ່ຈະໄປຕາມຈັງຫວະຂອງຕົນເອງໄດ້ສະເໝີ.",
-
   "reading-plan-cadence-length": "ສຳເລັດພາຍໃນ {{count}} ມື້",
   "reading-plan-cadence-length_one": "ສຳເລັດພາຍໃນ {{count}} ມື້",
   "reading-plan-cadence-length_other": "ສຳເລັດພາຍໃນ {{count}} ມື້",
@@ -485,7 +479,6 @@
   "reading-plan-draft-saving": "ກຳລັງບັນທຶກ...",
   "reading-plan-draft-saved": "ບັນທຶກຮ່າງແລ້ວ",
   "reading-plan-draft-save-failed": "ບໍ່ສາມາດບັນທຶກສະບັບຮ່າງໄດ້",
-
   "reading-plan-scripture-remove": "ລຶບການອ່ານອອກ",
   "reading-plan-create-submit": "ສ້າງແຜນການ",
   "reading-plan-save-changes": "ບັນທຶກການປ່ຽນແປງ",
@@ -498,11 +491,8 @@
   "loading": "ກຳລັງໂຫຼດ…",
   "reading-plan-not-started": "ຍັງບໍ່ໄດ້ເລີ່ມ",
   "reading-plan-start": "ເລີ່ມຕົ້ນແຜນການ",
-
   "reading-plan-streak": "ຕິດຕໍ່ກັນ {{count}} - ມື້",
-
   "reading-plan-mark-complete": "ໝາຍວ່າສຳເລັດແລ້ວ",
-
   "reading-plan-empty-sessions": "ແຜນການນີ້ຍັງບໍ່ມີການອ່ານໃດໆເທື່ອ.",
   "reading-plan-celebration-title": "ສຳເລັດມື້ທີ {{day}} ແລ້ວ!",
   "reading-plan-complete-title": "ແຜນການສຳເລັດແລ້ວ!",
@@ -535,7 +525,6 @@
   "reading-plan-mark-reading-complete": "ໝາຍການອ່ານວ່າສຳເລັດແລ້ວ",
   "reading-plan-link-video": "ວິດີໂອ",
   "reading-belongs-to": "ການອ່ານນີ້ເປັນຂອງ",
-
   "reading-plan-mark-passage-complete": "ໝາຍ {{passage}} ວ່າອ່ານແລ້ວ",
   "reading-plan-read-nudge-title": "ອ່ານແລ້ວດີຫຼາຍ!",
   "reading-plan-read-nudge-toast": "ໝາຍ {{passage}} ວ່າສຳເລັດແລ້ວບໍ?",
@@ -553,7 +542,6 @@
   "last-48-hours": "48 ຊົ່ວໂມງທີ່ຜ່ານມາ",
   "open-bible": "ເປີດຄຳພີໄບເບິນ",
   "personal-greeting": "ຍິນດີຕ້ອນຮັບ, {{name}} !",
-  "read-first-chapter": "ອ່ານບົດທຳອິດ",
   "resume-reading": "ສືບຕໍ່ບ່ອນທີ່ທ່ານອອກໄປ",
   "resume-reading-loading": "ກຳລັງໂຫຼດປະຫວັດການອ່ານຂອງທ່ານ…",
   "selected-year": "ປີ: {{year}}",
@@ -615,7 +603,6 @@
   "playlist-description_placeholder": "ລາຍການເພງນີ້ກ່ຽວກັບຫຍັງ?",
   "read-more": "ອ່ານຕື່ມ",
   "read-less": "ອ່ານໜ້ອຍລົງ",
-
   "ask-to-switch-ui-language": "ສະເໜີໃຫ້ປ່ຽນພາສາພ້ອມກັບການແປພາສາ",
   "ai": "ປັນຍາປະດິດ",
   "ai-edit-playlist": "ແກ້ໄຂລາຍການເພງດ້ວຍ AI",
@@ -623,7 +610,6 @@
   "chat-tool-used": "{{name}} ໃຊ້ເຄື່ອງມື {{count}} ແລ້ວ",
   "chat-tool-used_one": "{{name}} ໄດ້ໃຊ້ເຄື່ອງມື",
   "chat-tool-used_other": "{{name}} ໃຊ້ເຄື່ອງມື {{count}} ແລ້ວ",
-
   "ai-context-button-label": "ບໍລິບົດ AI ທີ່ໃຊ້ງານຢູ່",
   "ai-context-tool-count": "ເຄື່ອງມື {{count}}",
   "annotation-conflict-title": "ບັນທຶກນີ້ມີການປ່ຽນແປງໃນສອງບ່ອນ",
@@ -638,7 +624,6 @@
   "annotation-conflict-no-content": "ບໍ່ມີເນື້ອຫາ.",
   "annotation-conflict-confirm": "ຢືນຢັນ",
   "annotation-conflict-resolve-failed": "ບໍ່ສາມາດນຳໃຊ້ຕົວເລືອກນັ້ນໄດ້. ມັນຈະຖືກລອງອີກຄັ້ງ.",
-
   "annotation-sync-failed": "ບໍ່ສາມາດບັນທຶກບັນທຶກໃສ່ບັນຊີຂອງທ່ານໄດ້. ມັນຍັງຢູ່ໃນອຸປະກອນນີ້.",
   "create-menu": "ສ້າງ",
   "create-annotation-menu-item": "ຄຳອະທິບາຍປະກອບ",
@@ -653,7 +638,6 @@
   "save-annotation-failed": "ບໍ່ສາມາດບັນທຶກຄຳອະທິບາຍໄດ້.",
   "annotation-group-expand": "ຂະຫຍາຍກຸ່ມ",
   "annotation-group-collapse": "ຫຍໍ້ກຸ່ມ",
-
   "notes": "ໝາຍເຫດ",
   "note": "ໝາຍເຫດ",
   "show-more-verse-actions": "ສະແດງການກະທຳເພີ່ມເຕີມ",
@@ -667,7 +651,6 @@
   "create-folder": "ສ້າງໂຟນເດີ",
   "edit-bookmark": "ແກ້ໄຂບຸກມາກ",
   "remove-bookmark-from-all-folders": "ລຶບອອກຈາກໂຟນເດີທັງໝົດ",
-
   "greeting-afternoon": "ສະບາຍດີຕອນບ່າຍ!",
   "greeting-afternoon-named": "ສະບາຍດີຕອນບ່າຍ, {{name}} !",
   "greeting-evening": "ສະບາຍດີຕອນແລງ!",
@@ -677,5 +660,6 @@
   "greeting-night": "ສະບາຍດີ!",
   "greeting-night-named": "ສະບາຍດີຕອນກາງຄືນ, {{name}} !",
   "annotation-override-banner": "ບັນທຶກກຳລັງຖືກບັນທຶກ ແລະ ໂຫຼດຈາກບັນຊີຂອງທີມທ່ານ.",
-  "annotation-override-save-to-my-account": "ບັນທຶກໄວ້ໃນບັນຊີຂອງຂ້ອຍ"
+  "annotation-override-save-to-my-account": "ບັນທຶກໄວ້ໃນບັນຊີຂອງຂ້ອຍ",
+  "read-book-chapter-button": "ອ່ານ {{bookName}} {{chapterNumber}}"
 }

@@ -104,11 +104,9 @@ describe("Welcome", () => {
       expect(q(".sb-today-welcome-screen-book")!.textContent).toBe("JOHN 1:1");
     });
 
-    it("renders 'undefined' when the John name is missing", () => {
+    it("falls back to the raw book id when the John name is missing", () => {
       setup({ bookNames: new Map() });
-      expect(q(".sb-today-welcome-screen-book")!.textContent).toBe(
-        "undefined 1:1"
-      );
+      expect(q(".sb-today-welcome-screen-book")!.textContent).toBe("JHN 1:1");
     });
   });
 
@@ -265,20 +263,26 @@ describe("Welcome", () => {
     it("renders the start text and the forward arrow", () => {
       setup();
       const button = btn(".sb-today-welcome-screen-start-button");
-      expect(button.textContent).toContain("Read the first chapter");
+      expect(button.textContent).toContain("Read John 1");
       expect(
         button.querySelector(".material-symbols-outlined")!.textContent
       ).toBe("arrow_right_alt");
     });
 
-    it("opens Genesis 1 with the last translation id", () => {
+    it("falls back to the raw book id when the John name is missing", () => {
+      setup({ bookNames: new Map() });
+      const button = btn(".sb-today-welcome-screen-start-button");
+      expect(button.textContent).toContain("Read JHN 1");
+    });
+
+    it("opens John 1 with the last translation id", () => {
       lastTranslationId.value = "KJV";
       setup();
 
       act(() => btn(".sb-today-welcome-screen-start-button").click());
 
       expect(onOpenPassage).toHaveBeenCalledWith({
-        bookId: "GEN",
+        bookId: "JHN",
         chapter: 1,
         translationId: "KJV",
       });
@@ -293,7 +297,7 @@ describe("Welcome", () => {
       act(() => btn(".sb-today-welcome-screen-start-button").click());
 
       expect(onOpenPassage).toHaveBeenCalledWith({
-        bookId: "GEN",
+        bookId: "JHN",
         chapter: 1,
         translationId: undefined,
       });
