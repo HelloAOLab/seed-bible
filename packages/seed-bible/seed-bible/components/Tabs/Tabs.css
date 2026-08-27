@@ -782,9 +782,21 @@
 .sb-session-settings {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   min-width: 17.5rem;
+  min-height: 0;
+  flex: 1;
   color: var(--sb-font-color);
+}
+
+/* Everything above the actions bar scrolls on its own so the bar below it
+   can stay pinned to the bottom of the modal instead of scrolling away. */
+.sb-session-settings-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .sb-session-settings-note {
@@ -907,6 +919,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  flex-shrink: 0;
   margin-top: 0.25rem;
   padding-top: 0.75rem;
   border-top: 1px solid

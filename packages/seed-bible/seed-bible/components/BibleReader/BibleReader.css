@@ -965,6 +965,16 @@
   min-height: 0;
 }
 
+/* Session settings modal: let the content area shrink within the modal's
+ * max-height and hand that bounded height to .sb-session-settings, so its
+ * actions bar (End Session / Close) can pin to the bottom instead of
+ * scrolling away with the settings above it. */
+.sb-footnote-modal:has(.sb-session-settings) .sb-footnote-modal-content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
