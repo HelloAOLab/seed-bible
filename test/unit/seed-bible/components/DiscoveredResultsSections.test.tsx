@@ -172,6 +172,95 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
     expect(container.textContent).toContain("Background");
     expect(container.textContent).toContain("The full article.");
   });
+
+  it("groups content results into one section per author", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Video 1",
+              description: "",
+              content: "Video 1 body.",
+              author: "Bible Project",
+            },
+            {
+              type: "content",
+              title: "Video 2",
+              description: "",
+              content: "Video 2 body.",
+              author: "Bible Project",
+            },
+            {
+              type: "content",
+              title: "Article",
+              description: "",
+              content: "Article body.",
+              author: "Jane Doe",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toEqual(["Bible Project", "Jane Doe"]);
+    expect(sectionTitles).not.toContain("Content");
+
+    const bibleProjectSection = Array.from(
+      container.querySelectorAll(".sb-discover-section")
+    ).find(
+      (section) =>
+        section.querySelector(".sb-discover-section-title")?.textContent ===
+        "Bible Project"
+    );
+    expect(bibleProjectSection?.textContent).toContain("Video 1");
+    expect(bibleProjectSection?.textContent).toContain("Video 2");
+    expect(bibleProjectSection?.textContent).not.toContain("Article");
+  });
+
+  it("puts authorless results in a general 'Content' section alongside author sections", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Video 1",
+              description: "",
+              content: "Video 1 body.",
+              author: "Bible Project",
+            },
+            {
+              type: "content",
+              title: "Untitled note",
+              description: "",
+              content: "No author here.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toEqual(["Bible Project", "Content"]);
+    expect(container.textContent).toContain("No author here.");
+  });
 });
 
 describe("hasAnyDiscoverResults", () => {

@@ -69,6 +69,7 @@ export default function initDefaultContentExtension() {
               // stays empty.
               description: "",
               reference,
+              author: item.author,
               content: (
                 <DiscoveredContentBody
                   description={item.description}
@@ -100,10 +101,10 @@ export default function initDefaultContentExtension() {
                 chapter: context.chapter,
                 endChapter: item.chapter_end,
               },
+              author: "Bible Project",
               content: (
                 <DiscoveredContentBody
                   description={item.video.description}
-                  // author
                   url={item.video.share_url}
                 />
               ),
