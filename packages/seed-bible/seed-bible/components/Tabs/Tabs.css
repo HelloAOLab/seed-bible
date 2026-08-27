@@ -30,6 +30,12 @@
   .sb-sidebar-top-row {
     justify-content: center;
   }
+
+  /* Stack the logo below the hamburger button instead of beside it — side
+     by side doesn't fit the narrow collapsed rail. */
+  .sb-sidebar-top-start {
+    flex-direction: column;
+  }
 }
 
 /* Compact desktop (just above the mobile breakpoint): the row is too narrow
