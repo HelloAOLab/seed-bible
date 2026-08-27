@@ -125,6 +125,12 @@ export interface AppSettings {
   textConfig: TextConfig;
   toolbar: ToolbarCustomization;
   keepScreenAwake: boolean;
+  /**
+   * Whether picking a Bible translation written in another language may offer
+   * to switch the UI to that language. Cleared by the prompt's "Never ask
+   * again" option.
+   */
+  askToSwitchUiLanguage: boolean;
   /** User-added custom highlight colors (hex strings, max 3). */
   customHighlightColors: string[];
   /** Horizontal padding (px) applied to the bible reader container. */
@@ -197,6 +203,9 @@ export const AppSettingsSchema = z.object({
     order: z.array(z.string()),
   }),
   keepScreenAwake: z.boolean(),
+  // Defaulted rather than required so settings exported before this option
+  // existed still import.
+  askToSwitchUiLanguage: z.boolean().default(true),
   customHighlightColors: z.array(z.string()).max(3),
   scriptureMargin: z.number().min(0).max(45),
   themeId: z.string(),
@@ -225,6 +234,7 @@ const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_TEXT_CONFIG = "app.textConfig";
 const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
+const TAG_ASK_TO_SWITCH_UI_LANGUAGE = "app.askToSwitchUiLanguage";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
 const TAG_THEME_ID = "app.themeId";
@@ -241,6 +251,7 @@ const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_TEXT_CONFIG = "textConfig";
 const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
+const PROFILE_ASK_TO_SWITCH_UI_LANGUAGE = "askToSwitchUiLanguage";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
 const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
 const PROFILE_THEME_ID = "themeId";
@@ -352,6 +363,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   textConfig: DEFAULT_TEXT_CONFIG,
   toolbar: DEFAULT_TOOLBAR_CONFIG,
   keepScreenAwake: false,
+  askToSwitchUiLanguage: true,
   customHighlightColors: [],
   scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
   themeId: "light",
@@ -692,6 +704,12 @@ export interface SettingsManager {
   setFontSize: (fontSize: TextSize) => void;
   setDisablePanels: (disablePanels: boolean) => void;
   /**
+   * Enables/disables the "switch your UI language?" prompt shown after picking
+   * a translation written in another language. See
+   * `AppSettings.askToSwitchUiLanguage`.
+   */
+  setAskToSwitchUiLanguage: (askToSwitchUiLanguage: boolean) => void;
+  /**
    * Persists the user's chosen UI language to their profile. Wired into
    * `I18nManager`'s `requestLanguageChange` (the selector path) via
    * `setLanguagePersister`, so it runs ONLY for explicit selector choices —
@@ -810,6 +828,10 @@ export function createSettings(
         read(PROFILE_KEEP_AWAKE, TAG_KEEP_AWAKE),
         DEFAULT_SETTINGS.keepScreenAwake
       ),
+      askToSwitchUiLanguage: parseBoolean(
+        read(PROFILE_ASK_TO_SWITCH_UI_LANGUAGE, TAG_ASK_TO_SWITCH_UI_LANGUAGE),
+        DEFAULT_SETTINGS.askToSwitchUiLanguage
+      ),
       customHighlightColors: parseCustomHighlightColors(
         read(PROFILE_CUSTOM_HIGHLIGHT_COLORS, TAG_CUSTOM_HIGHLIGHT_COLORS)
       ),
@@ -854,6 +876,16 @@ export function createSettings(
     settings.value = { ...settings.value, disablePanels };
     sessionOverrides[TAG_DISABLE_PANELS] = disablePanels;
     saveProfileConfigValue(login, PROFILE_DISABLE_PANELS, disablePanels);
+  };
+
+  const setAskToSwitchUiLanguage = (askToSwitchUiLanguage: boolean) => {
+    settings.value = { ...settings.value, askToSwitchUiLanguage };
+    sessionOverrides[TAG_ASK_TO_SWITCH_UI_LANGUAGE] = askToSwitchUiLanguage;
+    saveProfileConfigValue(
+      login,
+      PROFILE_ASK_TO_SWITCH_UI_LANGUAGE,
+      askToSwitchUiLanguage
+    );
   };
 
   // Apply the profile's saved UI language, but ONLY when the profile itself
@@ -1082,6 +1114,8 @@ export function createSettings(
     sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_SETTINGS.textConfig;
     sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
+    sessionOverrides[TAG_ASK_TO_SWITCH_UI_LANGUAGE] =
+      DEFAULT_SETTINGS.askToSwitchUiLanguage;
     sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
     sessionOverrides[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
     sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
@@ -1119,6 +1153,11 @@ export function createSettings(
       login,
       PROFILE_KEEP_AWAKE,
       DEFAULT_SETTINGS.keepScreenAwake
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_ASK_TO_SWITCH_UI_LANGUAGE,
+      DEFAULT_SETTINGS.askToSwitchUiLanguage
     );
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, []);
     saveProfileConfigValue(
@@ -1174,6 +1213,7 @@ export function createSettings(
     settings,
     setFontSize,
     setDisablePanels,
+    setAskToSwitchUiLanguage,
     persistLanguage,
     setBookOrientation,
     setUISize: setUISize,

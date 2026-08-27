@@ -1,8 +1,9 @@
 import QRCodeComponent from "./QRCode";
 import { type TwitchPubState } from "./interface";
-import { useI18n } from "seed-bible/i18n";
+import { getBrandedAppText, useI18n } from "seed-bible/i18n";
 import { fmtRef } from "@seed-bible/ai-transcript-extension/highlight";
 import { useEffect, useRef } from "preact/hooks";
+import { useAppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 const TwitchInterface = (props: { state: TwitchPubState }) => {
   const { uiHidden, qrValue, navigatingRef, hideUI, showUI, toast } =
@@ -27,6 +28,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
   }, []);
 
   const { t } = useI18n();
+  const { branding } = useAppConfig();
 
   return (
     <>
@@ -76,11 +78,15 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
               uiHidden.value ? "twitchPub-hidden" : ""
             }`}
           >
-            {t("twitchInterface.qrCodeInstructions", {
-              ns: "ext_twitchPub",
-              defaultValue:
-                "Your viewers can scan this to follow you on Seed Bible",
-            })}
+            {getBrandedAppText(
+              t("twitchInterface.qrCodeInstructions", {
+                ns: "ext_twitchPub",
+                defaultValue:
+                  "Your viewers can scan this to follow you on Seed Bible",
+              }),
+              t,
+              branding
+            )}
           </span>
         </div>
       </div>

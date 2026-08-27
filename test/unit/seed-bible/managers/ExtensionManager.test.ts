@@ -932,7 +932,7 @@ describe("createExtensionManager", () => {
           meta: {
             id: "ext.autoinstall-dependency",
             // No autoinstall flag - only force-installed as a dependency,
-            // mirroring seed-bible-utils/today-screen in production.
+            // mirroring seed-bible-utils/scripture-map in production.
             translations: {
               en: {
                 title: "Dependency",

@@ -17,7 +17,11 @@ import {
   ContextMenuWithButton,
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { MaterialIcon, SettingsIcon } from "../../components/icons";
+import {
+  BookmarkIcon,
+  MaterialIcon,
+  SettingsIcon,
+} from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -34,15 +38,16 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "../../app/keyboardNav";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import {
+  Avatar,
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
   sessionRoleRank,
 } from "../Avatar/Avatar";
 import { useEffect, useRef } from "preact/hooks";
-import { getExtensionExports } from "../../managers";
+import { chatHasOtherPeople } from "../../managers/ChatsManager";
+import { trimmedOrNull } from "../../managers/Utils";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -938,7 +943,6 @@ export function Settings(props: SettingsProps) {
   const { state } = props;
   const { sidebar } = state;
   const { t } = useI18n();
-  const isAccountView = sidebar.requestedSettingsView.value === "account";
 
   return (
     <div className="sb-sidebar-settings-view">
@@ -946,9 +950,7 @@ export function Settings(props: SettingsProps) {
         <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
         <button
           onClick={sidebar.closeSettings}
-          className={`sb-sidebar-settings-close-button${
-            isAccountView ? " sb-sidebar-settings-close-button-account" : ""
-          }`}
+          className="sb-sidebar-settings-close-button"
           aria-label={t("close-settings", { defaultValue: "Close Settings" })}
           title={t("close-settings", { defaultValue: "Close Settings" })}
         >
@@ -960,31 +962,6 @@ export function Settings(props: SettingsProps) {
         <SettingsPage state={state} />
       </div>
     </div>
-  );
-}
-
-/**
- * Compact bookmark icon used by category headers and bookmark rows. Sized to
- * match the per-row text height so categories sit comfortably inside the tab
- * list without their own taller hit-targets.
- */
-function BookmarkIconGlyph() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linejoin="round"
-      />
-    </svg>
   );
 }
 
@@ -1795,7 +1772,17 @@ function BookmarksSection(props: BookmarksSectionProps) {
                 aria-label={category.name}
               >
                 <span className="sb-bookmark-category-icon" aria-hidden="true">
-                  <BookmarkIconGlyph />
+                  {/*
+                    Filled rather than outlined, and sized to the row's text
+                    height so category headers don't get a taller hit-target
+                    than the tabs around them.
+                  */}
+                  <BookmarkIcon
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    stroke-width="1.5"
+                  />
                 </span>
                 {isRenaming ? (
                   <input
@@ -2172,17 +2159,7 @@ export function Tabs(props: TabsProps) {
                 aria-label={t("tasks", { defaultValue: "Tasks" })}
                 title={t("tasks", { defaultValue: "Tasks" })}
                 onClick={() => {
-                  const today =
-                    getExtensionExports<TodayScreenAPI>("today-screen");
-                  if (today) {
-                    today.open();
-                  } else {
-                    app.toast(
-                      t("today-coming-soon", {
-                        defaultValue: "Today screen is coming soon",
-                      })
-                    );
-                  }
+                  state.today.open();
                 }}
               >
                 <svg
@@ -2502,14 +2479,17 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
 }
 
 /**
- * Just the avatar visual — the image (when the user has a profile picture)
- * or the deterministic animal icon + color (otherwise). Reused by the
- * sidebar bottom-right avatar button and by the mobile bottom-bar "You"
- * tab so the two surfaces always show the same identity.
+ * Just the avatar visual — the image (when the user has a profile picture),
+ * a generic account icon (when they don't, and nobody else is around), or
+ * the deterministic animal icon + color (when they don't, and other people
+ * are present). Reused by the sidebar bottom-right avatar button and by the
+ * mobile header account button so the two surfaces always show the same
+ * identity.
  */
 export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const { state } = props;
   const { login } = state;
+  const { t } = useI18n();
   const profile = login.profile.value;
   // Share identity with connected-user rendering so the avatar shows the
   // same icon/color as the user's row inside a shared session.
@@ -2520,47 +2500,56 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const visual = getUserAnimalVisual(visualKey);
   const imageUrl = profile?.pictureUrl ?? null;
 
-  if (imageUrl) {
-    return (
-      <span
-        className="sb-tab-user-icon sb-tab-user-icon-has-image"
-        style={{
-          borderColor: visual.color,
-          backgroundImage: `url(${imageUrl})`,
-        }}
-      />
-    );
-  }
-
   return (
-    <span
-      className="sb-tab-user-icon sb-tab-user-icon-animal"
-      style={{
-        borderColor: visual.color,
-        backgroundColor: visual.color,
-      }}
-    >
-      <span className="material-symbols-outlined">{visual.defaultIcon}</span>
-    </span>
+    <Avatar
+      imageUrl={imageUrl}
+      visual={visual}
+      title={getSelfDisplayName(state, t)}
+      genericFallback={!isInMultiUserIdentityContext(state)}
+    />
   );
 }
 
+/**
+ * True when the current user is in a context where other people can see
+ * them — a shared reading session, or a chat that includes another person
+ * (including someone who is currently inactive). That's when the
+ * animal+color fallback is needed to tell people apart.
+ */
+function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
+  const tabs = state.tabs?.tabs?.value;
+  if (tabs?.some((tab) => tab.sharedSession != null)) {
+    return true;
+  }
+  const chats = state.chats?.chats?.value;
+  return chats?.some((chat) => chatHasOtherPeople(chat)) ?? false;
+}
+
 /** Display name for the current user — used as the avatar tooltip / aria-label. */
-export function getSelfDisplayName(state: SeedBibleState): string {
+export function getSelfDisplayName(
+  state: SeedBibleState,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   const userId = state.login.userId.value;
   const profile = state.login.profile.value;
-  return profile?.name ?? (userId ? userId.slice(0, 8) : "Guest");
+  return (
+    trimmedOrNull(profile?.name) ??
+    (userId
+      ? userId.slice(0, 8)
+      : t("anonymous", { defaultValue: "Anonymous" }))
+  );
 }
 
 /**
- * Button at the bottom-right of the sidebar showing the current user's own
- * animal icon + color. Opens account settings when clicked (matches the
- * bottom-of-sidebar avatar slot in develop).
+ * Button at the bottom-right of the sidebar showing the current user's
+ * avatar. Opens account settings when clicked (matches the bottom-of-sidebar
+ * avatar slot in develop).
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
   const { sidebar } = state;
-  const displayName = getSelfDisplayName(state);
+  const { t } = useI18n();
+  const displayName = getSelfDisplayName(state, t);
 
   return (
     <button

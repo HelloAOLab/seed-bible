@@ -25,12 +25,11 @@ import {
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 import { openBookmarkCategoryModal } from "../Tabs/Tabs";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
   annotationVerseNumbers,
+  annotationListHasOtherAuthors,
   groupAnnotationsByVerseRange,
   type AnnotationGroup,
   type AnnotationsManager,
@@ -439,6 +438,7 @@ function VerseToolbarAnnotationGroup(props: {
   toast: SeedBibleState["app"]["toast"];
   openDiscover: () => void;
   onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
 }) {
   const {
     id,
@@ -449,6 +449,7 @@ function VerseToolbarAnnotationGroup(props: {
     modals,
     toast,
     onReferenceClick,
+    otherPeoplePresent,
   } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
@@ -494,6 +495,7 @@ function VerseToolbarAnnotationGroup(props: {
                   login={login}
                   t={t}
                   language={language}
+                  otherPeoplePresent={otherPeoplePresent}
                 />
               </div>
               <ContextMenuWithButton
@@ -553,7 +555,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     bookmarks,
-    extensions,
     login,
   } = props.state;
   const selectedTab = useComputed(
@@ -777,9 +778,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       !bookmarks.isFilterActive.value
   );
 
-  const isTodayOpen = useComputed(() =>
-    panes.panes.value.some((p) => p.id === "today-screen-pane")
-  );
+  const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
   const activeMobileTab = useComputed<
     "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
   >(() => {
@@ -1532,46 +1531,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
-  // Opens the Today screen. If the `today-screen` extension isn't installed
-  // yet, install it (the same path Settings uses — this persists the install)
-  // and then open it once it has initialized.
-  const openTodayScreen = async () => {
+  const openTodayScreen = () => {
     isMoreMenuOpen.value = false;
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-
-    const existing = getExtensionExports<TodayScreenAPI>("today-screen");
-    if (existing) {
-      existing.open();
-      return;
-    }
-
-    const entry = extensions.extensions.value.find(
-      (e) => e.id === "today-screen"
-    );
-    const todayPackage = entry?.extension;
-    if (!todayPackage) {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-      return;
-    }
-
-    const installed = await extensions.loadExtension(todayPackage);
-    if (installed) {
-      getExtensionExports<TodayScreenAPI>("today-screen")?.open();
-    } else {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-    }
+    props.state.today.open();
   };
 
   // Opens (or closes) the tabs list in the sidebar drawer. Shared by the Tabs
@@ -1882,12 +1849,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   label={t("bible", { defaultValue: "Bible" })}
                   active={activeMobileTab.value === "bible"}
                   onClick={() => {
+                    // The Bible text is already showing, so there's nothing to
+                    // dismiss — open the book selector instead of doing nothing.
+                    if (activeMobileTab.value === "bible") {
+                      openSelectorTool.value?.onSelect();
+                      return;
+                    }
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    // Close any fullscreen extension pane (e.g. Today).
+                    // Close any fullscreen pane (e.g. Today).
                     panes.closeAll();
                     selectedToolbarToolId.value = null;
                   }}
@@ -2766,6 +2739,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     onReferenceClick={
                                       props.state.app.openVerseReference
                                     }
+                                    otherPeoplePresent={annotationListHasOtherAuthors(
+                                      selectionAnnotations.value,
+                                      props.state.login.userId.value
+                                    )}
                                   />
                                 );
                               })}
@@ -2827,23 +2804,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 )}
               </div>
             )}
-          {isSmallScreen.value &&
-            isHighlightPickerOpen.value &&
-            showHighlightColorSwipeHint.value && (
-              <div
-                className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
-                aria-hidden="true"
-              >
-                <span className="material-symbols-outlined">
-                  keyboard_double_arrow_right
-                </span>
-                <span>
-                  {t("swipe-to-see-more", {
-                    defaultValue: "Swipe to see more",
-                  })}
-                </span>
-              </div>
-            )}
+          {isSmallScreen.value && isHighlightPickerOpen.value && (
+            <div
+              className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
+              aria-hidden="true"
+              style={{
+                opacity: showHighlightColorSwipeHint.value ? 1 : 0,
+              }}
+            >
+              <span className="material-symbols-outlined">
+                keyboard_double_arrow_right
+              </span>
+
+              <span>
+                {t("swipe-to-see-more", {
+                  defaultValue: "Swipe to see more",
+                })}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </>

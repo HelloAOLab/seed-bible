@@ -1121,6 +1121,14 @@
   font-size: 1.125rem;
 }
 
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic {
+  border: none;
+}
+
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic .material-symbols-outlined {
+  font-size: 2rem;
+}
+
 .sb-tab-title {
   font-size: 0.75rem;
   opacity: 0.75;
@@ -1337,12 +1345,6 @@
     display: inline-flex;
   }
 
-  /* On mobile the account panel is dismissed via the bottom bar of options
-   * (e.g. the "Bible" tab), so the redundant X close button is hidden. */
-  .sb-sidebar-settings-close-button-account {
-    display: none;
-  }
-
   /* The desktop bottom-actions row (settings cog + self avatar) is hidden
    * on mobile — the bottom is now the Bible/Tabs switcher. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-bottom-actions {
@@ -1368,6 +1370,20 @@
     color: var(--sb-book-title-font-color);
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+
+  /* The settings sidebar (main list, and every settings subpage, including
+   * Account) shares .sb-sidebar-tabs-title with the tab-list header above,
+   * but its "Settings" heading isn't a book title — restore the plain
+   * heading style so it renders the same as on desktop. */
+  .sb-tabs-sidebar-mobile-open
+    .sb-sidebar-settings-view
+    .sb-sidebar-tabs-title {
+    flex: initial;
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--sb-font-color);
   }
 
   /* Tab list takes the body of the sidebar; leave room at the bottom for
