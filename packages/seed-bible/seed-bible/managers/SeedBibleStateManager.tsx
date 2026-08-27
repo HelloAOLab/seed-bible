@@ -1062,7 +1062,7 @@ export function createSeedBibleState(
 
     const { t } = i18n;
 
-    const seedBibleTitle = getBrandedAppText(t, "seed bible", branding, {
+    const seedBibleTitle = getBrandedAppText(t, "seed-bible", branding, {
       defaultValue: "Seed Bible",
     });
 
@@ -1140,7 +1140,7 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    return getBrandedAppText(t, "seed bible", branding, {
+    return getBrandedAppText(t, "seed-bible", branding, {
       defaultValue: "Seed Bible",
     });
   });
