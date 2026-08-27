@@ -69,6 +69,16 @@ type TranslationFn = (key: string, options?: Record<string, unknown>) => string;
 function getAppName(t: TranslationFn, branding?: BrandingConfig): string {
   return branding?.appName ?? t("seed-bible", { defaultValue: "Seed Bible" });
 }
+
+/**
+ * Replaces occurrences of "Seed Bible" in the given text with the branded app name, which can be customized via the branding configuration.
+ * This function is useful for ensuring that the app's name is consistently displayed according to the user's branding preferences.
+ * Currently, this only means that English is fully supported for branding.
+ * @param text The text in which to replace "Seed Bible" with the branded app name.
+ * @param t The translation function to use for retrieving the branded app name. This is typically obtained from the i18n manager.
+ * @param branding The branding configuration that may contain a custom app name. If not provided, the default app name "Seed Bible" will be used.
+ * @returns
+ */
 export function getBrandedAppText(
   text: string,
   t: TranslationFn,
