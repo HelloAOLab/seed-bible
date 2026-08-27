@@ -305,6 +305,7 @@ describe("CustomizationsManager", () => {
                 name: "Default",
                 themes: {
                   primaryColor: "#111111",
+                  dividerColor: "rgba(0, 0, 0, 0.2)",
                   verseFontFamily: "Playfair Display, serif",
                   hebrewSubtitleFontFamily: "Newsreader, serif",
                   someUnknownKey: "should be dropped",
@@ -327,6 +328,7 @@ describe("CustomizationsManager", () => {
 
     expect(manager.customizations.value[0]?.variants[0]?.themes).toEqual({
       primaryColor: "#111111",
+      dividerColor: "rgba(0, 0, 0, 0.2)",
       verseFontFamily: "Playfair Display, serif",
       hebrewSubtitleFontFamily: "Newsreader, serif",
     });
@@ -372,6 +374,18 @@ describe("CustomizationsManager", () => {
     );
     expect(created.variants[0]?.themes.selectedVerseTextDecorationColor).toBe(
       lightThemeVariables.selectedVerseTextDecorationColor
+    );
+    expect(created.variants[0]?.themes.primaryFontColor).toBe(
+      lightThemeVariables.primaryFontColor
+    );
+    expect(created.variants[0]?.themes.secondaryFontColor).toBe(
+      lightThemeVariables.secondaryFontColor
+    );
+    expect(created.variants[0]?.themes.hebrewSubtitleFontColor).toBe(
+      lightThemeVariables.hebrewSubtitleFontColor
+    );
+    expect(created.variants[0]?.themes.dividerColor).toBe(
+      lightThemeVariables.dividerColor
     );
     // Font-family fields are seeded from the current theme the same way
     // color fields are.

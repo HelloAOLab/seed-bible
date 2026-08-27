@@ -231,7 +231,9 @@ export const CUSTOMIZATION_COLOR_GROUPS: CustomizationColorGroup[] = [
     title: "Brand",
     fields: [
       { key: "primaryColor", label: "Primary" },
+      { key: "primaryFontColor", label: "Primary text" },
       { key: "secondaryColor", label: "Secondary" },
+      { key: "secondaryFontColor", label: "Secondary text" },
       { key: "tertiaryColor", label: "Tertiary" },
       { key: "linkColor", label: "Link" },
       { key: "linkVisitedColor", label: "Visited link" },
@@ -249,6 +251,7 @@ export const CUSTOMIZATION_COLOR_GROUPS: CustomizationColorGroup[] = [
         key: "readerToolbarFloatingButtonBackground",
         label: "Floating button background",
       },
+      { key: "dividerColor", label: "Divider" },
     ],
   },
   {
@@ -261,6 +264,7 @@ export const CUSTOMIZATION_COLOR_GROUPS: CustomizationColorGroup[] = [
       { key: "bookTitleFontColor", label: "Book title" },
       { key: "chapterHeadingFontColor", label: "Chapter heading" },
       { key: "verseFontColor", label: "Verse" },
+      { key: "hebrewSubtitleFontColor", label: "Hebrew subtitle" },
       { key: "readerToolbarFontColor", label: "Reader toolbar text" },
       {
         key: "readerToolbarFloatingButtonFontColor",

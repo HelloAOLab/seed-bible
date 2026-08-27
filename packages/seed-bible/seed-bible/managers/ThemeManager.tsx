@@ -876,7 +876,8 @@ export type ThemeColorKey =
   | "readerToolbarFloatingButtonBackground"
   | "readerToolbarFloatingButtonFontColor"
   | "tabFontColor"
-  | "selectedTabFontColor";
+  | "selectedTabFontColor"
+  | "dividerColor";
 
 export interface ThemeColorField {
   key: ThemeColorKey;
@@ -916,6 +917,7 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
         key: "readerToolbarFloatingButtonBackground",
         label: "Floating button background",
       },
+      { key: "dividerColor", label: "Divider" },
     ],
   },
   {
