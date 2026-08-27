@@ -1,5 +1,13 @@
 import { parseVerseReferences } from "@packages/seed-bible/seed-bible/managers/parseVerseReference";
+import { createRequire } from "node:module";
 
+// Loaded via createRequire rather than a static `import { createRecordsClient }`
+// because the package ships as CJS with no exports map, and tsx's ESM named-export
+// interop fails to bind the named export at link time (Node's CJS lexer and
+// require() both expose it fine).
+const { createRecordsClient } = createRequire(import.meta.url)(
+  "@casual-simulation/aux-records/RecordsClient.js"
+) as typeof import("@casual-simulation/aux-records/RecordsClient.js");
 /** Matches the shape of `DiscoverReference` in `managers/DiscoverManager.tsx`. */
 export interface DiscoveredContentReference {
   book: string;
@@ -15,6 +23,7 @@ export interface DiscoveredContentItem {
   author: string;
   description: string;
   url: string;
+  imageUrl: string;
   references: DiscoveredContentReference[];
 }
 
@@ -153,9 +162,12 @@ const UTF8_BOM_PATTERN = new RegExp("^\\uFEFF");
  * to at least one book, are skipped and reported in `warnings` rather than
  * failing the whole run.
  */
-export function buildDiscoveredContentList(
+export async function buildDiscoveredContentList(
   csvText: string
-): BuildDiscoveredContentListResult {
+): Promise<BuildDiscoveredContentListResult> {
+  const client = createRecordsClient("https://auth.ao.bot");
+  client.headers["Origin"] = "https://auth.ao.bot";
+
   const rows = parseCsv(csvText.replace(UTF8_BOM_PATTERN, ""));
   const warnings: string[] = [];
 
@@ -239,12 +251,39 @@ export function buildDiscoveredContentList(
       continue;
     }
 
+    const url = cell(row, "URL");
+    console.log(
+      "Fetching link preview for row",
+      sheetRow,
+      "title",
+      title,
+      "url",
+      url
+    );
+    const linkPreview = await client.getLinkPreview({
+      url: url,
+      locale: "en-US",
+    });
+
+    if (!linkPreview.success) {
+      console.warn(
+        `Row ${sheetRow} ("${title}"): failed to fetch link preview for URL "${url}".`,
+        linkPreview
+      );
+      throw new Error(
+        `Failed to fetch link preview for URL "${url}": ${linkPreview.errorMessage}`
+      );
+    }
+
+    console.log("Got link preview", linkPreview);
+
     items.push({
       id: uniqueSlug(title, usedIds),
       title,
       author: cell(row, "Author"),
       description: cell(row, "Description"),
       url: cell(row, "URL"),
+      imageUrl: linkPreview.meta["og:image"] ?? linkPreview.imageUrl!,
       references,
     });
   }

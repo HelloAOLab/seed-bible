@@ -50,7 +50,7 @@ async function main(): Promise<void> {
   const outputPath = outArg ? path.resolve(outArg) : DEFAULT_OUTPUT_PATH;
 
   const csvText = await readFile(path.resolve(csvPath), "utf-8");
-  const { items, warnings } = buildDiscoveredContentList(csvText);
+  const { items, warnings } = await buildDiscoveredContentList(csvText);
 
   for (const warning of warnings) {
     console.warn(`Warning: ${warning}`);
