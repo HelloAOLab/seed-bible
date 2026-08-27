@@ -30,6 +30,7 @@ import {
   type BibleReadingSession,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
+  getSessionUrl,
 } from "../../managers/SessionsManager";
 import { safeLocalStorage } from "../../app/ssrEnv";
 import { useI18n } from "../../i18n/I18nManager";
@@ -1286,17 +1287,6 @@ export interface BookmarkLocation {
   bookId: string;
   chapterNumber: number;
   verse?: BookmarkVerse;
-}
-
-function getSessionUrl(session: BibleReadingSession) {
-  const url = new URL(window.location.href);
-  const pattern = url.searchParams.get("pattern");
-  url.search = "";
-  url.searchParams.set("sessionId", session.id);
-  if (pattern) {
-    url.searchParams.set("pattern", pattern);
-  }
-  return url;
 }
 
 /**
