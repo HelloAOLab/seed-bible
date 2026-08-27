@@ -120,6 +120,10 @@
   align-items: flex-start;
 }
 
+.sb-discover-item--clickable {
+  cursor: pointer;
+}
+
 .sb-annotation-group {
   display: flex;
   flex-direction: column;

@@ -234,6 +234,64 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
     expect(container.querySelector(".sb-discover-item-image")).toBeNull();
   });
 
+  it("calls the result's onClick when the card is clicked", () => {
+    const onClick = vi.fn();
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+              onClick,
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const item = container.querySelector(".sb-discover-item");
+    expect(item?.classList.contains("sb-discover-item--clickable")).toBe(true);
+
+    act(() => {
+      item?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not mark the card clickable when there's no onClick", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const item = container.querySelector(".sb-discover-item");
+    expect(item?.classList.contains("sb-discover-item--clickable")).toBe(false);
+  });
+
   it("groups content results into one section per author", () => {
     const tab = createMockTab({
       discoveredContent: [

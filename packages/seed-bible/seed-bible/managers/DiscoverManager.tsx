@@ -43,6 +43,8 @@ export interface DiscoverContentResult {
   author?: string;
   /** A preview image URL, shown above the item's title. */
   image?: string;
+  /** Called when the item's card is clicked. */
+  onClick?: () => void;
 }
 
 export interface DiscoverCrossReferenceResult {
