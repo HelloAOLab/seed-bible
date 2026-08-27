@@ -18,7 +18,6 @@
   "create-new-tab": "Buat tab baru",
   "tab-options": "Opsi tab",
   "open-tab-menu": "Buka menu tab",
-  "session-id_x": "ID Sesi: {{sessionId}}",
   "search-verses": "Cari ayat",
   "clear-search": "Hapus pencarian",
   "searching": "Sedang mencari...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "Sorotan untuk",
   "end-session": "Akhiri Sesi",
   "panels": "Panel",
-
   "open-in-new-panel": "Buka di panel baru",
   "close-sidebar": "Tutup bilah sisi",
   "select-pane-layout": "Pilih tata letak panel",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Buat rencana membaca",
   "reading-plans-empty": "Anda belum memiliki rencana membaca. Buatlah satu untuk memulai.",
   "untitled-reading-plan": "Rencana tanpa judul",
-
   "reading-plan-description_placeholder": "Rencana ini tentang apa?",
   "anonymous": "Anonim",
   "no-chat-messages": "Belum ada pesan",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Tur berpemandu tersedia untuk membantu Anda mempelajari seluk-beluk Seed Bible.",
   "tutorial.promptDecline": "Tidak, terima kasih",
   "tutorial.promptAccept": "Ikuti tur",
-  "session-id": "ID Sesi",
   "session-settings-section-navigation": "Navigasi",
   "session-settings-section-sharing": "Membagikan",
   "session-settings-section-participants": "Peserta",
@@ -335,7 +331,6 @@
   "dont-show-again": "Jangan tampilkan ini lagi",
   "discover": "Menemukan",
   "playlists": "Daftar Putar",
-
   "cross-references": "Referensi silang",
   "study-notes": "Catatan belajar",
   "content": "Isi",
@@ -404,7 +399,6 @@
   "add-and-save": "Tambah dan simpan",
   "loading-profile": "Sedang memuat profil Anda…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Membagikan",
   "share-sheet-title": "Membagikan",
   "share-link": "Bagikan tautan",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Buat rencana baru",
   "edit-reading-plan": "Edit rencana",
   "reading-plan-step-name-title": "Sebutkan rencana Anda",
-
   "reading-plan-name-placeholder": "misalnya Perjalanan Mazmurku",
   "reading-plan-description-label": "Deskripsi (opsional)",
   "reading-plan-step-scripture-title": "Bacaan pilihan",
   "reading-plan-step-cadences-title": "Irama membaca",
   "reading-plan-step-cadences-hint": "Pilih kecepatan membaca yang ingin Anda tawarkan. Pembaca selalu dapat memilih untuk membaca dengan kecepatan mereka sendiri.",
-
   "reading-plan-cadence-length": "Selesai dalam {{count}} hari",
   "reading-plan-cadence-length_one": "Selesai dalam {{count}} hari",
   "reading-plan-cadence-length_other": "Selesai dalam {{count}} hari",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Penghematan…",
   "reading-plan-draft-saved": "Draf tersimpan",
   "reading-plan-draft-save-failed": "Tidak bisa menyimpan draf.",
-
   "reading-plan-scripture-remove": "Hapus bacaan",
   "reading-plan-create-submit": "Buat rencana",
   "reading-plan-save-changes": "Simpan perubahan",
@@ -498,11 +489,8 @@
   "loading": "Memuat…",
   "reading-plan-not-started": "Belum dimulai",
   "reading-plan-start": "Mulai rencana",
-
   "reading-plan-streak": "{{count}} -rentetan hari",
-
   "reading-plan-mark-complete": "Tandai sebagai selesai",
-
   "reading-plan-empty-sessions": "Rencana ini belum memiliki data pembacaan apa pun.",
   "reading-plan-celebration-title": "Hari {{day}} selesai!",
   "reading-plan-complete-title": "Rencana selesai!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Tandai bacaan selesai",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Bacaan ini termasuk dalam",
-
   "reading-plan-mark-passage-complete": "Tandai {{passage}} sebagai sudah dibaca",
   "reading-plan-read-nudge-title": "Bacaan yang menyenangkan!",
   "reading-plan-read-nudge-toast": "Apakah {{passage}} sudah selesai?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Daftar putar ini tentang apa?",
   "read-more": "Baca selengkapnya",
   "read-less": "Baca lebih sedikit",
-
   "ask-to-switch-ui-language": "Tawarkan untuk mengganti bahasa dengan terjemahan.",
   "ai": "AI",
   "ai-edit-playlist": "Edit daftar putar dengan AI",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} menggunakan {{count}} alat",
   "chat-tool-used_one": "{{name}} menggunakan sebuah alat",
   "chat-tool-used_other": "{{name}} menggunakan {{count}} alat",
-
   "ai-context-button-label": "Konteks AI aktif",
   "ai-context-tool-count": "{{count}} alat",
   "annotation-conflict-title": "Catatan ini berubah di dua tempat.",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Tidak ada konten.",
   "annotation-conflict-confirm": "Mengonfirmasi",
   "annotation-conflict-resolve-failed": "Pilihan itu tidak bisa diterapkan. Akan dicoba lagi.",
-
   "annotation-sync-failed": "Catatan tidak dapat disimpan ke akun Anda. Catatan tersebut masih ada di perangkat ini.",
   "create-menu": "Membuat",
   "create-annotation-menu-item": "Anotasi",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Anotasi tidak dapat disimpan.",
   "annotation-group-expand": "Perluas grup",
   "annotation-group-collapse": "Kelompok runtuh",
-
   "notes": "Catatan",
   "note": "Catatan",
   "show-more-verse-actions": "Tampilkan lebih banyak tindakan",
@@ -667,7 +650,6 @@
   "create-folder": "Buat folder",
   "edit-bookmark": "Edit bookmark",
   "remove-bookmark-from-all-folders": "Hapus dari semua folder",
-
   "greeting-afternoon": "Selamat siang!",
   "greeting-afternoon-named": "Selamat siang, {{name}} !",
   "greeting-evening": "Selamat malam!",
@@ -677,5 +659,6 @@
   "greeting-night": "Selamat malam!",
   "greeting-night-named": "Selamat malam, {{name}} !",
   "annotation-override-banner": "Catatan sedang disimpan dan dimuat dari akun tim Anda.",
-  "annotation-override-save-to-my-account": "Simpan ke akun saya"
+  "annotation-override-save-to-my-account": "Simpan ke akun saya",
+  "session-url": "URL Sesi"
 }

@@ -18,7 +18,6 @@
   "create-new-tab": "Створити нову вкладку",
   "tab-options": "Параметри вкладок",
   "open-tab-menu": "Відкрити меню вкладок",
-  "session-id_x": "Ідентифікатор сеансу: {{sessionId}}",
   "search-verses": "Пошук віршів",
   "clear-search": "Очистити пошук",
   "searching": "Пошук...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "Виділіть для",
   "end-session": "Закінчити сеанс",
   "panels": "Панелі",
-
   "open-in-new-panel": "Відкрити в новій панелі",
   "close-sidebar": "Закрити бічну панель",
   "select-pane-layout": "Вибрати макет панелі",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Створіть план читання",
   "reading-plans-empty": "У вас ще немає планів читання. Створіть його, щоб розпочати.",
   "untitled-reading-plan": "Безіменний план",
-
   "reading-plan-description_placeholder": "Про що цей план?",
   "anonymous": "Анонім",
   "no-chat-messages": "Поки що немає повідомлень",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Доступна екскурсія з гідом, яка допоможе вам дізнатися про всі тонкощі Біблії насіння.",
   "tutorial.promptDecline": "Ні, дякую.",
   "tutorial.promptAccept": "Відвідайте екскурсію",
-  "session-id": "Ідентифікатор сеансу",
   "session-settings-section-navigation": "Навігація",
   "session-settings-section-sharing": "Спільне використання",
   "session-settings-section-participants": "Учасники",
@@ -335,7 +331,6 @@
   "dont-show-again": "Не показувати це більше",
   "discover": "Відкрийте",
   "playlists": "Списки відтворення",
-
   "cross-references": "Перехресні посилання",
   "study-notes": "Нотатки до навчання",
   "content": "Зміст",
@@ -404,7 +399,6 @@
   "add-and-save": "Додати та зберегти",
   "loading-profile": "Завантаження вашого профілю…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Поділитися",
   "share-sheet-title": "Поділитися",
   "share-link": "Поділитися посиланням",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Створити новий план",
   "edit-reading-plan": "Редагувати план",
   "reading-plan-step-name-title": "Назвіть свій план",
-
   "reading-plan-name-placeholder": "наприклад, Моя подорож за Псалмами",
   "reading-plan-description-label": "Опис (необов'язково)",
   "reading-plan-step-scripture-title": "Виберіть показники",
   "reading-plan-step-cadences-title": "Читання каденцій",
   "reading-plan-step-cadences-hint": "Оберіть темп читання, який ви хочете запропонувати. Читачі завжди можуть обрати власний темп.",
-
   "reading-plan-cadence-length": "Закінчується через {{count}} днів",
   "reading-plan-cadence-length_one": "Закінчується через {{count}} день",
   "reading-plan-cadence-length_other": "Закінчується через {{count}} днів",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Збереження…",
   "reading-plan-draft-saved": "Чернетку збережено",
   "reading-plan-draft-save-failed": "Не вдалося зберегти чернетку",
-
   "reading-plan-scripture-remove": "Видалити читання",
   "reading-plan-create-submit": "Створити план",
   "reading-plan-save-changes": "Зберегти зміни",
@@ -498,11 +489,8 @@
   "loading": "Завантаження…",
   "reading-plan-not-started": "Не розпочато",
   "reading-plan-start": "Початок плану",
-
   "reading-plan-streak": "{{count}} -денна серія",
-
   "reading-plan-mark-complete": "Позначити як завершене",
-
   "reading-plan-empty-sessions": "Цей план ще не має жодних показників.",
   "reading-plan-celebration-title": "День {{day}} завершено!",
   "reading-plan-complete-title": "План виконано!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Позначити прочитане як завершене",
   "reading-plan-link-video": "Відео",
   "reading-belongs-to": "Це читання належить",
-
   "reading-plan-mark-passage-complete": "Позначити {{passage}} як прочитаний",
   "reading-plan-read-nudge-title": "Приємного читання!",
   "reading-plan-read-nudge-toast": "Позначити {{passage}} як завершений?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Про що цей плейлист?",
   "read-more": "Читати далі",
   "read-less": "Читати менше",
-
   "ask-to-switch-ui-language": "Пропонувати змінити мову з перекладом",
   "ai": "Штучний інтелект",
   "ai-edit-playlist": "Редагування списку відтворення за допомогою штучного інтелекту",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} використовував {{count}} інструментів",
   "chat-tool-used_one": "{{name}} використовував інструмент",
   "chat-tool-used_other": "{{name}} використовував {{count}} інструментів",
-
   "ai-context-button-label": "Активний контекст ШІ",
   "ai-context-tool-count": "інструменти {{count}}",
   "annotation-conflict-title": "Ця примітка змінилася у двох місцях",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Без контенту.",
   "annotation-conflict-confirm": "Підтвердити",
   "annotation-conflict-resolve-failed": "Не вдалося застосувати цей варіант. Спробуємо ще раз.",
-
   "annotation-sync-failed": "Не вдалося зберегти нотатку у вашому обліковому записі. Вона все ще на цьому пристрої.",
   "create-menu": "Створити",
   "create-annotation-menu-item": "Анотація",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Не вдалося зберегти анотацію.",
   "annotation-group-expand": "Розгорнути групу",
   "annotation-group-collapse": "Згорнути групу",
-
   "notes": "Нотатки",
   "note": "Примітка",
   "show-more-verse-actions": "Показати більше дій",
@@ -667,7 +650,6 @@
   "create-folder": "Створити папку",
   "edit-bookmark": "Редагувати закладку",
   "remove-bookmark-from-all-folders": "Видалити з усіх папок",
-
   "greeting-afternoon": "Доброго дня!",
   "greeting-afternoon-named": "Доброго дня, {{name}} !",
   "greeting-evening": "Доброго вечора!",
@@ -677,5 +659,6 @@
   "greeting-night": "На добраніч!",
   "greeting-night-named": "На добраніч, {{name}} !",
   "annotation-override-banner": "Нотатки зберігаються та завантажуються з облікового запису вашої команди.",
-  "annotation-override-save-to-my-account": "Зберегти в моєму обліковому записі"
+  "annotation-override-save-to-my-account": "Зберегти в моєму обліковому записі",
+  "session-url": "URL-адреса сеансу"
 }

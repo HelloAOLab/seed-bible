@@ -957,14 +957,14 @@
   background: #dc2626;
 }
 
-/* Session ID row (top of the session settings panel) */
-.sb-session-settings-id {
+/* Session URL row (top of the session settings panel) */
+.sb-session-settings-url {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
 }
 
-.sb-session-settings-id-row {
+.sb-session-settings-url-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -974,7 +974,7 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
-.sb-session-settings-id-value {
+.sb-session-settings-url-value {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -983,7 +983,7 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
 
-.sb-session-settings-copy-id {
+.sb-session-settings-copy-url {
   border: none;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 34%);

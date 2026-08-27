@@ -23,7 +23,6 @@
   "create-new-tab": "Skapa ny flik",
   "tab-options": "Flikalternativ",
   "open-tab-menu": "Öppna flikmenyn",
-  "session-id_x": "Sessions-ID: {{sessionId}}",
   "search-verses": "Sök verser",
   "clear-search": "Rensa sökningen",
   "searching": "Sökande...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Markera för",
   "end-session": "Avsluta sessionen",
   "panels": "Paneler",
-
   "open-in-new-panel": "Öppna i ny panel",
   "close-sidebar": "Stäng sidofältet",
   "select-pane-layout": "Välj rutans layout",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Skapa läsplan",
   "reading-plans-empty": "Du har inga läsplaner än. Skapa en för att komma igång.",
   "untitled-reading-plan": "Namnlös plan",
-
   "reading-plan-description_placeholder": "Vad handlar den här planen om?",
   "anonymous": "Anonym",
   "no-chat-messages": "Inga meddelanden ännu",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "En guidad tur finns tillgänglig för att hjälpa dig att lära dig allt om Seed Bible.",
   "tutorial.promptDecline": "Nej tack",
   "tutorial.promptAccept": "Ta rundturen",
-  "session-id": "Sessions-ID",
   "session-settings-section-navigation": "Navigering",
   "session-settings-section-sharing": "Delning",
   "session-settings-section-participants": "Deltagare",
@@ -335,7 +331,6 @@
   "dont-show-again": "Visa inte detta igen",
   "discover": "Upptäcka",
   "playlists": "Spellistor",
-
   "cross-references": "Korsreferenser",
   "study-notes": "Studieanteckningar",
   "content": "Innehåll",
@@ -404,7 +399,6 @@
   "add-and-save": "Lägg till och spara",
   "loading-profile": "Laddar din profil…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Dela",
   "share-sheet-title": "Dela",
   "share-link": "Dela en länk",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Skapa ny plan",
   "edit-reading-plan": "Redigera plan",
   "reading-plan-step-name-title": "Namnge din plan",
-
   "reading-plan-name-placeholder": "t.ex. Min Psalmresa",
   "reading-plan-description-label": "Beskrivning (valfritt)",
   "reading-plan-step-scripture-title": "Välj avläsningar",
   "reading-plan-step-cadences-title": "Läsning av kadenser",
   "reading-plan-step-cadences-hint": "Välj de lästakter du vill erbjuda. Läsarna kan alltid välja att fortsätta i sin egen takt istället.",
-
   "reading-plan-cadence-length": "Klar om {{count}} dagar",
   "reading-plan-cadence-length_one": "Avslutas om {{count}} dag",
   "reading-plan-cadence-length_other": "Klar om {{count}} dagar",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Sparande…",
   "reading-plan-draft-saved": "Utkast sparat",
   "reading-plan-draft-save-failed": "Det gick inte att spara utkastet",
-
   "reading-plan-scripture-remove": "Ta bort läsning",
   "reading-plan-create-submit": "Skapa plan",
   "reading-plan-save-changes": "Spara ändringar",
@@ -498,11 +489,8 @@
   "loading": "Belastning…",
   "reading-plan-not-started": "Inte påbörjad",
   "reading-plan-start": "Starta planen",
-
   "reading-plan-streak": "{{count}} dagar i rad",
-
   "reading-plan-mark-complete": "Markera som klar",
-
   "reading-plan-empty-sessions": "Den här planen har inga avläsningar ännu.",
   "reading-plan-celebration-title": "Dag {{day}} avklarad!",
   "reading-plan-complete-title": "Planen är klar!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Markeringsläsning klar",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Denna läsning tillhör",
-
   "reading-plan-mark-passage-complete": "Markera {{passage}} som läst",
   "reading-plan-read-nudge-title": "Trevlig läsning!",
   "reading-plan-read-nudge-toast": "Markera {{passage}} som klar?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Vad handlar den här spellistan om?",
   "read-more": "Läs mer",
   "read-less": "Läs mindre",
-
   "ask-to-switch-ui-language": "Erbjud att byta språk med översättning",
   "ai": "AI",
   "ai-edit-playlist": "Redigera spellista med AI",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} använde {{count}} verktyg",
   "chat-tool-used_one": "{{name}} använde ett verktyg",
   "chat-tool-used_other": "{{name}} använde {{count}} verktyg",
-
   "ai-context-button-label": "Aktiv AI-kontext",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Denna anteckning har ändrats på två ställen",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Inget innehåll.",
   "annotation-conflict-confirm": "Bekräfta",
   "annotation-conflict-resolve-failed": "Kunde inte tillämpa det valet. Det kommer att försökas igen.",
-
   "annotation-sync-failed": "Det gick inte att spara en anteckning på ditt konto. Den finns fortfarande på den här enheten.",
   "create-menu": "Skapa",
   "create-annotation-menu-item": "Anteckning",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Kunde inte spara annoteringen.",
   "annotation-group-expand": "Expandera gruppen",
   "annotation-group-collapse": "Komprimera grupp",
-
   "notes": "Anteckningar",
   "note": "Notera",
   "show-more-verse-actions": "Visa fler åtgärder",
@@ -667,7 +650,6 @@
   "create-folder": "Skapa mapp",
   "edit-bookmark": "Redigera bokmärke",
   "remove-bookmark-from-all-folders": "Ta bort från alla mappar",
-
   "greeting-afternoon": "God eftermiddag!",
   "greeting-afternoon-named": "God eftermiddag, {{name}} !",
   "greeting-evening": "god afton!",
@@ -677,5 +659,6 @@
   "greeting-night": "God natt!",
   "greeting-night-named": "God natt, {{name}} !",
   "annotation-override-banner": "Anteckningar sparas och laddas från ditt teams konto.",
-  "annotation-override-save-to-my-account": "Spara på mitt konto"
+  "annotation-override-save-to-my-account": "Spara på mitt konto",
+  "session-url": "Sessions-URL"
 }

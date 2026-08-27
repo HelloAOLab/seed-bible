@@ -18,7 +18,6 @@
   "create-new-tab": "يېڭى بەتكۈچ قۇرۇش",
   "tab-options": "بەتكۈچ تاللانمىلىرى",
   "open-tab-menu": "بەتكۈچ تىزىملىكىنى ئېچىش",
-  "session-id_x": "يىغىن نومۇرى: {{sessionId}}",
   "search-verses": "ئايەتلەرنى ئىزدەڭ",
   "clear-search": "ئىزدەشنى تازىلاش",
   "searching": "ئىزدەۋاتىدۇ...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "بەلگىلەڭ",
   "end-session": "ئاخىرلىشىش يىغىنى",
   "panels": "پانېللار",
-
   "open-in-new-panel": "يېڭى تاختىدا ئېچىش",
   "close-sidebar": "يان تاختىنى تاقاش",
   "select-pane-layout": "كۆزنەك لايىھەسىنى تاللاڭ",
@@ -253,7 +251,6 @@
   "create-reading-plan": "ئوقۇش پىلانى تۈزۈڭ",
   "reading-plans-empty": "سىزدە ھازىرغىچە ئوقۇش پىلانى يوق. باشلاش ئۈچۈن بىرنى تۈزۈڭ.",
   "untitled-reading-plan": "ماۋزۇسىز پىلان",
-
   "reading-plan-description_placeholder": "بۇ پىلان نېمە ھەققىدە؟",
   "anonymous": "نامسىز",
   "no-chat-messages": "ھازىرغىچە ئۇچۇر يوق",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "«Seed Bible» نىڭ ئىچكى-تاشقى تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
   "tutorial.promptDecline": "ياق، رەھمەت",
   "tutorial.promptAccept": "ساياھەتكە چىقىڭ",
-  "session-id": "يىغىن نومۇرى",
   "session-settings-section-navigation": "يول باشلاش",
   "session-settings-section-sharing": "ئورتاقلىشىش",
   "session-settings-section-participants": "قاتناشقۇچىلار",
@@ -335,7 +331,6 @@
   "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ",
   "discover": "بايقاش",
   "playlists": "قويۇش تىزىملىكى",
-
   "cross-references": "كرېست پايدىلىنىش ماتېرىياللىرى",
   "study-notes": "ئۆگىنىش خاتىرىلىرى",
   "content": "مەزمۇن",
@@ -404,7 +399,6 @@
   "add-and-save": "قوشۇش ۋە ساقلاش",
   "loading-profile": "پروفىلىڭىز يۈكلەنمەكتە…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "ئورتاقلىشىش",
   "share-sheet-title": "ئورتاقلىشىش",
   "share-link": "ئۇلىنىشنى ئورتاقلىشىڭ",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "يېڭى پىلان تۈزۈڭ",
   "edit-reading-plan": "پىلاننى تەھرىرلەش",
   "reading-plan-step-name-title": "پىلانىڭىزغا ئىسىم قويۇڭ",
-
   "reading-plan-name-placeholder": "مەسىلەن، مېنىڭ زەبۇر سەپىرىم",
   "reading-plan-description-label": "چۈشەندۈرۈش (تاللاشچان)",
   "reading-plan-step-scripture-title": "ئوقۇشلارنى تاللاڭ",
   "reading-plan-step-cadences-title": "ئوقۇش سۈرئىتى",
   "reading-plan-step-cadences-hint": "ئۆزىڭىز تەمىنلىمەكچى بولغان ئوقۇش سۈرئىتىنى تاللاڭ. ئوقۇرمەنلەر ھەمىشە ئۆزلىرىنىڭ سۈرئىتى بويىچە ئوقۇشنى تاللىيالايدۇ.",
-
   "reading-plan-cadence-length": "{{count}} كۈندە تاماملىنىدۇ",
   "reading-plan-cadence-length_one": "{{count}} كۈندە تاماملىنىدۇ",
   "reading-plan-cadence-length_other": "{{count}} كۈندە تاماملىنىدۇ",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "ساقلىنىۋاتىدۇ…",
   "reading-plan-draft-saved": "لايىھە ساقلاندى",
   "reading-plan-draft-save-failed": "لايىھەنى ساقلىغىلى بولمىدى",
-
   "reading-plan-scripture-remove": "ئوقۇشنى ئۆچۈرۈڭ",
   "reading-plan-create-submit": "پىلان تۈزۈش",
   "reading-plan-save-changes": "ئۆزگەرتىشلەرنى ساقلاڭ",
@@ -498,11 +489,8 @@
   "loading": "يۈكلەۋاتىدۇ…",
   "reading-plan-not-started": "باشلانمىدى",
   "reading-plan-start": "پىلاننى باشلاش",
-
   "reading-plan-streak": "{{count}} -كۈنلۈك يۈرۈش",
-
   "reading-plan-mark-complete": "تاماملانغان دەپ بەلگىلەش",
-
   "reading-plan-empty-sessions": "بۇ پىلاننىڭ ھازىرغىچە ئوقۇش نەتىجىسى يوق.",
   "reading-plan-celebration-title": "{{day}} كۈن تاماملاندى!",
   "reading-plan-complete-title": "پىلان تاماملاندى!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "ئوقۇش تاماملانغان دەپ بەلگىلەڭ",
   "reading-plan-link-video": "سىن",
   "reading-belongs-to": "بۇ ئوقۇشلۇق تۆۋەندىكىگە تەۋە",
-
   "reading-plan-mark-passage-complete": "{{passage}} نى ئوقۇلغان دەپ بەلگىلەڭ",
   "reading-plan-read-nudge-title": "ياخشى ئوقۇش!",
   "reading-plan-read-nudge-toast": "{{passage}} تاماملاندى دەپ بەلگىلەمسىز؟",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "بۇ ناخشا تىزىملىكى نېمىلەر ھەققىدە؟",
   "read-more": "كۆپرەك ئوقۇڭ",
   "read-less": "ئازراق ئوقۇڭ",
-
   "ask-to-switch-ui-language": "تەرجىمە ئارقىلىق تىلنى ئالماشتۇرۇش تەكلىپى",
   "ai": "سۈنئىي ئەقىل",
   "ai-edit-playlist": "سۈنئىي ئەقىل بىلەن ناخشا تىزىملىكىنى تەھرىرلەڭ",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} {{count}} قوراللارنى ئىشلەتتى",
   "chat-tool-used_one": "{{name}} بىر قورال ئىشلەتتى",
   "chat-tool-used_other": "{{name}} {{count}} قوراللارنى ئىشلەتتى",
-
   "ai-context-button-label": "ئاكتىپ سۈنئىي ئەقىل مۇھىتى",
   "ai-context-tool-count": "{{count}} قوراللار",
   "annotation-conflict-title": "بۇ خاتىرە ئىككى يەردە ئۆزگەردى",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "مەزمۇن يوق.",
   "annotation-conflict-confirm": "جەزملەش",
   "annotation-conflict-resolve-failed": "بۇ تاللاشنى قوللىنىشقا بولمىدى. قايتا سىناپ كۆرىمىز.",
-
   "annotation-sync-failed": "ھېساباتىڭىزغا بىر خاتىرە ساقلىغىلى بولمىدى. ئۇ يەنىلا بۇ ئۈسكۈنىدە.",
   "create-menu": "يارىتىش",
   "create-annotation-menu-item": "ئىزاھات",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "ئىزاھاتنى ساقلىغىلى بولمىدى.",
   "annotation-group-expand": "گۇرۇپپىنى كېڭەيتىش",
   "annotation-group-collapse": "گۇرۇپپىنى يىقىتىش",
-
   "notes": "ئىزاھاتلار",
   "note": "ئەسكەرتىش",
   "show-more-verse-actions": "تېخىمۇ كۆپ ھەرىكەتلەرنى كۆرسىتىش",
@@ -667,7 +650,6 @@
   "create-folder": "قىسقۇچ قۇرۇش",
   "edit-bookmark": "خەتكۈچنى تەھرىرلەش",
   "remove-bookmark-from-all-folders": "بارلىق قىسقۇچلاردىن ئۆچۈرۈڭ",
-
   "greeting-afternoon": "خەيرلىك چۈشتىن كېيىن!",
   "greeting-afternoon-named": "خەيرلىك چۈشتىن كېيىن، {{name}} !",
   "greeting-evening": "خەيرلىك كەچ!",
@@ -677,5 +659,6 @@
   "greeting-night": "خەيرلىك كېچە!",
   "greeting-night-named": "خەيرلىك كېچە، {{name}} !",
   "annotation-override-banner": "خاتىرىلەر سىزنىڭ گۇرۇپپىڭىزنىڭ ھېساباتىدىن ساقلانماقتا ۋە يۈكلەنمەكتە.",
-  "annotation-override-save-to-my-account": "ھېساباتىمغا ساقلاڭ"
+  "annotation-override-save-to-my-account": "ھېساباتىمغا ساقلاڭ",
+  "session-url": "يىغىن URL"
 }

@@ -23,7 +23,6 @@
   "create-new-tab": "Opret ny fane",
   "tab-options": "Faneindstillinger",
   "open-tab-menu": "Åbn fanemenu",
-  "session-id_x": "Sessions-ID: {{sessionId}}",
   "search-verses": "Søg vers",
   "clear-search": "Ryd søgning",
   "searching": "Søger...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Fremhæv for",
   "end-session": "Afslut session",
   "panels": "Paneler",
-
   "open-in-new-panel": "Åbn i nyt panel",
   "close-sidebar": "Luk sidebjælken",
   "select-pane-layout": "Vælg rudelayout",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Opret læseplan",
   "reading-plans-empty": "Du har endnu ingen læseplaner. Opret en for at komme i gang.",
   "untitled-reading-plan": "Unavngivet plan",
-
   "reading-plan-description_placeholder": "Hvad handler denne plan om?",
   "anonymous": "Anonym",
   "no-chat-messages": "Ingen beskeder endnu",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "En guidet tur er tilgængelig, der kan hjælpe dig med at lære Seed Bibles ind og ud.",
   "tutorial.promptDecline": "Nej, tak",
   "tutorial.promptAccept": "Tag turen",
-  "session-id": "Sessions-ID",
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Deling",
   "session-settings-section-participants": "Deltagere",
@@ -335,7 +331,6 @@
   "dont-show-again": "Vis ikke dette igen",
   "discover": "Opdage",
   "playlists": "Afspilningslister",
-
   "cross-references": "Krydsreferencer",
   "study-notes": "Studienotater",
   "content": "Tilfreds",
@@ -404,7 +399,6 @@
   "add-and-save": "Tilføj og gem",
   "loading-profile": "Indlæser din profil…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Dele",
   "share-sheet-title": "Dele",
   "share-link": "Del et link",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Opret ny plan",
   "edit-reading-plan": "Rediger plan",
   "reading-plan-step-name-title": "Navngiv din plan",
-
   "reading-plan-name-placeholder": "f.eks. Min Salmers Rejse",
   "reading-plan-description-label": "Beskrivelse (valgfrit)",
   "reading-plan-step-scripture-title": "Vælg aflæsninger",
   "reading-plan-step-cadences-title": "Læsekadenser",
   "reading-plan-step-cadences-hint": "Vælg de læsetempoer, du ønsker at tilbyde. Læserne kan altid vælge at fortsætte i deres eget tempo i stedet.",
-
   "reading-plan-cadence-length": "Færdig om {{count}} dage",
   "reading-plan-cadence-length_one": "Færdig om {{count}} dag",
   "reading-plan-cadence-length_other": "Færdig om {{count}} dage",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Gemmer…",
   "reading-plan-draft-saved": "Udkast gemt",
   "reading-plan-draft-save-failed": "Kladden kunne ikke gemmes",
-
   "reading-plan-scripture-remove": "Fjern læsning",
   "reading-plan-create-submit": "Opret plan",
   "reading-plan-save-changes": "Gem ændringer",
@@ -498,11 +489,8 @@
   "loading": "Indlæser…",
   "reading-plan-not-started": "Ikke startet",
   "reading-plan-start": "Startplan",
-
   "reading-plan-streak": "{{count}} dages streak",
-
   "reading-plan-mark-complete": "Markér som fuldført",
-
   "reading-plan-empty-sessions": "Denne plan har endnu ingen aflæsninger.",
   "reading-plan-celebration-title": "Dag {{day}} fuldført!",
   "reading-plan-complete-title": "Planen er færdig!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Markér læsning fuldført",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Denne læsning tilhører",
-
   "reading-plan-mark-passage-complete": "Markér {{passage}} som læst",
   "reading-plan-read-nudge-title": "Dejlig læsning!",
   "reading-plan-read-nudge-toast": "Marker {{passage}} som fuldført?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Hvad handler denne playliste om?",
   "read-more": "Læs mere",
   "read-less": "Læs mindre",
-
   "ask-to-switch-ui-language": "Tilbud om at skifte sprog med oversættelse",
   "ai": "AI",
   "ai-edit-playlist": "Rediger afspilningsliste med AI",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} brugte {{count}} værktøjer",
   "chat-tool-used_one": "{{name}} brugte et værktøj",
   "chat-tool-used_other": "{{name}} brugte {{count}} værktøjer",
-
   "ai-context-button-label": "Aktiv AI-kontekst",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Denne note er ændret to steder",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Intet indhold.",
   "annotation-conflict-confirm": "Bekræfte",
   "annotation-conflict-resolve-failed": "Kunne ikke anvende det valg. Det vil blive forsøgt igen.",
-
   "annotation-sync-failed": "Kunne ikke gemme en note på din konto. Den er stadig på denne enhed.",
   "create-menu": "Skabe",
   "create-annotation-menu-item": "Annotation",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Annotationen kunne ikke gemme.",
   "annotation-group-expand": "Udvid gruppe",
   "annotation-group-collapse": "Skjul gruppe",
-
   "notes": "Noter",
   "note": "Note",
   "show-more-verse-actions": "Vis flere handlinger",
@@ -667,7 +650,6 @@
   "create-folder": "Opret mappe",
   "edit-bookmark": "Rediger bogmærke",
   "remove-bookmark-from-all-folders": "Fjern fra alle mapper",
-
   "greeting-afternoon": "God eftermiddag!",
   "greeting-afternoon-named": "God eftermiddag, {{name}} !",
   "greeting-evening": "God aften!",
@@ -677,5 +659,6 @@
   "greeting-night": "Godnat!",
   "greeting-night-named": "Godnat, {{name}} !",
   "annotation-override-banner": "Noter gemmes og indlæses fra dit teams konto.",
-  "annotation-override-save-to-my-account": "Gem på min konto"
+  "annotation-override-save-to-my-account": "Gem på min konto",
+  "session-url": "Sessions-URL"
 }

@@ -18,7 +18,6 @@
   "create-new-tab": "Шинэ таб үүсгэх",
   "tab-options": "Таб сонголтууд",
   "open-tab-menu": "Таб цэсийг нээх",
-  "session-id_x": "Сессийн ID: {{sessionId}}",
   "search-verses": "Шүлгүүдийг хайх",
   "clear-search": "Хайлтыг цэвэрлэх",
   "searching": "Хайж байна...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "Тодруулга",
   "end-session": "Хуралдааныг дуусгах",
   "panels": "Самбарууд",
-
   "open-in-new-panel": "Шинэ самбарт нээх",
   "close-sidebar": "Хажуугийн цэсийг хаах",
   "select-pane-layout": "Панелийн загварыг сонгох",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Унших төлөвлөгөө гаргах",
   "reading-plans-empty": "Танд одоогоор унших төлөвлөгөө алга байна. Эхлэхийн тулд нэгийг үүсгэнэ үү.",
   "untitled-reading-plan": "Гарчиггүй төлөвлөгөө",
-
   "reading-plan-description_placeholder": "Энэ төлөвлөгөө юуны тухай вэ?",
   "anonymous": "Нэргүй",
   "no-chat-messages": "Одоогоор мессеж алга",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible-ийн нарийн ширийн зүйлийг сурахад тань туслах хөтөчтэй аялал байдаг.",
   "tutorial.promptDecline": "Үгүй ээ, баярлалаа",
   "tutorial.promptAccept": "Аялалд оролцоорой",
-  "session-id": "Сессийн ID",
   "session-settings-section-navigation": "Навигаци",
   "session-settings-section-sharing": "Хуваалцах",
   "session-settings-section-participants": "Оролцогчид",
@@ -335,7 +331,6 @@
   "dont-show-again": "Үүнийг дахин бүү харуул",
   "discover": "Нээх",
   "playlists": "Тоглуулах жагсаалтууд",
-
   "cross-references": "Хөндлөн лавлагаа",
   "study-notes": "Судалгааны тэмдэглэл",
   "content": "Агуулга",
@@ -404,7 +399,6 @@
   "add-and-save": "Нэмээд хадгалах",
   "loading-profile": "Таны профайлыг ачаалж байна…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Хуваалцах",
   "share-sheet-title": "Хуваалцах",
   "share-link": "Холбоос хуваалцах",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Шинэ төлөвлөгөө үүсгэх",
   "edit-reading-plan": "Төлөвлөгөөг засах",
   "reading-plan-step-name-title": "Төлөвлөгөөгөө нэрлэнэ үү",
-
   "reading-plan-name-placeholder": "жишээ нь Миний Дуулал Аялал",
   "reading-plan-description-label": "Тайлбар (заавал биш)",
   "reading-plan-step-scripture-title": "Уншилтыг сонгоно уу",
   "reading-plan-step-cadences-title": "Унших хэмнэл",
   "reading-plan-step-cadences-hint": "Санал болгохыг хүссэн унших хурдаа сонгоно уу. Уншигчид хүссэн хурдаараа уншихаа үргэлж сонгож болно.",
-
   "reading-plan-cadence-length": "{{count}} хоногийн дараа дуусна",
   "reading-plan-cadence-length_one": "{{count}} өдрийн дараа дуусна",
   "reading-plan-cadence-length_other": "{{count}} хоногийн дараа дуусна",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Хадгалж байна…",
   "reading-plan-draft-saved": "Ноорог хадгалагдсан",
   "reading-plan-draft-save-failed": "Нооргийг хадгалж чадсангүй",
-
   "reading-plan-scripture-remove": "Уншлагыг устгах",
   "reading-plan-create-submit": "Төлөвлөгөө үүсгэх",
   "reading-plan-save-changes": "Өөрчлөлтүүдийг хадгалах",
@@ -498,11 +489,8 @@
   "loading": "Ачааллаж байна…",
   "reading-plan-not-started": "Эхлээгүй байна",
   "reading-plan-start": "Төлөвлөгөөг эхлүүлэх",
-
   "reading-plan-streak": "{{count}} -өдрийн цуврал",
-
   "reading-plan-mark-complete": "Дууссан гэж тэмдэглэх",
-
   "reading-plan-empty-sessions": "Энэ төлөвлөгөөнд хараахан уншилт байхгүй байна.",
   "reading-plan-celebration-title": "Өдөр {{day}} дууслаа!",
   "reading-plan-complete-title": "Төлөвлөгөө бэлэн боллоо!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Уншсан гэж тэмдэглэх",
   "reading-plan-link-video": "Видео",
   "reading-belongs-to": "Энэ уншлага нь хамаарна",
-
   "reading-plan-mark-passage-complete": "{{passage}} уншсан гэж тэмдэглэх",
   "reading-plan-read-nudge-title": "Сайхан уншлага байна!",
   "reading-plan-read-nudge-toast": "{{passage}} дууссан гэж тэмдэглэх үү?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Энэ тоглуулах жагсаалт юуны тухай вэ?",
   "read-more": "Дэлгэрэнгүй унших",
   "read-less": "Бага унших",
-
   "ask-to-switch-ui-language": "Орчуулгатай хэлийг солих санал",
   "ai": "Хиймэл оюун ухаан",
   "ai-edit-playlist": "Хиймэл оюун ухаанаар тоглуулах жагсаалтыг засах",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} {{count}} хэрэгслийг ашигласан",
   "chat-tool-used_one": "{{name}} хэрэгсэл ашигласан",
   "chat-tool-used_other": "{{name}} {{count}} хэрэгслийг ашигласан",
-
   "ai-context-button-label": "Идэвхтэй хиймэл оюун ухааны контекст",
   "ai-context-tool-count": "{{count}} хэрэгслүүд",
   "annotation-conflict-title": "Энэ тэмдэглэл хоёр газарт өөрчлөгдсөн",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Агуулга байхгүй.",
   "annotation-conflict-confirm": "Баталгаажуулах",
   "annotation-conflict-resolve-failed": "Энэ сонголтыг хэрэгжүүлж чадсангүй. Дахин оролдох болно.",
-
   "annotation-sync-failed": "Таны бүртгэлд тэмдэглэл хадгалж чадсангүй. Энэ нь энэ төхөөрөмж дээр хэвээр байна.",
   "create-menu": "Үүсгэх",
   "create-annotation-menu-item": "Тэмдэглэл",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Тэмдэглэгээг хадгалж чадсангүй.",
   "annotation-group-expand": "Бүлгийг дэлгэх",
   "annotation-group-collapse": "Бүлгийг хураах",
-
   "notes": "Тэмдэглэл",
   "note": "Тэмдэглэл",
   "show-more-verse-actions": "Бусад үйлдлийг харуулах",
@@ -667,7 +650,6 @@
   "create-folder": "Хавтас үүсгэх",
   "edit-bookmark": "Хавчуургыг засах",
   "remove-bookmark-from-all-folders": "Бүх хавтаснаас устгах",
-
   "greeting-afternoon": "Өдрийн мэнд!",
   "greeting-afternoon-named": "Өдрийн мэнд, {{name}} !",
   "greeting-evening": "Оройн мэнд!",
@@ -677,5 +659,6 @@
   "greeting-night": "Сайхан амраарай!",
   "greeting-night-named": "Сайхан амраарай, {{name}} !",
   "annotation-override-banner": "Танай багийн данснаас тэмдэглэлүүдийг хадгалж, ачаалж байна.",
-  "annotation-override-save-to-my-account": "Миний бүртгэлд хадгалах"
+  "annotation-override-save-to-my-account": "Миний бүртгэлд хадгалах",
+  "session-url": "Сессийн URL"
 }

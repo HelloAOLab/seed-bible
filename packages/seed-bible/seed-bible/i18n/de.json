@@ -23,7 +23,6 @@
   "create-new-tab": "Neuen Tab erstellen",
   "tab-options": "Registerkartenoptionen",
   "open-tab-menu": "Tab-Menü öffnen",
-  "session-id_x": "Sitzungs-ID: {{sessionId}}",
   "search-verses": "Verse suchen",
   "clear-search": "Suche löschen",
   "searching": "Suche...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Hervorheben für",
   "end-session": "Sitzung beenden",
   "panels": "Paneele",
-
   "open-in-new-panel": "In neuem Fenster öffnen",
   "close-sidebar": "Seitenleiste schließen",
   "select-pane-layout": "Layout des Auswahlbereichs",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Leseplan erstellen",
   "reading-plans-empty": "Sie haben noch keine Lesepläne. Erstellen Sie einen, um loszulegen.",
   "untitled-reading-plan": "Unbenannter Plan",
-
   "reading-plan-description_placeholder": "Worum geht es in diesem Plan?",
   "anonymous": "Anonym",
   "no-chat-messages": "Noch keine Nachrichten",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Es wird eine geführte Tour angeboten, die Ihnen hilft, die Funktionsweise der Seed Bible kennenzulernen.",
   "tutorial.promptDecline": "Nein danke",
   "tutorial.promptAccept": "Nehmen Sie an der Tour teil",
-  "session-id": "Sitzungs-ID",
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Teilen",
   "session-settings-section-participants": "Teilnehmer",
@@ -335,7 +331,6 @@
   "dont-show-again": "Zeig das nicht noch einmal",
   "discover": "Entdecken",
   "playlists": "Wiedergabelisten",
-
   "cross-references": "Querverweise",
   "study-notes": "Studiennotizen",
   "content": "Inhalt",
@@ -404,7 +399,6 @@
   "add-and-save": "Hinzufügen und speichern",
   "loading-profile": "Ihr Profil wird geladen…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Aktie",
   "share-sheet-title": "Aktie",
   "share-link": "Link teilen",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Neuen Plan erstellen",
   "edit-reading-plan": "Plan bearbeiten",
   "reading-plan-step-name-title": "Benennen Sie Ihren Plan",
-
   "reading-plan-name-placeholder": "z. B. Meine Psalmenreise",
   "reading-plan-description-label": "Beschreibung (optional)",
   "reading-plan-step-scripture-title": "Ausgewählte Lesungen",
   "reading-plan-step-cadences-title": "Leserhythmen",
   "reading-plan-step-cadences-hint": "Wählen Sie die Lesegeschwindigkeiten, die Sie anbieten möchten. Leser können alternativ auch in ihrem eigenen Tempo lesen.",
-
   "reading-plan-cadence-length": "Fertigstellung in {{count}} Tagen",
   "reading-plan-cadence-length_one": "Endet in {{count}} Tagen",
   "reading-plan-cadence-length_other": "Fertigstellung in {{count}} Tagen",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Speichern…",
   "reading-plan-draft-saved": "Entwurf gespeichert",
   "reading-plan-draft-save-failed": "Entwurf konnte nicht gespeichert werden",
-
   "reading-plan-scripture-remove": "Lesen entfernen",
   "reading-plan-create-submit": "Plan erstellen",
   "reading-plan-save-changes": "Änderungen speichern",
@@ -498,11 +489,8 @@
   "loading": "Laden…",
   "reading-plan-not-started": "Nicht gestartet",
   "reading-plan-start": "Startplan",
-
   "reading-plan-streak": "{{count}} -Tagesserie",
-
   "reading-plan-mark-complete": "Als erledigt markieren",
-
   "reading-plan-empty-sessions": "Dieser Plan enthält noch keine Messwerte.",
   "reading-plan-celebration-title": "Tag {{day}} abgeschlossen!",
   "reading-plan-complete-title": "Plan abgeschlossen!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Mark liest vollständig vor",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Diese Lesung gehört zu",
-
   "reading-plan-mark-passage-complete": "Markieren Sie {{passage}} als gelesen",
   "reading-plan-read-nudge-title": "Viel Spaß beim Lesen!",
   "reading-plan-read-nudge-toast": "Ist {{passage}} abgeschlossen?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Worum geht es in dieser Playlist?",
   "read-more": "Mehr lesen",
   "read-less": "Weniger lesen",
-
   "ask-to-switch-ui-language": "Bieten Sie an, die Sprache mit Übersetzung zu wechseln",
   "ai": "KI",
   "ai-edit-playlist": "Playlist mit KI bearbeiten",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} verwendete {{count}} Werkzeuge",
   "chat-tool-used_one": "{{name}} hat ein Werkzeug benutzt",
   "chat-tool-used_other": "{{name}} verwendete {{count}} Werkzeuge",
-
   "ai-context-button-label": "Aktiver KI-Kontext",
   "ai-context-tool-count": "{{count}} Werkzeuge",
   "annotation-conflict-title": "Diese Notiz wurde an zwei Stellen geändert.",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Kein Inhalt.",
   "annotation-conflict-confirm": "Bestätigen",
   "annotation-conflict-resolve-failed": "Diese Auswahl konnte nicht angewendet werden. Es wird ein neuer Versuch unternommen.",
-
   "annotation-sync-failed": "Die Notiz konnte nicht in Ihrem Konto gespeichert werden. Sie befindet sich noch auf diesem Gerät.",
   "create-menu": "Erstellen",
   "create-annotation-menu-item": "Anmerkung",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Die Anmerkung konnte nicht gespeichert werden.",
   "annotation-group-expand": "Gruppe erweitern",
   "annotation-group-collapse": "Gruppe zusammenbrechen",
-
   "notes": "Anmerkungen",
   "note": "Notiz",
   "show-more-verse-actions": "Weitere Aktionen anzeigen",
@@ -667,7 +650,6 @@
   "create-folder": "Ordner erstellen",
   "edit-bookmark": "Lesezeichen bearbeiten",
   "remove-bookmark-from-all-folders": "Aus allen Ordnern entfernen",
-
   "greeting-afternoon": "Guten Tag!",
   "greeting-afternoon-named": "Guten Tag, {{name}} !",
   "greeting-evening": "Guten Abend!",
@@ -677,5 +659,6 @@
   "greeting-night": "Gute Nacht!",
   "greeting-night-named": "Gute Nacht, {{name}} !",
   "annotation-override-banner": "Notizen werden im Konto Ihres Teams gespeichert und geladen.",
-  "annotation-override-save-to-my-account": "In meinem Konto speichern"
+  "annotation-override-save-to-my-account": "In meinem Konto speichern",
+  "session-url": "Sitzungs-URL"
 }

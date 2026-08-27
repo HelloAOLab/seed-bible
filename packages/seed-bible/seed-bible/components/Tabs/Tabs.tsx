@@ -166,17 +166,18 @@ function SessionSettingsModalContent(props: {
     Array.isArray(options.allowedDecorators) &&
     options.allowedDecorators.length > 0;
   const shareTranslation = options.shareTranslation;
+  const sessionUrl = getSessionUrl(session);
 
-  const idCopied = useSignal(false);
-  const copySessionId = () => {
+  const urlCopied = useSignal(false);
+  const copySessionUrl = () => {
     try {
-      navigator.clipboard.writeText(session.id);
-      idCopied.value = true;
+      navigator.clipboard.writeText(sessionUrl.href);
+      urlCopied.value = true;
       setTimeout(() => {
-        idCopied.value = false;
+        urlCopied.value = false;
       }, 1200);
     } catch (error) {
-      console.error("Failed to copy session ID.", error);
+      console.error("Failed to copy session URL.", error);
     }
   };
 
@@ -229,27 +230,30 @@ function SessionSettingsModalContent(props: {
   return (
     <div className="sb-session-settings">
       <div className="sb-session-settings-scroll">
-        <div className="sb-session-settings-id">
+        <div className="sb-session-settings-url">
           <span className="sb-session-settings-label">
-            {t("session-id", { defaultValue: "Session ID" })}
+            {t("session-url", { defaultValue: "Session URL" })}
           </span>
-          <div className="sb-session-settings-id-row">
-            <span className="sb-session-settings-id-value" title={session.id}>
-              {session.id}
+          <div className="sb-session-settings-url-row">
+            <span
+              className="sb-session-settings-url-value"
+              title={sessionUrl.href}
+            >
+              {sessionUrl.href}
             </span>
             <button
               type="button"
-              className="sb-session-settings-copy-id"
-              onClick={copySessionId}
+              className="sb-session-settings-copy-url"
+              onClick={copySessionUrl}
               aria-label={t("copy", { defaultValue: "Copy" })}
               title={
-                idCopied.value
+                urlCopied.value
                   ? t("copied", { defaultValue: "Copied" })
                   : t("copy", { defaultValue: "Copy" })
               }
             >
               <span className="material-symbols-outlined" aria-hidden="true">
-                {idCopied.value ? "check" : "content_copy"}
+                {urlCopied.value ? "check" : "content_copy"}
               </span>
             </button>
           </div>
