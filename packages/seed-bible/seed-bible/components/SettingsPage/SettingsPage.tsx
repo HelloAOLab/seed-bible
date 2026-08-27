@@ -677,7 +677,7 @@ function CustomizationVariantGallery(props: {
   return (
     <section className="sb-settings-section">
       <h3 className="sb-settings-subheading">
-        {t("variants", { defaultValue: "Variants" })}
+        {t("variants", { defaultValue: "Themes" })}
       </h3>
       <div
         className="sb-theme-ready-gallery"
@@ -2073,7 +2073,7 @@ function AllSettingsView(props: { state: SeedBibleState }) {
             <p>
               {t("colors-controlled-by-customization", {
                 defaultValue:
-                  "Colors are controlled by the active Customization. Change which variant you're using from Display & Theme.",
+                  "Colors are controlled by the active Customization. Change which theme you're using from Display & Theme.",
               })}
             </p>
             <button
@@ -2469,7 +2469,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
 
         <section className="sb-settings-section">
           <h3 className="sb-settings-subheading">
-            {t("variants", { defaultValue: "Variants" })}
+            {t("variants", { defaultValue: "Themes" })}
           </h3>
           <ul className="sb-settings-list">
             {record.variants.map((variant) => (
@@ -2502,7 +2502,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
                   <ContextMenuWithButton
                     buttonClassName="sb-extension-row-action-button"
                     aria-label={t("variant-options", {
-                      defaultValue: "Variant options",
+                      defaultValue: "Theme options",
                     })}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -2535,7 +2535,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
               className="sb-settings-action-button"
               onClick={handleAddVariant}
             >
-              {t("add-variant", { defaultValue: "Add variant" })}
+              {t("add-variant", { defaultValue: "Add theme" })}
             </button>
           </div>
         </section>
@@ -2761,7 +2761,7 @@ function CustomizationVariantEditSettingsView(props: {
           <div className="sb-settings-empty-state">
             <p>
               {t("variant-not-found", {
-                defaultValue: "This variant could not be found.",
+                defaultValue: "This theme could not be found.",
               })}
             </p>
           </div>
