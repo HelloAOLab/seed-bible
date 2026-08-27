@@ -2790,7 +2790,10 @@ function CustomizationEditExtensionsSettingsView(props: {
                 className="sb-settings-field-label"
                 htmlFor={`sb-customization-extension-${entry.id}`}
               >
-                {t("title", { ns: entry.id, defaultValue: entry.id })}
+                {
+                  // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+                  t("title", { ns: entry.id, defaultValue: entry.id })
+                }
               </label>
               <select
                 id={`sb-customization-extension-${entry.id}`}
