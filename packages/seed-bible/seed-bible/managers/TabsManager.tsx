@@ -12,6 +12,7 @@ import {
   parseReadingPath,
   stripBasePath,
 } from "./ReadingUrlPath";
+import { parseStaticPagePath } from "./StaticPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -362,6 +363,15 @@ export interface TabsManager {
 
   /** Selects a tab by ID. */
   selectTab: (tabId: string) => void;
+
+  /**
+   * Writes the currently selected tab's reading position to the URL even
+   * while sitting on a static page like "/en/about" — the escape hatch the
+   * tab-focus effect itself uses internally, exposed for anything else that
+   * needs to explicitly leave a static page (e.g. an About-page pane
+   * closing).
+   */
+  leaveStaticPage: () => void;
 }
 
 /**
@@ -643,13 +653,36 @@ export function createTabs(
    * and on tab switch / mount (replace) — never reactively off the underlying
    * position signals, so one navigation produces exactly one history entry.
    */
-  const commitSelectedTabToUrl = (options: { replace?: boolean } = {}) => {
+  const commitSelectedTabToUrl = (
+    options: { replace?: boolean; leaveStaticPage?: boolean } = {}
+  ) => {
     // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
     // translation/extension signals, and this runs inside a signals effect. If
     // those reads were tracked, the effect would re-run on every position
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
+      // Never overwrite a static page's own URL (e.g. "/en/about") with the
+      // reading position. This runs unconditionally on mount and on every
+      // UI-language change (see the effects below); without this guard, the
+      // very first hydration of a static page — and any later language
+      // switch while on it — would immediately replace the address bar with
+      // a reading URL, since a reading tab always exists underneath.
+      //
+      // `leaveStaticPage` is the escape hatch: a genuine tab-focus change (the
+      // user picked a different tab, or navigated via search) should win over
+      // this guard and take the user back to the reader — see the tab-focus
+      // effect below, the only caller that ever passes it.
+      if (
+        !options.leaveStaticPage &&
+        parseStaticPagePath(
+          navigation.currentUrl.peek().pathname,
+          navigation.basePath
+        )
+      ) {
+        return;
+      }
+
       const tab = selectedTab.peek();
       const nextQueryParams: Record<string, string | null> =
         tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
@@ -714,16 +747,26 @@ export function createTabs(
   // a `replace` so the URL reflects the newly-focused tab without adding a
   // history entry. Real navigations within the tab arrive via `onNavigate` and
   // push a single entry each.
+  let hasFocusedTabBefore = false;
   effect(() => {
     const readingState = selectedTab.value?.readingState;
     if (!readingState) {
       return undefined;
     }
 
+    // The first run is the initial mount — must not clobber a freshly loaded
+    // static page's own URL (e.g. "/en/about"), per the guard in
+    // `commitSelectedTabToUrl`. Every later run means the selected tab (or
+    // its content) actually changed after that — the user picked a different
+    // tab, or navigated via search — so it should leave a static page for the
+    // position now being shown instead of leaving it stuck behind the URL.
+    const leaveStaticPage = hasFocusedTabBefore;
+
     const dispose = readingState.onNavigate((options) =>
-      commitSelectedTabToUrl(options)
+      commitSelectedTabToUrl({ ...options, leaveStaticPage })
     );
-    commitSelectedTabToUrl({ replace: true });
+    commitSelectedTabToUrl({ replace: true, leaveStaticPage });
+    hasFocusedTabBefore = true;
     return dispose;
   });
 
@@ -980,6 +1023,17 @@ export function createTabs(
     selectedTabId.value = tabId;
   };
 
+  /**
+   * Writes the currently selected tab's reading position to the URL even
+   * while sitting on a static page like "/en/about" — the escape hatch the
+   * tab-focus effect itself uses internally, exposed for anything else that
+   * needs to explicitly leave a static page (e.g. an About-page pane
+   * closing).
+   */
+  const leaveStaticPage = () => {
+    commitSelectedTabToUrl({ replace: true, leaveStaticPage: true });
+  };
+
   return {
     defaultTranslation,
     tabs,
@@ -987,5 +1041,6 @@ export function createTabs(
     addTab,
     removeTab,
     selectTab,
+    leaveStaticPage,
   };
 }

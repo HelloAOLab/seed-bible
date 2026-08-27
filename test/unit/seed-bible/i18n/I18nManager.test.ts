@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   createI18nManager,
   getPreferredSupportedLanguage,
+  getUrlLanguage,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -361,5 +362,29 @@ describe("I18nManager URL <-> language sync", () => {
     expect(manager.language.value).toBe("fr");
     expect(nav.currentUrl.value.search).toBe("");
     expect(nav.currentUrl.value.pathname).toBe("/");
+  });
+});
+
+describe("getUrlLanguage", () => {
+  it("resolves the language segment of a reading path", () => {
+    expect(
+      getUrlLanguage(new URL("https://x.example/es/spa_onbv/john/3"), "")
+    ).toBe("es");
+  });
+
+  it("resolves the language segment of a static page path", () => {
+    expect(getUrlLanguage(new URL("https://x.example/es/about"), "")).toBe(
+      "es"
+    );
+  });
+
+  it("falls back to the legacy ?lang= param for anything else", () => {
+    expect(getUrlLanguage(new URL("https://x.example/?lang=fr"), "")).toBe(
+      "fr"
+    );
+  });
+
+  it("returns null when nothing in the URL names a language", () => {
+    expect(getUrlLanguage(new URL("https://x.example/"), "")).toBeNull();
   });
 });

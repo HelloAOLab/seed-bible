@@ -286,8 +286,6 @@ describe("tabs Share control", () => {
   });
 });
 
-
-
 describe("Sidebar self avatar", () => {
   let container: HTMLDivElement;
 

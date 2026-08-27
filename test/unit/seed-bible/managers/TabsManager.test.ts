@@ -1371,4 +1371,84 @@ describe("createTabs", () => {
       createBibleReadingStateSpy.mockRestore();
     }
   });
+
+  // Regression: a static page's URL (e.g. "/en/about") has no reading
+  // position of its own, but a reading tab is still created underneath it
+  // with default content. Without an explicit guard in
+  // `commitSelectedTabToUrl`, the effect that runs on mount would
+  // unconditionally rewrite the address bar to that default reading path,
+  // clobbering the static page's own URL the instant the app hydrates.
+  it("does not overwrite a static page's URL with the reading position on mount", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+  });
+
+  // Regression: the guard above must not block a genuine tab-focus change.
+  // Selecting a different (pre-existing) tab while viewing a static page is
+  // an explicit "go look at this tab" action — like a sidebar tab click —
+  // and should leave the static page for the position now being shown,
+  // rather than leaving the URL stuck on "/en/about" underneath it.
+  it("leaves a static page's URL when the user selects a different tab", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/about");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // Mount alone must still respect the guard.
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.selectTab("tab-2");
+
+    await waitFor(() => new URL(window.location.href).pathname !== "/en/about");
+    expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+  });
+
+  // `leaveStaticPage()` is the public escape hatch for callers outside the
+  // tab-focus effect itself (e.g. the About page's pane closing) that need
+  // to force the same "leave a static page" commit on demand, rather than
+  // waiting for the selected tab to actually change.
+  it("leaveStaticPage() writes the selected tab's position even with no tab-selection change", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.leaveStaticPage();
+
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
+  });
 });

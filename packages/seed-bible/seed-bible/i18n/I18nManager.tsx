@@ -16,6 +16,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
+import { parseStaticPagePath } from "../managers/StaticPagePath";
 import type { BrandingConfig } from "../app/appConfig";
 
 function getLanguageName(importPath: string): string {
@@ -152,13 +153,19 @@ export function getPreferredSupportedLanguage(
  * and an omitted one canonically means `DEFAULT_UI_LANGUAGE` — that's the
  * meaning of the 3-segment "fully default" form, not "detect from the
  * browser" (browser-based detection only applies to a bare `/` with no
- * reading path at all, via `getInitialLanguage`). Falls back to the legacy
- * `?lang=` query param for a non-reading-path URL.
+ * reading path at all, via `getInitialLanguage`). Next, a static page path
+ * (e.g. "/es/about") always names its language explicitly. Falls back to the
+ * legacy `?lang=` query param for anything else.
  */
 export function getUrlLanguage(url: URL, basePath: string): string | null {
   const parsed = parseReadingPath(url.pathname, basePath);
   if (parsed) {
     return parsed.language ?? DEFAULT_UI_LANGUAGE;
+  }
+
+  const staticPage = parseStaticPagePath(url.pathname, basePath);
+  if (staticPage) {
+    return staticPage.language;
   }
 
   const urlLang = url.searchParams.get("lang");

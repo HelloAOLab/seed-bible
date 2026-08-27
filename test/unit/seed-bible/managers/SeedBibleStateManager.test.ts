@@ -1,4 +1,7 @@
-import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  ABOUT_PANE_ID,
+  type SeedBibleState,
+} from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type {
   Translation,
   TranslationBooks,
@@ -1572,6 +1575,107 @@ describe("createSeedBibleState", () => {
       expect(state.app.title.value).toBe(
         `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
+    });
+  });
+
+  describe("about page", () => {
+    it("recognizes the /{lang}/about URL and branches every meta signal", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+      const state = await createState();
+
+      expect(state.app.isAboutPage.value).toBe(true);
+      expect(state.app.title.value).toBe("About Seed Bible | Seed Bible");
+      expect(state.app.description.value).toBe(
+        "Seed Bible is a free Bible app built for reading Scripture together with your family, friends, and community — free forever, no ads or paywalls."
+      );
+      expect(state.app.socialTitle.value).toBe("About Seed Bible");
+      expect(state.app.canonicalUrl.value).toBe("/en/about");
+    });
+
+    it("does not treat an ordinary reading URL as the About page", async () => {
+      const state = await createState();
+
+      expect(state.app.isAboutPage.value).toBe(false);
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
+      expect(state.app.title.value).toBe("Genesis 1 - ESV | Seed Bible");
+    });
+
+    it("registers a real fullscreen pane while on /en/about", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+      const state = await createState();
+
+      const pane = state.panes.panes.value.find(
+        (candidate) => candidate.id === ABOUT_PANE_ID
+      );
+      expect(pane).toBeDefined();
+      expect(pane?.placement).toBe("fullscreen");
+    });
+
+    it("selecting a different tab closes the About pane and leaves the page, per the same rule as any fullscreen pane", async () => {
+      window.localStorage.clear();
+      window.history.replaceState(null, "", "/en/about");
+      window.localStorage.setItem(
+        "sb-tabs-state",
+        JSON.stringify({
+          version: 1,
+          tabs: [
+            {
+              id: "tab-1",
+              translationId: "AAB",
+              bookId: "GEN",
+              chapterNumber: 1,
+            },
+            {
+              id: "tab-2",
+              translationId: "NIV",
+              bookId: "MAT",
+              chapterNumber: 1,
+            },
+          ],
+          selectedTabId: "tab-1",
+          layout: "split-2v",
+          slotTabIds: ["tab-1", "tab-2"],
+          selectedSlotIndex: 0,
+        })
+      );
+      const state = await createState();
+
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(true);
+
+      state.app.selectTab("tab-2");
+
+      await waitFor(() => state.app.isAboutPage.value === false);
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(false);
+      expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+
+      window.localStorage.clear();
+    });
+
+    it("closing the About pane's own close button leaves the page for the selected tab", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com/en/about?useFreeBibleAPI=true",
+      });
+      const state = await createState();
+
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(true);
+
+      state.panes.closePane(ABOUT_PANE_ID, "user");
+
+      await waitFor(() => state.app.isAboutPage.value === false);
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === ABOUT_PANE_ID)
+      ).toBe(false);
+      expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
     });
   });
 
