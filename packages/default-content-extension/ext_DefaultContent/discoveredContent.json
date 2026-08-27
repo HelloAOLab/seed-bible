@@ -1,0 +1,50 @@
+[
+  {
+    "id": "bethel-where-jacob-met-god",
+    "title": "BETHEL: Where Jacob Met God",
+    "author": "Expedition Bible",
+    "description": "Join Joel at the ancient site of Bethel, modern-day Beitin. In Genesis 28, the Bible tells the story of Jacob dreaming about a stairway coming down from heaven with angels ascending and descending. What is the significance of that dream? Watch to find out!",
+    "url": "https://youtu.be/8cqBePFD9S4?si=n4X9Jm95cqp-v2Ml",
+    "references": [
+      {
+        "book": "GEN",
+        "chapter": 28
+      }
+    ]
+  },
+  {
+    "id": "the-discovery-of-joshua-s-great-witness-stone-at-shechem",
+    "title": "The Discovery of Joshua's Great Witness Stone at Shechem",
+    "author": "Expedition Bible",
+    "description": "Join Joel at the ruins of ancient Shechem, where Joshua, after renewing the covenant with Israel, erected “a large stone and set it up under the oak near the holy place of the LORD.” (Joshua 9:26) Listen to the story of how this very stone was found…and almost lost…through archaeology.",
+    "url": "https://youtu.be/mnis257Rd3E?si=hfERp1Sl_JnqkjFP",
+    "references": [
+      {
+        "book": "JOS",
+        "chapter": 9,
+        "verse": 26
+      }
+    ]
+  },
+  {
+    "id": "the-problem-of-joshua-s-ai-solved",
+    "title": "The Problem of Joshua's Ai...SOLVED!",
+    "author": "Expedition Bible",
+    "description": "The Battle of Ai is a pivotal story in the Bible and has traditionally been understood to have occurred at the ancient site called Et Tell. In modern times, however, archaeology has identified what it calls \"The Problem of Ai,\" claiming that the pottery timeline at Et Tell doesn't match the Bible's timeline, casting doubt on whether the story is true or not. Watch today's video to understand why the details in the Bible easily line up with the archaeology of the site. \"The Problem of Ai\" is no problem at all!",
+    "url": "https://youtu.be/lK7GQxkEkKk?si=PJiecoCdevpj3WgU",
+    "references": [
+      {
+        "book": "JOS",
+        "chapter": 7,
+        "verse": 1,
+        "endVerse": 15
+      },
+      {
+        "book": "JOS",
+        "chapter": 8,
+        "verse": 1,
+        "endVerse": 29
+      }
+    ]
+  }
+]
