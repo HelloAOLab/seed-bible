@@ -262,11 +262,17 @@ function MainContent(props: {
           os={state.os}
           toast={state.app.toast}
           className={`${webkitClass}`}
+          customizationName={
+            state.customizations.activeCustomization.value?.name
+          }
         />
 
         <TutorialPrompt
           tutorial={state.tutorial}
           className={`${webkitClass}`}
+          customizationName={
+            state.customizations.activeCustomization.value?.name
+          }
         />
 
         <OfflineDownloadPrompt

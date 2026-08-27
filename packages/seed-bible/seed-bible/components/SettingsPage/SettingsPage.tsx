@@ -1374,14 +1374,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                 // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
                 t("title", { ns: id, defaultValue: id }),
                 t,
-                branding
+                branding,
+                customizations.activeCustomization.value?.name
               )}
             </span>
             <span className="sb-extension-description">
               {getBrandedAppText(
                 t("description", { ns: id, defaultValue: "" }),
                 t,
-                branding
+                branding,
+                customizations.activeCustomization.value?.name
               )}
             </span>
           </div>

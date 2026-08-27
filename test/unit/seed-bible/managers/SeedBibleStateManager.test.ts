@@ -1573,6 +1573,70 @@ describe("createSeedBibleState", () => {
         `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
     });
+
+    it("uses the active customization's name in place of the app name", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", "Genesis", 7, "ESV");
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Seed Bible");
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            themes: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Grandma's Bible");
+
+      state.customizations.editingCustomization.value = null;
+
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Seed Bible");
+    });
+  });
+
+  describe("siteName tag", () => {
+    it("defaults to the app name", async () => {
+      const state = await createState();
+
+      expect(state.app.siteName.value).toBe("Seed Bible");
+    });
+
+    it("uses the active customization's name in place of the app name", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            themes: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.siteName.value).toBe("Grandma's Bible");
+    });
   });
 
   describe("meta description", () => {

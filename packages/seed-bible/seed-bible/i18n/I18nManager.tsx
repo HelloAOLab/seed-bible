@@ -66,8 +66,16 @@ export function addTranslations(
   }
 }
 type TranslationFn = (key: string, options?: Record<string, unknown>) => string;
-function getAppName(t: TranslationFn, branding?: BrandingConfig): string {
-  return branding?.appName ?? t("seed-bible", { defaultValue: "Seed Bible" });
+function getAppName(
+  t: TranslationFn,
+  branding?: BrandingConfig,
+  customizationName?: string | null
+): string {
+  return (
+    customizationName ??
+    branding?.appName ??
+    t("seed-bible", { defaultValue: "Seed Bible" })
+  );
 }
 
 /**
@@ -77,14 +85,16 @@ function getAppName(t: TranslationFn, branding?: BrandingConfig): string {
  * @param text The text in which to replace "Seed Bible" with the branded app name.
  * @param t The translation function to use for retrieving the branded app name. This is typically obtained from the i18n manager.
  * @param branding The branding configuration that may contain a custom app name. If not provided, the default app name "Seed Bible" will be used.
+ * @param customizationName The name of the active Customization (loaded via a `?customization=...` link, or previewed in its editor), if any. Takes priority over `branding.appName` — a customization's own name is a more specific override than the deployment's default branding.
  * @returns
  */
 export function getBrandedAppText(
   text: string,
   t: TranslationFn,
-  branding?: BrandingConfig
+  branding?: BrandingConfig,
+  customizationName?: string | null
 ): string {
-  const appName = getAppName(t, branding);
+  const appName = getAppName(t, branding, customizationName);
   return text.replace(/Seed Bible/gi, appName);
 }
 // /**

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   createI18nManager,
+  getBrandedAppText,
   getPreferredSupportedLanguage,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
@@ -361,5 +362,55 @@ describe("I18nManager URL <-> language sync", () => {
     expect(manager.language.value).toBe("fr");
     expect(nav.currentUrl.value.search).toBe("");
     expect(nav.currentUrl.value.pathname).toBe("/");
+  });
+});
+
+describe("getBrandedAppText", () => {
+  const t = (key: string, options?: Record<string, unknown>) =>
+    (options?.defaultValue as string | undefined) ?? key;
+
+  it("uses the default app name when no branding or customization name is given", () => {
+    expect(getBrandedAppText("Welcome to Seed Bible", t)).toBe(
+      "Welcome to Seed Bible"
+    );
+  });
+
+  it("substitutes the branding config's app name when set", () => {
+    expect(
+      getBrandedAppText("Welcome to Seed Bible", t, {
+        appName: "Acme Bible",
+      } as any)
+    ).toBe("Welcome to Acme Bible");
+  });
+
+  it("prefers the active customization's name over the branding config's app name", () => {
+    expect(
+      getBrandedAppText(
+        "Welcome to Seed Bible",
+        t,
+        { appName: "Acme Bible" } as any,
+        "Grandma's Bible"
+      )
+    ).toBe("Welcome to Grandma's Bible");
+  });
+
+  it("uses the customization name even when there is no branding config at all", () => {
+    expect(
+      getBrandedAppText(
+        "Welcome to Seed Bible",
+        t,
+        undefined,
+        "Grandma's Bible"
+      )
+    ).toBe("Welcome to Grandma's Bible");
+  });
+
+  it("falls back to branding/default when the customization name is null or undefined", () => {
+    expect(getBrandedAppText("Welcome to Seed Bible", t, undefined, null)).toBe(
+      "Welcome to Seed Bible"
+    );
+    expect(
+      getBrandedAppText("Welcome to Seed Bible", t, undefined, undefined)
+    ).toBe("Welcome to Seed Bible");
   });
 });

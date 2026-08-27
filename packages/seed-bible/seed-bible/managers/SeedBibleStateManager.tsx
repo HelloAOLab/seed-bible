@@ -1155,7 +1155,8 @@ export function createSeedBibleState(
     const seedBibleTitle = getBrandedAppText(
       t("seed-bible", { defaultValue: "Seed Bible" }),
       t,
-      branding
+      branding,
+      customizations.activeCustomization.value?.name
     );
 
     const getTitle = () => {
@@ -1235,7 +1236,8 @@ export function createSeedBibleState(
     return getBrandedAppText(
       t("seed-bible", { defaultValue: "Seed Bible" }),
       t,
-      branding
+      branding,
+      customizations.activeCustomization.value?.name
     );
   });
 
