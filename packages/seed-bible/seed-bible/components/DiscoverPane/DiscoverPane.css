@@ -316,6 +316,7 @@
 .sb-discover-item-content {
   font-size: 0.8125rem;
   margin-top: 4px;
+  max-width: 100%;
 }
 
 .sb-annotations-pending-sync {
