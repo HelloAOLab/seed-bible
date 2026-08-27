@@ -148,7 +148,6 @@ const customizationSchema = z
     variants: z.array(customizationVariantSchema).min(1),
     defaultVariantId: z.string().min(1),
     logoUrl: z.url().max(1024).optional().nullable(),
-    active: z.boolean(),
     createdAt: z.number(),
     updatedAt: z.number(),
     /**
@@ -184,7 +183,6 @@ export interface SeedBibleCustomization {
   /** The variant id shown to a viewer who hasn't picked one for this customization yet. Always references an entry in `variants`. */
   defaultVariantId: string;
   logoUrl?: string | null;
-  active: boolean;
   createdAt: number;
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry defaults to "available". */
@@ -386,7 +384,14 @@ function buildVariant(
 export interface CustomizationsManager {
   customizations: Signal<SeedBibleCustomization[]>;
   isLoading: Signal<boolean>;
-  /** The customization currently applied to the live theme, if any. Prefers the in-progress edit draft over the persisted record when they're the same customization, so unsaved color edits preview live. */
+  /**
+   * The customization currently applied to the live theme, if any. There
+   * are exactly two ways for one to become active: the in-progress edit
+   * draft, if one is open (so unsaved edits preview live), or a
+   * `?customization=...` share link. The draft takes priority, so opening
+   * an editor always previews that customization even if a different one
+   * was loaded via the URL.
+   */
   activeCustomization: ReadonlySignal<SeedBibleCustomization | null>;
   /** The variant of the active customization currently in effect (viewer's own pick, else the customization's default, else its first variant). */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
@@ -405,8 +410,8 @@ export interface CustomizationsManager {
   activeExtensionIds: ReadonlySignal<string[]>;
   /**
    * A customization loaded via the `?customization={recordName}.{id}` share
-   * link, if any. Takes priority over the signed-in user's own active
-   * customization in `activeCustomization`.
+   * link, if any. Used by `activeCustomization` whenever there's no
+   * in-progress edit draft open.
    */
   linkedCustomization: ReadonlySignal<SeedBibleCustomization | null>;
   /**
@@ -427,8 +432,6 @@ export interface CustomizationsManager {
   stopEditing: () => void;
   /** Persists `editingCustomization` and upserts it into `customizations`. No-op if there's no draft or the user is signed out. */
   saveEditingCustomization: () => Promise<void>;
-  setActive: (id: string) => Promise<void>;
-  deactivate: (id: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
   /** Uploads the file, stages the resulting URL onto the open draft, and immediately persists it (unlike every other draft field, which waits for an explicit Save). */
   uploadLogo: (file: File) => Promise<void>;
@@ -534,33 +537,27 @@ export function createCustomizationsManager(
     void loadByLocator(initialLocator);
   }
 
-  const activeCustomization = computed<SeedBibleCustomization | null>(() => {
-    if (linkedCustomization.value) {
-      return linkedCustomization.value;
-    }
-    const own = customizations.value.find((c) => c.active) ?? null;
-    if (!own) {
-      return null;
-    }
-    // Prefer the in-progress edit draft for display purposes, so unsaved
-    // color/variant edits preview live on the app while it's still active —
-    // "don't save after every change" is about the network write, not the
-    // live preview. Nothing is persisted here; only saveEditingCustomization
-    // writes to CasualOS.
-    const draft = editingCustomization.value;
-    return draft && draft.id === own.id ? draft : own;
-  });
+  // The only two ways for a customization to become "active" (applied to
+  // the live theme): an in-progress edit draft, or a `?customization=...`
+  // share link. The draft wins when both are present — nothing is persisted
+  // by opening an editor, so previewing your own edits should never be
+  // blocked by whatever happened to be loaded from the URL.
+  const activeCustomization = computed<SeedBibleCustomization | null>(
+    () => editingCustomization.value ?? linkedCustomization.value
+  );
 
   const activeCustomizationLocator = computed<string | null>(() => {
+    const draft = editingCustomization.value;
+    if (draft) {
+      const recordName = login.userId.value;
+      return recordName
+        ? buildCustomizationLocator(recordName, draft.id)
+        : null;
+    }
     if (linkedCustomization.value) {
       return linkedCustomizationLocator.value;
     }
-    const own = customizations.value.find((c) => c.active);
-    if (!own) {
-      return null;
-    }
-    const recordName = login.userId.value;
-    return recordName ? buildCustomizationLocator(recordName, own.id) : null;
+    return null;
   });
 
   const activeExtensionIds = computed<string[]>(() => {
@@ -663,7 +660,6 @@ export function createCustomizationsManager(
       variants: [variant],
       defaultVariantId: variant.id,
       logoUrl: null,
-      active: false,
       createdAt: now,
       updatedAt: now,
       extensionSettings: {},
@@ -700,26 +696,6 @@ export function createCustomizationsManager(
       ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
       : [...customizations.value, saved];
     editingCustomization.value = saved;
-  };
-
-  // Only used by setActive/deactivate/remove, which stay immediate (they're
-  // one-click actions, not staged field edits).
-  const updateRecord = async (
-    id: string,
-    patch: (record: SeedBibleCustomization) => SeedBibleCustomization
-  ): Promise<SeedBibleCustomization | null> => {
-    const userId = login.userId.value;
-    const existing = customizations.value.find((c) => c.id === id);
-    if (!userId || !existing) {
-      return null;
-    }
-
-    const updated = patch(existing);
-    await persist(userId, updated);
-    customizations.value = customizations.value.map((c) =>
-      c.id === id ? updated : c
-    );
-    return updated;
   };
 
   const updateEditingName = (name: string): void => {
@@ -882,61 +858,6 @@ export function createCustomizationsManager(
     };
   };
 
-  const setActive = async (id: string): Promise<void> => {
-    const target = customizations.value.find((c) => c.id === id);
-    if (!target) {
-      return;
-    }
-
-    const previouslyActive = customizations.value.find(
-      (c) => c.active && c.id !== id
-    );
-    if (previouslyActive) {
-      await updateRecord(previouslyActive.id, (record) => ({
-        ...record,
-        active: false,
-        updatedAt: Date.now(),
-      }));
-      if (editingCustomization.value?.id === previouslyActive.id) {
-        editingCustomization.value = {
-          ...editingCustomization.value,
-          active: false,
-        };
-      }
-    }
-
-    await updateRecord(id, (record) => ({
-      ...record,
-      active: true,
-      updatedAt: Date.now(),
-    }));
-    if (editingCustomization.value?.id === id) {
-      editingCustomization.value = {
-        ...editingCustomization.value,
-        active: true,
-      };
-    }
-  };
-
-  const deactivate = async (id: string): Promise<void> => {
-    const existing = customizations.value.find((c) => c.id === id);
-    if (!existing?.active) {
-      return;
-    }
-
-    await updateRecord(id, (record) => ({
-      ...record,
-      active: false,
-      updatedAt: Date.now(),
-    }));
-    if (editingCustomization.value?.id === id) {
-      editingCustomization.value = {
-        ...editingCustomization.value,
-        active: false,
-      };
-    }
-  };
-
   const remove = async (id: string): Promise<void> => {
     const userId = login.userId.value;
     const existing = customizations.value.find((c) => c.id === id);
@@ -1078,8 +999,6 @@ export function createCustomizationsManager(
     startEditing,
     stopEditing,
     saveEditingCustomization,
-    setActive,
-    deactivate,
     remove,
     uploadLogo,
     getShareLink,

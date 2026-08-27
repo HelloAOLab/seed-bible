@@ -2254,11 +2254,6 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
                   <span className="sb-settings-nav-label">
                     {customization.name}
                   </span>
-                  {customization.active && (
-                    <span className="sb-customization-active-badge">
-                      {t("active", { defaultValue: "Active" })}
-                    </span>
-                  )}
                   <ContextMenuWithButton
                     buttonClassName="sb-extension-row-action-button"
                     aria-label={t("customization-options", {
@@ -2586,24 +2581,6 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
           >
             {t("share", { defaultValue: "Share" })}
           </button>
-
-          {record.active ? (
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => void customizations.deactivate(record.id)}
-            >
-              {t("deactivate", { defaultValue: "Deactivate" })}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              onClick={() => void customizations.setActive(record.id)}
-            >
-              {t("set-as-active", { defaultValue: "Set as active" })}
-            </button>
-          )}
 
           {confirmingDelete.value ? (
             <button

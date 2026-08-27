@@ -179,7 +179,6 @@ describe("CustomizationsManager", () => {
               },
             ],
             defaultVariantId: "variant_1",
-            active: false,
             createdAt: 1,
             updatedAt: 1,
           },
@@ -206,7 +205,6 @@ describe("CustomizationsManager", () => {
             name: "Old shape",
             themes: { primaryColor: "#111111" },
             logoUrl: null,
-            active: false,
             createdAt: 1,
             updatedAt: 1,
           },
@@ -219,6 +217,42 @@ describe("CustomizationsManager", () => {
 
     expect(warnSpy).toHaveBeenCalled();
     expect(manager.customizations.value).toEqual([]);
+  });
+
+  it("load() accepts a record still carrying the old `active` field and simply ignores it", async () => {
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [
+        {
+          address: "customization_pre-active-removal",
+          data: {
+            id: "customization_pre-active-removal",
+            name: "Pre-active-removal",
+            variants: [
+              {
+                id: "variant_a",
+                name: "Default",
+                themes: { primaryColor: "#111111" },
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            ],
+            defaultVariantId: "variant_a",
+            logoUrl: null,
+            active: true,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ],
+    });
+    const { manager } = createManager();
+
+    await manager.load();
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(manager.customizations.value).toHaveLength(1);
+    expect(manager.customizations.value[0]).not.toHaveProperty("active");
   });
 
   it("load() defaults extensionSettings to {} for a record persisted before the field existed", async () => {
@@ -241,7 +275,6 @@ describe("CustomizationsManager", () => {
             ],
             defaultVariantId: "variant_a",
             logoUrl: null,
-            active: false,
             createdAt: 1,
             updatedAt: 1,
             // No extensionSettings field at all.
@@ -282,7 +315,6 @@ describe("CustomizationsManager", () => {
             ],
             defaultVariantId: "variant_a",
             logoUrl: null,
-            active: false,
             createdAt: 1,
             updatedAt: 1,
           },
@@ -306,7 +338,6 @@ describe("CustomizationsManager", () => {
 
     const created = await manager.create();
 
-    expect(created.active).toBe(false);
     expect(created.variants).toHaveLength(1);
     expect(created.defaultVariantId).toBe(created.variants[0]?.id);
     expect(created.variants[0]?.name).toBe(theme.basePresetTheme.value.name);
@@ -701,21 +732,16 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value).toBeNull();
   });
 
-  it("setEditingVariantColor() on a non-active customization is not reflected in the live theme, before or after saving", async () => {
-    const { manager, theme } = createManager();
-    const created = await manager.create();
-    const variantId = created.variants[0]!.id;
-    manager.startEditing(created.id);
+  it("merely creating a customization doesn't make it active — activeThemeOverrides stays empty until it's edited or linked", async () => {
+    const { manager } = createManager();
+    await manager.create();
+    await manager.create();
 
-    manager.setEditingVariantColor(variantId, "primaryColor", "#123456");
-    expect(manager.activeThemeOverrides.value.primaryColor).toBeUndefined();
-
-    await manager.saveEditingCustomization();
-    expect(manager.activeThemeOverrides.value.primaryColor).toBeUndefined();
-    expect(theme.customOverrides.value.primaryColor).toBeUndefined();
+    expect(manager.activeCustomization.value).toBeNull();
+    expect(manager.activeThemeOverrides.value).toEqual({});
   });
 
-  it("setActive() applies the draft's unsaved colors to the live theme without persisting them to the user's theme settings", async () => {
+  it("startEditing() immediately previews the draft's unsaved colors on the live theme without persisting them to the user's theme settings", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
@@ -723,96 +749,54 @@ describe("CustomizationsManager", () => {
     manager.setEditingVariantColor(variantId, "primaryColor", "#111111");
     manager.setEditingVariantColor(variantId, "fontColor", "#222222");
 
-    await manager.setActive(created.id);
-
-    expect(manager.customizations.value[0]?.active).toBe(true);
-    // The unsaved draft edits preview live once the customization is active
-    // — "don't save after every change" is about the network write, not the
-    // live preview.
+    // Opening the editor is itself enough to become the active
+    // customization — there's no separate "make it active" step.
+    expect(manager.activeCustomization.value?.id).toBe(created.id);
     expect(manager.activeThemeOverrides.value.primaryColor).toBe("#111111");
     expect(manager.activeThemeOverrides.value.fontColor).toBe("#222222");
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe(
       lightenColor("#111111", SECONDARY_LIGHTEN_AMOUNT)
     );
-    // Regression check: activating a customization must never write into the
-    // user's persisted, settings-backed theme overrides — only refreshing
-    // this in-memory signal.
+    // Regression check: none of this may ever write into the user's
+    // persisted, settings-backed theme overrides — only this in-memory
+    // signal.
     expect(theme.customOverrides.value).toEqual({});
   });
 
-  it("setActive() syncs editingCustomization.active only when it's the customization being edited", async () => {
-    const { manager } = createManager();
-    const editing = await manager.create();
-    const other = await manager.create();
-    manager.startEditing(editing.id);
-
-    await manager.setActive(other.id);
-
-    expect(manager.editingCustomization.value?.active).toBe(false);
-
-    await manager.setActive(editing.id);
-
-    expect(manager.editingCustomization.value?.active).toBe(true);
-  });
-
-  it("setActive() deactivates the previously active customization", async () => {
+  it("activeCustomization switches to whichever customization is currently being edited", async () => {
     const { manager } = createManager();
     const first = await manager.create();
     const second = await manager.create();
 
-    await manager.setActive(first.id);
-    await manager.setActive(second.id);
+    manager.startEditing(first.id);
+    expect(manager.activeCustomization.value?.id).toBe(first.id);
 
-    const firstNow = manager.customizations.value.find(
-      (c) => c.id === first.id
-    );
-    const secondNow = manager.customizations.value.find(
-      (c) => c.id === second.id
-    );
-    expect(firstNow?.active).toBe(false);
-    expect(secondNow?.active).toBe(true);
+    manager.startEditing(second.id);
+    expect(manager.activeCustomization.value?.id).toBe(second.id);
   });
 
-  it("setEditingVariantColor() on the active customization's variant also previews the change live, without persisting it to the user's theme", async () => {
+  it("stopEditing() resets the live theme's overrides", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
-    const variantId = created.variants[0]!.id;
-    await manager.setActive(created.id);
     manager.startEditing(created.id);
-
-    manager.setEditingVariantColor(variantId, "secondaryColor", "#abcdef");
-
+    manager.setEditingVariantColor(
+      created.variants[0]!.id,
+      "secondaryColor",
+      "#abcdef"
+    );
     expect(manager.activeThemeOverrides.value.secondaryColor).toBe("#abcdef");
-    expect(theme.customOverrides.value.secondaryColor).toBeUndefined();
-  });
 
-  it("deactivate() resets the live theme's overrides", async () => {
-    const { manager, theme } = createManager();
-    const created = await manager.create();
-    await manager.setActive(created.id);
+    manager.stopEditing();
 
-    await manager.deactivate(created.id);
-
-    expect(manager.customizations.value[0]?.active).toBe(false);
+    expect(manager.activeCustomization.value).toBeNull();
     expect(manager.activeThemeOverrides.value).toEqual({});
     expect(theme.customOverrides.value).toEqual({});
   });
 
-  it("deactivate() syncs editingCustomization.active when editing the deactivated customization", async () => {
-    const { manager } = createManager();
-    const created = await manager.create();
-    await manager.setActive(created.id);
-    manager.startEditing(created.id);
-
-    await manager.deactivate(created.id);
-
-    expect(manager.editingCustomization.value?.active).toBe(false);
-  });
-
-  it("remove() erases the record and resets the live theme if it was active", async () => {
+  it("remove() erases the record and resets the live theme if it was being edited", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
-    await manager.setActive(created.id);
+    manager.startEditing(created.id);
 
     await manager.remove(created.id);
 
@@ -1029,8 +1013,6 @@ describe("CustomizationsManager", () => {
     manager.setEditingDefaultVariant(second!.id);
     await manager.saveEditingCustomization();
 
-    await manager.setActive(created.id);
-
     expect(manager.activeVariant.value?.id).toBe(second!.id);
     expect(manager.activeThemeOverrides.value).toEqual(second!.themes);
   });
@@ -1041,7 +1023,6 @@ describe("CustomizationsManager", () => {
     manager.startEditing(created.id);
     const second = manager.addEditingVariant();
     await manager.saveEditingCustomization();
-    await manager.setActive(created.id);
     recordDataMock.mockClear();
 
     await manager.selectActiveVariant(second!.id);
@@ -1080,7 +1061,6 @@ describe("CustomizationsManager", () => {
     manager.startEditing(created.id);
     manager.setEditingExtensionAvailability("ext.base", "auto-installed");
     await manager.saveEditingCustomization();
-    await manager.setActive(created.id);
 
     expect(manager.activeExtensionIds.value).toEqual(["ext.base"]);
 
@@ -1100,7 +1080,6 @@ describe("CustomizationsManager", () => {
     const created = await manager.create();
     manager.startEditing(created.id);
     await manager.saveEditingCustomization();
-    await manager.setActive(created.id);
     await manager.addExtensionToActiveCustomization("ext.was-available");
 
     expect(manager.activeExtensionIds.value).toEqual(["ext.was-available"]);
@@ -1120,7 +1099,6 @@ describe("CustomizationsManager", () => {
     manager.startEditing(created.id);
     manager.setEditingExtensionAvailability("ext.hidden", "hidden");
     await manager.saveEditingCustomization();
-    await manager.setActive(created.id);
     recordDataMock.mockClear();
 
     await manager.addExtensionToActiveCustomization("ext.hidden");
@@ -1137,7 +1115,7 @@ describe("CustomizationsManager", () => {
   it("addExtensionToActiveCustomization()/removeExtensionFromActiveCustomization() persist to the viewer's own extension-preferences record, not the customization's own record", async () => {
     const { manager } = createManager();
     const created = await manager.create();
-    await manager.setActive(created.id);
+    manager.startEditing(created.id);
     recordDataMock.mockClear();
 
     await manager.addExtensionToActiveCustomization("ext.extra");
@@ -1190,7 +1168,6 @@ describe("CustomizationsManager", () => {
       ],
       defaultVariantId: "variant_shared",
       logoUrl: null,
-      active: false,
       createdAt: 1,
       updatedAt: 1,
     };
@@ -1215,7 +1192,7 @@ describe("CustomizationsManager", () => {
     expect(manager.activeCustomization.value?.extensionSettings).toEqual({});
   });
 
-  it("a locator-loaded customization takes priority over the signed-in user's own active customization", async () => {
+  it("an in-progress edit draft takes priority over a URL-linked customization", async () => {
     const sharedRecord = {
       id: "customization_shared",
       name: "Shared",
@@ -1230,7 +1207,6 @@ describe("CustomizationsManager", () => {
       ],
       defaultVariantId: "variant_shared",
       logoUrl: null,
-      active: false,
       createdAt: 1,
       updatedAt: 1,
     };
@@ -1241,11 +1217,15 @@ describe("CustomizationsManager", () => {
     });
     const { manager } = createManager(linkedNavigation);
     const ownCustomization = await manager.create();
-    await manager.setActive(ownCustomization.id);
     await Promise.resolve();
     await Promise.resolve();
-
+    // Confirm the link actually resolved first, so the next assertion is
+    // proving the draft overrides it, not just that the link never loaded.
     expect(manager.activeCustomization.value?.id).toBe("customization_shared");
+
+    manager.startEditing(ownCustomization.id);
+
+    expect(manager.activeCustomization.value?.id).toBe(ownCustomization.id);
   });
 
   it("loadByLocator() ignores a malformed locator", async () => {
