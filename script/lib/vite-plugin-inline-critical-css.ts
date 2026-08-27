@@ -20,8 +20,9 @@ const VIRTUAL_ID_PREFIX = "\0inline-critical-css:";
 
 /**
  * Marks `*.inline.css` files (currently `base.inline.css`,
- * `BibleReader.inline.css`, `BibleReaderToolbar.inline.css` — the CSS needed
- * to correctly paint the first-visible content) as build-time-only critical
+ * `BibleReader.inline.css`, `BibleReaderToolbar.inline.css`,
+ * `BibleSelector.inline.css` — the CSS needed to correctly paint the
+ * first-visible content) as build-time-only critical
  * CSS: their minified content is baked directly into `index.html` instead of
  * the regular external stylesheet, and that stylesheet's `<link>` is made
  * non-blocking, since first paint no longer depends on it.
