@@ -1433,4 +1433,22 @@ describe("createTabs", () => {
     await waitFor(() => new URL(window.location.href).pathname !== "/en/about");
     expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
   });
+
+  // `leaveStaticPage()` is the public escape hatch for callers outside the
+  // tab-focus effect itself (e.g. the About page's pane closing) that need
+  // to force the same "leave a static page" commit on demand, rather than
+  // waiting for the selected tab to actually change.
+  it("leaveStaticPage() writes the selected tab's position even with no tab-selection change", async () => {
+    window.history.replaceState(null, "", "/en/about");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+
+    manager.leaveStaticPage();
+
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
+  });
 });

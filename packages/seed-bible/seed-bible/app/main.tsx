@@ -39,7 +39,6 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
-import { AboutPage } from "../components/AboutPage/AboutPage";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 
 /**
@@ -197,14 +196,6 @@ function MainContent(props: {
           {sidePane && <SidePane state={state} pane={sidePane} />}
           {fullscreenPane && (
             <FullscreenPane state={state} pane={fullscreenPane} />
-          )}
-          {state.app.isAboutPage.value && (
-            <div
-              className="sb-pane-shell sb-pane-shell-detached"
-              data-placement="fullscreen"
-            >
-              <AboutPage state={state} />
-            </div>
           )}
         </div>
 

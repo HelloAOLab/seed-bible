@@ -7,11 +7,18 @@ const CHANGELOG_URL =
 const DONATE_URL = "https://better.giving/marketplace/1118469";
 const DISCORD_URL = "https://discord.com/invite/NbEZMCJmqC";
 
+/** The pane header title for the About page (see `SeedBibleStateManager.tsx`). */
+export function AboutPaneTitle() {
+  const { t } = useI18n();
+  return <>{t("about-title", { defaultValue: "About Seed Bible" })}</>;
+}
+
 /**
  * The "/{lang}/about" page — a static, crawlable primer on what the Seed
- * Bible is, why it's being built, and what it can do. Rendered in place of
- * the reader chrome (see `MainContent` in `app/main.tsx`) rather than as
- * another pane or modal, since it needs its own indexable URL.
+ * Bible is, why it's being built, and what it can do. Rendered as a real
+ * fullscreen pane (see `SeedBibleStateManager.tsx`'s About pane wiring),
+ * which supplies its own header/close button, so this component owns only
+ * the letter content and its actions — not a page-level title bar.
  */
 export function AboutPage({
   state,
@@ -19,16 +26,10 @@ export function AboutPage({
   state: ReturnType<typeof createSeedBibleState>;
 }) {
   const { t } = useI18n();
-  const { navigation, selector, tutorial } = state;
+  const { selector, tutorial } = state;
 
   return (
     <main className="sb-about-page" role="main">
-      <header className="sb-about-header">
-        <a className="sb-about-home-link" href={`${navigation.basePath}/`}>
-          {t("seed-bible", { defaultValue: "Seed Bible" })}
-        </a>
-      </header>
-
       <article className="sb-about-content">
         <h1>{t("about-title", { defaultValue: "About Seed Bible" })}</h1>
 

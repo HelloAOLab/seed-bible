@@ -363,6 +363,15 @@ export interface TabsManager {
 
   /** Selects a tab by ID. */
   selectTab: (tabId: string) => void;
+
+  /**
+   * Writes the currently selected tab's reading position to the URL even
+   * while sitting on a static page like "/en/about" — the escape hatch the
+   * tab-focus effect itself uses internally, exposed for anything else that
+   * needs to explicitly leave a static page (e.g. an About-page pane
+   * closing).
+   */
+  leaveStaticPage: () => void;
 }
 
 /**
@@ -1014,6 +1023,17 @@ export function createTabs(
     selectedTabId.value = tabId;
   };
 
+  /**
+   * Writes the currently selected tab's reading position to the URL even
+   * while sitting on a static page like "/en/about" — the escape hatch the
+   * tab-focus effect itself uses internally, exposed for anything else that
+   * needs to explicitly leave a static page (e.g. an About-page pane
+   * closing).
+   */
+  const leaveStaticPage = () => {
+    commitSelectedTabToUrl({ replace: true, leaveStaticPage: true });
+  };
+
   return {
     defaultTranslation,
     tabs,
@@ -1021,5 +1041,6 @@ export function createTabs(
     addTab,
     removeTab,
     selectTab,
+    leaveStaticPage,
   };
 }

@@ -1,25 +1,14 @@
 /* About page --------------------------------------------------------------- */
 
+/* The pane chrome (`.sb-pane-detached-body`/`.sb-pane-component` in
+   PaneLayout.css) already provides scrolling and sizes this to fill the
+   pane body, so this only needs to fill that box, not size/scroll itself. */
 .sb-about-page {
   width: 100%;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  height: 100%;
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
-}
-
-.sb-about-header {
-  padding: 1.5rem 1.5rem 0;
-}
-
-.sb-about-home-link {
-  font-family: var(--sb-book-title-font-family), serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--sb-font-color);
-  text-decoration: none;
 }
 
 .sb-about-content {

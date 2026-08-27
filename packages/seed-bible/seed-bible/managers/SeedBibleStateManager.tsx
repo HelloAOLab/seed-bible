@@ -19,6 +19,7 @@ import {
   type TodayManager,
 } from "../managers/TodayManager";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
   buildStaticPagePath,
   parseStaticPagePath,
@@ -176,6 +177,9 @@ export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
  */
 const APP_META_DESCRIPTION =
   "Read, search, and study the Bible online. Free translations in many languages, with highlights, notes, bookmarks, and reading plans.";
+
+/** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
+export const ABOUT_PANE_ID = "about-page-pane";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -1064,9 +1068,10 @@ export function createSeedBibleState(
 
   /**
    * Whether the current URL is a static, non-reading page (currently just
-   * "/{lang}/about"). Drives the page-level component swap in `main.tsx` and
-   * the meta-signal branches below \u2014 a single source of truth so the
-   * rendered content and its title/description/canonical always agree.
+   * "/{lang}/about"). Drives the About fullscreen-pane's open/close effect
+   * below and the meta-signal branches further down \u2014 a single source of
+   * truth so the rendered content and its title/description/canonical
+   * always agree.
    */
   const isAboutPage = computed(
     () =>
@@ -2239,6 +2244,38 @@ export function createSeedBibleState(
     );
     if (!paneOpen && today.isOpen.peek()) {
       today.close();
+    }
+  });
+
+  const renderAboutPane = () => <AboutPage state={state} />;
+  const renderAboutPaneTitle = () => <AboutPaneTitle />;
+
+  effect(() => {
+    if (isAboutPage.value) {
+      panes.openPane({
+        id: ABOUT_PANE_ID,
+        placement: "fullscreen",
+        title: renderAboutPaneTitle,
+        component: renderAboutPane,
+      });
+    } else {
+      panes.closePane(ABOUT_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // Unlike Today's `isOpen` (a plain writable boolean), `isAboutPage` is a
+  // read-only computed derived from the URL — closing the pane can't just
+  // flip a signal back. Instead, leave "/about" for the current tab's
+  // reading position, mirroring how a genuine tab-focus change already does
+  // (see TabsManager.leaveStaticPage). This fires whether the pane was
+  // closed via its header's close button, `closeFullscreenPanes()` (e.g.
+  // selecting a tab), or displacement by another fullscreen pane.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === ABOUT_PANE_ID
+    );
+    if (!paneOpen && isAboutPage.peek()) {
+      tabs.leaveStaticPage();
     }
   });
 
