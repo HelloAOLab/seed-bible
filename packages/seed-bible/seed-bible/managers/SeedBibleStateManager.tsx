@@ -51,6 +51,7 @@ import {
   type PersistedTab,
 } from "../managers/TabsPersistence";
 import {
+  applyHighlightOverrides,
   generateThemeCssVariables,
   createTheme,
   generateThemeCssClasses,
@@ -715,13 +716,21 @@ export function createSeedBibleState(
   // user's actual theme, decoupled from whichever Customization is active.
   const theme = computed(() => {
     const overrides = customizations.activeThemeOverrides.value;
-    if (Object.keys(overrides).length === 0) {
-      return currentTheme.value;
-    }
-    return {
-      ...currentTheme.value,
-      variables: { ...currentTheme.value.variables, ...overrides },
-    };
+    const withVariableOverrides =
+      Object.keys(overrides).length === 0
+        ? currentTheme.value
+        : {
+            ...currentTheme.value,
+            variables: { ...currentTheme.value.variables, ...overrides },
+          };
+    // A no-op when the active variant has no highlight overrides of its
+    // own — falls through to the user's own persisted highlight colors
+    // (already baked into `currentTheme`), same as the variable overrides
+    // above do for everything else.
+    return applyHighlightOverrides(
+      withVariableOverrides,
+      customizations.activeHighlightOverrides.value
+    );
   });
   const themeCssVariables = computed(() =>
     generateThemeCssVariables(theme.value)

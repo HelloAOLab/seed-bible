@@ -979,13 +979,18 @@ export type HighlightId = (typeof DEFAULT_HIGHLIGHT_IDS)[number];
 export type ThemeOverrides = Partial<
   Record<ThemeColorKey | ThemeFontFamilyKey, string>
 >;
-type HighlightOverrides = Record<string, Partial<ThemeHighlightColor>>;
+export type HighlightOverrides = Record<string, Partial<ThemeHighlightColor>>;
 
 const THEME_COLOR_KEYS: ThemeColorKey[] = THEME_COLOR_GROUPS.flatMap((group) =>
   group.fields.map((field) => field.key)
 );
 
-function applyHighlightOverrides(
+/**
+ * Merges per-highlight-id color overrides onto a theme's own highlight
+ * colors, filling in any field an override omits from that theme's existing
+ * value. A no-op (returns `theme` unchanged) when `overrides` is empty.
+ */
+export function applyHighlightOverrides(
   theme: BibleTheme,
   overrides: HighlightOverrides
 ): BibleTheme {

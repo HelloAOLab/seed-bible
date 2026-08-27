@@ -1587,6 +1587,7 @@ describe("createSeedBibleState", () => {
             id: "variant_test",
             name: "Default",
             themes: {},
+            highlightColors: {},
             createdAt: 0,
             updatedAt: 0,
           },
@@ -1624,6 +1625,7 @@ describe("createSeedBibleState", () => {
             id: "variant_test",
             name: "Default",
             themes: {},
+            highlightColors: {},
             createdAt: 0,
             updatedAt: 0,
           },
@@ -1636,6 +1638,48 @@ describe("createSeedBibleState", () => {
       };
 
       expect(state.app.siteName.value).toBe("Grandma's Bible");
+    });
+  });
+
+  describe("customization highlight-color overrides", () => {
+    it("layers the active customization variant's highlight overrides onto the rendered theme, leaving untouched ids alone", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            themes: {},
+            highlightColors: { yellow: { color: "#123456" } },
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.theme.themeCssVariables.value).toContain(
+        "--sb-highlight-yellow-color: #123456;"
+      );
+      // An id the customization's variant doesn't override still shows the
+      // base theme's own value — the merge is per-id, not a wholesale
+      // replace of every highlight color.
+      expect(state.theme.themeCssVariables.value).toContain(
+        "--sb-highlight-green-color: #a5d6a7;"
+      );
+
+      state.customizations.editingCustomization.value = null;
+
+      expect(state.theme.themeCssVariables.value).not.toContain(
+        "--sb-highlight-yellow-color: #123456;"
+      );
     });
   });
 

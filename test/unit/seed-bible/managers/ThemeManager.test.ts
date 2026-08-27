@@ -1,4 +1,5 @@
 import {
+  applyHighlightOverrides,
   createTheme as createThemeManager,
   filterValidFontFamilyOverrides,
   generateThemeCssClasses,
@@ -141,6 +142,66 @@ describe("filterValidFontFamilyOverrides", () => {
     expect(filterValidFontFamilyOverrides({ primaryColor: "#111111" })).toEqual(
       {}
     );
+  });
+});
+
+describe("applyHighlightOverrides", () => {
+  function highlightTheme(): BibleTheme {
+    return {
+      id: "test-theme",
+      name: "Test Theme",
+      variables: {} as BibleTheme["variables"],
+      highlightColors: {
+        yellow: {
+          color: "#fff59d",
+          fontColor: "#333333",
+          wordsOfJesusFontColor: "#b45309",
+        },
+        mint: {
+          color: "#86efac",
+          fontColor: "#14532d",
+          wordsOfJesusFontColor: "#166534",
+        },
+      },
+    } as unknown as BibleTheme;
+  }
+
+  it("returns the theme unchanged when there are no overrides", () => {
+    const theme = highlightTheme();
+
+    expect(applyHighlightOverrides(theme, {})).toBe(theme);
+  });
+
+  it("merges a partial override onto the theme's own value for that id, leaving omitted fields as they were", () => {
+    const merged = applyHighlightOverrides(highlightTheme(), {
+      yellow: { color: "#ff0000" },
+    });
+
+    expect(merged.highlightColors.yellow).toEqual({
+      color: "#ff0000",
+      fontColor: "#333333",
+      wordsOfJesusFontColor: "#b45309",
+    });
+  });
+
+  it("leaves a highlight id with no override in the set completely untouched", () => {
+    const merged = applyHighlightOverrides(highlightTheme(), {
+      yellow: { color: "#ff0000" },
+    });
+
+    expect(merged.highlightColors.mint).toEqual({
+      color: "#86efac",
+      fontColor: "#14532d",
+      wordsOfJesusFontColor: "#166534",
+    });
+  });
+
+  it("does not mutate the original theme object", () => {
+    const theme = highlightTheme();
+
+    applyHighlightOverrides(theme, { yellow: { color: "#ff0000" } });
+
+    expect(theme.highlightColors.yellow?.color).toBe("#fff59d");
   });
 });
 

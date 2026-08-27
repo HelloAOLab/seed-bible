@@ -290,6 +290,43 @@ describe("CustomizationsManager", () => {
     expect(manager.customizations.value[0]?.extensionSettings).toEqual({});
   });
 
+  it("load() defaults a variant's highlightColors to {} for a record persisted before the field existed", async () => {
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [
+        {
+          address: "customization_pre-highlights",
+          data: {
+            id: "customization_pre-highlights",
+            name: "Pre-highlights",
+            variants: [
+              {
+                id: "variant_a",
+                name: "Default",
+                themes: { primaryColor: "#111111" },
+                createdAt: 1,
+                updatedAt: 1,
+                // No highlightColors field at all.
+              },
+            ],
+            defaultVariantId: "variant_a",
+            logoUrl: null,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ],
+    });
+    const { manager } = createManager();
+
+    await manager.load();
+
+    expect(manager.customizations.value).toHaveLength(1);
+    expect(
+      manager.customizations.value[0]?.variants[0]?.highlightColors
+    ).toEqual({});
+  });
+
   it("load() narrows a variant's persisted themes to known color and font-family keys, dropping anything else", async () => {
     listAllDataByMarkerMock.mockResolvedValue({
       success: true,
@@ -403,6 +440,11 @@ describe("CustomizationsManager", () => {
     );
     expect(created.variants[0]?.themes.hebrewSubtitleFontFamily).toBe(
       lightThemeVariables.hebrewSubtitleFontFamily
+    );
+    // Highlight colors are seeded from the current theme too, one full
+    // {color, fontColor, wordsOfJesusFontColor} entry per highlight id.
+    expect(created.variants[0]?.highlightColors).toEqual(
+      theme.currentTheme.value.highlightColors
     );
     const seededKeys = Object.keys(created.variants[0]!.themes);
     for (const field of CUSTOMIZATION_COLOR_FIELDS) {
@@ -733,6 +775,83 @@ describe("CustomizationsManager", () => {
     expect(untouchedB?.themes).toEqual(variantB!.themes);
   });
 
+  it("setEditingVariantHighlightColor() patches one highlight id's colors on the draft without persisting, then persists it on save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#123456",
+    });
+
+    expect(
+      manager.editingCustomization.value?.variants[0]?.highlightColors.yellow
+        ?.color
+    ).toBe("#123456");
+    expect(
+      manager.customizations.value[0]?.variants[0]?.highlightColors.yellow
+        ?.color
+    ).not.toBe("#123456");
+
+    await manager.saveEditingCustomization();
+
+    expect(
+      manager.customizations.value[0]?.variants[0]?.highlightColors.yellow
+        ?.color
+    ).toBe("#123456");
+  });
+
+  it("setEditingVariantHighlightColor() merges a patch onto the existing entry, leaving other fields for that same id alone", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    const originalFontColor =
+      created.variants[0]!.highlightColors.yellow!.fontColor;
+    manager.startEditing(created.id);
+
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#123456",
+    });
+
+    expect(
+      manager.editingCustomization.value?.variants[0]?.highlightColors.yellow
+    ).toEqual({
+      color: "#123456",
+      fontColor: originalFontColor,
+      wordsOfJesusFontColor:
+        created.variants[0]!.highlightColors.yellow!.wordsOfJesusFontColor,
+    });
+  });
+
+  it("setEditingVariantHighlightColor() on one variant never touches a sibling variant's highlight colors", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const variantA = manager.editingCustomization.value!.variants[0]!;
+    const variantB = manager.addEditingVariant();
+    expect(variantB).not.toBeNull();
+
+    manager.setEditingVariantHighlightColor(variantA.id, "yellow", {
+      color: "#123456",
+    });
+
+    const record = manager.editingCustomization.value!;
+    const untouchedB = record.variants.find((v) => v.id === variantB!.id);
+    expect(untouchedB?.highlightColors).toEqual(variantB!.highlightColors);
+  });
+
+  it("setEditingVariantHighlightColor() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+
+    manager.setEditingVariantHighlightColor(created.variants[0]!.id, "yellow", {
+      color: "#123456",
+    });
+
+    expect(manager.editingCustomization.value).toBeNull();
+  });
+
   it("setEditingVariantFont() no-ops when there is no open draft", async () => {
     const { manager } = createManager();
     const created = await manager.create();
@@ -775,6 +894,34 @@ describe("CustomizationsManager", () => {
     // persisted, settings-backed theme overrides — only this in-memory
     // signal.
     expect(theme.customOverrides.value).toEqual({});
+  });
+
+  it("activeHighlightOverrides reflects the active variant's highlight colors, and resets to {} once editing stops", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+    manager.startEditing(created.id);
+
+    // Newly created variants seed a full highlight-color set from the live
+    // theme, so the active overrides already match it before any edit.
+    expect(manager.activeHighlightOverrides.value).toEqual(
+      theme.currentTheme.value.highlightColors
+    );
+
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#123456",
+    });
+
+    expect(manager.activeHighlightOverrides.value.yellow?.color).toBe(
+      "#123456"
+    );
+    // Regression check: same as activeThemeOverrides, this must never write
+    // into the user's persisted, settings-backed highlight overrides.
+    expect(theme.customHighlightOverrides.value).toEqual({});
+
+    manager.stopEditing();
+
+    expect(manager.activeHighlightOverrides.value).toEqual({});
   });
 
   it("activeCustomization switches to whichever customization is currently being edited", async () => {
@@ -926,6 +1073,9 @@ describe("CustomizationsManager", () => {
     );
     expect(added!.themes.readerBackground).toBe(
       theme.currentTheme.value.variables.readerBackground
+    );
+    expect(added!.highlightColors).toEqual(
+      theme.currentTheme.value.highlightColors
     );
     const seededKeys = Object.keys(added!.themes);
     for (const field of CUSTOMIZATION_COLOR_FIELDS) {

@@ -2969,6 +2969,70 @@ function CustomizationVariantEditSettingsView(props: {
           ))}
         </div>
 
+        <div className="sb-theme-colors-group">
+          <h3 className="sb-settings-subheading">
+            {t("highlight-colors", { defaultValue: "Highlight colors" })}
+          </h3>
+          <ul className="sb-theme-colors-list">
+            {DEFAULT_HIGHLIGHT_IDS.map((id) => {
+              const highlight = variant.highlightColors[id];
+              const bg = highlight?.color ?? "";
+              const fg = highlight?.fontColor ?? "";
+              const label = id.charAt(0).toUpperCase() + id.slice(1);
+              return (
+                <li key={id} className="sb-theme-color-row">
+                  <div className="sb-theme-color-row-main">
+                    <span
+                      className="sb-highlight-preview-pill"
+                      style={{ background: bg, color: fg }}
+                      aria-hidden="true"
+                    >
+                      {label}
+                    </span>
+                    <span className="sb-theme-color-value">{bg || "—"}</span>
+                  </div>
+                  <div className="sb-theme-color-row-controls">
+                    <input
+                      type="color"
+                      className="sb-theme-color-input"
+                      value={toHexInputValue(bg)}
+                      aria-label={t("id_highlight-background-color", { id })}
+                      title={t("highlight-background-color", {
+                        defaultValue: "Highlight background color",
+                      })}
+                      onInput={(event: Event) => {
+                        const target = event.currentTarget as HTMLInputElement;
+                        customizations.setEditingVariantHighlightColor(
+                          variant.id,
+                          id,
+                          { color: target.value }
+                        );
+                      }}
+                    />
+                    <input
+                      type="color"
+                      className="sb-theme-color-input"
+                      value={toHexInputValue(fg)}
+                      aria-label={t("id_highlight-text-color", { id })}
+                      title={t("highlight-text-color", {
+                        defaultValue: "Highlight text color",
+                      })}
+                      onInput={(event: Event) => {
+                        const target = event.currentTarget as HTMLInputElement;
+                        customizations.setEditingVariantHighlightColor(
+                          variant.id,
+                          id,
+                          { fontColor: target.value }
+                        );
+                      }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
         <div className="sb-settings-actions">
           <button
             type="button"

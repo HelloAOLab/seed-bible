@@ -15,9 +15,11 @@ import {
   filterValidColorOverrides,
   filterValidFontFamilyOverrides,
   LIGHT_THEME_FONT_DEFAULTS,
-  type BibleThemeVariables,
+  type BibleTheme,
+  type HighlightOverrides,
   type ThemeColorKey,
   type ThemeFontFamilyKey,
+  type ThemeHighlightColor,
   type ThemeManager,
   type ThemeOverrides,
 } from "./ThemeManager";
@@ -113,10 +115,24 @@ export function lightenColor(hex: string, amount: number): string {
 export const SECONDARY_LIGHTEN_AMOUNT = 0.35;
 export const TERTIARY_LIGHTEN_AMOUNT = 0.55;
 
+const customizationVariantHighlightColorSchema = z.object({
+  color: z.string().optional(),
+  fontColor: z.string().optional(),
+  wordsOfJesusFontColor: z.string().optional(),
+});
+
 const customizationVariantSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   themes: z.record(z.string(), z.string()),
+  /**
+   * Per-highlight-id color overrides, in the same shape as `ThemeManager`'s
+   * own `HighlightOverrides` — keyed by highlight id (e.g. "yellow"), each
+   * entry a partial `{ color, fontColor, wordsOfJesusFontColor }` patch.
+   */
+  highlightColors: z
+    .record(z.string(), customizationVariantHighlightColorSchema)
+    .default({}),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
@@ -171,6 +187,8 @@ export interface CustomizationThemeVariant {
   name: string;
   /** Color overrides in the same shape as `ThemeManager`'s own `ThemeOverrides`. */
   themes: ThemeOverrides;
+  /** Per-highlight-id color overrides, in the same shape as `ThemeManager`'s own `HighlightOverrides`. */
+  highlightColors: HighlightOverrides;
   createdAt: number;
   updatedAt: number;
 }
@@ -206,6 +224,7 @@ function narrowVariants(
     id: string;
     name: string;
     themes: Record<string, string>;
+    highlightColors: HighlightOverrides;
     createdAt: number;
     updatedAt: number;
   }[]
@@ -348,9 +367,10 @@ export function buildCustomFontValue(name: string): string {
 
 function buildVariant(
   name: string,
-  currentVariables: BibleThemeVariables
+  currentTheme: BibleTheme
 ): CustomizationThemeVariant {
   const now = Date.now();
+  const currentVariables = currentTheme.variables;
   const primaryColor = currentVariables.primaryColor;
   const themes: ThemeOverrides = {
     primaryColor,
@@ -376,10 +396,15 @@ function buildVariant(
       themes[field.key] = value;
     }
   }
+  const highlightColors: HighlightOverrides = {};
+  for (const [id, colors] of Object.entries(currentTheme.highlightColors)) {
+    highlightColors[id] = { ...colors };
+  }
   return {
     id: `variant_${uuid()}`,
     name,
     themes,
+    highlightColors,
     createdAt: now,
     updatedAt: now,
   };
@@ -405,6 +430,12 @@ export interface CustomizationsManager {
    * `SettingsManager` — a refresh always reverts to the user's real theme.
    */
   activeThemeOverrides: ReadonlySignal<ThemeOverrides>;
+  /**
+   * The active variant's per-highlight-id color overrides, session-only —
+   * same lifetime and rendering path as `activeThemeOverrides`, just for
+   * highlight colors instead of flat theme variables.
+   */
+  activeHighlightOverrides: ReadonlySignal<HighlightOverrides>;
   /**
    * The extension ids that should be installed while the active
    * customization is in effect: its own `auto-installed` extensions,
@@ -457,6 +488,12 @@ export interface CustomizationsManager {
     variantId: string,
     key: ThemeFontFamilyKey,
     value: string
+  ) => void;
+  /** Patches one highlight id's color overrides on the draft's variant. Fields omitted from `patch` are left as they were. */
+  setEditingVariantHighlightColor: (
+    variantId: string,
+    highlightId: string,
+    patch: Partial<ThemeHighlightColor>
   ) => void;
   setEditingDefaultVariant: (variantId: string) => void;
   /** Removes a variant from the draft. No-op if it's the only remaining variant. */
@@ -608,6 +645,10 @@ export function createCustomizationsManager(
     () => activeVariant.value?.themes ?? {}
   );
 
+  const activeHighlightOverrides = computed<HighlightOverrides>(
+    () => activeVariant.value?.highlightColors ?? {}
+  );
+
   const load = async () => {
     const userId = login.userId.value;
     if (!userId) {
@@ -656,7 +697,7 @@ export function createCustomizationsManager(
     const now = Date.now();
     const variant = buildVariant(
       theme.basePresetTheme.value.name,
-      theme.currentTheme.value.variables
+      theme.currentTheme.value
     );
     const record: SeedBibleCustomization = {
       id: `customization_${uuid()}`,
@@ -721,7 +762,7 @@ export function createCustomizationsManager(
     const name = usedNames.has(baseName)
       ? `Variant ${current.variants.length + 1}`
       : baseName;
-    const variant = buildVariant(name, theme.currentTheme.value.variables);
+    const variant = buildVariant(name, theme.currentTheme.value);
 
     editingCustomization.value = {
       ...current,
@@ -823,6 +864,35 @@ export function createCustomizationsManager(
             }
           : variant
       ),
+      updatedAt: Date.now(),
+    };
+  };
+
+  const setEditingVariantHighlightColor = (
+    variantId: string,
+    highlightId: string,
+    patch: Partial<ThemeHighlightColor>
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      variants: current.variants.map((variant) => {
+        if (variant.id !== variantId) {
+          return variant;
+        }
+        const existing = variant.highlightColors[highlightId] ?? {};
+        return {
+          ...variant,
+          highlightColors: {
+            ...variant.highlightColors,
+            [highlightId]: { ...existing, ...patch },
+          },
+          updatedAt: Date.now(),
+        };
+      }),
       updatedAt: Date.now(),
     };
   };
@@ -993,6 +1063,7 @@ export function createCustomizationsManager(
     activeCustomization,
     activeVariant,
     activeThemeOverrides,
+    activeHighlightOverrides,
     activeExtensionIds,
     linkedCustomization,
     editingCustomization,
@@ -1012,6 +1083,7 @@ export function createCustomizationsManager(
     renameEditingVariant,
     setEditingVariantColor,
     setEditingVariantFont,
+    setEditingVariantHighlightColor,
     setEditingDefaultVariant,
     removeEditingVariant,
     selectActiveVariant,
