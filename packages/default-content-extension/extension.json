@@ -4,7 +4,9 @@
   "translations": {
     "en": {
       "title": "Seed Bible Default Content",
-      "description": "Discover content selected by the Seed Bible authors."
+      "description": "Discover content selected by the Seed Bible authors.",
+      "content-by-author": "By {{author}}",
+      "content-watch-link": "Watch"
     }
   }
 }
