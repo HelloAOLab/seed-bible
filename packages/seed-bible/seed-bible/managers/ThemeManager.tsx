@@ -653,10 +653,10 @@ const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#e6e6e6",
+    primaryColor: "#e07b4c",
     primaryFontColor: "#111111",
 
-    secondaryColor: "#262626",
+    secondaryColor: "#433228",
     secondaryFontColor: "#f5f5f5",
 
     tertiaryColor: "#1c1c1c",

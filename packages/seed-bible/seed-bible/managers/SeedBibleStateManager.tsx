@@ -120,7 +120,11 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
-import { createI18nManager, type I18nManager } from "../i18n";
+import {
+  createI18nManager,
+  getBrandedAppText,
+  type I18nManager,
+} from "../i18n";
 import {
   createOnboardingManager,
   type OnboardingManager,
@@ -1079,9 +1083,11 @@ export function createSeedBibleState(
 
     const { t } = i18n;
 
-    const seedBibleTitle = t("seed-bible", {
-      defaultValue: "Seed Bible",
-    });
+    const seedBibleTitle = getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding
+    );
 
     const getTitle = () => {
       if (isAboutPage.value) {
@@ -1171,9 +1177,11 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    return t("seed-bible", {
-      defaultValue: "Seed Bible",
-    });
+    return getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding
+    );
   });
 
   /**

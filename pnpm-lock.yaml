@@ -454,6 +454,12 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/house-of-the-lord:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
   packages/locations-extension:
     dependencies:
       seed-bible:
