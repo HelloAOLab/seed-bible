@@ -689,6 +689,16 @@ describe("BibleReaderToolbar mobile More menu", () => {
   }> {
     const state = await createTestSeedBibleState();
 
+    // `viewportWidth` seeds to match the server's UA-based guess (never
+    // `window.innerWidth`) so a hydrate pass can't mismatch — see
+    // `SeedBibleStateManager.tsx`. The real correction happens once, from a
+    // post-mount effect that calls `applyViewport()`; the closest
+    // equivalent here is the same `resize` dispatch the sibling describe
+    // block above already uses.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
     await act(async () => {
       render(
         <TestHost state={state}>

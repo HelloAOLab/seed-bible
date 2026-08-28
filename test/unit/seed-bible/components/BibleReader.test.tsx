@@ -178,6 +178,7 @@ function createFixture(): ReaderFixture {
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null
     ),
@@ -569,6 +570,37 @@ describe("BibleReader", () => {
 
     expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
       "Exodus"
+    );
+  });
+
+  it("shows the loaded chapter's book name, not the raw book id, while the book catalog hasn't arrived yet", () => {
+    // The catalog (`translationBooks`) and the chapter fetch load
+    // independently (see `loadInitialData`'s comment on the content effect
+    // firing off the raw position signals before the catalog-backed check
+    // completes) — so it's possible for the chapter to settle, as it has
+    // here, while the catalog is still null. Before the fix `currentBook`
+    // fell straight back to the raw id ("GEN") in that case; it should fall
+    // back to the loaded chapter's own book record instead.
+    const { slot, selectorState, readingState } = createFixture();
+    (
+      readingState.translationBooks as Signal<
+        BibleReadingState["translationBooks"]["value"]
+      >
+    ).value = null;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
     );
   });
 

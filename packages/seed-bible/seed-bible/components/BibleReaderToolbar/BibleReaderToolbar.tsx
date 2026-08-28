@@ -1,4 +1,4 @@
-import "./BibleReaderToolbar.css";
+import "./BibleReaderToolbar.inline.css";
 import { effect, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -570,6 +570,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   if (!readingState.value) {
     return null;
+  }
+
+  // `BibleReaderToolbar` is a sibling of `<TabsLayout>` (which contains
+  // `BibleReader`), not a descendant of it — `BibleReader.tsx` suspending on
+  // its own chapter load does nothing for this component, since
+  // `preact-render-to-string` only defers the specific subtree that actually
+  // threw. Without this, the tools below (`hasNext`/`hasPrevious`-driven
+  // chapter nav buttons among them) render off of whatever `chapterData`/
+  // `translationBooks` happen to hold on the very first synchronous pass —
+  // typically nothing yet — baking incorrect availability into the SSR HTML
+  // that a live client would never show.
+  if (
+    import.meta.env.SSR &&
+    !readingState.value.initialChapterLoadSettled.value
+  ) {
+    throw readingState.value.chapterDataPromise;
   }
 
   const viewportWidth = props.state.app.viewportWidth;
@@ -1713,6 +1729,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             aria-label={translateTitle(t, prev.title)}
+                            data-tool-id={prev.id}
                           >
                             <PrevIcon />
                           </button>
@@ -1766,6 +1783,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             aria-label={translateTitle(t, next.title)}
+                            data-tool-id={next.id}
                           >
                             <NextIcon />
                           </button>
@@ -2015,6 +2033,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selectedToolbarToolId.value = null;
                         tool.onSelect();
                       }}
+                      data-tool-id={tool.id}
                       className="sb-reader-toolbar-button"
                       aria-label={label}
                     >

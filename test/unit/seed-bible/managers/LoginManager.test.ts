@@ -141,10 +141,19 @@ describe("createLoginManager", () => {
     warnSpy.mockRestore();
   });
 
-  /** Persists a session key so a freshly-created manager authenticates on init. */
+  /**
+   * Persists a session key so a freshly-created manager authenticates on
+   * init, and — mirroring the real app's post-mount `hydrateLocalConfig()`
+   * call, which always runs well before a user can complete an actual login
+   * — hydrates `localConfig` from storage immediately, so login/adoption
+   * behavior can be tested against real saved local config the same way it
+   * would run in practice.
+   */
   function createAuthenticatedManager(): LoginManager {
     localStorage.setItem("sessionKey", SESSION_KEY);
-    return createLoginManager({ os });
+    const manager = createLoginManager({ os });
+    manager.hydrateLocalConfig();
+    return manager;
   }
 
   describe("login flow", () => {
@@ -1265,7 +1274,7 @@ describe("createLoginManager", () => {
   });
 
   describe("localConfig (anonymous device-local config)", () => {
-    it("reads a previously-saved local config on construction", () => {
+    it("starts empty on construction, matching SSR's lack of localStorage, even with a saved config on disk", () => {
       localStorage.setItem(
         "sb-profile-config-local",
         JSON.stringify({ fontSize: "XL" })
@@ -1273,7 +1282,47 @@ describe("createLoginManager", () => {
 
       const manager = createLoginManager({ os });
 
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("hydrateLocalConfig() applies a previously-saved local config", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL" })
+      );
+
+      const manager = createLoginManager({ os });
+      manager.hydrateLocalConfig();
+
       expect(manager.localConfig.value).toEqual({ fontSize: "XL" });
+    });
+
+    it("hydrateLocalConfig() merges the disk read under the current in-memory value, not over it", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL", uiSize: "L" })
+      );
+      const manager = createLoginManager({ os });
+      manager.hydrateLocalConfig();
+      // Sets fontSize in memory (and, via the persist effect, on disk too).
+      manager.localConfig.value = { fontSize: "S", uiSize: "L" };
+
+      // Simulate disk changing out from under this instance (e.g. another
+      // tab writing concurrently) without going through this manager, so
+      // the in-memory value above is untouched by it.
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL", newKey: "z" })
+      );
+      manager.hydrateLocalConfig();
+
+      // The in-memory fontSize ("S") wins over disk's stale value ("XL");
+      // disk's new key is still picked up; the in-memory-only key survives.
+      expect(manager.localConfig.value).toEqual({
+        fontSize: "S",
+        newKey: "z",
+        uiSize: "L",
+      });
     });
 
     it("persists localConfig writes to localStorage", () => {

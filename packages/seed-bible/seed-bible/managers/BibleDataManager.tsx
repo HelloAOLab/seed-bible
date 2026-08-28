@@ -32,6 +32,21 @@ export interface MergeTranslationsOptions {
 export interface BibleDataManager {
   endpoints: Signal<string[]>;
   availableTranslations: Signal<Translation[]>;
+  /**
+   * Whether the full multi-translation catalog (`getTranslations`) has ever
+   * been fetched (or restored from a prior visit's cache) this session.
+   *
+   * `availableTranslations` alone can't answer that: a normal chapter load
+   * only ever merges in the *one* translation it's reading, via
+   * `getTranslationBooks` — see `BibleReadingManager.loadInitialData`, which
+   * validates a URL-named translation against its own book catalog instead
+   * of downloading the full list just to confirm an ID that's already known.
+   * So `availableTranslations.value.length > 0` is true well before the full
+   * catalog has ever been requested. Callers that need "is every translation
+   * known yet" (the translation selector, a UI-language switch picking a new
+   * default translation) must check this instead of the list's length.
+   */
+  catalogLoaded: Signal<boolean>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
 
@@ -99,6 +114,15 @@ export interface BibleDataManager {
    * @param translationId The ID of the translation.
    */
   buildTranslationId: (translationId: string) => string;
+
+  /**
+   * Applies the previous visit's `localStorage`-cached translation catalog and
+   * endpoint map. Call once from a post-mount effect (via
+   * `AppState.hydrateFromStorage`) — reading it at construction would make a
+   * returning visitor's first render disagree with the SSR HTML, which has no
+   * `localStorage` to read. A malformed cache entry is discarded, not thrown.
+   */
+  hydrateCachedCatalog: () => void;
 }
 
 function normalizeEndpoint(endpoint: string): string {
@@ -852,6 +876,7 @@ export function createBibleDataManager(
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
+  const catalogLoaded = signal<boolean>(false);
   const translationBooks = signal<Map<string, TranslationBooks>>(new Map());
   const translationEndpoints = signal<Map<string, string>>(new Map());
 
@@ -918,6 +943,7 @@ export function createBibleDataManager(
       options
     );
     mergeTranslations(normalizedEndpoint, result.translations);
+    catalogLoaded.value = true;
     return result.translations;
   };
 
@@ -1064,19 +1090,16 @@ export function createBibleDataManager(
   };
 
   effect(() => {
-    if (availableTranslations.value.length > 0) {
+    // Gated on `catalogLoaded`, not just a non-empty list — an ordinary
+    // chapter load merges in only the one translation it's reading (see
+    // `catalogLoaded`'s own doc comment), and persisting that partial list
+    // here would silently overwrite a previously-cached *complete* catalog
+    // with an incomplete one.
+    if (catalogLoaded.value && availableTranslations.value.length > 0) {
       safeLocalStorage.setItem(
         "availableTranslations",
         JSON.stringify(availableTranslations.value)
       );
-    }
-  });
-
-  effect(() => {
-    const stored = safeLocalStorage.getItem("availableTranslations");
-    if (stored) {
-      const parsed: Translation[] = JSON.parse(stored);
-      availableTranslations.value = parsed;
     }
   });
 
@@ -1089,17 +1112,50 @@ export function createBibleDataManager(
     }
   });
 
-  effect(() => {
-    const stored = safeLocalStorage.getItem("endpoints");
-    if (stored) {
-      const parsed: [string, string][] = JSON.parse(stored);
-      translationEndpoints.value = new Map(parsed);
+  /**
+   * Applies the previous visit's cached translation catalog and endpoint map.
+   *
+   * Read from a post-mount effect rather than at construction (see
+   * `AppState.hydrateFromStorage`): these signals feed the reader and the
+   * translation selector, and the server has no `localStorage`, so an eager read
+   * would make a returning visitor's first render disagree with the SSR HTML it
+   * is hydrating onto. The corresponding writes above stay eager — they can't
+   * affect a render.
+   *
+   * Each read is individually guarded: a corrupt value used to throw straight
+   * out of `createBibleDataManager` and, through `createSeedBibleState`, blank
+   * the page. Discarding one bad cache entry is always better than that.
+   */
+  const hydrateCachedCatalog = () => {
+    try {
+      const stored = safeLocalStorage.getItem("availableTranslations");
+      if (stored) {
+        availableTranslations.value = JSON.parse(stored) as Translation[];
+        // Only ever written after a genuine full-catalog fetch (see the
+        // persistence effect above), so restoring it means the catalog is
+        // already known, not just this session's active translation.
+        catalogLoaded.value = true;
+      }
+    } catch {
+      // Ignore a malformed cache; the live catalog fetch is authoritative.
     }
-  });
+
+    try {
+      const stored = safeLocalStorage.getItem("endpoints");
+      if (stored) {
+        translationEndpoints.value = new Map(
+          JSON.parse(stored) as [string, string][]
+        );
+      }
+    } catch {
+      // Ignore a malformed cache.
+    }
+  };
 
   return {
     endpoints,
     availableTranslations,
+    catalogLoaded,
     translationBooks,
     api,
     offline,
@@ -1111,5 +1167,6 @@ export function createBibleDataManager(
     getPreviousChapter,
     getTranslationEndpointInfo,
     buildTranslationId,
+    hydrateCachedCatalog,
   };
 }

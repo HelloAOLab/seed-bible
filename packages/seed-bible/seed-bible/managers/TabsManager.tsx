@@ -362,6 +362,21 @@ export interface TabsManager {
 
   /** Selects a tab by ID. */
   selectTab: (tabId: string) => void;
+
+  /**
+   * Applies the tabs saved in `localStorage` by a previous visit, reconciled
+   * against the URL the page was opened with.
+   *
+   * Construction deliberately builds only the single URL-derived tab, which is
+   * exactly what SSR renders (`readStoredTabsState` returns null server-side).
+   * A returning visitor's saved tabs would otherwise mount extra `TabRow`s and
+   * panes that aren't in the served HTML — the one hydration divergence Preact
+   * actually reports, since it runs out of DOM nodes to match against. Call
+   * this once from a post-mount effect (see `MainBody` in `app/main.tsx`, via
+   * `app.hydrateFromStorage`) so the saved tabs arrive as a normal diffed
+   * re-render instead. Idempotent.
+   */
+  hydrateStoredTabs: () => void;
 }
 
 /**
@@ -469,69 +484,115 @@ export function createTabs(
     };
   };
 
-  const storedState = normalizeStoredTabsState(readStoredTabsState());
+  // Always seed the single URL-derived tab, even when `localStorage` holds a
+  // whole session's worth of tabs. This is precisely what SSR produces
+  // (`readStoredTabsState` returns null with no `window`), and the client's
+  // first render has to match it for `hydrate()` to succeed — extra sibling
+  // elements are the one divergence Preact reports rather than silently
+  // patching. `hydrateStoredTabs` below applies the saved tabs immediately
+  // after the first commit.
+  const initialTranslationId = getInitialTranslationId(
+    navigation.initialUrl,
+    navigation.basePath,
+    i18nManager.defaultLanguage,
+    branding?.defaultTranslationId
+  );
+  const initialBookId = getInitialFirstTabBookId(
+    navigation.initialUrl,
+    navigation.basePath
+  );
+  const initialChapter = getInitialFirstTabChapter(
+    navigation.initialUrl,
+    navigation.basePath
+  );
 
-  let initialTabs: ReaderTab[];
-  let initialSelectedTabId: string;
+  const initialTabs = createInitialTabs(
+    dataManager,
+    highlightsManager,
+    i18nManager,
+    {
+      translationId: initialTranslationId,
+      bookId: initialBookId,
+      chapter: initialChapter,
+      highlightedVerses,
+    },
+    discoverManager,
+    readingExtensionManager,
+    getAnnotationsManager
+  );
 
-  if (!storedState || storedState.tabs.length === 0) {
-    // No stored state (SSR or first-ever visit): seed a single tab from the URL
-    // reading params, or the defaults — the original behavior.
-    const initialTranslationId = getInitialTranslationId(
-      navigation.initialUrl,
-      navigation.basePath,
-      i18nManager.defaultLanguage,
-      branding?.defaultTranslationId
-    );
-    const initialBookId = getInitialFirstTabBookId(
-      navigation.initialUrl,
-      navigation.basePath
-    );
-    const initialChapter = getInitialFirstTabChapter(
-      navigation.initialUrl,
-      navigation.basePath
-    );
+  const tabs = signal<ReaderTab[]>(initialTabs);
+  const selectedTabId = signal<string>(initialTabs[0]?.id ?? "");
+  const selectedTab = computed(
+    () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
+  );
 
-    initialTabs = createInitialTabs(
-      dataManager,
-      highlightsManager,
-      i18nManager,
-      {
-        translationId: initialTranslationId,
-        bookId: initialBookId,
-        chapter: initialChapter,
-        highlightedVerses,
-      },
-      discoverManager,
-      readingExtensionManager,
-      getAnnotationsManager
-    );
-    initialSelectedTabId = initialTabs[0]?.id ?? "";
-  } else {
-    // Restore the stored tabs, reconciled against the URL reading params — from
-    // the same frozen snapshot as the reads above, so we compare against what the
-    // user actually linked with, not a position the reader may have written back.
+  let storedTabsHydrated = false;
+
+  const hydrateStoredTabs = () => {
+    if (storedTabsHydrated) {
+      return;
+    }
+    storedTabsHydrated = true;
+
+    const storedState = normalizeStoredTabsState(readStoredTabsState());
+    if (!storedState || storedState.tabs.length === 0) {
+      return;
+    }
+
+    // Reconciled against `initialUrl`, the frozen arrival snapshot, rather than
+    // the live `currentUrl`: by the time this runs the reader has echoed its own
+    // position into the address bar in canonical form, which would make "the
+    // visitor linked here" indistinguishable from "the app wrote this itself".
     const query = readInitialReadingParams(
       navigation.initialUrl,
       navigation.basePath
     );
-    const { tabs: descriptors, selectedTabId } = reconcileStoredTabs(
-      storedState,
-      query,
-      defaultTranslation.id
+    const { tabs: descriptors, selectedTabId: restoredSelectedTabId } =
+      reconcileStoredTabs(storedState, query, defaultTranslation.id);
+
+    const bootTab = tabs.value[0] ?? null;
+
+    // `reconcileStoredTabs` retargets whichever stored tab it matched to the
+    // URL's position, so the selected descriptor names the chapter the boot tab
+    // has already loaded (and the server already rendered). Handing that
+    // descriptor the boot tab's existing reading state instead of a fresh one is
+    // what keeps the reader pane mounted — a new state object would remount
+    // `BibleReader` and flash the scripture that just hydrated.
+    const reusableDescriptor =
+      (bootTab &&
+        descriptors.find(
+          (descriptor) =>
+            descriptor.id === restoredSelectedTabId &&
+            !descriptor.slotOnly &&
+            descriptor.translationId ===
+              bootTab.readingState.translationId.value &&
+            descriptor.bookId === bootTab.readingState.bookId.value &&
+            descriptor.chapterNumber ===
+              bootTab.readingState.chapterNumber.value
+        )) ??
+      null;
+
+    const nextTabs = descriptors.map((descriptor, index) =>
+      bootTab && descriptor === reusableDescriptor
+        ? {
+            ...bootTab,
+            id: descriptor.id,
+            title: `Tab ${index + 1}`,
+            slotOnly: descriptor.slotOnly ?? false,
+          }
+        : buildRestoredTab(descriptor, index, restoredSelectedTabId)
     );
 
-    initialTabs = descriptors.map((descriptor, index) =>
-      buildRestoredTab(descriptor, index, selectedTabId)
-    );
-    initialSelectedTabId = selectedTabId;
-  }
+    // No descriptor adopted the boot tab, so its reading state is now
+    // unreachable — release it the way `removeTab` would.
+    if (bootTab && !reusableDescriptor) {
+      bootTab.readingState.dispose();
+    }
 
-  const tabs = signal<ReaderTab[]>(initialTabs);
-  const selectedTabId = signal<string>(initialSelectedTabId);
-  const selectedTab = computed(
-    () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
-  );
+    tabs.value = nextTabs;
+    selectedTabId.value = restoredSelectedTabId;
+  };
 
   const syncSelectedTabFromUrl = async () => {
     const selectedTab =
@@ -987,5 +1048,6 @@ export function createTabs(
     addTab,
     removeTab,
     selectTab,
+    hydrateStoredTabs,
   };
 }
