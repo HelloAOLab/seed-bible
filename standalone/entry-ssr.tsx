@@ -24,6 +24,7 @@ import {
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { ssrTranslationsCache } from "./ssrTranslationsCache";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -459,6 +460,7 @@ export async function render(
   const state = createSeedBibleState({
     config,
     initialHref: href,
+    translationsCache: ssrTranslationsCache,
   });
 
   // Block until the detected language's translations are loaded so the

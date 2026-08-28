@@ -4,6 +4,7 @@ import {
   createBibleDataManager,
   type BibleDataManager,
   type BookId,
+  type TranslationsCache,
   type VerseRef,
 } from "../managers/BibleDataManager";
 import {
@@ -463,6 +464,12 @@ export interface CreateSeedBibleStateOptions {
    */
   offlineStore?: OfflineTranslationStore | null;
   /**
+   * Cache shared across `getTranslations()` calls. Only the SSR host passes
+   * one in (see `standalone/ssrTranslationsCache.ts`) — omitted here, client
+   * behavior (per-page-load cache + localStorage) is unchanged.
+   */
+  translationsCache?: TranslationsCache;
+  /**
    * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
    * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
    * instance already fetched. The client uses this to seed its own API cache
@@ -507,6 +514,7 @@ export function createSeedBibleState(
   );
   const data = createBibleDataManager(api, {
     offlineStore: options.offlineStore,
+    translationsCache: options.translationsCache,
   });
   const os = CasualOSManager();
   const login = createLoginManager({ os });

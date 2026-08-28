@@ -15,6 +15,19 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 
+/**
+ * Opaque cache for `getTranslations()`'s network result, keyed by normalized
+ * endpoint. Only the SSR host supplies one (see
+ * `standalone/ssrTranslationsCache.ts`) — it exists to share one fetch across
+ * many HTTP requests within a single long-running server process, since
+ * `localStorage` (the client's cross-page-load cache) doesn't exist there.
+ */
+export interface TranslationsCache {
+  get(endpoint: string): Promise<Translation[]> | undefined;
+  set(endpoint: string, promise: Promise<Translation[]>): void;
+  delete(endpoint: string): void;
+}
+
 /** How a set of translations should be folded into the known-translations list. */
 export interface MergeTranslationsOptions {
   /**
@@ -867,12 +880,19 @@ export interface CreateBibleDataManagerOptions {
    * an in-memory store, and null disables offline downloads entirely.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * Cache shared across `getTranslations()` calls, keyed by endpoint. Omit
+   * this everywhere except the SSR host — see `TranslationsCache`'s doc
+   * comment for why.
+   */
+  translationsCache?: TranslationsCache;
 }
 
 export function createBibleDataManager(
   api: FreeUseBibleAPI,
   options: CreateBibleDataManagerOptions = {}
 ): BibleDataManager {
+  const translationsCache = options.translationsCache;
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
@@ -938,13 +958,34 @@ export function createBibleDataManager(
     const normalizedEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
     ensureEndpointTracked(normalizedEndpoint);
 
-    const result = await api.getAvailableTranslations(
-      normalizedEndpoint,
-      options
-    );
-    mergeTranslations(normalizedEndpoint, result.translations);
+    if (options?.refresh) {
+      translationsCache?.delete(normalizedEndpoint);
+    }
+
+    let resultPromise = translationsCache?.get(normalizedEndpoint);
+    if (!resultPromise) {
+      resultPromise = api
+        .getAvailableTranslations(normalizedEndpoint, options)
+        .then((response) => response.translations);
+      translationsCache?.set(normalizedEndpoint, resultPromise);
+      // A failed fetch must not poison the cache for its whole TTL — mirrors
+      // FreeUseBibleAPI's own cache, which evicts on rejection too. Only
+      // evict if this is still the entry stored for the endpoint: a slower,
+      // superseded request (replaced by a `refresh` or a fresh post-TTL
+      // fetch) rejecting later must not delete the newer, valid entry that
+      // took its place.
+      const failedPromise = resultPromise;
+      failedPromise.catch(() => {
+        if (translationsCache?.get(normalizedEndpoint) === failedPromise) {
+          translationsCache?.delete(normalizedEndpoint);
+        }
+      });
+    }
+
+    const result = await resultPromise;
+    mergeTranslations(normalizedEndpoint, result);
     catalogLoaded.value = true;
-    return result.translations;
+    return result;
   };
 
   // Created here (rather than by the caller) so it can share this manager's
