@@ -1,0 +1,4 @@
+/* Hide ugly sidebar until the full CSS loads */
+.sb-tabs-sidebar {
+  opacity: 0;
+}
