@@ -1,0 +1,425 @@
+/*
+ * "Your content" screen (issue #1553). Like the Profile screen, colours come
+ * from the `--sb-*` theme variables rather than the hex values in Figma, so
+ * the screen follows the theme ThemeManager injects on `body`.
+ */
+.sb-content-screen {
+  --sb-content-padding: 16px;
+  --sb-content-radius: 12px;
+
+  --sb-content-surface: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 95%
+  );
+  --sb-content-surface-strong: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 91%
+  );
+  --sb-content-muted: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  --sb-content-rule: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  --sb-content-accent: var(--sb-primary-color);
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 32px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-content-inner {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------------ search */
+
+.sb-content-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  margin: var(--sb-content-padding);
+  padding: 0 16px;
+  border-radius: 8px;
+  background: var(--sb-content-surface-strong);
+  box-sizing: border-box;
+}
+
+.sb-content-search .material-symbols-outlined {
+  flex-shrink: 0;
+  color: var(--sb-font-color);
+  font-size: 22px;
+}
+
+.sb-content-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.sb-content-search input:focus {
+  outline: none;
+}
+
+.sb-content-search input::placeholder {
+  color: var(--sb-content-muted);
+}
+
+/* ------------------------------------------------------------------- chips */
+
+/*
+ * The chip strip scrolls sideways rather than wrapping — with six filters it
+ * would otherwise take two lines on a narrow phone and push the first section
+ * below the fold.
+ */
+.sb-content-chips {
+  display: flex;
+  gap: 8px;
+  padding: 0 var(--sb-content-padding) 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sb-content-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.sb-content-chip {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--sb-content-surface-strong);
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sb-content-chip-active {
+  background: var(--sb-content-accent);
+  color: var(--sb-primary-font-color);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- sections */
+
+.sb-content-section {
+  padding: 8px var(--sb-content-padding) 16px;
+}
+
+/* A rule between sections, as in the design — but not above the first. */
+.sb-content-section + .sb-content-section {
+  border-top: 1px solid var(--sb-content-rule);
+}
+
+.sb-content-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sb-content-section-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.sb-content-see-all {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-content-muted);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sb-content-see-all:hover {
+  color: var(--sb-content-accent);
+}
+
+.sb-content-empty {
+  padding: 4px 0 8px;
+  color: var(--sb-content-muted);
+  font-size: 0.9375rem;
+}
+
+/* ------------------------------------------------------------- annotations */
+
+.sb-content-annotations {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-content-annotation {
+  padding: 16px;
+  border-radius: var(--sb-content-radius);
+  background: var(--sb-content-surface);
+}
+
+.sb-content-annotation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sb-content-date {
+  color: var(--sb-content-muted);
+  font-size: 0.8125rem;
+}
+
+.sb-content-kebab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--sb-content-muted);
+  cursor: pointer;
+}
+
+.sb-content-kebab:hover {
+  background: var(--sb-content-surface-strong);
+}
+
+/* The verse the note is about: an accent rule, the text, then the reference. */
+.sb-content-quote {
+  padding: 2px 0 2px 12px;
+  border-inline-start: 3px solid var(--sb-content-accent);
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border-block: none;
+  border-inline-end: none;
+  cursor: pointer;
+}
+
+.sb-content-quote-text {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.sb-content-quote-ref {
+  display: block;
+  margin-top: 2px;
+  color: var(--sb-content-muted);
+  font-size: 0.8125rem;
+}
+
+.sb-content-annotation-body {
+  margin-top: 12px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* Rich text from the editor — keep it from blowing out the card. */
+.sb-content-annotation-body p {
+  margin: 0 0 6px;
+}
+
+.sb-content-annotation-body p:last-child {
+  margin-bottom: 0;
+}
+
+.sb-content-annotation-body img,
+.sb-content-annotation-body video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* -------------------------------------------------------------- highlights */
+
+.sb-content-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-content-highlight {
+  display: block;
+  width: 100%;
+  padding: 2px 0 2px 12px;
+  border-inline-start: 4px solid var(--sb-content-accent);
+  border-block: none;
+  border-inline-end: none;
+  background: none;
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-content-highlight-text {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.sb-content-highlight-ref {
+  display: block;
+  margin-top: 2px;
+  color: var(--sb-content-muted);
+  font-size: 0.8125rem;
+}
+
+/* --------------------------------------------------------------- bookmarks */
+
+.sb-content-bookmarks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sb-content-bookmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--sb-content-surface);
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-content-bookmark:hover {
+  background: var(--sb-content-surface-strong);
+}
+
+.sb-content-bookmark-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.sb-content-bookmark-kind {
+  color: var(--sb-content-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* A verse bookmark is the more specific of the two, so it carries the accent. */
+.sb-content-bookmark-kind-verse {
+  color: var(--sb-content-accent);
+}
+
+.sb-content-bookmark-date {
+  color: var(--sb-content-muted);
+  font-size: 0.75rem;
+}
+
+/* --------------------------------------------------------------- playlists */
+
+.sb-content-playlists {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sb-content-playlists::-webkit-scrollbar {
+  display: none;
+}
+
+.sb-content-playlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 130px;
+  padding: 12px;
+  border: none;
+  border-radius: var(--sb-content-radius);
+  background: var(--sb-content-surface);
+  box-sizing: border-box;
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-content-playlist:hover {
+  background: var(--sb-content-surface-strong);
+}
+
+.sb-content-playlist-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+}
+
+.sb-content-playlist-play .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-content-playlist-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sb-content-playlist-meta {
+  color: var(--sb-content-muted);
+  font-size: 0.75rem;
+}
+
+/* --------------------------------------------------------- load / failure */
+
+.sb-content-status {
+  padding: 24px var(--sb-content-padding);
+  color: var(--sb-content-muted);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.sb-content-retry {
+  margin-top: 12px;
+  padding: 9px 18px;
+  border: 1px solid var(--sb-content-rule);
+  border-radius: 999px;
+  background: none;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+/* Delete is destructive, so it reads red — matching the design's menu. */
+.sb-content-menu-delete {
+  color: #db1c1c;
+}

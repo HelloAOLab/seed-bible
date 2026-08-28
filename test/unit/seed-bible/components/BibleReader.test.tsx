@@ -2416,20 +2416,17 @@ describe("BibleReader", () => {
     );
   });
 
-  it("shows a generic account icon in the mobile header when the user is alone", () => {
+  // The account avatar moved out of the reader header and back into the
+  // bottom bar as the "You" tab (#1554), so the header must not show one.
+  it("does not show an account button in the mobile header", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createMobileState();
 
     renderMobileReader({ slot, selectorState, readingState }, state, container);
 
-    const accountButton = container.querySelector(
-      ".sb-bible-reader-mobile-header-account"
-    );
-    expect(accountButton).not.toBeNull();
     expect(
-      accountButton?.querySelector(".sb-tab-user-icon-generic")
-    ).not.toBeNull();
-    expect(accountButton?.textContent).toContain("account_circle");
+      container.querySelector(".sb-bible-reader-mobile-header-account")
+    ).toBeNull();
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {

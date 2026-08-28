@@ -17,8 +17,23 @@ import {
   createTodayManager,
   openTodayPassage,
   type TodayManager,
+  type TodayPassageTarget,
 } from "../managers/TodayManager";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import {
+  PROFILE_PANE_ID,
+  ProfilePane,
+  ProfilePaneTitle,
+} from "../components/ProfilePane/ProfilePane";
+import {
+  YOUR_CONTENT_PANE_ID,
+  YourContentPane,
+  YourContentPaneTitle,
+} from "../components/YourContentPane/YourContentPane";
+import {
+  createYourContentManager,
+  type YourContentManager,
+} from "../managers/YourContentManager";
 import {
   META_DESCRIPTION_MAX_GRAPHEMES,
   buildChapterExcerpt,
@@ -26,7 +41,10 @@ import {
   truncateForMeta,
 } from "../managers/ChapterText";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
-import { createBibleToolsManager } from "../managers/BibleToolsManager";
+import {
+  createBibleToolsManager,
+  openReadingPlansPane,
+} from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
   FreeUseBibleAPI,
@@ -94,6 +112,7 @@ import {
 } from "../managers/SessionsManager";
 import {
   createAnnotationsManager,
+  type Annotation,
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
@@ -384,6 +403,23 @@ export interface SeedBibleState {
    */
   features: FeaturesManager;
 
+  /** Backs the "Your content" screen: the user's own annotations/highlights. */
+  yourContent: YourContentManager;
+
+  /** True when the "Your content" screen is showing. */
+  isYourContentOpen: ReadonlySignal<boolean>;
+  /** Opens "Your content" (reflected in the URL as `?content=open`). */
+  openYourContent: () => void;
+  /** Closes "Your content" (clears `content` from the URL). */
+  closeYourContent: () => void;
+
+  /** True when the Profile screen is showing. */
+  isProfileOpen: ReadonlySignal<boolean>;
+  /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
+  openProfile: () => void;
+  /** Closes the Profile screen (clears `profile` from the URL). */
+  closeProfile: () => void;
+
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
   /** Opens the Terms of Service modal (reflected in the URL as `?terms=open`). */
@@ -414,6 +450,7 @@ import {
   createPlaylistManager,
   type PlaylistManager,
   type PlaylistItemData,
+  type Playlist,
 } from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
@@ -559,6 +596,11 @@ export function createSeedBibleState(
     discover,
     annotationRecordKey
   );
+  const yourContent = createYourContentManager({
+    annotations,
+    highlights,
+    login,
+  });
   const sessions = createSessionsManager(
     os,
     data,
@@ -626,7 +668,57 @@ export function createSeedBibleState(
     codeOfConductOpen.value = false;
   };
 
+  // The "Your content" screen, reached from Profile. Bound to `?content=open`
+  // on the same terms as the Profile screen below.
+  const contentOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("content") === "open"
+  );
+  const isYourContentOpen = computed(() => contentOpen.value);
+  const openYourContent = () => {
+    contentOpen.value = true;
+  };
+  const closeYourContent = () => {
+    contentOpen.value = false;
+  };
+
+  // The Profile screen. Two-way bound to `?profile=open` so it can be
+  // deep-linked and so the browser's back button leaves it, mirroring Today.
+  //
+  // Never open during SSR: `effectivePanes` renders fullscreen panes
+  // unconditionally, so a crawled `/?profile=open` would otherwise serialize
+  // the signed-in profile into the response HTML.
+  const profileOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("profile") === "open"
+  );
+  const isProfileOpen = computed(() => profileOpen.value);
+  const openProfile = () => {
+    profileOpen.value = true;
+  };
+  const closeProfile = () => {
+    profileOpen.value = false;
+  };
+
   navigation.syncSignalsToUrl({
+    profile: {
+      get value() {
+        return profileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        profileOpen.value = newValue === "open";
+      },
+    },
+    content: {
+      get value() {
+        return contentOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        contentOpen.value = newValue === "open";
+      },
+    },
     terms: {
       get value() {
         return termsOpen.value ? "open" : null;
@@ -2020,6 +2112,13 @@ export function createSeedBibleState(
     playlists,
     tutorial,
     onboarding,
+    yourContent,
+    isYourContentOpen,
+    openYourContent,
+    closeYourContent,
+    isProfileOpen,
+    openProfile,
+    closeProfile,
     isTermsOpen,
     openTerms,
     closeTerms,
@@ -2189,6 +2288,115 @@ export function createSeedBibleState(
     );
     if (!paneOpen && today.isOpen.peek()) {
       today.close();
+    }
+  });
+
+  // The Profile screen, wired the same way as Today above: a fullscreen pane
+  // mirrored from `isProfileOpen`, with the thunks hoisted so their identity
+  // stays stable across reopens.
+  const openAccountSettingsFromProfile = () => {
+    closeProfile();
+    sidebar.openSidebar();
+    sidebar.openSettingsToView("account");
+  };
+  const openReadingPlansFromProfile = () => {
+    const readingState = selectedTab.peek()?.readingState;
+    if (!readingState) {
+      return;
+    }
+    closeProfile();
+    // Fullscreen rather than the toolbar's docked "side": the user came from a
+    // fullscreen screen, so a side panel would leave them looking at the reader.
+    openReadingPlansPane({
+      readingPlans,
+      readingState,
+      panesManager: panes,
+      modals,
+      playlists,
+      placement: "fullscreen",
+    });
+  };
+  const renderProfilePane = () => (
+    <ProfilePane
+      state={state}
+      onOpenAccountSettings={openAccountSettingsFromProfile}
+      onOpenReadingPlans={openReadingPlansFromProfile}
+      onOpenYourContent={openYourContent}
+    />
+  );
+  const renderProfilePaneTitle = () => <ProfilePaneTitle />;
+
+  effect(() => {
+    if (isProfileOpen.value) {
+      panes.openPane({
+        id: PROFILE_PANE_ID,
+        placement: "fullscreen",
+        title: renderProfilePaneTitle,
+        component: renderProfilePane,
+      });
+    } else {
+      panes.closePane(PROFILE_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === PROFILE_PANE_ID
+    );
+    if (!paneOpen && isProfileOpen.peek()) {
+      closeProfile();
+    }
+  });
+
+  // "Your content", the third fullscreen screen, wired like the two above.
+  // Each handler closes the screen first: all three destinations (reader,
+  // playlist player, annotation editor) sit behind it.
+  const openPassageFromContent = (target: TodayPassageTarget) => {
+    closeYourContent();
+    closeProfile();
+    openTodayPassage(state, today, target);
+  };
+  const playPlaylistFromContent = (playlist: Playlist) => {
+    closeYourContent();
+    closeProfile();
+    playlists.startPlaying(playlist, 0);
+  };
+  const editAnnotationFromContent = (annotation: Annotation) => {
+    closeYourContent();
+    closeProfile();
+    // Opens the Discover pane's annotation editor, the same one the reader
+    // uses — rather than growing a second editor on this screen.
+    annotations.editAnnotation(annotation);
+  };
+  const renderYourContentPane = () => (
+    <YourContentPane
+      state={state}
+      onOpenPassage={openPassageFromContent}
+      onPlayPlaylist={playPlaylistFromContent}
+      onEditAnnotation={editAnnotationFromContent}
+    />
+  );
+  const renderYourContentPaneTitle = () => <YourContentPaneTitle />;
+
+  effect(() => {
+    if (isYourContentOpen.value) {
+      panes.openPane({
+        id: YOUR_CONTENT_PANE_ID,
+        placement: "fullscreen",
+        title: renderYourContentPaneTitle,
+        component: renderYourContentPane,
+      });
+    } else {
+      panes.closePane(YOUR_CONTENT_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === YOUR_CONTENT_PANE_ID
+    );
+    if (!paneOpen && isYourContentOpen.peek()) {
+      closeYourContent();
     }
   });
 

@@ -1,0 +1,349 @@
+/*
+ * Profile screen (issue #1555). Every colour is derived from the `--sb-*`
+ * theme variables rather than the hex values in Figma, so the screen follows
+ * the light/dark themes ThemeManager injects on `body` — there is no
+ * CSS-level dark mode in this app to hook into.
+ */
+.sb-profile-screen {
+  --sb-profile-padding: 16px;
+  --sb-profile-gap: 12px;
+  --sb-profile-card-radius: 16px;
+  --sb-profile-tile-size: 44px;
+
+  /* Card fill, one step off the page background. */
+  --sb-profile-surface: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 95%
+  );
+  --sb-profile-border: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 88%
+  );
+  /* Secondary text: dates, counts, row subtitles. */
+  --sb-profile-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  --sb-profile-accent: var(--sb-primary-color);
+  /* Peach wash behind the icon tiles and the reading-plans card. */
+  --sb-profile-accent-tint: var(--sb-secondary-color);
+  --sb-profile-accent-wash: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 93%
+  );
+  --sb-profile-accent-edge: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 70%
+  );
+  --sb-profile-danger: #db1c1c;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-profile-gap);
+  padding: var(--sb-profile-padding);
+  padding-bottom: 32px;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+/* Wide viewports: the design is a phone layout, so cap it and centre. */
+.sb-profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-profile-gap);
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------- identity */
+
+/*
+ * Inset further than the cards below it — in the design this card is visibly
+ * narrower than the rows, which is what centres the avatar in the screen.
+ */
+.sb-profile-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 35px 12px;
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--sb-profile-surface);
+}
+
+.sb-profile-avatar-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.sb-profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--sb-profile-accent-tint);
+  background-size: cover;
+  background-position: center;
+  color: var(--sb-profile-accent);
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  /* Initials are uppercased in CSS so the name itself is left untouched. */
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* The "+" affordance that opens the picture picker. */
+.sb-profile-avatar-edit {
+  position: absolute;
+  right: -2px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid var(--sb-reader-background);
+  border-radius: 50%;
+  background: var(--sb-profile-accent);
+  color: var(--sb-primary-font-color);
+  cursor: pointer;
+}
+
+.sb-profile-avatar-edit .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-profile-name {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.sb-profile-account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--sb-profile-border);
+  border-radius: 999px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sb-profile-account-button:hover {
+  background: var(--sb-profile-surface);
+}
+
+.sb-profile-account-button .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* -------------------------------------------------------------- plans card */
+
+.sb-profile-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--sb-profile-accent-edge);
+  border-radius: var(--sb-profile-card-radius);
+  background: var(--sb-profile-accent-wash);
+  box-sizing: border-box;
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-profile-plans-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sb-profile-plans-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.sb-profile-plans-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--sb-profile-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-profile-plans-link .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-profile-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 80%);
+  overflow: hidden;
+}
+
+.sb-profile-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sb-profile-accent);
+}
+
+.sb-profile-plans-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sb-profile-plans-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--sb-profile-muted);
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-profile-plans-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--sb-profile-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sb-profile-plans-stats .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* --------------------------------------------------------------- nav rows */
+
+.sb-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--sb-profile-border);
+  border-radius: var(--sb-profile-card-radius);
+  background: var(--sb-reader-background);
+  box-sizing: border-box;
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-profile-row:hover {
+  background: var(--sb-profile-surface);
+}
+
+.sb-profile-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--sb-profile-tile-size);
+  height: var(--sb-profile-tile-size);
+  border-radius: 12px;
+  background: var(--sb-profile-accent-tint);
+  color: var(--sb-profile-accent);
+}
+
+.sb-profile-tile .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.sb-profile-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-profile-row-title {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sb-profile-row-subtitle {
+  display: block;
+  color: var(--sb-profile-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.sb-profile-row-arrow {
+  flex-shrink: 0;
+  color: var(--sb-profile-accent);
+}
+
+/* ------------------------------------------------------------------ logout */
+
+.sb-profile-logout {
+  width: 100%;
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid var(--sb-profile-danger);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sb-profile-danger);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-profile-logout:hover {
+  background: color-mix(in srgb, var(--sb-profile-danger), transparent 92%);
+}
+
+/* Signed out: the identity card invites sign-in instead. */
+.sb-profile-signin {
+  padding: 13px 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--sb-profile-accent);
+  color: var(--sb-primary-font-color);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-profile-signin-hint {
+  margin: 0;
+  color: var(--sb-profile-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}

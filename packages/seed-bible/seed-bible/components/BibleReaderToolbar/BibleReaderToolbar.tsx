@@ -24,7 +24,7 @@ import {
   StopIcon,
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
-import { openBookmarkCategoryModal } from "../Tabs/Tabs";
+import { SelfAvatarVisual, openBookmarkCategoryModal } from "../Tabs/Tabs";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
@@ -779,14 +779,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
 
   const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
+  const isProfileOpen = useComputed(() => props.state.isProfileOpen.value);
   const activeMobileTab = useComputed<
-    "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
+    | "today"
+    | "you"
+    | "bible"
+    | "search"
+    | "tabs"
+    | "bookmarks"
+    | "more"
+    | "none"
   >(() => {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
-    // The account ("You") control now lives in the reader header, so an open
-    // settings view no longer maps to a bottom-bar tab.
-    if (sidebar.isSettingsOpen.value) return "none";
+    if (isProfileOpen.value) return "you";
+    // Account settings is reached from the Profile screen, so keep "You" lit
+    // while it is open rather than dropping the highlight mid-journey.
+    if (sidebar.isSettingsOpen.value) return "you";
     if (isBookmarksViewOpen.value) {
       // Bookmarks is always a top-level tab, so highlight it whenever its
       // view is open.
@@ -1541,6 +1550,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     props.state.today.open();
   };
 
+  // The "You" tab. Tapping it again while the Profile screen is up closes it,
+  // matching how Search and Tabs toggle.
+  const openProfileScreen = () => {
+    if (props.state.isProfileOpen.value) {
+      props.state.closeProfile();
+      return;
+    }
+    isMoreMenuOpen.value = false;
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    sidebar.closeSidebar();
+    panes.closeAll();
+    props.state.openProfile();
+  };
+
   // Opens (or closes) the tabs list in the sidebar drawer. Shared by the Tabs
   // bottom tab and the Tabs entry inside the More menu.
   const openTabsView = () => {
@@ -1820,6 +1845,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   onClick={() => {
                     void openTodayScreen();
                   }}
+                />
+
+                <MobileBottomTab
+                  iconNode={<SelfAvatarVisual state={props.state} />}
+                  label={t("you", { defaultValue: "You" })}
+                  active={activeMobileTab.value === "you"}
+                  onClick={openProfileScreen}
                 />
 
                 <MobileBottomTab

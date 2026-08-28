@@ -374,6 +374,53 @@ export function CasualOSManager(
       return { success: true, items: allItems };
     },
 
+    /**
+     * Every data item in a record, paged by address.
+     *
+     * The marker-scoped listing above can't answer "everything of mine",
+     * because some of what the app writes is marked per chapter — annotations
+     * carry `publicRead:annotations/{book}/{chapter}`, so collecting them all
+     * by marker would mean 1,189 requests. `listData` takes no marker and
+     * walks the record itself, which is one paged sweep instead.
+     *
+     * Callers get raw `{ address, data }` and are expected to recognise their
+     * own items, either by an address prefix or by parsing `data` with their
+     * schema. Only items the caller may read come back.
+     */
+    listAllData: async (
+      recordName: string
+    ): Promise<{
+      success: boolean;
+      items: { address: string; data: unknown }[];
+    }> => {
+      const allItems: { address: string; data: unknown }[] = [];
+      let lastAddress: string | undefined;
+
+      while (true) {
+        const page = await client.listData({
+          recordName,
+          address: lastAddress,
+        });
+
+        if (!page.success) {
+          console.error("Error listing data:", page);
+          throw new Error(`Error listing data: ${page.errorCode}`);
+        }
+
+        if (page.items.length === 0) {
+          break;
+        }
+
+        for (const item of page.items) {
+          allItems.push({ address: item.address, data: item.data });
+        }
+
+        lastAddress = page.items[page.items.length - 1]?.address;
+      }
+
+      return { success: true, items: allItems };
+    },
+
     recordFile: async (
       recordKey: string,
       data: object | string | number | boolean,

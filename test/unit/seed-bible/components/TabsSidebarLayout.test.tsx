@@ -286,8 +286,6 @@ describe("tabs Share control", () => {
   });
 });
 
-
-
 describe("Sidebar self avatar", () => {
   let container: HTMLDivElement;
 
@@ -374,6 +372,32 @@ describe("Sidebar self avatar", () => {
     expect(avatar).not.toBeNull();
     expect(avatar?.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
     expect(avatar?.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  // The desktop entry point for the Profile screen (#1554). It used to open
+  // account settings directly; account settings now hangs off Profile.
+  it("opens the Profile screen when clicked", async () => {
+    const state = await createTestSeedBibleState();
+    state.settings.setDisablePanels(false);
+    expect(state.isProfileOpen.value).toBe(false);
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    act(() => {
+      (
+        container.querySelector(".sb-sidebar-self-avatar") as HTMLButtonElement
+      ).click();
+    });
+
+    expect(state.isProfileOpen.value).toBe(true);
+    expect(state.sidebar.isSettingsOpen.value).toBe(false);
   });
 
   it("shows the animal fallback when the user has no profile picture and is in a chat with another person", async () => {

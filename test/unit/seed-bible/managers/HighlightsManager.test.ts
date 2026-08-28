@@ -2,6 +2,7 @@ import {
   chapterHighlightsSchema,
   createHighlightsManager,
   highlightContainsVerse,
+  parseChapterHighlightsAddress,
   type ChapterHighlight,
   type ChapterHighlights,
 } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
@@ -957,6 +958,126 @@ describe("HighlightsManager", () => {
         "Unable to save highlights: user is not authenticated."
       );
     });
+  });
+
+  describe("listAllHighlights()", () => {
+    it("returns nothing when signed out — there is no record to read", async () => {
+      login.userId.value = null;
+      const listAllData = vi.spyOn(os, "listAllData");
+      const manager = createHighlightsManager(os, login);
+
+      expect(await manager.listAllHighlights()).toEqual([]);
+      expect(listAllData).not.toHaveBeenCalled();
+    });
+
+    it("flattens every chapter's highlights, one entry per highlight", async () => {
+      vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          {
+            address: "highlights:BSB/GEN/1",
+            data: {
+              highlights: [
+                { colorId: "color-1", verse: 1 },
+                { colorId: "color-2", verse: [3, 5] },
+              ],
+            },
+          },
+          {
+            address: "highlights:KJV/JHN/3",
+            data: { highlights: [{ colorId: "color-3", verse: 16 }] },
+          },
+        ],
+      });
+      const manager = createHighlightsManager(os, login);
+
+      expect(await manager.listAllHighlights()).toEqual([
+        {
+          translationId: "BSB",
+          bookId: "GEN",
+          chapterNumber: 1,
+          highlight: { colorId: "color-1", verse: 1 },
+        },
+        {
+          translationId: "BSB",
+          bookId: "GEN",
+          chapterNumber: 1,
+          highlight: { colorId: "color-2", verse: [3, 5] },
+        },
+        {
+          translationId: "KJV",
+          bookId: "JHN",
+          chapterNumber: 3,
+          highlight: { colorId: "color-3", verse: 16 },
+        },
+      ]);
+    });
+
+    // The record holds annotations, bookmarks and playlists too. Sweeping it
+    // must pick out only the highlights and step over everything else.
+    it("ignores records that are not highlights", async () => {
+      vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          { address: "bookmarks", data: { bookmarks: [] } },
+          {
+            address: "0f0a3b1e-1111-2222-3333-444455556666",
+            data: { id: "x", bookId: "GEN", chapterNumber: 1 },
+          },
+          {
+            address: "highlights:BSB/GEN/1",
+            data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+          },
+        ],
+      });
+      const manager = createHighlightsManager(os, login);
+
+      const result = await manager.listAllHighlights();
+      expect(result).toHaveLength(1);
+      expect(result[0]?.bookId).toBe("GEN");
+    });
+
+    it("skips a highlights record whose payload is malformed", async () => {
+      vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          { address: "highlights:BSB/GEN/1", data: { highlights: "nope" } },
+          {
+            address: "highlights:BSB/GEN/2",
+            data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+          },
+        ],
+      });
+      const manager = createHighlightsManager(os, login);
+
+      const result = await manager.listAllHighlights();
+      expect(result).toHaveLength(1);
+      expect(result[0]?.chapterNumber).toBe(2);
+      expect(warnSpy).toHaveBeenCalled();
+    });
+  });
+});
+
+describe("parseChapterHighlightsAddress", () => {
+  it("reads back the translation, book and chapter", () => {
+    expect(parseChapterHighlightsAddress("highlights:BSB/GEN/12")).toEqual({
+      translationId: "BSB",
+      bookId: "GEN",
+      chapterNumber: 12,
+    });
+  });
+
+  it("rejects addresses belonging to other kinds of record", () => {
+    expect(parseChapterHighlightsAddress("bookmarks")).toBeNull();
+    expect(parseChapterHighlightsAddress("annotations:GEN/1")).toBeNull();
+  });
+
+  it("rejects a highlights address that is missing a part", () => {
+    expect(parseChapterHighlightsAddress("highlights:BSB/GEN")).toBeNull();
+  });
+
+  it("rejects a non-numeric chapter", () => {
+    expect(parseChapterHighlightsAddress("highlights:BSB/GEN/one")).toBeNull();
   });
 });
 
