@@ -7,3 +7,17 @@
   opacity: 0;
   transform: translateY(50%);
 }
+
+.sb-selector-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.25rem;
+
+  transition: background 0.3s ease;
+}
