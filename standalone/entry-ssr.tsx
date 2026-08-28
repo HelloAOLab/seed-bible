@@ -1,6 +1,7 @@
 import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
+import { DEFAULT_APP_CONFIG } from "../packages/seed-bible/seed-bible/app/appConfig";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   findClosestBookId,
@@ -364,17 +365,20 @@ export async function render(
   | { redirectTo: string; redirectStatus?: number; vary?: string }
   | string
 > {
-  const { config } = options;
+  const { config: injectedConfig } = options;
 
-  const redirectTo = legacyReadingUrlRedirect(options.path, config.basePath);
+  const redirectTo = legacyReadingUrlRedirect(
+    options.path,
+    injectedConfig.basePath
+  );
   if (redirectTo) {
     return { redirectTo };
   }
 
   const languageRedirectTo = acceptLanguageRedirect(
     options.path,
-    config.basePath,
-    config.acceptedLanguages
+    injectedConfig.basePath,
+    injectedConfig.acceptedLanguages
   );
   if (languageRedirectTo) {
     return {
@@ -383,6 +387,13 @@ export async function render(
       vary: "Accept-Language",
     };
   }
+
+  // Combine the injected config with the defaults
+  // This allows the server to read the injected branding config and pass it to the app during SSR, while still providing defaults for any missing values.
+  const config = {
+    ...DEFAULT_APP_CONFIG,
+    ...injectedConfig,
+  };
 
   // A pure URL-level check (no network involved): a canonical-shaped path
   // whose book segment doesn't resolve even via a fuzzy match has nothing

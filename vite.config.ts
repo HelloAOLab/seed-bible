@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { execSync } from "child_process";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { analyzer } from "vite-bundle-analyzer";
 import { VitePWA } from "vite-plugin-pwa";
 import { patternPlugin } from "./script/lib/vite-plugin-patterns";
@@ -42,6 +42,18 @@ const assetBaseUrl =
 // deploy branch is set), and pin its files/scope to the site root regardless of
 // where the versioned chunks live.
 const isRootBuild = !deployBranch || deployBranch === "main";
+
+const brandingConfig = existsSync(
+  path.resolve(__dirname, "seed-bible.branding.json")
+)
+  ? JSON.parse(
+      readFileSync(path.resolve(__dirname, "seed-bible.branding.json"), "utf-8")
+    )
+  : undefined;
+
+if (brandingConfig) {
+  console.log("[vite.config.ts] Using branding config:", brandingConfig);
+}
 
 function withTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
@@ -123,6 +135,8 @@ export default defineConfig(({ isSsrBuild }) => ({
     // assets apart from another branch deployment's. vite-plugin-pwa reuses
     // this `define` block when it compiles the worker.
     __ASSET_BASE_URL__: JSON.stringify(assetBaseUrl),
+
+    __BRANDING_CONFIG__: JSON.stringify(brandingConfig),
   },
 
   plugins: [

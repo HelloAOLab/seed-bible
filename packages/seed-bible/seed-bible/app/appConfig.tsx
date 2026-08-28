@@ -19,6 +19,10 @@ export interface BrandingConfig {
   disabledToolbarTools?: string[];
   defaultTranslationId?: string;
 }
+
+// Injected from Vite
+declare const __BRANDING_CONFIG__: BrandingConfig | undefined;
+
 export interface AppConfig {
   /**
    * Path prefix this deployment is mounted under, e.g. "/d/branch-develop".
@@ -54,6 +58,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   renderedAsMobile: false,
   renderedAsWebKit: false,
   acceptedLanguages: [],
+  branding: import.meta.env.VITEST ? undefined : __BRANDING_CONFIG__,
 };
 
 /**
