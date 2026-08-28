@@ -2204,7 +2204,7 @@ export function createSeedBibleState(
       today={today}
       login={login}
       bookmarks={bookmarks.bookmarks}
-      theme={theme}
+      theme={themeManager.currentTheme}
       isMobile={isMobile}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}

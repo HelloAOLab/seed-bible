@@ -1060,6 +1060,8 @@
      opts back into horizontal panning below since it needs its own native
      scroll. */
   touch-action: none;
+
+  transition: transform 0.2s ease;
 }
 
 /* Drag target around the grab handle. The pill is only 4px tall, so the
@@ -1085,13 +1087,6 @@
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
   border-radius: 0.5rem;
-}
-
-/* The sheet slides down under a dismiss drag and eases back if the drag is
-   released short of the threshold. Both are suppressed while a finger is down
-   (see `.sb-verse-sheet-dragging`) so the sheet tracks the finger exactly. */
-.sb-verse-toolbar-mobile {
-  transition: transform 0.2s ease;
 }
 
 /* The overflow row of actions, revealed by dragging the handle up. Its height is
