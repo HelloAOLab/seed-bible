@@ -19,7 +19,7 @@ import {
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
-import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/dist/app/appConfig";
+import { DEFAULT_APP_CONFIG } from "../packages/seed-bible/dist/app/appConfig";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
