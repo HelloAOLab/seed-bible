@@ -1,11 +1,12 @@
 import "./ChatView.css";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
-import type {
-  ChatParticipant,
-  ChatMessage,
-  ChatSession,
-  ParsedChatTextMessage,
+import {
+  chatHasOtherPeople,
+  type ChatParticipant,
+  type ChatMessage,
+  type ChatSession,
+  type ParsedChatTextMessage,
 } from "../../managers/ChatsManager";
 import {
   getUserAnimalVisual,
@@ -66,6 +67,35 @@ type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup | ChatToolCallGroup;
 interface JoinEvent {
   participant: ChatParticipant;
   timeMs: number;
+}
+
+/** Compose field grows with content, then scrolls past this many lines. */
+const COMPOSE_INPUT_MAX_LINES = 5;
+
+/**
+ * Sizes the compose textarea to its content, capped at
+ * {@link COMPOSE_INPUT_MAX_LINES} lines (overflow then scrolls).
+ */
+function resizeComposeInput(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  const style = getComputedStyle(el);
+  const lineHeight = parseFloat(style.lineHeight);
+  const paddingTop = parseFloat(style.paddingTop) || 0;
+  const paddingBottom = parseFloat(style.paddingBottom) || 0;
+  const borderTop = parseFloat(style.borderTopWidth) || 0;
+  const borderBottom = parseFloat(style.borderBottomWidth) || 0;
+  // Fall back to font-size * typical line-height if line-height is "normal".
+  const resolvedLineHeight =
+    Number.isFinite(lineHeight) && lineHeight > 0
+      ? lineHeight
+      : (parseFloat(style.fontSize) || 14) * 1.2;
+  const maxHeight =
+    resolvedLineHeight * COMPOSE_INPUT_MAX_LINES +
+    paddingTop +
+    paddingBottom +
+    borderTop +
+    borderBottom;
+  el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
 }
 
 /**
@@ -329,9 +359,11 @@ export function getMessageAvatar(
   label: string;
   visual: ConnectionSessionUserVisual;
   isSelf: boolean;
+  genericFallback: boolean;
 } {
   const authors = chat.getMessageAuthors(message);
   const primaryAuthor = authors[0] ?? null;
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   if (!primaryAuthor) {
     const anonymous = t("anonymous", { defaultValue: "Anonymous" });
@@ -340,20 +372,23 @@ export function getMessageAvatar(
       label: anonymous,
       visual: getUserAnimalVisual(message.id),
       isSelf: false,
+      genericFallback: false,
     };
   }
 
-  return getParticipantAvatar(primaryAuthor, t);
+  return getParticipantAvatar(primaryAuthor, t, { otherPeoplePresent });
 }
 
 export function getParticipantAvatar(
   participant: ChatParticipant,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: (key: string, options?: Record<string, unknown>) => string,
+  options?: { otherPeoplePresent?: boolean }
 ): {
   imageUrl: string | null;
   label: string;
   visual: ConnectionSessionUserVisual;
   isSelf: boolean;
+  genericFallback: boolean;
 } {
   const label = getParticipantDisplayLabel(participant, t);
   const imageUrl = participant.isAI
@@ -367,6 +402,8 @@ export function getParticipantAvatar(
     label,
     visual: getParticipantVisual(participant),
     isSelf: participant.isSelf,
+    genericFallback:
+      participant.isSelf && !participant.isAI && !options?.otherPeoplePresent,
   };
 }
 
@@ -534,7 +571,9 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
         data-count={totalVisible}
       >
         {avatarsToShow.map((participant) => {
-          const av = getParticipantAvatar(participant, t);
+          const av = getParticipantAvatar(participant, t, {
+            otherPeoplePresent: true,
+          });
           return (
             <Avatar
               key={participant.id}
@@ -542,6 +581,7 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
               visual={av.visual}
               title={av.label}
               isSelf={av.isSelf}
+              genericFallback={av.genericFallback}
             />
           );
         })}
@@ -575,7 +615,7 @@ export function ChatView(props: ChatViewProps) {
   const isSubmitting = useSignal(false);
   const submitError = useSignal<string | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const isFirstRenderRef = useRef(true);
   const wasAtBottomRef = useRef(true);
   // Mobile-only: while the field is blurred and empty, blink a fake caret
@@ -736,6 +776,7 @@ export function ChatView(props: ChatViewProps) {
       input.focus();
       input.setSelectionRange(nextCursor, nextCursor);
       cursorPosition.value = nextCursor;
+      resizeComposeInput(input);
     });
   };
 
@@ -748,48 +789,8 @@ export function ChatView(props: ChatViewProps) {
   };
 
   const handleInputPositionUpdate = (event: Event) => {
-    const target = event.currentTarget as HTMLInputElement;
+    const target = event.currentTarget as HTMLTextAreaElement;
     cursorPosition.value = target.selectionStart ?? target.value.length;
-  };
-
-  const handleMentionKeyDown = (event: KeyboardEvent) => {
-    if (!isMentionPickerOpen) {
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      mentionActiveIndex.value =
-        (mentionActiveIndex.value + 1) % totalMentionCount;
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      mentionActiveIndex.value =
-        (mentionActiveIndex.value - 1 + totalMentionCount) % totalMentionCount;
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
-        selectEveryoneMention();
-      } else {
-        const participantIndex =
-          mentionActiveIndex.value - (showEveryoneSuggestion ? 1 : 0);
-        const suggestion = allMentionSuggestions[participantIndex];
-        if (suggestion) {
-          selectMention(suggestion);
-        }
-      }
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      cursorPosition.value = 0;
-    }
   };
 
   const handleSubmit = async (event: Event) => {
@@ -810,7 +811,16 @@ export function ChatView(props: ChatViewProps) {
       });
       draft.value = "";
       chat.setTypingStatus(false);
-      inputRef.current?.focus();
+      // Defer until Preact has cleared the textarea DOM value, otherwise
+      // resizeComposeInput measures the still-tall content and leaves the
+      // empty field expanded.
+      window.queueMicrotask(() => {
+        const input = inputRef.current;
+        if (input) {
+          input.focus();
+          resizeComposeInput(input);
+        }
+      });
     } catch (error) {
       submitError.value =
         error instanceof Error
@@ -820,6 +830,64 @@ export function ChatView(props: ChatViewProps) {
             });
     } finally {
       isSubmitting.value = false;
+    }
+  };
+
+  const handleComposeKeyDown = (event: KeyboardEvent) => {
+    if (isMentionPickerOpen) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        mentionActiveIndex.value =
+          (mentionActiveIndex.value + 1) % totalMentionCount;
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        mentionActiveIndex.value =
+          (mentionActiveIndex.value - 1 + totalMentionCount) %
+          totalMentionCount;
+        return;
+      }
+
+      if (event.key === "Enter") {
+        // Don't steal Enter while an IME is confirming a candidate.
+        if (event.isComposing || event.keyCode === 229) {
+          return;
+        }
+        event.preventDefault();
+        if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
+          selectEveryoneMention();
+        } else {
+          const participantIndex =
+            mentionActiveIndex.value - (showEveryoneSuggestion ? 1 : 0);
+          const suggestion = allMentionSuggestions[participantIndex];
+          if (suggestion) {
+            selectMention(suggestion);
+          }
+        }
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cursorPosition.value = 0;
+        return;
+      }
+    }
+
+    // Desktop: Enter submits; Shift+Enter inserts a newline.
+    // Mobile: Enter inserts a newline; submit is via the send button.
+    // Skip while an IME is composing (CJK candidate confirmation, etc.).
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.isComposing &&
+      event.keyCode !== 229 &&
+      !state.app.isMobile.value
+    ) {
+      event.preventDefault();
+      void handleSubmit(event);
     }
   };
 
@@ -852,7 +920,9 @@ export function ChatView(props: ChatViewProps) {
                 <div className="sb-chat-view-event" key={group.key}>
                   <div className="sb-chat-view-event-avatar-shell">
                     {group.participants.slice(0, 3).map((p) => {
-                      const avatar = getParticipantAvatar(p, t);
+                      const avatar = getParticipantAvatar(p, t, {
+                        otherPeoplePresent: chatHasOtherPeople(chat),
+                      });
                       return (
                         <Avatar
                           key={p.id}
@@ -860,6 +930,7 @@ export function ChatView(props: ChatViewProps) {
                           visual={avatar.visual}
                           title={avatar.label}
                           isSelf={avatar.isSelf}
+                          genericFallback={avatar.genericFallback}
                         />
                       );
                     })}
@@ -882,6 +953,7 @@ export function ChatView(props: ChatViewProps) {
                       visual={avatar.visual}
                       title={avatar.label}
                       isSelf={avatar.isSelf}
+                      genericFallback={avatar.genericFallback}
                     />
                   </div>
                   <span className="sb-chat-view-event-text">
@@ -926,6 +998,7 @@ export function ChatView(props: ChatViewProps) {
                       visual={avatar.visual}
                       title={avatar.label}
                       isSelf={avatar.isSelf}
+                      genericFallback={avatar.genericFallback}
                     />
                   </div>
                 </div>
@@ -1074,22 +1147,23 @@ export function ChatView(props: ChatViewProps) {
               className="sb-chat-view-input-hint-caret"
               aria-hidden="true"
             />
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
               className="sb-chat-view-input"
+              rows={1}
               placeholder={t("type-a-message", {
                 defaultValue: "Type a message...",
               })}
               value={draft.value}
               onInput={(event) => {
-                const input = event.currentTarget as HTMLInputElement;
+                const input = event.currentTarget as HTMLTextAreaElement;
                 draft.value = input.value;
                 cursorPosition.value =
                   input.selectionStart ?? input.value.length;
                 chat.setTypingStatus(input.value.trim().length > 0);
+                resizeComposeInput(input);
               }}
-              onKeyDown={handleMentionKeyDown}
+              onKeyDown={handleComposeKeyDown}
               onClick={handleInputPositionUpdate}
               onKeyUp={handleInputPositionUpdate}
               onSelect={handleInputPositionUpdate}
@@ -1104,6 +1178,9 @@ export function ChatView(props: ChatViewProps) {
               aria-autocomplete="list"
               aria-expanded={isMentionPickerOpen}
               aria-haspopup="listbox"
+              aria-label={t("type-a-message", {
+                defaultValue: "Type a message...",
+              })}
             />
           </div>
           <button
@@ -1148,7 +1225,12 @@ function ChatMessage({
       <p className="sb-chat-view-message-body">
         <MessageBody
           message={message}
-          onVerseReferenceClick={(ref) => state.app.openVerseReference(ref)}
+          onVerseReferenceClick={(ref) => {
+            if (state.app.isMobile.value) {
+              state.sidebar.closeChatPanel();
+            }
+            void state.app.openVerseReference(ref);
+          }}
         />
       </p>
       {showTimestamp && (

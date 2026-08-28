@@ -1,0 +1,31 @@
+{
+  "id": "house-of-the-lord",
+  "translations": {
+    "en": {
+      "title": "House of the Lord",
+      "description": "Interactive 3D experiences of things the Bible describes, tied to the verses that mention them.",
+      "experience-tabernacle": "Tabernacle",
+      "experience-solomon-temple": "Solomon's temple",
+      "piece-altar-of-sacrifice": "Altar Of Sacrifice",
+      "piece-ark-of-covenant": "Ark Of Covenant",
+      "piece-bars": "Bars",
+      "piece-bronze-laver": "Bronze Laver",
+      "piece-brown-curtain": "Brown Curtain",
+      "piece-front-curtain": "Front Curtain",
+      "piece-front-pillars": "Front Pillars",
+      "piece-grey-curtain": "Grey Curtain",
+      "piece-incense-altar": "Incense Altar",
+      "piece-inner-curtain": "Inner Curtain",
+      "piece-inner-pillars": "Inner Pillars",
+      "piece-menorah": "Menorah",
+      "piece-purple-curtain": "Purple Curtain",
+      "piece-red-curtain": "Red Curtain",
+      "piece-rings": "Rings",
+      "piece-table-of-showbread": "Table Of Showbread",
+      "piece-walls": "Walls",
+      "piece-ground": "Ground",
+      "piece-fence": "Fence",
+      "piece-test": "Test"
+    }
+  }
+}

@@ -30,6 +30,14 @@
       font-size: 0.9375rem;
     }
   }
+
+  .sb-chat-view-message-avatar-shell > .sb-tab-user-icon-generic {
+    border: none;
+
+    > .material-symbols-outlined {
+      font-size: 1.875rem;
+    }
+  }
 }
 
 .sb-chat-view-empty {
@@ -157,6 +165,14 @@
       font-size: 0.625rem;
     }
   }
+
+  > .sb-tab-user-icon-generic {
+    border: none;
+
+    > .material-symbols-outlined {
+      font-size: 0.875rem;
+    }
+  }
 }
 
 .sb-chat-view-event-text {
@@ -257,7 +273,7 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-compose {
   display: flex;
   gap: 0.5rem;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .sb-chat-view-compose-shell {
@@ -409,20 +425,30 @@ img.sb-chat-view-message-avatar {
   background: color-mix(in srgb, var(--sb-background, #fff), transparent 5%);
   color: var(--sb-font-color);
   padding: 0.625rem 0.75rem;
+  font: inherit;
   font-size: 0.875rem;
   line-height: 1.2;
+  resize: none;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Cap at 5 lines: 5 × font-size × line-height + vertical padding. */
+  max-height: calc(0.875rem * 1.2 * 5 + 1.25rem);
+}
+
+.sb-chat-view-input::-webkit-scrollbar {
+  display: none;
 }
 
 /* Mobile type-hint: faux blinking caret while the field is unfocused.
-   Inputs can't host ::before/::after, so this is a sibling pseudo-caret. */
+   Textareas can't host ::before/::after for this, so this is a sibling. */
 .sb-chat-view-input-hint-caret {
   display: none;
   position: absolute;
   left: 0.75rem;
-  top: 50%;
+  top: 0.625rem;
   width: 1.5px;
   height: 1.05em;
-  transform: translateY(-50%);
   background: var(--sb-font-color);
   pointer-events: none;
   z-index: 1;

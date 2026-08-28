@@ -30,6 +30,7 @@ import {
 import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
 import type { BookId } from "./BibleDataManager";
+import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -113,11 +114,207 @@ export type SimplePlaylist = Pick<
   Playlist,
   "id" | "items" | "title" | "description"
 >;
+
+/**
+ * True when a playlist is backed by a record, so a play-history row can reload
+ * it later by `{recordName, id}`. Ad-hoc queues (a reading plan's day, say)
+ * carry no record name and so can't be resumed from history.
+ */
+function isRecordedPlaylist(
+  playlist: SimplePlaylist
+): playlist is SimplePlaylist & Pick<Playlist, "recordName"> {
+  return typeof (playlist as Partial<Playlist>).recordName === "string";
+}
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
 
+/**
+ * Latest play of a playlist, stored under the user's record so shared playlist
+ * links can be reopened later from Discover without keeping the URL. One row
+ * per playlist: playing again (resume or start over) overwrites that row
+ * instead of appending a session log.
+ */
+export const PlaylistPlayHistorySchema = z.object({
+  id: z.string(),
+  recordName: z.string(),
+  userId: z.string(),
+  playlistId: z.string(),
+  playlistRecordName: z.string(),
+  playlistTitle: z.string().nullable(),
+  playlistDescription: z.string().nullable().optional(),
+  /**
+   * Legacy chain to a prior play-session. Kept so stored records still parse;
+   * new writes leave it unset. History is one row per playlist now.
+   */
+  previousHistoryId: z.string().nullable().optional(),
+  totalSteps: z.number().int().nonnegative(),
+  /** 0-based queue index at last update; `-1` when the queue was empty. */
+  currentStep: z.number().int(),
+  /** Snapshot of the queue item at `currentStep` for display without reloading. */
+  lastItem: PlaylistItem.nullable(),
+  startedAtMs: z.number().positive(),
+  /** Set when playback stops; `null` while this session is still active. */
+  endedAtMs: z.number().positive().nullable().optional(),
+  /** Wall-clock ms from `startedAtMs` to the last save (or stop). */
+  durationMs: z.number().nonnegative().default(0),
+  createdAtMs: z.number().positive(),
+  updatedAtMs: z.number().positive(),
+});
+export type PlaylistPlayHistory = z.infer<typeof PlaylistPlayHistorySchema>;
+
+/**
+ * Options for {@link createPlaylistManager}'s `startPlaying`. Pass
+ * `history: false` to skip tracking (e.g. reading plans that reuse the
+ * playlist player).
+ */
+export type StartPlayingOptions = {
+  history?: false;
+};
+
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
 export type PlayingState = ReturnType<typeof createPlayingState>;
+
+const PLAYLIST_PLAY_HISTORY_MARKER = "publicRead:playlistPlayHistory";
+
+/**
+ * Bound on how many playlists we keep in history. One row per playlist, so
+ * this is a cap on distinct playlists, not on play sessions.
+ */
+export const MAX_PLAYLIST_PLAY_HISTORY = 200;
+
+/** Identity of the playlist a history row refers to (record + id). */
+export function playlistPlayHistoryKey(
+  entry: Pick<PlaylistPlayHistory, "playlistRecordName" | "playlistId">
+): string {
+  return `${entry.playlistRecordName}.${entry.playlistId}`;
+}
+
+/**
+ * Newest play per playlist, newest-first, capped at
+ * {@link MAX_PLAYLIST_PLAY_HISTORY}. Used both when loading from the backend
+ * and when pruning after a new play so Discover never shows a session log.
+ */
+export function retainPlaylistPlayHistory(
+  entries: PlaylistPlayHistory[]
+): PlaylistPlayHistory[] {
+  const sorted = [...entries].sort((a, b) => b.startedAtMs - a.startedAtMs);
+  const seen = new Set<string>();
+  const retained: PlaylistPlayHistory[] = [];
+  for (const entry of sorted) {
+    const key = playlistPlayHistoryKey(entry);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    retained.push(entry);
+    if (retained.length >= MAX_PLAYLIST_PLAY_HISTORY) {
+      break;
+    }
+  }
+  return retained;
+}
+
+export type PlaylistPlayHistoryDayGroup = {
+  dayKey: string;
+  entries: PlaylistPlayHistory[];
+};
+
+/**
+ * Newest-first history rows grouped by calendar day in `timeZone` (the
+ * machine zone when omitted). Day keys are `YYYY-MM-DD`.
+ */
+export function groupPlaylistPlayHistoryByDay(
+  entries: PlaylistPlayHistory[],
+  timeZone?: string | null
+): PlaylistPlayHistoryDayGroup[] {
+  const sorted = retainPlaylistPlayHistory(entries);
+  const groups = new Map<string, PlaylistPlayHistory[]>();
+  const order: string[] = [];
+  for (const entry of sorted) {
+    const dayKey = civilDateToISO(civilDateInZone(entry.startedAtMs, timeZone));
+    const group = groups.get(dayKey);
+    if (group) {
+      group.push(entry);
+      continue;
+    }
+    groups.set(dayKey, [entry]);
+    order.push(dayKey);
+  }
+  return order.map((dayKey) => ({
+    dayKey,
+    entries: groups.get(dayKey) ?? [],
+  }));
+}
+
+/** Which heading Discover should use for a history day group. */
+export function playlistPlayHistoryDayKind(
+  dayKey: string,
+  nowMs: number = Date.now(),
+  timeZone?: string | null
+): "today" | "yesterday" | "date" {
+  const today = civilDateToISO(civilDateInZone(nowMs, timeZone));
+  if (dayKey === today) {
+    return "today";
+  }
+  const yesterday = civilDateToISO(
+    addCivilDays(civilDateInZone(nowMs, timeZone), -1)
+  );
+  if (dayKey === yesterday) {
+    return "yesterday";
+  }
+  return "date";
+}
+
+/** Fraction of the queue reached (0–1), counting every item type. */
+export function playlistPlayHistoryPercent(
+  entry: Pick<PlaylistPlayHistory, "currentStep" | "totalSteps">
+): number {
+  if (entry.totalSteps <= 0 || entry.currentStep < 0) {
+    return 0;
+  }
+  const reached = Math.min(entry.currentStep + 1, entry.totalSteps);
+  return reached / entry.totalSteps;
+}
+
+/** True when the last update was on the final queue item. */
+export function isPlaylistPlayHistoryComplete(
+  entry: Pick<PlaylistPlayHistory, "currentStep" | "totalSteps">
+): boolean {
+  return entry.totalSteps > 0 && entry.currentStep >= entry.totalSteps - 1;
+}
+
+/**
+ * Formats a wall-clock play duration for the history accordion. Kept here so
+ * manager tests can assert the same string the UI shows.
+ */
+export function formatPlaylistPlayDurationMs(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+}
+
+/**
+ * Duration shown in Discover: finished sessions use the saved `durationMs`;
+ * an still-active session (no `endedAtMs`) is measured live from `startedAtMs`
+ * so the accordion stays honest without a backend write every few seconds.
+ */
+export function playlistPlayHistoryDisplayDurationMs(
+  entry: Pick<PlaylistPlayHistory, "startedAtMs" | "endedAtMs" | "durationMs">,
+  nowMs: number = Date.now()
+): number {
+  if (entry.endedAtMs == null) {
+    return Math.max(0, nowMs - entry.startedAtMs);
+  }
+  return entry.durationMs;
+}
 
 /**
  * The serializable playback state the playlist reading extension stores in its
@@ -471,6 +668,9 @@ export function createPlaylistManager(
     navigation.currentUrl.value.searchParams.get("playlistStep")
   );
   const userPlaylists = signal<Playlist[]>([]);
+  /** Latest play per playlist for the signed-in user, newest first. */
+  const userPlaylistHistory = signal<PlaylistPlayHistory[]>([]);
+
   // view/isDiscoverOpen are owned by DiscoverManager now; these are local
   // aliases so the rest of this function keeps working unchanged.
   const view = discover.view;
@@ -478,6 +678,13 @@ export function createPlaylistManager(
 
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
+
+  /**
+   * Id of the history row being written for the active play session, or null
+   * when nothing is being tracked (signed out, `history: false`, or idle).
+   */
+  const activePlayHistoryId = signal<string | null>(null);
+  const activePlayHistoryStartedAtMs = signal<number | null>(null);
 
   /**
    * The reading state playback is bound to: the shared-session tab if one
@@ -533,9 +740,312 @@ export function createPlaylistManager(
     });
   };
 
+  const savePlayHistory = async (entry: PlaylistPlayHistory) => {
+    const parsed = PlaylistPlayHistorySchema.parse(entry);
+    await os.recordData(parsed.recordName, parsed.id, parsed, {
+      marker: PLAYLIST_PLAY_HISTORY_MARKER,
+    });
+  };
+
+  const erasePlayHistory = async (
+    entry: PlaylistPlayHistory
+  ): Promise<void> => {
+    try {
+      await os.eraseData(entry.recordName, entry.id);
+    } catch (error) {
+      console.error("Failed to erase playlist play history:", error);
+    }
+  };
+
+  /**
+   * Drops every history row that is not in `keep`, both in memory (caller
+   * updates the signal) and best-effort on the backend. Used after load and
+   * after starting a play so leftover sessions for the same playlist (and
+   * overflow past the retention cap) never accumulate.
+   */
+  const prunePlayHistoryOutside = (
+    all: PlaylistPlayHistory[],
+    keep: PlaylistPlayHistory[]
+  ): void => {
+    const keepIds = new Set(keep.map((entry) => entry.id));
+    for (const entry of all) {
+      if (!keepIds.has(entry.id)) {
+        void erasePlayHistory(entry);
+      }
+    }
+  };
+
+  const loadPlayHistory = async (
+    recordName: string
+  ): Promise<PlaylistPlayHistory[]> => {
+    // Paginate through every page — a single `listDataByMarker` page is ordered
+    // by record address (random UUID), not by recency, so recent plays would
+    // silently disappear once history grew past one page.
+    const records = await os.listAllDataByMarker(
+      recordName,
+      PLAYLIST_PLAY_HISTORY_MARKER
+    );
+    if (records.success === false) {
+      throw new Error("Failed to list playlist play history");
+    }
+    const all = records.items
+      .map((record) => PlaylistPlayHistorySchema.safeParse(record.data))
+      .filter((r) => r.success)
+      .map((r) => r.data);
+    const retained = retainPlaylistPlayHistory(all);
+    prunePlayHistoryOutside(all, retained);
+    return retained;
+  };
+
+  const upsertLocalPlayHistory = (entry: PlaylistPlayHistory) => {
+    // `.peek()` so callers inside playback effects don't subscribe to the list
+    // they are writing (that would trip Preact's cycle detection).
+    const key = playlistPlayHistoryKey(entry);
+    const without = userPlaylistHistory
+      .peek()
+      .filter((e) => e.id !== entry.id && playlistPlayHistoryKey(e) !== key);
+    userPlaylistHistory.value = retainPlaylistPlayHistory([entry, ...without]);
+  };
+
+  /**
+   * Writes progress for a history row. Skips the backend write when only the
+   * wall-clock duration moved (idle parked on one step) — those are refreshed
+   * locally for the Discover accordion and flushed for real on stop / step
+   * change. Persistence is otherwise best-effort.
+   */
+  const persistPlayHistoryPatch = async (
+    id: string,
+    startedAtMs: number,
+    patch: {
+      currentStep: number;
+      totalSteps: number;
+      lastItem: PlaylistItemData | null;
+      endedAtMs?: number | null;
+    }
+  ): Promise<void> => {
+    const existing = userPlaylistHistory.peek().find((e) => e.id === id);
+    if (!existing) {
+      return;
+    }
+    const now = Date.now();
+    // Playing the same playlist again reopens this row before a just-queued
+    // finalize write lands; skip that stale "ended" patch so it cannot close
+    // the session we just started.
+    if (patch.endedAtMs != null && activePlayHistoryId.peek() === id) {
+      return;
+    }
+    const endedAtMs =
+      patch.endedAtMs !== undefined ? patch.endedAtMs : existing.endedAtMs;
+    const durationMs = Math.max(0, (endedAtMs ?? now) - startedAtMs);
+    const next: PlaylistPlayHistory = {
+      ...existing,
+      currentStep: patch.currentStep,
+      totalSteps: patch.totalSteps,
+      lastItem: patch.lastItem,
+      endedAtMs: endedAtMs ?? null,
+      durationMs,
+      updatedAtMs: now,
+    };
+
+    const stepUnchanged =
+      existing.currentStep === patch.currentStep &&
+      existing.totalSteps === patch.totalSteps &&
+      jsonEqual(existing.lastItem, patch.lastItem);
+    const ending =
+      patch.endedAtMs !== undefined && patch.endedAtMs !== existing.endedAtMs;
+
+    // Always keep the in-memory row fresh for the accordion; only hit the
+    // network when the user actually advanced or the session ended.
+    upsertLocalPlayHistory(next);
+    if (!ending && stepUnchanged) {
+      return;
+    }
+    try {
+      await savePlayHistory(next);
+    } catch (error) {
+      console.error("Failed to save playlist play history:", error);
+    }
+  };
+
+  const patchActivePlayHistory = async (patch: {
+    currentStep: number;
+    totalSteps: number;
+    lastItem: PlaylistItemData | null;
+    endedAtMs?: number | null;
+  }): Promise<void> => {
+    const id = activePlayHistoryId.peek();
+    const startedAtMs = activePlayHistoryStartedAtMs.peek();
+    if (!id || startedAtMs == null) {
+      return;
+    }
+    await persistPlayHistoryPatch(id, startedAtMs, patch);
+  };
+
+  /**
+   * Opens (or resets) the single history row for this playlist. Playing again
+   * overwrites that row with the current session so Discover shows latest
+   * progress, not a log of every play. Local list updates first so Discover
+   * can show it immediately; the CasualOS write is best-effort. Leftover
+   * rows for the same playlist and overflow past the retention cap are erased.
+   */
+  const beginPlayHistory = async (
+    playlist: SimplePlaylist & Pick<Playlist, "recordName">,
+    queue: PlaylistItemData[],
+    step: number
+  ): Promise<void> => {
+    const userId = login.userId.peek();
+    if (!userId) {
+      return;
+    }
+    const now = Date.now();
+    const previous = userPlaylistHistory.peek();
+    const existing = previous.find(
+      (entry) =>
+        playlistPlayHistoryKey(entry) ===
+        playlistPlayHistoryKey({
+          playlistRecordName: playlist.recordName,
+          playlistId: playlist.id,
+        })
+    );
+    const entry = PlaylistPlayHistorySchema.parse({
+      id: existing?.id ?? `playlist_history_${uuid()}`,
+      recordName: userId,
+      userId,
+      playlistId: playlist.id,
+      playlistRecordName: playlist.recordName,
+      playlistTitle: playlist.title,
+      playlistDescription: playlist.description,
+      previousHistoryId: null,
+      totalSteps: queue.length,
+      currentStep: step,
+      lastItem: queue[step] ?? null,
+      startedAtMs: now,
+      endedAtMs: null,
+      durationMs: 0,
+      createdAtMs: existing?.createdAtMs ?? now,
+      updatedAtMs: now,
+    });
+    activePlayHistoryId.value = entry.id;
+    activePlayHistoryStartedAtMs.value = now;
+
+    const nextList = retainPlaylistPlayHistory([entry, ...previous]);
+    userPlaylistHistory.value = nextList;
+    prunePlayHistoryOutside([entry, ...previous], nextList);
+
+    try {
+      await savePlayHistory(entry);
+    } catch (error) {
+      console.error("Failed to save playlist play history:", error);
+    }
+  };
+
+  /**
+   * Snapshots the current active history session (if any), clears the active
+   * pointers immediately, then persists the ended row. Clearing first avoids
+   * racing a follow-up `beginPlayHistory` that would otherwise see the old id.
+   */
+  const finalizeActivePlayHistory = (): void => {
+    const id = activePlayHistoryId.peek();
+    const startedAtMs = activePlayHistoryStartedAtMs.peek();
+    const playingState = playing.peek();
+    activePlayHistoryId.value = null;
+    activePlayHistoryStartedAtMs.value = null;
+    if (!id || startedAtMs == null) {
+      return;
+    }
+    const step = playingState?.currentIndex.peek() ?? -1;
+    const queue = playingState?.queue.peek() ?? [];
+    void persistPlayHistoryPatch(id, startedAtMs, {
+      currentStep: step,
+      totalSteps: queue.length,
+      lastItem: queue[step] ?? null,
+      endedAtMs: Date.now(),
+    });
+  };
+
+  const isHistoryForPlaylist = (
+    entry: PlaylistPlayHistory,
+    playlist: Pick<Playlist, "id" | "recordName">
+  ): boolean =>
+    entry.playlistId === playlist.id &&
+    entry.playlistRecordName === playlist.recordName;
+
+  /**
+   * Drops matching history rows from memory and the backend. Clears the
+   * active session pointer first when it points at a dropped row so an
+   * in-flight finalize cannot resurrect it.
+   */
+  const dropPlayHistoryForPlaylist = (
+    playlist: Pick<Playlist, "id" | "recordName">
+  ): void => {
+    const matching = userPlaylistHistory
+      .peek()
+      .filter((entry) => isHistoryForPlaylist(entry, playlist));
+    if (matching.some((entry) => entry.id === activePlayHistoryId.peek())) {
+      activePlayHistoryId.value = null;
+      activePlayHistoryStartedAtMs.value = null;
+    }
+    userPlaylistHistory.value = userPlaylistHistory
+      .peek()
+      .filter((entry) => !isHistoryForPlaylist(entry, playlist));
+    for (const entry of matching) {
+      void erasePlayHistory(entry);
+    }
+  };
+
+  /**
+   * Removes one play session from Discover history. Playback itself is left
+   * running if this was the active row; only tracking stops.
+   */
+  const removePlayHistory = async (
+    entry: PlaylistPlayHistory
+  ): Promise<void> => {
+    if (activePlayHistoryId.peek() === entry.id) {
+      activePlayHistoryId.value = null;
+      activePlayHistoryStartedAtMs.value = null;
+    }
+    userPlaylistHistory.value = userPlaylistHistory
+      .peek()
+      .filter((existing) => existing.id !== entry.id);
+    await erasePlayHistory(entry);
+  };
+
+  /**
+   * Reports a playlist analytics event for each given playlist, tagging
+   * whether the current user authored it. Used to distinguish playback by the
+   * creator from playback by someone the playlist was shared with. Accepts
+   * `SimplePlaylist` (an unsaved playlist, e.g. an AI-generated one played
+   * before it's ever recorded) as well as a full `Playlist` — an unsaved
+   * playlist has no `authorUserId` on record, so it's attributed to the
+   * current user, the only one who could have been playing it.
+   * `extraProperties` are merged in on top of the common `playlistId`/
+   * `playlistLocator`/`isCreator` fields, so every playlist event stays
+   * queryable by the same base shape in PostHog.
+   */
+  const capturePlaylistEvent = (
+    eventName: string,
+    playlists: SimplePlaylist[],
+    extraProperties: Record<string, unknown> = {}
+  ): void => {
+    if (typeof posthog === "undefined" || !posthog) {
+      return;
+    }
+    const userId = login.userId.peek();
+    for (const playlist of playlists) {
+      const authorUserId = (playlist as Partial<Playlist>).authorUserId;
+      posthog.capture(eventName, {
+        playlistId: playlist.id,
+        playlistLocator: getPlaylistLocator(playlist),
+        isCreator: authorUserId == null || authorUserId === userId,
+        ...extraProperties,
+      });
+    }
+  };
+
   /**
    * Permanently deletes a playlist: erases its record, drops it from
-   * `userPlaylists`, and clears any edit/playback state that referenced it.
+   * `userPlaylists`, clears matching play-history rows, and clears any
+   * edit/playback state that referenced it.
    */
   const deletePlaylist = async (playlist: Playlist): Promise<void> => {
     const result = await os.eraseData(playlist.recordName, playlist.id);
@@ -549,12 +1059,13 @@ export function createPlaylistManager(
     if (editingPlaylist.peek()?.id === playlist.id) {
       cancelEditingPlaylist();
     }
-    if (
-      playing
-        .peek()
-        ?.playlists.peek()
-        .some((p) => p.id === playlist.id)
-    ) {
+    const wasPlaying = !!playing
+      .peek()
+      ?.playlists.peek()
+      .some((p) => p.id === playlist.id);
+    // Drop history before stopPlaying so finalize cannot write the rows back.
+    dropPlayHistoryForPlaylist(playlist);
+    if (wasPlaying) {
       stopPlaying();
     }
   };
@@ -650,11 +1161,32 @@ export function createPlaylistManager(
     const playlist: Playlist = { ...current, updatedAtMs: Date.now() };
     await savePlaylist(playlist);
     const exists = userPlaylists.value.some((p) => p.id === playlist.id);
+    capturePlaylistEvent(
+      exists ? "playlist_updated" : "playlist_created",
+      [playlist],
+      { itemCount: playlist.items.length }
+    );
     userPlaylists.value = exists
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
     editingPlaylist.value = null;
     view.value = "discover";
+  };
+
+  /**
+   * Patches the currently-edited playlist's title and/or description. No-op
+   * when there is no playlist being edited. Persisting happens later via
+   * `saveEditingPlaylist`.
+   */
+  const updateEditingPlaylistMetadata = (
+    updates: Partial<Pick<Playlist, "title" | "description">>
+  ): string => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return "error: no playlist is currently being edited";
+    }
+    editingPlaylist.value = { ...current, ...updates };
+    return "success";
   };
 
   /**
@@ -786,11 +1318,15 @@ export function createPlaylistManager(
    * reordered/edited without mutating the playlists. The extension owns the live
    * playing state; this manager reads it back via the `playing` computed.
    *
+   * When the user is signed in and `options.history` is not `false`, the
+   * single history row for the first recorded playlist is opened or reset.
+   *
    * Returns the live playing state, or null when there is no tab to play on.
    */
   const startPlaying = (
     playlist: SimplePlaylist | SimplePlaylist[],
-    initialStep = 0
+    initialStep = 0,
+    options?: StartPlayingOptions
   ): PlayingState | null => {
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
     // Play on the active tab only. Other tabs keep their own playback (if any)
@@ -805,6 +1341,14 @@ export function createPlaylistManager(
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
 
+    // Ending an existing tracked session before opening the next one keeps
+    // duration/endedAt accurate when the user starts another playlist without
+    // an explicit stop.
+    if (activePlayHistoryId.peek()) {
+      finalizeActivePlayHistory();
+    }
+    capturePlaylistEvent("playlist_played", playlists);
+
     targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
       playlists,
       queue,
@@ -815,6 +1359,17 @@ export function createPlaylistManager(
     if (isMobile.value) {
       // on mobile, close the discover pane so the reader is visible while playing
       view.value = null;
+    }
+
+    const trackHistory = options?.history !== false;
+    const firstPlaylist = playlists[0];
+    if (
+      trackHistory &&
+      firstPlaylist &&
+      isRecordedPlaylist(firstPlaylist) &&
+      login.userId.peek()
+    ) {
+      void beginPlayHistory(firstPlaylist, queue, step);
     }
 
     return playing.value;
@@ -863,6 +1418,7 @@ export function createPlaylistManager(
    * playback is left running.
    */
   const stopPlaying = (): void => {
+    finalizeActivePlayHistory();
     const tab = activeTab.peek();
     if (tab?.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)) {
       tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
@@ -873,6 +1429,35 @@ export function createPlaylistManager(
     if (view.peek()) {
       view.value = "discover";
     }
+  };
+
+  /**
+   * Loads the playlist for a history row and starts playback at the saved step.
+   * The playlist's history row is reset to this new session.
+   */
+  const continueFromHistory = async (
+    entry: PlaylistPlayHistory
+  ): Promise<void> => {
+    const playlist = await loadPlaylist(
+      entry.playlistRecordName,
+      entry.playlistId
+    );
+    const step = Math.max(0, entry.currentStep);
+    startPlaying(playlist, step);
+  };
+
+  /**
+   * Loads the playlist for a history row and starts playback from the beginning.
+   * The playlist's history row is reset to this new session.
+   */
+  const replayFromHistory = async (
+    entry: PlaylistPlayHistory
+  ): Promise<void> => {
+    const playlist = await loadPlaylist(
+      entry.playlistRecordName,
+      entry.playlistId
+    );
+    startPlaying(playlist, 0);
   };
 
   const syncPlaylists = async () => {
@@ -889,8 +1474,27 @@ export function createPlaylistManager(
     }
   };
 
+  const syncPlayHistory = async () => {
+    if (!login.userId.value) {
+      userPlaylistHistory.value = [];
+      activePlayHistoryId.value = null;
+      activePlayHistoryStartedAtMs.value = null;
+      return;
+    }
+
+    try {
+      userPlaylistHistory.value = await loadPlayHistory(login.userId.value);
+    } catch (error) {
+      console.error("Failed to sync playlist play history:", error);
+    }
+  };
+
   effect(() => {
     void syncPlaylists();
+  });
+
+  effect(() => {
+    void syncPlayHistory();
   });
 
   effect(() => {
@@ -900,6 +1504,27 @@ export function createPlaylistManager(
 
     showItemInModal(playing.value.currentItem.value);
   });
+
+  // Mirror queue position into the active history row whenever it changes.
+  // Identical step patches are no-ops for the backend (see persistPlayHistoryPatch),
+  // so the write that beginPlayHistory already did is not immediately repeated.
+  effect(() => {
+    const historyId = activePlayHistoryId.value;
+    const playingState = playing.value;
+    if (!historyId || !playingState) {
+      return;
+    }
+    const step = playingState.currentIndex.value;
+    const queue = playingState.queue.value;
+    void patchActivePlayHistory({
+      currentStep: step,
+      totalSteps: queue.length,
+      lastItem: queue[step] ?? null,
+    });
+  });
+
+  // Duration for an active session is refreshed locally on step changes and
+  // flushed to the backend on stop — no idle 5s recordData timer.
 
   // Registered before the deep-link autoplay check below, since that check can
   // synchronously reach `startPlaying` -> `enableExtension`.
@@ -953,6 +1578,42 @@ export function createPlaylistManager(
           playingState.setState(next);
         }
       });
+
+      // Reports a `playlist_finished` event the first time *this client's
+      // own* forward navigation reaches the last item in the queue. Hooked
+      // onto `next()` itself rather than a reactive effect on `currentIndex`,
+      // because `next()` is only ever called by this client's own advance —
+      // never by an inbound session sync (which moves the index via
+      // `setState` instead, so every synced participant's index can shift
+      // without each of them having "finished" anything) and never by a
+      // queue edit (`removeFromQueue` clamping the index after the trailing
+      // items are deleted doesn't call `next()` either). Comparing the index
+      // before/after also rules out a single-item queue's starting position,
+      // a deep link that opens directly on the last step, and a redundant
+      // press of "next" while already on the last item — none of those are a
+      // forward move. Guarded by `hasFiredFinished` so navigating back and
+      // forth over the last item doesn't re-report it.
+      let hasFiredFinished = false;
+      const localNext = playingState.next;
+      playingState.next = async (): Promise<void> => {
+        const before = playingState.currentIndex.peek();
+        await localNext();
+        const after = playingState.currentIndex.peek();
+        const queueLength = playingState.queue.peek().length;
+        if (
+          hasFiredFinished ||
+          after <= before ||
+          queueLength === 0 ||
+          after !== queueLength - 1
+        ) {
+          return;
+        }
+        hasFiredFinished = true;
+        capturePlaylistEvent(
+          "playlist_finished",
+          playingState.playlists.peek()
+        );
+      };
 
       // Playback governs stepping *within* the queue; at its edges the reader's
       // own chapter navigation takes over again. Before this, reaching the last
@@ -1215,13 +1876,10 @@ export function createPlaylistManager(
           return "error: no playlist is currently being edited";
         }
 
-        editingPlaylist.value = {
-          ...current,
+        return updateEditingPlaylistMetadata({
           title: args.title,
           description: args.description ?? current.description ?? null,
-        };
-
-        return "success";
+        });
       },
     });
 
@@ -1288,6 +1946,7 @@ export function createPlaylistManager(
     createNewPlaylist,
     editPlaylist,
     saveEditingPlaylist,
+    updateEditingPlaylistMetadata,
     addEditingPlaylistItem,
     insertEditingPlaylistItem,
     updateEditingPlaylistItem,
@@ -1297,6 +1956,7 @@ export function createPlaylistManager(
     listPlaylists,
     loadPlaylist,
     userPlaylists,
+    userPlaylistHistory,
     availablePlaylists,
     view,
     actualView,
@@ -1304,6 +1964,9 @@ export function createPlaylistManager(
     playing,
     startPlaying,
     stopPlaying,
+    continueFromHistory,
+    replayFromHistory,
+    removePlayHistory,
     getPlaylistUrl,
     isDiscoverOpen,
     goBackFromPlayingView,

@@ -132,7 +132,7 @@ export const ShareModal = (props: ShareModalProps) => {
                 {action.subtitle}
               </span>
             </span>
-            <span className="sb-share-action-chevron material-symbols-outlined">
+            <span className="sb-share-action-chevron material-symbols-outlined rtl-mirror">
               chevron_right
             </span>
           </button>

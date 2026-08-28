@@ -11,10 +11,19 @@ import {
 import {
   PlaylistItem,
   PlaylistSchema,
+  PlaylistPlayHistorySchema,
   createPlaylistManager,
   createPlayingState,
+  formatPlaylistPlayDurationMs,
+  groupPlaylistPlayHistoryByDay,
+  isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryDayKind,
+  playlistPlayHistoryPercent,
+  retainPlaylistPlayHistory,
+  MAX_PLAYLIST_PLAY_HISTORY,
   type Playlist,
   type PlaylistItemData,
+  type PlaylistPlayHistory,
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
@@ -26,6 +35,7 @@ import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
 const MARKER = "publicRead:playlists";
+const HISTORY_MARKER = "publicRead:playlistPlayHistory";
 
 function makePlaylist(overrides: Partial<Playlist> = {}): Playlist {
   return PlaylistSchema.parse({
@@ -35,6 +45,30 @@ function makePlaylist(overrides: Partial<Playlist> = {}): Playlist {
     title: "My Playlist",
     description: null,
     items: [],
+    createdAtMs: START_MS,
+    updatedAtMs: START_MS,
+    ...overrides,
+  });
+}
+
+function makeHistory(
+  overrides: Partial<PlaylistPlayHistory> = {}
+): PlaylistPlayHistory {
+  return PlaylistPlayHistorySchema.parse({
+    id: "playlist_history_1",
+    recordName: "user-1",
+    userId: "user-1",
+    playlistId: "playlist-1",
+    playlistRecordName: "user-1",
+    playlistTitle: "My Playlist",
+    playlistDescription: null,
+    previousHistoryId: null,
+    totalSteps: 2,
+    currentStep: 0,
+    lastItem: { type: "html", html: "<p>hi</p>" },
+    startedAtMs: START_MS,
+    endedAtMs: null,
+    durationMs: 0,
     createdAtMs: START_MS,
     updatedAtMs: START_MS,
     ...overrides,
@@ -72,6 +106,117 @@ describe("Playlist schemas", () => {
       ],
     });
     expect(playlist.items).toHaveLength(2);
+  });
+});
+
+describe("playlist play history helpers", () => {
+  it("computes percent complete from the current step", () => {
+    expect(playlistPlayHistoryPercent({ currentStep: 0, totalSteps: 4 })).toBe(
+      0.25
+    );
+    expect(playlistPlayHistoryPercent({ currentStep: 3, totalSteps: 4 })).toBe(
+      1
+    );
+    expect(playlistPlayHistoryPercent({ currentStep: -1, totalSteps: 0 })).toBe(
+      0
+    );
+  });
+
+  it("treats the last queue index as complete", () => {
+    expect(
+      isPlaylistPlayHistoryComplete({ currentStep: 2, totalSteps: 3 })
+    ).toBe(true);
+    expect(
+      isPlaylistPlayHistoryComplete({ currentStep: 1, totalSteps: 3 })
+    ).toBe(false);
+  });
+
+  it("formats wall-clock durations", () => {
+    expect(formatPlaylistPlayDurationMs(5_000)).toBe("5s");
+    expect(formatPlaylistPlayDurationMs(65_000)).toBe("1m 5s");
+    expect(formatPlaylistPlayDurationMs(3_661_000)).toBe("1h 1m");
+  });
+
+  it("keeps one newest session per playlist, capped", () => {
+    const older = makeHistory({
+      id: "h-old",
+      playlistId: "p1",
+      startedAtMs: START_MS,
+    });
+    const newer = makeHistory({
+      id: "h-new",
+      playlistId: "p1",
+      startedAtMs: START_MS + 10_000,
+    });
+    const other = makeHistory({
+      id: "h-other",
+      playlistId: "p2",
+      startedAtMs: START_MS + 5_000,
+    });
+    expect(
+      retainPlaylistPlayHistory([older, newer, other]).map((e) => e.id)
+    ).toEqual(["h-new", "h-other"]);
+
+    const many = Array.from({ length: MAX_PLAYLIST_PLAY_HISTORY + 5 }, (_, i) =>
+      makeHistory({
+        id: `h-${i}`,
+        playlistId: `playlist-${i}`,
+        startedAtMs: START_MS + i,
+      })
+    );
+    const retained = retainPlaylistPlayHistory(many);
+    expect(retained).toHaveLength(MAX_PLAYLIST_PLAY_HISTORY);
+    expect(retained[0]!.id).toBe(`h-${MAX_PLAYLIST_PLAY_HISTORY + 4}`);
+    expect(retained.at(-1)!.id).toBe("h-5");
+  });
+
+  it("groups the latest play of each playlist by calendar day", () => {
+    const today = makeHistory({
+      id: "h-today",
+      playlistId: "p-today",
+      startedAtMs: Date.UTC(2026, 5, 17, 13, 45, 0),
+    });
+    const yesterday = makeHistory({
+      id: "h-yesterday",
+      playlistId: "p-yesterday",
+      startedAtMs: Date.UTC(2026, 5, 16, 8, 0, 0),
+    });
+    const older = makeHistory({
+      id: "h-older",
+      playlistId: "p-older",
+      startedAtMs: Date.UTC(2026, 5, 10, 12, 0, 0),
+    });
+    const groups = groupPlaylistPlayHistoryByDay(
+      [older, today, yesterday],
+      "UTC"
+    );
+    expect(groups.map((g) => g.dayKey)).toEqual([
+      "2026-06-17",
+      "2026-06-16",
+      "2026-06-10",
+    ]);
+    expect(groups[0]!.entries.map((e) => e.id)).toEqual(["h-today"]);
+    expect(
+      playlistPlayHistoryDayKind(
+        "2026-06-17",
+        Date.UTC(2026, 5, 17, 18, 0, 0),
+        "UTC"
+      )
+    ).toBe("today");
+    expect(
+      playlistPlayHistoryDayKind(
+        "2026-06-16",
+        Date.UTC(2026, 5, 17, 18, 0, 0),
+        "UTC"
+      )
+    ).toBe("yesterday");
+    expect(
+      playlistPlayHistoryDayKind(
+        "2026-06-10",
+        Date.UTC(2026, 5, 17, 18, 0, 0),
+        "UTC"
+      )
+    ).toBe("date");
   });
 });
 
@@ -222,6 +367,7 @@ function makeTabWithExtensionMocks(
 describe("createPlaylistManager", () => {
   let recordDataMock: Mock;
   let listDataByMarkerMock: Mock;
+  let listAllDataByMarkerMock: Mock;
   let getDataMock: Mock;
   let eraseDataMock: Mock;
   let loginMock: Mock;
@@ -257,6 +403,7 @@ describe("createPlaylistManager", () => {
     Object.assign(os, {
       recordData: recordDataMock,
       listDataByMarker: listDataByMarkerMock,
+      listAllDataByMarker: listAllDataByMarkerMock,
       getData: getDataMock,
       eraseData: eraseDataMock,
     });
@@ -296,6 +443,9 @@ describe("createPlaylistManager", () => {
   beforeEach(() => {
     recordDataMock = vi.fn().mockResolvedValue(undefined);
     listDataByMarkerMock = vi
+      .fn()
+      .mockResolvedValue({ success: true, items: [] });
+    listAllDataByMarkerMock = vi
       .fn()
       .mockResolvedValue({ success: true, items: [] });
     getDataMock = vi.fn().mockResolvedValue({ success: true, data: null });
@@ -378,21 +528,47 @@ describe("createPlaylistManager", () => {
     );
   });
 
-  it("deletePlaylist erases the record and drops it from userPlaylists", async () => {
+  it("deletePlaylist erases the record, matching history, and drops it from userPlaylists", async () => {
     listDataByMarkerMock.mockResolvedValue({
       success: true,
       items: [{ data: makePlaylist({ id: "playlist-a" }) }],
     });
+    listAllDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [
+        {
+          data: makeHistory({
+            id: "hist-playlist-a",
+            playlistId: "playlist-a",
+            playlistRecordName: "user-1",
+          }),
+        },
+        {
+          data: makeHistory({
+            id: "hist-other",
+            playlistId: "playlist-other",
+            playlistRecordName: "user-1",
+          }),
+        },
+      ],
+    });
     const manager = makeManager("user-1");
     await flush();
     expect(manager.userPlaylists.value).toHaveLength(1);
+    expect(manager.userPlaylistHistory.value).toHaveLength(2);
 
     await manager.deletePlaylist(
       makePlaylist({ id: "playlist-a", recordName: "user-1" })
     );
+    await flush();
 
     expect(eraseDataMock).toHaveBeenCalledWith("user-1", "playlist-a");
+    expect(eraseDataMock).toHaveBeenCalledWith("user-1", "hist-playlist-a");
+    expect(eraseDataMock).not.toHaveBeenCalledWith("user-1", "hist-other");
     expect(manager.userPlaylists.value).toEqual([]);
+    expect(manager.userPlaylistHistory.value.map((e) => e.id)).toEqual([
+      "hist-other",
+    ]);
   });
 
   it("deletePlaylist throws and keeps the playlist when erase fails", async () => {
@@ -574,6 +750,55 @@ describe("createPlaylistManager", () => {
 
     expect(manager.userPlaylists.value).toHaveLength(1);
     expect(manager.userPlaylists.value[0]!.title).toBe("New");
+  });
+
+  it("updateEditingPlaylistMetadata patches the draft title and description", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    expect(manager.updateEditingPlaylistMetadata({ title: "Favorites" })).toBe(
+      "success"
+    );
+    expect(
+      manager.updateEditingPlaylistMetadata({
+        description: "Verses I keep coming back to",
+      })
+    ).toBe("success");
+
+    expect(manager.editingPlaylist.value!.title).toBe("Favorites");
+    expect(manager.editingPlaylist.value!.description).toBe(
+      "Verses I keep coming back to"
+    );
+    expect(manager.editingPlaylist.value!.items).toEqual([]);
+  });
+
+  it("updateEditingPlaylistMetadata reports an error when nothing is being edited", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(manager.updateEditingPlaylistMetadata({ title: "Too late" })).toBe(
+      "error: no playlist is currently being edited"
+    );
+  });
+
+  it("saveEditingPlaylist persists a description change", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+    manager.updateEditingPlaylistMetadata({
+      title: "Favorites",
+      description: "Verses I keep coming back to",
+    });
+    recordDataMock.mockClear();
+
+    await manager.saveEditingPlaylist();
+
+    const saved = recordDataMock.mock.calls.at(-1)![2] as Playlist;
+    expect(saved.description).toBe("Verses I keep coming back to");
+    expect(manager.userPlaylists.value[0]!.description).toBe(
+      "Verses I keep coming back to"
+    );
   });
 
   it("addEditingPlaylistItem appends an item to the current draft", async () => {
@@ -1258,6 +1483,386 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value).not.toBeNull();
   });
 
+  describe("playlist play history", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(START_MS);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("creates a history entry when playback starts while signed in", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      const entry = manager.userPlaylistHistory.value[0]!;
+      expect(entry.playlistId).toBe(playlist.id);
+      expect(entry.currentStep).toBe(0);
+      expect(entry.totalSteps).toBe(2);
+      expect(entry.previousHistoryId).toBeNull();
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        entry.id,
+        expect.objectContaining({
+          playlistId: playlist.id,
+          totalSteps: 2,
+        }),
+        { marker: HISTORY_MARKER }
+      );
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("does not create history when signed out", async () => {
+      const manager = makeManager(null);
+      await flush();
+      recordDataMock.mockClear();
+
+      manager.startPlaying(
+        makePlaylist({ items: [{ type: "html", html: "a" }] })
+      );
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+      expect(
+        recordDataMock.mock.calls.some(
+          (call) => call[3]?.marker === HISTORY_MARKER
+        )
+      ).toBe(false);
+
+      manager.stopPlaying();
+    });
+
+    it("skips history when startPlaying is called with history: false", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      recordDataMock.mockClear();
+
+      manager.startPlaying(
+        makePlaylist({ items: [{ type: "html", html: "a" }] }),
+        0,
+        { history: false }
+      );
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+      manager.stopPlaying();
+    });
+
+    it("updates currentStep as playback advances and finalizes on stop", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "link", url: "https://example.com" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await flush();
+
+      await manager.playing.value!.next();
+      await flush();
+
+      expect(manager.userPlaylistHistory.value[0]!.currentStep).toBe(1);
+      expect(manager.userPlaylistHistory.value[0]!.lastItem).toEqual({
+        type: "html",
+        html: "b",
+      });
+
+      vi.setSystemTime(START_MS + 12_000);
+      manager.stopPlaying();
+      await flush();
+
+      const entry = manager.userPlaylistHistory.value[0]!;
+      expect(entry.endedAtMs).toBe(START_MS + 12_000);
+      expect(entry.durationMs).toBe(entry.endedAtMs! - entry.startedAtMs);
+      expect(entry.currentStep).toBe(1);
+    });
+
+    it("continueFromHistory resumes at the saved step and resets the same playlist row", async () => {
+      const prior = makeHistory({
+        id: "hist-prior",
+        currentStep: 1,
+        totalSteps: 3,
+        startedAtMs: START_MS - 60_000,
+        endedAtMs: START_MS - 1_000,
+        durationMs: 59_000,
+        updatedAtMs: START_MS - 1_000,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
+      });
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      const manager = makeManager("user-1");
+      await flush();
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+
+      await manager.continueFromHistory(prior);
+      await flush();
+
+      expect(manager.playing.value?.currentIndex.value).toBe(1);
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      const resumed = manager.userPlaylistHistory.value[0]!;
+      expect(resumed.id).toBe(prior.id);
+      expect(resumed.currentStep).toBe(1);
+      expect(resumed.endedAtMs).toBeNull();
+      expect(resumed.durationMs).toBe(0);
+      expect(resumed.startedAtMs).toBeGreaterThan(prior.startedAtMs);
+      expect(eraseDataMock).not.toHaveBeenCalledWith("user-1", prior.id);
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("replayFromHistory starts at step 0 and resets the same playlist row", async () => {
+      const prior = makeHistory({
+        id: "hist-done",
+        currentStep: 2,
+        totalSteps: 3,
+        endedAtMs: START_MS,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
+      });
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      await manager.replayFromHistory(prior);
+      await flush();
+
+      expect(manager.playing.value?.currentIndex.value).toBe(0);
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      const reset = manager.userPlaylistHistory.value[0]!;
+      expect(reset.id).toBe(prior.id);
+      expect(reset.currentStep).toBe(0);
+      expect(reset.endedAtMs).toBeNull();
+      expect(reset.previousHistoryId).toBeNull();
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("syncs stored history on login and clears it on logout", async () => {
+      const stored = makeHistory({ id: "hist-stored" });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: stored }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+      expect(listAllDataByMarkerMock).toHaveBeenCalledWith(
+        "user-1",
+        HISTORY_MARKER
+      );
+      expect(manager.userPlaylistHistory.value).toEqual([stored]);
+
+      userId.value = null;
+      await flush();
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+    });
+
+    it("loads all pages and keeps one newest session per playlist", async () => {
+      const older = makeHistory({
+        id: "hist-old",
+        playlistId: "playlist-1",
+        startedAtMs: START_MS,
+      });
+      const newer = makeHistory({
+        id: "hist-new",
+        playlistId: "playlist-1",
+        startedAtMs: START_MS + 60_000,
+      });
+      const other = makeHistory({
+        id: "hist-other",
+        playlistId: "playlist-2",
+        playlistRecordName: "user-1",
+        startedAtMs: START_MS + 30_000,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: older }, { data: newer }, { data: other }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylistHistory.value.map((e) => e.id)).toEqual([
+        "hist-new",
+        "hist-other",
+      ]);
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", older.id);
+    });
+
+    it("does not write history to the backend while idle on the same step", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      manager.startPlaying(playlist);
+      await flush();
+
+      const historyWrites = () =>
+        recordDataMock.mock.calls.filter(
+          (call) => call[3]?.marker === HISTORY_MARKER
+        );
+      const writesAfterStart = historyWrites().length;
+      expect(writesAfterStart).toBeGreaterThanOrEqual(1);
+
+      recordDataMock.mockClear();
+      vi.setSystemTime(START_MS + 30_000);
+      // Re-trigger the mirror effect with the same step (simulates idle ticks /
+      // redundant effect runs). No step change → no backend write.
+      await manager.playing.value!.jumpTo(0);
+      await flush();
+      expect(historyWrites()).toHaveLength(0);
+
+      await manager.playing.value!.next();
+      await flush();
+      expect(historyWrites().length).toBeGreaterThanOrEqual(1);
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("starting a playlist again resets that playlist's history to the new session", async () => {
+      const prior = makeHistory({
+        id: "hist-prior",
+        playlistId: "playlist-1",
+        currentStep: 1,
+        totalSteps: 2,
+        startedAtMs: START_MS,
+        endedAtMs: START_MS,
+        durationMs: 5_000,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+      eraseDataMock.mockClear();
+
+      vi.setSystemTime(START_MS + 60_000);
+      manager.startPlaying(
+        makePlaylist({
+          id: "playlist-1",
+          items: [
+            { type: "html", html: "a" },
+            { type: "html", html: "b" },
+          ],
+        })
+      );
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toHaveLength(1);
+      const reset = manager.userPlaylistHistory.value[0]!;
+      expect(reset.id).toBe(prior.id);
+      expect(reset.currentStep).toBe(0);
+      expect(reset.endedAtMs).toBeNull();
+      expect(reset.durationMs).toBe(0);
+      expect(reset.startedAtMs).toBe(START_MS + 60_000);
+      expect(eraseDataMock).not.toHaveBeenCalledWith("user-1", prior.id);
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("playing a different playlist keeps the first playlist's history row", async () => {
+      const prior = makeHistory({
+        id: "hist-prior",
+        playlistId: "playlist-1",
+        startedAtMs: START_MS,
+        endedAtMs: START_MS,
+      });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: prior }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      manager.startPlaying(
+        makePlaylist({
+          id: "playlist-2",
+          items: [{ type: "html", html: "a" }],
+        })
+      );
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toHaveLength(2);
+      expect(
+        manager.userPlaylistHistory.value.map((e) => e.playlistId)
+      ).toEqual(["playlist-2", "playlist-1"]);
+      expect(
+        manager.userPlaylistHistory.value.some((e) => e.id === prior.id)
+      ).toBe(true);
+
+      manager.stopPlaying();
+      await flush();
+    });
+
+    it("removePlayHistory drops the session from memory and the backend", async () => {
+      const stored = makeHistory({ id: "hist-stored" });
+      listAllDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: stored }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      eraseDataMock.mockClear();
+
+      await manager.removePlayHistory(stored);
+      await flush();
+
+      expect(manager.userPlaylistHistory.value).toEqual([]);
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", stored.id);
+    });
+  });
+
   describe("playlist reading extension", () => {
     /**
      * Activates the registered "playlist" reading extension in isolation, with
@@ -1604,6 +2209,253 @@ describe("createPlaylistManager", () => {
     await flush();
 
     expect(manager.playing.value).toBeNull();
+  });
+
+  describe("playlist analytics", () => {
+    let mockPosthogCapture: Mock;
+
+    beforeEach(() => {
+      mockPosthogCapture = vi.fn();
+      (globalThis as any).posthog = { capture: mockPosthogCapture };
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).posthog;
+    });
+
+    it("captures playlist_created when saving a new draft", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const draftId = manager.editingPlaylist.value!.id;
+
+      await manager.saveEditingPlaylist();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_created", {
+        playlistId: draftId,
+        playlistLocator: `user-1.${draftId}`,
+        isCreator: true,
+        itemCount: 0,
+      });
+    });
+
+    it("captures playlist_updated when saving an existing playlist", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ data: makePlaylist({ id: "playlist-1" }) }],
+      });
+      const manager = makeManager("user-1");
+      await flush();
+
+      manager.editingPlaylist.value = makePlaylist({
+        id: "playlist-1",
+        title: "New",
+      });
+      await manager.saveEditingPlaylist();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_updated", {
+        playlistId: "playlist-1",
+        playlistLocator: "user-1.playlist-1",
+        isCreator: true,
+        itemCount: 0,
+      });
+    });
+
+    it("captures playlist_played with isCreator true for the user's own playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ authorUserId: "user-1" });
+
+      manager.startPlaying(playlist);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_played", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: true,
+      });
+    });
+
+    it("captures playlist_played with isCreator false for a playlist shared by someone else", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ authorUserId: "user-2" });
+
+      manager.startPlaying(playlist);
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_played", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+    });
+
+    it("captures playlist_finished once playback reaches the last item, and not again on revisit", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        authorUserId: "user-2",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
+
+      await manager.playing.value!.next();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_finished", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+
+      // Navigating back to the last item again does not re-report it.
+      await manager.playing.value!.previous();
+      await manager.playing.value!.next();
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not capture playlist_finished when a single-item playlist starts (start-at-last is not the same as finishing)", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
+
+      manager.startPlaying(playlist);
+
+      // "played" fires for the start; "finished" must not, since nothing was
+      // actually played through — the queue just happens to be one item long,
+      // so its start and its end are the same index.
+      expect(mockPosthogCapture).toHaveBeenCalledWith(
+        "playlist_played",
+        expect.anything()
+      );
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("does not capture playlist_finished when a deep link opens directly on the last step", async () => {
+      const playlist = makePlaylist({
+        id: "playlist-1",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+      // The URL opens straight on step 2 (the last item) via a shared link,
+      // rather than the user navigating there.
+      makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/?playlist=user-1.playlist-1&playlistStep=2"
+      );
+      await flush();
+
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("does not capture playlist_finished when removing trailing items clamps the current index to the new last item", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+          { type: "html", html: "d" },
+        ],
+      });
+
+      manager.startPlaying(playlist);
+      mockPosthogCapture.mockClear(); // drop the "played" capture from startPlaying
+      await manager.playing.value!.next();
+      await manager.playing.value!.next();
+      expect(manager.playing.value!.currentIndex.value).toBe(2);
+
+      // Deleting the trailing item shrinks the queue so index 2 becomes the
+      // new last index, without the user ever advancing into it.
+      manager.playing.value!.removeFromQueue(3);
+      expect(manager.playing.value!.queue.value).toHaveLength(3);
+      expect(manager.playing.value!.currentIndex.value).toBe(2);
+
+      expect(mockPosthogCapture).not.toHaveBeenCalledWith(
+        "playlist_finished",
+        expect.anything()
+      );
+    });
+
+    it("captures playlist_finished only for the participant that advances, not for a peer whose index moves via session sync", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        authorUserId: "user-2",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      // Both participants' enablements are mirrored onto the same `data`
+      // signal, the same way `SessionsManager` keeps a shared session's
+      // participants in sync.
+      const sharedData = signal<unknown>({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
+      const definition =
+        lastReadingExtensionManager.getReadingExtension("playlist")!;
+      const participantA = definition.activate({
+        readingState: {} as any,
+        data: sharedData,
+        isShared: signal(true),
+      }) as unknown as PlaylistReadingExtensionInstance;
+      const participantB = definition.activate({
+        readingState: {} as any,
+        data: sharedData,
+        isShared: signal(true),
+      }) as unknown as PlaylistReadingExtensionInstance;
+      mockPosthogCapture.mockClear();
+
+      // A advances locally into the last item...
+      await participantA.playingState.next();
+      // ...which propagates to B purely via the synced `data`...
+      expect(participantB.playingState.currentIndex.value).toBe(1);
+
+      // ...but only A actually finished playback; B's move was an inbound sync.
+      expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
+      expect(mockPosthogCapture).toHaveBeenCalledWith("playlist_finished", {
+        playlistId: playlist.id,
+        playlistLocator: `${playlist.recordName}.${playlist.id}`,
+        isCreator: false,
+      });
+    });
+
+    it("does not throw and does not report playback events when posthog is unavailable", async () => {
+      delete (globalThis as any).posthog;
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      expect(() => manager.startPlaying(playlist)).not.toThrow();
+      await expect(manager.playing.value!.next()).resolves.toBeUndefined();
+
+      expect(mockPosthogCapture).not.toHaveBeenCalled();
+    });
   });
 });
 

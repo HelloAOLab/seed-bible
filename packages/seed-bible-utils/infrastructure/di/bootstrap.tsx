@@ -50,7 +50,6 @@ import { getUserAnimalVisual } from "../../../seed-bible/seed-bible/managers/Ses
 import { effect, signal } from "@preact/signals";
 // import { RadingInstanceProvider } from "../adapters/userPresence/ReadingInstanceProvider";
 import { ReadingHistoryTimeline } from "../presentation/components/ui/ReadingHistoryTimeline";
-import { useHorizontalScroll } from "../presentation/hooks/useHorizontalScroll";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -174,8 +173,11 @@ export const bootstrapExtension = () => {
         // eslint-disable-next-line
         const sharedSessionsState = context.tabs.tabs.value.map((tab) => {
           return {
+            // Each peer's own position — the session position below only
+            // covers peers who have yet to broadcast one.
+            participantPositions: tab.sharedSession?.participantPositions.value,
             bookId: tab.sharedSession?.readingState.bookId.value,
-            chaperNumber: tab.sharedSession?.readingState.chapterNumber.value,
+            chapterNumber: tab.sharedSession?.readingState.chapterNumber.value,
           };
         });
 
@@ -249,6 +251,8 @@ export const bootstrapExtension = () => {
         userColorStore,
         userPresenceService,
         arrangementService,
+        arrangementConfigProvider: arrangementsConfigProvider,
+        customArrangementStore: customArrangementStore,
         getDayRangeSeconds: GetDayRangeSeconds,
         GetPastDateInfo,
         CapitalizeFirstLetter,
@@ -269,7 +273,6 @@ export const bootstrapExtension = () => {
         sessionProvider,
         bookNames,
         connectedUsers,
-        useHorizontalScroll,
       };
 
       return api;

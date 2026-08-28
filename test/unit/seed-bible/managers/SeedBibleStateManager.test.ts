@@ -1412,6 +1412,83 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("annotationRecordKey", () => {
+    it("passes the annotationRecordKey URL param to the annotations manager, so it is used as the record name instead of requiring sign-in", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com?annotationRecordKey=custom-record",
+      });
+      const state = await createState();
+      const recordDataSpy = vi
+        .spyOn(state.os, "recordData")
+        .mockResolvedValue({ success: true } as any);
+      const loginSpy = vi.spyOn(state.login, "login");
+
+      await state.annotations.saveAnnotation({
+        id: "ann-1",
+        bookId: "GEN",
+        chapterNumber: 1,
+        data: { type: "comment", html: "<p>Hi</p>" },
+      });
+
+      // Never had to sign in because the override short-circuits the lookup
+      // that would otherwise fall back to the signed-in user's id.
+      expect(loginSpy).not.toHaveBeenCalled();
+      expect(recordDataSpy).toHaveBeenCalledWith(
+        "custom-record",
+        "ann-1",
+        expect.any(Object),
+        { marker: "publicRead:annotations/GEN/1" }
+      );
+    });
+
+    it("uses the annotationRecordKey URL param when listing annotations for a chapter", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com?annotationRecordKey=custom-record",
+      });
+      const state = await createState();
+      const listDataByMarkerSpy = vi
+        .spyOn(state.os, "listDataByMarker")
+        .mockResolvedValue({ success: true, items: [] } as any);
+
+      await state.annotations.listAnnotationsForChapter("GEN", 1);
+
+      expect(listDataByMarkerSpy).toHaveBeenCalledWith(
+        "custom-record",
+        "publicRead:annotations/GEN/1",
+        undefined
+      );
+    });
+
+    it("keeps a saved annotation visible in getAnnotationsForChapter - the reactive view the UI actually renders from", async () => {
+      jsdom.reconfigure({
+        url: "https://example.com?annotationRecordKey=custom-record",
+      });
+      const state = await createState();
+      vi.spyOn(state.os, "recordData").mockResolvedValue({
+        success: true,
+      } as any);
+      const loginSpy = vi.spyOn(state.login, "login");
+
+      state.annotations.editAnnotation({
+        id: "ann-1",
+        bookId: "GEN",
+        chapterNumber: 1,
+        data: { type: "comment", html: "<p>Hi</p>" },
+      });
+      await state.annotations.saveEditingAnnotation();
+
+      // Never had to sign in, and the just-saved note shows up through the
+      // same reactive view the annotation pane renders from - not just
+      // through the low-level listAnnotationsForChapter/saveAnnotation calls.
+      expect(loginSpy).not.toHaveBeenCalled();
+      expect(
+        state.annotations
+          .getAnnotationsForChapter("GEN", 1)
+          .value.map((a) => a.id)
+      ).toEqual(["ann-1"]);
+    });
+  });
+
   // Shared by the pageTitle and meta-description suites: both read signals
   // derived from the selected tab's loaded chapter.
   function setSelectedTabChapter(

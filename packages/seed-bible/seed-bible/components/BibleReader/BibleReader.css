@@ -246,16 +246,30 @@
 }
 
 /* The chapter-bookmark toggle joins the header's right-hand icon cluster on
- * mobile. Reset the desktop absolute positioning and let it (as the first
- * item of the cluster) consume the free space so it and the settings button
- * sit together on the right. */
+ * mobile. The cluster wrapper consumes the free space so bookmark, share,
+ * account, and settings stay together on the right even when bookmark is
+ * hidden during playlist playback. */
+.sb-bible-reader-mobile-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
 .sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
   position: static;
   flex-shrink: 0;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  margin-inline-start: auto;
+}
+
+/* Match the 2rem circular header buttons (bookmark, account, settings)
+ * rather than the desktop quick-toolbar's 2.25rem size. */
+.sb-bible-reader-mobile-header .sb-quick-toolbar-button {
+  width: 2rem;
+  height: 2rem;
 }
 
 .sb-bible-reader-mobile-header-settings {
@@ -334,6 +348,16 @@
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
   font-size: 1rem;
+}
+
+.sb-bible-reader-mobile-header-account .sb-tab-user-icon-generic {
+  border: none;
+}
+
+.sb-bible-reader-mobile-header-account
+  .sb-tab-user-icon-generic
+  .material-symbols-outlined {
+  font-size: 1.75rem;
 }
 
 .sb-reader-swipe-viewport {

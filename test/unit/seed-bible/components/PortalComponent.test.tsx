@@ -1,26 +1,18 @@
-import { render } from "preact";
+import { render, createRef } from "preact";
 import { act } from "preact/test-utils";
 import { computed, signal } from "@preact/signals";
 import {
   PortalComponent,
   type PortalComponentProps,
+  type PortalComponentHandle,
 } from "@packages/seed-bible/seed-bible/components/PortalComponent/PortalComponent";
 import { PaneLayout } from "@packages/seed-bible/seed-bible/components/PaneLayout/PaneLayout";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 function iframeOf(container: HTMLElement): HTMLIFrameElement {
@@ -99,6 +91,172 @@ describe("PortalComponent", () => {
     const iframeAfter = iframeOf(container);
     expect(iframeAfter).toBe(iframeBefore);
     expect(iframeAfter.src).toBe(srcBefore);
+  });
+});
+
+describe("PortalComponent postMessage bridge", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  it("sends messages into the iframe via the imperative handle", () => {
+    const ref = createRef<PortalComponentHandle>();
+
+    act(() => {
+      render(
+        <PortalComponent
+          ref={ref}
+          portal="map"
+          portalType="map"
+          inst="inst-1"
+          pattern={null}
+        />,
+        container
+      );
+    });
+
+    const iframe = iframeOf(container);
+    const postMessage = vi.spyOn(iframe.contentWindow!, "postMessage");
+
+    ref.current?.sendMessage({ type: "highlightFeature", featureId: "abc" });
+
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: "highlightFeature", featureId: "abc" },
+      "https://ao.bot"
+    );
+  });
+
+  it("calls onMessage for a message from the portal's own iframe at the trusted origin", () => {
+    const onMessage = vi.fn();
+
+    act(() => {
+      render(
+        <PortalComponent
+          portal="map"
+          portalType="map"
+          inst="inst-1"
+          pattern={null}
+          onMessage={onMessage}
+        />,
+        container
+      );
+    });
+
+    const iframe = iframeOf(container);
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        origin: "https://ao.bot",
+        source: iframe.contentWindow,
+        data: { type: "featureClicked", featureId: "abc" },
+      })
+    );
+
+    expect(onMessage).toHaveBeenCalledWith({
+      type: "featureClicked",
+      featureId: "abc",
+    });
+  });
+
+  it("ignores a message from an untrusted origin", () => {
+    const onMessage = vi.fn();
+
+    act(() => {
+      render(
+        <PortalComponent
+          portal="map"
+          portalType="map"
+          inst="inst-1"
+          pattern={null}
+          onMessage={onMessage}
+        />,
+        container
+      );
+    });
+
+    const iframe = iframeOf(container);
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        origin: "https://evil.example",
+        source: iframe.contentWindow,
+        data: { type: "featureClicked" },
+      })
+    );
+
+    expect(onMessage).not.toHaveBeenCalled();
+  });
+
+  it("ignores a same-origin message from a different portal's iframe", () => {
+    const onMessage = vi.fn();
+
+    act(() => {
+      render(
+        <PortalComponent
+          portal="map"
+          portalType="map"
+          inst="inst-1"
+          pattern={null}
+          onMessage={onMessage}
+        />,
+        container
+      );
+    });
+
+    // A second, unrelated iframe standing in for a sibling PortalComponent's
+    // own ao.bot iframe mounted elsewhere on the page.
+    const otherIframe = document.createElement("iframe");
+    document.body.appendChild(otherIframe);
+
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        origin: "https://ao.bot",
+        source: otherIframe.contentWindow,
+        data: { type: "featureClicked" },
+      })
+    );
+
+    expect(onMessage).not.toHaveBeenCalled();
+    otherIframe.remove();
+  });
+
+  it("stops calling onMessage once unmounted", () => {
+    const onMessage = vi.fn();
+
+    act(() => {
+      render(
+        <PortalComponent
+          portal="map"
+          portalType="map"
+          inst="inst-1"
+          pattern={null}
+          onMessage={onMessage}
+        />,
+        container
+      );
+    });
+
+    const iframeContentWindow = iframeOf(container).contentWindow;
+
+    act(() => {
+      render(null, container);
+    });
+
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        origin: "https://ao.bot",
+        source: iframeContentWindow,
+        data: { type: "featureClicked" },
+      })
+    );
+
+    expect(onMessage).not.toHaveBeenCalled();
   });
 });
 
