@@ -51,6 +51,10 @@ const brandingConfig = existsSync(
     )
   : undefined;
 
+if (brandingConfig) {
+  console.log("[vite.config.ts] Using branding config:", brandingConfig);
+}
+
 function withTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
