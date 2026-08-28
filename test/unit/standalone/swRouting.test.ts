@@ -1,4 +1,5 @@
 import {
+  getAppShellCacheKey,
   isAppShellNavigation,
   isCacheableStaticAsset,
 } from "../../../standalone/swRouting";
@@ -134,5 +135,20 @@ describe("isCacheableStaticAsset()", () => {
         assetBaseHref: `${ORIGIN}/`,
       })
     ).toBe(true);
+  });
+});
+
+describe("getAppShellCacheKey()", () => {
+  it("returns the same key regardless of which path is being cached", () => {
+    // The whole point: every navigation shares one entry, so the key can't
+    // vary with the requested path.
+    expect(getAppShellCacheKey(ORIGIN)).toBe(getAppShellCacheKey(ORIGIN));
+  });
+
+  it("scopes the key to the given origin", () => {
+    expect(getAppShellCacheKey(ORIGIN)).toContain(ORIGIN);
+    expect(getAppShellCacheKey(ORIGIN)).not.toBe(
+      getAppShellCacheKey("https://alpha.seedbible.org")
+    );
   });
 });
