@@ -30,7 +30,8 @@
     "sitemap": "tsx script/generate-sitemap.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
-    "prepare": "husky && tsx script/setupMergeDriver.ts"
+    "prepare": "husky && tsx script/setupMergeDriver.ts",
+    "preview": "tsx script/preview.ts"
   },
   "repository": {
     "type": "git",
