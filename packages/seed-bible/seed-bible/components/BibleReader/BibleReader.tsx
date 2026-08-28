@@ -1,4 +1,4 @@
-import "./BibleReader.css";
+import "./BibleReader.inline.css";
 import {
   type TranslationBookChapter,
   type ChapterVerse,
@@ -56,6 +56,7 @@ import {
   openBookmarkCategoryModal,
 } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
+import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -1655,6 +1656,19 @@ export function BibleReader(props: BibleReaderProps) {
       bookId.value !== null &&
       currentBook.value === null
   );
+  // Display name for the header/title: the catalog entry's name, falling
+  // back to the loaded chapter's own book record while the catalog is still
+  // in flight. The book catalog and the chapter content load independently
+  // (see `loadInitialData`'s comment on the raw position signals firing the
+  // content effect before the catalog-backed check completes), so — same as
+  // `SeedBibleStateManager`'s `resolveCurrentBook` for the document title —
+  // `currentBook` can still be null here even after SSR has suspended on
+  // (and resolved) `chapterDataPromise`. Without this, the header would show
+  // the raw book id ("GEN") instead of its name whenever that race lands the
+  // chapter first.
+  const currentBookName = computed(
+    () => currentBook.value?.name ?? chapterData.value?.book.name ?? null
+  );
   const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
@@ -1879,7 +1893,7 @@ export function BibleReader(props: BibleReaderProps) {
     <>
       {isMobile &&
         renderMobileChapterTitle(
-          currentBook.value?.name ?? bookId.value ?? "",
+          currentBookName.value ?? bookId.value ?? "",
           chapterNumber.value ?? ""
         )}
 
@@ -2050,7 +2064,7 @@ export function BibleReader(props: BibleReaderProps) {
                   className="sb-bible-reader-mobile-header-book"
                   onClick={openBookSelector}
                 >
-                  {currentBook.value?.name ?? bookId.value ?? ""}{" "}
+                  {currentBookName.value ?? bookId.value ?? ""}{" "}
                   {chapterNumber.value}
                 </span>
                 <span
@@ -2064,60 +2078,67 @@ export function BibleReader(props: BibleReaderProps) {
                 </span>
               </h1>
             </div>
-            <QuickToolbar
-              toolsManager={state.tools}
-              readingState={readingState}
-              playlists={state.playlists}
-              features={state.features}
-              className="sb-quick-toolbar-mobile-header"
-            />
             <ChapterNotesButton
               state={state}
               bookId={bookId.value}
               chapterNumber={chapterNumber.value}
             />
-            {!state.playlists.playing.value && (
-              <ReaderBookmarkButton
-                state={state}
-                translationId={translationId.value}
-                bookId={bookId.value}
-                chapterNumber={chapterNumber.value}
+            <div className="sb-bible-reader-mobile-header-actions">
+              {!state.playlists.playing.value && (
+                <ReaderBookmarkButton
+                  state={state}
+                  translationId={translationId.value}
+                  bookId={bookId.value}
+                  chapterNumber={chapterNumber.value}
+                />
+              )}
+              <QuickToolbar
+                toolsManager={state.tools}
+                readingState={readingState}
+                playlists={state.playlists}
+                features={state.features}
+                sharedSession={sharedSession ?? null}
+                toast={state.app.toast}
+                modals={state.modals}
+                app={state.app}
+                className="sb-quick-toolbar-mobile-header"
               />
-            )}
-            {sharedSession ? (
-              <MobileSessionParticipants
-                state={state}
-                session={sharedSession}
-              />
-            ) : (
+              {sharedSession ? (
+                <MobileSessionParticipants
+                  state={state}
+                  session={sharedSession}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="sb-bible-reader-mobile-header-account"
+                  aria-label={`Open account settings (${getSelfDisplayName(
+                    state,
+                    t
+                  )})`}
+                  // The reader pane wrapper selects the pane on pointerdown/click
+                  // (which runs closeSidebarAndSettings). Stop the tap here so it
+                  // doesn't immediately dismiss the account view we're opening.
+                  onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    state.sidebar.openSidebar();
+                    state.sidebar.openSettingsToView("account");
+                  }}
+                >
+                  <SelfAvatarVisual state={state} />
+                </button>
+              )}
               <button
                 type="button"
-                className="sb-bible-reader-mobile-header-account"
-                aria-label={`Open account settings (${getSelfDisplayName(
-                  state
-                )})`}
-                // The reader pane wrapper selects the pane on pointerdown/click
-                // (which runs closeSidebarAndSettings). Stop the tap here so it
-                // doesn't immediately dismiss the account view we're opening.
-                onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                onClick={(e: MouseEvent) => {
-                  e.stopPropagation();
-                  state.sidebar.openSidebar();
-                  state.sidebar.openSettingsToView("account");
-                }}
+                className="sb-bible-reader-mobile-header-settings"
+                onClick={() => mobileChrome?.onOpenMobileSettings()}
+                aria-label={t("settings", { defaultValue: "Settings" })}
+                title={t("settings", { defaultValue: "Settings" })}
               >
-                <SelfAvatarVisual state={state} />
+                <InfoSettingsIcon />
               </button>
-            )}
-            <button
-              type="button"
-              className="sb-bible-reader-mobile-header-settings"
-              onClick={() => mobileChrome?.onOpenMobileSettings()}
-              aria-label={t("settings", { defaultValue: "Settings" })}
-              title={t("settings", { defaultValue: "Settings" })}
-            >
-              <InfoSettingsIcon />
-            </button>
+            </div>
           </div>
 
           <div
@@ -2181,11 +2202,13 @@ export function BibleReader(props: BibleReaderProps) {
         <>
           <div className="sb-bible-reader-header">
             <h2
-              onClick={() => selectorState.setOpen(true, currentSlot)}
+              {...flingSafeTapHandlers(() => {
+                void selectorState.setOpen(true, currentSlot);
+              })}
               className="sb-bible-reader-title"
             >
               <span className="sb-bible-reader-book">
-                {currentBook.value?.name ?? bookId.value ?? "Select a book"}
+                {currentBookName.value ?? bookId.value ?? "Select a book"}
               </span>
               <span className="sb-bible-reader-title-sep" aria-hidden="true">
                 {" "}
@@ -2207,6 +2230,10 @@ export function BibleReader(props: BibleReaderProps) {
                   readingState={readingState}
                   playlists={state.playlists}
                   features={state.features}
+                  sharedSession={sharedSession ?? null}
+                  toast={state.app.toast}
+                  modals={state.modals}
+                  app={state.app}
                   className="sb-quick-toolbar-reader"
                 />
                 {!state.playlists.playing.value && (

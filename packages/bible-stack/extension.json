@@ -1,0 +1,391 @@
+{
+  "id": "bible-stack",
+  "dependencies": ["seed-bible-utils"],
+  "translations": {
+    "en": {
+      "title": "Bible Stack",
+      "description": "Interactive 3D visualization of the Bible as a physical stack of testaments, sections, and books that you can explode into an expanded view, select and navigate piece by piece, and highlight — with a guided tour on first visit.",
+      "below-reader-tool": "Bible Stack"
+    },
+    "af": {
+      "title": "Bybelstapel",
+      "description": "Interaktiewe 3D-visualisering van die Bybel as 'n fisiese stapel testamente, gedeeltes en boeke wat jy in 'n uitgebreide aansig kan ontplof, stuk vir stuk kan kies en navigeer, en kan uitlig - met 'n begeleide toer tydens die eerste besoek.",
+      "below-reader-tool": "Bybelstapel"
+    },
+    "am": {
+      "title": "የመጽሐፍ ቅዱስ ቁልል",
+      "description": "መጽሐፍ ቅዱስን እንደ አካላዊ የኑዛዜዎች፣ የክፍሎች እና የመጻሕፍት ስብስብ አድርጎ የሚያሳይ በይነተገናኝ 3D ምስላዊ እይታ፤ እነዚህም ወደ ሰፊ እይታ ሊፈነዱ፣ ክፍልን በክፍል መምረጥ እና ማሰስ እና ማድመቅ ይችላሉ - በመጀመሪያው ጉብኝት በሚመራ ጉብኝት።",
+      "below-reader-tool": "የመጽሐፍ ቅዱስ ቁልል"
+    },
+    "ar": {
+      "title": "مجموعة من الكتب المقدسة",
+      "description": "تصور ثلاثي الأبعاد تفاعلي للكتاب المقدس على شكل مجموعة مادية من العهود والأقسام والكتب التي يمكنك تفجيرها لعرض موسع، وتحديدها والتنقل فيها جزءًا تلو الآخر، وتسليط الضوء عليها - مع جولة إرشادية في الزيارة الأولى.",
+      "below-reader-tool": "مجموعة من الكتب المقدسة"
+    },
+    "az": {
+      "title": "Müqəddəs Kitab yığını",
+      "description": "Genişləndirilmiş görünüşə çevrilə, hissə-hissə seçib naviqasiya edə və ilk ziyarətdə bələdçi ilə vurğulaya biləcəyiniz vəsiyyətnamələrin, bölmələrin və kitabların fiziki yığını kimi Müqəddəs Kitabın interaktiv 3D vizuallaşdırılması.",
+      "below-reader-tool": "Müqəddəs Kitab yığını"
+    },
+    "be": {
+      "title": "Біблійны стэк",
+      "description": "Інтэрактыўная 3D-візуалізацыя Бібліі ў выглядзе фізічнага набору запаветаў, раздзелаў і кніг, якія можна разгарнуць у пашыраным выглядзе, выбіраць і перамяшчацца па частках, а таксама вылучаць — з экскурсіяй падчас першага наведвання.",
+      "below-reader-tool": "Біблійны стэк"
+    },
+    "bg": {
+      "title": "Библия Стек",
+      "description": "Интерактивна 3D визуализация на Библията като физическа подредба от завети, раздели и книги, които можете да разгънете в разширен изглед, да избирате и навигирате част по част и да маркирате – с екскурзоводска обиколка при първото посещение.",
+      "below-reader-tool": "Библия Стек"
+    },
+    "bn": {
+      "title": "বাইবেল স্ট্যাক",
+      "description": "বাইবেলের বিভিন্ন টেস্টামেন্ট, অধ্যায় এবং বইয়ের একটি বাস্তব স্তূপের ইন্টারেক্টিভ থ্রিডি ভিজ্যুয়ালাইজেশন, যাকে আপনি বড় করে দেখতে পারবেন, অংশ এক এক করে বেছে নিয়ে নেভিগেট করতে পারবেন এবং হাইলাইট করতে পারবেন — প্রথমবার দেখার সময় একটি গাইডেড ট্যুরও থাকছে।",
+      "below-reader-tool": "বাইবেল স্ট্যাক"
+    },
+    "bs": {
+      "title": "Biblijski stog",
+      "description": "Interaktivna 3D vizualizacija Biblije kao fizičkog skupa zavjeta, odjeljaka i knjiga koje možete raširiti u prošireni prikaz, odabrati i navigirati dio po dio, te istaknuti - uz vođenu turu prilikom prve posjete.",
+      "below-reader-tool": "Biblijski stog"
+    },
+    "ca": {
+      "title": "Pila de la Bíblia",
+      "description": "Visualització interactiva en 3D de la Bíblia com una pila física de testaments, seccions i llibres que podeu desplegar en una vista ampliada, seleccionar i navegar peça per peça i ressaltar, amb una visita guiada en la primera visita.",
+      "below-reader-tool": "Pila de la Bíblia"
+    },
+    "cs": {
+      "title": "Biblický stoh",
+      "description": "Interaktivní 3D vizualizace Bible jako fyzického souboru zákonů, částí a knih, které si můžete rozbalit do rozšířeného zobrazení, vybírat a procházet jednotlivé části a zvýrazňovat je – s prohlídkou s průvodcem při první návštěvě.",
+      "below-reader-tool": "Biblický stoh"
+    },
+    "cy": {
+      "title": "Pentwr y Beibl",
+      "description": "Delweddu 3D rhyngweithiol o'r Beibl fel pentwr corfforol o destamentau, adrannau a llyfrau y gallwch eu troi'n olygfa estynedig, eu dewis a'u llywio darn wrth ddarn, a'u hamlygu - gyda thaith dywys ar yr ymweliad cyntaf.",
+      "below-reader-tool": "Pentwr y Beibl"
+    },
+    "da": {
+      "title": "Bibelstak",
+      "description": "Interaktiv 3D-visualisering af Bibelen som en fysisk stak af testamenter, afsnit og bøger, som du kan eksplodere til en udvidet visning, vælge og navigere stykke for stykke og fremhæve – med en guidet tur ved første besøg.",
+      "below-reader-tool": "Bibelstak"
+    },
+    "de": {
+      "title": "Bibelstapel",
+      "description": "Interaktive 3D-Visualisierung der Bibel als physischer Stapel von Testamenten, Abschnitten und Büchern, die Sie in eine vergrößerte Ansicht aufbrechen, Stück für Stück auswählen und navigieren und hervorheben können – mit einer geführten Tour beim ersten Besuch.",
+      "below-reader-tool": "Bibelstapel"
+    },
+    "el": {
+      "title": "Στοίβα Βίβλων",
+      "description": "Διαδραστική τρισδιάστατη απεικόνιση της Βίβλου ως φυσικής στοίβας διαθηκών, ενοτήτων και βιβλίων που μπορείτε να αναδείξετε σε μια διευρυμένη προβολή, να επιλέξετε και να πλοηγηθείτε κομμάτι-κομμάτι και να επισημάνετε — με ξενάγηση κατά την πρώτη επίσκεψη.",
+      "below-reader-tool": "Στοίβα Βίβλων"
+    },
+    "es": {
+      "title": "Pila de Biblias",
+      "description": "Visualización interactiva en 3D de la Biblia como una pila física de testamentos, secciones y libros que puedes expandir para obtener una vista ampliada, seleccionar y navegar pieza por pieza, y resaltar, con una visita guiada en la primera visita.",
+      "below-reader-tool": "Pila de Biblias"
+    },
+    "et": {
+      "title": "Piiblivirn",
+      "description": "Piibli interaktiivne 3D-visualiseerimine füüsilise testamentide, osade ja raamatute virnana, mida saab laiendatud vaateks lahti paisata, tükkhaaval valida ja navigeerida ning esile tõsta – esmakülastusel giidiga ekskursiooniga.",
+      "below-reader-tool": "Piiblivirn"
+    },
+    "fa": {
+      "title": "پشته کتاب مقدس",
+      "description": "تجسم سه‌بعدی تعاملی کتاب مقدس به عنوان مجموعه‌ای فیزیکی از عهدین، بخش‌ها و کتاب‌ها که می‌توانید در یک نمای گسترده‌تر آن را باز کنید، قطعه به قطعه را انتخاب و پیمایش کنید و برجسته کنید - با یک تور راهنما در اولین بازدید.",
+      "below-reader-tool": "پشته کتاب مقدس"
+    },
+    "fi": {
+      "title": "Raamattupino",
+      "description": "Raamatun interaktiivinen 3D-visualisointi fyysisenä testamenttien, osien ja kirjojen pinona, jonka voit räjäyttää laajennettuun näkymään, valita ja selata pala palalta ja korostaa – opastetulla kierroksella ensimmäisellä käynnillä.",
+      "below-reader-tool": "Raamattupino"
+    },
+    "fil": {
+      "title": "Patong ng Bibliya",
+      "description": "Interaktibong 3D visualization ng Bibliya bilang isang pisikal na tumpok ng mga testamento, seksyon, at mga aklat na maaari mong palawakin sa isang pinalawak na view, piliin at i-navigate nang paunti-unti, at i-highlight — kasama ang isang guided tour sa unang pagbisita.",
+      "below-reader-tool": "Patong ng Bibliya"
+    },
+    "fr": {
+      "title": "Pile de Bibles",
+      "description": "Visualisation 3D interactive de la Bible sous forme d'une pile physique de testaments, de sections et de livres que vous pouvez déployer pour obtenir une vue étendue, sélectionner et parcourir élément par élément, et mettre en évidence — avec une visite guidée lors de la première utilisation.",
+      "below-reader-tool": "Pile de Bibles"
+    },
+    "fy": {
+      "title": "Bibelstapel",
+      "description": "Ynteraktive 3D-visualisaasje fan 'e Bibel as in fysike stapel testaminten, seksjes en boeken dy't jo kinne eksplodearje yn in útwreide werjefte, stik foar stik selektearje en navigearje, en markearje - mei in rûnlieding by it earste besyk.",
+      "below-reader-tool": "Bibelstapel"
+    },
+    "gl": {
+      "title": "Pila da Biblia",
+      "description": "Visualización interactiva en 3D da Biblia como unha pila física de testamentos, seccións e libros que podes expandir nunha vista ampliada, seleccionar e navegar peza por peza e destacar, cunha visita guiada na primeira visita.",
+      "below-reader-tool": "Pila da Biblia"
+    },
+    "gn": {
+      "title": "Pila Biblia rehegua",
+      "description": "Visualización interactiva 3D Biblia rehegua peteĩ pila física testamento, sección ha libro-kuéraicha ikatúva rembopu peteĩ jehecha ampliado-pe, reiporavo ha reguata pedazo por pedazo ha redestaca — peteĩ tour guiado reheve primera visita-pe.",
+      "below-reader-tool": "Pila Biblia rehegua"
+    },
+    "gu": {
+      "title": "બાઇબલ સ્ટેક",
+      "description": "બાઇબલનું ઇન્ટરેક્ટિવ 3D વિઝ્યુલાઇઝેશન, જેમાં વસિયતનામા, વિભાગો અને પુસ્તકોનો ભૌતિક ઢગલો છે, જેને તમે વિસ્તૃત દૃશ્યમાં વિસ્ફોટ કરી શકો છો, ટુકડા-ટુકડા પસંદ કરી શકો છો અને નેવિગેટ કરી શકો છો, અને હાઇલાઇટ કરી શકો છો - પહેલી મુલાકાતમાં માર્ગદર્શિત પ્રવાસ સાથે.",
+      "below-reader-tool": "બાઇબલ સ્ટેક"
+    },
+    "he": {
+      "title": "ערימת התנ\"ך",
+      "description": "ויזואליזציה תלת-ממדית אינטראקטיבית של התנ\"ך כערימה פיזית של צוואות, פרקים וספרים שניתן להרחיב לתצוגה, לבחור ולנווט ביניהם קטע אחר קטע, ולהדגיש - עם סיור מודרך בביקור הראשון.",
+      "below-reader-tool": "ערימת התנ\"ך"
+    },
+    "hi": {
+      "title": "बाइबल स्टैक",
+      "description": "बाइबिल का एक इंटरैक्टिव 3डी विज़ुअलाइज़ेशन, जिसमें बाइबिल के विभिन्न अध्यायों, खंडों और पुस्तकों का एक भौतिक ढेर दिखाया गया है, जिसे आप विस्तारित रूप में देख सकते हैं, एक-एक करके चुन सकते हैं और नेविगेट कर सकते हैं, और हाइलाइट कर सकते हैं - पहली बार देखने पर एक निर्देशित टूर के साथ।",
+      "below-reader-tool": "बाइबल स्टैक"
+    },
+    "hr": {
+      "title": "Biblijski stog",
+      "description": "Interaktivna 3D vizualizacija Biblije kao fizičkog hrpa zavjeta, odjeljaka i knjiga koje možete raširiti u prošireni prikaz, odabrati i navigirati dio po dio te istaknuti - uz vođeni obilazak pri prvom posjetu.",
+      "below-reader-tool": "Biblijski stog"
+    },
+    "hu": {
+      "title": "Biblia-verem",
+      "description": "A Biblia interaktív 3D-s vizualizációja, amely egy fizikai testamentumokból, szakaszokból és könyvekből álló halomként jelenik meg, amelyet egy kibővített nézetben bonthatsz ki, darabonként kiválaszthatsz és navigálhatsz közöttük, és kiemelhetsz – az első látogatáskor vezetett túrával.",
+      "below-reader-tool": "Biblia-verem"
+    },
+    "ind": {
+      "title": "Tumpukan Alkitab",
+      "description": "Visualisasi 3D interaktif Alkitab sebagai tumpukan fisik perjanjian, bagian, dan buku yang dapat Anda uraikan menjadi tampilan yang lebih besar, pilih dan navigasi bagian demi bagian, serta sorot — dengan tur panduan pada kunjungan pertama.",
+      "below-reader-tool": "Tumpukan Alkitab"
+    },
+    "is": {
+      "title": "Biblíustafla",
+      "description": "Gagnvirk þrívíddarsýn af Biblíunni sem efnislegan stafla af testamentum, köflum og bókum sem þú getur sprengt í stækkaða mynd, valið og flett í gegnum hluta fyrir hluta og auðkennt — með leiðsögn í fyrstu heimsókn.",
+      "below-reader-tool": "Biblíustafla"
+    },
+    "it": {
+      "title": "Pila di Bibbie",
+      "description": "Visualizzazione 3D interattiva della Bibbia come una pila fisica di testamenti, sezioni e libri che è possibile espandere per visualizzarli ingranditi, selezionarli e navigarli pezzo per pezzo, evidenziandoli, con una visita guidata alla prima consultazione.",
+      "below-reader-tool": "Pila di Bibbie"
+    },
+    "iw": {
+      "title": "ערימת התנ\"ך",
+      "description": "ויזואליזציה תלת-ממדית אינטראקטיבית של התנ\"ך כערימה פיזית של צוואות, פרקים וספרים שניתן להרחיב לתצוגה, לבחור ולנווט ביניהם קטע אחר קטע, ולהדגיש - עם סיור מודרך בביקור הראשון.",
+      "below-reader-tool": "ערימת התנ\"ך"
+    },
+    "ja": {
+      "title": "聖書スタック",
+      "description": "聖書を、聖約、章、書物が物理的に積み重ねられた状態としてインタラクティブな3Dビジュアライゼーションで表現します。展開して拡大表示したり、部分ごとに選択してナビゲートしたり、ハイライト表示したりできます。初回訪問時にはガイド付きツアーも用意されています。",
+      "below-reader-tool": "聖書スタック"
+    },
+    "ka": {
+      "title": "ბიბლიის დასტა",
+      "description": "ბიბლიის ინტერაქტიული 3D ვიზუალიზაცია, როგორც აღთქმების, სექციებისა და წიგნების ფიზიკური დასტის, რომლის გაფართოებული ხედის სახით გადაქცევა, ნაწილ-ნაწილ შერჩევა და ნავიგაცია, ასევე მათი გამოყოფა — პირველივე ვიზიტისას გიდის თანხლებით.",
+      "below-reader-tool": "ბიბლიის დასტა"
+    },
+    "km": {
+      "title": "ជង់ព្រះគម្ពីរ",
+      "description": "ការមើលឃើញរូបភាព 3D អន្តរកម្មនៃព្រះគម្ពីរជាគំនរនៃសក្ខីកម្ម ផ្នែក និងសៀវភៅដែលអ្នកអាចពង្រីកទៅជាទិដ្ឋភាពពង្រីក ជ្រើសរើស និងរុករកមួយៗ និងបន្លិច — ជាមួយនឹងដំណើរទស្សនកិច្ចដែលមានមគ្គុទ្ទេសក៍នៅពេលទៅទស្សនាលើកដំបូង។",
+      "below-reader-tool": "ជង់ព្រះគម្ពីរ"
+    },
+    "kn": {
+      "title": "ಬೈಬಲ್ ಸ್ಟ್ಯಾಕ್",
+      "description": "ಬೈಬಲ್‌ನ ಸಂವಾದಾತ್ಮಕ 3D ದೃಶ್ಯೀಕರಣವು ಒಡಂಬಡಿಕೆಗಳು, ವಿಭಾಗಗಳು ಮತ್ತು ಪುಸ್ತಕಗಳ ಭೌತಿಕ ರಾಶಿಯಾಗಿ, ನೀವು ವಿಸ್ತೃತ ನೋಟಕ್ಕೆ ಸ್ಫೋಟಿಸಬಹುದು, ತುಂಡು ತುಂಡಾಗಿ ಆಯ್ಕೆ ಮಾಡಬಹುದು ಮತ್ತು ನ್ಯಾವಿಗೇಟ್ ಮಾಡಬಹುದು ಮತ್ತು ಹೈಲೈಟ್ ಮಾಡಬಹುದು - ಮೊದಲ ಭೇಟಿಯಲ್ಲಿ ಮಾರ್ಗದರ್ಶಿ ಪ್ರವಾಸದೊಂದಿಗೆ.",
+      "below-reader-tool": "ಬೈಬಲ್ ಸ್ಟ್ಯಾಕ್"
+    },
+    "ko": {
+      "title": "성경책 더미",
+      "description": "성경을 실제 책들이 쌓여 있는 모습으로 3D로 시각화하여 보여줍니다. 펼쳐서 자세히 볼 수도 있고, 각 부분을 선택해서 탐색하고 강조 표시할 수도 있습니다. 처음 방문 시에는 가이드 투어도 제공됩니다.",
+      "below-reader-tool": "성경책 더미"
+    },
+    "ky": {
+      "title": "Ыйык Китеп топтому",
+      "description": "Ыйык Китепти интерактивдүү 3D визуализациялоо, сиз кеңейтилген көрүнүшкө бөлүп, бөлүктөрү боюнча тандап жана багыт алып, биринчи жолу келгенде гид менен экскурсия аркылуу белгилей турган керээздердин, бөлүмдөрдүн жана китептердин физикалык үймөгү катары.",
+      "below-reader-tool": "Ыйык Китеп топтому"
+    },
+    "ln": {
+      "title": "Ebele ya Biblia",
+      "description": "Visualisation interactive 3D ya Biblia lokola ebele ya physique ya ba testaments, biteni, mpe mikanda oyo okoki ko exploser na vue expandu, kopona mpe ko naviguer eteni na eteni, mpe ko souligner — na tour guidé na visite ya liboso.",
+      "below-reader-tool": "Ebele ya Biblia"
+    },
+    "lo": {
+      "title": "ກອງຄຳພີໄບເບິນ",
+      "description": "ການສະແດງພາບ 3 ມິຕິແບບໂຕ້ຕອບຂອງຄຳພີໄບເບິນເປັນກອງພຣະສັນຍາ, ພາກສ່ວນຕ່າງໆ, ແລະ ປຶ້ມຕ່າງໆທີ່ທ່ານສາມາດຂະຫຍາຍອອກເປັນມຸມມອງທີ່ຂະຫຍາຍອອກ, ເລືອກ ແລະ ນຳທາງແບບເທື່ອລະສ່ວນ, ແລະ ເນັ້ນໃສ່ — ພ້ອມດ້ວຍການທ່ອງທ່ຽວແບບມີຄູ່ມືໃນການຢ້ຽມຢາມຄັ້ງທຳອິດ.",
+      "below-reader-tool": "ກອງຄຳພີໄບເບິນ"
+    },
+    "lt": {
+      "title": "Biblijos krūva",
+      "description": "Interaktyvi 3D Biblijos vizualizacija kaip fizinis testamentų, skyrių ir knygų rinkinys, kurį galite išskleisti į išplėstinį rodinį, pasirinkti ir naršyti po dalį bei paryškinti – su gidu pirmojo apsilankymo metu.",
+      "below-reader-tool": "Biblijos krūva"
+    },
+    "lv": {
+      "title": "Bībeles kaudze",
+      "description": "Interaktīva Bībeles 3D vizualizācija kā fizisks testamentu, sadaļu un grāmatu kopums, ko var izvērst plašākā skatā, atlasīt un pārvietoties pa daļām un iezīmēt — ar gida pavadībā sniegtu ekskursiju pirmajā apmeklējuma reizē.",
+      "below-reader-tool": "Bībeles kaudze"
+    },
+    "mk": {
+      "title": "Библиски стек",
+      "description": "Интерактивна 3D визуелизација на Библијата како физички куп од завети, делови и книги што можете да ги претворите во проширен приказ, да избирате и да се движите низ нив дел по дел и да ги истакнувате — со водена тура при првата посета.",
+      "below-reader-tool": "Библиски стек"
+    },
+    "ml": {
+      "title": "ബൈബിൾ സ്റ്റാക്ക്",
+      "description": "ബൈബിളിന്റെ സംവേദനാത്മക 3D ദൃശ്യവൽക്കരണം, ആദ്യ സന്ദർശനത്തിൽ തന്നെ ഒരു ഗൈഡഡ് ടൂർ സഹിതം, വിപുലീകൃത കാഴ്ചയിലേക്ക് പൊട്ടിത്തെറിക്കാനും, ഓരോന്നായി തിരഞ്ഞെടുക്കാനും നാവിഗേറ്റ് ചെയ്യാനും, ഹൈലൈറ്റ് ചെയ്യാനും കഴിയുന്ന, ടെസ്റ്റമെന്റുകൾ, വിഭാഗങ്ങൾ, പുസ്തകങ്ങൾ എന്നിവയുടെ ഒരു ഭൗതിക ശേഖരം.",
+      "below-reader-tool": "ബൈബിൾ സ്റ്റാക്ക്"
+    },
+    "mn": {
+      "title": "Библийн овоолго",
+      "description": "Библийн интерактив 3 хэмжээст дүрслэлийг гэрээслэл, хэсэг, номын физик овоолго болгон ашиглан та тэдгээрийг өргөтгөсөн харагдац болгон дэлбэлж, хэсэг хэсгээр нь сонгож, чиглүүлж, анх удаа зочлохдоо хөтөчтэй аялал хийх боломжтой.",
+      "below-reader-tool": "Библийн овоолго"
+    },
+    "mr": {
+      "title": "बायबल स्टॅक",
+      "description": "बायबलचे परस्परसंवादी ३डी व्हिज्युअलायझेशन, जे करार, विभाग आणि पुस्तकांच्या भौतिक थप्पीच्या स्वरूपात आहे, ज्याला तुम्ही विस्तारित दृश्यात विस्तारू शकता, एकेक भाग निवडून त्यामध्ये फिरू शकता आणि हायलाइट करू शकता — पहिल्या भेटीत मार्गदर्शित दौऱ्यासह.",
+      "below-reader-tool": "बायबल स्टॅक"
+    },
+    "ms": {
+      "title": "Susunan Bible",
+      "description": "Visualisasi 3D interaktif Bible sebagai timbunan fizikal wasiat, bahagian dan buku yang boleh anda kembangkan menjadi paparan yang lebih luas, pilih dan navigasi bahagian demi bahagian dan sorot — dengan lawatan berpandu pada lawatan pertama.",
+      "below-reader-tool": "Susunan Bible"
+    },
+    "my": {
+      "title": "သမ္မာကျမ်းစာပုံ",
+      "description": "ဓမ္မသစ်ကျမ်းများ၊ အပိုင်းများနှင့် စာအုပ်များစုပေါင်းထားသော ရုပ်ပိုင်းဆိုင်ရာအစုအဝေးတစ်ခုအဖြစ် သမ္မာကျမ်းစာကို အပြန်အလှန်တုံ့ပြန်နိုင်သော 3D မြင်ယောင်မှုကို ပထမဆုံးအကြိမ်လာရောက်လည်ပတ်မှုတွင် လမ်းညွှန်ခရီးစဉ်ဖြင့် သင်ချဲ့ထွင်ထားသော မြင်ကွင်းအဖြစ် ပေါက်ကွဲနိုင်သည်၊ အပိုင်းလိုက် ရွေးချယ်ပြီး လမ်းညွှန်ပေးနိုင်ပါသည်။",
+      "below-reader-tool": "သမ္မာကျမ်းစာပုံ"
+    },
+    "nb": {
+      "title": "Bibelstabel",
+      "description": "Interaktiv 3D-visualisering av Bibelen som en fysisk stabel med testamenter, avsnitt og bøker som du kan eksplodere til en utvidet visning, velge og navigere bit for bit, og markere – med en guidet omvisning ved første besøk.",
+      "below-reader-tool": "Bibelstabel"
+    },
+    "ne": {
+      "title": "बाइबल स्ट्याक",
+      "description": "पहिलो भ्रमणमा निर्देशित भ्रमणको साथ, बाइबलको अन्तरक्रियात्मक थ्रीडी दृश्यावलोकन, वसीयतनामा, खण्डहरू, र पुस्तकहरूको भौतिक स्ट्याकको रूपमा जुन तपाईं विस्तारित दृश्यमा विस्फोट गर्न सक्नुहुन्छ, टुक्रा टुक्रा चयन गर्न र नेभिगेट गर्न सक्नुहुन्छ, र हाइलाइट गर्न सक्नुहुन्छ।",
+      "below-reader-tool": "बाइबल स्ट्याक"
+    },
+    "nl": {
+      "title": "Bijbelstapel",
+      "description": "Interactieve 3D-visualisatie van de Bijbel als een fysieke stapel testamenten, delen en boeken die je kunt uitvergroten, stuk voor stuk kunt selecteren en bekijken, en markeren — met een rondleiding bij je eerste bezoek.",
+      "below-reader-tool": "Bijbelstapel"
+    },
+    "no": {
+      "title": "Bibelstabel",
+      "description": "Interaktiv 3D-visualisering av Bibelen som en fysisk stabel med testamenter, avsnitt og bøker som du kan eksplodere til en utvidet visning, velge og navigere bit for bit, og markere – med en guidet omvisning ved første besøk.",
+      "below-reader-tool": "Bibelstabel"
+    },
+    "pa": {
+      "title": "ਬਾਈਬਲ ਸਟੈਕ",
+      "description": "ਬਾਈਬਲ ਦਾ ਇੰਟਰਐਕਟਿਵ 3D ਵਿਜ਼ੂਅਲਾਈਜ਼ੇਸ਼ਨ, ਜਿਸ ਵਿੱਚ ਨੇਮਾਂ, ਭਾਗਾਂ ਅਤੇ ਕਿਤਾਬਾਂ ਦਾ ਇੱਕ ਭੌਤਿਕ ਢੇਰ ਹੈ, ਜਿਸਨੂੰ ਤੁਸੀਂ ਇੱਕ ਵਿਸਤ੍ਰਿਤ ਦ੍ਰਿਸ਼ ਵਿੱਚ ਵਿਸਫੋਟ ਕਰ ਸਕਦੇ ਹੋ, ਟੁਕੜੇ-ਟੁਕੜੇ ਚੁਣ ਸਕਦੇ ਹੋ ਅਤੇ ਨੈਵੀਗੇਟ ਕਰ ਸਕਦੇ ਹੋ, ਅਤੇ ਪਹਿਲੀ ਫੇਰੀ 'ਤੇ ਇੱਕ ਗਾਈਡਡ ਟੂਰ ਦੇ ਨਾਲ - ਹਾਈਲਾਈਟ ਕਰ ਸਕਦੇ ਹੋ।",
+      "below-reader-tool": "ਬਾਈਬਲ ਸਟੈਕ"
+    },
+    "pl": {
+      "title": "Stos Biblii",
+      "description": "Interaktywna wizualizacja 3D Biblii jako fizycznego stosu Testamentów, rozdziałów i ksiąg, który można rozszerzyć, wybierać i przeglądać fragment po fragmencie, a także zaznaczać — z przewodnikiem podczas pierwszej wizyty.",
+      "below-reader-tool": "Stos Biblii"
+    },
+    "ps": {
+      "title": "د بائبل سټیک",
+      "description": "د انجیل متقابل 3D لید د وصیتونو، برخو او کتابونو د فزیکي سټک په توګه چې تاسو کولی شئ په پراخه لید کې چاودنه وکړئ، ټوټه ټوټه وټاکئ او حرکت وکړئ، او روښانه کړئ - په لومړي سفر کې د لارښود سفر سره.",
+      "below-reader-tool": "د بائبل سټیک"
+    },
+    "pt": {
+      "title": "Pilha de Bíblias",
+      "description": "Visualização interativa em 3D da Bíblia como uma pilha física de testamentos, seções e livros que você pode expandir para uma visualização ampliada, selecionar e navegar parte por parte e destacar — com uma visita guiada na primeira visita.",
+      "below-reader-tool": "Pilha de Bíblias"
+    },
+    "ro": {
+      "title": "Stiva Biblică",
+      "description": "Vizualizare 3D interactivă a Bibliei ca o stivă fizică de testamente, secțiuni și cărți pe care o puteți descompune într-o vizualizare extinsă, selecta și naviga piesă cu piesă și evidenția — cu un tur ghidat la prima vizită.",
+      "below-reader-tool": "Stiva Biblică"
+    },
+    "ru": {
+      "title": "Стопка Библий",
+      "description": "Интерактивная 3D-визуализация Библии в виде физической стопки заветов, разделов и книг, которую можно развернуть на увеличенном изображении, выбирать и перемещаться по ней по частям, а также выделять важные моменты — с возможностью ознакомительной экскурсии при первом посещении.",
+      "below-reader-tool": "Стопка Библий"
+    },
+    "sk": {
+      "title": "Biblický stoh",
+      "description": "Interaktívna 3D vizualizácia Biblie ako fyzického súboru zákonov, častí a kníh, ktoré si môžete rozbaliť do rozšíreného zobrazenia, vyberať a prechádzať si jednotlivé časti a zvýrazňovať ich – s prehliadkou so sprievodcom pri prvej návšteve.",
+      "below-reader-tool": "Biblický stoh"
+    },
+    "sl": {
+      "title": "Biblijski sklad",
+      "description": "Interaktivna 3D vizualizacija Svetega pisma kot fizičnega sklada zavez, razdelkov in knjig, ki jih lahko razstavite v razširjen pogled, izberete in se pomikate po delih ter jih označite – z vodenim ogledom ob prvem obisku.",
+      "below-reader-tool": "Biblijski sklad"
+    },
+    "sq": {
+      "title": "Bibla e Grumbulluar",
+      "description": "Vizualizim interaktiv 3D i Biblës si një grumbull fizik testamentesh, seksionesh dhe librash që mund t’i shpërtheni në një pamje të zgjeruar, të zgjidhni dhe të lundroni pjesë pas pjese dhe të nxirrni në pah — me një tur të udhëhequr në vizitën e parë.",
+      "below-reader-tool": "Bibla e Grumbulluar"
+    },
+    "sv": {
+      "title": "Bibelstapel",
+      "description": "Interaktiv 3D-visualisering av Bibeln som en fysisk bunt av testamenten, avsnitt och böcker som du kan explodera till en utökad vy, välja och navigera bit för bit och markera – med en guidad tur vid första besöket.",
+      "below-reader-tool": "Bibelstapel"
+    },
+    "sw": {
+      "title": "Mrundiko wa Biblia",
+      "description": "Taswira shirikishi ya Biblia ya 3D kama rundo la maagano, sehemu, na vitabu ambavyo unaweza kuvipanua na kuvifanya kuwa mwonekano mpana, kuchagua na kuvisogeza vipande vipande, na kuviangazia — kwa ziara iliyoongozwa katika ziara ya kwanza.",
+      "below-reader-tool": "Mrundiko wa Biblia"
+    },
+    "ta": {
+      "title": "பைபிள் அடுக்கு",
+      "description": "பைபிளை ஏற்பாடுகள், பிரிவுகள் மற்றும் புத்தகங்களின் ஒரு பௌதீக அடுக்காகக் காட்டும் ஊடாடும் முப்பரிமாணக் காட்சிப்படுத்தல். இதை நீங்கள் ஒரு விரிவான காட்சியாகப் பிரிக்கலாம், பகுதி பகுதியாகத் தேர்ந்தெடுத்துப் பார்க்கலாம், மற்றும் சிறப்பித்துக் காட்டலாம் — முதல் வருகையின்போது ஒரு வழிகாட்டப்பட்ட சுற்றுப்பயணமும் வழங்கப்படும்.",
+      "below-reader-tool": "பைபிள் அடுக்கு"
+    },
+    "te": {
+      "title": "బైబిల్ స్టాక్",
+      "description": "బైబిల్‌ను నిబంధనలు, విభాగాలు మరియు పుస్తకాల భౌతిక కుప్పగా చూపించే ఇంటరాక్టివ్ 3D విజువలైజేషన్. దీనిని మీరు విస్తరించిన వీక్షణలోకి విడదీయవచ్చు, ఒక్కో భాగాన్ని ఎంచుకుని నావిగేట్ చేయవచ్చు మరియు హైలైట్ చేయవచ్చు — మొదటి సందర్శనలోనే గైడెడ్ టూర్‌తో పాటు.",
+      "below-reader-tool": "బైబిల్ స్టాక్"
+    },
+    "th": {
+      "title": "กองพระคัมภีร์",
+      "description": "การแสดงผลแบบ 3 มิติเชิงโต้ตอบของพระคัมภีร์ในรูปแบบกองหนังสือ บทต่างๆ และหัวข้อต่างๆ ที่คุณสามารถขยายเพื่อดูในมุมมองที่ใหญ่ขึ้น เลือกและนำทางทีละส่วน และเน้นข้อความได้ พร้อมคำแนะนำประกอบในครั้งแรกที่เข้าชม",
+      "below-reader-tool": "กองพระคัมภีร์"
+    },
+    "ti": {
+      "title": "መጽሓፍ ቅዱስ ስታክ",
+      "description": "መስተጋብራዊ 3D ምስሊ መጽሓፍ ቅዱስ ከም ኣካላዊ ቁጽሪ ኪዳናት፣ ክፍልታትን መጻሕፍትን ናብ ዝተሰፍሐ ትርኢት ክትፍንጀር፣ ቁንጣሮ ቁንጣሮ ክትመርጽን ክትከይድን ትኽእል፣ ከምኡውን ከተጉልሖ ትኽእል — ምስ መሪሕ ዑደት ኣብ ቀዳማይ ምብጻሕ።",
+      "below-reader-tool": "መጽሓፍ ቅዱስ ስታክ"
+    },
+    "tl": {
+      "title": "Patong ng Bibliya",
+      "description": "Interaktibong 3D visualization ng Bibliya bilang isang pisikal na tumpok ng mga testamento, seksyon, at mga aklat na maaari mong palawakin sa isang pinalawak na view, piliin at i-navigate nang paunti-unti, at i-highlight — kasama ang isang guided tour sa unang pagbisita.",
+      "below-reader-tool": "Patong ng Bibliya"
+    },
+    "tr": {
+      "title": "İncil Yığını",
+      "description": "İncil'in, fiziksel bir yığın halinde bulunan ahitler, bölümler ve kitaplar şeklinde interaktif 3 boyutlu görselleştirmesi; bu yığını genişletilmiş bir görünüme açabilir, parça parça seçip gezinebilir ve vurgulayabilirsiniz; ilk ziyaretinizde rehberli bir tur da sunulmaktadır.",
+      "below-reader-tool": "İncil Yığını"
+    },
+    "ug": {
+      "title": "ئىنجىل توپلىمى",
+      "description": "ئىنجىلنىڭ ئۆز-ئارا تەسىر كۆرسىتىدىغان 3D كۆرۈنۈشى، ۋەسىيەتنامە، بۆلۈم ۋە كىتابلارنىڭ فىزىكىلىق توپلىمى سۈپىتىدە، كېڭەيتىلگەن كۆرۈنۈشكە ئايلاندۇرۇلىدۇ، پارچىلارنى تاللاپ يوللىنىدۇ، ھەمدە تۇنجى قېتىم كەلگەندە يېتەكچىلىك بىلەن كۆرسىتىلىدۇ.",
+      "below-reader-tool": "ئىنجىل توپلىمى"
+    },
+    "uk": {
+      "title": "Біблійний стек",
+      "description": "Інтерактивна 3D-візуалізація Біблії як фізичного стеку заповітів, розділів та книг, які можна розгортати у розширеному вигляді, вибирати та переглядати по частинах, а також виділяти — з екскурсією під час першого відвідування.",
+      "below-reader-tool": "Біблійний стек"
+    },
+    "ur": {
+      "title": "بائبل اسٹیک",
+      "description": "وصیت ناموں، حصوں اور کتابوں کے جسمانی ڈھیر کے طور پر بائبل کا انٹرایکٹو 3D ویژولائزیشن جسے آپ ایک وسیع منظر میں پھٹ سکتے ہیں، ٹکڑوں کو منتخب اور نیویگیٹ کر سکتے ہیں، اور نمایاں کر سکتے ہیں — پہلے وزٹ پر گائیڈڈ ٹور کے ساتھ۔",
+      "below-reader-tool": "بائبل اسٹیک"
+    },
+    "uz": {
+      "title": "Muqaddas Kitob to'plami",
+      "description": "Muqaddas Kitobning interaktiv 3D vizualizatsiyasi, vasiyatnomalar, bo'limlar va kitoblarning jismoniy to'plami sifatida kengaytirilgan ko'rinishga portlashi, bo'lakma-bo'lak tanlashi va navigatsiya qilishi hamda birinchi tashrifingizda ekskursiya bilan ajratib ko'rsatishi mumkin.",
+      "below-reader-tool": "Muqaddas Kitob to'plami"
+    },
+    "vi": {
+      "title": "Chồng Kinh Thánh",
+      "description": "Hình ảnh 3D tương tác của Kinh Thánh được thể hiện dưới dạng một chồng các phần, chương và sách vật lý mà bạn có thể phóng to để xem chi tiết, chọn và điều hướng từng phần, và đánh dấu — với một chuyến tham quan có hướng dẫn trong lần truy cập đầu tiên.",
+      "below-reader-tool": "Chồng Kinh Thánh"
+    },
+    "zh": {
+      "title": "圣经堆",
+      "description": "以交互式 3D 形式呈现圣经，将其视为一叠实体书卷、章节和书籍，您可以将其展开查看，逐一选择和浏览，并进行高亮显示——首次访问时还提供导览服务。",
+      "below-reader-tool": "圣经堆"
+    },
+    "zu": {
+      "title": "I-Bible Stack",
+      "description": "Ukuboniswa kweBhayibheli okusebenzisanayo kwe-3D njengeqoqo elingokoqobo lamaTestamente, izingxenye, nezincwadi ongazisebenzisa ukuze ubonise umbono owandisiwe, ukhethe futhi uzulazule kancane kancane, bese uqokomisa — ngohambo oluqondisiwe ekuvakasheni kokuqala.",
+      "below-reader-tool": "I-Bible Stack"
+    }
+  }
+}

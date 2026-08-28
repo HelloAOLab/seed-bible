@@ -12,6 +12,11 @@ export interface ToolActionElementProps {
   onActivate: () => void;
   className?: string;
   ariaLabel?: string;
+  /**
+   * Stable identifier for tests to select the element by, independent of its
+   * translatable `aria-label` — rendered as `data-tool-id`.
+   */
+  dataToolId?: string;
   onPointerDown?: JSX.PointerEventHandler<HTMLElement>;
   children?: ComponentChildren;
 }
@@ -43,6 +48,7 @@ export function ToolActionElement({
   onActivate,
   className,
   ariaLabel,
+  dataToolId,
   onPointerDown,
   children,
 }: ToolActionElementProps) {
@@ -52,6 +58,7 @@ export function ToolActionElement({
         href={href}
         className={className}
         aria-label={ariaLabel}
+        data-tool-id={dataToolId}
         // Anchors are draggable by default, which starts a link-drag ghost on
         // press-and-move — jarring on a button-shaped chevron that used to be
         // a real `<button>` (never draggable).
@@ -99,6 +106,7 @@ export function ToolActionElement({
       disabled={disabled}
       className={className}
       aria-label={ariaLabel}
+      data-tool-id={dataToolId}
       onPointerDown={onPointerDown}
       onClick={() => onActivate()}
     >

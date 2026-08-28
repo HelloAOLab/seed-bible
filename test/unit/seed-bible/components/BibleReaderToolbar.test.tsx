@@ -5,11 +5,13 @@ import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/B
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   createTestSeedBibleState,
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
+import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
+import { resetFlingSafeTapForTests } from "@packages/seed-bible/seed-bible/app/flingSafeTap";
 import { TestHost } from "./TestHost";
 import {
   aabBooks,
@@ -687,6 +689,16 @@ describe("BibleReaderToolbar mobile More menu", () => {
   }> {
     const state = await createTestSeedBibleState();
 
+    // `viewportWidth` seeds to match the server's UA-based guess (never
+    // `window.innerWidth`) so a hydrate pass can't mismatch — see
+    // `SeedBibleStateManager.tsx`. The real correction happens once, from a
+    // post-mount effect that calls `applyViewport()`; the closest
+    // equivalent here is the same `resize` dispatch the sibling describe
+    // block above already uses.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
     await act(async () => {
       render(
         <TestHost state={state}>
@@ -789,6 +801,17 @@ describe("BibleReaderToolbar mobile More menu", () => {
     expect(document.activeElement).toBe(moreButton);
   });
 
+  it("does not include Share, which lives in the chapter header on mobile", async () => {
+    const { moreButton } = await renderToolbar();
+    await openMenu(moreButton);
+
+    const labels = Array.from(
+      container.querySelectorAll(".sb-mobile-more-menu-label")
+    ).map((el) => el.textContent);
+
+    expect(labels).not.toContain("Share");
+  });
+
   it("stops listening once the menu is closed", async () => {
     const { moreButton } = await renderToolbar();
     await openMenu(moreButton);
@@ -811,6 +834,86 @@ describe("BibleReaderToolbar mobile More menu", () => {
     });
 
     expect(menu()).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar — mobile Bible tab", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar(): Promise<{
+    state: SeedBibleState;
+    bibleButton: HTMLButtonElement;
+  }> {
+    const state = await createTestSeedBibleState();
+
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const bibleButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        ".sb-reader-toolbar-mobile-tab-button"
+      )
+    ).find((button) => button.getAttribute("aria-label") === "Bible");
+    if (!bibleButton) {
+      throw new Error("The mobile Bible tab did not render.");
+    }
+    return { state, bibleButton };
+  }
+
+  async function tap(button: HTMLButtonElement): Promise<void> {
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  it("opens the book selector when the Bible text is already showing", async () => {
+    const { state, bibleButton } = await renderToolbar();
+    expect(state.selector.isOpen.value).toBe(false);
+
+    await tap(bibleButton);
+
+    await waitFor(() => state.selector.isOpen.value === true);
+  });
+
+  it("shows the Bible text instead of the selector when another screen covers the reader", async () => {
+    const { state, bibleButton } = await renderToolbar();
+
+    await act(async () => {
+      state.sidebar.openSearchPanel();
+    });
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    await tap(bibleButton);
+
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
+    expect(state.selector.isOpen.value).toBe(false);
   });
 });
 
@@ -1005,6 +1108,38 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
   });
 
+  it("expands the sheet when dragged from the panel background, not just the handle", async () => {
+    await renderSheet();
+    // The panel element itself, rather than the handle or the swipe hint —
+    // stands in for a finger landing on empty space in the sheet.
+    const panel = sheet()!;
+
+    await press(panel, 500);
+    await moveTo(panel, 460);
+
+    expect(overflow()?.style.height).toBe("40px");
+    expect(sheet()?.className).toContain("sb-verse-sheet-dragging");
+
+    // Past halfway, so releasing settles it fully open.
+    await moveTo(panel, 400);
+    await release(panel, 400);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+  });
+
+  it("does not start the sheet drag when pressing down on a toolbar button", async () => {
+    await renderSheet();
+    const closeButton = container.querySelector<HTMLElement>(
+      ".sb-verse-toolbar-close"
+    );
+    if (!closeButton) throw new Error("The close button did not render.");
+
+    await press(closeButton, 500);
+    await moveTo(closeButton, 460);
+
+    expect(overflow()?.style.height).toBe("0px");
+    expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
+  });
+
   it("keeps the closed drawer's actions out of the tab order", async () => {
     const handle = await renderSheet();
 
@@ -1094,6 +1229,41 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await release(handle, 300 + OVERFLOW_HEIGHT);
 
     expect(overflow()?.style.height).toBe("0px");
+  });
+
+  it("continues straight into the dismiss slide when a single drag from expanded closes the drawer and keeps going", async () => {
+    const handle = await renderSheet();
+
+    // Open it first.
+    await press(handle, 500);
+    await moveTo(handle, 300);
+    await release(handle, 300);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+
+    // One continuous drag: closes the drawer, then keeps going and starts
+    // sliding the sheet itself away — no release/re-press in between.
+    await press(handle, 300);
+    await moveTo(handle, 300 + OVERFLOW_HEIGHT + 40);
+
+    expect(overflow()?.style.height).toBe("0px");
+    expect(sheet()?.style.transform).toBe("translateY(40px)");
+
+    await release(handle, 300 + OVERFLOW_HEIGHT + 40);
+  });
+
+  it("dismisses the selection from one continuous drag starting expanded", async () => {
+    const handle = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 300);
+    await release(handle, 300);
+    expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
+
+    await press(handle, 300);
+    await moveTo(handle, 300 + OVERFLOW_HEIGHT + 100);
+    await release(handle, 300 + OVERFLOW_HEIGHT + 100);
+
+    expect(readingState.selectedVerses.value).toHaveLength(0);
   });
 
   it("toggles on a tap that barely moves", async () => {
@@ -1439,6 +1609,328 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
       expect(annotationItems()[0]?.textContent).toContain("Just this verse");
       expect(annotationItems()[1]?.textContent).toContain("A short range");
     });
+  });
+
+  it("shows a generic account icon on the current user's notes when nobody else has annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+        )
+      ).not.toBeNull();
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )?.textContent
+    ).toContain("account_circle");
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+      )
+    ).toBeNull();
+  });
+
+  it("shows the animal fallback on verse-sheet notes when other people have also annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+      {
+        id: "a2",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Theirs</p>",
+          userId: "toolbar-user-other",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelectorAll(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+        )
+      ).toHaveLength(2);
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )
+    ).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar floating chapter nav", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+    resetFlingSafeTapForTests();
+  });
+
+  async function renderToolbar(): Promise<{
+    state: SeedBibleState;
+    bookLabel: HTMLButtonElement;
+  }> {
+    const state = await createTestSeedBibleState();
+
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const bookLabel = container.querySelector<HTMLButtonElement>(
+      ".sb-reader-floating-nav-label"
+    );
+    if (!bookLabel) {
+      throw new Error("The floating book/chapter label did not render.");
+    }
+    return { state, bookLabel };
+  }
+
+  const TAP_X = 100;
+  const TAP_Y = 700;
+
+  function touchEvent(type: "pointerdown" | "pointerup", x: number) {
+    return new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 1,
+      pointerType: "touch",
+      clientX: x,
+      clientY: TAP_Y,
+    });
+  }
+
+  function tap(
+    element: HTMLElement,
+    options: { withClick?: boolean; releaseX?: number } = {}
+  ) {
+    element.dispatchEvent(touchEvent("pointerdown", TAP_X));
+    element.dispatchEvent(touchEvent("pointerup", options.releaseX ?? TAP_X));
+    if (options.withClick) {
+      element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+  }
+
+  it("opens the book selector on a tap that lands mid-scroll", async () => {
+    const { state, bookLabel } = await renderToolbar();
+    expect(state.selector.isOpen.value).toBe(false);
+
+    // Chromium spends the tap that halts a momentum scroll on stopping it: the
+    // pointer events arrive but no click follows, so a click-only control sits
+    // there doing nothing until the page settles.
+    await act(async () => {
+      // The helper only treats a tap as fling-stop when a scroll was still
+      // coasting; without that, it waits for `click`, which this gesture has
+      // none of.
+      document.body.dispatchEvent(new Event("scroll", { bubbles: false }));
+      tap(bookLabel);
+    });
+
+    await waitFor(() => state.selector.isOpen.value);
+  });
+
+  it("opens the book selector on an ordinary tap", async () => {
+    const { state, bookLabel } = await renderToolbar();
+
+    await act(async () => {
+      tap(bookLabel, { withClick: true });
+    });
+
+    await waitFor(() => state.selector.isOpen.value);
+  });
+
+  it("leaves the book selector closed when the tap becomes a swipe", async () => {
+    const { state, bookLabel } = await renderToolbar();
+
+    await act(async () => {
+      tap(bookLabel, { releaseX: TAP_X + 140 });
+      // Let anything the press started settle, so the assertion isn't just
+      // beating an open that was on its way.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(state.selector.isOpen.value).toBe(false);
+  });
+});
+
+/**
+ * On mobile, the toolbar is the only way into the Today screen from the reader, and it had
+ * no coverage at all — the migration replaced an install-on-demand path (and a
+ * second, divergent copy in the sidebar) with a single `today.open()` call.
+ */
+describe("BibleReaderToolbar — the mobile Today tab", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    // Seeded into `viewportWidth` at creation, so it has to precede the state.
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar() {
+    const state = await createTestSeedBibleState();
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    const tab = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Today"]'
+    );
+    if (!tab) throw new Error("The Today bottom tab did not render.");
+    return { state, tab };
+  }
+
+  const tapTab = async (tab: HTMLButtonElement) => {
+    await act(async () => {
+      tab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  it("opens the Today screen when tapped", async () => {
+    const { state, tab } = await renderToolbar();
+    expect(state.today.isOpen.value).toBe(false);
+
+    await tapTab(tab);
+
+    expect(state.today.isOpen.value).toBe(true);
+  });
+
+  it("highlights itself while Today is open", async () => {
+    const { state, tab } = await renderToolbar();
+    const isActive = () =>
+      container
+        .querySelector('button[aria-label="Today"]')!
+        .classList.contains("sb-reader-toolbar-mobile-tab-button-active");
+    expect(isActive()).toBe(false);
+
+    await tapTab(tab);
+    expect(isActive()).toBe(true);
+
+    // Closing from anywhere else has to un-highlight it too: the tab reads the
+    // manager signal rather than tracking its own taps.
+    await act(async () => state.today.close());
+    expect(isActive()).toBe(false);
+  });
+
+  /**
+   * An ordering guard. `openTodayScreen` closes what is on screen before
+   * calling `today.open()`; swap those two and the close sweeps away the pane
+   * Today just opened, so the tab does nothing visible. Both assertions below
+   * have to hold at once to rule that out — verified by making the swap.
+   *
+   * It deliberately does *not* claim to cover `panes.closeAll()`: on a mobile
+   * viewport `openPane` treats every pane as fullscreen and already evicts the
+   * others, firing their `onClose` the same way, so removing that call changes
+   * nothing observable here.
+   */
+  it("leaves Today as the only thing covering the reader", async () => {
+    const { state, tab } = await renderToolbar();
+
+    await act(async () => {
+      state.panes.openPane({
+        placement: "fullscreen",
+        title: "Jerusalem",
+        component: () => <div className="test-pane-body" />,
+      });
+    });
+    expect(state.panes.panes.value).toHaveLength(1);
+
+    await tapTab(tab);
+
+    expect(state.today.isOpen.value).toBe(true);
+    const ids = state.panes.panes.value.map((pane) => pane.id);
+    expect(ids).toContain(TODAY_PANE_ID);
+    expect(ids).toHaveLength(1);
   });
 });
 

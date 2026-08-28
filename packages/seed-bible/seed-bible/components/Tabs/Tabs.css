@@ -21,6 +21,10 @@
   position: relative;
   user-select: none;
   min-height: 0;
+
+  /* Sidebar is hidden by inline styles */
+  opacity: 1;
+  transition: opacity 0.25s ease;
 }
 
 .sb-tabs-sidebar-collapsed {
@@ -693,7 +697,8 @@
   align-items: stretch;
   position: relative;
 
-  padding: 0.5rem 0.375rem 0.5rem 0.75rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem 0.375rem;
   border-radius: 0.5rem;
   border: 1px solid transparent;
   background: var(--sb-tab-background);
@@ -714,7 +719,7 @@
 }
 
 .sb-tab-button {
-  text-align: left;
+  text-align: start;
 
   border: none;
   background: none;
@@ -1102,6 +1107,14 @@
   font-size: 1.125rem;
 }
 
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic {
+  border: none;
+}
+
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic .material-symbols-outlined {
+  font-size: 2rem;
+}
+
 .sb-tab-title {
   font-size: 0.75rem;
   opacity: 0.75;
@@ -1199,7 +1212,7 @@
   cursor: pointer;
   width: 2rem;
   height: 2rem;
-  margin-left: auto;
+  margin-inline-start: auto;
   align-items: center;
   justify-content: center;
   padding: 0;
@@ -1318,12 +1331,6 @@
     display: inline-flex;
   }
 
-  /* On mobile the account panel is dismissed via the bottom bar of options
-   * (e.g. the "Bible" tab), so the redundant X close button is hidden. */
-  .sb-sidebar-settings-close-button-account {
-    display: none;
-  }
-
   /* The desktop bottom-actions row (settings cog + self avatar) is hidden
    * on mobile — the bottom is now the Bible/Tabs switcher. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-bottom-actions {
@@ -1351,16 +1358,35 @@
     text-overflow: ellipsis;
   }
 
+  /* The settings sidebar (main list, and every settings subpage, including
+   * Account) shares .sb-sidebar-tabs-title with the tab-list header above,
+   * but its "Settings" heading isn't a book title — restore the plain
+   * heading style so it renders the same as on desktop. */
+  .sb-tabs-sidebar-mobile-open
+    .sb-sidebar-settings-view
+    .sb-sidebar-tabs-title {
+    flex: initial;
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--sb-font-color);
+  }
+
   /* Tab list takes the body of the sidebar; leave room at the bottom for
    * the floating Add button so the last tab isn't covered. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    padding: 1rem 1rem 6rem;
     gap: 0.75rem;
     /* On mobile the whole drawer scrolls (see .sb-tabs-sidebar-mobile-open),
      * so undo the desktop tab-list scroll region to avoid a nested scroll. */
     flex: 0 0 auto;
     overflow: visible;
     min-height: auto;
+
+    /* Add a thin divider above the inline button so it visually separates
+     * from the tab list, matching the design. */
+    margin-inline: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--sb-divider-color);
   }
 
   /* Tab card on mobile — plain by default, peach pill when selected. */
@@ -1428,19 +1454,6 @@
     .material-symbols-outlined {
     font-size: 1.375rem;
     font-weight: 500;
-  }
-
-  /* Add a thin divider above the inline button so it visually separates
-   * from the tab list, matching the design. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    margin-inline: 1rem;
-    padding: 0.75rem 0;
-  }
-
-  /* Reset the desktop tab list padding now that we apply our own. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--sb-divider-color);
   }
 
   /* ------------------------------------------------------------------
@@ -1635,7 +1648,6 @@
     padding-left: 0.5rem;
     padding-bottom: 0.3125rem;
     padding-top: 0.5rem;
-    color: inherit;
     display: flex;
     align-items: center;
     gap: 0.3125rem;

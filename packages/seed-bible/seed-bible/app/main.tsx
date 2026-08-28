@@ -12,7 +12,7 @@ import { Sidebar, SharedSessionsToasts } from "../components/Tabs/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { Suspense } from "preact/compat";
 import { useEffect } from "preact/hooks";
-import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
+import { useSignalEffect } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
 import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
@@ -24,31 +24,32 @@ import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
   DEFAULT_APP_CONFIG,
+  useAppConfig,
   type AppConfig,
 } from "./appConfig";
+import { isWebKit } from "./ssrEnv";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
-import "./styles/base.css";
-import "./styles/utilities.css";
+import "./styles/base.inline.css";
+import "./styles/utilities.inline.css";
 import {
   OnboardingModals,
   LanguageUnavailableModal,
+  UiLanguageSwitchModal,
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 
 /**
- * A collection of link/script's providing expected resources from external sources.
- * @returns
+ * Font `<link>`s. Theme CSS used to render here too, but now writes directly
+ * to `document.head` from a `ThemeManager` effect (see `ThemeManager.tsx`'s
+ * `createTheme`) — that target is never diffed by Preact, so it carries no
+ * hydration-mismatch risk the way an in-tree `<style>` whose text derives
+ * from `localStorage` would.
  */
-export function ExternalResourceDependencies({
-  themeCssVariables,
-  themeCssClasses,
-}: {
-  themeCssVariables: ReadonlySignal<string>;
-  themeCssClasses: ReadonlySignal<string>;
-}) {
+export function ExternalResourceDependencies() {
   return (
     <>
       <link
@@ -59,8 +60,6 @@ export function ExternalResourceDependencies({
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
-      <style>{`body {\n${themeCssVariables}\n}`}</style>
-      <style>{themeCssClasses}</style>
     </>
   );
 }
@@ -77,10 +76,51 @@ export function Main({
 
   initialState?: ReturnType<typeof createSeedBibleState>;
 } = {}) {
-  const state =
-    initialState ??
-    useMemo(() => createSeedBibleState({ config: appConfig, initialHref }), []);
+  // Split into two components rather than conditionally skipping `useMemo`
+  // below (`initialState ?? useMemo(...)`): every real caller always passes
+  // `initialState`, but if one ever didn't across a re-render, that would
+  // change which hooks this component instance calls, which Preact requires
+  // to stay identical for the component's lifetime. Choosing which of two
+  // components to render carries no such requirement — each has its own,
+  // internally-fixed hook sequence.
+  return initialState ? (
+    <MainWithState appConfig={appConfig} initialState={initialState} />
+  ) : (
+    <MainCreatingState appConfig={appConfig} initialHref={initialHref} />
+  );
+}
 
+function MainWithState({
+  appConfig,
+  initialState,
+}: {
+  appConfig: AppConfig;
+  initialState: ReturnType<typeof createSeedBibleState>;
+}) {
+  return <MainBody appConfig={appConfig} state={initialState} />;
+}
+
+function MainCreatingState({
+  appConfig,
+  initialHref,
+}: {
+  appConfig: AppConfig;
+  initialHref?: string;
+}) {
+  const state = useMemo(
+    () => createSeedBibleState({ config: appConfig, initialHref }),
+    []
+  );
+  return <MainBody appConfig={appConfig} state={state} />;
+}
+
+function MainBody({
+  appConfig,
+  state,
+}: {
+  appConfig: AppConfig;
+  state: ReturnType<typeof createSeedBibleState>;
+}) {
   // Dev-only escape hatch for poking at live managers from the browser
   // console (e.g. `window.__seedBible.login`) — never runs in production.
   if (import.meta.env.DEV && typeof window !== "undefined") {
@@ -89,6 +129,37 @@ export function Main({
 
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
+  }, []);
+
+  // One-time correction: the viewport signals seed to match the server's
+  // UA-based guess so the first hydrate pass can't mismatch, but that guess
+  // rarely matches the device's real size. Apply the real dimensions once,
+  // right after Preact's first commit — a normal diffed re-render, not a
+  // hydration mismatch.
+  useEffect(() => {
+    state.app.applyViewport();
+  }, []);
+
+  // Deferred real read: `login.localConfig` seeds empty to match SSR, so the
+  // first hydrate pass can't disagree with the server over font size, UI
+  // size, toolbar customization, disablePanels, theme, etc. Apply the
+  // device's real saved config once, right after mount —
+  // `SettingsManager`'s own effect() already re-derives `settings` whenever
+  // `login.localConfig` changes, so no change is needed there.
+  useEffect(() => {
+    state.login.hydrateLocalConfig();
+  }, []);
+
+  // Deferred real read, same reason as the two above: saved tabs and their slot
+  // layout, the cached translation catalog, the selector view mode, and the
+  // tutorial/onboarding flags all seed to what the server rendered so the first
+  // hydrate pass can't disagree with it, then get corrected here. Unlike the
+  // others this one is load-bearing for correctness rather than polish — a
+  // returning visitor's extra tabs would mount `TabRow`s and panes the served
+  // HTML never had, which is the one divergence `hydrate()` reports instead of
+  // silently patching.
+  useEffect(() => {
+    state.app.hydrateFromStorage();
   }, []);
 
   if (typeof document !== "undefined") {
@@ -106,27 +177,15 @@ export function Main({
   );
 }
 
-// From https://rnwest.engineer/detect-webkit/
-function isWebKit() {
-  const ua = navigator.userAgent;
-  // As far as I can tell, Chromium-based desktop browsers are the only browsers
-  // that pretend to be WebKit-based but aren't.
-  return (
-    (/AppleWebKit/.test(ua) && !/Chrome/.test(ua)) ||
-    /\b(iPad|iPhone|iPod)\b/.test(ua)
-  );
-}
-
-const isWebKitBrowser = isWebKit();
-const webkitClass = isWebKitBrowser ? "is-webkit" : "";
-
 function MainContent(props: {
   state: ReturnType<typeof createSeedBibleState>;
 }) {
   const { state } = props;
   const { isRtl } = useI18n();
+  const { renderedAsWebKit } = useAppConfig();
+  const webkitClass = isWebKit(renderedAsWebKit) ? "is-webkit" : "";
   const appDirection = isRtl ? "rtl" : "ltr";
-  const { theme, selector } = state;
+  const { selector } = state;
   const sidePane =
     state.app.effectivePanes.value.find((pane) => pane.placement === "side") ??
     null;
@@ -151,10 +210,7 @@ function MainContent(props: {
           overflow: "hidden",
         }}
       >
-        <ExternalResourceDependencies
-          themeCssVariables={theme.themeCssVariables}
-          themeCssClasses={theme.themeCssClasses}
-        />
+        <ExternalResourceDependencies />
         <Sidebar state={state} />
 
         <div className="sb-content-row">
@@ -227,6 +283,12 @@ function MainContent(props: {
           className={`${webkitClass}`}
         />
 
+        <OfflineDownloadPrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
         <Tutorial
           tutorial={state.tutorial}
           className={`${webkitClass}`}
@@ -234,6 +296,8 @@ function MainContent(props: {
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />
+
+        <UiLanguageSwitchModal className={`${webkitClass}`} />
       </div>
     </>
   );

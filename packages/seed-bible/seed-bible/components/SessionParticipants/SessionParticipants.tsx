@@ -190,7 +190,7 @@ export function MobileSessionParticipants({
                     })}
                   </span>
                   <MaterialIcon
-                    className="sb-session-participants-settings-chevron"
+                    className="sb-session-participants-settings-chevron rtl-mirror"
                     aria-hidden="true"
                   >
                     chevron_right
@@ -215,7 +215,7 @@ export function MobileSessionParticipants({
                   {t("share-session", { defaultValue: "Share session" })}
                 </span>
                 <MaterialIcon
-                  className="sb-session-participants-share-chevron"
+                  className="sb-session-participants-share-chevron rtl-mirror"
                   aria-hidden="true"
                 >
                   chevron_right

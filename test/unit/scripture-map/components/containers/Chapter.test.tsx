@@ -9,9 +9,9 @@ vi.mock("../../../../../packages/scripture-map/hooks/useChapter", () => ({
 }));
 
 vi.mock(
-  "../../../../../packages/scripture-map/components/containers/Tooltip",
+  "../../../../../packages/scripture-map/components/containers/ScriptureMapTooltip",
   () => ({
-    Tooltip: ({
+    ScriptureMapTooltip: ({
       anchor,
       offsetY,
     }: {

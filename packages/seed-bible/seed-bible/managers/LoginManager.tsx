@@ -89,6 +89,14 @@ export interface LoginManager {
   localConfig: Signal<Record<string, unknown>>;
 
   /**
+   * Applies the device's real saved `localConfig` from `localStorage`,
+   * merged under whatever is already there. `localConfig` seeds empty (to
+   * match SSR); call this once from a post-mount effect to bring in the
+   * device's real settings without risking a hydration mismatch.
+   */
+  hydrateLocalConfig: () => void;
+
+  /**
    * The promise that resolves with the user's profile information once it has loaded.
    * Null if the user is not logged in.
    */
@@ -348,6 +356,10 @@ export function createLoginManager({
    * parse — so the call could only fail; it costs a round trip on a path often taken
    * while connectivity is poor; and for a banned account it can never succeed.
    *
+   * Also opens the login screen. A forced sign-out only happens when there was a real
+   * session, so the user was not anonymous — offering sign-in again is a convenience,
+   * not a hindrance. (A deliberate `logout()` does not go through here.)
+   *
    * `sessionEnded` is left set rather than reset, which is what lets a sign-out during
    * construction still reach the toast: `SeedBibleStateManager` wires that effect much
    * later, and an effect reads its dependencies eagerly on its first run. Don't
@@ -370,6 +382,10 @@ export function createLoginManager({
       reason,
       id: ++sessionEndedCount,
     };
+    // Skip during SSR — there is no interactive login surface to show.
+    if (!import.meta.env.SSR) {
+      isLoginOpen.value = true;
+    }
   };
 
   /** Signs the user out because the server reported the session key dead. */
@@ -390,6 +406,13 @@ export function createLoginManager({
     forceLogout(event.errorCode);
   });
 
+  // Known hydration-mismatch risk: unlike `localConfig` below, this reads
+  // `localStorage` and applies it immediately instead of being deferred to a
+  // `hydrate*()` function called from a post-mount effect. Left as-is here —
+  // deferring it touches ~15 tests in LoginManager.test.ts that assert on
+  // synchronous restoration and would delay a returning user's background
+  // session refresh/login — tracked as follow-up work rather than fixed here.
+  /* eslint-disable seed-bible-hydration/no-immediate-storage-access */
   if (typeof localStorage !== "undefined") {
     const storedSessionKey = localStorage.getItem("sessionKey");
     const storedConnectionKey = localStorage.getItem("connectionKey");
@@ -438,6 +461,7 @@ export function createLoginManager({
       }
     }
   }
+  /* eslint-enable seed-bible-hydration/no-immediate-storage-access */
 
   let loginPromise: Promise<UserInfo | null> | null = null;
   let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
@@ -447,7 +471,15 @@ export function createLoginManager({
   // const userId = os.userId;
   const profile = signal<UserProfile | null>(null);
   const cachedProfile = signal<UserProfile | null>(null);
-  const localConfig = signal<Record<string, unknown>>(readLocalConfig());
+  // Seeded empty — matching SSR, which has no `localStorage` at all — rather
+  // than reading real `localStorage` here immediately. `createSeedBibleState`
+  // (and everything downstream that derives from `localConfig`, e.g.
+  // `SettingsManager`/`ThemeManager`) runs before Preact's first
+  // render/hydrate pass, so an eager real read here would make the client's
+  // first render disagree with what the server produced. `hydrateLocalConfig`
+  // (below) applies the real value once, from a post-mount effect — see
+  // `MainBody` in `app/main.tsx`.
+  const localConfig = signal<Record<string, unknown>>({});
   const isProfileLoading = signal(false);
   const isSavingProfile = signal(false);
   // Counts profile writes currently in flight so overlapping writes (e.g. a
@@ -467,9 +499,11 @@ export function createLoginManager({
   let cachedProfileUserId: string | null = null;
 
   // Persist `localConfig` on every change. Skip the effect's first,
-  // unconditional run — `localConfig` was just seeded from `readLocalConfig()`
-  // above, so writing it back immediately would just re-serialize the exact
-  // data that was read a moment ago.
+  // unconditional run: `localConfig` is seeded EMPTY above (to match SSR) and
+  // only gets the device's real saved settings later, in
+  // `hydrateLocalConfig()`. Without this guard the first run would persist
+  // that empty seed straight over `localStorage`, wiping every returning
+  // visitor's settings before they were ever read back. Do not remove it.
   let isFirstLocalConfigWrite = true;
   effect(() => {
     const config = localConfig.value;
@@ -479,6 +513,23 @@ export function createLoginManager({
     }
     writeLocalConfig(config);
   });
+
+  /**
+   * Reads the device's real anonymous local config from `localStorage` and
+   * applies it. Call once, from a post-mount effect, to correct the
+   * SSR-matching empty seed (see `localConfig` above) to the device's real
+   * saved settings right after Preact's first commit —
+   * `SettingsManager`'s own `effect()` already depends on `localConfig` and
+   * re-derives automatically, so nothing downstream needs to change.
+   *
+   * Merges the disk read UNDER the current in-memory value (rather than
+   * overwriting outright), so a setter that already fired in the brief
+   * window before this runs isn't clobbered by the (now-stale) disk
+   * snapshot for that same key.
+   */
+  const hydrateLocalConfig = () => {
+    localConfig.value = { ...readLocalConfig(), ...localConfig.value };
+  };
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const data = await os.getData(userId, "profile");
@@ -600,6 +651,7 @@ export function createLoginManager({
   }
 
   async function cancelLogin() {
+    isLoginOpen.value = false;
     if (loginPromise && rejectLoginPromise) {
       rejectLoginPromise(new Error("Login cancelled"));
       loginPromise = null;
@@ -668,6 +720,9 @@ export function createLoginManager({
         id: userId.value,
         email: result.email,
       };
+      // Close even when login was opened by a forced sign-out (no `login()`
+      // promise) — that path never reaches `loginCore`'s `finally`.
+      isLoginOpen.value = false;
       if (resolveLoginPromise) {
         resolveLoginPromise(userInfo.value);
         resolveLoginPromise = null;
@@ -983,6 +1038,7 @@ export function createLoginManager({
     profile,
     cachedProfile,
     localConfig,
+    hydrateLocalConfig,
     // Exposed as a getter so external readers see the promise assigned by the
     // profile-loading effect below. A plain property would capture the value
     // at construction time (null), which stays null after a fresh login and

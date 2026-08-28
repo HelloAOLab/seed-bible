@@ -18,16 +18,8 @@ import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/ma
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: { defaultValue?: string }) =>
-        options?.defaultValue ?? key,
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 const testBranding: BrandingConfig = {
   appName: "Test App",
@@ -189,6 +181,7 @@ function createFixture(): ReaderFixture {
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
     initialLoadSettled: computed(() => true),
+    initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null
     ),
@@ -580,6 +573,37 @@ describe("BibleReader", () => {
 
     expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
       "Exodus"
+    );
+  });
+
+  it("shows the loaded chapter's book name, not the raw book id, while the book catalog hasn't arrived yet", () => {
+    // The catalog (`translationBooks`) and the chapter fetch load
+    // independently (see `loadInitialData`'s comment on the content effect
+    // firing off the raw position signals before the catalog-backed check
+    // completes) — so it's possible for the chapter to settle, as it has
+    // here, while the catalog is still null. Before the fix `currentBook`
+    // fell straight back to the raw id ("GEN") in that case; it should fall
+    // back to the loaded chapter's own book record instead.
+    const { slot, selectorState, readingState } = createFixture();
+    (
+      readingState.translationBooks as Signal<
+        BibleReadingState["translationBooks"]["value"]
+      >
+    ).value = null;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
     );
   });
 
@@ -2425,6 +2449,22 @@ describe("BibleReader", () => {
     expect(websiteLink?.getAttribute("href")).toBe(
       "https://example.org/translation"
     );
+  });
+
+  it("shows a generic account icon in the mobile header when the user is alone", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createMobileState();
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const accountButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-account"
+    );
+    expect(accountButton).not.toBeNull();
+    expect(
+      accountButton?.querySelector(".sb-tab-user-icon-generic")
+    ).not.toBeNull();
+    expect(accountButton?.textContent).toContain("account_circle");
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {

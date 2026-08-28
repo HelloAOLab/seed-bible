@@ -12,6 +12,7 @@ import {
   makeUrl,
 } from "../seed-bible/managers/testUtils/mockBibleApiData";
 import { buildChapterUrl } from "../../../script/lib/sitemap";
+import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
 
 describe("legacyReadingUrlRedirect", () => {
   describe("already the canonical shape", () => {
@@ -386,8 +387,11 @@ describe("render() redirect wiring", () => {
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
     "<!doctype html><html><head>",
+    '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
+    '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
+    '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -419,6 +423,11 @@ describe("render() server-rendered meta tags", () => {
     // the server, and that suspension is what makes the meta tags render with
     // content rather than an empty shell.
     import.meta.env.SSR = true;
+    // The SSR translations cache is a module-level singleton shared across
+    // every `render()` call in the real server process (that's the point —
+    // see ssrTranslationsCache.ts). Reset it so one test's cached response
+    // can't leak into the next.
+    resetSsrTranslationsCacheForTests();
   });
 
   afterEach(() => {
@@ -478,6 +487,169 @@ describe("render() server-rendered meta tags", () => {
     )?.[1];
     expect(injected).toBeDefined();
     expect(JSON.parse(injected as string)).toMatchObject(config);
+  });
+
+  it("injects the exact request path as renderedForPath, and ssrChapterContentSettled true, for the hydration gate", async () => {
+    const path = "/en/AAB/genesis/1?useFreeBibleAPI=true";
+    const html = await renderHtml(path);
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const config = JSON.parse(injected as string) as {
+      renderedForPath: string;
+      ssrChapterContentSettled: boolean;
+    };
+    expect(config.renderedForPath).toBe(path);
+    expect(config.ssrChapterContentSettled).toBe(true);
+  });
+
+  it("injects ssrChapterContentSettled false when the initial chapter fetch fails, not just on an SSR timeout", async () => {
+    // Genesis 2 is a real chapter the fixture has no response for, so the
+    // position resolves but the fetch fails outright — no timeout involved.
+    // A real client hitting the same failure would not necessarily see it too
+    // (a network blip specific to the server's own request path), so the
+    // client must not hydrate onto whatever this render produced — including
+    // any next/previous-chapter availability computed off the missing data.
+    const html = await renderHtml("/en/AAB/genesis/2?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-config">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const config = JSON.parse(injected as string) as {
+      ssrChapterContentSettled: boolean;
+    };
+    expect(config.ssrChapterContentSettled).toBe(false);
+  });
+
+  it("does not disable the mobile floating nav's chapter buttons for a genuine mid-book chapter", async () => {
+    // `<BibleReaderToolbar>` (which renders the mobile floating nav) is a
+    // sibling of `<TabsLayout>`/`<BibleReader>`, not a descendant of it, so
+    // `BibleReader`'s own SSR suspend-on-chapter-load doesn't defer it too.
+    // Exodus has 40 chapters in the fixture catalog, so chapter 2 has both a
+    // previous and next chapter — the buttons must not render disabled.
+    const html = await renderHtml("/en/AAB/exodus/2?useFreeBibleAPI=true", {
+      renderedAsMobile: true,
+    });
+
+    // Matched by `data-tool-id` (stable) rather than `aria-label`
+    // (translatable, user-facing copy that can change independently of the
+    // button's behavior), and via `hasAttribute` on the parsed element rather
+    // than a `disabled[^>]*data-tool-id=...` regex, so the assertion doesn't
+    // depend on attribute order in the serialized tag.
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const prevButton = doc.querySelector('[data-tool-id="previous-chapter"]');
+    const nextButton = doc.querySelector('[data-tool-id="next-chapter"]');
+
+    expect(prevButton).not.toBeNull();
+    expect(nextButton).not.toBeNull();
+    expect(prevButton?.hasAttribute("disabled")).toBe(false);
+    expect(nextButton?.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("injects the active theme's CSS into the #sb-theme-styles tag", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<style id="sb-theme-styles">([^<]*)<\/style>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    expect(injected).toContain("body {");
+    expect(injected).toContain("--sb-");
+  });
+
+  it("injects the built-in theme presets into the #sb-theme-presets tag, for the pre-hydration script", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="sb-theme-presets">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+    const presets = JSON.parse(injected as string) as Record<string, string>;
+    expect(presets.light).toContain("body {");
+    expect(presets.dark).toContain("body {");
+  });
+
+  it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<string, unknown>;
+    const urls = Object.keys(seedData);
+    // The render fetches (at least) the chapter it displays — everything
+    // else the client would otherwise refetch on top of that.
+    expect(urls.some((url) => url.includes("/AAB/GEN/1.json"))).toBe(true);
+  });
+
+  it("excludes the full translation catalog from the #app-seed-data JSON script tag", async () => {
+    // An unrecognized translation ID still forces the render to fetch the
+    // full catalog internally, to confirm there's genuinely nothing to fall
+    // back to — that's exactly the large response that must never be
+    // embedded in the page, even when the render does fetch it itself. A
+    // returning visitor likely already has it in their browser's own HTTP
+    // cache; the point of this exclusion is to stop paying for it again on
+    // every single page load's inlined HTML.
+    const html = await renderHtml("/en/NOPE/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<string, unknown>;
+    const urls = Object.keys(seedData);
+    expect(
+      urls.some((url) => url.endsWith("/available_translations.json"))
+    ).toBe(false);
+  });
+
+  // Regression: the placeholder substitutions in render()'s final `return`
+  // used to be a chain of `String.replace(literalPlaceholder, value)` calls.
+  // `replace`'s *replacement* argument treats `$1`, `$&`, etc. specially even
+  // when the search argument is a plain string — so live translation text
+  // containing one of those sequences (a footnote citing a dollar amount, for
+  // instance) would have silently corrupted the substitution instead of
+  // throwing. This fetches a chapter engineered to contain exactly that, and
+  // checks it survives all the way through the HTML back out to
+  // `JSON.parse`.
+  it("preserves a literal $1 in fetched chapter content through the SEED_JSON placeholder", async () => {
+    const riskyChapter = makeChapter(aabBooks, "GEN", 1);
+    riskyChapter.chapter.content = [
+      { type: "verse", number: 1, content: ["This costs $1, or so it says."] },
+    ];
+    globalThis.fetch = (async (url: string) => {
+      if (url === makeUrl("/api/AAB/GEN/1.json")) {
+        return createResponse(riskyChapter);
+      }
+      const responses = createDefaultManagerResponseMap();
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    }) as typeof globalThis.fetch;
+
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const injected = html.match(
+      /<script type="application\/json" id="app-seed-data">([^<]*)<\/script>/
+    )?.[1];
+    expect(injected).toBeDefined();
+
+    const seedData = JSON.parse(injected as string) as Record<
+      string,
+      { chapter: { content: { content: string[] }[] } }
+    >;
+    const chapterEntry = seedData[makeUrl("/api/AAB/GEN/1.json")];
+    expect(chapterEntry?.chapter.content[0]?.content[0]).toBe(
+      "This costs $1, or so it says."
+    );
   });
 
   // The review's complaint about the sitemap was not just that its URLs
@@ -626,5 +798,38 @@ describe("render() server-rendered meta tags", () => {
       throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
     }
     expect(result.notFound).toBe(true);
+  });
+
+  // Regression: every `render()` used to build a brand-new, empty-cache
+  // FreeUseBibleAPI and unconditionally re-fetch the translations list, so a
+  // long-running SSR process fetched `available_translations.json` fresh on
+  // every single HTTP request. The shared, TTL-based `ssrTranslationsCache`
+  // fixes that — two renders sharing an endpoint should hit the network for
+  // it only once.
+  //
+  // Uses unrecognized translation IDs rather than AAB/NIV: an ordinary
+  // request for a known translation resolves entirely off its own (much
+  // smaller) `books.json` and never touches the catalog at all (see
+  // `BibleReadingManager.loadInitialData`), so it wouldn't exercise the
+  // catalog cache this test is about. An unresolved translation is exactly
+  // the case that still falls through to the full catalog fetch.
+  it("shares one available_translations.json fetch across multiple SSR renders", async () => {
+    const responses = createDefaultManagerResponseMap();
+    const fetchMock = vi.fn(async (url: string) => {
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return response;
+    });
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    await renderHtml("/en/NOPE/genesis/1?useFreeBibleAPI=true");
+    await renderHtml("/en/NOPE2/matthew/1?useFreeBibleAPI=true");
+
+    const translationsCalls = fetchMock.mock.calls.filter(([url]) =>
+      (url as string).endsWith("/api/available_translations.json")
+    );
+    expect(translationsCalls).toHaveLength(1);
   });
 });

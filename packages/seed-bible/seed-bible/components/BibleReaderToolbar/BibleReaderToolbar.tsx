@@ -1,8 +1,9 @@
-import "./BibleReaderToolbar.css";
+import "./BibleReaderToolbar.inline.css";
 import { effect, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
+import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
   applyToolbarCustomization,
   UI_SIZE_SCALE_MAP,
@@ -25,12 +26,11 @@ import {
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 import { openBookmarkCategoryModal } from "../Tabs/Tabs";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
   annotationVerseNumbers,
+  annotationListHasOtherAuthors,
   groupAnnotationsByVerseRange,
   type AnnotationGroup,
   type AnnotationsManager,
@@ -439,6 +439,7 @@ function VerseToolbarAnnotationGroup(props: {
   toast: SeedBibleState["app"]["toast"];
   openDiscover: () => void;
   onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
 }) {
   const {
     id,
@@ -449,6 +450,7 @@ function VerseToolbarAnnotationGroup(props: {
     modals,
     toast,
     onReferenceClick,
+    otherPeoplePresent,
   } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
@@ -494,6 +496,7 @@ function VerseToolbarAnnotationGroup(props: {
                   login={login}
                   t={t}
                   language={language}
+                  otherPeoplePresent={otherPeoplePresent}
                 />
               </div>
               <ContextMenuWithButton
@@ -553,7 +556,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     bookmarks,
-    extensions,
     login,
   } = props.state;
   const selectedTab = useComputed(
@@ -573,13 +575,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   // Server only: wait for the initial load to settle before rendering.
   //
-  // This toolbar sits outside the reader's own Suspense boundary, so
-  // `renderToStringAsync` would otherwise render it in the first synchronous
-  // pass — before the book catalog has arrived, when the chapter tools cannot
-  // yet name where they lead. The result was a chapter page whose prev/next
-  // arrows server-rendered disabled, with no links out of it for a crawler to
-  // follow. `chapterDataPromise` never rejects, and the deadline behind it
-  // bounds the wait.
+  // `BibleReaderToolbar` is a sibling of `<TabsLayout>` (which contains
+  // `BibleReader`), not a descendant of it — `BibleReader.tsx` suspending on
+  // its own chapter load does nothing for this component, since
+  // `preact-render-to-string` only defers the specific subtree that actually
+  // threw. Without this, the tools below (`hasNext`/`hasPrevious`-driven
+  // chapter nav buttons, and the chapter links this component renders for
+  // them) render off of whatever `chapterData`/`translationBooks` happen to
+  // hold on the very first synchronous pass — typically nothing yet — baking
+  // incorrect availability, and a chapter page with no links out of it, into
+  // SSR HTML a live client would never show. `chapterDataPromise` never
+  // rejects, and the deadline behind it bounds the wait.
   //
   // `initialLoadSettled`, not `initialChapterLoadSettled`: the catalog is a
   // separate request from the chapter, so the chapter can settle first and
@@ -798,9 +804,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       !bookmarks.isFilterActive.value
   );
 
-  const isTodayOpen = useComputed(() =>
-    panes.panes.value.some((p) => p.id === "today-screen-pane")
-  );
+  const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
   const activeMobileTab = useComputed<
     "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
   >(() => {
@@ -1031,10 +1035,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    *
    * The sheet follows the finger rather than snapping at a threshold: dragging up
    * grows the overflow row a pixel at a time, dragging back down shrinks it, and
-   * dragging down on an already-collapsed sheet slides the whole sheet toward the
-   * bottom of the screen to dismiss it. Releasing settles to whichever resting
-   * position the gesture ended up nearest, so a half-finished drag animates the
-   * rest of the way instead of being abandoned.
+   * once the overflow row is fully closed — whether the drag started collapsed or
+   * (after closing it mid-gesture) expanded — continuing to drag down slides the
+   * whole sheet toward the bottom of the screen to dismiss it, all in one
+   * continuous motion rather than requiring a release and a second drag.
+   * Releasing settles to whichever resting position the gesture ended up nearest,
+   * so a half-finished drag animates the rest of the way instead of being
+   * abandoned.
    *
    * A press that barely moves is a tap, and toggles.
    */
@@ -1095,11 +1102,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const reveal = Math.min(overflowHeight, Math.max(0, drag.startReveal - dy));
     verseSheetDragReveal.value = reveal;
 
-    // Only start sliding the sheet away once there is no overflow left to close:
-    // a downward drag first puts the sheet back to collapsed, and only carries on
-    // into a dismiss if it began there.
+    // Once the overflow row is fully closed, the rest of the same downward drag
+    // slides the whole sheet away to dismiss. `dy` minus `startReveal` is how far
+    // the finger has moved *past* the point where the row finished closing —
+    // using that (rather than raw `dy`) means the dismiss slide picks up smoothly
+    // from 0 instead of jumping by however much drag it took to close the row,
+    // and it works the same whether the drag started collapsed (startReveal 0) or
+    // expanded (startReveal the full row height).
+    const distancePastClosed = dy - drag.startReveal;
     verseSheetDismissOffset.value =
-      reveal === 0 && dy > 0 && drag.startReveal === 0 ? dy : 0;
+      reveal === 0 && distancePastClosed > 0 ? distancePastClosed : 0;
   };
 
   const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
@@ -1138,6 +1150,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     endVerseSheetDrag(event);
     // An interrupted gesture shouldn't leave the sheet half-committed.
     isVerseSheetExpanded.value = drag.startExpanded;
+  };
+
+  /**
+   * Elements inside the mobile sheet that must keep their own tap/scroll
+   * behavior instead of starting the sheet drag: buttons and inputs (so taps
+   * still register as clicks — capturing the pointer on the panel would
+   * otherwise steal their `pointerup`), and the horizontal highlight-color
+   * strip (its own swipe gesture would fight the sheet's vertical one).
+   */
+  const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
+    "button, input, a, .sb-verse-toolbar-swatches";
+
+  /**
+   * Entry point for the whole-panel version of the handle drag: any part of
+   * the collapsed/expanded mobile sheet not covered by the ignore list above
+   * starts the same drag tracked by the handle, so the user doesn't have to
+   * land a thumb precisely on the handle to expand, collapse, or dismiss it.
+   * Not wired up while the highlight picker is showing — that view has no
+   * overflow row to reveal, and its swatch strip already owns horizontal
+   * swipes.
+   */
+  const handleVerseSheetPanelPointerDown = (event: PointerEvent) => {
+    if (isHighlightPickerOpen.value) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest(VERSE_SHEET_DRAG_IGNORE_SELECTOR)) return;
+    handleVerseSheetHandlePointerDown(event);
   };
 
   const handleVerseSheetHandleKeyDown = (event: KeyboardEvent) => {
@@ -1519,46 +1557,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
-  // Opens the Today screen. If the `today-screen` extension isn't installed
-  // yet, install it (the same path Settings uses — this persists the install)
-  // and then open it once it has initialized.
-  const openTodayScreen = async () => {
+  const openTodayScreen = () => {
     isMoreMenuOpen.value = false;
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-
-    const existing = getExtensionExports<TodayScreenAPI>("today-screen");
-    if (existing) {
-      existing.open();
-      return;
-    }
-
-    const entry = extensions.extensions.value.find(
-      (e) => e.id === "today-screen"
-    );
-    const todayPackage = entry?.extension;
-    if (!todayPackage) {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-      return;
-    }
-
-    const installed = await extensions.loadExtension(todayPackage);
-    if (installed) {
-      getExtensionExports<TodayScreenAPI>("today-screen")?.open();
-    } else {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-    }
+    props.state.today.open();
   };
 
   // Opens (or closes) the tabs list in the sidebar drawer. Shared by the Tabs
@@ -1733,6 +1739,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             ariaLabel={translateTitle(t, prev.title)}
+                            dataToolId={prev.id}
                           >
                             <PrevIcon />
                           </ToolActionElement>
@@ -1754,8 +1761,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selector && (
                           <button
                             type="button"
-                            onClick={selector.onSelect}
-                            onPointerDown={spawnRipple}
+                            {...flingSafeTapHandlers(
+                              selector.onSelect,
+                              spawnRipple
+                            )}
                             className="sb-reader-floating-nav-label"
                           >
                             {getReaderNavLabel()}
@@ -1784,6 +1793,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             ariaLabel={translateTitle(t, next.title)}
+                            dataToolId={next.id}
                           >
                             <NextIcon />
                           </ToolActionElement>
@@ -1867,12 +1877,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   label={t("bible", { defaultValue: "Bible" })}
                   active={activeMobileTab.value === "bible"}
                   onClick={() => {
+                    // The Bible text is already showing, so there's nothing to
+                    // dismiss — open the book selector instead of doing nothing.
+                    if (activeMobileTab.value === "bible") {
+                      openSelectorTool.value?.onSelect();
+                      return;
+                    }
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    // Close any fullscreen extension pane (e.g. Today).
+                    // Close any fullscreen pane (e.g. Today).
                     panes.closeAll();
                     selectedToolbarToolId.value = null;
                   }}
@@ -2030,6 +2046,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selectedToolbarToolId.value = null;
                         tool.onSelect();
                       }}
+                      dataToolId={tool.id}
                       className="sb-reader-toolbar-button"
                       ariaLabel={label}
                     >
@@ -2156,25 +2173,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 }
           }
           onPointerDown={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerDown
+            isSmallScreen.value
+              ? handleVerseSheetPanelPointerDown
+              : handleVerseToolbarPointerDown
           }
           onPointerMove={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerMove
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerMove
+              : handleVerseToolbarPointerMove
           }
           onPointerUp={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerUp
+              : handleVerseToolbarPointerUp
           }
           onPointerCancel={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerCancel
+              : handleVerseToolbarPointerUp
           }
         >
           {isSmallScreen.value && (
             <>
-              {/* The pill itself is only a few pixels tall, so the drag gesture
-                  lives on a taller wrapper that's comfortable to grab with a
-                  thumb. It carries the button role and keyboard handling too:
-                  the sheet has no "More" card any more, so this is the only
-                  control that opens the overflow row. */}
+              {/* The drag/tap gesture itself is handled by the panel (see
+                  onPointerDown above), so this only needs to carry the
+                  keyboard-accessible button role: the sheet has no "More"
+                  card any more, so this is the only control that opens the
+                  overflow row for non-pointer users. */}
               <div
                 className="sb-verse-toolbar-handle-area"
                 role="button"
@@ -2189,10 +2214,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         defaultValue: "Show more actions",
                       })
                 }
-                onPointerDown={handleVerseSheetHandlePointerDown}
-                onPointerMove={handleVerseSheetHandlePointerMove}
-                onPointerUp={handleVerseSheetHandlePointerUp}
-                onPointerCancel={handleVerseSheetHandlePointerCancel}
                 onKeyDown={handleVerseSheetHandleKeyDown}
               >
                 <div className="sb-verse-toolbar-handle" />
@@ -2750,6 +2771,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     onReferenceClick={
                                       props.state.app.openVerseReference
                                     }
+                                    otherPeoplePresent={annotationListHasOtherAuthors(
+                                      selectionAnnotations.value,
+                                      props.state.login.userId.value
+                                    )}
                                   />
                                 );
                               })}
@@ -2775,15 +2800,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             !isVerseSheetExpanded.value && (
               <div
                 className="sb-verse-toolbar-swipe-hint"
+                // Purely decorative: the panel itself owns the drag/tap
+                // gesture now, and the handle above remains the sole
+                // *accessible* control, so this stays out of the a11y tree.
                 aria-hidden="true"
-                // Same drag/tap gesture as the handle above it — a tap expands,
-                // and dragging tracks the finger the same way. The handle
-                // remains the sole *accessible* control (this stays
-                // `aria-hidden`), but pointer/touch users get a bigger target.
-                onPointerDown={handleVerseSheetHandlePointerDown}
-                onPointerMove={handleVerseSheetHandlePointerMove}
-                onPointerUp={handleVerseSheetHandlePointerUp}
-                onPointerCancel={handleVerseSheetHandlePointerCancel}
                 style={{
                   // Fades in step with the drag, so the hint gets out of the way
                   // as the sheet opens rather than blinking off at the end.
@@ -2816,23 +2836,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 )}
               </div>
             )}
-          {isSmallScreen.value &&
-            isHighlightPickerOpen.value &&
-            showHighlightColorSwipeHint.value && (
-              <div
-                className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
-                aria-hidden="true"
-              >
-                <span className="material-symbols-outlined">
-                  keyboard_double_arrow_right
-                </span>
-                <span>
-                  {t("swipe-to-see-more", {
-                    defaultValue: "Swipe to see more",
-                  })}
-                </span>
-              </div>
-            )}
+          {isSmallScreen.value && isHighlightPickerOpen.value && (
+            <div
+              className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
+              aria-hidden="true"
+              style={{
+                opacity: showHighlightColorSwipeHint.value ? 1 : 0,
+              }}
+            >
+              <span className="material-symbols-outlined">
+                keyboard_double_arrow_right
+              </span>
+
+              <span>
+                {t("swipe-to-see-more", {
+                  defaultValue: "Swipe to see more",
+                })}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </>
