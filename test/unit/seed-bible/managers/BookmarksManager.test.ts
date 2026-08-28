@@ -52,6 +52,7 @@ describe("BookmarksManager", () => {
       profile: signal(null),
       cachedProfile: signal(null),
       localConfig: signal({}),
+      hydrateLocalConfig: vi.fn(),
       profilePromise: null,
       isProfileLoading: signal(false),
       isSavingProfile: signal(false),

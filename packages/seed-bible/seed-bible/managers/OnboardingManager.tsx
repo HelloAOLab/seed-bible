@@ -1,9 +1,16 @@
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
+import { safeLocalStorage } from "../app/ssrEnv";
 
 /**
  * The platform the app is currently running on. Used to decide how the app can
@@ -78,16 +85,12 @@ export function isStandalone(): boolean {
 }
 
 function readFlag(key: string): boolean {
-  try {
-    return window.localStorage.getItem(key) === "true";
-  } catch {
-    return false;
-  }
+  return safeLocalStorage.getItem(key) === "true";
 }
 
 function writeFlag(key: string): void {
   try {
-    window.localStorage.setItem(key, "true");
+    safeLocalStorage.setItem(key, "true");
   } catch {
     // Best-effort — onboarding still works without persistence, it just may
     // show again on the next visit.
@@ -123,6 +126,13 @@ export interface OnboardingManager {
    * (backend) and the local cache. Called when an install completes.
    */
   markInstalled: () => void;
+
+  /**
+   * Applies the device's real `localStorage` install/dismissed flags. They seed
+   * to their SSR values so the client's first render matches the served HTML;
+   * call once from a post-mount effect via `AppState.hydrateFromStorage`.
+   */
+  hydrateStoredFlags: () => void;
 }
 
 /**
@@ -140,12 +150,12 @@ export function createOnboardingManager(
   const platform = getPlatform();
   const standalone = isStandalone();
 
-  // Local cache of the installed flag. Seeded from localStorage and from a
-  // standalone session (which proves an install). The profile is the source
-  // of truth when logged in; this cache covers anonymous/offline use.
-  const installedLocally = signal<boolean>(
-    standalone || readFlag(APP_INSTALLED_KEY)
-  );
+  // Local cache of the installed flag. The profile is the source of truth when
+  // logged in; this cache covers anonymous/offline use. Seeded from the
+  // standalone check only — the `localStorage` half is applied by
+  // `hydrateStoredFlags` after the first commit, so the client's first render
+  // matches the SSR HTML (see `AppState.hydrateFromStorage`).
+  const installedLocally = signal<boolean>(standalone);
 
   const installed = computed<boolean>(() => {
     if (installedLocally.value) {
@@ -183,7 +193,22 @@ export function createOnboardingManager(
   // Whether the user dismissed the install prompt ("Maybe later"). Like the
   // installed flag, the profile is the source of truth when logged in, with a
   // localStorage cache for anonymous/offline use.
-  const dismissedLocally = signal<boolean>(readFlag(INSTALL_DISMISSED_KEY));
+  const dismissedLocally = signal<boolean>(false);
+
+  /**
+   * Applies the device's real install/dismissed flags. See
+   * `OnboardingManager.hydrateStoredFlags`.
+   */
+  const hydrateStoredFlags = () => {
+    batch(() => {
+      // OR'd rather than assigned: `standalone` already proved an install, and a
+      // dismissal may have been recorded in the window before this ran.
+      installedLocally.value =
+        installedLocally.value || readFlag(APP_INSTALLED_KEY);
+      dismissedLocally.value =
+        dismissedLocally.value || readFlag(INSTALL_DISMISSED_KEY);
+    });
+  };
 
   const dismissed = computed<boolean>(() => {
     if (dismissedLocally.value) {
@@ -224,5 +249,6 @@ export function createOnboardingManager(
     dismissInstall,
     openInstall,
     markInstalled,
+    hydrateStoredFlags,
   };
 }

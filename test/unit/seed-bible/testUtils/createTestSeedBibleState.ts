@@ -8,6 +8,7 @@ import {
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import type { AppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
 // the glob backend in I18nManager. Without this, `changeLanguage("ar")` (etc.)
@@ -36,6 +37,8 @@ export interface CreateTestSeedBibleStateOptions {
    * pass an in-memory store to exercise anything that depends on downloads.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /** Deployment config passed through to `createSeedBibleState`. */
+  config?: AppConfig;
 }
 
 export async function waitFor(
@@ -174,8 +177,17 @@ export async function createTestSeedBibleState(
 
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
-  const state = createSeedBibleState({ offlineStore: options.offlineStore });
+  const state = createSeedBibleState({
+    offlineStore: options.offlineStore,
+    config: options.config,
+  });
   liveTestStates.push(state);
+  // Mirrors the real app's post-mount effect (see `MainBody` in
+  // `app/main.tsx`) that applies the device's real saved local config —
+  // `login.localConfig` itself seeds empty to match SSR. This helper
+  // represents a fully-loaded app for test purposes, so it should reflect
+  // that step too, the same way it already waits for tabs to load below.
+  state.login.hydrateLocalConfig();
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.

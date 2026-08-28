@@ -1169,6 +1169,10 @@
     height: fit-content;
     justify-content: flex-start;
     background: transparent;
+    margin-top: -0.625rem;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    width: 100%;
   }
 
   .sb-selector-panel .sidebar-selected-itm:hover {
@@ -1183,13 +1187,6 @@
   .sidebar-select {
     font-size: 1.125rem;
     padding-left: 0px;
-  }
-
-  .show-sidebar-chapter {
-    margin-top: -0.625rem;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    width: 100%;
   }
 
   .sidebar-selected-itm {
