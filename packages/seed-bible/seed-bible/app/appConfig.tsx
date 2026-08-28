@@ -87,7 +87,11 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   renderedAsMobile: false,
   renderedAsWebKit: false,
   acceptedLanguages: [],
-  branding: import.meta.env.VITEST ? undefined : __BRANDING_CONFIG__,
+  branding: import.meta.env.VITEST
+    ? undefined
+    : typeof __BRANDING_CONFIG__ !== "undefined"
+      ? __BRANDING_CONFIG__
+      : undefined,
   ssrChapterContentSettled: true,
 };
 
