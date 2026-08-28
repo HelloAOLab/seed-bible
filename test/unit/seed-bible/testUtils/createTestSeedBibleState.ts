@@ -253,6 +253,11 @@ export async function createTestSeedBibleState(
   // represents a fully-loaded app for test purposes, so it should reflect
   // that step too, the same way it already waits for tabs to load below.
   state.login.hydrateLocalConfig();
+  // Mirrors the same post-mount sequence's other one-time correction: saved
+  // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
+  // to match SSR and only become real once this runs. Without it, anything
+  // gated behind `tutorial.armAutoStart()` (called from here) never arms.
+  state.app.hydrateFromStorage();
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.

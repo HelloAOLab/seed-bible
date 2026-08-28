@@ -860,6 +860,13 @@ describe("BibleReaderToolbar — mobile Bible tab", () => {
   }> {
     const state = await createTestSeedBibleState();
 
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
     await act(async () => {
       render(
         <TestHost state={state}>
@@ -1725,6 +1732,13 @@ describe("BibleReaderToolbar floating chapter nav", () => {
   }> {
     const state = await createTestSeedBibleState();
 
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
     await act(async () => {
       render(
         <TestHost state={state}>
@@ -1835,6 +1849,12 @@ describe("BibleReaderToolbar — the mobile Today tab", () => {
 
   async function renderToolbar() {
     const state = await createTestSeedBibleState();
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
     await act(async () => {
       render(
         <TestHost state={state}>
