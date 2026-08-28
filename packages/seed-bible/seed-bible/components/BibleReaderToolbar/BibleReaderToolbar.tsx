@@ -12,6 +12,7 @@ import { highlightContainsVerse } from "../../managers/HighlightsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
+import { ToolActionElement } from "../ToolActionElement";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
@@ -572,19 +573,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
+  // Server only: wait for the initial load to settle before rendering.
+  //
   // `BibleReaderToolbar` is a sibling of `<TabsLayout>` (which contains
   // `BibleReader`), not a descendant of it — `BibleReader.tsx` suspending on
   // its own chapter load does nothing for this component, since
   // `preact-render-to-string` only defers the specific subtree that actually
   // threw. Without this, the tools below (`hasNext`/`hasPrevious`-driven
-  // chapter nav buttons among them) render off of whatever `chapterData`/
-  // `translationBooks` happen to hold on the very first synchronous pass —
-  // typically nothing yet — baking incorrect availability into the SSR HTML
-  // that a live client would never show.
-  if (
-    import.meta.env.SSR &&
-    !readingState.value.initialChapterLoadSettled.value
-  ) {
+  // chapter nav buttons, and the chapter links this component renders for
+  // them) render off of whatever `chapterData`/`translationBooks` happen to
+  // hold on the very first synchronous pass — typically nothing yet — baking
+  // incorrect availability, and a chapter page with no links out of it, into
+  // SSR HTML a live client would never show. `chapterDataPromise` never
+  // rejects, and the deadline behind it bounds the wait.
+  //
+  // `initialLoadSettled`, not `initialChapterLoadSettled`: the catalog is a
+  // separate request from the chapter, so the chapter can settle first and
+  // leave that narrower latch true while the catalog is still on its way.
+  if (import.meta.env.SSR && !readingState.value.initialLoadSettled.value) {
     throw readingState.value.chapterDataPromise;
   }
 
@@ -614,6 +620,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       modals: props.state.modals,
       app: props.state.app,
       annotations: props.state.annotations,
+      navigation: props.state.navigation,
+      data: props.state.bibleData,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -677,6 +685,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       modals: props.state.modals,
       app: props.state.app,
       annotations: props.state.annotations,
+      navigation: props.state.navigation,
+      data: props.state.bibleData,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -1722,17 +1732,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ) : (
                         prev &&
                         PrevIcon && (
-                          <button
-                            type="button"
+                          <ToolActionElement
+                            href={prev.href.value}
                             disabled={prev.disabled.value}
-                            onClick={prev.onSelect}
+                            onActivate={prev.onSelect}
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
-                            aria-label={translateTitle(t, prev.title)}
-                            data-tool-id={prev.id}
+                            ariaLabel={translateTitle(t, prev.title)}
+                            dataToolId={prev.id}
                           >
                             <PrevIcon />
-                          </button>
+                          </ToolActionElement>
                         )
                       )}
 
@@ -1776,17 +1786,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ) : (
                         next &&
                         NextIcon && (
-                          <button
-                            type="button"
+                          <ToolActionElement
+                            href={next.href.value}
                             disabled={next.disabled.value}
-                            onClick={next.onSelect}
+                            onActivate={next.onSelect}
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
-                            aria-label={translateTitle(t, next.title)}
-                            data-tool-id={next.id}
+                            ariaLabel={translateTitle(t, next.title)}
+                            dataToolId={next.id}
                           >
                             <NextIcon />
-                          </button>
+                          </ToolActionElement>
                         )
                       )}
                     </div>
@@ -2019,9 +2029,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     key={tool.id}
                     className={`sb-reader-toolbar-item${hideLabel ? " sb-reader-toolbar-item-arrow" : ""}`}
                   >
-                    <button
+                    <ToolActionElement
+                      // A tool that opens a menu stays a button: the href
+                      // would advertise a destination the click never goes to.
+                      href={hasMenuItems ? null : tool.href.value}
                       disabled={tool.disabled.value}
-                      onClick={() => {
+                      onActivate={() => {
                         if (hasMenuItems) {
                           selectedToolbarToolId.value =
                             selectedToolbarToolId.value === tool.id
@@ -2033,9 +2046,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selectedToolbarToolId.value = null;
                         tool.onSelect();
                       }}
-                      data-tool-id={tool.id}
+                      dataToolId={tool.id}
                       className="sb-reader-toolbar-button"
-                      aria-label={label}
+                      ariaLabel={label}
                     >
                       <ToolIcon />
                       {hideLabel ? (
@@ -2065,7 +2078,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           })}
                         />
                       )}
-                    </button>
+                    </ToolActionElement>
                     {hasMenuItems &&
                       selectedToolbarToolId.value === tool.id && (
                         <div

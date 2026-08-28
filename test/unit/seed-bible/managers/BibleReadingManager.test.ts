@@ -758,6 +758,67 @@ describe("createBibleReadingState", () => {
     expect(state.hasNext.value).toBe(true);
   });
 
+  it("names the adjacent chapters, crossing book boundaries", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/AAB/GEN/2.json")]: createResponse(
+        makeChapter(aabBooks, "GEN", 2)
+      ),
+    });
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.nextChapterPosition.value).toEqual({
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 2,
+    });
+    // First chapter of the first book — there is nothing before it.
+    expect(state.previousChapterPosition.value).toBeNull();
+
+    await state.selectChapter("GEN", 2);
+
+    expect(state.previousChapterPosition.value).toEqual({
+      translationId: "AAB",
+      bookId: "GEN",
+      chapterNumber: 1,
+    });
+  });
+
+  it("returns null for the adjacent chapter at the end of the canon", async () => {
+    setWebResponses({
+      ...createReadingManagerResponseMap(),
+      [makeExampleUrl("/api/AAB/MAT/28.json")]: createResponse(
+        makeChapter(aabBooks, "MAT", 28)
+      ),
+    });
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    await state.selectChapter("MAT", 28);
+
+    // Matthew is the last book in this catalog. The chapter payload still
+    // carries a `nextChapterApiLink`, which is exactly why the link cannot be
+    // derived from it — it says a chapter exists without saying which.
+    expect(state.chapterData.value?.nextChapterApiLink).toBeTruthy();
+    expect(state.nextChapterPosition.value).toBeNull();
+  });
+
+  it("returns null for the adjacent chapter while the catalog is missing", async () => {
+    setWebResponses(createReadingManagerResponseMap());
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    expect(state.nextChapterPosition.value).not.toBeNull();
+
+    // No catalog for this translation, so the target is only discoverable by
+    // fetching it. `hasNext` still says yes (it falls back to the chapter's
+    // links), but nothing can name an address yet.
+    state.translationId.value = "NIV";
+
+    expect(state.translationBooks.value).toBeNull();
+    expect(state.hasNext.value).toBe(true);
+    expect(state.nextChapterPosition.value).toBeNull();
+  });
+
   it("tracks the catalog of whichever translation is selected", async () => {
     setWebResponses({
       ...createReadingManagerResponseMap(),
@@ -2908,6 +2969,39 @@ describe("createBibleReadingState", () => {
       expect(state.chapterNumber.value).toBe(1);
     });
 
+    it("stops naming the adjacent chapter once an extension owns that direction", async () => {
+      setWebResponses({
+        ...createReadingManagerResponseMap(),
+        [makeExampleUrl("/api/AAB/GEN/2.json")]: createResponse(
+          makeChapter(aabBooks, "GEN", 2)
+        ),
+      });
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "handled" }),
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      await state.selectChapter("GEN", 2);
+      expect(state.nextChapterPosition.value).not.toBeNull();
+
+      state.enableExtension("x");
+
+      // The extension may send "next" anywhere, so no honest address exists
+      // and that control falls back to a button. Only the direction the
+      // extension claimed is affected — "previous" still names its target.
+      expect(state.nextChapterPosition.value).toBeNull();
+      expect(state.previousChapterPosition.value).toEqual({
+        translationId: "AAB",
+        bookId: "GEN",
+        chapterNumber: 1,
+      });
+    });
+
     it("navigateNext returning 'navigate' goes to the chosen chapter", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const targetChapter = makeChapter(aabBooks, "GEN", 3);
@@ -3878,5 +3972,69 @@ describe("createBibleReadingState", () => {
       // "high" runs first (inner), "low" wraps its output (outer).
       expect(state.title.value).toBe("L>H>Genesis 1");
     });
+  });
+});
+
+describe("SSR readiness deadlines", () => {
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    delete (import.meta.env as { SSR?: boolean }).SSR;
+  });
+
+  it("settles on its own short deadline when the catalog never answers, without waiting for the chapter's longer one", async () => {
+    // This is the bug the dedicated catalog timeout fixes: before it existed,
+    // both latches shared the chapter's 5-second deadline, so a hung catalog
+    // held the whole SSR response open for the full five seconds even though
+    // nothing waiting on it could ever produce a chapter link either way.
+    const responses = createReadingManagerResponseMap();
+    const booksUrl = makeExampleUrl("/api/AAB/books.json");
+    fetchMock.mockImplementation((url: string) => {
+      if (url === booksUrl) {
+        // Never resolves — the catalog request that's still in flight when
+        // its own deadline arrives.
+        return new Promise(() => {});
+      }
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      return Promise.resolve(response);
+    });
+
+    vi.useFakeTimers();
+    import.meta.env.SSR = true;
+    // A starting position, not the no-args form: that's what makes
+    // construction take the reactive-effect path straight into
+    // `requestContent` (an un-awaited catalog fetch alongside an awaited
+    // chapter fetch) — the actual path this deadline exists for. The no-args
+    // form instead resolves the catalog *before* ever starting the chapter
+    // fetch, in `loadInitialData`, which can't reproduce the race at all.
+    const state = createBibleReadingState(createDataManager(), {
+      initialTranslationId: "AAB",
+      initialBookId: "GEN",
+      initialChapterNumber: 1,
+    });
+
+    try {
+      // Nothing blocks the chapter itself; flush the microtasks its fetch
+      // chain runs on so it can settle before either deadline is reached.
+      await vi.advanceTimersByTimeAsync(0);
+      expect(state.initialChapterLoadSettled.value).toBe(true);
+      expect(state.translationBooks.value).toBeNull();
+      // The chapter settled, but the catalog is still hanging and hasn't hit
+      // its own deadline yet — nothing waiting on both may proceed.
+      expect(state.initialLoadSettled.value).toBe(false);
+
+      // One tick short of the catalog's own deadline: still waiting.
+      await vi.advanceTimersByTimeAsync(999);
+      expect(state.initialLoadSettled.value).toBe(false);
+
+      // The catalog's deadline — not the chapter's separate, longer one.
+      await vi.advanceTimersByTimeAsync(1);
+      expect(state.initialLoadSettled.value).toBe(true);
+    } finally {
+      state.dispose();
+    }
   });
 });

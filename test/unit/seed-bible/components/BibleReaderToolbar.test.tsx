@@ -1933,3 +1933,171 @@ describe("BibleReaderToolbar — the mobile Today tab", () => {
     expect(ids).toHaveLength(1);
   });
 });
+
+describe("BibleReaderToolbar chapter navigation links", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    // Desktop viewport, so the labelled toolbar renders rather than the mobile
+    // floating nav.
+    window.innerWidth = 1200;
+    window.innerHeight = 900;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function chapterLinks(root: ParentNode) {
+    return Array.from(root.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href")
+    );
+  }
+
+  it("renders the chapter controls as real links", async () => {
+    const state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const next = container.querySelector(
+      'a[aria-label="Next Chapter"]'
+    ) as HTMLAnchorElement | null;
+
+    expect(next).not.toBeNull();
+    expect(next?.getAttribute("href")).toBe("/en/AAB/genesis/2");
+
+    // Genesis 1 is the start of the catalog, so "previous" has nowhere to go
+    // and stays a disabled button rather than becoming a link to nothing.
+    expect(
+      container.querySelector('a[aria-label="Previous Chapter"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('button[aria-label="Previous Chapter"]')
+    ).not.toBeNull();
+  });
+
+  /**
+   * Server-renders the toolbar against a state built here rather than by
+   * `createTestSeedBibleState`, which awaits the initial load and would settle
+   * the very race these tests are about.
+   *
+   * `holdCatalog` delays the book catalog until after the chapter has landed.
+   * That is the ordering the SSR guard has to survive: the two are independent
+   * un-awaited requests, and the catalog is only *usually* the faster one.
+   */
+  async function renderToolbarOnServer({ holdCatalog = false } = {}) {
+    const { renderToStringAsync } = await import("preact-render-to-string");
+    const { Suspense } = await import("preact/compat");
+    const { createSeedBibleState } =
+      await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
+
+    // Installs the fetch mock and initializes i18n. Its own state is discarded:
+    // the data manager — and so the catalog cache — is built per state, so
+    // nothing it fetched can warm the one under test.
+    await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+
+    const responses = createPrivateEndpointResponses();
+    const booksUrl = makeUrl("/api/AAB/books.json", PRIVATE_API_ENDPOINT);
+    const previousFetch = globalThis.fetch;
+
+    let state: SeedBibleState | null = null;
+    let renderStarted = false;
+    const chapterHasSettled = () =>
+      !!state?.tabs.tabs.value[0]?.readingState.initialChapterLoadSettled.value;
+
+    globalThis.fetch = (async (url: string) => {
+      const response = responses[url];
+      if (!response) {
+        throw new Error(`No mocked response for ${url}`);
+      }
+      // Held across the whole first render pass, so the guard has to decide
+      // while the catalog is genuinely still in flight.
+      if (holdCatalog && url === booksUrl) {
+        await waitFor(() => renderStarted, 2000);
+      }
+      return response;
+    }) as typeof globalThis.fetch;
+
+    // Set before the state is built: the catalog latch is armed at
+    // construction, and the toolbar's suspend is server-only.
+    import.meta.env.SSR = true;
+
+    // Same origin as jsdom's document: `TabsManager` echoes the reading
+    // position back into the URL on mount, and jsdom rejects a cross-origin
+    // `replaceState`. A real server render has no `window` at all, so that
+    // write is a no-op there.
+    state = createSeedBibleState({
+      initialHref: `${window.location.origin}/en/AAB/genesis/1`,
+    });
+
+    try {
+      await state.i18n.ready;
+
+      // Let the chapter finish first. That is the ordering the SSR guard has to
+      // survive, and it is not the default here — the mocked chapter response
+      // otherwise lands well after the render has already begun, so the guard
+      // would suspend for the right reason by accident and prove nothing.
+      if (holdCatalog) {
+        await waitFor(chapterHasSettled, 2000);
+      }
+      renderStarted = true;
+
+      const html = await renderToStringAsync(
+        <TestHost state={state}>
+          <Suspense fallback={null}>
+            <BibleReaderToolbar state={state} />
+          </Suspense>
+        </TestHost>
+      );
+      return new DOMParser().parseFromString(html, "text/html");
+    } finally {
+      delete import.meta.env.SSR;
+      globalThis.fetch = previousFetch;
+      for (const tab of state.tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
+      state.navigation.dispose();
+    }
+  }
+
+  it("puts the chapter links in the server-rendered HTML", async () => {
+    // The point of the whole feature: a crawler fetching a chapter page has to
+    // find a followable link to the next chapter in the markup it is served.
+    //
+    // The toolbar sits outside the reader's Suspense boundary, so without the
+    // SSR suspend it renders in the first synchronous pass — before the book
+    // catalog names where "next" leads — and the arrows serialize as disabled
+    // buttons with no links out of the page.
+    const parsed = await renderToolbarOnServer();
+
+    expect(chapterLinks(parsed)).toContain("/en/AAB/genesis/2");
+  });
+
+  it("still server-renders the links when the catalog arrives after the chapter", async () => {
+    // The catalog and the chapter are separate, un-awaited requests, so the
+    // chapter can win. When it does, the first latch flips while the catalog is
+    // still in flight — and a guard watching only that latch stops suspending
+    // and serializes a page with no way out of it.
+    const parsed = await renderToolbarOnServer({ holdCatalog: true });
+
+    expect(chapterLinks(parsed)).toContain("/en/AAB/genesis/2");
+  });
+});

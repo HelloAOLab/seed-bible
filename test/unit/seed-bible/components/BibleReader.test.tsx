@@ -173,11 +173,14 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
     hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
+    nextChapterPosition: computed(() => null),
+    previousChapterPosition: computed(() => null),
     getAdjacentChapter: vi.fn(async () => null),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialLoadSettled: computed(() => true),
     initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null

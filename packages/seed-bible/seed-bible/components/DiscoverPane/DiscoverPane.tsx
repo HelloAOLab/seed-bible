@@ -1242,12 +1242,12 @@ function AnnotationsSection(props: {
     chapterNumber
   ).value;
   const groups = groupAnnotationsByVerseRange(chapterAnnotations);
-  
+
   const otherPeoplePresent = annotationListHasOtherAuthors(
     chapterAnnotations,
     login.userId.value
   );
-  
+
   const pending = annotations.sync.pendingCountForChapter(
     bookId,
     chapterNumber
