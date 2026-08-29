@@ -23,7 +23,9 @@ export function readPhotoChooserPhotos(
   if (!photos) {
     return [];
   }
-  return Array.isArray(photos) ? photos : photos.value;
+  // `Array.isArray` does not narrow `readonly T[]` (TS sees it as `any[]`),
+  // so discriminate on the signal's `.value` instead.
+  return "value" in photos ? photos.value : photos;
 }
 
 /**
