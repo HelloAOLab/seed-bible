@@ -370,6 +370,8 @@ export interface SeedBibleState {
    * Playlist manager for creating, editing, and syncing user playlists.
    */
   playlists: PlaylistManager;
+  /** Saved photos the user has uploaded, for reuse as covers and later features. */
+  gallery: UserGalleryManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -411,6 +413,10 @@ import {
   type PlaylistManager,
   type PlaylistItemData,
 } from "./PlaylistManager";
+import {
+  createUserGalleryManager,
+  type UserGalleryManager,
+} from "./UserGalleryManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
@@ -649,6 +655,7 @@ export function createSeedBibleState(
     },
   });
   const readingPlans = createReadingPlansManager(os, login);
+  const gallery = createUserGalleryManager(os, login);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -2010,6 +2017,7 @@ export function createSeedBibleState(
     extensions,
     readingPlans,
     playlists,
+    gallery,
     tutorial,
     onboarding,
     isTermsOpen,
@@ -2083,6 +2091,7 @@ export function createSeedBibleState(
             tabs={tabs}
             chats={chats}
             openChatPanel={sidebar.openChatPanel}
+            modals={modals}
           />
         ),
         header: () => (

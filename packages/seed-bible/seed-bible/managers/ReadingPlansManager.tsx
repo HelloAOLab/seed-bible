@@ -13,6 +13,7 @@ import {
 import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
 import { captureEvent } from "./Utils";
+import { savePhotoToGallery } from "./UserGalleryManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -103,6 +104,11 @@ export const ReadingPlanMetadataSchema = z.object({
   locale: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
+  /**
+   * Public URL of a 4:3 cover image. Optional so plans saved before this field
+   * existed still parse.
+   */
+  heroImageUrl: z.url().max(2048).nullable().optional(),
   // Every pace the author offers for reading this plan. A plan has no single
   // duration — how long it takes follows from whichever cadence the reader
   // picks (see `cadenceDurationDays`).
@@ -315,6 +321,7 @@ export function createReadingPlan(
     locale?: string;
     title?: string | null;
     description?: string | null;
+    heroImageUrl?: string | null;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
     status?: ReadingPlanStatus;
@@ -332,6 +339,7 @@ export function createReadingPlan(
     locale: options.locale ?? "en",
     title: options.title ?? null,
     description: options.description ?? null,
+    heroImageUrl: options.heroImageUrl ?? null,
     cadenceOptions,
     defaultCadenceId: options.defaultCadenceId ?? cadenceOptions[0]?.id ?? null,
     status: options.status ?? "complete",
@@ -2045,11 +2053,24 @@ export function createReadingPlansManager(
     editingReadingPlan.value = null;
   };
 
-  /** Merges a title/description change into the draft. */
+  /** Merges a title/description/cover-image change into the draft. */
   const updateEditingReadingPlan = (
-    patch: Partial<Pick<ReadingPlan, "title" | "description">>
+    patch: Partial<Pick<ReadingPlan, "title" | "description" | "heroImageUrl">>
   ) => {
     mutateDraft((plan) => ({ ...plan, ...patch }));
+  };
+
+  /**
+   * Uploads a cover image to the current user's record and returns its public
+   * URL. The caller attaches that URL via `updateEditingReadingPlan`. Throws
+   * when signed out.
+   */
+  const uploadHeroImage = async (file: File): Promise<string> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot upload a cover image while signed out.");
+    }
+    return (await savePhotoToGallery(os, userId, file)).url;
   };
 
   /** Points new readings at a session of the draft. */
@@ -2354,6 +2375,7 @@ export function createReadingPlansManager(
     cancelEditingReadingPlan,
     discardEditingReadingPlan,
     updateEditingReadingPlan,
+    uploadHeroImage,
     selectEditingPlanSession,
     setEditingPlanCadenceOptions,
     addSessionToEditingPlan,

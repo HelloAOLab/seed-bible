@@ -1,5 +1,5 @@
 import "./ReadingPlanEditor.css";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -14,7 +14,14 @@ import {
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { CasualOSManager } from "../../managers/OsManager";
+import type { LoginManager } from "../../managers/LoginManager";
+import {
+  uploadPhotoToGallery,
+  type UserGalleryManager,
+} from "../../managers/UserGalleryManager";
 import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
+import { HeroImageField } from "../HeroImageField/HeroImageField";
 import {
   canPreviewPlaylistItem,
   openPlaylistItemPreview,
@@ -34,6 +41,9 @@ interface ReadingPlanEditorProps {
   /** Modals host for previewing a text/link reading. Optional — without it the
    * preview action is simply not offered. */
   modals?: ModalManager;
+  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
+  login?: Pick<LoginManager, "userId">;
+  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   /** Called when the user backs out of (or discards) the plan. */
   onCancel: () => void;
   /** Called after the plan is successfully saved. */
@@ -66,7 +76,8 @@ interface ReadingPlanEditorProps {
  * mobile fullscreen pane without any breakpoint of its own.
  */
 export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
-  const { readingPlans, books, modals, onCancel, onSaved } = props;
+  const { readingPlans, books, modals, os, login, gallery, onCancel, onSaved } =
+    props;
   const { t } = useI18n();
 
   const [saving, setSaving] = useState(false);
@@ -79,6 +90,17 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
   const draft = readingPlans.editingReadingPlan.value;
   const autosaving = readingPlans.editingReadingPlanSaving.value;
   const autosaveFailed = readingPlans.editingReadingPlanSaveError.value;
+
+  useEffect(() => {
+    const url = draft?.plan.heroImageUrl;
+    if (!url || !gallery) {
+      return;
+    }
+    if (gallery.photos.peek().some((photo) => photo.url === url)) {
+      return;
+    }
+    void gallery.rememberPhoto?.(url);
+  }, [draft?.plan.heroImageUrl, gallery]);
 
   if (!draft) {
     return null;
@@ -184,6 +206,42 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
               })}
             />
           </label>
+          {modals ? (
+            <div className="sb-rp-field">
+              <span className="sb-rp-field-label">
+                {t("hero-image", { defaultValue: "Cover image" })}
+              </span>
+              <HeroImageField
+                imageUrl={draft.plan.heroImageUrl}
+                modals={modals}
+                gallery={gallery}
+                photos={gallery?.photos}
+                onUpload={async (file) => {
+                  const url = await uploadPhotoToGallery(file, {
+                    gallery,
+                    os,
+                    userId: login?.userId.value,
+                    fallbackUpload: readingPlans.uploadHeroImage,
+                  });
+                  readingPlans.updateEditingReadingPlan({
+                    heroImageUrl: url,
+                  });
+                  return url;
+                }}
+                onSelectPhoto={(url) => {
+                  readingPlans.updateEditingReadingPlan({
+                    heroImageUrl: url,
+                  });
+                  void gallery?.rememberPhoto(url);
+                }}
+                onRemove={() =>
+                  readingPlans.updateEditingReadingPlan({
+                    heroImageUrl: null,
+                  })
+                }
+              />
+            </div>
+          ) : null}
         </section>
 
         <section className="sb-rp-editor-section">

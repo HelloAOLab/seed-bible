@@ -146,6 +146,18 @@ describe("ReadingPlansManager schemas", () => {
     expect(plan.sessions[0]!.readings).toHaveLength(2);
   });
 
+  it("parses a plan without a cover image (legacy records)", () => {
+    const plan = makePlan();
+    expect(plan.heroImageUrl).toBeUndefined();
+  });
+
+  it("parses a plan with a cover image", () => {
+    const plan = makePlan({
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    expect(plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
+  });
+
   it("treats an omitted sessionsPerDay as 1", () => {
     const cadence = CadenceSchema.parse({
       segments: [{ type: "read", days: 1 }],
@@ -1142,6 +1154,7 @@ describe("createReadingPlansManager", () => {
   let getDataMock: Mock;
   let listDataByMarkerMock: Mock;
   let eraseDataMock: Mock;
+  let recordFileMock: Mock;
   let warnSpy: Mock;
   let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
@@ -1185,6 +1198,7 @@ describe("createReadingPlansManager", () => {
       getData: getDataMock,
       recordData: recordDataMock,
       eraseData: eraseDataMock,
+      recordFile: recordFileMock,
       listDataByMarker: listDataByMarkerMock,
       listAllDataByMarker: async (recordName: string, marker: string) => {
         const items: { address: string; data: unknown }[] = [];
@@ -1216,6 +1230,10 @@ describe("createReadingPlansManager", () => {
   beforeEach(() => {
     recordDataMock = vi.fn().mockResolvedValue(undefined);
     eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    recordFileMock = vi.fn().mockResolvedValue({
+      success: true,
+      url: "https://example.com/hero.jpg",
+    });
     getDataMock = vi.fn().mockResolvedValue({ success: false });
     listDataByMarkerMock = vi
       .fn()
@@ -1573,6 +1591,9 @@ describe("createReadingPlansManager", () => {
     expect(started.persisted).toBe(false); // nothing written until an edit
 
     manager.updateEditingReadingPlan({ title: "Psalms" });
+    manager.updateEditingReadingPlan({
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
     manager.addReadingToEditingPlan({
       type: "bible-verse",
       ref: { bookId: "PSA", chapter: 23 },
@@ -1586,12 +1607,48 @@ describe("createReadingPlansManager", () => {
 
     const draft = manager.editingReadingPlan.value!;
     expect(draft.plan.title).toBe("Psalms");
+    expect(draft.plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
     expect(draft.plan.sessions[0]!.readings).toHaveLength(2);
     expect(draft.plan.sessions[0]!.readings.map((r) => r.item.type)).toEqual([
       "bible-verse",
       "html",
     ]);
     expect(draftReadingCount(draft)).toBe(2);
+  });
+
+  it("uploadHeroImage stores the file and returns its public URL", async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "cover.jpg", {
+      type: "image/jpeg",
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    recordDataMock.mockClear();
+    await expect(manager.uploadHeroImage(file)).resolves.toBe(
+      "https://example.com/hero.jpg"
+    );
+    expect(recordFileMock).toHaveBeenCalledWith("user-1", file, {
+      mimeType: "image/jpeg",
+      marker: "publicRead",
+    });
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      expect.stringMatching(/^photo_/),
+      expect.objectContaining({ url: "https://example.com/hero.jpg" }),
+      { marker: "publicRead:userGallery" }
+    );
+  });
+
+  it("uploadHeroImage throws when signed out", async () => {
+    const manager = makeManager(null);
+    await flush();
+
+    await expect(
+      manager.uploadHeroImage(
+        new File([new Uint8Array([1])], "cover.jpg", { type: "image/jpeg" })
+      )
+    ).rejects.toThrow("Cannot upload a cover image while signed out.");
+    expect(recordFileMock).not.toHaveBeenCalled();
   });
 
   it("saves the draft to the user's account after a change", async () => {
@@ -2802,6 +2859,7 @@ describe("createReadingPlan", () => {
     expect(plan.locale).toBe("en");
     expect(plan.title).toBeNull();
     expect(plan.description).toBeNull();
+    expect(plan.heroImageUrl).toBeNull();
     expect(plan.schemaVersion).toBe(1);
     expect(plan.createdAtMs).toBe(START_MS);
     expect(plan.updatedAtMs).toBe(START_MS);
@@ -2828,12 +2886,14 @@ describe("createReadingPlan", () => {
       locale: "es-MX",
       title: "My Plan",
       description: "A custom plan",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
       cadenceOptions,
     });
 
     expect(plan.locale).toBe("es-MX");
     expect(plan.title).toBe("My Plan");
     expect(plan.description).toBe("A custom plan");
+    expect(plan.heroImageUrl).toBe("https://example.com/plan-cover.jpg");
     expect(plan.cadenceOptions).toEqual(cadenceOptions);
     expect(plan.defaultCadenceId).toBe("weekly"); // first provided option
   });

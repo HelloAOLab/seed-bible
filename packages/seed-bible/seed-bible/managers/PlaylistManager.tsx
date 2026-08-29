@@ -31,6 +31,7 @@ import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
 import type { BookId } from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
+import { savePhotoToGallery } from "./UserGalleryManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -81,10 +82,29 @@ export const PlaylistSchema = z.object({
   authorUserId: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
+  /**
+   * Public URL of a 4:3 cover image. Optional so playlists saved before this
+   * field existed still parse.
+   */
+  heroImageUrl: z.url().max(2048).nullable().optional(),
   items: z.array(PlaylistItem),
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
 });
+
+function clonePlaylist(playlist: Playlist): Playlist {
+  return PlaylistSchema.parse(JSON.parse(JSON.stringify(playlist)));
+}
+
+/** Fields the unsaved-changes prompt cares about: name, description, cover, items. */
+function playlistEditorState(playlist: Playlist): string {
+  return JSON.stringify({
+    title: playlist.title ?? null,
+    description: playlist.description ?? null,
+    heroImageUrl: playlist.heroImageUrl ?? null,
+    items: playlist.items,
+  });
+}
 
 function getPlaylistLocator(playlist: {
   recordName?: string;
@@ -112,7 +132,7 @@ function parsePlaylistLocator(
 export type Playlist = z.infer<typeof PlaylistSchema>;
 export type SimplePlaylist = Pick<
   Playlist,
-  "id" | "items" | "title" | "description"
+  "id" | "items" | "title" | "description" | "heroImageUrl"
 >;
 
 /**
@@ -142,6 +162,7 @@ export const PlaylistPlayHistorySchema = z.object({
   playlistRecordName: z.string(),
   playlistTitle: z.string().nullable(),
   playlistDescription: z.string().nullable().optional(),
+  playlistHeroImageUrl: z.url().max(2048).nullable().optional(),
   /**
    * Legacy chain to a prior play-session. Kept so stored records still parse;
    * new writes leave it unset. History is one row per playlist now.
@@ -678,6 +699,8 @@ export function createPlaylistManager(
 
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
+  /** Copy of the draft when the editor opened, for unsaved-change detection. */
+  const editingPlaylistBaseline = signal<Playlist | null>(null);
 
   /**
    * Id of the history row being written for the active play session, or null
@@ -915,6 +938,7 @@ export function createPlaylistManager(
       playlistRecordName: playlist.recordName,
       playlistTitle: playlist.title,
       playlistDescription: playlist.description,
+      playlistHeroImageUrl: playlist.heroImageUrl ?? null,
       previousHistoryId: null,
       totalSteps: queue.length,
       currentStep: step,
@@ -1123,16 +1147,19 @@ export function createPlaylistManager(
       userId = userInfo.id;
     }
     const now = Date.now();
-    editingPlaylist.value = PlaylistSchema.parse({
+    const draft = PlaylistSchema.parse({
       id: `playlist_${uuid()}`,
       recordName: userId,
       authorUserId: userId,
       title: initial?.title ?? null,
       description: initial?.description ?? null,
+      heroImageUrl: null,
       items: initial?.items ?? [],
       createdAtMs: now,
       updatedAtMs: now,
     });
+    editingPlaylist.value = draft;
+    editingPlaylistBaseline.value = clonePlaylist(draft);
     view.value = "create_playlist";
 
     return editingPlaylist;
@@ -1144,7 +1171,9 @@ export function createPlaylistManager(
    * later via `saveEditingPlaylist`.
    */
   const editPlaylist = (playlist: Playlist): void => {
-    editingPlaylist.value = { ...playlist };
+    const draft = clonePlaylist(playlist);
+    editingPlaylist.value = draft;
+    editingPlaylistBaseline.value = clonePlaylist(playlist);
     view.value = "create_playlist";
   };
 
@@ -1170,16 +1199,17 @@ export function createPlaylistManager(
       ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
       : [...userPlaylists.value, playlist];
     editingPlaylist.value = null;
+    editingPlaylistBaseline.value = null;
     view.value = "discover";
   };
 
   /**
-   * Patches the currently-edited playlist's title and/or description. No-op
-   * when there is no playlist being edited. Persisting happens later via
-   * `saveEditingPlaylist`.
+   * Patches the currently-edited playlist's title, description, and/or cover
+   * image. No-op when there is no playlist being edited. Persisting happens
+   * later via `saveEditingPlaylist`.
    */
   const updateEditingPlaylistMetadata = (
-    updates: Partial<Pick<Playlist, "title" | "description">>
+    updates: Partial<Pick<Playlist, "title" | "description" | "heroImageUrl">>
   ): string => {
     const current = editingPlaylist.value;
     if (!current) {
@@ -1307,7 +1337,34 @@ export function createPlaylistManager(
   /** Discards the current edit and returns to the discover view. */
   const cancelEditingPlaylist = (): void => {
     editingPlaylist.value = null;
+    editingPlaylistBaseline.value = null;
     view.value = "discover";
+  };
+
+  /**
+   * True when the open draft's name, description, cover, or items differ from
+   * what they were when the editor opened.
+   */
+  const isEditingPlaylistDirty = (): boolean => {
+    const current = editingPlaylist.peek();
+    const baseline = editingPlaylistBaseline.peek();
+    if (!current || !baseline) {
+      return false;
+    }
+    return playlistEditorState(current) !== playlistEditorState(baseline);
+  };
+
+  /**
+   * Uploads a cover image to the current user's record and returns its public
+   * URL. The caller is responsible for attaching that URL to the playlist
+   * (typically via `updateEditingPlaylistMetadata`). Throws when signed out.
+   */
+  const uploadHeroImage = async (file: File): Promise<string> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Cannot upload a cover image while signed out.");
+    }
+    return (await savePhotoToGallery(os, userId, file)).url;
   };
 
   /**
@@ -1947,12 +2004,14 @@ export function createPlaylistManager(
     editPlaylist,
     saveEditingPlaylist,
     updateEditingPlaylistMetadata,
+    uploadHeroImage,
     addEditingPlaylistItem,
     insertEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
     reorderEditingPlaylistItem,
     cancelEditingPlaylist,
+    isEditingPlaylistDirty,
     listPlaylists,
     loadPlaylist,
     userPlaylists,

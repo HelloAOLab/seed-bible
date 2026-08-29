@@ -107,6 +107,33 @@ describe("Playlist schemas", () => {
     });
     expect(playlist.items).toHaveLength(2);
   });
+
+  it("parses a playlist without a cover image (legacy records)", () => {
+    const playlist = PlaylistSchema.parse({
+      id: "playlist-1",
+      recordName: "user-1",
+      authorUserId: "user-1",
+      title: "My Playlist",
+      description: null,
+      items: [],
+      createdAtMs: START_MS,
+      updatedAtMs: START_MS,
+    });
+    expect(playlist.heroImageUrl).toBeUndefined();
+  });
+
+  it("parses a playlist with a cover image", () => {
+    const playlist = makePlaylist({
+      heroImageUrl: "https://example.com/cover.jpg",
+    });
+    expect(playlist.heroImageUrl).toBe("https://example.com/cover.jpg");
+  });
+
+  it("rejects a cover image that is not a URL", () => {
+    expect(() =>
+      makePlaylist({ heroImageUrl: "not-a-url" as unknown as string })
+    ).toThrow();
+  });
 });
 
 describe("playlist play history helpers", () => {
@@ -370,6 +397,7 @@ describe("createPlaylistManager", () => {
   let listAllDataByMarkerMock: Mock;
   let getDataMock: Mock;
   let eraseDataMock: Mock;
+  let recordFileMock: Mock;
   let loginMock: Mock;
   let selectTranslationAndChapterMock: Mock;
   let warnSpy: Mock;
@@ -406,6 +434,7 @@ describe("createPlaylistManager", () => {
       listAllDataByMarker: listAllDataByMarkerMock,
       getData: getDataMock,
       eraseData: eraseDataMock,
+      recordFile: recordFileMock,
     });
     const login = { userId, login: loginMock } as unknown as LoginArg;
     const tabs =
@@ -450,6 +479,10 @@ describe("createPlaylistManager", () => {
       .mockResolvedValue({ success: true, items: [] });
     getDataMock = vi.fn().mockResolvedValue({ success: true, data: null });
     eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    recordFileMock = vi.fn().mockResolvedValue({
+      success: true,
+      url: "https://example.com/hero.jpg",
+    });
     loginMock = vi.fn().mockResolvedValue(null);
     selectTranslationAndChapterMock = vi.fn().mockResolvedValue(undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -663,6 +696,7 @@ describe("createPlaylistManager", () => {
     expect(editing.title).toBeNull();
     expect(editing.description).toBeNull();
     expect(editing.items).toEqual([]);
+    expect(editing.heroImageUrl).toBeNull();
     expect(manager.view.value).toBe("create_playlist");
     // Creating a draft does not persist anything yet.
     expect(recordDataMock).not.toHaveBeenCalled();
@@ -771,6 +805,95 @@ describe("createPlaylistManager", () => {
       "Verses I keep coming back to"
     );
     expect(manager.editingPlaylist.value!.items).toEqual([]);
+  });
+
+  it("updateEditingPlaylistMetadata can set and clear a cover image", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    expect(
+      manager.updateEditingPlaylistMetadata({
+        heroImageUrl: "https://example.com/cover.jpg",
+      })
+    ).toBe("success");
+    expect(manager.editingPlaylist.value!.heroImageUrl).toBe(
+      "https://example.com/cover.jpg"
+    );
+
+    expect(manager.updateEditingPlaylistMetadata({ heroImageUrl: null })).toBe(
+      "success"
+    );
+    expect(manager.editingPlaylist.value!.heroImageUrl).toBeNull();
+  });
+
+  it("saveEditingPlaylist persists a cover image", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+    manager.updateEditingPlaylistMetadata({
+      title: "Favorites",
+      heroImageUrl: "https://example.com/cover.jpg",
+    });
+    recordDataMock.mockClear();
+
+    await manager.saveEditingPlaylist();
+
+    const saved = recordDataMock.mock.calls.at(-1)![2] as Playlist;
+    expect(saved.heroImageUrl).toBe("https://example.com/cover.jpg");
+    expect(manager.userPlaylists.value[0]!.heroImageUrl).toBe(
+      "https://example.com/cover.jpg"
+    );
+  });
+
+  it("uploadHeroImage stores the file and returns its public URL", async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "cover.jpg", {
+      type: "image/jpeg",
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    recordDataMock.mockClear();
+    await expect(manager.uploadHeroImage(file)).resolves.toBe(
+      "https://example.com/hero.jpg"
+    );
+    expect(recordFileMock).toHaveBeenCalledWith("user-1", file, {
+      mimeType: "image/jpeg",
+      marker: "publicRead",
+    });
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      expect.stringMatching(/^photo_/),
+      expect.objectContaining({ url: "https://example.com/hero.jpg" }),
+      { marker: "publicRead:userGallery" }
+    );
+  });
+
+  it("uploadHeroImage throws when signed out", async () => {
+    const manager = makeManager(null);
+    await flush();
+
+    await expect(
+      manager.uploadHeroImage(
+        new File([new Uint8Array([1])], "cover.jpg", { type: "image/jpeg" })
+      )
+    ).rejects.toThrow("Cannot upload a cover image while signed out.");
+    expect(recordFileMock).not.toHaveBeenCalled();
+  });
+
+  it("uploadHeroImage throws when the file upload fails", async () => {
+    recordFileMock.mockResolvedValue({
+      success: false,
+      errorCode: "upload_failed",
+    });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await expect(
+      manager.uploadHeroImage(
+        new File([new Uint8Array([1])], "cover.jpg", { type: "image/jpeg" })
+      )
+    ).rejects.toThrow("Failed to upload file");
   });
 
   it("updateEditingPlaylistMetadata reports an error when nothing is being edited", async () => {
@@ -891,6 +1014,62 @@ describe("createPlaylistManager", () => {
     expect(manager.editingPlaylist.value).toBeNull();
     expect(manager.view.value).toBe("discover");
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("isEditingPlaylistDirty is false for an untouched new playlist", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    expect(manager.isEditingPlaylistDirty()).toBe(false);
+  });
+
+  it("isEditingPlaylistDirty is true after the name, description, cover, or items change", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    manager.updateEditingPlaylistMetadata({ title: "Evening" });
+    expect(manager.isEditingPlaylistDirty()).toBe(true);
+
+    manager.cancelEditingPlaylist();
+    await manager.createNewPlaylist();
+    manager.updateEditingPlaylistMetadata({ description: "Notes" });
+    expect(manager.isEditingPlaylistDirty()).toBe(true);
+
+    manager.cancelEditingPlaylist();
+    await manager.createNewPlaylist();
+    manager.updateEditingPlaylistMetadata({
+      heroImageUrl: "https://example.com/cover.jpg",
+    });
+    expect(manager.isEditingPlaylistDirty()).toBe(true);
+
+    manager.cancelEditingPlaylist();
+    await manager.createNewPlaylist();
+    manager.addEditingPlaylistItem({
+      type: "html",
+      title: "Intro",
+      html: "<p>Hi</p>",
+    });
+    expect(manager.isEditingPlaylistDirty()).toBe(true);
+  });
+
+  it("isEditingPlaylistDirty is false after editing an existing playlist without changing it", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const playlist = makePlaylist({
+      title: "Kept",
+      description: "Same",
+      heroImageUrl: "https://example.com/cover.jpg",
+      items: [{ type: "html", title: "Intro", html: "<p>Hi</p>" }],
+    });
+    manager.editPlaylist(playlist);
+
+    expect(manager.isEditingPlaylistDirty()).toBe(false);
+    manager.updateEditingPlaylistMetadata({ title: "Changed" });
+    expect(manager.isEditingPlaylistDirty()).toBe(true);
+    manager.updateEditingPlaylistMetadata({ title: "Kept" });
+    expect(manager.isEditingPlaylistDirty()).toBe(false);
   });
 
   describe("chat AI context", () => {

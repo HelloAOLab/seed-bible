@@ -26,6 +26,10 @@
   background: var(--rp-peach);
 }
 
+.sb-rpd .sb-hero-banner--bleed {
+  flex: none;
+}
+
 .sb-rpd-subtitle {
   margin: 0;
   font-size: 0.8125rem;
