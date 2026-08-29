@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals";
+import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import {
   GalleryPhotoSchema,
   MAX_RECENT_GALLERY_PHOTOS,
@@ -16,13 +17,20 @@ async function flush(): Promise<void> {
   await Promise.resolve();
 }
 
+type GalleryOs = Pick<
+  CasualOSManager,
+  "recordFile" | "recordData" | "listAllDataByMarker"
+>;
+
+type GalleryOsMock = {
+  recordFile: ReturnType<typeof vi.fn>;
+  recordData: ReturnType<typeof vi.fn>;
+  listAllDataByMarker: ReturnType<typeof vi.fn>;
+};
+
 function makeOs(
-  overrides: {
-    recordFile?: ReturnType<typeof vi.fn>;
-    recordData?: ReturnType<typeof vi.fn>;
-    listAllDataByMarker?: ReturnType<typeof vi.fn>;
-  } = {}
-) {
+  overrides: Partial<GalleryOsMock> = {}
+): GalleryOsMock & GalleryOs {
   return {
     recordFile:
       overrides.recordFile ??
@@ -34,7 +42,7 @@ function makeOs(
     listAllDataByMarker:
       overrides.listAllDataByMarker ??
       vi.fn().mockResolvedValue({ success: true, items: [] }),
-  };
+  } as GalleryOsMock & GalleryOs;
 }
 
 describe("savePhotoToGallery", () => {
@@ -75,7 +83,7 @@ describe("savePhotoToGallery", () => {
       url: "https://example.com/photo.jpg",
     });
     expect(os.recordData).toHaveBeenCalledTimes(1);
-    const saved = os.recordData.mock.calls[0][2];
+    const saved = os.recordData.mock.calls[0]![2];
     expect(saved.createdAtMs).toBeGreaterThan(existing.createdAtMs);
   });
 });
@@ -111,7 +119,7 @@ describe("uploadPhotoToGallery", () => {
     expect(url).toBe("https://example.com/photo.jpg");
     expect(os.recordFile).toHaveBeenCalled();
     expect(os.recordData).toHaveBeenCalled();
-    expect(os.recordData.mock.calls[0][3]).toEqual({
+    expect(os.recordData.mock.calls[0]![3]).toEqual({
       marker: USER_GALLERY_MARKER,
     });
   });
