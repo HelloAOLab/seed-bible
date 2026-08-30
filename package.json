@@ -28,6 +28,7 @@
     "i18n": "tsx script/i18n.ts",
     "list-bible-translations": "tsx script/list-bible-translations.ts",
     "sitemap": "tsx script/generate-sitemap.ts",
+    "index-sitemap-urls": "tsx script/index-sitemap-urls.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky && tsx script/setupMergeDriver.ts",
