@@ -1035,6 +1035,7 @@
   flex-direction: column;
   gap: 2rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 @media (min-width: 1024px) {
@@ -1050,6 +1051,7 @@
      doesn't make it any taller. */
   .sb-bible-reader-content {
     flex-direction: row;
+    align-items: unset;
   }
 
   /* The "discover-content-panel" quick tool is off for this tab: keep the
@@ -1058,6 +1060,10 @@
   .sb-bible-reader-content.sb-bible-reader-content--discover-below {
     flex-direction: column;
     align-items: stretch;
+
+    & > .sb-bible-reader-discover-panel {
+      max-width: var(--sb-scripture-width, 48rem);
+    }
   }
 }
 
