@@ -169,6 +169,53 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
   });
 
+  it("clears the verse selection when a tap lands in empty chapter-content space (not on a verse)", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    // Stands in for the real `.sb-chapter-content` BibleReader renders (not
+    // mounted in this unit test) — its padding, the gaps between verse spans,
+    // and section headings all sit inside this container but outside any
+    // `.sb-verse` span, and a tap there should count as "outside" the verse.
+    const chapterContent = document.createElement("div");
+    chapterContent.className = "sb-chapter-content";
+    document.body.appendChild(chapterContent);
+
+    try {
+      await act(async () => {
+        chapterContent.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      chapterContent.remove();
+    }
+  });
+
+  it("does not clear the verse selection when a tap lands on a verse", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    const verse = document.createElement("span");
+    verse.className = "sb-verse";
+    document.body.appendChild(verse);
+
+    try {
+      await act(async () => {
+        verse.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      verse.remove();
+    }
+  });
+
   it("does not clear the verse selection when the pane covering the reader is tapped", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();

@@ -1454,11 +1454,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     activeMobileTab.value,
   ]);
 
-  // Clicking anywhere outside the chapter content or the verse toolbar
-  // dismisses the verse selection (and therefore the toolbar). Only while the
-  // toolbar is actually showing — with a pane covering the reader every tap
-  // lands "outside", which would silently throw the selection away behind the
-  // pane instead of restoring the toolbar when the pane closes.
+  // Clicking anywhere outside a verse or the verse toolbar dismisses the
+  // verse selection (and therefore the toolbar). Only while the toolbar is
+  // actually showing — with a pane covering the reader every tap lands
+  // "outside", which would silently throw the selection away behind the pane
+  // instead of restoring the toolbar when the pane closes.
+  //
+  // Excluding only `.sb-verse` (rather than the whole `.sb-chapter-content`
+  // container) is deliberate: a verse's own `onClick` already handles
+  // toggling that verse's selection, so this listener has to stand aside for
+  // it, but empty space within the chapter — padding, the gap between verse
+  // spans, a section heading — isn't a verse, and a tap there is exactly the
+  // "click off of it on an empty space on the page" this listener exists to
+  // catch.
   //
   // A pane docked beside the reader (e.g. Discover, open on desktop) doesn't
   // cover it, so `isVerseToolbarVisible` stays true and this listener stays
@@ -1482,7 +1490,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest(".sb-chapter-content")) return;
+      if (target.closest(".sb-verse")) return;
       if (target.closest(".sb-verse-toolbar")) return;
       if (target.closest(".sb-pane-side-shell")) return;
       if (target.closest(".sb-pane-shell")) return;
