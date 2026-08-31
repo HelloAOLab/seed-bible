@@ -173,6 +173,7 @@
   "extensions-for-active-customization": "Showing extensions for {{name}}. Extensions this customization includes can't be removed here.",
   "variants": "Themes",
   "add-variant": "Add theme",
+  "base-theme": "Base theme",
   "variant-name": "Name",
   "variant-not-found": "This theme could not be found.",
   "variant-options": "Theme options",

@@ -460,7 +460,8 @@ export interface CustomizationsManager {
   load: () => Promise<void>;
   /** Loads a customization by its `{recordName}.{id}` locator into `linkedCustomization`. */
   loadByLocator: (locator: string) => Promise<void>;
-  create: () => Promise<SeedBibleCustomization>;
+  /** Creates a new customization with one variant seeded from a built-in preset (`presetId`, one of `theme.themes.value`'s own ids) — or, if omitted or unrecognized, from whichever preset the viewer is currently using. */
+  create: (presetId?: string) => Promise<SeedBibleCustomization>;
   /** Seeds `editingCustomization` from the persisted record with this id. No-ops if not found. */
   startEditing: (id: string) => void;
   /** Clears `editingCustomization` and `editingVariantId`, discarding any unsaved edits. */
@@ -476,8 +477,8 @@ export interface CustomizationsManager {
   updateEditingName: (name: string) => void;
   /** Clears the draft's logo and immediately persists it (unlike every other draft field, which waits for an explicit Save). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
-  /** Adds a new variant to the draft, seeded from the current live theme. */
-  addEditingVariant: () => CustomizationThemeVariant | null;
+  /** Adds a new variant to the draft, seeded from a built-in preset (`presetId`, one of `theme.themes.value`'s own ids) — or, if omitted or unrecognized, from whichever preset the viewer is currently using. */
+  addEditingVariant: (presetId?: string) => CustomizationThemeVariant | null;
   renameEditingVariant: (variantId: string, name: string) => void;
   setEditingVariantColor: (
     variantId: string,
@@ -688,17 +689,25 @@ export function createCustomizationsManager(
     });
   };
 
-  const create = async (): Promise<SeedBibleCustomization> => {
+  /**
+   * Resolves which built-in preset (Light, Dark, ...) a new variant should
+   * be seeded from. `presetId` is one of `theme.themes.value`'s own ids; an
+   * unrecognized or omitted id falls back to whichever preset the viewer is
+   * currently using, matching the previous (implicit) behavior.
+   */
+  const resolvePreset = (presetId?: string): BibleTheme =>
+    theme.themes.value.find((t) => t.id === presetId) ??
+    theme.basePresetTheme.value;
+
+  const create = async (presetId?: string): Promise<SeedBibleCustomization> => {
     const userId = login.userId.value;
     if (!userId) {
       throw new Error("Cannot create a customization while signed out.");
     }
 
     const now = Date.now();
-    const variant = buildVariant(
-      theme.basePresetTheme.value.name,
-      theme.currentTheme.value
-    );
+    const preset = resolvePreset(presetId);
+    const variant = buildVariant(preset.name, preset);
     const record: SeedBibleCustomization = {
       id: `customization_${uuid()}`,
       name: `Customization ${customizations.value.length + 1}`,
@@ -751,18 +760,21 @@ export function createCustomizationsManager(
     editingCustomization.value = { ...current, name, updatedAt: Date.now() };
   };
 
-  const addEditingVariant = (): CustomizationThemeVariant | null => {
+  const addEditingVariant = (
+    presetId?: string
+  ): CustomizationThemeVariant | null => {
     const current = editingCustomization.value;
     if (!current) {
       return null;
     }
 
-    const baseName = theme.basePresetTheme.value.name;
+    const preset = resolvePreset(presetId);
+    const baseName = preset.name;
     const usedNames = new Set(current.variants.map((v) => v.name));
     const name = usedNames.has(baseName)
       ? `Variant ${current.variants.length + 1}`
       : baseName;
-    const variant = buildVariant(name, theme.currentTheme.value);
+    const variant = buildVariant(name, preset);
 
     editingCustomization.value = {
       ...current,
