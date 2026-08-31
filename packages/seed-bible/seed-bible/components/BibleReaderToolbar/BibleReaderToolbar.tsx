@@ -392,6 +392,10 @@ function removeSharedHighlightsFromSelection(
  *   leave any existing personal highlight on those verses alone. The broadcast
  *   covers it for as long as it lives (the reader draws a decoration highlight
  *   over a saved one) and it reappears when the broadcast expires.
+ *
+ * Either way, the verse selection is cleared once the highlight is applied —
+ * the selection and its toolbar were otherwise left sitting open after every
+ * highlight, forcing an extra dismiss (#1704).
  */
 function applyHighlightWithSession(
   rs: BibleReadingState,
@@ -408,6 +412,7 @@ function applyHighlightWithSession(
     // highlighting silently did nothing for them. Saving is the only thing this
     // can mean, so a signed-out user is asked to sign in before it applies.
     void rs.highlightSelectedVerses(details);
+    rs.clearSelectedVerses();
     return;
   }
 
@@ -419,6 +424,7 @@ function applyHighlightWithSession(
   }
 
   broadcastDecorationToSession(session, rs, details);
+  rs.clearSelectedVerses();
 }
 
 /**
@@ -2445,6 +2451,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     // while the user had no permission to broadcast — and
                     // "clear" has to mean the verse ends up unhighlighted.
                     void rs.unhighlightSelectedVerses();
+                    // Clearing a highlight should clear the selection too,
+                    // same as applying one (#1704).
+                    rs.clearSelectedVerses();
                   }}
                   aria-label={t("clear-highlight", {
                     defaultValue: "Clear highlight",

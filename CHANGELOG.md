@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Applying or clearing a highlight now clears the verse selection and closes the verse toolbar automatically, instead of leaving the selection and toolbar open after every highlight action.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

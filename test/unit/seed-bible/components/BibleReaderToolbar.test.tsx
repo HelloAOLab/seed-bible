@@ -459,11 +459,21 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     });
   }
 
-  /** Clicks the first preset colour, opening the picker first if it is closed. */
-  async function openPickerAndHighlight() {
+  /**
+   * Opens the highlight colour picker if it is closed. The picker (and the
+   * "Clear" button, which lives inside it) auto-closes whenever the
+   * selection is cleared, so this has to run again after every highlight —
+   * highlighting always clears the selection (#1704).
+   */
+  async function openPicker() {
     if (!container.querySelector(".sb-verse-toolbar-color-button")) {
       await click(".sb-verse-toolbar-highlight-trigger");
     }
+  }
+
+  /** Clicks the first preset colour, opening the picker first if it is closed. */
+  async function openPickerAndHighlight() {
+    await openPicker();
     await click(".sb-verse-toolbar-color-button");
   }
 
@@ -487,9 +497,47 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     expect(readingState.highlights.value.highlights).toHaveLength(1);
 
+    // Highlighting clears the selection (and with it, the verse toolbar) —
+    // reselect the verse and reopen the picker to bring the clear button
+    // back before clicking it.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
+  });
+
+  it("clears the verse selection and closes the toolbar after applying a highlight", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    await openPickerAndHighlight();
+
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
+  it("clears the verse selection and closes the toolbar after clearing a highlight", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPickerAndHighlight();
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+
+    // Highlighting already cleared the selection — reselect it and reopen the
+    // picker to bring the clear button back.
+    await selectFirstVerse();
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+    await openPicker();
+
+    await click(".sb-verse-toolbar-clear");
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
 
   it("broadcasts without saving when the session expires highlights", async () => {
@@ -528,6 +576,9 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await act(async () => {
       options.value = { ...options.value, highlightDurationSeconds: 16 };
     });
+    // Highlighting cleared the selection made above — reselect the verse to
+    // re-highlight it.
+    await selectFirstVerse();
     await openPickerAndHighlight();
 
     // The broadcast covers the saved highlight while it lives and uncovers it
@@ -558,6 +609,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
 
     // Nothing was ever saved, so clearing has no write to make — and asking for
     // an account to undo something that never persisted is pure interruption.
@@ -603,6 +658,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     expect(broadcastHighlights()).toHaveLength(1);
 
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(removeSharedDecoration).toHaveBeenCalledWith(
@@ -622,6 +681,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     attachFakeSession({ canDecorate: true });
     await renderToolbar();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
@@ -632,6 +695,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     const { readingState } = await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // so the clear button is showing again to check.
+    await selectFirstVerse();
+    await openPicker();
 
     expect(broadcastHighlights()).toHaveLength(0);
     expect(readingState.highlights.value.highlights).toHaveLength(1);
@@ -643,6 +710,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     const { readingState, verseNumber } = await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // so the clear button is showing again to check.
+    await selectFirstVerse();
+    await openPicker();
 
     // Stand in for the session's highlight timer firing. Nothing was saved, so
     // the verse is genuinely unhighlighted again and there is nothing to clear.
