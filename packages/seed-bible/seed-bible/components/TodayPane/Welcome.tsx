@@ -19,8 +19,13 @@ export const Welcome = (props: {
   onOpenBookSelector: () => void;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) => {
-  const { bookNames, getVerseText, lastTranslationId, getDefaultTranslation } =
-    props.today;
+  const {
+    bookNames,
+    lastTranslationBooks,
+    getVerseText,
+    lastTranslationId,
+    getDefaultTranslation,
+  } = props.today;
   const username = props.login.profile.value?.name;
   const { t } = useI18n();
   // Read here in the render body, which is a reactive scope, so a theme switch
@@ -28,31 +33,47 @@ export const Welcome = (props: {
   const theme = props.theme.value;
 
   const welcomeVerse = useSignal("");
-  const johnBookName = bookNames.value.get("JHN") ?? "JHN";
+
+  const johnBookName = bookNames.value.get("JHN");
+  const firstBook = lastTranslationBooks.value?.books[0];
+  // John is the usual welcome passage, but not every translation has it (an
+  // Old Testament-only translation, say) -- fall back to the translation's
+  // own first book (typically Genesis) when it doesn't. While no book data
+  // has loaded yet, `firstBook` is also undefined, so this keeps the raw
+  // "JHN" id as a loading placeholder rather than guessing, matching
+  // BibleReader's `currentBook.value?.name ?? bookId.value` pattern.
+  const welcomeBookId =
+    johnBookName !== undefined ? "JHN" : (firstBook?.id ?? "JHN");
+  const welcomeBookName = johnBookName ?? firstBook?.name ?? welcomeBookId;
 
   useEffect(() => {
     let isActive = true;
 
     const translationId =
       lastTranslationId.value ?? getDefaultTranslation() ?? "";
-    const mappedVerse = WELCOME_VERSE_MAP[translationId];
+    // The table only covers John 1:1 -- once the target has fallen back to a
+    // different book, it no longer applies.
+    const mappedVerse =
+      welcomeBookId === "JHN" ? WELCOME_VERSE_MAP[translationId] : undefined;
 
     // The table is the common case and needs no network round trip; the API
     // is only a fallback for a translation the table has not been given yet.
     if (mappedVerse !== undefined) {
       welcomeVerse.value = `"${mappedVerse}"`;
     } else {
-      void getVerseText(translationId, "JHN", 1, 1).then((rawVerseText) => {
-        if (isActive) {
-          welcomeVerse.value = `"${rawVerseText ?? ""}"`;
+      void getVerseText(translationId, welcomeBookId, 1, 1).then(
+        (rawVerseText) => {
+          if (isActive) {
+            welcomeVerse.value = `"${rawVerseText ?? ""}"`;
+          }
         }
-      });
+      );
     }
 
     return () => {
       isActive = false;
     };
-  }, [lastTranslationId.value]);
+  }, [lastTranslationId.value, welcomeBookId]);
 
   return (
     <div className={"sb-today-welcome-screen"}>
@@ -65,7 +86,7 @@ export const Welcome = (props: {
           : t("anonymous-greeting", { defaultValue: "Welcome!" })}
       </h1>
       <span className={"sb-today-welcome-screen-book"}>
-        {`${johnBookName.toUpperCase()} 1:1`}
+        {`${welcomeBookName.toUpperCase()} 1:1`}
       </span>
       {/*
         Real nodes rather than `dangerouslySetInnerHTML`. The `<hl>` markers are
@@ -108,7 +129,7 @@ export const Welcome = (props: {
           onClick={() =>
             // `onOpenPassage` falls back to the default translation when unset.
             props.onOpenPassage({
-              bookId: "JHN",
+              bookId: welcomeBookId,
               chapter: 1,
               translationId: lastTranslationId.value,
             })
@@ -116,7 +137,7 @@ export const Welcome = (props: {
         >
           {t("read-book-chapter-button", {
             defaultValue: "Read {{bookName}} {{chapterNumber}}",
-            bookName: johnBookName,
+            bookName: welcomeBookName,
             chapterNumber: 1,
           })}
           <MaterialIcon>arrow_right_alt</MaterialIcon>

@@ -56,10 +56,18 @@ describe("Welcome", () => {
     options: {
       username?: string | undefined;
       bookNames?: Map<string, string>;
+      firstBook?: { id: string; name: string };
     } = {}
   ) {
     const today = todayStub({
       bookNames: signal(options.bookNames ?? new Map([["JHN", "John"]])),
+      lastTranslationBooks: signal(
+        options.firstBook
+          ? {
+              books: [{ ...options.firstBook, numberOfChapters: 1 }],
+            }
+          : null
+      ),
       getVerseText,
       lastTranslationId,
       getDefaultTranslation,
@@ -107,6 +115,16 @@ describe("Welcome", () => {
     it("falls back to the raw book id when the John name is missing", () => {
       setup({ bookNames: new Map() });
       expect(q(".sb-today-welcome-screen-book")!.textContent).toBe("JHN 1:1");
+    });
+
+    it("falls back to the translation's first book when John is unavailable", () => {
+      setup({
+        bookNames: new Map([["GEN", "Genesis"]]),
+        firstBook: { id: "GEN", name: "Genesis" },
+      });
+      expect(q(".sb-today-welcome-screen-book")!.textContent).toBe(
+        "GENESIS 1:1"
+      );
     });
   });
 
@@ -196,6 +214,25 @@ describe("Welcome", () => {
       expect(q(".sb-today-welcome-screen-verse")!.textContent).toBe('""');
     });
 
+    it("skips the John 1:1 table and fetches the first book's first verse when John is unavailable", async () => {
+      // AAB is mapped in the John 1:1 table, but that table shouldn't apply
+      // once the target has fallen back to a different book.
+      lastTranslationId.value = "AAB";
+      getVerseText.mockResolvedValue(
+        "In the beginning God created the heavens and the earth."
+      );
+      setup({
+        bookNames: new Map([["GEN", "Genesis"]]),
+        firstBook: { id: "GEN", name: "Genesis" },
+      });
+      await act(async () => {});
+
+      expect(getVerseText).toHaveBeenCalledWith("AAB", "GEN", 1, 1);
+      expect(q(".sb-today-welcome-screen-verse")!.textContent).toBe(
+        '"In the beginning God created the heavens and the earth."'
+      );
+    });
+
     it("ignores a stale fetch result after the translation changes", async () => {
       const d1 = deferred<string>();
       const d2 = deferred<string>();
@@ -273,6 +310,31 @@ describe("Welcome", () => {
       setup({ bookNames: new Map() });
       const button = btn(".sb-today-welcome-screen-start-button");
       expect(button.textContent).toContain("Read JHN 1");
+    });
+
+    it("falls back to the translation's first book when John is unavailable", () => {
+      setup({
+        bookNames: new Map([["GEN", "Genesis"]]),
+        firstBook: { id: "GEN", name: "Genesis" },
+      });
+      const button = btn(".sb-today-welcome-screen-start-button");
+      expect(button.textContent).toContain("Read Genesis 1");
+    });
+
+    it("opens the translation's first book when John is unavailable", () => {
+      lastTranslationId.value = "KJV";
+      setup({
+        bookNames: new Map([["GEN", "Genesis"]]),
+        firstBook: { id: "GEN", name: "Genesis" },
+      });
+
+      act(() => btn(".sb-today-welcome-screen-start-button").click());
+
+      expect(onOpenPassage).toHaveBeenCalledWith({
+        bookId: "GEN",
+        chapter: 1,
+        translationId: "KJV",
+      });
     });
 
     it("opens John 1 with the last translation id", () => {
