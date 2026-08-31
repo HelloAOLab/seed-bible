@@ -2347,13 +2347,13 @@ describe("createBibleReadingState", () => {
 
   it("retryLoad() repeats the initial load when that is what failed", async () => {
     const responses = createReadingManagerResponseMap();
-    const translationsUrl = makeExampleUrl("/api/available_translations.json");
-    const translationsResponse = responses[translationsUrl]!;
-    responses[translationsUrl] = createResponse(
-      { error: true },
-      500,
-      "Server Error"
-    );
+    // A plain, already-valid translation ID resolves via its own book
+    // catalog rather than the full translation list (see the "loads a valid
+    // translation without ever fetching the full catalog" test below), so
+    // that's the request that has to fail here to exercise this path.
+    const booksUrl = makeExampleUrl("/api/AAB/books.json");
+    const booksResponse = responses[booksUrl]!;
+    responses[booksUrl] = createResponse({ error: true }, 500, "Server Error");
 
     setWebResponses(responses);
     const state = createBibleReadingState(createDataManager());
@@ -2362,11 +2362,49 @@ describe("createBibleReadingState", () => {
     expect(state.error.value).not.toBeNull();
     expect(state.chapterData.value).toBeNull();
 
-    responses[translationsUrl] = translationsResponse;
+    responses[booksUrl] = booksResponse;
     await state.retryLoad();
 
     expect(state.error.value).toBeNull();
     expect(state.chapterData.value?.chapter.number).toBe(1);
+  });
+
+  it("loads a valid translation named by the URL without ever fetching the full translation catalog", async () => {
+    // The overwhelmingly common case — a URL that already names a valid
+    // translation — should validate it against just that translation's own
+    // book catalog, not the full (much larger) multi-translation list.
+    const responses = createReadingManagerResponseMap();
+    setWebResponses(responses);
+
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.error.value).toBeNull();
+    expect(state.chapterData.value?.chapter.number).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      makeExampleUrl("/api/available_translations.json"),
+      expect.anything()
+    );
+  });
+
+  it("falls back to the full catalog when the requested translation's own books fetch fails", async () => {
+    const responses = createReadingManagerResponseMap();
+    const booksUrl = makeExampleUrl("/api/AAB/books.json");
+    responses[booksUrl] = createResponse({ error: true }, 500, "Server Error");
+    setWebResponses(responses);
+
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    // No `fallbackToFirstAvailableWhenMissing` was requested (a plain
+    // translation ID, not a deep link), so a translation that genuinely can't
+    // be validated still surfaces as an error rather than silently
+    // substituting a different one.
+    expect(state.error.value).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeExampleUrl("/api/available_translations.json"),
+      expect.anything()
+    );
   });
 
   describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {

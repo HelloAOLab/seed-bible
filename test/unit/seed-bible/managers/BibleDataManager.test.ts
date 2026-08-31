@@ -9,6 +9,7 @@ import {
   parseVerseReferences,
   type BibleDataManager,
   type BookId,
+  type TranslationsCache,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import {
   FreeUseBibleAPI,
@@ -268,6 +269,166 @@ describe("createBibleDataManager", () => {
     expect(manager.buildTranslationId("NIV")).toBe(
       makeEndpointUrl(ALT_ENDPOINT, "api/NIV/books.json")
     );
+  });
+
+  describe("translationsCache option", () => {
+    function createTestCache(): TranslationsCache {
+      const store = new Map<string, Promise<Translation[]>>();
+      return {
+        get: (endpoint) => store.get(endpoint),
+        set: (endpoint, promise) => store.set(endpoint, promise),
+        delete: (endpoint) => store.delete(endpoint),
+      };
+    }
+
+    it("shares one fetch across separate managers that share a cache", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+
+      const translationsCache = createTestCache();
+      const managerA = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+      const managerB = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await managerA.getTranslations();
+      await managerB.getTranslations();
+
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("shares one in-flight fetch across managers racing on a cache miss", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+
+      const translationsCache = createTestCache();
+      const managerA = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+      const managerB = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await Promise.all([
+        managerA.getTranslations(),
+        managerB.getTranslations(),
+      ]);
+
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("refresh: true bypasses and evicts the cache", async () => {
+      const updatedNiv = {
+        ...translations.translations[1]!,
+        sha256: "updated",
+      };
+      webGetMock
+        .mockResolvedValueOnce(createResponse(translations))
+        .mockResolvedValueOnce(
+          createResponse({
+            translations: [translations.translations[0]!, updatedNiv],
+          })
+        );
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await manager.getTranslations();
+      const cachedAgain = await manager.getTranslations();
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+      expect(cachedAgain.find((t) => t.id === "NIV")?.sha256).not.toBe(
+        "updated"
+      );
+
+      const refreshed = await manager.getTranslations(undefined, {
+        refresh: true,
+      });
+      expect(webGetMock).toHaveBeenCalledTimes(2);
+      expect(refreshed.find((t) => t.id === "NIV")?.sha256).toBe("updated");
+    });
+
+    it("does not cache a failed fetch, so the next call retries", async () => {
+      webGetMock
+        .mockRejectedValueOnce(new Error("network down"))
+        .mockResolvedValueOnce(createResponse(translations));
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await expect(manager.getTranslations()).rejects.toThrow("network down");
+
+      const result = await manager.getTranslations();
+      expect(result).toEqual(translations.translations);
+      expect(webGetMock).toHaveBeenCalledTimes(2);
+    });
+
+    // Regression: a slow request's own `.catch` used to delete whatever the
+    // cache currently held for that endpoint, not just its own (now stale)
+    // entry. A `refresh: true` call that starts and finishes while the
+    // original request is still hanging replaces the cache entry with a
+    // fresh, valid one — the original request rejecting afterward must not
+    // wipe that out.
+    it("does not evict a fresher cache entry when a superseded request rejects later", async () => {
+      function createDeferred<T>() {
+        let resolve!: (value: T) => void;
+        let reject!: (error: unknown) => void;
+        const promise = new Promise<T>((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+        return { promise, resolve, reject };
+      }
+
+      const deferredA = createDeferred<ReturnType<typeof createResponse>>();
+      const deferredB = createDeferred<ReturnType<typeof createResponse>>();
+      webGetMock
+        .mockImplementationOnce(() => deferredA.promise)
+        .mockImplementationOnce(() => deferredB.promise);
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      // Both calls run synchronously up to their own first `await`, so this
+      // reproduces the exact race: A's fetch starts and hangs, then B's
+      // `refresh: true` call supersedes it before A ever settles.
+      const callA = manager.getTranslations();
+      const callB = manager.getTranslations(undefined, { refresh: true });
+      const normalizedEndpoint = manager.endpoints.value[0]!;
+
+      deferredB.resolve(createResponse(translations));
+      await callB;
+      const cachedAfterB = translationsCache.get(normalizedEndpoint);
+      expect(cachedAfterB).toBeDefined();
+
+      deferredA.reject(new Error("stale request failed"));
+      await expect(callA).rejects.toThrow("stale request failed");
+
+      // B's entry must still be the current cache contents.
+      expect(translationsCache.get(normalizedEndpoint)).toBe(cachedAfterB);
+    });
   });
 });
 

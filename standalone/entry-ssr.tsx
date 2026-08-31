@@ -1,6 +1,7 @@
 import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
+import { DEFAULT_APP_CONFIG } from "../packages/seed-bible/seed-bible/app/appConfig";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   findClosestBookId,
@@ -19,6 +20,11 @@ import {
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
 import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import {
+  composeThemeStyleText,
+  THEME_PRESET_STYLE_TEXT,
+} from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { ssrTranslationsCache } from "./ssrTranslationsCache";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -46,6 +52,11 @@ export interface RenderOptions {
    * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
    *   should be injected, so the client can seed its own API cache with data
    *   the server already fetched instead of re-fetching it.
+   * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
+   *   should be injected, inside a `<style id="sb-theme-styles">` tag.
+   * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
+   *   CSS text should be injected, for the pre-hydration script that applies
+   *   a returning visitor's saved theme before first paint.
    * - `<!--META-->` where any additional meta tags should be injected (optional).
    *
    * The host server loads this from disk at startup and passes it to the render function on each request, allowing it to be customized or overridden per request if needed.
@@ -55,6 +66,34 @@ export interface RenderOptions {
 }
 
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
+
+/**
+ * Excludes the full multi-translation catalog from what gets embedded in the
+ * page. It's large, and unlike the rest of the seed snapshot it isn't tied to
+ * the specific chapter this request rendered — a returning visitor likely
+ * already has it in their browser's own HTTP cache from a prior page, so
+ * re-sending it inline on every single request just bloats the HTML. The
+ * client fetches it itself, over a normal (cacheable) request, on the rare
+ * loads that actually need it.
+ */
+function omitAvailableTranslationsResponse(
+  responseCache: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(responseCache).filter(
+      ([url]) => !url.endsWith("/available_translations.json")
+    )
+  );
+}
+
+/**
+ * Static across every request — the built-in presets have no custom
+ * overrides, so this only needs computing once. Read by the pre-hydration
+ * inline script in `index.html`, before any JS bundle loads.
+ */
+const themePresetsJson = escapeForScript(
+  JSON.stringify(THEME_PRESET_STYLE_TEXT)
+);
 
 /**
  * Substitutes a literal placeholder for a value, without `String.replace`'s
@@ -364,17 +403,20 @@ export async function render(
   | { redirectTo: string; redirectStatus?: number; vary?: string }
   | string
 > {
-  const { config } = options;
+  const { config: injectedConfig } = options;
 
-  const redirectTo = legacyReadingUrlRedirect(options.path, config.basePath);
+  const redirectTo = legacyReadingUrlRedirect(
+    options.path,
+    injectedConfig.basePath
+  );
   if (redirectTo) {
     return { redirectTo };
   }
 
   const languageRedirectTo = acceptLanguageRedirect(
     options.path,
-    config.basePath,
-    config.acceptedLanguages
+    injectedConfig.basePath,
+    injectedConfig.acceptedLanguages
   );
   if (languageRedirectTo) {
     return {
@@ -383,6 +425,13 @@ export async function render(
       vary: "Accept-Language",
     };
   }
+
+  // Combine the injected config with the defaults
+  // This allows the server to read the injected branding config and pass it to the app during SSR, while still providing defaults for any missing values.
+  const config = {
+    ...DEFAULT_APP_CONFIG,
+    ...injectedConfig,
+  };
 
   // A pure URL-level check (no network involved): a canonical-shaped path
   // whose book segment doesn't resolve even via a fuzzy match has nothing
@@ -411,6 +460,7 @@ export async function render(
   const state = createSeedBibleState({
     config,
     initialHref: href,
+    translationsCache: ssrTranslationsCache,
   });
 
   // Block until the detected language's translations are loaded so the
@@ -457,16 +507,49 @@ export async function render(
     </>
   );
 
-  const configJson = escapeForScript(JSON.stringify(config));
+  // Metadata about *this render*, not part of the deployment config the
+  // render itself needed — kept separate from `config` (which is what's
+  // threaded into <Main config={config} .../> above) so the hydration gate
+  // (app/hydrationGate.ts) has something to verify against without the app
+  // itself needing to care about it.
+  //
+  // Covers both the SSR-only timeout and a real fetch error. A deterministic
+  // failure (e.g. "book not found") would leave the same gap for a live
+  // client, but an upstream error hitting the server's own request (a
+  // transient blip, rate limiting keyed to the server's shared IP) is not
+  // guaranteed to hit a visitor's browser too — and until the catalog or
+  // chapter loads, things like next/previous availability compute off no
+  // data. Treating any unsettled-for-a-bad-reason load as a hydration hazard
+  // costs nothing but an extra client-side render() when the failure really
+  // was deterministic.
+  const ssrChapterContentSettled = !state.tabs.tabs.value.some(
+    (tab) => tab.readingState.initialChapterLoadUnreliable.value
+  );
+  const clientConfig: AppConfig = {
+    ...config,
+    renderedForPath: options.path,
+    ssrChapterContentSettled,
+  };
+
+  const configJson = escapeForScript(JSON.stringify(clientConfig));
   // Snapshotted after the render above settles, so it includes every
   // response the render actually fetched (translations, book catalog,
   // chapter content) — that's what lets the client skip re-fetching them.
   const seedJson = escapeForScript(
-    JSON.stringify(state.bibleData.api.snapshotResponseCache())
+    JSON.stringify(
+      omitAvailableTranslationsResponse(
+        state.bibleData.api.snapshotResponseCache()
+      )
+    )
   );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+    [
+      "<!-- THEME_STYLE_TAG -->",
+      composeThemeStyleText(state.theme.currentTheme.value),
+    ],
+    ["<!-- THEME_PRESETS_JSON -->", themePresetsJson],
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
     ["<!-- APP_HTML -->", appHtml],

@@ -258,6 +258,12 @@ describe("tabs Share control", () => {
   it("opens the share sheet from the mobile tabs header instead of creating a session", async () => {
     window.innerWidth = 400;
     const state = await createState();
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
     expect(state.app.isMobile.value).toBe(true);
     const createSharedSession = vi.spyOn(state.app, "createSharedSession");
     state.sidebar.isMobileOpen.value = true;

@@ -11,7 +11,7 @@ import { FloatingReaderPanels } from "../components/FloatingReaderPanels/Floatin
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { useEffect } from "preact/hooks";
-import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
+import { useSignalEffect } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
 import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
@@ -30,8 +30,8 @@ import { isWebKit } from "./ssrEnv";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
-import "./styles/base.css";
-import "./styles/utilities.css";
+import "./styles/base.inline.css";
+import "./styles/utilities.inline.css";
 import {
   OnboardingModals,
   LanguageUnavailableModal,
@@ -42,16 +42,13 @@ import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 
 /**
- * A collection of link/script's providing expected resources from external sources.
- * @returns
+ * Font `<link>`s. Theme CSS used to render here too, but now writes directly
+ * to `document.head` from a `ThemeManager` effect (see `ThemeManager.tsx`'s
+ * `createTheme`) — that target is never diffed by Preact, so it carries no
+ * hydration-mismatch risk the way an in-tree `<style>` whose text derives
+ * from `localStorage` would.
  */
-export function ExternalResourceDependencies({
-  themeCssVariables,
-  themeCssClasses,
-}: {
-  themeCssVariables: ReadonlySignal<string>;
-  themeCssClasses: ReadonlySignal<string>;
-}) {
+export function ExternalResourceDependencies() {
   return (
     <>
       <link
@@ -62,8 +59,6 @@ export function ExternalResourceDependencies({
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
-      <style>{`body {\n${themeCssVariables}\n}`}</style>
-      <style>{themeCssClasses}</style>
     </>
   );
 }
@@ -135,6 +130,37 @@ function MainBody({
     state.extensions.loadDefaultExtensions();
   }, []);
 
+  // One-time correction: the viewport signals seed to match the server's
+  // UA-based guess so the first hydrate pass can't mismatch, but that guess
+  // rarely matches the device's real size. Apply the real dimensions once,
+  // right after Preact's first commit — a normal diffed re-render, not a
+  // hydration mismatch.
+  useEffect(() => {
+    state.app.applyViewport();
+  }, []);
+
+  // Deferred real read: `login.localConfig` seeds empty to match SSR, so the
+  // first hydrate pass can't disagree with the server over font size, UI
+  // size, toolbar customization, disablePanels, theme, etc. Apply the
+  // device's real saved config once, right after mount —
+  // `SettingsManager`'s own effect() already re-derives `settings` whenever
+  // `login.localConfig` changes, so no change is needed there.
+  useEffect(() => {
+    state.login.hydrateLocalConfig();
+  }, []);
+
+  // Deferred real read, same reason as the two above: saved tabs and their slot
+  // layout, the cached translation catalog, the selector view mode, and the
+  // tutorial/onboarding flags all seed to what the server rendered so the first
+  // hydrate pass can't disagree with it, then get corrected here. Unlike the
+  // others this one is load-bearing for correctness rather than polish — a
+  // returning visitor's extra tabs would mount `TabRow`s and panes the served
+  // HTML never had, which is the one divergence `hydrate()` reports instead of
+  // silently patching.
+  useEffect(() => {
+    state.app.hydrateFromStorage();
+  }, []);
+
   if (typeof document !== "undefined") {
     useSignalEffect(() => {
       document.title = state.app.title.value;
@@ -158,7 +184,7 @@ function MainContent(props: {
   const { renderedAsWebKit } = useAppConfig();
   const webkitClass = isWebKit(renderedAsWebKit) ? "is-webkit" : "";
   const appDirection = isRtl ? "rtl" : "ltr";
-  const { theme, selector } = state;
+  const { selector } = state;
   const sidePane =
     state.app.effectivePanes.value.find((pane) => pane.placement === "side") ??
     null;
@@ -183,10 +209,7 @@ function MainContent(props: {
           overflow: "hidden",
         }}
       >
-        <ExternalResourceDependencies
-          themeCssVariables={theme.themeCssVariables}
-          themeCssClasses={theme.themeCssClasses}
-        />
+        <ExternalResourceDependencies />
         <Sidebar state={state} />
 
         <div className="sb-content-row">

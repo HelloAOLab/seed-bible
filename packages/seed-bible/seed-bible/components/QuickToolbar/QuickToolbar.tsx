@@ -1,3 +1,4 @@
+import "./QuickToolbar.inline.css";
 import "./QuickToolbar.css";
 import { type ToolsManager } from "../../managers/BibleToolsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
