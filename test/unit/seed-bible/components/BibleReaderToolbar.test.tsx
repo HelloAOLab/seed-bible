@@ -733,6 +733,131 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     expect(clearButton()?.disabled).toBe(true);
   });
+
+  /**
+   * Fires the native colour input's `input` event, as the OS colour dialog
+   * would while the user drags. (Preact rewrites this input's `onChange` to
+   * also listen for the native `input` event rather than `change` — see
+   * `preact/compat`'s `onChangeInputType` — so both of the component's
+   * `onChange`/`onInput` handlers respond to this, same as a real browser.)
+   */
+  function dragCustomColor(value: string) {
+    const input = container.querySelector<HTMLInputElement>(
+      ".sb-verse-toolbar-color-input"
+    );
+    if (!input) {
+      throw new Error("No element matched .sb-verse-toolbar-color-input");
+    }
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  /**
+   * Blurs the colour input, as closing the native colour dialog would.
+   * (Preact rewrites `onBlur` to listen for the native `focusout` event.)
+   */
+  function closeCustomColorDialog() {
+    const input = container.querySelector<HTMLInputElement>(
+      ".sb-verse-toolbar-color-input"
+    );
+    if (!input) {
+      throw new Error("No element matched .sb-verse-toolbar-color-input");
+    }
+    input.dispatchEvent(new Event("focusout", { bubbles: true }));
+  }
+
+  it("applies a live-dragged custom color without clearing the selection, clearing only once the dialog closes", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    // Fake timers only start now — `click()` (used by `openPicker()`) awaits
+    // a real `setTimeout`, which would never resolve once timers are faked.
+    vi.useFakeTimers();
+    try {
+      // The OS colour dialog fires `input` continuously while dragging.
+      await act(async () => {
+        dragCustomColor("#112233");
+        await vi.advanceTimersByTimeAsync(300);
+      });
+
+      // The debounced live-drag commit applies the color, but the selection
+      // (and picker) stays open so the user can keep adjusting the shade —
+      // clearing here would silently drop any further tweaking (#1725).
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#112233"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+      expect(
+        container.querySelector(".sb-verse-toolbar-color-input")
+      ).not.toBeNull();
+
+      // Still dragging — another live commit updates the color and still
+      // doesn't clear the selection.
+      await act(async () => {
+        dragCustomColor("#334455");
+        await vi.advanceTimersByTimeAsync(300);
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#334455"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+
+      // The dialog closes: the color already settled 300ms ago, so this just
+      // clears the selection, same as any other highlight action.
+      await act(async () => {
+        closeCustomColorDialog();
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#334455"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("flushes a still-pending custom color immediately when the dialog closes before the debounce settles", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    vi.useFakeTimers();
+    try {
+      // Pick a color and close the dialog right away, well inside the 300ms
+      // debounce window — the pending pick shouldn't be lost to the delay.
+      await act(async () => {
+        dragCustomColor("#112233");
+        closeCustomColorDialog();
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#112233"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves the selection untouched when the color dialog closes without picking a color", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    await act(async () => {
+      closeCustomColorDialog();
+    });
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+  });
 });
 
 describe("BibleReaderToolbar mobile More menu", () => {

@@ -393,9 +393,13 @@ function removeSharedHighlightsFromSelection(
  *   covers it for as long as it lives (the reader draws a decoration highlight
  *   over a saved one) and it reappears when the broadcast expires.
  *
- * Either way, the verse selection is cleared once the highlight is applied —
+ * By default the verse selection is cleared once the highlight is applied —
  * the selection and its toolbar were otherwise left sitting open after every
- * highlight, forcing an extra dismiss (#1704).
+ * highlight, forcing an extra dismiss (#1704). `clearSelection` lets a caller
+ * opt out: the custom-color picker's live-drag commits pass `false` so the
+ * selection survives while the color dialog is still open, letting the user
+ * keep tweaking the shade instead of losing the selection after the first
+ * settled color.
  */
 function applyHighlightWithSession(
   rs: BibleReadingState,
@@ -405,26 +409,28 @@ function applyHighlightWithSession(
     customColor?: string;
     customFontColor?: string;
   },
-  isSignedIn: boolean
+  isSignedIn: boolean,
+  clearSelection = true
 ): void {
   if (!session || !session.userCanDecorate(session.localSessionId.value)) {
     // A participant who can't broadcast used to match neither branch here, so
     // highlighting silently did nothing for them. Saving is the only thing this
     // can mean, so a signed-out user is asked to sign in before it applies.
     void rs.highlightSelectedVerses(details);
+  } else {
+    const duration = session.options.value.highlightDurationSeconds;
+    const isTransient = duration !== null && duration > 0;
+
+    if (!isTransient && isSignedIn) {
+      void rs.highlightSelectedVerses(details);
+    }
+
+    broadcastDecorationToSession(session, rs, details);
+  }
+
+  if (clearSelection) {
     rs.clearSelectedVerses();
-    return;
   }
-
-  const duration = session.options.value.highlightDurationSeconds;
-  const isTransient = duration !== null && duration > 0;
-
-  if (!isTransient && isSignedIn) {
-    void rs.highlightSelectedVerses(details);
-  }
-
-  broadcastDecorationToSession(session, rs, details);
-  rs.clearSelectedVerses();
 }
 
 /**
@@ -1196,30 +1202,79 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
   const selectionUI = useComputed(() => settings.settings.value.selectionUI);
 
-  // Debounce the commit so rapid `change` events from the native color
-  // picker (fired as the user drags) don't add each intermediate color to
-  // the custom palette — only the final settled color is saved.
+  // The most recent color from a still-pending debounce, so a blur that
+  // lands before the debounce fires can apply it immediately instead of
+  // losing it. `null` once there's nothing pending.
+  const customColorPendingRef = useRef<string | null>(null);
+  // Whether any color from the current "Add custom color" session has been
+  // applied yet — distinguishes "the dialog closed after picking a color"
+  // (clear the selection) from "the dialog closed without picking one"
+  // (leave the selection alone; nothing happened).
+  const customColorAppliedRef = useRef(false);
+
+  const applyCustomColor = (color: string, clearSelection: boolean) => {
+    settings.addCustomHighlightColor(color);
+    const rs = readingState.value;
+    if (rs) {
+      applyHighlightWithSession(
+        rs,
+        sessionState.value,
+        {
+          colorId: "yellow",
+          customColor: color,
+          customFontColor: getContrastTextColor(color),
+        },
+        !!login.userId.value,
+        clearSelection
+      );
+    }
+    customColorAppliedRef.current = true;
+  };
+
+  // Debounce the commit so rapid `input`/`change` events from the native
+  // color picker (fired as the user drags) don't add each intermediate color
+  // to the custom palette — only the settled color is saved. These debounced
+  // commits never clear the selection themselves: the color dialog may still
+  // be open, and clearing here would silently drop any further tweaking
+  // within the same dialog session (#1725). The selection is cleared for real
+  // in `finishCustomColor`, once the input actually loses focus.
   const commitCustomColor = (color: string) => {
     if (customColorCommitTimeoutRef.current !== null) {
       window.clearTimeout(customColorCommitTimeoutRef.current);
     }
+    customColorPendingRef.current = color;
     customColorCommitTimeoutRef.current = window.setTimeout(() => {
-      settings.addCustomHighlightColor(color);
-      const rs = readingState.value;
-      if (rs) {
-        applyHighlightWithSession(
-          rs,
-          sessionState.value,
-          {
-            colorId: "yellow",
-            customColor: color,
-            customFontColor: getContrastTextColor(color),
-          },
-          !!login.userId.value
-        );
-      }
       customColorCommitTimeoutRef.current = null;
+      const pending = customColorPendingRef.current;
+      customColorPendingRef.current = null;
+      if (pending !== null) {
+        applyCustomColor(pending, false);
+      }
     }, 300);
+  };
+
+  // Runs when the color input loses focus, i.e. the OS color dialog closed —
+  // the reliable "the user is done" signal, since the native `change` event
+  // this input would otherwise fire is what `onChange` gets rewritten to
+  // listen for as `input` (see the `onChange`/`onInput` props below), so it
+  // can't be used to distinguish "still dragging" from "done" on its own.
+  // Flushes a still-debounced pick immediately rather than waiting the
+  // remaining 300ms, and only clears the selection if a color was actually
+  // applied this dialog session (closing without picking one leaves the
+  // selection untouched, same as before).
+  const finishCustomColor = () => {
+    if (customColorCommitTimeoutRef.current !== null) {
+      window.clearTimeout(customColorCommitTimeoutRef.current);
+      customColorCommitTimeoutRef.current = null;
+    }
+    const pending = customColorPendingRef.current;
+    customColorPendingRef.current = null;
+    if (pending !== null) {
+      applyCustomColor(pending, true);
+    } else if (customColorAppliedRef.current) {
+      readingState.value?.clearSelectedVerses();
+    }
+    customColorAppliedRef.current = false;
   };
 
   // Clear removes a saved highlight *and* the session's broadcast copy, so it
@@ -2424,6 +2479,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     const target = event.currentTarget as HTMLInputElement;
                     commitCustomColor(target.value);
                   }}
+                  onBlur={finishCustomColor}
                 />
 
                 <button
