@@ -5,6 +5,7 @@ import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/B
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -168,6 +169,126 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
   });
 
+  it("clears the verse selection when a tap lands in empty chapter-content space (not on a verse)", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    // Stands in for the real `.sb-chapter-content` BibleReader renders (not
+    // mounted in this unit test) — its padding, the gaps between verse spans,
+    // and section headings all sit inside this container but outside any
+    // `.sb-verse` span, and a tap there should count as "outside" the verse.
+    const chapterContent = document.createElement("div");
+    chapterContent.className = "sb-chapter-content";
+    document.body.appendChild(chapterContent);
+
+    try {
+      await act(async () => {
+        chapterContent.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      chapterContent.remove();
+    }
+  });
+
+  it("does not clear the verse selection when a tap lands on a verse's rendered text", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // The decorator span is what actually wraps a verse's rendered words (see
+    // `.sb-verse-decorator` in `BibleReader.tsx`) — a real tap on the text
+    // lands here, not merely somewhere inside the outer `.sb-verse` span.
+    const verse = document.createElement("span");
+    verse.className = "sb-verse";
+    const decorator = document.createElement("span");
+    decorator.className = "sb-verse-decorator";
+    verse.appendChild(decorator);
+    document.body.appendChild(verse);
+
+    try {
+      await act(async () => {
+        decorator.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      verse.remove();
+    }
+  });
+
+  it("clears the verse selection when a mouse tap lands in a poetry verse's blank space (not on its text)", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // A poetry verse's outer span is `display: block` (`.sb-verse-poetry` in
+    // `BibleReader.inline.css`), so it spans the full content width even when
+    // its actual text — wrapped in the nested `.sb-verse-decorator` — is much
+    // narrower. Tapping that outer span directly (not the decorator) stands
+    // in for a mouse click that lands in the blank margin past a short line,
+    // which should count as "outside" the verse, not "on" it — a mouse click
+    // is precise enough that missing the text is a deliberate miss.
+    const verse = document.createElement("span");
+    verse.className = "sb-verse sb-verse-poetry";
+    const decorator = document.createElement("span");
+    decorator.className = "sb-verse-decorator";
+    verse.appendChild(decorator);
+    document.body.appendChild(verse);
+
+    try {
+      await act(async () => {
+        verse.dispatchEvent(
+          new window.PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerType: "mouse",
+          })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      verse.remove();
+    }
+  });
+
+  it("does not clear the verse selection when a touch tap lands in a poetry verse's blank space", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // Same blank-space scenario as the mouse case above, but a finger is far
+    // less precise than a mouse pointer — there's no "blank space" inside a
+    // verse's box that a touch could deliberately miss the text into the way
+    // a mouse click could. A touch tap here should keep the original,
+    // forgiving behavior of the whole `.sb-verse` block rather than clearing
+    // the selection out from under the finger that just placed it.
+    const verse = document.createElement("span");
+    verse.className = "sb-verse sb-verse-poetry";
+    const decorator = document.createElement("span");
+    decorator.className = "sb-verse-decorator";
+    verse.appendChild(decorator);
+    document.body.appendChild(verse);
+
+    try {
+      await act(async () => {
+        verse.dispatchEvent(
+          new window.PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerType: "touch",
+          })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      verse.remove();
+    }
+  });
+
   it("does not clear the verse selection when the pane covering the reader is tapped", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();
@@ -287,6 +408,64 @@ describe("BibleReaderToolbar — verse selection vs. side panes", () => {
       expect(readingState.selectedVerses.value).toHaveLength(1);
     } finally {
       sidePane.remove();
+    }
+  });
+
+  it("does not clear the verse selection when a tap lands inside a floating pane", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      state.panes.openPane({
+        placement: "floating",
+        title: "Jerusalem",
+        component: () => <div className="test-pane-body" />,
+      });
+    });
+
+    // Stands in for the real overlay pane shell `PaneLayout.tsx` renders for
+    // a floating/fullscreen pane (not mounted in this unit test) — it, unlike
+    // an ordinary reader tab slot, carries the `-detached` modifier.
+    const floatingPane = document.createElement("div");
+    floatingPane.className = "sb-pane-shell sb-pane-shell-detached";
+    document.body.appendChild(floatingPane);
+
+    try {
+      await act(async () => {
+        floatingPane.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      floatingPane.remove();
+    }
+  });
+
+  it("clears the verse selection when a tap lands in the reader's own tab slot (not on a verse)", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // Stands in for the plain `.sb-pane-shell` every reader tab slot renders
+    // in `TabsLayout.tsx` — it carries the same base class as a detached
+    // overlay pane but none of the `-detached` modifier, so a tap here (on
+    // empty reader space, not a verse) should count as "outside" and close
+    // the toolbar, not be mistaken for a tap inside a covering pane.
+    const readerSlot = document.createElement("div");
+    readerSlot.className = "sb-pane-shell sb-pane-slot-1";
+    document.body.appendChild(readerSlot);
+
+    try {
+      await act(async () => {
+        readerSlot.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      readerSlot.remove();
     }
   });
 });
@@ -458,11 +637,21 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     });
   }
 
-  /** Clicks the first preset colour, opening the picker first if it is closed. */
-  async function openPickerAndHighlight() {
+  /**
+   * Opens the highlight colour picker if it is closed. The picker (and the
+   * "Clear" button, which lives inside it) auto-closes whenever the
+   * selection is cleared, so this has to run again after every highlight —
+   * highlighting always clears the selection (#1704).
+   */
+  async function openPicker() {
     if (!container.querySelector(".sb-verse-toolbar-color-button")) {
       await click(".sb-verse-toolbar-highlight-trigger");
     }
+  }
+
+  /** Clicks the first preset colour, opening the picker first if it is closed. */
+  async function openPickerAndHighlight() {
+    await openPicker();
     await click(".sb-verse-toolbar-color-button");
   }
 
@@ -486,9 +675,47 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     expect(readingState.highlights.value.highlights).toHaveLength(1);
 
+    // Highlighting clears the selection (and with it, the verse toolbar) —
+    // reselect the verse and reopen the picker to bring the clear button
+    // back before clicking it.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
+  });
+
+  it("clears the verse selection and closes the toolbar after applying a highlight", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    await openPickerAndHighlight();
+
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
+  it("clears the verse selection and closes the toolbar after clearing a highlight", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPickerAndHighlight();
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+
+    // Highlighting already cleared the selection — reselect it and reopen the
+    // picker to bring the clear button back.
+    await selectFirstVerse();
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+    await openPicker();
+
+    await click(".sb-verse-toolbar-clear");
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
 
   it("broadcasts without saving when the session expires highlights", async () => {
@@ -527,6 +754,9 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await act(async () => {
       options.value = { ...options.value, highlightDurationSeconds: 16 };
     });
+    // Highlighting cleared the selection made above — reselect the verse to
+    // re-highlight it.
+    await selectFirstVerse();
     await openPickerAndHighlight();
 
     // The broadcast covers the saved highlight while it lives and uncovers it
@@ -557,6 +787,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
 
     // Nothing was ever saved, so clearing has no write to make — and asking for
     // an account to undo something that never persisted is pure interruption.
@@ -602,6 +836,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     expect(broadcastHighlights()).toHaveLength(1);
 
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(removeSharedDecoration).toHaveBeenCalledWith(
@@ -621,6 +859,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     attachFakeSession({ canDecorate: true });
     await renderToolbar();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
@@ -631,6 +873,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     const { readingState } = await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // so the clear button is showing again to check.
+    await selectFirstVerse();
+    await openPicker();
 
     expect(broadcastHighlights()).toHaveLength(0);
     expect(readingState.highlights.value.highlights).toHaveLength(1);
@@ -642,6 +888,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     const { readingState, verseNumber } = await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // so the clear button is showing again to check.
+    await selectFirstVerse();
+    await openPicker();
 
     // Stand in for the session's highlight timer firing. Nothing was saved, so
     // the verse is genuinely unhighlighted again and there is nothing to clear.
@@ -660,6 +910,131 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await click(".sb-verse-toolbar-highlight-trigger");
 
     expect(clearButton()?.disabled).toBe(true);
+  });
+
+  /**
+   * Fires the native colour input's `input` event, as the OS colour dialog
+   * would while the user drags. (Preact rewrites this input's `onChange` to
+   * also listen for the native `input` event rather than `change` — see
+   * `preact/compat`'s `onChangeInputType` — so both of the component's
+   * `onChange`/`onInput` handlers respond to this, same as a real browser.)
+   */
+  function dragCustomColor(value: string) {
+    const input = container.querySelector<HTMLInputElement>(
+      ".sb-verse-toolbar-color-input"
+    );
+    if (!input) {
+      throw new Error("No element matched .sb-verse-toolbar-color-input");
+    }
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  /**
+   * Blurs the colour input, as closing the native colour dialog would.
+   * (Preact rewrites `onBlur` to listen for the native `focusout` event.)
+   */
+  function closeCustomColorDialog() {
+    const input = container.querySelector<HTMLInputElement>(
+      ".sb-verse-toolbar-color-input"
+    );
+    if (!input) {
+      throw new Error("No element matched .sb-verse-toolbar-color-input");
+    }
+    input.dispatchEvent(new Event("focusout", { bubbles: true }));
+  }
+
+  it("applies a live-dragged custom color without clearing the selection, clearing only once the dialog closes", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    // Fake timers only start now — `click()` (used by `openPicker()`) awaits
+    // a real `setTimeout`, which would never resolve once timers are faked.
+    vi.useFakeTimers();
+    try {
+      // The OS colour dialog fires `input` continuously while dragging.
+      await act(async () => {
+        dragCustomColor("#112233");
+        await vi.advanceTimersByTimeAsync(300);
+      });
+
+      // The debounced live-drag commit applies the color, but the selection
+      // (and picker) stays open so the user can keep adjusting the shade —
+      // clearing here would silently drop any further tweaking (#1725).
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#112233"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+      expect(
+        container.querySelector(".sb-verse-toolbar-color-input")
+      ).not.toBeNull();
+
+      // Still dragging — another live commit updates the color and still
+      // doesn't clear the selection.
+      await act(async () => {
+        dragCustomColor("#334455");
+        await vi.advanceTimersByTimeAsync(300);
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#334455"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+
+      // The dialog closes: the color already settled 300ms ago, so this just
+      // clears the selection, same as any other highlight action.
+      await act(async () => {
+        closeCustomColorDialog();
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#334455"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("flushes a still-pending custom color immediately when the dialog closes before the debounce settles", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    vi.useFakeTimers();
+    try {
+      // Pick a color and close the dialog right away, well inside the 300ms
+      // debounce window — the pending pick shouldn't be lost to the delay.
+      await act(async () => {
+        dragCustomColor("#112233");
+        closeCustomColorDialog();
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#112233"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves the selection untouched when the color dialog closes without picking a color", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    await act(async () => {
+      closeCustomColorDialog();
+    });
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
   });
 });
 
@@ -687,6 +1062,16 @@ describe("BibleReaderToolbar mobile More menu", () => {
     moreButton: HTMLButtonElement;
   }> {
     const state = await createTestSeedBibleState();
+
+    // `viewportWidth` seeds to match the server's UA-based guess (never
+    // `window.innerWidth`) so a hydrate pass can't mismatch — see
+    // `SeedBibleStateManager.tsx`. The real correction happens once, from a
+    // post-mount effect that calls `applyViewport()`; the closest
+    // equivalent here is the same `resize` dispatch the sibling describe
+    // block above already uses.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
 
     await act(async () => {
       render(
@@ -823,6 +1208,86 @@ describe("BibleReaderToolbar mobile More menu", () => {
     });
 
     expect(menu()).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar — mobile Bible tab", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar(): Promise<{
+    state: SeedBibleState;
+    bibleButton: HTMLButtonElement;
+  }> {
+    const state = await createTestSeedBibleState();
+
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const bibleButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        ".sb-reader-toolbar-mobile-tab-button"
+      )
+    ).find((button) => button.getAttribute("aria-label") === "Bible");
+    if (!bibleButton) {
+      throw new Error("The mobile Bible tab did not render.");
+    }
+    return { state, bibleButton };
+  }
+
+  async function tap(button: HTMLButtonElement): Promise<void> {
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  it("opens the book selector when the Bible text is already showing", async () => {
+    const { state, bibleButton } = await renderToolbar();
+    expect(state.selector.isOpen.value).toBe(false);
+
+    await tap(bibleButton);
+
+    await waitFor(() => state.selector.isOpen.value === true);
+  });
+
+  it("shows the Bible text instead of the selector when another screen covers the reader", async () => {
+    const { state, bibleButton } = await renderToolbar();
+
+    await act(async () => {
+      state.sidebar.openSearchPanel();
+    });
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(true);
+
+    await tap(bibleButton);
+
+    expect(state.sidebar.isSearchPanelOpen.value).toBe(false);
+    expect(state.selector.isOpen.value).toBe(false);
   });
 });
 
@@ -1519,6 +1984,102 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
       expect(annotationItems()[1]?.textContent).toContain("A short range");
     });
   });
+
+  it("shows a generic account icon on the current user's notes when nobody else has annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+        )
+      ).not.toBeNull();
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )?.textContent
+    ).toContain("account_circle");
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+      )
+    ).toBeNull();
+  });
+
+  it("shows the animal fallback on verse-sheet notes when other people have also annotated the selection", async () => {
+    state.highlights.getChapterHighlights = vi.fn(() =>
+      signal({ highlights: [] })
+    );
+    state.login.userId = signal("toolbar-user-self");
+    state.login.getUserProfile = vi.fn().mockResolvedValue({});
+
+    const { chapter, firstVerse } = getFirstVerse();
+    await mockAnnotationsForChapter([
+      {
+        id: "a1",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Mine</p>",
+          userId: "toolbar-user-self",
+        },
+      },
+      {
+        id: "a2",
+        bookId: chapter.book.id,
+        chapterNumber: chapter.chapter.number,
+        verseNumber: firstVerse.number,
+        data: {
+          type: "comment",
+          html: "<p>Theirs</p>",
+          userId: "toolbar-user-other",
+        },
+      },
+    ]);
+    const { handle } = await renderSheet();
+
+    await press(handle, 500);
+    await moveTo(handle, 460);
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelectorAll(
+          ".sb-verse-toolbar-annotations .sb-tab-user-icon-animal"
+        )
+      ).toHaveLength(2);
+    });
+    expect(
+      container.querySelector(
+        ".sb-verse-toolbar-annotations .sb-tab-user-icon-generic"
+      )
+    ).toBeNull();
+  });
 });
 
 describe("BibleReaderToolbar floating chapter nav", () => {
@@ -1544,6 +2105,13 @@ describe("BibleReaderToolbar floating chapter nav", () => {
     bookLabel: HTMLButtonElement;
   }> {
     const state = await createTestSeedBibleState();
+
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
 
     await act(async () => {
       render(
@@ -1627,5 +2195,115 @@ describe("BibleReaderToolbar floating chapter nav", () => {
     });
 
     expect(state.selector.isOpen.value).toBe(false);
+  });
+});
+
+/**
+ * On mobile, the toolbar is the only way into the Today screen from the reader, and it had
+ * no coverage at all — the migration replaced an install-on-demand path (and a
+ * second, divergent copy in the sidebar) with a single `today.open()` call.
+ */
+describe("BibleReaderToolbar — the mobile Today tab", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    // Seeded into `viewportWidth` at creation, so it has to precede the state.
+    window.innerWidth = MOBILE_VIEWPORT_WIDTH;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function renderToolbar() {
+    const state = await createTestSeedBibleState();
+    // `viewportWidth` seeds from the server's UA-based guess, never
+    // `window.innerWidth`, so it has to be corrected the same way the real
+    // post-mount effect does — see `SeedBibleStateManager.tsx`.
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    const tab = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Today"]'
+    );
+    if (!tab) throw new Error("The Today bottom tab did not render.");
+    return { state, tab };
+  }
+
+  const tapTab = async (tab: HTMLButtonElement) => {
+    await act(async () => {
+      tab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  };
+
+  it("opens the Today screen when tapped", async () => {
+    const { state, tab } = await renderToolbar();
+    expect(state.today.isOpen.value).toBe(false);
+
+    await tapTab(tab);
+
+    expect(state.today.isOpen.value).toBe(true);
+  });
+
+  it("highlights itself while Today is open", async () => {
+    const { state, tab } = await renderToolbar();
+    const isActive = () =>
+      container
+        .querySelector('button[aria-label="Today"]')!
+        .classList.contains("sb-reader-toolbar-mobile-tab-button-active");
+    expect(isActive()).toBe(false);
+
+    await tapTab(tab);
+    expect(isActive()).toBe(true);
+
+    // Closing from anywhere else has to un-highlight it too: the tab reads the
+    // manager signal rather than tracking its own taps.
+    await act(async () => state.today.close());
+    expect(isActive()).toBe(false);
+  });
+
+  /**
+   * An ordering guard. `openTodayScreen` closes what is on screen before
+   * calling `today.open()`; swap those two and the close sweeps away the pane
+   * Today just opened, so the tab does nothing visible. Both assertions below
+   * have to hold at once to rule that out — verified by making the swap.
+   *
+   * It deliberately does *not* claim to cover `panes.closeAll()`: on a mobile
+   * viewport `openPane` treats every pane as fullscreen and already evicts the
+   * others, firing their `onClose` the same way, so removing that call changes
+   * nothing observable here.
+   */
+  it("leaves Today as the only thing covering the reader", async () => {
+    const { state, tab } = await renderToolbar();
+
+    await act(async () => {
+      state.panes.openPane({
+        placement: "fullscreen",
+        title: "Jerusalem",
+        component: () => <div className="test-pane-body" />,
+      });
+    });
+    expect(state.panes.panes.value).toHaveLength(1);
+
+    await tapTab(tab);
+
+    expect(state.today.isOpen.value).toBe(true);
+    const ids = state.panes.panes.value.map((pane) => pane.id);
+    expect(ids).toContain(TODAY_PANE_ID);
+    expect(ids).toHaveLength(1);
   });
 });

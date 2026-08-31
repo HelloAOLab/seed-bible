@@ -736,11 +736,156 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
+    // Construction ignores storage entirely so the client's first render matches
+    // SSR; the stored position only arrives with `hydrateStoredTabs`.
+    expect(manager.tabs.value[0]!.readingState.bookId.value).toBe("GEN");
+
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
     expect(manager.tabs.value).toHaveLength(1);
     const readingState = manager.tabs.value[0]!.readingState;
     expect(readingState.translationId.value).toBe("AAB");
     expect(readingState.bookId.value).toBe("EXO");
     expect(readingState.chapterNumber.value).toBe(2);
+  });
+
+  it("seeds only the URL-derived tab at construction, even with several tabs stored", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "AAB",
+            bookId: "EXO",
+            chapterNumber: 3,
+          },
+          {
+            id: "tab-3",
+            translationId: "AAB",
+            bookId: "PSA",
+            chapterNumber: 4,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // Three stored tabs would mount three `TabRow`s the SSR HTML never had —
+    // extra elements are the one divergence `hydrate()` reports rather than
+    // silently patching, so construction must produce exactly one tab.
+    expect(manager.tabs.value).toHaveLength(1);
+    expect(manager.selectedTabId.value).toBe("tab-1");
+
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(manager.tabs.value.map((tab) => tab.id)).toEqual([
+      "tab-1",
+      "tab-2",
+      "tab-3",
+    ]);
+  });
+
+  it("keeps the selected tab's reading state instance across hydrateStoredTabs", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "AAB",
+            bookId: "EXO",
+            chapterNumber: 3,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    const bootReadingState = manager.tabs.value[0]!.readingState;
+
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // The selected tab lands on the URL position the boot tab already loaded, so
+    // it must adopt that same reading state object. A fresh one would remount
+    // `BibleReader` and throw away the scripture that just hydrated.
+    const selected = manager.tabs.value.find(
+      (tab) => tab.id === manager.selectedTabId.value
+    )!;
+    expect(selected.readingState).toBe(bootReadingState);
+  });
+
+  it("hydrateStoredTabs is idempotent", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "AAB",
+            bookId: "EXO",
+            chapterNumber: 3,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    manager.hydrateStoredTabs();
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(manager.tabs.value).toHaveLength(2);
   });
 
   it("reconciles a deep link against stored tabs, selecting the matching tab", async () => {
@@ -777,6 +922,9 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
 
     const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    manager.hydrateStoredTabs();
     await waitForTabsToLoad(manager.tabs.value);
 
     // The query translation (NIV) matches the second stored tab, so it is

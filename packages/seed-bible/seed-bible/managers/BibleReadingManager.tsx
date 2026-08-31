@@ -280,6 +280,17 @@ export interface BibleReadingState {
    * `chapterData === null` on its own cannot.
    */
   initialChapterLoadSettled: ReadonlySignal<boolean>;
+  /**
+   * True when `initialChapterLoadSettled` became true for a reason that
+   * doesn't guarantee a live client would land on the same content: the
+   * SSR-only load deadline passed, or the load errored out. Either way, the
+   * catalog and/or chapter data behind availability computations (like
+   * `hasNext`/`hasPrevious`) may be missing on the server even though a
+   * client-side retry succeeds — a network hiccup, rate limit, or timeout
+   * hitting the server process doesn't necessarily hit a visitor's own
+   * browser. `false` only for a load that actually completed with content.
+   */
+  initialChapterLoadUnreliable: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -1251,6 +1262,8 @@ export function createBibleReadingState(
    * rather than repeatedly.
    */
   const initialChapterLoadSettled = signal<boolean>(false);
+  /** See the interface doc on `initialChapterLoadUnreliable`. */
+  const initialChapterLoadUnreliable = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
@@ -1335,6 +1348,7 @@ export function createBibleReadingState(
   const SSR_INITIAL_CHAPTER_TIMEOUT_MS = 5000;
   const initialChapterLoadTimer = import.meta.env.SSR
     ? setTimeout(() => {
+        initialChapterLoadUnreliable.value = true;
         initialChapterLoadSettled.value = true;
       }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
     : null;
@@ -2160,6 +2174,14 @@ export function createBibleReadingState(
       }
       error.value =
         err instanceof Error ? err.message : "Failed to load chapter.";
+      // A failure here on the *initial* load doesn't mean a live client would
+      // hit the same wall — it may be the server's own request path (e.g. an
+      // HTML error page coming back where JSON was expected), not something
+      // wrong with the chapter itself. It must not look "settled" to the
+      // hydration gate — see the interface doc on `initialChapterLoadUnreliable`.
+      if (!initialChapterLoadSettled.peek()) {
+        initialChapterLoadUnreliable.value = true;
+      }
     } finally {
       if (contentRequestController === controller) {
         contentRequestController = null;
@@ -2618,33 +2640,64 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const loadedTranslations =
-        await dataManager.getTranslations(getActiveEndpoint());
-      availableTranslations.value = toAvailableTranslations(
-        dataManager.availableTranslations.value
-      );
+      // The overwhelmingly common case is a URL that already names a valid
+      // translation on the default endpoint. Validating it against just that
+      // translation's own (much smaller) book catalog — rather than always
+      // pulling down every translation's metadata first — is what keeps an
+      // ordinary chapter load from downloading the full, large translation
+      // list on every single page view. The full catalog below is only
+      // fetched when there's no translation to validate yet
+      // (`useFirstAvailableTranslation`), a custom endpoint is in play (its
+      // translations aren't known until the catalog itself names them), or
+      // the requested translation turns out to be missing.
+      let nextTranslationId: string | undefined;
+      let books: TranslationBooks | undefined;
 
-      const firstAvailableTranslation = loadedTranslations[0];
-      const currentTranslation = useFirstAvailableTranslation.value
-        ? firstAvailableTranslation
-        : (availableTranslations.value.translations.find(
-            (translation) => translation.id === translationId.value
-          ) ??
-          (shouldFallbackToFirstAvailableTranslation
-            ? firstAvailableTranslation
-            : undefined));
-      if (!currentTranslation) {
-        throw new Error(
-          useFirstAvailableTranslation.value
-            ? "No available translations found for endpoint."
-            : `Translation with ID "${translationId.value}" not available.`
+      if (!useFirstAvailableTranslation.value && !getActiveEndpoint()) {
+        try {
+          books = await dataManager.getTranslationBooks(translationId.value);
+          nextTranslationId = translationId.value;
+        } catch {
+          // Not confidently "this translation doesn't exist" on its own — a
+          // network blip would fail the same way. Fall through to the
+          // catalog resolution below, which is what actually decides that.
+        }
+      }
+
+      if (!books || !nextTranslationId) {
+        const loadedTranslations =
+          await dataManager.getTranslations(getActiveEndpoint());
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
+
+        const firstAvailableTranslation = loadedTranslations[0];
+        const currentTranslation = useFirstAvailableTranslation.value
+          ? firstAvailableTranslation
+          : (availableTranslations.value.translations.find(
+              (translation) => translation.id === translationId.value
+            ) ??
+            (shouldFallbackToFirstAvailableTranslation
+              ? firstAvailableTranslation
+              : undefined));
+        if (!currentTranslation) {
+          throw new Error(
+            useFirstAvailableTranslation.value
+              ? "No available translations found for endpoint."
+              : `Translation with ID "${translationId.value}" not available.`
+          );
+        }
+
+        nextTranslationId = currentTranslation.id;
+        books = await dataManager.getTranslationBooks(nextTranslationId);
+      } else {
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
         );
       }
 
-      const nextTranslationId = currentTranslation.id;
       useFirstAvailableTranslation.value = false;
 
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0];
       if (!firstBook) {
         throw new Error("No books available for selected translation.");
@@ -2704,6 +2757,13 @@ export function createBibleReadingState(
       console.error("Error loading initial Bible data:", err);
       error.value =
         err instanceof Error ? err.message : "Failed to load Bible data.";
+      // An error here doesn't mean a live client would hit the same wall —
+      // it may be the server's own network path (rate limiting, a transient
+      // upstream blip) rather than something the requested chapter itself is
+      // missing. Flagging it the same as a timeout keeps the SSR host from
+      // baking availability computed off no data (e.g. disabled next/previous
+      // buttons) into a page a client then hydrates onto and never corrects.
+      initialChapterLoadUnreliable.value = true;
     } finally {
       endRequest();
       // Terminal either way. Without this a failed first load leaves anything
@@ -3078,6 +3138,7 @@ export function createBibleReadingState(
     chapterData,
     chapterDataPromise,
     initialChapterLoadSettled,
+    initialChapterLoadUnreliable,
     isChapterContentStale,
     highlights,
     decorations,

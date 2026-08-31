@@ -32,6 +32,12 @@ const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   window.localStorage.clear();
+  // The UI-language switch prompt is once-per-session, so a leftover marker
+  // would silently make later tests pass for the wrong reason.
+  window.sessionStorage.clear();
+  // Each test builds its own NavigationManager from window.location, so start
+  // from a clean path instead of inheriting the previous test's reading URL.
+  window.history.replaceState(null, "", "/");
   webGetMock = vi.fn();
   globalThis.fetch = webGetMock;
 });
@@ -79,7 +85,10 @@ function createLoginManagerMock() {
       ...newData,
     } as { name: string; config?: Record<string, unknown> };
   });
-  return { userId, profile, profilePromise: null, updateProfile };
+  // Logged-out writes land here rather than on the profile, so the mock needs
+  // it for any code path that saves while signed out.
+  const localConfig = signal<Record<string, unknown>>({});
+  return { userId, profile, localConfig, profilePromise: null, updateProfile };
 }
 
 function createSettingsManagerMock() {
@@ -103,11 +112,18 @@ function createBookmarksManagerMock() {
   };
 }
 
+function createI18nManagerMock() {
+  return {
+    maybePromptUiLanguageSwitch: vi.fn(),
+  };
+}
+
 function createSelectorState(
   dataManager: ReturnType<typeof createDataManager>,
   tabsManager: ReturnType<typeof createTabs>,
   tabsLayoutManager: ReturnType<typeof createTabsLayout>,
-  login: ReturnType<typeof createLoginManagerMock> = createLoginManagerMock()
+  login: ReturnType<typeof createLoginManagerMock> = createLoginManagerMock(),
+  i18n: unknown = createI18nManagerMock()
 ): BibleSelectorState {
   return createBibleSelectorState(
     dataManager,
@@ -117,7 +133,8 @@ function createSelectorState(
     createSidebarManagerMock() as any,
     createBookmarksManagerMock() as any,
     createNavigationManager(),
-    login as any
+    login as any,
+    i18n as any
   );
 }
 
@@ -492,6 +509,126 @@ describe("createBibleSelectorState", () => {
     );
     const newTabId = tabsManager.tabs.value.at(-1)!.id;
     expect(updatedOtherSlot?.tab?.id).toBe(newTabId);
+  });
+
+  it("offers to switch the UI language when the user picks a translation in another language", async () => {
+    const aab = makeTranslationWithLanguage({
+      id: "AAB",
+      shortName: "AAB",
+      language: "eng",
+      languageEnglishName: "English",
+    });
+    const rvr = makeTranslationWithLanguage({
+      id: "RVR",
+      shortName: "RVR",
+      language: "spa",
+      languageEnglishName: "Spanish",
+    });
+
+    setWebResponses({
+      [makeExampleUrl("/api/available_translations.json")]: createResponse({
+        translations: [aab, rvr],
+      }),
+      [makeExampleUrl("/api/AAB/books.json")]: createResponse({
+        ...nivBooks,
+        translation: aab,
+      }),
+      [makeExampleUrl("/api/RVR/books.json")]: createResponse({
+        ...nivBooks,
+        translation: rvr,
+      }),
+      [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
+        makeChapter({ ...bsbBooks, translation: aab }, "GEN", 1)
+      ),
+    });
+
+    const dataManager = createDataManager();
+    const navigation = createNavigationManager();
+    const i18n = createI18nManager(navigation, ["en"]);
+    await i18n.changeLanguage("en");
+    const tabsManager = createTabs(
+      navigation,
+      dataManager,
+      createHighlightsManagerMock() as any,
+      {} as any,
+      i18n,
+      createLoginManagerMock() as any
+    );
+    const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
+    const slot = tabsLayoutManager.slots.value[0]!;
+
+    const selector = createSelectorState(
+      dataManager,
+      tabsManager,
+      tabsLayoutManager,
+      createLoginManagerMock(),
+      i18n
+    );
+    await selector.setOpen(true, slot);
+
+    await selector.pickTranslation("RVR");
+
+    expect(i18n.uiLanguageSwitchPrompt.value?.targetLanguage).toBe("es");
+  });
+
+  it("does not offer to switch the UI language for a programmatic translation change", async () => {
+    const aab = makeTranslationWithLanguage({
+      id: "AAB",
+      shortName: "AAB",
+      language: "eng",
+      languageEnglishName: "English",
+    });
+    const rvr = makeTranslationWithLanguage({
+      id: "RVR",
+      shortName: "RVR",
+      language: "spa",
+      languageEnglishName: "Spanish",
+    });
+
+    setWebResponses({
+      [makeExampleUrl("/api/available_translations.json")]: createResponse({
+        translations: [aab, rvr],
+      }),
+      [makeExampleUrl("/api/AAB/books.json")]: createResponse({
+        ...nivBooks,
+        translation: aab,
+      }),
+      [makeExampleUrl("/api/RVR/books.json")]: createResponse({
+        ...nivBooks,
+        translation: rvr,
+      }),
+      [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
+        makeChapter({ ...bsbBooks, translation: aab }, "GEN", 1)
+      ),
+    });
+
+    const dataManager = createDataManager();
+    const navigation = createNavigationManager();
+    const i18n = createI18nManager(navigation, ["en"]);
+    await i18n.changeLanguage("en");
+    const tabsManager = createTabs(
+      navigation,
+      dataManager,
+      createHighlightsManagerMock() as any,
+      {} as any,
+      i18n,
+      createLoginManagerMock() as any
+    );
+    const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
+    const slot = tabsLayoutManager.slots.value[0]!;
+
+    const selector = createSelectorState(
+      dataManager,
+      tabsManager,
+      tabsLayoutManager,
+      createLoginManagerMock(),
+      i18n
+    );
+    await selector.setOpen(true, slot);
+
+    await selector.selectTranslation("RVR");
+
+    expect(i18n.uiLanguageSwitchPrompt.value).toBeNull();
   });
 
   it("groups api translations by language code instead of language english name", async () => {

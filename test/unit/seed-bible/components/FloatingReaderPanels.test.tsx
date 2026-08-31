@@ -20,26 +20,8 @@ import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState"
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (
-        key: string,
-        options?: { defaultValue?: string } & Record<string, unknown>
-      ) => {
-        const template = options?.defaultValue ?? key;
-        return options
-          ? template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
-              String(options[name] ?? "")
-            )
-          : template;
-      },
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 vi.mock(
@@ -341,6 +323,56 @@ describe("ChatList", () => {
     expect(
       container.querySelectorAll(".sb-floating-chat-list-item")
     ).toHaveLength(2);
+  });
+
+  it("shows a generic account icon for your own avatar when you are the only person in the chat", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const chat = createMockChatSession({
+      participants: signal([self]),
+      totalParticipants: signal([self]),
+    });
+    const state = createMockChatListState();
+
+    act(() => {
+      render(<ChatList chats={[chat]} state={state} />, container);
+    });
+
+    const cluster = container.querySelector(".sb-chat-list-avatar-cluster");
+    expect(cluster?.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(cluster?.textContent).toContain("account_circle");
+    expect(cluster?.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for your own avatar when the other person is inactive", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+    });
+    const other = createMockParticipant({
+      id: "other",
+      name: "Alice",
+      isSelf: false,
+      isRemote: true,
+      isActive: false,
+    });
+    const chat = createMockChatSession({
+      participants: signal([self]),
+      totalParticipants: signal([self, other]),
+    });
+    const state = createMockChatListState();
+
+    act(() => {
+      render(<ChatList chats={[chat]} state={state} />, container);
+    });
+
+    const cluster = container.querySelector(".sb-chat-list-avatar-cluster");
+    expect(cluster?.querySelector(".sb-tab-user-icon-animal")).not.toBeNull();
+    expect(cluster?.querySelector(".sb-tab-user-icon-generic")).toBeNull();
   });
 
   it("shows the chat title derived from the participant's name", () => {

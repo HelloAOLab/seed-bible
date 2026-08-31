@@ -10,6 +10,7 @@ import { createModalManager } from "@packages/seed-bible/seed-bible/managers/Mod
 import type {
   Playlist,
   PlaylistManager,
+  PlaylistPlayHistory,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { createPlayingState } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type {
@@ -24,23 +25,8 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const actual = await vi.importActual<
-    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
-  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
-  return {
-    ...actual,
-    useI18n: () => ({
-      t: (key: string, options?: Record<string, unknown>) => {
-        let str = (options?.defaultValue as string | undefined) ?? key;
-        for (const [optionKey, value] of Object.entries(options ?? {})) {
-          if (optionKey === "defaultValue") continue;
-          str = str.replaceAll(`{{${optionKey}}}`, String(value));
-        }
-        return str;
-      },
-      language: "en",
-    }),
-  };
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
 });
 
 vi.mock(
@@ -140,6 +126,9 @@ interface MockPlaylistsResult {
   getPlaylistUrl: ReturnType<typeof vi.fn>;
   cancelEditingPlaylist: ReturnType<typeof vi.fn>;
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
+  continueFromHistory: ReturnType<typeof vi.fn>;
+  replayFromHistory: ReturnType<typeof vi.fn>;
+  removePlayHistory: ReturnType<typeof vi.fn>;
 }
 
 function createMockPlaylists(
@@ -151,6 +140,7 @@ function createMockPlaylists(
       | "create_annotation"
       | null;
     userPlaylists?: Playlist[];
+    userPlaylistHistory?: PlaylistPlayHistory[];
     editingPlaylist?: Playlist | null;
     playing?: ReturnType<typeof createPlayingState> | null;
     deletePlaylistImpl?: () => Promise<void>;
@@ -167,13 +157,18 @@ function createMockPlaylists(
   );
   const cancelEditingPlaylist = vi.fn();
   const goBackFromPlayingView = vi.fn();
+  const continueFromHistory = vi.fn().mockResolvedValue(undefined);
+  const replayFromHistory = vi.fn().mockResolvedValue(undefined);
+  const removePlayHistory = vi.fn().mockResolvedValue(undefined);
 
   const view = signal(overrides.view ?? "discover");
+  const editingPlaylist = signal(overrides.editingPlaylist ?? null);
   const playlists = {
     view,
     actualView: view,
     userPlaylists: signal(overrides.userPlaylists ?? []),
-    editingPlaylist: signal(overrides.editingPlaylist ?? null),
+    editingPlaylist,
+    userPlaylistHistory: signal(overrides.userPlaylistHistory ?? []),
     playing: signal(overrides.playing ?? null),
     createNewPlaylist,
     startPlaying,
@@ -181,7 +176,17 @@ function createMockPlaylists(
     deletePlaylist,
     getPlaylistUrl,
     cancelEditingPlaylist,
+    continueFromHistory,
+    replayFromHistory,
+    removePlayHistory,
     saveEditingPlaylist: vi.fn().mockResolvedValue(undefined),
+    updateEditingPlaylistMetadata: vi.fn(
+      (updates: Partial<Pick<Playlist, "title" | "description">>) => {
+        const current = editingPlaylist.value;
+        if (!current) return;
+        editingPlaylist.value = { ...current, ...updates };
+      }
+    ),
     addEditingPlaylistItem: vi.fn(),
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
@@ -197,6 +202,9 @@ function createMockPlaylists(
     getPlaylistUrl,
     cancelEditingPlaylist,
     goBackFromPlayingView,
+    continueFromHistory,
+    replayFromHistory,
+    removePlayHistory,
   };
 }
 
@@ -214,6 +222,7 @@ function createMockAnnotations(
     editingAnnotation?: Annotation | null;
     annotationsForChapter?: Annotation[];
     deleteAnnotationAndRefreshImpl?: () => Promise<void>;
+    hasRecordOverride?: boolean;
     pendingSyncCount?: number;
   } = {}
 ): MockAnnotationsResult {
@@ -236,6 +245,7 @@ function createMockAnnotations(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    hasRecordOverride: overrides.hasRecordOverride ?? false,
     // The pane shows how much is waiting to sync, so this has to be present.
     sync: {
       pendingCount: signal(overrides.pendingSyncCount ?? 0),
@@ -506,7 +516,7 @@ describe("DiscoverPane", () => {
       items[0]?.querySelector(".sb-discover-item-title")?.textContent
     ).toBe("Evening Reading");
     expect(
-      items[0]?.querySelector(".sb-discover-item-description")?.textContent
+      items[0]?.querySelector(".sb-expandable-text-body")?.textContent
     ).toBe("A short evening study");
     expect(
       items[1]?.querySelector(".sb-discover-item-title")?.textContent
@@ -768,6 +778,102 @@ describe("DiscoverPane", () => {
 
     render(null, modalContainer);
     modalContainer.remove();
+  });
+
+  it("hides the record-override banner when annotations are not routed through an override", () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      hasRecordOverride: false,
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-annotation-override-banner")
+    ).toBeNull();
+  });
+
+  it("shows the record-override banner when annotations are routed through a team record, with a button that reloads the URL without the query param", async () => {
+    const { playlists } = createMockPlaylists();
+    const { annotations } = createMockAnnotations({
+      hasRecordOverride: true,
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      value: new URL(
+        "https://example.com/read?book=GEN&annotationRecordKey=team-record"
+      ),
+      writable: true,
+      configurable: true,
+    });
+
+    try {
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={tabs}
+            playlists={playlists}
+            annotations={annotations}
+            modals={modals}
+            state={state}
+            toast={state.app.toast}
+          />,
+          container
+        );
+      });
+
+      // The banner is lazily loaded, so it only mounts once the dynamic
+      // import resolves - which (being a real, unmocked import rather than a
+      // pre-resolved one) can take more than a single tick.
+      await vi.waitFor(() => {
+        expect(
+          container.querySelector(".sb-annotation-override-banner")
+        ).not.toBeNull();
+      });
+
+      const banner = container.querySelector(".sb-annotation-override-banner");
+      expect(banner?.textContent).toContain(
+        "Notes are being saved and loaded from your team's account."
+      );
+
+      const button = container.querySelector(
+        ".sb-annotation-override-banner-button"
+      ) as HTMLButtonElement;
+      expect(button?.textContent).toBe("Save to my account");
+
+      act(() => {
+        button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(window.location.href).toBe("https://example.com/read?book=GEN");
+    } finally {
+      Object.defineProperty(window, "location", {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      });
+    }
   });
 
   it("shows the empty-annotations message when there are no annotations for the chapter", () => {
@@ -1441,7 +1547,147 @@ describe("DiscoverPane", () => {
     expect(avatarIndex).toBeLessThan(nameIndex);
   });
 
-  it("shows a deterministic fallback avatar (derived from the user id) when the author has no profile picture", () => {
+  it("shows a generic account icon for the current user's own notes when nobody else has annotated", () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-self",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+    state.login.userId.value = "user-self";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-tab-user-icon-generic")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-tab-user-icon-generic")?.textContent
+    ).toContain("account_circle");
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the current user's profile picture on their own notes even when nobody else has annotated", async () => {
+    const { playlists } = createMockPlaylists();
+    const annotation = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Hi</p>",
+        userId: "user-self-with-picture",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [annotation],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const getUserProfile = vi.fn().mockResolvedValue({
+      name: "Ada",
+      pictureUrl: "https://example.com/ada.png",
+    });
+    const state = createMockState(false, { getUserProfile });
+    state.login.userId.value = "user-self-with-picture";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    await vi.waitFor(() => {
+      const avatar = container.querySelector(
+        ".sb-tab-user-icon-has-image"
+      ) as HTMLElement;
+      expect(avatar).not.toBeNull();
+      expect(avatar?.style.backgroundImage).toContain(
+        "https://example.com/ada.png"
+      );
+    });
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+    expect(container.querySelector(".sb-tab-user-icon-animal")).toBeNull();
+  });
+
+  it("shows the animal fallback for the current user's notes when other people have also annotated", () => {
+    const { playlists } = createMockPlaylists();
+    const own = createAnnotation({
+      id: "a1",
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Mine</p>",
+        userId: "user-self",
+      },
+    });
+    const other = createAnnotation({
+      id: "a2",
+      verseNumber: 4,
+      data: {
+        type: "comment",
+        html: "<p>Theirs</p>",
+        userId: "user-other",
+      },
+    });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [own, other],
+    });
+    const tab = createMockTab();
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+    state.login.userId.value = "user-self";
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const animals = container.querySelectorAll(".sb-tab-user-icon-animal");
+    expect(animals.length).toBe(2);
+    expect(container.querySelector(".sb-tab-user-icon-generic")).toBeNull();
+  });
+
+  it("shows a deterministic fallback avatar (derived from the user id) when another author has no profile picture", () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
       id: "a1",
@@ -2290,6 +2536,192 @@ describe("DiscoverPaneTitle", () => {
     });
 
     expect(playlists.editingPlaylist.value?.title).toBeNull();
+  });
+
+  function createHistoryEntry(
+    overrides: Partial<PlaylistPlayHistory> = {}
+  ): PlaylistPlayHistory {
+    return {
+      id: "hist-1",
+      recordName: "user-1",
+      userId: "user-1",
+      playlistId: "playlist-1",
+      playlistRecordName: "user-1",
+      playlistTitle: "Shared Study",
+      playlistDescription: null,
+      previousHistoryId: null,
+      totalSteps: 4,
+      currentStep: 1,
+      lastItem: {
+        type: "bible-verse",
+        ref: { bookId: "JHN", chapter: 3, verse: 16 },
+      },
+      startedAtMs: 1_000,
+      endedAtMs: 1_000 + 65_000,
+      durationMs: 65_000,
+      createdAtMs: 1_000,
+      updatedAtMs: 1_000 + 65_000,
+      ...overrides,
+    };
+  }
+
+  it("shows the empty playlist-history message when there is no history", () => {
+    const { playlists } = createMockPlaylists({ userPlaylistHistory: [] });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const emptyStates = Array.from(
+      container.querySelectorAll(".sb-discover-empty")
+    ).map((el) => el.textContent);
+    expect(emptyStates).toContain(
+      "Play a saved playlist while signed in and it will show up here."
+    );
+  });
+
+  it("lists playlist history with status, play to continue, and no Continue listening section", async () => {
+    const entry = createHistoryEntry();
+    const { playlists, continueFromHistory, replayFromHistory } =
+      createMockPlaylists({
+        userPlaylistHistory: [entry],
+      });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(container.textContent).not.toContain("Continue listening");
+    const item = container.querySelector(
+      ".sb-playlist-history-item"
+    ) as HTMLLIElement;
+    expect(item).not.toBeNull();
+    expect(item.querySelector(".sb-discover-item-title")?.textContent).toBe(
+      "Shared Study"
+    );
+    expect(
+      item.querySelector(".sb-discover-item-description")?.textContent
+    ).toMatch(/50% complete/);
+    expect(
+      item.querySelector(".sb-discover-item-description")?.textContent
+    ).toContain("JHN 3:16");
+    expect(container.querySelector(".sb-playlist-history-details")).toBeNull();
+
+    const play = item.querySelector(
+      ".sb-discover-item-play"
+    ) as HTMLButtonElement;
+    expect(play.getAttribute("aria-label")).toBe("Continue");
+
+    await act(async () => {
+      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(continueFromHistory).toHaveBeenCalledWith(entry);
+    expect(replayFromHistory).not.toHaveBeenCalled();
+  });
+
+  it("replays a completed history entry from the play button", async () => {
+    const entry = createHistoryEntry({
+      currentStep: 3,
+      totalSteps: 4,
+    });
+    const { playlists, replayFromHistory, continueFromHistory } =
+      createMockPlaylists({
+        userPlaylistHistory: [entry],
+      });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const play = container.querySelector(
+      ".sb-playlist-history-item .sb-discover-item-play"
+    ) as HTMLButtonElement;
+    expect(play.getAttribute("aria-label")).toBe("Replay");
+
+    await act(async () => {
+      play.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(replayFromHistory).toHaveBeenCalledWith(entry);
+    expect(continueFromHistory).not.toHaveBeenCalled();
+  });
+
+  it("removes a history session from the overflow menu", async () => {
+    const entry = createHistoryEntry();
+    const { playlists, removePlayHistory } = createMockPlaylists({
+      userPlaylistHistory: [entry],
+    });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+    const { annotations } = createMockAnnotations();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    const remove = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ).find((el) => el.textContent?.includes("Remove from history")) as
+      | HTMLButtonElement
+      | undefined;
+    expect(remove).toBeDefined();
+
+    await act(async () => {
+      remove!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(removePlayHistory).toHaveBeenCalledWith(entry);
   });
 
   function renderAnnotationTitle(editing: Annotation) {
