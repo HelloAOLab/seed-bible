@@ -8,6 +8,8 @@
 
 ### 🐛 Fixed
 
+- Fix the tabs, quick toolbar, below-reader toolbar, and mobile layout briefly showing unstyled before the page's full CSS finished loading, by keeping them hidden until it does.
+
 ### 🗑️ Removed
 
 ## v1.6.0 — 2026-08-24
