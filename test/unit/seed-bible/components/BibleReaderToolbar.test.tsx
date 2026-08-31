@@ -459,11 +459,21 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     });
   }
 
-  /** Clicks the first preset colour, opening the picker first if it is closed. */
-  async function openPickerAndHighlight() {
+  /**
+   * Opens the highlight colour picker if it is closed. The picker (and the
+   * "Clear" button, which lives inside it) auto-closes whenever the
+   * selection is cleared, so this has to run again after every highlight —
+   * highlighting always clears the selection (#1704).
+   */
+  async function openPicker() {
     if (!container.querySelector(".sb-verse-toolbar-color-button")) {
       await click(".sb-verse-toolbar-highlight-trigger");
     }
+  }
+
+  /** Clicks the first preset colour, opening the picker first if it is closed. */
+  async function openPickerAndHighlight() {
+    await openPicker();
     await click(".sb-verse-toolbar-color-button");
   }
 
@@ -487,9 +497,47 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     expect(readingState.highlights.value.highlights).toHaveLength(1);
 
+    // Highlighting clears the selection (and with it, the verse toolbar) —
+    // reselect the verse and reopen the picker to bring the clear button
+    // back before clicking it.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
+  });
+
+  it("clears the verse selection and closes the toolbar after applying a highlight", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+
+    await openPickerAndHighlight();
+
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+  });
+
+  it("clears the verse selection and closes the toolbar after clearing a highlight", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPickerAndHighlight();
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+
+    // Highlighting already cleared the selection — reselect it and reopen the
+    // picker to bring the clear button back.
+    await selectFirstVerse();
+    expect(container.querySelector(".sb-verse-toolbar")).not.toBeNull();
+    await openPicker();
+
+    await click(".sb-verse-toolbar-clear");
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
   });
 
   it("broadcasts without saving when the session expires highlights", async () => {
@@ -528,6 +576,9 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await act(async () => {
       options.value = { ...options.value, highlightDurationSeconds: 16 };
     });
+    // Highlighting cleared the selection made above — reselect the verse to
+    // re-highlight it.
+    await selectFirstVerse();
     await openPickerAndHighlight();
 
     // The broadcast covers the saved highlight while it lives and uncovers it
@@ -558,6 +609,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
 
     // Nothing was ever saved, so clearing has no write to make — and asking for
     // an account to undo something that never persisted is pure interruption.
@@ -603,6 +658,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     expect(broadcastHighlights()).toHaveLength(1);
 
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(removeSharedDecoration).toHaveBeenCalledWith(
@@ -622,6 +681,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
 
     attachFakeSession({ canDecorate: true });
     await renderToolbar();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // to bring the clear button back.
+    await selectFirstVerse();
+    await openPicker();
     await click(".sb-verse-toolbar-clear");
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
@@ -632,6 +695,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     const { readingState } = await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // so the clear button is showing again to check.
+    await selectFirstVerse();
+    await openPicker();
 
     expect(broadcastHighlights()).toHaveLength(0);
     expect(readingState.highlights.value.highlights).toHaveLength(1);
@@ -643,6 +710,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     const { readingState, verseNumber } = await selectFirstVerse();
     await renderToolbar();
     await openPickerAndHighlight();
+    // Highlighting cleared the selection — reselect it and reopen the picker
+    // so the clear button is showing again to check.
+    await selectFirstVerse();
+    await openPicker();
 
     // Stand in for the session's highlight timer firing. Nothing was saved, so
     // the verse is genuinely unhighlighted again and there is nothing to clear.
@@ -661,6 +732,131 @@ describe("BibleReaderToolbar — clearing highlights", () => {
     await click(".sb-verse-toolbar-highlight-trigger");
 
     expect(clearButton()?.disabled).toBe(true);
+  });
+
+  /**
+   * Fires the native colour input's `input` event, as the OS colour dialog
+   * would while the user drags. (Preact rewrites this input's `onChange` to
+   * also listen for the native `input` event rather than `change` — see
+   * `preact/compat`'s `onChangeInputType` — so both of the component's
+   * `onChange`/`onInput` handlers respond to this, same as a real browser.)
+   */
+  function dragCustomColor(value: string) {
+    const input = container.querySelector<HTMLInputElement>(
+      ".sb-verse-toolbar-color-input"
+    );
+    if (!input) {
+      throw new Error("No element matched .sb-verse-toolbar-color-input");
+    }
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  /**
+   * Blurs the colour input, as closing the native colour dialog would.
+   * (Preact rewrites `onBlur` to listen for the native `focusout` event.)
+   */
+  function closeCustomColorDialog() {
+    const input = container.querySelector<HTMLInputElement>(
+      ".sb-verse-toolbar-color-input"
+    );
+    if (!input) {
+      throw new Error("No element matched .sb-verse-toolbar-color-input");
+    }
+    input.dispatchEvent(new Event("focusout", { bubbles: true }));
+  }
+
+  it("applies a live-dragged custom color without clearing the selection, clearing only once the dialog closes", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    // Fake timers only start now — `click()` (used by `openPicker()`) awaits
+    // a real `setTimeout`, which would never resolve once timers are faked.
+    vi.useFakeTimers();
+    try {
+      // The OS colour dialog fires `input` continuously while dragging.
+      await act(async () => {
+        dragCustomColor("#112233");
+        await vi.advanceTimersByTimeAsync(300);
+      });
+
+      // The debounced live-drag commit applies the color, but the selection
+      // (and picker) stays open so the user can keep adjusting the shade —
+      // clearing here would silently drop any further tweaking (#1725).
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#112233"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+      expect(
+        container.querySelector(".sb-verse-toolbar-color-input")
+      ).not.toBeNull();
+
+      // Still dragging — another live commit updates the color and still
+      // doesn't clear the selection.
+      await act(async () => {
+        dragCustomColor("#334455");
+        await vi.advanceTimersByTimeAsync(300);
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#334455"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+
+      // The dialog closes: the color already settled 300ms ago, so this just
+      // clears the selection, same as any other highlight action.
+      await act(async () => {
+        closeCustomColorDialog();
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#334455"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("flushes a still-pending custom color immediately when the dialog closes before the debounce settles", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    vi.useFakeTimers();
+    try {
+      // Pick a color and close the dialog right away, well inside the 300ms
+      // debounce window — the pending pick shouldn't be lost to the delay.
+      await act(async () => {
+        dragCustomColor("#112233");
+        closeCustomColorDialog();
+      });
+
+      expect(readingState.highlights.value.highlights).toHaveLength(1);
+      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+        "#112233"
+      );
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves the selection untouched when the color dialog closes without picking a color", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openPicker();
+
+    await act(async () => {
+      closeCustomColorDialog();
+    });
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
   });
 });
 

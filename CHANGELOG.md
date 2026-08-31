@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Applying or clearing a highlight now clears the verse selection and closes the verse toolbar automatically, instead of leaving the selection and toolbar open after every highlight action.
+
 ### 🐛 Fixed
 
 - Fix the tabs, quick toolbar, below-reader toolbar, and mobile layout briefly showing unstyled before the page's full CSS finished loading, by keeping them hidden until it does.
