@@ -6,7 +6,6 @@ import {
 } from "@preact/signals";
 import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import type { HighlightsManager, StoredHighlight } from "./HighlightsManager";
-import type { LoginManager } from "./LoginManager";
 
 /**
  * Which kind of content the screen is showing. "all" is the default and shows
@@ -52,6 +51,11 @@ export interface YourContentManager {
   load: (options?: { force?: boolean }) => Promise<void>;
   /** Drops a deleted annotation from the list without a server round-trip. */
   removeAnnotation: (annotationId: string) => void;
+  /**
+   * Puts an annotation back, for when the server delete that
+   * `removeAnnotation` ran ahead of turns out to have failed.
+   */
+  restoreAnnotation: (annotation: Annotation) => void;
   /** Clears the search box and returns the chips to "all". */
   resetFilters: () => void;
 }
@@ -59,7 +63,6 @@ export interface YourContentManager {
 export interface CreateYourContentManagerOptions {
   annotations: AnnotationsManager;
   highlights: HighlightsManager;
-  login: LoginManager;
 }
 
 /**
@@ -123,6 +126,16 @@ export function createYourContentManager(
     );
   };
 
+  const restoreAnnotation = (annotation: Annotation) => {
+    if (annotations.value.some((existing) => existing.id === annotation.id)) {
+      return;
+    }
+    annotations.value = sortAnnotationsByRecency([
+      ...annotations.value,
+      annotation,
+    ]);
+  };
+
   const resetFilters = () => {
     query.value = "";
     filter.value = "all";
@@ -136,6 +149,7 @@ export function createYourContentManager(
     status: computed(() => status.value),
     load,
     removeAnnotation,
+    restoreAnnotation,
     resetFilters,
   };
 }
@@ -160,14 +174,18 @@ export function sortAnnotationsByRecency(
 
 /** Plain text of an annotation's rich-text body, for searching and previews. */
 export function annotationPlainText(annotation: Annotation): string {
-  return annotation.data.html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    annotation.data.html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Last, so text that escaped an entity — "&amp;lt;" — comes out as
+      // "&lt;" instead of being decoded a second time into "<".
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }

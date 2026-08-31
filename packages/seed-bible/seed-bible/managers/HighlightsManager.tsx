@@ -370,7 +370,12 @@ export function parseChapterHighlightsAddress(
   }
   const [translationId, bookId, chapter] = parts;
   const chapterNumber = Number(chapter);
-  if (!translationId || !bookId || !Number.isInteger(chapterNumber)) {
+  if (
+    !translationId ||
+    !bookId ||
+    !Number.isInteger(chapterNumber) ||
+    chapterNumber <= 0
+  ) {
     return null;
   }
   return { translationId, bookId, chapterNumber };

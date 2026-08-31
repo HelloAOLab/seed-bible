@@ -6,7 +6,6 @@ import type {
   HighlightsManager,
   StoredHighlight,
 } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
-import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import {
   annotationPlainText,
   createYourContentManager,
@@ -58,7 +57,6 @@ function createManager(
   const manager = createYourContentManager({
     annotations: { listAllAnnotations } as unknown as AnnotationsManager,
     highlights: { listAllHighlights } as unknown as HighlightsManager,
-    login: {} as unknown as LoginManager,
   });
 
   return { manager, listAllAnnotations, listAllHighlights };
@@ -163,6 +161,33 @@ describe("createYourContentManager", () => {
     expect(manager.annotations.value.map((x) => x.id)).toEqual(["b"]);
   });
 
+  it("puts an annotation back when its delete turned out to fail", async () => {
+    const { manager } = createManager({
+      annotations: [
+        annotation("a", { createdAtMs: 3000 }),
+        annotation("b", { createdAtMs: 2000 }),
+        annotation("c", { createdAtMs: 1000 }),
+      ],
+    });
+
+    await manager.load();
+    const removed = manager.annotations.value[1]!;
+    manager.removeAnnotation("b");
+    manager.restoreAnnotation(removed);
+
+    // Back in its place by date, not appended to the end.
+    expect(manager.annotations.value.map((x) => x.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("doesn't duplicate an annotation that is already in the list", async () => {
+    const { manager } = createManager({ annotations: [annotation("a")] });
+
+    await manager.load();
+    manager.restoreAnnotation(manager.annotations.value[0]!);
+
+    expect(manager.annotations.value.map((x) => x.id)).toEqual(["a"]);
+  });
+
   it("clears the search box and chips together", () => {
     const { manager } = createManager();
     manager.query.value = "psalm";
@@ -233,6 +258,17 @@ describe("annotationPlainText", () => {
     );
 
     expect(text).toBe('Alpha & Omega "first"');
+  });
+
+  // "&amp;lt;" is how the editor stores the literal text "&lt;". Decoding
+  // "&amp;" first would turn it into "&lt;" and then into "<", showing markup
+  // the note never contained.
+  it("doesn't decode an escaped entity twice", () => {
+    const text = annotationPlainText(
+      annotation("a", { html: "<p>write &amp;lt;b&amp;gt; for bold</p>" })
+    );
+
+    expect(text).toBe("write &lt;b&gt; for bold");
   });
 
   it("collapses the whitespace left behind by removed tags", () => {

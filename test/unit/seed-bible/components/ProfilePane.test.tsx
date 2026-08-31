@@ -4,6 +4,11 @@ import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { ProfilePane } from "@packages/seed-bible/seed-bible/components/ProfilePane/ProfilePane";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type {
+  ReadingPlan,
+  ReadingPlanMetadata,
+  ReadingPlanProgress,
+} from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -15,6 +20,95 @@ interface StateOptions {
   name?: string | null;
   pictureUrl?: string | null;
   plansEnabled?: boolean;
+  /** Plan metadata, full plans and progress, as the manager would hold them. */
+  plans?: {
+    metas: ReadingPlanMetadata[];
+    full: ReadingPlan[];
+    progresses: ReadingPlanProgress[];
+  };
+}
+
+// A fixed "now" so the plan card's day maths doesn't move with the clock.
+const NOW_MS = Date.UTC(2026, 5, 17, 9, 0, 0);
+
+/** Four one-reading sessions, read one a day. */
+function planFixture(
+  overrides: {
+    address?: string;
+    title?: string | null;
+    status?: "draft" | "complete";
+  } = {}
+): { meta: ReadingPlanMetadata; full: ReadingPlan } {
+  const address = overrides.address ?? "plan-1";
+  const meta = {
+    address,
+    recordName: "record-1",
+    authorUserId: "author-1",
+    locale: "en-US",
+    title: overrides.title === undefined ? "Gospel of John" : overrides.title,
+    description: null,
+    cadenceOptions: [
+      {
+        id: "daily",
+        label: "Daily",
+        cadence: { segments: [{ type: "read", days: 1, sessionsPerDay: 1 }] },
+      },
+    ],
+    defaultCadenceId: "daily",
+    status: overrides.status ?? "complete",
+    schemaVersion: 1,
+    createdAtMs: NOW_MS,
+    updatedAtMs: NOW_MS,
+  } as unknown as ReadingPlanMetadata;
+
+  const full = {
+    ...meta,
+    sessions: ["s1", "s2", "s3", "s4"].map((id) => ({
+      id: `${address}-${id}`,
+      readings: [
+        {
+          id: `${address}-${id}-r1`,
+          item: {
+            type: "bible-verse",
+            ref: { bookId: "JHN", chapter: 1, verse: 1 },
+          },
+        },
+      ],
+    })),
+  } as unknown as ReadingPlan;
+
+  return { meta, full };
+}
+
+/**
+ * Progress for `plan` started today, with its first `doneDays` days read.
+ * The time zone is fixed so a day boundary doesn't depend on the machine's.
+ */
+function progressFixture(
+  plan: ReadingPlan,
+  doneDays: number
+): ReadingPlanProgress {
+  return {
+    id: `progress-${plan.address}`,
+    planId: `rp_${plan.recordName}_${plan.address}`,
+    recordName: plan.recordName,
+    userId: "user-1",
+    selectedCadenceId: "daily",
+    selfPaced: false,
+    startedAtMs: NOW_MS,
+    timeZone: "utc",
+    sessions: plan.sessions.slice(0, doneDays).map((session) => ({
+      sessionId: session.id,
+      completedReadingIds: session.readings.map((reading) => reading.id),
+      partialChapters: [],
+      completedAtMs: NOW_MS,
+    })),
+    percentComplete: doneDays / plan.sessions.length,
+    totalSessions: plan.sessions.length,
+    totalReadings: plan.sessions.length,
+    createdAtMs: NOW_MS,
+    updatedAtMs: NOW_MS,
+  } as unknown as ReadingPlanProgress;
 }
 
 function createState(options: StateOptions = {}) {
@@ -40,11 +134,11 @@ function createState(options: StateOptions = {}) {
     features: {
       isFeatureEnabled: () => signal(plansEnabled),
     },
-    // Reading plans the user has none of — the card falls back to its prompt.
+    // By default the user has no plans, so the card falls back to its prompt.
     readingPlans: {
-      userReadingPlans: signal([]),
-      fullReadingPlans: signal([]),
-      userReadingPlanProgresses: signal([]),
+      userReadingPlans: signal(options.plans?.metas ?? []),
+      fullReadingPlans: signal(options.plans?.full ?? []),
+      userReadingPlanProgresses: signal(options.plans?.progresses ?? []),
     },
     os: { connectionId: "conn-1" },
   } as unknown as SeedBibleState;
@@ -207,6 +301,106 @@ describe("ProfilePane", () => {
     });
 
     expect(onOpenReadingPlans).toHaveBeenCalledTimes(1);
+  });
+
+  describe("with a plan in progress", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW_MS);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("features the plan with its day, total and progress bar", () => {
+      const { meta, full } = planFixture();
+      const { state } = createState({
+        plans: {
+          metas: [meta],
+          full: [full],
+          progresses: [progressFixture(full, 1)],
+        },
+      });
+      renderPane(state);
+
+      const card = container.querySelector(".sb-profile-plans");
+      expect(card?.textContent).toContain("Gospel of John");
+      // One of four days read, so the next one to read is day 2.
+      expect(card?.textContent).toContain("Day 2 of 4");
+
+      const bar = container.querySelector(
+        ".sb-profile-progress"
+      ) as HTMLElement;
+      expect(bar.getAttribute("aria-valuenow")).toBe("2");
+      expect(bar.getAttribute("aria-valuemax")).toBe("4");
+      expect(
+        (bar.querySelector(".sb-profile-progress-fill") as HTMLElement).style
+          .width
+      ).toBe("25%");
+      // Today's reading is done, so the streak reads one day.
+      expect(
+        container.querySelector(".sb-profile-plans-stats")?.textContent
+      ).toBe("Day 2 of 4 · local_fire_department1");
+    });
+
+    it("falls back to a placeholder when the plan has no title", () => {
+      const { meta, full } = planFixture({ title: null });
+      const { state } = createState({
+        plans: {
+          metas: [meta],
+          full: [full],
+          progresses: [progressFixture(full, 1)],
+        },
+      });
+      renderPane(state);
+
+      expect(
+        container.querySelector(".sb-profile-plans-name")?.textContent
+      ).toBe("Untitled plan");
+    });
+
+    // A draft is the user's own unfinished plan, not something to read.
+    it("ignores a draft plan and features the published one", () => {
+      const draft = planFixture({ address: "draft-1", status: "draft" });
+      const published = planFixture({
+        address: "plan-2",
+        title: "Psalms in a month",
+      });
+      const { state } = createState({
+        plans: {
+          metas: [draft.meta, published.meta],
+          full: [draft.full, published.full],
+          progresses: [
+            // The draft is further along, so it would win if it counted.
+            progressFixture(draft.full, 3),
+            progressFixture(published.full, 1),
+          ],
+        },
+      });
+      renderPane(state);
+
+      expect(
+        container.querySelector(".sb-profile-plans-name")?.textContent
+      ).toBe("Psalms in a month");
+    });
+
+    it("invites a new plan once every plan is finished", () => {
+      const { meta, full } = planFixture();
+      const { state } = createState({
+        plans: {
+          metas: [meta],
+          full: [full],
+          progresses: [progressFixture(full, 4)],
+        },
+      });
+      renderPane(state);
+
+      expect(container.querySelector(".sb-profile-progress")).toBeNull();
+      expect(
+        container.querySelector(".sb-profile-plans")?.textContent
+      ).toContain("You haven't started a plan yet.");
+    });
   });
 
   it("hides the plans card when the reading plans feature is off", () => {

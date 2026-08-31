@@ -1079,6 +1079,13 @@ describe("parseChapterHighlightsAddress", () => {
   it("rejects a non-numeric chapter", () => {
     expect(parseChapterHighlightsAddress("highlights:BSB/GEN/one")).toBeNull();
   });
+
+  // Chapters are numbered from 1, so a 0 or a negative is a malformed
+  // address rather than a chapter nobody has highlighted.
+  it("rejects a chapter number below 1", () => {
+    expect(parseChapterHighlightsAddress("highlights:BSB/GEN/0")).toBeNull();
+    expect(parseChapterHighlightsAddress("highlights:BSB/GEN/-3")).toBeNull();
+  });
 });
 
 describe("highlightContainsVerse", () => {

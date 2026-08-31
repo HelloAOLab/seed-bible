@@ -697,9 +697,15 @@
   "edit": "Edit",
   "more-options": "More options",
   "playlist-item-count": "{{count}} items",
+  "playlist-item-count_one": "{{count}} item",
+  "playlist-item-count_other": "{{count}} items",
   "loading-your-content": "Gathering your content…",
   "your-content-load-failed": "Your content couldn't be loaded.",
   "your-content-no-matches": "Nothing matches that search.",
   "your-content-empty": "Notes, highlights, bookmarks and playlists you make will show up here.",
+  "your-content-empty-annotations": "Notes you write will show up here.",
+  "your-content-empty-highlights": "Verses you highlight will show up here.",
+  "your-content-empty-bookmarks": "Passages you bookmark will show up here.",
+  "your-content-empty-playlists": "Playlists you create will show up here.",
   "try-again": "Try again"
 }

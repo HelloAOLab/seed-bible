@@ -599,7 +599,6 @@ export function createSeedBibleState(
   const yourContent = createYourContentManager({
     annotations,
     highlights,
-    login,
   });
   const sessions = createSessionsManager(
     os,

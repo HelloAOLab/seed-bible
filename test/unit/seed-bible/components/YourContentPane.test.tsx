@@ -65,12 +65,19 @@ interface StateOptions {
   bookmarks?: Bookmark[];
   playlists?: Playlist[];
   status?: ContentLoadStatus;
+  /** Makes the server delete fail, so the optimistic removal has to roll back. */
+  deleteError?: Error;
 }
 
 function createState(options: StateOptions = {}) {
   const load = vi.fn(async () => {});
   const removeAnnotation = vi.fn(() => {});
-  const deleteAnnotationAndRefresh = vi.fn(async () => {});
+  const restoreAnnotation = vi.fn(() => {});
+  const deleteAnnotationAndRefresh = vi.fn(async () => {
+    if (options.deleteError) {
+      throw options.deleteError;
+    }
+  });
   const query = signal("");
   const filter = signal("all");
 
@@ -83,6 +90,7 @@ function createState(options: StateOptions = {}) {
       status: signal(options.status ?? "ready"),
       load,
       removeAnnotation,
+      restoreAnnotation,
       resetFilters: vi.fn(() => {}),
     },
     bookmarks: { bookmarks: signal(options.bookmarks ?? []) },
@@ -107,6 +115,7 @@ function createState(options: StateOptions = {}) {
     state,
     load,
     removeAnnotation,
+    restoreAnnotation,
     deleteAnnotationAndRefresh,
     query,
     filter,
@@ -433,6 +442,73 @@ describe("YourContentPane", () => {
 
     expect(removeAnnotation).toHaveBeenCalledWith("a");
     expect(deleteAnnotationAndRefresh).toHaveBeenCalledWith(target);
+  });
+
+  // A chip for a section with nothing in it used to render nothing at all:
+  // the empty message counted every section, and the other sections still
+  // had content.
+  it("says a chosen section is empty even when other sections aren't", () => {
+    const { state, filter } = createState({
+      annotations: [annotation("a", "<p>note</p>")],
+    });
+    renderPane(state);
+
+    act(() => {
+      filter.value = "playlists";
+    });
+
+    expect(container.querySelector(".sb-content-section")).toBeNull();
+    expect(
+      container.querySelector(".sb-content-status")?.textContent
+    ).toContain("Playlists you create will show up here.");
+  });
+
+  it("keeps a search's 'no matches' message when a section is chosen", () => {
+    const { state, filter, query } = createState({
+      annotations: [annotation("a", "<p>note about light</p>")],
+    });
+    renderPane(state);
+
+    act(() => {
+      filter.value = "annotations";
+      query.value = "nothing here";
+    });
+
+    expect(
+      container.querySelector(".sb-content-status")?.textContent
+    ).toContain("Nothing matches");
+  });
+
+  // Without the rollback the note vanished from the screen while still
+  // sitting in the record.
+  it("puts an annotation back when the server delete fails", async () => {
+    const target = annotation("a", "<p>note</p>");
+    const { state, removeAnnotation, restoreAnnotation } = createState({
+      annotations: [target],
+      deleteError: new Error("nope"),
+    });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    renderPane(state);
+
+    act(() => {
+      (
+        container.querySelector(".sb-content-kebab") as HTMLButtonElement
+      ).click();
+    });
+    const deleteItem = Array.from(
+      document.querySelectorAll(".sb-context-menu-item")
+    ).find((el) => el.textContent?.includes("Delete")) as HTMLButtonElement;
+    act(() => {
+      deleteItem.click();
+    });
+
+    expect(removeAnnotation).toHaveBeenCalledWith("a");
+    await vi.waitFor(() => {
+      expect(restoreAnnotation).toHaveBeenCalledWith(target);
+    });
+    consoleError.mockRestore();
   });
 
   it("hands an annotation to the editor from the menu", () => {

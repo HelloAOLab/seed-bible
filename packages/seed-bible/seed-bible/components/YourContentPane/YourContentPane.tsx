@@ -373,8 +373,8 @@ function PlaylistTile(props: {
       </span>
       <span className="sb-content-playlist-meta">
         {t("playlist-item-count", {
-          count: playlist.items.length,
           defaultValue: "{{count}} items",
+          count: playlist.items.length,
         })}
         {" · "}
         {formatDate(playlist.updatedAtMs, language, "short")}
@@ -457,12 +457,54 @@ export function YourContentPane(props: YourContentScreenProps) {
     }
   };
 
-  const nothingAtAll =
+  const sectionCounts: Record<Exclude<ContentFilter, "all">, number> = {
+    annotations: visibleAnnotations.length,
+    highlights: visibleHighlights.length,
+    bookmarks: visibleBookmarks.length,
+    playlists: visiblePlaylists.length,
+  };
+
+  /**
+   * Nothing to show *for the chip that's selected*. Counting every section
+   * instead would leave a chosen-but-empty section as a blank screen, because
+   * the sections it isn't showing still had content.
+   */
+  const nothingToShow =
     status === "ready" &&
-    visibleAnnotations.length === 0 &&
-    visibleHighlights.length === 0 &&
-    visibleBookmarks.length === 0 &&
-    visiblePlaylists.length === 0;
+    (filter === "all"
+      ? Object.values(sectionCounts).every((count) => count === 0)
+      : sectionCounts[filter] === 0);
+
+  const emptyMessage = (): string => {
+    if (needle.length > 0) {
+      return t("your-content-no-matches", {
+        defaultValue: "Nothing matches that search.",
+      });
+    }
+    switch (filter) {
+      case "annotations":
+        return t("your-content-empty-annotations", {
+          defaultValue: "Notes you write will show up here.",
+        });
+      case "highlights":
+        return t("your-content-empty-highlights", {
+          defaultValue: "Verses you highlight will show up here.",
+        });
+      case "bookmarks":
+        return t("your-content-empty-bookmarks", {
+          defaultValue: "Passages you bookmark will show up here.",
+        });
+      case "playlists":
+        return t("your-content-empty-playlists", {
+          defaultValue: "Playlists you create will show up here.",
+        });
+      case "all":
+        return t("your-content-empty", {
+          defaultValue:
+            "Notes, highlights, bookmarks and playlists you make will show up here.",
+        });
+    }
+  };
 
   return (
     <div className="sb-content-screen">
@@ -528,17 +570,8 @@ export function YourContentPane(props: YourContentScreenProps) {
           </div>
         ) : null}
 
-        {nothingAtAll ? (
-          <p className="sb-content-status">
-            {needle.length > 0
-              ? t("your-content-no-matches", {
-                  defaultValue: "Nothing matches that search.",
-                })
-              : t("your-content-empty", {
-                  defaultValue:
-                    "Notes, highlights, bookmarks and playlists you make will show up here.",
-                })}
-          </p>
+        {nothingToShow ? (
+          <p className="sb-content-status">{emptyMessage()}</p>
         ) : null}
 
         {showing("annotations") && visibleAnnotations.length > 0 ? (
@@ -559,9 +592,16 @@ export function YourContentPane(props: YourContentScreenProps) {
                     onEdit={() => props.onEditAnnotation(annotation)}
                     onDelete={() => {
                       // Drop it from the list straight away — waiting on the
-                      // server would leave a deleted note on screen.
+                      // server would leave a deleted note on screen. If the
+                      // delete then fails, put it back rather than showing a
+                      // note as gone that is still there.
                       yourContent.removeAnnotation(annotation.id);
-                      void annotations.deleteAnnotationAndRefresh(annotation);
+                      void annotations
+                        .deleteAnnotationAndRefresh(annotation)
+                        .catch((error) => {
+                          console.error("Error deleting annotation:", error);
+                          yourContent.restoreAnnotation(annotation);
+                        });
                     }}
                   />
                 ))}
