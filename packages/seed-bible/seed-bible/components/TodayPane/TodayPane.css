@@ -81,6 +81,39 @@
   text-align: center;
 }
 
+/* The book reference and verse quote both wait on an async translation
+   lookup, so they start hidden and grow in once resolved instead of
+   snapping into place -- which also eases the buttons below down smoothly,
+   since they're just later flex siblings in the same gapped column. Animating
+   `grid-template-rows` from 0fr to 1fr (rather than guessing a `max-height`
+   cap) grows the box to the content's real height, so it can't clip if the
+   font or line-height changes later. The `.sb-today-welcome-screen-reveal`
+   child is what actually gets clipped mid-transition -- a 0fr row doesn't
+   shrink its content below intrinsic size unless that content has its own
+   `overflow: hidden`. */
+.sb-today-welcome-screen .sb-today-welcome-screen-book,
+.sb-today-welcome-screen .sb-today-welcome-screen-verse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    opacity 1s ease,
+    grid-template-rows 1s ease;
+}
+
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-book.sb-today-welcome-screen-passage-visible,
+.sb-today-welcome-screen
+  .sb-today-welcome-screen-verse.sb-today-welcome-screen-passage-visible {
+  opacity: 1;
+  grid-template-rows: 1fr;
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-reveal {
+  overflow: hidden;
+  min-height: 0;
+}
+
 .sb-today-welcome-screen
   .sb-today-welcome-screen-verse
   .sb-today-welcome-screen-verse-highlight {
@@ -120,6 +153,11 @@
   border: none;
   background-color: var(--sb-primary-color);
   color: var(--sb-reader-background);
+}
+
+.sb-today-welcome-screen .sb-today-welcome-screen-start-button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .sb-today-welcome-screen .sb-today-welcome-screen-start-button > span {

@@ -112,9 +112,13 @@ describe("Welcome", () => {
       expect(q(".sb-today-welcome-screen-book")!.textContent).toBe("JOHN 1:1");
     });
 
-    it("falls back to the raw book id when the John name is missing", () => {
+    it("renders nothing until the translation's books have loaded", () => {
       setup({ bookNames: new Map() });
-      expect(q(".sb-today-welcome-screen-book")!.textContent).toBe("JHN 1:1");
+      const book = q(".sb-today-welcome-screen-book")!;
+      expect(book.textContent).toBe("");
+      expect(book.className).not.toContain(
+        "sb-today-welcome-screen-passage-visible"
+      );
     });
 
     it("falls back to the translation's first book when John is unavailable", () => {
@@ -233,6 +237,28 @@ describe("Welcome", () => {
       );
     });
 
+    it("only reveals the book heading and verse together, once both have resolved", async () => {
+      const verseDeferred = deferred<string>();
+      getVerseText.mockReturnValue(verseDeferred.promise);
+      setup({ bookNames: new Map([["JHN", "John"]]) });
+
+      const book = q(".sb-today-welcome-screen-book")!;
+      const verse = q(".sb-today-welcome-screen-verse")!;
+      const visibleClass = "sb-today-welcome-screen-passage-visible";
+
+      // The book name is already known, but the verse fetch hasn't resolved
+      // yet, so neither should be revealed.
+      expect(book.className).not.toContain(visibleClass);
+      expect(verse.className).not.toContain(visibleClass);
+
+      await act(async () => {
+        verseDeferred.resolve("In the beginning");
+      });
+
+      expect(book.className).toContain(visibleClass);
+      expect(verse.className).toContain(visibleClass);
+    });
+
     it("ignores a stale fetch result after the translation changes", async () => {
       const d1 = deferred<string>();
       const d2 = deferred<string>();
@@ -301,15 +327,23 @@ describe("Welcome", () => {
       setup();
       const button = btn(".sb-today-welcome-screen-start-button");
       expect(button.textContent).toContain("Read John 1");
+      expect(button.disabled).toBe(false);
       expect(
         button.querySelector(".material-symbols-outlined")!.textContent
       ).toBe("arrow_right_alt");
     });
 
-    it("falls back to the raw book id when the John name is missing", () => {
+    it("disables the button with a generic label until the translation's books have loaded", () => {
       setup({ bookNames: new Map() });
       const button = btn(".sb-today-welcome-screen-start-button");
-      expect(button.textContent).toContain("Read JHN 1");
+      expect(button.disabled).toBe(true);
+      expect(button.textContent).toContain("Read the Bible");
+    });
+
+    it("does nothing when clicked while disabled", () => {
+      setup({ bookNames: new Map() });
+      act(() => btn(".sb-today-welcome-screen-start-button").click());
+      expect(onOpenPassage).not.toHaveBeenCalled();
     });
 
     it("falls back to the translation's first book when John is unavailable", () => {

@@ -38,15 +38,22 @@ export const Welcome = (props: {
   const firstBook = lastTranslationBooks.value?.books[0];
   // John is the usual welcome passage, but not every translation has it (an
   // Old Testament-only translation, say) -- fall back to the translation's
-  // own first book (typically Genesis) when it doesn't. While no book data
-  // has loaded yet, `firstBook` is also undefined, so this keeps the raw
-  // "JHN" id as a loading placeholder rather than guessing, matching
-  // BibleReader's `currentBook.value?.name ?? bookId.value` pattern.
-  const welcomeBookId =
-    johnBookName !== undefined ? "JHN" : (firstBook?.id ?? "JHN");
-  const welcomeBookName = johnBookName ?? firstBook?.name ?? welcomeBookId;
+  // own first book (typically Genesis) when it doesn't. Both stay `undefined`
+  // until book data has loaded, rather than guessing, so nothing below renders
+  // a placeholder for a book that might not be the right one.
+  const welcomeBookId = johnBookName !== undefined ? "JHN" : firstBook?.id;
+  const welcomeBookName = johnBookName ?? firstBook?.name;
+  // Gates the fade-in below: true only once the target book is known *and*
+  // its opening verse has come back, so the heading and quote always appear
+  // together instead of the heading beating the (async) verse fetch.
+  const passageReady =
+    welcomeBookName !== undefined && welcomeVerse.value.length > 0;
 
   useEffect(() => {
+    if (welcomeBookId === undefined) {
+      return;
+    }
+
     let isActive = true;
 
     const translationId =
@@ -85,8 +92,12 @@ export const Welcome = (props: {
             })
           : t("anonymous-greeting", { defaultValue: "Welcome!" })}
       </h1>
-      <span className={"sb-today-welcome-screen-book"}>
-        {`${welcomeBookName.toUpperCase()} 1:1`}
+      <span
+        className={`sb-today-welcome-screen-book${passageReady ? " sb-today-welcome-screen-passage-visible" : ""}`}
+      >
+        <span className="sb-today-welcome-screen-reveal">
+          {welcomeBookName ? `${welcomeBookName.toUpperCase()} 1:1` : ""}
+        </span>
       </span>
       {/*
         Real nodes rather than `dangerouslySetInnerHTML`. The `<hl>` markers are
@@ -94,19 +105,23 @@ export const Welcome = (props: {
         unmapped fallback path renders text straight from the Bible API through
         this same element, and as raw HTML that text was never escaped.
       */}
-      <div className="sb-today-welcome-screen-verse">
-        {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
-          index % 2 === 1 ? (
-            <span
-              className="sb-today-welcome-screen-verse-highlight"
-              key={index}
-            >
-              {part}
-            </span>
-          ) : (
-            part
-          )
-        )}
+      <div
+        className={`sb-today-welcome-screen-verse${passageReady ? " sb-today-welcome-screen-passage-visible" : ""}`}
+      >
+        <div className="sb-today-welcome-screen-reveal">
+          {welcomeVerse.value.split(HIGHLIGHT_MARKERS).map((part, index) =>
+            index % 2 === 1 ? (
+              <span
+                className="sb-today-welcome-screen-verse-highlight"
+                key={index}
+              >
+                {part}
+              </span>
+            ) : (
+              part
+            )
+          )}
+        </div>
       </div>
       <div className={"sb-today-welcome-screen-navigation"}>
         <button
@@ -126,20 +141,26 @@ export const Welcome = (props: {
         </button>
         <button
           className={"sb-today-welcome-screen-start-button sb-today-clickable"}
-          onClick={() =>
+          disabled={welcomeBookId === undefined}
+          onClick={() => {
+            if (welcomeBookId === undefined) {
+              return;
+            }
             // `onOpenPassage` falls back to the default translation when unset.
             props.onOpenPassage({
               bookId: welcomeBookId,
               chapter: 1,
               translationId: lastTranslationId.value,
-            })
-          }
+            });
+          }}
         >
-          {t("read-book-chapter-button", {
-            defaultValue: "Read {{bookName}} {{chapterNumber}}",
-            bookName: welcomeBookName,
-            chapterNumber: 1,
-          })}
+          {welcomeBookId !== undefined
+            ? t("read-book-chapter-button", {
+                defaultValue: "Read {{bookName}} {{chapterNumber}}",
+                bookName: welcomeBookName,
+                chapterNumber: 1,
+              })
+            : t("read-the-bible", { defaultValue: "Read the Bible" })}
           <MaterialIcon>arrow_right_alt</MaterialIcon>
         </button>
       </div>
