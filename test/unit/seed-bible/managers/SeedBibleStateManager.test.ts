@@ -1638,6 +1638,7 @@ describe("createSeedBibleState", () => {
           {
             id: "variant_test",
             name: "Default",
+            baseTheme: "light",
             themes: {},
             highlightColors: {},
             createdAt: 0,
@@ -1676,6 +1677,7 @@ describe("createSeedBibleState", () => {
           {
             id: "variant_test",
             name: "Default",
+            baseTheme: "light",
             themes: {},
             highlightColors: {},
             createdAt: 0,
@@ -1704,6 +1706,7 @@ describe("createSeedBibleState", () => {
           {
             id: "variant_test",
             name: "Default",
+            baseTheme: "light",
             themes: {},
             highlightColors: { yellow: { color: "#123456" } },
             createdAt: 0,

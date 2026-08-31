@@ -52,7 +52,6 @@ import {
   type PersistedTab,
 } from "../managers/TabsPersistence";
 import {
-  applyHighlightOverrides,
   generateThemeCssVariables,
   createTheme,
   generateThemeCssClasses,
@@ -743,30 +742,17 @@ export function createSeedBibleState(
   const readingPlans = createReadingPlansManager(os, login);
 
   const { currentTheme } = themeManager;
-  // Layers the active Customization's colors on top of the user's real,
-  // persisted theme — session-only, since `activeThemeOverrides` is derived
-  // from in-memory customization data, never written to `SettingsManager`.
+  // While a Customization is active, its variant is rendered against its
+  // own `baseTheme` preset (via `activeResolvedTheme` — see
+  // `buildBibleThemeFromCustomizationTheme`), not against the viewer's own
+  // theme — session-only, since that resolution is derived from in-memory
+  // customization data, never written to `SettingsManager`.
   // `themeManager.currentTheme` itself (exposed as `state.theme.currentTheme`)
   // stays unblended so Display & Theme settings keep showing/editing the
   // user's actual theme, decoupled from whichever Customization is active.
-  const theme = computed(() => {
-    const overrides = customizations.activeThemeOverrides.value;
-    const withVariableOverrides =
-      Object.keys(overrides).length === 0
-        ? currentTheme.value
-        : {
-            ...currentTheme.value,
-            variables: { ...currentTheme.value.variables, ...overrides },
-          };
-    // A no-op when the active variant has no highlight overrides of its
-    // own — falls through to the user's own persisted highlight colors
-    // (already baked into `currentTheme`), same as the variable overrides
-    // above do for everything else.
-    return applyHighlightOverrides(
-      withVariableOverrides,
-      customizations.activeHighlightOverrides.value
-    );
-  });
+  const theme = computed(
+    () => customizations.activeResolvedTheme.value ?? currentTheme.value
+  );
   const themeCssVariables = computed(() =>
     generateThemeCssVariables(theme.value)
   );

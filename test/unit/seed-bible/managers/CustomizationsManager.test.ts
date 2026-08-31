@@ -1,8 +1,7 @@
 import {
   createCustomizationsManager,
+  buildBibleThemeFromCustomizationTheme,
   buildCustomFontValue,
-  CUSTOMIZATION_COLOR_FIELDS,
-  CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_MARKER,
   getFontPresetsForField,
   lightenColor,
@@ -372,7 +371,7 @@ describe("CustomizationsManager", () => {
     });
   });
 
-  it("create() persists a new record with one variant pre-filled from the current theme, secondary/tertiary lightened from primary", async () => {
+  it("create() persists a new record with one variant based on the viewer's current preset, with no overrides of its own", async () => {
     const { manager, theme } = createManager();
     const lightThemeVariables = theme.currentTheme.value.variables;
 
@@ -381,79 +380,26 @@ describe("CustomizationsManager", () => {
     expect(created.variants).toHaveLength(1);
     expect(created.defaultVariantId).toBe(created.variants[0]?.id);
     expect(created.variants[0]?.name).toBe(theme.basePresetTheme.value.name);
-    expect(created.variants[0]?.themes.primaryColor).toBe(
+    // A brand-new variant has no overrides of its own — everything is
+    // inherited from its baseTheme until the user explicitly edits it.
+    expect(created.variants[0]?.baseTheme).toBe(theme.basePresetTheme.value.id);
+    expect(created.variants[0]?.themes).toEqual({});
+    expect(created.variants[0]?.highlightColors).toEqual({});
+    // But the *resolved* theme (base + overrides) already matches the
+    // viewer's current preset, since there's nothing to override yet.
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      created.variants[0]!,
+      theme.basePresetTheme.value
+    );
+    expect(resolved.variables.primaryColor).toBe(
       lightThemeVariables.primaryColor
     );
-    expect(created.variants[0]?.themes.secondaryColor).toBe(
-      lightenColor(lightThemeVariables.primaryColor, SECONDARY_LIGHTEN_AMOUNT)
-    );
-    expect(created.variants[0]?.themes.tertiaryColor).toBe(
-      lightenColor(lightThemeVariables.primaryColor, TERTIARY_LIGHTEN_AMOUNT)
-    );
-    expect(created.variants[0]?.themes.fontColor).toBe(
-      lightThemeVariables.fontColor
-    );
-    // Every customizable field is seeded from the current theme, not just
-    // the original 4 — spot-check a few of the newer ones.
-    expect(created.variants[0]?.themes.readerBackground).toBe(
+    expect(resolved.variables.readerBackground).toBe(
       lightThemeVariables.readerBackground
     );
-    expect(created.variants[0]?.themes.sidebarFontColor).toBe(
-      lightThemeVariables.sidebarFontColor
-    );
-    expect(created.variants[0]?.themes.linkColor).toBe(
-      lightThemeVariables.linkColor
-    );
-    expect(created.variants[0]?.themes.verseFontColor).toBe(
-      lightThemeVariables.verseFontColor
-    );
-    expect(created.variants[0]?.themes.readerToolbarFontColor).toBe(
-      lightThemeVariables.readerToolbarFontColor
-    );
-    expect(created.variants[0]?.themes.selectedVerseTextDecorationColor).toBe(
-      lightThemeVariables.selectedVerseTextDecorationColor
-    );
-    expect(created.variants[0]?.themes.primaryFontColor).toBe(
-      lightThemeVariables.primaryFontColor
-    );
-    expect(created.variants[0]?.themes.secondaryFontColor).toBe(
-      lightThemeVariables.secondaryFontColor
-    );
-    expect(created.variants[0]?.themes.hebrewSubtitleFontColor).toBe(
-      lightThemeVariables.hebrewSubtitleFontColor
-    );
-    expect(created.variants[0]?.themes.dividerColor).toBe(
-      lightThemeVariables.dividerColor
-    );
-    // Font-family fields are seeded from the current theme the same way
-    // color fields are.
-    expect(created.variants[0]?.themes.fontFamily).toBe(
-      lightThemeVariables.fontFamily
-    );
-    expect(created.variants[0]?.themes.bookTitleFontFamily).toBe(
-      lightThemeVariables.bookTitleFontFamily
-    );
-    expect(created.variants[0]?.themes.chapterHeadingFontFamily).toBe(
-      lightThemeVariables.chapterHeadingFontFamily
-    );
-    expect(created.variants[0]?.themes.verseFontFamily).toBe(
-      lightThemeVariables.verseFontFamily
-    );
-    expect(created.variants[0]?.themes.hebrewSubtitleFontFamily).toBe(
-      lightThemeVariables.hebrewSubtitleFontFamily
-    );
-    // Highlight colors are seeded from the current theme too, one full
-    // {color, fontColor, wordsOfJesusFontColor} entry per highlight id.
-    expect(created.variants[0]?.highlightColors).toEqual(
+    expect(resolved.highlightColors).toEqual(
       theme.currentTheme.value.highlightColors
     );
-    const seededKeys = Object.keys(created.variants[0]!.themes);
-    for (const field of CUSTOMIZATION_COLOR_FIELDS) {
-      expect(seededKeys).toContain(field.key);
-    }
-    for (const field of CUSTOMIZATION_FONT_FIELDS) {
-      expect(seededKeys).toContain(field.key);
-    }
     expect(created.extensionSettings).toEqual({});
     expect(recordDataMock).toHaveBeenCalledWith("user-1", created.id, created, {
       marker: CUSTOMIZATION_MARKER,
@@ -480,6 +426,117 @@ describe("CustomizationsManager", () => {
     expect(r2).toBeLessThanOrEqual(255);
     expect(g2).toBeLessThanOrEqual(255);
     expect(b2).toBeLessThanOrEqual(255);
+  });
+
+  it("buildBibleThemeFromCustomizationTheme() returns the base preset unchanged when the variant has no overrides", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    const lightPreset = theme.themes.value.find((t) => t.id === "light")!;
+
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      created.variants[0]!,
+      lightPreset
+    );
+
+    expect(resolved.variables).toEqual(lightPreset.variables);
+    expect(resolved.highlightColors).toEqual(lightPreset.highlightColors);
+  });
+
+  it("buildBibleThemeFromCustomizationTheme() layers explicit overrides onto the base preset, leaving everything else from the preset", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const variantId = created.variants[0]!.id;
+    manager.setEditingVariantColor(variantId, "readerBackground", "#000000");
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#123456",
+    });
+    const variant = manager.editingCustomization.value!.variants[0]!;
+    const lightPreset = theme.themes.value.find((t) => t.id === "light")!;
+
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      variant,
+      lightPreset
+    );
+
+    expect(resolved.variables.readerBackground).toBe("#000000");
+    // A field never touched by the user still falls through to the preset.
+    expect(resolved.variables.primaryColor).toBe(
+      lightPreset.variables.primaryColor
+    );
+    expect(resolved.highlightColors.yellow?.color).toBe("#123456");
+    // The rest of that same highlight id's fields, and every other id,
+    // still come from the preset — this is a per-id merge, not a
+    // wholesale replace.
+    expect(resolved.highlightColors.yellow?.fontColor).toBe(
+      lightPreset.highlightColors.yellow.fontColor
+    );
+    expect(resolved.highlightColors.green).toEqual(
+      lightPreset.highlightColors.green
+    );
+  });
+
+  it("resolveVariantBaseTheme() resolves a variant's baseTheme id to the matching preset, falling back to the viewer's current preset for an unrecognized id", async () => {
+    const { manager, theme } = createManager();
+    const darkPreset = theme.themes.value.find((t) => t.id === "dark")!;
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const variantId = created.variants[0]!.id;
+    manager.applyPresetToEditingVariant(variantId, "dark");
+    const variant = manager.editingCustomization.value!.variants[0]!;
+
+    expect(manager.resolveVariantBaseTheme(variant)).toBe(darkPreset);
+    expect(
+      manager.resolveVariantBaseTheme({
+        ...variant,
+        baseTheme: "not-a-real-preset-id",
+      })
+    ).toBe(theme.basePresetTheme.value);
+  });
+
+  it("resetEditingVariantField() removes a color/font override, reverting it to inherit from the base preset", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const variantId = created.variants[0]!.id;
+    manager.setEditingVariantColor(variantId, "readerBackground", "#000000");
+    const lightPreset = theme.themes.value.find((t) => t.id === "light")!;
+
+    manager.resetEditingVariantField(variantId, "readerBackground");
+
+    const variant = manager.editingCustomization.value!.variants[0]!;
+    expect(variant.themes.readerBackground).toBeUndefined();
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      variant,
+      lightPreset
+    );
+    expect(resolved.variables.readerBackground).toBe(
+      lightPreset.variables.readerBackground
+    );
+  });
+
+  it("resetEditingVariantHighlightColor() removes all of a highlight id's overrides, reverting it to inherit from the base preset", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const variantId = created.variants[0]!.id;
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      color: "#123456",
+      fontColor: "#abcdef",
+    });
+    const lightPreset = theme.themes.value.find((t) => t.id === "light")!;
+
+    manager.resetEditingVariantHighlightColor(variantId, "yellow");
+
+    const variant = manager.editingCustomization.value!.variants[0]!;
+    expect(variant.highlightColors.yellow).toBeUndefined();
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      variant,
+      lightPreset
+    );
+    expect(resolved.highlightColors.yellow).toEqual(
+      lightPreset.highlightColors.yellow
+    );
   });
 
   it("buildCustomFontValue() builds a font-family CSS value with a sans-serif fallback", () => {
@@ -807,21 +864,22 @@ describe("CustomizationsManager", () => {
     const { manager } = createManager();
     const created = await manager.create();
     const variantId = created.variants[0]!.id;
-    const originalFontColor =
-      created.variants[0]!.highlightColors.yellow!.fontColor;
     manager.startEditing(created.id);
 
     manager.setEditingVariantHighlightColor(variantId, "yellow", {
       color: "#123456",
+    });
+    // A second patch on the same id merges alongside the first field
+    // rather than replacing the whole entry.
+    manager.setEditingVariantHighlightColor(variantId, "yellow", {
+      fontColor: "#abcdef",
     });
 
     expect(
       manager.editingCustomization.value?.variants[0]?.highlightColors.yellow
     ).toEqual({
       color: "#123456",
-      fontColor: originalFontColor,
-      wordsOfJesusFontColor:
-        created.variants[0]!.highlightColors.yellow!.wordsOfJesusFontColor,
+      fontColor: "#abcdef",
     });
   });
 
@@ -903,11 +961,9 @@ describe("CustomizationsManager", () => {
     const variantId = created.variants[0]!.id;
     manager.startEditing(created.id);
 
-    // Newly created variants seed a full highlight-color set from the live
-    // theme, so the active overrides already match it before any edit.
-    expect(manager.activeHighlightOverrides.value).toEqual(
-      theme.currentTheme.value.highlightColors
-    );
+    // A newly created variant has no highlight overrides of its own yet —
+    // everything is still inherited from its base preset.
+    expect(manager.activeHighlightOverrides.value).toEqual({});
 
     manager.setEditingVariantHighlightColor(variantId, "yellow", {
       color: "#123456",
@@ -1058,7 +1114,7 @@ describe("CustomizationsManager", () => {
     expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
   });
 
-  it("addEditingVariant() appends a new variant to the draft, seeded from the current theme", async () => {
+  it("addEditingVariant() appends a new variant to the draft, based on the viewer's current preset with no overrides of its own", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();
     manager.startEditing(created.id);
@@ -1069,19 +1125,9 @@ describe("CustomizationsManager", () => {
     const record = manager.editingCustomization.value!;
     expect(record.variants).toHaveLength(2);
     expect(record.variants[1]?.id).toBe(added!.id);
-    expect(added!.themes.primaryColor).toBe(
-      theme.currentTheme.value.variables.primaryColor
-    );
-    expect(added!.themes.readerBackground).toBe(
-      theme.currentTheme.value.variables.readerBackground
-    );
-    expect(added!.highlightColors).toEqual(
-      theme.currentTheme.value.highlightColors
-    );
-    const seededKeys = Object.keys(added!.themes);
-    for (const field of CUSTOMIZATION_COLOR_FIELDS) {
-      expect(seededKeys).toContain(field.key);
-    }
+    expect(added!.baseTheme).toBe(theme.basePresetTheme.value.id);
+    expect(added!.themes).toEqual({});
+    expect(added!.highlightColors).toEqual({});
     // The base preset name ("Light") is already taken by the first variant,
     // so the new one falls back to a generic name.
     expect(added!.name).toBe("Variant 2");
@@ -1097,13 +1143,16 @@ describe("CustomizationsManager", () => {
     expect(added).toBeNull();
   });
 
-  it("applyPresetToEditingVariant() replaces the variant's colors/fonts/highlights with the given built-in preset's, leaving its id/name/createdAt untouched", async () => {
+  it("applyPresetToEditingVariant() changes the variant's fallback preset while leaving its own overrides and identity untouched", async () => {
     const { manager, theme } = createManager();
     const darkPreset = theme.themes.value.find((t) => t.id === "dark")!;
     const created = await manager.create();
     manager.startEditing(created.id);
     const variant = created.variants[0]!;
     manager.renameEditingVariant(variant.id, "My Theme");
+    // The user has explicitly overridden primaryColor, but never touched
+    // readerBackground — after rebasing, primaryColor must still be their
+    // pick, while readerBackground should now resolve from the new preset.
     manager.setEditingVariantColor(variant.id, "primaryColor", "#abcdef");
 
     manager.applyPresetToEditingVariant(variant.id, "dark");
@@ -1114,11 +1163,18 @@ describe("CustomizationsManager", () => {
     expect(updated.id).toBe(variant.id);
     expect(updated.name).toBe("My Theme");
     expect(updated.createdAt).toBe(variant.createdAt);
-    expect(updated.themes.primaryColor).toBe(darkPreset.variables.primaryColor);
-    expect(updated.themes.readerBackground).toBe(
+    expect(updated.baseTheme).toBe("dark");
+    // The primaryColor cascade also auto-derives secondary/tertiary from
+    // the override — all three stay the user's own, not the preset's.
+    expect(updated.themes.primaryColor).toBe("#abcdef");
+    // readerBackground was never overridden, so it now resolves from the
+    // new base preset instead of the old one.
+    expect(updated.themes.readerBackground).toBeUndefined();
+    const resolved = buildBibleThemeFromCustomizationTheme(updated, darkPreset);
+    expect(resolved.variables.primaryColor).toBe("#abcdef");
+    expect(resolved.variables.readerBackground).toBe(
       darkPreset.variables.readerBackground
     );
-    expect(updated.highlightColors).toEqual(darkPreset.highlightColors);
   });
 
   it("applyPresetToEditingVariant() leaves other variants and the current live theme untouched", async () => {
@@ -1132,8 +1188,11 @@ describe("CustomizationsManager", () => {
     manager.applyPresetToEditingVariant(second.id, "dark");
 
     const record = manager.editingCustomization.value!;
-    expect(record.variants.find((v) => v.id === first.id)?.themes).toEqual(
-      first.themes
+    const updatedFirst = record.variants.find((v) => v.id === first.id)!;
+    expect(updatedFirst.themes).toEqual(first.themes);
+    expect(updatedFirst.baseTheme).toBe(first.baseTheme);
+    expect(record.variants.find((v) => v.id === second.id)?.baseTheme).toBe(
+      "dark"
     );
     // The viewer's own theme (light, by default in this fixture) is
     // untouched — this only mutates the draft's variant, not the live theme.

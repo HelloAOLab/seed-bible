@@ -282,6 +282,17 @@
   padding: 0.25rem 0.25rem;
 }
 
+.sb-settings-field-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-settings-field-row-controls > *:not(.sb-theme-color-reset) {
+  flex: 1;
+  min-width: 0;
+}
+
 .sb-settings-field-label {
   font-size: 0.8125rem;
   font-weight: 500;

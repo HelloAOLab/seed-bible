@@ -12,6 +12,7 @@ import type { NavigationManager } from "./NavigationManager";
 import type { CustomizationVariantSelectionsManager } from "./CustomizationVariantSelectionsManager";
 import type { CustomizationExtensionPreferencesManager } from "./CustomizationExtensionPreferencesManager";
 import {
+  applyHighlightOverrides,
   filterValidColorOverrides,
   filterValidFontFamilyOverrides,
   LIGHT_THEME_FONT_DEFAULTS,
@@ -124,11 +125,27 @@ const customizationVariantHighlightColorSchema = z.object({
 const customizationVariantSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  /**
+   * Id of the built-in preset (an entry in `theme.themes.value`, e.g.
+   * "light"/"dark") this theme falls back to for any field not present in
+   * `themes`/`highlightColors` below. Defaults to "light" for records
+   * persisted before this field existed — harmless, since those records'
+   * `themes`/`highlightColors` were always fully populated at creation
+   * time, so there's nothing left for a base theme to fill in.
+   */
+  baseTheme: z.string().min(1).default("light"),
+  /**
+   * Color/font overrides explicitly set by the user, keyed by
+   * `ThemeColorKey`/`ThemeFontFamilyKey`. A key's absence means "inherit
+   * `baseTheme`'s value", not "no value" — see `buildBibleThemeFromCustomizationTheme`.
+   */
   themes: z.record(z.string(), z.string()),
   /**
    * Per-highlight-id color overrides, in the same shape as `ThemeManager`'s
    * own `HighlightOverrides` — keyed by highlight id (e.g. "yellow"), each
-   * entry a partial `{ color, fontColor, wordsOfJesusFontColor }` patch.
+   * entry a partial `{ color, fontColor, wordsOfJesusFontColor }` patch. A
+   * highlight id (or one of its fields) absent here also means "inherit
+   * from `baseTheme`."
    */
   highlightColors: z
     .record(z.string(), customizationVariantHighlightColorSchema)
@@ -185,9 +202,21 @@ const customizationSchema = z
 export interface CustomizationThemeVariant {
   id: string;
   name: string;
-  /** Color overrides in the same shape as `ThemeManager`'s own `ThemeOverrides`. */
+  /**
+   * Id of the built-in preset (an entry in `theme.themes.value`) this theme
+   * falls back to for any field not present in `themes`/`highlightColors`.
+   * See `buildBibleThemeFromCustomizationTheme`.
+   */
+  baseTheme: string;
+  /**
+   * Color/font overrides explicitly set by the user, in the same shape as
+   * `ThemeManager`'s own `ThemeOverrides`. A key's absence means "inherit
+   * `baseTheme`'s value" — this is what makes "has the user overridden
+   * this field" a simple presence check rather than something tracked
+   * separately.
+   */
   themes: ThemeOverrides;
-  /** Per-highlight-id color overrides, in the same shape as `ThemeManager`'s own `HighlightOverrides`. */
+  /** Per-highlight-id color overrides, in the same shape as `ThemeManager`'s own `HighlightOverrides`. Absence follows the same inherit-from-`baseTheme` rule as `themes`. */
   highlightColors: HighlightOverrides;
   createdAt: number;
   updatedAt: number;
@@ -223,6 +252,7 @@ function narrowVariants(
   variants: {
     id: string;
     name: string;
+    baseTheme: string;
     themes: Record<string, string>;
     highlightColors: HighlightOverrides;
     createdAt: number;
@@ -366,62 +396,49 @@ export function buildCustomFontValue(name: string): string {
 }
 
 /**
- * Derives a variant's `themes`/`highlightColors` fields from a full
- * `BibleTheme` — shared by `buildVariant` (a brand-new variant) and
- * `applyPresetToEditingVariant` (re-basing an existing one onto a preset),
- * so both stay in sync with which fields get seeded.
+ * A brand-new variant starts with no overrides at all — every field is
+ * inherited from `baseThemeId` until the user explicitly edits it. This is
+ * what makes "has the user overridden this field" a simple presence check
+ * (see `buildBibleThemeFromCustomizationTheme`) rather than something that
+ * has to be tracked separately from the values themselves.
  */
-function buildVariantFields(currentTheme: BibleTheme): {
-  themes: ThemeOverrides;
-  highlightColors: HighlightOverrides;
-} {
-  const currentVariables = currentTheme.variables;
-  const primaryColor = currentVariables.primaryColor;
-  const themes: ThemeOverrides = {
-    primaryColor,
-    secondaryColor: lightenColor(primaryColor, SECONDARY_LIGHTEN_AMOUNT),
-    tertiaryColor: lightenColor(primaryColor, TERTIARY_LIGHTEN_AMOUNT),
-  };
-  for (const field of CUSTOMIZATION_COLOR_FIELDS) {
-    if (
-      field.key === "primaryColor" ||
-      field.key === "secondaryColor" ||
-      field.key === "tertiaryColor"
-    ) {
-      continue;
-    }
-    const value = currentVariables[field.key];
-    if (typeof value === "string" && value.length > 0) {
-      themes[field.key] = value;
-    }
-  }
-  for (const field of CUSTOMIZATION_FONT_FIELDS) {
-    const value = currentVariables[field.key];
-    if (typeof value === "string" && value.length > 0) {
-      themes[field.key] = value;
-    }
-  }
-  const highlightColors: HighlightOverrides = {};
-  for (const [id, colors] of Object.entries(currentTheme.highlightColors)) {
-    highlightColors[id] = { ...colors };
-  }
-  return { themes, highlightColors };
-}
-
 function buildVariant(
   name: string,
-  currentTheme: BibleTheme
+  baseThemeId: string
 ): CustomizationThemeVariant {
   const now = Date.now();
-  const { themes, highlightColors } = buildVariantFields(currentTheme);
   return {
     id: `variant_${uuid()}`,
     name,
-    themes,
-    highlightColors,
+    baseTheme: baseThemeId,
+    themes: {},
+    highlightColors: {},
     createdAt: now,
     updatedAt: now,
   };
+}
+
+/**
+ * Resolves a customization theme's full, ready-to-render `BibleTheme` by
+ * layering its own explicit overrides (`variant.themes`/`highlightColors`)
+ * on top of `basePreset`. A field absent from the variant falls through to
+ * `basePreset`'s own value unchanged — this is the one place that
+ * inherit-vs-override distinction gets resolved into a concrete value, so
+ * `variant.themes`/`highlightColors` should never be read as if either were
+ * a complete theme on their own.
+ */
+export function buildBibleThemeFromCustomizationTheme(
+  variant: CustomizationThemeVariant,
+  basePreset: BibleTheme
+): BibleTheme {
+  const withVariables =
+    Object.keys(variant.themes).length === 0
+      ? basePreset
+      : {
+          ...basePreset,
+          variables: { ...basePreset.variables, ...variant.themes },
+        };
+  return applyHighlightOverrides(withVariables, variant.highlightColors);
 }
 
 export interface CustomizationsManager {
@@ -451,6 +468,18 @@ export interface CustomizationsManager {
    */
   activeHighlightOverrides: ReadonlySignal<HighlightOverrides>;
   /**
+   * The active variant's full, resolved `BibleTheme` — its own overrides
+   * combined with its `baseTheme` preset via
+   * `buildBibleThemeFromCustomizationTheme`. `null` when nothing is active.
+   * This is what `SeedBibleStateManager` actually renders: the active
+   * variant's colors are always shown against its own designated base
+   * preset (e.g. a "Dark" theme always looks dark), never against whatever
+   * the viewer's own personal light/dark theme happens to be.
+   */
+  activeResolvedTheme: ReadonlySignal<BibleTheme | null>;
+  /** Resolves a variant's `baseTheme` id to the actual preset, falling back to the viewer's current preset if the id is unrecognized (e.g. a preset was removed). */
+  resolveVariantBaseTheme: (variant: CustomizationThemeVariant) => BibleTheme;
+  /**
    * The extension ids that should be installed while the active
    * customization is in effect: its own `auto-installed` extensions,
    * unioned with any `available` extras the viewer added for it via
@@ -474,7 +503,7 @@ export interface CustomizationsManager {
   load: () => Promise<void>;
   /** Loads a customization by its `{recordName}.{id}` locator into `linkedCustomization`. */
   loadByLocator: (locator: string) => Promise<void>;
-  /** Creates a new customization with one variant seeded from the viewer's current theme. */
+  /** Creates a new customization with one variant based on the viewer's current preset (no overrides of its own yet). */
   create: () => Promise<SeedBibleCustomization>;
   /** Seeds `editingCustomization` from the persisted record with this id. No-ops if not found. */
   startEditing: (id: string) => void;
@@ -491,15 +520,17 @@ export interface CustomizationsManager {
   updateEditingName: (name: string) => void;
   /** Clears the draft's logo and immediately persists it (unlike every other draft field, which waits for an explicit Save). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
-  /** Adds a new variant to the draft, seeded from the viewer's current theme. */
+  /** Adds a new variant to the draft, based on the viewer's current preset (no overrides of its own yet). */
   addEditingVariant: () => CustomizationThemeVariant | null;
   renameEditingVariant: (variantId: string, name: string) => void;
   /**
-   * Rebases one variant's colors, fonts, and highlight colors onto a
-   * built-in preset (`presetId`, one of `theme.themes.value`'s own ids) —
-   * e.g. "start this dark theme over from Seed Bible's own Dark preset."
-   * The variant's id, name, and createdAt are untouched. No-ops if there's
-   * no open draft or the preset id is unrecognized.
+   * Changes which built-in preset (`presetId`, one of `theme.themes.value`'s
+   * own ids) one variant falls back to for anything it hasn't explicitly
+   * overridden — e.g. "base this dark theme on Seed Bible's own Dark
+   * preset." The variant's own overrides (`themes`/`highlightColors`) are
+   * left completely untouched; only fields the user hasn't customized will
+   * visually change. No-ops if there's no open draft or the preset id is
+   * unrecognized.
    */
   applyPresetToEditingVariant: (variantId: string, presetId: string) => void;
   setEditingVariantColor: (
@@ -517,6 +548,16 @@ export interface CustomizationsManager {
     variantId: string,
     highlightId: string,
     patch: Partial<ThemeHighlightColor>
+  ) => void;
+  /** Removes one color/font field's override, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
+  resetEditingVariantField: (
+    variantId: string,
+    key: ThemeColorKey | ThemeFontFamilyKey
+  ) => void;
+  /** Removes all of one highlight id's overrides, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
+  resetEditingVariantHighlightColor: (
+    variantId: string,
+    highlightId: string
   ) => void;
   setEditingDefaultVariant: (variantId: string) => void;
   /** Removes a variant from the draft. No-op if it's the only remaining variant. */
@@ -672,6 +713,23 @@ export function createCustomizationsManager(
     () => activeVariant.value?.highlightColors ?? {}
   );
 
+  const resolveVariantBaseTheme = (
+    variant: CustomizationThemeVariant
+  ): BibleTheme =>
+    theme.themes.value.find((t) => t.id === variant.baseTheme) ??
+    theme.basePresetTheme.value;
+
+  const activeResolvedTheme = computed<BibleTheme | null>(() => {
+    const variant = activeVariant.value;
+    if (!variant) {
+      return null;
+    }
+    return buildBibleThemeFromCustomizationTheme(
+      variant,
+      resolveVariantBaseTheme(variant)
+    );
+  });
+
   const load = async () => {
     const userId = login.userId.value;
     if (!userId) {
@@ -718,10 +776,8 @@ export function createCustomizationsManager(
     }
 
     const now = Date.now();
-    const variant = buildVariant(
-      theme.basePresetTheme.value.name,
-      theme.currentTheme.value
-    );
+    const preset = theme.basePresetTheme.value;
+    const variant = buildVariant(preset.name, preset.id);
     const record: SeedBibleCustomization = {
       id: `customization_${uuid()}`,
       name: `Customization ${customizations.value.length + 1}`,
@@ -780,12 +836,13 @@ export function createCustomizationsManager(
       return null;
     }
 
-    const baseName = theme.basePresetTheme.value.name;
+    const preset = theme.basePresetTheme.value;
+    const baseName = preset.name;
     const usedNames = new Set(current.variants.map((v) => v.name));
     const name = usedNames.has(baseName)
       ? `Variant ${current.variants.length + 1}`
       : baseName;
-    const variant = buildVariant(name, theme.currentTheme.value);
+    const variant = buildVariant(name, preset.id);
 
     editingCustomization.value = {
       ...current,
@@ -796,12 +853,13 @@ export function createCustomizationsManager(
   };
 
   /**
-   * Replaces one variant's colors, fonts, and highlight colors with a
-   * built-in preset's (`presetId`, one of `theme.themes.value`'s own ids) —
-   * "base" this theme on Light or Dark so it starts from a known-good
-   * reference instead of hand-tweaking every field. The variant's id, name,
-   * and createdAt are untouched; no-ops if there's no open draft, the
-   * variant id doesn't match, or the preset id is unrecognized.
+   * Changes which built-in preset one variant falls back to for anything it
+   * hasn't explicitly overridden — "base" this theme on Light or Dark so it
+   * starts from a known-good reference instead of hand-tweaking every
+   * field. Every field the user has already customized (present in
+   * `themes`/`highlightColors`) is left completely untouched; only the
+   * still-inherited fields will visually change. No-ops if there's no open
+   * draft, the variant id doesn't match, or `presetId` is unrecognized.
    */
   const applyPresetToEditingVariant = (
     variantId: string,
@@ -815,13 +873,12 @@ export function createCustomizationsManager(
     if (!preset) {
       return;
     }
-    const { themes, highlightColors } = buildVariantFields(preset);
 
     editingCustomization.value = {
       ...current,
       variants: current.variants.map((v) =>
         v.id === variantId
-          ? { ...v, themes, highlightColors, updatedAt: Date.now() }
+          ? { ...v, baseTheme: preset.id, updatedAt: Date.now() }
           : v
       ),
       updatedAt: Date.now(),
@@ -866,15 +923,19 @@ export function createCustomizationsManager(
         }
 
         // Secondary/tertiary follow the primary color as long as they still
-        // match its lightened derivation — the moment a user manually picks
-        // one, it stops matching and is left alone on future primary edits.
-        const previousPrimary = variant.themes.primaryColor;
+        // match its lightened derivation — including "never touched at
+        // all" (inherited from the base preset), which counts as following
+        // too. The moment a user manually picks one, it stops matching and
+        // is left alone on future primary edits.
+        const previousPrimary =
+          variant.themes.primaryColor ??
+          resolveVariantBaseTheme(variant).variables.primaryColor;
         const nextThemes: ThemeOverrides = {
           ...variant.themes,
           primaryColor: value,
         };
         if (
-          previousPrimary &&
+          variant.themes.secondaryColor === undefined ||
           variant.themes.secondaryColor ===
             lightenColor(previousPrimary, SECONDARY_LIGHTEN_AMOUNT)
         ) {
@@ -884,7 +945,7 @@ export function createCustomizationsManager(
           );
         }
         if (
-          previousPrimary &&
+          variant.themes.tertiaryColor === undefined ||
           variant.themes.tertiaryColor ===
             lightenColor(previousPrimary, TERTIARY_LIGHTEN_AMOUNT)
         ) {
@@ -946,6 +1007,56 @@ export function createCustomizationsManager(
             ...variant.highlightColors,
             [highlightId]: { ...existing, ...patch },
           },
+          updatedAt: Date.now(),
+        };
+      }),
+      updatedAt: Date.now(),
+    };
+  };
+
+  /** Removes one field's override, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
+  const resetEditingVariantField = (
+    variantId: string,
+    key: ThemeColorKey | ThemeFontFamilyKey
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      variants: current.variants.map((variant) => {
+        if (variant.id !== variantId) {
+          return variant;
+        }
+        const nextThemes = { ...variant.themes };
+        delete nextThemes[key];
+        return { ...variant, themes: nextThemes, updatedAt: Date.now() };
+      }),
+      updatedAt: Date.now(),
+    };
+  };
+
+  /** Removes all of one highlight id's overrides, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
+  const resetEditingVariantHighlightColor = (
+    variantId: string,
+    highlightId: string
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    editingCustomization.value = {
+      ...current,
+      variants: current.variants.map((variant) => {
+        if (variant.id !== variantId) {
+          return variant;
+        }
+        const nextHighlightColors = { ...variant.highlightColors };
+        delete nextHighlightColors[highlightId];
+        return {
+          ...variant,
+          highlightColors: nextHighlightColors,
           updatedAt: Date.now(),
         };
       }),
@@ -1120,6 +1231,8 @@ export function createCustomizationsManager(
     activeVariant,
     activeThemeOverrides,
     activeHighlightOverrides,
+    activeResolvedTheme,
+    resolveVariantBaseTheme,
     activeExtensionIds,
     linkedCustomization,
     editingCustomization,
@@ -1141,6 +1254,8 @@ export function createCustomizationsManager(
     setEditingVariantColor,
     setEditingVariantFont,
     setEditingVariantHighlightColor,
+    resetEditingVariantField,
+    resetEditingVariantHighlightColor,
     setEditingDefaultVariant,
     removeEditingVariant,
     selectActiveVariant,

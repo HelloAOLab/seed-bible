@@ -24,6 +24,7 @@ import {
 import {
   CUSTOMIZATION_COLOR_GROUPS,
   CUSTOMIZATION_FONT_FIELDS,
+  buildBibleThemeFromCustomizationTheme,
   buildCustomFontValue,
   getExtensionAvailability,
   getFontPresetsForField,
@@ -2882,6 +2883,10 @@ function CustomizationVariantEditSettingsView(props: {
 
   const isDefault = variant.id === record.defaultVariantId;
   const canDelete = record.variants.length > 1;
+  const resolvedTheme = buildBibleThemeFromCustomizationTheme(
+    variant,
+    customizations.resolveVariantBaseTheme(variant)
+  );
 
   return (
     <div className="sb-settings-page">
@@ -2946,7 +2951,7 @@ function CustomizationVariantEditSettingsView(props: {
           <p className="sb-settings-field-description">
             {t("base-theme-description", {
               defaultValue:
-                "Replaces this theme's colors, fonts, and highlight colors with the chosen preset's.",
+                "Changes which preset this theme falls back to for anything you haven't customized. Your own edits are kept.",
             })}
           </p>
         </div>
@@ -2956,7 +2961,8 @@ function CustomizationVariantEditSettingsView(props: {
             <h3 className="sb-settings-subheading">{group.title}</h3>
             <ul className="sb-theme-colors-list">
               {group.fields.map((field) => {
-                const value = variant.themes[field.key] ?? "";
+                const value = resolvedTheme.variables[field.key] ?? "";
+                const isOverridden = variant.themes[field.key] !== undefined;
                 const label = t(`customization-${field.key}`, {
                   defaultValue: field.label,
                 });
@@ -2984,6 +2990,26 @@ function CustomizationVariantEditSettingsView(props: {
                           );
                         }}
                       />
+                      {isOverridden && (
+                        <button
+                          type="button"
+                          className="sb-theme-color-reset"
+                          title={t("reset-to-base-theme", {
+                            defaultValue: "Reset to base theme",
+                          })}
+                          aria-label={`Reset ${label}`}
+                          onClick={() =>
+                            customizations.resetEditingVariantField(
+                              variant.id,
+                              field.key
+                            )
+                          }
+                        >
+                          <span className="material-symbols-outlined">
+                            restart_alt
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </li>
                 );
@@ -3001,7 +3027,8 @@ function CustomizationVariantEditSettingsView(props: {
               key={field.key}
               variantId={variant.id}
               fieldKey={field.key}
-              value={variant.themes[field.key] ?? ""}
+              value={resolvedTheme.variables[field.key] ?? ""}
+              isOverridden={variant.themes[field.key] !== undefined}
               label={t(`customization-${field.key}`, {
                 defaultValue: field.label,
               })}
@@ -3016,9 +3043,10 @@ function CustomizationVariantEditSettingsView(props: {
           </h3>
           <ul className="sb-theme-colors-list">
             {DEFAULT_HIGHLIGHT_IDS.map((id) => {
-              const highlight = variant.highlightColors[id];
-              const bg = highlight?.color ?? "";
-              const fg = highlight?.fontColor ?? "";
+              const effective = resolvedTheme.highlightColors[id];
+              const bg = effective?.color ?? "";
+              const fg = effective?.fontColor ?? "";
+              const isOverridden = variant.highlightColors[id] !== undefined;
               const label = id.charAt(0).toUpperCase() + id.slice(1);
               return (
                 <li key={id} className="sb-theme-color-row">
@@ -3067,6 +3095,26 @@ function CustomizationVariantEditSettingsView(props: {
                         );
                       }}
                     />
+                    {isOverridden && (
+                      <button
+                        type="button"
+                        className="sb-theme-color-reset"
+                        title={t("reset-to-base-theme", {
+                          defaultValue: "Reset to base theme",
+                        })}
+                        aria-label={`Reset ${label}`}
+                        onClick={() =>
+                          customizations.resetEditingVariantHighlightColor(
+                            variant.id,
+                            id
+                          )
+                        }
+                      >
+                        <span className="material-symbols-outlined">
+                          restart_alt
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </li>
               );
@@ -3141,10 +3189,12 @@ function CustomizationFontFieldRow(props: {
   variantId: string;
   fieldKey: ThemeFontFamilyKey;
   value: string;
+  isOverridden: boolean;
   label: string;
   customizations: CustomizationsManager;
 }) {
-  const { variantId, fieldKey, value, label, customizations } = props;
+  const { variantId, fieldKey, value, isOverridden, label, customizations } =
+    props;
   const { t } = useI18n();
   const forcedCustom = useSignal(false);
 
@@ -3167,56 +3217,76 @@ function CustomizationFontFieldRow(props: {
       >
         {label}
       </label>
-      <select
-        id={`sb-customization-font-${fieldKey}`}
-        className="sb-settings-language-select"
-        value={preset ? preset.name : "__custom__"}
-        onChange={(event: Event) => {
-          const target = event.currentTarget as HTMLSelectElement;
-          if (target.value === "__custom__") {
-            forcedCustom.value = true;
-            return;
-          }
-          forcedCustom.value = false;
-          const nextPreset = fieldPresets.find((p) => p.name === target.value);
-          if (nextPreset) {
-            customizations.setEditingVariantFont(
-              variantId,
-              fieldKey,
-              nextPreset.value
+      <div className="sb-settings-field-row-controls">
+        <select
+          id={`sb-customization-font-${fieldKey}`}
+          className="sb-settings-language-select"
+          value={preset ? preset.name : "__custom__"}
+          onChange={(event: Event) => {
+            const target = event.currentTarget as HTMLSelectElement;
+            if (target.value === "__custom__") {
+              forcedCustom.value = true;
+              return;
+            }
+            forcedCustom.value = false;
+            const nextPreset = fieldPresets.find(
+              (p) => p.name === target.value
             );
-          }
-        }}
-      >
-        {fieldPresets.map((p) => (
-          <option key={p.name} value={p.name}>
-            {p.name === "Default"
-              ? t("default", { defaultValue: "Default" })
-              : p.name}
-          </option>
-        ))}
-        <option value="__custom__">
-          {t("custom-font-option", { defaultValue: "Custom…" })}
-        </option>
-      </select>
-      {isCustom && (
-        <input
-          type="text"
-          className="sb-settings-text-input"
-          placeholder={t("custom-font-name-placeholder", {
-            defaultValue: "Google Font name",
-          })}
-          value={customName}
-          onInput={(event: Event) => {
-            const target = event.currentTarget as HTMLInputElement;
-            customizations.setEditingVariantFont(
-              variantId,
-              fieldKey,
-              buildCustomFontValue(target.value)
-            );
+            if (nextPreset) {
+              customizations.setEditingVariantFont(
+                variantId,
+                fieldKey,
+                nextPreset.value
+              );
+            }
           }}
-        />
-      )}
+        >
+          {fieldPresets.map((p) => (
+            <option key={p.name} value={p.name}>
+              {p.name === "Default"
+                ? t("default", { defaultValue: "Default" })
+                : p.name}
+            </option>
+          ))}
+          <option value="__custom__">
+            {t("custom-font-option", { defaultValue: "Custom…" })}
+          </option>
+        </select>
+        {isCustom && (
+          <input
+            type="text"
+            className="sb-settings-text-input"
+            placeholder={t("custom-font-name-placeholder", {
+              defaultValue: "Google Font name",
+            })}
+            value={customName}
+            onInput={(event: Event) => {
+              const target = event.currentTarget as HTMLInputElement;
+              customizations.setEditingVariantFont(
+                variantId,
+                fieldKey,
+                buildCustomFontValue(target.value)
+              );
+            }}
+          />
+        )}
+        {isOverridden && (
+          <button
+            type="button"
+            className="sb-theme-color-reset"
+            title={t("reset-to-base-theme", {
+              defaultValue: "Reset to base theme",
+            })}
+            aria-label={`Reset ${label}`}
+            onClick={() => {
+              forcedCustom.value = false;
+              customizations.resetEditingVariantField(variantId, fieldKey);
+            }}
+          >
+            <span className="material-symbols-outlined">restart_alt</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
