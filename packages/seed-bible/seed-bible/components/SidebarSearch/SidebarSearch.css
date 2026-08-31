@@ -128,7 +128,6 @@
   width: 3.3125rem;
   height: 3.3125rem;
   border-radius: 0.625rem;
-  border: var(--sb-tab-border);
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
   cursor: pointer;

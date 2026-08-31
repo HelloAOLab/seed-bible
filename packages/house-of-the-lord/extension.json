@@ -606,7 +606,7 @@
       "experience-solomon-temple": "Salomón tupao",
       "piece-altar-of-sacrifice": "Altar De Sacrificio rehegua",
       "piece-ark-of-covenant": "Arca De Convenio rehegua",
-      "piece-bars": "Barras-kuéra",
+      "piece-bars": "Bares-kuéra",
       "piece-bronze-laver": "Laver de Bronce rehegua",
       "piece-brown-curtain": "Cortina Marrón rehegua",
       "piece-front-curtain": "Cortina delantera rehegua",
@@ -1459,7 +1459,7 @@
     },
     "pt": {
       "title": "Casa do Senhor",
-      "description": "Experiências interativas em 3D de coisas descritas na Bíblia, vinculadas aos versículos que as mencionam.",
+      "description": "Experiências interativas em 3D de coisas descritas na Bíblia, relacionadas aos versículos que as mencionam.",
       "experience-tabernacle": "Tabernáculo",
       "experience-solomon-temple": "Templo de Salomão",
       "piece-altar-of-sacrifice": "Altar do Sacrifício",
@@ -1719,7 +1719,7 @@
     },
     "th": {
       "title": "บ้านของพระเจ้า",
-      "description": "ประสบการณ์ 3 มิติแบบอินเทอร์แอ็กทีฟเกี่ยวกับสิ่งต่างๆ ที่พระคัมภีร์กล่าวถึง โดยเชื่อมโยงกับข้อพระคัมภีร์ที่กล่าวถึงสิ่งเหล่านั้น",
+      "description": "ประสบการณ์แบบอินเตอร์แอคทีฟในรูปแบบ 3 มิติ เกี่ยวกับสิ่งต่างๆ ที่พระคัมภีร์กล่าวถึง โดยเชื่อมโยงกับข้อพระคัมภีร์ที่กล่าวถึงสิ่งเหล่านั้น",
       "experience-tabernacle": "แทเบอร์นาเคิล",
       "experience-solomon-temple": "วิหารของโซโลมอน",
       "piece-altar-of-sacrifice": "แท่นบูชาแห่งการเสียสละ",

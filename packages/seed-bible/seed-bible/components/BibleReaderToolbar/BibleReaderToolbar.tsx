@@ -1,4 +1,4 @@
-import "./BibleReaderToolbar.css";
+import "./BibleReaderToolbar.inline.css";
 import { effect, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -392,6 +392,14 @@ function removeSharedHighlightsFromSelection(
  *   leave any existing personal highlight on those verses alone. The broadcast
  *   covers it for as long as it lives (the reader draws a decoration highlight
  *   over a saved one) and it reappears when the broadcast expires.
+ *
+ * By default the verse selection is cleared once the highlight is applied —
+ * the selection and its toolbar were otherwise left sitting open after every
+ * highlight, forcing an extra dismiss (#1704). `clearSelection` lets a caller
+ * opt out: the custom-color picker's live-drag commits pass `false` so the
+ * selection survives while the color dialog is still open, letting the user
+ * keep tweaking the shade instead of losing the selection after the first
+ * settled color.
  */
 function applyHighlightWithSession(
   rs: BibleReadingState,
@@ -401,24 +409,28 @@ function applyHighlightWithSession(
     customColor?: string;
     customFontColor?: string;
   },
-  isSignedIn: boolean
+  isSignedIn: boolean,
+  clearSelection = true
 ): void {
   if (!session || !session.userCanDecorate(session.localSessionId.value)) {
     // A participant who can't broadcast used to match neither branch here, so
     // highlighting silently did nothing for them. Saving is the only thing this
     // can mean, so a signed-out user is asked to sign in before it applies.
     void rs.highlightSelectedVerses(details);
-    return;
+  } else {
+    const duration = session.options.value.highlightDurationSeconds;
+    const isTransient = duration !== null && duration > 0;
+
+    if (!isTransient && isSignedIn) {
+      void rs.highlightSelectedVerses(details);
+    }
+
+    broadcastDecorationToSession(session, rs, details);
   }
 
-  const duration = session.options.value.highlightDurationSeconds;
-  const isTransient = duration !== null && duration > 0;
-
-  if (!isTransient && isSignedIn) {
-    void rs.highlightSelectedVerses(details);
+  if (clearSelection) {
+    rs.clearSelectedVerses();
   }
-
-  broadcastDecorationToSession(session, rs, details);
 }
 
 /**
@@ -570,6 +582,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   if (!readingState.value) {
     return null;
+  }
+
+  // `BibleReaderToolbar` is a sibling of `<TabsLayout>` (which contains
+  // `BibleReader`), not a descendant of it — `BibleReader.tsx` suspending on
+  // its own chapter load does nothing for this component, since
+  // `preact-render-to-string` only defers the specific subtree that actually
+  // threw. Without this, the tools below (`hasNext`/`hasPrevious`-driven
+  // chapter nav buttons among them) render off of whatever `chapterData`/
+  // `translationBooks` happen to hold on the very first synchronous pass —
+  // typically nothing yet — baking incorrect availability into the SSR HTML
+  // that a live client would never show.
+  if (
+    import.meta.env.SSR &&
+    !readingState.value.initialChapterLoadSettled.value
+  ) {
+    throw readingState.value.chapterDataPromise;
   }
 
   const viewportWidth = props.state.app.viewportWidth;
@@ -924,7 +952,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       return;
     }
     const el = verseToolbarRef.current;
-    if (!el) return;
+    if (!el || typeof ResizeObserver === "undefined") return;
 
     const measure = () => {
       verseToolbarHeight.value = el.offsetHeight;
@@ -1174,30 +1202,79 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
   const selectionUI = useComputed(() => settings.settings.value.selectionUI);
 
-  // Debounce the commit so rapid `change` events from the native color
-  // picker (fired as the user drags) don't add each intermediate color to
-  // the custom palette — only the final settled color is saved.
+  // The most recent color from a still-pending debounce, so a blur that
+  // lands before the debounce fires can apply it immediately instead of
+  // losing it. `null` once there's nothing pending.
+  const customColorPendingRef = useRef<string | null>(null);
+  // Whether any color from the current "Add custom color" session has been
+  // applied yet — distinguishes "the dialog closed after picking a color"
+  // (clear the selection) from "the dialog closed without picking one"
+  // (leave the selection alone; nothing happened).
+  const customColorAppliedRef = useRef(false);
+
+  const applyCustomColor = (color: string, clearSelection: boolean) => {
+    settings.addCustomHighlightColor(color);
+    const rs = readingState.value;
+    if (rs) {
+      applyHighlightWithSession(
+        rs,
+        sessionState.value,
+        {
+          colorId: "yellow",
+          customColor: color,
+          customFontColor: getContrastTextColor(color),
+        },
+        !!login.userId.value,
+        clearSelection
+      );
+    }
+    customColorAppliedRef.current = true;
+  };
+
+  // Debounce the commit so rapid `input`/`change` events from the native
+  // color picker (fired as the user drags) don't add each intermediate color
+  // to the custom palette — only the settled color is saved. These debounced
+  // commits never clear the selection themselves: the color dialog may still
+  // be open, and clearing here would silently drop any further tweaking
+  // within the same dialog session (#1725). The selection is cleared for real
+  // in `finishCustomColor`, once the input actually loses focus.
   const commitCustomColor = (color: string) => {
     if (customColorCommitTimeoutRef.current !== null) {
       window.clearTimeout(customColorCommitTimeoutRef.current);
     }
+    customColorPendingRef.current = color;
     customColorCommitTimeoutRef.current = window.setTimeout(() => {
-      settings.addCustomHighlightColor(color);
-      const rs = readingState.value;
-      if (rs) {
-        applyHighlightWithSession(
-          rs,
-          sessionState.value,
-          {
-            colorId: "yellow",
-            customColor: color,
-            customFontColor: getContrastTextColor(color),
-          },
-          !!login.userId.value
-        );
-      }
       customColorCommitTimeoutRef.current = null;
+      const pending = customColorPendingRef.current;
+      customColorPendingRef.current = null;
+      if (pending !== null) {
+        applyCustomColor(pending, false);
+      }
     }, 300);
+  };
+
+  // Runs when the color input loses focus, i.e. the OS color dialog closed —
+  // the reliable "the user is done" signal, since the native `change` event
+  // this input would otherwise fire is what `onChange` gets rewritten to
+  // listen for as `input` (see the `onChange`/`onInput` props below), so it
+  // can't be used to distinguish "still dragging" from "done" on its own.
+  // Flushes a still-debounced pick immediately rather than waiting the
+  // remaining 300ms, and only clears the selection if a color was actually
+  // applied this dialog session (closing without picking one leaves the
+  // selection untouched, same as before).
+  const finishCustomColor = () => {
+    if (customColorCommitTimeoutRef.current !== null) {
+      window.clearTimeout(customColorCommitTimeoutRef.current);
+      customColorCommitTimeoutRef.current = null;
+    }
+    const pending = customColorPendingRef.current;
+    customColorPendingRef.current = null;
+    if (pending !== null) {
+      applyCustomColor(pending, true);
+    } else if (customColorAppliedRef.current) {
+      readingState.value?.clearSelectedVerses();
+    }
+    customColorAppliedRef.current = false;
   };
 
   // Clear removes a saved highlight *and* the session's broadcast copy, so it
@@ -1438,17 +1515,48 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     activeMobileTab.value,
   ]);
 
-  // Clicking anywhere outside the chapter content or the verse toolbar
-  // dismisses the verse selection (and therefore the toolbar). Only while the
-  // toolbar is actually showing — with a pane covering the reader every tap
-  // lands "outside", which would silently throw the selection away behind the
-  // pane instead of restoring the toolbar when the pane closes.
+  // Clicking anywhere outside a verse or the verse toolbar dismisses the
+  // verse selection (and therefore the toolbar). Only while the toolbar is
+  // actually showing — with a pane covering the reader every tap lands
+  // "outside", which would silently throw the selection away behind the pane
+  // instead of restoring the toolbar when the pane closes.
+  //
+  // Excluding only `.sb-verse-decorator` for a mouse (rather than the whole
+  // `.sb-chapter-content` container, or even the whole `.sb-verse`) is
+  // deliberate: a verse's own `onClick` already handles toggling that
+  // verse's selection, so this listener has to stand aside for it, but empty
+  // space within the chapter — padding, the gap between verse spans, a
+  // section heading — isn't a verse, and a tap there is exactly the "click
+  // off of it on an empty space on the page" this listener exists to catch.
+  // `.sb-verse` itself is too generous a target for that with a mouse: a
+  // poetry verse's outer span (`.sb-verse-poetry`, `BibleReader.tsx`) is
+  // `display: block`, so it — and each `.sb-verse-line` inside it — spans the
+  // full content width regardless of how short the actual line of text is,
+  // making most of a poem's visible blank space still read as "on the verse".
+  // A verse's own decorator span (`.sb-verse-decorator`) wraps only the words
+  // actually rendered, so that's the mouse target instead.
+  //
+  // A touch is far less precise, though, and there's no in-between "blank
+  // space" for a finger to miss into that a mouse pointer couldn't also land
+  // on deliberately, so a touch keeps checking the full `.sb-verse` — a tap
+  // between two wrapped poetry lines still counts as "on the verse" rather
+  // than clearing the selection out from under the finger that just placed
+  // it. `event.pointerType` (native to `PointerEvent`, no plumbing needed)
+  // picks the selector; the verse's own `onClick` guard for the poetry case
+  // makes the same touch/mouse distinction, using its own pointerdown for the
+  // pointer type since a `click` never carries it.
   //
   // A pane docked beside the reader (e.g. Discover, open on desktop) doesn't
   // cover it, so `isVerseToolbarVisible` stays true and this listener stays
   // attached — clicks inside that pane (composing an annotation, say) are
   // also excluded so they can't clear a selection the pane's own content is
-  // actively using (e.g. the annotation title/target derived from it).
+  // actively using (e.g. the annotation title/target derived from it). The
+  // exclusion has to key on `.sb-pane-shell-detached` rather than the bare
+  // `.sb-pane-shell` — every reader tab slot (`TabsLayout.tsx`) is *also* a
+  // `.sb-pane-shell`, just without the `-detached` modifier a floating,
+  // fullscreen, or overlay pane carries (`PaneLayout.tsx`), so matching the
+  // bare class swallowed every click anywhere in the reader, verse or not,
+  // and the toolbar could never be dismissed by clicking off of it.
   //
   // The annotation item's three-dot menu (`ContextMenuWithButton`) is
   // portaled to `document.body`, so a click on it — or on one of its
@@ -1466,10 +1574,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest(".sb-chapter-content")) return;
+      const verseTapSelector =
+        event.pointerType === "touch" ? ".sb-verse" : ".sb-verse-decorator";
+      if (target.closest(verseTapSelector)) return;
       if (target.closest(".sb-verse-toolbar")) return;
       if (target.closest(".sb-pane-side-shell")) return;
-      if (target.closest(".sb-pane-shell")) return;
+      if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-footnote-modal-overlay")) return;
       readingState.value?.clearSelectedVerses();
@@ -1713,6 +1823,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             aria-label={translateTitle(t, prev.title)}
+                            data-tool-id={prev.id}
                           >
                             <PrevIcon />
                           </button>
@@ -1766,6 +1877,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             aria-label={translateTitle(t, next.title)}
+                            data-tool-id={next.id}
                           >
                             <NextIcon />
                           </button>
@@ -2015,6 +2127,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selectedToolbarToolId.value = null;
                         tool.onSelect();
                       }}
+                      data-tool-id={tool.id}
                       className="sb-reader-toolbar-button"
                       aria-label={label}
                     >
@@ -2399,6 +2512,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     const target = event.currentTarget as HTMLInputElement;
                     commitCustomColor(target.value);
                   }}
+                  onBlur={finishCustomColor}
                 />
 
                 <button
@@ -2426,15 +2540,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     // while the user had no permission to broadcast — and
                     // "clear" has to mean the verse ends up unhighlighted.
                     void rs.unhighlightSelectedVerses();
+                    // Clearing a highlight should clear the selection too,
+                    // same as applying one (#1704).
+                    rs.clearSelectedVerses();
                   }}
                   aria-label={t("clear-highlight", {
                     defaultValue: "Clear highlight",
                   })}
                   title={t("clear", { defaultValue: "Clear" })}
                 >
-                  <span className="material-symbols-outlined">
-                    {isSmallScreen.value ? "close" : "ink_eraser"}
-                  </span>
+                  <span className="material-symbols-outlined">ink_eraser</span>
                   <span className="sb-verse-toolbar-action-text">
                     {t("clear", { defaultValue: "Clear" })}
                   </span>
