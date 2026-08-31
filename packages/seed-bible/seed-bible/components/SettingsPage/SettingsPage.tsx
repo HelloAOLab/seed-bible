@@ -2277,9 +2277,8 @@ function SettingsVersionFooter() {
 
 function CustomizationsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { customizations, theme } = state;
+  const { customizations } = state;
   const { t } = useI18n();
-  const selectedPresetId = useSignal(theme.selectedThemeId.value);
 
   useEffect(() => {
     void customizations.load();
@@ -2295,7 +2294,7 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleCreate = async () => {
-    const created = await customizations.create(selectedPresetId.value);
+    const created = await customizations.create();
     openCustomization(created.id);
   };
 
@@ -2399,22 +2398,6 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
         )}
 
         <div className="sb-settings-actions">
-          <select
-            className="sb-settings-language-select"
-            value={selectedPresetId.value}
-            aria-label={t("base-theme", { defaultValue: "Base theme" })}
-            title={t("base-theme", { defaultValue: "Base theme" })}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              selectedPresetId.value = target.value;
-            }}
-          >
-            {theme.themes.value.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.name}
-              </option>
-            ))}
-          </select>
           <button
             type="button"
             className="sb-settings-save-button"
@@ -2432,11 +2415,10 @@ function CustomizationsSettingsView(props: { state: SeedBibleState }) {
 
 function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { customizations, theme } = state;
+  const { customizations } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
   const isUploadingLogo = useSignal(false);
-  const newVariantPresetId = useSignal(theme.selectedThemeId.value);
 
   const record = customizations.editingCustomization.value;
 
@@ -2456,7 +2438,7 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleAddVariant = () => {
-    const variant = customizations.addEditingVariant(newVariantPresetId.value);
+    const variant = customizations.addEditingVariant();
     if (variant) {
       openVariant(variant.id);
     }
@@ -2655,22 +2637,6 @@ function CustomizationEditSettingsView(props: { state: SeedBibleState }) {
             ))}
           </ul>
           <div className="sb-settings-actions">
-            <select
-              className="sb-settings-language-select"
-              value={newVariantPresetId.value}
-              aria-label={t("base-theme", { defaultValue: "Base theme" })}
-              title={t("base-theme", { defaultValue: "Base theme" })}
-              onChange={(event: Event) => {
-                const target = event.currentTarget as HTMLSelectElement;
-                newVariantPresetId.value = target.value;
-              }}
-            >
-              {theme.themes.value.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
             <button
               type="button"
               className="sb-settings-action-button"
@@ -2871,7 +2837,7 @@ function CustomizationVariantEditSettingsView(props: {
   state: SeedBibleState;
 }) {
   const { state } = props;
-  const { customizations } = state;
+  const { customizations, theme } = state;
   const { t } = useI18n();
   const confirmingDelete = useSignal(false);
 
@@ -2942,6 +2908,47 @@ function CustomizationVariantEditSettingsView(props: {
               customizations.renameEditingVariant(variant.id, target.value);
             }}
           />
+        </div>
+
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-customization-variant-base-theme"
+          >
+            {t("base-theme", { defaultValue: "Base theme" })}
+          </label>
+          <select
+            id="sb-customization-variant-base-theme"
+            className="sb-settings-language-select"
+            value=""
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+              if (target.value) {
+                customizations.applyPresetToEditingVariant(
+                  variant.id,
+                  target.value
+                );
+                target.value = "";
+              }
+            }}
+          >
+            <option value="">
+              {t("select-base-theme", {
+                defaultValue: "Base this theme on…",
+              })}
+            </option>
+            {theme.themes.value.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name}
+              </option>
+            ))}
+          </select>
+          <p className="sb-settings-field-description">
+            {t("base-theme-description", {
+              defaultValue:
+                "Replaces this theme's colors, fonts, and highlight colors with the chosen preset's.",
+            })}
+          </p>
         </div>
 
         {CUSTOMIZATION_COLOR_GROUPS.map((group) => (

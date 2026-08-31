@@ -463,45 +463,6 @@ describe("CustomizationsManager", () => {
     expect(theme.customOverrides.value).toEqual({});
   });
 
-  it("create(presetId) seeds the variant from the given built-in preset, not from whatever theme the viewer currently has", async () => {
-    const { manager, theme } = createManager();
-    const darkPreset = theme.themes.value.find((t) => t.id === "dark")!;
-
-    const created = await manager.create("dark");
-
-    expect(created.variants[0]?.name).toBe(darkPreset.name);
-    expect(created.variants[0]?.themes.primaryColor).toBe(
-      darkPreset.variables.primaryColor
-    );
-    expect(created.variants[0]?.themes.readerBackground).toBe(
-      darkPreset.variables.readerBackground
-    );
-    expect(created.variants[0]?.highlightColors).toEqual(
-      darkPreset.highlightColors
-    );
-    // The viewer's own theme (light, by default in this fixture) is
-    // untouched — proves this isn't just seeding from `currentTheme`. Uses
-    // readerBackground rather than primaryColor since the brand color is
-    // shared between the light and dark presets, but the background isn't.
-    expect(created.variants[0]?.themes.readerBackground).not.toBe(
-      theme.currentTheme.value.variables.readerBackground
-    );
-  });
-
-  it("create() with no presetId (or an unrecognized one) falls back to the viewer's currently selected preset", async () => {
-    const { manager, theme } = createManager();
-
-    const createdDefault = await manager.create();
-    const createdUnrecognized = await manager.create("not-a-real-preset-id");
-
-    expect(createdDefault.variants[0]?.themes.primaryColor).toBe(
-      theme.basePresetTheme.value.variables.primaryColor
-    );
-    expect(createdUnrecognized.variants[0]?.themes.primaryColor).toBe(
-      theme.basePresetTheme.value.variables.primaryColor
-    );
-  });
-
   it("lightenColor() moves a color's lightness toward white by the given amount", () => {
     const [r1, g1, b1] = hexToRgbTuple(lightenColor("#000000", 0.5));
     expect(r1).toBeGreaterThan(0);
@@ -1136,18 +1097,65 @@ describe("CustomizationsManager", () => {
     expect(added).toBeNull();
   });
 
-  it("addEditingVariant(presetId) seeds the new variant from the given built-in preset instead of the viewer's current theme", async () => {
+  it("applyPresetToEditingVariant() replaces the variant's colors/fonts/highlights with the given built-in preset's, leaving its id/name/createdAt untouched", async () => {
     const { manager, theme } = createManager();
     const darkPreset = theme.themes.value.find((t) => t.id === "dark")!;
     const created = await manager.create();
     manager.startEditing(created.id);
+    const variant = created.variants[0]!;
+    manager.renameEditingVariant(variant.id, "My Theme");
+    manager.setEditingVariantColor(variant.id, "primaryColor", "#abcdef");
 
-    const added = manager.addEditingVariant("dark");
+    manager.applyPresetToEditingVariant(variant.id, "dark");
 
-    expect(added).not.toBeNull();
-    expect(added!.name).toBe(darkPreset.name);
-    expect(added!.themes.primaryColor).toBe(darkPreset.variables.primaryColor);
-    expect(added!.highlightColors).toEqual(darkPreset.highlightColors);
+    const updated = manager.editingCustomization.value!.variants.find(
+      (v) => v.id === variant.id
+    )!;
+    expect(updated.id).toBe(variant.id);
+    expect(updated.name).toBe("My Theme");
+    expect(updated.createdAt).toBe(variant.createdAt);
+    expect(updated.themes.primaryColor).toBe(darkPreset.variables.primaryColor);
+    expect(updated.themes.readerBackground).toBe(
+      darkPreset.variables.readerBackground
+    );
+    expect(updated.highlightColors).toEqual(darkPreset.highlightColors);
+  });
+
+  it("applyPresetToEditingVariant() leaves other variants and the current live theme untouched", async () => {
+    const { manager, theme } = createManager();
+    const darkPreset = theme.themes.value.find((t) => t.id === "dark")!;
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    const first = created.variants[0]!;
+    const second = manager.addEditingVariant()!;
+
+    manager.applyPresetToEditingVariant(second.id, "dark");
+
+    const record = manager.editingCustomization.value!;
+    expect(record.variants.find((v) => v.id === first.id)?.themes).toEqual(
+      first.themes
+    );
+    // The viewer's own theme (light, by default in this fixture) is
+    // untouched — this only mutates the draft's variant, not the live theme.
+    expect(theme.currentTheme.value.variables.readerBackground).not.toBe(
+      darkPreset.variables.readerBackground
+    );
+  });
+
+  it("applyPresetToEditingVariant() no-ops with no open draft or an unrecognized preset id", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+
+    manager.applyPresetToEditingVariant(created.variants[0]!.id, "dark");
+    expect(manager.editingCustomization.value).toBeNull();
+
+    manager.startEditing(created.id);
+    const before = manager.editingCustomization.value;
+    manager.applyPresetToEditingVariant(
+      created.variants[0]!.id,
+      "not-a-real-preset-id"
+    );
+    expect(manager.editingCustomization.value).toEqual(before);
   });
 
   it("renameEditingVariant() updates only the targeted variant in the draft", async () => {

@@ -365,11 +365,16 @@ export function buildCustomFontValue(name: string): string {
   return trimmed ? `${trimmed}, sans-serif` : "";
 }
 
-function buildVariant(
-  name: string,
-  currentTheme: BibleTheme
-): CustomizationThemeVariant {
-  const now = Date.now();
+/**
+ * Derives a variant's `themes`/`highlightColors` fields from a full
+ * `BibleTheme` — shared by `buildVariant` (a brand-new variant) and
+ * `applyPresetToEditingVariant` (re-basing an existing one onto a preset),
+ * so both stay in sync with which fields get seeded.
+ */
+function buildVariantFields(currentTheme: BibleTheme): {
+  themes: ThemeOverrides;
+  highlightColors: HighlightOverrides;
+} {
   const currentVariables = currentTheme.variables;
   const primaryColor = currentVariables.primaryColor;
   const themes: ThemeOverrides = {
@@ -400,6 +405,15 @@ function buildVariant(
   for (const [id, colors] of Object.entries(currentTheme.highlightColors)) {
     highlightColors[id] = { ...colors };
   }
+  return { themes, highlightColors };
+}
+
+function buildVariant(
+  name: string,
+  currentTheme: BibleTheme
+): CustomizationThemeVariant {
+  const now = Date.now();
+  const { themes, highlightColors } = buildVariantFields(currentTheme);
   return {
     id: `variant_${uuid()}`,
     name,
@@ -460,8 +474,8 @@ export interface CustomizationsManager {
   load: () => Promise<void>;
   /** Loads a customization by its `{recordName}.{id}` locator into `linkedCustomization`. */
   loadByLocator: (locator: string) => Promise<void>;
-  /** Creates a new customization with one variant seeded from a built-in preset (`presetId`, one of `theme.themes.value`'s own ids) — or, if omitted or unrecognized, from whichever preset the viewer is currently using. */
-  create: (presetId?: string) => Promise<SeedBibleCustomization>;
+  /** Creates a new customization with one variant seeded from the viewer's current theme. */
+  create: () => Promise<SeedBibleCustomization>;
   /** Seeds `editingCustomization` from the persisted record with this id. No-ops if not found. */
   startEditing: (id: string) => void;
   /** Clears `editingCustomization` and `editingVariantId`, discarding any unsaved edits. */
@@ -477,9 +491,17 @@ export interface CustomizationsManager {
   updateEditingName: (name: string) => void;
   /** Clears the draft's logo and immediately persists it (unlike every other draft field, which waits for an explicit Save). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
-  /** Adds a new variant to the draft, seeded from a built-in preset (`presetId`, one of `theme.themes.value`'s own ids) — or, if omitted or unrecognized, from whichever preset the viewer is currently using. */
-  addEditingVariant: (presetId?: string) => CustomizationThemeVariant | null;
+  /** Adds a new variant to the draft, seeded from the viewer's current theme. */
+  addEditingVariant: () => CustomizationThemeVariant | null;
   renameEditingVariant: (variantId: string, name: string) => void;
+  /**
+   * Rebases one variant's colors, fonts, and highlight colors onto a
+   * built-in preset (`presetId`, one of `theme.themes.value`'s own ids) —
+   * e.g. "start this dark theme over from Seed Bible's own Dark preset."
+   * The variant's id, name, and createdAt are untouched. No-ops if there's
+   * no open draft or the preset id is unrecognized.
+   */
+  applyPresetToEditingVariant: (variantId: string, presetId: string) => void;
   setEditingVariantColor: (
     variantId: string,
     key: ThemeColorKey,
@@ -689,25 +711,17 @@ export function createCustomizationsManager(
     });
   };
 
-  /**
-   * Resolves which built-in preset (Light, Dark, ...) a new variant should
-   * be seeded from. `presetId` is one of `theme.themes.value`'s own ids; an
-   * unrecognized or omitted id falls back to whichever preset the viewer is
-   * currently using, matching the previous (implicit) behavior.
-   */
-  const resolvePreset = (presetId?: string): BibleTheme =>
-    theme.themes.value.find((t) => t.id === presetId) ??
-    theme.basePresetTheme.value;
-
-  const create = async (presetId?: string): Promise<SeedBibleCustomization> => {
+  const create = async (): Promise<SeedBibleCustomization> => {
     const userId = login.userId.value;
     if (!userId) {
       throw new Error("Cannot create a customization while signed out.");
     }
 
     const now = Date.now();
-    const preset = resolvePreset(presetId);
-    const variant = buildVariant(preset.name, preset);
+    const variant = buildVariant(
+      theme.basePresetTheme.value.name,
+      theme.currentTheme.value
+    );
     const record: SeedBibleCustomization = {
       id: `customization_${uuid()}`,
       name: `Customization ${customizations.value.length + 1}`,
@@ -760,21 +774,18 @@ export function createCustomizationsManager(
     editingCustomization.value = { ...current, name, updatedAt: Date.now() };
   };
 
-  const addEditingVariant = (
-    presetId?: string
-  ): CustomizationThemeVariant | null => {
+  const addEditingVariant = (): CustomizationThemeVariant | null => {
     const current = editingCustomization.value;
     if (!current) {
       return null;
     }
 
-    const preset = resolvePreset(presetId);
-    const baseName = preset.name;
+    const baseName = theme.basePresetTheme.value.name;
     const usedNames = new Set(current.variants.map((v) => v.name));
     const name = usedNames.has(baseName)
       ? `Variant ${current.variants.length + 1}`
       : baseName;
-    const variant = buildVariant(name, preset);
+    const variant = buildVariant(name, theme.currentTheme.value);
 
     editingCustomization.value = {
       ...current,
@@ -782,6 +793,39 @@ export function createCustomizationsManager(
       updatedAt: Date.now(),
     };
     return variant;
+  };
+
+  /**
+   * Replaces one variant's colors, fonts, and highlight colors with a
+   * built-in preset's (`presetId`, one of `theme.themes.value`'s own ids) —
+   * "base" this theme on Light or Dark so it starts from a known-good
+   * reference instead of hand-tweaking every field. The variant's id, name,
+   * and createdAt are untouched; no-ops if there's no open draft, the
+   * variant id doesn't match, or the preset id is unrecognized.
+   */
+  const applyPresetToEditingVariant = (
+    variantId: string,
+    presetId: string
+  ): void => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    const preset = theme.themes.value.find((t) => t.id === presetId);
+    if (!preset) {
+      return;
+    }
+    const { themes, highlightColors } = buildVariantFields(preset);
+
+    editingCustomization.value = {
+      ...current,
+      variants: current.variants.map((v) =>
+        v.id === variantId
+          ? { ...v, themes, highlightColors, updatedAt: Date.now() }
+          : v
+      ),
+      updatedAt: Date.now(),
+    };
   };
 
   const renameEditingVariant = (variantId: string, name: string): void => {
@@ -1092,6 +1136,7 @@ export function createCustomizationsManager(
     updateEditingName,
     removeEditingLogo,
     addEditingVariant,
+    applyPresetToEditingVariant,
     renameEditingVariant,
     setEditingVariantColor,
     setEditingVariantFont,
