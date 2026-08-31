@@ -2451,9 +2451,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   })}
                   title={t("clear", { defaultValue: "Clear" })}
                 >
-                  <span className="material-symbols-outlined">
-                    {isSmallScreen.value ? "close" : "ink_eraser"}
-                  </span>
+                  <span className="material-symbols-outlined">ink_eraser</span>
                   <span className="sb-verse-toolbar-action-text">
                     {t("clear", { defaultValue: "Clear" })}
                   </span>

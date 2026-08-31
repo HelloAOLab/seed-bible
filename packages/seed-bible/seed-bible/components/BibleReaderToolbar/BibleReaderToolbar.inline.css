@@ -1348,13 +1348,21 @@
 }
 
 .sb-verse-toolbar-mobile .sb-verse-toolbar-clear {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  color: var(--sb-font-color);
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 85%
+  );
+  color: var(--sb-error-color, #d64545);
 }
 
 .sb-verse-toolbar-mobile .sb-verse-toolbar-clear:hover:not(:disabled) {
-  filter: none;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  filter: brightness(0.95);
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 78%
+  );
 }
 
 .sb-verse-toolbar-mobile
