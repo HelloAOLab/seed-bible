@@ -8,8 +8,6 @@
 
 ### 🐛 Fixed
 
-- Fix the Today screen appearing and then immediately disappearing when opening the app without a link to a specific chapter. Returning readers have their last chapter restored from the browser just after the page appears, and the app was mistaking that restore for the reader navigating away, which closed Today the moment it opened. The restore is now recognised as part of the same page load, so Today stays up until you choose where to go.
-
 ### 🗑️ Removed
 
 ## v1.6.0 — 2026-08-24
