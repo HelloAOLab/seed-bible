@@ -7,6 +7,7 @@ import {
   createResponse,
   makeChapter,
   makeUrl,
+  nivBooks,
   translations,
 } from "./testUtils/mockBibleApiData";
 import { TODAY_PANE_ID } from "@packages/seed-bible/seed-bible/managers/TodayManager";
@@ -26,6 +27,21 @@ function responsesForBootAndRestore() {
     ),
     [makeUrl("/api/AAB/EXO/2.json", PRIVATE_API_ENDPOINT)]: createResponse(
       makeChapter(aabBooks, "EXO", 2)
+    ),
+  };
+}
+
+/**
+ * Genesis 1 is the boot tab's default; NIV is the profile's saved translation
+ * and contains Matthew only, so it cannot hold the book the boot tab is on.
+ */
+function responsesForBootAndSavedTranslation() {
+  return {
+    ...responsesForBootAndRestore(),
+    [makeUrl("/api/NIV/books.json", PRIVATE_API_ENDPOINT)]:
+      createResponse(nivBooks),
+    [makeUrl("/api/NIV/MAT/1.json", PRIVATE_API_ENDPOINT)]: createResponse(
+      makeChapter(nivBooks, "MAT", 1)
     ),
   };
 }
@@ -76,6 +92,37 @@ describe("Today on a cold load with no reading position in the URL", () => {
       2000
     );
     expect(window.location.pathname).toBe("/en/AAB/exodus/2");
+
+    expect(state.today.isOpen.value).toBe(true);
+    expect(
+      state.panes.panes.value.some((pane) => pane.id === TODAY_PANE_ID)
+    ).toBe(true);
+  });
+
+  it("stays open while the profile's saved translation is restored", async () => {
+    window.history.replaceState(null, "", "/");
+
+    const state = await createTestSeedBibleState({
+      responses: responsesForBootAndSavedTranslation(),
+      todayOpen: "fromUrl",
+    });
+
+    // The boot tab is on Genesis, which the saved translation doesn't contain —
+    // that mismatch is what makes the restore move the book, and moving the book
+    // is what reaches the fullscreen-pane effect at all.
+    expect(state.app.selectedTab.value?.readingState.bookId.value).toBe("GEN");
+    expect(state.today.isOpen.value).toBe(true);
+
+    state.login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    // Same reasoning as above: the restore has to have actually landed, or
+    // "Today is still open" holds for the uninteresting reason that nothing
+    // moved the reader.
+    await waitFor(
+      () => state.app.selectedTab.value?.readingState.bookId.value === "MAT",
+      2000
+    );
+    expect(window.location.pathname).toBe("/en/NIV/matthew/1");
 
     expect(state.today.isOpen.value).toBe(true);
     expect(

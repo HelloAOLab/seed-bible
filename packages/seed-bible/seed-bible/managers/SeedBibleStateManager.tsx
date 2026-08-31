@@ -767,11 +767,14 @@ export function createSeedBibleState(
     if (previous === null || previous === location) {
       return;
     }
-    // The saved reading position arriving from `localStorage` is still part of
-    // this load, not a navigation away from it — see `restoringStoredState`.
-    // The baseline above is updated first, so the restored position becomes
-    // the position everything after it is compared against.
-    if (restoringStoredState) {
+    // A restore is not a navigation: the reader hasn't gone anywhere, the app is
+    // catching the URL up to state that only arrived after the load — the saved
+    // tabs from `localStorage` (see `restoringStoredState`) or the profile's
+    // saved translation, which reaches this effect at all because it can fall
+    // back to a different book (see `isRestoringProfileTranslation`). The
+    // baseline above is updated first in both cases, so the restored position
+    // becomes the position everything after it is compared against.
+    if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
       return;
     }
     panes.closeFullscreenPanes();

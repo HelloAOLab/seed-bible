@@ -377,6 +377,20 @@ export interface TabsManager {
    * re-render instead. Idempotent.
    */
   hydrateStoredTabs: () => void;
+
+  /**
+   * Whether the profile's saved translation is being written to the URL at this
+   * instant. Consumers that watch the URL for "the reader moved" must treat that
+   * write as a restore rather than a navigation — it can change the book or
+   * chapter (see `applySavedTranslation`) without the reader having gone
+   * anywhere.
+   *
+   * Deliberately a getter rather than a signal: it is only meaningful read
+   * synchronously from inside the URL-change effect it exists to inform, and
+   * making it reactive would invite subscribers that then re-run on a value
+   * guaranteed to be `false` again by the time they saw it.
+   */
+  isRestoringProfileTranslation: () => boolean;
 }
 
 /**
@@ -815,6 +829,17 @@ export function createTabs(
       });
     });
 
+  // True only while `applySavedTranslation` below writes the restored position
+  // to the URL. That write can move the book or chapter — a saved translation
+  // that lacks the book you're on falls back to its first book, and an
+  // out-of-range chapter is clamped — which looks exactly like a navigation to
+  // the fullscreen-pane effect in `SeedBibleStateManager`, even though the
+  // reader hasn't gone anywhere. Without this, a signed-in reader arriving on
+  // Today with a partial saved translation watched it open and then immediately
+  // close again. Read synchronously, never subscribed to, so a plain boolean
+  // rather than a signal.
+  let restoringProfileTranslation = false;
+
   // Restores the profile's saved translation on the given reading state.
   // `selectTranslationAndChapter` clamps an out-of-range chapter but throws
   // if the current book isn't in the target translation at all (a partial/
@@ -907,7 +932,15 @@ export function createTabs(
     // recomputes the desired translation from the URL, finds none, and
     // reverts this restore straight back to the default.
     if (selectedTab.peek()?.readingState === readingState) {
-      commitSelectedTabToUrl({ replace: true });
+      // Marked as a restore for the duration of the write: `commitSelectedTabToUrl`
+      // updates the URL synchronously and everything watching it runs before this
+      // returns, so the flag doesn't need to span the awaits above.
+      restoringProfileTranslation = true;
+      try {
+        commitSelectedTabToUrl({ replace: true });
+      } finally {
+        restoringProfileTranslation = false;
+      }
     }
   };
 
@@ -1049,5 +1082,6 @@ export function createTabs(
     removeTab,
     selectTab,
     hydrateStoredTabs,
+    isRestoringProfileTranslation: () => restoringProfileTranslation,
   };
 }
