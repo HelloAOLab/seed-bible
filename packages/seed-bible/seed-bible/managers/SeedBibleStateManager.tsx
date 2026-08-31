@@ -726,6 +726,14 @@ export function createSeedBibleState(
     discover,
     chats
   );
+  // True only while `hydrateFromStorage` below is applying the saved tab state.
+  // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
+  // the restored book/chapter to the address bar — a URL move that looks exactly
+  // like a navigation to the effect below, but is the tail end of the same page
+  // load. Without this, a returning visitor whose last chapter wasn't the boot
+  // default watched Today open and then immediately close again.
+  let restoringStoredState = false;
+
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
   // position into the path — see `commitSelectedTabToUrl` in TabsManager).
@@ -757,6 +765,16 @@ export function createSeedBibleState(
     lastReadingLocation = location;
 
     if (previous === null || previous === location) {
+      return;
+    }
+    // A restore is not a navigation: the reader hasn't gone anywhere, the app is
+    // catching the URL up to state that only arrived after the load — the saved
+    // tabs from `localStorage` (see `restoringStoredState`) or the profile's
+    // saved translation, which reaches this effect at all because it can fall
+    // back to a different book (see `isRestoringProfileTranslation`). The
+    // baseline above is updated first in both cases, so the restored position
+    // becomes the position everything after it is compared against.
+    if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
       return;
     }
     panes.closeFullscreenPanes();
@@ -1090,19 +1108,26 @@ export function createSeedBibleState(
    * first render. See `AppState.hydrateFromStorage`.
    */
   const hydrateFromStorage = () => {
-    batch(() => {
-      // Tabs before slots: slots are bound to tab objects by id, and restoring
-      // tabs replaces those objects wholesale.
-      tabs.hydrateStoredTabs();
-      tabsLayout.hydrateStoredLayout();
-      data.hydrateCachedCatalog();
-      selector.hydrateStoredViewMode();
-      tutorial.hydrateStoredFlags();
-      onboarding.hydrateStoredFlags();
-      // Unblocks the persistence effect above, which now sees the restored tab
-      // list rather than the URL-only seed.
-      tabsRestored.value = true;
-    });
+    // `batch` flushes its effects before it returns, so the reader's write of
+    // the restored position to the URL lands inside this window.
+    restoringStoredState = true;
+    try {
+      batch(() => {
+        // Tabs before slots: slots are bound to tab objects by id, and restoring
+        // tabs replaces those objects wholesale.
+        tabs.hydrateStoredTabs();
+        tabsLayout.hydrateStoredLayout();
+        data.hydrateCachedCatalog();
+        selector.hydrateStoredViewMode();
+        tutorial.hydrateStoredFlags();
+        onboarding.hydrateStoredFlags();
+        // Unblocks the persistence effect above, which now sees the restored tab
+        // list rather than the URL-only seed.
+        tabsRestored.value = true;
+      });
+    } finally {
+      restoringStoredState = false;
+    }
     // Deliberately outside the batch: this can set `promptVisible`, and it must
     // observe the settled reader state rather than a half-applied one.
     tutorial.armAutoStart();
