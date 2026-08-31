@@ -1,5 +1,6 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
-import type { ActivityIndicator, Piece } from "../../../domain/models/canvas";
+import type { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
+import type { Piece } from "../../../domain/models/canvas";
 import type { HexString } from "../../../domain/models/commonTypes";
 import type {
   LabelDateFormat,
@@ -58,7 +59,7 @@ export interface LabelDataStorePort {
 }
 
 export interface IndicatorsUpdaterPort {
-  updateIndicators: (container: InfoLabelData) => ActivityIndicator[];
+  updateIndicators: (container: InfoLabelData) => ActivityIndicatorData[];
 }
 
 export interface IdGeneratorPort {
@@ -66,9 +67,9 @@ export interface IdGeneratorPort {
 }
 
 export interface ActivityIndicatorsAdapterPort {
-  showIndicators: (command: ShowIndicatorsCommand) => ActivityIndicator[];
-  hideIndicators: (indicators: ActivityIndicator[]) => void;
-  hideIndicator: (indicator: ActivityIndicator) => void;
+  showIndicators: (command: ShowIndicatorsCommand) => void;
+  hideIndicators: (indicators: ActivityIndicatorData[]) => void;
+  hideIndicator: (indicator: ActivityIndicatorData) => void;
   updateIndicatorsPosition: (container: ActivityContainer) => void;
 }
 

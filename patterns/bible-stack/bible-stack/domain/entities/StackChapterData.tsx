@@ -3,9 +3,9 @@ import type {
   ParentDataIds,
   ChapterCreationParams,
   BiblePiece,
-  ActivityIndicator,
   ActivityNotification,
 } from "../models/canvas";
+import type { ActivityIndicatorData } from "./ActivityIndicatorData";
 import type { ChapterInfo } from "../models/arrangement";
 import type { HexString } from "../models/commonTypes";
 import type { Piece } from "../models/canvas";
@@ -25,7 +25,7 @@ interface DataParams {
   isHidden?: boolean;
   creationParams: ChapterCreationParams;
   isExpanded?: boolean;
-  activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
+  activityIndicators?: ActivityIndicatorData[];
   activityNotification?: ActivityNotification;
   childrenData?: VersesBundleData[];
 }
@@ -59,7 +59,7 @@ export class StackChapterData extends StackPieceData<
     isHidden = false,
     creationParams,
     isExpanded = false,
-    activityIndicators = new Map(),
+    activityIndicators = [],
     activityNotification,
     childrenData,
   }: DataParams) {
@@ -126,23 +126,25 @@ export class StackChapterData extends StackPieceData<
   }
 
   get activityIndicators() {
-    return [...this.#activityIndicators.values()];
+    return [...this.#activityIndicators];
   }
   clearActivityIndicators() {
-    if (this.#activityIndicators.size > 0) {
-      const indicators = [...this.#activityIndicators.values()];
-      this.#activityIndicators.clear();
+    if (this.#activityIndicators.length > 0) {
+      const indicators = [...this.#activityIndicators];
+      this.#activityIndicators = [];
       return indicators;
     }
     return undefined;
   }
-  addActivityIndicator(indicator: ActivityIndicator) {
-    if (!this.#activityIndicators.has(indicator.id)) {
-      this.#activityIndicators.set(indicator.id, indicator);
+  addActivityIndicator(indicator: ActivityIndicatorData) {
+    if (!this.#activityIndicators.some((data) => data.id === indicator.id)) {
+      this.#activityIndicators.push(indicator);
     }
   }
-  removeActivityIndicator(indicatorId: ActivityIndicator["id"]) {
-    this.#activityIndicators.delete(indicatorId);
+  removeActivityIndicator(indicatorId: ActivityIndicatorData["id"]) {
+    this.#activityIndicators = this.#activityIndicators.filter(
+      (data) => data.id !== indicatorId
+    );
   }
 
   get activityNotification() {

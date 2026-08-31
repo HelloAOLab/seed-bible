@@ -20,13 +20,6 @@ interface ServiceParams {
   versesBundleLifecycleAdapterPort: VersesBundleLifecycleAdapterPort;
 }
 
-// type TrySelectParams = {
-//   data: StackChapterData;
-// } | {
-//   bookData: StackBookData | StackSectionBookData;
-//   chapter: number
-// }
-
 export class ChapterSelectionService implements ChapterSelectionPort {
   #loggerPort: ServiceParams["loggerPort"];
   #chapterSelectionAdapterPort: ServiceParams["chapterSelectionAdapterPort"];
@@ -129,6 +122,6 @@ export class ChapterSelectionService implements ChapterSelectionPort {
 
     await this.#chapterSelectionAdapterPort.select({ data });
 
-    data!.changeSelectionState("SequenceComplete");
+    data.changeSelectionState("SequenceComplete");
   }
 }

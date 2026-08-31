@@ -219,9 +219,11 @@ export class LabelFeedbackAdapter {
           }
         : undefined,
       ...data.activityIndicators.map((indicator) => ({
-        pieceBot: this.#activityIndicatorMapperPort.toInfrastructure(indicator),
+        pieceBot: this.#activityIndicatorMapperPort.toInfrastructure(
+          indicator.piece
+        ),
         initialPosition: this.#visualStateRegistryPort.getStateProperty({
-          piece: indicator,
+          piece: indicator.piece,
           property: "initialPosition",
         }),
       })),
@@ -539,8 +541,9 @@ export class LabelFeedbackAdapter {
       );
     }
     const activityIndicators = data.activityIndicators.map((indicator) => {
-      const indicatorBot =
-        this.#activityIndicatorMapperPort.toInfrastructure(indicator);
+      const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(
+        indicator.piece
+      );
       if (!indicatorBot) {
         throw new Error(
           `LabelFeedbackAdapter: indicatorBot not found at displayShowFeedback`
@@ -573,7 +576,7 @@ export class LabelFeedbackAdapter {
       bots.push(tail);
     }
     const activityIndicators = data.activityIndicators.map((indicator) =>
-      this.#activityIndicatorMapperPort.toInfrastructure(indicator)
+      this.#activityIndicatorMapperPort.toInfrastructure(indicator.piece)
     );
     for (const indicator of activityIndicators) {
       if (indicator) {

@@ -166,8 +166,7 @@ export type BibleShadowBot = TypedBot<BibleShadowTags>;
 
 export interface ActivityIndicatorTags extends PieceBotTags<"ActivityIndicator"> {
   color: HexString;
-  ownerBotId?: PieceBot["id"];
-  ownerDataId?: ActivityContainer["id"];
+  dataId: string;
   scaleX: number;
   scaleY: number;
   scaleZ: number;
@@ -176,12 +175,8 @@ export interface ActivityIndicatorTags extends PieceBotTags<"ActivityIndicator">
   label?: string;
   labelOpacity?: number;
   formRenderOrder?: number;
-  // indicatorType?: ActivityIndicator["indicatorType"];
-  // index?: number;
-  // targetOpacity: number;
   // isActivityIndicator: boolean;
   // isActivityIndicatorPrefab?: boolean;
-  // initialPosition?: Vector3;
 }
 
 export type ActivityIndicatorBot = TypedBot<ActivityIndicatorTags>;
@@ -249,19 +244,14 @@ export interface InfoLabelTailTags extends PieceBotTags<"InfoLabelTail"> {
 
 export type InfoLabelTailBot = TypedBot<InfoLabelTailTags>;
 
-// TODO: Locate indicatorType at the indicatorBot's visual state
 // eslint-disable-next-line
-export interface RegularActivityIndicatorTags extends ActivityIndicatorTags {
-  // indicatorType: "regular";
-}
+export interface RegularActivityIndicatorTags extends ActivityIndicatorTags {}
 
 export interface ExtraBackgroundActivityIndicatorTags extends ActivityIndicatorTags {
-  // indicatorType: "extraBackground";
   color: "#000000";
 }
 
 export interface ExtraContentActivityIndicatorTags extends ActivityIndicatorTags {
-  // indicatorType: "extraContent";
   color: "#ffffff";
   label: string;
   labelOpacity: number;

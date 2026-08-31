@@ -3,7 +3,6 @@ import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackChapterData } from "../../domain/entities/StackChapterData";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { PieceSelectionSources } from "../../domain/models/canvas";
-import type { UserReadingInstance } from "../../domain/models/reading";
 import type { ScripturePort } from "../ports/in/Scripture";
 import type { BibleDataRepositoryPort } from "../ports/stacks";
 import type {
@@ -12,14 +11,16 @@ import type {
 } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
-  PresenceProviderPort,
   PieceAdapterPort,
   SequenceStateServicePort,
   AwaiterPort,
 } from "../ports/userPresence";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
-import { StackPresenceNavigationPacings } from "../../domain/models/userPresence";
+import {
+  StackPresenceNavigationPacings,
+  type ReadingInstance,
+} from "../../domain/models/userPresence";
 import type { StackPresenceNavigationServicePort } from "../ports/in/StackPresenceNavigation";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type {
@@ -31,11 +32,12 @@ import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type { LoggerPort } from "../ports/in/Logger";
+import type { UserPresencePort } from "../ports/in/UserPresence";
 
 interface ServiceParams {
   loggerPort: LoggerPort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
-  presenceProviderPort: PresenceProviderPort;
+  userPresencePort: UserPresencePort;
   pieceAdapterPort: PieceAdapterPort;
   pieceDataRepositoryPort: Pick<
     PieceDataRepositoryPort,
@@ -63,7 +65,7 @@ interface NavigationTargets {
 export class StackPresenceNavigationService implements StackPresenceNavigationServicePort {
   #loggerPort: ServiceParams["loggerPort"];
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
-  #presenceProviderPort: ServiceParams["presenceProviderPort"];
+  #userPresencePort: ServiceParams["userPresencePort"];
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
@@ -83,7 +85,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   constructor({
     loggerPort,
     bibleDataRepositoryPort,
-    presenceProviderPort,
+    userPresencePort,
     pieceAdapterPort,
     pieceDataRepositoryPort,
     sequenceStateServicePort,
@@ -100,7 +102,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   }: ServiceParams) {
     this.#loggerPort = loggerPort;
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
-    this.#presenceProviderPort = presenceProviderPort;
+    this.#userPresencePort = userPresencePort;
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
@@ -117,14 +119,15 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   }
 
   handleSectionExploded(payload: { sectionData: StackSectionData }): void {
-    const activeTab = this.#presenceProviderPort.getActiveTab();
-    if (activeTab) {
+    const selectedInstance =
+      this.#userPresencePort.getOwnUserSelectedInstance();
+    if (selectedInstance) {
       const activeBook = payload.sectionData.childrenData
         .flat()
         .find((bookData) => {
           return (
-            bookData.getPieceInfoProperty("bookId") === activeTab.bookId &&
-            bookData.isActivelySelected()
+            bookData.getPieceInfoProperty("bookId") ===
+              selectedInstance.bookId && bookData.isActivelySelected()
           );
         });
       if (activeBook) this.update();
@@ -132,14 +135,15 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   }
 
   async update(): Promise<void> {
-    const ativeReadingInstance = this.#presenceProviderPort.getActiveTab();
+    const selectedInstance =
+      this.#userPresencePort.getOwnUserSelectedInstance();
 
     const shouldQueue =
       this.#sequenceStateServicePort.isThereAnOngoingSequence() ||
       this.#isThereAnOngoingUpdate;
     if (
       this.#bibleDataRepositoryPort.getAllBiblesData().length === 0 ||
-      !ativeReadingInstance ||
+      !selectedInstance ||
       shouldQueue
     ) {
       if (shouldQueue) this.#isUpdateQueued = true;
@@ -151,7 +155,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
 
     try {
       const { chaptersToDeselect, chaptersToSelectDirectly, chapterToFocus } =
-        this.#determineNavigationTargets(ativeReadingInstance);
+        this.#determineNavigationTargets(selectedInstance);
 
       const animations: Promise<void>[] = [
         ...chaptersToSelectDirectly.map((data) =>
@@ -187,7 +191,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   }
 
   #determineNavigationTargets(
-    ativeReadingInstance: UserReadingInstance
+    ativeReadingInstance: ReadingInstance
   ): NavigationTargets {
     const chaptersToDeselect: StackChapterData[] = [];
     const chaptersToSelectDirectly: StackChapterData[] = [];

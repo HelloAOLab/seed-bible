@@ -1,20 +1,17 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
 import type { SubsetBookInfo } from "../../../domain/models/arrangement";
-import type {
-  UserIds,
-  UserPresence,
-  UserPresenceData,
-} from "../../../domain/models/userPresence";
+import type { UserIds } from "../../../domain/models/userPresence";
 
 import type { HexString, Point2D } from "../../../domain/models/commonTypes";
 import type { SubsetBookChapter } from "../../../domain/models/arrangement";
-import type { UserReadingInstance } from "../../../domain/models/reading";
 import {
   type Piece,
   BiblePieces,
   type ActivityIndicator,
+  type ActivityIndicatorType,
   type ActivityNotification,
 } from "../../../domain/models/canvas";
+import type { ActivityIndicatorData } from "../../../domain/entities/ActivityIndicatorData";
 import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
@@ -65,10 +62,6 @@ export interface LabelDataStorePort {
   getDataByOwnerId: (id: string) => InfoLabelData | undefined;
 }
 
-export interface IndicatorsRepositoryPort {
-  getIndicatorsByPieceId: (pieceDataId: string) => ActivityIndicator[];
-}
-
 export interface ScriptureServicePort {
   mapCompleteToSubsetBook({
     chapter,
@@ -79,33 +72,21 @@ export interface ScriptureServicePort {
   }): SubsetBookChapter;
 }
 
-export interface UserPresenceServicePort {
-  getUserPresence: () => UserPresence;
-  getOwnUserPresence: () => UserPresenceData | undefined;
-  getOwnUserConfigId: () => string;
-}
-
-export interface ReadingInstanceProviderPort {
-  getOwnReadingInstances(): UserReadingInstance[];
-  getRemotesReadingInstances(): UserReadingInstance[];
-}
-
 export type ActivityContainer = InfoLabelData | StackChapterData;
 
 export type NotifiableContainer = StackChapterData;
 
 export type ActivityContainerType = "label" | "piece";
 
-export interface BaseShowIndicatorCommand<
-  T extends ActivityIndicator["indicatorType"],
-> {
+export interface BaseShowIndicatorCommand<T extends ActivityIndicatorType> {
   type: T;
-  index: ActivityIndicator["index"];
-  indicator: ActivityIndicator | undefined;
+  index: number;
+  indicator: ActivityIndicatorData;
 }
 
 export interface ShowRegularIndicatorCommand extends BaseShowIndicatorCommand<"regular"> {
-  isOwnUserActiveActivity: boolean;
+  isSelected: boolean;
+  isOwnUser: boolean;
   color: HexString;
 }
 
@@ -127,10 +108,18 @@ export interface ShowIndicatorsCommand {
 }
 
 export interface ActivityIndicatorsAdapterPort {
-  showIndicators: (command: ShowIndicatorsCommand) => ActivityIndicator[];
-  hideIndicators: (indicators: ActivityIndicator[]) => void;
-  hideIndicator: (indicator: ActivityIndicator) => void;
+  showIndicators: (command: ShowIndicatorsCommand) => void;
+  hideIndicators: (indicators: ActivityIndicatorData[]) => void;
+  hideIndicator: (indicator: ActivityIndicatorData) => void;
   updateIndicatorsPosition: (container: ActivityContainer) => void;
+}
+
+export interface ActivityIndicatorLifecyclePort {
+  spawnActivityIndicatorDomain: (dataId: string) => ActivityIndicator;
+}
+
+export interface IdGeneratorPort {
+  getId: () => string;
 }
 
 export interface ShowNotificationCommand {

@@ -48,9 +48,17 @@ export interface SectionShadow extends Piece<"StackSectionShadow"> {
   sectionDataId: string;
 }
 
+export type ActivityIndicatorType =
+  | "regular"
+  | "extraContent"
+  | "extraBackground";
+
+export type ActivityContainerPieceType =
+  | typeof BiblePieces.StackChapter
+  | typeof BiblePieces.InfoLabelTransformer;
+
 export interface ActivityIndicator extends Piece<"ActivityIndicator"> {
-  indicatorType: "regular" | "extraContent" | "extraBackground";
-  index: number;
+  dataId: string;
 }
 
 export type ActivityNotification = Piece<"ActivityNotification">;

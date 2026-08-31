@@ -5,6 +5,7 @@ import type { StackTestamentData } from "../entities/StackTestamentData";
 import type { StackSectionBookData } from "../entities/StackSectionBookData";
 import type { StackBookData } from "../entities/StackBookData";
 import type { StackSectionData } from "../entities/StackSectionData";
+import type { UserPresence } from "./userPresence";
 
 export interface BibleStackEvents {
   OnStackSequenceStart: void;
@@ -38,6 +39,7 @@ export interface BibleStackEvents {
   OnLabelDateFormatChange: void;
   OnArrangementIndexChanged: { newIndex: number };
   OnCustomArrangementsChanged: void;
+  OnUserPresenceUpdated: { userPresence: UserPresence };
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;
