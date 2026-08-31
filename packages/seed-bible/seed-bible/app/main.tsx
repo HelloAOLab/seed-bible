@@ -30,8 +30,8 @@ import { isWebKit } from "./ssrEnv";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
-import "./styles/base.css";
-import "./styles/utilities.css";
+import "./styles/base.inline.css";
+import "./styles/utilities.inline.css";
 import {
   OnboardingModals,
   LanguageUnavailableModal,
@@ -42,8 +42,19 @@ import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 
 /**
- * A collection of link/script's providing expected resources from external sources.
- * @returns
+ * Font `<link>`s, plus the CSS for the active Customization layered on top
+ * of the real theme (see `SeedBibleStateManager`'s `theme`/`themeCssVariables`/
+ * `themeCssClasses`). The unblended preset+settings theme writes directly to
+ * `document.head` from a `ThemeManager` effect instead (see `ThemeManager.tsx`'s
+ * `createTheme`) — that target is never diffed by Preact, so it carries no
+ * hydration-mismatch risk the way an in-tree `<style>` would; this one still
+ * needs to be in-tree so a shared `?customization=` link's colors are part of
+ * the SSR'd HTML. `dangerouslySetInnerHTML` (rather than a plain text child)
+ * is what keeps it safe: raw CSS can contain `&` (e.g. the highlight classes'
+ * `&.sb-words-of-jesus`), which a plain JSX text child would HTML-escape on
+ * the server but not on the client, causing a hydration mismatch; Preact also
+ * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
+ * inert even if the two sides' CSS text does legitimately differ.
  */
 export function ExternalResourceDependencies({
   themeCssVariables,
@@ -76,8 +87,12 @@ export function ExternalResourceDependencies({
             .join("&")}&display=swap`}
         />
       )}
-      <style>{`body {\n${themeCssVariables}\n}`}</style>
-      <style>{themeCssClasses}</style>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `body {\n${themeCssVariables.value}\n}`,
+        }}
+      />
+      <style dangerouslySetInnerHTML={{ __html: themeCssClasses.value }} />
     </>
   );
 }
@@ -147,6 +162,37 @@ function MainBody({
 
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
+  }, []);
+
+  // One-time correction: the viewport signals seed to match the server's
+  // UA-based guess so the first hydrate pass can't mismatch, but that guess
+  // rarely matches the device's real size. Apply the real dimensions once,
+  // right after Preact's first commit — a normal diffed re-render, not a
+  // hydration mismatch.
+  useEffect(() => {
+    state.app.applyViewport();
+  }, []);
+
+  // Deferred real read: `login.localConfig` seeds empty to match SSR, so the
+  // first hydrate pass can't disagree with the server over font size, UI
+  // size, toolbar customization, disablePanels, theme, etc. Apply the
+  // device's real saved config once, right after mount —
+  // `SettingsManager`'s own effect() already re-derives `settings` whenever
+  // `login.localConfig` changes, so no change is needed there.
+  useEffect(() => {
+    state.login.hydrateLocalConfig();
+  }, []);
+
+  // Deferred real read, same reason as the two above: saved tabs and their slot
+  // layout, the cached translation catalog, the selector view mode, and the
+  // tutorial/onboarding flags all seed to what the server rendered so the first
+  // hydrate pass can't disagree with it, then get corrected here. Unlike the
+  // others this one is load-bearing for correctness rather than polish — a
+  // returning visitor's extra tabs would mount `TabRow`s and panes the served
+  // HTML never had, which is the one divergence `hydrate()` reports instead of
+  // silently patching.
+  useEffect(() => {
+    state.app.hydrateFromStorage();
   }, []);
 
   if (typeof document !== "undefined") {

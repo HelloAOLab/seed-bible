@@ -1,3 +1,4 @@
+import "./BibleSelector.inline.css";
 import "./BibleSelector.css";
 import {
   type BibleSelectorBookItem,

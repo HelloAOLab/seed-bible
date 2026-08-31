@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
+import {
+  BibleReader,
+  resetLastVersePointerTypeForTests,
+} from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
@@ -178,6 +181,7 @@ function createFixture(): ReaderFixture {
     highlights,
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(
       () => contentStale.value ?? chapterData.value === null
     ),
@@ -302,6 +306,7 @@ function renderMobileReader(
 
 beforeEach(() => {
   setupRerender();
+  resetLastVersePointerTypeForTests();
 });
 
 afterEach(() => {
@@ -572,6 +577,37 @@ describe("BibleReader", () => {
     );
   });
 
+  it("shows the loaded chapter's book name, not the raw book id, while the book catalog hasn't arrived yet", () => {
+    // The catalog (`translationBooks`) and the chapter fetch load
+    // independently (see `loadInitialData`'s comment on the content effect
+    // firing off the raw position signals before the catalog-backed check
+    // completes) — so it's possible for the chapter to settle, as it has
+    // here, while the catalog is still null. Before the fix `currentBook`
+    // fell straight back to the raw id ("GEN") in that case; it should fall
+    // back to the loaded chapter's own book record instead.
+    const { slot, selectorState, readingState } = createFixture();
+    (
+      readingState.translationBooks as Signal<
+        BibleReadingState["translationBooks"]["value"]
+      >
+    ).value = null;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+  });
+
   it("dims the previous chapter's verses when navigation starts, without flashing the placeholder", () => {
     const { slot, selectorState, readingState, contentStale } = createFixture();
     contentStale.value = true;
@@ -730,6 +766,120 @@ describe("BibleReader", () => {
       }),
       12,
       34
+    );
+  });
+
+  it("clicking a poetry verse's blank space with a mouse (not its rendered text) does not select it", () => {
+    // A poetry verse's outer span is `display: block` (`.sb-verse-poetry` in
+    // BibleReader.inline.css), so it spans the full content width even when
+    // its text — wrapped in the nested `.sb-verse-decorator` — is much
+    // narrower. Dispatching directly on the outer span (rather than a child)
+    // stands in for a mouse click that lands in that blank margin — no
+    // preceding `pointerdown` is dispatched, matching a real mouse click's
+    // default (non-"touch") pointer type.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const poetryVerse = container.querySelector(
+      ".sb-verse-poetry"
+    ) as HTMLElement | null;
+    expect(poetryVerse).not.toBeNull();
+
+    act(() => {
+      poetryVerse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("tapping a poetry verse's blank space with a touch still selects it", () => {
+    // Same blank-space scenario as the mouse case above, but a finger is far
+    // less precise than a mouse pointer — there's no "blank space" inside a
+    // verse's box a touch could deliberately miss the text into the way a
+    // mouse click could. The verse's own click guard should therefore keep
+    // the original, forgiving whole-block behavior for a touch.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const poetryVerse = container.querySelector(
+      ".sb-verse-poetry"
+    ) as HTMLElement | null;
+    expect(poetryVerse).not.toBeNull();
+
+    act(() => {
+      poetryVerse?.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerType: "touch",
+        })
+      );
+      poetryVerse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it("clicking a poetry verse's actual text still selects it", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const decorator = container.querySelector(
+      ".sb-verse-poetry .sb-verse-decorator"
+    ) as HTMLElement | null;
+    expect(decorator).not.toBeNull();
+
+    act(() => {
+      decorator?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.anything(),
+      expect.anything()
     );
   });
 

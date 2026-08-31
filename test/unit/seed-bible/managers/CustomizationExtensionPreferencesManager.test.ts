@@ -59,6 +59,7 @@ describe("CustomizationExtensionPreferencesManager", () => {
         success: true,
         userInfo: { id: "user-1", email: "test@example.com" },
       }),
+      hydrateLocalConfig: vi.fn(),
     };
   });
 

@@ -94,6 +94,7 @@ describe("CustomizationsManager", () => {
         success: true,
         userInfo: { id: "user-1", email: "test@example.com" },
       }),
+      hydrateLocalConfig: vi.fn(),
     };
 
     type MinimalSettingsValue = {

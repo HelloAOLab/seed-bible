@@ -1,3 +1,4 @@
+import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
 import {

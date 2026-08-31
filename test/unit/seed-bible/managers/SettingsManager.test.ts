@@ -479,8 +479,12 @@ describe("anonymous settings survive a simulated page refresh", () => {
 
     // Simulate a fresh page load: a brand-new LoginManager/SettingsManager
     // pair, backed by the same (real) localStorage that `login1`'s anonymous
-    // write just persisted to.
+    // write just persisted to. `hydrateLocalConfig()` mirrors the real app's
+    // post-mount effect (see `MainBody` in `app/main.tsx`) that applies the
+    // device's real saved config — `localConfig` itself seeds empty to match
+    // SSR.
     const login2 = createLoginManager({ os });
+    login2.hydrateLocalConfig();
     const settings2 = createSettings(os, login2, nav);
 
     expect(settings2.settings.value.bookOrientation).toBe("tanakh");

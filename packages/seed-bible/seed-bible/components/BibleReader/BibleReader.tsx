@@ -1,4 +1,4 @@
-import "./BibleReader.css";
+import "./BibleReader.inline.css";
 import {
   type TranslationBookChapter,
   type ChapterVerse,
@@ -589,6 +589,22 @@ function renderInlineContent(
   return null;
 }
 
+/**
+ * Pointer type of the most recent `pointerdown` on a poetry verse's outer
+ * span, read by that same verse's `onClick` guard below to decide how
+ * forgiving its tap region is. Module scope rather than a ref: `renderVerseNode`
+ * is a plain helper re-created on every call, not a component, so it has
+ * nowhere of its own to persist state between the pointerdown and the click
+ * that follows it (same reasoning as the module-scope state in
+ * `app/flingSafeTap.ts`).
+ */
+let lastVersePointerType = "";
+
+/** Clears the module-scope pointer-type state so tests cannot leak it between cases. */
+export function resetLastVersePointerTypeForTests() {
+  lastVersePointerType = "";
+}
+
 function renderChapterContent(
   chapterData: TranslationBookChapter | null,
   onVerseClick: (verse: BibleSelectedVerse, event: MouseEvent) => void,
@@ -871,7 +887,29 @@ function renderChapterContent(
           key={`verse-${entryIndex}`}
           className={verseClassName}
           data-verse-number={value.number}
+          onPointerDown={(event: PointerEvent) => {
+            lastVersePointerType = event.pointerType;
+          }}
           onClick={(event: MouseEvent) => {
+            // Poetry lines are `display: block` so each one spans the full
+            // content width — a tap in the blank margin past a short line's
+            // last word still lands inside this outer span even though it's
+            // nowhere near the verse's actual text. On a mouse, where a
+            // precise miss is unambiguous, only a click that reaches an
+            // actual `.sb-verse-decorator` (the inline span the rendered
+            // words themselves sit in) counts as selecting the verse — the
+            // reader's outside-click handling (`BibleReaderToolbar.tsx`) is
+            // then free to treat the rest of the block as a dismiss. A touch
+            // tap is far less precise, though, and there's no in-between
+            // "blank space" for a finger to miss into that a mouse pointer
+            // couldn't also land on deliberately — so a touch keeps the
+            // original, forgiving behavior of the whole block.
+            const target = event.target as HTMLElement | null;
+            const verseTapSelector =
+              lastVersePointerType === "touch"
+                ? ".sb-verse"
+                : ".sb-verse-decorator";
+            if (!target?.closest(verseTapSelector)) return;
             onVerseClick(verse, event);
           }}
           style={{
@@ -1656,6 +1694,19 @@ export function BibleReader(props: BibleReaderProps) {
       bookId.value !== null &&
       currentBook.value === null
   );
+  // Display name for the header/title: the catalog entry's name, falling
+  // back to the loaded chapter's own book record while the catalog is still
+  // in flight. The book catalog and the chapter content load independently
+  // (see `loadInitialData`'s comment on the raw position signals firing the
+  // content effect before the catalog-backed check completes), so — same as
+  // `SeedBibleStateManager`'s `resolveCurrentBook` for the document title —
+  // `currentBook` can still be null here even after SSR has suspended on
+  // (and resolved) `chapterDataPromise`. Without this, the header would show
+  // the raw book id ("GEN") instead of its name whenever that race lands the
+  // chapter first.
+  const currentBookName = computed(
+    () => currentBook.value?.name ?? chapterData.value?.book.name ?? null
+  );
   const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
@@ -1880,7 +1931,7 @@ export function BibleReader(props: BibleReaderProps) {
     <>
       {isMobile &&
         renderMobileChapterTitle(
-          currentBook.value?.name ?? bookId.value ?? "",
+          currentBookName.value ?? bookId.value ?? "",
           chapterNumber.value ?? ""
         )}
 
@@ -2051,7 +2102,7 @@ export function BibleReader(props: BibleReaderProps) {
                   className="sb-bible-reader-mobile-header-book"
                   onClick={openBookSelector}
                 >
-                  {currentBook.value?.name ?? bookId.value ?? ""}{" "}
+                  {currentBookName.value ?? bookId.value ?? ""}{" "}
                   {chapterNumber.value}
                 </span>
                 <span
@@ -2195,7 +2246,7 @@ export function BibleReader(props: BibleReaderProps) {
               className="sb-bible-reader-title"
             >
               <span className="sb-bible-reader-book">
-                {currentBook.value?.name ?? bookId.value ?? "Select a book"}
+                {currentBookName.value ?? bookId.value ?? "Select a book"}
               </span>
               <span className="sb-bible-reader-title-sep" aria-hidden="true">
                 {" "}
