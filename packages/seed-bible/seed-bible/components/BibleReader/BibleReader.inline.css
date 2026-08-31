@@ -1,8 +1,5 @@
 .sb-bible-reader {
-  width: calc(100% - (var(--sb-scripture-margin) * 2));
-  min-width: 17.1875rem;
-  padding-top: 1.875rem;
-  padding-bottom: 6rem;
+  padding: 1.875rem 1.5rem 6rem 1.5rem;
   margin: 0 auto;
   box-sizing: border-box;
   position: relative;
@@ -391,11 +388,6 @@
 
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
   padding-top: 2.5rem;
-}
-.sb-bible-reader-mobile
-  .sb-reader-swipe-panel:has(.sb-translation-license-notice) {
-  /* Trailing chrome clearance when a license line is the last content —
-     chapter content drops its own inset in that case (see below). */
   padding-bottom: var(--sb-reader-bottom-inset);
 }
 
@@ -455,8 +447,6 @@
   line-height: var(--text-verse-line-height, 1.7);
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
-
-  padding-bottom: var(--sb-reader-bottom-inset);
 
   /* Covers dimming and un-dimming via `.sb-chapter-content-stale` (see below).
      Short enough to read as immediate rather than as an animation. */
@@ -1040,4 +1030,108 @@
 .sb-translation-website {
   text-align: center;
   opacity: 0.75;
+}
+
+.sb-bible-reader-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  /* `align-items: stretch` (the flex default) is required here, not just
+     cosmetic: it makes this row's cross-axis size (and so the discover
+     panel's wrapper) match the height of the scripture column instead of
+     shrink-wrapping to the sticky panel's own content height. Without that
+     extra room in its containing block, `position: sticky` on
+     `.sb-discover-content-panel` (see DiscoverContentPanel.css) has nowhere
+     to lag behind the scroll, so the panel just scrolls off with the page
+     instead of sticking. The panel's own `max-height`/`overflow: hidden`
+     already cap how tall it visually renders, so stretching its wrapper
+     doesn't make it any taller. */
+  .sb-bible-reader-content {
+    flex-direction: row;
+    align-items: unset;
+  }
+
+  /* The "discover-content-panel" quick tool is off for this tab: keep the
+     discover panel stacked below the scripture text (after the license
+     notice) instead of letting it sit beside it. */
+  .sb-bible-reader-content.sb-bible-reader-content--discover-below {
+    flex-direction: column;
+    align-items: stretch;
+
+    & > .sb-bible-reader-discover-panel {
+      max-width: var(--sb-scripture-width, 48rem);
+    }
+  }
+}
+
+.sb-bible-reader-discover-panel {
+  flex: 1 1 22.5rem;
+  justify-self: flex-end;
+  max-width: 22.5rem;
+}
+
+/* On mobile the panel is a plain block inside the swipe panel's own scroll
+   (not a flex child), so it otherwise sits flush against the screen edges
+   and the bottom of the reader. Give it the same breathing room as the rest
+   of the mobile chrome.
+
+   `justify-self: flex-end` above (needed on desktop, to hug the end of the
+   `.sb-bible-reader-content` row) also applies to plain block boxes per the
+   CSS Box Alignment spec — it makes the box size to its fit-content width
+   (pulled wide by the `flex-basis: 22.5rem` it carries as a sizing hint,
+   even outside a flex container) and right-align within its container,
+   instead of stretching to fill it. On phones as narrow as 320-375px that
+   fit-content width is wider than the screen, so the box's left edge renders
+   off-screen; reset back to the normal stretch-to-fill behavior here. */
+.sb-bible-reader-mobile .sb-bible-reader-discover-panel {
+  margin: 6rem 1rem 2rem;
+  justify-self: auto;
+}
+
+/* Belt-and-suspenders alongside the `justify-self` reset above: without this,
+   `.sb-discover-content-panel`'s own `min-width: 18rem` (see
+   DiscoverContentPanel.css — a floor meant to keep it readable as a flex item
+   in the desktop side-by-side layout) can still leave it a few pixels wider
+   than its now-correctly-stretched mobile container. */
+.sb-bible-reader-mobile .sb-discover-content-panel {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sb-bible-reader-main-content {
+  max-width: var(--sb-scripture-width, 48rem);
+  padding-bottom: var(--sb-reader-bottom-inset);
+
+  &:has(+ .sb-bible-reader-discover-panel) {
+    padding-bottom: 5rem;
+  }
+}
+
+/* Flex-wrap's line-fitting check runs on each item's *unshrunk* flex basis,
+   not its post-shrink size. Left at their default `flex-basis` (content-sized
+   for the scripture column, 22.5rem for the panel), the two items'
+   hypothetical size is their full preferred width — together almost always
+   wider than the row actually has, so the browser wraps the panel below
+   before either side gets a chance to shrink, even in a plain single-pane
+   desktop window. Basing both at 0 instead makes their hypothetical size
+   collapse to their `min-width` floor, so wrapping only kicks in once the row
+   genuinely can't fit both at their minimum comfortable widths — e.g. a
+   narrow multi-pane layout. Placed after their base rules above (same
+   specificity, later wins) so this actually overrides them at this width. */
+@media (min-width: 1024px) {
+  .sb-bible-reader-main-content {
+    flex: 1.5 1 0;
+    min-width: min(20rem, var(--sb-scripture-width, 48rem));
+  }
+
+  .sb-bible-reader-discover-panel {
+    flex: 1 1 0;
+    min-width: 18rem;
+  }
 }

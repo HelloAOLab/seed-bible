@@ -8,16 +8,6 @@
   --rpb-muted: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
   --rpb-success: #059669;
 
-  box-sizing: border-box;
-  width: calc(100% - 32px);
-  max-width: 40rem;
-  margin: 16px auto 96px;
-  padding: 14px 16px;
-  border: 1px solid var(--rpb-border);
-  border-radius: 12px;
-  background: var(--sb-reader-background, #fff);
-  color: var(--sb-font-color);
-  font-family: "DM Sans", var(--sb-font-family, sans-serif);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -26,14 +16,6 @@
 .sb-rpb-card-nudge {
   border-color: var(--rpb-accent-border);
   box-shadow: 0 0 0 3px var(--rpb-accent-soft);
-}
-
-.sb-rpb-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--rpb-muted);
 }
 
 .sb-rpb-nudge-text {

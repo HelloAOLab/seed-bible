@@ -133,15 +133,27 @@ export interface AppSettings {
   askToSwitchUiLanguage: boolean;
   /** User-added custom highlight colors (hex strings, max 3). */
   customHighlightColors: string[];
-  /** Horizontal padding (px) applied to the bible reader container. */
-  scriptureMargin: number;
+  /** Max width of the chapter content in ch. */
+  scriptureWidth: number;
   /** Selected theme preset id (owned/consumed by ThemeManager). */
   themeId: string;
   /** User color overrides layered on top of the selected theme preset. */
   customTheme: Record<string, string>;
   /** User highlight-color overrides layered on top of the preset highlights. */
   customHighlights: Record<string, Partial<ThemeHighlightColor>>;
+  /**
+   * Whether the compact discover panel sits beside the scripture text
+   * (true, the default) when there's room, or is forced below it, after the
+   * license notice, at any viewport width (false). Flipped by the
+   * "discover-content-panel" quick tool; consumed by `BibleReadingManager`'s
+   * per-tab `discoverContentPanelInline` signal.
+   */
+  discoverContentPanelInline: boolean;
 }
+
+export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
+export const MAX_SCRIPTURE_WIDTH = 192; // ch
+export const MIN_SCRIPTURE_WIDTH = 24; // ch
 
 export const AppSettingsSchema = z.object({
   fontSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
@@ -207,7 +219,11 @@ export const AppSettingsSchema = z.object({
   // existed still import.
   askToSwitchUiLanguage: z.boolean().default(true),
   customHighlightColors: z.array(z.string()).max(3),
-  scriptureMargin: z.number().min(0).max(45),
+  scriptureWidth: z
+    .number()
+    .min(MIN_SCRIPTURE_WIDTH)
+    .max(MAX_SCRIPTURE_WIDTH)
+    .default(DEFAULT_SCRIPTURE_WIDTH),
   themeId: z.string(),
   customTheme: z.record(z.string(), z.string()),
   customHighlights: z.record(
@@ -218,9 +234,11 @@ export const AppSettingsSchema = z.object({
       wordsOfJesusFontColor: z.string().optional(),
     })
   ),
+  // Defaulted rather than required so settings exported before this option
+  // existed still import.
+  discoverContentPanelInline: z.boolean().default(true),
 });
 
-export const DEFAULT_SCRIPTURE_MARGIN = 27;
 export const MOBILE_SCRIPTURE_MARGIN = 5;
 
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
@@ -236,10 +254,11 @@ const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_ASK_TO_SWITCH_UI_LANGUAGE = "app.askToSwitchUiLanguage";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
-const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
+const TAG_SCRIPTURE_WIDTH = "app.scriptureWidth";
 const TAG_THEME_ID = "app.themeId";
 const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
+const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -253,10 +272,11 @@ const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_ASK_TO_SWITCH_UI_LANGUAGE = "askToSwitchUiLanguage";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
-const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
+const PROFILE_SCRIPTURE_WIDTH = "scriptureWidth";
 const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
+const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -365,10 +385,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   keepScreenAwake: false,
   askToSwitchUiLanguage: true,
   customHighlightColors: [],
-  scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
+  scriptureWidth: DEFAULT_SCRIPTURE_WIDTH,
   themeId: "light",
   customTheme: {},
   customHighlights: {},
+  discoverContentPanelInline: true,
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -726,8 +747,8 @@ export interface SettingsManager {
     section: TextSectionId,
     patch: Partial<TextSectionConfig>
   ) => void;
-  /** Set the same horizontal margin on bookTitle, heading, and verse (Scripture Margins control). */
-  setScriptureMargin: (margin: number) => void;
+  /** Set the max width of the chapter content (Scripture Width control). */
+  setScriptureWidth: (width: number) => void;
   /** Set the verse line-height (Scripture line-spacing control). */
   setVerseLineHeight: (lineHeight: number) => void;
   /** Clear per-section color overrides so the active theme drives text colors. */
@@ -749,6 +770,12 @@ export interface SettingsManager {
   setCustomHighlights: (
     next: Record<string, Partial<ThemeHighlightColor>>
   ) => void;
+  /**
+   * Persists whether the compact discover panel sits inline beside the
+   * scripture text. Consumed by `BibleReadingManager`'s per-tab
+   * `discoverContentPanelInline` signal.
+   */
+  setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
 }
 
 export function createSettings(
@@ -835,9 +862,9 @@ export function createSettings(
       customHighlightColors: parseCustomHighlightColors(
         read(PROFILE_CUSTOM_HIGHLIGHT_COLORS, TAG_CUSTOM_HIGHLIGHT_COLORS)
       ),
-      scriptureMargin: parseNumber(
-        read(PROFILE_SCRIPTURE_MARGIN, TAG_SCRIPTURE_MARGIN),
-        DEFAULT_SETTINGS.scriptureMargin
+      scriptureWidth: parseNumber(
+        read(PROFILE_SCRIPTURE_WIDTH, TAG_SCRIPTURE_WIDTH),
+        DEFAULT_SETTINGS.scriptureWidth
       ),
       themeId: parseThemeId(
         read(PROFILE_THEME_ID, TAG_THEME_ID),
@@ -848,6 +875,13 @@ export function createSettings(
       ),
       customHighlights: parseHighlightOverrides(
         read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
+      ),
+      discoverContentPanelInline: parseBoolean(
+        read(
+          PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
+          TAG_DISCOVER_CONTENT_PANEL_INLINE
+        ),
+        DEFAULT_SETTINGS.discoverContentPanelInline
       ),
     };
   };
@@ -960,12 +994,15 @@ export function createSettings(
     writeTextConfig(nextTextConfig);
   };
 
-  const setScriptureMargin = (margin: number) => {
-    if (!Number.isFinite(margin)) return;
-    const clamped = Math.max(0, Math.min(45, margin));
-    settings.value = { ...settings.value, scriptureMargin: clamped };
-    sessionOverrides[TAG_SCRIPTURE_MARGIN] = clamped;
-    saveProfileConfigValue(login, PROFILE_SCRIPTURE_MARGIN, clamped);
+  const setScriptureWidth = (width: number) => {
+    if (!Number.isFinite(width)) return;
+    const clamped = Math.max(
+      MIN_SCRIPTURE_WIDTH,
+      Math.min(MAX_SCRIPTURE_WIDTH, width)
+    );
+    settings.value = { ...settings.value, scriptureWidth: clamped };
+    sessionOverrides[TAG_SCRIPTURE_WIDTH] = clamped;
+    saveProfileConfigValue(login, PROFILE_SCRIPTURE_WIDTH, clamped);
   };
 
   const setVerseLineHeight = (lineHeight: number) => {
@@ -1088,6 +1125,19 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 
+  const setDiscoverContentPanelInline = (
+    discoverContentPanelInline: boolean
+  ) => {
+    settings.value = { ...settings.value, discoverContentPanelInline };
+    sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
+      discoverContentPanelInline;
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
+      discoverContentPanelInline
+    );
+  };
+
   const setAllSettings = (next: AppSettings) => {
     next = AppSettingsSchema.parse(next);
     settings.value = next;
@@ -1117,10 +1167,12 @@ export function createSettings(
     sessionOverrides[TAG_ASK_TO_SWITCH_UI_LANGUAGE] =
       DEFAULT_SETTINGS.askToSwitchUiLanguage;
     sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
-    sessionOverrides[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
+    sessionOverrides[TAG_SCRIPTURE_WIDTH] = DEFAULT_SETTINGS.scriptureWidth;
     sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
     sessionOverrides[TAG_CUSTOM_THEME] = {};
     sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
+    sessionOverrides[TAG_DISCOVER_CONTENT_PANEL_INLINE] =
+      DEFAULT_SETTINGS.discoverContentPanelInline;
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1162,12 +1214,17 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, []);
     saveProfileConfigValue(
       login,
-      PROFILE_SCRIPTURE_MARGIN,
-      DEFAULT_SETTINGS.scriptureMargin
+      PROFILE_SCRIPTURE_WIDTH,
+      DEFAULT_SETTINGS.scriptureWidth
     );
     saveProfileConfigValue(login, PROFILE_THEME_ID, DEFAULT_SETTINGS.themeId);
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, {});
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, {});
+    saveProfileConfigValue(
+      login,
+      PROFILE_DISCOVER_CONTENT_PANEL_INLINE,
+      DEFAULT_SETTINGS.discoverContentPanelInline
+    );
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
@@ -1193,8 +1250,8 @@ export function createSettings(
   effect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty(
-      "--sb-scripture-margin",
-      `${settings.value.scriptureMargin}%`
+      "--sb-scripture-width",
+      `${settings.value.scriptureWidth}ch`
     );
   });
 
@@ -1220,7 +1277,7 @@ export function createSettings(
     setSelectionUI,
     setScriptureElements,
     updateTextSection,
-    setScriptureMargin,
+    setScriptureWidth,
     setVerseLineHeight,
     resetTextColors,
     resetTextConfig,
@@ -1235,5 +1292,6 @@ export function createSettings(
     setThemeId,
     setCustomTheme,
     setCustomHighlights,
+    setDiscoverContentPanelInline,
   };
 }

@@ -2756,6 +2756,135 @@ describe("createBibleReadingState", () => {
     });
   });
 
+  describe("discoverContentPanelInline", () => {
+    it("defaults to inline (beside the scripture text) and round-trips writes", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"])
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(true);
+
+      state.discoverContentPanelInline.value = false;
+      expect(state.discoverContentPanelInline.value).toBe(false);
+
+      state.discoverContentPanelInline.value = true;
+      expect(state.discoverContentPanelInline.value).toBe(true);
+    });
+
+    function createSettingsManagerMock(discoverContentPanelInline: boolean) {
+      const settings = signal({ discoverContentPanelInline } as any);
+      return {
+        settings,
+        setDiscoverContentPanelInline: vi.fn((value: boolean) => {
+          settings.value = {
+            ...settings.value,
+            discoverContentPanelInline: value,
+          };
+        }),
+      };
+    }
+
+    it("seeds its initial value from a persisted settings manager", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(false);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+    });
+
+    it("persists changes through to the settings manager", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      state.discoverContentPanelInline.value = false;
+
+      expect(
+        settingsManager.setDiscoverContentPanelInline
+      ).toHaveBeenCalledWith(false);
+      expect(settingsManager.settings.value.discoverContentPanelInline).toBe(
+        false
+      );
+    });
+
+    it("picks up changes made to the settings manager from elsewhere (e.g. another tab)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(true);
+
+      // Simulate another tab persisting a change through the shared
+      // `SettingsManager`, without going through this tab's signal.
+      settingsManager.settings.value = {
+        ...settingsManager.settings.value,
+        discoverContentPanelInline: false,
+      };
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+    });
+
+    it("doesn't write the setting back to the settings manager when applying an externally-made change", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      settingsManager.settings.value = {
+        ...settingsManager.settings.value,
+        discoverContentPanelInline: false,
+      };
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+      expect(
+        settingsManager.setDiscoverContentPanelInline
+      ).not.toHaveBeenCalled();
+    });
+  });
+
   describe("reading extensions", () => {
     const genBookData = aabBooks.books.find((book) => book.id === "GEN")!;
 

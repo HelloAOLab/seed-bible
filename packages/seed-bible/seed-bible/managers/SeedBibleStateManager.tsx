@@ -554,7 +554,8 @@ export function createSeedBibleState(
     discover,
     readingExtensions,
     () => annotations,
-    branding
+    branding,
+    settings
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(

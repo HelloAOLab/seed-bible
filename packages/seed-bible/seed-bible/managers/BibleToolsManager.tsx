@@ -5,6 +5,7 @@ import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
   uiLocaleForDefaultTranslation,
+  hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
@@ -338,7 +339,8 @@ export type ManagedBibleBelowReaderToolbarToolItem =
  * Runtime context for the quick toolbar surface — the compact row of
  * actions shown at the top of the reader, beside the chapter bookmark
  * button. Intentionally lean: quick tools are header-level chapter actions
- * and only need the active reading state.
+ * and only need the active reading state (plus whichever manager a specific
+ * tool's visibility/action depends on).
  */
 export interface QuickToolContext {
   /** Active reading state for the current reader surface. */
@@ -348,6 +350,9 @@ export interface QuickToolContext {
    * Playlist manager state.
    */
   playlists: PlaylistManager;
+
+  /** Used by the discover-content-panel tool to factor notes into visibility. */
+  annotations: AnnotationsManager;
 
   features: FeaturesManager;
 
@@ -609,6 +614,46 @@ function getDefaultQuickToolbarTools(
         c.playlists.isMobile.value,
       onSelect: (c) => {
         c.playlists.view.value = "play_playlist";
+      },
+    },
+    {
+      id: "discover-content-panel",
+      priority: 10,
+      title: {
+        key: "discover-content-panel",
+        defaultValue: "Discover content",
+      },
+      icon: (c) => (
+        <MaterialIcon
+          className={
+            c.readingState.discoverContentPanelInline.value
+              ? "sb-quick-tool-icon-active"
+              : undefined
+          }
+        >
+          explore
+        </MaterialIcon>
+      ),
+      isVisible: (c) => {
+        if (c.app?.isMobile?.value) {
+          return false;
+        }
+        if (hasAnyDiscoverResults(c.readingState)) {
+          return true;
+        }
+        const bookId = c.readingState.bookId.value;
+        const chapterNumber = c.readingState.chapterNumber.value;
+        if (!bookId || !chapterNumber) {
+          return false;
+        }
+        return (
+          c.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+            .length > 0
+        );
+      },
+      onSelect: (c) => {
+        c.readingState.discoverContentPanelInline.value =
+          !c.readingState.discoverContentPanelInline.value;
       },
     },
     {
