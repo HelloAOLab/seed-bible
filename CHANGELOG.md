@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.7.0 — 2026-08-31
+
+### ✨ Added
+
 - Add support for the `annotationRecordKey` query parameter, so a deployment can save all annotations to a specific record instead of each user's own, letting translations published from Codex be annotated and viewed there directly. ([#1662](https://github.com/HelloAOLab/seed-bible/pull/1662))
 - Automatically prompt to download the current translation for offline reading, after the welcome screen on first load and again after dismissing the Today screen if you have no downloaded translations. ([#1663](https://github.com/HelloAOLab/seed-bible/pull/1663))
 - Prompt to switch your UI language when you choose a translation written in a different language. ([#1677](https://github.com/HelloAOLab/seed-bible/pull/1677))
@@ -34,8 +44,6 @@
 - Fix the mobile highlight color picker's layout shifting down when the "swipe to see more" hint disappears after you touch it. ([#1684](https://github.com/HelloAOLab/seed-bible/pull/1684))
 - Fix the verse toolbar staying open when tapping empty space within the chapter (padding, gaps between verses, section headings), instead of only closing on taps entirely outside the chapter. ([#1723](https://github.com/HelloAOLab/seed-bible/pull/1723))
 - Fix the Today screen appearing and then immediately closing when the app opens without a link to a specific chapter and restores your saved reading position or saved translation. ([#1726](https://github.com/HelloAOLab/seed-bible/pull/1726))
-
-### 🗑️ Removed
 
 ## v1.6.0 — 2026-08-24
 
