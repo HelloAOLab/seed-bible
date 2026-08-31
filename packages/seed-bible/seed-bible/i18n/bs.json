@@ -23,7 +23,6 @@
   "create-new-tab": "Kreiraj novu karticu",
   "tab-options": "Opcije kartice",
   "open-tab-menu": "Otvori meni kartice",
-  "session-id_x": "ID sesije: {{sessionId}}",
   "search-verses": "Pretraži stihove",
   "clear-search": "Obriši pretragu",
   "searching": "Pretraga...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Istaknite za",
   "end-session": "Završi sesiju",
   "panels": "Paneli",
-
   "open-in-new-panel": "Otvori u novom panelu",
   "close-sidebar": "Zatvori bočnu traku",
   "select-pane-layout": "Odaberite raspored okna",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Napravite plan čitanja",
   "reading-plans-empty": "Još nemate planove čitanja. Napravite jedan da biste započeli.",
   "untitled-reading-plan": "Neimenovani plan",
-
   "reading-plan-description_placeholder": "O čemu se radi u ovom planu?",
   "anonymous": "Anonimno",
   "no-chat-messages": "Još nema poruka",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Dostupna je vođena tura koja će vam pomoći da saznate sve o Seed Bible.",
   "tutorial.promptDecline": "Ne, hvala",
   "tutorial.promptAccept": "Krenite na obilazak",
-  "session-id": "ID sesije",
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dijeljenje",
   "session-settings-section-participants": "Učesnici",
@@ -335,7 +331,6 @@
   "dont-show-again": "Ne prikazuj ovo više",
   "discover": "Otkrijte",
   "playlists": "Plejliste",
-
   "cross-references": "Unakrsne reference",
   "study-notes": "Bilješke o učenju",
   "content": "Sadržaj",
@@ -404,7 +399,6 @@
   "add-and-save": "Dodaj i spremi",
   "loading-profile": "Učitavanje vašeg profila…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Podijeli",
   "share-sheet-title": "Podijeli",
   "share-link": "Podijeli link",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Kreiraj novi plan",
   "edit-reading-plan": "Uredi plan",
   "reading-plan-step-name-title": "Nazovite svoj plan",
-
   "reading-plan-name-placeholder": "npr. Moje putovanje kroz Psalme",
   "reading-plan-description-label": "Opis (neobavezno)",
   "reading-plan-step-scripture-title": "Odaberite očitanja",
   "reading-plan-step-cadences-title": "Čitanje kadenca",
   "reading-plan-step-cadences-hint": "Odaberite tempo čitanja koji želite ponuditi. Čitaoci uvijek mogu odabrati da idu svojim vlastitim tempom.",
-
   "reading-plan-cadence-length": "Završava se za {{count}} dana",
   "reading-plan-cadence-length_one": "Završava se za {{count}} dan",
   "reading-plan-cadence-length_other": "Završava se za {{count}} dana",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Spremanje…",
   "reading-plan-draft-saved": "Nacrt sačuvan",
   "reading-plan-draft-save-failed": "Nije moguće sačuvati nacrt",
-
   "reading-plan-scripture-remove": "Ukloni čitanje",
   "reading-plan-create-submit": "Kreiraj plan",
   "reading-plan-save-changes": "Sačuvaj promjene",
@@ -498,11 +489,8 @@
   "loading": "Učitavanje…",
   "reading-plan-not-started": "Nije započeto",
   "reading-plan-start": "Započni plan",
-
   "reading-plan-streak": "{{count}} dnevni niz",
-
   "reading-plan-mark-complete": "Označi kao završeno",
-
   "reading-plan-empty-sessions": "Ovaj plan još nema nikakvih očitanja.",
   "reading-plan-celebration-title": "Dan {{day}} završen!",
   "reading-plan-complete-title": "Plan završen!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Označi čitanje kao završeno",
   "reading-plan-link-video": "Videozapis",
   "reading-belongs-to": "Ovo čitanje pripada",
-
   "reading-plan-mark-passage-complete": "Označi {{passage}} kao pročitano",
   "reading-plan-read-nudge-title": "Lijepo štivo!",
   "reading-plan-read-nudge-toast": "Označi {{passage}} kao završen?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "O čemu se radi na ovoj plejlisti?",
   "read-more": "Pročitajte više",
   "read-less": "Čitaj manje",
-
   "ask-to-switch-ui-language": "Ponuda za promjenu jezika s prijevodom",
   "ai": "Vještačka inteligencija",
   "ai-edit-playlist": "Uredite listu pjesama pomoću umjetne inteligencije",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} je koristio {{count}} alata",
   "chat-tool-used_one": "{{name}} je koristio/la alat",
   "chat-tool-used_other": "{{name}} je koristio {{count}} alata",
-
   "ai-context-button-label": "Aktivni kontekst umjetne inteligencije",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Ova napomena je promijenjena na dva mjesta",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Nema sadržaja.",
   "annotation-conflict-confirm": "Potvrdi",
   "annotation-conflict-resolve-failed": "Nije moguće primijeniti tu opciju. Pokušat će se ponovo.",
-
   "annotation-sync-failed": "Nije moguće sačuvati bilješku na vaš račun. Još uvijek je na ovom uređaju.",
   "create-menu": "Kreiraj",
   "create-annotation-menu-item": "Anotacija",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Nije moguće sačuvati napomenu.",
   "annotation-group-expand": "Proširi grupu",
   "annotation-group-collapse": "Sažmi grupu",
-
   "notes": "Bilješke",
   "note": "Napomena",
   "show-more-verse-actions": "Prikaži više akcija",
@@ -667,7 +650,6 @@
   "create-folder": "Kreiraj mapu",
   "edit-bookmark": "Uredi oznaku",
   "remove-bookmark-from-all-folders": "Ukloni iz svih foldera",
-
   "greeting-afternoon": "Dobar dan!",
   "greeting-afternoon-named": "Dobar dan, {{name}} !",
   "greeting-evening": "Dobro veče!",
@@ -677,5 +659,6 @@
   "greeting-night": "Laku noć!",
   "greeting-night-named": "Laku noć, {{name}} !",
   "annotation-override-banner": "Bilješke se spremaju i učitavaju s računa vašeg tima.",
-  "annotation-override-save-to-my-account": "Sačuvaj na moj račun"
+  "annotation-override-save-to-my-account": "Sačuvaj na moj račun",
+  "session-url": "URL sesije"
 }

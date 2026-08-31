@@ -23,7 +23,6 @@
   "create-new-tab": "Vytvořit novou kartu",
   "tab-options": "Možnosti záložek",
   "open-tab-menu": "Otevřít nabídku karet",
-  "session-id_x": "ID relace: {{sessionId}}",
   "search-verses": "Vyhledávání veršů",
   "clear-search": "Vymazat vyhledávání",
   "searching": "Hledání...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Zvýraznit pro",
   "end-session": "Ukončit relaci",
   "panels": "Panely",
-
   "open-in-new-panel": "Otevřít v novém panelu",
   "close-sidebar": "Zavřít postranní panel",
   "select-pane-layout": "Vyberte rozvržení panelu",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Vytvořte si čtenářský plán",
   "reading-plans-empty": "Zatím nemáte žádné čtecí plány. Vytvořte si jeden a začněte.",
   "untitled-reading-plan": "Bez názvu plán",
-
   "reading-plan-description_placeholder": "O čem je tento plán?",
   "anonymous": "Anonymní",
   "no-chat-messages": "Zatím žádné zprávy",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "K dispozici je prohlídka s průvodcem, která vám pomůže seznámit se se všemi detaily Seed Bible.",
   "tutorial.promptDecline": "Ne, děkuji.",
   "tutorial.promptAccept": "Vydejte se na prohlídku",
-  "session-id": "ID relace",
   "session-settings-section-navigation": "Navigace",
   "session-settings-section-sharing": "Sdílení",
   "session-settings-section-participants": "Účastníci",
@@ -335,7 +331,6 @@
   "dont-show-again": "Tohle už znovu nezobrazovat",
   "discover": "Objevit",
   "playlists": "Seznamy skladeb",
-
   "cross-references": "Křížové odkazy",
   "study-notes": "Studijní poznámky",
   "content": "Obsah",
@@ -404,7 +399,6 @@
   "add-and-save": "Přidat a uložit",
   "loading-profile": "Načítání vašeho profilu…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Podíl",
   "share-sheet-title": "Podíl",
   "share-link": "Sdílet odkaz",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Vytvořit nový plán",
   "edit-reading-plan": "Upravit plán",
   "reading-plan-step-name-title": "Pojmenujte svůj plán",
-
   "reading-plan-name-placeholder": "např. Moje cesta za žalmy",
   "reading-plan-description-label": "Popis (volitelné)",
   "reading-plan-step-scripture-title": "Vyberte hodnoty",
   "reading-plan-step-cadences-title": "Čtení kadencí",
   "reading-plan-step-cadences-hint": "Vyberte si tempo čtení, které chcete nabídnout. Čtenáři si vždy mohou zvolit vlastní tempo.",
-
   "reading-plan-cadence-length": "Končí za {{count}} dní",
   "reading-plan-cadence-length_one": "Končí za {{count}} den",
   "reading-plan-cadence-length_other": "Končí za {{count}} dní",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Ukládání…",
   "reading-plan-draft-saved": "Koncept uložen",
   "reading-plan-draft-save-failed": "Koncept se nepodařilo uložit",
-
   "reading-plan-scripture-remove": "Odebrat čtení",
   "reading-plan-create-submit": "Vytvořit plán",
   "reading-plan-save-changes": "Uložit změny",
@@ -498,11 +489,8 @@
   "loading": "Načítání…",
   "reading-plan-not-started": "Nezahájeno",
   "reading-plan-start": "Zahájit plán",
-
   "reading-plan-streak": "{{count}} denní série",
-
   "reading-plan-mark-complete": "Označit jako dokončené",
-
   "reading-plan-empty-sessions": "Tento plán zatím nemá žádné údaje.",
   "reading-plan-celebration-title": "Den {{day}} dokončen!",
   "reading-plan-complete-title": "Plán hotový!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Označit přečtení jako dokončené",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Toto čtení patří",
-
   "reading-plan-mark-passage-complete": "Označit {{passage}} jako přečtené",
   "reading-plan-read-nudge-title": "Pěkné čtení!",
   "reading-plan-read-nudge-toast": "Označit {{passage}} jako dokončený?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "O čem je tento playlist?",
   "read-more": "Číst dále",
   "read-less": "Číst méně",
-
   "ask-to-switch-ui-language": "Nabídka změny jazyka s překladem",
   "ai": "Umělá inteligence",
   "ai-edit-playlist": "Úprava playlistu pomocí umělé inteligence",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} použil {{count}} nástrojů",
   "chat-tool-used_one": "{{name}} použil(a) nástroj",
   "chat-tool-used_other": "{{name}} použil {{count}} nástrojů",
-
   "ai-context-button-label": "Aktivní kontext umělé inteligence",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Tato poznámka se změnila na dvou místech",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Žádný obsah.",
   "annotation-conflict-confirm": "Potvrdit",
   "annotation-conflict-resolve-failed": "Tuto volbu se nepodařilo použít. Zkusíme to znovu.",
-
   "annotation-sync-failed": "Poznámku se nepodařilo uložit do vašeho účtu. Stále je v tomto zařízení.",
   "create-menu": "Vytvořit",
   "create-annotation-menu-item": "Anotace",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Anotaci se nepodařilo uložit.",
   "annotation-group-expand": "Rozbalit skupinu",
   "annotation-group-collapse": "Sbalit skupinu",
-
   "notes": "Poznámky",
   "note": "Poznámka",
   "show-more-verse-actions": "Zobrazit další akce",
@@ -667,7 +650,6 @@
   "create-folder": "Vytvořit složku",
   "edit-bookmark": "Upravit záložku",
   "remove-bookmark-from-all-folders": "Odebrat ze všech složek",
-
   "greeting-afternoon": "Dobré odpoledne!",
   "greeting-afternoon-named": "Dobré odpoledne, {{name}} !",
   "greeting-evening": "Dobrý večer!",
@@ -677,5 +659,6 @@
   "greeting-night": "Dobrou noc!",
   "greeting-night-named": "Dobrou noc, {{name}} !",
   "annotation-override-banner": "Poznámky se ukládají a načítají z účtu vašeho týmu.",
-  "annotation-override-save-to-my-account": "Uložit do mého účtu"
+  "annotation-override-save-to-my-account": "Uložit do mého účtu",
+  "session-url": "URL relace"
 }

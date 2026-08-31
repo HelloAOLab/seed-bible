@@ -23,7 +23,6 @@
   "create-new-tab": "Creați o filă nouă",
   "tab-options": "Opțiuni pentru file",
   "open-tab-menu": "Deschideți meniul filelor",
-  "session-id_x": "ID sesiune: {{sessionId}}",
   "search-verses": "Căutați versete",
   "clear-search": "Șterge căutarea",
   "searching": "Se caută...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Evidențiați pentru",
   "end-session": "Încheiați sesiunea",
   "panels": "Panouri",
-
   "open-in-new-panel": "Deschideți într-un panou nou",
   "close-sidebar": "Închide bara laterală",
   "select-pane-layout": "Selectați aspectul panoului",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Creați un plan de lectură",
   "reading-plans-empty": "Nu ai încă niciun plan de lectură. Creează unul pentru a începe.",
   "untitled-reading-plan": "Plan fără titlu",
-
   "reading-plan-description_placeholder": "Despre ce este vorba în acest plan?",
   "anonymous": "Anonim",
   "no-chat-messages": "Niciun mesaj încă",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Un tur ghidat este disponibil pentru a vă ajuta să învățați toate detaliile Bibliei Semințelor.",
   "tutorial.promptDecline": "Nu, mulțumesc",
   "tutorial.promptAccept": "Faceți turul",
-  "session-id": "ID-ul sesiunii",
   "session-settings-section-navigation": "Navigare",
   "session-settings-section-sharing": "Partajare",
   "session-settings-section-participants": "Participanți",
@@ -335,7 +331,6 @@
   "dont-show-again": "Nu mai afișa asta",
   "discover": "Descoperi",
   "playlists": "Liste de redare",
-
   "cross-references": "Referințe încrucișate",
   "study-notes": "Note de studiu",
   "content": "Conţinut",
@@ -404,7 +399,6 @@
   "add-and-save": "Adaugă și salvează",
   "loading-profile": "Se încarcă profilul tău…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Distribuie",
   "share-sheet-title": "Distribuie",
   "share-link": "Distribuiți un link",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Creați un plan nou",
   "edit-reading-plan": "Editați planul",
   "reading-plan-step-name-title": "Denumește-ți planul",
-
   "reading-plan-name-placeholder": "De exemplu, Călătoria mea cu Psalmii",
   "reading-plan-description-label": "Descriere (opțional)",
   "reading-plan-step-scripture-title": "Selectați lecturi",
   "reading-plan-step-cadences-title": "Cadențe de citire",
   "reading-plan-step-cadences-hint": "Alegeți ritmurile de citire pe care doriți să le oferiți. Cititorii pot oricând alege să meargă în ritmul lor propriu.",
-
   "reading-plan-cadence-length": "Se termină în {{count}} zile",
   "reading-plan-cadence-length_one": "Se termină în {{count}} zi",
   "reading-plan-cadence-length_other": "Se termină în {{count}} zile",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Economisire…",
   "reading-plan-draft-saved": "Schiță salvată",
   "reading-plan-draft-save-failed": "Nu s-a putut salva schița",
-
   "reading-plan-scripture-remove": "Eliminați citirea",
   "reading-plan-create-submit": "Creați un plan",
   "reading-plan-save-changes": "Salvați modificările",
@@ -498,11 +489,8 @@
   "loading": "Încărcare…",
   "reading-plan-not-started": "Neînceput",
   "reading-plan-start": "Plan de început",
-
   "reading-plan-streak": "serie de {{count}} zile",
-
   "reading-plan-mark-complete": "Marcați ca finalizat",
-
   "reading-plan-empty-sessions": "Acest plan nu are încă nicio citire.",
   "reading-plan-celebration-title": "Ziua {{day}} s-a încheiat!",
   "reading-plan-complete-title": "Plan finalizat!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Marcați citirea ca finalizată",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Această lectură aparține",
-
   "reading-plan-mark-passage-complete": "Marcați {{passage}} ca citit",
   "reading-plan-read-nudge-title": "Lectură plăcută!",
   "reading-plan-read-nudge-toast": "Marcați {{passage}} ca finalizat?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Despre ce este vorba în această listă de redare?",
   "read-more": "Citeşte mai mult",
   "read-less": "Citește mai puțin",
-
   "ask-to-switch-ui-language": "Oferă schimbarea limbii cu traducere",
   "ai": "IA",
   "ai-edit-playlist": "Editează playlistul cu ajutorul inteligenței artificiale",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} a folosit {{count}} unelte",
   "chat-tool-used_one": "{{name}} a folosit o unealtă",
   "chat-tool-used_other": "{{name}} a folosit {{count}} unelte",
-
   "ai-context-button-label": "Contextul IA activ",
   "ai-context-tool-count": "{{count}} instrumente",
   "annotation-conflict-title": "Această notă s-a schimbat în două locuri",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Fără conținut.",
   "annotation-conflict-confirm": "Confirma",
   "annotation-conflict-resolve-failed": "Nu s-a putut aplica acea opțiune. Se va încerca din nou.",
-
   "annotation-sync-failed": "Nu s-a putut salva o notă în contul tău. Este încă pe acest dispozitiv.",
   "create-menu": "Crea",
   "create-annotation-menu-item": "Adnotare",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Nu s-a putut salva adnotarea.",
   "annotation-group-expand": "Extindeți grupul",
   "annotation-group-collapse": "Restrângeți grupul",
-
   "notes": "Note",
   "note": "Nota",
   "show-more-verse-actions": "Afișează mai multe acțiuni",
@@ -667,7 +650,6 @@
   "create-folder": "Creați un folder",
   "edit-bookmark": "Editează marcajul",
   "remove-bookmark-from-all-folders": "Eliminați din toate folderele",
-
   "greeting-afternoon": "Bună ziua!",
   "greeting-afternoon-named": "Bună ziua, {{name}} !",
   "greeting-evening": "Bună seara!",
@@ -677,5 +659,6 @@
   "greeting-night": "Noapte bună!",
   "greeting-night-named": "Noapte bună, {{name}} !",
   "annotation-override-banner": "Notele sunt salvate și încărcate din contul echipei tale.",
-  "annotation-override-save-to-my-account": "Salvați în contul meu"
+  "annotation-override-save-to-my-account": "Salvați în contul meu",
+  "session-url": "URL-ul sesiunii"
 }

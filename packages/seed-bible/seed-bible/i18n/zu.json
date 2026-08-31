@@ -23,7 +23,6 @@
   "create-new-tab": "Dala ithebhu entsha",
   "tab-options": "Izinketho zethebhu",
   "open-tab-menu": "Vula imenyu yethebhu",
-  "session-id_x": "I-ID Yeseshini: {{sessionId}}",
   "search-verses": "Sesha amavesi",
   "clear-search": "Sula usesho",
   "searching": "Iyasesha...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Okugqamile kwe",
   "end-session": "Ukuphela Kweseshini",
   "panels": "Amaphaneli",
-
   "open-in-new-panel": "Vula kuphaneli entsha",
   "close-sidebar": "Vala ibha eseceleni",
   "select-pane-layout": "Khetha isakhiwo sephaneli",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Dala uhlelo lokufunda",
   "reading-plans-empty": "Awunazo izinhlelo zokufunda okwamanje. Dala eyodwa ukuze uqalise.",
   "untitled-reading-plan": "Uhlelo olungenasihloko",
-
   "reading-plan-description_placeholder": "Lolu hlelo lumayelana nani?",
   "anonymous": "Ongaziwa",
   "no-chat-messages": "Azikho imilayezo okwamanje",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Uhambo oluqondisiwe luyatholakala ukukusiza ufunde okujulile nokungaphandle kweSeed Bible.",
   "tutorial.promptDecline": "Cha ngiyabonga",
   "tutorial.promptAccept": "Thatha uhambo",
-  "session-id": "I-ID Yeseshini",
   "session-settings-section-navigation": "Ukuzulazula",
   "session-settings-section-sharing": "Ukwabelana",
   "session-settings-section-participants": "Abahlanganyeli",
@@ -335,7 +331,6 @@
   "dont-show-again": "Ungabonisi lokhu futhi",
   "discover": "Thola",
   "playlists": "Uhlu lwadlalwayo",
-
   "cross-references": "Izinkomba ezihambisanayo",
   "study-notes": "Amanothi okufunda",
   "content": "Okuqukethwe",
@@ -404,7 +399,6 @@
   "add-and-save": "Ngeza futhi ulondoloze",
   "loading-profile": "Ilayisha iphrofayela yakho…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Yabelana",
   "share-sheet-title": "Yabelana",
   "share-link": "Yabelana ngesixhumanisi",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Dala uhlelo olusha",
   "edit-reading-plan": "Hlela uhlelo",
   "reading-plan-step-name-title": "Qamba uhlelo lwakho",
-
   "reading-plan-name-placeholder": "isib. Uhambo Lwami Lwezingoma",
   "reading-plan-description-label": "Incazelo (ongakukhetha)",
   "reading-plan-step-scripture-title": "Khetha ukufundwa",
   "reading-plan-step-cadences-title": "Ama-cadence okufunda",
   "reading-plan-step-cadences-hint": "Khetha ijubane lokufunda ofuna ukulinikeza. Abafundi bangakhetha njalo ukuhamba ngejubane labo esikhundleni salokho.",
-
   "reading-plan-cadence-length": "Iphela ezinsukwini ezingu {{count}}",
   "reading-plan-cadence-length_one": "Iphela ngosuku olungu- {{count}}",
   "reading-plan-cadence-length_other": "Iphela ezinsukwini ezingu {{count}}",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Ilondoloza...",
   "reading-plan-draft-saved": "Okusalungiswa kulondoloziwe",
   "reading-plan-draft-save-failed": "Ayikwazanga ukulondoloza okusalungiswa",
-
   "reading-plan-scripture-remove": "Susa ukufunda",
   "reading-plan-create-submit": "Dala uhlelo",
   "reading-plan-save-changes": "Londoloza izinguquko",
@@ -498,11 +489,8 @@
   "loading": "Iyalayisha…",
   "reading-plan-not-started": "Akuqalwanga",
   "reading-plan-start": "Uhlelo lokuqala",
-
   "reading-plan-streak": "{{count}} -uchungechunge lwezinsuku",
-
   "reading-plan-mark-complete": "Maka njengokuqediwe",
-
   "reading-plan-empty-sessions": "Lolu hlelo alunazo izibalo okwamanje.",
   "reading-plan-celebration-title": "Usuku {{day}} luphelile!",
   "reading-plan-complete-title": "Uhlelo luqediwe!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Maka ukufunda kuqediwe",
   "reading-plan-link-video": "Ividiyo",
   "reading-belongs-to": "Lokhu kufundwa kungokwa",
-
   "reading-plan-mark-passage-complete": "Maka i {{passage}} njengefundiwe",
   "reading-plan-read-nudge-title": "Ukufunda okuhle!",
   "reading-plan-read-nudge-toast": "Maka {{passage}} iqediwe?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Lumayelana nani lolu hlu lwadlalwayo?",
   "read-more": "Funda kabanzi",
   "read-less": "Funda okuncane",
-
   "ask-to-switch-ui-language": "Nikeza ukushintsha ulimi ngokuhumusha",
   "ai": "I-AI",
   "ai-edit-playlist": "Hlela uhlu lwadlalwayo nge-AI",
@@ -623,7 +609,6 @@
   "chat-tool-used": "Amathuluzi asetshenziswe ngu {{name}} angu {{count}}",
   "chat-tool-used_one": "{{name}} usebenzise ithuluzi",
   "chat-tool-used_other": "Amathuluzi asetshenziswe ngu {{name}} angu {{count}}",
-
   "ai-context-button-label": "Umongo we-AI osebenzayo",
   "ai-context-tool-count": "amathuluzi angu {{count}}",
   "annotation-conflict-title": "Leli nothi lishintshe ezindaweni ezimbili",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Akukho okuqukethwe.",
   "annotation-conflict-confirm": "Qinisekisa",
   "annotation-conflict-resolve-failed": "Ayikwazanga ukusebenzisa leso sinqumo. Sizophinde sizame.",
-
   "annotation-sync-failed": "Ayikwazanga ukulondoloza inothi ku-akhawunti yakho. Lisesekhona kule divayisi.",
   "create-menu": "Dala",
   "create-annotation-menu-item": "Isichasiselo",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Ayikwazanga ukulondoloza isichasiselo.",
   "annotation-group-expand": "Nweba iqembu",
   "annotation-group-collapse": "Goqa iqembu",
-
   "notes": "Amanothi",
   "note": "Inothi",
   "show-more-verse-actions": "Bonisa izenzo ezengeziwe",
@@ -667,7 +650,6 @@
   "create-folder": "Dala ifolda",
   "edit-bookmark": "Hlela ibhukhimakhi",
   "remove-bookmark-from-all-folders": "Susa kuwo wonke amafolda",
-
   "greeting-afternoon": "Sawubona!",
   "greeting-afternoon-named": "Sawubona ntambama, {{name}} !",
   "greeting-evening": "Sawubona!",
@@ -677,5 +659,6 @@
   "greeting-night": "Ulale kahle!",
   "greeting-night-named": "Ulale kahle, {{name}} !",
   "annotation-override-banner": "Amanothi ayalondolozwa futhi alayishwa kusuka ku-akhawunti yethimba lakho.",
-  "annotation-override-save-to-my-account": "Londoloza ku-akhawunti yami"
+  "annotation-override-save-to-my-account": "Londoloza ku-akhawunti yami",
+  "session-url": "I-URL Yeseshini"
 }

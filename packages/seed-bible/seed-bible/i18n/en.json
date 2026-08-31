@@ -415,7 +415,7 @@
   "tutorial.promptBody": "A guided tour is available to help you learn the ins and outs of Seed Bible.",
   "tutorial.promptDecline": "No, thanks",
   "tutorial.promptAccept": "Take the tour",
-  "session-id": "Session ID",
+  "session-url": "Session URL",
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Sharing",
   "session-settings-section-participants": "Participants",

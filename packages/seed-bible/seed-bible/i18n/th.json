@@ -23,7 +23,6 @@
   "create-new-tab": "สร้างแท็บใหม่",
   "tab-options": "ตัวเลือกแท็บ",
   "open-tab-menu": "เมนูแท็บเปิด",
-  "session-id_x": "รหัสเซสชัน: {{sessionId}}",
   "search-verses": "ค้นหาข้อความ",
   "clear-search": "ล้างการค้นหา",
   "searching": "กำลังค้นหา...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "ไฮไลต์สำหรับ",
   "end-session": "สิ้นสุดเซสชั่น",
   "panels": "แผง",
-
   "open-in-new-panel": "เปิดในหน้าต่างใหม่",
   "close-sidebar": "ปิดแถบด้านข้าง",
   "select-pane-layout": "เลือกเค้าโครงบานหน้าต่าง",
@@ -253,7 +251,6 @@
   "create-reading-plan": "จัดทำแผนการอ่าน",
   "reading-plans-empty": "คุณยังไม่มีแผนการอ่านใดๆ เลย เริ่มสร้างแผนการอ่านขึ้นมาก่อนก็ได้",
   "untitled-reading-plan": "แผนงานที่ไม่มีชื่อ",
-
   "reading-plan-description_placeholder": "แผนนี้เกี่ยวกับอะไร?",
   "anonymous": "นิรนาม",
   "no-chat-messages": "ยังไม่มีข้อความใดๆ",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "มีบริการนำชมเพื่อช่วยให้คุณเรียนรู้รายละเอียดต่างๆ ของ Seed Bible อย่างครบถ้วน",
   "tutorial.promptDecline": "ไม่เป็นไร ขอบคุณ",
   "tutorial.promptAccept": "ไปทัวร์กันเลย",
-  "session-id": "รหัสเซสชัน",
   "session-settings-section-navigation": "การนำทาง",
   "session-settings-section-sharing": "การแบ่งปัน",
   "session-settings-section-participants": "ผู้เข้าร่วม",
@@ -335,7 +331,6 @@
   "dont-show-again": "อย่าแสดงสิ่งนี้อีก",
   "discover": "ค้นพบ",
   "playlists": "เพลย์ลิสต์",
-
   "cross-references": "การอ้างอิงโยง",
   "study-notes": "บันทึกการเรียน",
   "content": "เนื้อหา",
@@ -404,7 +399,6 @@
   "add-and-save": "เพิ่มและบันทึก",
   "loading-profile": "กำลังโหลดโปรไฟล์ของคุณ…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "แบ่งปัน",
   "share-sheet-title": "แบ่งปัน",
   "share-link": "แชร์ลิงก์",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "สร้างแผนใหม่",
   "edit-reading-plan": "แก้ไขแผน",
   "reading-plan-step-name-title": "ตั้งชื่อแผนของคุณ",
-
   "reading-plan-name-placeholder": "เช่น การเดินทางแห่งบทเพลงสดุดีของฉัน",
   "reading-plan-description-label": "คำอธิบาย (ไม่บังคับ)",
   "reading-plan-step-scripture-title": "เลือกอ่านบทความต่างๆ",
   "reading-plan-step-cadences-title": "จังหวะการอ่าน",
   "reading-plan-step-cadences-hint": "เลือกความเร็วในการอ่านที่คุณต้องการนำเสนอ ผู้อ่านสามารถเลือกที่จะอ่านตามจังหวะของตนเองได้เสมอ",
-
   "reading-plan-cadence-length": "เสร็จสิ้นในอีก {{count}} วัน",
   "reading-plan-cadence-length_one": "เสร็จสิ้นภายใน {{count}} วัน",
   "reading-plan-cadence-length_other": "เสร็จสิ้นในอีก {{count}} วัน",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "ประหยัด…",
   "reading-plan-draft-saved": "บันทึกฉบับร่างแล้ว",
   "reading-plan-draft-save-failed": "ไม่สามารถบันทึกฉบับร่างได้",
-
   "reading-plan-scripture-remove": "ลบการอ่าน",
   "reading-plan-create-submit": "สร้างแผน",
   "reading-plan-save-changes": "บันทึกการเปลี่ยนแปลง",
@@ -498,11 +489,8 @@
   "loading": "กำลังโหลด…",
   "reading-plan-not-started": "ยังไม่ได้เริ่ม",
   "reading-plan-start": "เริ่มวางแผน",
-
   "reading-plan-streak": "สตรีค {{count}} วัน",
-
   "reading-plan-mark-complete": "ทำเครื่องหมายว่าเสร็จสมบูรณ์",
-
   "reading-plan-empty-sessions": "แผนนี้ยังไม่มีข้อมูลการอ่านใดๆ",
   "reading-plan-celebration-title": "เสร็จสิ้นวันที่ {{day}} แล้ว!",
   "reading-plan-complete-title": "แผนเสร็จสมบูรณ์แล้ว!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "ทำเครื่องหมายว่าอ่านเสร็จแล้ว",
   "reading-plan-link-video": "วิดีโอ",
   "reading-belongs-to": "เนื้อหานี้เป็นของ...",
-
   "reading-plan-mark-passage-complete": "ทำเครื่องหมาย {{passage}} ว่าอ่านแล้ว",
   "reading-plan-read-nudge-title": "ขอให้สนุกกับการอ่าน!",
   "reading-plan-read-nudge-toast": "ทำเครื่องหมาย {{passage}} เสร็จสมบูรณ์แล้ว?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "เพลย์ลิสต์นี้เกี่ยวกับอะไร?",
   "read-more": "อ่านเพิ่มเติม",
   "read-less": "อ่านน้อยลง",
-
   "ask-to-switch-ui-language": "เสนอให้เปลี่ยนภาษาด้วยการแปล",
   "ai": "AI",
   "ai-edit-playlist": "แก้ไขเพลย์ลิสต์ด้วย AI",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} ใช้เครื่องมือ {{count}} รายการ",
   "chat-tool-used_one": "{{name}} ใช้เครื่องมือ",
   "chat-tool-used_other": "{{name}} ใช้เครื่องมือ {{count}} รายการ",
-
   "ai-context-button-label": "บริบท AI ที่ใช้งานอยู่",
   "ai-context-tool-count": "เครื่องมือ {{count}} ชิ้น",
   "annotation-conflict-title": "ข้อความนี้มีการเปลี่ยนแปลงในสองจุด",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "ไม่มีเนื้อหา",
   "annotation-conflict-confirm": "ยืนยัน",
   "annotation-conflict-resolve-failed": "ไม่สามารถเลือกตัวเลือกนั้นได้ จะลองใหม่อีกครั้ง",
-
   "annotation-sync-failed": "ไม่สามารถบันทึกบันทึกย่อลงในบัญชีของคุณได้ บันทึกย่อยังคงอยู่ในอุปกรณ์นี้",
   "create-menu": "สร้าง",
   "create-annotation-menu-item": "คำอธิบายประกอบ",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "ไม่สามารถบันทึกคำอธิบายประกอบได้",
   "annotation-group-expand": "ขยายกลุ่ม",
   "annotation-group-collapse": "ยุบกลุ่ม",
-
   "notes": "หมายเหตุ",
   "note": "บันทึก",
   "show-more-verse-actions": "แสดงการดำเนินการเพิ่มเติม",
@@ -667,7 +650,6 @@
   "create-folder": "สร้างโฟลเดอร์",
   "edit-bookmark": "แก้ไขบุ๊กมาร์ก",
   "remove-bookmark-from-all-folders": "ลบออกจากทุกโฟลเดอร์",
-
   "greeting-afternoon": "สวัสดีตอนบ่าย!",
   "greeting-afternoon-named": "สวัสดีตอนบ่ายค่ะ {{name}} !",
   "greeting-evening": "สวัสดีตอนเย็น!",
@@ -677,5 +659,6 @@
   "greeting-night": "ราตรีสวัสดิ์!",
   "greeting-night-named": "ฝันดีนะ {{name}} !",
   "annotation-override-banner": "บันทึกต่างๆ กำลังถูกบันทึกและโหลดจากบัญชีของทีมคุณ",
-  "annotation-override-save-to-my-account": "บันทึกไปยังบัญชีของฉัน"
+  "annotation-override-save-to-my-account": "บันทึกไปยังบัญชีของฉัน",
+  "session-url": "URL เซสชัน"
 }

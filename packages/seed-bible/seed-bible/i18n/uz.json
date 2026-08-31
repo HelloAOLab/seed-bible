@@ -23,7 +23,6 @@
   "create-new-tab": "Yangi yorliq yaratish",
   "tab-options": "Yorliq parametrlari",
   "open-tab-menu": "Yorliq menyusini ochish",
-  "session-id_x": "Sessiya identifikatori: {{sessionId}}",
   "search-verses": "Oyatlarni qidirish",
   "clear-search": "Qidiruvni tozalash",
   "searching": "Qidirilmoqda...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Belgilash uchun",
   "end-session": "Sessiyani tugatish",
   "panels": "Panellar",
-
   "open-in-new-panel": "Yangi panelda ochish",
   "close-sidebar": "Yon panelni yopish",
   "select-pane-layout": "Panelning joylashuvini tanlang",
@@ -253,7 +251,6 @@
   "create-reading-plan": "O'qish rejasini tuzing",
   "reading-plans-empty": "Sizda hali o'qish rejalari yo'q. Boshlash uchun bittasini yarating.",
   "untitled-reading-plan": "Nomsiz reja",
-
   "reading-plan-description_placeholder": "Bu reja nima haqida?",
   "anonymous": "Anonim",
   "no-chat-messages": "Hali xabar yo'q",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible kitobining nozik va nozik tomonlarini o'rganishingizga yordam beradigan ekskursiya mavjud.",
   "tutorial.promptDecline": "Yo'q rahmat",
   "tutorial.promptAccept": "Ekskursiyaga chiqing",
-  "session-id": "Sessiya identifikatori",
   "session-settings-section-navigation": "Navigatsiya",
   "session-settings-section-sharing": "Ulashish",
   "session-settings-section-participants": "Ishtirokchilar",
@@ -335,7 +331,6 @@
   "dont-show-again": "Buni boshqa ko'rsatmang",
   "discover": "Kashf eting",
   "playlists": "Pleylistlar",
-
   "cross-references": "O'zaro havolalar",
   "study-notes": "O'quv yozuvlari",
   "content": "Tarkib",
@@ -404,7 +399,6 @@
   "add-and-save": "Qo'shish va saqlash",
   "loading-profile": "Profilingiz yuklanmoqda…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Ulashish",
   "share-sheet-title": "Ulashish",
   "share-link": "Havolani ulashing",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Yangi reja yarating",
   "edit-reading-plan": "Rejani tahrirlash",
   "reading-plan-step-name-title": "Rejangizga nom bering",
-
   "reading-plan-name-placeholder": "masalan, Mening Zaburlarim Sayohati",
   "reading-plan-description-label": "Tavsif (ixtiyoriy)",
   "reading-plan-step-scripture-title": "O'qishlarni tanlang",
   "reading-plan-step-cadences-title": "O'qish tezligi",
   "reading-plan-step-cadences-hint": "O'qish sur'atlarini tanlang. O'quvchilar har doim o'z sur'atlarida o'qishni tanlashlari mumkin.",
-
   "reading-plan-cadence-length": "{{count}} kunda tugaydi",
   "reading-plan-cadence-length_one": "{{count}} kunda tugaydi",
   "reading-plan-cadence-length_other": "{{count}} kunda tugaydi",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Saqlanmoqda…",
   "reading-plan-draft-saved": "Qoralama saqlandi",
   "reading-plan-draft-save-failed": "Qoralamani saqlab bo'lmadi",
-
   "reading-plan-scripture-remove": "O'qishni olib tashlash",
   "reading-plan-create-submit": "Reja tuzing",
   "reading-plan-save-changes": "O'zgarishlarni saqlash",
@@ -498,11 +489,8 @@
   "loading": "Yuklanmoqda…",
   "reading-plan-not-started": "Boshlanmagan",
   "reading-plan-start": "Boshlash rejasi",
-
   "reading-plan-streak": "{{count}} -kunlik seriya",
-
   "reading-plan-mark-complete": "Bajarilgan deb belgilash",
-
   "reading-plan-empty-sessions": "Bu rejada hali o'qishlar yo'q.",
   "reading-plan-celebration-title": "{{day}} kun tugadi!",
   "reading-plan-complete-title": "Reja yakunlandi!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "O'qishni tugallangan deb belgilash",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Ushbu o'qish tegishli",
-
   "reading-plan-mark-passage-complete": "{{passage}} ni o'qilgan deb belgilash",
   "reading-plan-read-nudge-title": "Yaxshi o'qish!",
   "reading-plan-read-nudge-toast": "{{passage}} tugallangan deb belgilansinmi?",
@@ -615,7 +602,6 @@
   "playlist-description_placeholder": "Bu pleylist nima haqida?",
   "read-more": "Ko'proq o'qish",
   "read-less": "Kamroq o'qing",
-
   "ask-to-switch-ui-language": "Tarjima bilan tilni o'zgartirishni taklif qiling",
   "ai": "Sun'iy intellekt",
   "ai-edit-playlist": "Sun'iy intellekt yordamida pleylistni tahrirlash",
@@ -623,7 +609,6 @@
   "chat-tool-used": "{{name}} {{count}} ta vositadan foydalangan",
   "chat-tool-used_one": "{{name}} vositadan foydalandi",
   "chat-tool-used_other": "{{name}} {{count}} ta vositadan foydalangan",
-
   "ai-context-button-label": "Faol AI konteksti",
   "ai-context-tool-count": "{{count}} ta asbob",
   "annotation-conflict-title": "Bu eslatma ikki joyda o'zgargan",
@@ -638,7 +623,6 @@
   "annotation-conflict-no-content": "Tarkib yo'q.",
   "annotation-conflict-confirm": "Tasdiqlash",
   "annotation-conflict-resolve-failed": "Bu tanlovni qo'llab bo'lmadi. Qayta urinib ko'riladi.",
-
   "annotation-sync-failed": "Hisobingizga qayd saqlanmadi. U hali ham shu qurilmada.",
   "create-menu": "Yaratish",
   "create-annotation-menu-item": "Izoh",
@@ -653,7 +637,6 @@
   "save-annotation-failed": "Izohni saqlab bo'lmadi.",
   "annotation-group-expand": "Guruhni kengaytirish",
   "annotation-group-collapse": "Guruhni yig'ish",
-
   "notes": "Izohlar",
   "note": "Eslatma",
   "show-more-verse-actions": "Ko'proq amallarni ko'rsatish",
@@ -667,7 +650,6 @@
   "create-folder": "Jild yaratish",
   "edit-bookmark": "Xatcho'pni tahrirlash",
   "remove-bookmark-from-all-folders": "Barcha papkalardan olib tashlash",
-
   "greeting-afternoon": "Hayrli kun!",
   "greeting-afternoon-named": "Xayrli kun, {{name}} !",
   "greeting-evening": "Hayrli kech!",
@@ -677,5 +659,6 @@
   "greeting-night": "Hayrli tun!",
   "greeting-night-named": "Xayrli tun, {{name}} !",
   "annotation-override-banner": "Qaydlar jamoangiz hisobidan saqlanmoqda va yuklanmoqda.",
-  "annotation-override-save-to-my-account": "Hisobimga saqlash"
+  "annotation-override-save-to-my-account": "Hisobimga saqlash",
+  "session-url": "Sessiya URL manzili"
 }
