@@ -222,7 +222,7 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     }
   });
 
-  it("clears the verse selection when a tap lands in a poetry verse's blank space (not on its text)", async () => {
+  it("clears the verse selection when a mouse tap lands in a poetry verse's blank space (not on its text)", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();
 
@@ -230,8 +230,9 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     // `BibleReader.inline.css`), so it spans the full content width even when
     // its actual text — wrapped in the nested `.sb-verse-decorator` — is much
     // narrower. Tapping that outer span directly (not the decorator) stands
-    // in for a tap that lands in the blank margin past a short line, which
-    // should count as "outside" the verse, not "on" it.
+    // in for a mouse click that lands in the blank margin past a short line,
+    // which should count as "outside" the verse, not "on" it — a mouse click
+    // is precise enough that missing the text is a deliberate miss.
     const verse = document.createElement("span");
     verse.className = "sb-verse sb-verse-poetry";
     const decorator = document.createElement("span");
@@ -242,11 +243,47 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     try {
       await act(async () => {
         verse.dispatchEvent(
-          new window.PointerEvent("pointerdown", { bubbles: true })
+          new window.PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerType: "mouse",
+          })
         );
       });
 
       expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      verse.remove();
+    }
+  });
+
+  it("does not clear the verse selection when a touch tap lands in a poetry verse's blank space", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // Same blank-space scenario as the mouse case above, but a finger is far
+    // less precise than a mouse pointer — there's no "blank space" inside a
+    // verse's box that a touch could deliberately miss the text into the way
+    // a mouse click could. A touch tap here should keep the original,
+    // forgiving behavior of the whole `.sb-verse` block rather than clearing
+    // the selection out from under the finger that just placed it.
+    const verse = document.createElement("span");
+    verse.className = "sb-verse sb-verse-poetry";
+    const decorator = document.createElement("span");
+    decorator.className = "sb-verse-decorator";
+    verse.appendChild(decorator);
+    document.body.appendChild(verse);
+
+    try {
+      await act(async () => {
+        verse.dispatchEvent(
+          new window.PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerType: "touch",
+          })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
     } finally {
       verse.remove();
     }

@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
+import {
+  BibleReader,
+  resetLastVersePointerTypeForTests,
+} from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
 import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
@@ -303,6 +306,7 @@ function renderMobileReader(
 
 beforeEach(() => {
   setupRerender();
+  resetLastVersePointerTypeForTests();
 });
 
 afterEach(() => {
@@ -765,12 +769,14 @@ describe("BibleReader", () => {
     );
   });
 
-  it("clicking a poetry verse's blank space (not its rendered text) does not select it", () => {
+  it("clicking a poetry verse's blank space with a mouse (not its rendered text) does not select it", () => {
     // A poetry verse's outer span is `display: block` (`.sb-verse-poetry` in
     // BibleReader.inline.css), so it spans the full content width even when
     // its text — wrapped in the nested `.sb-verse-decorator` — is much
     // narrower. Dispatching directly on the outer span (rather than a child)
-    // stands in for a tap that lands in that blank margin.
+    // stands in for a mouse click that lands in that blank margin — no
+    // preceding `pointerdown` is dispatched, matching a real mouse click's
+    // default (non-"touch") pointer type.
     const { slot, selectorState, readingState, selectVerse } = createFixture();
 
     act(() => {
@@ -794,6 +800,52 @@ describe("BibleReader", () => {
     });
 
     expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("tapping a poetry verse's blank space with a touch still selects it", () => {
+    // Same blank-space scenario as the mouse case above, but a finger is far
+    // less precise than a mouse pointer — there's no "blank space" inside a
+    // verse's box a touch could deliberately miss the text into the way a
+    // mouse click could. The verse's own click guard should therefore keep
+    // the original, forgiving whole-block behavior for a touch.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const poetryVerse = container.querySelector(
+      ".sb-verse-poetry"
+    ) as HTMLElement | null;
+    expect(poetryVerse).not.toBeNull();
+
+    act(() => {
+      poetryVerse?.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerType: "touch",
+        })
+      );
+      poetryVerse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.anything(),
+      expect.anything()
+    );
   });
 
   it("clicking a poetry verse's actual text still selects it", () => {

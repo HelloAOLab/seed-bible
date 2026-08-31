@@ -1460,23 +1460,30 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // "outside", which would silently throw the selection away behind the pane
   // instead of restoring the toolbar when the pane closes.
   //
-  // Excluding only `.sb-verse-decorator` (rather than the whole
+  // Excluding only `.sb-verse-decorator` for a mouse (rather than the whole
   // `.sb-chapter-content` container, or even the whole `.sb-verse`) is
   // deliberate: a verse's own `onClick` already handles toggling that
   // verse's selection, so this listener has to stand aside for it, but empty
   // space within the chapter — padding, the gap between verse spans, a
   // section heading — isn't a verse, and a tap there is exactly the "click
   // off of it on an empty space on the page" this listener exists to catch.
-  // `.sb-verse` itself is too generous a target for that: a poetry verse's
-  // outer span (`.sb-verse-poetry`, `BibleReader.tsx`) is `display: block`,
-  // so it — and each `.sb-verse-line` inside it — spans the full content
-  // width regardless of how short the actual line of text is, making most of
-  // a poem's visible blank space still read as "on the verse". A verse's own
-  // decorator span (`.sb-verse-decorator`) wraps only the words actually
-  // rendered, so it — not the outer verse span — is what the verse's own
-  // `onClick` now also keys off of for the poetry case (see the guard there),
-  // keeping the two checks in sync: a tap lands on the decorator or it
-  // doesn't, on both sides.
+  // `.sb-verse` itself is too generous a target for that with a mouse: a
+  // poetry verse's outer span (`.sb-verse-poetry`, `BibleReader.tsx`) is
+  // `display: block`, so it — and each `.sb-verse-line` inside it — spans the
+  // full content width regardless of how short the actual line of text is,
+  // making most of a poem's visible blank space still read as "on the verse".
+  // A verse's own decorator span (`.sb-verse-decorator`) wraps only the words
+  // actually rendered, so that's the mouse target instead.
+  //
+  // A touch is far less precise, though, and there's no in-between "blank
+  // space" for a finger to miss into that a mouse pointer couldn't also land
+  // on deliberately, so a touch keeps checking the full `.sb-verse` — a tap
+  // between two wrapped poetry lines still counts as "on the verse" rather
+  // than clearing the selection out from under the finger that just placed
+  // it. `event.pointerType` (native to `PointerEvent`, no plumbing needed)
+  // picks the selector; the verse's own `onClick` guard for the poetry case
+  // makes the same touch/mouse distinction, using its own pointerdown for the
+  // pointer type since a `click` never carries it.
   //
   // A pane docked beside the reader (e.g. Discover, open on desktop) doesn't
   // cover it, so `isVerseToolbarVisible` stays true and this listener stays
@@ -1506,7 +1513,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest(".sb-verse-decorator")) return;
+      const verseTapSelector =
+        event.pointerType === "touch" ? ".sb-verse" : ".sb-verse-decorator";
+      if (target.closest(verseTapSelector)) return;
       if (target.closest(".sb-verse-toolbar")) return;
       if (target.closest(".sb-pane-side-shell")) return;
       if (target.closest(".sb-pane-shell-detached")) return;
