@@ -1,14 +1,9 @@
 .sb-discover-content-panel {
   display: flex;
   flex-direction: column;
-  min-width: 0;
   position: sticky;
   top: 1rem;
   flex: 1 1 22.5rem;
-  /* float: inline-end; */
-  /* margin-inline-start: 2rem;
-  margin-bottom: 1.5rem; */
-  /* width: 22.5rem; */
   min-width: 18rem;
   max-height: calc(100vh - 2rem);
   overflow: hidden;
