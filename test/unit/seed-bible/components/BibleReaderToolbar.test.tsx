@@ -195,12 +195,48 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     }
   });
 
-  it("does not clear the verse selection when a tap lands on a verse", async () => {
+  it("does not clear the verse selection when a tap lands on a verse's rendered text", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();
 
+    // The decorator span is what actually wraps a verse's rendered words (see
+    // `.sb-verse-decorator` in `BibleReader.tsx`) — a real tap on the text
+    // lands here, not merely somewhere inside the outer `.sb-verse` span.
     const verse = document.createElement("span");
     verse.className = "sb-verse";
+    const decorator = document.createElement("span");
+    decorator.className = "sb-verse-decorator";
+    verse.appendChild(decorator);
+    document.body.appendChild(verse);
+
+    try {
+      await act(async () => {
+        decorator.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      verse.remove();
+    }
+  });
+
+  it("clears the verse selection when a tap lands in a poetry verse's blank space (not on its text)", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // A poetry verse's outer span is `display: block` (`.sb-verse-poetry` in
+    // `BibleReader.inline.css`), so it spans the full content width even when
+    // its actual text — wrapped in the nested `.sb-verse-decorator` — is much
+    // narrower. Tapping that outer span directly (not the decorator) stands
+    // in for a tap that lands in the blank margin past a short line, which
+    // should count as "outside" the verse, not "on" it.
+    const verse = document.createElement("span");
+    verse.className = "sb-verse sb-verse-poetry";
+    const decorator = document.createElement("span");
+    decorator.className = "sb-verse-decorator";
+    verse.appendChild(decorator);
     document.body.appendChild(verse);
 
     try {
@@ -210,7 +246,7 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
         );
       });
 
-      expect(readingState.selectedVerses.value).toHaveLength(1);
+      expect(readingState.selectedVerses.value).toHaveLength(0);
     } finally {
       verse.remove();
     }
@@ -335,6 +371,64 @@ describe("BibleReaderToolbar — verse selection vs. side panes", () => {
       expect(readingState.selectedVerses.value).toHaveLength(1);
     } finally {
       sidePane.remove();
+    }
+  });
+
+  it("does not clear the verse selection when a tap lands inside a floating pane", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    await act(async () => {
+      state.panes.openPane({
+        placement: "floating",
+        title: "Jerusalem",
+        component: () => <div className="test-pane-body" />,
+      });
+    });
+
+    // Stands in for the real overlay pane shell `PaneLayout.tsx` renders for
+    // a floating/fullscreen pane (not mounted in this unit test) — it, unlike
+    // an ordinary reader tab slot, carries the `-detached` modifier.
+    const floatingPane = document.createElement("div");
+    floatingPane.className = "sb-pane-shell sb-pane-shell-detached";
+    document.body.appendChild(floatingPane);
+
+    try {
+      await act(async () => {
+        floatingPane.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      floatingPane.remove();
+    }
+  });
+
+  it("clears the verse selection when a tap lands in the reader's own tab slot (not on a verse)", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // Stands in for the plain `.sb-pane-shell` every reader tab slot renders
+    // in `TabsLayout.tsx` — it carries the same base class as a detached
+    // overlay pane but none of the `-detached` modifier, so a tap here (on
+    // empty reader space, not a verse) should count as "outside" and close
+    // the toolbar, not be mistaken for a tap inside a covering pane.
+    const readerSlot = document.createElement("div");
+    readerSlot.className = "sb-pane-shell sb-pane-slot-1";
+    document.body.appendChild(readerSlot);
+
+    try {
+      await act(async () => {
+        readerSlot.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(0);
+    } finally {
+      readerSlot.remove();
     }
   });
 });

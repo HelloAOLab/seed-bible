@@ -765,6 +765,72 @@ describe("BibleReader", () => {
     );
   });
 
+  it("clicking a poetry verse's blank space (not its rendered text) does not select it", () => {
+    // A poetry verse's outer span is `display: block` (`.sb-verse-poetry` in
+    // BibleReader.inline.css), so it spans the full content width even when
+    // its text — wrapped in the nested `.sb-verse-decorator` — is much
+    // narrower. Dispatching directly on the outer span (rather than a child)
+    // stands in for a tap that lands in that blank margin.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const poetryVerse = container.querySelector(
+      ".sb-verse-poetry"
+    ) as HTMLElement | null;
+    expect(poetryVerse).not.toBeNull();
+
+    act(() => {
+      poetryVerse?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("clicking a poetry verse's actual text still selects it", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    const decorator = container.querySelector(
+      ".sb-verse-poetry .sb-verse-decorator"
+    ) as HTMLElement | null;
+    expect(decorator).not.toBeNull();
+
+    act(() => {
+      decorator?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
   it("clicking a footnote button opens the matching note", () => {
     const { slot, selectorState, readingState, selectFootnote, selectVerse } =
       createFixture();

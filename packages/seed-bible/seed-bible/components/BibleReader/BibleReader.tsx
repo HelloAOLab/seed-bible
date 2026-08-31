@@ -872,6 +872,17 @@ function renderChapterContent(
           className={verseClassName}
           data-verse-number={value.number}
           onClick={(event: MouseEvent) => {
+            // Poetry lines are `display: block` so each one spans the full
+            // content width — a tap in the blank margin past a short line's
+            // last word still lands inside this outer span even though it's
+            // nowhere near the verse's actual text. Only a tap that reaches
+            // an actual `.sb-verse-decorator` (the inline span the rendered
+            // words themselves sit in) should count as selecting the verse;
+            // anywhere else in the block is empty space, which the reader's
+            // outside-click handling (`BibleReaderToolbar.tsx`) needs to be
+            // free to treat as a dismiss instead.
+            const target = event.target as HTMLElement | null;
+            if (!target?.closest(".sb-verse-decorator")) return;
             onVerseClick(verse, event);
           }}
           style={{

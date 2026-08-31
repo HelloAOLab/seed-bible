@@ -940,7 +940,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       return;
     }
     const el = verseToolbarRef.current;
-    if (!el) return;
+    if (!el || typeof ResizeObserver === "undefined") return;
 
     const measure = () => {
       verseToolbarHeight.value = el.offsetHeight;
@@ -1460,19 +1460,35 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // "outside", which would silently throw the selection away behind the pane
   // instead of restoring the toolbar when the pane closes.
   //
-  // Excluding only `.sb-verse` (rather than the whole `.sb-chapter-content`
-  // container) is deliberate: a verse's own `onClick` already handles
-  // toggling that verse's selection, so this listener has to stand aside for
-  // it, but empty space within the chapter — padding, the gap between verse
-  // spans, a section heading — isn't a verse, and a tap there is exactly the
-  // "click off of it on an empty space on the page" this listener exists to
-  // catch.
+  // Excluding only `.sb-verse-decorator` (rather than the whole
+  // `.sb-chapter-content` container, or even the whole `.sb-verse`) is
+  // deliberate: a verse's own `onClick` already handles toggling that
+  // verse's selection, so this listener has to stand aside for it, but empty
+  // space within the chapter — padding, the gap between verse spans, a
+  // section heading — isn't a verse, and a tap there is exactly the "click
+  // off of it on an empty space on the page" this listener exists to catch.
+  // `.sb-verse` itself is too generous a target for that: a poetry verse's
+  // outer span (`.sb-verse-poetry`, `BibleReader.tsx`) is `display: block`,
+  // so it — and each `.sb-verse-line` inside it — spans the full content
+  // width regardless of how short the actual line of text is, making most of
+  // a poem's visible blank space still read as "on the verse". A verse's own
+  // decorator span (`.sb-verse-decorator`) wraps only the words actually
+  // rendered, so it — not the outer verse span — is what the verse's own
+  // `onClick` now also keys off of for the poetry case (see the guard there),
+  // keeping the two checks in sync: a tap lands on the decorator or it
+  // doesn't, on both sides.
   //
   // A pane docked beside the reader (e.g. Discover, open on desktop) doesn't
   // cover it, so `isVerseToolbarVisible` stays true and this listener stays
   // attached — clicks inside that pane (composing an annotation, say) are
   // also excluded so they can't clear a selection the pane's own content is
-  // actively using (e.g. the annotation title/target derived from it).
+  // actively using (e.g. the annotation title/target derived from it). The
+  // exclusion has to key on `.sb-pane-shell-detached` rather than the bare
+  // `.sb-pane-shell` — every reader tab slot (`TabsLayout.tsx`) is *also* a
+  // `.sb-pane-shell`, just without the `-detached` modifier a floating,
+  // fullscreen, or overlay pane carries (`PaneLayout.tsx`), so matching the
+  // bare class swallowed every click anywhere in the reader, verse or not,
+  // and the toolbar could never be dismissed by clicking off of it.
   //
   // The annotation item's three-dot menu (`ContextMenuWithButton`) is
   // portaled to `document.body`, so a click on it — or on one of its
@@ -1490,10 +1506,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest(".sb-verse")) return;
+      if (target.closest(".sb-verse-decorator")) return;
       if (target.closest(".sb-verse-toolbar")) return;
       if (target.closest(".sb-pane-side-shell")) return;
-      if (target.closest(".sb-pane-shell")) return;
+      if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-footnote-modal-overlay")) return;
       readingState.value?.clearSelectedVerses();
