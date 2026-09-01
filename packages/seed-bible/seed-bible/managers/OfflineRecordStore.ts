@@ -508,12 +508,9 @@ export function createIndexedDbRecordStore<T>(
     const transaction = database.transaction(RECORDS_STORE, "readwrite");
     const store = transaction.objectStore(RECORDS_STORE);
     const rows = (await requestToPromise(store.getAll())) as StoredRecord<T>[];
-    const byKey = new Map(rows.map((row) => [row.key, row]));
     const { adopt, discard } = partitionLocalRows(rows);
 
-    const adopted = adopt.map((row) =>
-      adoptRow(row, owner, byKey.get(recordKey(owner, row.address)) ?? null)
-    );
+    const adopted = adopt.map((row) => adoptRow(row, owner));
     for (const row of discard) {
       store.delete(row.key);
     }
@@ -599,21 +596,18 @@ function sortPending<T>(rows: StoredRecord<T>[]): StoredRecord<T>[] {
 /**
  * Moves a signed-out row onto a real account.
  *
- * The base is taken from the account's own row for the same address when it
- * has one, so the push becomes a three-way merge against what the server
- * holds. Otherwise the record has never been on any server and the push is a
- * fresh create.
+ * The base is always null: this content was written with no account, so it has
+ * never been reconciled against any server copy, whatever the account itself
+ * happens to have stored for the same address. A null base makes the push a
+ * create for a domain with no merge, and a union merge for one that has it —
+ * either way the server's version is looked at before anything overwrites it.
  */
-function adoptRow<T>(
-  row: StoredRecord<T>,
-  owner: string,
-  existing: StoredRecord<T> | null
-): StoredRecord<T> {
+function adoptRow<T>(row: StoredRecord<T>, owner: string): StoredRecord<T> {
   return {
     ...row,
     key: recordKey(owner, row.address),
     owner,
-    base: existing?.base ?? null,
+    base: null,
     pendingOp: "upsert",
     attempts: 0,
   };
@@ -750,11 +744,8 @@ export function createInMemoryRecordStore<T>(): OfflineRecordStore<T> {
 
     async adoptLocalRows(owner) {
       const all = [...rows.values()];
-      const byKey = new Map(all.map((row) => [row.key, row]));
       const { adopt, discard } = partitionLocalRows(all);
-      const adopted = adopt.map((row) =>
-        adoptRow(row, owner, byKey.get(recordKey(owner, row.address)) ?? null)
-      );
+      const adopted = adopt.map((row) => adoptRow(row, owner));
       for (const row of discard) {
         rows.delete(row.key);
       }

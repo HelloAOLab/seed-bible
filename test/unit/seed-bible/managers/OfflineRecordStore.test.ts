@@ -400,7 +400,7 @@ describe("createInMemoryRecordStore<Annotation>()", () => {
       expect(adopted?.attempts).toBe(0);
     });
 
-    it("keeps the account's existing base so the push is a three-way merge", async () => {
+    it("gives an adopted row a null base even when the account already had one", async () => {
       const store = createInMemoryRecordStore<Annotation>();
       const server = makeAnnotation("ann-1");
       await store.put(synced("user-1", server));
@@ -415,7 +415,9 @@ describe("createInMemoryRecordStore<Annotation>()", () => {
 
       const [adopted] = await store.adoptLocalRows("user-1");
 
-      expect(adopted?.base).toEqual(server);
+      // Written with no account, so it was never reconciled against the
+      // server's copy — the push has to look at that copy before overwriting it.
+      expect(adopted?.base).toBeNull();
       expect(adopted?.pendingOp).toBe("upsert");
       expect((await store.get("user-1", "ann-1"))?.payload?.data.html).toBe(
         "<p>local</p>"

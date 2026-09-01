@@ -1103,6 +1103,47 @@ describe("HighlightsManager", () => {
         { marker: "publicRead:highlights/BSB" }
       );
     });
+
+    it("keeps the server's highlights when a signed-out chapter is adopted over an unsent account row", async () => {
+      login.userId.value = null;
+      // An edit the account made before signing out and never pushed. Sign-out
+      // keeps it, so signing back in adopts the signed-out chapter on top of it.
+      await store.put({
+        key: "user-1/highlights:BSB/GEN/1",
+        owner: "user-1",
+        address: "highlights:BSB/GEN/1",
+        collection: "highlights:BSB/GEN/1",
+        payload: {
+          highlights: [
+            { colorId: "c1", verse: 3 },
+            { colorId: "c1", verse: 5 },
+          ],
+        },
+        base: { highlights: [{ colorId: "c1", verse: 3 }] },
+        deleted: false,
+        updatedAtMs: 1_000,
+        pendingOp: "upsert",
+        attempts: 0,
+      });
+      const manager = createManager();
+
+      await manager.highlightVerse("BSB", "GEN", 1, {
+        colorId: "c1",
+        verse: 9,
+      });
+
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { highlights: [{ colorId: "c1", verse: 3 }] },
+      });
+      login.userId.value = "user-1";
+      await flushPromises();
+      await manager.sync.sync();
+
+      const pushed = recordDataMock.mock.calls.at(-1)?.[2] as ChapterHighlights;
+      expect(pushed.highlights).toContainEqual({ colorId: "c1", verse: 3 });
+      expect(pushed.highlights).toContainEqual({ colorId: "c1", verse: 9 });
+    });
   });
 });
 
