@@ -1528,7 +1528,16 @@ export function createSeedBibleState(
   };
 
   const handleSelectPane = (paneId: string) => {
-    closeSidebarAndSettings();
+    // Side and fullscreen panes render docked beside the sidebar on desktop
+    // (see PaneLayout's SidePane/FullscreenPane) rather than covering it, so
+    // interacting with one shouldn't close it there — the Customization
+    // Center's editor pane in particular depends on the Settings list
+    // staying open behind it. On mobile every pane is forced to fullscreen
+    // (see `effectivePanes`) and the sidebar is a full-screen drawer, so it
+    // still needs to close to reveal the pane.
+    if (isMobile.value) {
+      closeSidebarAndSettings();
+    }
     panes.selectPane(paneId);
   };
 

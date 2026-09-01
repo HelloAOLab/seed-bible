@@ -872,6 +872,38 @@ describe("createSeedBibleState", () => {
     expect(state.selector.isOpen.value).toBe(false);
   });
 
+  it("selecting a side pane on desktop leaves the Settings sidebar open, so the Customization Center's list stays visible behind its editor pane", async () => {
+    const state = await createState();
+    state.sidebar.openSettings();
+    const pane = state.panes.openPane({
+      placement: "side",
+      title: "Test Pane",
+      component: () => null,
+    });
+
+    state.app.selectPane(pane.id);
+
+    expect(state.sidebar.isSettingsOpen.value).toBe(true);
+  });
+
+  it("selecting a pane on mobile closes the sidebar drawer, since every pane renders fullscreen there", async () => {
+    const state = await createState();
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT;
+    state.sidebar.openSidebar();
+    state.sidebar.openSettings();
+    const pane = state.panes.openPane({
+      placement: "side",
+      title: "Test Pane",
+      component: () => null,
+    });
+
+    state.app.selectPane(pane.id);
+
+    expect(state.sidebar.isMobileOpen.value).toBe(false);
+    expect(state.sidebar.isSettingsOpen.value).toBe(false);
+  });
+
   it("closes a fullscreen pane when navigating to a new chapter", async () => {
     jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
     const state = await createState();
