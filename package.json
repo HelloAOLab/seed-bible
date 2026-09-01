@@ -13,8 +13,8 @@
     "build:client": "vite build",
     "build:ssr": "vite build --ssr standalone/entry-ssr.tsx",
     "build:server": "bun build --target=bun --external express --external vite --outfile=server/dist/index.js ./server/index.ts",
-    "lint": "eslint packages test",
-    "lint:fix": "eslint packages test --fix",
+    "lint": "eslint packages test && stylelint \"packages/**/*.css\"",
+    "lint:fix": "eslint packages test --fix && stylelint \"packages/**/*.css\" --fix",
     "check:ts": "pnpm run check:ts:client && pnpm run check:ts:sw && pnpm run check:patterns",
     "check:ts:client": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
     "check:ts:sw": "tsc --project ./standalone/tsconfig.sw.json",
@@ -30,7 +30,8 @@
     "sitemap": "tsx script/generate-sitemap.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
-    "prepare": "husky && tsx script/setupMergeDriver.ts"
+    "prepare": "husky && tsx script/setupMergeDriver.ts",
+    "preview": "tsx script/preview.ts"
   },
   "repository": {
     "type": "git",
@@ -108,6 +109,7 @@
     "prompts": "^2.4.2",
     "puppeteer": "^24.30.0",
     "rxjs": "catalog:",
+    "stylelint": "^17.14.1",
     "ts-jest": "^29.4.6",
     "ts-morph": "^27.0.2",
     "tsc-silent": "1.2.2",

@@ -2347,13 +2347,13 @@ describe("createBibleReadingState", () => {
 
   it("retryLoad() repeats the initial load when that is what failed", async () => {
     const responses = createReadingManagerResponseMap();
-    const translationsUrl = makeExampleUrl("/api/available_translations.json");
-    const translationsResponse = responses[translationsUrl]!;
-    responses[translationsUrl] = createResponse(
-      { error: true },
-      500,
-      "Server Error"
-    );
+    // A plain, already-valid translation ID resolves via its own book
+    // catalog rather than the full translation list (see the "loads a valid
+    // translation without ever fetching the full catalog" test below), so
+    // that's the request that has to fail here to exercise this path.
+    const booksUrl = makeExampleUrl("/api/AAB/books.json");
+    const booksResponse = responses[booksUrl]!;
+    responses[booksUrl] = createResponse({ error: true }, 500, "Server Error");
 
     setWebResponses(responses);
     const state = createBibleReadingState(createDataManager());
@@ -2362,11 +2362,49 @@ describe("createBibleReadingState", () => {
     expect(state.error.value).not.toBeNull();
     expect(state.chapterData.value).toBeNull();
 
-    responses[translationsUrl] = translationsResponse;
+    responses[booksUrl] = booksResponse;
     await state.retryLoad();
 
     expect(state.error.value).toBeNull();
     expect(state.chapterData.value?.chapter.number).toBe(1);
+  });
+
+  it("loads a valid translation named by the URL without ever fetching the full translation catalog", async () => {
+    // The overwhelmingly common case — a URL that already names a valid
+    // translation — should validate it against just that translation's own
+    // book catalog, not the full (much larger) multi-translation list.
+    const responses = createReadingManagerResponseMap();
+    setWebResponses(responses);
+
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    expect(state.error.value).toBeNull();
+    expect(state.chapterData.value?.chapter.number).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      makeExampleUrl("/api/available_translations.json"),
+      expect.anything()
+    );
+  });
+
+  it("falls back to the full catalog when the requested translation's own books fetch fails", async () => {
+    const responses = createReadingManagerResponseMap();
+    const booksUrl = makeExampleUrl("/api/AAB/books.json");
+    responses[booksUrl] = createResponse({ error: true }, 500, "Server Error");
+    setWebResponses(responses);
+
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    // No `fallbackToFirstAvailableWhenMissing` was requested (a plain
+    // translation ID, not a deep link), so a translation that genuinely can't
+    // be validated still surfaces as an error rather than silently
+    // substituting a different one.
+    expect(state.error.value).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeExampleUrl("/api/available_translations.json"),
+      expect.anything()
+    );
   });
 
   describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {
@@ -2715,6 +2753,135 @@ describe("createBibleReadingState", () => {
       expect(state.discoveredStudyNotes.value).toEqual([]);
       expect(state.discoveredCrossReferences.value).toEqual([]);
       expect(state.discoveredContent.value).toEqual([]);
+    });
+  });
+
+  describe("discoverContentPanelInline", () => {
+    it("defaults to inline (beside the scripture text) and round-trips writes", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"])
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(true);
+
+      state.discoverContentPanelInline.value = false;
+      expect(state.discoverContentPanelInline.value).toBe(false);
+
+      state.discoverContentPanelInline.value = true;
+      expect(state.discoverContentPanelInline.value).toBe(true);
+    });
+
+    function createSettingsManagerMock(discoverContentPanelInline: boolean) {
+      const settings = signal({ discoverContentPanelInline } as any);
+      return {
+        settings,
+        setDiscoverContentPanelInline: vi.fn((value: boolean) => {
+          settings.value = {
+            ...settings.value,
+            discoverContentPanelInline: value,
+          };
+        }),
+      };
+    }
+
+    it("seeds its initial value from a persisted settings manager", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(false);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+    });
+
+    it("persists changes through to the settings manager", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      state.discoverContentPanelInline.value = false;
+
+      expect(
+        settingsManager.setDiscoverContentPanelInline
+      ).toHaveBeenCalledWith(false);
+      expect(settingsManager.settings.value.discoverContentPanelInline).toBe(
+        false
+      );
+    });
+
+    it("picks up changes made to the settings manager from elsewhere (e.g. another tab)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoverContentPanelInline.value).toBe(true);
+
+      // Simulate another tab persisting a change through the shared
+      // `SettingsManager`, without going through this tab's signal.
+      settingsManager.settings.value = {
+        ...settingsManager.settings.value,
+        discoverContentPanelInline: false,
+      };
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+    });
+
+    it("doesn't write the setting back to the settings manager when applying an externally-made change", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const settingsManager = createSettingsManagerMock(true);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        undefined,
+        undefined,
+        settingsManager as any
+      );
+      await waitForInitialLoad(state);
+
+      settingsManager.settings.value = {
+        ...settingsManager.settings.value,
+        discoverContentPanelInline: false,
+      };
+
+      expect(state.discoverContentPanelInline.value).toBe(false);
+      expect(
+        settingsManager.setDiscoverContentPanelInline
+      ).not.toHaveBeenCalled();
     });
   });
 

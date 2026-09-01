@@ -25,9 +25,10 @@
   padding-bottom: 4rem;
 
   /* A third, more muted text tier than `--sb-secondary-font-color`: the
-     resume card deliberately pairs the two, so they are not interchangeable.
-     Local rather than a theme token because core has no equivalent, and this
-     mid-grey is legible on both themes as-is. */
+     welcome screen's greeting and book label pair it against the brighter
+     `--sb-font-color` verse text below them. Local rather than a theme token
+     because core has no equivalent, and this mid-grey is legible on both
+     themes as-is. */
   --sb-today-muted-font-color: #989898;
 }
 
@@ -183,9 +184,8 @@
   height: 2.25rem;
   justify-self: end;
   align-self: self-start;
-  background-color: #f1ece4;
-  background-color: var(--sb-tertiary-color);
-  color: var(--sb-reader-font-color);
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-header > button:nth-of-type(1) {
@@ -229,7 +229,7 @@
 }
 
 .sb-today-container .sb-today-resume-card > h1 > span {
-  color: var(--sb-today-muted-font-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container .sb-today-resume-card > button {
@@ -247,7 +247,7 @@
 }
 
 .sb-today-container .sb-today-resume-card > button > span {
-  color: var(--sb-background);
+  color: var(--sb-primary-font-color);
 }
 
 /* Loading placeholder for the resume card — shown while the reading-history
@@ -297,7 +297,7 @@
   .sb-today-titled-section-header
   > button {
   margin: 0;
-  color: var(--sb-today-muted-font-color);
+  color: var(--sb-font-color);
 }
 
 .sb-today-container .sb-today-titled-section .sb-today-titled-section-header {
@@ -344,7 +344,7 @@
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: 1fr;
-  background-color: var(--sb-tertiary-color);
+  background-color: var(--sb-secondary-color);
   border-radius: 0.5rem;
   justify-content: center;
   align-items: center;
@@ -353,13 +353,13 @@
 }
 
 .sb-today-container .sb-today-search-container .sb-today-searchbar > span {
-  color: var(--sb-reader-font-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container .sb-today-search-container .sb-today-searchbar > input {
   background-color: transparent;
   border: none;
-  color: var(--sb-reader-font-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .sb-today-container
@@ -568,13 +568,13 @@
   .sb-today-timespan-filter-container
   .sb-today-timespan-filter-option {
   border: none;
-  background-color: var(--sb-tertiary-color);
+  background-color: var(--sb-secondary-color);
   border-radius: 1.875rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
   min-width: 3.25rem;
   font-weight: 500;
-  color: var(--sb-reader-font-color);
+  color: var(--sb-secondary-font-color);
   flex-shrink: 0;
 }
 
@@ -582,14 +582,18 @@
   .sb-today-history-card
   .sb-today-timespan-filter-container
   .sb-today-timespan-filter-option:hover {
-  background-color: var(--sb-secondary-color);
+  background-color: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    var(--sb-font-color) 8%
+  );
 }
 
 .sb-today-container
   .sb-today-history-card
   .sb-today-timespan-filter-container
   .sb-today-timespan-filter-option.sb-today-timespan-filter-option-selected {
-  color: var(--sb-reader-background);
+  color: var(--sb-primary-font-color);
   background-color: var(--sb-primary-color);
 }
 

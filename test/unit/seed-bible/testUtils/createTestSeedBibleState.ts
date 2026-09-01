@@ -8,6 +8,7 @@ import {
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import type { AppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
@@ -37,6 +38,8 @@ export interface CreateTestSeedBibleStateOptions {
    * pass an in-memory store to exercise anything that depends on downloads.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /** Deployment config passed through to `createSeedBibleState`. */
+  config?: AppConfig;
   /**
    * Whether the Today screen auto-opens over the reader, as it does in
    * production for a URL with no reading position. Defaults to `false` so the
@@ -236,11 +239,25 @@ export async function createTestSeedBibleState(
 
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
-  const state = createSeedBibleState({ offlineStore: options.offlineStore });
+  const state = createSeedBibleState({
+    offlineStore: options.offlineStore,
+    config: options.config,
+  });
   // Before anything can sign in: the resume effect fires the moment a session
   // key lands, and it is the path that would otherwise open a socket.
   installSharedDocumentMock(state);
   liveTestStates.push(state);
+  // Mirrors the real app's post-mount effect (see `MainBody` in
+  // `app/main.tsx`) that applies the device's real saved local config —
+  // `login.localConfig` itself seeds empty to match SSR. This helper
+  // represents a fully-loaded app for test purposes, so it should reflect
+  // that step too, the same way it already waits for tabs to load below.
+  state.login.hydrateLocalConfig();
+  // Mirrors the same post-mount sequence's other one-time correction: saved
+  // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
+  // to match SSR and only become real once this runs. Without it, anything
+  // gated behind `tutorial.armAutoStart()` (called from here) never arms.
+  state.app.hydrateFromStorage();
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.
