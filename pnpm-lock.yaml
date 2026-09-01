@@ -457,6 +457,18 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/mcp-extension:
+    dependencies:
+      '@modelcontextprotocol/client':
+        specifier: ^2.0.0
+        version: 2.0.0
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/scripture-map:
     dependencies:
       seed-bible:
@@ -474,9 +486,6 @@ importers:
       '@casual-simulation/websocket':
         specifier: 'catalog:'
         version: 4.0.0
-      '@modelcontextprotocol/client':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.27.1(@tiptap/pm@3.27.1)
@@ -4552,6 +4561,7 @@ packages:
   eslint@9.39.2:
     resolution: {integrity: sha512-LEyamqS7W5HB3ujJyvi0HQK/dtVINZvd5mAAp9eT5S/ujByGjiZLCzPcHVzuXbpJDJF/cxwHlfceVUDZ2lnSTw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

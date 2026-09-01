@@ -741,7 +741,7 @@ describe("FloatingChatPanel", () => {
     ).not.toBeNull();
   });
 
-  it("still shows the AI context button (for its Settings entry) when there are no active contexts", () => {
+  it("shows no AI context button when there are no active contexts", () => {
     const { state } = createMockFloatingChatPanelState({ activeContexts: [] });
 
     act(() => {
@@ -750,7 +750,7 @@ describe("FloatingChatPanel", () => {
 
     expect(
       container.querySelector(".sb-floating-chat-header-ai-context-button")
-    ).not.toBeNull();
+    ).toBeNull();
   });
 
   it("shows the AI context button with no count badge for a single active context", () => {
@@ -819,6 +819,71 @@ describe("FloatingChatPanel", () => {
     const item = container.querySelector(".sb-floating-chat-ai-context-item");
     expect(item?.textContent).toContain("Playlist Editor");
     expect(item?.textContent).toContain("2 tools");
+  });
+
+  it("invokes a context's settingsAction on click instead of the default inert behavior", () => {
+    const onClick = vi.fn();
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "mcp-servers",
+          label: {
+            key: "mcp-servers-chat-context",
+            defaultValue: "MCP servers",
+          },
+          tools: [],
+          settingsAction: {
+            label: {
+              key: "ai-chat-settings-menu-item",
+              defaultValue: "AI Chat Settings",
+            },
+            onClick,
+          },
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const item = container.querySelector(
+      ".sb-floating-chat-ai-context-item"
+    ) as HTMLElement | null;
+    expect(item).not.toBeNull();
+    act(() => {
+      item?.click();
+    });
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not invoke anything on click for a context with no settingsAction", () => {
+    const { state } = createMockFloatingChatPanelState({
+      activeContexts: [
+        {
+          id: "playlist",
+          label: { key: "playlist-editor", defaultValue: "Playlist Editor" },
+          tools: [makeTool("editPlaylist")],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const item = container.querySelector(
+      ".sb-floating-chat-ai-context-item"
+    ) as HTMLElement | null;
+    expect(item).not.toBeNull();
+    // Should not throw when clicked, and the menu content should remain
+    // (an inert row just prevents default, it doesn't call anything).
+    expect(() => {
+      act(() => {
+        item?.click();
+      });
+    }).not.toThrow();
   });
 
   it("hides the AI context button when the selected chat's only AI participant doesn't support tool calling", () => {

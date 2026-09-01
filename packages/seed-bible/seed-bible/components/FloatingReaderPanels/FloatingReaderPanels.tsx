@@ -28,7 +28,6 @@ import { useEffect, useRef } from "preact/hooks";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
-import { openAIChatSettingsModal } from "../AIChatSettingsModal/AIChatSettingsModal";
 
 interface SearchResult {
   id: string;
@@ -896,7 +895,8 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           </ContextMenuWithButton>
         ) : null}
 
-        {selectedChatHasToolCallingProvider ? (
+        {state.chats.activeContexts.value.length > 0 &&
+        selectedChatHasToolCallingProvider ? (
           <ContextMenuWithButton
             anchorClassName="sb-floating-chat-header-ai-context-anchor"
             buttonClassName="sb-floating-chat-header-ai-context-button"
@@ -924,7 +924,11 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 key={ctx.id}
                 className="sb-floating-chat-ai-context-item"
                 onClick={(event) => {
-                  event.preventDefault();
+                  if (ctx.settingsAction) {
+                    ctx.settingsAction.onClick();
+                  } else {
+                    event.preventDefault();
+                  }
                 }}
               >
                 <span className="sb-floating-chat-ai-context-item-label">
@@ -936,28 +940,17 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                     count: ctx.tools?.length ?? 0,
                   })}
                 </span>
+                {ctx.settingsAction && (
+                  <MaterialIcon
+                    className="sb-context-menu-item-icon"
+                    aria-label={translateTitle(t, ctx.settingsAction.label)}
+                    title={translateTitle(t, ctx.settingsAction.label)}
+                  >
+                    settings
+                  </MaterialIcon>
+                )}
               </ContextMenuItem>
             ))}
-            {state.chats.activeContexts.value.length > 0 && (
-              <div
-                className="sb-floating-chat-ai-context-sep"
-                role="separator"
-              />
-            )}
-            <ContextMenuItem
-              onClick={() => {
-                openAIChatSettingsModal(state);
-              }}
-            >
-              <MaterialIcon className="sb-context-menu-item-icon">
-                settings
-              </MaterialIcon>
-              <span>
-                {t("ai-chat-settings-menu-item", {
-                  defaultValue: "AI Chat Settings",
-                })}
-              </span>
-            </ContextMenuItem>
           </ContextMenuWithButton>
         ) : null}
 

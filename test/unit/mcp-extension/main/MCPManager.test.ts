@@ -1,6 +1,5 @@
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
-import type { ChatsManager } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import { signal } from "@preact/signals";
 import type { Mock, Mocked } from "vitest";
 
@@ -33,7 +32,7 @@ vi.mock("@modelcontextprotocol/client", () => {
   };
 });
 
-let createMCPManager: typeof import("@packages/seed-bible/seed-bible/managers/MCPManager").createMCPManager;
+let createMCPManager: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").createMCPManager;
 
 interface McpMock {
   Client: Mock;
@@ -96,13 +95,6 @@ function createTestLogin(userId: string | null): Mocked<LoginManager> {
   };
 }
 
-function createChatsMock() {
-  const addContext = vi.fn();
-  const removeContext = vi.fn();
-  const chats = { addContext, removeContext } as unknown as ChatsManager;
-  return { chats, addContext, removeContext };
-}
-
 describe("createMCPManager", () => {
   let getDataMock: Mock;
   let recordDataMock: Mock;
@@ -111,7 +103,7 @@ describe("createMCPManager", () => {
 
   beforeAll(async () => {
     ({ createMCPManager } =
-      await import("@packages/seed-bible/seed-bible/managers/MCPManager"));
+      await import("@packages/mcp-extension/ext_MCP/main/MCPManager"));
   });
 
   beforeEach(async () => {
@@ -142,9 +134,8 @@ describe("createMCPManager", () => {
 
   it("starts empty when logged out", () => {
     const login = createTestLogin(null);
-    const { chats } = createChatsMock();
 
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
 
     expect(manager.servers.value).toEqual([]);
     expect(getDataMock).not.toHaveBeenCalled();
@@ -163,8 +154,7 @@ describe("createMCPManager", () => {
       })
     );
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
 
     await manager.addServer({ name: "Added first", url: "https://mcp.test" });
     expect(manager.servers.value).toHaveLength(1);
@@ -181,8 +171,7 @@ describe("createMCPManager", () => {
 
   it("addServer persists the new server and connects to it", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     const mock = await getMcpMock();
     mock.listTools.mockResolvedValue({
       tools: [
@@ -223,8 +212,7 @@ describe("createMCPManager", () => {
 
   it("does not use the publicRead marker (server configs may hold auth headers)", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
 
     await manager.addServer({ name: "S", url: "https://mcp.test" });
 
@@ -234,8 +222,7 @@ describe("createMCPManager", () => {
 
   it("warns and does not persist when adding a server while logged out", async () => {
     const login = createTestLogin(null);
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
 
     await manager.addServer({ name: "S", url: "https://mcp.test" });
 
@@ -244,10 +231,9 @@ describe("createMCPManager", () => {
     expect(warnSpy).toHaveBeenCalled();
   });
 
-  it("wraps MCP tools as AIProviderFunctionTool and calls callTool with the right arguments", async () => {
+  it("wraps MCP tools as AIProviderFunctionTool and exposes them via `tools`", async () => {
     const login = createTestLogin("user-1");
-    const { chats, addContext } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     const mock = await getMcpMock();
     mock.listTools.mockResolvedValue({
       tools: [
@@ -264,15 +250,13 @@ describe("createMCPManager", () => {
 
     await manager.addServer({ name: "MyServer", url: "https://mcp.test" });
 
-    await waitForCondition(() => addContext.mock.calls.length > 0);
+    await waitForCondition(() => manager.tools.value.length > 0);
 
-    const context = addContext.mock.calls.at(-1)![0];
-    expect(context.id).toBe("mcp-servers");
-    expect(context.tools).toHaveLength(1);
-    expect(context.tools[0].name).toBe("MyServer:search");
-    expect(context.tools[0].description).toBe("Searches things");
+    expect(manager.tools.value).toHaveLength(1);
+    expect(manager.tools.value[0]!.name).toBe("MyServer:search");
+    expect(manager.tools.value[0]!.description).toBe("Searches things");
 
-    const result = await context.tools[0].function({ q: "hi" });
+    const result = await manager.tools.value[0]!.function({ q: "hi" });
     expect(mock.callTool).toHaveBeenCalledWith({
       name: "search",
       arguments: { q: "hi" },
@@ -280,30 +264,9 @@ describe("createMCPManager", () => {
     expect(result).toEqual({ content: [{ type: "text", text: "ok" }] });
   });
 
-  it("adds and removes the mcp-servers chat context as the tool set becomes non-empty and empty again", async () => {
-    const login = createTestLogin("user-1");
-    const { chats, addContext, removeContext } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
-    const mock = await getMcpMock();
-    mock.listTools.mockResolvedValue({
-      tools: [{ name: "t", description: "", inputSchema: {} }],
-    });
-
-    await manager.addServer({ name: "S", url: "https://mcp.test" });
-    await waitForCondition(() => addContext.mock.calls.length > 0);
-    expect(addContext).toHaveBeenCalled();
-
-    const serverId = manager.servers.value[0]!.id;
-    await manager.removeServer(serverId);
-
-    await waitForCondition(() => removeContext.mock.calls.length > 0);
-    expect(removeContext).toHaveBeenCalledWith("mcp-servers");
-  });
-
   it("removeServer closes the connection and clears connection state", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     const mock = await getMcpMock();
 
     await manager.addServer({ name: "S", url: "https://mcp.test" });
@@ -321,8 +284,7 @@ describe("createMCPManager", () => {
 
   it("updateServer(enabled: false) disconnects without removing the server", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     await manager.addServer({ name: "S", url: "https://mcp.test" });
     const serverId = manager.servers.value[0]!.id;
     await waitForCondition(
@@ -339,8 +301,7 @@ describe("createMCPManager", () => {
 
   it("falls back to SSE when the StreamableHTTP transport fails to connect", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     const mock = await getMcpMock();
     mock.connect
       .mockRejectedValueOnce(new Error("streamable http not supported"))
@@ -362,8 +323,7 @@ describe("createMCPManager", () => {
 
   it("surfaces a connection error when both transports fail", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     const mock = await getMcpMock();
     mock.connect.mockRejectedValue(new Error("server unreachable"));
 
@@ -380,8 +340,7 @@ describe("createMCPManager", () => {
 
   it("surfaces an error for an invalid server URL without touching the MCP client", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     const mock = await getMcpMock();
 
     await manager.addServer({ name: "S", url: "not a url" });
@@ -408,9 +367,8 @@ describe("createMCPManager", () => {
       },
     });
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
 
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
 
     await waitForCondition(() => manager.servers.value.length === 1);
     expect(manager.servers.value[0]!.name).toBe("Saved");
@@ -425,9 +383,8 @@ describe("createMCPManager", () => {
       data: { servers: [{ id: "bad" }] },
     });
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
 
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
 
     await waitForCondition(() => warnSpy.mock.calls.length > 0);
     expect(manager.servers.value).toEqual([]);
@@ -435,8 +392,7 @@ describe("createMCPManager", () => {
 
   it("closes all connections and clears state on logout", async () => {
     const login = createTestLogin("user-1");
-    const { chats } = createChatsMock();
-    const manager = createMCPManager(os, login, chats);
+    const manager = createMCPManager(os, login);
     const mock = await getMcpMock();
 
     await manager.addServer({ name: "S", url: "https://mcp.test" });
@@ -451,5 +407,28 @@ describe("createMCPManager", () => {
     await waitForCondition(() => manager.servers.value.length === 0);
     expect(mock.close).toHaveBeenCalled();
     await waitForCondition(() => manager.connectionState.value.size === 0);
+  });
+
+  it("dispose() stops the login effect and closes live connections", async () => {
+    const login = createTestLogin("user-1");
+    const manager = createMCPManager(os, login);
+    const mock = await getMcpMock();
+
+    await manager.addServer({ name: "S", url: "https://mcp.test" });
+    const serverId = manager.servers.value[0]!.id;
+    await waitForCondition(
+      () => manager.connectionState.value.get(serverId)?.status === "connected"
+    );
+
+    manager.dispose();
+    await waitForCondition(() => mock.close.mock.calls.length > 0);
+
+    // Logging out after dispose must not throw or resurrect a load — the
+    // login effect should no longer be running.
+    login.userId.value = null;
+    login.userId.value = "user-1";
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(getDataMock).toHaveBeenCalledTimes(1); // only the original load
   });
 });

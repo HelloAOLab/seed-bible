@@ -1,10 +1,9 @@
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import * as z from "zod/v4";
 import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
-import type { LoginManager } from "./LoginManager";
-import type { CasualOSManager } from "./OsManager";
-import type { ChatsManager } from "./ChatsManager";
-import type { AIProviderFunctionTool } from "./AIManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 
 /**
  * Schema for one user-configured MCP server. `headers` carries any auth the
@@ -30,9 +29,6 @@ export const mcpServersPayloadSchema = z.object({
 export type McpServersPayload = z.infer<typeof mcpServersPayloadSchema>;
 
 const STORAGE_ADDRESS = "mcp-servers";
-
-/** The id used to add/remove this manager's combined tool list via `ChatsManager.addContext`/`removeContext`. */
-const MCP_CHAT_CONTEXT_ID = "mcp-servers";
 
 export type McpServerConnectionStatus =
   | "connecting"
@@ -74,6 +70,9 @@ export interface MCPManager {
   /** Live connection status per server id. */
   connectionState: ReadonlySignal<Map<string, McpServerConnectionState>>;
 
+  /** The combined tool list across every connected, enabled server. */
+  tools: ReadonlySignal<AIProviderFunctionTool[]>;
+
   /**
    * Adds a new MCP server and attempts to connect to it. Requires the user
    * to be logged in; no-ops (with a warning) otherwise.
@@ -97,12 +96,17 @@ export interface MCPManager {
       Pick<McpServerConfig, "name" | "url" | "headers" | "enabled">
     >
   ) => Promise<void>;
+
+  /**
+   * Stops the login-driven load effect and closes every live connection.
+   * Call this when the extension is uninstalled.
+   */
+  dispose: () => void;
 }
 
 export function createMCPManager(
   os: CasualOSManager,
-  login: LoginManager,
-  chats: ChatsManager
+  login: LoginManager
 ): MCPManager {
   const servers = signal<McpServerConfig[]>([]);
   const connectionState = signal<Map<string, McpServerConnectionState>>(
@@ -187,10 +191,10 @@ export function createMCPManager(
     setConnectionState(server.id, { status: "connecting" });
 
     try {
-      // The MCP client SDK is only needed once a server is actually being
-      // connected to, so it's fetched here instead of imported statically —
-      // mirrors `SearchManager`'s lazy `typesense` import — keeping it (and
-      // its dependencies) out of the app's core bundle.
+      // Fetched here (rather than imported statically) so the SDK isn't
+      // pulled in until a server is actually being connected to — being
+      // part of this extension already keeps it out of the core app bundle
+      // regardless, but this still avoids paying for it before it's needed.
       const { Client, StreamableHTTPClientTransport, SSEClientTransport } =
         await import("@modelcontextprotocol/client");
       if (isStale()) return;
@@ -310,7 +314,7 @@ export function createMCPManager(
     await os.recordData(userId, STORAGE_ADDRESS, payload, {});
   };
 
-  effect(() => {
+  const stopLoginEffect = effect(() => {
     const userId = login.userId.value;
     if (!userId) {
       servers.value = [];
@@ -324,29 +328,12 @@ export function createMCPManager(
     void loadServers(userId);
   });
 
-  const allTools = computed<AIProviderFunctionTool[]>(() => {
+  const readTools: ReadonlySignal<AIProviderFunctionTool[]> = computed(() => {
     // `liveConnections` is a plain Map (not a signal) since its entries hold
     // non-serializable client handles; `toolsVersion` is the reactive proxy
     // that tells this computed when to re-derive from it.
     void toolsVersion.value;
     return [...liveConnections.values()].flatMap((c) => c.tools);
-  });
-
-  // Exposes every connected server's tools to every AI chat via
-  // `ChatsManager`, the same mechanism `PlaylistManager` uses while a
-  // playlist is open for editing — any tool-calling-capable chat provider
-  // picks these up automatically.
-  effect(() => {
-    const tools = allTools.value;
-    if (tools.length === 0) {
-      chats.removeContext(MCP_CHAT_CONTEXT_ID);
-      return;
-    }
-    chats.addContext({
-      id: MCP_CHAT_CONTEXT_ID,
-      label: { key: "mcp-servers-chat-context", defaultValue: "MCP servers" },
-      tools,
-    });
   });
 
   const addServer: MCPManager["addServer"] = async (input) => {
@@ -394,11 +381,18 @@ export function createMCPManager(
     void connectServer(updated);
   };
 
+  const dispose = () => {
+    stopLoginEffect();
+    void closeAllConnections();
+  };
+
   return {
     servers: readServers,
     connectionState: readConnectionState,
+    tools: readTools,
     addServer,
     removeServer,
     updateServer,
+    dispose,
   };
 }

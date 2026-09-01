@@ -1,13 +1,13 @@
 import "./AIChatSettingsModal.css";
 import { useState } from "preact/hooks";
-import { useI18n } from "../../i18n/I18nManager";
-import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import { useI18n } from "seed-bible/i18n";
+import type { SeedBibleState } from "seed-bible";
+import { MaterialIcon } from "seed-bible/components";
 import type {
   MCPManager,
   McpServerConfig,
   McpServerConnectionState,
-} from "../../managers/MCPManager";
-import { MaterialIcon } from "../icons";
+} from "./MCPManager";
 
 const MODAL_ID = "ai-chat-settings";
 
@@ -15,16 +15,20 @@ const MODAL_ID = "ai-chat-settings";
  * Opens the "AI Chat Settings" modal, where a user manages the MCP servers
  * whose tools are made available to every tool-calling-capable AI chat
  * participant. Reachable from the sparkle "Active AI context" menu on a
- * chat's header.
+ * chat's header (via this extension's contributed `settingsAction`).
  */
-export function openAIChatSettingsModal(state: SeedBibleState) {
+export function openAIChatSettingsModal(
+  state: SeedBibleState,
+  mcp: MCPManager
+) {
   state.modals.openModal({
     id: MODAL_ID,
     title: {
       key: "ai-chat-settings-title",
       defaultValue: "AI Chat Settings",
+      ns: "mcp-extension",
     },
-    content: () => <AIChatSettingsModalContent mcp={state.mcp} />,
+    content: () => <AIChatSettingsModalContent mcp={mcp} />,
   });
 }
 
@@ -54,12 +58,24 @@ function AIChatSettingsServerRow(props: {
 
   const statusLabel =
     status === "connected"
-      ? t("mcp-server-status-connected", { defaultValue: "Connected" })
+      ? t("mcp-server-status-connected", {
+          defaultValue: "Connected",
+          ns: "mcp-extension",
+        })
       : status === "connecting"
-        ? t("mcp-server-status-connecting", { defaultValue: "Connecting…" })
+        ? t("mcp-server-status-connecting", {
+            defaultValue: "Connecting…",
+            ns: "mcp-extension",
+          })
         : status === "error"
-          ? t("mcp-server-status-error", { defaultValue: "Connection failed" })
-          : t("mcp-server-status-disabled", { defaultValue: "Disabled" });
+          ? t("mcp-server-status-error", {
+              defaultValue: "Connection failed",
+              ns: "mcp-extension",
+            })
+          : t("mcp-server-status-disabled", {
+              defaultValue: "Disabled",
+              ns: "mcp-extension",
+            });
 
   return (
     <li className="sb-extension-row">
@@ -89,6 +105,7 @@ function AIChatSettingsServerRow(props: {
                 {t("mcp-server-auth-header-sse-warning", {
                   defaultValue:
                     "This server only supports the legacy SSE transport, which can't carry the auth header below — it may not have been applied.",
+                  ns: "mcp-extension",
                 })}
               </span>
             )}
@@ -97,6 +114,7 @@ function AIChatSettingsServerRow(props: {
               {t("mcp-server-connect-error", {
                 defaultValue: "Couldn't connect: {{error}}",
                 error: connection.error,
+                ns: "mcp-extension",
               })}
             </span>
           )}
@@ -108,13 +126,25 @@ function AIChatSettingsServerRow(props: {
             onClick={() => onToggleEnabled(status === "disabled")}
             aria-label={
               status === "disabled"
-                ? t("mcp-server-enable", { defaultValue: "Enable" })
-                : t("mcp-server-disable", { defaultValue: "Disable" })
+                ? t("mcp-server-enable", {
+                    defaultValue: "Enable",
+                    ns: "mcp-extension",
+                  })
+                : t("mcp-server-disable", {
+                    defaultValue: "Disable",
+                    ns: "mcp-extension",
+                  })
             }
             title={
               status === "disabled"
-                ? t("mcp-server-enable", { defaultValue: "Enable" })
-                : t("mcp-server-disable", { defaultValue: "Disable" })
+                ? t("mcp-server-enable", {
+                    defaultValue: "Enable",
+                    ns: "mcp-extension",
+                  })
+                : t("mcp-server-disable", {
+                    defaultValue: "Disable",
+                    ns: "mcp-extension",
+                  })
             }
           >
             <MaterialIcon>
@@ -125,8 +155,14 @@ function AIChatSettingsServerRow(props: {
             type="button"
             className="sb-extension-row-action-button"
             onClick={onRemove}
-            aria-label={t("mcp-server-remove", { defaultValue: "Remove" })}
-            title={t("mcp-server-remove", { defaultValue: "Remove" })}
+            aria-label={t("mcp-server-remove", {
+              defaultValue: "Remove",
+              ns: "mcp-extension",
+            })}
+            title={t("mcp-server-remove", {
+              defaultValue: "Remove",
+              ns: "mcp-extension",
+            })}
           >
             <MaterialIcon>delete</MaterialIcon>
           </button>
@@ -157,7 +193,10 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
       validUrl = new URL(trimmedUrl).toString();
     } catch {
       setError(
-        t("mcp-server-add-url-error", { defaultValue: "Enter a valid URL" })
+        t("mcp-server-add-url-error", {
+          defaultValue: "Enter a valid URL",
+          ns: "mcp-extension",
+        })
       );
       return;
     }
@@ -190,6 +229,7 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
         dir="auto"
         placeholder={t("mcp-server-name-placeholder", {
           defaultValue: "Server name",
+          ns: "mcp-extension",
         })}
         onInput={(event: Event) => {
           setName((event.currentTarget as HTMLInputElement).value);
@@ -202,6 +242,7 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
         dir="auto"
         placeholder={t("mcp-server-url-placeholder", {
           defaultValue: "https://example.com/mcp",
+          ns: "mcp-extension",
         })}
         onInput={(event: Event) => {
           setUrl((event.currentTarget as HTMLInputElement).value);
@@ -215,6 +256,7 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
         dir="auto"
         placeholder={t("mcp-server-auth-header-placeholder", {
           defaultValue: "Authorization header (optional)",
+          ns: "mcp-extension",
         })}
         onInput={(event: Event) => {
           setAuthHeader((event.currentTarget as HTMLInputElement).value);
@@ -226,7 +268,10 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
         onClick={() => void handleAdd()}
         disabled={!name.trim() || !url.trim() || isAdding}
       >
-        {t("mcp-server-add", { defaultValue: "Add server" })}
+        {t("mcp-server-add", {
+          defaultValue: "Add server",
+          ns: "mcp-extension",
+        })}
       </button>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
     </div>
@@ -245,6 +290,7 @@ export function AIChatSettingsModalContent(props: { mcp: MCPManager }) {
         {t("ai-chat-settings-description", {
           defaultValue:
             "Connect remote MCP servers to give AI chat participants access to their tools.",
+          ns: "mcp-extension",
         })}
       </p>
       {servers.length === 0 ? (
@@ -252,6 +298,7 @@ export function AIChatSettingsModalContent(props: { mcp: MCPManager }) {
           <p>
             {t("no-mcp-servers-configured", {
               defaultValue: "No MCP servers configured yet.",
+              ns: "mcp-extension",
             })}
           </p>
         </div>
