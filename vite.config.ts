@@ -137,6 +137,16 @@ export default defineConfig(({ isSsrBuild }) => ({
     // this `define` block when it compiles the worker.
     __ASSET_BASE_URL__: JSON.stringify(assetBaseUrl),
 
+    // Baked into both the client and SSR bundles, identifying which branch's
+    // *code* is actually running — independent of which branch's URL served
+    // the request. The SSR host can render an unlisted branch's page through
+    // a different (trusted) branch's SSR bundle (`DEFAULT_SSR_BRANCH` in
+    // `server/index.ts`); that bundle's own `__DEPLOY_BRANCH__` lets
+    // `app/hydrationGate.ts` tell the client "the DOM you're about to
+    // hydrate wasn't produced by your own code" and force a full render()
+    // instead.
+    __DEPLOY_BRANCH__: JSON.stringify(deployBranch ?? ""),
+
     __BRANDING_CONFIG__: JSON.stringify(brandingConfig),
   },
 

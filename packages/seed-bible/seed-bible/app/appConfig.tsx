@@ -68,6 +68,26 @@ export interface AppConfig {
   renderedForPath?: string;
 
   /**
+   * The branch whose SSR bundle actually produced this HTML — that bundle's
+   * own `__DEPLOY_BRANCH__` build constant (see `vite.config.ts`), not
+   * anything derived from the request URL.
+   *
+   * Ordinarily equal to the requested branch. Differs only when the
+   * requested branch isn't in the host server's `ALLOWED_SSR_BRANCHES`
+   * whitelist and `DEFAULT_SSR_BRANCH` rendered the page instead (see
+   * `server/index.ts`) — the DOM was then built by a different branch's
+   * component code than the one the client is about to hydrate with. The
+   * hydration gate (`app/hydrationGate.ts`) compares this against the
+   * client's own `__DEPLOY_BRANCH__` and refuses to hydrate on a mismatch.
+   *
+   * Absent for the same reasons `renderedForPath` can be absent, and (like
+   * `ssrChapterContentSettled`) treated as "no mismatch" when absent so an
+   * older server build that predates this field doesn't block hydration on
+   * pure version skew.
+   */
+  renderedByBranch?: string;
+
+  /**
    * False only when the SSR-only initial-chapter-load timeout
    * (`SSR_INITIAL_CHAPTER_TIMEOUT_MS` in `BibleReadingManager.tsx`) fired for
    * at least one tab, instead of the load settling normally — meaning this

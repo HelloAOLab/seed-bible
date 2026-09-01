@@ -528,6 +528,9 @@ export async function render(
   const clientConfig: AppConfig = {
     ...config,
     renderedForPath: options.path,
+    // This bundle's own build identity, not the requested branch — see
+    // AppConfig.renderedByBranch.
+    renderedByBranch: __DEPLOY_BRANCH__,
     ssrChapterContentSettled,
   };
 

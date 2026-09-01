@@ -181,6 +181,7 @@ describe("client hydration", () => {
       pathname: location.pathname,
       search: location.search,
       container,
+      clientBranch: __DEPLOY_BRANCH__,
     });
     expect(decision).toEqual({ hydrate: true });
 
@@ -257,6 +258,7 @@ describe("client hydration", () => {
         pathname: location.pathname,
         search: location.search,
         container,
+        clientBranch: __DEPLOY_BRANCH__,
       })
     ).toEqual({ hydrate: true });
 
@@ -362,6 +364,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/exodus/2",
       search: "",
       container,
+      clientBranch: __DEPLOY_BRANCH__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "url-mismatch" });
   });
@@ -380,6 +383,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/genesis/1",
       search: "",
       container,
+      clientBranch: __DEPLOY_BRANCH__,
     });
     expect(decision).toEqual({
       hydrate: false,
@@ -400,6 +404,7 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
+      clientBranch: __DEPLOY_BRANCH__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
   });
@@ -413,8 +418,53 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
+      clientBranch: __DEPLOY_BRANCH__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
+  });
+
+  it("declines to hydrate when the SSR HTML was rendered through a different branch's bundle", () => {
+    // Reproduces the reported bug: a request for a branch outside the host
+    // server's `ALLOWED_SSR_BRANCHES` whitelist gets rendered through
+    // `DEFAULT_SSR_BRANCH`'s bundle instead (see `server/index.ts`). The
+    // requested URL matches exactly, but the DOM was produced by different
+    // component code than the one about to hydrate onto it.
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      renderedByBranch: "develop",
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientBranch: "feature-branch",
+    });
+    expect(decision).toEqual({ hydrate: false, reason: "branch-mismatch" });
+  });
+
+  it("hydrates when the rendering branch matches the client's own branch", () => {
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      renderedByBranch: "feature-branch",
+      ssrChapterContentSettled: true,
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientBranch: "feature-branch",
+    });
+    expect(decision).toEqual({ hydrate: true });
   });
 });
 
