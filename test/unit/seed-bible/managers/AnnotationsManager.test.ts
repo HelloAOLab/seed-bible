@@ -1148,6 +1148,28 @@ describe("AnnotationsManager", () => {
       expect(manager.editingAnnotation.value).not.toBeNull();
     });
 
+    it("starts a signed-out draft online after the sign-in prompt is dismissed", async () => {
+      // Online, so sign-in is offered. Dismissing it means "carry on without an
+      // account", and a device with somewhere to put the note must honour that:
+      // the editor opens and the note is kept locally. Before #1591 the
+      // dismissal threw out of `createNewAnnotation`, so the editor never
+      // opened and the user was simply stuck.
+      login.userId.value = null;
+      login.login.mockResolvedValue(null);
+      const manager = createOfflineManager();
+
+      await manager.createNewAnnotation();
+
+      expect(login.login).toHaveBeenCalled();
+      const draft = manager.editingAnnotation.value;
+      expect(draft).not.toBeNull();
+
+      await manager.saveEditingAnnotation();
+
+      expect(await store.get(LOCAL_OWNER, draft!.id)).not.toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
     it("shows signed-out drafts in the chapter listing", async () => {
       login.userId.value = null;
       const manager = createOfflineManager();
