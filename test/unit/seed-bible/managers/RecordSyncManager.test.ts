@@ -234,6 +234,8 @@ describe("RecordSyncManager", () => {
       expect(sync.conflicts.value[0]?.kind).toBe("edited_elsewhere");
       expect(sync.conflicts.value[0]?.local?.data.html).toBe("<p>mine</p>");
       expect(sync.conflicts.value[0]?.server?.data.html).toBe("<p>theirs</p>");
+      // The row's own change stamp, not the payload's `data.updatedAtMs`.
+      expect(sync.conflicts.value[0]?.localUpdatedAtMs).toBe(9_000);
     });
 
     it("asks the user when the note was deleted elsewhere", async () => {

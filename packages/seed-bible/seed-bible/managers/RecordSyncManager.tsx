@@ -84,6 +84,9 @@ export interface RecordConflict<T> {
 
   /** What the server has. Null when the server's copy is gone. */
   server: T | null;
+
+  /** When this device last changed the record. */
+  localUpdatedAtMs: number;
 }
 
 /**
@@ -298,6 +301,7 @@ export function createRecordSyncManager<T>(
     owner: row.owner,
     local: row.payload,
     server: server.present ? server.payload : null,
+    localUpdatedAtMs: row.updatedAtMs,
   });
 
   /**
