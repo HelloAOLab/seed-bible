@@ -466,7 +466,7 @@ const SideBarBooks = (props: {
       index: number,
       chapterPos: number,
       separator: number,
-      chapterAtEnd: boolean,
+      chapterColumnPosition: "start" | "middle" | "end",
       chapterHint?: number,
       itemStyle?: JSX.CSSProperties,
       narrowChapterStyle?: boolean,
@@ -526,9 +526,11 @@ const SideBarBooks = (props: {
                     ws <= MOBILE_BREAKPOINT
                       ? "flex-start"
                       : bd.numberOfChapters < 4 * separator
-                        ? chapterAtEnd
+                        ? chapterColumnPosition === "end"
                           ? "flex-end"
-                          : "flex-start"
+                          : chapterColumnPosition === "middle"
+                            ? "center"
+                            : "flex-start"
                         : "space-between",
                 }}
               >
@@ -563,7 +565,12 @@ const SideBarBooks = (props: {
           ? { gridColumn: "1 / -1", gridRow: openVisualRow + 2 }
           : undefined;
       const openVisualCol = columns > 1 ? Math.floor(lbc / rows) : 0;
-      const chapterAtEnd = columns > 1 && openVisualCol === columns - 1;
+      const chapterColumnPosition: "start" | "middle" | "end" =
+        columns <= 1 || openVisualCol === 0
+          ? "start"
+          : openVisualCol === columns - 1
+            ? "end"
+            : "middle";
 
       return (
         <div
@@ -576,7 +583,7 @@ const SideBarBooks = (props: {
               index,
               chapterPos,
               columns,
-              chapterAtEnd,
+              chapterColumnPosition,
               chapterHint,
               itemStyle,
               narrowChapterStyle,
