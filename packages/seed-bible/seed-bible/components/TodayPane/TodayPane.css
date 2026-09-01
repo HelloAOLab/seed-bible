@@ -888,10 +888,12 @@
      row-recentring above doesn't apply -- the leading margin would otherwise
      misalign this button against its stretched sibling once it reveals, and
      the desktop `max-width` cap would clip it short of the full stretch
-     width once enabled. */
+     width once enabled. `100%` rather than `none`: the disabled state
+     transitions from `0`, and CSS can't animate a length to the keyword
+     `none` (it just jumps), so the reveal wouldn't actually grow in here. */
   .sb-today-welcome-screen .sb-today-welcome-screen-start-button {
     margin-left: 0;
-    max-width: none;
+    max-width: 100%;
   }
   .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
     font-size: 2rem;
