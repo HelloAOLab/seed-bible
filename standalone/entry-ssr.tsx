@@ -529,8 +529,8 @@ export async function render(
     ...config,
     renderedForPath: options.path,
     // This bundle's own build identity, not the requested branch — see
-    // AppConfig.renderedByBranch.
-    renderedByBranch: __DEPLOY_BRANCH__,
+    // AppConfig.renderedByCommit.
+    renderedByCommit: __GIT_COMMIT__,
     ssrChapterContentSettled,
   };
 

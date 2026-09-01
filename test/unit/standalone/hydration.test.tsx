@@ -181,7 +181,7 @@ describe("client hydration", () => {
       pathname: location.pathname,
       search: location.search,
       container,
-      clientBranch: __DEPLOY_BRANCH__,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: true });
 
@@ -258,7 +258,7 @@ describe("client hydration", () => {
         pathname: location.pathname,
         search: location.search,
         container,
-        clientBranch: __DEPLOY_BRANCH__,
+        clientCommit: __GIT_COMMIT__,
       })
     ).toEqual({ hydrate: true });
 
@@ -364,7 +364,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/exodus/2",
       search: "",
       container,
-      clientBranch: __DEPLOY_BRANCH__,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "url-mismatch" });
   });
@@ -383,7 +383,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/genesis/1",
       search: "",
       container,
-      clientBranch: __DEPLOY_BRANCH__,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({
       hydrate: false,
@@ -404,7 +404,7 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
-      clientBranch: __DEPLOY_BRANCH__,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
   });
@@ -418,12 +418,12 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
-      clientBranch: __DEPLOY_BRANCH__,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
   });
 
-  it("declines to hydrate when the SSR HTML was rendered through a different branch's bundle", () => {
+  it("declines to hydrate when the SSR HTML was rendered by a different commit's bundle", () => {
     // Reproduces the reported bug: a request for a branch outside the host
     // server's `ALLOWED_SSR_BRANCHES` whitelist gets rendered through
     // `DEFAULT_SSR_BRANCH`'s bundle instead (see `server/index.ts`). The
@@ -434,7 +434,7 @@ describe("client hydration", () => {
     const config = {
       ...DEFAULT_APP_CONFIG,
       renderedForPath: "/en/AAB/genesis/1",
-      renderedByBranch: "develop",
+      renderedByCommit: "commit-develop-abc123",
     };
 
     const decision = decideHydration({
@@ -442,18 +442,18 @@ describe("client hydration", () => {
       pathname: "/en/AAB/genesis/1",
       search: "",
       container,
-      clientBranch: "feature-branch",
+      clientCommit: "commit-feature-branch-def456",
     });
-    expect(decision).toEqual({ hydrate: false, reason: "branch-mismatch" });
+    expect(decision).toEqual({ hydrate: false, reason: "build-mismatch" });
   });
 
-  it("hydrates when the rendering branch matches the client's own branch", () => {
+  it("hydrates when the rendering commit matches the client's own commit", () => {
     const container = document.createElement("div");
     container.innerHTML = "<div>Verse 1</div>";
     const config = {
       ...DEFAULT_APP_CONFIG,
       renderedForPath: "/en/AAB/genesis/1",
-      renderedByBranch: "feature-branch",
+      renderedByCommit: "commit-feature-branch-def456",
       ssrChapterContentSettled: true,
     };
 
@@ -462,7 +462,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/genesis/1",
       search: "",
       container,
-      clientBranch: "feature-branch",
+      clientCommit: "commit-feature-branch-def456",
     });
     expect(decision).toEqual({ hydrate: true });
   });

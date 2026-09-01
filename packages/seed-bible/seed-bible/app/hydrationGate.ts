@@ -10,11 +10,11 @@ export interface HydrationGateContext {
   /** The element `hydrate()`/`render()` will target (e.g. `#app`). */
   container: Element;
   /**
-   * This client bundle's own build identity — `__DEPLOY_BRANCH__` (see
-   * `vite.config.ts`). Compared against `config.renderedByBranch` to detect
-   * a page whose DOM was produced by a different branch's SSR bundle.
+   * This client bundle's own build identity — `__GIT_COMMIT__`. Compared
+   * against `config.renderedByCommit` to detect a page whose DOM was
+   * produced by a different branch's (or commit's) SSR bundle.
    */
-  clientBranch: string;
+  clientCommit: string;
 }
 
 /**
@@ -27,7 +27,7 @@ export type HydrationDeclineReason =
   | "chapter-load-incomplete"
   | "chapter-load-timed-out"
   | "url-mismatch"
-  | "branch-mismatch";
+  | "build-mismatch";
 
 export type HydrationDecision =
   | { hydrate: true }
@@ -44,7 +44,7 @@ export type HydrationDecision =
  * otherwise happen.
  */
 export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
-  const { config, pathname, search, container, clientBranch } = ctx;
+  const { config, pathname, search, container, clientCommit } = ctx;
 
   // A shell that was never actually filled in (a non-whitelisted branch's
   // stale fallback with a swallowed substitution, or a render() error path)
@@ -60,18 +60,18 @@ export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
     return { hydrate: false, reason: "no-ssr-content" };
   }
 
-  // The DOM was built by a different branch's SSR bundle than the one this
-  // client is about to hydrate with (see AppConfig.renderedByBranch) — e.g.
+  // The DOM was built by a different commit's SSR bundle than the one this
+  // client is about to hydrate with (see AppConfig.renderedByCommit) — e.g.
   // a request for an unlisted branch that the host server rendered through
   // `DEFAULT_SSR_BRANCH` instead. Preact's hydrate() only diffs the tree
   // shape, not component code identity, so it would happily patch onto
   // markup a different version of the app produced. Absent (an older server
   // build) is treated as a match rather than a decline.
   if (
-    config.renderedByBranch !== undefined &&
-    config.renderedByBranch !== clientBranch
+    config.renderedByCommit !== undefined &&
+    config.renderedByCommit !== clientCommit
   ) {
-    return { hydrate: false, reason: "branch-mismatch" };
+    return { hydrate: false, reason: "build-mismatch" };
   }
 
   if (!config.ssrChapterContentSettled) {
