@@ -1,5 +1,4 @@
 import "./BibleReaderToolbar.inline.css";
-import "./BibleReaderToolbar.css";
 import { effect, signal, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
