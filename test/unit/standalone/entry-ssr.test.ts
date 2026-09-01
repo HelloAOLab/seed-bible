@@ -28,23 +28,29 @@ describe("legacyReadingUrlRedirect", () => {
     });
 
     it("corrects a typo in an already-explicit 4-segment path without disturbing its language", () => {
-      expect(legacyReadingUrlRedirect("/en/AAB/luke-skywalker/1", "")).toBe(
-        "/en/AAB/luke/1"
+      expect(legacyReadingUrlRedirect("/en/AAB/senesis/1", "")).toBe(
+        "/en/AAB/genesis/1"
       );
       expect(legacyReadingUrlRedirect("/en/AAB/john/3", "")).toBeNull();
     });
 
-    // The review's table. `getBookId`'s `startsWith` fallback resolves all of
-    // these, so they used to be served 200 at their own indexable URLs.
+    // Aliases and casing still canonicalize. Junk prefixes that used to match
+    // via the old "typed text starts with book key" fallback (luke-skywalker,
+    // genocide, …) no longer resolve — they 404 instead of being indexed.
     it.each([
-      ["/en/AAB/luke-skywalker/1", "/en/AAB/luke/1"],
-      ["/en/AAB/genocide/1", "/en/AAB/genesis/1"],
-      ["/en/AAB/mark-twain/1", "/en/AAB/mark/1"],
-      ["/en/AAB/acts-of-congress/1", "/en/AAB/acts/1"],
       ["/en/AAB/gen/1", "/en/AAB/genesis/1"],
       ["/en/AAB/Genesis/1", "/en/AAB/genesis/1"],
     ])("canonicalizes %s -> %s", (from, to) => {
       expect(legacyReadingUrlRedirect(from, "")).toBe(to);
+    });
+
+    it.each([
+      "/en/AAB/luke-skywalker/1",
+      "/en/AAB/genocide/1",
+      "/en/AAB/mark-twain/1",
+      "/en/AAB/acts-of-congress/1",
+    ])("does not resolve junk book prefix %s", (from) => {
+      expect(legacyReadingUrlRedirect(from, "")).toBeNull();
     });
 
     it("canonicalizes a zero-padded chapter and a trailing slash", () => {
