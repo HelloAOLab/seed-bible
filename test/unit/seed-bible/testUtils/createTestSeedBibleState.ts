@@ -61,6 +61,14 @@ export interface CreateTestSeedBibleStateOptions {
    * Pass a string to set a non-canonical value (e.g. `"1"`) for edge-case tests.
    */
   chatFirst?: boolean | string;
+  /**
+   * Skips the internal `state.today.hydrateAutoOpen()` call below, leaving
+   * `today.isOpen` at its pre-hydrate seed (`false`) instead of the URL's
+   * real open/closed state. For a test asserting the seed-then-correct
+   * invariant itself; every other test wants the fully-loaded-app behavior
+   * this helper otherwise mirrors, so this defaults to `false`.
+   */
+  skipHydrateAutoOpen?: boolean;
 }
 
 export async function waitFor(
@@ -285,7 +293,9 @@ export async function createTestSeedBibleState(
   // `today.isOpen` seeds `false` to match SSR (which always renders Today
   // closed), and only reflects the URL's real open/closed state once this
   // runs.
-  state.today.hydrateAutoOpen();
+  if (!options.skipHydrateAutoOpen) {
+    state.today.hydrateAutoOpen();
+  }
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.
