@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Show "The host disconnected from the session" and "The host reconnected to the session" when only the host drops from a shared session, instead of "Reconnecting to the session" / "Reconnected to the session". When you lose your own connection (everyone else disappears), the toasts are "You lost connection to the session" and "You reconnected to the session".
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed

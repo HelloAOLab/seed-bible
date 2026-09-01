@@ -626,6 +626,11 @@ describe("createSeedBibleState", () => {
       connectionId: "guest-connection",
       isSelf: true,
     };
+    const otherGuestConnectedUser = {
+      userId: "guest-user-2",
+      connectionId: "guest-connection-2",
+      isSelf: false,
+    };
 
     function createMockHostedSession(id: string) {
       const session = createMockSharedSession(id);
@@ -665,14 +670,18 @@ describe("createSeedBibleState", () => {
       session.isSynced.value = false;
       session.connectedUsers.value = [selfConnectedUser];
 
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+
       vi.advanceTimersByTime(20_000);
 
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
       expect(originalDispose).not.toHaveBeenCalled();
-      expect(state.app.currentToast.value).toBeNull();
     });
 
-    it("shows a reconnecting toast and closes the tab after the grace period once synced and the host is still gone", async () => {
+    it("shows a host-disconnected toast and closes the tab after the grace period once synced and the host is still gone", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
         state,
@@ -685,7 +694,7 @@ describe("createSeedBibleState", () => {
       session.connectedUsers.value = [selfConnectedUser];
 
       expect(state.app.currentToast.value?.message).toBe(
-        "Reconnecting to the session…"
+        "The host disconnected from the session"
       );
       expect(originalDispose).not.toHaveBeenCalled();
 
@@ -715,7 +724,7 @@ describe("createSeedBibleState", () => {
 
       session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
-        "Reconnected to the session"
+        "The host reconnected to the session"
       );
 
       vi.advanceTimersByTime(20_000);
@@ -768,7 +777,7 @@ describe("createSeedBibleState", () => {
       // and arms the timer.
       vi.advanceTimersByTime(1);
       expect(state.app.currentToast.value?.message).toBe(
-        "Reconnecting to the session…"
+        "The host disconnected from the session"
       );
 
       vi.advanceTimersByTime(30_000);
@@ -801,6 +810,111 @@ describe("createSeedBibleState", () => {
       expect(originalDispose).not.toHaveBeenCalled();
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
       expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows a host-disconnected toast when only the host leaves and other guests remain", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-host-only"
+      );
+
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        otherGuestConnectedUser,
+      ];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host disconnected from the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("shows a you-lost-connection toast instead of a host toast when every other user disappears", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-all-others-gone"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+      session.connectedUsers.value = [selfConnectedUser];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(30_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+    });
+
+    it("shows a you-reconnected toast when other users reappear after our own connection dropped", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-we-reconnected"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+      session.connectedUsers.value = [selfConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      session.connectedUsers.value = [
+        selfConnectedUser,
+        hostConnectedUser,
+        otherGuestConnectedUser,
+      ];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You reconnected to the session"
+      );
+
+      vi.advanceTimersByTime(30_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+    });
+
+    it("shows you-lost-connection then you-reconnected toasts when this client's own sync drops and recovers", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-sync-drop"
+      );
+
+      session.isSynced.value = false;
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      session.isSynced.value = true;
+      expect(state.app.currentToast.value?.message).toBe(
+        "You reconnected to the session"
+      );
     });
   });
 
