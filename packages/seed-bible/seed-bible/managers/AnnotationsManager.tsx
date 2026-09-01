@@ -13,15 +13,18 @@ import type { DiscoverManager } from "./DiscoverManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import type { TranslationBookChapter } from "./FreeUseBibleAPI";
 import {
-  createAnnotationSyncManager,
-  type AnnotationSyncManager,
-} from "./AnnotationSyncManager";
+  createRecordSyncManager,
+  type RecordSyncManager,
+} from "./RecordSyncManager";
 import {
-  createIndexedDbAnnotationStore,
+  canonicalize,
+  createIndexedDbRecordStore,
   LOCAL_OWNER,
-  type OfflineAnnotationStore,
-  type StoredAnnotation,
-} from "./OfflineAnnotationStore";
+  recordKey,
+  type OfflineRecordStore,
+  type StoredRecord,
+  type SyncDomain,
+} from "./OfflineRecordStore";
 
 export interface AnnotationQuery {
   /**
@@ -113,7 +116,7 @@ export interface AnnotationsManager {
    * Exposed so the UI can show how much is still waiting to sync and prompt for
    * a decision when a note changed in two places at once.
    */
-  sync: AnnotationSyncManager;
+  sync: RecordSyncManager<Annotation>;
 }
 
 export const commentAnnotationSchema = z.object({
@@ -146,6 +149,53 @@ export const annotationSchema = z.object({
   order: z.number().nullable().optional(),
   data: annotationDataSchema,
 });
+
+/** The collection a chapter's annotations are grouped under in the local store. */
+export function annotationCollection(
+  bookId: string,
+  chapterNumber: number
+): string {
+  return `${bookId}/${chapterNumber}`;
+}
+
+/**
+ * A stable fingerprint of an annotation's content, excluding `updatedAtMs`.
+ * Used to answer "is the server's copy still the one I edited?" for records
+ * written before timestamps existed.
+ */
+export function annotationFingerprint(annotation: Annotation): string {
+  const { updatedAtMs: _updatedAtMs, ...data } = annotation.data;
+  return canonicalize({ ...annotation, data });
+}
+
+function annotationUpdatedAtMs(annotation: Annotation): number | null {
+  return typeof annotation.data.updatedAtMs === "number"
+    ? annotation.data.updatedAtMs
+    : null;
+}
+
+export const annotationSyncDomain: SyncDomain<Annotation> = {
+  dbName: "seed-bible-annotations",
+  parse: (value) => {
+    const parsed = annotationSchema.safeParse(value);
+    return parsed.success ? parsed.data : null;
+  },
+  // Timestamps when both sides have one; content otherwise, because records
+  // written through the raw save path may carry no timestamp at all.
+  sameVersion: (a, b) => {
+    const ta = annotationUpdatedAtMs(a);
+    const tb = annotationUpdatedAtMs(b);
+    return ta !== null && tb !== null
+      ? ta === tb
+      : annotationFingerprint(a) === annotationFingerprint(b);
+  },
+  collection: (_address, a) => annotationCollection(a.bookId, a.chapterNumber),
+  marker: (_address, a) => getAnnotationMarker(a.bookId, a.chapterNumber),
+  duplicate: (a) => {
+    const copy: Annotation = { ...a, id: `annotation_${uuid()}` };
+    return { address: copy.id, payload: copy };
+  },
+};
 
 /**
  * Resolves the verse numbers an annotation targets: `verseNumbers` when
@@ -423,7 +473,7 @@ export interface CreateAnnotationsManagerOptions {
    * during SSR and wherever the browser blocks storage, since the IndexedDB
    * factory returns null there.
    */
-  store?: OfflineAnnotationStore | null;
+  store?: OfflineRecordStore<Annotation> | null;
 }
 
 /**
@@ -440,7 +490,7 @@ export function createAnnotationsManager(
 ): AnnotationsManager {
   const store =
     options.store === undefined
-      ? createIndexedDbAnnotationStore()
+      ? createIndexedDbRecordStore<Annotation>(annotationSyncDomain.dbName)
       : options.store;
 
   /**
@@ -525,19 +575,17 @@ export function createAnnotationsManager(
     const owner = localOwner();
     const existing = await store.get(owner, parsed.id);
     await store.put({
-      key: `${owner}/${parsed.id}`,
+      key: recordKey(owner, parsed.id),
       owner,
-      annotationId: parsed.id,
-      bookId: parsed.bookId,
-      chapterNumber: parsed.chapterNumber,
-      annotation: parsed,
-      deleted: false,
-      updatedAtMs: now,
+      address: parsed.id,
+      collection: annotationCollection(parsed.bookId, parsed.chapterNumber),
+      payload: parsed,
       // Keep whichever server version this edit was built on. A second offline
       // edit must still be judged against the copy the server actually holds,
       // not against our own previous unsent edit.
-      baseUpdatedAtMs: existing?.baseUpdatedAtMs ?? null,
-      baseFingerprint: existing?.baseFingerprint ?? null,
+      base: existing?.base ?? null,
+      deleted: false,
+      updatedAtMs: now,
       pendingOp: "upsert",
       attempts: 0,
     });
@@ -574,27 +622,21 @@ export function createAnnotationsManager(
     // Never reached the server, so there is nothing to tombstone — including
     // the create-then-delete-while-offline case, which now costs no requests
     // at all.
-    if (
-      existing &&
-      existing.baseUpdatedAtMs === null &&
-      !existing.baseFingerprint
-    ) {
+    if (existing && existing.base === null) {
       await store.delete(owner, annotationId);
       sync?.notifyLocalChange();
       return;
     }
 
     await store.put({
-      key: `${owner}/${annotationId}`,
+      key: recordKey(owner, annotationId),
       owner,
-      annotationId,
-      bookId: existing?.bookId ?? "",
-      chapterNumber: existing?.chapterNumber ?? 0,
-      annotation: null,
+      address: annotationId,
+      collection: existing?.collection ?? "",
+      payload: null,
+      base: existing?.base ?? null,
       deleted: true,
       updatedAtMs: Date.now(),
-      baseUpdatedAtMs: existing?.baseUpdatedAtMs ?? null,
-      baseFingerprint: existing?.baseFingerprint ?? null,
       pendingOp: "delete",
       attempts: 0,
     });
@@ -650,13 +692,17 @@ export function createAnnotationsManager(
     if (!store) {
       return [];
     }
-    const rows = await store.listForChapter(owner, bookId, chapterNumber);
+    const rows = await store.listForCollection(
+      owner,
+      annotationCollection(bookId, chapterNumber)
+    );
     return sortAnnotations(
       rows
-        .filter((row): row is StoredAnnotation & { annotation: Annotation } =>
-          Boolean(!row.deleted && row.annotation)
+        .filter(
+          (row): row is StoredRecord<Annotation> & { payload: Annotation } =>
+            Boolean(!row.deleted && row.payload)
         )
-        .map((row) => row.annotation)
+        .map((row) => row.payload)
     );
   };
 
@@ -669,7 +715,12 @@ export function createAnnotationsManager(
     if (!store) {
       return false;
     }
-    return (await store.getChapter(owner, bookId, chapterNumber)) !== null;
+    return (
+      (await store.getListed(
+        owner,
+        annotationCollection(bookId, chapterNumber)
+      )) !== null
+    );
   };
 
   /**
@@ -701,11 +752,10 @@ export function createAnnotationsManager(
     if (canReachServer) {
       try {
         const fromServer = await listFromServer(owner, bookId, chapterNumber);
-        await store.reconcileChapter(
+        await store.reconcileCollection(
           owner,
-          bookId,
-          chapterNumber,
-          fromServer,
+          annotationCollection(bookId, chapterNumber),
+          fromServer.map((a) => ({ address: a.id, payload: a })),
           Date.now()
         );
       } catch (error) {
@@ -944,21 +994,16 @@ export function createAnnotationsManager(
   };
 
   // Created here, rather than by the caller, so it can be handed the cache
-  // helpers below and this module's own schema — which is also what keeps the
-  // dependency one-way and avoids the two modules importing each other.
-  const sync = createAnnotationSyncManager({
+  // helpers below — which is also what keeps the dependency one-way and
+  // avoids the two modules importing each other.
+  const sync = createRecordSyncManager<Annotation>({
     os,
     login,
     store,
-    parseAnnotation: (value) => {
-      const parsed = annotationSchema.safeParse(value);
-      return parsed.success ? parsed.data : null;
-    },
-    getMarker: (bookId, chapterNumber) =>
-      getAnnotationMarker(bookId, chapterNumber),
-    onSynced: (annotation, owner) => upsertIntoCache(annotation, owner),
-    onRemoved: (annotationId, owner) =>
-      removeFromCacheById(annotationId, owner),
+    domain: annotationSyncDomain,
+    onSynced: (_address, annotation, owner) =>
+      upsertIntoCache(annotation, owner),
+    onRemoved: (address, owner) => removeFromCacheById(address, owner),
   });
 
   // A chapter whose load failed is retried once there's a connection — the

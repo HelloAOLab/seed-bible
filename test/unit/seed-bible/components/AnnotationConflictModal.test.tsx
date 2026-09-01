@@ -6,9 +6,9 @@ import {
   syncAnnotationConflictModal,
 } from "@packages/seed-bible/seed-bible/components/AnnotationConflictModal/AnnotationConflictModal";
 import type {
-  AnnotationConflict,
-  AnnotationSyncManager,
-} from "@packages/seed-bible/seed-bible/managers/AnnotationSyncManager";
+  RecordConflict,
+  RecordSyncManager,
+} from "@packages/seed-bible/seed-bible/managers/RecordSyncManager";
 import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
@@ -42,43 +42,44 @@ vi.mock("@packages/seed-bible/seed-bible/managers/Sanitization", () => ({
   },
 }));
 
-function makeAnnotation(html: string): Annotation {
+function makeAnnotation(html: string, updatedAtMs = 2_000): Annotation {
   return {
     id: "ann-1",
     bookId: "GEN",
     chapterNumber: 1,
     verseNumber: 1,
-    data: { type: "comment", html, createdAtMs: 1_000, updatedAtMs: 2_000 },
+    data: { type: "comment", html, createdAtMs: 1_000, updatedAtMs },
   };
 }
 
 function makeConflict(
-  overrides: Partial<AnnotationConflict> = {}
-): AnnotationConflict {
+  overrides: Partial<RecordConflict<Annotation>> = {}
+): RecordConflict<Annotation> {
   return {
     id: "user-1/ann-1",
     kind: "edited_elsewhere",
     owner: "user-1",
     local: makeAnnotation("<p>mine</p>"),
-    server: makeAnnotation("<p>theirs</p>"),
+    // The modal reads the server's time off the payload itself, not a
+    // separate field — so this is what fixes the "theirs" version's timestamp.
+    server: makeAnnotation("<p>theirs</p>", 5_000),
     localUpdatedAtMs: 9_000,
-    serverUpdatedAtMs: 5_000,
     ...overrides,
   };
 }
 
-function makeSync(conflicts: AnnotationConflict[]): {
-  sync: AnnotationSyncManager;
+function makeSync(conflicts: RecordConflict<Annotation>[]): {
+  sync: RecordSyncManager<Annotation>;
   resolveConflict: ReturnType<typeof vi.fn>;
   /** Writable handle on the queue — `sync.conflicts` is read-only to callers. */
-  queue: Signal<AnnotationConflict[]>;
+  queue: Signal<RecordConflict<Annotation>[]>;
 } {
   const resolveConflict = vi.fn().mockResolvedValue(undefined);
   const queue = signal(conflicts);
   const sync = {
     conflicts: queue,
     resolveConflict,
-  } as unknown as AnnotationSyncManager;
+  } as unknown as RecordSyncManager<Annotation>;
   return { sync, resolveConflict, queue };
 }
 
@@ -98,7 +99,7 @@ describe("AnnotationConflictModal", () => {
     vi.restoreAllMocks();
   });
 
-  function renderConflict(conflict: AnnotationConflict) {
+  function renderConflict(conflict: RecordConflict<Annotation>) {
     const { sync, resolveConflict } = makeSync([conflict]);
     act(() => {
       render(

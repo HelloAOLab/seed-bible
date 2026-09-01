@@ -254,7 +254,7 @@ function createMobileState(): SeedBibleState {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
+        pendingCountForCollection: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;
@@ -300,7 +300,7 @@ function createDesktopState(): SeedBibleState {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
+        pendingCountForCollection: vi.fn(() => 0),
       },
     },
   } as any as SeedBibleState;

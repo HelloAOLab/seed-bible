@@ -1,4 +1,5 @@
 import {
+  annotationCollection,
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
   createAnnotationsManager,
@@ -7,11 +8,11 @@ import {
   type Annotation,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import {
-  createInMemoryAnnotationStore,
+  createInMemoryRecordStore,
   LOCAL_OWNER,
   syncedRow,
-  type OfflineAnnotationStore,
-} from "@packages/seed-bible/seed-bible/managers/OfflineAnnotationStore";
+  type OfflineRecordStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
@@ -956,10 +957,10 @@ describe("AnnotationsManager", () => {
   // above all exercise the no-store fallback that talks straight to the server.
   // These inject the in-memory store to cover the offline paths.
   describe("with a local store", () => {
-    let store: OfflineAnnotationStore;
+    let store: OfflineRecordStore<Annotation>;
 
     beforeEach(() => {
-      store = createInMemoryAnnotationStore();
+      store = createInMemoryRecordStore<Annotation>();
     });
 
     function createOfflineManager() {
@@ -991,6 +992,16 @@ describe("AnnotationsManager", () => {
     /** Puts the manager in the state of having no connection. */
     function goOffline() {
       window.dispatchEvent(new Event("offline"));
+    }
+
+    /** A row that looks exactly like what the server holds for `annotation`. */
+    function annotationSyncedRow(owner: string, annotation: Annotation) {
+      return syncedRow(
+        owner,
+        annotation.id,
+        annotationCollection(annotation.bookId, annotation.chapterNumber),
+        annotation
+      );
     }
 
     /**
@@ -1057,16 +1068,16 @@ describe("AnnotationsManager", () => {
       });
 
       expect(await store.listPending("user-1")).toHaveLength(1);
-      expect(
-        (await store.get("user-1", "offline-1"))?.annotation?.data.html
-      ).toBe("<p>third</p>");
+      expect((await store.get("user-1", "offline-1"))?.payload?.data.html).toBe(
+        "<p>third</p>"
+      );
     });
 
     it("records a tombstone when deleting a note the server knows about", async () => {
       const manager = createOfflineManager();
       // Pretend the server already has it, so there is something to delete.
       await store.put(
-        syncedRow("user-1", createCommentAnnotation({ id: "known" }))
+        annotationSyncedRow("user-1", createCommentAnnotation({ id: "known" }))
       );
       goOffline();
 
@@ -1081,7 +1092,7 @@ describe("AnnotationsManager", () => {
     it("hides a note deleted offline from the chapter listing", async () => {
       const manager = createOfflineManager();
       await store.put(
-        syncedRow("user-1", createCommentAnnotation({ id: "known" }))
+        annotationSyncedRow("user-1", createCommentAnnotation({ id: "known" }))
       );
       goOffline();
 
@@ -1216,7 +1227,7 @@ describe("AnnotationsManager", () => {
     it("drops a note the server no longer has when refreshing", async () => {
       const manager = createOfflineManager();
       await store.put(
-        syncedRow("user-1", createCommentAnnotation({ id: "gone" }))
+        annotationSyncedRow("user-1", createCommentAnnotation({ id: "gone" }))
       );
       serverList([]);
 
@@ -1267,7 +1278,7 @@ describe("AnnotationsManager", () => {
     it("removes a deleted note from the account it started as", async () => {
       const manager = createOfflineManager();
       const annotation = createCommentAnnotation({ id: "known" });
-      await store.put(syncedRow("user-1", annotation));
+      await store.put(annotationSyncedRow("user-1", annotation));
       goOffline();
 
       const deletePromise = manager.deleteAnnotationAndRefresh(annotation);
