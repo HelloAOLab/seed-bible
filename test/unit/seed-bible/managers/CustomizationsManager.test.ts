@@ -610,7 +610,7 @@ describe("CustomizationsManager", () => {
     expect(manager.editingVariantId.value).toBeNull();
   });
 
-  it("draft mutators never call os.recordData — only saveEditingCustomization() persists the accumulated edits", async () => {
+  it("draft mutators never call os.recordData synchronously — an explicit saveEditingCustomization() persists the accumulated edits", async () => {
     const { manager } = createManager();
     const created = await manager.create();
     expect(recordDataMock).toHaveBeenCalledTimes(1);
@@ -625,7 +625,9 @@ describe("CustomizationsManager", () => {
     manager.addEditingVariant();
     manager.setEditingExtensionAvailability("ext.example", "auto-installed");
 
-    // None of the draft edits above triggered a network write.
+    // None of the draft edits above triggered a network write. (Each also
+    // queues a debounced auto-save — see the "auto-save" tests below — but
+    // that only fires after 5 quiet seconds, not synchronously.)
     expect(recordDataMock).toHaveBeenCalledTimes(1);
     expect(manager.customizations.value[0]?.name).toBe(created.name);
 
@@ -640,6 +642,91 @@ describe("CustomizationsManager", () => {
       "ext.example": "auto-installed",
     });
     expect(manager.customizations.value[0]?.name).toBe("Renamed");
+  });
+
+  it("auto-saves the draft 5 seconds after an edit, with no manual save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingName("Auto-saved name");
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(recordDataMock).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(manager.customizations.value[0]?.name).toBe("Auto-saved name");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("rapid edits collapse into a single auto-save, 5 seconds after the last one", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingName("A");
+      await vi.advanceTimersByTimeAsync(3000);
+      manager.updateEditingName("Ab");
+      await vi.advanceTimersByTimeAsync(3000);
+      manager.updateEditingName("Abc");
+
+      // 3s after the last edit: the 5s debounce hasn't elapsed since it, so
+      // the two earlier edits it superseded must not have snuck a save in.
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(recordDataMock).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(manager.customizations.value[0]?.name).toBe("Abc");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a manual save cancels a pending auto-save so the edit isn't persisted twice", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingName("Manually saved");
+      await manager.saveEditingCustomization();
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+
+      // The debounce timer the edit above queued must have been cancelled by
+      // the manual save, so it must not fire a second, redundant write.
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stopEditing() flushes a pending auto-save before discarding the draft, so a recent edit isn't lost", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.updateEditingName("Closed right after editing");
+    manager.stopEditing();
+    // Flush the microtask queue so the pending flush's persist() resolves.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(recordDataMock).toHaveBeenCalledTimes(1);
+    expect(manager.customizations.value[0]?.name).toBe(
+      "Closed right after editing"
+    );
+    expect(manager.editingCustomization.value).toBeNull();
   });
 
   it("saveEditingCustomization() no-ops when there is no open draft", async () => {

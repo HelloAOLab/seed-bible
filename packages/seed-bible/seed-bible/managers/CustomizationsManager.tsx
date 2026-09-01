@@ -507,18 +507,24 @@ export interface CustomizationsManager {
   create: () => Promise<SeedBibleCustomization>;
   /** Seeds `editingCustomization` from the persisted record with this id. No-ops if not found. */
   startEditing: (id: string) => void;
-  /** Clears `editingCustomization` and `editingVariantId`, discarding any unsaved edits. */
+  /**
+   * Clears `editingCustomization` and `editingVariantId` immediately. Any
+   * edit still waiting on the auto-save debounce (see
+   * `saveEditingCustomization`) is flushed in the background at the same
+   * time, so closing the editor right after a change doesn't drop it.
+   */
   stopEditing: () => void;
-  /** Persists `editingCustomization` and upserts it into `customizations`. No-op if there's no draft or the user is signed out. */
+  /** Persists `editingCustomization` and upserts it into `customizations`. No-op if there's no draft or the user is signed out. Also called automatically, debounced by 5 seconds, whenever one of the draft mutators below changes the draft. */
   saveEditingCustomization: () => Promise<void>;
   remove: (id: string) => Promise<void>;
-  /** Uploads the file, stages the resulting URL onto the open draft, and immediately persists it (unlike every other draft field, which waits for an explicit Save). */
+  /** Uploads the file, stages the resulting URL onto the open draft, and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). */
   uploadLogo: (file: File) => Promise<void>;
   /** A shareable link that auto-loads this customization via `loadByLocator`. */
   getShareLink: (customization: SeedBibleCustomization) => string;
-  // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is null.
+  // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is
+  // null, and otherwise queues a debounced auto-save of the draft.
   updateEditingName: (name: string) => void;
-  /** Clears the draft's logo and immediately persists it (unlike every other draft field, which waits for an explicit Save). No-op with no open draft. */
+  /** Clears the draft's logo and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). No-op with no open draft. */
   removeEditingLogo: () => Promise<void>;
   /** Adds a new variant to the draft, based on the viewer's current preset (no overrides of its own yet). */
   addEditingVariant: () => CustomizationThemeVariant | null;
@@ -802,12 +808,25 @@ export function createCustomizationsManager(
     editingCustomization.value = existing;
   };
 
+  /**
+   * Clears `editingCustomization` and `editingVariantId`. Any edit still
+   * waiting on the auto-save debounce is flushed first (in the background —
+   * this stays synchronous, since callers rely on the draft being gone
+   * immediately), so closing the editor right after a change doesn't drop it.
+   */
   const stopEditing = (): void => {
+    if (autoSaveTimer !== null) {
+      void flushAutoSave();
+    }
     editingCustomization.value = null;
     editingVariantId.value = null;
   };
 
   const saveEditingCustomization = async (): Promise<void> => {
+    if (autoSaveTimer !== null) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
+    }
     const userId = login.userId.value;
     const current = editingCustomization.value;
     if (!userId || !current) {
@@ -819,7 +838,46 @@ export function createCustomizationsManager(
     customizations.value = customizations.value.some((c) => c.id === saved.id)
       ? customizations.value.map((c) => (c.id === saved.id ? saved : c))
       : [...customizations.value, saved];
-    editingCustomization.value = saved;
+    // Only reflect the write onto the draft if it's still the exact one
+    // captured above — a newer edit, or the editor closing, may have
+    // changed `editingCustomization` while this (possibly auto-triggered)
+    // save was in flight, and must not be clobbered by this now-stale copy.
+    if (editingCustomization.value === current) {
+      editingCustomization.value = saved;
+    }
+  };
+
+  /** How long to wait after the last edit before auto-saving the draft. */
+  const AUTO_SAVE_DEBOUNCE_MS = 5000;
+  let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  // Serializes autosave writes so two saves can't race and land out of
+  // order, and one failure doesn't reject the save queued behind it.
+  let autoSaveChain: Promise<void> = Promise.resolve();
+
+  /** Queues a debounced save of the current draft. */
+  const scheduleAutoSave = (): void => {
+    if (autoSaveTimer !== null) {
+      clearTimeout(autoSaveTimer);
+    }
+    autoSaveTimer = setTimeout(() => {
+      autoSaveTimer = null;
+      void flushAutoSave();
+    }, AUTO_SAVE_DEBOUNCE_MS);
+  };
+
+  /**
+   * Writes the current draft immediately. Resolves once it has landed.
+   * Starts the write synchronously (rather than deferring it into a
+   * `.then()`) so it captures `editingCustomization.value` as it is right
+   * now — callers like `stopEditing()` clear that signal on the very next
+   * line, before this promise has a chance to resolve.
+   */
+  const flushAutoSave = (): Promise<void> => {
+    const write = saveEditingCustomization().catch((error) => {
+      console.error("Failed to auto-save customization:", error);
+    });
+    autoSaveChain = autoSaveChain.then(() => write);
+    return autoSaveChain;
   };
 
   const updateEditingName = (name: string): void => {
@@ -828,6 +886,7 @@ export function createCustomizationsManager(
       return;
     }
     editingCustomization.value = { ...current, name, updatedAt: Date.now() };
+    scheduleAutoSave();
   };
 
   const addEditingVariant = (): CustomizationThemeVariant | null => {
@@ -849,6 +908,7 @@ export function createCustomizationsManager(
       variants: [...current.variants, variant],
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
     return variant;
   };
 
@@ -883,6 +943,7 @@ export function createCustomizationsManager(
       ),
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const renameEditingVariant = (variantId: string, name: string): void => {
@@ -897,6 +958,7 @@ export function createCustomizationsManager(
       ),
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const setEditingVariantColor = (
@@ -959,6 +1021,7 @@ export function createCustomizationsManager(
       }),
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const setEditingVariantFont = (
@@ -983,6 +1046,7 @@ export function createCustomizationsManager(
       ),
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const setEditingVariantHighlightColor = (
@@ -1012,6 +1076,7 @@ export function createCustomizationsManager(
       }),
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   /** Removes one field's override, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
@@ -1035,6 +1100,7 @@ export function createCustomizationsManager(
       }),
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   /** Removes all of one highlight id's overrides, reverting it to inherit from the variant's `baseTheme`. No-op with no open draft. */
@@ -1062,6 +1128,7 @@ export function createCustomizationsManager(
       }),
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const setEditingDefaultVariant = (variantId: string): void => {
@@ -1074,6 +1141,7 @@ export function createCustomizationsManager(
       defaultVariantId: variantId,
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const removeEditingVariant = (variantId: string): void => {
@@ -1097,6 +1165,7 @@ export function createCustomizationsManager(
       defaultVariantId: nextDefaultVariantId,
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const remove = async (id: string): Promise<void> => {
@@ -1179,6 +1248,7 @@ export function createCustomizationsManager(
       extensionSettings: nextSettings,
       updatedAt: Date.now(),
     };
+    scheduleAutoSave();
   };
 
   const getActiveExtensionAvailability = (
