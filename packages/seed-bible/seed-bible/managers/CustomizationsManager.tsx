@@ -514,6 +514,19 @@ export interface CustomizationsManager {
    * time, so closing the editor right after a change doesn't drop it.
    */
   stopEditing: () => void;
+  /**
+   * Same as `stopEditing`, except a pending auto-save is cancelled instead
+   * of flushed — the draft's unsaved changes are actually thrown away. Used
+   * by the "Discard changes" action of the unsaved-changes confirmation
+   * shown when closing the editor with `hasUnsavedChanges` true.
+   */
+  discardEditingCustomization: () => void;
+  /**
+   * True while `editingCustomization` differs from what's actually
+   * persisted (a pending or in-flight auto-save). `false` when there's no
+   * open draft.
+   */
+  hasUnsavedChanges: ReadonlySignal<boolean>;
   /** Persists `editingCustomization` and upserts it into `customizations`. No-op if there's no draft or the user is signed out. Also called automatically, debounced by 5 seconds, whenever one of the draft mutators below changes the draft. */
   saveEditingCustomization: () => Promise<void>;
   remove: (id: string) => Promise<void>;
@@ -736,6 +749,25 @@ export function createCustomizationsManager(
     );
   });
 
+  /**
+   * Whether the open draft (`editingCustomization`) differs from what's
+   * actually persisted — i.e. an edit hasn't landed yet, whether because
+   * the auto-save debounce is still pending or a write is in flight. Used
+   * to decide whether to warn before discarding the draft. `false` when
+   * there's no open draft.
+   */
+  const hasUnsavedChanges = computed<boolean>(() => {
+    const draft = editingCustomization.value;
+    if (!draft) {
+      return false;
+    }
+    const persisted = customizations.value.find((c) => c.id === draft.id);
+    if (!persisted) {
+      return true;
+    }
+    return JSON.stringify(draft) !== JSON.stringify(persisted);
+  });
+
   const load = async () => {
     const userId = login.userId.value;
     if (!userId) {
@@ -817,6 +849,23 @@ export function createCustomizationsManager(
   const stopEditing = (): void => {
     if (autoSaveTimer !== null) {
       void flushAutoSave();
+    }
+    editingCustomization.value = null;
+    editingVariantId.value = null;
+  };
+
+  /**
+   * Clears `editingCustomization` and `editingVariantId` the same as
+   * `stopEditing`, except any edit still waiting on the auto-save debounce
+   * is cancelled instead of flushed — the draft's unsaved changes are
+   * genuinely thrown away rather than written on the way out. An edit
+   * whose auto-save has already started (the 5-second debounce already
+   * fired) can't be un-sent and will still land.
+   */
+  const discardEditingCustomization = (): void => {
+    if (autoSaveTimer !== null) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
     }
     editingCustomization.value = null;
     editingVariantId.value = null;
@@ -1312,6 +1361,8 @@ export function createCustomizationsManager(
     create,
     startEditing,
     stopEditing,
+    discardEditingCustomization,
+    hasUnsavedChanges,
     saveEditingCustomization,
     remove,
     uploadLogo,

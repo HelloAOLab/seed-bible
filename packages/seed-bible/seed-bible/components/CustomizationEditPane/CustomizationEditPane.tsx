@@ -2,6 +2,7 @@ import "../SettingsPage/SettingsPage.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import type { ModalManager } from "../../managers/ModalManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
   CUSTOMIZATION_FONT_FIELDS,
@@ -97,6 +98,90 @@ export function CustomizationEditPaneLeading() {
   );
 }
 
+const UNSAVED_CHANGES_CONFIRM_MODAL_ID =
+  "customization-unsaved-changes-confirm";
+
+/**
+ * Confirmation body shown when the editor pane's close (X) button is
+ * clicked while the draft has unsaved changes still pending — same
+ * `sb-confirm-delete*` structure and button classes as the playlist
+ * editor's "unsaved item" confirmation (`CreatePlaylistForm.tsx`), adapted
+ * to this editor's own auto-save/discard actions instead of its "add
+ * item" ones.
+ */
+function UnsavedChangesConfirmModalContent(props: {
+  onKeepEditing: () => void;
+  onDiscard: () => void;
+  onSaveAndLeave: () => void;
+}) {
+  const { onKeepEditing, onDiscard, onSaveAndLeave } = props;
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-confirm-delete">
+      <p className="sb-confirm-delete-message">
+        {t("unsaved-changes-confirm-message", {
+          defaultValue:
+            "You have unsaved changes to this customization. What would you like to do?",
+        })}
+      </p>
+      <div className="sb-confirm-delete-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onKeepEditing}
+        >
+          {t("keep-editing", { defaultValue: "Keep editing" })}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onDiscard}
+        >
+          {t("discard-changes", { defaultValue: "Discard changes" })}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-end"
+          onClick={onSaveAndLeave}
+        >
+          {t("save-and-leave", { defaultValue: "Save and leave" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Opens the unsaved-changes confirmation modal. */
+function openUnsavedChangesConfirm(
+  modals: ModalManager,
+  onDiscard: () => void,
+  onSaveAndLeave: () => void
+) {
+  modals.openModal({
+    id: UNSAVED_CHANGES_CONFIRM_MODAL_ID,
+    title: {
+      key: "unsaved-changes-confirm-title",
+      defaultValue: "Unsaved changes",
+    },
+    content: () => (
+      <UnsavedChangesConfirmModalContent
+        onKeepEditing={() =>
+          modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID)
+        }
+        onDiscard={() => {
+          modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
+          onDiscard();
+        }}
+        onSaveAndLeave={() => {
+          modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
+          onSaveAndLeave();
+        }}
+      />
+    ),
+  });
+}
+
 /**
  * Opens (or, if already open, updates) the customization editor side pane on
  * a specific customization. Called from the customizations list in Settings.
@@ -118,6 +203,29 @@ export function openCustomizationEditPane(
     component: () => <CustomizationEditPane state={state} />,
     onClose: () => {
       state.customizations.stopEditing();
+    },
+    // Blocks the header's close (X) button while the draft has unsaved
+    // edits, showing a confirmation instead of silently discarding or
+    // (invisibly) auto-saving them. Returning `false` here leaves the pane
+    // open; each modal action closes the pane itself afterward.
+    confirmClose: () => {
+      if (!state.customizations.hasUnsavedChanges.value) {
+        return true;
+      }
+      openUnsavedChangesConfirm(
+        state.modals,
+        () => {
+          state.customizations.discardEditingCustomization();
+          state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID, "user");
+        },
+        () => {
+          void (async () => {
+            await state.customizations.saveEditingCustomization();
+            state.panes.closePane(CUSTOMIZATION_EDIT_PANE_ID, "user");
+          })();
+        }
+      );
+      return false;
     },
   });
 }

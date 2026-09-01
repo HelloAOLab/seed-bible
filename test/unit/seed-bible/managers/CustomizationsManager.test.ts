@@ -729,6 +729,73 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value).toBeNull();
   });
 
+  it("discardEditingCustomization() cancels a pending auto-save so a recent edit is never persisted", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingName("Should be discarded");
+
+      manager.discardEditingCustomization();
+      // Advance well past the 5s debounce — the cancelled timer must never fire.
+      await vi.advanceTimersByTimeAsync(6000);
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(manager.customizations.value[0]?.name).toBe(created.name);
+      expect(manager.editingCustomization.value).toBeNull();
+      expect(manager.editingVariantId.value).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("discardEditingCustomization() no-ops when there is no open draft", async () => {
+    const { manager } = createManager();
+    await manager.create();
+
+    expect(() => manager.discardEditingCustomization()).not.toThrow();
+    expect(manager.editingCustomization.value).toBeNull();
+  });
+
+  it("hasUnsavedChanges reflects whether the draft has landed yet, and clears on save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+
+    expect(manager.hasUnsavedChanges.value).toBe(false);
+
+    manager.startEditing(created.id);
+    // Seeding the draft from the persisted record alone isn't a change.
+    expect(manager.hasUnsavedChanges.value).toBe(false);
+
+    manager.updateEditingName("Renamed");
+    expect(manager.hasUnsavedChanges.value).toBe(true);
+
+    await manager.saveEditingCustomization();
+    expect(manager.hasUnsavedChanges.value).toBe(false);
+
+    manager.stopEditing();
+    expect(manager.hasUnsavedChanges.value).toBe(false);
+  });
+
+  it("hasUnsavedChanges clears once a debounced auto-save lands, with no manual save", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingName("Auto-saved");
+      expect(manager.hasUnsavedChanges.value).toBe(true);
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(manager.hasUnsavedChanges.value).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("saveEditingCustomization() no-ops when there is no open draft", async () => {
     const { manager } = createManager();
     await manager.create();
