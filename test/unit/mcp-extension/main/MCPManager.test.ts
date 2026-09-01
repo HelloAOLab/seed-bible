@@ -92,6 +92,7 @@ function createTestLogin(userId: string | null): Mocked<LoginManager> {
       success: true,
       userInfo: { id: userId ?? "user-1", email: "test@example.com" },
     }),
+    hydrateLocalConfig: vi.fn(),
   };
 }
 
