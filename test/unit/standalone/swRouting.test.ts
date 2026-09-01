@@ -139,10 +139,11 @@ describe("isCacheableStaticAsset()", () => {
 });
 
 describe("getAppShellCacheKey()", () => {
-  it("returns the same key regardless of which path is being cached", () => {
-    // The whole point: every navigation shares one entry, so the key can't
-    // vary with the requested path.
-    expect(getAppShellCacheKey(ORIGIN)).toBe(getAppShellCacheKey(ORIGIN));
+  it("keys the shell under a fixed synthetic path, scoped to the origin", () => {
+    // The literal is intentionally hardcoded rather than built from
+    // `APP_SHELL_CACHE_PATH` — this needs to fail if that constant's value
+    // ever changes, not just mirror it.
+    expect(getAppShellCacheKey(ORIGIN)).toBe(`${ORIGIN}/__app-shell`);
   });
 
   it("scopes the key to the given origin", () => {

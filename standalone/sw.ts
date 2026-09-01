@@ -149,10 +149,10 @@ cleanupOutdatedCaches();
  * still land on the browser's "no connection" page until the user had visited
  * a second time.
  *
- * Deliberately swallows failures. Anything thrown out of an install handler
- * fails the install, and this is an optimisation, not a requirement — if the
- * host is unreachable right now, the first controlled navigation fills the
- * cache instead.
+ * Returns whether the shell was actually refreshed. Never throws — this is
+ * called from an install handler, where a rejected `waitUntil` promise fails
+ * the install outright, and a failed warm here is meant to be recoverable
+ * (see the `install` listener below), not fatal.
  *
  * Warms from the URL of the page that's actually registering this worker
  * (falling back to `/` if that can't be determined), since that's the only
@@ -160,7 +160,7 @@ cleanupOutdatedCaches();
  * shared `APP_SHELL_URL` key like every other write to this cache, not under
  * its own URL.
  */
-async function warmAppShellCache(): Promise<void> {
+async function warmAppShellCache(): Promise<boolean> {
   try {
     // `includeUncontrolled` is what makes this work on a *first* install: a
     // worker that is still installing controls nothing yet (control only
@@ -187,7 +187,7 @@ async function warmAppShellCache(): Promise<void> {
     const response = await fetch(url, { cache: "no-cache" });
     // Same acceptance rule as the route's `CacheableResponsePlugin` below, so
     // this can't seed the cache with something the route would have rejected.
-    if (response.status !== 200) return;
+    if (response.status !== 200) return false;
     const cache = await caches.open(HTML_CACHE);
     // Copied before storing, to drop the `redirected` flag. This `fetch` is
     // built from a string, so it follows redirects — meaning a URL that ever
@@ -198,13 +198,30 @@ async function warmAppShellCache(): Promise<void> {
     // shell. Stored under the shared `APP_SHELL_URL` key, same as the route
     // below.
     await cache.put(APP_SHELL_URL, new Response(response.body, response));
+    return true;
   } catch {
-    // Offline at install time — nothing to do.
+    // Offline (or otherwise unreachable) at install time.
+    return false;
   }
 }
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(warmAppShellCache());
+  event.waitUntil(
+    warmAppShellCache().then((warmed) => {
+      // Only cut over to this worker once its own shell is confirmed to
+      // match the build that's installing right now. Precaching (via
+      // `precacheAndRoute`/`cleanupOutdatedCaches` above) drops the
+      // *previous* build's chunks the moment this worker activates,
+      // regardless of connectivity — so activating with a stale shell still
+      // cached would leave an offline load stranded between old HTML that
+      // references chunks the precache no longer has. Skipping
+      // `skipWaiting()` here instead leaves the *previous* worker in
+      // control — its own shell and precache are still mutually consistent
+      // — until a later install attempt (the browser's normal update
+      // polling, while online) succeeds.
+      if (warmed) self.skipWaiting();
+    })
+  );
 });
 
 registerRoute(
@@ -218,8 +235,10 @@ registerRoute(
     cacheName: HTML_CACHE,
     plugins: [
       // Rewrites both the read and the write to the one shared
-      // `APP_SHELL_URL` key, ahead of the plugins below so they see (and
-      // gate) that same key rather than the actual requested URL.
+      // `APP_SHELL_URL` key. Placed first so `ExpirationPlugin` below — whose
+      // bookkeeping keys off the effective request — sees that same
+      // rewritten key; `CacheableResponsePlugin` only looks at response
+      // status, so ordering doesn't affect it.
       appShellCacheKeyPlugin,
       // Never let a 404 (unknown branch) or 500 (render error) become the
       // stored copy of the app.
@@ -308,7 +327,9 @@ registerRoute(
 
 // ─── Lifecycle ───────────────────────────────────────────────────────────────
 // `registerType: "autoUpdate"` in vite.config.ts means there is no "reload to
-// update" prompt, so a new worker has to take over on its own: skip the waiting
-// phase, then claim the open pages.
-self.skipWaiting();
+// update" prompt, so a new worker has to take over on its own — `skipWaiting()`
+// is called from the `install` listener above (conditionally, once the shell
+// is confirmed warm) rather than unconditionally here. `clientsClaim()` stays
+// unconditional: it only has an effect once activation actually happens,
+// however that was triggered, and just claims the open pages at that point.
 clientsClaim();
