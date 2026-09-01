@@ -161,6 +161,15 @@ function MainBody({
     state.app.hydrateFromStorage();
   }, []);
 
+  // Deferred real read, same reason as the three above: `isOpen` seeds
+  // `false` to match SSR (which always renders Today closed, for crawler
+  // SEO — see `TodayManager`), so the first hydrate pass can't disagree with
+  // it. Apply the URL's real open/closed state, and start the live URL sync,
+  // once right after mount.
+  useEffect(() => {
+    state.today.hydrateAutoOpen();
+  }, []);
+
   if (typeof document !== "undefined") {
     useSignalEffect(() => {
       document.title = state.app.title.value;
