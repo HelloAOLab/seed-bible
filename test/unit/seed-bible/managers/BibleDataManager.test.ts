@@ -6,9 +6,10 @@ import {
   getBookId,
   getBookSlug,
   parseVerseReference,
-  parseVerseReferences,
+  scanVerseReferencesInText,
   type BibleDataManager,
   type BookId,
+  type TranslationsCache,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import {
   FreeUseBibleAPI,
@@ -269,6 +270,166 @@ describe("createBibleDataManager", () => {
       makeEndpointUrl(ALT_ENDPOINT, "api/NIV/books.json")
     );
   });
+
+  describe("translationsCache option", () => {
+    function createTestCache(): TranslationsCache {
+      const store = new Map<string, Promise<Translation[]>>();
+      return {
+        get: (endpoint) => store.get(endpoint),
+        set: (endpoint, promise) => store.set(endpoint, promise),
+        delete: (endpoint) => store.delete(endpoint),
+      };
+    }
+
+    it("shares one fetch across separate managers that share a cache", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+
+      const translationsCache = createTestCache();
+      const managerA = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+      const managerB = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await managerA.getTranslations();
+      await managerB.getTranslations();
+
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("shares one in-flight fetch across managers racing on a cache miss", async () => {
+      setWebResponses({
+        [makeEndpointUrl(
+          EXAMPLE_API_ENDPOINT,
+          "api/available_translations.json"
+        )]: createResponse(translations),
+      });
+
+      const translationsCache = createTestCache();
+      const managerA = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+      const managerB = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await Promise.all([
+        managerA.getTranslations(),
+        managerB.getTranslations(),
+      ]);
+
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("refresh: true bypasses and evicts the cache", async () => {
+      const updatedNiv = {
+        ...translations.translations[1]!,
+        sha256: "updated",
+      };
+      webGetMock
+        .mockResolvedValueOnce(createResponse(translations))
+        .mockResolvedValueOnce(
+          createResponse({
+            translations: [translations.translations[0]!, updatedNiv],
+          })
+        );
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await manager.getTranslations();
+      const cachedAgain = await manager.getTranslations();
+      expect(webGetMock).toHaveBeenCalledTimes(1);
+      expect(cachedAgain.find((t) => t.id === "NIV")?.sha256).not.toBe(
+        "updated"
+      );
+
+      const refreshed = await manager.getTranslations(undefined, {
+        refresh: true,
+      });
+      expect(webGetMock).toHaveBeenCalledTimes(2);
+      expect(refreshed.find((t) => t.id === "NIV")?.sha256).toBe("updated");
+    });
+
+    it("does not cache a failed fetch, so the next call retries", async () => {
+      webGetMock
+        .mockRejectedValueOnce(new Error("network down"))
+        .mockResolvedValueOnce(createResponse(translations));
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      await expect(manager.getTranslations()).rejects.toThrow("network down");
+
+      const result = await manager.getTranslations();
+      expect(result).toEqual(translations.translations);
+      expect(webGetMock).toHaveBeenCalledTimes(2);
+    });
+
+    // Regression: a slow request's own `.catch` used to delete whatever the
+    // cache currently held for that endpoint, not just its own (now stale)
+    // entry. A `refresh: true` call that starts and finishes while the
+    // original request is still hanging replaces the cache entry with a
+    // fresh, valid one — the original request rejecting afterward must not
+    // wipe that out.
+    it("does not evict a fresher cache entry when a superseded request rejects later", async () => {
+      function createDeferred<T>() {
+        let resolve!: (value: T) => void;
+        let reject!: (error: unknown) => void;
+        const promise = new Promise<T>((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+        return { promise, resolve, reject };
+      }
+
+      const deferredA = createDeferred<ReturnType<typeof createResponse>>();
+      const deferredB = createDeferred<ReturnType<typeof createResponse>>();
+      webGetMock
+        .mockImplementationOnce(() => deferredA.promise)
+        .mockImplementationOnce(() => deferredB.promise);
+
+      const translationsCache = createTestCache();
+      const manager = createBibleDataManager(
+        new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT),
+        { translationsCache }
+      );
+
+      // Both calls run synchronously up to their own first `await`, so this
+      // reproduces the exact race: A's fetch starts and hangs, then B's
+      // `refresh: true` call supersedes it before A ever settles.
+      const callA = manager.getTranslations();
+      const callB = manager.getTranslations(undefined, { refresh: true });
+      const normalizedEndpoint = manager.endpoints.value[0]!;
+
+      deferredB.resolve(createResponse(translations));
+      await callB;
+      const cachedAfterB = translationsCache.get(normalizedEndpoint);
+      expect(cachedAfterB).toBeDefined();
+
+      deferredA.reject(new Error("stale request failed"));
+      await expect(callA).rejects.toThrow("stale request failed");
+
+      // B's entry must still be the current cache contents.
+      expect(translationsCache.get(normalizedEndpoint)).toBe(cachedAfterB);
+    });
+  });
 });
 
 describe("parseVerseReference()", () => {
@@ -293,7 +454,7 @@ describe("parseVerseReference()", () => {
       { book: "HAB", chapter: 3, verse: 8, endVerse: 15 },
     ] as const,
     ["Hab.3", { book: "HAB", chapter: 3 }] as const,
-    ["Hab.3-5", { book: "HAB", chapter: 3, endChapter: 5 }] as const,
+    ["Hab.2-3", { book: "HAB", chapter: 2, endChapter: 3 }] as const,
     ["2Sam.15.8", { book: "2SA", chapter: 15, verse: 8 }] as const,
     [
       "1Kgs.1.31-32",
@@ -382,7 +543,7 @@ describe("parseVerseReference()", () => {
   );
 });
 
-describe("parseVerseReferences()", () => {
+describe("scanVerseReferencesInText()", () => {
   const cases = [
     ["GEN 1:1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
     ["EXO 1:1", { ref: { book: "EXO", chapter: 1, verse: 1 } }] as const,
@@ -409,7 +570,7 @@ describe("parseVerseReferences()", () => {
       { ref: { book: "HAB", chapter: 3, verse: 8, endVerse: 15 } },
     ] as const,
     ["Hab.3", { ref: { book: "HAB", chapter: 3 } }] as const,
-    ["Hab.3-5", { ref: { book: "HAB", chapter: 3, endChapter: 5 } }] as const,
+    ["Hab.2-3", { ref: { book: "HAB", chapter: 2, endChapter: 3 } }] as const,
     ["2Sam.15.8", { ref: { book: "2SA", chapter: 15, verse: 8 } }] as const,
     [
       "1Kgs.1.31-32",
@@ -449,26 +610,30 @@ describe("parseVerseReferences()", () => {
   ];
 
   it.each(cases)("should find %s", (input, expected) => {
-    expect(parseVerseReferences(input)).toContainEqual(
+    expect(scanVerseReferencesInText(input)).toContainEqual(
       expect.objectContaining(expected)
     );
   });
 
   it("should find a single reference", () => {
-    expect(parseVerseReferences("This is GEN 1:1.")).toEqual([
+    expect(scanVerseReferencesInText("This is GEN 1:1.")).toEqual([
       { ref: { book: "GEN", chapter: 1, verse: 1 }, start: 8, end: 15 },
     ]);
   });
 
   it("should find multiple chapter-only references", () => {
-    expect(parseVerseReferences("This is GEN 5 and this is GEN 40")).toEqual([
+    expect(
+      scanVerseReferencesInText("This is GEN 5 and this is GEN 40")
+    ).toEqual([
       { ref: { book: "GEN", chapter: 5 }, start: 8, end: 13 },
       { ref: { book: "GEN", chapter: 40 }, start: 26, end: 32 },
     ]);
   });
 
   it("should find multiple references with ranges", () => {
-    expect(parseVerseReferences("This is MAT 1:1-3 and John 3:16")).toEqual([
+    expect(
+      scanVerseReferencesInText("This is MAT 1:1-3 and John 3:16")
+    ).toEqual([
       {
         ref: { book: "MAT", chapter: 1, verse: 1, endVerse: 3 },
         start: 8,
@@ -479,38 +644,42 @@ describe("parseVerseReferences()", () => {
   });
 
   it("should find references with em dash ranges", () => {
-    expect(parseVerseReferences("See MAT 1:1—3 and also John 3:16—18")).toEqual(
-      [
-        {
-          ref: { book: "MAT", chapter: 1, verse: 1, endVerse: 3 },
-          start: 4,
-          end: 13,
-        },
-        {
-          ref: { book: "JHN", chapter: 3, verse: 16, endVerse: 18 },
-          start: 23,
-          end: 35,
-        },
-      ]
-    );
+    expect(
+      scanVerseReferencesInText("See MAT 1:1—3 and also John 3:16—18")
+    ).toEqual([
+      {
+        ref: { book: "MAT", chapter: 1, verse: 1, endVerse: 3 },
+        start: 4,
+        end: 13,
+      },
+      {
+        ref: { book: "JHN", chapter: 3, verse: 16, endVerse: 18 },
+        start: 23,
+        end: 35,
+      },
+    ]);
   });
 
   it("should find numbered books when preceded by other words", () => {
-    expect(parseVerseReferences("See 1 Corinthians 13:4 for love")).toEqual([
+    expect(
+      scanVerseReferencesInText("See 1 Corinthians 13:4 for love")
+    ).toEqual([
       {
         ref: { book: "1CO", chapter: 13, verse: 4 },
         start: 4,
         end: 22,
       },
     ]);
-    expect(parseVerseReferences("See 2 Corinthians 5:17")).toEqual([
+    expect(scanVerseReferencesInText("See 2 Corinthians 5:17")).toEqual([
       {
         ref: { book: "2CO", chapter: 5, verse: 17 },
         start: 4,
         end: 22,
       },
     ]);
-    expect(parseVerseReferences("See 1 John 3:16 and 1 Kings 1:1")).toEqual([
+    expect(
+      scanVerseReferencesInText("See 1 John 3:16 and 1 Kings 1:1")
+    ).toEqual([
       {
         ref: { book: "1JN", chapter: 3, verse: 16 },
         start: 4,
@@ -522,7 +691,7 @@ describe("parseVerseReferences()", () => {
         end: 31,
       },
     ]);
-    expect(parseVerseReferences("See 1CO 1:2")).toEqual([
+    expect(scanVerseReferencesInText("See 1CO 1:2")).toEqual([
       {
         ref: { book: "1CO", chapter: 1, verse: 2 },
         start: 4,
@@ -532,18 +701,114 @@ describe("parseVerseReferences()", () => {
   });
 
   it("should not treat 'Song of …' phrases as Song of Solomon", () => {
-    expect(parseVerseReferences("the Song of Moses 2:1")).toEqual([]);
-    expect(parseVerseReferences("See Song of Mary 1:46")).toEqual([]);
+    expect(scanVerseReferencesInText("the Song of Moses 2:1")).toEqual([]);
+    expect(scanVerseReferencesInText("See Song of Mary 1:46")).toEqual([]);
     expect(getBookId("song of moses")).toBeNull();
     expect(getBookId("Song of Mary")).toBeNull();
   });
 
   it("should accept title-cased 'Of' in Song of Solomon", () => {
-    expect(parseVerseReferences("Song Of Solomon 2:1")).toContainEqual(
+    expect(scanVerseReferencesInText("Song Of Solomon 2:1")).toContainEqual(
       expect.objectContaining({
         ref: expect.objectContaining({ book: "SNG", chapter: 2, verse: 1 }),
       })
     );
+  });
+
+  it("does not link ordinary words that merely begin with a book abbreviation", () => {
+    const cases = [
+      "Isaac 24 tells us about his marriage to Rebekah.",
+      "The tribe of Judah 4 was the largest.",
+      "Jerusalem 70 AD was when the temple fell.",
+      "Galilee 3 is where he called the disciples.",
+      "Joseph 37 was sold by his brothers.",
+      "Hebron 11 is a city in Judah.",
+      "Jonathan 1 was Saul's son.",
+      "Judgment 1 falls on the wicked.",
+      "Danielle 1 wrote the report.",
+      "The military rank of General 4 is held by four-star commanders.",
+      "See Revision 3:15 of the design doc.",
+      "Philosophy 1 introduces the course.",
+      "There were actually 5 people in the room.",
+      "Level 1 is the beginner track.",
+      "Titles 1 lists the headings.",
+      "Jobs 1 opens the board.",
+    ];
+    // Review verified false positives both with and without a translation
+    // book list — exact book-name lookup misses these, then getBookId must
+    // not fall through to the abbreviation path.
+    const genBooks = [
+      {
+        id: "GEN",
+        name: "Genesis",
+        commonName: "Genesis",
+        title: null,
+        order: 1,
+        numberOfChapters: 50,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 1533,
+      },
+    ] as TranslationBook[];
+    for (const text of cases) {
+      expect(scanVerseReferencesInText(text)).toEqual([]);
+      expect(scanVerseReferencesInText(text, genBooks)).toEqual([]);
+    }
+  });
+
+  it("rejects chapter and verse numbers outside the book", () => {
+    expect(scanVerseReferencesInText("Genesis 999")).toEqual([]);
+    expect(scanVerseReferencesInText("Genesis 1:999")).toEqual([]);
+    expect(scanVerseReferencesInText("Jude 5:1")).toEqual([]);
+    expect(scanVerseReferencesInText("Genesis 0")).toEqual([]);
+    expect(scanVerseReferencesInText("Revelation 22:1-99")).toEqual([]);
+    expect(parseVerseReference("Genesis 999")).toBeNull();
+    expect(parseVerseReference("Genesis 1:999")).toBeNull();
+    expect(parseVerseReference("Jude 5:1")).toBeNull();
+  });
+
+  it("still links valid last-verse boundary references", () => {
+    // Locks the static verse table: undercounting (e.g. Psalm 150 as 5)
+    // would silently drop these after bounds were added.
+    const cases: Array<
+      [string, { book: BookId; chapter: number; verse: number }]
+    > = [
+      ["Psalm 117:2", { book: "PSA", chapter: 117, verse: 2 }],
+      ["Psalm 119:176", { book: "PSA", chapter: 119, verse: 176 }],
+      ["Psalm 150:6", { book: "PSA", chapter: 150, verse: 6 }],
+      ["Genesis 50:26", { book: "GEN", chapter: 50, verse: 26 }],
+      ["Revelation 22:21", { book: "REV", chapter: 22, verse: 21 }],
+      ["Jude 1:25", { book: "JUD", chapter: 1, verse: 25 }],
+    ];
+    for (const [text, ref] of cases) {
+      expect(scanVerseReferencesInText(text)).toContainEqual(
+        expect.objectContaining({ ref })
+      );
+    }
+  });
+
+  it("does not impose Protestant verse maxima when a translation book is loaded", () => {
+    // Daniel 3 in editions with the Song of the Three Young Men has ~100
+    // verses; the static Protestant table only has 30. With translation
+    // metadata present, chapter gating still applies but verse maxima do not.
+    const danBooks = [
+      {
+        id: "DAN",
+        name: "Daniel",
+        commonName: "Daniel",
+        title: null,
+        order: 27,
+        numberOfChapters: 12,
+        firstChapterNumber: 1,
+        totalNumberOfVerses: 357,
+      },
+    ] as TranslationBook[];
+    expect(scanVerseReferencesInText("Daniel 3:57", danBooks)).toContainEqual(
+      expect.objectContaining({
+        ref: { book: "DAN", chapter: 3, verse: 57 },
+      })
+    );
+    // Without a translation list, Protestant static maxima still apply.
+    expect(scanVerseReferencesInText("Daniel 3:57")).toEqual([]);
   });
 });
 
@@ -654,9 +919,9 @@ describe("all 66 Protestant-canon books", () => {
     });
   });
 
-  describe("parseVerseReferences() by book ID", () => {
+  describe("scanVerseReferencesInText() by book ID", () => {
     it.each(PROTESTANT_CANON)("finds standalone $id 1:1", ({ id }) => {
-      expect(parseVerseReferences(`${id} 1:1`)).toContainEqual(
+      expect(scanVerseReferencesInText(`${id} 1:1`)).toContainEqual(
         expect.objectContaining({
           ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
         })
@@ -664,7 +929,9 @@ describe("all 66 Protestant-canon books", () => {
     });
 
     it.each(PROTESTANT_CANON)("finds mid-sentence $id 1:1", ({ id }) => {
-      expect(parseVerseReferences(`See ${id} 1:1 for context`)).toContainEqual(
+      expect(
+        scanVerseReferencesInText(`See ${id} 1:1 for context`)
+      ).toContainEqual(
         expect.objectContaining({
           ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
         })
@@ -672,9 +939,9 @@ describe("all 66 Protestant-canon books", () => {
     });
   });
 
-  describe("parseVerseReferences() by English name", () => {
+  describe("scanVerseReferencesInText() by English name", () => {
     it.each(PROTESTANT_CANON)("finds standalone $name 1:1", ({ id, name }) => {
-      expect(parseVerseReferences(`${name} 1:1`)).toContainEqual(
+      expect(scanVerseReferencesInText(`${name} 1:1`)).toContainEqual(
         expect.objectContaining({
           ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
         })
@@ -685,7 +952,7 @@ describe("all 66 Protestant-canon books", () => {
       "finds mid-sentence $name 1:1",
       ({ id, name }) => {
         expect(
-          parseVerseReferences(`See ${name} 1:1 for context`)
+          scanVerseReferencesInText(`See ${name} 1:1 for context`)
         ).toContainEqual(
           expect.objectContaining({
             ref: expect.objectContaining({ book: id, chapter: 1, verse: 1 }),
@@ -796,14 +1063,14 @@ describe("all 66 Protestant-canon books", () => {
 
     it("finds a localized name mid-sentence", () => {
       expect(
-        parseVerseReferences("Lee Esdras 3 primero", spaBooks)
+        scanVerseReferencesInText("Lee Esdras 3 primero", spaBooks)
       ).toContainEqual(
         expect.objectContaining({
           ref: { book: "EZR", chapter: 3 },
         })
       );
       expect(
-        parseVerseReferences("See Esdras 3:1 and also John 1:1", spaBooks)
+        scanVerseReferencesInText("See Esdras 3:1 and also John 1:1", spaBooks)
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -817,19 +1084,21 @@ describe("all 66 Protestant-canon books", () => {
     });
 
     it("matches accented localized book names in the prose scanner", () => {
-      expect(parseVerseReferences("Génesis 3", spaBooks)).toContainEqual(
+      expect(scanVerseReferencesInText("Génesis 3", spaBooks)).toContainEqual(
         expect.objectContaining({
           ref: { book: "GEN", chapter: 3 },
         })
       );
       expect(
-        parseVerseReferences("Lee Éxodo 2 conmigo", spaBooks)
+        scanVerseReferencesInText("Lee Éxodo 2 conmigo", spaBooks)
       ).toContainEqual(
         expect.objectContaining({
           ref: { book: "EXO", chapter: 2 },
         })
       );
-      expect(parseVerseReferences("Ver Nehemías 1:5", spaBooks)).toContainEqual(
+      expect(
+        scanVerseReferencesInText("Ver Nehemías 1:5", spaBooks)
+      ).toContainEqual(
         expect.objectContaining({
           ref: { book: "NEH", chapter: 1, verse: 5 },
         })
@@ -856,15 +1125,15 @@ describe("all 66 Protestant-canon books", () => {
     it("does not unique-prefix expand short tokens when scanning prose", () => {
       // Prefix matching belongs in the deliberate single-reference parser, not
       // free-text scanning — otherwise "Is 3" becomes Isaiah, "So 3" Song, etc.
-      expect(parseVerseReferences("See Esd 3 for context", spaBooks)).toEqual(
-        []
-      );
       expect(
-        parseVerseReferences("See Filip 2:1 for context", spaBooks)
+        scanVerseReferencesInText("See Esd 3 for context", spaBooks)
+      ).toEqual([]);
+      expect(
+        scanVerseReferencesInText("See Filip 2:1 for context", spaBooks)
       ).toEqual([]);
       // Exact full names still match.
       expect(
-        parseVerseReferences("See Filipenses 2:1 for context", spaBooks)
+        scanVerseReferencesInText("See Filipenses 2:1 for context", spaBooks)
       ).toContainEqual(
         expect.objectContaining({
           ref: { book: "PHP", chapter: 2, verse: 1 },
@@ -883,8 +1152,8 @@ describe("all 66 Protestant-canon books", () => {
         "Ru 2 left early",
       ];
       for (const text of ordinary) {
-        expect(parseVerseReferences(text, spaBooks)).toEqual([]);
-        expect(parseVerseReferences(text)).toEqual([]);
+        expect(scanVerseReferencesInText(text, spaBooks)).toEqual([]);
+        expect(scanVerseReferencesInText(text)).toEqual([]);
       }
     });
 
@@ -895,7 +1164,7 @@ describe("all 66 Protestant-canon books", () => {
         verse: 4,
       });
       expect(
-        parseVerseReferences("See 1 Corintios 13:4 for love", spaBooks)
+        scanVerseReferencesInText("See 1 Corintios 13:4 for love", spaBooks)
       ).toContainEqual(
         expect.objectContaining({
           ref: { book: "1CO", chapter: 13, verse: 4 },
@@ -933,7 +1202,7 @@ describe("all 66 Protestant-canon books", () => {
         book: "Esdras",
         chapter: 3,
       });
-      expect(parseVerseReferences("Esdras 3")).toEqual([]);
+      expect(scanVerseReferencesInText("Esdras 3")).toEqual([]);
     });
 
     it("matches by book id when the listed common name differs", () => {
@@ -945,7 +1214,7 @@ describe("all 66 Protestant-canon books", () => {
 
     it("returns no mid-sentence hits for fully unknown names", () => {
       expect(
-        parseVerseReferences("See Nopeon 1 for context", spaBooks)
+        scanVerseReferencesInText("See Nopeon 1 for context", spaBooks)
       ).toEqual([]);
     });
   });
@@ -965,6 +1234,7 @@ describe("getBookId()", () => {
     expect(getBookId("1CH")).toBe("1CH");
     expect(getBookId("1 chronicles")).toBe("1CH");
     expect(getBookId("1 chron")).toBe("1CH");
+    expect(getBookId("1Chron")).toBe("1CH");
     expect(getBookId("1Kgs")).toBe("1KI");
     expect(getBookId("2Kgs")).toBe("2KI");
     expect(getBookId("1Chr")).toBe("1CH");
@@ -984,6 +1254,44 @@ describe("getBookId()", () => {
     expect(getBookId("Nah")).toBe("NAM");
     expect(getBookId("Phil")).toBe("PHP");
     expect(getBookId("Phlm")).toBe("PHM");
+    expect(getBookId("Genes")).toBe("GEN");
+    expect(getBookId("Levit")).toBe("LEV");
+    expect(getBookId("Gen.")).toBe("GEN");
+    expect(getBookId("Rev")).toBe("REV");
+  });
+
+  it("resolves every BOOK_SLUGS canonical name via the exact map", () => {
+    for (const [bookId, slug] of Object.entries(BOOK_SLUGS)) {
+      const nameKey = slug.replaceAll("-", "");
+      expect(
+        BOOK_ID_MAP.has(nameKey) || BOOK_ID_MAP.has(bookId.toLowerCase())
+      ).toBe(true);
+      expect(getBookId(slug)).toBe(bookId);
+      expect(getBookId(nameKey)).toBe(bookId);
+    }
+  });
+
+  it("does not treat ordinary words as book abbreviations", () => {
+    for (const word of [
+      "Isaac",
+      "Judah",
+      "Jerusalem",
+      "Galilee",
+      "Joseph",
+      "Hebron",
+      "Jonathan",
+      "Judgment",
+      "Danielle",
+      "General",
+      "Revision",
+      "Philosophy",
+      "Actually",
+      "Level",
+      "Titles",
+      "Jobs",
+    ]) {
+      expect(getBookId(word)).toBeNull();
+    }
   });
 
   it("resolves hyphenated URL slugs (path-based routing)", () => {
@@ -1020,8 +1328,9 @@ describe("getBookSlug()", () => {
   });
 
   it("resolves spelled-out apocrypha names that collide with a shorter book's prefix", () => {
-    // Without explicit entries these fall through to the `startsWith` scan
-    // and land on Jude ("jud") and Ecclesiastes ("ecc").
+    // Without explicit entries the abbreviation fallback would hand "judith"
+    // to the first key starting with "jud" (Jude) and "ecclesiasticus" to
+    // Ecclesiastes ("ecc"). Exact map entries must win.
     expect(getBookId("judith")).toBe("JDT");
     expect(getBookId("ecclesiasticus")).toBe("SIR");
   });

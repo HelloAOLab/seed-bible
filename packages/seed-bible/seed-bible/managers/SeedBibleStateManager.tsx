@@ -4,6 +4,7 @@ import {
   createBibleDataManager,
   type BibleDataManager,
   type BookId,
+  type TranslationsCache,
   type VerseRef,
 } from "../managers/BibleDataManager";
 import {
@@ -50,11 +51,7 @@ import {
   writeStoredTabsState,
   type PersistedTab,
 } from "../managers/TabsPersistence";
-import {
-  generateThemeCssVariables,
-  createTheme,
-  generateThemeCssClasses,
-} from "../managers/ThemeManager";
+import { createTheme } from "../managers/ThemeManager";
 import type { ThemeManager } from "../managers/ThemeManager";
 import {
   batch,
@@ -116,7 +113,11 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
-import { createI18nManager, type I18nManager } from "../i18n";
+import {
+  createI18nManager,
+  getBrandedAppText,
+  type I18nManager,
+} from "../i18n";
 import {
   createOnboardingManager,
   type OnboardingManager,
@@ -204,6 +205,27 @@ export interface AppState {
   viewportWidth: ReadonlySignal<number>;
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
+  /**
+   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
+   * Call once from a post-mount effect to correct the SSR-matched seed value
+   * (see `viewportWidth`/`viewportHeight`) to the device's real viewport
+   * right after Preact's first commit. No-op on the server.
+   */
+  applyViewport: () => void;
+
+  /**
+   * Applies every value the app keeps in `localStorage` that also feeds the
+   * first render — saved tabs and their slot layout, the cached translation
+   * catalog, the selector's view mode, and the tutorial/onboarding flags.
+   *
+   * All of those seed to what the server rendered (it has no `localStorage` at
+   * all), because a client tree with extra elements is the one hydration
+   * divergence Preact reports rather than silently patching. Call once from a
+   * post-mount effect — see `MainBody` in `app/main.tsx` — so the device's real
+   * state arrives as a normal diffed re-render. Ordering matters and is fixed
+   * here: slots bind to tab objects by id, so tabs are restored first.
+   */
+  hydrateFromStorage: () => void;
 
   /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
@@ -306,11 +328,8 @@ export interface SeedBibleState {
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
-  /** Theme manager plus derived CSS variables/classes for rendering. */
-  theme: ThemeManager & {
-    themeCssVariables: ReadonlySignal<string>;
-    themeCssClasses: ReadonlySignal<string>;
-  };
+  /** Theme manager. Writes its own CSS to `document.head` — see `ThemeManager.tsx`. */
+  theme: ThemeManager;
   /** Sidebar/settings visibility manager. */
   sidebar: SidebarManager;
   /** Reader tab lifecycle manager. */
@@ -445,6 +464,12 @@ export interface CreateSeedBibleStateOptions {
    */
   offlineStore?: OfflineTranslationStore | null;
   /**
+   * Cache shared across `getTranslations()` calls. Only the SSR host passes
+   * one in (see `standalone/ssrTranslationsCache.ts`) — omitted here, client
+   * behavior (per-page-load cache + localStorage) is unchanged.
+   */
+  translationsCache?: TranslationsCache;
+  /**
    * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
    * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
    * instance already fetched. The client uses this to seed its own API cache
@@ -489,6 +514,7 @@ export function createSeedBibleState(
   );
   const data = createBibleDataManager(api, {
     offlineStore: options.offlineStore,
+    translationsCache: options.translationsCache,
   });
   const os = CasualOSManager();
   const login = createLoginManager({ os });
@@ -528,7 +554,8 @@ export function createSeedBibleState(
     discover,
     readingExtensions,
     () => annotations,
-    branding
+    branding,
+    settings
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -650,13 +677,6 @@ export function createSeedBibleState(
   });
   const readingPlans = createReadingPlansManager(os, login);
 
-  const { currentTheme } = themeManager;
-  const theme = computed(() => currentTheme.value);
-  const themeCssVariables = computed(() =>
-    generateThemeCssVariables(theme.value)
-  );
-  const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
-
   // Theme is the source of truth for text colors. When the user switches
   // theme presets, drop any per-section color override from the text editor
   // so verse / book title / heading pick up the new theme's colors.
@@ -679,22 +699,16 @@ export function createSeedBibleState(
   });
 
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
-  const isSSR = import.meta.env.SSR as boolean;
 
-  const viewportWidth = signal(
-    typeof window === "undefined"
-      ? isSSR && renderedAsMobile
-        ? MOBILE_BREAKPOINT
-        : 1000
-      : window.innerWidth
-  );
-  const viewportHeight = signal(
-    typeof window === "undefined"
-      ? isSSR && renderedAsMobile
-        ? 800
-        : 1000
-      : window.innerHeight
-  );
+  // Seeded from the SAME `renderedAsMobile` guess the server made — never
+  // `window.innerWidth`/`.innerHeight` here — so the client's first
+  // render/hydrate pass produces the identical viewport-derived layout the
+  // server rendered, regardless of the device's actual screen size.
+  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
+  // dimensions once, from a post-mount effect in `MainBody` — see
+  // `app/main.tsx`.
+  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
+  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
@@ -713,6 +727,14 @@ export function createSeedBibleState(
     discover,
     chats
   );
+  // True only while `hydrateFromStorage` below is applying the saved tab state.
+  // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
+  // the restored book/chapter to the address bar — a URL move that looks exactly
+  // like a navigation to the effect below, but is the tail end of the same page
+  // load. Without this, a returning visitor whose last chapter wasn't the boot
+  // default watched Today open and then immediately close again.
+  let restoringStoredState = false;
+
   // Close any fullscreen pane when the book/chapter in the URL path changes,
   // so navigating reveals the reader (every navigation path writes this
   // position into the path — see `commitSelectedTabToUrl` in TabsManager).
@@ -744,6 +766,16 @@ export function createSeedBibleState(
     lastReadingLocation = location;
 
     if (previous === null || previous === location) {
+      return;
+    }
+    // A restore is not a navigation: the reader hasn't gone anywhere, the app is
+    // catching the URL up to state that only arrived after the load — the saved
+    // tabs from `localStorage` (see `restoringStoredState`) or the profile's
+    // saved translation, which reaches this effect at all because it can fall
+    // back to a different book (see `isRestoringProfileTranslation`). The
+    // baseline above is updated first in both cases, so the restored position
+    // becomes the position everything after it is compared against.
+    if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
       return;
     }
     panes.closeFullscreenPanes();
@@ -835,19 +867,29 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
+  /**
+   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
+   * Shared by the resize listener below and a one-time post-mount correction
+   * (`MainBody` in `app/main.tsx`) — one place reads `window.inner*` into
+   * these signals. No-op on the server.
+   */
+  const applyViewport = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    batch(() => {
+      viewportWidth.value = window.innerWidth;
+      viewportHeight.value = window.innerHeight;
+    });
+  };
+
   effect(() => {
     if (typeof window === "undefined") {
       return;
     }
-    const handleResize = () => {
-      batch(() => {
-        viewportWidth.value = window.innerWidth;
-        viewportHeight.value = window.innerHeight;
-      });
-    };
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", applyViewport);
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", applyViewport);
     };
   });
 
@@ -991,6 +1033,13 @@ export function createSeedBibleState(
     }
   });
 
+  // Blocks the persistence effect below until `hydrateFromStorage` has read the
+  // stored tabs back. Until then the managers hold only the single URL-derived
+  // tab they seed with to match SSR, and persisting *that* would overwrite the
+  // visitor's saved tabs with a one-tab state before anything ever restored
+  // them — the saved session would be destroyed by the act of loading the page.
+  const tabsRestored = signal(false);
+
   // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
   // selected tab, the layout preset, and the slot arrangement) to localStorage
   // so TabsManager/TabsLayoutManager can restore it on the next refresh or
@@ -1016,6 +1065,10 @@ export function createSeedBibleState(
         });
 
     effect(() => {
+      if (!tabsRestored.value) {
+        return;
+      }
+
       const persistedTabs = buildPersistedTabs();
       const persistableIds = new Set(persistedTabs.map((tab) => tab.id));
 
@@ -1051,6 +1104,36 @@ export function createSeedBibleState(
     });
   }
 
+  /**
+   * One-time correction of every `localStorage`-derived value that feeds the
+   * first render. See `AppState.hydrateFromStorage`.
+   */
+  const hydrateFromStorage = () => {
+    // `batch` flushes its effects before it returns, so the reader's write of
+    // the restored position to the URL lands inside this window.
+    restoringStoredState = true;
+    try {
+      batch(() => {
+        // Tabs before slots: slots are bound to tab objects by id, and restoring
+        // tabs replaces those objects wholesale.
+        tabs.hydrateStoredTabs();
+        tabsLayout.hydrateStoredLayout();
+        data.hydrateCachedCatalog();
+        selector.hydrateStoredViewMode();
+        tutorial.hydrateStoredFlags();
+        onboarding.hydrateStoredFlags();
+        // Unblocks the persistence effect above, which now sees the restored tab
+        // list rather than the URL-only seed.
+        tabsRestored.value = true;
+      });
+    } finally {
+      restoringStoredState = false;
+    }
+    // Deliberately outside the batch: this can set `promptVisible`, and it must
+    // observe the settled reader state rather than a half-applied one.
+    tutorial.armAutoStart();
+  };
+
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
     void i18n.language.value;
@@ -1058,9 +1141,11 @@ export function createSeedBibleState(
 
     const { t } = i18n;
 
-    const seedBibleTitle = t("seed-bible", {
-      defaultValue: "Seed Bible",
-    });
+    const seedBibleTitle = getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding
+    );
 
     const getTitle = () => {
       if (!selectedTab.value) {
@@ -1136,9 +1221,11 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    return t("seed-bible", {
-      defaultValue: "Seed Bible",
-    });
+    return getBrandedAppText(
+      t("seed-bible", { defaultValue: "Seed Bible" }),
+      t,
+      branding
+    );
   });
 
   /**
@@ -1998,11 +2085,7 @@ export function createSeedBibleState(
   const state: SeedBibleState = {
     os,
     bibleData: data,
-    theme: {
-      ...themeManager,
-      themeCssVariables,
-      themeCssClasses,
-    },
+    theme: themeManager,
     sidebar,
     tabs,
     tabsLayout,
@@ -2050,6 +2133,8 @@ export function createSeedBibleState(
       effectivePanes,
       viewportWidth,
       viewportHeight,
+      applyViewport,
+      hydrateFromStorage,
       isMobile,
       isMobileLandscape,
       isCompactDesktop,
@@ -2171,7 +2256,7 @@ export function createSeedBibleState(
       today={today}
       login={login}
       bookmarks={bookmarks.bookmarks}
-      theme={theme}
+      theme={themeManager.currentTheme}
       isMobile={isMobile}
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
@@ -2250,7 +2335,7 @@ export function createSeedBibleState(
     },
     () => data.availableTranslations.value,
     async () => {
-      if (data.availableTranslations.value.length === 0) {
+      if (!data.catalogLoaded.value) {
         await data.getTranslations();
       }
       return data.availableTranslations.value;

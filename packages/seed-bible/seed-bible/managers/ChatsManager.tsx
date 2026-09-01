@@ -16,7 +16,7 @@ import {
 import type { TranslatableTitle } from "./BibleToolsManager";
 import { translateTitle } from "../app/utils";
 import type { VerseRef } from "./BibleDataManager";
-import { parseVerseReferences } from "./BibleDataManager";
+import { scanVerseReferencesInText } from "./BibleDataManager";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 import { getConnectedUserVisualKey } from "./SessionsManager";
 import { v4 as uuid } from "uuid";
@@ -919,7 +919,7 @@ function parseTextMessage(
     });
   }
 
-  for (const { ref, start, end } of parseVerseReferences(text, books)) {
+  for (const { ref, start, end } of scanVerseReferencesInText(text, books)) {
     pending.push({ kind: "verse_ref", start, end, ref });
   }
 
