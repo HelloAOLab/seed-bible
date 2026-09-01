@@ -293,9 +293,15 @@ interface LegacyStoredChapter {
 /**
  * Version 1 kept two derived facts about the base instead of the base itself.
  * A non-null fingerprint or timestamp proves the server held a copy, and the
- * local annotation is the closest known version of it: an unchanged note then
- * passes the fingerprint check, a changed one correctly raises a conflict.
- * With neither, the note has never been on the server.
+ * local annotation is the closest known version of it. With neither, the note
+ * has never been on the server.
+ *
+ * Where v1 remembered the server's change time, it is put back on that copy —
+ * the annotation carries the time of the *local* edit, so a base built from it
+ * unchanged would never match what the server holds and every migrated pending
+ * row would look edited elsewhere. A row that only ever had a fingerprint has
+ * nothing to put back: if its note was edited offline, its first push asks the
+ * user once. That is the whole residual cost of the migration.
  */
 export function migrateV1Row(
   row: LegacyStoredAnnotation
@@ -308,11 +314,34 @@ export function migrateV1Row(
     address: row.annotationId,
     collection: `${row.bookId}/${row.chapterNumber}`,
     payload: row.annotation ?? null,
-    base: hadServerCopy ? (row.annotation ?? null) : null,
+    base: hadServerCopy ? baseFromV1Row(row) : null,
     deleted: row.deleted,
     updatedAtMs: row.updatedAtMs,
     pendingOp: row.pendingOp,
     attempts: row.attempts,
+  };
+}
+
+/** An annotation-shaped value, narrowed without importing the feature's type. */
+function hasDataObject(
+  value: unknown
+): value is { data: Record<string, unknown> } {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const { data } = value as { data?: unknown };
+  return typeof data === "object" && data !== null;
+}
+
+/** The local annotation, restamped with the server's change time when v1 kept one. */
+function baseFromV1Row(row: LegacyStoredAnnotation): unknown {
+  const annotation = row.annotation ?? null;
+  if (row.baseUpdatedAtMs === null || !hasDataObject(annotation)) {
+    return annotation;
+  }
+  return {
+    ...annotation,
+    data: { ...annotation.data, updatedAtMs: row.baseUpdatedAtMs },
   };
 }
 

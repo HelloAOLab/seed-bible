@@ -5,6 +5,7 @@ import {
   createInMemoryRecordStore,
   LOCAL_OWNER,
   MAX_SYNC_ATTEMPTS,
+  migrateV1Row,
   syncedRow,
   type OfflineRecordStore,
   type StoredRecord,
@@ -1014,6 +1015,41 @@ describe("RecordSyncManager", () => {
 
       expect(getDataMock).not.toHaveBeenCalled();
       expect(sync.pendingCount.value).toBe(0);
+    });
+  });
+
+  describe("rows migrated from the version-1 schema", () => {
+    it("pushes a pending note the server still holds unchanged", async () => {
+      const mine = makeAnnotation("ann-1", {
+        html: "<p>mine</p>",
+        updatedAtMs: 9_000,
+      });
+      const onServer = makeAnnotation("ann-1", { updatedAtMs: 4_000 });
+      await store.put(
+        migrateV1Row({
+          key: `${OWNER}/ann-1`,
+          owner: OWNER,
+          annotationId: "ann-1",
+          bookId: "GEN",
+          chapterNumber: 1,
+          annotation: mine,
+          deleted: false,
+          updatedAtMs: 9_000,
+          baseUpdatedAtMs: 4_000,
+          baseFingerprint: null,
+          pendingOp: "upsert",
+          attempts: 0,
+        }) as StoredRecord<Annotation>
+      );
+      serverHas(onServer);
+
+      const sync = createSync();
+      await sync.sync();
+
+      expect(recordDataMock).toHaveBeenCalledWith(OWNER, "ann-1", mine, {
+        marker: "publicRead:annotations/GEN/1",
+      });
+      expect(sync.conflicts.value).toEqual([]);
     });
   });
 

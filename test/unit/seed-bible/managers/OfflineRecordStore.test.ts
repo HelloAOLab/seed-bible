@@ -111,6 +111,20 @@ describe("migrateV1Row()", () => {
     expect(row.base).toEqual(makeAnnotation("ann-1"));
   });
 
+  it("puts the server's own change time on the base, so an unchanged note still pushes", () => {
+    const row = migrateV1Row({
+      ...legacy,
+      baseUpdatedAtMs: 4_000,
+      pendingOp: "upsert",
+    });
+    const annotation = makeAnnotation("ann-1");
+    expect(row.base).toEqual({
+      ...annotation,
+      data: { ...annotation.data, updatedAtMs: 4_000 },
+    });
+    expect(row.payload).toEqual(annotation);
+  });
+
   it("leaves the base null for a note that never reached the server", () => {
     const row = migrateV1Row({ ...legacy, pendingOp: "upsert" });
     expect(row.base).toBeNull();
