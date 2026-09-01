@@ -1,8 +1,9 @@
-import "./BibleReaderToolbar.css";
-import { effect, useComputed, useSignal } from "@preact/signals";
+import "./BibleReaderToolbar.inline.css";
+import { effect, signal, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
+import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
   applyToolbarCustomization,
   UI_SIZE_SCALE_MAP,
@@ -24,12 +25,11 @@ import {
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 import { openBookmarkCategoryModal } from "../Tabs/Tabs";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { getExtensionExports } from "../../managers";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
   annotationVerseNumbers,
+  annotationListHasOtherAuthors,
   groupAnnotationsByVerseRange,
   type AnnotationGroup,
   type AnnotationsManager,
@@ -39,7 +39,7 @@ import {
   AnnotationCommentMeta,
   annotationLocationLabel,
   openDeleteAnnotationConfirm,
-} from "../DiscoverPane/DiscoverPane";
+} from "../DiscoverPane/AnnotationsSection";
 import {
   ContextMenuWithButton,
   ContextMenuItem,
@@ -49,6 +49,50 @@ import type { VerseRef } from "../../managers/BibleDataManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { DEFAULT_HIGHLIGHT_IDS } from "../../managers/ThemeManager";
+
+/** Shared always-true visibility for Chat when `?chatFirst=true`. */
+const CHAT_FIRST_VISIBLE = signal(true);
+
+/**
+ * Boot-only integration flag: `?chatFirst=true` promotes Chat on mobile (fourth
+ * bottom tab instead of Bookmarks/Discover) and keeps Chat prominent on
+ * desktop/laptop. Case-insensitive `"true"` only — `"1"` / `"yes"` stay off.
+ */
+function readChatFirstFlag(url: URL): boolean {
+  return url.searchParams.get("chatFirst")?.toLowerCase() === "true";
+}
+
+/**
+ * When chat-first is on, force Chat into the labeled (desktop/laptop) toolbar
+ * even if it was hidden by visibility rules or toolbar customization, and park
+ * it just after the non-controllable reading nav cluster so it reads as a
+ * primary action without displacing chapter navigation.
+ */
+function applyChatFirstDesktopTools(
+  resolved: BibleReaderToolbarTool[],
+  customized: BibleReaderToolbarTool[]
+): BibleReaderToolbarTool[] {
+  const chatTool = resolved.find((tool) => tool.id === "open-chat");
+  if (!chatTool) {
+    return customized;
+  }
+
+  const promoted: BibleReaderToolbarTool = {
+    ...chatTool,
+    visible: CHAT_FIRST_VISIBLE,
+  };
+  const withoutChat = customized.filter((tool) => tool.id !== "open-chat");
+  const firstControllable = withoutChat.findIndex(
+    (tool) => tool.isControllable
+  );
+  const insertAt =
+    firstControllable === -1 ? withoutChat.length : firstControllable;
+  return [
+    ...withoutChat.slice(0, insertAt),
+    promoted,
+    ...withoutChat.slice(insertAt),
+  ];
+}
 
 /**
  * Breathing room between the reader's last content and the bottom chrome, in
@@ -130,9 +174,9 @@ interface MobileMoreMenuProps {
   onClose: () => void;
   tools: BibleReaderToolbarTool[];
   /**
-   * App-level items (not extension tools) pinned to the top of the menu, e.g.
-   * Bookmarks when it has been demoted off the bottom toolbar. Each item's
-   * `onClick` is responsible for closing the menu.
+   * App-level items (not extension tools) appended after extension tools, e.g.
+   * Tabs, or Bookmarks when chat-first has demoted it off the bottom toolbar.
+   * Each item's `onClick` is responsible for closing the menu.
    */
   pinnedItems?: Array<{
     id: string;
@@ -227,8 +271,11 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
               className="sb-mobile-more-menu-unread-indicator"
               aria-label={
                 props.chatWasMentioned
-                  ? "Unread mention"
-                  : `Unread messages: ${props.unreadChatIndicator}`
+                  ? t("unread-mention", { defaultValue: "Unread mention" })
+                  : t("unread-messages", {
+                      defaultValue: "Unread messages: {{count}}",
+                      count: props.unreadChatIndicator,
+                    })
               }
             >
               {props.unreadChatIndicator}
@@ -392,6 +439,14 @@ function removeSharedHighlightsFromSelection(
  *   leave any existing personal highlight on those verses alone. The broadcast
  *   covers it for as long as it lives (the reader draws a decoration highlight
  *   over a saved one) and it reappears when the broadcast expires.
+ *
+ * By default the verse selection is cleared once the highlight is applied —
+ * the selection and its toolbar were otherwise left sitting open after every
+ * highlight, forcing an extra dismiss (#1704). `clearSelection` lets a caller
+ * opt out: the custom-color picker's live-drag commits pass `false` so the
+ * selection survives while the color dialog is still open, letting the user
+ * keep tweaking the shade instead of losing the selection after the first
+ * settled color.
  */
 function applyHighlightWithSession(
   rs: BibleReadingState,
@@ -401,24 +456,28 @@ function applyHighlightWithSession(
     customColor?: string;
     customFontColor?: string;
   },
-  isSignedIn: boolean
+  isSignedIn: boolean,
+  clearSelection = true
 ): void {
   if (!session || !session.userCanDecorate(session.localSessionId.value)) {
     // A participant who can't broadcast used to match neither branch here, so
     // highlighting silently did nothing for them. Saving is the only thing this
     // can mean, so a signed-out user is asked to sign in before it applies.
     void rs.highlightSelectedVerses(details);
-    return;
+  } else {
+    const duration = session.options.value.highlightDurationSeconds;
+    const isTransient = duration !== null && duration > 0;
+
+    if (!isTransient && isSignedIn) {
+      void rs.highlightSelectedVerses(details);
+    }
+
+    broadcastDecorationToSession(session, rs, details);
   }
 
-  const duration = session.options.value.highlightDurationSeconds;
-  const isTransient = duration !== null && duration > 0;
-
-  if (!isTransient && isSignedIn) {
-    void rs.highlightSelectedVerses(details);
+  if (clearSelection) {
+    rs.clearSelectedVerses();
   }
-
-  broadcastDecorationToSession(session, rs, details);
 }
 
 /**
@@ -438,6 +497,7 @@ function VerseToolbarAnnotationGroup(props: {
   toast: SeedBibleState["app"]["toast"];
   openDiscover: () => void;
   onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
 }) {
   const {
     id,
@@ -448,6 +508,7 @@ function VerseToolbarAnnotationGroup(props: {
     modals,
     toast,
     onReferenceClick,
+    otherPeoplePresent,
   } = props;
   const { t, language } = useI18n();
   const expanded = useSignal(true);
@@ -493,6 +554,7 @@ function VerseToolbarAnnotationGroup(props: {
                   login={login}
                   t={t}
                   language={language}
+                  otherPeoplePresent={otherPeoplePresent}
                 />
               </div>
               <ContextMenuWithButton
@@ -552,7 +614,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     bookmarks,
-    extensions,
     login,
   } = props.state;
   const selectedTab = useComputed(
@@ -570,8 +631,29 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
+  // `BibleReaderToolbar` is a sibling of `<TabsLayout>` (which contains
+  // `BibleReader`), not a descendant of it — `BibleReader.tsx` suspending on
+  // its own chapter load does nothing for this component, since
+  // `preact-render-to-string` only defers the specific subtree that actually
+  // threw. Without this, the tools below (`hasNext`/`hasPrevious`-driven
+  // chapter nav buttons among them) render off of whatever `chapterData`/
+  // `translationBooks` happen to hold on the very first synchronous pass —
+  // typically nothing yet — baking incorrect availability into the SSR HTML
+  // that a live client would never show.
+  if (
+    import.meta.env.SSR &&
+    !readingState.value.initialChapterLoadSettled.value
+  ) {
+    throw readingState.value.chapterDataPromise;
+  }
+
   const viewportWidth = props.state.app.viewportWidth;
   const viewportHeight = props.state.app.viewportHeight;
+
+  // Boot-only integration flag — latched from `initialUrl` so later navigation
+  // cannot flip the layout mid-session. Affects mobile bottom tabs and the
+  // desktop/laptop labeled toolbar.
+  const isChatFirst = readChatFirstFlag(props.state.navigation.initialUrl);
 
   const tools = useComputed(() => {
     const resolved = toolsManager.getToolbarTools({
@@ -597,7 +679,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       app: props.state.app,
       annotations: props.state.annotations,
     });
-    return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
+    const customized = applyToolbarCustomization(
+      resolved,
+      settings.settings.value.toolbar
+    );
+    if (!isChatFirst) {
+      return customized;
+    }
+    return applyChatFirstDesktopTools(resolved, customized);
   });
 
   const unreadChatIndicator = useComputed(() => {
@@ -620,7 +709,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  const hiddenToolIds = new Set(["open-search"]);
+  const hiddenToolIds = new Set(
+    isChatFirst ? ["open-search", "open-chat"] : ["open-search"]
+  );
 
   const moreTools = useComputed(() =>
     tools.value.filter(
@@ -629,11 +720,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
+  // Chat-first always shows More so demoted Bookmarks (and Tabs) have a home,
+  // even when no controllable extension tools remain after hiding open-chat.
+  const showMoreMenu = useComputed(
+    () => moreTools.value.length > 0 || isChatFirst
+  );
+
   // Whether the chat tool is tucked inside the mobile More menu. When it is, its
   // unread badge is hidden until the menu is opened, so the More tab itself
-  // needs to carry the indicator.
-  const chatInMoreMenu = useComputed(() =>
-    moreTools.value.some((tool) => tool.id === "open-chat")
+  // needs to carry the indicator. When chat is a bottom tab, the tab itself
+  // carries the badge instead.
+  const chatInMoreMenu = useComputed(
+    () =>
+      !isChatFirst && moreTools.value.some((tool) => tool.id === "open-chat")
   );
 
   const verseToolbarTools = useComputed(() => {
@@ -776,29 +875,39 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       !bookmarks.isFilterActive.value
   );
 
-  const isTodayOpen = useComputed(() =>
-    panes.panes.value.some((p) => p.id === "today-screen-pane")
-  );
+  const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
   const activeMobileTab = useComputed<
-    "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
+    | "today"
+    | "bible"
+    | "search"
+    | "tabs"
+    | "bookmarks"
+    | "chat"
+    | "more"
+    | "none"
   >(() => {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
     // The account ("You") control now lives in the reader header, so an open
     // settings view no longer maps to a bottom-bar tab.
     if (sidebar.isSettingsOpen.value) return "none";
+    if (isChatFirst && sidebar.isChatPanelOpen.value) {
+      return "chat";
+    }
     if (isBookmarksViewOpen.value) {
-      // Bookmarks is always a top-level tab, so highlight it whenever its
-      // view is open.
-      return "bookmarks";
+      // Bookmarks is a top-level tab unless chat-first demoted it into More;
+      // highlight it whenever its view is open either way so the user can tell
+      // the drawer is still the bookmarks list.
+      return isChatFirst ? "more" : "bookmarks";
     }
     if (isTodayOpen.value) return "today";
     // Some other extension pane is covering the reader (opened from More).
     if (isFullscreenPaneVisible.value) return "more";
     if (sidebar.isMobileOpen.value) {
       // Tabs is a top-level tab only when there's no overflow. When it lives
-      // inside the More menu, keep nothing highlighted.
-      return moreTools.value.length > 0 ? "none" : "tabs";
+      // inside the More menu, keep nothing highlighted — unless chat-first is
+      // forcing More open for Bookmarks, in which case the same rule applies.
+      return showMoreMenu.value ? "none" : "tabs";
     }
     return "bible";
   });
@@ -820,6 +929,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         .getQuickTools({
           readingState: readingState.value!,
           playlists: props.state.playlists,
+          annotations: props.state.annotations,
           features: props.state.features,
           surface: "mobile-navigation-bar",
         })
@@ -924,7 +1034,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       return;
     }
     const el = verseToolbarRef.current;
-    if (!el) return;
+    if (!el || typeof ResizeObserver === "undefined") return;
 
     const measure = () => {
       verseToolbarHeight.value = el.offsetHeight;
@@ -1009,10 +1119,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    *
    * The sheet follows the finger rather than snapping at a threshold: dragging up
    * grows the overflow row a pixel at a time, dragging back down shrinks it, and
-   * dragging down on an already-collapsed sheet slides the whole sheet toward the
-   * bottom of the screen to dismiss it. Releasing settles to whichever resting
-   * position the gesture ended up nearest, so a half-finished drag animates the
-   * rest of the way instead of being abandoned.
+   * once the overflow row is fully closed — whether the drag started collapsed or
+   * (after closing it mid-gesture) expanded — continuing to drag down slides the
+   * whole sheet toward the bottom of the screen to dismiss it, all in one
+   * continuous motion rather than requiring a release and a second drag.
+   * Releasing settles to whichever resting position the gesture ended up nearest,
+   * so a half-finished drag animates the rest of the way instead of being
+   * abandoned.
    *
    * A press that barely moves is a tap, and toggles.
    */
@@ -1073,11 +1186,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const reveal = Math.min(overflowHeight, Math.max(0, drag.startReveal - dy));
     verseSheetDragReveal.value = reveal;
 
-    // Only start sliding the sheet away once there is no overflow left to close:
-    // a downward drag first puts the sheet back to collapsed, and only carries on
-    // into a dismiss if it began there.
+    // Once the overflow row is fully closed, the rest of the same downward drag
+    // slides the whole sheet away to dismiss. `dy` minus `startReveal` is how far
+    // the finger has moved *past* the point where the row finished closing —
+    // using that (rather than raw `dy`) means the dismiss slide picks up smoothly
+    // from 0 instead of jumping by however much drag it took to close the row,
+    // and it works the same whether the drag started collapsed (startReveal 0) or
+    // expanded (startReveal the full row height).
+    const distancePastClosed = dy - drag.startReveal;
     verseSheetDismissOffset.value =
-      reveal === 0 && dy > 0 && drag.startReveal === 0 ? dy : 0;
+      reveal === 0 && distancePastClosed > 0 ? distancePastClosed : 0;
   };
 
   const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
@@ -1118,6 +1236,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     isVerseSheetExpanded.value = drag.startExpanded;
   };
 
+  /**
+   * Elements inside the mobile sheet that must keep their own tap/scroll
+   * behavior instead of starting the sheet drag: buttons and inputs (so taps
+   * still register as clicks — capturing the pointer on the panel would
+   * otherwise steal their `pointerup`), and the horizontal highlight-color
+   * strip (its own swipe gesture would fight the sheet's vertical one).
+   */
+  const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
+    "button, input, a, .sb-verse-toolbar-swatches";
+
+  /**
+   * Entry point for the whole-panel version of the handle drag: any part of
+   * the collapsed/expanded mobile sheet not covered by the ignore list above
+   * starts the same drag tracked by the handle, so the user doesn't have to
+   * land a thumb precisely on the handle to expand, collapse, or dismiss it.
+   * Not wired up while the highlight picker is showing — that view has no
+   * overflow row to reveal, and its swatch strip already owns horizontal
+   * swipes.
+   */
+  const handleVerseSheetPanelPointerDown = (event: PointerEvent) => {
+    if (isHighlightPickerOpen.value) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest(VERSE_SHEET_DRAG_IGNORE_SELECTOR)) return;
+    handleVerseSheetHandlePointerDown(event);
+  };
+
   const handleVerseSheetHandleKeyDown = (event: KeyboardEvent) => {
     if (verseSheetOverflowHeight.value <= 0) return;
     if (event.key === "Enter" || event.key === " ") {
@@ -1140,30 +1284,79 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
   const selectionUI = useComputed(() => settings.settings.value.selectionUI);
 
-  // Debounce the commit so rapid `change` events from the native color
-  // picker (fired as the user drags) don't add each intermediate color to
-  // the custom palette — only the final settled color is saved.
+  // The most recent color from a still-pending debounce, so a blur that
+  // lands before the debounce fires can apply it immediately instead of
+  // losing it. `null` once there's nothing pending.
+  const customColorPendingRef = useRef<string | null>(null);
+  // Whether any color from the current "Add custom color" session has been
+  // applied yet — distinguishes "the dialog closed after picking a color"
+  // (clear the selection) from "the dialog closed without picking one"
+  // (leave the selection alone; nothing happened).
+  const customColorAppliedRef = useRef(false);
+
+  const applyCustomColor = (color: string, clearSelection: boolean) => {
+    settings.addCustomHighlightColor(color);
+    const rs = readingState.value;
+    if (rs) {
+      applyHighlightWithSession(
+        rs,
+        sessionState.value,
+        {
+          colorId: "yellow",
+          customColor: color,
+          customFontColor: getContrastTextColor(color),
+        },
+        !!login.userId.value,
+        clearSelection
+      );
+    }
+    customColorAppliedRef.current = true;
+  };
+
+  // Debounce the commit so rapid `input`/`change` events from the native
+  // color picker (fired as the user drags) don't add each intermediate color
+  // to the custom palette — only the settled color is saved. These debounced
+  // commits never clear the selection themselves: the color dialog may still
+  // be open, and clearing here would silently drop any further tweaking
+  // within the same dialog session (#1725). The selection is cleared for real
+  // in `finishCustomColor`, once the input actually loses focus.
   const commitCustomColor = (color: string) => {
     if (customColorCommitTimeoutRef.current !== null) {
       window.clearTimeout(customColorCommitTimeoutRef.current);
     }
+    customColorPendingRef.current = color;
     customColorCommitTimeoutRef.current = window.setTimeout(() => {
-      settings.addCustomHighlightColor(color);
-      const rs = readingState.value;
-      if (rs) {
-        applyHighlightWithSession(
-          rs,
-          sessionState.value,
-          {
-            colorId: "yellow",
-            customColor: color,
-            customFontColor: getContrastTextColor(color),
-          },
-          !!login.userId.value
-        );
-      }
       customColorCommitTimeoutRef.current = null;
+      const pending = customColorPendingRef.current;
+      customColorPendingRef.current = null;
+      if (pending !== null) {
+        applyCustomColor(pending, false);
+      }
     }, 300);
+  };
+
+  // Runs when the color input loses focus, i.e. the OS color dialog closed —
+  // the reliable "the user is done" signal, since the native `change` event
+  // this input would otherwise fire is what `onChange` gets rewritten to
+  // listen for as `input` (see the `onChange`/`onInput` props below), so it
+  // can't be used to distinguish "still dragging" from "done" on its own.
+  // Flushes a still-debounced pick immediately rather than waiting the
+  // remaining 300ms, and only clears the selection if a color was actually
+  // applied this dialog session (closing without picking one leaves the
+  // selection untouched, same as before).
+  const finishCustomColor = () => {
+    if (customColorCommitTimeoutRef.current !== null) {
+      window.clearTimeout(customColorCommitTimeoutRef.current);
+      customColorCommitTimeoutRef.current = null;
+    }
+    const pending = customColorPendingRef.current;
+    customColorPendingRef.current = null;
+    if (pending !== null) {
+      applyCustomColor(pending, true);
+    } else if (customColorAppliedRef.current) {
+      readingState.value?.clearSelectedVerses();
+    }
+    customColorAppliedRef.current = false;
   };
 
   // Clear removes a saved highlight *and* the session's broadcast copy, so it
@@ -1404,17 +1597,48 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     activeMobileTab.value,
   ]);
 
-  // Clicking anywhere outside the chapter content or the verse toolbar
-  // dismisses the verse selection (and therefore the toolbar). Only while the
-  // toolbar is actually showing — with a pane covering the reader every tap
-  // lands "outside", which would silently throw the selection away behind the
-  // pane instead of restoring the toolbar when the pane closes.
+  // Clicking anywhere outside a verse or the verse toolbar dismisses the
+  // verse selection (and therefore the toolbar). Only while the toolbar is
+  // actually showing — with a pane covering the reader every tap lands
+  // "outside", which would silently throw the selection away behind the pane
+  // instead of restoring the toolbar when the pane closes.
+  //
+  // Excluding only `.sb-verse-decorator` for a mouse (rather than the whole
+  // `.sb-chapter-content` container, or even the whole `.sb-verse`) is
+  // deliberate: a verse's own `onClick` already handles toggling that
+  // verse's selection, so this listener has to stand aside for it, but empty
+  // space within the chapter — padding, the gap between verse spans, a
+  // section heading — isn't a verse, and a tap there is exactly the "click
+  // off of it on an empty space on the page" this listener exists to catch.
+  // `.sb-verse` itself is too generous a target for that with a mouse: a
+  // poetry verse's outer span (`.sb-verse-poetry`, `BibleReader.tsx`) is
+  // `display: block`, so it — and each `.sb-verse-line` inside it — spans the
+  // full content width regardless of how short the actual line of text is,
+  // making most of a poem's visible blank space still read as "on the verse".
+  // A verse's own decorator span (`.sb-verse-decorator`) wraps only the words
+  // actually rendered, so that's the mouse target instead.
+  //
+  // A touch is far less precise, though, and there's no in-between "blank
+  // space" for a finger to miss into that a mouse pointer couldn't also land
+  // on deliberately, so a touch keeps checking the full `.sb-verse` — a tap
+  // between two wrapped poetry lines still counts as "on the verse" rather
+  // than clearing the selection out from under the finger that just placed
+  // it. `event.pointerType` (native to `PointerEvent`, no plumbing needed)
+  // picks the selector; the verse's own `onClick` guard for the poetry case
+  // makes the same touch/mouse distinction, using its own pointerdown for the
+  // pointer type since a `click` never carries it.
   //
   // A pane docked beside the reader (e.g. Discover, open on desktop) doesn't
   // cover it, so `isVerseToolbarVisible` stays true and this listener stays
   // attached — clicks inside that pane (composing an annotation, say) are
   // also excluded so they can't clear a selection the pane's own content is
-  // actively using (e.g. the annotation title/target derived from it).
+  // actively using (e.g. the annotation title/target derived from it). The
+  // exclusion has to key on `.sb-pane-shell-detached` rather than the bare
+  // `.sb-pane-shell` — every reader tab slot (`TabsLayout.tsx`) is *also* a
+  // `.sb-pane-shell`, just without the `-detached` modifier a floating,
+  // fullscreen, or overlay pane carries (`PaneLayout.tsx`), so matching the
+  // bare class swallowed every click anywhere in the reader, verse or not,
+  // and the toolbar could never be dismissed by clicking off of it.
   //
   // The annotation item's three-dot menu (`ContextMenuWithButton`) is
   // portaled to `document.body`, so a click on it — or on one of its
@@ -1432,10 +1656,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const handleDocumentPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest(".sb-chapter-content")) return;
+      const verseTapSelector =
+        event.pointerType === "touch" ? ".sb-verse" : ".sb-verse-decorator";
+      if (target.closest(verseTapSelector)) return;
       if (target.closest(".sb-verse-toolbar")) return;
       if (target.closest(".sb-pane-side-shell")) return;
-      if (target.closest(".sb-pane-shell")) return;
+      if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-footnote-modal-overlay")) return;
       readingState.value?.clearSelectedVerses();
@@ -1497,46 +1723,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
-  // Opens the Today screen. If the `today-screen` extension isn't installed
-  // yet, install it (the same path Settings uses — this persists the install)
-  // and then open it once it has initialized.
-  const openTodayScreen = async () => {
+  const openTodayScreen = () => {
     isMoreMenuOpen.value = false;
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-
-    const existing = getExtensionExports<TodayScreenAPI>("today-screen");
-    if (existing) {
-      existing.open();
-      return;
-    }
-
-    const entry = extensions.extensions.value.find(
-      (e) => e.id === "today-screen"
-    );
-    const todayPackage = entry?.extension;
-    if (!todayPackage) {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-      return;
-    }
-
-    const installed = await extensions.loadExtension(todayPackage);
-    if (installed) {
-      getExtensionExports<TodayScreenAPI>("today-screen")?.open();
-    } else {
-      props.state.app.toast(
-        t("today-coming-soon", {
-          defaultValue: "Today screen is coming soon",
-        })
-      );
-    }
+    props.state.today.open();
   };
 
   // Opens (or closes) the tabs list in the sidebar drawer. Shared by the Tabs
@@ -1582,6 +1776,40 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       bookmarks.toggleFilter();
     }
   };
+
+  // Opens (or closes) the floating chat panel. Used by the Chat bottom tab when
+  // `?chatFirst=true` promotes it off the More menu.
+  const openChatView = () => {
+    isMoreMenuOpen.value = false;
+    if (sidebar.isChatPanelOpen.value) {
+      sidebar.closeChatPanel();
+      return;
+    }
+    panes.closeAll();
+    sidebar.closeSearchPanel();
+    sidebar.closeSettings();
+    sidebar.closeSidebar();
+    sidebar.openChatPanel();
+  };
+
+  const bookmarksTabIcon = (filled: boolean) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
 
   /**
    * Display name for a book id, resolved from the current translation's
@@ -1711,6 +1939,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             aria-label={translateTitle(t, prev.title)}
+                            data-tool-id={prev.id}
                           >
                             <PrevIcon />
                           </button>
@@ -1732,8 +1961,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selector && (
                           <button
                             type="button"
-                            onClick={selector.onSelect}
-                            onPointerDown={spawnRipple}
+                            {...flingSafeTapHandlers(
+                              selector.onSelect,
+                              spawnRipple
+                            )}
                             className="sb-reader-floating-nav-label"
                           >
                             {getReaderNavLabel()}
@@ -1762,6 +1993,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             onPointerDown={spawnRipple}
                             className="sb-reader-floating-nav-arrow"
                             aria-label={translateTitle(t, next.title)}
+                            data-tool-id={next.id}
                           >
                             <NextIcon />
                           </button>
@@ -1845,46 +2077,83 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   label={t("bible", { defaultValue: "Bible" })}
                   active={activeMobileTab.value === "bible"}
                   onClick={() => {
+                    // The Bible text is already showing, so there's nothing to
+                    // dismiss — open the book selector instead of doing nothing.
+                    if (activeMobileTab.value === "bible") {
+                      openSelectorTool.value?.onSelect();
+                      return;
+                    }
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    // Close any fullscreen extension pane (e.g. Today).
+                    // Close any fullscreen pane (e.g. Today).
                     panes.closeAll();
                     selectedToolbarToolId.value = null;
                   }}
                 />
 
-                <MobileBottomTab
-                  iconNode={
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill={
-                        activeMobileTab.value === "bookmarks"
-                          ? "currentColor"
-                          : "none"
-                      }
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
+                {isChatFirst ? (
+                  <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab">
+                    <button
+                      type="button"
+                      onClick={openChatView}
+                      className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
+                        activeMobileTab.value === "chat"
+                          ? " sb-reader-toolbar-mobile-tab-button-active"
+                          : ""
+                      }`}
+                      aria-label={t("chat", { defaultValue: "Chat" })}
                     >
-                      <path
-                        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  }
-                  label={t("bookmarks", { defaultValue: "Bookmarks" })}
-                  active={activeMobileTab.value === "bookmarks"}
-                  onClick={openBookmarksView}
-                />
+                      <span
+                        className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
+                        aria-hidden="true"
+                      >
+                        chat_bubble_outline
+                      </span>
+                      <span className="sb-reader-toolbar-mobile-tab-label">
+                        {t("chat", { defaultValue: "Chat" })}
+                      </span>
+                      {unreadChatIndicator.value && (
+                        <span
+                          className="sb-reader-toolbar-unread-indicator"
+                          aria-label={
+                            chats.wasMentioned.value
+                              ? t("unread-mention", {
+                                  defaultValue: "Unread mention",
+                                })
+                              : t("unread-messages", {
+                                  defaultValue: "Unread messages: {{count}}",
+                                  count: unreadChatIndicator.value,
+                                })
+                          }
+                        >
+                          {unreadChatIndicator.value}
+                        </span>
+                      )}
+                      {hasTypingInChats.value && (
+                        <span
+                          className="sb-reader-toolbar-typing-indicator"
+                          aria-label={t("someone-is-typing", {
+                            defaultValue: "Someone is typing...",
+                          })}
+                        />
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <MobileBottomTab
+                    iconNode={bookmarksTabIcon(
+                      activeMobileTab.value === "bookmarks"
+                    )}
+                    label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                    active={activeMobileTab.value === "bookmarks"}
+                    onClick={openBookmarksView}
+                  />
+                )}
 
-                {moreTools.value.length > 0 ? (
+                {showMoreMenu.value ? (
                   <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
                     <button
                       type="button"
@@ -1927,8 +2196,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             className="sb-reader-toolbar-unread-indicator"
                             aria-label={
                               chats.wasMentioned.value
-                                ? "Unread mention"
-                                : `Unread messages: ${unreadChatIndicator.value}`
+                                ? t("unread-mention", {
+                                    defaultValue: "Unread mention",
+                                  })
+                                : t("unread-messages", {
+                                    defaultValue: "Unread messages: {{count}}",
+                                    count: unreadChatIndicator.value,
+                                  })
                             }
                           >
                             {unreadChatIndicator.value}
@@ -1953,6 +2227,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         chatWasMentioned={chats.wasMentioned.value}
                         hasTypingInChats={hasTypingInChats.value}
                         pinnedItems={[
+                          ...(isChatFirst
+                            ? [
+                                {
+                                  id: "bookmarks",
+                                  label: t("bookmarks", {
+                                    defaultValue: "Bookmarks",
+                                  }),
+                                  iconNode: bookmarksTabIcon(false),
+                                  onClick: openBookmarksView,
+                                },
+                              ]
+                            : []),
                           {
                             id: "tabs",
                             label: t("tabs", {
@@ -2005,6 +2291,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         selectedToolbarToolId.value = null;
                         tool.onSelect();
                       }}
+                      data-tool-id={tool.id}
                       className="sb-reader-toolbar-button"
                       aria-label={label}
                     >
@@ -2021,8 +2308,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           className="sb-reader-toolbar-unread-indicator"
                           aria-label={
                             chats.wasMentioned.value
-                              ? "Unread mention"
-                              : `Unread messages: ${unreadChatIndicator.value}`
+                              ? t("unread-mention", {
+                                  defaultValue: "Unread mention",
+                                })
+                              : t("unread-messages", {
+                                  defaultValue: "Unread messages: {{count}}",
+                                  count: unreadChatIndicator.value,
+                                })
                           }
                         >
                           {unreadChatIndicator.value}
@@ -2131,25 +2423,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 }
           }
           onPointerDown={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerDown
+            isSmallScreen.value
+              ? handleVerseSheetPanelPointerDown
+              : handleVerseToolbarPointerDown
           }
           onPointerMove={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerMove
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerMove
+              : handleVerseToolbarPointerMove
           }
           onPointerUp={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerUp
+              : handleVerseToolbarPointerUp
           }
           onPointerCancel={
-            isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
+            isSmallScreen.value
+              ? handleVerseSheetHandlePointerCancel
+              : handleVerseToolbarPointerUp
           }
         >
           {isSmallScreen.value && (
             <>
-              {/* The pill itself is only a few pixels tall, so the drag gesture
-                  lives on a taller wrapper that's comfortable to grab with a
-                  thumb. It carries the button role and keyboard handling too:
-                  the sheet has no "More" card any more, so this is the only
-                  control that opens the overflow row. */}
+              {/* The drag/tap gesture itself is handled by the panel (see
+                  onPointerDown above), so this only needs to carry the
+                  keyboard-accessible button role: the sheet has no "More"
+                  card any more, so this is the only control that opens the
+                  overflow row for non-pointer users. */}
               <div
                 className="sb-verse-toolbar-handle-area"
                 role="button"
@@ -2164,10 +2464,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         defaultValue: "Show more actions",
                       })
                 }
-                onPointerDown={handleVerseSheetHandlePointerDown}
-                onPointerMove={handleVerseSheetHandlePointerMove}
-                onPointerUp={handleVerseSheetHandlePointerUp}
-                onPointerCancel={handleVerseSheetHandlePointerCancel}
                 onKeyDown={handleVerseSheetHandleKeyDown}
               >
                 <div className="sb-verse-toolbar-handle" />
@@ -2385,6 +2681,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     const target = event.currentTarget as HTMLInputElement;
                     commitCustomColor(target.value);
                   }}
+                  onBlur={finishCustomColor}
                 />
 
                 <button
@@ -2412,15 +2709,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     // while the user had no permission to broadcast — and
                     // "clear" has to mean the verse ends up unhighlighted.
                     void rs.unhighlightSelectedVerses();
+                    // Clearing a highlight should clear the selection too,
+                    // same as applying one (#1704).
+                    rs.clearSelectedVerses();
                   }}
                   aria-label={t("clear-highlight", {
                     defaultValue: "Clear highlight",
                   })}
                   title={t("clear", { defaultValue: "Clear" })}
                 >
-                  <span className="material-symbols-outlined">
-                    {isSmallScreen.value ? "close" : "ink_eraser"}
-                  </span>
+                  <span className="material-symbols-outlined">ink_eraser</span>
                   <span className="sb-verse-toolbar-action-text">
                     {t("clear", { defaultValue: "Clear" })}
                   </span>
@@ -2725,6 +3023,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                                     onReferenceClick={
                                       props.state.app.openVerseReference
                                     }
+                                    otherPeoplePresent={annotationListHasOtherAuthors(
+                                      selectionAnnotations.value,
+                                      props.state.login.userId.value
+                                    )}
                                   />
                                 );
                               })}
@@ -2750,15 +3052,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             !isVerseSheetExpanded.value && (
               <div
                 className="sb-verse-toolbar-swipe-hint"
+                // Purely decorative: the panel itself owns the drag/tap
+                // gesture now, and the handle above remains the sole
+                // *accessible* control, so this stays out of the a11y tree.
                 aria-hidden="true"
-                // Same drag/tap gesture as the handle above it — a tap expands,
-                // and dragging tracks the finger the same way. The handle
-                // remains the sole *accessible* control (this stays
-                // `aria-hidden`), but pointer/touch users get a bigger target.
-                onPointerDown={handleVerseSheetHandlePointerDown}
-                onPointerMove={handleVerseSheetHandlePointerMove}
-                onPointerUp={handleVerseSheetHandlePointerUp}
-                onPointerCancel={handleVerseSheetHandlePointerCancel}
                 style={{
                   // Fades in step with the drag, so the hint gets out of the way
                   // as the sheet opens rather than blinking off at the end.
@@ -2791,23 +3088,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 )}
               </div>
             )}
-          {isSmallScreen.value &&
-            isHighlightPickerOpen.value &&
-            showHighlightColorSwipeHint.value && (
-              <div
-                className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
-                aria-hidden="true"
-              >
-                <span className="material-symbols-outlined">
-                  keyboard_double_arrow_right
-                </span>
-                <span>
-                  {t("swipe-to-see-more", {
-                    defaultValue: "Swipe to see more",
-                  })}
-                </span>
-              </div>
-            )}
+          {isSmallScreen.value && isHighlightPickerOpen.value && (
+            <div
+              className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
+              aria-hidden="true"
+              style={{
+                opacity: showHighlightColorSwipeHint.value ? 1 : 0,
+              }}
+            >
+              <span className="material-symbols-outlined">
+                keyboard_double_arrow_right
+              </span>
+
+              <span>
+                {t("swipe-to-see-more", {
+                  defaultValue: "Swipe to see more",
+                })}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </>

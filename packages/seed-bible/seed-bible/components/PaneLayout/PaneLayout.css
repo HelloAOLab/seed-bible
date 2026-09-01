@@ -303,9 +303,22 @@
   grid-row: 2;
 }
 
+/* Flex row wrapping `.sb-pane-reader` in every slot. Always has just the one
+   child; the discover content panel floats inside `.sb-bible-reader` itself
+   (see `.sb-discover-content-panel--side` and `BibleReader.tsx`). */
+.sb-pane-reader-outer {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
 .sb-pane-reader {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   overflow: auto;
   scrollbar-width: none;
@@ -322,7 +335,10 @@
 .sb-pane-layout-menu {
   position: absolute;
   top: calc(100% + 0.5rem);
-  left: 0;
+  /* The menu is wider than the sidebar it hangs off, so it has to open into the
+     reader. Logical inset, not `left`: in RTL the sidebar is on the right edge
+     and a physical `left: 0` would push the menu off the screen. */
+  inset-inline-start: 0;
   width: 23.25rem;
   padding: 1.25rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);

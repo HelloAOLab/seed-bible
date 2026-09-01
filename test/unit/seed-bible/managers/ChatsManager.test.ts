@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import {
   createChatsManager,
+  chatHasOtherPeople,
   resolveMessageTargets,
   type ChatMessage,
   type ChatMessageOptions,
@@ -281,6 +282,53 @@ function createSharedSessionMock(options?: {
     translationBooks,
   };
 }
+
+function chatWithParticipants(participants: ChatParticipant[]) {
+  return { totalParticipants: { value: participants } };
+}
+
+describe("chatHasOtherPeople", () => {
+  it("is false when the only participants are the current user and AI", () => {
+    expect(chatHasOtherPeople(chatWithParticipants([]))).toBe(false);
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(false);
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: true },
+        ] as ChatParticipant[])
+      )
+    ).toBe(false);
+  });
+
+  it("is true when another person is in the chat", () => {
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false },
+          { isSelf: false, isAI: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+
+  it("is true when the other person is inactive", () => {
+    expect(
+      chatHasOtherPeople(
+        chatWithParticipants([
+          { isSelf: true, isAI: false, isActive: true },
+          { isSelf: false, isAI: false, isActive: false },
+        ] as ChatParticipant[])
+      )
+    ).toBe(true);
+  });
+});
 
 describe("createChatsManager", () => {
   beforeEach(() => {
@@ -1190,13 +1238,13 @@ describe("createChatsManager", () => {
         {
           userId: null,
           connectionId: "anon-1",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
         {
           userId: null,
           connectionId: "anon-2",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
       ],
@@ -1210,8 +1258,8 @@ describe("createChatsManager", () => {
         id: "anon-1",
         userId: null,
         connectionId: "anon-1",
-        profile: { name: "Guest" },
-        name: "Guest",
+        profile: null,
+        name: null,
         isSelf: false,
         isAI: false,
         isRemote: true,
@@ -1226,8 +1274,8 @@ describe("createChatsManager", () => {
         id: "anon-2",
         userId: null,
         connectionId: "anon-2",
-        profile: { name: "Guest" },
-        name: "Guest",
+        profile: null,
+        name: null,
         isSelf: false,
         isAI: false,
         isRemote: true,
@@ -2985,7 +3033,7 @@ describe("createChatsManager", () => {
           {
             userId: null,
             connectionId: "anon-1",
-            name: "Guest",
+            name: null,
             isSelf: false,
           },
         ],
@@ -3006,7 +3054,7 @@ describe("createChatsManager", () => {
       {
         userId: "u1",
         connectionId: "anon-1",
-        profile: { name: "Guest" },
+        profile: { name: "Dana" },
         isSelf: false,
         isActive: true,
         color: "#000000",
@@ -3049,7 +3097,7 @@ describe("createChatsManager", () => {
         {
           userId: null,
           connectionId: "anon-1",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
       ],
@@ -3075,7 +3123,7 @@ describe("createChatsManager", () => {
       {
         userId: "u1",
         connectionId: "anon-1",
-        profile: { name: "Guest" },
+        profile: { name: "Dana" },
         isSelf: false,
         isActive: true,
         color: "#000000",
@@ -3126,7 +3174,7 @@ describe("createChatsManager", () => {
         {
           userId: null,
           connectionId: "anon-1",
-          name: "Guest",
+          name: null,
           isSelf: false,
         },
       ],
@@ -3152,7 +3200,7 @@ describe("createChatsManager", () => {
       {
         userId: "u1",
         connectionId: "anon-1",
-        profile: { name: "Guest" },
+        profile: { name: "Dana" },
         isSelf: false,
         isActive: true,
         color: "#000000",
@@ -4327,6 +4375,35 @@ describe("createChatsManager", () => {
       });
     });
 
+    it("does not link Bible-domain names that only share a book abbreviation prefix", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Isaac 24 and Judah 4 and Jerusalem 70 AD",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Isaac 24 and Judah 4 and Jerusalem 70 AD"],
+      });
+    });
+
+    it("does not link out-of-range chapter references in chat", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager, mockI18nManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "See Genesis 999" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["See Genesis 999"],
+      });
+    });
+
     it("resolves mention by shared participant id alias (shared session)", async () => {
       const { loginManager } = createLoginManagerMock();
       const { session, sharedChats, sharedParticipantAliases } =
@@ -4335,7 +4412,7 @@ describe("createChatsManager", () => {
             {
               userId: "u1",
               connectionId: "anon-1",
-              name: "Guest",
+              name: "Dana",
               isSelf: false,
             },
           ],

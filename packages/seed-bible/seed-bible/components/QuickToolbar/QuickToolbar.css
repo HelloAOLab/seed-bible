@@ -4,6 +4,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  opacity: 1;
+  transition: opacity 0.25s ease;
 }
 
 /* Desktop: sits in the header's action cluster, just left of the bookmark
@@ -13,6 +15,9 @@
   flex-shrink: 0;
 }
 
+/* Mobile: sits in the header's right cluster, just after the bookmark
+   button, so Share (and any other quick tools) stay next to chapter
+   actions instead of floating beside the translation pill. */
 .sb-quick-toolbar-mobile-header {
   flex-shrink: 0;
 }
@@ -80,4 +85,11 @@
 
 .sb-now-playing-icon-title {
   margin: 0;
+}
+
+/* Visual on/off cue for toggle-style quick tools (e.g. the discover content
+   panel toggle) — the framework's tool predicates don't carry a "pressed"
+   signal, so the tool's own icon function applies this class conditionally. */
+.sb-quick-tool-icon-active {
+  color: var(--sb-primary-color);
 }

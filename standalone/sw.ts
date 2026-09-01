@@ -30,7 +30,7 @@
  *  | Google Fonts / Fontshare font files    | CacheFirst                      |
  *  | Anything else (other branches, APIs)   | Not handled — straight to net   |
  */
-import { clientsClaim, type WorkboxPlugin } from "workbox-core";
+import { clientsClaim } from "workbox-core";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 import {
@@ -97,34 +97,24 @@ cleanupOutdatedCaches();
 // ─── The app shell (HTML) ────────────────────────────────────────────────────
 
 /**
- * Every cached copy of the page is stored under this one key, so a visit to
- * `/AAB/genesis/10` can be answered from a copy that was saved for
- * `/ar/ARBNAV/john/9`.
+ * Each navigation's HTML is cached under its own URL — Workbox's default key
+ * (the full request URL, including query string) — since no
+ * `cacheKeyWillBeUsed` override is registered on the route below. This
+ * matters because the client now calls Preact's `hydrate()`, not `render()`
+ * (see `app/init.tsx`): hydration requires the container's existing DOM to
+ * already match the URL being hydrated. Serving a cached copy from a
+ * *different* URL/book/chapter would hydrate against the wrong content, and
+ * — unlike a full render/rebuild — `hydrate()` does not diff attributes on
+ * existing DOM, so a mismatch here would not self-correct.
  *
- * That is safe here because the served HTML is a shell: the client entry
- * (`app/init.tsx`) calls Preact's `render`, not `hydrate`, and reads the book
- * and chapter from `window.location` — so whatever markup the shell arrived
- * with is thrown away and re-rendered for the URL actually being visited.
- *
- * The shell does carry server-injected config (see `renderAndRespond` in
- * `server/index.ts`), and some of it is request-specific: `acceptedLanguages`
- * and `renderedAsMobile` come from request headers. Those only steer SSR, and
- * the client re-derives both — language from the URL then `navigator.languages`
- * (`I18nManager`), layout from `window.innerWidth` (`SeedBibleStateManager`) —
- * so whatever a cached shell was rendered for is discarded. The one piece that
- * would matter is `basePath`, and it is identical across every path this route
- * handles, because `/b/...` — the only prefix with a non-empty `basePath` — is
- * excluded below.
- *
- * The upshot for anyone extending the injected config: every cached navigation
- * shares this one copy, so nothing request-specific may be added unless the
- * client re-derives it too.
+ * A URL with no cached copy falls through to the network (subject to the 3s
+ * timeout below); if that also fails, the navigation gets no cached shell at
+ * all rather than a mismatched one — the client-side hydration gate (see
+ * `app/hydrationGate.ts`) decides whether to hydrate or fall back to a full
+ * `render()` for whatever HTML is actually present, so an absent or stale
+ * cache entry degrades to a normal client render rather than a broken
+ * hydrate.
  */
-const APP_SHELL_CACHE_KEY = new URL("/index.html", self.location.origin).href;
-
-const useAppShellCacheKey: WorkboxPlugin = {
-  cacheKeyWillBeUsed: async () => APP_SHELL_CACHE_KEY,
-};
 
 /**
  * Fetches the shell once while installing, so the app survives being closed
@@ -140,23 +130,51 @@ const useAppShellCacheKey: WorkboxPlugin = {
  * fails the install, and this is an optimisation, not a requirement — if the
  * host is unreachable right now, the first controlled navigation fills the
  * cache instead.
+ *
+ * Warms the URL of the page that's actually registering this worker (falling
+ * back to `/` if that can't be determined) rather than always warming `/`:
+ * now that each URL is cached separately, warming only `/` would leave a
+ * user who installs the worker while reading `/AAB/genesis/10` with nothing
+ * cached for that page specifically.
  */
 async function warmAppShellCache(): Promise<void> {
   try {
-    const response = await fetch("/", { cache: "no-cache" });
+    // `includeUncontrolled` is what makes this work on a *first* install: a
+    // worker that is still installing controls nothing yet (control only
+    // arrives at activate/`clientsClaim()`), so without it `matchAll` comes
+    // back empty on exactly the visit this function exists for, and the
+    // fallback to `/` leaves the page the user is actually reading uncached.
+    const clients = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    });
+    // Same-origin windows the worker doesn't control also include branch
+    // previews under `/b/...`, which this worker deliberately stays out of
+    // (see the route below). Warming one of those would cache a shell the
+    // route will never serve *and* still miss the real page, so pick the
+    // first client the shell route would actually answer for.
+    const url =
+      clients.find((client) =>
+        isAppShellNavigation({
+          url: new URL(client.url),
+          requestMode: "navigate",
+          origin: self.location.origin,
+        })
+      )?.url ?? "/";
+    const response = await fetch(url, { cache: "no-cache" });
     // Same acceptance rule as the route's `CacheableResponsePlugin` below, so
     // this can't seed the cache with something the route would have rejected.
     if (response.status !== 200) return;
     const cache = await caches.open(HTML_CACHE);
     // Copied before storing, to drop the `redirected` flag. This `fetch` is
-    // built from a string, so it follows redirects — meaning a `/` that ever
+    // built from a string, so it follows redirects — meaning a URL that ever
     // starts redirecting would land here as a perfectly ordinary 200 that is
     // also flagged `redirected`. Serving such a response to a navigation
     // (whose redirect mode is "manual") is a hard browser error, so caching
     // one would turn every offline launch into a failure instead of the
-    // shell. `/` does not redirect today; this keeps that from becoming a
-    // prerequisite anyone has to remember.
-    await cache.put(APP_SHELL_CACHE_KEY, new Response(response.body, response));
+    // shell. Cached under the response's own (post-redirect) URL, matching
+    // how the route below keys every other entry.
+    await cache.put(response.url, new Response(response.body, response));
   } catch {
     // Offline at install time — nothing to do.
   }
@@ -192,7 +210,17 @@ registerRoute(
       // follows the redirect itself and we see a fresh fetch event for the
       // destination, whose 200 is what gets stored.
       new CacheableResponsePlugin({ statuses: [200] }),
-      useAppShellCacheKey,
+      // Every reading position gets its own entry now (see the comment
+      // above), so — unlike the single shared entry this replaced — this
+      // cache can grow without bound as a visitor reads more chapters.
+      // Bounded the same way `ASSET_CACHE` below is; shorter-lived, since
+      // this is an offline fallback behind a 3s NetworkFirst timeout, not
+      // the primary path.
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 3 * DAY_SECONDS,
+        purgeOnQuotaError: true,
+      }),
     ],
   })
 );

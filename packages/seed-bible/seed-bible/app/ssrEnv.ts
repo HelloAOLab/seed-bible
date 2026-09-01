@@ -66,3 +66,23 @@ export const safeLocalStorage = {
     if (typeof localStorage !== "undefined") localStorage.removeItem(key);
   },
 };
+
+/**
+ * SSR-safe `sessionStorage`, with the same read-null/write-no-op contract as
+ * `safeLocalStorage`. Used for state that should reset when the tab closes —
+ * e.g. a prompt that may only appear once per session.
+ */
+export const safeSessionStorage = {
+  getItem(key: string): string | null {
+    return typeof sessionStorage !== "undefined"
+      ? sessionStorage.getItem(key)
+      : null;
+  },
+  setItem(key: string, value: string): void {
+    if (typeof sessionStorage !== "undefined")
+      sessionStorage.setItem(key, value);
+  },
+  removeItem(key: string): void {
+    if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(key);
+  },
+};

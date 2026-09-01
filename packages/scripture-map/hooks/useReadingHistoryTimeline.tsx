@@ -1,4 +1,4 @@
-import type { TooltipContentData } from "../components/containers/Tooltip";
+import type { TooltipContentData } from "../components/containers/ScriptureMapTooltip";
 import type { HexString } from "../../seed-bible-utils/domain/models/commonTypes";
 import { useTimeContext } from "../contexts/Time/TimeContext";
 import { useScriptureMapContext } from "../contexts/ScriptureMap/ScriptureMapContext";
@@ -263,7 +263,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
             const userSummary = daySummary.users[userId];
             const isMe = userId === myAuthBotId;
             const userName = CapitalizeFirstLetter(
-              isMe ? translate("you") : translate("guest")
+              isMe ? translate("you") : translate("anonymous")
             );
             const userColor = userColorStore.getUserColor({ authId: userId });
             const dotStyle = { backgroundColor: userColor };
