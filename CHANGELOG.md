@@ -12,6 +12,7 @@
 
 ### 🐛 Fixed
 
+- Count time spent listening with the Audio Reader extension towards reading history, even while the phone is locked. Listening with the screen off used to record almost nothing: reading time was measured with a timer, and phones stop running timers for a page that isn't on screen, so an hour of narration during chores could land in your history as a few seconds. Listening is now measured by how far the audio itself advanced, and written back as soon as the app wakes up.
 - Fix the back button and back gesture after opening a bookmark on mobile. Tapping a bookmark used to leave the reader on the bookmarks screen and record two browser history entries for the same chapter — so going back appeared to do nothing. Tapping a bookmark now closes the bookmarks screen and lands on the chapter, and going back returns to the bookmarks list, then to the chapter you were reading before. ([#1338](https://github.com/HelloAOLab/seed-bible/issues/1338))
 - Keep the verses a playlist item points at at full brightness when you tap it, instead of dimming the whole chapter including those verses.
 

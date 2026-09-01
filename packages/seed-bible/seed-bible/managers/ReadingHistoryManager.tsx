@@ -76,7 +76,7 @@ function getReadingHistoryDocument(
 }
 
 /**
- * Saves a reading history event.
+ * Saves a reading history event ending at the current moment.
  * If the user has already read the chapter within the last 30 minutes, then end time of the event will be updated instead of creating a new event.
  * @param userId The ID of the user that the event is for.
  * @param bookId The ID of the book that the event is for.
@@ -95,20 +95,66 @@ export async function saveReadingHistory(
   marker?: string,
   name?: string
 ): Promise<void> {
+  const currentTimeSeconds = Math.floor(Date.now() / 1000);
+  await saveReadingHistorySpan(
+    os,
+    recordName,
+    userId,
+    bookId,
+    chapter,
+    currentTimeSeconds,
+    currentTimeSeconds,
+    recencyThresholdSeconds,
+    marker,
+    name
+  );
+}
+
+/**
+ * Saves a stretch of time already spent on a chapter, running from
+ * `startTimeSeconds` to `endTimeSeconds`.
+ *
+ * `saveReadingHistory` can only ever credit the instant it is called, which is
+ * no use to audio playback: while a phone is locked the page is frozen and no
+ * timer of ours runs, so minutes spent listening can only be recorded after the
+ * fact, from how far the audio element's own clock advanced.
+ *
+ * An existing event for the same chapter is extended when this span continues
+ * it. Whether it does is judged from the span's *start*, not from the clock, so
+ * a listen that ran longer than `joinThresholdSeconds` still lands on the event
+ * it began rather than opening a second one. `end` never moves backwards, so a
+ * late-arriving span can't shorten what another writer already recorded.
+ *
+ * @param startTimeSeconds The unix time in seconds when the span began.
+ * @param endTimeSeconds The unix time in seconds when the span ended.
+ * @param joinThresholdSeconds How long a gap may sit between an existing event and this span's start for the two to count as one sitting. Defaults to 30 minutes.
+ * @param marker The marker to use for the reading history document. Use `publicRead` to allow anyone to read, but only users who have access to the record can write. Use `publicWrite` to allow anyone to write. Defaults to `publicRead`.
+ * @param name The name of the shared document. Defaults to `reading_history`.
+ */
+export async function saveReadingHistorySpan(
+  os: CasualOSManager,
+  recordName: string,
+  userId: string,
+  bookId: string,
+  chapter: number,
+  startTimeSeconds: number,
+  endTimeSeconds: number,
+  joinThresholdSeconds: number = 30 * 60,
+  marker?: string,
+  name?: string
+): Promise<void> {
   console.log(
     `Saving reading history for user ${userId}, book ${bookId}, chapter ${chapter}`
   );
-  const currentTimeSeconds = Math.floor(Date.now() / 1000);
-  const currentYear = new Date().getUTCFullYear();
+  const year = new Date(endTimeSeconds * 1000).getUTCFullYear();
 
   const doc = await getReadingHistoryDocument(
     os,
     recordName,
-    currentYear,
+    year,
     marker,
     name
   );
-  const recencyThreshold = currentTimeSeconds - recencyThresholdSeconds;
   const array = doc.getArray("events");
   const event = findMostRecentReadingEvent(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,17 +162,19 @@ export async function saveReadingHistory(
     userId,
     bookId,
     chapter,
-    recencyThreshold
+    startTimeSeconds - joinThresholdSeconds
   );
   if (event) {
-    event.set("end", currentTimeSeconds);
+    if (event.get("end") < endTimeSeconds) {
+      event.set("end", endTimeSeconds);
+    }
   } else {
     const newEvent = doc.createMap();
     newEvent.set("userId", userId);
     newEvent.set("bookId", bookId);
     newEvent.set("chapter", chapter);
-    newEvent.set("start", currentTimeSeconds);
-    newEvent.set("end", currentTimeSeconds);
+    newEvent.set("start", startTimeSeconds);
+    newEvent.set("end", endTimeSeconds);
     array.push(newEvent);
   }
 }
@@ -699,6 +747,18 @@ export interface ReadingHistoryManager {
     chapter: number,
     recencyThresholdSeconds?: number
   ) => void;
+  /**
+   * Credits a chapter with time that has already passed, rather than with the
+   * moment of the call. Audio playback uses this to record listening the app
+   * could not record as it happened, because the page was frozen behind a
+   * locked screen for all of it.
+   */
+  saveReadingSpan: (
+    bookId: string,
+    chapter: number,
+    startTimeSeconds: number,
+    endTimeSeconds: number
+  ) => void;
   getReadingEvents: (
     startTime: number,
     endTime: number
@@ -747,8 +807,38 @@ export function createReadingHistoryManager(
     return getReadingHistoryEvents(os, login.userId.value, startTime, endTime);
   };
 
+  const saveReadingSpanForCurrentUser = (
+    bookId: string,
+    chapter: number,
+    startTimeSeconds: number,
+    endTimeSeconds: number
+  ): void => {
+    const userId = login.userId.value;
+    if (!userId) {
+      // User is not logged in, so we can't save reading history
+      return;
+    }
+
+    // Deliberately not debounced, unlike the call above: these arrive at
+    // moments the page may not survive (going into the background, playback
+    // ending), and each one carries timestamps of its own, so a trailing
+    // debounce could drop the very save that records the listening.
+    saveReadingHistorySpan(
+      os,
+      userId,
+      userId,
+      bookId,
+      chapter,
+      startTimeSeconds,
+      endTimeSeconds
+    ).catch((err) => {
+      console.error("Failed to save listening time to reading history", err);
+    });
+  };
+
   return {
     saveReadingHistory: saveReadingHistoryForCurrentUser,
+    saveReadingSpan: saveReadingSpanForCurrentUser,
     getReadingEvents: getReadingEventsForCurrentUser,
   };
 }
