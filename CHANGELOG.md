@@ -6,7 +6,11 @@
 
 ### 🔧 Changed
 
+- Add selected verses to a playlist as one item per contiguous range (for example Exodus 26:1-11) instead of one item per verse.
+
 ### 🐛 Fixed
+
+- Keep the verses a playlist item points at at full brightness when you tap it, instead of dimming the whole chapter including those verses.
 
 ### 🗑️ Removed
 

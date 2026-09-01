@@ -13,6 +13,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
 
@@ -1314,6 +1315,162 @@ describe("createBibleToolsManager", () => {
         key: "share-sheet-title",
         defaultValue: "Share",
       });
+    });
+  });
+
+  describe("add-to-playlist", () => {
+    function selectedVerse(bookId: string, chapter: number, number: number) {
+      return {
+        bookId,
+        chapterNumber: chapter,
+        translationId: "BSB",
+        verse: {
+          type: "verse" as const,
+          number,
+          content: [`verse ${number}`],
+        },
+      };
+    }
+
+    function createPlaylistContext(options: {
+      verses: ReturnType<typeof selectedVerse>[];
+      existingItems?: PlaylistItemData[];
+    }) {
+      const clearSelectedVerses = vi.fn();
+      const editingPlaylist = signal<{
+        id: string;
+        title: string;
+        items: PlaylistItemData[];
+      }>({
+        id: "playlist-1",
+        title: "Draft",
+        items: options.existingItems ?? [],
+      });
+      const context = {
+        ...createContext(),
+        readingState: {
+          ...createContext().readingState,
+          selectedVerses: signal(options.verses),
+          clearSelectedVerses,
+          chapterData: signal({
+            book: { id: "EXO", name: "Exodus" },
+            chapter: { number: 26 },
+            numberOfVerses: 37,
+          }),
+        } as any,
+        playlists: {
+          editingPlaylist,
+        } as any,
+      };
+      return { context, editingPlaylist, clearSelectedVerses };
+    }
+
+    it("adds one playlist item for a contiguous verse run", async () => {
+      const manager = createBibleToolsManager(testBranding);
+      const { context, editingPlaylist, clearSelectedVerses } =
+        createPlaylistContext({
+          verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
+            selectedVerse("EXO", 26, n)
+          ),
+        });
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "add-to-playlist");
+
+      await tool?.onSelect();
+
+      expect(editingPlaylist.value.items).toEqual([
+        {
+          type: "bible-verse",
+          ref: { bookId: "EXO", chapter: 26, verse: 1, endVerse: 11 },
+        },
+      ]);
+      expect(clearSelectedVerses).toHaveBeenCalledTimes(1);
+    });
+
+    it("adds one playlist item per gapped range", async () => {
+      const manager = createBibleToolsManager(testBranding);
+      const { context, editingPlaylist } = createPlaylistContext({
+        verses: [
+          ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
+            selectedVerse("EXO", 26, n)
+          ),
+          ...[15, 16, 17].map((n) => selectedVerse("EXO", 26, n)),
+        ],
+      });
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "add-to-playlist");
+
+      await tool?.onSelect();
+
+      expect(editingPlaylist.value.items).toEqual([
+        {
+          type: "bible-verse",
+          ref: { bookId: "EXO", chapter: 26, verse: 1, endVerse: 11 },
+        },
+        {
+          type: "bible-verse",
+          ref: { bookId: "EXO", chapter: 26, verse: 15, endVerse: 17 },
+        },
+      ]);
+    });
+
+    it("appends grouped ranges after items already on the playlist", async () => {
+      const manager = createBibleToolsManager(testBranding);
+      const existing = {
+        type: "bible-verse" as const,
+        ref: { bookId: "GEN", chapter: 1, verse: 1 },
+      };
+      const { context, editingPlaylist } = createPlaylistContext({
+        verses: [
+          selectedVerse("EXO", 26, 4),
+          selectedVerse("EXO", 26, 3),
+          selectedVerse("EXO", 26, 1),
+          selectedVerse("EXO", 26, 2),
+        ],
+        existingItems: [existing],
+      });
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "add-to-playlist");
+
+      await tool?.onSelect();
+
+      expect(editingPlaylist.value.items).toEqual([
+        existing,
+        {
+          type: "bible-verse",
+          ref: { bookId: "EXO", chapter: 26, verse: 1, endVerse: 4 },
+        },
+      ]);
+    });
+
+    it("does not change the playlist when nothing is being edited", async () => {
+      const manager = createBibleToolsManager(testBranding);
+      const clearSelectedVerses = vi.fn();
+      const context = {
+        ...createContext(),
+        readingState: {
+          ...createContext().readingState,
+          selectedVerses: signal([selectedVerse("EXO", 26, 1)]),
+          clearSelectedVerses,
+        } as any,
+        playlists: {
+          editingPlaylist: signal(null),
+        } as any,
+      };
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "add-to-playlist");
+
+      await tool?.onSelect();
+
+      expect(clearSelectedVerses).not.toHaveBeenCalled();
     });
   });
 });

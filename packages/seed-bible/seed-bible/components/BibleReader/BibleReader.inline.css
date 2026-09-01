@@ -995,6 +995,13 @@
   .sb-chapter-heading {
     animation: diminish-in-out 3s ease-in-out;
   }
+
+  /* Nested so this beats `.sb-chapter-decoration-diminish .sb-verse` above
+     (equal specificity would otherwise let the dim animation win). */
+  .sb-verse:has(.sb-verse-decoration-diminish) {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 @keyframes diminish-in-out {
