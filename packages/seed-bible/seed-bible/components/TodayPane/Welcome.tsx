@@ -36,16 +36,15 @@ export const Welcome = (props: {
 
   const johnBookName = bookNames.value.get("JHN");
   const firstBook = lastTranslationBooks.value?.books[0];
-  // John is the usual welcome passage, but not every translation has it (an
-  // Old Testament-only translation, say) -- fall back to the translation's
-  // own first book (typically Genesis) when it doesn't. Both stay `undefined`
-  // until book data has loaded, rather than guessing, so nothing below renders
-  // a placeholder for a book that might not be the right one.
+  // John is the usual welcome passage; translations that lack it (an Old
+  // Testament-only translation, say) fall back to the translation's own
+  // first book (typically Genesis). Both stay `undefined` until book data
+  // loads, rather than guessing, so nothing below renders the wrong book.
   const welcomeBookId = johnBookName !== undefined ? "JHN" : firstBook?.id;
   const welcomeBookName = johnBookName ?? firstBook?.name;
-  // Gates the fade-in below: true only once the target book is known *and*
-  // its opening verse has come back, so the heading and quote always appear
-  // together instead of the heading beating the (async) verse fetch.
+  // Gates the fade-in below: true only once the book is known *and* its
+  // opening verse has come back, so the heading and quote reveal together
+  // instead of the heading beating the async verse fetch.
   const passageReady =
     welcomeBookName !== undefined && welcomeVerse.value.length > 0;
 
@@ -154,14 +153,16 @@ export const Welcome = (props: {
             });
           }}
         >
-          {welcomeBookId !== undefined
-            ? t("read-book-chapter-button", {
-                defaultValue: "Read {{bookName}} {{chapterNumber}}",
-                bookName: welcomeBookName,
-                chapterNumber: 1,
-              })
-            : t("read-the-bible", { defaultValue: "Read the Bible" })}
-          <MaterialIcon>arrow_right_alt</MaterialIcon>
+          <span className="sb-today-welcome-screen-reveal">
+            {welcomeBookId !== undefined
+              ? t("read-book-chapter-button", {
+                  defaultValue: "Read {{bookName}} {{chapterNumber}}",
+                  bookName: welcomeBookName,
+                  chapterNumber: 1,
+                })
+              : t("read-the-bible", { defaultValue: "Read the Bible" })}
+            <MaterialIcon>arrow_right_alt</MaterialIcon>
+          </span>
         </button>
       </div>
     </div>
