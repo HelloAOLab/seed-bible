@@ -181,6 +181,7 @@ describe("client hydration", () => {
       pathname: location.pathname,
       search: location.search,
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: true });
 
@@ -257,6 +258,7 @@ describe("client hydration", () => {
         pathname: location.pathname,
         search: location.search,
         container,
+        clientCommit: __GIT_COMMIT__,
       })
     ).toEqual({ hydrate: true });
 
@@ -362,6 +364,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/exodus/2",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "url-mismatch" });
   });
@@ -372,6 +375,7 @@ describe("client hydration", () => {
     const config = {
       ...DEFAULT_APP_CONFIG,
       renderedForPath: "/en/AAB/genesis/1",
+      renderedByCommit: __GIT_COMMIT__,
       ssrChapterContentSettled: false,
     };
 
@@ -380,6 +384,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/genesis/1",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({
       hydrate: false,
@@ -400,6 +405,7 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
   });
@@ -413,8 +419,76 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
+  });
+
+  it("declines to hydrate when the SSR HTML was rendered by a different commit's bundle", () => {
+    // Reproduces the reported bug: a request for a branch outside the host
+    // server's `ALLOWED_SSR_BRANCHES` whitelist gets rendered through
+    // `DEFAULT_SSR_BRANCH`'s bundle instead (see `server/index.ts`). The
+    // requested URL matches exactly, but the DOM was produced by different
+    // component code than the one about to hydrate onto it.
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      renderedByCommit: "commit-develop-abc123",
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientCommit: "commit-feature-branch-def456",
+    });
+    expect(decision).toEqual({ hydrate: false, reason: "build-mismatch" });
+  });
+
+  it("declines to hydrate when the SSR document carries no renderedByCommit at all", () => {
+    // An SSR document with an unverifiable build identity (e.g. a server old
+    // enough to predate this field) gets no benefit of the doubt: `undefined`
+    // is not treated as "assume it matches", since that's exactly the kind of
+    // gap this check exists to close.
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      // No renderedByCommit.
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientCommit: "commit-feature-branch-def456",
+    });
+    expect(decision).toEqual({ hydrate: false, reason: "build-mismatch" });
+  });
+
+  it("hydrates when the rendering commit matches the client's own commit", () => {
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      renderedByCommit: "commit-feature-branch-def456",
+      ssrChapterContentSettled: true,
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientCommit: "commit-feature-branch-def456",
+    });
+    expect(decision).toEqual({ hydrate: true });
   });
 });
 

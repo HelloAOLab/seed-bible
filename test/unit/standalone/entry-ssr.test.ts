@@ -495,7 +495,7 @@ describe("render() server-rendered meta tags", () => {
     expect(JSON.parse(injected as string)).toMatchObject(config);
   });
 
-  it("injects the exact request path as renderedForPath, and ssrChapterContentSettled true, for the hydration gate", async () => {
+  it("injects the exact request path as renderedForPath, ssrChapterContentSettled true, and this bundle's own commit as renderedByCommit, for the hydration gate", async () => {
     const path = "/en/AAB/genesis/1?useFreeBibleAPI=true";
     const html = await renderHtml(path);
 
@@ -506,9 +506,13 @@ describe("render() server-rendered meta tags", () => {
     const config = JSON.parse(injected as string) as {
       renderedForPath: string;
       ssrChapterContentSettled: boolean;
+      renderedByCommit: string;
     };
     expect(config.renderedForPath).toBe(path);
     expect(config.ssrChapterContentSettled).toBe(true);
+    // This bundle's own build identity, not anything derived from the
+    // request — see AppConfig.renderedByCommit.
+    expect(config.renderedByCommit).toBe(__GIT_COMMIT__);
   });
 
   it("injects ssrChapterContentSettled false when the initial chapter fetch fails, not just on an SSR timeout", async () => {
