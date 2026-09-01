@@ -333,6 +333,7 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     settings.setThemeId("dark");
     settings.setCustomTheme({ primaryColor: "#000000" });
     settings.setCustomHighlights({ yellow: { color: "#ffff00" } });
+    settings.setDiscoverContentPanelInline(false);
 
     settings.resetToDefaults();
 
@@ -342,6 +343,34 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.themeId).toBe("light");
     expect(settings.settings.value.customTheme).toEqual({});
     expect(settings.settings.value.customHighlights).toEqual({});
+    expect(settings.settings.value.discoverContentPanelInline).toBe(true);
+  });
+
+  it("setDiscoverContentPanelInline persists to login.localConfig when anonymous and defaults to true", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.discoverContentPanelInline).toBe(true);
+
+    settings.setDiscoverContentPanelInline(false);
+
+    expect(settings.settings.value.discoverContentPanelInline).toBe(false);
+    expect(login.localConfig.value.discoverContentPanelInline).toBe(false);
+  });
+
+  it("setDiscoverContentPanelInline persists to the user's profile when logged in", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setDiscoverContentPanelInline(false);
+
+    expect(settings.settings.value.discoverContentPanelInline).toBe(false);
+    expect(
+      (login.profile.value as any)?.config?.discoverContentPanelInline
+    ).toBe(false);
   });
 });
 
@@ -479,8 +508,12 @@ describe("anonymous settings survive a simulated page refresh", () => {
 
     // Simulate a fresh page load: a brand-new LoginManager/SettingsManager
     // pair, backed by the same (real) localStorage that `login1`'s anonymous
-    // write just persisted to.
+    // write just persisted to. `hydrateLocalConfig()` mirrors the real app's
+    // post-mount effect (see `MainBody` in `app/main.tsx`) that applies the
+    // device's real saved config — `localConfig` itself seeds empty to match
+    // SSR.
     const login2 = createLoginManager({ os });
+    login2.hydrateLocalConfig();
     const settings2 = createSettings(os, login2, nav);
 
     expect(settings2.settings.value.bookOrientation).toBe("tanakh");

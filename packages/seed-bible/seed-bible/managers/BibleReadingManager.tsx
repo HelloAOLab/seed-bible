@@ -29,6 +29,7 @@ import type {
   HighlightsManager,
 } from "../managers/HighlightsManager";
 import { v4 as uuid } from "uuid";
+import type { SettingsManager } from "./SettingsManager";
 import type { I18nManager } from "../i18n";
 import { LANG_META } from "../i18n/languageMeta";
 import type {
@@ -280,6 +281,17 @@ export interface BibleReadingState {
    * `chapterData === null` on its own cannot.
    */
   initialChapterLoadSettled: ReadonlySignal<boolean>;
+  /**
+   * True when `initialChapterLoadSettled` became true for a reason that
+   * doesn't guarantee a live client would land on the same content: the
+   * SSR-only load deadline passed, or the load errored out. Either way, the
+   * catalog and/or chapter data behind availability computations (like
+   * `hasNext`/`hasPrevious`) may be missing on the server even though a
+   * client-side retry succeeds — a network hiccup, rate limit, or timeout
+   * hitting the server process doesn't necessarily hit a visitor's own
+   * browser. `false` only for a load that actually completed with content.
+   */
+  initialChapterLoadUnreliable: ReadonlySignal<boolean>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -412,6 +424,18 @@ export interface BibleReadingState {
   discoveredStudyNotes: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
+  /**
+   * Placement toggle for the compact discover content panel (cross
+   * references/study notes/content), which is otherwise always shown when
+   * there's something to show. True (the default) lets the panel sit beside
+   * the scripture text when there's room; false forces it below the
+   * scripture text, after the license notice, at any viewport width. Flipped
+   * by the "discover-content-panel" quick tool. Seeded from — and, when a
+   * `SettingsManager` was passed to `createBibleReadingState`, kept in sync
+   * with — the user's persisted `discoverContentPanelInline` setting; other
+   * callers (e.g. shared sessions) get an in-memory-only signal.
+   */
+  discoverContentPanelInline: Signal<boolean>;
 
   /**
    * True while this reading state is part of a shared/multiplayer session.
@@ -1177,6 +1201,20 @@ export function emphasizeVerses(
   });
 }
 
+/** True when the reading state has any discovered cross reference, study note, or content result for the current chapter. */
+export function hasAnyDiscoverResults(
+  readingState: BibleReadingState | null | undefined
+): boolean {
+  if (!readingState) {
+    return false;
+  }
+  return (
+    readingState.discoveredCrossReferences.value.length > 0 ||
+    readingState.discoveredStudyNotes.value.length > 0 ||
+    readingState.discoveredContent.value.length > 0
+  );
+}
+
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
@@ -1191,7 +1229,13 @@ export function createBibleReadingState(
    * By the time anything actually reads `selectionAnnotations.value`, the
    * caller's `AnnotationsManager` already exists.
    */
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  /**
+   * Backs `discoverContentPanelInline` with the user's persisted setting when
+   * provided. Omitted for reading states that shouldn't persist it (e.g.
+   * shared sessions), which fall back to an in-memory-only signal.
+   */
+  settingsManager?: SettingsManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -1251,6 +1295,8 @@ export function createBibleReadingState(
    * rather than repeatedly.
    */
   const initialChapterLoadSettled = signal<boolean>(false);
+  /** See the interface doc on `initialChapterLoadUnreliable`. */
+  const initialChapterLoadUnreliable = signal<boolean>(false);
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<ReadonlySignal<ChapterHighlights>>(
@@ -1335,6 +1381,7 @@ export function createBibleReadingState(
   const SSR_INITIAL_CHAPTER_TIMEOUT_MS = 5000;
   const initialChapterLoadTimer = import.meta.env.SSR
     ? setTimeout(() => {
+        initialChapterLoadUnreliable.value = true;
         initialChapterLoadSettled.value = true;
       }, SSR_INITIAL_CHAPTER_TIMEOUT_MS)
     : null;
@@ -2160,6 +2207,14 @@ export function createBibleReadingState(
       }
       error.value =
         err instanceof Error ? err.message : "Failed to load chapter.";
+      // A failure here on the *initial* load doesn't mean a live client would
+      // hit the same wall — it may be the server's own request path (e.g. an
+      // HTML error page coming back where JSON was expected), not something
+      // wrong with the chapter itself. It must not look "settled" to the
+      // hydration gate — see the interface doc on `initialChapterLoadUnreliable`.
+      if (!initialChapterLoadSettled.peek()) {
+        initialChapterLoadUnreliable.value = true;
+      }
     } finally {
       if (contentRequestController === controller) {
         contentRequestController = null;
@@ -2618,33 +2673,64 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      const loadedTranslations =
-        await dataManager.getTranslations(getActiveEndpoint());
-      availableTranslations.value = toAvailableTranslations(
-        dataManager.availableTranslations.value
-      );
+      // The overwhelmingly common case is a URL that already names a valid
+      // translation on the default endpoint. Validating it against just that
+      // translation's own (much smaller) book catalog — rather than always
+      // pulling down every translation's metadata first — is what keeps an
+      // ordinary chapter load from downloading the full, large translation
+      // list on every single page view. The full catalog below is only
+      // fetched when there's no translation to validate yet
+      // (`useFirstAvailableTranslation`), a custom endpoint is in play (its
+      // translations aren't known until the catalog itself names them), or
+      // the requested translation turns out to be missing.
+      let nextTranslationId: string | undefined;
+      let books: TranslationBooks | undefined;
 
-      const firstAvailableTranslation = loadedTranslations[0];
-      const currentTranslation = useFirstAvailableTranslation.value
-        ? firstAvailableTranslation
-        : (availableTranslations.value.translations.find(
-            (translation) => translation.id === translationId.value
-          ) ??
-          (shouldFallbackToFirstAvailableTranslation
-            ? firstAvailableTranslation
-            : undefined));
-      if (!currentTranslation) {
-        throw new Error(
-          useFirstAvailableTranslation.value
-            ? "No available translations found for endpoint."
-            : `Translation with ID "${translationId.value}" not available.`
+      if (!useFirstAvailableTranslation.value && !getActiveEndpoint()) {
+        try {
+          books = await dataManager.getTranslationBooks(translationId.value);
+          nextTranslationId = translationId.value;
+        } catch {
+          // Not confidently "this translation doesn't exist" on its own — a
+          // network blip would fail the same way. Fall through to the
+          // catalog resolution below, which is what actually decides that.
+        }
+      }
+
+      if (!books || !nextTranslationId) {
+        const loadedTranslations =
+          await dataManager.getTranslations(getActiveEndpoint());
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
+        );
+
+        const firstAvailableTranslation = loadedTranslations[0];
+        const currentTranslation = useFirstAvailableTranslation.value
+          ? firstAvailableTranslation
+          : (availableTranslations.value.translations.find(
+              (translation) => translation.id === translationId.value
+            ) ??
+            (shouldFallbackToFirstAvailableTranslation
+              ? firstAvailableTranslation
+              : undefined));
+        if (!currentTranslation) {
+          throw new Error(
+            useFirstAvailableTranslation.value
+              ? "No available translations found for endpoint."
+              : `Translation with ID "${translationId.value}" not available.`
+          );
+        }
+
+        nextTranslationId = currentTranslation.id;
+        books = await dataManager.getTranslationBooks(nextTranslationId);
+      } else {
+        availableTranslations.value = toAvailableTranslations(
+          dataManager.availableTranslations.value
         );
       }
 
-      const nextTranslationId = currentTranslation.id;
       useFirstAvailableTranslation.value = false;
 
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
       const firstBook = books.books[0];
       if (!firstBook) {
         throw new Error("No books available for selected translation.");
@@ -2704,6 +2790,13 @@ export function createBibleReadingState(
       console.error("Error loading initial Bible data:", err);
       error.value =
         err instanceof Error ? err.message : "Failed to load Bible data.";
+      // An error here doesn't mean a live client would hit the same wall —
+      // it may be the server's own network path (rate limiting, a transient
+      // upstream blip) rather than something the requested chapter itself is
+      // missing. Flagging it the same as a timeout keeps the SSR host from
+      // baking availability computed off no data (e.g. disabled next/previous
+      // buttons) into a page a client then hydrates onto and never corrects.
+      initialChapterLoadUnreliable.value = true;
     } finally {
       endRequest();
       // Terminal either way. Without this a failed first load leaves anything
@@ -2829,6 +2922,61 @@ export function createBibleReadingState(
       }))
       .filter((providerResults) => providerResults.results.length > 0);
   });
+
+  const discoverContentPanelInline = signal<boolean>(
+    settingsManager?.settings.value.discoverContentPanelInline ?? true
+  );
+
+  if (settingsManager) {
+    // Persists every local change (the quick tool's explicit toggle, and
+    // BibleReader's "force inline to reveal a note" nudge alike) to the
+    // user's settings, mirroring how other per-tab UI toggles write through.
+    // Skips the first run so re-seeding this same value back on construction
+    // isn't a redundant profile write.
+    let isFirstRun = true;
+    effectDisposers.push(
+      effect(() => {
+        const value = discoverContentPanelInline.value;
+        if (isFirstRun) {
+          isFirstRun = false;
+          return;
+        }
+        // `untracked` matters here, not just style: it also guards the loop
+        // with the "settings -> local" effect below — when *that* effect
+        // applies an externally-changed setting to `discoverContentPanelInline`,
+        // this effect re-runs, but the value it's about to write is already
+        // what `settings.value` holds, so the equality check no-ops instead of
+        // writing it straight back out. Left tracked, the read of
+        // `settings.value` — made synchronously inside this very effect's
+        // evaluation — would also silently subscribe the effect to the *entire*
+        // settings signal, and the write that follows would then immediately
+        // re-trigger this same effect, forever.
+        untracked(() => {
+          if (
+            settingsManager.settings.value.discoverContentPanelInline === value
+          ) {
+            return;
+          }
+          settingsManager.setDiscoverContentPanelInline(value);
+        });
+      })
+    );
+
+    // Pulls in changes made elsewhere — another tab, another device synced
+    // through the profile — so this reading state's signal doesn't go stale
+    // once construction is done.
+    effectDisposers.push(
+      effect(() => {
+        const settingValue =
+          settingsManager.settings.value.discoverContentPanelInline;
+        untracked(() => {
+          if (discoverContentPanelInline.value !== settingValue) {
+            discoverContentPanelInline.value = settingValue;
+          }
+        });
+      })
+    );
+  }
 
   if (discoverManager) {
     let discoverGeneration = 0;
@@ -3078,6 +3226,7 @@ export function createBibleReadingState(
     chapterData,
     chapterDataPromise,
     initialChapterLoadSettled,
+    initialChapterLoadUnreliable,
     isChapterContentStale,
     highlights,
     decorations,
@@ -3109,6 +3258,7 @@ export function createBibleReadingState(
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
+    discoverContentPanelInline,
     title,
     shortTitle,
     subTitle,

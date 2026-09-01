@@ -1437,6 +1437,90 @@ describe("DiscoverPane", () => {
     expect(container.querySelectorAll(".sb-annotation-item")).toHaveLength(1);
   });
 
+  it("scrolls to and briefly highlights the group targeted by discover.scrollToVerse, then clears it", () => {
+    const { playlists } = createMockPlaylists();
+    const verse3 = createAnnotation({ id: "verse-3", verseNumber: 3 });
+    const verse7 = createAnnotation({ id: "verse-7", verseNumber: 7 });
+    const { annotations } = createMockAnnotations({
+      annotationsForChapter: [verse3, verse7],
+    });
+    const tab = createMockTab({
+      chapterData: {
+        book: { id: "GEN", name: "Genesis" },
+        chapter: { number: 1 },
+      },
+    });
+    const tabs = createMockTabs(tab);
+    const modals = createModalManager();
+    const state = createMockState();
+
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoViewSpy = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewSpy,
+    });
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        callback(0);
+        return 0;
+      });
+
+    vi.useFakeTimers();
+
+    try {
+      act(() => {
+        render(
+          <DiscoverPane
+            tabs={tabs}
+            playlists={playlists}
+            annotations={annotations}
+            modals={modals}
+            state={state}
+            toast={state.app.toast}
+          />,
+          container
+        );
+      });
+
+      act(() => {
+        state.discover.scrollToVerse.value = {
+          bookId: "GEN",
+          chapterNumber: 1,
+          verseNumber: 7,
+        };
+      });
+
+      // Consumed once, immediately.
+      expect(state.discover.scrollToVerse.value).toBeNull();
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({ block: "center" });
+
+      const groups = container.querySelectorAll(".sb-annotation-group");
+      expect(
+        groups[0]?.classList.contains("sb-annotation-group--highlighted")
+      ).toBe(false);
+      expect(
+        groups[1]?.classList.contains("sb-annotation-group--highlighted")
+      ).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      expect(
+        groups[1]?.classList.contains("sb-annotation-group--highlighted")
+      ).toBe(false);
+    } finally {
+      vi.useRealTimers();
+      rafSpy.mockRestore();
+      Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+        configurable: true,
+        value: originalScrollIntoView,
+      });
+    }
+  });
+
   it("shows the comment's author name resolved from their profile and a formatted updated time", async () => {
     const { playlists } = createMockPlaylists();
     const annotation = createAnnotation({
