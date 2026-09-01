@@ -54,6 +54,13 @@ export interface CreateTestSeedBibleStateOptions {
    * heuristic, since an explicit `?today=` short-circuits it.
    */
   todayOpen?: boolean | "fromUrl";
+  /**
+   * Whether the mobile toolbar promotes Chat to the fourth tab via
+   * `?chatFirst=true`. Applied through the real URL param before the state is
+   * built, since `BibleReaderToolbar` reads it from `initialUrl` at boot.
+   * Pass a string to set a non-canonical value (e.g. `"1"`) for edge-case tests.
+   */
+  chatFirst?: boolean | string;
 }
 
 export async function waitFor(
@@ -234,6 +241,21 @@ export async function createTestSeedBibleState(
   if (typeof window !== "undefined" && options.todayOpen !== "fromUrl") {
     const url = new URL(window.location.href);
     url.searchParams.set("today", options.todayOpen ? "open" : "closed");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
+
+  // Same boot-latch pattern for chat-first: the toolbar reads `chatFirst` from
+  // `initialUrl`, so the param has to be on the URL before the state is built.
+  if (typeof window !== "undefined" && options.chatFirst !== undefined) {
+    const url = new URL(window.location.href);
+    if (options.chatFirst === false) {
+      url.searchParams.delete("chatFirst");
+    } else {
+      url.searchParams.set(
+        "chatFirst",
+        options.chatFirst === true ? "true" : options.chatFirst
+      );
+    }
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }
 

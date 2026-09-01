@@ -343,6 +343,8 @@
   "type-a-message": "Type a message...",
   "send-message": "Send message",
   "someone-is-typing": "Someone is typing...",
+  "unread-mention": "Unread mention",
+  "unread-messages": "Unread messages: {{count}}",
   "x-and-x-are-typing": "{{first}} and {{second}} are typing...",
   "x-is-typing": "{{name}} is typing...",
   "x-is-typing-and-more": "{{name}} and {{count}} others are typing...",
