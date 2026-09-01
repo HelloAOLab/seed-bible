@@ -33,7 +33,10 @@ import {
   ReadingPlansPaneLeading,
   ReadingPlansPaneTitle,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
-import type { PlaylistManager } from "./PlaylistManager";
+import {
+  groupVersesIntoPlaylistItems,
+  type PlaylistManager,
+} from "./PlaylistManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
 import { i18n, useI18n } from "../i18n";
 import {
@@ -932,18 +935,23 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         const playlist = context.playlists?.editingPlaylist.value;
         if (!playlist) return;
 
+        const chapterData = context.readingState.chapterData.value;
         context.playlists!.editingPlaylist.value = {
           ...playlist,
           items: [
             ...playlist.items,
-            ...context.readingState.selectedVerses.value.map((verse) => ({
-              type: "bible-verse" as const,
-              ref: {
+            ...groupVersesIntoPlaylistItems(
+              context.readingState.selectedVerses.value.map((verse) => ({
                 bookId: verse.bookId,
                 chapter: verse.chapterNumber,
                 verse: verse.verse.number,
-              },
-            })),
+              })),
+              (bookId, chapter) =>
+                chapterData?.book.id === bookId &&
+                chapterData.chapter.number === chapter
+                  ? chapterData.numberOfVerses
+                  : undefined
+            ),
           ],
         };
 
