@@ -2532,22 +2532,22 @@ export function getSelfDisplayName(
 
 /**
  * Button at the bottom-right of the sidebar showing the current user's
- * avatar. Opens account settings when clicked (matches the bottom-of-sidebar
- * avatar slot in develop).
+ * avatar. Opens the Profile screen — the desktop entry point for it (#1554).
+ * Account settings now hangs off Profile rather than being reached directly.
  */
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { sidebar } = state;
   const { t } = useI18n();
   const displayName = getSelfDisplayName(state, t);
+  const label = t("open-profile", { defaultValue: "Open profile" });
 
   return (
     <button
       className="sb-sidebar-self-avatar"
       onClick={() => {
-        sidebar.openSettingsToView("account");
+        state.openProfile();
       }}
-      aria-label={`Open account settings (${displayName})`}
+      aria-label={`${label} (${displayName})`}
       title={displayName}
     >
       <SelfAvatarVisual state={state} />

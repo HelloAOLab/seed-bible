@@ -50,11 +50,7 @@ import { MobileSessionParticipants } from "../../components/SessionParticipants/
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
-import {
-  SelfAvatarVisual,
-  getSelfDisplayName,
-  openBookmarkCategoryModal,
-} from "../Tabs/Tabs";
+import { openBookmarkCategoryModal } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
@@ -2171,32 +2167,17 @@ export function BibleReader(props: BibleReaderProps) {
                 app={state.app}
                 className="sb-quick-toolbar-mobile-header"
               />
+              {/*
+               * No account avatar here: "You" is a bottom-bar tab again
+               * (#1554), and two avatars on one screen made it unclear which
+               * one was the way to your profile.
+               */}
               {sharedSession ? (
                 <MobileSessionParticipants
                   state={state}
                   session={sharedSession}
                 />
-              ) : (
-                <button
-                  type="button"
-                  className="sb-bible-reader-mobile-header-account"
-                  aria-label={`Open account settings (${getSelfDisplayName(
-                    state,
-                    t
-                  )})`}
-                  // The reader pane wrapper selects the pane on pointerdown/click
-                  // (which runs closeSidebarAndSettings). Stop the tap here so it
-                  // doesn't immediately dismiss the account view we're opening.
-                  onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    state.sidebar.openSidebar();
-                    state.sidebar.openSettingsToView("account");
-                  }}
-                >
-                  <SelfAvatarVisual state={state} />
-                </button>
-              )}
+              ) : null}
               <button
                 type="button"
                 className="sb-bible-reader-mobile-header-settings"

@@ -13,7 +13,7 @@ import { buildReadingUrl } from "../managers/ReadingUrlPath";
 import { extractContentText } from "../managers/ChapterText";
 import type { BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
-import type { PanesManager } from "../managers/PanesManager";
+import type { PanePlacement, PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
   formatVerseSelection,
@@ -682,6 +682,81 @@ function getDefaultQuickToolbarTools(
   );
 }
 
+export interface OpenReadingPlansPaneOptions {
+  readingPlans: ReadingPlansManager;
+  readingState: BibleReadingState;
+  panesManager: PanesManager;
+  modals?: ModalManager;
+  playlists?: PlaylistManager;
+  /**
+   * Where the pane opens. Defaults to "side" — docked beside the reader, which
+   * is what the toolbar's Plans tool wants. The Profile screen passes
+   * "fullscreen" so tapping "All plans" replaces it rather than opening a
+   * panel behind it.
+   */
+  placement?: PanePlacement;
+}
+
+/**
+ * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
+ * the Profile screen's plans card so the two land on the same pane, with the
+ * same chrome and the same scripture/playback wiring.
+ */
+export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
+  const { readingPlans, readingState, panesManager, modals, playlists } =
+    options;
+
+  panesManager.openPane({
+    id: "reading-plans-pane",
+    placement: options.placement ?? "side",
+
+    // The pane's own header carries the plans chrome: a back button when
+    // the user has drilled into a plan or the create wizard, the plan's
+    // name as the title, and the new-plan button.
+    title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
+    icon: () => <ReadingPlansPaneIcon />,
+    leading: () => <ReadingPlansPaneLeading readingPlans={readingPlans} />,
+    header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
+    component: () => (
+      <ReadingPlansPane
+        readingPlans={readingPlans}
+        books={readingState.translationBooks.value?.books ?? []}
+        modals={modals}
+        // Tapping a scripture reading takes the user to it. Without this
+        // a plan can only be ticked off, never actually read from.
+        onOpenScripture={async (ref, translationId) => {
+          await readingState.selectTranslationAndChapter(
+            translationId ?? readingState.translationId.peek(),
+            ref.bookId,
+            ref.chapter,
+            { scrollToVerse: ref.verse }
+          );
+        }}
+        // A day of a plan is a run of readings, which is exactly what the
+        // playlist queue already steps through — so it is handed straight
+        // to `startPlaying` rather than growing a second set of next/back
+        // controls here. The synthetic playlist borrows the plan's own
+        // record name and address so playback is identifiable; it isn't a
+        // real playlist record, so a shared/reloaded URL won't resume it.
+        onPlayReadings={(plan, items, startIndex) => {
+          playlists?.startPlaying(
+            {
+              id: plan.address,
+              title: plan.title,
+              description: plan.description,
+              items,
+            },
+            startIndex,
+            // Reading plans reuse the playlist player but keep their own
+            // progress records — don't also write playlist play history.
+            { history: false }
+          );
+        }}
+      />
+    ),
+  });
+}
+
 function getDefaultToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleToolbarTool[] {
@@ -801,65 +876,15 @@ function getDefaultToolbarTools(
         !!context.readingPlans &&
         context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
       onSelect: (context) => {
-        const readingPlans = context.readingPlans;
-        if (!readingPlans) {
+        if (!context.readingPlans) {
           return;
         }
-        const readingState = context.readingState;
-        context.panesManager.openPane({
-          id: "reading-plans-pane",
-          placement: "side",
-
-          // The pane's own header carries the plans chrome: a back button when
-          // the user has drilled into a plan or the create wizard, the plan's
-          // name as the title, and the new-plan button.
-          title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
-          icon: () => <ReadingPlansPaneIcon />,
-          leading: () => (
-            <ReadingPlansPaneLeading readingPlans={readingPlans} />
-          ),
-          header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
-          component: () => (
-            <ReadingPlansPane
-              readingPlans={readingPlans}
-              books={readingState.translationBooks.value?.books ?? []}
-              modals={context.modals}
-              // Tapping a scripture reading takes the user to it. Without this
-              // a plan can only be ticked off, never actually read from.
-              onOpenScripture={async (ref, translationId) => {
-                await readingState.selectTranslationAndChapter(
-                  translationId ?? readingState.translationId.peek(),
-                  ref.bookId,
-                  ref.chapter,
-                  { scrollToVerse: ref.verse }
-                );
-              }}
-              // A day of a plan is a run of readings, which is exactly what the
-              // playlist queue already steps through — so it is handed straight
-              // to `startPlaying` rather than growing a second set of next/back
-              // controls here. The synthetic playlist borrows the plan's own
-              // record name and address so playback is identifiable; it isn't a
-              // real playlist record, so a shared/reloaded URL won't resume it.
-              onPlayReadings={(plan, items, startIndex) => {
-                context.playlists?.startPlaying(
-                  {
-                    id: plan.address,
-                    // recordName: plan.recordName,
-                    // authorUserId: plan.authorUserId,
-                    title: plan.title,
-                    description: plan.description,
-                    items,
-                    // createdAtMs: plan.createdAtMs,
-                    // updatedAtMs: plan.updatedAtMs,
-                  },
-                  startIndex,
-                  // Reading plans reuse the playlist player but keep their own
-                  // progress records — don't also write playlist play history.
-                  { history: false }
-                );
-              }}
-            />
-          ),
+        openReadingPlansPane({
+          readingPlans: context.readingPlans,
+          readingState: context.readingState,
+          panesManager: context.panesManager,
+          modals: context.modals,
+          playlists: context.playlists,
         });
       },
     },

@@ -89,6 +89,12 @@ export function CasualOSManager(
   let instRecordsClient: InstRecordsClient | null = null;
   let authSource: PartitionAuthSource | null = null;
 
+  /** Record sweeps still running, so concurrent callers share one. */
+  const listAllDataInFlight = new Map<
+    string,
+    Promise<{ success: boolean; items: { address: string; data: unknown }[] }>
+  >();
+
   const sessionKey = signal<string | null>(null);
   const connectionKey = signal<string | null>(null);
 
@@ -372,6 +378,70 @@ export function CasualOSManager(
       }
 
       return { success: true, items: allItems };
+    },
+
+    /**
+     * Every data item in a record, paged by address.
+     *
+     * The marker-scoped listing above can't answer "everything of mine",
+     * because some of what the app writes is marked per chapter — annotations
+     * carry `publicRead:annotations/{book}/{chapter}`, so collecting them all
+     * by marker would mean 1,189 requests. `listData` takes no marker and
+     * walks the record itself, which is one paged sweep instead.
+     *
+     * Callers get raw `{ address, data }` and are expected to recognise their
+     * own items, either by an address prefix or by parsing `data` with their
+     * schema. Only items the caller may read come back.
+     *
+     * Concurrent sweeps of the same record share one set of requests: several
+     * callers want different slices of the same items — annotations and
+     * highlights, say — and each doing its own sweep would page the whole
+     * record twice for the same answer.
+     */
+    listAllData: (
+      recordName: string
+    ): Promise<{
+      success: boolean;
+      items: { address: string; data: unknown }[];
+    }> => {
+      const existing = listAllDataInFlight.get(recordName);
+      if (existing) {
+        return existing;
+      }
+
+      const sweep = (async () => {
+        const allItems: { address: string; data: unknown }[] = [];
+        let lastAddress: string | undefined;
+
+        while (true) {
+          const page = await client.listData({
+            recordName,
+            address: lastAddress,
+          });
+
+          if (!page.success) {
+            console.error("Error listing data:", page);
+            throw new Error(`Error listing data: ${page.errorCode}`);
+          }
+
+          if (page.items.length === 0) {
+            break;
+          }
+
+          for (const item of page.items) {
+            allItems.push({ address: item.address, data: item.data });
+          }
+
+          lastAddress = page.items[page.items.length - 1]?.address;
+        }
+
+        return { success: true, items: allItems };
+      })().finally(() => {
+        listAllDataInFlight.delete(recordName);
+      });
+
+      listAllDataInFlight.set(recordName, sweep);
+      return sweep;
     },
 
     recordFile: async (

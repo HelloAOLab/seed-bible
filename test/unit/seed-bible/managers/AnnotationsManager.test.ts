@@ -315,6 +315,66 @@ describe("AnnotationsManager", () => {
     expect(annotations[0]?.id).toBe("valid");
   });
 
+  describe("listAllAnnotations()", () => {
+    it("collects annotations from across the whole record", async () => {
+      const listAllData = vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          {
+            address: "ann-1",
+            data: createCommentAnnotation({ id: "ann-1", bookId: "GEN" }),
+          },
+          {
+            address: "ann-2",
+            data: createCommentAnnotation({
+              id: "ann-2",
+              bookId: "JHN",
+              chapterNumber: 3,
+            }),
+          },
+        ],
+      });
+      const manager = createManager();
+
+      const annotations = await manager.listAllAnnotations();
+
+      // One sweep of the record, not one request per chapter.
+      expect(listAllData).toHaveBeenCalledTimes(1);
+      expect(listAllData).toHaveBeenCalledWith("user-1");
+      expect(annotations.map((a) => a.id)).toEqual(["ann-1", "ann-2"]);
+    });
+
+    // The same record holds highlights, bookmarks and playlists. Only the
+    // items that parse as an annotation may come back.
+    it("steps over records that are not annotations", async () => {
+      vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          {
+            address: "highlights:BSB/GEN/1",
+            data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+          },
+          { address: "bookmarks", data: { bookmarks: [] } },
+          { address: "ann-1", data: createCommentAnnotation({ id: "ann-1" }) },
+        ],
+      });
+      const manager = createManager();
+
+      const annotations = await manager.listAllAnnotations();
+
+      expect(annotations.map((a) => a.id)).toEqual(["ann-1"]);
+    });
+
+    it("returns nothing when signed out", async () => {
+      login.userId.value = null;
+      const listAllData = vi.spyOn(os, "listAllData");
+      const manager = createManager();
+
+      expect(await manager.listAllAnnotations()).toEqual([]);
+      expect(listAllData).not.toHaveBeenCalled();
+    });
+  });
+
   it("operations throw when login cannot resolve a user record", async () => {
     login.userId.value = null;
     login.login.mockResolvedValue({
