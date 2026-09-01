@@ -8,6 +8,7 @@ import {
   type Signal,
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
+import { canonicalize, type SyncDomain } from "./OfflineRecordStore";
 
 /**
  * Zod schema for a highlighted verse target.
@@ -341,7 +342,7 @@ function createChapterHighlightsAddress(
   bookId: string,
   chapterNumber: number
 ): string {
-  return `highlights:${translationId}/${bookId}/${chapterNumber}`;
+  return `${HIGHLIGHTS_ADDRESS_PREFIX}${translationId}/${bookId}/${chapterNumber}`;
 }
 
 const emptyChapterHighlights: ChapterHighlights = {
@@ -764,3 +765,90 @@ export function createHighlightsManager(
     unhighlightVerses,
   };
 }
+
+type HighlightStyle = Omit<ChapterHighlight, "verse">;
+
+function stylesByVerse(
+  payload: ChapterHighlights | null
+): Map<number, HighlightStyle> {
+  const styles = new Map<number, HighlightStyle>();
+  if (!payload) {
+    return styles;
+  }
+  for (const highlight of normalizeHighlights(payload.highlights)) {
+    const { start, end } = toVerseRange(highlight.verse);
+    for (let verse = start; verse <= end; verse++) {
+      styles.set(verse, {
+        colorId: highlight.colorId,
+        customColor: highlight.customColor,
+        customFontColor: highlight.customFontColor,
+      });
+    }
+  }
+  return styles;
+}
+
+function sameStyle(
+  a: HighlightStyle | undefined,
+  b: HighlightStyle | undefined
+): boolean {
+  return canonicalize(a ?? null) === canonicalize(b ?? null);
+}
+
+/**
+ * Three-way merge of one chapter's highlights, per verse.
+ *
+ * A verse this device did not touch (local equals base) takes whatever the
+ * server has, present or absent. A verse it did touch keeps the local value,
+ * including a removal. No clocks are involved, so two devices never disagree
+ * about the outcome, and there is never anything to ask the user.
+ */
+export function mergeChapterHighlights(
+  base: ChapterHighlights | null,
+  local: ChapterHighlights | null,
+  server: ChapterHighlights | null
+): ChapterHighlights {
+  const baseStyles = stylesByVerse(base);
+  const localStyles = stylesByVerse(local);
+  const serverStyles = stylesByVerse(server);
+  const verses = [
+    ...new Set([
+      ...baseStyles.keys(),
+      ...localStyles.keys(),
+      ...serverStyles.keys(),
+    ]),
+  ].sort((a, b) => a - b);
+
+  const merged: ChapterHighlight[] = [];
+  for (const verse of verses) {
+    const style = sameStyle(localStyles.get(verse), baseStyles.get(verse))
+      ? serverStyles.get(verse)
+      : localStyles.get(verse);
+    if (style) {
+      merged.push({ ...style, verse });
+    }
+  }
+  return { highlights: normalizeHighlights(merged) };
+}
+
+const HIGHLIGHTS_ADDRESS_PREFIX = "highlights:";
+
+function translationIdFromAddress(address: string): string {
+  return address.slice(HIGHLIGHTS_ADDRESS_PREFIX.length).split("/")[0] ?? "";
+}
+
+export const highlightsSyncDomain: SyncDomain<ChapterHighlights> = {
+  dbName: "seed-bible-highlights",
+  parse: (value) => {
+    const parsed = chapterHighlightsSchema.safeParse(value);
+    return parsed.success ? parsed.data : null;
+  },
+  sameVersion: (a, b) =>
+    canonicalize(normalizeHighlights(a.highlights)) ===
+    canonicalize(normalizeHighlights(b.highlights)),
+  // The chapter is the record, so it is its own collection.
+  collection: (address) => address,
+  marker: (address) =>
+    `publicRead:highlights/${translationIdFromAddress(address)}`,
+  merge: mergeChapterHighlights,
+};

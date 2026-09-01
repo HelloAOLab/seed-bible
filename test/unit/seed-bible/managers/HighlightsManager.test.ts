@@ -2,6 +2,8 @@ import {
   chapterHighlightsSchema,
   createHighlightsManager,
   highlightContainsVerse,
+  highlightsSyncDomain,
+  mergeChapterHighlights,
   type ChapterHighlight,
   type ChapterHighlights,
 } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
@@ -1046,5 +1048,79 @@ describe("chapterHighlightsSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("mergeChapterHighlights()", () => {
+  const c = (
+    verse: ChapterHighlight["verse"],
+    colorId = "c1"
+  ): ChapterHighlight => ({ colorId, verse });
+  const hl = (...highlights: ChapterHighlight[]): ChapterHighlights => ({
+    highlights,
+  });
+
+  it("keeps verses added on both sides", () => {
+    expect(mergeChapterHighlights(hl(), hl(c(3)), hl(c(7)))).toEqual(
+      hl(c(3), c(7))
+    );
+  });
+
+  it("lets the local color win when both sides recolored the same verse", () => {
+    expect(
+      mergeChapterHighlights(
+        hl(c(3, "old")),
+        hl(c(3, "mine")),
+        hl(c(3, "theirs"))
+      )
+    ).toEqual(hl(c(3, "mine")));
+  });
+
+  it("removes a verse removed locally when the server left it alone", () => {
+    expect(mergeChapterHighlights(hl(c(3)), hl(), hl(c(3)))).toEqual(hl());
+  });
+
+  it("removes a verse removed on the server when the local side left it alone", () => {
+    expect(
+      mergeChapterHighlights(hl(c(3), c(5)), hl(c(3), c(5)), hl(c(5)))
+    ).toEqual(hl(c(5)));
+  });
+
+  it("unions when there is no base, with local winning overlaps", () => {
+    expect(
+      mergeChapterHighlights(
+        null,
+        hl(c(3, "mine"), c(4)),
+        hl(c(3, "theirs"), c(8))
+      )
+    ).toEqual(hl(c(3, "mine"), c(4), c(8)));
+  });
+
+  it("collapses adjacent equal styles back into ranges", () => {
+    expect(mergeChapterHighlights(hl(), hl(c([3, 5])), hl(c(6)))).toEqual(
+      hl(c([3, 6]))
+    );
+  });
+});
+
+describe("highlightsSyncDomain", () => {
+  it("derives the marker from the translation in the address", () => {
+    expect(
+      highlightsSyncDomain.marker("highlights:BSB/GEN/1", { highlights: [] })
+    ).toBe("publicRead:highlights/BSB");
+  });
+
+  it("treats two payloads as the same version when they normalize equal", () => {
+    expect(
+      highlightsSyncDomain.sameVersion(
+        { highlights: [{ colorId: "c1", verse: [3, 4] }] },
+        {
+          highlights: [
+            { colorId: "c1", verse: 3 },
+            { colorId: "c1", verse: 4 },
+          ],
+        }
+      )
+    ).toBe(true);
   });
 });
