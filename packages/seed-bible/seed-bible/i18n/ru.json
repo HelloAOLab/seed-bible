@@ -18,7 +18,6 @@
   "create-new-tab": "Создать новую вкладку",
   "tab-options": "Параметры вкладки",
   "open-tab-menu": "Открыть меню вкладок",
-  "session-id_x": "Идентификатор сессии: {{sessionId}}",
   "search-verses": "Поиск стихов",
   "clear-search": "Очистить поиск",
   "searching": "Идет поиск...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Для того чтобы вы могли узнать все тонкости Seed Bible, предлагается экскурсия с гидом.",
   "tutorial.promptDecline": "Нет, спасибо",
   "tutorial.promptAccept": "Пройдите экскурсию",
-  "session-id": "Идентификатор сессии",
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Совместное использование",
   "session-settings-section-participants": "Участники",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Спокойной ночи, {{name}} !",
   "annotation-override-banner": "Заметки сохраняются и загружаются из учетной записи вашей команды.",
   "annotation-override-save-to-my-account": "Сохранить в мой аккаунт",
-  "read-book-chapter-button": "Прочитайте {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Прочитайте {{bookName}} {{chapterNumber}}",
+  "session-url": "URL сессии"
 }

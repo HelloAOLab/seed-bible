@@ -18,7 +18,6 @@
   "create-new-tab": "ሓድሽ ትብ ምፍጣር",
   "tab-options": "ናይ ትብ ኣማራጺታት",
   "open-tab-menu": "ትብ ምልክት ክፈት",
-  "session-id_x": "መለለዪ ክፍለ ግዜ {{sessionId}}",
   "search-verses": "ጥቕስታት ድለዩ።",
   "clear-search": "ንጹር ምድላይ",
   "searching": "ምድላይ...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "ውሽጣውን ደጋውን ናይ ዘርኢ መጽሓፍ ቅዱስ ንኽትመሃር ዝሕግዘካ ብመሪሕ ዑደት ኣሎ።",
   "tutorial.promptDecline": "ኣይፋልን የቐንየለይ",
   "tutorial.promptAccept": "ዑደት ውሰድዎ።",
-  "session-id": "መለለዪ ክፍለ ግዜ",
   "session-settings-section-navigation": "ምድህሳስ",
   "session-settings-section-sharing": "ሼር ምግባር",
   "session-settings-section-participants": "ተሳተፍቲ",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ሰናይ ለይቲ {{name}} !",
   "annotation-override-banner": "መዘኻኸሪታት ካብ ኣካውንት ጋንታኻ ይቕመጡን ይጽዓኑን ኣለዉ።",
   "annotation-override-save-to-my-account": "ኣብ ኣካውንተይ ኣቐምጥ",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ኣንብብ"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ኣንብብ",
+  "session-url": "ናይ ክፍለ ግዜ URL"
 }

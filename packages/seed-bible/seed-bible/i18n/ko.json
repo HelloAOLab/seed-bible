@@ -18,7 +18,6 @@
   "create-new-tab": "새 탭 만들기",
   "tab-options": "탭 옵션",
   "open-tab-menu": "탭 메뉴 열기",
-  "session-id_x": "세션 ID: {{sessionId}}",
   "search-verses": "구절 검색",
   "clear-search": "검색 결과 지우기",
   "searching": "수색...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible의 모든 것을 자세히 알아볼 수 있도록 가이드 투어가 제공됩니다.",
   "tutorial.promptDecline": "아니요, 괜찮습니다.",
   "tutorial.promptAccept": "투어에 참여하세요",
-  "session-id": "세션 ID",
   "session-settings-section-navigation": "항해",
   "session-settings-section-sharing": "공유하기",
   "session-settings-section-participants": "참가자들",
@@ -661,5 +659,6 @@
   "greeting-night-named": "잘 자요, {{name}} !",
   "annotation-override-banner": "팀 계정에서 메모를 저장하고 불러오고 있습니다.",
   "annotation-override-save-to-my-account": "내 계정에 저장",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} 를 읽으세요."
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} 를 읽으세요.",
+  "session-url": "세션 URL"
 }

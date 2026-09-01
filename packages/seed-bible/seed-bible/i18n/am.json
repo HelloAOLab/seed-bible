@@ -18,7 +18,6 @@
   "create-new-tab": "አዲስ ትር ፍጠር",
   "tab-options": "የትር አማራጮች",
   "open-tab-menu": "የትር ምናሌን ክፈት",
-  "session-id_x": "የክፍለ ጊዜ መታወቂያ፦ {{sessionId}}",
   "search-verses": "ጥቅሶችን ፈልግ",
   "clear-search": "ፍለጋን አጽዳ",
   "searching": "በመፈለግ ላይ...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "የ Seed Bible ውስጣዊና ውጫዊ ነገሮችን ለመማር የሚያግዝዎት የሚመራ ጉብኝት አለ።",
   "tutorial.promptDecline": "አልፈልግም፣አመሰግናለሁ",
   "tutorial.promptAccept": "ጉብኝቱን ይውሰዱ",
-  "session-id": "የክፍለ ጊዜ መታወቂያ",
   "session-settings-section-navigation": "አሰሳ",
   "session-settings-section-sharing": "ማጋራት",
   "session-settings-section-participants": "ተሳታፊዎች",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ደህና እደሩ፣ {{name}} !",
   "annotation-override-banner": "ማስታወሻዎች ከቡድንዎ መለያ እየተቀመጡ እና እየተጫኑ ነው።",
   "annotation-override-save-to-my-account": "ወደ መለያዬ አስቀምጥ",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ን ያንብቡ"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ን ያንብቡ",
+  "session-url": "የክፍለ ጊዜ ዩአርኤል"
 }

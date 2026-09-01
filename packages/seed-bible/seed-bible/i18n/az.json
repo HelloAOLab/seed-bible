@@ -23,7 +23,6 @@
   "create-new-tab": "Yeni sekme yaradın",
   "tab-options": "Tab seçimləri",
   "open-tab-menu": "Açıq sekme menyusu",
-  "session-id_x": "Sessiya ID-si: {{sessionId}}",
   "search-verses": "Ayələri axtarın",
   "clear-search": "Axtarışı təmizləyin",
   "searching": "Axtarışda...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible-ın incəliklərini öyrənməyinizə kömək etmək üçün bələdçi turu mövcuddur.",
   "tutorial.promptDecline": "Xeyr, təşəkkürlər",
   "tutorial.promptAccept": "Tura çıxın",
-  "session-id": "Sessiya ID-si",
   "session-settings-section-navigation": "Naviqasiya",
   "session-settings-section-sharing": "Paylaşma",
   "session-settings-section-participants": "İştirakçılar",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Gecəniz xeyirə, {{name}} !",
   "annotation-override-banner": "Qeydlər komandanızın hesabından yadda saxlanılır və yüklənir.",
   "annotation-override-save-to-my-account": "Hesabıma yadda saxla",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} oxuyun"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} oxuyun",
+  "session-url": "Sessiya URL-i"
 }

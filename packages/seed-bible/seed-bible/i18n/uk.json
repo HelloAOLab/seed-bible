@@ -18,7 +18,6 @@
   "create-new-tab": "Створити нову вкладку",
   "tab-options": "Параметри вкладок",
   "open-tab-menu": "Відкрити меню вкладок",
-  "session-id_x": "Ідентифікатор сеансу: {{sessionId}}",
   "search-verses": "Пошук віршів",
   "clear-search": "Очистити пошук",
   "searching": "Пошук...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Доступна екскурсія з гідом, яка допоможе вам дізнатися про всі тонкощі Біблії насіння.",
   "tutorial.promptDecline": "Ні, дякую.",
   "tutorial.promptAccept": "Відвідайте екскурсію",
-  "session-id": "Ідентифікатор сеансу",
   "session-settings-section-navigation": "Навігація",
   "session-settings-section-sharing": "Спільне використання",
   "session-settings-section-participants": "Учасники",
@@ -661,5 +659,6 @@
   "greeting-night-named": "На добраніч, {{name}} !",
   "annotation-override-banner": "Нотатки зберігаються та завантажуються з облікового запису вашої команди.",
   "annotation-override-save-to-my-account": "Зберегти в моєму обліковому записі",
-  "read-book-chapter-button": "Прочитайте {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Прочитайте {{bookName}} {{chapterNumber}}",
+  "session-url": "URL-адреса сеансу"
 }

@@ -1,4 +1,4 @@
-import "./ReadingPlanBelongsCard.css";
+import "./ReadingPlansSection.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
@@ -17,6 +17,7 @@ import {
 interface ReadingPlanBelongsCardProps {
   state: SeedBibleState;
   readingState: BibleReadingState;
+  plans: PlanMatch[];
 }
 
 /**
@@ -29,7 +30,7 @@ const MIN_DWELL_MS = 12_000;
 
 interface PlanMatch {
   planKey: string;
-  planTitle: string;
+  planTitle: string | null;
   progress: ReadingPlanProgress;
   /** Sessions in this plan whose readings cover the current passage. */
   sessions: ReadingPlanSession[];
@@ -50,7 +51,7 @@ interface PlanMatch {
  * text and link readings that happen to share the session (and can't be reached
  * from the reader at all) are left alone.
  */
-export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
+export function ReadingPlansSection(props: ReadingPlanBelongsCardProps) {
   const { state, readingState } = props;
   const { t } = useI18n();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -63,51 +64,8 @@ export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
   // Read signals unconditionally so the component stays subscribed.
   const bookId = readingState.bookId.value;
   const chapter = readingState.chapterNumber.value;
-  const fullPlans = readingPlans?.fullReadingPlans.value ?? [];
-  const progresses = readingPlans?.userReadingPlanProgresses.value ?? [];
 
-  const untitled = t("untitled-reading-plan", {
-    defaultValue: "Untitled plan",
-  });
-
-  const matches: PlanMatch[] = [];
-  if (readingPlans && featureOn && bookId) {
-    for (const plan of fullPlans) {
-      const planId = formatReadingPlanId(plan.recordName, plan.address);
-      const progress = progresses.find((p) => p.planId === planId);
-      if (!progress) {
-        continue; // only plans the user is actually following
-      }
-      const sessions = plan.sessions.filter((s) =>
-        sessionMatchesPassage(s, bookId, chapter)
-      );
-      if (sessions.length === 0) {
-        continue;
-      }
-      // Done means "this chapter is read", not "the whole session is read":
-      // every reading covering the open chapter has that chapter recorded.
-      const allComplete = sessions.every((s) => {
-        const sp = progress.sessions.find((entry) => entry.sessionId === s.id);
-        return s.readings.every((reading) => {
-          const item = reading.item;
-          if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
-            return true; // not this passage — not this card's business
-          }
-          if (!readingChapters(reading).includes(chapter)) {
-            return true;
-          }
-          return isReadingChapterComplete(sp, reading.id, chapter);
-        });
-      });
-      matches.push({
-        planKey: planId,
-        planTitle: plan.title ?? untitled,
-        progress,
-        sessions,
-        allComplete,
-      });
-    }
-  }
+  const matches: PlanMatch[] = props.plans;
 
   const matchCount = matches.length;
   const hasIncomplete = matches.some((m) => !m.allComplete);
@@ -256,9 +214,9 @@ export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
         className={`sb-rpb-card${nudging ? " sb-rpb-card-nudge" : ""}`}
         ref={cardRef}
       >
-        <div className="sb-rpb-label">
-          {t("reading-belongs-to", { defaultValue: "This reading belongs to" })}
-        </div>
+        <h3 className="sb-discover-section-title">
+          {t("reading-plans", { defaultValue: "Reading Plans" })}
+        </h3>
 
         <ul className="sb-rpb-list">
           {matches.map((match) => (
@@ -307,4 +265,58 @@ export function ReadingPlanBelongsCard(props: ReadingPlanBelongsCardProps) {
       </div>
     </>
   );
+}
+
+export function getReadingPlansForChapter(
+  state: SeedBibleState,
+  readingState: BibleReadingState
+): PlanMatch[] {
+  const readingPlans = state.readingPlans;
+  const featureOn = state.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS);
+
+  // Read signals unconditionally so the component stays subscribed.
+  const bookId = readingState.bookId.value;
+  const chapter = readingState.chapterNumber.value;
+  const fullPlans = readingPlans?.fullReadingPlans.value ?? [];
+  const progresses = readingPlans?.userReadingPlanProgresses.value ?? [];
+
+  const matches: PlanMatch[] = [];
+  if (readingPlans && featureOn && bookId) {
+    for (const plan of fullPlans) {
+      const planId = formatReadingPlanId(plan.recordName, plan.address);
+      const progress = progresses.find((p) => p.planId === planId);
+      if (!progress) {
+        continue; // only plans the user is actually following
+      }
+      const sessions = plan.sessions.filter((s) =>
+        sessionMatchesPassage(s, bookId, chapter)
+      );
+      if (sessions.length === 0) {
+        continue;
+      }
+      // Done means "this chapter is read", not "the whole session is read":
+      // every reading covering the open chapter has that chapter recorded.
+      const allComplete = sessions.every((s) => {
+        const sp = progress.sessions.find((entry) => entry.sessionId === s.id);
+        return s.readings.every((reading) => {
+          const item = reading.item;
+          if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
+            return true; // not this passage — not this card's business
+          }
+          if (!readingChapters(reading).includes(chapter)) {
+            return true;
+          }
+          return isReadingChapterComplete(sp, reading.id, chapter);
+        });
+      });
+      matches.push({
+        planKey: planId,
+        planTitle: plan.title ?? null,
+        progress,
+        sessions,
+        allComplete,
+      });
+    }
+  }
+  return matches;
 }

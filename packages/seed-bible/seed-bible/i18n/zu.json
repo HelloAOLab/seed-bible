@@ -23,7 +23,6 @@
   "create-new-tab": "Dala ithebhu entsha",
   "tab-options": "Izinketho zethebhu",
   "open-tab-menu": "Vula imenyu yethebhu",
-  "session-id_x": "I-ID Yeseshini: {{sessionId}}",
   "search-verses": "Sesha amavesi",
   "clear-search": "Sula usesho",
   "searching": "Iyasesha...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Uhambo oluqondisiwe luyatholakala ukukusiza ufunde okujulile nokungaphandle kweSeed Bible.",
   "tutorial.promptDecline": "Cha ngiyabonga",
   "tutorial.promptAccept": "Thatha uhambo",
-  "session-id": "I-ID Yeseshini",
   "session-settings-section-navigation": "Ukuzulazula",
   "session-settings-section-sharing": "Ukwabelana",
   "session-settings-section-participants": "Abahlanganyeli",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Ulale kahle, {{name}} !",
   "annotation-override-banner": "Amanothi ayalondolozwa futhi alayishwa kusuka ku-akhawunti yethimba lakho.",
   "annotation-override-save-to-my-account": "Londoloza ku-akhawunti yami",
-  "read-book-chapter-button": "Funda {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Funda {{bookName}} {{chapterNumber}}",
+  "session-url": "I-URL Yeseshini"
 }

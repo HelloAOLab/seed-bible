@@ -23,7 +23,6 @@
   "create-new-tab": "Sukurti naują skirtuką",
   "tab-options": "Skirtukų parinktys",
   "open-tab-menu": "Atidaryti skirtuko meniu",
-  "session-id_x": "Sesijos ID: {{sessionId}}",
   "search-verses": "Ieškoti eilučių",
   "clear-search": "Išvalyti paiešką",
   "searching": "Ieškoma...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Siūloma ekskursija su gidu, kuri padės jums sužinoti apie „Seed Bible“ subtilybes.",
   "tutorial.promptDecline": "Ne, ačiū",
   "tutorial.promptAccept": "Apsilankykite ekskursijoje",
-  "session-id": "Sesijos ID",
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dalijimasis",
   "session-settings-section-participants": "Dalyviai",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Labos nakties, {{name}} !",
   "annotation-override-banner": "Užrašai išsaugomi ir įkeliami iš jūsų komandos paskyros.",
   "annotation-override-save-to-my-account": "Išsaugoti mano paskyroje",
-  "read-book-chapter-button": "Perskaitykite {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Perskaitykite {{bookName}} {{chapterNumber}}",
+  "session-url": "Seanso URL"
 }

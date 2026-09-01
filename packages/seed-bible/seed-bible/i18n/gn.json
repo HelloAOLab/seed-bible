@@ -23,7 +23,6 @@
   "create-new-tab": "Ojapo ficha pyahu",
   "tab-options": "Opciones ficha rehegua",
   "open-tab-menu": "Eipe’a menú ficha rehegua",
-  "session-id_x": "ID sesión rehegua: {{sessionId}}",
   "search-verses": "Eheka umi versíkulo",
   "clear-search": "Ojeporeka hesakã porãva",
   "searching": "Ojehekávo...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Ojeguereko peteĩ visita guiada nepytyvõtava reikuaa hag̃ua umi mbaʼe iñimportantevéva Seed Bible-pe.",
   "tutorial.promptDecline": "Nahániri, aguyje",
   "tutorial.promptAccept": "Ejapo pe gira",
-  "session-id": "ID sesión rehegua",
   "session-settings-section-navigation": "Navegación rehegua",
   "session-settings-section-sharing": "Ñemboja’o",
   "session-settings-section-participants": "Umi oikeva’ekue",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Pyhare porã, {{name}} !",
   "annotation-override-banner": "Umi nota oñeñongatu ha ojekarga hína nde equipo cuenta-gui.",
   "annotation-override-save-to-my-account": "Eñongatu che cuenta-pe",
-  "read-book-chapter-button": "Emoñe’ẽ {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Emoñe’ẽ {{bookName}} {{chapterNumber}}",
+  "session-url": "URL sesión rehegua"
 }

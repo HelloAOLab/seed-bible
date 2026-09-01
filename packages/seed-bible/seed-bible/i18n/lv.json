@@ -23,7 +23,6 @@
   "create-new-tab": "Izveidot jaunu cilni",
   "tab-options": "Cilnes opcijas",
   "open-tab-menu": "Atvērt cilnes izvēlni",
-  "session-id_x": "Sesijas ID: {{sessionId}}",
   "search-verses": "Meklēšanas panti",
   "clear-search": "Notīrīt meklēšanu",
   "searching": "Meklēšana...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Ir pieejama ekskursija ar gidu, lai palīdzētu jums apgūt Seed Bible būtību.",
   "tutorial.promptDecline": "Nē, paldies",
   "tutorial.promptAccept": "Dodieties ekskursijā",
-  "session-id": "Sesijas ID",
   "session-settings-section-navigation": "Navigācija",
   "session-settings-section-sharing": "Kopīgošana",
   "session-settings-section-participants": "Dalībnieki",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Arlabunakti, {{name}} !",
   "annotation-override-banner": "Piezīmes tiek saglabātas un ielādētas no jūsu komandas konta.",
   "annotation-override-save-to-my-account": "Saglabāt manā kontā",
-  "read-book-chapter-button": "Izlasiet grāmatu {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Izlasiet grāmatu {{bookName}} {{chapterNumber}}",
+  "session-url": "Sesijas URL"
 }

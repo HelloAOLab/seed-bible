@@ -23,7 +23,6 @@
   "create-new-tab": "Loo uus vahekaart",
   "tab-options": "Vahekaardi valikud",
   "open-tab-menu": "Ava vahekaardi menüü",
-  "session-id_x": "Seansi ID: {{sessionId}}",
   "search-verses": "Otsi salme",
   "clear-search": "Tühjenda otsing",
   "searching": "Otsin...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Saadaval on giidiga ekskursioon, mis aitab teil Seed Bible'i plusse ja miinuseid tundma õppida.",
   "tutorial.promptDecline": "Ei, aitäh",
   "tutorial.promptAccept": "Tehke ringkäik",
-  "session-id": "Seansi ID",
   "session-settings-section-navigation": "Navigeerimine",
   "session-settings-section-sharing": "Jagamine",
   "session-settings-section-participants": "Osalejad",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Head ööd, {{name}} !",
   "annotation-override-banner": "Märkmeid salvestatakse ja laaditakse teie meeskonna kontolt.",
   "annotation-override-save-to-my-account": "Salvesta minu kontole",
-  "read-book-chapter-button": "Loe raamatut {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Loe raamatut {{bookName}} {{chapterNumber}}",
+  "session-url": "Seansi URL"
 }

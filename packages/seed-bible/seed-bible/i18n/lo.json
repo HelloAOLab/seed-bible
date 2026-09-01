@@ -23,7 +23,6 @@
   "create-new-tab": "ສ້າງແຖບໃໝ່",
   "tab-options": "ຕົວເລືອກແຖບ",
   "open-tab-menu": "ເປີດເມນູແຖບ",
-  "session-id_x": "ລະຫັດເຊດຊັນ: {{sessionId}}",
   "search-verses": "ຄົ້ນຫາຂໍ້ພຣະຄຳພີ",
   "clear-search": "ລຶບລ້າງການຄົ້ນຫາ",
   "searching": "ກຳລັງຊອກຫາ...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "ມີການທ່ອງທ່ຽວແບບມີຄູ່ມືເພື່ອຊ່ວຍໃຫ້ທ່ານຮຽນຮູ້ລາຍລະອຽດຂອງ Seed Bible.",
   "tutorial.promptDecline": "ບໍ່, ຂອບໃຈ",
   "tutorial.promptAccept": "ໄປທ່ຽວຊົມ",
-  "session-id": "ລະຫັດເຊດຊັນ",
   "session-settings-section-navigation": "ການນຳທາງ",
   "session-settings-section-sharing": "ການແບ່ງປັນ",
   "session-settings-section-participants": "ຜູ້ເຂົ້າຮ່ວມ",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ສະບາຍດີຕອນກາງຄືນ, {{name}} !",
   "annotation-override-banner": "ບັນທຶກກຳລັງຖືກບັນທຶກ ແລະ ໂຫຼດຈາກບັນຊີຂອງທີມທ່ານ.",
   "annotation-override-save-to-my-account": "ບັນທຶກໄວ້ໃນບັນຊີຂອງຂ້ອຍ",
-  "read-book-chapter-button": "ອ່ານ {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "ອ່ານ {{bookName}} {{chapterNumber}}",
+  "session-url": "URL ຂອງເຊດຊັນ"
 }

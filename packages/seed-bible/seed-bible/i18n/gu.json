@@ -23,7 +23,6 @@
   "create-new-tab": "નવું ટેબ બનાવો",
   "tab-options": "ટૅબ વિકલ્પો",
   "open-tab-menu": "ટૅબ મેનૂ ખોલો",
-  "session-id_x": "સત્ર ID: {{sessionId}}",
   "search-verses": "શ્લોકો શોધો",
   "clear-search": "શોધ સાફ કરો",
   "searching": "શોધી રહ્યું છે...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "સીડ બાઇબલની ઝીણવટભરી બાબતો શીખવામાં તમારી મદદ માટે માર્ગદર્શિત પ્રવાસ ઉપલબ્ધ છે.",
   "tutorial.promptDecline": "ના, આભાર",
   "tutorial.promptAccept": "પ્રવાસ લો",
-  "session-id": "સત્ર ID",
   "session-settings-section-navigation": "નેવિગેશન",
   "session-settings-section-sharing": "શેરિંગ",
   "session-settings-section-participants": "સહભાગીઓ",
@@ -661,5 +659,6 @@
   "greeting-night-named": "શુભ રાત્રિ, {{name}} !",
   "annotation-override-banner": "તમારી ટીમના ખાતામાંથી નોંધો સાચવવામાં અને લોડ કરવામાં આવી રહી છે.",
   "annotation-override-save-to-my-account": "મારા એકાઉન્ટમાં સાચવો",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} વાંચો"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} વાંચો",
+  "session-url": "સત્ર URL"
 }

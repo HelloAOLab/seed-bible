@@ -23,7 +23,6 @@
   "create-new-tab": "Ustvari nov zavihek",
   "tab-options": "Možnosti zavihkov",
   "open-tab-menu": "Odpri meni zavihkov",
-  "session-id_x": "ID seje: {{sessionId}}",
   "search-verses": "Iskanje verzov",
   "clear-search": "Počisti iskanje",
   "searching": "Iskanje ...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Na voljo je voden ogled, ki vam bo pomagal spoznati podrobnosti Seed Bible.",
   "tutorial.promptDecline": "Ne, hvala",
   "tutorial.promptAccept": "Udeležite se ogleda",
-  "session-id": "ID seje",
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Deljenje",
   "session-settings-section-participants": "Udeleženci",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Lahko noč, {{name}} !",
   "annotation-override-banner": "Zapiski se shranjujejo in nalagajo iz računa vaše ekipe.",
   "annotation-override-save-to-my-account": "Shrani v moj račun",
-  "read-book-chapter-button": "Preberi {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Preberi {{bookName}} {{chapterNumber}}",
+  "session-url": "URL seje"
 }

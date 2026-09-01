@@ -23,7 +23,6 @@
   "create-new-tab": "Neuen Tab erstellen",
   "tab-options": "Registerkartenoptionen",
   "open-tab-menu": "Tab-Menü öffnen",
-  "session-id_x": "Sitzungs-ID: {{sessionId}}",
   "search-verses": "Verse suchen",
   "clear-search": "Suche löschen",
   "searching": "Suche...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Es wird eine geführte Tour angeboten, die Ihnen hilft, die Funktionsweise der Seed Bible kennenzulernen.",
   "tutorial.promptDecline": "Nein danke",
   "tutorial.promptAccept": "Nehmen Sie an der Tour teil",
-  "session-id": "Sitzungs-ID",
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Teilen",
   "session-settings-section-participants": "Teilnehmer",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Gute Nacht, {{name}} !",
   "annotation-override-banner": "Notizen werden im Konto Ihres Teams gespeichert und geladen.",
   "annotation-override-save-to-my-account": "In meinem Konto speichern",
-  "read-book-chapter-button": "Lesen Sie {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Lesen Sie {{bookName}} {{chapterNumber}}",
+  "session-url": "Sitzungs-URL"
 }

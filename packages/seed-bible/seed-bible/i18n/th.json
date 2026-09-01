@@ -23,7 +23,6 @@
   "create-new-tab": "สร้างแท็บใหม่",
   "tab-options": "ตัวเลือกแท็บ",
   "open-tab-menu": "เมนูแท็บเปิด",
-  "session-id_x": "รหัสเซสชัน: {{sessionId}}",
   "search-verses": "ค้นหาข้อความ",
   "clear-search": "ล้างการค้นหา",
   "searching": "กำลังค้นหา...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "มีบริการนำชมเพื่อช่วยให้คุณเรียนรู้รายละเอียดต่างๆ ของ Seed Bible อย่างครบถ้วน",
   "tutorial.promptDecline": "ไม่เป็นไร ขอบคุณ",
   "tutorial.promptAccept": "ไปทัวร์กันเลย",
-  "session-id": "รหัสเซสชัน",
   "session-settings-section-navigation": "การนำทาง",
   "session-settings-section-sharing": "การแบ่งปัน",
   "session-settings-section-participants": "ผู้เข้าร่วม",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ฝันดีนะ {{name}} !",
   "annotation-override-banner": "บันทึกต่างๆ กำลังถูกบันทึกและโหลดจากบัญชีของทีมคุณ",
   "annotation-override-save-to-my-account": "บันทึกไปยังบัญชีของฉัน",
-  "read-book-chapter-button": "อ่านหนังสือ {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "อ่านหนังสือ {{bookName}} {{chapterNumber}}",
+  "session-url": "URL เซสชัน"
 }

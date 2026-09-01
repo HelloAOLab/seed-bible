@@ -23,7 +23,6 @@
   "create-new-tab": "Opret ny fane",
   "tab-options": "Faneindstillinger",
   "open-tab-menu": "Åbn fanemenu",
-  "session-id_x": "Sessions-ID: {{sessionId}}",
   "search-verses": "Søg vers",
   "clear-search": "Ryd søgning",
   "searching": "Søger...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "En guidet tur er tilgængelig, der kan hjælpe dig med at lære Seed Bibles ind og ud.",
   "tutorial.promptDecline": "Nej, tak",
   "tutorial.promptAccept": "Tag turen",
-  "session-id": "Sessions-ID",
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Deling",
   "session-settings-section-participants": "Deltagere",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Godnat, {{name}} !",
   "annotation-override-banner": "Noter gemmes og indlæses fra dit teams konto.",
   "annotation-override-save-to-my-account": "Gem på min konto",
-  "read-book-chapter-button": "Læs {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Læs {{bookName}} {{chapterNumber}}",
+  "session-url": "Sessions-URL"
 }

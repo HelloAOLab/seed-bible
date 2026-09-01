@@ -23,7 +23,6 @@
   "create-new-tab": "ਨਵੀਂ ਟੈਬ ਬਣਾਓ",
   "tab-options": "ਟੈਬ ਵਿਕਲਪ",
   "open-tab-menu": "ਟੈਬ ਮੀਨੂ ਖੋਲ੍ਹੋ",
-  "session-id_x": "ਸੈਸ਼ਨ ਆਈਡੀ: {{sessionId}}",
   "search-verses": "ਆਇਤਾਂ ਦੀ ਖੋਜ ਕਰੋ",
   "clear-search": "ਖੋਜ ਸਾਫ਼ ਕਰੋ",
   "searching": "ਖੋਜ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "ਸੀਡ ਬਾਈਬਲ ਦੀਆਂ ਬਾਰੀਕੀਆਂ ਸਿੱਖਣ ਵਿੱਚ ਤੁਹਾਡੀ ਮਦਦ ਕਰਨ ਲਈ ਇੱਕ ਗਾਈਡਡ ਟੂਰ ਉਪਲਬਧ ਹੈ।",
   "tutorial.promptDecline": "ਨਹੀਂ ਧੰਨਵਾਦ",
   "tutorial.promptAccept": "ਟੂਰ ਲਓ",
-  "session-id": "ਸੈਸ਼ਨ ਆਈਡੀ",
   "session-settings-section-navigation": "ਨੇਵੀਗੇਸ਼ਨ",
   "session-settings-section-sharing": "ਸਾਂਝਾ ਕਰਨਾ",
   "session-settings-section-participants": "ਭਾਗੀਦਾਰ",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ਸ਼ੁਭ ਰਾਤਰੀ, {{name}} !",
   "annotation-override-banner": "ਨੋਟਸ ਤੁਹਾਡੀ ਟੀਮ ਦੇ ਖਾਤੇ ਤੋਂ ਸੇਵ ਅਤੇ ਲੋਡ ਕੀਤੇ ਜਾ ਰਹੇ ਹਨ।",
   "annotation-override-save-to-my-account": "ਮੇਰੇ ਖਾਤੇ ਵਿੱਚ ਸੇਵ ਕਰੋ",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ਪੜ੍ਹੋ"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ਪੜ੍ਹੋ",
+  "session-url": "ਸੈਸ਼ਨ URL"
 }

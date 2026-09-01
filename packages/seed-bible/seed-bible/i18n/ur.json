@@ -18,7 +18,6 @@
   "create-new-tab": "نیا ٹیب بنائیں",
   "tab-options": "ٹیب کے اختیارات",
   "open-tab-menu": "ٹیب مینو کھولیں۔",
-  "session-id_x": "سیشن ID: {{sessionId}}",
   "search-verses": "آیات تلاش کریں۔",
   "clear-search": "تلاش صاف کریں۔",
   "searching": "تلاش کر رہا ہے...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "سیڈ بائبل کے اندر اور باہر سیکھنے میں آپ کی مدد کے لیے ایک گائیڈڈ ٹور دستیاب ہے۔",
   "tutorial.promptDecline": "نہیں، شکریہ",
   "tutorial.promptAccept": "ٹور لیں۔",
-  "session-id": "سیشن ID",
   "session-settings-section-navigation": "نیویگیشن",
   "session-settings-section-sharing": "شیئرنگ",
   "session-settings-section-participants": "شرکاء",
@@ -661,5 +659,6 @@
   "greeting-night-named": "شب بخیر، {{name}} !",
   "annotation-override-banner": "نوٹس آپ کی ٹیم کے اکاؤنٹ سے محفوظ اور لوڈ کیے جا رہے ہیں۔",
   "annotation-override-save-to-my-account": "میرے اکاؤنٹ میں محفوظ کریں۔",
-  "read-book-chapter-button": "پڑھیں {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "پڑھیں {{bookName}} {{chapterNumber}}",
+  "session-url": "سیشن URL"
 }

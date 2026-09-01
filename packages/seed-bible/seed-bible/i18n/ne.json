@@ -18,7 +18,6 @@
   "create-new-tab": "नयाँ ट्याब सिर्जना गर्नुहोस्",
   "tab-options": "ट्याब विकल्पहरू",
   "open-tab-menu": "ट्याब मेनु खोल्नुहोस्",
-  "session-id_x": "सत्र आईडी: {{sessionId}}",
   "search-verses": "पदहरू खोज्नुहोस्",
   "clear-search": "खोज खाली गर्नुहोस्",
   "searching": "खोज्दै...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "सिड बाइबलका भित्री र बाहिरी कुराहरू सिक्न मद्दत गर्न निर्देशित भ्रमण उपलब्ध छ।",
   "tutorial.promptDecline": "होइन, धन्यवाद",
   "tutorial.promptAccept": "भ्रमण गर्नुहोस्",
-  "session-id": "सत्र आईडी",
   "session-settings-section-navigation": "नेभिगेसन",
   "session-settings-section-sharing": "साझा गर्ने",
   "session-settings-section-participants": "सहभागीहरू",
@@ -661,5 +659,6 @@
   "greeting-night-named": "शुभ रात्री, {{name}} !",
   "annotation-override-banner": "तपाईंको टोलीको खाताबाट नोटहरू बचत र लोड भइरहेका छन्।",
   "annotation-override-save-to-my-account": "मेरो खातामा बचत गर्नुहोस्",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} पढ्नुहोस्"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} पढ्नुहोस्",
+  "session-url": "सत्र URL"
 }

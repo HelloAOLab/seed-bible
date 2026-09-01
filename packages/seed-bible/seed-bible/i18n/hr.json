@@ -23,7 +23,6 @@
   "create-new-tab": "Stvori novu karticu",
   "tab-options": "Opcije kartice",
   "open-tab-menu": "Otvori izbornik kartica",
-  "session-id_x": "ID sesije: {{sessionId}}",
   "search-verses": "Pretraži stihove",
   "clear-search": "Obriši pretragu",
   "searching": "Pretraživanje...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Dostupan je vođeni obilazak koji će vam pomoći da naučite sve o Seed Bible.",
   "tutorial.promptDecline": "Ne, hvala",
   "tutorial.promptAccept": "Krenite na obilazak",
-  "session-id": "ID sesije",
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dijeljenje",
   "session-settings-section-participants": "Sudionici",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Laku noć, {{name}} !",
   "annotation-override-banner": "Bilješke se spremaju i učitavaju s računa vašeg tima.",
   "annotation-override-save-to-my-account": "Spremi na moj račun",
-  "read-book-chapter-button": "Pročitajte {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Pročitajte {{bookName}} {{chapterNumber}}",
+  "session-url": "URL sesije"
 }

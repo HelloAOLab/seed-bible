@@ -18,7 +18,6 @@
   "create-new-tab": "新しいタブを作成する",
   "tab-options": "タブオプション",
   "open-tab-menu": "タブメニューを開く",
-  "session-id_x": "セッションID: {{sessionId}}",
   "search-verses": "聖句を検索",
   "clear-search": "検索をクリアする",
   "searching": "検索中...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "シードバイブルのあらゆる側面を学ぶのに役立つガイド付きツアーをご利用いただけます。",
   "tutorial.promptDecline": "結構です",
   "tutorial.promptAccept": "ツアーに参加する",
-  "session-id": "セッションID",
   "session-settings-section-navigation": "ナビゲーション",
   "session-settings-section-sharing": "共有",
   "session-settings-section-participants": "参加者",
@@ -661,5 +659,6 @@
   "greeting-night-named": "おやすみなさい、 {{name}} ！",
   "annotation-override-banner": "メモはチームのアカウントから保存および読み込まれています。",
   "annotation-override-save-to-my-account": "マイアカウントに保存",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}}を読んでください。"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}}を読んでください。",
+  "session-url": "セッションURL"
 }

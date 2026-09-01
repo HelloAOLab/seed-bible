@@ -18,7 +18,6 @@
   "create-new-tab": "Créer un nouvel onglet",
   "tab-options": "Options d'onglet",
   "open-tab-menu": "Ouvrir le menu à onglets",
-  "session-id_x": "ID de session : {{sessionId}}",
   "search-verses": "Rechercher des versets",
   "clear-search": "Recherche propre",
   "searching": "Recherche...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Une visite guidée est disponible pour vous aider à découvrir tous les tenants et aboutissants de la Seed Bible.",
   "tutorial.promptDecline": "Non merci",
   "tutorial.promptAccept": "Faites la visite",
-  "session-id": "ID de session",
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Partage",
   "session-settings-section-participants": "Participants",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Bonne nuit, {{name}} !",
   "annotation-override-banner": "Les notes sont enregistrées et chargées depuis le compte de votre équipe.",
   "annotation-override-save-to-my-account": "Enregistrer sur mon compte",
-  "read-book-chapter-button": "Lire {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Lire {{bookName}} {{chapterNumber}}",
+  "session-url": "URL de session"
 }

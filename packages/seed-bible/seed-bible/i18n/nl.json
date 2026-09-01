@@ -23,7 +23,6 @@
   "create-new-tab": "Een nieuw tabblad aanmaken",
   "tab-options": "Tabopties",
   "open-tab-menu": "Tabmenu openen",
-  "session-id_x": "Sessie-ID: {{sessionId}}",
   "search-verses": "Zoek verzen",
   "clear-search": "Zoekopdracht wissen",
   "searching": "Zoeken...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Een rondleiding is beschikbaar om u te helpen de ins en outs van Seed Bible te leren kennen.",
   "tutorial.promptDecline": "Nee, bedankt",
   "tutorial.promptAccept": "Doe mee aan de rondleiding",
-  "session-id": "Sessie-ID",
   "session-settings-section-navigation": "Navigatie",
   "session-settings-section-sharing": "Delen",
   "session-settings-section-participants": "Deelnemers",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Goedenacht, {{name}} !",
   "annotation-override-banner": "Notities worden opgeslagen en geladen vanuit het account van uw team.",
   "annotation-override-save-to-my-account": "Opslaan in mijn account",
-  "read-book-chapter-button": "Lees {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Lees {{bookName}} {{chapterNumber}}",
+  "session-url": "Sessie-URL"
 }

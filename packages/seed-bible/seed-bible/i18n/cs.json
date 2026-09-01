@@ -23,7 +23,6 @@
   "create-new-tab": "Vytvořit novou kartu",
   "tab-options": "Možnosti záložek",
   "open-tab-menu": "Otevřít nabídku karet",
-  "session-id_x": "ID relace: {{sessionId}}",
   "search-verses": "Vyhledávání veršů",
   "clear-search": "Vymazat vyhledávání",
   "searching": "Hledání...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "K dispozici je prohlídka s průvodcem, která vám pomůže seznámit se se všemi detaily Seed Bible.",
   "tutorial.promptDecline": "Ne, děkuji.",
   "tutorial.promptAccept": "Vydejte se na prohlídku",
-  "session-id": "ID relace",
   "session-settings-section-navigation": "Navigace",
   "session-settings-section-sharing": "Sdílení",
   "session-settings-section-participants": "Účastníci",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Dobrou noc, {{name}} !",
   "annotation-override-banner": "Poznámky se ukládají a načítají z účtu vašeho týmu.",
   "annotation-override-save-to-my-account": "Uložit do mého účtu",
-  "read-book-chapter-button": "Přečtěte si {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Přečtěte si {{bookName}} {{chapterNumber}}",
+  "session-url": "URL relace"
 }

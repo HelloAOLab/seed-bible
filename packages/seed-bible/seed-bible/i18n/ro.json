@@ -23,7 +23,6 @@
   "create-new-tab": "Creați o filă nouă",
   "tab-options": "Opțiuni pentru file",
   "open-tab-menu": "Deschideți meniul filelor",
-  "session-id_x": "ID sesiune: {{sessionId}}",
   "search-verses": "Căutați versete",
   "clear-search": "Șterge căutarea",
   "searching": "Se caută...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Un tur ghidat este disponibil pentru a vă ajuta să învățați toate detaliile Bibliei Semințelor.",
   "tutorial.promptDecline": "Nu, mulțumesc",
   "tutorial.promptAccept": "Faceți turul",
-  "session-id": "ID-ul sesiunii",
   "session-settings-section-navigation": "Navigare",
   "session-settings-section-sharing": "Partajare",
   "session-settings-section-participants": "Participanți",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Noapte bună, {{name}} !",
   "annotation-override-banner": "Notele sunt salvate și încărcate din contul echipei tale.",
   "annotation-override-save-to-my-account": "Salvați în contul meu",
-  "read-book-chapter-button": "Citește {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Citește {{bookName}} {{chapterNumber}}",
+  "session-url": "URL-ul sesiunii"
 }

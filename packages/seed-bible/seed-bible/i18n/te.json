@@ -23,7 +23,6 @@
   "create-new-tab": "కొత్త ట్యాబ్‌ను సృష్టించండి",
   "tab-options": "ట్యాబ్ ఎంపికలు",
   "open-tab-menu": "ట్యాబ్ మెనూను తెరవండి",
-  "session-id_x": "సెషన్ ID: {{sessionId}}",
   "search-verses": "శోధన పద్యాలు",
   "clear-search": "శోధనను క్లియర్ చేయండి",
   "searching": "వెతుకుతోంది...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "సీడ్ బైబిల్ యొక్క సమగ్ర విషయాలను తెలుసుకోవడంలో మీకు సహాయపడటానికి గైడెడ్ టూర్ అందుబాటులో ఉంది.",
   "tutorial.promptDecline": "వద్దు, ధన్యవాదాలు",
   "tutorial.promptAccept": "పర్యటన చేయండి",
-  "session-id": "సెషన్ ID",
   "session-settings-section-navigation": "నావిగేషన్",
   "session-settings-section-sharing": "పంచుకోవడం",
   "session-settings-section-participants": "పాల్గొనేవారు",
@@ -661,5 +659,6 @@
   "greeting-night-named": "శుభరాత్రి, {{name}} !",
   "annotation-override-banner": "మీ టీమ్ ఖాతా నుండి నోట్స్ సేవ్ చేయబడి, లోడ్ చేయబడుతున్నాయి.",
   "annotation-override-save-to-my-account": "నా ఖాతాలో సేవ్ చేసుకోండి",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} చదవండి"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} చదవండి",
+  "session-url": "సెషన్ URL"
 }

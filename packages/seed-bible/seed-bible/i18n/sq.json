@@ -23,7 +23,6 @@
   "create-new-tab": "Krijo skedë të re",
   "tab-options": "Opsionet e skedës",
   "open-tab-menu": "Hap menynë e skedave",
-  "session-id_x": "ID e sesionit: {{sessionId}}",
   "search-verses": "Kërko vargje",
   "clear-search": "Pastro kërkimin",
   "searching": "Duke kërkuar...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Një tur me guidë është në dispozicion për t'ju ndihmuar të mësoni hollësitë e Biblës së Seed-it.",
   "tutorial.promptDecline": "Jo, faleminderit",
   "tutorial.promptAccept": "Bëni turin",
-  "session-id": "ID-ja e sesionit",
   "session-settings-section-navigation": "Navigimi",
   "session-settings-section-sharing": "Ndarja",
   "session-settings-section-participants": "Pjesëmarrësit",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Natën e mirë, {{name}} !",
   "annotation-override-banner": "Shënimet po ruhen dhe ngarkohen nga llogaria e ekipit tuaj.",
   "annotation-override-save-to-my-account": "Ruaj në llogarinë time",
-  "read-book-chapter-button": "Lexo {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Lexo {{bookName}} {{chapterNumber}}",
+  "session-url": "URL-ja e sesionit"
 }

@@ -23,7 +23,6 @@
   "create-new-tab": "புதிய தாவலை உருவாக்கு",
   "tab-options": "தாவல் விருப்பங்கள்",
   "open-tab-menu": "தாவல் மெனுவைத் திறக்கவும்",
-  "session-id_x": "அமர்வு ஐடி: {{sessionId}}",
   "search-verses": "வசனங்களைத் தேடுங்கள்",
   "clear-search": "தேடலைத் தெளிவுபடுத்து",
   "searching": "தேடுகிறது...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "சீட் பைபிளின் நுணுக்கங்களை நீங்கள் அறிந்துகொள்ள உதவும் வகையில், வழிகாட்டப்பட்ட சுற்றுப்பயணம் ஒன்று ஏற்பாடு செய்யப்பட்டுள்ளது.",
   "tutorial.promptDecline": "வேண்டாம், நன்றி.",
   "tutorial.promptAccept": "சுற்றுப்பயணம் மேற்கொள்ளுங்கள்",
-  "session-id": "அமர்வு ஐடி",
   "session-settings-section-navigation": "வழிசெலுத்தல்",
   "session-settings-section-sharing": "பகிர்வு",
   "session-settings-section-participants": "பங்கேற்பாளர்கள்",
@@ -661,5 +659,6 @@
   "greeting-night-named": "இனிய இரவு, {{name}} !",
   "annotation-override-banner": "உங்கள் குழுவின் கணக்கிலிருந்து குறிப்புகள் சேமிக்கப்பட்டு ஏற்றப்படுகின்றன.",
   "annotation-override-save-to-my-account": "எனது கணக்கில் சேமிக்கவும்",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} -ஐப் படிக்கவும்"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} -ஐப் படிக்கவும்",
+  "session-url": "அமர்வு URL"
 }

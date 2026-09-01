@@ -70,6 +70,48 @@ function createContext(): BibleToolContext {
   };
 }
 
+function createQuickToolContext(
+  overrides: {
+    discoveredCrossReferences?: unknown[];
+    discoveredStudyNotes?: unknown[];
+    discoveredContent?: unknown[];
+    discoverContentPanelInline?: boolean;
+    annotationsForChapter?: unknown[];
+    isMobile?: boolean;
+  } = {}
+): QuickToolContext {
+  return {
+    readingState: {
+      bookId: signal("GEN"),
+      chapterNumber: signal(1),
+      discoveredCrossReferences: signal(
+        overrides.discoveredCrossReferences ?? []
+      ),
+      discoveredStudyNotes: signal(overrides.discoveredStudyNotes ?? []),
+      discoveredContent: signal(overrides.discoveredContent ?? []),
+      discoverContentPanelInline: signal(
+        overrides.discoverContentPanelInline ?? true
+      ),
+    } as any,
+    playlists: {
+      playing: signal(null),
+      isMobile: signal(false),
+    } as any,
+    annotations: {
+      getAnnotationsForChapter: vi.fn(() =>
+        signal(overrides.annotationsForChapter ?? [])
+      ),
+    } as any,
+    features: {
+      isFeatureEnabled: vi.fn(() => signal(true)),
+    } as any,
+    surface: "quick-toolbar",
+    app: {
+      isMobile: signal(overrides.isMobile ?? false),
+    } as any,
+  };
+}
+
 function createShareUrlReadingState(overrides?: Partial<BibleReadingState>) {
   return {
     translation: signal({ id: "NIV" }),
@@ -1028,6 +1070,81 @@ describe("createBibleToolsManager", () => {
     });
   });
 
+  describe("discover-content-panel quick tool", () => {
+    it("is invisible when there are no discovered results", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext();
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(false);
+    });
+
+    it("is visible when there are discovered cross references, study notes, or content", () => {
+      const manager = createBibleToolsManager(testBranding);
+
+      for (const overrides of [
+        { discoveredCrossReferences: [{ providerId: "p1", results: [{}] }] },
+        { discoveredStudyNotes: [{ providerId: "p1", results: [{}] }] },
+        { discoveredContent: [{ providerId: "p1", results: [{}] }] },
+      ]) {
+        const tool = manager
+          .getQuickTools(createQuickToolContext(overrides))
+          .find((t) => t.id === "discover-content-panel");
+
+        expect(tool?.visible.value).toBe(true);
+      }
+    });
+
+    it("is visible when the chapter has annotations, even with no discovered results", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        annotationsForChapter: [{ id: "ann-1" }],
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool?.visible.value).toBe(true);
+    });
+
+    it("is hidden on mobile even when there are discovered results or annotations", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+        annotationsForChapter: [{ id: "ann-1" }],
+        isMobile: true,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool?.visible.value).toBe(false);
+    });
+
+    it("flips the tab's discoverContentPanelInline signal when selected", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        discoverContentPanelInline: true,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      tool?.onSelect();
+      expect(context.readingState.discoverContentPanelInline.value).toBe(false);
+
+      tool?.onSelect();
+      expect(context.readingState.discoverContentPanelInline.value).toBe(true);
+    });
+  });
+
   describe("chapter navigation tools stay enabled while loading (#1414)", () => {
     function createNavigableContext(): ReturnType<typeof createContext> {
       const context = createContext();
@@ -1104,10 +1221,17 @@ describe("createBibleToolsManager", () => {
           bookId: signal("GEN"),
           chapterNumber: signal(1),
           selectedVerses: signal([]),
+          discoverContentPanelInline: signal(false),
+          discoveredCrossReferences: signal([]),
+          discoveredStudyNotes: signal([]),
+          discoveredContent: signal([]),
         } as any,
         playlists: {
           playing: signal(null),
           isMobile: signal(false),
+        } as any,
+        annotations: {
+          getAnnotationsForChapter: () => signal([]),
         } as any,
         features: {} as any,
         surface: "quick-toolbar",

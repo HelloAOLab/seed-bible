@@ -23,7 +23,6 @@
   "create-new-tab": "Opprett ny fane",
   "tab-options": "Fanealternativer",
   "open-tab-menu": "Åpne fanemenyen",
-  "session-id_x": "Økt-ID: {{sessionId}}",
   "search-verses": "Søk i vers",
   "clear-search": "Tøm søk",
   "searching": "Søker...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "En guidet omvisning er tilgjengelig for å hjelpe deg med å lære alt om Seed Bible.",
   "tutorial.promptDecline": "Nei, takk",
   "tutorial.promptAccept": "Ta turen",
-  "session-id": "Økt-ID",
   "session-settings-section-navigation": "Navigasjon",
   "session-settings-section-sharing": "Deling",
   "session-settings-section-participants": "Deltakerne",
@@ -661,5 +659,6 @@
   "greeting-night-named": "God natt, {{name}} !",
   "annotation-override-banner": "Notater lagres og lastes inn fra teamets konto.",
   "annotation-override-save-to-my-account": "Lagre på kontoen min",
-  "read-book-chapter-button": "Les {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Les {{bookName}} {{chapterNumber}}",
+  "session-url": "URL-adresse for økt"
 }

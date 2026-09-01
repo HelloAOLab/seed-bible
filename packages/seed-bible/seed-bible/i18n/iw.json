@@ -23,7 +23,6 @@
   "create-new-tab": "צור כרטיסייה חדשה",
   "tab-options": "אפשרויות טאב",
   "open-tab-menu": "פתיחת תפריט כרטיסיות",
-  "session-id_x": "מזהה סשן: {{sessionId}}",
   "search-verses": "חיפוש פסוקים",
   "clear-search": "נקה חיפוש",
   "searching": "מחפש...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "סיור מודרך זמין שיעזור לכם ללמוד את כל הפרטים על תנ\"ך הזרעים.",
   "tutorial.promptDecline": "לא, תודה",
   "tutorial.promptAccept": "צא לסיור",
-  "session-id": "מזהה סשן",
   "session-settings-section-navigation": "ניווט",
   "session-settings-section-sharing": "שיתוף",
   "session-settings-section-participants": "משתתפים",
@@ -661,5 +659,6 @@
   "greeting-night-named": "לילה טוב, {{name}} !",
   "annotation-override-banner": "הערות נשמרות ונטענות מחשבון הצוות שלך.",
   "annotation-override-save-to-my-account": "שמור בחשבון שלי",
-  "read-book-chapter-button": "קרא {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "קרא {{bookName}} {{chapterNumber}}",
+  "session-url": "כתובת אתר של סשן"
 }

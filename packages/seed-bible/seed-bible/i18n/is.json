@@ -23,7 +23,6 @@
   "create-new-tab": "Búa til nýjan flipa",
   "tab-options": "Valkostir flipa",
   "open-tab-menu": "Opna flipavalmynd",
-  "session-id_x": "Lotuauðkenni: {{sessionId}}",
   "search-verses": "Leita að versum",
   "clear-search": "Hreinsa leit",
   "searching": "Leitar...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Leiðsögn er í boði til að hjálpa þér að læra allt um Seed Bible.",
   "tutorial.promptDecline": "Nei, takk",
   "tutorial.promptAccept": "Taktu skoðunarferðina",
-  "session-id": "Lotuauðkenni",
   "session-settings-section-navigation": "Leiðsögn",
   "session-settings-section-sharing": "Deiling",
   "session-settings-section-participants": "Þátttakendur",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Góða nótt, {{name}} !",
   "annotation-override-banner": "Glósur eru vistaðar og hlaðnar inn af reikningi teymisins þíns.",
   "annotation-override-save-to-my-account": "Vista á reikninginn minn",
-  "read-book-chapter-button": "Lesið {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Lesið {{bookName}} {{chapterNumber}}",
+  "session-url": "Vefslóð lotu"
 }

@@ -23,7 +23,6 @@
   "create-new-tab": "Δημιουργία νέας καρτέλας",
   "tab-options": "Επιλογές καρτέλας",
   "open-tab-menu": "Άνοιγμα μενού καρτελών",
-  "session-id_x": "Αναγνωριστικό περιόδου σύνδεσης: {{sessionId}}",
   "search-verses": "Αναζήτηση στίχων",
   "clear-search": "Εκκαθάριση αναζήτησης",
   "searching": "Ερευνητικός...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Διατίθεται ξενάγηση με ξεναγό για να σας βοηθήσει να μάθετε τα πάντα για τη Βίβλο των Σπόρων.",
   "tutorial.promptDecline": "Όχι, ευχαριστώ",
   "tutorial.promptAccept": "Κάντε την περιήγηση",
-  "session-id": "Αναγνωριστικό περιόδου σύνδεσης",
   "session-settings-section-navigation": "Πλοήγηση",
   "session-settings-section-sharing": "Μοιρασιά",
   "session-settings-section-participants": "Συμμετέχοντες",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Καληνύχτα, {{name}} !",
   "annotation-override-banner": "Οι σημειώσεις αποθηκεύονται και φορτώνονται από τον λογαριασμό της ομάδας σας.",
   "annotation-override-save-to-my-account": "Αποθήκευση στον λογαριασμό μου",
-  "read-book-chapter-button": "Διαβάστε το {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Διαβάστε το {{bookName}} {{chapterNumber}}",
+  "session-url": "URL περιόδου σύνδεσης"
 }

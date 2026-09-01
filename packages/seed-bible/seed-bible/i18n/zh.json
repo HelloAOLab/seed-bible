@@ -18,7 +18,6 @@
   "create-new-tab": "创建新标签页",
   "tab-options": "标签页选项",
   "open-tab-menu": "打开标签菜单",
-  "session-id_x": "会话 ID： {{sessionId}}",
   "search-verses": "搜索诗句",
   "clear-search": "清除搜索",
   "searching": "正在搜索……",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "我们提供导览服务，帮助您了解 Seed Bible 的方方面面。",
   "tutorial.promptDecline": "不，谢谢",
   "tutorial.promptAccept": "参加参观",
-  "session-id": "会话 ID",
   "session-settings-section-navigation": "导航",
   "session-settings-section-sharing": "分享",
   "session-settings-section-participants": "参与者",
@@ -661,5 +659,6 @@
   "greeting-night-named": "晚安， {{name}} ！",
   "annotation-override-banner": "笔记正在从您团队的帐户保存和加载。",
   "annotation-override-save-to-my-account": "保存到我的帐户",
-  "read-book-chapter-button": "阅读{{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "阅读{{bookName}} {{chapterNumber}}",
+  "session-url": "会话 URL"
 }

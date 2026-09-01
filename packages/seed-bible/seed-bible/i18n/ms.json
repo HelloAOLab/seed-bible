@@ -23,7 +23,6 @@
   "create-new-tab": "Cipta tab baharu",
   "tab-options": "Pilihan tab",
   "open-tab-menu": "Buka menu tab",
-  "session-id_x": "ID Sesi: {{sessionId}}",
   "search-verses": "Cari ayat-ayat",
   "clear-search": "Kosongkan carian",
   "searching": "Mencari...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Lawatan berpandu disediakan untuk membantu anda mempelajari selok-belok Seed Bible.",
   "tutorial.promptDecline": "Tidak, terima kasih",
   "tutorial.promptAccept": "Ikuti lawatan itu",
-  "session-id": "ID Sesi",
   "session-settings-section-navigation": "Navigasi",
   "session-settings-section-sharing": "Perkongsian",
   "session-settings-section-participants": "Peserta",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Selamat malam, {{name}} !",
   "annotation-override-banner": "Nota sedang disimpan dan dimuatkan daripada akaun pasukan anda.",
   "annotation-override-save-to-my-account": "Simpan ke akaun saya",
-  "read-book-chapter-button": "Baca {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Baca {{bookName}} {{chapterNumber}}",
+  "session-url": "URL Sesi"
 }

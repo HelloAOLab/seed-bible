@@ -18,7 +18,6 @@
   "create-new-tab": "Unda kichupo kipya",
   "tab-options": "Chaguo za vichupo",
   "open-tab-menu": "Fungua menyu ya kichupo",
-  "session-id_x": "Kitambulisho cha Kipindi: {{sessionId}}",
   "search-verses": "Tafuta mistari",
   "clear-search": "Futa utafutaji",
   "searching": "Inatafuta...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Ziara inayoongozwa inapatikana ili kukusaidia kujifunza mambo muhimu na ya kipekee kuhusu Biblia ya Mbegu.",
   "tutorial.promptDecline": "Hapana, asante",
   "tutorial.promptAccept": "Chukua ziara",
-  "session-id": "Kitambulisho cha Kipindi",
   "session-settings-section-navigation": "Urambazaji",
   "session-settings-section-sharing": "Kushiriki",
   "session-settings-section-participants": "Washiriki",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Usiku mwema, {{name}} !",
   "annotation-override-banner": "Madokezo yanahifadhiwa na kupakiwa kutoka kwa akaunti ya timu yako.",
   "annotation-override-save-to-my-account": "Hifadhi kwenye akaunti yangu",
-  "read-book-chapter-button": "Soma {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Soma {{bookName}} {{chapterNumber}}",
+  "session-url": "URL ya Kipindi"
 }

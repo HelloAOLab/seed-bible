@@ -23,6 +23,7 @@ function createMockState(
       profile: signal<UserProfile | null>(profile),
       cachedProfile: signal<UserProfile | null>(null),
       localConfig: signal<Record<string, unknown>>({}),
+      hydrateLocalConfig: vi.fn(),
       isProfileLoading: signal<boolean>(isProfileLoading),
       isSavingProfile: signal<boolean>(false),
       updateProfile,

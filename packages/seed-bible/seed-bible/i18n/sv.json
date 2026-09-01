@@ -23,7 +23,6 @@
   "create-new-tab": "Skapa ny flik",
   "tab-options": "Flikalternativ",
   "open-tab-menu": "Öppna flikmenyn",
-  "session-id_x": "Sessions-ID: {{sessionId}}",
   "search-verses": "Sök verser",
   "clear-search": "Rensa sökningen",
   "searching": "Sökande...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "En guidad tur finns tillgänglig för att hjälpa dig att lära dig allt om Seed Bible.",
   "tutorial.promptDecline": "Nej tack",
   "tutorial.promptAccept": "Ta rundturen",
-  "session-id": "Sessions-ID",
   "session-settings-section-navigation": "Navigering",
   "session-settings-section-sharing": "Delning",
   "session-settings-section-participants": "Deltagare",
@@ -661,5 +659,6 @@
   "greeting-night-named": "God natt, {{name}} !",
   "annotation-override-banner": "Anteckningar sparas och laddas från ditt teams konto.",
   "annotation-override-save-to-my-account": "Spara på mitt konto",
-  "read-book-chapter-button": "Läs {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Läs {{bookName}} {{chapterNumber}}",
+  "session-url": "Sessions-URL"
 }

@@ -23,7 +23,6 @@
   "create-new-tab": "Yangi yorliq yaratish",
   "tab-options": "Yorliq parametrlari",
   "open-tab-menu": "Yorliq menyusini ochish",
-  "session-id_x": "Sessiya identifikatori: {{sessionId}}",
   "search-verses": "Oyatlarni qidirish",
   "clear-search": "Qidiruvni tozalash",
   "searching": "Qidirilmoqda...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible kitobining nozik va nozik tomonlarini o'rganishingizga yordam beradigan ekskursiya mavjud.",
   "tutorial.promptDecline": "Yo'q rahmat",
   "tutorial.promptAccept": "Ekskursiyaga chiqing",
-  "session-id": "Sessiya identifikatori",
   "session-settings-section-navigation": "Navigatsiya",
   "session-settings-section-sharing": "Ulashish",
   "session-settings-section-participants": "Ishtirokchilar",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Xayrli tun, {{name}} !",
   "annotation-override-banner": "Qaydlar jamoangiz hisobidan saqlanmoqda va yuklanmoqda.",
   "annotation-override-save-to-my-account": "Hisobimga saqlash",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ni o'qing"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ni o'qing",
+  "session-url": "Sessiya URL manzili"
 }

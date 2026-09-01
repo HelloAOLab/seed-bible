@@ -23,7 +23,6 @@
   "create-new-tab": "တဘ်အသစ်တစ်ခု ဖန်တီးပါ",
   "tab-options": "တဘ်ရွေးချယ်စရာများ",
   "open-tab-menu": "တဘ်မီနူးကို ဖွင့်ပါ",
-  "session-id_x": "အစည်းအဝေး ID: {{sessionId}}",
   "search-verses": "ကျမ်းပိုဒ်များကို ရှာဖွေပါ",
   "clear-search": "ရှာဖွေမှုကို ရှင်းလင်းပါ",
   "searching": "ရှာဖွေနေသည်...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible ရဲ့ အသေးစိတ်အချက်အလက်တွေကို လေ့လာနိုင်ဖို့ လမ်းညွှန်ခရီးစဉ်တစ်ခု ရရှိနိုင်ပါတယ်။",
   "tutorial.promptDecline": "ရပါတယ်ကျေးဇူးပါ",
   "tutorial.promptAccept": "ခရီးစဉ်ကို လိုက်ပါပါ",
-  "session-id": "အစည်းအဝေး ID",
   "session-settings-section-navigation": "လမ်းညွှန်",
   "session-settings-section-sharing": "မျှဝေခြင်း",
   "session-settings-section-participants": "ပါဝင်သူများ",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ကောင်းသောညပါရှင်၊ {{name}} !",
   "annotation-override-banner": "မှတ်စုများကို သင့်အဖွဲ့၏အကောင့်မှ သိမ်းဆည်းပြီး တင်နေပါသည်။",
   "annotation-override-save-to-my-account": "ကျွန်ုပ်၏အကောင့်သို့ သိမ်းဆည်းပါ",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ကိုဖတ်ပါ"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ကိုဖတ်ပါ",
+  "session-url": "အစည်းအဝေး URL"
 }

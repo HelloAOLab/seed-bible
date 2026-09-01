@@ -23,7 +23,6 @@
   "create-new-tab": "Luo uusi välilehti",
   "tab-options": "Välilehden asetukset",
   "open-tab-menu": "Avaa välilehtivalikko",
-  "session-id_x": "Istunnon tunnus: {{sessionId}}",
   "search-verses": "Hae jakeita",
   "clear-search": "Tyhjennä haku",
   "searching": "Haetaan...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Opastettu kierros auttaa sinua oppimaan Seed Biblen salat.",
   "tutorial.promptDecline": "Ei kiitos",
   "tutorial.promptAccept": "Osallistu kierrokselle",
-  "session-id": "Istunnon tunnus",
   "session-settings-section-navigation": "Navigointi",
   "session-settings-section-sharing": "Jakaminen",
   "session-settings-section-participants": "Osallistujat",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Hyvää yötä, {{name}} !",
   "annotation-override-banner": "Muistiinpanoja tallennetaan ja ladataan tiimisi tililtä.",
   "annotation-override-save-to-my-account": "Tallenna tililleni",
-  "read-book-chapter-button": "Lue {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Lue {{bookName}} {{chapterNumber}}",
+  "session-url": "Istunnon URL-osoite"
 }

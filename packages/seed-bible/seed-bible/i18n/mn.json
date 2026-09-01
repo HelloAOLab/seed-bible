@@ -18,7 +18,6 @@
   "create-new-tab": "Шинэ таб үүсгэх",
   "tab-options": "Таб сонголтууд",
   "open-tab-menu": "Таб цэсийг нээх",
-  "session-id_x": "Сессийн ID: {{sessionId}}",
   "search-verses": "Шүлгүүдийг хайх",
   "clear-search": "Хайлтыг цэвэрлэх",
   "searching": "Хайж байна...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible-ийн нарийн ширийн зүйлийг сурахад тань туслах хөтөчтэй аялал байдаг.",
   "tutorial.promptDecline": "Үгүй ээ, баярлалаа",
   "tutorial.promptAccept": "Аялалд оролцоорой",
-  "session-id": "Сессийн ID",
   "session-settings-section-navigation": "Навигаци",
   "session-settings-section-sharing": "Хуваалцах",
   "session-settings-section-participants": "Оролцогчид",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Сайхан амраарай, {{name}} !",
   "annotation-override-banner": "Танай багийн данснаас тэмдэглэлүүдийг хадгалж, ачаалж байна.",
   "annotation-override-save-to-my-account": "Миний бүртгэлд хадгалах",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} г унших"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} г унших",
+  "session-url": "Сессийн URL"
 }

@@ -23,7 +23,6 @@
   "create-new-tab": "Új lap létrehozása",
   "tab-options": "Tab opciók",
   "open-tab-menu": "Lapmenü megnyitása",
-  "session-id_x": "Munkamenet-azonosító: {{sessionId}}",
   "search-verses": "Versek keresése",
   "clear-search": "Keresés törlése",
   "searching": "Keresés...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Vezetett túra áll rendelkezésre, hogy megismerkedhessen a Seed Bible rejtelmeivel.",
   "tutorial.promptDecline": "Nem, köszönöm",
   "tutorial.promptAccept": "Vegyen részt a túrán",
-  "session-id": "Munkamenet-azonosító",
   "session-settings-section-navigation": "Navigáció",
   "session-settings-section-sharing": "Megosztás",
   "session-settings-section-participants": "Résztvevők",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Jó éjszakát, {{name}} !",
   "annotation-override-banner": "A jegyzetek mentésre és betöltésre kerülnek a csapatod fiókjából.",
   "annotation-override-save-to-my-account": "Mentés a fiókomba",
-  "read-book-chapter-button": "Olvasd el {{bookName}} {{chapterNumber}} könyvet"
+  "read-book-chapter-button": "Olvasd el {{bookName}} {{chapterNumber}} könyvet",
+  "session-url": "Munkamenet URL-címe"
 }

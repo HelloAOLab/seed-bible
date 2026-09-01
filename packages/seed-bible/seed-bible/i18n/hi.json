@@ -18,7 +18,6 @@
   "create-new-tab": "नया टैब बनाएं",
   "tab-options": "टैब विकल्प",
   "open-tab-menu": "टैब मेनू खोलें",
-  "session-id_x": "सत्र आईडी: {{sessionId}}",
   "search-verses": "श्लोकों की खोज करें",
   "clear-search": "खोज साफ़ करें",
   "searching": "खोज जारी है...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "सीड बाइबल के बारे में पूरी जानकारी प्राप्त करने में आपकी सहायता के लिए एक निर्देशित भ्रमण उपलब्ध है।",
   "tutorial.promptDecline": "जी नहीं, धन्यवाद",
   "tutorial.promptAccept": "भ्रमण पर जाएं",
-  "session-id": "सत्र आईडी",
   "session-settings-section-navigation": "मार्गदर्शन",
   "session-settings-section-sharing": "शेयरिंग",
   "session-settings-section-participants": "प्रतिभागियों",
@@ -661,5 +659,6 @@
   "greeting-night-named": "शुभ रात्रि, {{name}} !",
   "annotation-override-banner": "आपकी टीम के खाते से नोट्स सहेजे और लोड किए जा रहे हैं।",
   "annotation-override-save-to-my-account": "मेरे खाते में सहेजें",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} पढ़ें"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} पढ़ें",
+  "session-url": "सत्र यूआरएल"
 }

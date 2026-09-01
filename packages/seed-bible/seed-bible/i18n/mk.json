@@ -23,7 +23,6 @@
   "create-new-tab": "Креирај нов таб",
   "tab-options": "Опции за табулатори",
   "open-tab-menu": "Отвори мени со јазичиња",
-  "session-id_x": "ИД на сесија: {{sessionId}}",
   "search-verses": "Пребарај стихови",
   "clear-search": "Исчисти пребарување",
   "searching": "Пребарување...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Достапна е водена тура за да ви помогне да ги научите сите детали за Seed Bible.",
   "tutorial.promptDecline": "Не, благодарам",
   "tutorial.promptAccept": "Одете на турата",
-  "session-id": "ИД на сесија",
   "session-settings-section-navigation": "Навигација",
   "session-settings-section-sharing": "Споделување",
   "session-settings-section-participants": "Учесници",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Добра ноќ, {{name}} !",
   "annotation-override-banner": "Белешките се зачувуваат и вчитуваат од сметката на вашиот тим.",
   "annotation-override-save-to-my-account": "Зачувај на мојата сметка",
-  "read-book-chapter-button": "Прочитај {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Прочитај {{bookName}} {{chapterNumber}}",
+  "session-url": "URL-адреса на сесијата"
 }

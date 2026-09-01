@@ -23,7 +23,6 @@
   "create-new-tab": "Crea una pestanya nova",
   "tab-options": "Opcions de pestanyes",
   "open-tab-menu": "Obre el menú de pestanyes",
-  "session-id_x": "ID de sessió: {{sessionId}}",
   "search-verses": "Cerca versos",
   "clear-search": "Esborra la cerca",
   "searching": "Cercant...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "S'ofereix una visita guiada per ajudar-vos a aprendre els detalls de la Bíblia de les llavors.",
   "tutorial.promptDecline": "No, gràcies",
   "tutorial.promptAccept": "Fes el recorregut",
-  "session-id": "ID de sessió",
   "session-settings-section-navigation": "Navegació",
   "session-settings-section-sharing": "Compartir",
   "session-settings-section-participants": "Participants",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Bona nit, {{name}} !",
   "annotation-override-banner": "Les notes s'estan desant i carregant des del compte del vostre equip.",
   "annotation-override-save-to-my-account": "Desa al meu compte",
-  "read-book-chapter-button": "Llegeix {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Llegeix {{bookName}} {{chapterNumber}}",
+  "session-url": "URL de sessió"
 }

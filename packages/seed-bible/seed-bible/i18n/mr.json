@@ -23,7 +23,6 @@
   "create-new-tab": "नवीन टॅब तयार करा",
   "tab-options": "टॅब पर्याय",
   "open-tab-menu": "टॅब मेनू उघडा",
-  "session-id_x": "सेशन आयडी: {{sessionId}}",
   "search-verses": "श्लोक शोधा",
   "clear-search": "शोध साफ करा",
   "searching": "शोधत आहे...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "सीड बायबलची सखोल माहिती शिकण्यासाठी एक मार्गदर्शित दौरा उपलब्ध आहे.",
   "tutorial.promptDecline": "नको, धन्यवाद.",
   "tutorial.promptAccept": "दौरा करा",
-  "session-id": "सत्र आयडी",
   "session-settings-section-navigation": "नेव्हिगेशन",
   "session-settings-section-sharing": "शेअरिंग",
   "session-settings-section-participants": "सहभागी",
@@ -661,5 +659,6 @@
   "greeting-night-named": "शुभ रात्री, {{name}} !",
   "annotation-override-banner": "तुमच्या टीमच्या खात्यातून नोट्स सेव्ह आणि लोड केल्या जात आहेत.",
   "annotation-override-save-to-my-account": "माझ्या खात्यात जतन करा",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} वाचा."
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} वाचा.",
+  "session-url": "सत्र URL"
 }

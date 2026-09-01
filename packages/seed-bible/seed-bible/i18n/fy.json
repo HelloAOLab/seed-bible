@@ -23,7 +23,6 @@
   "create-new-tab": "Nije ljepper oanmeitsje",
   "tab-options": "Tab-opsjes",
   "open-tab-menu": "Tabmenu iepenje",
-  "session-id_x": "Sesje-ID: {{sessionId}}",
   "search-verses": "Sykje fersen",
   "clear-search": "Sykje wiskje",
   "searching": "Sykje...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "In rûnlieding is beskikber om jo te helpen de yns en outs fan Seed Bible te learen.",
   "tutorial.promptDecline": "Nee, tank",
   "tutorial.promptAccept": "Nim de toer",
-  "session-id": "Sesje-ID",
   "session-settings-section-navigation": "Navigaasje",
   "session-settings-section-sharing": "Dielen",
   "session-settings-section-participants": "Dielnimmers",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Goeie nacht, {{name}} !",
   "annotation-override-banner": "Notysjes wurde bewarre en laden fan it akkount fan jo team.",
   "annotation-override-save-to-my-account": "Bewarje yn myn akkount",
-  "read-book-chapter-button": "Lês {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Lês {{bookName}} {{chapterNumber}}",
+  "session-url": "Sesje-URL"
 }

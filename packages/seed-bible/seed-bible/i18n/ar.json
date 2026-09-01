@@ -18,7 +18,6 @@
   "create-new-tab": "إنشاء علامة تبويب جديدة",
   "tab-options": "خيارات علامة التبويب",
   "open-tab-menu": "قائمة علامة التبويب المفتوحة",
-  "session-id_x": "معرّف الجلسة: {{sessionId}}",
   "search-verses": "ابحث عن الآيات",
   "clear-search": "مسح البحث",
   "searching": "جارٍ البحث...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "تتوفر جولة إرشادية لمساعدتك على التعرف على تفاصيل وخبايا \"سيد بايبل\".",
   "tutorial.promptDecline": "ًلا شكرا",
   "tutorial.promptAccept": "قم بجولة",
-  "session-id": "معرف الجلسة",
   "session-settings-section-navigation": "ملاحة",
   "session-settings-section-sharing": "مشاركة",
   "session-settings-section-participants": "مشاركون",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ليلة سعيدة {{name}} !",
   "annotation-override-banner": "يتم حفظ الملاحظات وتحميلها من حساب فريقك.",
   "annotation-override-save-to-my-account": "حفظ في حسابي",
-  "read-book-chapter-button": "اقرأ {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "اقرأ {{bookName}} {{chapterNumber}}",
+  "session-url": "عنوان URL للجلسة"
 }

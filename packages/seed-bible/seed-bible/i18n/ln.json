@@ -23,7 +23,6 @@
   "create-new-tab": "Bosala onglet ya sika",
   "tab-options": "Ba options ya onglet",
   "open-tab-menu": "Fungola menu ya onglet",
-  "session-id_x": "ID ya likita: {{sessionId}}",
   "search-verses": "Luká bavɛrsɛ",
   "clear-search": "Boluki ya polele",
   "searching": "Koluka...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Tour guidé ezali mpo na kosalisa yo oyeba makambo ya kati mpe ya libanda ya Biblia ya Momboto.",
   "tutorial.promptDecline": "Te, merci",
   "tutorial.promptAccept": "Salá mobembo yango",
-  "session-id": "ID ya session",
   "session-settings-section-navigation": "Kosala navigation",
   "session-settings-section-sharing": "Kokabola",
   "session-settings-section-participants": "Bato oyo bakosangana na yango",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Butu malamu, {{name}} !",
   "annotation-override-banner": "Ba notes ezali kobombama mpe ko charger na compte ya équipe na yo.",
   "annotation-override-save-to-my-account": "Bomba na compte na ngai",
-  "read-book-chapter-button": "Tanga {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Tanga {{bookName}} {{chapterNumber}}",
+  "session-url": "URL ya session"
 }

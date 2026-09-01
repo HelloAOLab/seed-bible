@@ -18,7 +18,6 @@
   "create-new-tab": "Tạo tab mới",
   "tab-options": "Tùy chọn tab",
   "open-tab-menu": "Mở menu tab",
-  "session-id_x": "Mã phiên: {{sessionId}}",
   "search-verses": "Tìm kiếm các câu thơ",
   "clear-search": "Xóa tìm kiếm",
   "searching": "Đang tìm kiếm...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Có tour tham quan có hướng dẫn viên giúp bạn tìm hiểu mọi ngóc ngách của Seed Bible.",
   "tutorial.promptDecline": "Không, cảm ơn",
   "tutorial.promptAccept": "Hãy tham gia chuyến tham quan.",
-  "session-id": "ID phiên",
   "session-settings-section-navigation": "Điều hướng",
   "session-settings-section-sharing": "Chia sẻ",
   "session-settings-section-participants": "Người tham gia",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Chúc ngủ ngon, {{name}} !",
   "annotation-override-banner": "Các ghi chú đang được lưu và tải từ tài khoản của nhóm bạn.",
   "annotation-override-save-to-my-account": "Lưu vào tài khoản của tôi",
-  "read-book-chapter-button": "Đọc {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Đọc {{bookName}} {{chapterNumber}}",
+  "session-url": "URL phiên"
 }

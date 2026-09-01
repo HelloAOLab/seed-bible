@@ -23,7 +23,6 @@
   "create-new-tab": "Gumawa ng bagong tab",
   "tab-options": "Mga opsyon sa tab",
   "open-tab-menu": "Buksan ang menu ng tab",
-  "session-id_x": "ID ng Sesyon: {{sessionId}}",
   "search-verses": "Maghanap ng mga bersikulo",
   "clear-search": "I-clear ang paghahanap",
   "searching": "Naghahanap...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "May guided tour na makakatulong sa iyong matutunan ang mga detalye ng Seed Bible.",
   "tutorial.promptDecline": "Hindi, salamat",
   "tutorial.promptAccept": "Sumakay sa tour",
-  "session-id": "ID ng Sesyon",
   "session-settings-section-navigation": "Nabigasyon",
   "session-settings-section-sharing": "Pagbabahagi",
   "session-settings-section-participants": "Mga Kalahok",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Magandang gabi, {{name}} !",
   "annotation-override-banner": "Sine-save at nilo-load ang mga tala mula sa account ng iyong team.",
   "annotation-override-save-to-my-account": "I-save sa aking account",
-  "read-book-chapter-button": "Basahin ang {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Basahin ang {{bookName}} {{chapterNumber}}",
+  "session-url": "URL ng Sesyon"
 }

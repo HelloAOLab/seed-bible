@@ -18,7 +18,6 @@
   "create-new-tab": "Yeni sekme oluştur",
   "tab-options": "Sekme seçenekleri",
   "open-tab-menu": "Sekme menüsünü aç",
-  "session-id_x": "Oturum Kimliği: {{sessionId}}",
   "search-verses": "Ayeti ara",
   "clear-search": "Arama sonuçlarını temizle",
   "searching": "Arama...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible'ın inceliklerini öğrenmenize yardımcı olacak rehberli bir tur mevcuttur.",
   "tutorial.promptDecline": "Hayır, teşekkürler",
   "tutorial.promptAccept": "Tura katılın",
-  "session-id": "Oturum Kimliği",
   "session-settings-section-navigation": "Navigasyon",
   "session-settings-section-sharing": "Paylaşım",
   "session-settings-section-participants": "Katılımcılar",
@@ -661,5 +659,6 @@
   "greeting-night-named": "İyi geceler, {{name}} !",
   "annotation-override-banner": "Notlar ekibinizin hesabından kaydediliyor ve yükleniyor.",
   "annotation-override-save-to-my-account": "Hesabıma kaydet",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} kitabını okuyun."
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} kitabını okuyun.",
+  "session-url": "Oturum URL'si"
 }

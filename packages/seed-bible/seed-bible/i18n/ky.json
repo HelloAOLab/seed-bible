@@ -23,7 +23,6 @@
   "create-new-tab": "Жаңы өтмөк түзүү",
   "tab-options": "Өтмөк параметрлери",
   "open-tab-menu": "Өтмөк менюсун ачуу",
-  "session-id_x": "Сессия ID: {{sessionId}}",
   "search-verses": "Аяттарды издөө",
   "clear-search": "Издөөнү тазалоо",
   "searching": "Изделүүдө...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible китебинин майда-чүйдөсүнө чейин үйрөнүүгө жардам берүү үчүн экскурсия уюштурулган.",
   "tutorial.promptDecline": "Жок, рахмат",
   "tutorial.promptAccept": "Экскурсияга чыгыңыз",
-  "session-id": "Сессия IDси",
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Бөлүшүү",
   "session-settings-section-participants": "Катышуучулар",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Кайырлы түн, {{name}} !",
   "annotation-override-banner": "Эскертүүлөр сиздин командаңыздын аккаунтунан сакталып жана жүктөлүүдө.",
   "annotation-override-save-to-my-account": "Менин аккаунтума сактоо",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} окуу"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} окуу",
+  "session-url": "Сессия URL'и"
 }

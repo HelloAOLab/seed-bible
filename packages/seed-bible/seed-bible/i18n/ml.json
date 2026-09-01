@@ -23,7 +23,6 @@
   "create-new-tab": "പുതിയ ടാബ് സൃഷ്ടിക്കുക",
   "tab-options": "ടാബ് ഓപ്ഷനുകൾ",
   "open-tab-menu": "ടാബ് മെനു തുറക്കുക",
-  "session-id_x": "സെഷൻ ഐഡി: {{sessionId}}",
   "search-verses": "വാക്യങ്ങൾ തിരയുക",
   "clear-search": "തിരയൽ മായ്ക്കുക",
   "searching": "തിരയുന്നു...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "സീഡ് ബൈബിളിന്റെ ഉൾക്കാഴ്ചകൾ മനസ്സിലാക്കാൻ നിങ്ങളെ സഹായിക്കുന്നതിന് ഒരു ഗൈഡഡ് ടൂർ ലഭ്യമാണ്.",
   "tutorial.promptDecline": "വേണ്ട, നന്ദി",
   "tutorial.promptAccept": "ടൂർ നടത്തുക",
-  "session-id": "സെഷൻ ഐഡി",
   "session-settings-section-navigation": "നാവിഗേഷൻ",
   "session-settings-section-sharing": "പങ്കിടൽ",
   "session-settings-section-participants": "പങ്കെടുക്കുന്നവർ",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ശുഭരാത്രി, {{name}} !",
   "annotation-override-banner": "നിങ്ങളുടെ ടീമിന്റെ അക്കൗണ്ടിൽ നിന്ന് കുറിപ്പുകൾ സംരക്ഷിക്കുകയും ലോഡ് ചെയ്യുകയും ചെയ്യുന്നു.",
   "annotation-override-save-to-my-account": "എന്റെ അക്കൗണ്ടിലേക്ക് സംരക്ഷിക്കുക",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} വായിക്കുക"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} വായിക്കുക",
+  "session-url": "സെഷൻ URL"
 }

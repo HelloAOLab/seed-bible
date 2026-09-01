@@ -23,7 +23,6 @@
   "create-new-tab": "ახალი ჩანართის შექმნა",
   "tab-options": "ჩანართის პარამეტრები",
   "open-tab-menu": "ჩანართების მენიუს გახსნა",
-  "session-id_x": "სესიის ID: {{sessionId}}",
   "search-verses": "ლექსების ძიება",
   "clear-search": "ძიების გასუფთავება",
   "searching": "ძიება...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "ხელმისაწვდომია გიდის თანხლებით ტური, რათა გაიგოთ „სეედ ბიბლიის“ ყველა დეტალი.",
   "tutorial.promptDecline": "არა, გმადლობთ",
   "tutorial.promptAccept": "გაიარეთ ტური",
-  "session-id": "სესიის ID",
   "session-settings-section-navigation": "ნავიგაცია",
   "session-settings-section-sharing": "გაზიარება",
   "session-settings-section-participants": "მონაწილეები",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ღამე მშვიდობისა, {{name}} !",
   "annotation-override-banner": "ჩანაწერები ინახება და იტვირთება თქვენი გუნდის ანგარიშიდან.",
   "annotation-override-save-to-my-account": "შენახვა ჩემს ანგარიშზე",
-  "read-book-chapter-button": "წაიკითხეთ {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "წაიკითხეთ {{bookName}} {{chapterNumber}}",
+  "session-url": "სესიის URL"
 }

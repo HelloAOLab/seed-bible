@@ -23,7 +23,6 @@
   "create-new-tab": "Creu tab newydd",
   "tab-options": "Dewisiadau tab",
   "open-tab-menu": "Agor dewislen tabiau",
-  "session-id_x": "ID Sesiwn: {{sessionId}}",
   "search-verses": "Chwiliwch am adnodau",
   "clear-search": "Clirio chwiliad",
   "searching": "Chwilio...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Mae taith dywys ar gael i'ch helpu i ddysgu manylion Beibl Hadau.",
   "tutorial.promptDecline": "Na, diolch",
   "tutorial.promptAccept": "Cymerwch y daith",
-  "session-id": "ID y Sesiwn",
   "session-settings-section-navigation": "Mordwyo",
   "session-settings-section-sharing": "Rhannu",
   "session-settings-section-participants": "Cyfranogwyr",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Nos da, {{name}} !",
   "annotation-override-banner": "Mae nodiadau'n cael eu cadw a'u llwytho o gyfrif eich tîm.",
   "annotation-override-save-to-my-account": "Cadw i'm cyfrif",
-  "read-book-chapter-button": "Darllenwch {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Darllenwch {{bookName}} {{chapterNumber}}",
+  "session-url": "URL y sesiwn"
 }

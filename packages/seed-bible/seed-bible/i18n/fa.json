@@ -18,7 +18,6 @@
   "create-new-tab": "ایجاد برگه جدید",
   "tab-options": "گزینه‌های تب",
   "open-tab-menu": "منوی برگه را باز کنید",
-  "session-id_x": "شناسه جلسه: {{sessionId}}",
   "search-verses": "جستجوی آیات",
   "clear-search": "پاک کردن جستجو",
   "searching": "در حال جستجو...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "یک تور با راهنما برای کمک به شما در یادگیری جزئیات Seed Bible در دسترس است.",
   "tutorial.promptDecline": "نه، ممنون",
   "tutorial.promptAccept": "تور را طی کنید",
-  "session-id": "شناسه جلسه",
   "session-settings-section-navigation": "ناوبری",
   "session-settings-section-sharing": "اشتراک‌گذاری",
   "session-settings-section-participants": "شرکت‌کنندگان",
@@ -661,5 +659,6 @@
   "greeting-night-named": "شب بخیر، {{name}} !",
   "annotation-override-banner": "یادداشت‌ها از حساب تیم شما ذخیره و بارگذاری می‌شوند.",
   "annotation-override-save-to-my-account": "ذخیره در حساب من",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} را بخوانید"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} را بخوانید",
+  "session-url": "آدرس اینترنتی جلسه"
 }

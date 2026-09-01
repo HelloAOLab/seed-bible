@@ -23,7 +23,6 @@
   "create-new-tab": "Създаване на нов раздел",
   "tab-options": "Опции за раздели",
   "open-tab-menu": "Отваряне на менюто с раздели",
-  "session-id_x": "Идентификатор на сесия: {{sessionId}}",
   "search-verses": "Търсене на стихове",
   "clear-search": "Изчистване на търсенето",
   "searching": "Търсене...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Предлага се обиколка с екскурзовод, която ще ви помогне да научите тънкостите на Библията на семената.",
   "tutorial.promptDecline": "Не, благодаря",
   "tutorial.promptAccept": "Направете обиколката",
-  "session-id": "Идентификатор на сесия",
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Споделяне",
   "session-settings-section-participants": "Участници",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Лека нощ, {{name}} !",
   "annotation-override-banner": "Бележките се запазват и зареждат от акаунта на вашия екип.",
   "annotation-override-save-to-my-account": "Запазване в моя акаунт",
-  "read-book-chapter-button": "Прочетете {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Прочетете {{bookName}} {{chapterNumber}}",
+  "session-url": "URL адрес на сесията"
 }

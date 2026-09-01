@@ -18,7 +18,6 @@
   "create-new-tab": "Criar nova aba",
   "tab-options": "Opções da guia",
   "open-tab-menu": "Abrir menu de abas",
-  "session-id_x": "ID da sessão: {{sessionId}}",
   "search-verses": "Versículos de pesquisa",
   "clear-search": "Limpar pesquisa",
   "searching": "Procurando...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "Está disponível uma visita guiada para ajudá-lo a aprender todos os detalhes da Seed Bible.",
   "tutorial.promptDecline": "Não, obrigado",
   "tutorial.promptAccept": "Faça o tour",
-  "session-id": "ID da sessão",
   "session-settings-section-navigation": "Navegação",
   "session-settings-section-sharing": "Compartilhamento",
   "session-settings-section-participants": "Participantes",
@@ -661,5 +659,6 @@
   "greeting-night-named": "Boa noite, {{name}} !",
   "annotation-override-banner": "As anotações estão sendo salvas e carregadas da conta da sua equipe.",
   "annotation-override-save-to-my-account": "Salvar na minha conta",
-  "read-book-chapter-button": "Leia {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Leia {{bookName}} {{chapterNumber}}",
+  "session-url": "URL da sessão"
 }

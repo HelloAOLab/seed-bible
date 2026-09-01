@@ -23,7 +23,6 @@
   "create-new-tab": "ಹೊಸ ಟ್ಯಾಬ್ ರಚಿಸಿ",
   "tab-options": "ಟ್ಯಾಬ್ ಆಯ್ಕೆಗಳು",
   "open-tab-menu": "ಟ್ಯಾಬ್ ಮೆನು ತೆರೆಯಿರಿ",
-  "session-id_x": "ಸೆಷನ್ ಐಡಿ: {{sessionId}}",
   "search-verses": "ಪದ್ಯಗಳನ್ನು ಹುಡುಕಿ",
   "clear-search": "ಹುಡುಕಾಟ ತೆರವುಗೊಳಿಸಿ",
   "searching": "ಹುಡುಕಲಾಗುತ್ತಿದೆ...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "ಸೀಡ್ ಬೈಬಲ್‌ನ ಒಳನೋಟಗಳನ್ನು ಕಲಿಯಲು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ಮಾರ್ಗದರ್ಶಿ ಪ್ರವಾಸ ಲಭ್ಯವಿದೆ.",
   "tutorial.promptDecline": "ಬೇಡ, ಧನ್ಯವಾದಗಳು",
   "tutorial.promptAccept": "ಪ್ರವಾಸ ಕೈಗೊಳ್ಳಿ",
-  "session-id": "ಸೆಷನ್ ಐಡಿ",
   "session-settings-section-navigation": "ಸಂಚರಣೆ",
   "session-settings-section-sharing": "ಹಂಚಿಕೊಳ್ಳುವುದು",
   "session-settings-section-participants": "ಭಾಗವಹಿಸುವವರು",
@@ -661,5 +659,6 @@
   "greeting-night-named": "ಶುಭ ರಾತ್ರಿ, {{name}} !",
   "annotation-override-banner": "ಟಿಪ್ಪಣಿಗಳನ್ನು ನಿಮ್ಮ ತಂಡದ ಖಾತೆಯಿಂದ ಉಳಿಸಲಾಗುತ್ತಿದೆ ಮತ್ತು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ.",
   "annotation-override-save-to-my-account": "ನನ್ನ ಖಾತೆಗೆ ಉಳಿಸಿ",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ಓದಿ"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ಓದಿ",
+  "session-url": "ಸೆಷನ್ URL"
 }

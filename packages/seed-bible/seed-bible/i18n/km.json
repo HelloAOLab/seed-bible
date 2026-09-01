@@ -23,7 +23,6 @@
   "create-new-tab": "បង្កើតផ្ទាំងថ្មី",
   "tab-options": "ជម្រើសផ្ទាំង",
   "open-tab-menu": "បើកម៉ឺនុយផ្ទាំង",
-  "session-id_x": "លេខសម្គាល់វគ្គ៖ {{sessionId}}",
   "search-verses": "ស្វែងរកខគម្ពីរ",
   "clear-search": "សម្អាតការស្វែងរក",
   "searching": "កំពុង​ស្វែងរក...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "ដំណើរទស្សនកិច្ចដែលមានមគ្គុទ្ទេសក៍អាចរកបានដើម្បីជួយអ្នកឱ្យរៀនព័ត៌មានលម្អិតនៃ Seed Bible។",
   "tutorial.promptDecline": "ទេ អរគុណ",
   "tutorial.promptAccept": "ចូលរួមដំណើរទស្សនកិច្ច",
-  "session-id": "លេខសម្គាល់វគ្គ",
   "session-settings-section-navigation": "ការរុករក",
   "session-settings-section-sharing": "ការចែករំលែក",
   "session-settings-section-participants": "អ្នកចូលរួម",
@@ -661,5 +659,6 @@
   "greeting-night-named": "រាត្រីសួស្តី, {{name}} !",
   "annotation-override-banner": "កំណត់ចំណាំកំពុងត្រូវបានរក្សាទុក និងផ្ទុកពីគណនីក្រុមរបស់អ្នក។",
   "annotation-override-save-to-my-account": "រក្សាទុកទៅក្នុងគណនីរបស់ខ្ញុំ",
-  "read-book-chapter-button": "អាន {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "អាន {{bookName}} {{chapterNumber}}",
+  "session-url": "អាសយដ្ឋាន​វគ្គ"
 }

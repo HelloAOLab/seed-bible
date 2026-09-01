@@ -18,7 +18,6 @@
   "create-new-tab": "يېڭى بەتكۈچ قۇرۇش",
   "tab-options": "بەتكۈچ تاللانمىلىرى",
   "open-tab-menu": "بەتكۈچ تىزىملىكىنى ئېچىش",
-  "session-id_x": "يىغىن نومۇرى: {{sessionId}}",
   "search-verses": "ئايەتلەرنى ئىزدەڭ",
   "clear-search": "ئىزدەشنى تازىلاش",
   "searching": "ئىزدەۋاتىدۇ...",
@@ -309,7 +308,6 @@
   "tutorial.promptBody": "«Seed Bible» نىڭ ئىچكى-تاشقى تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
   "tutorial.promptDecline": "ياق، رەھمەت",
   "tutorial.promptAccept": "ساياھەتكە چىقىڭ",
-  "session-id": "يىغىن نومۇرى",
   "session-settings-section-navigation": "يول باشلاش",
   "session-settings-section-sharing": "ئورتاقلىشىش",
   "session-settings-section-participants": "قاتناشقۇچىلار",
@@ -661,5 +659,6 @@
   "greeting-night-named": "خەيرلىك كېچە، {{name}} !",
   "annotation-override-banner": "خاتىرىلەر سىزنىڭ گۇرۇپپىڭىزنىڭ ھېساباتىدىن ساقلانماقتا ۋە يۈكلەنمەكتە.",
   "annotation-override-save-to-my-account": "ھېساباتىمغا ساقلاڭ",
-  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} نى ئوقۇڭ"
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} نى ئوقۇڭ",
+  "session-url": "يىغىن URL"
 }
