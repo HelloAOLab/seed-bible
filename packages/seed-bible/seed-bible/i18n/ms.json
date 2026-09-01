@@ -540,7 +540,6 @@
   "last-48-hours": "48 jam terakhir",
   "open-bible": "Bible Terbuka",
   "personal-greeting": "Selamat datang, {{name}} !",
-  "read-first-chapter": "Baca bab pertama",
   "resume-reading": "TERUSKAN DI MANA ANDA BERHENTI",
   "resume-reading-loading": "Memuatkan sejarah bacaan anda…",
   "selected-year": "Tahun: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Selamat malam, {{name}} !",
   "annotation-override-banner": "Nota sedang disimpan dan dimuatkan daripada akaun pasukan anda.",
   "annotation-override-save-to-my-account": "Simpan ke akaun saya",
+  "read-book-chapter-button": "Baca {{bookName}} {{chapterNumber}}",
   "session-url": "URL Sesi"
 }

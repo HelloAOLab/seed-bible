@@ -540,7 +540,6 @@
   "last-48-hours": "Акыркы 48 саат",
   "open-bible": "Ачык Ыйык Китеп",
   "personal-greeting": "Кош келиңиз, {{name}} !",
-  "read-first-chapter": "Биринчи бөлүмдү окуңуз",
   "resume-reading": "КАЛГАН ЖЕРИҢИЗДЕН УЛАНТУУ",
   "resume-reading-loading": "Окуу тарыхыңыз жүктөлүүдө…",
   "selected-year": "Жыл: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Кайырлы түн, {{name}} !",
   "annotation-override-banner": "Эскертүүлөр сиздин командаңыздын аккаунтунан сакталып жана жүктөлүүдө.",
   "annotation-override-save-to-my-account": "Менин аккаунтума сактоо",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} окуу",
   "session-url": "Сессия URL'и"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "Posledných 48 hodín",
   "open-bible": "Otvorená Biblia",
   "personal-greeting": "Vitaj, {{name}} !",
-  "read-first-chapter": "Prečítajte si prvú kapitolu",
   "resume-reading": "POKRAČUJTE TAM, KDE STE PRESTALI",
   "resume-reading-loading": "Načítava sa vaša história čítania…",
   "selected-year": "Rok: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Dobrú noc, {{name}} !",
   "annotation-override-banner": "Poznámky sa ukladajú a načítavajú z účtu vášho tímu.",
   "annotation-override-save-to-my-account": "Uložiť do môjho účtu",
+  "read-book-chapter-button": "Prečítajte si {{bookName}} {{chapterNumber}}",
   "session-url": "URL adresa relácie"
 }

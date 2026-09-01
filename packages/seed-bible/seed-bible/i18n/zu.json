@@ -540,7 +540,6 @@
   "last-48-hours": "Amahora angu-48 okugcina",
   "open-bible": "Vula iBhayibheli",
   "personal-greeting": "Siyakwamukela, {{name}} !",
-  "read-first-chapter": "Funda isahluko sokuqala",
   "resume-reading": "QHUBEKA LAPHO USHIYE KHONA",
   "resume-reading-loading": "Ilayisha umlando wakho wokufunda…",
   "selected-year": "Unyaka: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Ulale kahle, {{name}} !",
   "annotation-override-banner": "Amanothi ayalondolozwa futhi alayishwa kusuka ku-akhawunti yethimba lakho.",
   "annotation-override-save-to-my-account": "Londoloza ku-akhawunti yami",
+  "read-book-chapter-button": "Funda {{bookName}} {{chapterNumber}}",
   "session-url": "I-URL Yeseshini"
 }

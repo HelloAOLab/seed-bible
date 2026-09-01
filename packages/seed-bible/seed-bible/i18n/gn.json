@@ -540,7 +540,6 @@
   "last-48-hours": "Ohasáva 48 aravo",
   "open-bible": "Jaipeʼa la Biblia",
   "personal-greeting": "Eju porãite, {{name}} !",
-  "read-first-chapter": "Elee pe primer kapítulo",
   "resume-reading": "ESEGUI MOÕPA REHECHA",
   "resume-reading-loading": "Okargávo nde rembiasakue moñe'ẽrã...",
   "selected-year": "Ary: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Pyhare porã, {{name}} !",
   "annotation-override-banner": "Umi nota oñeñongatu ha ojekarga hína nde equipo cuenta-gui.",
   "annotation-override-save-to-my-account": "Eñongatu che cuenta-pe",
+  "read-book-chapter-button": "Emoñe’ẽ {{bookName}} {{chapterNumber}}",
   "session-url": "URL sesión rehegua"
 }

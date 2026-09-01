@@ -540,7 +540,6 @@
   "last-48-hours": "Laaste 48 uur",
   "open-bible": "Oop Bybel",
   "personal-greeting": "Welkom, {{name}} !",
-  "read-first-chapter": "Lees die eerste hoofstuk",
   "resume-reading": "GAAN VOORT WAAR JY OPGEHOU HET",
   "resume-reading-loading": "Laai jou leesgeskiedenis…",
   "selected-year": "Jaar: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Goeienag, {{name}} !",
   "annotation-override-banner": "Notas word gestoor en gelaai vanaf jou span se rekening.",
   "annotation-override-save-to-my-account": "Stoor in my rekening",
+  "read-book-chapter-button": "Lees {{bookName}} {{chapterNumber}}",
   "session-url": "Sessie-URL"
 }

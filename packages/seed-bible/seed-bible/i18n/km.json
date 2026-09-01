@@ -540,7 +540,6 @@
   "last-48-hours": "៤៨ ម៉ោងចុងក្រោយ",
   "open-bible": "បើកព្រះគម្ពីរ",
   "personal-greeting": "សូមស្វាគមន៍, {{name}} !",
-  "read-first-chapter": "សូមអានជំពូកទីមួយ",
   "resume-reading": "បន្ត​ទៅ​កន្លែង​ដែល​អ្នក​បាន​ចាកចេញ",
   "resume-reading-loading": "កំពុងផ្ទុកប្រវត្តិអានរបស់អ្នក...",
   "selected-year": "ឆ្នាំ៖ {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "រាត្រីសួស្តី, {{name}} !",
   "annotation-override-banner": "កំណត់ចំណាំកំពុងត្រូវបានរក្សាទុក និងផ្ទុកពីគណនីក្រុមរបស់អ្នក។",
   "annotation-override-save-to-my-account": "រក្សាទុកទៅក្នុងគណនីរបស់ខ្ញុំ",
+  "read-book-chapter-button": "អាន {{bookName}} {{chapterNumber}}",
   "session-url": "អាសយដ្ឋាន​វគ្គ"
 }

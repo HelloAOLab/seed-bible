@@ -540,7 +540,6 @@
   "last-48-hours": "ပြီးခဲ့တဲ့ ၄၈ နာရီ",
   "open-bible": "သမ္မာကျမ်းစာဖွင့်ပါ",
   "personal-greeting": "ကြိုဆိုပါတယ်၊ {{name}} !",
-  "read-first-chapter": "ပထမအခန်းကိုဖတ်ပါ",
   "resume-reading": "သင်ထားခဲ့သောနေရာသို့ ဆက်သွားပါ",
   "resume-reading-loading": "သင့်ဖတ်ရှုမှုမှတ်တမ်းကို တင်နေသည်…",
   "selected-year": "ခုနှစ်: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ကောင်းသောညပါရှင်၊ {{name}} !",
   "annotation-override-banner": "မှတ်စုများကို သင့်အဖွဲ့၏အကောင့်မှ သိမ်းဆည်းပြီး တင်နေပါသည်။",
   "annotation-override-save-to-my-account": "ကျွန်ုပ်၏အကောင့်သို့ သိမ်းဆည်းပါ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ကိုဖတ်ပါ",
   "session-url": "အစည်းအဝေး URL"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "ਪਿਛਲੇ 48 ਘੰਟੇ",
   "open-bible": "ਬਾਈਬਲ ਖੋਲ੍ਹੋ",
   "personal-greeting": "ਜੀ ਆਇਆਂ ਨੂੰ, {{name}} !",
-  "read-first-chapter": "ਪਹਿਲਾ ਅਧਿਆਇ ਪੜ੍ਹੋ",
   "resume-reading": "ਜਿੱਥੇ ਤੁਸੀਂ ਛੱਡਿਆ ਸੀ ਉੱਥੇ ਹੀ ਜਾਰੀ ਰੱਖੋ",
   "resume-reading-loading": "ਤੁਹਾਡਾ ਪੜ੍ਹਨ ਦਾ ਇਤਿਹਾਸ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
   "selected-year": "ਸਾਲ: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ਸ਼ੁਭ ਰਾਤਰੀ, {{name}} !",
   "annotation-override-banner": "ਨੋਟਸ ਤੁਹਾਡੀ ਟੀਮ ਦੇ ਖਾਤੇ ਤੋਂ ਸੇਵ ਅਤੇ ਲੋਡ ਕੀਤੇ ਜਾ ਰਹੇ ਹਨ।",
   "annotation-override-save-to-my-account": "ਮੇਰੇ ਖਾਤੇ ਵਿੱਚ ਸੇਵ ਕਰੋ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ਪੜ੍ਹੋ",
   "session-url": "ਸੈਸ਼ਨ URL"
 }

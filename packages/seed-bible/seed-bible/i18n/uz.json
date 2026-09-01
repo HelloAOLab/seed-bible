@@ -540,7 +540,6 @@
   "last-48-hours": "So'nggi 48 soat",
   "open-bible": "Ochiq Muqaddas Kitob",
   "personal-greeting": "Xush kelibsiz, {{name}} !",
-  "read-first-chapter": "Birinchi bobni o'qing",
   "resume-reading": "KETGAN YERINGIZDA DAVOM ETING",
   "resume-reading-loading": "O'qish tarixingiz yuklanmoqda…",
   "selected-year": "Yil: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Xayrli tun, {{name}} !",
   "annotation-override-banner": "Qaydlar jamoangiz hisobidan saqlanmoqda va yuklanmoqda.",
   "annotation-override-save-to-my-account": "Hisobimga saqlash",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ni o'qing",
   "session-url": "Sessiya URL manzili"
 }

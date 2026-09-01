@@ -540,7 +540,6 @@
   "last-48-hours": "Lêste 48 oeren",
   "open-bible": "Iepen Bibel",
   "personal-greeting": "Wolkom, {{name}} !",
-  "read-first-chapter": "Lês it earste haadstik",
   "resume-reading": "GEAN TROCH WAAR JO BLIJF BINNE",
   "resume-reading-loading": "Dyn lêshistoarje oan it laden…",
   "selected-year": "Jier: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Goeie nacht, {{name}} !",
   "annotation-override-banner": "Notysjes wurde bewarre en laden fan it akkount fan jo team.",
   "annotation-override-save-to-my-account": "Bewarje yn myn akkount",
+  "read-book-chapter-button": "Lês {{bookName}} {{chapterNumber}}",
   "session-url": "Sesje-URL"
 }

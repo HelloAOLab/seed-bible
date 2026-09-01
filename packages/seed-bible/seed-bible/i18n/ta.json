@@ -540,7 +540,6 @@
   "last-48-hours": "கடந்த 48 மணி நேரம்",
   "open-bible": "திறந்த புத்தகம்",
   "personal-greeting": "வரவேற்கிறோம், {{name}} !",
-  "read-first-chapter": "முதல் அத்தியாயத்தைப் படிக்கவும்",
   "resume-reading": "நீங்கள் விட்ட இடத்திலிருந்து தொடரவும்",
   "resume-reading-loading": "உங்கள் வாசிப்பு வரலாறு ஏற்றப்படுகிறது…",
   "selected-year": "ஆண்டு: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "இனிய இரவு, {{name}} !",
   "annotation-override-banner": "உங்கள் குழுவின் கணக்கிலிருந்து குறிப்புகள் சேமிக்கப்பட்டு ஏற்றப்படுகின்றன.",
   "annotation-override-save-to-my-account": "எனது கணக்கில் சேமிக்கவும்",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} -ஐப் படிக்கவும்",
   "session-url": "அமர்வு URL"
 }

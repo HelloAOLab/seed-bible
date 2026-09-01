@@ -540,7 +540,6 @@
   "last-48-hours": "Ngonga 48 oyo eleki",
   "open-bible": "Fungola Biblia",
   "personal-greeting": "Boyei malamu, {{name}} !",
-  "read-first-chapter": "Tángá mokapo ya liboso",
   "resume-reading": "CONTINUER ESIKA OLOKI",
   "resume-reading-loading": "Ko charger histoire ya botangi na yo...",
   "selected-year": "Mobu: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Butu malamu, {{name}} !",
   "annotation-override-banner": "Ba notes ezali kobombama mpe ko charger na compte ya équipe na yo.",
   "annotation-override-save-to-my-account": "Bomba na compte na ngai",
+  "read-book-chapter-button": "Tanga {{bookName}} {{chapterNumber}}",
   "session-url": "URL ya session"
 }

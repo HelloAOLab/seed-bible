@@ -540,7 +540,6 @@
   "last-48-hours": "Paskutinės 48 valandos",
   "open-bible": "Atvira Biblija",
   "personal-greeting": "Sveiki atvykę, {{name}} !",
-  "read-first-chapter": "Perskaitykite pirmąjį skyrių",
   "resume-reading": "TĘSKITE TEN, KUR IŠĖJOTE",
   "resume-reading-loading": "Įkeliama jūsų skaitymo istorija…",
   "selected-year": "Metai: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Labos nakties, {{name}} !",
   "annotation-override-banner": "Užrašai išsaugomi ir įkeliami iš jūsų komandos paskyros.",
   "annotation-override-save-to-my-account": "Išsaugoti mano paskyroje",
+  "read-book-chapter-button": "Perskaitykite {{bookName}} {{chapterNumber}}",
   "session-url": "Seanso URL"
 }

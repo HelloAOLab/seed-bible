@@ -540,7 +540,6 @@
   "last-48-hours": "Последните 48 часа",
   "open-bible": "Отворена Библија",
   "personal-greeting": "Добредојде, {{name}} !",
-  "read-first-chapter": "Прочитајте го првото поглавје",
   "resume-reading": "ПРОДОЛЖИ ТАМУ КАДЕ ШТО ЗАМИНА",
   "resume-reading-loading": "Се вчитува вашата историја на читање…",
   "selected-year": "Година: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Добра ноќ, {{name}} !",
   "annotation-override-banner": "Белешките се зачувуваат и вчитуваат од сметката на вашиот тим.",
   "annotation-override-save-to-my-account": "Зачувај на мојата сметка",
+  "read-book-chapter-button": "Прочитај {{bookName}} {{chapterNumber}}",
   "session-url": "URL-адреса на сесијата"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "48 giờ qua",
   "open-bible": "Kinh Thánh Mở",
   "personal-greeting": "Chào mừng, {{name}} !",
-  "read-first-chapter": "Hãy đọc chương đầu tiên",
   "resume-reading": "TIẾP TỤC TỪ CHỖ BẠN ĐÃ DỪNG",
   "resume-reading-loading": "Đang tải lịch sử đọc của bạn…",
   "selected-year": "Năm: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Chúc ngủ ngon, {{name}} !",
   "annotation-override-banner": "Các ghi chú đang được lưu và tải từ tài khoản của nhóm bạn.",
   "annotation-override-save-to-my-account": "Lưu vào tài khoản của tôi",
+  "read-book-chapter-button": "Đọc {{bookName}} {{chapterNumber}}",
   "session-url": "URL phiên"
 }

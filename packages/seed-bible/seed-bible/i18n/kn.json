@@ -540,7 +540,6 @@
   "last-48-hours": "ಕಳೆದ 48 ಗಂಟೆಗಳು",
   "open-bible": "ಬೈಬಲ್ ತೆರೆಯಿರಿ",
   "personal-greeting": "ಸ್ವಾಗತ, {{name}} !",
-  "read-first-chapter": "ಮೊದಲ ಅಧ್ಯಾಯವನ್ನು ಓದಿ",
   "resume-reading": "ನೀವು ಎಲ್ಲಿಗೆ ಬಿಟ್ಟಿದ್ದೀರೋ ಅಲ್ಲಿಂದಲೇ ಮುಂದುವರಿಯಿರಿ",
   "resume-reading-loading": "ನಿಮ್ಮ ಓದುವ ಇತಿಹಾಸವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
   "selected-year": "ವರ್ಷ: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ಶುಭ ರಾತ್ರಿ, {{name}} !",
   "annotation-override-banner": "ಟಿಪ್ಪಣಿಗಳನ್ನು ನಿಮ್ಮ ತಂಡದ ಖಾತೆಯಿಂದ ಉಳಿಸಲಾಗುತ್ತಿದೆ ಮತ್ತು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ.",
   "annotation-override-save-to-my-account": "ನನ್ನ ಖಾತೆಗೆ ಉಳಿಸಿ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ಓದಿ",
   "session-url": "ಸೆಷನ್ URL"
 }

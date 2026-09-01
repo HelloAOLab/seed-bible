@@ -540,7 +540,6 @@
   "last-48-hours": "过去48小时",
   "open-bible": "打开圣经",
   "personal-greeting": "欢迎， {{name}} ！",
-  "read-first-chapter": "阅读第一章",
   "resume-reading": "继续你上次离开的地方",
   "resume-reading-loading": "正在加载您的阅读历史记录…",
   "selected-year": "年份： {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "晚安， {{name}} ！",
   "annotation-override-banner": "笔记正在从您团队的帐户保存和加载。",
   "annotation-override-save-to-my-account": "保存到我的帐户",
+  "read-book-chapter-button": "阅读{{bookName}} {{chapterNumber}}",
   "session-url": "会话 URL"
 }

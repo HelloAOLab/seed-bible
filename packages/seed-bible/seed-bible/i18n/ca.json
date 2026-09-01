@@ -540,7 +540,6 @@
   "last-48-hours": "Últimes 48 hores",
   "open-bible": "Bíblia Oberta",
   "personal-greeting": "Benvingut/da, {{name}} !",
-  "read-first-chapter": "Llegeix el primer capítol",
   "resume-reading": "CONTINUA ON HAS DEIXAT",
   "resume-reading-loading": "S'està carregant l'historial de lectura…",
   "selected-year": "Any: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Bona nit, {{name}} !",
   "annotation-override-banner": "Les notes s'estan desant i carregant des del compte del vostre equip.",
   "annotation-override-save-to-my-account": "Desa al meu compte",
+  "read-book-chapter-button": "Llegeix {{bookName}} {{chapterNumber}}",
   "session-url": "URL de sessió"
 }

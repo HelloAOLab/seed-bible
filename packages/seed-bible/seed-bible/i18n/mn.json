@@ -540,7 +540,6 @@
   "last-48-hours": "Сүүлийн 48 цаг",
   "open-bible": "Нээлттэй Библи",
   "personal-greeting": "Тавтай морил, {{name}} !",
-  "read-first-chapter": "Эхний бүлгийг уншина уу",
   "resume-reading": "ХАЯСАН ЗАЙГААСАА ҮРГЭЛЖЛҮҮЛЭХ",
   "resume-reading-loading": "Уншлагын түүхийг тань ачаалж байна...",
   "selected-year": "Жил: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Сайхан амраарай, {{name}} !",
   "annotation-override-banner": "Танай багийн данснаас тэмдэглэлүүдийг хадгалж, ачаалж байна.",
   "annotation-override-save-to-my-account": "Миний бүртгэлд хадгалах",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} г унших",
   "session-url": "Сессийн URL"
 }

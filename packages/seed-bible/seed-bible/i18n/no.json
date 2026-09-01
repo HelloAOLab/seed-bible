@@ -540,7 +540,6 @@
   "last-48-hours": "Siste 48 timer",
   "open-bible": "Åpne Bibelen",
   "personal-greeting": "Velkommen, {{name}} !",
-  "read-first-chapter": "Les det første kapittelet",
   "resume-reading": "FORTSETT DER DU SLUTTE",
   "resume-reading-loading": "Laster inn lesehistorikken din …",
   "selected-year": "År: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "God natt, {{name}} !",
   "annotation-override-banner": "Notater lagres og lastes inn fra teamets konto.",
   "annotation-override-save-to-my-account": "Lagre på kontoen min",
+  "read-book-chapter-button": "Les {{bookName}} {{chapterNumber}}",
   "session-url": "URL-adresse for økt"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "過去48時間",
   "open-bible": "聖書を開く",
   "personal-greeting": "ようこそ、 {{name}}さん！",
-  "read-first-chapter": "最初の章を読んでください",
   "resume-reading": "前回中断したところから再開してください",
   "resume-reading-loading": "閲覧履歴を読み込んでいます…",
   "selected-year": "年: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "おやすみなさい、 {{name}} ！",
   "annotation-override-banner": "メモはチームのアカウントから保存および読み込まれています。",
   "annotation-override-save-to-my-account": "マイアカウントに保存",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}}を読んでください。",
   "session-url": "セッションURL"
 }

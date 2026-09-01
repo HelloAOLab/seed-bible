@@ -540,7 +540,6 @@
   "last-48-hours": "48 ຊົ່ວໂມງທີ່ຜ່ານມາ",
   "open-bible": "ເປີດຄຳພີໄບເບິນ",
   "personal-greeting": "ຍິນດີຕ້ອນຮັບ, {{name}} !",
-  "read-first-chapter": "ອ່ານບົດທຳອິດ",
   "resume-reading": "ສືບຕໍ່ບ່ອນທີ່ທ່ານອອກໄປ",
   "resume-reading-loading": "ກຳລັງໂຫຼດປະຫວັດການອ່ານຂອງທ່ານ…",
   "selected-year": "ປີ: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ສະບາຍດີຕອນກາງຄືນ, {{name}} !",
   "annotation-override-banner": "ບັນທຶກກຳລັງຖືກບັນທຶກ ແລະ ໂຫຼດຈາກບັນຊີຂອງທີມທ່ານ.",
   "annotation-override-save-to-my-account": "ບັນທຶກໄວ້ໃນບັນຊີຂອງຂ້ອຍ",
+  "read-book-chapter-button": "ອ່ານ {{bookName}} {{chapterNumber}}",
   "session-url": "URL ຂອງເຊດຊັນ"
 }

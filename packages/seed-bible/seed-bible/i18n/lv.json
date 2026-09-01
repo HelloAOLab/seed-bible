@@ -540,7 +540,6 @@
   "last-48-hours": "Pēdējās 48 stundas",
   "open-bible": "Atvērtā Bībele",
   "personal-greeting": "Sveicināti, {{name}} !",
-  "read-first-chapter": "Izlasiet pirmo nodaļu",
   "resume-reading": "TURPINIET TUR, KUR APSTĀJĀT",
   "resume-reading-loading": "Notiek lasīšanas vēstures ielāde…",
   "selected-year": "Gads: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Arlabunakti, {{name}} !",
   "annotation-override-banner": "Piezīmes tiek saglabātas un ielādētas no jūsu komandas konta.",
   "annotation-override-save-to-my-account": "Saglabāt manā kontā",
+  "read-book-chapter-button": "Izlasiet grāmatu {{bookName}} {{chapterNumber}}",
   "session-url": "Sesijas URL"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "Síðustu 48 klukkustundir",
   "open-bible": "Opna Biblíuna",
   "personal-greeting": "Velkomin(n), {{name}} !",
-  "read-first-chapter": "Lestu fyrsta kaflann",
   "resume-reading": "HALDU ÁFRAM ÞAR SEM ÞÚ HÆTTIR",
   "resume-reading-loading": "Hleður lestrarsöguna þína…",
   "selected-year": "Ár: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Góða nótt, {{name}} !",
   "annotation-override-banner": "Glósur eru vistaðar og hlaðnar inn af reikningi teymisins þíns.",
   "annotation-override-save-to-my-account": "Vista á reikninginn minn",
+  "read-book-chapter-button": "Lesið {{bookName}} {{chapterNumber}}",
   "session-url": "Vefslóð lotu"
 }

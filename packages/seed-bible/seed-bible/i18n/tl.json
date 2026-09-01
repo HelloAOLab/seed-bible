@@ -540,7 +540,6 @@
   "last-48-hours": "Huling 48 oras",
   "open-bible": "Bukas na Bibliya",
   "personal-greeting": "Maligayang pagdating, {{name}} !",
-  "read-first-chapter": "Basahin ang unang kabanata",
   "resume-reading": "MAGPATULOY KUNG SAAN KA UMALIS",
   "resume-reading-loading": "Nilo-load ang iyong history ng pagbabasa…",
   "selected-year": "Taon: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Magandang gabi, {{name}} !",
   "annotation-override-banner": "Sine-save at nilo-load ang mga tala mula sa account ng iyong team.",
   "annotation-override-save-to-my-account": "I-save sa aking account",
+  "read-book-chapter-button": "Basahin ang {{bookName}} {{chapterNumber}}",
   "session-url": "URL ng Sesyon"
 }

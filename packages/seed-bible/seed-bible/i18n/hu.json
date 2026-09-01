@@ -540,7 +540,6 @@
   "last-48-hours": "Utolsó 48 óra",
   "open-bible": "Nyitott Biblia",
   "personal-greeting": "Üdvözlünk, {{name}} !",
-  "read-first-chapter": "Olvasd el az első fejezetet",
   "resume-reading": "FOLYTASD ONNAN, AHOL ELHAGYTAD",
   "resume-reading-loading": "Olvasási előzmények betöltése…",
   "selected-year": "Év: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Jó éjszakát, {{name}} !",
   "annotation-override-banner": "A jegyzetek mentésre és betöltésre kerülnek a csapatod fiókjából.",
   "annotation-override-save-to-my-account": "Mentés a fiókomba",
+  "read-book-chapter-button": "Olvasd el {{bookName}} {{chapterNumber}} könyvet",
   "session-url": "Munkamenet URL-címe"
 }

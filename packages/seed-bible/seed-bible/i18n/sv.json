@@ -540,7 +540,6 @@
   "last-48-hours": "Senaste 48 timmarna",
   "open-bible": "Öppna Bibeln",
   "personal-greeting": "Välkommen, {{name}} !",
-  "read-first-chapter": "Läs det första kapitlet",
   "resume-reading": "FORTSÄTT DÄR DU SLUTADE",
   "resume-reading-loading": "Läser in din läshistorik…",
   "selected-year": "År: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "God natt, {{name}} !",
   "annotation-override-banner": "Anteckningar sparas och laddas från ditt teams konto.",
   "annotation-override-save-to-my-account": "Spara på mitt konto",
+  "read-book-chapter-button": "Läs {{bookName}} {{chapterNumber}}",
   "session-url": "Sessions-URL"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "ዝሓለፉ 48 ሰዓታት",
   "open-bible": "መጽሓፍ ቅዱስ ክፈት",
   "personal-greeting": "እንቋዕ ደሓን መጻእካ {{name}} !",
-  "read-first-chapter": "ቀዳመይቲ ምዕራፍ ኣንብባ",
   "resume-reading": "ኣብቲ ዝወጻእካሉ ቦታ ቀጽል",
   "resume-reading-loading": "ታሪኽ ንባብካ ኣብ ምጽዓን...",
   "selected-year": "ዓመት {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ሰናይ ለይቲ {{name}} !",
   "annotation-override-banner": "መዘኻኸሪታት ካብ ኣካውንት ጋንታኻ ይቕመጡን ይጽዓኑን ኣለዉ።",
   "annotation-override-save-to-my-account": "ኣብ ኣካውንተይ ኣቐምጥ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ኣንብብ",
   "session-url": "ናይ ክፍለ ግዜ URL"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "Τελευταίες 48 ώρες",
   "open-bible": "Ανοιχτή Βίβλος",
   "personal-greeting": "Καλώς ήρθες, {{name}} !",
-  "read-first-chapter": "Διαβάστε το πρώτο κεφάλαιο",
   "resume-reading": "ΣΥΝΕΧΙΣΤΕ ΑΠΟ ΕΚΕΙ ΠΟΥ ΑΦΗΣΑΤΕ",
   "resume-reading-loading": "Φόρτωση του ιστορικού ανάγνωσής σας…",
   "selected-year": "Έτος: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Καληνύχτα, {{name}} !",
   "annotation-override-banner": "Οι σημειώσεις αποθηκεύονται και φορτώνονται από τον λογαριασμό της ομάδας σας.",
   "annotation-override-save-to-my-account": "Αποθήκευση στον λογαριασμό μου",
+  "read-book-chapter-button": "Διαβάστε το {{bookName}} {{chapterNumber}}",
   "session-url": "URL περιόδου σύνδεσης"
 }

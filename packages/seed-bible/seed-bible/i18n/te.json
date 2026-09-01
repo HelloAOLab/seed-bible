@@ -540,7 +540,6 @@
   "last-48-hours": "గత 48 గంటల్లో",
   "open-bible": "ఓపెన్ బైబిల్",
   "personal-greeting": "స్వాగతం, {{name}} !",
-  "read-first-chapter": "మొదటి అధ్యాయం చదవండి",
   "resume-reading": "మీరు ఆపిన చోట నుండి కొనసాగించండి",
   "resume-reading-loading": "మీ పఠన చరిత్ర లోడ్ అవుతోంది…",
   "selected-year": "సంవత్సరం: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "శుభరాత్రి, {{name}} !",
   "annotation-override-banner": "మీ టీమ్ ఖాతా నుండి నోట్స్ సేవ్ చేయబడి, లోడ్ చేయబడుతున్నాయి.",
   "annotation-override-save-to-my-account": "నా ఖాతాలో సేవ్ చేసుకోండి",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} చదవండి",
   "session-url": "సెషన్ URL"
 }

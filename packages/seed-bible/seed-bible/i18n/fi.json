@@ -540,7 +540,6 @@
   "last-48-hours": "Viimeiset 48 tuntia",
   "open-bible": "Avoin Raamattu",
   "personal-greeting": "Tervetuloa, {{name}} !",
-  "read-first-chapter": "Lue ensimmäinen luku",
   "resume-reading": "JATKA SIINÄ, MISTÄ LÄHETIT",
   "resume-reading-loading": "Ladataan lukuhistoriaasi…",
   "selected-year": "Vuosi: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Hyvää yötä, {{name}} !",
   "annotation-override-banner": "Muistiinpanoja tallennetaan ja ladataan tiimisi tililtä.",
   "annotation-override-save-to-my-account": "Tallenna tililleni",
+  "read-book-chapter-button": "Lue {{bookName}} {{chapterNumber}}",
   "session-url": "Istunnon URL-osoite"
 }

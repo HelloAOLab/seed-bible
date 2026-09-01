@@ -540,7 +540,6 @@
   "last-48-hours": "ባለፉት 48 ሰዓታት",
   "open-bible": "ክፍት መጽሐፍ ቅዱስ",
   "personal-greeting": "እንኳን ደህና መጡ፣ {{name}} !",
-  "read-first-chapter": "የመጀመሪያውን ምዕራፍ ያንብቡ",
   "resume-reading": "ከሄዱበት ይቀጥሉ",
   "resume-reading-loading": "የንባብ ታሪክዎን በመጫን ላይ…",
   "selected-year": "ዓመት፦ {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ደህና እደሩ፣ {{name}} !",
   "annotation-override-banner": "ማስታወሻዎች ከቡድንዎ መለያ እየተቀመጡ እና እየተጫኑ ነው።",
   "annotation-override-save-to-my-account": "ወደ መለያዬ አስቀምጥ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ን ያንብቡ",
   "session-url": "የክፍለ ጊዜ ዩአርኤል"
 }

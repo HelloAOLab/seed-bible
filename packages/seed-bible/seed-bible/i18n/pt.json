@@ -540,7 +540,6 @@
   "last-48-hours": "Últimas 48 horas",
   "open-bible": "Abra a Bíblia",
   "personal-greeting": "Bem-vindo(a), {{name}} !",
-  "read-first-chapter": "Leia o primeiro capítulo",
   "resume-reading": "CONTINUE DE ONDE PAROU",
   "resume-reading-loading": "Carregando seu histórico de leitura…",
   "selected-year": "Ano: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Boa noite, {{name}} !",
   "annotation-override-banner": "As anotações estão sendo salvas e carregadas da conta da sua equipe.",
   "annotation-override-save-to-my-account": "Salvar na minha conta",
+  "read-book-chapter-button": "Leia {{bookName}} {{chapterNumber}}",
   "session-url": "URL da sessão"
 }

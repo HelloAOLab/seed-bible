@@ -540,7 +540,6 @@
   "last-48-hours": "Останні 48 годин",
   "open-bible": "Відкрита Біблія",
   "personal-greeting": "Ласкаво просимо, {{name}} !",
-  "read-first-chapter": "Прочитайте перший розділ",
   "resume-reading": "ПРОДОВЖУЙТЕ ЗА МЕЖАМИ, ДЕ ВИ ЗУПИНИЛИСЯ",
   "resume-reading-loading": "Завантаження історії читання…",
   "selected-year": "Рік: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "На добраніч, {{name}} !",
   "annotation-override-banner": "Нотатки зберігаються та завантажуються з облікового запису вашої команди.",
   "annotation-override-save-to-my-account": "Зберегти в моєму обліковому записі",
+  "read-book-chapter-button": "Прочитайте {{bookName}} {{chapterNumber}}",
   "session-url": "URL-адреса сеансу"
 }

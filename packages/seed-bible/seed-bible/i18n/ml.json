@@ -540,7 +540,6 @@
   "last-48-hours": "കഴിഞ്ഞ 48 മണിക്കൂർ",
   "open-bible": "ബൈബിൾ തുറക്കുക",
   "personal-greeting": "സ്വാഗതം, {{name}} !",
-  "read-first-chapter": "ആദ്യ അധ്യായം വായിക്കുക",
   "resume-reading": "നിങ്ങൾ പോയ ഇടത്തുതന്നെ തുടരുക",
   "resume-reading-loading": "നിങ്ങളുടെ വായനാ ചരിത്രം ലോഡ് ചെയ്യുന്നു...",
   "selected-year": "വർഷം: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ശുഭരാത്രി, {{name}} !",
   "annotation-override-banner": "നിങ്ങളുടെ ടീമിന്റെ അക്കൗണ്ടിൽ നിന്ന് കുറിപ്പുകൾ സംരക്ഷിക്കുകയും ലോഡ് ചെയ്യുകയും ചെയ്യുന്നു.",
   "annotation-override-save-to-my-account": "എന്റെ അക്കൗണ്ടിലേക്ക് സംരക്ഷിക്കുക",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} വായിക്കുക",
   "session-url": "സെഷൻ URL"
 }

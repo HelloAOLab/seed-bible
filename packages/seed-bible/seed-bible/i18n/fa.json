@@ -540,7 +540,6 @@
   "last-48-hours": "۴۸ ساعت گذشته",
   "open-bible": "کتاب مقدس را باز کنید",
   "personal-greeting": "خوش آمدید، {{name}} !",
-  "read-first-chapter": "فصل اول را بخوانید",
   "resume-reading": "از جایی که ترک کردید ادامه دهید",
   "resume-reading-loading": "در حال بارگذاری سابقه مطالعه شما…",
   "selected-year": "سال: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "شب بخیر، {{name}} !",
   "annotation-override-banner": "یادداشت‌ها از حساب تیم شما ذخیره و بارگذاری می‌شوند.",
   "annotation-override-save-to-my-account": "ذخیره در حساب من",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} را بخوانید",
   "session-url": "آدرس اینترنتی جلسه"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "آخری 48 گھنٹے",
   "open-bible": "بائبل کھولیں۔",
   "personal-greeting": "خوش آمدید، {{name}} !",
-  "read-first-chapter": "پہلا باب پڑھیں",
   "resume-reading": "وہیں سے جاری رکھیں جہاں آپ نے چھوڑا تھا۔",
   "resume-reading-loading": "آپ کی پڑھنے کی سرگزشت لوڈ ہو رہی ہے…",
   "selected-year": "سال: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "شب بخیر، {{name}} !",
   "annotation-override-banner": "نوٹس آپ کی ٹیم کے اکاؤنٹ سے محفوظ اور لوڈ کیے جا رہے ہیں۔",
   "annotation-override-save-to-my-account": "میرے اکاؤنٹ میں محفوظ کریں۔",
+  "read-book-chapter-button": "پڑھیں {{bookName}} {{chapterNumber}}",
   "session-url": "سیشن URL"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "Ultimele 48 de ore",
   "open-bible": "Biblia deschisă",
   "personal-greeting": "Bun venit, {{name}} !",
-  "read-first-chapter": "Citește primul capitol",
   "resume-reading": "CONTINUAȚI DE UNDE AȚI PLĂCUT",
   "resume-reading-loading": "Se încarcă istoricul de lectură…",
   "selected-year": "An: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Noapte bună, {{name}} !",
   "annotation-override-banner": "Notele sunt salvate și încărcate din contul echipei tale.",
   "annotation-override-save-to-my-account": "Salvați în contul meu",
+  "read-book-chapter-button": "Citește {{bookName}} {{chapterNumber}}",
   "session-url": "URL-ul sesiunii"
 }

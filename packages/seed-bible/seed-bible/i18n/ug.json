@@ -540,7 +540,6 @@
   "last-48-hours": "ئاخىرقى 48 سائەت",
   "open-bible": "ئوچۇق ئىنجىل",
   "personal-greeting": "خۇش كەپسىز، {{name}} !",
-  "read-first-chapter": "بىرىنچى بابنى ئوقۇڭ",
   "resume-reading": "سىز كەتكەن يەردىن داۋاملاشتۇرۇڭ",
   "resume-reading-loading": "ئوقۇش تارىخىڭىز يۈكلەنمەكتە…",
   "selected-year": "يىل: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "خەيرلىك كېچە، {{name}} !",
   "annotation-override-banner": "خاتىرىلەر سىزنىڭ گۇرۇپپىڭىزنىڭ ھېساباتىدىن ساقلانماقتا ۋە يۈكلەنمەكتە.",
   "annotation-override-save-to-my-account": "ھېساباتىمغا ساقلاڭ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} نى ئوقۇڭ",
   "session-url": "يىغىن URL"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "Afgelopen 48 uur",
   "open-bible": "Open Bijbel",
   "personal-greeting": "Welkom, {{name}} !",
-  "read-first-chapter": "Lees het eerste hoofdstuk.",
   "resume-reading": "GA VERDER WAAR JE GEBLEVEN BENT GEBLEVEN",
   "resume-reading-loading": "Je leesgeschiedenis wordt geladen...",
   "selected-year": "Jaar: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Goedenacht, {{name}} !",
   "annotation-override-banner": "Notities worden opgeslagen en geladen vanuit het account van uw team.",
   "annotation-override-save-to-my-account": "Opslaan in mijn account",
+  "read-book-chapter-button": "Lees {{bookName}} {{chapterNumber}}",
   "session-url": "Sessie-URL"
 }

@@ -540,7 +540,6 @@
   "last-48-hours": "48 orët e fundit",
   "open-bible": "Bibla e Hapur",
   "personal-greeting": "Mirë se erdhe, {{name}} !",
-  "read-first-chapter": "Lexoni kapitullin e parë",
   "resume-reading": "VAZHDONI ATJE KU U LËTË",
   "resume-reading-loading": "Duke ngarkuar historikun tënd të leximit…",
   "selected-year": "Viti: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Natën e mirë, {{name}} !",
   "annotation-override-banner": "Shënimet po ruhen dhe ngarkohen nga llogaria e ekipit tuaj.",
   "annotation-override-save-to-my-account": "Ruaj në llogarinë time",
+  "read-book-chapter-button": "Lexo {{bookName}} {{chapterNumber}}",
   "session-url": "URL-ja e sesionit"
 }

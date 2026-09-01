@@ -540,7 +540,6 @@
   "last-48-hours": "Son 48 saat",
   "open-bible": "Açık İncil",
   "personal-greeting": "Hoş geldin, {{name}} !",
-  "read-first-chapter": "Birinci bölümü okuyun",
   "resume-reading": "KALDIĞINIZ YERDEN DEVAM EDİN",
   "resume-reading-loading": "Okuma geçmişiniz yükleniyor…",
   "selected-year": "Yıl: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "İyi geceler, {{name}} !",
   "annotation-override-banner": "Notlar ekibinizin hesabından kaydediliyor ve yükleniyor.",
   "annotation-override-save-to-my-account": "Hesabıma kaydet",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} kitabını okuyun.",
   "session-url": "Oturum URL'si"
 }

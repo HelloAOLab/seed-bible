@@ -540,7 +540,6 @@
   "last-48-hours": "آخر 48 ساعة",
   "open-bible": "الكتاب المقدس المفتوح",
   "personal-greeting": "أهلاً وسهلاً، {{name}} !",
-  "read-first-chapter": "اقرأ الفصل الأول",
   "resume-reading": "تابع من حيث توقفت",
   "resume-reading-loading": "جارٍ تحميل سجل القراءة الخاص بك…",
   "selected-year": "السنة: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ليلة سعيدة {{name}} !",
   "annotation-override-banner": "يتم حفظ الملاحظات وتحميلها من حساب فريقك.",
   "annotation-override-save-to-my-account": "حفظ في حسابي",
+  "read-book-chapter-button": "اقرأ {{bookName}} {{chapterNumber}}",
   "session-url": "عنوان URL للجلسة"
 }

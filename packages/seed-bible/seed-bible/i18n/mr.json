@@ -540,7 +540,6 @@
   "last-48-hours": "गेल्या ४८ तासांत",
   "open-bible": "बायबल उघडा",
   "personal-greeting": "स्वागत आहे, {{name}} !",
-  "read-first-chapter": "पहिला अध्याय वाचा",
   "resume-reading": "जिथे सोडले होते तिथून पुढे चालू ठेवा",
   "resume-reading-loading": "तुमचा वाचन इतिहास लोड होत आहे…",
   "selected-year": "वर्ष: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "शुभ रात्री, {{name}} !",
   "annotation-override-banner": "तुमच्या टीमच्या खात्यातून नोट्स सेव्ह आणि लोड केल्या जात आहेत.",
   "annotation-override-save-to-my-account": "माझ्या खात्यात जतन करा",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} वाचा.",
   "session-url": "सत्र URL"
 }

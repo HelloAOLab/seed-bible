@@ -540,7 +540,6 @@
   "last-48-hours": "وروستي ۴۸ ساعته",
   "open-bible": "خلاص بائبل",
   "personal-greeting": "ښه راغلاست، {{name}} !",
-  "read-first-chapter": "لومړی فصل ولولئ",
   "resume-reading": "هلته ادامه ورکړئ چیرته چې تاسو پریښودل",
   "resume-reading-loading": "ستاسو د لوستلو تاریخ پورته کیږي…",
   "selected-year": "کال: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "ښه شپه، {{name}} !",
   "annotation-override-banner": "یادښتونه ستاسو د ټیم له حساب څخه خوندي او پورته کیږي.",
   "annotation-override-save-to-my-account": "زما حساب ته خوندي کړئ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ولولئ",
   "session-url": "د غونډې URL"
 }

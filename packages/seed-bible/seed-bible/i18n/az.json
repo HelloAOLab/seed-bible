@@ -540,7 +540,6 @@
   "last-48-hours": "Son 48 saat",
   "open-bible": "Açıq Müqəddəs Kitab",
   "personal-greeting": "Xoş gəlmisiniz, {{name}} !",
-  "read-first-chapter": "Birinci fəsli oxuyun",
   "resume-reading": "QALDIĞINIZ YERDƏN DAVAM EDİN",
   "resume-reading-loading": "Oxu tarixçəniz yüklənir...",
   "selected-year": "İl: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Gecəniz xeyirə, {{name}} !",
   "annotation-override-banner": "Qeydlər komandanızın hesabından yadda saxlanılır və yüklənir.",
   "annotation-override-save-to-my-account": "Hesabıma yadda saxla",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} oxuyun",
   "session-url": "Sessiya URL-i"
 }

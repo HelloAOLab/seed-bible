@@ -540,7 +540,6 @@
   "last-48-hours": "48 awr ddiwethaf",
   "open-bible": "Beibl Agored",
   "personal-greeting": "Croeso, {{name}} !",
-  "read-first-chapter": "Darllenwch y bennod gyntaf",
   "resume-reading": "PARHAU LLE GADAWOCH CHI",
   "resume-reading-loading": "Wrthi'n llwytho eich hanes darllen…",
   "selected-year": "Blwyddyn: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Nos da, {{name}} !",
   "annotation-override-banner": "Mae nodiadau'n cael eu cadw a'u llwytho o gyfrif eich tîm.",
   "annotation-override-save-to-my-account": "Cadw i'm cyfrif",
+  "read-book-chapter-button": "Darllenwch {{bookName}} {{chapterNumber}}",
   "session-url": "URL y sesiwn"
 }

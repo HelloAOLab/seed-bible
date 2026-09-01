@@ -540,7 +540,6 @@
   "last-48-hours": "Последние 48 часов",
   "open-bible": "Открытая Библия",
   "personal-greeting": "Добро пожаловать, {{name}} !",
-  "read-first-chapter": "Прочитайте первую главу",
   "resume-reading": "ПРОДОЛЖАЙТЕ С ТОГО МЕСТА, ГДЕ ОСТАНОВИЛИСЬ",
   "resume-reading-loading": "Загрузка истории прочтения…",
   "selected-year": "Год: {{year}}",
@@ -660,5 +659,6 @@
   "greeting-night-named": "Спокойной ночи, {{name}} !",
   "annotation-override-banner": "Заметки сохраняются и загружаются из учетной записи вашей команды.",
   "annotation-override-save-to-my-account": "Сохранить в мой аккаунт",
+  "read-book-chapter-button": "Прочитайте {{bookName}} {{chapterNumber}}",
   "session-url": "URL сессии"
 }
