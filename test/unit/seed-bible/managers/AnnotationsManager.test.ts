@@ -1303,6 +1303,44 @@ describe("AnnotationsManager", () => {
 
       expect(manager.sync.pendingCount.value).toBe(2);
     });
+
+    describe("when the local database can no longer be opened", () => {
+      // What an older tab is left with after a newer one upgrades the database:
+      // its connection is closed and every reopen at the old version rejects.
+      function useUnusableStore() {
+        const closed = () => Promise.reject(new Error("database closed"));
+        store = {
+          ...createInMemoryRecordStore<Annotation>(),
+          get: closed,
+          put: closed,
+          delete: closed,
+        };
+      }
+
+      it("saveAnnotation() writes to the server instead of failing", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        useUnusableStore();
+        const manager = createOfflineManager();
+
+        const saved = await manager.saveAnnotation(createCommentAnnotation());
+
+        expect(recordDataMock).toHaveBeenCalledWith("user-1", "ann-1", saved, {
+          marker: "publicRead:annotations/GEN/1",
+        });
+        warn.mockRestore();
+      });
+
+      it("deleteAnnotation() erases on the server instead of failing", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        useUnusableStore();
+        const manager = createOfflineManager();
+
+        await manager.deleteAnnotation("ann-5");
+
+        expect(eraseDataMock).toHaveBeenCalledWith("user-1", "ann-5");
+        warn.mockRestore();
+      });
+    });
   });
 });
 

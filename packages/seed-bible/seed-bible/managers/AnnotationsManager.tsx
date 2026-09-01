@@ -542,6 +542,39 @@ export function createAnnotationsManager(
     }
   };
 
+  /**
+   * The record a direct write targets, for a note that has no local row: one
+   * belonging to another account, or a device whose local store can't hold it.
+   */
+  const directRecordName = (query?: AnnotationQuery): string => {
+    const recordName = resolveRecordName(query?.recordName);
+    if (!recordName) {
+      throw new Error(
+        "Unable to resolve annotation record. User is not authenticated."
+      );
+    }
+    return recordName;
+  };
+
+  const saveDirectToServer = async (
+    parsed: Annotation,
+    query?: AnnotationQuery
+  ): Promise<Annotation> => {
+    await saveToServer(directRecordName(query), parsed, query);
+    return parsed;
+  };
+
+  const eraseDirectlyOnServer = async (
+    annotationId: string,
+    query?: AnnotationQuery
+  ): Promise<void> => {
+    const result = await os.eraseData(directRecordName(query), annotationId);
+    if (!result.success) {
+      console.error("Error deleting annotation:", result);
+      throw new Error(`Error deleting annotation: ${result.errorCode}`);
+    }
+  };
+
   const saveAnnotation = async (
     annotation: Annotation,
     query?: AnnotationQuery
@@ -562,33 +595,35 @@ export function createAnnotationsManager(
     // Writing into somebody else's record is a direct operation with no local
     // mirror: it isn't this device's note to queue.
     if (isForeignQuery(query) || !store) {
-      const recordName = resolveRecordName(query?.recordName);
-      if (!recordName) {
-        throw new Error(
-          "Unable to resolve annotation record. User is not authenticated."
-        );
-      }
-      await saveToServer(recordName, parsed, query);
-      return parsed;
+      return saveDirectToServer(parsed, query);
     }
 
     const owner = localOwner();
-    const existing = await store.get(owner, parsed.id);
-    await store.put({
-      key: recordKey(owner, parsed.id),
-      owner,
-      address: parsed.id,
-      collection: annotationCollection(parsed.bookId, parsed.chapterNumber),
-      payload: parsed,
-      // Keep whichever server version this edit was built on. A second offline
-      // edit must still be judged against the copy the server actually holds,
-      // not against our own previous unsent edit.
-      base: existing?.base ?? null,
-      deleted: false,
-      updatedAtMs: now,
-      pendingOp: "upsert",
-      attempts: 0,
-    });
+    try {
+      const existing = await store.get(owner, parsed.id);
+      await store.put({
+        key: recordKey(owner, parsed.id),
+        owner,
+        address: parsed.id,
+        collection: annotationCollection(parsed.bookId, parsed.chapterNumber),
+        payload: parsed,
+        // Keep whichever server version this edit was built on. A second offline
+        // edit must still be judged against the copy the server actually holds,
+        // not against our own previous unsent edit.
+        base: existing?.base ?? null,
+        deleted: false,
+        updatedAtMs: now,
+        pendingOp: "upsert",
+        attempts: 0,
+      });
+    } catch (error) {
+      // The local database can become unusable for the rest of this tab's life
+      // — another tab upgrading it closes this connection and every reopen at
+      // the old version is rejected. Failing every save until the user reloads
+      // is worse than giving up the queue and writing straight to the server.
+      console.warn("Failed to record an annotation locally.", error);
+      return saveDirectToServer(parsed, query);
+    }
 
     // Resolves once the local write lands, so the composer closes cleanly with
     // no connection instead of reporting a failure the user can do nothing
@@ -602,44 +637,42 @@ export function createAnnotationsManager(
     query?: AnnotationQuery
   ): Promise<void> => {
     if (isForeignQuery(query) || !store) {
-      const recordName = resolveRecordName(query?.recordName);
-      if (!recordName) {
-        throw new Error(
-          "Unable to resolve annotation record. User is not authenticated."
-        );
-      }
-      const result = await os.eraseData(recordName, annotationId);
-      if (!result.success) {
-        console.error("Error deleting annotation:", result);
-        throw new Error(`Error deleting annotation: ${result.errorCode}`);
-      }
+      await eraseDirectlyOnServer(annotationId, query);
       return;
     }
 
     const owner = localOwner();
-    const existing = await store.get(owner, annotationId);
+    try {
+      const existing = await store.get(owner, annotationId);
 
-    // Never reached the server, so there is nothing to tombstone — including
-    // the create-then-delete-while-offline case, which now costs no requests
-    // at all.
-    if (existing && existing.base === null) {
-      await store.delete(owner, annotationId);
-      sync?.notifyLocalChange();
+      // Never reached the server, so there is nothing to tombstone — including
+      // the create-then-delete-while-offline case, which now costs no requests
+      // at all.
+      if (existing && existing.base === null) {
+        await store.delete(owner, annotationId);
+        sync?.notifyLocalChange();
+        return;
+      }
+
+      await store.put({
+        key: recordKey(owner, annotationId),
+        owner,
+        address: annotationId,
+        collection: existing?.collection ?? "",
+        payload: null,
+        base: existing?.base ?? null,
+        deleted: true,
+        updatedAtMs: Date.now(),
+        pendingOp: "delete",
+        attempts: 0,
+      });
+    } catch (error) {
+      // See `saveAnnotation`: a dead local database must not stop a deletion
+      // the server can carry out perfectly well.
+      console.warn("Failed to record an annotation deletion locally.", error);
+      await eraseDirectlyOnServer(annotationId, query);
       return;
     }
-
-    await store.put({
-      key: recordKey(owner, annotationId),
-      owner,
-      address: annotationId,
-      collection: existing?.collection ?? "",
-      payload: null,
-      base: existing?.base ?? null,
-      deleted: true,
-      updatedAtMs: Date.now(),
-      pendingOp: "delete",
-      attempts: 0,
-    });
 
     sync?.notifyLocalChange();
   };
