@@ -23,7 +23,6 @@
   "create-new-tab": "Δημιουργία νέας καρτέλας",
   "tab-options": "Επιλογές καρτέλας",
   "open-tab-menu": "Άνοιγμα μενού καρτελών",
-  "session-id_x": "Αναγνωριστικό περιόδου σύνδεσης: {{sessionId}}",
   "search-verses": "Αναζήτηση στίχων",
   "clear-search": "Εκκαθάριση αναζήτησης",
   "searching": "Ερευνητικός...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Επισήμανση για",
   "end-session": "Λήξη συνεδρίας",
   "panels": "Πάνελ",
-
   "open-in-new-panel": "Άνοιγμα σε νέο πλαίσιο",
   "close-sidebar": "Κλείσιμο πλευρικής γραμμής",
   "select-pane-layout": "Επιλογή διάταξης παραθύρου",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Δημιουργία σχεδίου ανάγνωσης",
   "reading-plans-empty": "Δεν έχετε ακόμη σχέδια ανάγνωσης. Δημιουργήστε ένα για να ξεκινήσετε.",
   "untitled-reading-plan": "Σχέδιο χωρίς τίτλο",
-
   "reading-plan-description_placeholder": "Τι αφορά αυτό το σχέδιο;",
   "anonymous": "Ανώνυμος",
   "no-chat-messages": "Δεν υπάρχουν ακόμη μηνύματα",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Διατίθεται ξενάγηση με ξεναγό για να σας βοηθήσει να μάθετε τα πάντα για τη Βίβλο των Σπόρων.",
   "tutorial.promptDecline": "Όχι, ευχαριστώ",
   "tutorial.promptAccept": "Κάντε την περιήγηση",
-  "session-id": "Αναγνωριστικό περιόδου σύνδεσης",
   "session-settings-section-navigation": "Πλοήγηση",
   "session-settings-section-sharing": "Μοιρασιά",
   "session-settings-section-participants": "Συμμετέχοντες",
@@ -335,7 +331,6 @@
   "dont-show-again": "Να μην εμφανιστεί ξανά αυτό",
   "discover": "Ανακαλύπτω",
   "playlists": "Λίστες αναπαραγωγής",
-
   "cross-references": "Διασταυρούμενες παραπομπές",
   "study-notes": "Σημειώσεις μελέτης",
   "content": "Περιεχόμενο",
@@ -404,7 +399,6 @@
   "add-and-save": "Προσθήκη και αποθήκευση",
   "loading-profile": "Φόρτωση του προφίλ σας…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Μερίδιο",
   "share-sheet-title": "Μερίδιο",
   "share-link": "Κοινοποίηση συνδέσμου",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Δημιουργία νέου σχεδίου",
   "edit-reading-plan": "Επεξεργασία σχεδίου",
   "reading-plan-step-name-title": "Ονομάστε το σχέδιό σας",
-
   "reading-plan-name-placeholder": "π.χ. Το Ταξίδι μου με τους Ψαλμούς",
   "reading-plan-description-label": "Περιγραφή (προαιρετικό)",
   "reading-plan-step-scripture-title": "Επιλογή μετρήσεων",
   "reading-plan-step-cadences-title": "Ρυθμοί ανάγνωσης",
   "reading-plan-step-cadences-hint": "Επιλέξτε τους ρυθμούς ανάγνωσης που θέλετε να προσφέρετε. Οι αναγνώστες μπορούν πάντα να επιλέξουν να ακολουθήσουν τον δικό τους ρυθμό.",
-
   "reading-plan-cadence-length": "Ολοκληρώνεται σε {{count}} ημέρες",
   "reading-plan-cadence-length_one": "Ολοκληρώνεται σε {{count}} ημέρα",
   "reading-plan-cadence-length_other": "Ολοκληρώνεται σε {{count}} ημέρες",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Οικονομία…",
   "reading-plan-draft-saved": "Το πρόχειρο αποθηκεύτηκε",
   "reading-plan-draft-save-failed": "Δεν ήταν δυνατή η αποθήκευση του προσχεδίου",
-
   "reading-plan-scripture-remove": "Αφαίρεση ανάγνωσης",
   "reading-plan-create-submit": "Δημιουργία σχεδίου",
   "reading-plan-save-changes": "Αποθήκευση αλλαγών",
@@ -498,11 +489,8 @@
   "loading": "Φόρτωση…",
   "reading-plan-not-started": "Δεν ξεκίνησε",
   "reading-plan-start": "Έναρξη σχεδίου",
-
   "reading-plan-streak": "{{count}} -ημερών σερί",
-
   "reading-plan-mark-complete": "Επισήμανση ως ολοκληρωμένου",
-
   "reading-plan-empty-sessions": "Αυτό το σχέδιο δεν έχει ακόμη αναγνώσεις.",
   "reading-plan-celebration-title": "Η ημέρα {{day}} ολοκληρώθηκε!",
   "reading-plan-complete-title": "Το σχέδιο ολοκληρώθηκε!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Σήμανση ολοκλήρωσης ανάγνωσης",
   "reading-plan-link-video": "Βίντεο",
   "reading-belongs-to": "Αυτή η ανάγνωση ανήκει σε",
-
   "reading-plan-mark-passage-complete": "Σημειώστε {{passage}} ως αναγνωσμένο",
   "reading-plan-read-nudge-title": "Καλή ανάγνωση!",
   "reading-plan-read-nudge-toast": "Σημειώστε {{passage}} ως ολοκληρωμένο;",
@@ -553,7 +540,6 @@
   "last-48-hours": "Τελευταίες 48 ώρες",
   "open-bible": "Ανοιχτή Βίβλος",
   "personal-greeting": "Καλώς ήρθες, {{name}} !",
-  "read-first-chapter": "Διαβάστε το πρώτο κεφάλαιο",
   "resume-reading": "ΣΥΝΕΧΙΣΤΕ ΑΠΟ ΕΚΕΙ ΠΟΥ ΑΦΗΣΑΤΕ",
   "resume-reading-loading": "Φόρτωση του ιστορικού ανάγνωσής σας…",
   "selected-year": "Έτος: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "Τι αφορά αυτή η λίστα αναπαραγωγής;",
   "read-more": "Διαβάστε περισσότερα",
   "read-less": "Διαβάστε λιγότερο",
-
   "ask-to-switch-ui-language": "Προσφορά για αλλαγή γλώσσας με μετάφραση",
   "ai": "Όλα συμπεριλαμβάνονται",
   "ai-edit-playlist": "Επεξεργασία λίστας αναπαραγωγής με τεχνητή νοημοσύνη (AI)",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} χρησιμοποίησε {{count}} εργαλεία",
   "chat-tool-used_one": "Ο χρήστης {{name}} χρησιμοποίησε ένα εργαλείο",
   "chat-tool-used_other": "{{name}} χρησιμοποίησε {{count}} εργαλεία",
-
   "ai-context-button-label": "Ενεργό πλαίσιο τεχνητής νοημοσύνης",
   "ai-context-tool-count": "{{count}} εργαλεία",
   "annotation-conflict-title": "Αυτή η σημείωση άλλαξε σε δύο σημεία",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Χωρίς περιεχόμενο.",
   "annotation-conflict-confirm": "Επιβεβαιώνω",
   "annotation-conflict-resolve-failed": "Δεν ήταν δυνατή η εφαρμογή αυτής της επιλογής. Θα επιχειρηθεί ξανά.",
-
   "annotation-sync-failed": "Δεν ήταν δυνατή η αποθήκευση μιας σημείωσης στον λογαριασμό σας. Βρίσκεται ακόμα σε αυτήν τη συσκευή.",
   "create-menu": "Δημιουργώ",
   "create-annotation-menu-item": "Σχόλιο",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Δεν ήταν δυνατή η αποθήκευση της σχολίασης.",
   "annotation-group-expand": "Ανάπτυξη ομάδας",
   "annotation-group-collapse": "Σύμπτυξη ομάδας",
-
   "notes": "Σημειώσεις",
   "note": "Σημείωμα",
   "show-more-verse-actions": "Εμφάνιση περισσότερων ενεργειών",
@@ -667,7 +649,6 @@
   "create-folder": "Δημιουργία φακέλου",
   "edit-bookmark": "Επεξεργασία σελιδοδείκτη",
   "remove-bookmark-from-all-folders": "Κατάργηση από όλους τους φακέλους",
-
   "greeting-afternoon": "Καλημέρα!",
   "greeting-afternoon-named": "Καλό απόγευμα, {{name}} !",
   "greeting-evening": "Καλησπέρα!",
@@ -677,5 +658,7 @@
   "greeting-night": "Καληνύχτα!",
   "greeting-night-named": "Καληνύχτα, {{name}} !",
   "annotation-override-banner": "Οι σημειώσεις αποθηκεύονται και φορτώνονται από τον λογαριασμό της ομάδας σας.",
-  "annotation-override-save-to-my-account": "Αποθήκευση στον λογαριασμό μου"
+  "annotation-override-save-to-my-account": "Αποθήκευση στον λογαριασμό μου",
+  "read-book-chapter-button": "Διαβάστε το {{bookName}} {{chapterNumber}}",
+  "session-url": "URL περιόδου σύνδεσης"
 }

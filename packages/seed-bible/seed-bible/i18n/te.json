@@ -23,7 +23,6 @@
   "create-new-tab": "కొత్త ట్యాబ్‌ను సృష్టించండి",
   "tab-options": "ట్యాబ్ ఎంపికలు",
   "open-tab-menu": "ట్యాబ్ మెనూను తెరవండి",
-  "session-id_x": "సెషన్ ID: {{sessionId}}",
   "search-verses": "శోధన పద్యాలు",
   "clear-search": "శోధనను క్లియర్ చేయండి",
   "searching": "వెతుకుతోంది...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "హైలైట్ కోసం",
   "end-session": "సెషన్ ముగింపు",
   "panels": "ప్యానెల్లు",
-
   "open-in-new-panel": "కొత్త ప్యానెల్‌లో తెరవండి",
   "close-sidebar": "సైడ్‌బార్‌ను మూసివేయండి",
   "select-pane-layout": "ప్యానెల్ లేఅవుట్‌ను ఎంచుకోండి",
@@ -253,7 +251,6 @@
   "create-reading-plan": "పఠన ప్రణాళికను రూపొందించండి",
   "reading-plans-empty": "మీకు ఇంకా పఠన ప్రణాళికలు ఏవీ లేవు. ప్రారంభించడానికి ఒక ప్రణాళికను రూపొందించుకోండి.",
   "untitled-reading-plan": "పేరులేని ప్రణాళిక",
-
   "reading-plan-description_placeholder": "ఈ ప్రణాళిక దేని గురించి?",
   "anonymous": "అనామక",
   "no-chat-messages": "ఇంకా సందేశాలు లేవు",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "సీడ్ బైబిల్ యొక్క సమగ్ర విషయాలను తెలుసుకోవడంలో మీకు సహాయపడటానికి గైడెడ్ టూర్ అందుబాటులో ఉంది.",
   "tutorial.promptDecline": "వద్దు, ధన్యవాదాలు",
   "tutorial.promptAccept": "పర్యటన చేయండి",
-  "session-id": "సెషన్ ID",
   "session-settings-section-navigation": "నావిగేషన్",
   "session-settings-section-sharing": "పంచుకోవడం",
   "session-settings-section-participants": "పాల్గొనేవారు",
@@ -335,7 +331,6 @@
   "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు",
   "discover": "కనుగొనండి",
   "playlists": "ప్లేజాబితాలు",
-
   "cross-references": "క్రాస్ రిఫరెన్సులు",
   "study-notes": "అధ్యయన గమనికలు",
   "content": "కంటెంట్",
@@ -404,7 +399,6 @@
   "add-and-save": "జోడించి సేవ్ చేయండి",
   "loading-profile": "మీ ప్రొఫైల్ లోడ్ అవుతోంది…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "పంచుకోండి",
   "share-sheet-title": "పంచుకోండి",
   "share-link": "లింక్‌ను పంచుకోండి",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "కొత్త ప్రణాళికను సృష్టించండి",
   "edit-reading-plan": "ప్రణాళికను సవరించండి",
   "reading-plan-step-name-title": "మీ ప్రణాళికకు పేరు పెట్టండి",
-
   "reading-plan-name-placeholder": "ఉదా: నా కీర్తనల ప్రయాణం",
   "reading-plan-description-label": "వివరణ (ఐచ్ఛికం)",
   "reading-plan-step-scripture-title": "రీడింగ్‌లను ఎంచుకోండి",
   "reading-plan-step-cadences-title": "పఠన లయలు",
   "reading-plan-step-cadences-hint": "మీరు అందించాలనుకుంటున్న పఠన వేగాలను ఎంచుకోండి. దానికి బదులుగా పాఠకులు ఎల్లప్పుడూ తమ సొంత వేగంతో చదవడాన్ని ఎంచుకోవచ్చు.",
-
   "reading-plan-cadence-length": "{{count}} రోజులలో పూర్తవుతుంది",
   "reading-plan-cadence-length_one": "{{count}} రోజులలో ముగుస్తుంది",
   "reading-plan-cadence-length_other": "{{count}} రోజులలో పూర్తవుతుంది",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "సేవ్ అవుతోంది…",
   "reading-plan-draft-saved": "డ్రాఫ్ట్ సేవ్ చేయబడింది",
   "reading-plan-draft-save-failed": "డ్రాఫ్ట్‌ను సేవ్ చేయలేకపోయారు",
-
   "reading-plan-scripture-remove": "చదవడం తొలగించండి",
   "reading-plan-create-submit": "ప్రణాళికను రూపొందించండి",
   "reading-plan-save-changes": "మార్పులను సేవ్ చేయండి",
@@ -498,11 +489,8 @@
   "loading": "లోడ్ అవుతోంది…",
   "reading-plan-not-started": "ప్రారంభించబడలేదు",
   "reading-plan-start": "ప్రణాళికను ప్రారంభించండి",
-
   "reading-plan-streak": "{{count}} -రోజుల పరంపర",
-
   "reading-plan-mark-complete": "పూర్తయినట్లుగా గుర్తించండి",
-
   "reading-plan-empty-sessions": "ఈ ప్లాన్‌లో ఇంకా ఎలాంటి రీడింగ్‌లు లేవు.",
   "reading-plan-celebration-title": "రోజు {{day}} పూర్తయింది!",
   "reading-plan-complete-title": "ప్రణాళిక పూర్తయింది!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "చదవడం పూర్తి చేసినట్లు గుర్తించండి",
   "reading-plan-link-video": "వీడియో",
   "reading-belongs-to": "ఈ పఠనం దీనికి చెందినది",
-
   "reading-plan-mark-passage-complete": "{{passage}} ను చదివినట్లుగా గుర్తించండి",
   "reading-plan-read-nudge-title": "చదివి ఆనందించండి!",
   "reading-plan-read-nudge-toast": "{{passage}} పూర్తి చేసినట్లుగా గుర్తించాలా?",
@@ -553,7 +540,6 @@
   "last-48-hours": "గత 48 గంటల్లో",
   "open-bible": "ఓపెన్ బైబిల్",
   "personal-greeting": "స్వాగతం, {{name}} !",
-  "read-first-chapter": "మొదటి అధ్యాయం చదవండి",
   "resume-reading": "మీరు ఆపిన చోట నుండి కొనసాగించండి",
   "resume-reading-loading": "మీ పఠన చరిత్ర లోడ్ అవుతోంది…",
   "selected-year": "సంవత్సరం: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "ఈ ప్లేలిస్ట్ దేని గురించి?",
   "read-more": "మరింత చదవండి",
   "read-less": "తక్కువ చదవండి",
-
   "ask-to-switch-ui-language": "అనువాదంతో పాటు భాషను మార్చుకోవడానికి ప్రతిపాదించండి",
   "ai": "AI",
   "ai-edit-playlist": "AIతో ప్లేలిస్ట్‌ను సవరించండి",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} {{count}} సాధనాలను ఉపయోగించారు",
   "chat-tool-used_one": "{{name}} ఒక సాధనాన్ని ఉపయోగించారు",
   "chat-tool-used_other": "{{name}} {{count}} సాధనాలను ఉపయోగించారు",
-
   "ai-context-button-label": "క్రియాశీల AI సందర్భం",
   "ai-context-tool-count": "{{count}} సాధనాలు",
   "annotation-conflict-title": "ఈ గమనిక రెండు చోట్ల మారింది",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "కంటెంట్ లేదు.",
   "annotation-conflict-confirm": "నిర్ధారించండి",
   "annotation-conflict-resolve-failed": "ఆ ఎంపికను వర్తింపజేయలేకపోయాము. మళ్ళీ ప్రయత్నిస్తాము.",
-
   "annotation-sync-failed": "మీ ఖాతాలో నోట్‌ను సేవ్ చేయలేకపోయాము. అది ఇంకా ఈ పరికరంలోనే ఉంది.",
   "create-menu": "సృష్టించండి",
   "create-annotation-menu-item": "వ్యాఖ్యానం",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "అనోటేషన్‌ను సేవ్ చేయలేకపోయాను.",
   "annotation-group-expand": "సమూహాన్ని విస్తరించండి",
   "annotation-group-collapse": "సమూహాన్ని కుదించండి",
-
   "notes": "గమనికలు",
   "note": "గమనిక",
   "show-more-verse-actions": "మరిన్ని చర్యలను చూపించు",
@@ -667,7 +649,6 @@
   "create-folder": "ఫోల్డర్‌ను సృష్టించండి",
   "edit-bookmark": "బుక్‌మార్క్‌ను సవరించండి",
   "remove-bookmark-from-all-folders": "అన్ని ఫోల్డర్‌ల నుండి తొలగించండి",
-
   "greeting-afternoon": "శుభ మధ్యాహ్నం!",
   "greeting-afternoon-named": "శుభ మధ్యాహ్నం, {{name}} !",
   "greeting-evening": "శుభ సాయం!",
@@ -677,5 +658,7 @@
   "greeting-night": "శుభరాత్రి!",
   "greeting-night-named": "శుభరాత్రి, {{name}} !",
   "annotation-override-banner": "మీ టీమ్ ఖాతా నుండి నోట్స్ సేవ్ చేయబడి, లోడ్ చేయబడుతున్నాయి.",
-  "annotation-override-save-to-my-account": "నా ఖాతాలో సేవ్ చేసుకోండి"
+  "annotation-override-save-to-my-account": "నా ఖాతాలో సేవ్ చేసుకోండి",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} చదవండి",
+  "session-url": "సెషన్ URL"
 }

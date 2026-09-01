@@ -18,7 +18,6 @@
   "create-new-tab": "Tạo tab mới",
   "tab-options": "Tùy chọn tab",
   "open-tab-menu": "Mở menu tab",
-  "session-id_x": "Mã phiên: {{sessionId}}",
   "search-verses": "Tìm kiếm các câu thơ",
   "clear-search": "Xóa tìm kiếm",
   "searching": "Đang tìm kiếm...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "Đánh dấu cho",
   "end-session": "Kết thúc phiên",
   "panels": "Tấm",
-
   "open-in-new-panel": "Mở trong cửa sổ mới",
   "close-sidebar": "Đóng thanh bên",
   "select-pane-layout": "Chọn bố cục khung",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Lập kế hoạch đọc sách",
   "reading-plans-empty": "Bạn chưa có kế hoạch đọc sách nào cả. Hãy lập một kế hoạch để bắt đầu.",
   "untitled-reading-plan": "Kế hoạch chưa có tiêu đề",
-
   "reading-plan-description_placeholder": "Kế hoạch này là về cái gì?",
   "anonymous": "Vô danh",
   "no-chat-messages": "Chưa có tin nhắn nào",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Có tour tham quan có hướng dẫn viên giúp bạn tìm hiểu mọi ngóc ngách của Seed Bible.",
   "tutorial.promptDecline": "Không, cảm ơn",
   "tutorial.promptAccept": "Hãy tham gia chuyến tham quan.",
-  "session-id": "ID phiên",
   "session-settings-section-navigation": "Điều hướng",
   "session-settings-section-sharing": "Chia sẻ",
   "session-settings-section-participants": "Người tham gia",
@@ -335,7 +331,6 @@
   "dont-show-again": "Đừng hiển thị lại cái này nữa",
   "discover": "Phát hiện",
   "playlists": "Danh sách phát",
-
   "cross-references": "Tham chiếu chéo",
   "study-notes": "Ghi chú học tập",
   "content": "Nội dung",
@@ -404,7 +399,6 @@
   "add-and-save": "Thêm và lưu",
   "loading-profile": "Đang tải hồ sơ của bạn…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Chia sẻ",
   "share-sheet-title": "Chia sẻ",
   "share-link": "Chia sẻ liên kết",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Tạo kế hoạch mới",
   "edit-reading-plan": "Chỉnh sửa kế hoạch",
   "reading-plan-step-name-title": "Đặt tên cho kế hoạch của bạn",
-
   "reading-plan-name-placeholder": "Ví dụ: Hành trình Thánh vịnh của tôi",
   "reading-plan-description-label": "Mô tả (tùy chọn)",
   "reading-plan-step-scripture-title": "Chọn bài đọc",
   "reading-plan-step-cadences-title": "Nhịp điệu đọc",
   "reading-plan-step-cadences-hint": "Hãy chọn tốc độ đọc mà bạn muốn cung cấp. Người đọc luôn có thể chọn đọc theo tốc độ của riêng mình.",
-
   "reading-plan-cadence-length": "Hoàn thành trong {{count}} ngày",
   "reading-plan-cadence-length_one": "Hoàn thành sau {{count}} ngày",
   "reading-plan-cadence-length_other": "Hoàn thành trong {{count}} ngày",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Đang lưu…",
   "reading-plan-draft-saved": "Bản nháp đã được lưu",
   "reading-plan-draft-save-failed": "Không thể lưu bản nháp",
-
   "reading-plan-scripture-remove": "Xóa bỏ việc đọc",
   "reading-plan-create-submit": "Lập kế hoạch",
   "reading-plan-save-changes": "Lưu thay đổi",
@@ -498,11 +489,8 @@
   "loading": "Đang tải…",
   "reading-plan-not-started": "Chưa bắt đầu",
   "reading-plan-start": "Bắt đầu kế hoạch",
-
   "reading-plan-streak": "chuỗi {{count}} ngày",
-
   "reading-plan-mark-complete": "Đánh dấu là đã hoàn thành",
-
   "reading-plan-empty-sessions": "Kế hoạch này hiện chưa có bất kỳ số liệu nào.",
   "reading-plan-celebration-title": "Ngày {{day}} đã hoàn thành!",
   "reading-plan-complete-title": "Kế hoạch đã hoàn tất!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Đánh dấu việc đọc đã hoàn tất",
   "reading-plan-link-video": "Băng hình",
   "reading-belongs-to": "Bài đọc này thuộc về",
-
   "reading-plan-mark-passage-complete": "Đánh dấu {{passage}} là đã đọc",
   "reading-plan-read-nudge-title": "Chúc bạn đọc vui vẻ!",
   "reading-plan-read-nudge-toast": "Đánh dấu {{passage}} đã hoàn thành?",
@@ -553,7 +540,6 @@
   "last-48-hours": "48 giờ qua",
   "open-bible": "Kinh Thánh Mở",
   "personal-greeting": "Chào mừng, {{name}} !",
-  "read-first-chapter": "Hãy đọc chương đầu tiên",
   "resume-reading": "TIẾP TỤC TỪ CHỖ BẠN ĐÃ DỪNG",
   "resume-reading-loading": "Đang tải lịch sử đọc của bạn…",
   "selected-year": "Năm: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "Danh sách nhạc này nói về điều gì?",
   "read-more": "Đọc thêm",
   "read-less": "Đọc ít hơn",
-
   "ask-to-switch-ui-language": "Đề nghị chuyển đổi ngôn ngữ kèm theo bản dịch",
   "ai": "Trí tuệ nhân tạo",
   "ai-edit-playlist": "Chỉnh sửa danh sách phát bằng AI",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} đã sử dụng {{count}} công cụ",
   "chat-tool-used_one": "{{name}} đã sử dụng một công cụ",
   "chat-tool-used_other": "{{name}} đã sử dụng {{count}} công cụ",
-
   "ai-context-button-label": "Bối cảnh AI chủ động",
   "ai-context-tool-count": "{{count}} công cụ",
   "annotation-conflict-title": "Ghi chú này đã được thay đổi ở hai chỗ.",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Không có nội dung.",
   "annotation-conflict-confirm": "Xác nhận",
   "annotation-conflict-resolve-failed": "Không thể áp dụng lựa chọn đó. Sẽ thử lại.",
-
   "annotation-sync-failed": "Không thể lưu ghi chú vào tài khoản của bạn. Ghi chú vẫn còn trên thiết bị này.",
   "create-menu": "Tạo nên",
   "create-annotation-menu-item": "Chú thích",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Không thể lưu chú thích.",
   "annotation-group-expand": "Mở rộng nhóm",
   "annotation-group-collapse": "Sụp đổ nhóm",
-
   "notes": "Ghi chú",
   "note": "Ghi chú",
   "show-more-verse-actions": "Hiển thị thêm hành động",
@@ -667,7 +649,6 @@
   "create-folder": "Tạo thư mục",
   "edit-bookmark": "Chỉnh sửa dấu trang",
   "remove-bookmark-from-all-folders": "Xóa khỏi tất cả các thư mục",
-
   "greeting-afternoon": "Chào buổi chiều!",
   "greeting-afternoon-named": "Chào buổi chiều, {{name}} !",
   "greeting-evening": "Buổi tối vui vẻ!",
@@ -677,5 +658,7 @@
   "greeting-night": "Chúc ngủ ngon!",
   "greeting-night-named": "Chúc ngủ ngon, {{name}} !",
   "annotation-override-banner": "Các ghi chú đang được lưu và tải từ tài khoản của nhóm bạn.",
-  "annotation-override-save-to-my-account": "Lưu vào tài khoản của tôi"
+  "annotation-override-save-to-my-account": "Lưu vào tài khoản của tôi",
+  "read-book-chapter-button": "Đọc {{bookName}} {{chapterNumber}}",
+  "session-url": "URL phiên"
 }

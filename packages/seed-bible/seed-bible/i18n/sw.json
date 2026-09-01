@@ -18,7 +18,6 @@
   "create-new-tab": "Unda kichupo kipya",
   "tab-options": "Chaguo za vichupo",
   "open-tab-menu": "Fungua menyu ya kichupo",
-  "session-id_x": "Kitambulisho cha Kipindi: {{sessionId}}",
   "search-verses": "Tafuta mistari",
   "clear-search": "Futa utafutaji",
   "searching": "Inatafuta...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "Angazia kwa",
   "end-session": "Mwisho wa Kipindi",
   "panels": "Paneli",
-
   "open-in-new-panel": "Fungua kwenye paneli mpya",
   "close-sidebar": "Funga upau wa pembeni",
   "select-pane-layout": "Chagua mpangilio wa kidirisha",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Unda mpango wa kusoma",
   "reading-plans-empty": "Huna mipango yoyote ya kusoma bado. Unda moja ili kuanza.",
   "untitled-reading-plan": "Mpango usio na kichwa",
-
   "reading-plan-description_placeholder": "Mpango huu unahusu nini?",
   "anonymous": "Mtu Asiyejulikana",
   "no-chat-messages": "Hakuna ujumbe bado",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Ziara inayoongozwa inapatikana ili kukusaidia kujifunza mambo muhimu na ya kipekee kuhusu Biblia ya Mbegu.",
   "tutorial.promptDecline": "Hapana, asante",
   "tutorial.promptAccept": "Chukua ziara",
-  "session-id": "Kitambulisho cha Kipindi",
   "session-settings-section-navigation": "Urambazaji",
   "session-settings-section-sharing": "Kushiriki",
   "session-settings-section-participants": "Washiriki",
@@ -335,7 +331,6 @@
   "dont-show-again": "Usionyeshe hii tena",
   "discover": "Gundua",
   "playlists": "Orodha za kucheza",
-
   "cross-references": "Marejeleo ya msalaba",
   "study-notes": "Maelezo ya utafiti",
   "content": "Maudhui",
@@ -404,7 +399,6 @@
   "add-and-save": "Ongeza na uhifadhi",
   "loading-profile": "Inapakia wasifu wako…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Shiriki",
   "share-sheet-title": "Shiriki",
   "share-link": "Shiriki kiungo",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Unda mpango mpya",
   "edit-reading-plan": "Hariri mpango",
   "reading-plan-step-name-title": "Taja mpango wako",
-
   "reading-plan-name-placeholder": "mfano Safari Yangu ya Zaburi",
   "reading-plan-description-label": "Maelezo (hiari)",
   "reading-plan-step-scripture-title": "Chagua usomaji",
   "reading-plan-step-cadences-title": "Kasi za kusoma",
   "reading-plan-step-cadences-hint": "Chagua kasi za kusoma unazotaka kutoa. Wasomaji wanaweza kuchagua kwenda kwa kasi yao wenyewe badala yake.",
-
   "reading-plan-cadence-length": "Huisha ndani ya siku {{count}}",
   "reading-plan-cadence-length_one": "Inakamilika ndani ya siku {{count}}",
   "reading-plan-cadence-length_other": "Huisha ndani ya siku {{count}}",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Inahifadhi…",
   "reading-plan-draft-saved": "Rasimu imehifadhiwa",
   "reading-plan-draft-save-failed": "Haikuweza kuhifadhi rasimu",
-
   "reading-plan-scripture-remove": "Ondoa usomaji",
   "reading-plan-create-submit": "Unda mpango",
   "reading-plan-save-changes": "Hifadhi mabadiliko",
@@ -498,11 +489,8 @@
   "loading": "Inapakia…",
   "reading-plan-not-started": "Haijaanza",
   "reading-plan-start": "Anza mpango",
-
   "reading-plan-streak": "{{count}} -mfululizo wa siku",
-
   "reading-plan-mark-complete": "Weka alama kama imekamilika",
-
   "reading-plan-empty-sessions": "Mpango huu hauna usomaji wowote bado.",
   "reading-plan-celebration-title": "Siku {{day}} imekamilika!",
   "reading-plan-complete-title": "Mpango umekamilika!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Weka alama ya usomaji umekamilika",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Usomaji huu ni wa",
-
   "reading-plan-mark-passage-complete": "Weka alama {{passage}} kama imesomwa",
   "reading-plan-read-nudge-title": "Usomaji mzuri!",
   "reading-plan-read-nudge-toast": "Weka alama kuwa {{passage}} imekamilika?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Saa 48 zilizopita",
   "open-bible": "Biblia Iliyofunguliwa",
   "personal-greeting": "Karibu, {{name}} !",
-  "read-first-chapter": "Soma sura ya kwanza",
   "resume-reading": "ENDELEA ULIPOACHA",
   "resume-reading-loading": "Inapakia historia yako ya usomaji…",
   "selected-year": "Mwaka: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "Orodha hii ya kucheza inahusu nini?",
   "read-more": "Soma zaidi",
   "read-less": "Soma kidogo",
-
   "ask-to-switch-ui-language": "Jitolee kubadilisha lugha na tafsiri",
   "ai": "AI",
   "ai-edit-playlist": "Hariri orodha ya kucheza ukitumia akili bandia (AI)",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} zana za {{count}} zilizotumika",
   "chat-tool-used_one": "{{name}} alitumia zana",
   "chat-tool-used_other": "{{name}} zana za {{count}} zilizotumika",
-
   "ai-context-button-label": "Muktadha Amilifu wa AI",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Dokezo hili limebadilika katika sehemu mbili",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Hakuna maudhui.",
   "annotation-conflict-confirm": "Thibitisha",
   "annotation-conflict-resolve-failed": "Haikuweza kutumia chaguo hilo. Itajaribu tena.",
-
   "annotation-sync-failed": "Haikuweza kuhifadhi dokezo kwenye akaunti yako. Bado lipo kwenye kifaa hiki.",
   "create-menu": "Unda",
   "create-annotation-menu-item": "Maelezo",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Haikuweza kuhifadhi maelezo.",
   "annotation-group-expand": "Panua kikundi",
   "annotation-group-collapse": "Kunja kikundi",
-
   "notes": "Vidokezo",
   "note": "Dokezo",
   "show-more-verse-actions": "Onyesha vitendo zaidi",
@@ -667,7 +649,6 @@
   "create-folder": "Unda folda",
   "edit-bookmark": "Hariri alamisho",
   "remove-bookmark-from-all-folders": "Ondoa kwenye folda zote",
-
   "greeting-afternoon": "Mchana mwema!",
   "greeting-afternoon-named": "Habari za mchana, {{name}} !",
   "greeting-evening": "Jioni njema!",
@@ -677,5 +658,7 @@
   "greeting-night": "Usiku mwema!",
   "greeting-night-named": "Usiku mwema, {{name}} !",
   "annotation-override-banner": "Madokezo yanahifadhiwa na kupakiwa kutoka kwa akaunti ya timu yako.",
-  "annotation-override-save-to-my-account": "Hifadhi kwenye akaunti yangu"
+  "annotation-override-save-to-my-account": "Hifadhi kwenye akaunti yangu",
+  "read-book-chapter-button": "Soma {{bookName}} {{chapterNumber}}",
+  "session-url": "URL ya Kipindi"
 }

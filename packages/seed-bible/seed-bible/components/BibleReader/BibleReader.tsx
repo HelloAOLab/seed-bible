@@ -57,6 +57,7 @@ import {
 } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
+import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -144,17 +145,22 @@ interface ChapterNotesButtonProps {
 
 /**
  * Shows the note count for the chapter currently in view; hidden entirely
- * when the chapter has no annotations. Opens the Discover pane, which lists
- * the chapter's annotations grouped by verse range.
+ * when the chapter has no annotations. Jumps to (scrolls to and highlights)
+ * the earliest annotated verse's group in the compact discover panel, which
+ * is always visible inline below the scripture text on mobile — see
+ * `AnnotationsSection`'s `scrollToVerse` consumer. Falls back to opening the
+ * full Discover pane when none of the chapter's annotations target a
+ * specific verse (whole-chapter annotations only), since there's nothing for
+ * the compact panel to scroll to in that case.
  */
 function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { state, bookId, chapterNumber } = props;
   const { t } = useI18n();
-  const noteCount =
+  const chapterAnnotations =
     bookId && chapterNumber
       ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
-          .length
-      : 0;
+      : [];
+  const noteCount = chapterAnnotations.length;
 
   if (noteCount === 0) {
     return null;
@@ -165,17 +171,32 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
     count: noteCount,
   });
 
+  const annotatedVerseNumbers = chapterAnnotations.flatMap((annotation) =>
+    annotationVerseNumbers(annotation)
+  );
+  const firstAnnotatedVerse =
+    annotatedVerseNumbers.length > 0
+      ? Math.min(...annotatedVerseNumbers)
+      : null;
+
   return (
     <button
       type="button"
       className="sb-bible-reader-mobile-header-notes"
       // Mirrors the account button below: stop the tap here so the reader
-      // pane wrapper's pointerdown handler doesn't interfere with opening
-      // Discover.
+      // pane wrapper's pointerdown handler doesn't interfere.
       onPointerDown={(e: PointerEvent) => e.stopPropagation()}
       onClick={(e: MouseEvent) => {
         e.stopPropagation();
-        state.app.openDiscover();
+        if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
+          state.app.openDiscover();
+          return;
+        }
+        state.discover.scrollToVerse.value = {
+          bookId,
+          chapterNumber,
+          verseNumber: firstAnnotatedVerse,
+        };
       }}
       aria-label={label}
       title={label}
@@ -1191,6 +1212,8 @@ interface BibleReaderProps {
   /** The shared session backing this tab, if any — drives the mobile header
    * participants stack. Null/undefined for a normal, non-shared tab. */
   sharedSession?: BibleReadingSession | null;
+
+  readingPlanBelongs?: ComponentChildren;
 }
 
 export interface BibleReaderMobileChromeProps {
@@ -1716,10 +1739,12 @@ export function BibleReader(props: BibleReaderProps) {
 
   const isMobile = state?.app.isMobile.value ?? false;
 
-  // Clicking an annotated verse number selects the verse (like clicking its
-  // text does) and jumps straight to its note: expands and scrolls to it in
-  // the mobile verse toolbar, or opens/scrolls the Discover pane on desktop,
-  // where that toolbar isn't used.
+  // Clicking an annotated verse number jumps straight to its note: on
+  // mobile, it also selects the verse (like clicking its text does) and
+  // expands/scrolls to the note in the mobile verse toolbar. On desktop,
+  // where that toolbar isn't used, it leaves the verse selection alone and
+  // just forces the compact discover panel beside the scripture text and
+  // scrolls/highlights the note there.
   const handleAnnotationVerseClick = (
     verse: BibleSelectedVerse,
     verseNumber: number,
@@ -1729,28 +1754,25 @@ export function BibleReader(props: BibleReaderProps) {
     // here so selectVerse (a toggle) doesn't run twice and immediately undo
     // itself.
     event.stopPropagation();
-    selectVerse(verse, event.clientX, event.clientY);
     if (!state) {
       return;
     }
 
     if (isMobile) {
+      selectVerse(verse, event.clientX, event.clientY);
       readingState.pendingAnnotationScrollVerse.value = verseNumber;
       return;
     }
 
-    // Set the target before (maybe) opening: if Discover is already open,
-    // openDiscover() would just toggle it *closed* — only open when it isn't
-    // already showing, and let the effect in AnnotationsSection react to the
-    // target either way.
+    readingState.discoverContentPanelInline.value = true;
+    // AnnotationsSection's shared effect reacts to this target either way —
+    // scrolling to and highlighting the note's group — whether it's mounted
+    // in this tab's compact panel or the toolbar-toggled Discover pane.
     state.discover.scrollToVerse.value = {
       bookId: verse.bookId,
       chapterNumber: verse.chapterNumber,
       verseNumber,
     };
-    if (!state.discover.isDiscoverOpen.value) {
-      state.app.openDiscover();
-    }
   };
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
@@ -2080,6 +2102,13 @@ export function BibleReader(props: BibleReaderProps) {
     </>
   );
 
+  // const extraContent = discoverPanel ? (
+  //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
+  // ) : null;
+  const extraContent = state ? (
+    <DiscoverContentPanel tab={currentSlot.tab} state={state} />
+  ) : null;
+
   return (
     <div
       className={`sb-bible-reader ${readerFontSizeClass}${
@@ -2134,6 +2163,7 @@ export function BibleReader(props: BibleReaderProps) {
                 toolsManager={state.tools}
                 readingState={readingState}
                 playlists={state.playlists}
+                annotations={state.annotations}
                 features={state.features}
                 sharedSession={sharedSession ?? null}
                 toast={state.app.toast}
@@ -2208,6 +2238,7 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-current"
               >
                 {renderMainContent()}
+                {extraContent}
               </div>
               <div
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
@@ -2267,6 +2298,7 @@ export function BibleReader(props: BibleReaderProps) {
                   toolsManager={state.tools}
                   readingState={readingState}
                   playlists={state.playlists}
+                  annotations={state.annotations}
                   features={state.features}
                   sharedSession={sharedSession ?? null}
                   toast={state.app.toast}
@@ -2285,7 +2317,18 @@ export function BibleReader(props: BibleReaderProps) {
               </div>
             )}
           </div>
-          {renderMainContent()}
+          <div
+            className={`sb-bible-reader-content${
+              readingState.discoverContentPanelInline.value === false
+                ? " sb-bible-reader-content--discover-below"
+                : ""
+            }`}
+          >
+            <div className="sb-bible-reader-main-content">
+              {renderMainContent()}
+            </div>
+            {extraContent}
+          </div>
         </>
       )}
 

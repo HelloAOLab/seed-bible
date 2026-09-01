@@ -594,7 +594,8 @@ export function createSeedBibleState(
     discover,
     readingExtensions,
     () => annotations,
-    branding
+    branding,
+    settings
   );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const selector = createBibleSelectorState(
@@ -1491,11 +1492,26 @@ export function createSeedBibleState(
     sidebar.closeSidebar();
   };
 
+  /**
+   * Dismisses the sidebar and runs a navigation as a single history entry.
+   * Both halves write the URL — the sidebar drops `?sidebar=open`, the reader
+   * writes the new position — and each write on its own would cost a history
+   * entry, so pressing back afterwards would land on a stale duplicate of the
+   * destination instead of where the user actually came from.
+   */
+  const navigateFromSidebar = (navigate: () => void) => {
+    navigation.batchWrites(() => {
+      closeSidebarAndSettings();
+      navigate();
+    });
+  };
+
   const handleSelectTab = (tabId: string) => {
-    closeSidebarAndSettings();
-    tabs.selectTab(tabId);
-    tabsLayout.setSelectedSlotTab(tabId);
-    panes.closeFullscreenPanes();
+    navigateFromSidebar(() => {
+      tabs.selectTab(tabId);
+      tabsLayout.setSelectedSlotTab(tabId);
+      panes.closeFullscreenPanes();
+    });
   };
 
   const handleAddTab = () => {
@@ -1509,22 +1525,24 @@ export function createSeedBibleState(
   };
 
   const handleOpenInNewSlot = (tabId: string) => {
-    closeSidebarAndSettings();
-    const slot = tabsLayout.openTabInNewSlot(tabId);
-    if (slot?.tab) {
-      tabs.selectTab(slot.tab.id);
-    }
+    navigateFromSidebar(() => {
+      const slot = tabsLayout.openTabInNewSlot(tabId);
+      if (slot?.tab) {
+        tabs.selectTab(slot.tab.id);
+      }
+    });
   };
 
   const handleSelectSlot = (slotId: string) => {
-    closeSidebarAndSettings();
-    tabsLayout.selectSlot(slotId);
+    navigateFromSidebar(() => {
+      tabsLayout.selectSlot(slotId);
 
-    const selectedSlot =
-      tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
-    if (selectedSlot?.tab) {
-      tabs.selectTab(selectedSlot.tab.id);
-    }
+      const selectedSlot =
+        tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
+      if (selectedSlot?.tab) {
+        tabs.selectTab(selectedSlot.tab.id);
+      }
+    });
   };
 
   const handleSelectPane = (paneId: string) => {
@@ -1534,11 +1552,16 @@ export function createSeedBibleState(
     // Center's editor pane in particular depends on the Settings list
     // staying open behind it. On mobile every pane is forced to fullscreen
     // (see `effectivePanes`) and the sidebar is a full-screen drawer, so it
-    // still needs to close to reveal the pane.
+    // still needs to close to reveal the pane — batched with the pane
+    // selection via `navigateFromSidebar` so the sidebar/settings URL writes
+    // don't cost the back button a stale extra history entry.
     if (isMobile.value) {
-      closeSidebarAndSettings();
+      navigateFromSidebar(() => {
+        panes.selectPane(paneId);
+      });
+    } else {
+      panes.selectPane(paneId);
     }
-    panes.selectPane(paneId);
   };
 
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.

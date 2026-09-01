@@ -18,7 +18,6 @@
   "create-new-tab": "نیا ٹیب بنائیں",
   "tab-options": "ٹیب کے اختیارات",
   "open-tab-menu": "ٹیب مینو کھولیں۔",
-  "session-id_x": "سیشن ID: {{sessionId}}",
   "search-verses": "آیات تلاش کریں۔",
   "clear-search": "تلاش صاف کریں۔",
   "searching": "تلاش کر رہا ہے...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "کے لیے نمایاں کریں۔",
   "end-session": "سیشن ختم کریں۔",
   "panels": "پینلز",
-
   "open-in-new-panel": "نئے پینل میں کھولیں۔",
   "close-sidebar": "سائڈبار بند کریں۔",
   "select-pane-layout": "پین لے آؤٹ کو منتخب کریں۔",
@@ -253,7 +251,6 @@
   "create-reading-plan": "پڑھنے کا منصوبہ بنائیں",
   "reading-plans-empty": "آپ کا ابھی تک پڑھنے کا کوئی منصوبہ نہیں ہے۔ شروع کرنے کے لیے ایک بنائیں۔",
   "untitled-reading-plan": "بلا عنوان منصوبہ",
-
   "reading-plan-description_placeholder": "یہ منصوبہ کیا ہے؟",
   "anonymous": "گمنام",
   "no-chat-messages": "ابھی تک کوئی پیغامات نہیں ہیں۔",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "سیڈ بائبل کے اندر اور باہر سیکھنے میں آپ کی مدد کے لیے ایک گائیڈڈ ٹور دستیاب ہے۔",
   "tutorial.promptDecline": "نہیں، شکریہ",
   "tutorial.promptAccept": "ٹور لیں۔",
-  "session-id": "سیشن ID",
   "session-settings-section-navigation": "نیویگیشن",
   "session-settings-section-sharing": "شیئرنگ",
   "session-settings-section-participants": "شرکاء",
@@ -335,7 +331,6 @@
   "dont-show-again": "اسے دوبارہ مت دکھائیں۔",
   "discover": "دریافت کریں۔",
   "playlists": "پلے لسٹس",
-
   "cross-references": "کراس حوالہ جات",
   "study-notes": "مطالعہ کے نوٹس",
   "content": "مواد",
@@ -404,7 +399,6 @@
   "add-and-save": "شامل کریں اور محفوظ کریں",
   "loading-profile": "آپ کا پروفائل لوڈ ہو رہا ہے…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "شیئر کریں۔",
   "share-sheet-title": "شیئر کریں۔",
   "share-link": "ایک لنک شیئر کریں۔",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "نیا منصوبہ بنائیں",
   "edit-reading-plan": "پلان میں ترمیم کریں۔",
   "reading-plan-step-name-title": "اپنے منصوبے کو نام دیں۔",
-
   "reading-plan-name-placeholder": "مثال کے طور پر میرا زبور کا سفر",
   "reading-plan-description-label": "تفصیل (اختیاری)",
   "reading-plan-step-scripture-title": "ریڈنگز کو منتخب کریں۔",
   "reading-plan-step-cadences-title": "کیڈینس پڑھنا",
   "reading-plan-step-cadences-hint": "پڑھنے کی رفتار کا انتخاب کریں جو آپ پیش کرنا چاہتے ہیں۔ اس کے بجائے قارئین ہمیشہ اپنی رفتار سے جانے کا انتخاب کر سکتے ہیں۔",
-
   "reading-plan-cadence-length": "{{count}} دنوں میں ختم ہو جائے گا۔",
   "reading-plan-cadence-length_one": "{{count}} دن میں ختم ہوگا۔",
   "reading-plan-cadence-length_other": "{{count}} دنوں میں ختم ہو جائے گا۔",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "محفوظ ہو رہا ہے…",
   "reading-plan-draft-saved": "مسودہ محفوظ ہو گیا۔",
   "reading-plan-draft-save-failed": "مسودہ محفوظ نہیں ہو سکا",
-
   "reading-plan-scripture-remove": "پڑھنے کو ہٹا دیں۔",
   "reading-plan-create-submit": "منصوبہ بنائیں",
   "reading-plan-save-changes": "تبدیلیاں محفوظ کریں۔",
@@ -498,11 +489,8 @@
   "loading": "لوڈ ہو رہا ہے…",
   "reading-plan-not-started": "شروع نہیں ہوا۔",
   "reading-plan-start": "منصوبہ شروع کریں۔",
-
   "reading-plan-streak": "{{count}} - دن کا سلسلہ",
-
   "reading-plan-mark-complete": "مکمل کے بطور نشان زد کریں۔",
-
   "reading-plan-empty-sessions": "اس پلان کی ابھی تک کوئی ریڈنگ نہیں ہے۔",
   "reading-plan-celebration-title": "دن {{day}} مکمل!",
   "reading-plan-complete-title": "منصوبہ مکمل!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "پڑھنا مکمل نشان زد کریں۔",
   "reading-plan-link-video": "ویڈیو",
   "reading-belongs-to": "یہ پڑھنے کا تعلق ہے۔",
-
   "reading-plan-mark-passage-complete": "{{passage}} کو پڑھا ہوا نشان زد کریں۔",
   "reading-plan-read-nudge-title": "اچھا پڑھنا!",
   "reading-plan-read-nudge-toast": "{{passage}} کو مکمل نشان زد کریں؟",
@@ -553,7 +540,6 @@
   "last-48-hours": "آخری 48 گھنٹے",
   "open-bible": "بائبل کھولیں۔",
   "personal-greeting": "خوش آمدید، {{name}} !",
-  "read-first-chapter": "پہلا باب پڑھیں",
   "resume-reading": "وہیں سے جاری رکھیں جہاں آپ نے چھوڑا تھا۔",
   "resume-reading-loading": "آپ کی پڑھنے کی سرگزشت لوڈ ہو رہی ہے…",
   "selected-year": "سال: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "یہ پلے لسٹ کس بارے میں ہے؟",
   "read-more": "مزید پڑھیں",
   "read-less": "کم پڑھیں",
-
   "ask-to-switch-ui-language": "ترجمہ کے ساتھ زبان کو تبدیل کرنے کی پیشکش کریں۔",
   "ai": "اے آئی",
   "ai-edit-playlist": "AI کے ساتھ پلے لسٹ میں ترمیم کریں۔",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} نے {{count}} ٹولز کا استعمال کیا۔",
   "chat-tool-used_one": "{{name}} نے ایک ٹول استعمال کیا۔",
   "chat-tool-used_other": "{{name}} نے {{count}} ٹولز کا استعمال کیا۔",
-
   "ai-context-button-label": "فعال AI سیاق و سباق",
   "ai-context-tool-count": "{{count}} ٹولز",
   "annotation-conflict-title": "یہ نوٹ دو جگہ تبدیل ہوا۔",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "کوئی مواد نہیں۔",
   "annotation-conflict-confirm": "تصدیق کریں۔",
   "annotation-conflict-resolve-failed": "اس انتخاب کو لاگو نہیں کیا جا سکا۔ اسے دوبارہ آزمایا جائے گا۔",
-
   "annotation-sync-failed": "آپ کے اکاؤنٹ میں نوٹ محفوظ نہیں کیا جا سکا۔ یہ اب بھی اس ڈیوائس پر ہے۔",
   "create-menu": "بنائیں",
   "create-annotation-menu-item": "تشریح",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "تشریح کو محفوظ نہیں کیا جا سکا۔",
   "annotation-group-expand": "گروپ کو پھیلائیں۔",
   "annotation-group-collapse": "گروپ کو سکیڑیں۔",
-
   "notes": "نوٹس",
   "note": "نوٹ",
   "show-more-verse-actions": "مزید کارروائیاں دکھائیں۔",
@@ -667,7 +649,6 @@
   "create-folder": "فولڈر بنائیں",
   "edit-bookmark": "بک مارک میں ترمیم کریں۔",
   "remove-bookmark-from-all-folders": "تمام فولڈرز سے ہٹا دیں۔",
-
   "greeting-afternoon": "شب بخیر!",
   "greeting-afternoon-named": "دوپہر بخیر، {{name}} !",
   "greeting-evening": "شب بخیر!",
@@ -677,5 +658,7 @@
   "greeting-night": "شب بخیر!",
   "greeting-night-named": "شب بخیر، {{name}} !",
   "annotation-override-banner": "نوٹس آپ کی ٹیم کے اکاؤنٹ سے محفوظ اور لوڈ کیے جا رہے ہیں۔",
-  "annotation-override-save-to-my-account": "میرے اکاؤنٹ میں محفوظ کریں۔"
+  "annotation-override-save-to-my-account": "میرے اکاؤنٹ میں محفوظ کریں۔",
+  "read-book-chapter-button": "پڑھیں {{bookName}} {{chapterNumber}}",
+  "session-url": "سیشن URL"
 }

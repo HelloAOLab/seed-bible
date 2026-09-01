@@ -23,7 +23,6 @@
   "create-new-tab": "Crea una pestanya nova",
   "tab-options": "Opcions de pestanyes",
   "open-tab-menu": "Obre el menú de pestanyes",
-  "session-id_x": "ID de sessió: {{sessionId}}",
   "search-verses": "Cerca versos",
   "clear-search": "Esborra la cerca",
   "searching": "Cercant...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Destacar per a",
   "end-session": "Finalitzar sessió",
   "panels": "Panells",
-
   "open-in-new-panel": "Obre en un panell nou",
   "close-sidebar": "Tanca la barra lateral",
   "select-pane-layout": "Selecciona el disseny del panell",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Crear un pla de lectura",
   "reading-plans-empty": "Encara no tens cap pla de lectura. Crea'n un per començar.",
   "untitled-reading-plan": "Pla sense títol",
-
   "reading-plan-description_placeholder": "De què tracta aquest pla?",
   "anonymous": "Anònim",
   "no-chat-messages": "Encara no hi ha missatges",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "S'ofereix una visita guiada per ajudar-vos a aprendre els detalls de la Bíblia de les llavors.",
   "tutorial.promptDecline": "No, gràcies",
   "tutorial.promptAccept": "Fes el recorregut",
-  "session-id": "ID de sessió",
   "session-settings-section-navigation": "Navegació",
   "session-settings-section-sharing": "Compartir",
   "session-settings-section-participants": "Participants",
@@ -335,7 +331,6 @@
   "dont-show-again": "No ho tornis a mostrar",
   "discover": "Descobreix",
   "playlists": "Llistes de reproducció",
-
   "cross-references": "Referències creuades",
   "study-notes": "Notes d'estudi",
   "content": "Contingut",
@@ -404,7 +399,6 @@
   "add-and-save": "Afegeix i desa",
   "loading-profile": "S'està carregant el teu perfil…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Comparteix",
   "share-sheet-title": "Comparteix",
   "share-link": "Comparteix un enllaç",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Crea un pla nou",
   "edit-reading-plan": "Edita el pla",
   "reading-plan-step-name-title": "Anomena el teu pla",
-
   "reading-plan-name-placeholder": "p. ex. El meu viatge als Salms",
   "reading-plan-description-label": "Descripció (opcional)",
   "reading-plan-step-scripture-title": "Seleccioneu lectures",
   "reading-plan-step-cadences-title": "Cadències de lectura",
   "reading-plan-step-cadences-hint": "Trieu els ritmes de lectura que voleu oferir. Els lectors sempre poden optar per anar al seu propi ritme.",
-
   "reading-plan-cadence-length": "Acaba en {{count}}",
   "reading-plan-cadence-length_one": "Acaba en {{count}} dia",
   "reading-plan-cadence-length_other": "Acaba en {{count}}",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Desant…",
   "reading-plan-draft-saved": "Esborrany desat",
   "reading-plan-draft-save-failed": "No s'ha pogut desar l'esborrany",
-
   "reading-plan-scripture-remove": "Elimina la lectura",
   "reading-plan-create-submit": "Crea un pla",
   "reading-plan-save-changes": "Desa els canvis",
@@ -498,11 +489,8 @@
   "loading": "S'està carregant…",
   "reading-plan-not-started": "No iniciat",
   "reading-plan-start": "Inicia el pla",
-
   "reading-plan-streak": "ratxa de {{count}} dies",
-
   "reading-plan-mark-complete": "Marca com a completat",
-
   "reading-plan-empty-sessions": "Aquest pla encara no té cap lectura.",
   "reading-plan-celebration-title": "Dia {{day}} completat!",
   "reading-plan-complete-title": "Pla complet!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Marca la lectura completada",
   "reading-plan-link-video": "Vídeo",
   "reading-belongs-to": "Aquesta lectura pertany a",
-
   "reading-plan-mark-passage-complete": "Marca {{passage}} com a llegit",
   "reading-plan-read-nudge-title": "Bona lectura!",
   "reading-plan-read-nudge-toast": "Marcar {{passage}} com a completat?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Últimes 48 hores",
   "open-bible": "Bíblia Oberta",
   "personal-greeting": "Benvingut/da, {{name}} !",
-  "read-first-chapter": "Llegeix el primer capítol",
   "resume-reading": "CONTINUA ON HAS DEIXAT",
   "resume-reading-loading": "S'està carregant l'historial de lectura…",
   "selected-year": "Any: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "De què tracta aquesta llista de reproducció?",
   "read-more": "Llegir més",
   "read-less": "Llegeix menys",
-
   "ask-to-switch-ui-language": "Oferir canviar d'idioma amb traducció",
   "ai": "IA",
   "ai-edit-playlist": "Edita la llista de reproducció amb IA",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} ha utilitzat {{count}} eines",
   "chat-tool-used_one": "{{name}} ha utilitzat una eina",
   "chat-tool-used_other": "{{name}} ha utilitzat {{count}} eines",
-
   "ai-context-button-label": "Context d'IA activa",
   "ai-context-tool-count": "{{count}} eines",
   "annotation-conflict-title": "Aquesta nota ha canviat en dos llocs",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Sense contingut.",
   "annotation-conflict-confirm": "Confirma",
   "annotation-conflict-resolve-failed": "No s'ha pogut aplicar aquesta opció. Ho tornarem a intentar.",
-
   "annotation-sync-failed": "No s'ha pogut desar una nota al teu compte. Encara és en aquest dispositiu.",
   "create-menu": "Crea",
   "create-annotation-menu-item": "Anotació",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "No s'ha pogut desar l'anotació.",
   "annotation-group-expand": "Expandeix el grup",
   "annotation-group-collapse": "Replega el grup",
-
   "notes": "Notes",
   "note": "Nota",
   "show-more-verse-actions": "Mostra més accions",
@@ -667,7 +649,6 @@
   "create-folder": "Crea una carpeta",
   "edit-bookmark": "Edita el marcador",
   "remove-bookmark-from-all-folders": "Elimina de totes les carpetes",
-
   "greeting-afternoon": "Bona tarda!",
   "greeting-afternoon-named": "Bona tarda, {{name}} !",
   "greeting-evening": "Bona nit!",
@@ -677,5 +658,7 @@
   "greeting-night": "Bona nit!",
   "greeting-night-named": "Bona nit, {{name}} !",
   "annotation-override-banner": "Les notes s'estan desant i carregant des del compte del vostre equip.",
-  "annotation-override-save-to-my-account": "Desa al meu compte"
+  "annotation-override-save-to-my-account": "Desa al meu compte",
+  "read-book-chapter-button": "Llegeix {{bookName}} {{chapterNumber}}",
+  "session-url": "URL de sessió"
 }

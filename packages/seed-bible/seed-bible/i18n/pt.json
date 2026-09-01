@@ -18,7 +18,6 @@
   "create-new-tab": "Criar nova aba",
   "tab-options": "Opções da guia",
   "open-tab-menu": "Abrir menu de abas",
-  "session-id_x": "ID da sessão: {{sessionId}}",
   "search-verses": "Versículos de pesquisa",
   "clear-search": "Limpar pesquisa",
   "searching": "Procurando...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "Destaque para",
   "end-session": "Encerrar sessão",
   "panels": "Painéis",
-
   "open-in-new-panel": "Abrir em novo painel",
   "close-sidebar": "Fechar barra lateral",
   "select-pane-layout": "Selecione o layout do painel",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Criar um plano de leitura",
   "reading-plans-empty": "Você ainda não tem nenhum plano de leitura. Crie um para começar.",
   "untitled-reading-plan": "Plano sem título",
-
   "reading-plan-description_placeholder": "Do que se trata este plano?",
   "anonymous": "Anônimo",
   "no-chat-messages": "Ainda não há mensagens.",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Está disponível uma visita guiada para ajudá-lo a aprender todos os detalhes da Seed Bible.",
   "tutorial.promptDecline": "Não, obrigado",
   "tutorial.promptAccept": "Faça o tour",
-  "session-id": "ID da sessão",
   "session-settings-section-navigation": "Navegação",
   "session-settings-section-sharing": "Compartilhamento",
   "session-settings-section-participants": "Participantes",
@@ -335,7 +331,6 @@
   "dont-show-again": "Não mostrar isso novamente",
   "discover": "Descobrir",
   "playlists": "Listas de reprodução",
-
   "cross-references": "Referências cruzadas",
   "study-notes": "Anotações de estudo",
   "content": "Contente",
@@ -404,7 +399,6 @@
   "add-and-save": "Adicionar e salvar",
   "loading-profile": "Carregando seu perfil…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Compartilhar",
   "share-sheet-title": "Compartilhar",
   "share-link": "Compartilhe um link",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Criar novo plano",
   "edit-reading-plan": "Editar plano",
   "reading-plan-step-name-title": "Dê um nome ao seu plano.",
-
   "reading-plan-name-placeholder": "Exemplo: Minha Jornada dos Salmos",
   "reading-plan-description-label": "Descrição (opcional)",
   "reading-plan-step-scripture-title": "Leituras selecionadas",
   "reading-plan-step-cadences-title": "Cadências de leitura",
   "reading-plan-step-cadences-hint": "Escolha o ritmo de leitura que deseja oferecer. Os leitores também podem optar por ler no seu próprio ritmo.",
-
   "reading-plan-cadence-length": "Termina em {{count}} dias",
   "reading-plan-cadence-length_one": "Termina em {{count}} dias",
   "reading-plan-cadence-length_other": "Termina em {{count}} dias",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Salvando…",
   "reading-plan-draft-saved": "Rascunho salvo",
   "reading-plan-draft-save-failed": "Não foi possível salvar o rascunho",
-
   "reading-plan-scripture-remove": "Remover leitura",
   "reading-plan-create-submit": "Criar plano",
   "reading-plan-save-changes": "Salvar alterações",
@@ -498,11 +489,8 @@
   "loading": "Carregando…",
   "reading-plan-not-started": "Não iniciado",
   "reading-plan-start": "Plano inicial",
-
   "reading-plan-streak": "sequência de {{count}} dias",
-
   "reading-plan-mark-complete": "Marcar como concluído",
-
   "reading-plan-empty-sessions": "Este plano ainda não possui nenhuma leitura.",
   "reading-plan-celebration-title": "Dia {{day}} concluído!",
   "reading-plan-complete-title": "Plano concluído!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Leitura concluída",
   "reading-plan-link-video": "Vídeo",
   "reading-belongs-to": "Esta leitura pertence a",
-
   "reading-plan-mark-passage-complete": "Marque {{passage}} como lido",
   "reading-plan-read-nudge-title": "Boa leitura!",
   "reading-plan-read-nudge-toast": "Marque {{passage}} como completo?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Últimas 48 horas",
   "open-bible": "Abra a Bíblia",
   "personal-greeting": "Bem-vindo(a), {{name}} !",
-  "read-first-chapter": "Leia o primeiro capítulo",
   "resume-reading": "CONTINUE DE ONDE PAROU",
   "resume-reading-loading": "Carregando seu histórico de leitura…",
   "selected-year": "Ano: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "Sobre o que é esta playlist?",
   "read-more": "Leia mais",
   "read-less": "Leia menos",
-
   "ask-to-switch-ui-language": "Ofereça a opção de mudança de idioma com tradução.",
   "ai": "IA",
   "ai-edit-playlist": "Edite listas de reprodução com IA.",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} usou {{count}} ferramentas",
   "chat-tool-used_one": "{{name}} usou uma ferramenta",
   "chat-tool-used_other": "{{name}} usou {{count}} ferramentas",
-
   "ai-context-button-label": "Contexto de IA ativa",
   "ai-context-tool-count": "{{count}} ferramentas",
   "annotation-conflict-title": "Esta nota foi alterada em dois lugares.",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Sem conteúdo.",
   "annotation-conflict-confirm": "Confirmar",
   "annotation-conflict-resolve-failed": "Não foi possível aplicar essa opção. Tentarei novamente.",
-
   "annotation-sync-failed": "Não foi possível salvar a nota na sua conta. Ela ainda está neste dispositivo.",
   "create-menu": "Criar",
   "create-annotation-menu-item": "Anotação",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Não foi possível salvar a anotação.",
   "annotation-group-expand": "Expandir grupo",
   "annotation-group-collapse": "Colapso do grupo",
-
   "notes": "Notas",
   "note": "Observação",
   "show-more-verse-actions": "Mostrar mais ações",
@@ -667,7 +649,6 @@
   "create-folder": "Criar pasta",
   "edit-bookmark": "Editar marcador",
   "remove-bookmark-from-all-folders": "Remover de todas as pastas",
-
   "greeting-afternoon": "Boa tarde!",
   "greeting-afternoon-named": "Boa tarde, {{name}} !",
   "greeting-evening": "Boa noite!",
@@ -677,5 +658,7 @@
   "greeting-night": "Boa noite!",
   "greeting-night-named": "Boa noite, {{name}} !",
   "annotation-override-banner": "As anotações estão sendo salvas e carregadas da conta da sua equipe.",
-  "annotation-override-save-to-my-account": "Salvar na minha conta"
+  "annotation-override-save-to-my-account": "Salvar na minha conta",
+  "read-book-chapter-button": "Leia {{bookName}} {{chapterNumber}}",
+  "session-url": "URL da sessão"
 }

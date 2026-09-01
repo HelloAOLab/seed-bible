@@ -29,7 +29,7 @@ import {
 } from "./AIManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import { emphasizeVerses } from "./BibleReadingManager";
-import type { BookId } from "./BibleDataManager";
+import { BOOK_SLUGS, type BookId } from "./BibleDataManager";
 import { addCivilDays, civilDateInZone, civilDateToISO } from "./civilDate";
 
 export const VerseRefSchema = z.object({
@@ -127,6 +127,166 @@ function isRecordedPlaylist(
 }
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
+
+/**
+ * One verse or whole-chapter selection to collapse into playlist items.
+ * `verse` omitted means the whole chapter, matching {@link VerseRefSchema}.
+ */
+export interface PlaylistVerseSelection {
+  bookId: string;
+  chapter: number;
+  verse?: number;
+}
+
+/** Canonical Protestant + Apocrypha order from {@link BOOK_SLUGS} insertion order. */
+const CANONICAL_BOOK_ORDER = new Map(
+  (Object.keys(BOOK_SLUGS) as BookId[]).map((id, index) => [id, index])
+);
+
+function canonicalBookIndex(bookId: string): number {
+  return CANONICAL_BOOK_ORDER.get(bookId as BookId) ?? Number.MAX_SAFE_INTEGER;
+}
+
+function comparePlaylistVerseSelections(
+  a: PlaylistVerseSelection,
+  b: PlaylistVerseSelection
+): number {
+  const bookDiff = canonicalBookIndex(a.bookId) - canonicalBookIndex(b.bookId);
+  if (bookDiff !== 0) {
+    return bookDiff;
+  }
+  if (a.bookId !== b.bookId) {
+    return a.bookId.localeCompare(b.bookId);
+  }
+  if (a.chapter !== b.chapter) {
+    return a.chapter - b.chapter;
+  }
+  // Whole-chapter selections (no verse) sort before verses in that chapter so
+  // they never get mixed into a verse run.
+  return (a.verse ?? 0) - (b.verse ?? 0);
+}
+
+function selectionKey(selection: PlaylistVerseSelection): string {
+  return `${selection.bookId}:${selection.chapter}:${selection.verse ?? "chapter"}`;
+}
+
+/**
+ * True when `curr` is the next verse or chapter after `prev` in reading order.
+ * Cross-chapter verse runs only join when `verseCountOf` says `prev` was the
+ * last verse of its chapter and `curr` is verse 1 of the next — without that
+ * count we cannot tell Genesis 1:5 + 2:1 from a real chapter-boundary range.
+ */
+function isContinuousPlaylistSelection(
+  prev: PlaylistVerseSelection,
+  curr: PlaylistVerseSelection,
+  verseCountOf?: (bookId: string, chapter: number) => number | undefined
+): boolean {
+  if (prev.bookId !== curr.bookId) {
+    return false;
+  }
+
+  const prevIsChapter = prev.verse == null;
+  const currIsChapter = curr.verse == null;
+  if (prevIsChapter !== currIsChapter) {
+    return false;
+  }
+
+  if (prevIsChapter) {
+    return curr.chapter === prev.chapter + 1;
+  }
+
+  if (curr.chapter === prev.chapter) {
+    return curr.verse === prev.verse! + 1;
+  }
+
+  if (curr.chapter === prev.chapter + 1 && curr.verse === 1) {
+    const lastVerse = verseCountOf?.(prev.bookId, prev.chapter);
+    return lastVerse != null && prev.verse === lastVerse;
+  }
+
+  return false;
+}
+
+function playlistItemFromSelectionGroup(
+  group: PlaylistVerseSelection[]
+): PlaylistItemData {
+  const start = group[0]!;
+  const end = group[group.length - 1]!;
+  const spansChapters = end.chapter !== start.chapter;
+
+  if (start.verse == null) {
+    return {
+      type: "bible-verse",
+      ref: {
+        bookId: start.bookId,
+        chapter: start.chapter,
+        ...(spansChapters ? { endChapter: end.chapter } : {}),
+      },
+    };
+  }
+
+  const spansVerses = spansChapters || end.verse !== start.verse;
+
+  return {
+    type: "bible-verse",
+    ref: {
+      bookId: start.bookId,
+      chapter: start.chapter,
+      verse: start.verse,
+      ...(spansChapters ? { endChapter: end.chapter } : {}),
+      ...(spansVerses ? { endVerse: end.verse } : {}),
+    },
+  };
+}
+
+/**
+ * Collapses a bag of selected verses (and, later, whole chapters) into one
+ * playlist item per contiguous range. Sorted into canonical book order, then
+ * chapter, then verse; gaps and book changes start a new item.
+ *
+ * `verseCountOf` is optional: when the caller knows how many verses a chapter
+ * has, a run that ends on that last verse and continues at verse 1 of the next
+ * chapter becomes one cross-chapter item (`endChapter` / `endVerse` on
+ * {@link VerseRefSchema}).
+ */
+export function groupVersesIntoPlaylistItems(
+  verses: readonly PlaylistVerseSelection[],
+  verseCountOf?: (bookId: string, chapter: number) => number | undefined
+): PlaylistItemData[] {
+  if (verses.length === 0) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const unique: PlaylistVerseSelection[] = [];
+  for (const verse of verses) {
+    const key = selectionKey(verse);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    unique.push(verse);
+  }
+
+  unique.sort(comparePlaylistVerseSelections);
+
+  const groups: PlaylistVerseSelection[][] = [];
+  let current: PlaylistVerseSelection[] = [];
+  for (const verse of unique) {
+    const prev = current[current.length - 1];
+    if (!prev || isContinuousPlaylistSelection(prev, verse, verseCountOf)) {
+      current.push(verse);
+    } else {
+      groups.push(current);
+      current = [verse];
+    }
+  }
+  if (current.length > 0) {
+    groups.push(current);
+  }
+
+  return groups.map(playlistItemFromSelectionGroup);
+}
 
 /**
  * Latest play of a playlist, stored under the user's record so shared playlist
@@ -462,12 +622,19 @@ export function createPlayingState(
 
     // `translationId` is optional on the item; fall back to the tab's current
     // translation. `.peek()` avoids re-navigating when the tab changes it.
+    // `ref.chapter` is the start of a chapter range, so a whole-chapter item
+    // and a "John 1-3" range both open the first chapter. Verse items also
+    // scroll to the start verse; chapter items have no verse to highlight.
     await tab.readingState.selectTranslationAndChapter(
       translationId ?? tab.readingState.translationId.peek(),
       ref.bookId,
       ref.chapter,
-      { scrollToVerse: ref.verse }
+      ref.verse != null ? { scrollToVerse: ref.verse } : undefined
     );
+
+    if (ref.verse == null) {
+      return;
+    }
 
     const loadedChapter = tab.readingState.chapterData.value;
     const chapterDataMatches =

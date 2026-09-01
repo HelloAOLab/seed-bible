@@ -57,6 +57,7 @@ describe("I18nManager getInitialLanguage()", () => {
       go: vi.fn(),
       replace: vi.fn(),
       push: vi.fn(),
+      batchWrites: vi.fn((fn: () => unknown) => fn()),
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
       updateQueryParams: vi.fn(),
@@ -188,6 +189,7 @@ describe("I18nManager language fallback prompt", () => {
       go: vi.fn(),
       replace: vi.fn(),
       push: vi.fn(),
+      batchWrites: vi.fn((fn: () => unknown) => fn()),
       updateQueryParam: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
@@ -249,6 +251,7 @@ describe("I18nManager UI language switch prompt", () => {
       updatePathAndQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
       dispose: vi.fn(),
+      batchWrites: vi.fn((fn: () => unknown) => fn()),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
     // The i18next instance is a module singleton shared across tests, so pin

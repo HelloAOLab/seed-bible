@@ -18,7 +18,6 @@
   "create-new-tab": "নতুন ট্যাব তৈরি করুন",
   "tab-options": "ট্যাব বিকল্পগুলি",
   "open-tab-menu": "ট্যাব মেনু খুলুন",
-  "session-id_x": "সেশন আইডি: {{sessionId}}",
   "search-verses": "শ্লোক অনুসন্ধান করুন",
   "clear-search": "পরিষ্কার অনুসন্ধান",
   "searching": "অনুসন্ধান করা হচ্ছে...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "হাইলাইট করার জন্য",
   "end-session": "অধিবেশন শেষ করুন",
   "panels": "প্যানেল",
-
   "open-in-new-panel": "নতুন প্যানেলে খুলুন",
   "close-sidebar": "সাইডবার বন্ধ করুন",
   "select-pane-layout": "প্যান লেআউট নির্বাচন করুন",
@@ -253,7 +251,6 @@
   "create-reading-plan": "পড়ার পরিকল্পনা তৈরি করুন",
   "reading-plans-empty": "আপনার এখনো কোনো পড়ার পরিকল্পনা নেই। শুরু করার জন্য একটি তৈরি করে নিন।",
   "untitled-reading-plan": "শিরোনামহীন পরিকল্পনা",
-
   "reading-plan-description_placeholder": "এই পরিকল্পনাটি কী বিষয়ে?",
   "anonymous": "বেনামী",
   "no-chat-messages": "এখনো কোনো বার্তা আসেনি",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "সীড বাইবেলের খুঁটিনাটি জানতে একটি গাইডেড ট্যুরের ব্যবস্থা রয়েছে।",
   "tutorial.promptDecline": "না, ধন্যবাদ।",
   "tutorial.promptAccept": "ভ্রমণ করুন",
-  "session-id": "সেশন আইডি",
   "session-settings-section-navigation": "নেভিগেশন",
   "session-settings-section-sharing": "শেয়ারিং",
   "session-settings-section-participants": "অংশগ্রহণকারীরা",
@@ -335,7 +331,6 @@
   "dont-show-again": "এটা আবার দেখাবেন না",
   "discover": "আবিষ্কার করুন",
   "playlists": "প্লেলিস্ট",
-
   "cross-references": "ক্রস রেফারেন্স",
   "study-notes": "অধ্যয়ন নোট",
   "content": "বিষয়বস্তু",
@@ -404,7 +399,6 @@
   "add-and-save": "যোগ করুন এবং সংরক্ষণ করুন",
   "loading-profile": "আপনার প্রোফাইল লোড হচ্ছে…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "শেয়ার",
   "share-sheet-title": "শেয়ার",
   "share-link": "একটি লিঙ্ক শেয়ার করুন",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "নতুন পরিকল্পনা তৈরি করুন",
   "edit-reading-plan": "পরিকল্পনা সম্পাদনা করুন",
   "reading-plan-step-name-title": "আপনার পরিকল্পনার নাম দিন",
-
   "reading-plan-name-placeholder": "যেমন আমার গীতসংহিতা যাত্রা",
   "reading-plan-description-label": "বিবরণ (ঐচ্ছিক)",
   "reading-plan-step-scripture-title": "নির্বাচিত পাঠ",
   "reading-plan-step-cadences-title": "পড়ার ছন্দ",
   "reading-plan-step-cadences-hint": "আপনি যে পড়ার গতিগুলো দিতে চান, তা বেছে নিন। পাঠকরা চাইলে সবসময় নিজেদের গতিতেও পড়তে পারেন।",
-
   "reading-plan-cadence-length": "{{count}} দিনে শেষ হবে",
   "reading-plan-cadence-length_one": "{{count}} দিনে শেষ হবে",
   "reading-plan-cadence-length_other": "{{count}} দিনে শেষ হবে",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "সঞ্চয়…",
   "reading-plan-draft-saved": "খসড়া সংরক্ষিত",
   "reading-plan-draft-save-failed": "খসড়া সংরক্ষণ করা যায়নি",
-
   "reading-plan-scripture-remove": "পড়া বন্ধ করুন",
   "reading-plan-create-submit": "পরিকল্পনা তৈরি করুন",
   "reading-plan-save-changes": "পরিবর্তনগুলি সংরক্ষণ করুন",
@@ -498,11 +489,8 @@
   "loading": "লোড হচ্ছে…",
   "reading-plan-not-started": "শুরু হয়নি",
   "reading-plan-start": "পরিকল্পনা শুরু করুন",
-
   "reading-plan-streak": "{{count}} -দিনের ধারা",
-
   "reading-plan-mark-complete": "সম্পূর্ণ হিসাবে চিহ্নিত করুন",
-
   "reading-plan-empty-sessions": "এই পরিকল্পনাটিতে এখনও কোনো পাঠ নেই।",
   "reading-plan-celebration-title": "দিন {{day}} সম্পন্ন!",
   "reading-plan-complete-title": "পরিকল্পনা সম্পন্ন!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "পড়া সম্পূর্ণ চিহ্নিত করুন।",
   "reading-plan-link-video": "ভিডিও",
   "reading-belongs-to": "এই পাঠটি এর অন্তর্গত",
-
   "reading-plan-mark-passage-complete": "{{passage}} পঠিত হিসাবে চিহ্নিত করুন।",
   "reading-plan-read-nudge-title": "পড়তে ভালো লাগলো!",
   "reading-plan-read-nudge-toast": "{{passage}} সম্পূর্ণ হয়েছে বলে চিহ্নিত করুন?",
@@ -553,7 +540,6 @@
   "last-48-hours": "গত ৪৮ ঘন্টা",
   "open-bible": "বাইবেল খুলুন",
   "personal-greeting": "স্বাগতম, {{name}} !",
-  "read-first-chapter": "প্রথম অধ্যায়টি পড়ুন",
   "resume-reading": "যেখান থেকে ছেড়েছিলেন সেখান থেকেই চালিয়ে যান।",
   "resume-reading-loading": "আপনার পঠন ইতিহাস লোড হচ্ছে…",
   "selected-year": "বছর: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "এই প্লেলিস্টটি কী নিয়ে?",
   "read-more": "আরও পড়ুন",
   "read-less": "কম পড়ুন",
-
   "ask-to-switch-ui-language": "অনুবাদের সাথে ভাষা পরিবর্তনের প্রস্তাব",
   "ai": "এআই",
   "ai-edit-playlist": "এআই দিয়ে প্লেলিস্ট সম্পাদনা করুন",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} {{count}} টি সরঞ্জাম ব্যবহার করেছেন",
   "chat-tool-used_one": "{{name}} একটি সরঞ্জাম ব্যবহার করেছিল",
   "chat-tool-used_other": "{{name}} {{count}} টি সরঞ্জাম ব্যবহার করেছেন",
-
   "ai-context-button-label": "সক্রিয় এআই প্রেক্ষাপট",
   "ai-context-tool-count": "{{count}} টি সরঞ্জাম",
   "annotation-conflict-title": "এই নোটটি দুটি জায়গায় পরিবর্তিত হয়েছে।",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "কোনো বিষয়বস্তু নেই।",
   "annotation-conflict-confirm": "নিশ্চিত করুন",
   "annotation-conflict-resolve-failed": "ওই বিকল্পটি প্রয়োগ করা যায়নি। আবার চেষ্টা করা হবে।",
-
   "annotation-sync-failed": "আপনার অ্যাকাউন্টে নোটটি সংরক্ষণ করা যায়নি। এটি এখনও এই ডিভাইসে রয়েছে।",
   "create-menu": "তৈরি করুন",
   "create-annotation-menu-item": "টীকা",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "টীকাটি সংরক্ষণ করা যায়নি।",
   "annotation-group-expand": "গ্রুপ প্রসারিত করুন",
   "annotation-group-collapse": "দল ভেঙে ফেলুন",
-
   "notes": "নোট",
   "note": "দ্রষ্টব্য",
   "show-more-verse-actions": "আরও পদক্ষেপ দেখান",
@@ -667,7 +649,6 @@
   "create-folder": "ফোল্ডার তৈরি করুন",
   "edit-bookmark": "বুকমার্ক সম্পাদনা করুন",
   "remove-bookmark-from-all-folders": "সমস্ত ফোল্ডার থেকে মুছে ফেলুন",
-
   "greeting-afternoon": "শুভ অপরাহ্ন!",
   "greeting-afternoon-named": "শুভ অপরাহ্ন, {{name}} !",
   "greeting-evening": "শুভ সন্ধ্যা!",
@@ -677,5 +658,7 @@
   "greeting-night": "শুভ রাত্রি!",
   "greeting-night-named": "শুভ রাত্রি, {{name}} !",
   "annotation-override-banner": "আপনার টিমের অ্যাকাউন্ট থেকে নোটগুলো সংরক্ষণ ও লোড করা হচ্ছে।",
-  "annotation-override-save-to-my-account": "আমার অ্যাকাউন্টে সংরক্ষণ করুন"
+  "annotation-override-save-to-my-account": "আমার অ্যাকাউন্টে সংরক্ষণ করুন",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} পড়ুন",
+  "session-url": "সেশন ইউআরএল"
 }

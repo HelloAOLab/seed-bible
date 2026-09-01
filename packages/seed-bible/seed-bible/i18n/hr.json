@@ -23,7 +23,6 @@
   "create-new-tab": "Stvori novu karticu",
   "tab-options": "Opcije kartice",
   "open-tab-menu": "Otvori izbornik kartica",
-  "session-id_x": "ID sesije: {{sessionId}}",
   "search-verses": "Pretraži stihove",
   "clear-search": "Obriši pretragu",
   "searching": "Pretraživanje...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Istakni za",
   "end-session": "Završi sesiju",
   "panels": "Paneli",
-
   "open-in-new-panel": "Otvori u novom panelu",
   "close-sidebar": "Zatvori bočnu traku",
   "select-pane-layout": "Odaberite raspored okna",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Napravite plan čitanja",
   "reading-plans-empty": "Još nemate planova čitanja. Izradite jedan za početak.",
   "untitled-reading-plan": "Plan bez naslova",
-
   "reading-plan-description_placeholder": "O čemu se radi u ovom planu?",
   "anonymous": "Anonimno",
   "no-chat-messages": "Još nema poruka",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Dostupan je vođeni obilazak koji će vam pomoći da naučite sve o Seed Bible.",
   "tutorial.promptDecline": "Ne, hvala",
   "tutorial.promptAccept": "Krenite na obilazak",
-  "session-id": "ID sesije",
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dijeljenje",
   "session-settings-section-participants": "Sudionici",
@@ -335,7 +331,6 @@
   "dont-show-again": "Ne prikazuj ovo više",
   "discover": "Otkriti",
   "playlists": "Popisi za reprodukciju",
-
   "cross-references": "Unakrsne reference",
   "study-notes": "Bilješke o učenju",
   "content": "Sadržaj",
@@ -404,7 +399,6 @@
   "add-and-save": "Dodaj i spremi",
   "loading-profile": "Učitavanje vašeg profila…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Udio",
   "share-sheet-title": "Udio",
   "share-link": "Podijeli poveznicu",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Izradi novi plan",
   "edit-reading-plan": "Uredi plan",
   "reading-plan-step-name-title": "Nazovite svoj plan",
-
   "reading-plan-name-placeholder": "npr. Moje putovanje kroz Psalme",
   "reading-plan-description-label": "Opis (neobavezno)",
   "reading-plan-step-scripture-title": "Odaberite očitanja",
   "reading-plan-step-cadences-title": "Čitanje kadenca",
   "reading-plan-step-cadences-hint": "Odaberite tempo čitanja koji želite ponuditi. Čitatelji uvijek mogu odabrati vlastiti tempo.",
-
   "reading-plan-cadence-length": "Završava za {{count}} dana",
   "reading-plan-cadence-length_one": "Završava za {{count}} dan",
   "reading-plan-cadence-length_other": "Završava za {{count}} dana",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Spremanje…",
   "reading-plan-draft-saved": "Nacrt spremljen",
   "reading-plan-draft-save-failed": "Nije moguće spremiti skicu",
-
   "reading-plan-scripture-remove": "Ukloni čitanje",
   "reading-plan-create-submit": "Izradi plan",
   "reading-plan-save-changes": "Spremi promjene",
@@ -498,11 +489,8 @@
   "loading": "Učitavanje…",
   "reading-plan-not-started": "Nije započeto",
   "reading-plan-start": "Započni plan",
-
   "reading-plan-streak": "{{count}} -dnevni niz",
-
   "reading-plan-mark-complete": "Označi kao dovršeno",
-
   "reading-plan-empty-sessions": "Ovaj plan još nema nikakvih očitanja.",
   "reading-plan-celebration-title": "Dan {{day}} završen!",
   "reading-plan-complete-title": "Plan dovršen!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Označi čitanje kao završeno",
   "reading-plan-link-video": "Video",
   "reading-belongs-to": "Ovo čitanje pripada",
-
   "reading-plan-mark-passage-complete": "Označi {{passage}} kao pročitano",
   "reading-plan-read-nudge-title": "Lijepo štivo!",
   "reading-plan-read-nudge-toast": "Označi {{passage}} kao dovršen?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Posljednjih 48 sati",
   "open-bible": "Otvorena Biblija",
   "personal-greeting": "Dobrodošli, {{name}} !",
-  "read-first-chapter": "Pročitajte prvo poglavlje",
   "resume-reading": "NASTAVITE GDJE STE STALI",
   "resume-reading-loading": "Učitavanje vaše povijesti čitanja…",
   "selected-year": "Godina: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "O čemu se radi na ovoj playlisti?",
   "read-more": "Pročitajte više",
   "read-less": "Čitaj manje",
-
   "ask-to-switch-ui-language": "Ponudite promjenu jezika s prijevodom",
   "ai": "Umjetna inteligencija",
   "ai-edit-playlist": "Uredite popis za reprodukciju pomoću umjetne inteligencije",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} je koristio {{count}} alata",
   "chat-tool-used_one": "{{name}} je koristio/la alat",
   "chat-tool-used_other": "{{name}} je koristio {{count}} alata",
-
   "ai-context-button-label": "Aktivni kontekst umjetne inteligencije",
   "ai-context-tool-count": "{{count}}",
   "annotation-conflict-title": "Ova se bilješka promijenila na dva mjesta",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Nema sadržaja.",
   "annotation-conflict-confirm": "Potvrdi",
   "annotation-conflict-resolve-failed": "Nije moguće primijeniti tu opciju. Pokušat ćemo ponovno.",
-
   "annotation-sync-failed": "Nije moguće spremiti bilješku na vaš račun. Još je na ovom uređaju.",
   "create-menu": "Stvoriti",
   "create-annotation-menu-item": "Napomena",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Nije moguće spremiti napomenu.",
   "annotation-group-expand": "Proširi grupu",
   "annotation-group-collapse": "Sažmi grupu",
-
   "notes": "Bilješke",
   "note": "Bilješka",
   "show-more-verse-actions": "Prikaži više radnji",
@@ -667,7 +649,6 @@
   "create-folder": "Izradi mapu",
   "edit-bookmark": "Uredi oznaku",
   "remove-bookmark-from-all-folders": "Ukloni iz svih mapa",
-
   "greeting-afternoon": "Dobar dan!",
   "greeting-afternoon-named": "Dobar dan, {{name}} !",
   "greeting-evening": "Dobra večer!",
@@ -677,5 +658,7 @@
   "greeting-night": "Laku noć!",
   "greeting-night-named": "Laku noć, {{name}} !",
   "annotation-override-banner": "Bilješke se spremaju i učitavaju s računa vašeg tima.",
-  "annotation-override-save-to-my-account": "Spremi na moj račun"
+  "annotation-override-save-to-my-account": "Spremi na moj račun",
+  "read-book-chapter-button": "Pročitajte {{bookName}} {{chapterNumber}}",
+  "session-url": "URL sesije"
 }

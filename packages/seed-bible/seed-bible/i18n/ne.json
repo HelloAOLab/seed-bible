@@ -18,7 +18,6 @@
   "create-new-tab": "नयाँ ट्याब सिर्जना गर्नुहोस्",
   "tab-options": "ट्याब विकल्पहरू",
   "open-tab-menu": "ट्याब मेनु खोल्नुहोस्",
-  "session-id_x": "सत्र आईडी: {{sessionId}}",
   "search-verses": "पदहरू खोज्नुहोस्",
   "clear-search": "खोज खाली गर्नुहोस्",
   "searching": "खोज्दै...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "हाइलाइट गर्नुहोस्",
   "end-session": "सत्र अन्त्य गर्नुहोस्",
   "panels": "प्यानलहरू",
-
   "open-in-new-panel": "नयाँ प्यानलमा खोल्नुहोस्",
   "close-sidebar": "साइडबार बन्द गर्नुहोस्",
   "select-pane-layout": "फलक लेआउट चयन गर्नुहोस्",
@@ -253,7 +251,6 @@
   "create-reading-plan": "पढ्ने योजना बनाउनुहोस्",
   "reading-plans-empty": "तपाईंसँग अहिलेसम्म पढ्ने कुनै योजना छैन। सुरु गर्न एउटा योजना बनाउनुहोस्।",
   "untitled-reading-plan": "शीर्षकविहीन योजना",
-
   "reading-plan-description_placeholder": "यो योजना के बारे हो?",
   "anonymous": "बेनामी",
   "no-chat-messages": "अहिलेसम्म कुनै सन्देश छैन",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "सिड बाइबलका भित्री र बाहिरी कुराहरू सिक्न मद्दत गर्न निर्देशित भ्रमण उपलब्ध छ।",
   "tutorial.promptDecline": "होइन, धन्यवाद",
   "tutorial.promptAccept": "भ्रमण गर्नुहोस्",
-  "session-id": "सत्र आईडी",
   "session-settings-section-navigation": "नेभिगेसन",
   "session-settings-section-sharing": "साझा गर्ने",
   "session-settings-section-participants": "सहभागीहरू",
@@ -335,7 +331,6 @@
   "dont-show-again": "यो फेरि नदेखाउनुहोस्",
   "discover": "पत्ता लगाउनुहोस्",
   "playlists": "प्लेलिस्टहरू",
-
   "cross-references": "क्रस सन्दर्भहरू",
   "study-notes": "अध्ययन नोटहरू",
   "content": "सामग्रीहरू",
@@ -404,7 +399,6 @@
   "add-and-save": "थप्नुहोस् र सेभ गर्नुहोस्",
   "loading-profile": "तपाईंको प्रोफाइल लोड गर्दै...",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "शेयर गर्नुहोस्",
   "share-sheet-title": "शेयर गर्नुहोस्",
   "share-link": "लिङ्क सेयर गर्नुहोस्",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "नयाँ योजना बनाउनुहोस्",
   "edit-reading-plan": "योजना सम्पादन गर्नुहोस्",
   "reading-plan-step-name-title": "आफ्नो योजनाको नाम दिनुहोस्",
-
   "reading-plan-name-placeholder": "जस्तै मेरो भजनसंग्रह यात्रा",
   "reading-plan-description-label": "विवरण (वैकल्पिक)",
   "reading-plan-step-scripture-title": "पठनहरू चयन गर्नुहोस्",
   "reading-plan-step-cadences-title": "पठन तालिकाहरू",
   "reading-plan-step-cadences-hint": "तपाईंले प्रस्ताव गर्न चाहनुभएको पठन गति छनौट गर्नुहोस्। पाठकहरूले सधैं आफ्नै गतिमा जाने छनौट गर्न सक्छन्।",
-
   "reading-plan-cadence-length": "{{count}} दिनमा समाप्त हुन्छ",
   "reading-plan-cadence-length_one": "{{count}} दिनमा समाप्त हुन्छ",
   "reading-plan-cadence-length_other": "{{count}} दिनमा समाप्त हुन्छ",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "बचत गर्दै...",
   "reading-plan-draft-saved": "मस्यौदा सुरक्षित गरियो",
   "reading-plan-draft-save-failed": "मस्यौदा सुरक्षित गर्न सकिएन",
-
   "reading-plan-scripture-remove": "पढाइ हटाउनुहोस्",
   "reading-plan-create-submit": "योजना बनाउनुहोस्",
   "reading-plan-save-changes": "परिवर्तनहरू बचत गर्नुहोस्",
@@ -498,11 +489,8 @@
   "loading": "लोड हुँदै...",
   "reading-plan-not-started": "सुरु भएको छैन",
   "reading-plan-start": "योजना सुरु गर्नुहोस्",
-
   "reading-plan-streak": "{{count}} -दिनको लहर",
-
   "reading-plan-mark-complete": "पूरा भएको भनी चिन्ह लगाउनुहोस्",
-
   "reading-plan-empty-sessions": "यो योजनामा ​​अहिलेसम्म कुनै पनि पठनहरू छैनन्।",
   "reading-plan-celebration-title": "दिन {{day}} पूरा भयो!",
   "reading-plan-complete-title": "योजना पूरा भयो!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "पढाइ पूरा भएको चिन्ह लगाउनुहोस्",
   "reading-plan-link-video": "भिडियो",
   "reading-belongs-to": "यो पठन निम्नसँग सम्बन्धित छ:",
-
   "reading-plan-mark-passage-complete": "{{passage}} लाई पढिएको रूपमा चिन्ह लगाउनुहोस्",
   "reading-plan-read-nudge-title": "राम्रो पढाइ!",
   "reading-plan-read-nudge-toast": "{{passage}} लाई पूरा भएको चिन्ह लगाउने हो?",
@@ -553,7 +540,6 @@
   "last-48-hours": "पछिल्लो ४८ घण्टा",
   "open-bible": "बाइबल खोल्नुहोस्",
   "personal-greeting": "स्वागत छ, {{name}} !",
-  "read-first-chapter": "पहिलो अध्याय पढ्नुहोस्",
   "resume-reading": "जहाँ छोड्नुभएको थियो त्यहीँ जारी राख्नुहोस्",
   "resume-reading-loading": "तपाईंको पठन इतिहास लोड गर्दै...",
   "selected-year": "वर्ष: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "यो प्लेलिस्ट के को बारेमा हो?",
   "read-more": "थप पढ्नुहोस्",
   "read-less": "कम पढ्नुहोस्",
-
   "ask-to-switch-ui-language": "अनुवादको साथ भाषा परिवर्तन गर्ने प्रस्ताव गर्नुहोस्",
   "ai": "एआई",
   "ai-edit-playlist": "AI मार्फत प्लेलिस्ट सम्पादन गर्नुहोस्",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} प्रयोग गरिएका {{count}} उपकरणहरू",
   "chat-tool-used_one": "{{name}} ले एउटा उपकरण प्रयोग गर्नुभयो",
   "chat-tool-used_other": "{{name}} प्रयोग गरिएका {{count}} उपकरणहरू",
-
   "ai-context-button-label": "सक्रिय एआई सन्दर्भ",
   "ai-context-tool-count": "{{count}} उपकरणहरू",
   "annotation-conflict-title": "यो नोट दुई ठाउँमा परिवर्तन भयो।",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "कुनै सामग्री छैन।",
   "annotation-conflict-confirm": "पुष्टि गर्नुहोस्",
   "annotation-conflict-resolve-failed": "त्यो विकल्प लागू गर्न सकिएन। यसलाई फेरि प्रयास गरिनेछ।",
-
   "annotation-sync-failed": "तपाईंको खातामा नोट सुरक्षित गर्न सकिएन। यो अझै पनि यो उपकरणमा छ।",
   "create-menu": "सिर्जना गर्नुहोस्",
   "create-annotation-menu-item": "एनोटेसन",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "एनोटेसन बचत गर्न सकिएन।",
   "annotation-group-expand": "समूह विस्तार गर्नुहोस्",
   "annotation-group-collapse": "समूह संक्षिप्त गर्नुहोस्",
-
   "notes": "नोटहरू",
   "note": "नोट",
   "show-more-verse-actions": "थप कार्यहरू देखाउनुहोस्",
@@ -667,7 +649,6 @@
   "create-folder": "फोल्डर सिर्जना गर्नुहोस्",
   "edit-bookmark": "बुकमार्क सम्पादन गर्नुहोस्",
   "remove-bookmark-from-all-folders": "सबै फोल्डरहरूबाट हटाउनुहोस्",
-
   "greeting-afternoon": "शुभ दिउँसो!",
   "greeting-afternoon-named": "शुभ दिउँसो, {{name}} !",
   "greeting-evening": "शुभ साँझ!",
@@ -677,5 +658,7 @@
   "greeting-night": "शुभ रात्री!",
   "greeting-night-named": "शुभ रात्री, {{name}} !",
   "annotation-override-banner": "तपाईंको टोलीको खाताबाट नोटहरू बचत र लोड भइरहेका छन्।",
-  "annotation-override-save-to-my-account": "मेरो खातामा बचत गर्नुहोस्"
+  "annotation-override-save-to-my-account": "मेरो खातामा बचत गर्नुहोस्",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} पढ्नुहोस्",
+  "session-url": "सत्र URL"
 }

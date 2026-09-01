@@ -29,6 +29,7 @@ import type {
   HighlightsManager,
 } from "../managers/HighlightsManager";
 import { v4 as uuid } from "uuid";
+import type { SettingsManager } from "./SettingsManager";
 import type { I18nManager } from "../i18n";
 import { LANG_META } from "../i18n/languageMeta";
 import type {
@@ -423,6 +424,18 @@ export interface BibleReadingState {
   discoveredStudyNotes: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
+  /**
+   * Placement toggle for the compact discover content panel (cross
+   * references/study notes/content), which is otherwise always shown when
+   * there's something to show. True (the default) lets the panel sit beside
+   * the scripture text when there's room; false forces it below the
+   * scripture text, after the license notice, at any viewport width. Flipped
+   * by the "discover-content-panel" quick tool. Seeded from — and, when a
+   * `SettingsManager` was passed to `createBibleReadingState`, kept in sync
+   * with — the user's persisted `discoverContentPanelInline` setting; other
+   * callers (e.g. shared sessions) get an in-memory-only signal.
+   */
+  discoverContentPanelInline: Signal<boolean>;
 
   /**
    * True while this reading state is part of a shared/multiplayer session.
@@ -1188,6 +1201,20 @@ export function emphasizeVerses(
   });
 }
 
+/** True when the reading state has any discovered cross reference, study note, or content result for the current chapter. */
+export function hasAnyDiscoverResults(
+  readingState: BibleReadingState | null | undefined
+): boolean {
+  if (!readingState) {
+    return false;
+  }
+  return (
+    readingState.discoveredCrossReferences.value.length > 0 ||
+    readingState.discoveredStudyNotes.value.length > 0 ||
+    readingState.discoveredContent.value.length > 0
+  );
+}
+
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
@@ -1202,7 +1229,13 @@ export function createBibleReadingState(
    * By the time anything actually reads `selectionAnnotations.value`, the
    * caller's `AnnotationsManager` already exists.
    */
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  /**
+   * Backs `discoverContentPanelInline` with the user's persisted setting when
+   * provided. Omitted for reading states that shouldn't persist it (e.g.
+   * shared sessions), which fall back to an in-memory-only signal.
+   */
+  settingsManager?: SettingsManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -2890,6 +2923,61 @@ export function createBibleReadingState(
       .filter((providerResults) => providerResults.results.length > 0);
   });
 
+  const discoverContentPanelInline = signal<boolean>(
+    settingsManager?.settings.value.discoverContentPanelInline ?? true
+  );
+
+  if (settingsManager) {
+    // Persists every local change (the quick tool's explicit toggle, and
+    // BibleReader's "force inline to reveal a note" nudge alike) to the
+    // user's settings, mirroring how other per-tab UI toggles write through.
+    // Skips the first run so re-seeding this same value back on construction
+    // isn't a redundant profile write.
+    let isFirstRun = true;
+    effectDisposers.push(
+      effect(() => {
+        const value = discoverContentPanelInline.value;
+        if (isFirstRun) {
+          isFirstRun = false;
+          return;
+        }
+        // `untracked` matters here, not just style: it also guards the loop
+        // with the "settings -> local" effect below — when *that* effect
+        // applies an externally-changed setting to `discoverContentPanelInline`,
+        // this effect re-runs, but the value it's about to write is already
+        // what `settings.value` holds, so the equality check no-ops instead of
+        // writing it straight back out. Left tracked, the read of
+        // `settings.value` — made synchronously inside this very effect's
+        // evaluation — would also silently subscribe the effect to the *entire*
+        // settings signal, and the write that follows would then immediately
+        // re-trigger this same effect, forever.
+        untracked(() => {
+          if (
+            settingsManager.settings.value.discoverContentPanelInline === value
+          ) {
+            return;
+          }
+          settingsManager.setDiscoverContentPanelInline(value);
+        });
+      })
+    );
+
+    // Pulls in changes made elsewhere — another tab, another device synced
+    // through the profile — so this reading state's signal doesn't go stale
+    // once construction is done.
+    effectDisposers.push(
+      effect(() => {
+        const settingValue =
+          settingsManager.settings.value.discoverContentPanelInline;
+        untracked(() => {
+          if (discoverContentPanelInline.value !== settingValue) {
+            discoverContentPanelInline.value = settingValue;
+          }
+        });
+      })
+    );
+  }
+
   if (discoverManager) {
     let discoverGeneration = 0;
 
@@ -3170,6 +3258,7 @@ export function createBibleReadingState(
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
+    discoverContentPanelInline,
     title,
     shortTitle,
     subTitle,

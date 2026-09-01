@@ -23,7 +23,6 @@
   "create-new-tab": "တဘ်အသစ်တစ်ခု ဖန်တီးပါ",
   "tab-options": "တဘ်ရွေးချယ်စရာများ",
   "open-tab-menu": "တဘ်မီနူးကို ဖွင့်ပါ",
-  "session-id_x": "အစည်းအဝေး ID: {{sessionId}}",
   "search-verses": "ကျမ်းပိုဒ်များကို ရှာဖွေပါ",
   "clear-search": "ရှာဖွေမှုကို ရှင်းလင်းပါ",
   "searching": "ရှာဖွေနေသည်...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "အတွက် မီးမောင်းထိုးပြရန်",
   "end-session": "အစည်းအဝေးကို အဆုံးသတ်ပါ",
   "panels": "ပြားများ",
-
   "open-in-new-panel": "panel အသစ်တွင်ဖွင့်ပါ",
   "close-sidebar": "ဘေးဘက်ဘားကို ပိတ်ရန်",
   "select-pane-layout": "ပန်နယ် အပြင်အဆင် ရွေးချယ်ပါ",
@@ -253,7 +251,6 @@
   "create-reading-plan": "စာဖတ်ခြင်းအစီအစဉ်ကို ဖန်တီးပါ",
   "reading-plans-empty": "သင်မှာ စာဖတ်အစီအစဉ် မရှိသေးပါဘူး။ စတင်ဖို့အတွက် တစ်ခု ဖန်တီးပါ။",
   "untitled-reading-plan": "ခေါင်းစဉ်မဲ့ အစီအစဉ်",
-
   "reading-plan-description_placeholder": "ဒီအစီအစဉ်က ဘာအကြောင်းလဲ။",
   "anonymous": "အမည်မဖော်လိုသူ",
   "no-chat-messages": "မက်ဆေ့ချ်များ မရှိသေးပါ",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Seed Bible ရဲ့ အသေးစိတ်အချက်အလက်တွေကို လေ့လာနိုင်ဖို့ လမ်းညွှန်ခရီးစဉ်တစ်ခု ရရှိနိုင်ပါတယ်။",
   "tutorial.promptDecline": "ရပါတယ်ကျေးဇူးပါ",
   "tutorial.promptAccept": "ခရီးစဉ်ကို လိုက်ပါပါ",
-  "session-id": "အစည်းအဝေး ID",
   "session-settings-section-navigation": "လမ်းညွှန်",
   "session-settings-section-sharing": "မျှဝေခြင်း",
   "session-settings-section-participants": "ပါဝင်သူများ",
@@ -335,7 +331,6 @@
   "dont-show-again": "ဒါကို ထပ်မပြပါနဲ့",
   "discover": "ရှာဖွေတွေ့ရှိပါ",
   "playlists": "သီချင်းစာရင်းများ",
-
   "cross-references": "အပြန်အလှန်ကိုးကားချက်များ",
   "study-notes": "လေ့လာရန်မှတ်စုများ",
   "content": "အကြောင်းအရာ",
@@ -404,7 +399,6 @@
   "add-and-save": "ထည့်ပြီး သိမ်းမည်",
   "loading-profile": "သင့်ပရိုဖိုင်ကို တင်နေသည်…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "မျှဝေပါ",
   "share-sheet-title": "မျှဝေပါ",
   "share-link": "လင့်ခ်မျှဝေပါ",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "အစီအစဉ်အသစ် ဖန်တီးပါ",
   "edit-reading-plan": "အစီအစဉ်ကို တည်းဖြတ်ပါ",
   "reading-plan-step-name-title": "သင့်အစီအစဉ်ကို အမည်ပေးပါ",
-
   "reading-plan-name-placeholder": "ဥပမာ ကျွန်ုပ်၏ ဆာလံကျမ်းခရီးစဉ်",
   "reading-plan-description-label": "ဖော်ပြချက် (ရွေးချယ်နိုင်သည်)",
   "reading-plan-step-scripture-title": "ရွေးချယ်ဖတ်ရှုမှုများ",
   "reading-plan-step-cadences-title": "စာဖတ်ခြင်း စည်းချက်",
   "reading-plan-step-cadences-hint": "သင်ပေးလိုသော စာဖတ်နှုန်းကို ရွေးချယ်ပါ။ စာဖတ်သူများသည် ၎င်းတို့၏ကိုယ်ပိုင်နှုန်းဖြင့် သွားရန် အမြဲရွေးချယ်နိုင်သည်။",
-
   "reading-plan-cadence-length": "ရက် {{count}} အတွင်း ပြီးစီးမည်",
   "reading-plan-cadence-length_one": "{{count}} ရက်အတွင်း ပြီးစီးမည်",
   "reading-plan-cadence-length_other": "ရက် {{count}} အတွင်း ပြီးစီးမည်",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "သိမ်းဆည်းနေသည်…",
   "reading-plan-draft-saved": "မူကြမ်းကို သိမ်းဆည်းပြီးပါပြီ",
   "reading-plan-draft-save-failed": "မူကြမ်းကို သိမ်းဆည်း၍မရပါ",
-
   "reading-plan-scripture-remove": "စာဖတ်ခြင်းကို ဖယ်ရှားပါ",
   "reading-plan-create-submit": "အစီအစဉ် ဖန်တီးပါ",
   "reading-plan-save-changes": "ပြောင်းလဲမှုများကို သိမ်းဆည်းပါ",
@@ -498,11 +489,8 @@
   "loading": "တင်နေသည်…",
   "reading-plan-not-started": "မစတင်ရသေးပါ",
   "reading-plan-start": "အစီအစဉ်စတင်ပါ",
-
   "reading-plan-streak": "{{count}} တစ်ရက်တာ ဆက်တိုက်",
-
   "reading-plan-mark-complete": "ပြီးမြောက်သည်ဟု မှတ်သားပါ",
-
   "reading-plan-empty-sessions": "ဤအစီအစဉ်တွင် ဖတ်ရှုမှုများ မရှိသေးပါ။",
   "reading-plan-celebration-title": "နေ့ {{day}} ပြီးပါပြီ။",
   "reading-plan-complete-title": "အစီအစဉ် ပြီးပါပြီ!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "ဖတ်ပြီးကြောင်း မှတ်သားပါ",
   "reading-plan-link-video": "ဗီဒီယို",
   "reading-belongs-to": "ဒီစာဖတ်ခြင်းက သူ့ပိုင်",
-
   "reading-plan-mark-passage-complete": "{{passage}} ကို ဖတ်ပြီးဟု မှတ်သားပါ",
   "reading-plan-read-nudge-title": "ဖတ်ရတာ ကောင်းတယ်!",
   "reading-plan-read-nudge-toast": "{{passage}} ပြီးပြီလို့ မှတ်သားမလား။",
@@ -553,7 +540,6 @@
   "last-48-hours": "ပြီးခဲ့တဲ့ ၄၈ နာရီ",
   "open-bible": "သမ္မာကျမ်းစာဖွင့်ပါ",
   "personal-greeting": "ကြိုဆိုပါတယ်၊ {{name}} !",
-  "read-first-chapter": "ပထမအခန်းကိုဖတ်ပါ",
   "resume-reading": "သင်ထားခဲ့သောနေရာသို့ ဆက်သွားပါ",
   "resume-reading-loading": "သင့်ဖတ်ရှုမှုမှတ်တမ်းကို တင်နေသည်…",
   "selected-year": "ခုနှစ်: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "ဒီသီချင်းစာရင်းက ဘာအကြောင်းလဲ။",
   "read-more": "ပိုပြီးဖတ်ပါ",
   "read-less": "လျှော့ဖတ်ပါ",
-
   "ask-to-switch-ui-language": "ဘာသာပြန်ဆိုချက်နှင့်အတူ ဘာသာစကားပြောင်းလဲရန် ကမ်းလှမ်းချက်",
   "ai": "ဉာဏ်ရည်တု",
   "ai-edit-playlist": "AI ဖြင့် သီချင်းစာရင်းကို တည်းဖြတ်ပါ",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} မှာ {{count}} ကိရိယာတွေကို အသုံးပြုခဲ့ပါတယ်",
   "chat-tool-used_one": "{{name}} ကိရိယာတစ်ခုကို အသုံးပြုခဲ့သည်",
   "chat-tool-used_other": "{{name}} မှာ {{count}} ကိရိယာတွေကို အသုံးပြုခဲ့ပါတယ်",
-
   "ai-context-button-label": "တက်ကြွသော AI နောက်ခံအခြေအနေ",
   "ai-context-tool-count": "{{count}} ကိရိယာများ",
   "annotation-conflict-title": "ဤမှတ်စုသည် နေရာနှစ်ခုတွင် ပြောင်းလဲသွားခဲ့သည်။",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "အကြောင်းအရာ မရှိပါ။",
   "annotation-conflict-confirm": "အတည်ပြုပါ",
   "annotation-conflict-resolve-failed": "ထိုရွေးချယ်မှုကို အသုံးပြု၍မရပါ။ ၎င်းကို ထပ်မံကြိုးစားပါမည်။",
-
   "annotation-sync-failed": "သင့်အကောင့်သို့ မှတ်စုတစ်ခု သိမ်းဆည်း၍မရပါ။ ၎င်းသည် ဤစက်ပစ္စည်းပေါ်တွင် ရှိနေဆဲဖြစ်သည်။",
   "create-menu": "ဖန်တီးပါ",
   "create-annotation-menu-item": "မှတ်ချက်",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "မှတ်ချက်ကို သိမ်းဆည်း၍မရပါ။",
   "annotation-group-expand": "အဖွဲ့ကို ချဲ့ထွင်ပါ",
   "annotation-group-collapse": "အဖွဲ့ကို ခေါက်သိမ်းပါ",
-
   "notes": "မှတ်စုများ",
   "note": "မှတ်ချက်",
   "show-more-verse-actions": "လုပ်ဆောင်ချက်များ ပိုမိုပြပါ",
@@ -667,7 +649,6 @@
   "create-folder": "ဖိုလ်ဒါ ဖန်တီးပါ",
   "edit-bookmark": "စာညှပ်ကို တည်းဖြတ်ပါ",
   "remove-bookmark-from-all-folders": "ဖိုင်တွဲအားလုံးမှ ဖယ်ရှားရန်",
-
   "greeting-afternoon": "မင်္ဂလာနေ့လည်ခင်းပါ!",
   "greeting-afternoon-named": "မင်္ဂလာပါခင်ဗျာ၊ {{name}} !",
   "greeting-evening": "မင်္ဂလာညနေခင်းပါ!",
@@ -677,5 +658,7 @@
   "greeting-night": "ကောင်းသောညပါ!",
   "greeting-night-named": "ကောင်းသောညပါရှင်၊ {{name}} !",
   "annotation-override-banner": "မှတ်စုများကို သင့်အဖွဲ့၏အကောင့်မှ သိမ်းဆည်းပြီး တင်နေပါသည်။",
-  "annotation-override-save-to-my-account": "ကျွန်ုပ်၏အကောင့်သို့ သိမ်းဆည်းပါ"
+  "annotation-override-save-to-my-account": "ကျွန်ုပ်၏အကောင့်သို့ သိမ်းဆည်းပါ",
+  "read-book-chapter-button": "{{bookName}} {{chapterNumber}} ကိုဖတ်ပါ",
+  "session-url": "အစည်းအဝေး URL"
 }

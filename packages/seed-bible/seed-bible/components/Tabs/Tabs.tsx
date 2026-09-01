@@ -31,6 +31,7 @@ import {
   type BibleReadingSession,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
+  getSessionUrl,
 } from "../../managers/SessionsManager";
 import { safeLocalStorage } from "../../app/ssrEnv";
 import { useI18n } from "../../i18n/I18nManager";
@@ -167,17 +168,18 @@ function SessionSettingsModalContent(props: {
     Array.isArray(options.allowedDecorators) &&
     options.allowedDecorators.length > 0;
   const shareTranslation = options.shareTranslation;
+  const sessionUrl = getSessionUrl(session);
 
-  const idCopied = useSignal(false);
-  const copySessionId = () => {
+  const urlCopied = useSignal(false);
+  const copySessionUrl = () => {
     try {
-      navigator.clipboard.writeText(session.id);
-      idCopied.value = true;
+      navigator.clipboard.writeText(sessionUrl.href);
+      urlCopied.value = true;
       setTimeout(() => {
-        idCopied.value = false;
+        urlCopied.value = false;
       }, 1200);
     } catch (error) {
-      console.error("Failed to copy session ID.", error);
+      console.error("Failed to copy session URL.", error);
     }
   };
 
@@ -229,249 +231,258 @@ function SessionSettingsModalContent(props: {
 
   return (
     <div className="sb-session-settings">
-      <div className="sb-session-settings-id">
-        <span className="sb-session-settings-label">
-          {t("session-id", { defaultValue: "Session ID" })}
-        </span>
-        <div className="sb-session-settings-id-row">
-          <span className="sb-session-settings-id-value" title={session.id}>
-            {session.id}
+      <div className="sb-session-settings-scroll">
+        <div className="sb-session-settings-url">
+          <span className="sb-session-settings-label">
+            {t("session-url", { defaultValue: "Session URL" })}
           </span>
-          <button
-            type="button"
-            className="sb-session-settings-copy-id"
-            onClick={copySessionId}
-            aria-label={t("copy", { defaultValue: "Copy" })}
-            title={
-              idCopied.value
-                ? t("copied", { defaultValue: "Copied" })
-                : t("copy", { defaultValue: "Copy" })
-            }
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              {idCopied.value ? "check" : "content_copy"}
+          <div className="sb-session-settings-url-row">
+            <span
+              className="sb-session-settings-url-value"
+              title={sessionUrl.href}
+            >
+              {sessionUrl.href}
             </span>
-          </button>
-        </div>
-      </div>
-
-      {!isHost && (
-        <p className="sb-session-settings-note">
-          {t("session-settings-host-only_note", {
-            defaultValue: "Only the session host can change these settings.",
-          })}
-        </p>
-      )}
-
-      <div className="sb-session-settings-section">
-        <div className="sb-session-settings-section-title">
-          {t("session-settings-section-navigation", {
-            defaultValue: "Navigation",
-          })}
-        </div>
-
-        <div className="sb-session-settings-row">
-          <label
-            className="sb-session-settings-label"
-            htmlFor="sb-session-only-host-navigate"
-          >
-            {t("session-settings-host-only_navigate", {
-              defaultValue: "Only host can navigate",
-            })}
-          </label>
-          <input
-            id="sb-session-only-host-navigate"
-            type="checkbox"
-            checked={onlyHostNavigate}
-            disabled={!isHost}
-            onChange={(event: Event) => {
-              setNavigatorsOnlyHost(
-                (event.currentTarget as HTMLInputElement).checked
-              );
-            }}
-          />
-        </div>
-        <p className="sb-session-settings-description">
-          {onlyHostNavigate
-            ? t("session-settings-navigate-desc_host", {
-                defaultValue:
-                  "Only the host can change the passage for everyone.",
-              })
-            : t("session-settings-navigate-desc_all", {
-                defaultValue: "Everyone in the session can change the passage.",
-              })}
-        </p>
-
-        <div className="sb-session-settings-row">
-          <label
-            className="sb-session-settings-label"
-            htmlFor="sb-session-only-host-highlight"
-          >
-            {t("session-settings-host-only_highlight", {
-              defaultValue: "Only host can highlight",
-            })}
-          </label>
-          <input
-            id="sb-session-only-host-highlight"
-            type="checkbox"
-            checked={onlyHostHighlight}
-            disabled={!isHost}
-            onChange={(event: Event) => {
-              setDecoratorsOnlyHost(
-                (event.currentTarget as HTMLInputElement).checked
-              );
-            }}
-          />
-        </div>
-        <p className="sb-session-settings-description">
-          {onlyHostHighlight
-            ? t("session-settings-highlight-desc_host", {
-                defaultValue: "Only the host can highlight for everyone.",
-              })
-            : t("session-settings-highlight-desc_all", {
-                defaultValue: "Everyone in the session can highlight.",
-              })}
-        </p>
-
-        <div className="sb-session-settings-duration">
-          <div className="sb-session-settings-duration-title">
-            {t("session-settings-highlight-duration", {
-              defaultValue: "Highlight for",
-            })}
-          </div>
-          <div
-            className="sb-session-settings-duration-options"
-            role="radiogroup"
-            onKeyDown={(event) => {
-              handleHorizontalListKeyNav(event, event.currentTarget);
-            }}
-          >
-            {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
-              const selected =
-                options.highlightDurationSeconds === option.value;
-              return (
-                <button
-                  key={option.label}
-                  type="button"
-                  className={`sb-session-settings-duration-option${selected ? " sb-session-settings-duration-option-selected" : ""}`}
-                  disabled={!isHost}
-                  onClick={() => setHighlightDuration(option.value)}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+            <button
+              type="button"
+              className="sb-session-settings-copy-url"
+              onClick={copySessionUrl}
+              aria-label={t("copy", { defaultValue: "Copy" })}
+              title={
+                urlCopied.value
+                  ? t("copied", { defaultValue: "Copied" })
+                  : t("copy", { defaultValue: "Copy" })
+              }
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {urlCopied.value ? "check" : "content_copy"}
+              </span>
+            </button>
           </div>
         </div>
-      </div>
 
-      <div className="sb-session-settings-section">
-        <div className="sb-session-settings-section-title">
-          {t("session-settings-section-sharing", { defaultValue: "Sharing" })}
-        </div>
-
-        <div className="sb-session-settings-row">
-          <label
-            className="sb-session-settings-label"
-            htmlFor="sb-session-share-translation"
-          >
-            {t("session-settings-share-translation", {
-              defaultValue: "Share translation",
+        {!isHost && (
+          <p className="sb-session-settings-note">
+            {t("session-settings-host-only_note", {
+              defaultValue: "Only the session host can change these settings.",
             })}
-          </label>
-          <input
-            id="sb-session-share-translation"
-            type="checkbox"
-            checked={shareTranslation}
-            disabled={!isHost}
-            onChange={(event: Event) => {
-              setShareTranslation(
-                (event.currentTarget as HTMLInputElement).checked
-              );
-            }}
-          />
-        </div>
-        <p className="sb-session-settings-description">
-          {shareTranslation
-            ? t("session-settings-share-translation-desc_shared", {
-                defaultValue:
-                  "Everyone reads the same translation. Changing it updates it for everyone.",
-              })
-            : t("session-settings-share-translation-desc_unique", {
-                defaultValue:
-                  "Each person keeps their own translation. Changing yours won't affect others.",
-              })}
-        </p>
-      </div>
+          </p>
+        )}
 
-      {isHost && participants.length > 0 && (
         <div className="sb-session-settings-section">
           <div className="sb-session-settings-section-title">
-            {t("session-settings-section-participants", {
-              defaultValue: "Participants",
+            {t("session-settings-section-navigation", {
+              defaultValue: "Navigation",
             })}
           </div>
-          <ul className="sb-session-participants">
-            {participants.map((user) => {
-              const coHostKey = getConnectedUserVisualKey(user);
-              const role = getUserSessionRole(options, user);
-              const isHostUser = role === "host";
-              const isCoHost = role === "co-host";
-              const visual = getUserAnimalVisual(coHostKey);
-              const imageUrl = user.profile?.pictureUrl ?? null;
-              return (
-                <li key={user.connectionId} className="sb-session-participant">
-                  <span
-                    className={`sb-session-participant-avatar${imageUrl ? " sb-session-participant-avatar-has-image" : ""}`}
-                    style={
-                      imageUrl
-                        ? {
-                            borderColor: visual.color,
-                            backgroundImage: `url(${imageUrl})`,
-                          }
-                        : { backgroundColor: visual.color }
-                    }
-                    aria-hidden="true"
+
+          <div className="sb-session-settings-row">
+            <label
+              className="sb-session-settings-label"
+              htmlFor="sb-session-only-host-navigate"
+            >
+              {t("session-settings-host-only_navigate", {
+                defaultValue: "Only host can navigate",
+              })}
+            </label>
+            <input
+              id="sb-session-only-host-navigate"
+              type="checkbox"
+              checked={onlyHostNavigate}
+              disabled={!isHost}
+              onChange={(event: Event) => {
+                setNavigatorsOnlyHost(
+                  (event.currentTarget as HTMLInputElement).checked
+                );
+              }}
+            />
+          </div>
+          <p className="sb-session-settings-description">
+            {onlyHostNavigate
+              ? t("session-settings-navigate-desc_host", {
+                  defaultValue:
+                    "Only the host can change the passage for everyone.",
+                })
+              : t("session-settings-navigate-desc_all", {
+                  defaultValue:
+                    "Everyone in the session can change the passage.",
+                })}
+          </p>
+
+          <div className="sb-session-settings-row">
+            <label
+              className="sb-session-settings-label"
+              htmlFor="sb-session-only-host-highlight"
+            >
+              {t("session-settings-host-only_highlight", {
+                defaultValue: "Only host can highlight",
+              })}
+            </label>
+            <input
+              id="sb-session-only-host-highlight"
+              type="checkbox"
+              checked={onlyHostHighlight}
+              disabled={!isHost}
+              onChange={(event: Event) => {
+                setDecoratorsOnlyHost(
+                  (event.currentTarget as HTMLInputElement).checked
+                );
+              }}
+            />
+          </div>
+          <p className="sb-session-settings-description">
+            {onlyHostHighlight
+              ? t("session-settings-highlight-desc_host", {
+                  defaultValue: "Only the host can highlight for everyone.",
+                })
+              : t("session-settings-highlight-desc_all", {
+                  defaultValue: "Everyone in the session can highlight.",
+                })}
+          </p>
+
+          <div className="sb-session-settings-duration">
+            <div className="sb-session-settings-duration-title">
+              {t("session-settings-highlight-duration", {
+                defaultValue: "Highlight for",
+              })}
+            </div>
+            <div
+              className="sb-session-settings-duration-options"
+              role="radiogroup"
+              onKeyDown={(event) => {
+                handleHorizontalListKeyNav(event, event.currentTarget);
+              }}
+            >
+              {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
+                const selected =
+                  options.highlightDurationSeconds === option.value;
+                return (
+                  <button
+                    key={option.label}
+                    type="button"
+                    className={`sb-session-settings-duration-option${selected ? " sb-session-settings-duration-option-selected" : ""}`}
+                    disabled={!isHost}
+                    onClick={() => setHighlightDuration(option.value)}
                   >
-                    {!imageUrl && (
-                      <MaterialIcon>{visual.defaultIcon}</MaterialIcon>
-                    )}
-                  </span>
-                  <span
-                    className="sb-session-participant-name"
-                    title={getUserDisplayName(user)}
-                  >
-                    {getUserDisplayName(user)}
-                    {isHostUser && (
-                      <span className="sb-session-participant-badge">
-                        {t("host", { defaultValue: "Host" })}
-                      </span>
-                    )}
-                    {isCoHost && (
-                      <span className="sb-session-participant-badge">
-                        {t("co-host", { defaultValue: "Co-host" })}
-                      </span>
-                    )}
-                  </span>
-                  {!isHostUser && (
-                    <button
-                      type="button"
-                      className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
-                      onClick={() => setCoHost(coHostKey, !isCoHost)}
-                    >
-                      {isCoHost
-                        ? t("remove-co-host", {
-                            defaultValue: "Remove co-host",
-                          })
-                        : t("make-co-host", { defaultValue: "Make co-host" })}
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      )}
+
+        <div className="sb-session-settings-section">
+          <div className="sb-session-settings-section-title">
+            {t("session-settings-section-sharing", { defaultValue: "Sharing" })}
+          </div>
+
+          <div className="sb-session-settings-row">
+            <label
+              className="sb-session-settings-label"
+              htmlFor="sb-session-share-translation"
+            >
+              {t("session-settings-share-translation", {
+                defaultValue: "Share translation",
+              })}
+            </label>
+            <input
+              id="sb-session-share-translation"
+              type="checkbox"
+              checked={shareTranslation}
+              disabled={!isHost}
+              onChange={(event: Event) => {
+                setShareTranslation(
+                  (event.currentTarget as HTMLInputElement).checked
+                );
+              }}
+            />
+          </div>
+          <p className="sb-session-settings-description">
+            {shareTranslation
+              ? t("session-settings-share-translation-desc_shared", {
+                  defaultValue:
+                    "Everyone reads the same translation. Changing it updates it for everyone.",
+                })
+              : t("session-settings-share-translation-desc_unique", {
+                  defaultValue:
+                    "Each person keeps their own translation. Changing yours won't affect others.",
+                })}
+          </p>
+        </div>
+
+        {isHost && participants.length > 0 && (
+          <div className="sb-session-settings-section">
+            <div className="sb-session-settings-section-title">
+              {t("session-settings-section-participants", {
+                defaultValue: "Participants",
+              })}
+            </div>
+            <ul className="sb-session-participants">
+              {participants.map((user) => {
+                const coHostKey = getConnectedUserVisualKey(user);
+                const role = getUserSessionRole(options, user);
+                const isHostUser = role === "host";
+                const isCoHost = role === "co-host";
+                const visual = getUserAnimalVisual(coHostKey);
+                const imageUrl = user.profile?.pictureUrl ?? null;
+                return (
+                  <li
+                    key={user.connectionId}
+                    className="sb-session-participant"
+                  >
+                    <span
+                      className={`sb-session-participant-avatar${imageUrl ? " sb-session-participant-avatar-has-image" : ""}`}
+                      style={
+                        imageUrl
+                          ? {
+                              borderColor: visual.color,
+                              backgroundImage: `url(${imageUrl})`,
+                            }
+                          : { backgroundColor: visual.color }
+                      }
+                      aria-hidden="true"
+                    >
+                      {!imageUrl && (
+                        <MaterialIcon>{visual.defaultIcon}</MaterialIcon>
+                      )}
+                    </span>
+                    <span
+                      className="sb-session-participant-name"
+                      title={getUserDisplayName(user)}
+                    >
+                      {getUserDisplayName(user)}
+                      {isHostUser && (
+                        <span className="sb-session-participant-badge">
+                          {t("host", { defaultValue: "Host" })}
+                        </span>
+                      )}
+                      {isCoHost && (
+                        <span className="sb-session-participant-badge">
+                          {t("co-host", { defaultValue: "Co-host" })}
+                        </span>
+                      )}
+                    </span>
+                    {!isHostUser && (
+                      <button
+                        type="button"
+                        className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
+                        onClick={() => setCoHost(coHostKey, !isCoHost)}
+                      >
+                        {isCoHost
+                          ? t("remove-co-host", {
+                              defaultValue: "Remove co-host",
+                            })
+                          : t("make-co-host", { defaultValue: "Make co-host" })}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
 
       <div className="sb-session-settings-actions">
         <button
@@ -1290,17 +1301,6 @@ export interface BookmarkLocation {
   verse?: BookmarkVerse;
 }
 
-function getSessionUrl(session: BibleReadingSession) {
-  const url = new URL(window.location.href);
-  const pattern = url.searchParams.get("pattern");
-  url.search = "";
-  url.searchParams.set("sessionId", session.id);
-  if (pattern) {
-    url.searchParams.set("pattern", pattern);
-  }
-  return url;
-}
-
 /**
  * Modal body shown when the user triggers "Bookmark" from a tab menu, the
  * sidebar tab row, the verse toolbar, or "Edit bookmark" from a bookmark's
@@ -1688,46 +1688,55 @@ function BookmarksSection(props: BookmarksSectionProps) {
     chapterNumber: number,
     verse?: number | [number, number]
   ) => {
-    closeContextMenus();
-    closeLayoutMenu();
-    const scrollVerse = Array.isArray(verse) ? verse[0] : verse;
-    const existing = tabsManager.tabs.value.find(
-      (tab) =>
-        tab.readingState.translationId.value === translationId &&
-        tab.readingState.bookId.value === bookId &&
-        tab.readingState.chapterNumber.value === chapterNumber
-    );
-    if (existing) {
-      app.selectTab(existing.id);
-      if (scrollVerse !== undefined) {
-        void existing.readingState.selectTranslationAndChapter(
-          translationId,
-          bookId,
-          chapterNumber,
-          { scrollToVerse: scrollVerse }
-        );
+    // Everything below changes some piece of state that mirrors to the URL:
+    // the reading position of the tab the bookmark opens, and — on mobile —
+    // the dismissal of the sidebar it was tapped in. Batched, they cost one
+    // history entry for the bookmark; unbatched, the position write lands on
+    // the entry that opened the sidebar and the dismissal adds a second entry
+    // for the same destination, which leaves the back button looking dead.
+    state.navigation.batchWrites(() => {
+      closeContextMenus();
+      closeLayoutMenu();
+      const scrollVerse = Array.isArray(verse) ? verse[0] : verse;
+      const existing = tabsManager.tabs.value.find(
+        (tab) =>
+          tab.readingState.translationId.value === translationId &&
+          tab.readingState.bookId.value === bookId &&
+          tab.readingState.chapterNumber.value === chapterNumber
+      );
+      if (existing) {
+        app.selectTab(existing.id);
+        if (scrollVerse !== undefined) {
+          void existing.readingState.selectTranslationAndChapter(
+            translationId,
+            bookId,
+            chapterNumber,
+            { scrollToVerse: scrollVerse }
+          );
+        }
+        return;
       }
-      return;
-    }
-    // Pass the bookmark location as the new tab's initial reading state so
-    // `loadInitialData()` lands directly on it. Calling `addTab()` and then
-    // `selectTranslationAndChapter()` would race the default GEN 1 load and
-    // sometimes lose, leaving the user on Genesis 1 instead of the bookmark.
-    const newTab = tabsManager.addTab(undefined, {
-      initialTranslationId: translationId,
-      initialBookId: bookId,
-      initialChapterNumber: chapterNumber,
+      // Pass the bookmark location as the new tab's initial reading state so
+      // `loadInitialData()` lands directly on it. Calling `addTab()` and then
+      // `selectTranslationAndChapter()` would race the default GEN 1 load and
+      // sometimes lose, leaving the user on Genesis 1 instead of the bookmark.
+      const newTab = tabsManager.addTab(undefined, {
+        initialTranslationId: translationId,
+        initialBookId: bookId,
+        initialChapterNumber: chapterNumber,
+      });
+      if (scrollVerse !== undefined) {
+        // Queue the scroll-to-verse against the freshly created tab so when
+        // initial chapter data lands the reader scrolls to the bookmarked verse.
+        newTab.readingState.scrollToVerse.value = scrollVerse;
+      }
+      // `addTab()` only marks the tab selected inside TabsManager — it doesn't
+      // place it in a layout slot or dismiss the sidebar. Without this the mobile
+      // bookmarks screen stays on top of the reader, and the bookmark's location
+      // is written over the history entry that opened the sidebar instead of
+      // getting an entry of its own.
+      app.selectTab(newTab.id);
     });
-    if (scrollVerse !== undefined) {
-      // Queue the scroll-to-verse against the freshly created tab so when
-      // initial chapter data lands the reader scrolls to the bookmarked verse.
-      newTab.readingState.scrollToVerse.value = scrollVerse;
-    }
-    // `addTab()` only marks the tab selected inside TabsManager — it doesn't
-    // place it in a layout slot or dismiss the sidebar. Without this the mobile
-    // bookmarks screen stays on top of the reader, so the bookmark looks
-    // unopened until a second tap takes the `existing` branch above.
-    app.selectTab(newTab.id);
   };
 
   const formatVerseRef = (

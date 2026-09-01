@@ -57,8 +57,8 @@ function seedStoredTabsState(
   );
 }
 
-async function renderSsrDocument(): Promise<string> {
-  jsdom.reconfigure({ url: `http://ssr.local${PATH}` });
+async function renderSsrDocument(path: string = PATH): Promise<string> {
+  jsdom.reconfigure({ url: `http://ssr.local${path}` });
   localStorage.clear();
   const responses = createDefaultManagerResponseMap();
   globalThis.fetch = (async (url: string) => {
@@ -71,7 +71,7 @@ async function renderSsrDocument(): Promise<string> {
   import.meta.env.SSR = true;
   try {
     const result = (await ssrRender({
-      path: PATH,
+      path,
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
       html: TEMPLATE,
     })) as { html: string; notFound?: true; redirectTo?: string };
@@ -181,6 +181,7 @@ describe("client hydration", () => {
       pathname: location.pathname,
       search: location.search,
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: true });
 
@@ -202,17 +203,17 @@ describe("client hydration", () => {
    * below can seed `localStorage` between the SSR render (which must not see it)
    * and the client's `createSeedBibleState` (which must).
    */
-  async function installSsrDocument(): Promise<{
+  async function installSsrDocument(path: string = PATH): Promise<{
     container: HTMLElement;
     beforeHtml: string;
   }> {
-    const html = await renderSsrDocument();
+    const html = await renderSsrDocument(path);
     document.open();
     document.write(html);
     document.close();
     // `document.write` re-navigates jsdom's location to "about:blank"; put it
     // back to what the server rendered for, matching a real browser.
-    jsdom.reconfigure({ url: `http://ssr.local${PATH}` });
+    jsdom.reconfigure({ url: `http://ssr.local${path}` });
     const container = document.getElementById("app")!;
     return { container, beforeHtml: container.innerHTML };
   }
@@ -238,6 +239,61 @@ describe("client hydration", () => {
     ).length;
   }
 
+  // The reported repro: an explicit `?today=open` auto-opens Today once
+  // `TodayManager.hydrateAutoOpen` runs -- the exact case `isOpen`'s
+  // seed-then-correct pattern exists for. A bare "/" would also auto-open
+  // Today, but the reader canonicalizes it to an explicit reading path via
+  // `history.replaceState` before this point, which would make the live URL
+  // disagree with `renderedForPath` for an unrelated reason (a real
+  // "url-mismatch", not the bug this test exists to catch) -- an already-
+  // canonical path with `?today=open` added avoids that entirely.
+  const TODAY_OPEN_PATH = `${PATH}&today=open`;
+
+  it("hydrates Today closed on an explicit ?today=open, matching SSR, then opens it after mount", async () => {
+    const { container, beforeHtml } = await installSsrDocument(TODAY_OPEN_PATH);
+    // Sanity check: SSR really did render the reader closed rather than
+    // Today's Welcome screen, or the rest of this test wouldn't be
+    // exercising the mismatch at all.
+    expect(beforeHtml).not.toContain("sb-today-container");
+
+    const { config, state } = await createClientState();
+    // The fix's core invariant, asserted directly: `isOpen` still matches
+    // what SSR rendered (closed) here, even though this URL will auto-open
+    // Today as soon as the post-mount effect runs. On the pre-fix code,
+    // `isOpen` seeded from `todayWillAutoOpenForUrl` at construction, so
+    // this would already be `true`.
+    expect(state.today.isOpen.value).toBe(false);
+
+    const decision = decideHydration({
+      config,
+      pathname: location.pathname,
+      search: location.search,
+      container,
+      clientCommit: __GIT_COMMIT__,
+    });
+    expect(decision).toEqual({ hydrate: true });
+
+    hydrate(<Main initialState={state} config={config} />, container);
+
+    // Byte-identical to the served HTML. On the pre-fix code, `isOpen` would
+    // already have been `true` for this URL, and `hydrate()` would have
+    // silently patched the whole open Today screen onto markup the server
+    // never sent.
+    expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
+      normalizeKnownSsrClientDivergences(beforeHtml)
+    );
+
+    // ...and only now, via `MainBody`'s post-mount effect calling
+    // `today.hydrateAutoOpen()`, does Today actually open.
+    await act(async () => {
+      state.today.hydrateAutoOpen();
+      await Promise.resolve();
+    });
+
+    expect(state.today.isOpen.value).toBe(true);
+    expect(container.innerHTML).toContain("sb-today-container");
+  });
+
   it("hydrates cleanly when the visitor already has this chapter's tab saved", async () => {
     // The reported repro: load a chapter, then refresh. The refresh finds an
     // `sb-tabs-state` entry describing the tab the previous load persisted.
@@ -257,6 +313,7 @@ describe("client hydration", () => {
         pathname: location.pathname,
         search: location.search,
         container,
+        clientCommit: __GIT_COMMIT__,
       })
     ).toEqual({ hydrate: true });
 
@@ -362,6 +419,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/exodus/2",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "url-mismatch" });
   });
@@ -372,6 +430,7 @@ describe("client hydration", () => {
     const config = {
       ...DEFAULT_APP_CONFIG,
       renderedForPath: "/en/AAB/genesis/1",
+      renderedByCommit: __GIT_COMMIT__,
       ssrChapterContentSettled: false,
     };
 
@@ -380,6 +439,7 @@ describe("client hydration", () => {
       pathname: "/en/AAB/genesis/1",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({
       hydrate: false,
@@ -400,6 +460,7 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
   });
@@ -413,8 +474,76 @@ describe("client hydration", () => {
       pathname: "/",
       search: "",
       container,
+      clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
+  });
+
+  it("declines to hydrate when the SSR HTML was rendered by a different commit's bundle", () => {
+    // Reproduces the reported bug: a request for a branch outside the host
+    // server's `ALLOWED_SSR_BRANCHES` whitelist gets rendered through
+    // `DEFAULT_SSR_BRANCH`'s bundle instead (see `server/index.ts`). The
+    // requested URL matches exactly, but the DOM was produced by different
+    // component code than the one about to hydrate onto it.
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      renderedByCommit: "commit-develop-abc123",
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientCommit: "commit-feature-branch-def456",
+    });
+    expect(decision).toEqual({ hydrate: false, reason: "build-mismatch" });
+  });
+
+  it("declines to hydrate when the SSR document carries no renderedByCommit at all", () => {
+    // An SSR document with an unverifiable build identity (e.g. a server old
+    // enough to predate this field) gets no benefit of the doubt: `undefined`
+    // is not treated as "assume it matches", since that's exactly the kind of
+    // gap this check exists to close.
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      // No renderedByCommit.
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientCommit: "commit-feature-branch-def456",
+    });
+    expect(decision).toEqual({ hydrate: false, reason: "build-mismatch" });
+  });
+
+  it("hydrates when the rendering commit matches the client's own commit", () => {
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      renderedByCommit: "commit-feature-branch-def456",
+      ssrChapterContentSettled: true,
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientCommit: "commit-feature-branch-def456",
+    });
+    expect(decision).toEqual({ hydrate: true });
   });
 });
 
