@@ -65,12 +65,11 @@ export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
   // a request for an unlisted branch that the host server rendered through
   // `DEFAULT_SSR_BRANCH` instead. Preact's hydrate() only diffs the tree
   // shape, not component code identity, so it would happily patch onto
-  // markup a different version of the app produced. Absent (an older server
-  // build) is treated as a match rather than a decline.
-  if (
-    config.renderedByCommit !== undefined &&
-    config.renderedByCommit !== clientCommit
-  ) {
+  // markup a different version of the app produced. An absent
+  // `renderedByCommit` (a server old enough to predate this field) is also
+  // treated as a mismatch rather than given the benefit of the doubt — an
+  // unidentified build is exactly the case this check exists to catch.
+  if (config.renderedByCommit !== clientCommit) {
     return { hydrate: false, reason: "build-mismatch" };
   }
 

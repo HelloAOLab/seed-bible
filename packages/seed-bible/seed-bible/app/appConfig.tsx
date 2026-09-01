@@ -81,10 +81,13 @@ export interface AppConfig {
    * gate (`app/hydrationGate.ts`) compares this against the client's own
    * `__GIT_COMMIT__` and refuses to hydrate on a mismatch.
    *
-   * Absent for the same reasons `renderedForPath` can be absent, and (like
-   * `ssrChapterContentSettled`) treated as "no mismatch" when absent so an
-   * older server build that predates this field doesn't block hydration on
-   * pure version skew.
+   * Can also be absent for the same reasons `renderedForPath` can be
+   * absent — an older server build that predates this field, for instance.
+   * Unlike `renderedForPath`/`ssrChapterContentSettled`, an absent value
+   * here is treated as a mismatch rather than given the benefit of the
+   * doubt: an SSR document with no verifiable build identity is exactly the
+   * case this field exists to catch, so the gate declines to hydrate onto
+   * it.
    */
   renderedByCommit?: string;
 

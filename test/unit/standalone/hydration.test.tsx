@@ -375,6 +375,7 @@ describe("client hydration", () => {
     const config = {
       ...DEFAULT_APP_CONFIG,
       renderedForPath: "/en/AAB/genesis/1",
+      renderedByCommit: __GIT_COMMIT__,
       ssrChapterContentSettled: false,
     };
 
@@ -435,6 +436,29 @@ describe("client hydration", () => {
       ...DEFAULT_APP_CONFIG,
       renderedForPath: "/en/AAB/genesis/1",
       renderedByCommit: "commit-develop-abc123",
+    };
+
+    const decision = decideHydration({
+      config,
+      pathname: "/en/AAB/genesis/1",
+      search: "",
+      container,
+      clientCommit: "commit-feature-branch-def456",
+    });
+    expect(decision).toEqual({ hydrate: false, reason: "build-mismatch" });
+  });
+
+  it("declines to hydrate when the SSR document carries no renderedByCommit at all", () => {
+    // An SSR document with an unverifiable build identity (e.g. a server old
+    // enough to predate this field) gets no benefit of the doubt: `undefined`
+    // is not treated as "assume it matches", since that's exactly the kind of
+    // gap this check exists to close.
+    const container = document.createElement("div");
+    container.innerHTML = "<div>Verse 1</div>";
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      renderedForPath: "/en/AAB/genesis/1",
+      // No renderedByCommit.
     };
 
     const decision = decideHydration({
