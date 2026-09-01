@@ -15,10 +15,7 @@ export type RequestedSettingsView =
   | "display-and-theme-all-settings"
   | "toolbar"
   | "extensions"
-  | "customizations"
-  | "customization-edit"
-  | "customization-edit-variant"
-  | "customization-edit-extensions";
+  | "customizations";
 
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;
@@ -137,20 +134,17 @@ export function createSidebar(options: CreateSidebarOptions) {
   };
 
   /**
-   * True while any part of the Customization Center is open — the list or
-   * one of its editors. Previewing a customization means clicking around
-   * and selecting verses in the reader while this settings view stays
-   * open, so both the scrim (Tabs.tsx, which would otherwise block input
-   * to the reader) and `collapseSidebarOverlay` below (which would close
-   * the view on that same click) need to stand down for all of these
-   * views, not just the editors.
+   * True while the Customization Center's list is open in Settings. Its
+   * editors now open in their own side pane (see `CustomizationEditPane`),
+   * not in this settings view, but the list stays open behind them so
+   * previewing a customization means clicking around and selecting verses
+   * in the reader while the list is still showing — so both the scrim
+   * (Tabs.tsx, which would otherwise block input to the reader) and
+   * `collapseSidebarOverlay` below (which would close the view on that
+   * same click) need to stand down while it is.
    */
   const isCustomizationViewOpen = computed(
-    () =>
-      requestedSettingsView.value === "customizations" ||
-      requestedSettingsView.value === "customization-edit" ||
-      requestedSettingsView.value === "customization-edit-variant" ||
-      requestedSettingsView.value === "customization-edit-extensions"
+    () => requestedSettingsView.value === "customizations"
   );
 
   /**

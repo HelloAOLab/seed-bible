@@ -247,12 +247,7 @@ describe("createSidebar", () => {
     expect(sidebar.isSearchPanelOpen.value).toBe(true);
   });
 
-  it.each([
-    "customizations",
-    "customization-edit",
-    "customization-edit-variant",
-    "customization-edit-extensions",
-  ] as const)(
+  it.each(["customizations"] as const)(
     "isCustomizationViewOpen is true while requestedSettingsView is %s",
     (view) => {
       const sidebar = createSidebar({
@@ -293,12 +288,7 @@ describe("createSidebar", () => {
     expect(sidebar.isSidebarCollapsed.value).toBe(true);
   });
 
-  it.each([
-    "customizations",
-    "customization-edit",
-    "customization-edit-variant",
-    "customization-edit-extensions",
-  ] as const)(
+  it.each(["customizations"] as const)(
     "collapseSidebarOverlay() no-ops while requestedSettingsView is %s, so a click on the reader can't close it",
     (view) => {
       const sidebar = createSidebar({
