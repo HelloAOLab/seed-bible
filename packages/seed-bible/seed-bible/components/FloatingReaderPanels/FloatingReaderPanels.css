@@ -564,6 +564,12 @@
   font-size: 1.25rem;
 }
 
+.sb-chat-list-avatar-cluster-1
+  .sb-tab-user-icon-generic
+  .material-symbols-outlined {
+  font-size: 2.25rem;
+}
+
 /* Two avatars: side by side, first overlaps second */
 .sb-chat-list-avatar-cluster-2 {
   width: 2.875rem;

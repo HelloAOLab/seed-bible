@@ -6,16 +6,9 @@ import {
 } from "./bookNameMatch";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 import type { VerseRef } from "./PlaylistManager";
+import { bookHasChapter } from "./verseReferenceBounds";
 
-/** Whether the given chapter number falls within the book's chapter range. */
-export function bookHasChapter(
-  book: TranslationBook,
-  chapter: number
-): boolean {
-  const first = book.firstChapterNumber;
-  const last = first + book.numberOfChapters - 1;
-  return chapter >= first && chapter <= last;
-}
+export { bookHasChapter } from "./verseReferenceBounds";
 
 /**
  * The trailing verse/range portion of a reference, shared by every candidate
@@ -59,6 +52,9 @@ export function buildTail(
  * Parses a human-typed scripture reference (e.g. "John 3:16", "1 John 2:1-3",
  * "Genesis 1:1-2:3") into every {@link VerseRef} it could plausibly mean.
  *
+ * Distinct from {@link scanVerseReferencesInText} in BibleDataManager, which
+ * finds every reference embedded in free prose (chat, footnotes).
+ *
  * The verse may be omitted to reference a whole chapter, so a bare "Genesis 1"
  * yields `{ bookId, chapter }`, and a chapter range like "John 1-3" yields
  * `{ bookId, chapter: 1, endChapter: 3 }`. Mixing a chapter start with a verse
@@ -86,7 +82,7 @@ export function buildTail(
  * Returns an empty list when the book can't be matched or the format is
  * invalid.
  */
-export function parseVerseReferences(
+export function parseVerseReferenceCandidates(
   input: string,
   books?: TranslationBook[]
 ): VerseRef[] {
@@ -167,15 +163,19 @@ export function parseVerseReferences(
 /**
  * Parses a human-typed scripture reference into a single {@link VerseRef}.
  *
- * Thin wrapper over {@link parseVerseReferences}: returns the match when it is
- * unambiguous (exactly one), and `null` when the reference can't be matched or
- * is ambiguous (matches more than one book, e.g. "Phil 1" -> Philippians and
- * Philemon). See {@link parseVerseReferences} for the matching rules.
+ * Thin wrapper over {@link parseVerseReferenceCandidates}: returns the match
+ * when it is unambiguous (exactly one), and `null` when the reference can't be
+ * matched or is ambiguous (matches more than one book, e.g. "Phil 1" ->
+ * Philippians and Philemon). See {@link parseVerseReferenceCandidates} for the
+ * matching rules.
+ *
+ * Distinct from {@link scanVerseReferencesInText} in BibleDataManager, which
+ * finds every reference embedded in free prose (chat, footnotes).
  */
-export function parseVerseReference(
+export function parseSingleVerseReference(
   input: string,
   books?: TranslationBook[]
 ): VerseRef | null {
-  const refs = parseVerseReferences(input, books);
+  const refs = parseVerseReferenceCandidates(input, books);
   return refs.length === 1 ? refs[0]! : null;
 }

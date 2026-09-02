@@ -365,7 +365,7 @@ describe("SessionsManager", () => {
     // a websocket to auth.seedbible.org. That connection resolving mid-run
     // fails the suite with an unhandled error even when every test passes.
     os = CasualOSManager();
-    
+
     // Stub the cache purge for every test, not just the presence ones: the
     // real one lazily builds the inst client, which opens a websocket to the
     // live server. Any test that takes a session through a resync (sync false

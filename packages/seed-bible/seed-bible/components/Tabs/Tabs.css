@@ -21,6 +21,10 @@
   position: relative;
   user-select: none;
   min-height: 0;
+
+  /* Sidebar is hidden by inline styles */
+  opacity: 1;
+  transition: opacity 0.25s ease;
 }
 
 .sb-tabs-sidebar-collapsed {
@@ -782,9 +786,21 @@
 .sb-session-settings {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   min-width: 17.5rem;
+  min-height: 0;
+  flex: 1;
   color: var(--sb-font-color);
+}
+
+/* Everything above the actions bar scrolls on its own so the bar below it
+   can stay pinned to the bottom of the modal instead of scrolling away. */
+.sb-session-settings-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .sb-session-settings-note {
@@ -907,6 +923,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  flex-shrink: 0;
   margin-top: 0.25rem;
   padding-top: 0.75rem;
   border-top: 1px solid
@@ -944,14 +961,14 @@
   background: #dc2626;
 }
 
-/* Session ID row (top of the session settings panel) */
-.sb-session-settings-id {
+/* Session URL row (top of the session settings panel) */
+.sb-session-settings-url {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
 }
 
-.sb-session-settings-id-row {
+.sb-session-settings-url-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -961,7 +978,7 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
-.sb-session-settings-id-value {
+.sb-session-settings-url-value {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -970,7 +987,7 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
 
-.sb-session-settings-copy-id {
+.sb-session-settings-copy-url {
   border: none;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
@@ -984,7 +1001,7 @@
   flex-shrink: 0;
 }
 
-.sb-session-settings-copy-id:hover {
+.sb-session-settings-copy-url:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
   color: var(--sb-font-color);
 }
@@ -1101,6 +1118,14 @@
 
 .sb-sidebar-self-avatar .sb-tab-user-icon-animal .material-symbols-outlined {
   font-size: 1.125rem;
+}
+
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic {
+  border: none;
+}
+
+.sb-sidebar-self-avatar .sb-tab-user-icon-generic .material-symbols-outlined {
+  font-size: 2rem;
 }
 
 .sb-tab-title {
@@ -1319,12 +1344,6 @@
     display: inline-flex;
   }
 
-  /* On mobile the account panel is dismissed via the bottom bar of options
-   * (e.g. the "Bible" tab), so the redundant X close button is hidden. */
-  .sb-sidebar-settings-close-button-account {
-    display: none;
-  }
-
   /* The desktop bottom-actions row (settings cog + self avatar) is hidden
    * on mobile — the bottom is now the Bible/Tabs switcher. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-bottom-actions {
@@ -1352,16 +1371,35 @@
     text-overflow: ellipsis;
   }
 
+  /* The settings sidebar (main list, and every settings subpage, including
+   * Account) shares .sb-sidebar-tabs-title with the tab-list header above,
+   * but its "Settings" heading isn't a book title — restore the plain
+   * heading style so it renders the same as on desktop. */
+  .sb-tabs-sidebar-mobile-open
+    .sb-sidebar-settings-view
+    .sb-sidebar-tabs-title {
+    flex: initial;
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--sb-font-color);
+  }
+
   /* Tab list takes the body of the sidebar; leave room at the bottom for
    * the floating Add button so the last tab isn't covered. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    padding: 1rem 1rem 6rem;
     gap: 0.75rem;
     /* On mobile the whole drawer scrolls (see .sb-tabs-sidebar-mobile-open),
      * so undo the desktop tab-list scroll region to avoid a nested scroll. */
     flex: 0 0 auto;
     overflow: visible;
     min-height: auto;
+
+    /* Add a thin divider above the inline button so it visually separates
+     * from the tab list, matching the design. */
+    margin-inline: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--sb-divider-color);
   }
 
   /* Tab card on mobile — plain by default, peach pill when selected. */
@@ -1429,19 +1467,6 @@
     .material-symbols-outlined {
     font-size: 1.375rem;
     font-weight: 500;
-  }
-
-  /* Add a thin divider above the inline button so it visually separates
-   * from the tab list, matching the design. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    margin-inline: 1rem;
-    padding: 0.75rem 0;
-  }
-
-  /* Reset the desktop tab list padding now that we apply our own. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--sb-divider-color);
   }
 
   /* ------------------------------------------------------------------
@@ -1636,7 +1661,6 @@
     padding-left: 0.5rem;
     padding-bottom: 0.3125rem;
     padding-top: 0.5rem;
-    color: inherit;
     display: flex;
     align-items: center;
     gap: 0.3125rem;

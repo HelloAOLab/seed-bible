@@ -1,5 +1,6 @@
 import {
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -474,6 +475,38 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
     .join("\n");
 }
 
+/**
+ * `<style>`-ready text for a theme (variables + highlight classes), scoped
+ * to `body` — NOT `:root`/`html`. See CLAUDE.md: `ThemeManager`'s
+ * body-scoped custom properties beat `base.css`'s `:root` block via DOM-
+ * proximity inheritance, not CSS specificity, so wherever this text ends up
+ * in the document, the selector inside it must stay `body`.
+ *
+ * `<` is stripped defensively: it never appears in a legitimate value here
+ * (colors, sizes, font names), and custom theme/highlight overrides are
+ * free text that isn't validated for CSS syntax (see
+ * `filterValidColorOverrides` below — it only checks for a non-empty
+ * string). This text ends up spliced as a raw string into `index.html`
+ * server-side (see `entry-ssr.tsx`'s `THEME_STYLE_TAG` substitution), so an
+ * override containing `</style` could otherwise break out of that tag.
+ */
+/**
+ * Whether the `#sb-theme-styles` tag already holds a real theme (rendered by
+ * the server and possibly corrected by the pre-hydration inline script in
+ * `index.html`), as opposed to being absent, empty, or the un-substituted
+ * placeholder the dev server leaves behind. Detected by the `--sb-` custom
+ * properties every composed theme emits — see `composeThemeStyleText`.
+ */
+function hasRenderedThemeStyles(): boolean {
+  const tag = document.getElementById("sb-theme-styles");
+  return !!tag?.textContent?.includes("--sb-");
+}
+
+export function composeThemeStyleText(theme: BibleTheme): string {
+  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${generateThemeCssClasses(theme)}`;
+  return css.replace(/</g, "");
+}
+
 const LIGHT_THEME: BibleTheme = {
   id: "light",
   name: "Light",
@@ -653,10 +686,10 @@ const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#e6e6e6",
+    primaryColor: "#e07b4c",
     primaryFontColor: "#111111",
 
-    secondaryColor: "#262626",
+    secondaryColor: "#433228",
     secondaryFontColor: "#f5f5f5",
 
     tertiaryColor: "#1c1c1c",
@@ -829,6 +862,19 @@ const DARK_THEME: BibleTheme = {
       wordsOfJesusFontColor: "#ff9e80",
     },
   },
+};
+
+/**
+ * Precomposed style text for the two built-in presets, with no custom
+ * overrides applied. Consumed both server-side (`entry-ssr.tsx` seeds a
+ * `<!-- THEME_PRESETS_JSON -->` payload from this) and by the pre-hydration
+ * inline script in `index.html`, which reads it before any JS bundle loads.
+ * Keeping this as the one place that composes preset text is what keeps
+ * that script and the runtime effect below from silently diverging.
+ */
+export const THEME_PRESET_STYLE_TEXT: Record<string, string> = {
+  [LIGHT_THEME.id]: composeThemeStyleText(LIGHT_THEME),
+  [DARK_THEME.id]: composeThemeStyleText(DARK_THEME),
 };
 
 /**
@@ -1060,6 +1106,55 @@ export function createTheme(settings: SettingsManager): ThemeManager {
       customHighlightOverrides.value
     )
   );
+
+  const themeStyleText = computed(() =>
+    composeThemeStyleText(currentTheme.value)
+  );
+
+  // Writes the active theme (preset + custom overrides) directly to a
+  // <head> <style> tag, entirely outside the Preact tree. This is a plain
+  // @preact/signals `effect()`, not `useEffect` — it runs synchronously the
+  // moment `createTheme()` is called (during `createSeedBibleState()`,
+  // before Preact's first render/hydrate pass), same as the in-tree
+  // <style> this replaced used to, but the target (document.head) is never
+  // diffed by Preact, so there is no hydration-mismatch class of bug here
+  // at all.
+  //
+  // Reuses id "sb-theme-styles" — the SAME id the SSR-rendered <style> tag
+  // in index.html carries, and the same id the pre-hydration inline script
+  // writes to. All three converge on one element.
+  //
+  // The first run does NOT write, though, whenever that element already
+  // holds real theme CSS. Being outside the diffed tree means no
+  // *mismatch* risk, but it does not exempt this from the *flash* the
+  // deferred `localConfig` seed creates: at `createTheme()` time
+  // `login.localConfig` is still empty (see LoginManager), so `themeId` is
+  // the default "light" even for a visitor whose saved theme is dark, and
+  // writing it here would clobber the dark CSS the pre-hydration inline
+  // script just put in that tag — painting light until
+  // `hydrateLocalConfig()` restores the real id post-mount. Whatever is
+  // already in the tag (server-rendered, then corrected by that inline
+  // script from `localStorage`) is the better answer until then, so this
+  // takes over only from the first real *change* onwards.
+  if (typeof document !== "undefined") {
+    let skipWrite = hasRenderedThemeStyles();
+    effect(() => {
+      const text = themeStyleText.value;
+      if (skipWrite) {
+        skipWrite = false;
+        return;
+      }
+      let tag = document.getElementById(
+        "sb-theme-styles"
+      ) as HTMLStyleElement | null;
+      if (!tag) {
+        tag = document.createElement("style");
+        tag.id = "sb-theme-styles";
+        document.head.appendChild(tag);
+      }
+      tag.textContent = text;
+    });
+  }
 
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {

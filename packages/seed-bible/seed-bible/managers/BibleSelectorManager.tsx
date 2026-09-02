@@ -26,6 +26,7 @@ import type {
 } from "../managers/SettingsManager";
 import { createSidebar } from "../managers/SidebarManager";
 import type { NavigationManager } from "../managers/NavigationManager";
+import type { I18nManager } from "../i18n/I18nManager";
 import { type BookmarksManager } from "../managers/BookmarksManager";
 import {
   computed,
@@ -187,6 +188,12 @@ export interface BibleSelectorState {
   allowedTranslationLimit: Signal<number>;
   apiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   showAllLanguages: Signal<TranslationViewMode>;
+  /**
+   * Applies the visitor's stored translation-list view mode. Seeds to the
+   * default to match SSR; call once from a post-mount effect (via
+   * `AppState.hydrateFromStorage`).
+   */
+  hydrateStoredViewMode: () => void;
   showTranslationSettings: Signal<boolean>;
   showTranslationInfo: Signal<{
     translation: Translation;
@@ -260,7 +267,8 @@ export function createBibleSelectorState(
   sidebar: SidebarManager,
   bookmarks: BookmarksManager,
   navigation: NavigationManager,
-  login: LoginManager
+  login: LoginManager,
+  i18n: I18nManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const slot = signal<TabSlot | null>(null);
@@ -301,7 +309,7 @@ export function createBibleSelectorState(
     error.value = null;
 
     try {
-      if (dataManager.availableTranslations.value.length === 0) {
+      if (!dataManager.catalogLoaded.value) {
         await dataManager.getTranslations();
       }
 
@@ -537,6 +545,15 @@ export function createBibleSelectorState(
       PROFILE_TRANSLATION_ID,
       nextTranslationId
     );
+
+    // Only this deliberate-pick path offers to move the UI to the
+    // translation's language. Programmatic changes (selector sync on open, a
+    // deep link, the language-driven translation switch) aren't the user
+    // saying "I want to read in this language", so they shouldn't ask.
+    const picked = availableTranslations.value.find(
+      (translation) => translation.id === nextTranslationId
+    );
+    i18n.maybePromptUiLanguageSwitch(picked?.language);
   };
 
   const languageQuery = signal<string>("");
@@ -586,11 +603,20 @@ export function createBibleSelectorState(
 
   // ─── TranslationModal State ───────────────────────────────────────────────────
 
-  const showAllLanguages = signal<TranslationViewMode>(
-    (safeLocalStorage.getItem(
+  // Seeded to the default rather than read from `localStorage` here, matching
+  // SSR (which has none) so the first hydrate pass can't disagree.
+  // `hydrateStoredViewMode` applies the stored choice after the first commit —
+  // see `AppState.hydrateFromStorage`.
+  const showAllLanguages = signal<TranslationViewMode>("complete");
+
+  const hydrateStoredViewMode = () => {
+    const stored = safeLocalStorage.getItem(
       "showAllLanguages"
-    ) as TranslationViewMode | null) || "complete"
-  );
+    ) as TranslationViewMode | null;
+    if (stored) {
+      showAllLanguages.value = stored;
+    }
+  };
 
   const showTranslationSettings = signal<boolean>(false);
 
@@ -862,8 +888,18 @@ export function createBibleSelectorState(
     () => pagedApiTranslations.value.totalMatching
   );
 
+  // Skip the effect's first, unconditional run. `showAllLanguages` seeds to the
+  // SSR-matching default, so writing it back straight away would overwrite the
+  // visitor's stored choice with "complete" before `hydrateStoredViewMode` ever
+  // got to read it.
+  let isFirstViewModeWrite = true;
   effect(() => {
-    safeLocalStorage.setItem("showAllLanguages", showAllLanguages.value);
+    const viewMode = showAllLanguages.value;
+    if (isFirstViewModeWrite) {
+      isFirstViewModeWrite = false;
+      return;
+    }
+    safeLocalStorage.setItem("showAllLanguages", viewMode);
   });
 
   return {
@@ -912,6 +948,7 @@ export function createBibleSelectorState(
     allowedTranslationLimit,
     apiTranslations,
     showAllLanguages,
+    hydrateStoredViewMode,
     showTranslationSettings,
     showTranslationInfo,
     pendingOfflineDelete,
