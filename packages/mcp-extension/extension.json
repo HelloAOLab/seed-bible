@@ -14,6 +14,7 @@
       "mcp-server-auth-header-sse-warning": "This server only supports the legacy SSE transport, which can't carry the auth header below — it may not have been applied.",
       "mcp-server-add": "Add server",
       "mcp-server-add-url-error": "Enter a valid URL",
+      "mcp-server-add-failed": "Couldn't add the server.",
       "mcp-server-connect-error": "Couldn't connect: {{error}}",
       "mcp-server-remove": "Remove",
       "mcp-server-enable": "Enable",

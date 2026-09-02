@@ -53,6 +53,99 @@ interface LiveConnection {
   tools: AIProviderFunctionTool[];
 }
 
+type JsonSchemaRecord = Record<string, unknown>;
+
+/**
+ * OpenAI's "strict" function-calling mode — which `apologist-extension`
+ * always requests for every tool it forwards — requires each object schema
+ * to set `additionalProperties: false` and list every property in
+ * `required`; a property that's semantically optional must instead allow
+ * `null` as one of its accepted types. MCP servers hand back arbitrary
+ * third-party JSON Schema that generally doesn't satisfy this, so every
+ * schema exposed to a tool-calling provider is normalized here first —
+ * otherwise a single incompatible tool gets the whole chat-completions call
+ * rejected, breaking tool calling for the entire turn rather than just that
+ * one tool.
+ */
+export function toStrictJsonSchema(schema: unknown): unknown {
+  if (Array.isArray(schema)) {
+    return schema.map((item) => toStrictJsonSchema(item));
+  }
+  if (typeof schema !== "object" || schema === null) {
+    return schema;
+  }
+
+  const result: JsonSchemaRecord = {};
+  for (const [key, value] of Object.entries(schema as JsonSchemaRecord)) {
+    result[key] = toStrictJsonSchema(value);
+  }
+
+  if (result.type === "object" && result.properties) {
+    const properties = result.properties as JsonSchemaRecord;
+    const propertyNames = Object.keys(properties);
+    const originalRequired = new Set(
+      Array.isArray(result.required) ? (result.required as string[]) : []
+    );
+
+    for (const name of propertyNames) {
+      if (!originalRequired.has(name)) {
+        properties[name] = allowNull(properties[name]);
+      }
+    }
+
+    result.required = propertyNames;
+    result.additionalProperties = false;
+  }
+
+  return result;
+}
+
+/**
+ * Adds `null` as an accepted value for a property that strict mode now
+ * forces into `required` even though it's semantically optional, so the
+ * model can supply `null` in place of omitting it.
+ */
+function allowNull(propertySchema: unknown): unknown {
+  if (typeof propertySchema !== "object" || propertySchema === null) {
+    return propertySchema;
+  }
+  const schema = propertySchema as JsonSchemaRecord;
+  if (Array.isArray(schema.anyOf)) {
+    return { ...schema, anyOf: [...schema.anyOf, { type: "null" }] };
+  }
+  if (typeof schema.type === "string") {
+    return schema.type === "null"
+      ? schema
+      : { ...schema, type: [schema.type, "null"] };
+  }
+  if (Array.isArray(schema.type)) {
+    return schema.type.includes("null")
+      ? schema
+      : { ...schema, type: [...schema.type, "null"] };
+  }
+  // No plain `type` to extend (e.g. a bare `enum`/`const`/`$ref`) — wrap it.
+  return { anyOf: [schema, { type: "null" }] };
+}
+
+/**
+ * Strips `null`-valued optional arguments before calling the real MCP tool.
+ * Strict mode forces every property into `required`, so a model that wants
+ * to omit an optional argument sends explicit `null` for it instead — the
+ * real MCP server generally expects the key to be absent, not `null`.
+ */
+export function stripNullOptionalArgs(
+  args: Record<string, unknown> | undefined,
+  requiredKeys: ReadonlySet<string>
+): Record<string, unknown> | undefined {
+  if (!args) return args;
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    if (value === null && !requiredKeys.has(key)) continue;
+    cleaned[key] = value;
+  }
+  return cleaned;
+}
+
 function makeServerId(): string {
   if (
     typeof crypto !== "undefined" &&
@@ -233,18 +326,30 @@ export function createMCPManager(
         return;
       }
 
-      const tools: AIProviderFunctionTool[] = mcpTools.map((tool) => ({
-        name: `${server.name}:${tool.name}`,
-        type: "function",
-        description: tool.description ?? "",
-        parameters:
-          tool.inputSchema as unknown as ZodStandardJSONSchemaPayload<unknown>,
-        function: async (args: unknown) =>
-          client.callTool({
-            name: tool.name,
-            arguments: args as Record<string, unknown> | undefined,
-          }),
-      }));
+      const tools: AIProviderFunctionTool[] = mcpTools.map((tool) => {
+        const inputSchema = tool.inputSchema as JsonSchemaRecord | undefined;
+        const requiredKeys = new Set(
+          Array.isArray(inputSchema?.required)
+            ? (inputSchema.required as string[])
+            : []
+        );
+        return {
+          name: `${server.name}:${tool.name}`,
+          type: "function",
+          description: tool.description ?? "",
+          parameters: toStrictJsonSchema(
+            tool.inputSchema
+          ) as unknown as ZodStandardJSONSchemaPayload<unknown>,
+          function: async (args: unknown) =>
+            client.callTool({
+              name: tool.name,
+              arguments: stripNullOptionalArgs(
+                args as Record<string, unknown> | undefined,
+                requiredKeys
+              ),
+            }),
+        };
+      });
 
       liveConnections.set(server.id, { client, tools });
       bumpToolsVersion();
@@ -363,9 +468,13 @@ export function createMCPManager(
     }
     servers.value = next;
     stateVersion++;
-    await persist(next);
+    // Close the connection and stop exposing its tools immediately — a user
+    // removing a server (plausibly because they no longer trust it) expects
+    // it to stop being callable right away, not depend on `persist` (a
+    // network round-trip) succeeding first.
     await closeConnection(id);
     clearConnectionState(id);
+    await persist(next);
   };
 
   const updateServer: MCPManager["updateServer"] = async (id, patch) => {
@@ -378,7 +487,19 @@ export function createMCPManager(
     servers.value = next;
     stateVersion++;
     await persist(next);
-    void connectServer(updated);
+    // Only reconnect when something connection-relevant actually changed —
+    // a future "rename" affordance (this method also accepts `name`) would
+    // otherwise silently drop and re-establish the connection, losing
+    // in-flight tool calls, for a change that has nothing to do with
+    // connectivity.
+    const connectionRelevantChange =
+      updated.url !== existing.url ||
+      updated.enabled !== existing.enabled ||
+      JSON.stringify(updated.headers ?? null) !==
+        JSON.stringify(existing.headers ?? null);
+    if (connectionRelevantChange) {
+      void connectServer(updated);
+    }
   };
 
   const dispose = () => {

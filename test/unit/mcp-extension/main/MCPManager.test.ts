@@ -33,6 +33,8 @@ vi.mock("@modelcontextprotocol/client", () => {
 });
 
 let createMCPManager: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").createMCPManager;
+let toStrictJsonSchema: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").toStrictJsonSchema;
+let stripNullOptionalArgs: typeof import("@packages/mcp-extension/ext_MCP/main/MCPManager").stripNullOptionalArgs;
 
 interface McpMock {
   Client: Mock;
@@ -102,7 +104,7 @@ describe("createMCPManager", () => {
   let warnSpy: Mock;
 
   beforeAll(async () => {
-    ({ createMCPManager } =
+    ({ createMCPManager, toStrictJsonSchema, stripNullOptionalArgs } =
       await import("@packages/mcp-extension/ext_MCP/main/MCPManager"));
   });
 
@@ -262,6 +264,56 @@ describe("createMCPManager", () => {
       arguments: { q: "hi" },
     });
     expect(result).toEqual({ content: [{ type: "text", text: "ok" }] });
+  });
+
+  it("normalizes a tool's schema for OpenAI strict mode (which apologist-extension always requests)", async () => {
+    const login = createTestLogin("user-1");
+    const manager = createMCPManager(os, login);
+    const mock = await getMcpMock();
+    mock.listTools.mockResolvedValue({
+      tools: [
+        {
+          name: "search",
+          description: "Searches things",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: { type: "string" },
+              limit: { type: "number" },
+            },
+            required: ["query"],
+          },
+        },
+      ],
+    });
+    mock.callTool.mockResolvedValue({ content: [] });
+
+    await manager.addServer({ name: "MyServer", url: "https://mcp.test" });
+    await waitForCondition(() => manager.tools.value.length > 0);
+
+    const parameters = manager.tools.value[0]!.parameters as {
+      properties: Record<string, { type: string | string[] }>;
+      required: string[];
+      additionalProperties: boolean;
+    };
+    // additionalProperties:false and every property in `required` (strict
+    // mode's requirements), but the originally-optional `limit` still
+    // accepts `null` so the model can supply it while "skipping" it.
+    expect(parameters.additionalProperties).toBe(false);
+    expect(parameters.required).toEqual(
+      expect.arrayContaining(["query", "limit"])
+    );
+    expect(parameters.properties.query!.type).toBe("string");
+    expect(parameters.properties.limit!.type).toEqual(["number", "null"]);
+
+    // Calling the tool with the optional arg explicitly nulled (as a
+    // strict-mode model would, since it can't omit a required key) must not
+    // forward that null to the real MCP server.
+    await manager.tools.value[0]!.function({ query: "hi", limit: null });
+    expect(mock.callTool).toHaveBeenCalledWith({
+      name: "search",
+      arguments: { query: "hi" },
+    });
   });
 
   it("removeServer closes the connection and clears connection state", async () => {
@@ -430,5 +482,128 @@ describe("createMCPManager", () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(getDataMock).toHaveBeenCalledTimes(1); // only the original load
+  });
+
+  it("passes a configured auth header through to the StreamableHTTP transport", async () => {
+    const login = createTestLogin("user-1");
+    const manager = createMCPManager(os, login);
+    const mock = await getMcpMock();
+
+    await manager.addServer({
+      name: "S",
+      url: "https://mcp.test",
+      headers: { Authorization: "Bearer secret-token" },
+    });
+    const serverId = manager.servers.value[0]!.id;
+    await waitForCondition(
+      () => manager.connectionState.value.get(serverId)?.status === "connected"
+    );
+
+    expect(mock.StreamableHTTPClientTransport).toHaveBeenCalledWith(
+      new URL("https://mcp.test"),
+      { requestInit: { headers: { Authorization: "Bearer secret-token" } } }
+    );
+  });
+
+  describe("toStrictJsonSchema", () => {
+    it("marks every property required and disallows additional properties", () => {
+      const result = toStrictJsonSchema({
+        type: "object",
+        properties: { a: { type: "string" }, b: { type: "number" } },
+        required: ["a"],
+      }) as {
+        required: string[];
+        additionalProperties: boolean;
+        properties: Record<string, unknown>;
+      };
+
+      expect(result.required).toEqual(["a", "b"]);
+      expect(result.additionalProperties).toBe(false);
+      expect(result.properties.a).toEqual({ type: "string" });
+    });
+
+    it("extends a single-string type to allow null for an optional property", () => {
+      const result = toStrictJsonSchema({
+        type: "object",
+        properties: { b: { type: "number" } },
+        required: [],
+      }) as { properties: { b: { type: string[] } } };
+
+      expect(result.properties.b.type).toEqual(["number", "null"]);
+    });
+
+    it("appends to an existing anyOf instead of replacing it", () => {
+      const result = toStrictJsonSchema({
+        type: "object",
+        properties: { b: { anyOf: [{ type: "string" }, { type: "number" }] } },
+        required: [],
+      }) as { properties: { b: { anyOf: unknown[] } } };
+
+      expect(result.properties.b.anyOf).toEqual([
+        { type: "string" },
+        { type: "number" },
+        { type: "null" },
+      ]);
+    });
+
+    it("wraps a typeless schema (e.g. a bare $ref) in anyOf", () => {
+      const result = toStrictJsonSchema({
+        type: "object",
+        properties: { b: { $ref: "#/definitions/Thing" } },
+        required: [],
+      }) as { properties: { b: { anyOf: unknown[] } } };
+
+      expect(result.properties.b.anyOf).toEqual([
+        { $ref: "#/definitions/Thing" },
+        { type: "null" },
+      ]);
+    });
+
+    it("recurses into nested object schemas", () => {
+      const result = toStrictJsonSchema({
+        type: "object",
+        properties: {
+          nested: {
+            type: "object",
+            properties: { inner: { type: "string" } },
+            required: [],
+          },
+        },
+        required: ["nested"],
+      }) as {
+        properties: {
+          nested: { required: string[]; additionalProperties: boolean };
+        };
+      };
+
+      expect(result.properties.nested.required).toEqual(["inner"]);
+      expect(result.properties.nested.additionalProperties).toBe(false);
+    });
+
+    it("leaves non-object schemas alone", () => {
+      expect(toStrictJsonSchema({ type: "string" })).toEqual({
+        type: "string",
+      });
+      expect(toStrictJsonSchema(null)).toBeNull();
+    });
+  });
+
+  describe("stripNullOptionalArgs", () => {
+    it("drops null values for keys not in the required set", () => {
+      const result = stripNullOptionalArgs(
+        { query: "hi", limit: null },
+        new Set(["query"])
+      );
+      expect(result).toEqual({ query: "hi" });
+    });
+
+    it("keeps a null value for a key that is actually required", () => {
+      const result = stripNullOptionalArgs({ query: null }, new Set(["query"]));
+      expect(result).toEqual({ query: null });
+    });
+
+    it("passes through undefined args unchanged", () => {
+      expect(stripNullOptionalArgs(undefined, new Set())).toBeUndefined();
+    });
   });
 });

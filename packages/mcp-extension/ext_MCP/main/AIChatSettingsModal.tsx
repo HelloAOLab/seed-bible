@@ -1,8 +1,8 @@
 import "./AIChatSettingsModal.css";
 import { useState } from "preact/hooks";
-import { useI18n } from "seed-bible/i18n";
-import type { SeedBibleState } from "seed-bible";
-import { MaterialIcon } from "seed-bible/components";
+import { useI18n } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import { MaterialIcon } from "@packages/seed-bible/seed-bible/components/icons";
 import type {
   MCPManager,
   McpServerConfig,
@@ -215,6 +215,14 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
       setUrl("");
       setAuthHeader("");
       setError(null);
+    } catch (err) {
+      console.error("Failed to add MCP server:", err);
+      setError(
+        t("mcp-server-add-failed", {
+          defaultValue: "Couldn't add the server.",
+          ns: "mcp-extension",
+        })
+      );
     } finally {
       setIsAdding(false);
     }

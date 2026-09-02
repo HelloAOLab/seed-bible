@@ -877,13 +877,19 @@ describe("FloatingChatPanel", () => {
       ".sb-floating-chat-ai-context-item"
     ) as HTMLElement | null;
     expect(item).not.toBeNull();
-    // Should not throw when clicked, and the menu content should remain
-    // (an inert row just prevents default, it doesn't call anything).
-    expect(() => {
-      act(() => {
-        item?.click();
-      });
-    }).not.toThrow();
+
+    // A context with no settingsAction should call `event.preventDefault()`
+    // (the mocked ContextMenuItem passes the native click event straight
+    // through to the row's onClick), not invoke anything else.
+    let capturedEvent: MouseEvent | undefined;
+    item?.addEventListener("click", (event) => {
+      capturedEvent = event as MouseEvent;
+    });
+    act(() => {
+      item?.click();
+    });
+
+    expect(capturedEvent?.defaultPrevented).toBe(true);
   });
 
   it("hides the AI context button when the selected chat's only AI participant doesn't support tool calling", () => {
