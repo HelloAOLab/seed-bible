@@ -120,6 +120,10 @@ function setup(target: ListeningTarget | null = PSALM_23) {
     wait(seconds: number) {
       nowMs += seconds * 1000;
     },
+    /** The media controls jumping the audio ahead, with no time passing. */
+    skipAhead(seconds: number) {
+      el.currentTime += seconds;
+    },
     /** The screen going off or coming back on — the same event either way. */
     visibilityChanged() {
       document.dispatchEvent(new Event("visibilitychange"));
@@ -227,17 +231,38 @@ describe("attachListeningRecorder", () => {
     );
   });
 
-  it("saves periodically so a long listen survives the page being killed", () => {
+  it("saves repeatedly through a long listen, not just when it ends", () => {
     const h = setup();
 
     h.el.play();
-    h.listen(20);
+    // Five minutes of narration, reported the way an element really reports
+    // it: many small steps rather than one leap.
+    for (let i = 0; i < 60; i++) {
+      h.listen(5);
+    }
+
+    const ends = h.saveSpan.mock.calls.map(([, , , to]) => to as number);
+    expect(ends.length).toBeGreaterThan(1);
+    for (let i = 1; i < ends.length; i++) {
+      expect(ends[i]!).toBeGreaterThan(ends[i - 1]!);
+    }
+    expect(ends.at(-1)).toBe(START_SECONDS + 300);
+  });
+
+  it("writes what has played when the page is told it may be discarded", () => {
+    const h = setup();
+
+    h.el.play();
+    h.listenWhileFrozen(120);
+
+    // The page is going away without ever coming back to the foreground.
+    window.dispatchEvent(new Event("pagehide"));
 
     expect(h.saveSpan).toHaveBeenCalledWith(
       "psalms",
       23,
       START_SECONDS,
-      START_SECONDS + 20
+      START_SECONDS + 120
     );
   });
 
@@ -275,6 +300,26 @@ describe("attachListeningRecorder", () => {
       START_SECONDS,
       START_SECONDS + 60
     );
+  });
+
+  it("caps a skip forward at the time that really passed, before any re-anchor", () => {
+    const h = setup();
+
+    h.el.play();
+    h.listen(60);
+    h.saveSpan.mockClear();
+
+    // Twenty seconds pass, and in them the media controls jump ten minutes
+    // ahead. The element reports its new position before the seek itself is
+    // delivered, so the wall clock is the only thing holding the credit down.
+    h.wait(20);
+    h.skipAhead(600);
+    h.el.dispatchEvent(new Event("timeupdate"));
+
+    expect(h.saveSpan).toHaveBeenCalled();
+    for (const [, , from, to] of h.saveSpan.mock.calls) {
+      expect(to - from).toBeLessThanOrEqual(80);
+    }
   });
 
   it("records nothing when the chapter being played is unknown", () => {

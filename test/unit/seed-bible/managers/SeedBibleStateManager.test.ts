@@ -1148,6 +1148,11 @@ describe("createSeedBibleState", () => {
       expect(mockSaveReadingSpan).toHaveBeenLastCalledWith(
         ...anySpanFor("genesis", 1)
       );
+
+      // The span covers the five seconds that just elapsed, rather than
+      // marking a single instant or reaching back further than it watched.
+      const [, , from, to] = mockSaveReadingSpan.mock.calls[0]!;
+      expect(to - from).toBe(5);
     });
 
     it("saves history once for each additional 5 seconds of viewing", async () => {
@@ -1170,6 +1175,17 @@ describe("createSeedBibleState", () => {
         3,
         ...anySpanFor("genesis", 1)
       );
+
+      // Each tick credits its own five seconds and they run end to end, so a
+      // sitting is neither double-counted nor left with holes in it.
+      const spans = mockSaveReadingSpan.mock.calls.map(
+        ([, , from, to]) => [from, to] as [number, number]
+      );
+      for (const [from, to] of spans) {
+        expect(to - from).toBe(5);
+      }
+      expect(spans[1]![0]).toBe(spans[0]![1]);
+      expect(spans[2]![0]).toBe(spans[1]![1]);
     });
 
     it("resets autosave interval when selected tab changes", async () => {

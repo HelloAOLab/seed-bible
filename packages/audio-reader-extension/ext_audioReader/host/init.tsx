@@ -138,7 +138,8 @@ export function attachListeningRecorder(
     else begin();
   };
 
-  const onVisibilityChange = () => {
+  /** Reads how far playback has got and writes it, whenever we get the chance. */
+  const flushProgress = () => {
     observePosition();
     save();
   };
@@ -148,8 +149,16 @@ export function attachListeningRecorder(
   el.addEventListener("seeked", onSeeked);
   el.addEventListener("pause", finish);
   el.addEventListener("ended", finish);
+  // Every moment the page might be about to stop running, plus the one where
+  // it starts again. A page put to sleep behind a locked screen can be thrown
+  // away without ever waking, taking an unwritten stretch of listening with it,
+  // so take each of these as the last chance it may be.
   if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", onVisibilityChange);
+    document.addEventListener("visibilitychange", flushProgress);
+    document.addEventListener("freeze", flushProgress);
+  }
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", flushProgress);
   }
 
   return () => {
@@ -159,7 +168,11 @@ export function attachListeningRecorder(
     el.removeEventListener("pause", finish);
     el.removeEventListener("ended", finish);
     if (typeof document !== "undefined") {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      document.removeEventListener("visibilitychange", flushProgress);
+      document.removeEventListener("freeze", flushProgress);
+    }
+    if (typeof window !== "undefined") {
+      window.removeEventListener("pagehide", flushProgress);
     }
   };
 }
