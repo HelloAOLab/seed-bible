@@ -77,7 +77,7 @@
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.625rem;
 }
@@ -119,8 +119,7 @@
    changes, to suit each header's title. Keep the two in step. */
 .sb-bible-reader-translation,
 .sb-bible-reader-mobile-header-translation {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   cursor: pointer;
   border: none;
   font-family: var(--text-bookTitle-font);
@@ -250,6 +249,27 @@
   font-size: 1rem;
   padding: 0.3125rem 0.625rem;
   border-radius: 0.9375rem;
+}
+
+/* A line box reserves room for descenders that an all-caps abbreviation never
+   uses, so it sits high in an evenly padded chip — badly so in Newsreader,
+   which leaves 0.265em below the baseline but only 0.065em above the caps.
+   Trimming the box to the caps centres the letters themselves, whichever font
+   the reader has chosen. The padding grows to hold the chip's size once the
+   box shrinks from the full 1em to the cap height. */
+@supports (text-box: trim-both cap alphabetic) {
+  .sb-bible-reader-translation,
+  .sb-bible-reader-mobile-header-translation {
+    text-box: trim-both cap alphabetic;
+  }
+
+  .sb-bible-reader-translation {
+    padding-block: 0.5625rem;
+  }
+
+  .sb-bible-reader-mobile-header-translation {
+    padding-block: 0.475rem;
+  }
 }
 
 .sb-bible-reader-mobile-header-play {
