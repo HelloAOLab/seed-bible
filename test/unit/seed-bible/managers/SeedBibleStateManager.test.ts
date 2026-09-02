@@ -865,7 +865,7 @@ describe("createSeedBibleState", () => {
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
     });
 
-    it("shows a you-reconnected toast when other users reappear after our own connection dropped", async () => {
+    it("shows a you-rejoined toast when other users reappear after our own connection dropped", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
         state,
@@ -891,7 +891,7 @@ describe("createSeedBibleState", () => {
         otherGuestConnectedUser,
       ];
       expect(state.app.currentToast.value?.message).toBe(
-        "You reconnected to the session"
+        "You rejoined the session"
       );
 
       vi.advanceTimersByTime(30_000);
@@ -900,7 +900,7 @@ describe("createSeedBibleState", () => {
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
     });
 
-    it("shows you-lost-connection then you-reconnected toasts when this client's own sync drops and recovers", async () => {
+    it("shows you-lost-connection then you-rejoined toasts when this client's own sync drops and recovers", async () => {
       const state = await createStateWithTwoTabs();
       const { session, originalDispose } = await joinAsHostedSession(
         state,
@@ -908,15 +908,97 @@ describe("createSeedBibleState", () => {
       );
 
       session.isSynced.value = false;
+      session.connectedUsers.value = [selfConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
         "You lost connection to the session"
       );
       expect(originalDispose).not.toHaveBeenCalled();
 
       session.isSynced.value = true;
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
-        "You reconnected to the session"
+        "You rejoined the session"
       );
+    });
+
+    it("does not show a you-disconnected toast on a remaining host device when another of the host's devices leaves", async () => {
+      const state = await createStateWithTwoTabs();
+      const session = createMockHostedSession("session-host-other-device");
+      const originalDispose = session.dispose;
+      mockSessionsManager.joinSession.mockResolvedValue(session);
+      await state.app.joinSharedSession("session-host-other-device");
+
+      const hostSelfConnectedUser = {
+        userId: HOST_ID,
+        connectionId: "host-connection-this-device",
+        isSelf: true,
+      };
+      const hostOtherDeviceConnectedUser = {
+        userId: HOST_ID,
+        connectionId: "host-connection-other-device",
+        isSelf: false,
+      };
+      session.connectedUsers.value = [
+        hostSelfConnectedUser,
+        hostOtherDeviceConnectedUser,
+      ];
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [hostSelfConnectedUser];
+
+      expect(state.app.currentToast.value).toBeNull();
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      session.isSynced.value = true;
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows you-rejoined instead of host-reconnected when the host reappears right after our own connection recovers", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-airplane-rejoin"
+      );
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [selfConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You lost connection to the session"
+      );
+
+      session.isSynced.value = true;
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+
+      session.connectedUsers.value = [selfConnectedUser, hostConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+    });
+
+    it("still shows a host-disconnected toast if the host is still gone after our reconnect presence settles", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-rejoin-host-still-gone"
+      );
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [selfConnectedUser];
+      session.isSynced.value = true;
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "You rejoined the session"
+      );
+
+      vi.advanceTimersByTime(2000);
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host disconnected from the session"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
     });
   });
 

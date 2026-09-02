@@ -1573,15 +1573,34 @@ export function createSeedBibleState(
   // is what our own dropped connection looks like on the presence list.
   const sessionsWhereOtherGuestsWereSeen = new Set<string>();
   const sessionsWhereWeLostConnection = new Set<string>();
+  // After we recover from our own drop, presence can still omit the host
+  // for a beat (the peer list is rebuilt on resync). Don't treat that as
+  // "the host left and came back" — prefer the you-rejoined toast.
+  const SELF_RECONNECT_SETTLE_MS = 2000;
+  const sessionsSettlingAfterSelfReconnect = new Set<string>();
+  const presenceSettleTick = signal(0);
+  const pendingPresenceSettleTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
   const HOST_DISCONNECT_GRACE_MS = 30000;
   const pendingHostDisconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
+  const clearPendingPresenceSettle = (sessionId: string): void => {
+    sessionsSettlingAfterSelfReconnect.delete(sessionId);
+    const timer = pendingPresenceSettleTimers.get(sessionId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      pendingPresenceSettleTimers.delete(sessionId);
+    }
+  };
   const forgetSessionPresence = (sessionId: string): void => {
     sessionsWhereHostWasSeen.delete(sessionId);
     sessionsWhereOtherGuestsWereSeen.delete(sessionId);
     sessionsWhereWeLostConnection.delete(sessionId);
+    clearPendingPresenceSettle(sessionId);
   };
   const clearPendingHostDisconnect = (sessionId: string): boolean => {
     const timer = pendingHostDisconnectTimers.get(sessionId);
@@ -1598,17 +1617,35 @@ export function createSeedBibleState(
         isSessionHost(session.options.value, user.userId) ||
         isSessionHost(session.options.value, user.connectionId)
     );
+  const sessionWeAreHost = (session: BibleReadingSession): boolean =>
+    locallyHostedSessionIds.has(session.id) ||
+    session.connectedUsers.value.some(
+      (user) =>
+        user.isSelf &&
+        (isSessionHost(session.options.value, user.userId) ||
+          isSessionHost(session.options.value, user.connectionId))
+    );
   const sessionHasRemoteUsers = (session: BibleReadingSession): boolean =>
     session.connectedUsers.value.some((user) => !user.isSelf);
   const sessionHasNonHostRemoteUsers = (
     session: BibleReadingSession
-  ): boolean =>
-    session.connectedUsers.value.some(
-      (user) =>
-        !user.isSelf &&
-        !isSessionHost(session.options.value, user.userId) &&
-        !isSessionHost(session.options.value, user.connectionId)
-    );
+  ): boolean => {
+    const self = session.connectedUsers.value.find((user) => user.isSelf);
+    return session.connectedUsers.value.some((user) => {
+      if (user.isSelf) return false;
+      if (
+        isSessionHost(session.options.value, user.userId) ||
+        isSessionHost(session.options.value, user.connectionId)
+      ) {
+        return false;
+      }
+      // Another device of the same logged-in user is not a "guest".
+      if (self?.userId && user.userId === self.userId) {
+        return false;
+      }
+      return true;
+    });
+  };
   // Whether this client's view of who's present is worth acting on. We are
   // definitionally present in our own session, so a list that doesn't even
   // include us means the presence channel is broken (it can go permanently
@@ -1620,6 +1657,7 @@ export function createSeedBibleState(
     session.isSynced.value &&
     session.connectedUsers.value.some((user) => user.isSelf);
   effect(() => {
+    presenceSettleTick.value;
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
       if (!session) continue;
@@ -1646,18 +1684,26 @@ export function createSeedBibleState(
       // Two different failures look similar on the presence list:
       //  - Our own connection dropped: `isSynced` goes false, and/or every
       //    other user disappears at once (the OS reports all peers as
-      //    disconnected). Show "you lost/reconnected" toasts.
+      //    disconnected). Show "you lost/rejoined" toasts.
       //  - Only the host dropped: other guests are still visible. Show
       //    host-specific toasts below, not these.
+      // If this device is itself a host (including another of the host's
+      // devices), an empty remote list is "someone else left", not "we
+      // disconnected" — even if `isSynced` blips when that peer drops.
+      const weSeeOurselves = session.connectedUsers.value.some(
+        (user) => user.isSelf
+      );
       const ourConnectionDropped =
-        (sessionsWhereHostWasSeen.has(session.id) && !session.isSynced.value) ||
-        (!locallyHostedSessionIds.has(session.id) &&
-          sessionsWhereOtherGuestsWereSeen.has(session.id) &&
-          !sessionHasRemoteUsers(session) &&
-          session.connectedUsers.value.some((user) => user.isSelf));
+        !sessionWeAreHost(session) &&
+        weSeeOurselves &&
+        !sessionHasRemoteUsers(session) &&
+        sessionsWhereHostWasSeen.has(session.id) &&
+        (!session.isSynced.value ||
+          sessionsWhereOtherGuestsWereSeen.has(session.id));
 
       if (ourConnectionDropped) {
         clearPendingHostDisconnect(session.id);
+        clearPendingPresenceSettle(session.id);
         if (!sessionsWhereWeLostConnection.has(session.id)) {
           sessionsWhereWeLostConnection.add(session.id);
           if (!justResumedFromBackground.value) {
@@ -1675,10 +1721,34 @@ export function createSeedBibleState(
         if (!justResumedFromBackground.value) {
           toast(
             t("session-reconnected", {
-              defaultValue: "You reconnected to the session",
+              defaultValue: "You rejoined the session",
             })
           );
         }
+        if (!locallyHostedSessionIds.has(session.id) && !hostIsConnected) {
+          clearPendingPresenceSettle(session.id);
+          sessionsSettlingAfterSelfReconnect.add(session.id);
+          pendingPresenceSettleTimers.set(
+            session.id,
+            setTimeout(() => {
+              pendingPresenceSettleTimers.delete(session.id);
+              sessionsSettlingAfterSelfReconnect.delete(session.id);
+              presenceSettleTick.value++;
+            }, SELF_RECONNECT_SETTLE_MS)
+          );
+        }
+      }
+
+      if (
+        sessionsSettlingAfterSelfReconnect.has(session.id) &&
+        !hostIsConnected
+      ) {
+        // Presence is still catching up after our own reconnect. Skip
+        // host disconnect/reconnect toasts until it settles.
+        continue;
+      }
+      if (sessionsSettlingAfterSelfReconnect.has(session.id)) {
+        clearPendingPresenceSettle(session.id);
       }
 
       // Never auto-close a session this client created — the host is the
