@@ -87,6 +87,7 @@ function createMockChatSession(
     removeParticipant: vi.fn(),
     getMessageAuthors: vi.fn().mockReturnValue([]),
     context: signal({}),
+    unsentDraft: signal(""),
     ...overrides,
   };
 }
@@ -1619,6 +1620,117 @@ describe("ChatView", () => {
     });
 
     expect(input.value).toBe("My question");
+  });
+
+  it("merges a later composerDraft with typed text instead of replacing it", async () => {
+    const firstPrefill = "For God so loved the world. (John 3:16 NIV)\n\n";
+    const composerDraft = signal(firstPrefill);
+    const chat = createMockChatSession();
+    const state = {
+      app: {
+        openVerseReference: vi.fn().mockResolvedValue(undefined),
+        isMobile: signal(false),
+      },
+      chats: { composerDraft },
+    } as unknown as SeedBibleState;
+
+    await act(async () => {
+      render(<ChatView chat={chat} state={state} />, container);
+      await Promise.resolve();
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    expect(input.value).toBe(firstPrefill);
+
+    const typedQuestion = "how does this connect to";
+    typeIntoInput(input, `${firstPrefill}${typedQuestion}`);
+
+    const secondPrefill = "The LORD is my shepherd. (Psalms 23:1 NIV)\n\n";
+    await act(async () => {
+      composerDraft.value = secondPrefill;
+      await Promise.resolve();
+    });
+
+    expect(input.value).toContain(typedQuestion);
+    expect(input.value).toBe(
+      `${firstPrefill}${typedQuestion}\n\n${secondPrefill}`
+    );
+    expect(composerDraft.value).toBe("");
+  });
+
+  it("keeps typed text after ChatView unmounts and remounts", async () => {
+    const chat = createMockChatSession();
+    const state = createMockState();
+
+    await act(async () => {
+      render(<ChatView chat={chat} state={state} />, container);
+      await Promise.resolve();
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    typeIntoInput(input, "how does this connect to");
+
+    await act(async () => {
+      render(null, container);
+    });
+
+    expect(chat.unsentDraft.value).toBe("how does this connect to");
+
+    await act(async () => {
+      render(<ChatView chat={chat} state={state} />, container);
+      await Promise.resolve();
+    });
+
+    const remountedInput = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    expect(remountedInput.value).toBe("how does this connect to");
+  });
+
+  it("appends Ask AI verse text after typed text when the chat was closed", async () => {
+    const composerDraft = signal("");
+    const chat = createMockChatSession();
+    const state = {
+      app: {
+        openVerseReference: vi.fn().mockResolvedValue(undefined),
+        isMobile: signal(false),
+      },
+      chats: { composerDraft },
+    } as unknown as SeedBibleState;
+
+    await act(async () => {
+      render(<ChatView chat={chat} state={state} />, container);
+      await Promise.resolve();
+    });
+
+    const input = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    const typedQuestion = "how does this connect to";
+    typeIntoInput(input, typedQuestion);
+
+    await act(async () => {
+      render(null, container);
+    });
+
+    const versePrefill =
+      'God called the firmament "sky." (Genesis 1:8 AAB)\n\n';
+    await act(async () => {
+      composerDraft.value = versePrefill;
+      render(<ChatView chat={chat} state={state} />, container);
+      await Promise.resolve();
+    });
+
+    const remountedInput = container.querySelector<HTMLTextAreaElement>(
+      ".sb-chat-view-input"
+    )!;
+    expect(remountedInput.value).toContain(typedQuestion);
+    expect(remountedInput.value).toBe(`${typedQuestion}\n\n${versePrefill}`);
+    expect(composerDraft.value).toBe("");
   });
 
   it("sends a prefilled verse plus the user's question on submit", async () => {

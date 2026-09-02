@@ -403,6 +403,13 @@ export interface ChatSession {
    * a context added to the manager is automatically available here.
    */
   context: ReadonlySignal<LocalChatContext>;
+
+  /**
+   * Unsent text in this chat's compose field. Lives on the session so it
+   * survives ChatView unmounting (clicking a verse closes the floating panel)
+   * and a later Ask AI can append a quote instead of replacing what was typed.
+   */
+  unsentDraft: Signal<string>;
 }
 
 export interface SharedChatSession extends ChatSession {
@@ -467,9 +474,9 @@ export interface ChatsManager {
 
   /**
    * Text waiting to be inserted into the chat compose field. ChatView consumes
-   * a non-empty value once (copies it into the draft, then clears this signal)
-   * so callers like the verse toolbar's Ask AI tool can prefill a question
-   * without owning the compose UI.
+   * a non-empty value once (merges it into the draft if the field already has
+   * content, then clears this signal) so callers like the verse toolbar's Ask
+   * AI tool can prefill a question without owning the compose UI.
    */
   composerDraft: Signal<string>;
 }
@@ -1741,6 +1748,7 @@ function createSharedChatSession(
         participantIdAliases.value
       ),
     context: chatContext,
+    unsentDraft: signal(""),
     isShared: true,
     session,
   };
@@ -2198,6 +2206,7 @@ function createLocalChatSession(
     },
     getMessageAuthors,
     context: chatContext,
+    unsentDraft: signal(""),
   };
 }
 

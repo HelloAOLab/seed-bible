@@ -72,6 +72,19 @@ interface JoinEvent {
 const COMPOSE_INPUT_MAX_LINES = 8;
 
 /**
+ * Combines an incoming Ask AI verse prefill with whatever is already in the
+ * compose field. The verse quote is appended after the user's typed text so a
+ * second Ask AI cannot wipe an unsent draft.
+ */
+function mergeComposerDraft(existing: string, incoming: string): string {
+  if (!existing.trim()) {
+    return incoming;
+  }
+  const prefix = existing.replace(/\n+$/, "") + "\n\n";
+  return `${prefix}${incoming}`;
+}
+
+/**
  * Sizes the compose textarea to its content, capped at
  * {@link COMPOSE_INPUT_MAX_LINES} lines (overflow then scrolls).
  */
@@ -603,7 +616,10 @@ export function ChatView(props: ChatViewProps) {
     toolCallMessages,
     chat.totalParticipants.value
   );
-  const draft = useSignal("");
+  const localDraft = useSignal("");
+  // Prefer the session draft so typed text survives ChatView unmounting when
+  // the user clicks a verse (that closes the floating panel).
+  const draft = chat.unsentDraft ?? localDraft;
   const draftText = draft.value;
   const cursorPosition = useSignal(0);
   const isSubmitting = useSignal(false);
@@ -714,7 +730,7 @@ export function ChatView(props: ChatViewProps) {
   }, []);
 
   // Verse-toolbar Ask AI (and similar) stash text on `chats.composerDraft`.
-  // Copy it into the local draft once, then clear the signal so a later
+  // Merge it into the local draft once, then clear the signal so a later
   // chat switch doesn't replay the same prefill.
   useEffect(() => {
     const composerDraft = state.chats?.composerDraft;
@@ -726,14 +742,15 @@ export function ChatView(props: ChatViewProps) {
       if (!value) {
         return;
       }
-      draft.value = value;
+      const merged = mergeComposerDraft(draft.value, value);
+      draft.value = merged;
       composerDraft.value = "";
       window.queueMicrotask(() => {
         const input = inputRef.current;
         if (!input) {
           return;
         }
-        const caret = value.length;
+        const caret = merged.length;
         input.setSelectionRange(caret, caret);
         cursorPosition.value = caret;
         if (!state.app.isMobile.value) {

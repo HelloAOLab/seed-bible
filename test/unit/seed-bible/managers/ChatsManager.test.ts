@@ -356,6 +356,16 @@ describe("createChatsManager", () => {
     );
   });
 
+  it("createLocalSession() exposes an empty unsentDraft for the compose field", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+
+    expect(session.unsentDraft.value).toBe("");
+    session.unsentDraft.value = "how does this connect to";
+    expect(session.unsentDraft.value).toBe("how does this connect to");
+  });
+
   it("createLocalSession() exposes lastMessageRead and markAsRead()", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";

@@ -235,6 +235,7 @@ function createMockChatSession(
     removeParticipant: vi.fn(),
     getMessageAuthors: vi.fn().mockReturnValue([]),
     context: signal({}),
+    unsentDraft: signal(""),
     ...overrides,
   };
 }
