@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.7.1 — 2026-09-02
+
+### ✨ Added
+
 - Analytics for common playlist actions like creating and finishing playlists.
 - Add an Ask AI action to the verse toolbar: select verses, pick an agent when more than one is available, and open (or reuse) a chat with those verses already in the input.
 - Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
@@ -33,8 +43,6 @@
 - Fix Bible reference auto-linking (in chat and notes) rejecting valid verses in translations that don't follow Protestant versification, while still catching genuinely out-of-range references like a nonexistent chapter number. ([#1695](https://github.com/HelloAOLab/seed-bible/pull/1695))
 - Fix several Today screen elements (the resume card, section headers, search box, and timespan filter) using the wrong theme tokens, so they didn't correctly follow the light/dark color scheme. ([#1710](https://github.com/HelloAOLab/seed-bible/pull/1710))
 - Pin the session settings modal's action buttons to the bottom instead of letting them scroll out of view. ([#1712](https://github.com/HelloAOLab/seed-bible/pull/1712))
-
-### 🗑️ Removed
 
 ## v1.7.0 — 2026-08-31
 
