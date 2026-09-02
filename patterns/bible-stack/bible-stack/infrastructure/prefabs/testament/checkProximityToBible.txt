@@ -1,0 +1,41 @@
+const dimension = os.getCurrentDimension();
+const mainWord = getBot("isMainWord", true);
+const radius = 4;
+let currentPosition;
+if(thisBot.tags.transformer)
+{
+    const transformerBot = getBot(byID(thisBot.tags.transformer));
+
+    const transformerBotPosition = new Vector2(
+        (transformerBot.masks[dimension + "X"] ?? transformerBot.tags[dimension + "X"]),
+        (transformerBot.masks[dimension + "Y"] ?? transformerBot.tags[dimension + "Y"])
+    )
+    currentPosition = new Vector2(
+        thisBot.masks[dimension + "X"] ?? thisBot.tags[dimension + "X"],
+        thisBot.masks[dimension + "Y"] ?? thisBot.tags[dimension + "Y"]
+    )
+    currentPosition = new Vector2(
+        currentPosition.x + transformerBotPosition.x,
+        currentPosition.y + transformerBotPosition.y
+    )
+}
+else
+{
+    currentPosition = new Vector2(
+        thisBot.masks[dimension + "X"] ?? thisBot.tags[dimension + "X"],
+        thisBot.masks[dimension + "Y"] ?? thisBot.tags[dimension + "Y"]
+    )
+}
+const mainWordPosition = new Vector2(
+    mainWord.masks[dimension + "X"] ?? mainWord.tags[dimension + "X"],
+    mainWord.masks[dimension + "Y"] ?? mainWord.tags[dimension + "Y"]
+)
+const distanceBetweenBotAndBible = Vector2.distanceBetween(mainWordPosition, currentPosition);
+
+if(distanceBetweenBotAndBible <= radius)
+{
+    if(thisBot.tryToIncludeInTheBible())
+    {
+        mainWord.resizeBible();
+    }
+}

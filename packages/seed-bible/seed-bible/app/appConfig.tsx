@@ -17,7 +17,12 @@ export interface BrandingConfig {
   icon: string;
   websiteUrl: string;
   disabledToolbarTools?: string[];
+  defaultTranslationId?: string;
 }
+
+// Injected from Vite
+declare const __BRANDING_CONFIG__: BrandingConfig | undefined;
+
 export interface AppConfig {
   /**
    * Path prefix this deployment is mounted under, e.g. "/d/branch-develop".
@@ -45,6 +50,59 @@ export interface AppConfig {
   acceptedLanguages: string[];
   /** Client branding configuration. */
   branding?: BrandingConfig;
+
+  /**
+   * The exact request path (including deployment prefix and query string)
+   * the SSR `render()` call that produced this HTML was invoked with — i.e.
+   * `RenderOptions.path` in `entry-ssr.tsx`. The client's hydration gate
+   * (`app/hydrationGate.ts`) compares this against the live URL before
+   * deciding to hydrate rather than render.
+   *
+   * Absent whenever this HTML never actually went through `render()` — a
+   * non-whitelisted branch's raw pre-rendered fallback, or `renderAndRespond`'s
+   * catch-all fallback in `server/index.ts`, never substitute
+   * `<!-- CONFIG_JSON -->` at all, so `readInjectedConfig()`'s `JSON.parse`
+   * fails and this stays absent (via `DEFAULT_APP_CONFIG`) rather than lying
+   * about having a real render behind it.
+   */
+  renderedForPath?: string;
+
+  /**
+   * The commit whose SSR bundle actually produced this HTML — that bundle's
+   * own `__GIT_COMMIT__` build constant, not anything derived from the
+   * request URL.
+   *
+   * Ordinarily equal to the requested branch's own latest commit. Differs
+   * when the requested branch isn't in the host server's
+   * `ALLOWED_SSR_BRANCHES` whitelist and `DEFAULT_SSR_BRANCH` rendered the
+   * page instead (see `server/index.ts`) — the DOM was then built by a
+   * different branch's (and near-certainly different commit's) component
+   * code than the one the client is about to hydrate with. The hydration
+   * gate (`app/hydrationGate.ts`) compares this against the client's own
+   * `__GIT_COMMIT__` and refuses to hydrate on a mismatch.
+   *
+   * Can also be absent for the same reasons `renderedForPath` can be
+   * absent — an older server build that predates this field, for instance.
+   * Unlike `renderedForPath`/`ssrChapterContentSettled`, an absent value
+   * here is treated as a mismatch rather than given the benefit of the
+   * doubt: an SSR document with no verifiable build identity is exactly the
+   * case this field exists to catch, so the gate declines to hydrate onto
+   * it.
+   */
+  renderedByCommit?: string;
+
+  /**
+   * False only when the SSR-only initial-chapter-load timeout
+   * (`SSR_INITIAL_CHAPTER_TIMEOUT_MS` in `BibleReadingManager.tsx`) fired for
+   * at least one tab, instead of the load settling normally — meaning this
+   * document has reader chrome but is missing verse text a live client would
+   * eventually show. Hydrating onto that would freeze the gap in place
+   * rather than let the client's own (unbounded) fetch fill it in.
+   *
+   * Defaults to `true` so a config produced by an older server build that
+   * predates this field doesn't block hydration purely on version skew.
+   */
+  ssrChapterContentSettled: boolean;
 }
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
@@ -53,6 +111,12 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   renderedAsMobile: false,
   renderedAsWebKit: false,
   acceptedLanguages: [],
+  branding: import.meta.env.VITEST
+    ? undefined
+    : typeof __BRANDING_CONFIG__ !== "undefined"
+      ? __BRANDING_CONFIG__
+      : undefined,
+  ssrChapterContentSettled: true,
 };
 
 /**
@@ -69,12 +133,16 @@ export function readInjectedConfig(): AppConfig {
     return DEFAULT_APP_CONFIG;
   }
   try {
-    return { ...DEFAULT_APP_CONFIG, ...JSON.parse(el.textContent) };
-  } catch {
+    const parsed = JSON.parse(el.textContent);
+    return {
+      ...DEFAULT_APP_CONFIG,
+      ...parsed,
+    };
+  } catch (error) {
+    console.error("CONFIG JSON PARSE FAILED:", error);
     return DEFAULT_APP_CONFIG;
   }
 }
-
 /** Prefixes a root-relative app path with the deployment base path. */
 export function withBasePath(config: AppConfig, path: string): string {
   if (!config.basePath) return path;

@@ -395,14 +395,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  width: auto;
 }
 
 .sb-rpd-footer .sb-rp-button {
   width: 100%;
-}
-
-.sb-rpd-footer-actions .sb-rp-button {
-  width: auto;
 }
 
 /* Edit / delete for the open plan. Kept visually quiet — they sit alongside

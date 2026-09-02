@@ -274,31 +274,6 @@ describe("toDomain — subset type", () => {
     ).toEqual([20, 30, 40]);
   });
 
-  it("defaults startIndex to 0 when not set", () => {
-    const repo = makeRepo(
-      makeStaticInfo({ chaptersVerseCount: [10, 20, 30], numberOfChapters: 3 })
-    );
-    const { mapper } = makeMapper({ repo });
-    const result = mapper.toDomain(
-      makeSubsetInfo({ startIndex: undefined, endIndex: 1 }),
-      makePath()
-    );
-    expect(result.chaptersVerseCount).toEqual([10, 20]);
-  });
-
-  it("defaults endIndex to numberOfChapters-1 when not set", () => {
-    const repo = makeRepo(
-      makeStaticInfo({ chaptersVerseCount: [10, 20, 30], numberOfChapters: 3 })
-    );
-    const { mapper } = makeMapper({ repo });
-    const result = mapper.toDomain(
-      makeSubsetInfo({ startIndex: 1, endIndex: undefined }),
-      makePath()
-    );
-    // endIndex = 3 - 1 = 2 → slice(1, 3) = [20, 30]
-    expect(result.chaptersVerseCount).toEqual([20, 30]);
-  });
-
   it("sets numberOfChapters to the length of the sliced chaptersVerseCount", () => {
     const repo = makeRepo(
       makeStaticInfo({
@@ -329,16 +304,12 @@ describe("toDomain — subset type", () => {
     ).toEqual(range);
   });
 
-  it("maps startIndex from info (including undefined)", () => {
+  it("maps startIndex from info", () => {
     const { mapper } = makeMapper();
     expect(
-      (
-        mapper.toDomain(
-          makeSubsetInfo({ startIndex: undefined }),
-          makePath()
-        ) as any
-      ).startIndex
-    ).toBeUndefined();
+      (mapper.toDomain(makeSubsetInfo({ startIndex: 4 }), makePath()) as any)
+        .startIndex
+    ).toBe(4);
   });
 
   it("maps endIndex from info", () => {

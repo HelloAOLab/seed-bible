@@ -1,3 +1,4 @@
+import "./PaneLayout.inline.css";
 import "./PaneLayout.css";
 import { PaneHeader } from "../PaneHeader/PaneHeader";
 import type { Pane } from "../../managers/PanesManager";

@@ -141,10 +141,19 @@ describe("createLoginManager", () => {
     warnSpy.mockRestore();
   });
 
-  /** Persists a session key so a freshly-created manager authenticates on init. */
+  /**
+   * Persists a session key so a freshly-created manager authenticates on
+   * init, and — mirroring the real app's post-mount `hydrateLocalConfig()`
+   * call, which always runs well before a user can complete an actual login
+   * — hydrates `localConfig` from storage immediately, so login/adoption
+   * behavior can be tested against real saved local config the same way it
+   * would run in practice.
+   */
   function createAuthenticatedManager(): LoginManager {
     localStorage.setItem("sessionKey", SESSION_KEY);
-    return createLoginManager({ os });
+    const manager = createLoginManager({ os });
+    manager.hydrateLocalConfig();
+    return manager;
   }
 
   describe("login flow", () => {
@@ -512,6 +521,44 @@ describe("createLoginManager", () => {
       expect(localStorage.getItem("connectionKey")).toBe(null);
     });
 
+    it("opens the login screen so the user can sign back in", async () => {
+      // Forced sign-out only happens when there was a real session, so offering
+      // the login UI is a convenience rather than surprising an anonymous user.
+      const manager = await signOutViaGetUserInfo("session_expired");
+
+      expect(manager.isLoginOpen.value).toBe(true);
+    });
+
+    it("closes the login screen when the user dismisses it after a forced sign-out", async () => {
+      const manager = await signOutViaGetUserInfo("session_expired");
+      expect(manager.isLoginOpen.value).toBe(true);
+
+      await manager.cancelLogin();
+
+      expect(manager.isLoginOpen.value).toBe(false);
+    });
+
+    it("closes the login screen when the user signs back in after a forced sign-out", async () => {
+      const manager = await signOutViaGetUserInfo("session_expired");
+      expect(manager.isLoginOpen.value).toBe(true);
+
+      // The forced-sign-out path left getUserInfo returning failure; restore a
+      // healthy response so the new login can finish.
+      getUserInfoMock.mockResolvedValue({
+        success: true,
+        email: EMAIL,
+        userId: USER_ID,
+      });
+
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success)
+        throw new Error("expected login request to succeed");
+      await manager.submitLoginCode("123456", request);
+
+      await waitFor(() => manager.userId.value === USER_ID);
+      expect(manager.isLoginOpen.value).toBe(false);
+    });
+
     it("does not call revokeSession when signing out for a dead session", async () => {
       // The session is already gone server side, so the round trip could only fail.
       await signOutViaGetUserInfo("session_expired");
@@ -662,6 +709,8 @@ describe("createLoginManager", () => {
 
       // Nothing expired here, so the message must not say so.
       expect(manager.sessionEnded.value?.reason).toBe("signed_out");
+      // Same convenience as any other forced sign-out: they had a stored session.
+      expect(manager.isLoginOpen.value).toBe(true);
     });
 
     it("leaves the user signed out rather than half-authenticated", () => {
@@ -702,6 +751,8 @@ describe("createLoginManager", () => {
 
       expect(os.sessionKey.value).toBe(null);
       expect(manager.sessionEnded.value).toBe(null);
+      // Deliberate logout is not a forced sign-out — don't push the login UI.
+      expect(manager.isLoginOpen.value).toBe(false);
     });
 
     it("signs out locally even when revokeSession rejects", async () => {
@@ -1223,7 +1274,7 @@ describe("createLoginManager", () => {
   });
 
   describe("localConfig (anonymous device-local config)", () => {
-    it("reads a previously-saved local config on construction", () => {
+    it("starts empty on construction, matching SSR's lack of localStorage, even with a saved config on disk", () => {
       localStorage.setItem(
         "sb-profile-config-local",
         JSON.stringify({ fontSize: "XL" })
@@ -1231,7 +1282,47 @@ describe("createLoginManager", () => {
 
       const manager = createLoginManager({ os });
 
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("hydrateLocalConfig() applies a previously-saved local config", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL" })
+      );
+
+      const manager = createLoginManager({ os });
+      manager.hydrateLocalConfig();
+
       expect(manager.localConfig.value).toEqual({ fontSize: "XL" });
+    });
+
+    it("hydrateLocalConfig() merges the disk read under the current in-memory value, not over it", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL", uiSize: "L" })
+      );
+      const manager = createLoginManager({ os });
+      manager.hydrateLocalConfig();
+      // Sets fontSize in memory (and, via the persist effect, on disk too).
+      manager.localConfig.value = { fontSize: "S", uiSize: "L" };
+
+      // Simulate disk changing out from under this instance (e.g. another
+      // tab writing concurrently) without going through this manager, so
+      // the in-memory value above is untouched by it.
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL", newKey: "z" })
+      );
+      manager.hydrateLocalConfig();
+
+      // The in-memory fontSize ("S") wins over disk's stale value ("XL");
+      // disk's new key is still picked up; the in-memory-only key survives.
+      expect(manager.localConfig.value).toEqual({
+        fontSize: "S",
+        newKey: "z",
+        uiSize: "L",
+      });
     });
 
     it("persists localConfig writes to localStorage", () => {

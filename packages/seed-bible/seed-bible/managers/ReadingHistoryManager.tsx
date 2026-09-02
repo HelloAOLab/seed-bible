@@ -572,6 +572,127 @@ function findMostRecentReadingEvent(
   return null;
 }
 
+/** Reading events grouped under a caller-supplied day key. */
+export type ReadingEventsByDay = Map<string, ReadingEvent[]>;
+
+/** One summary per day key, over the events in {@link ReadingEventsByDay}. */
+export type DailyReadingHistorySummaries = Map<string, ReadingHistorySummary>;
+
+export interface DailyReadingHistory {
+  /** Every fetched event, flattened across readers. */
+  events: ReadingEvent[];
+  /** Only days that had at least one qualifying event appear. */
+  eventsByDay: ReadingEventsByDay;
+  summariesByDay: DailyReadingHistorySummaries;
+  /** Summary over every fetched event, not just the bucketed ones. */
+  total: ReadingHistorySummary;
+}
+
+const SECONDS_PER_DAY = 60 * 60 * 24;
+
+/**
+ * Fetches every reader's events for a window and buckets them into calendar
+ * days, summarizing each day and the window as a whole.
+ *
+ * This is the shape both reading-history timelines need — the Today screen's
+ * and Scripture Map's — which had drifted into two near-identical copies of the
+ * same loop.
+ *
+ * Summarizing a year of days is enough work to drop frames, so it yields to the
+ * event loop every `yieldEvery` days. That makes this async purely for
+ * cooperativeness, not because the work itself needs it.
+ *
+ * Takes a `fetchEvents` function rather than the `os` client so callers can
+ * supply an already-bound fetcher (and tests a plain fake).
+ */
+export async function loadDailyReadingHistory(options: {
+  fetchEvents: (
+    readerId: string,
+    startSeconds: number,
+    endSeconds: number
+  ) => Promise<Iterable<ReadingEvent>>;
+  readerIds: readonly string[];
+  /** Day keys in calendar order, starting at `startSeconds`. */
+  dayKeys: readonly string[];
+  startSeconds: number;
+  endSeconds: number;
+  /** Events shorter than this are ignored entirely. Defaults to one minute. */
+  minDurationSeconds?: number;
+  /** Days summarized between yields. Defaults to 30. */
+  yieldEvery?: number;
+}): Promise<DailyReadingHistory> {
+  const {
+    fetchEvents,
+    readerIds,
+    dayKeys,
+    startSeconds,
+    endSeconds,
+    minDurationSeconds = 60,
+    yieldEvery = 30,
+  } = options;
+
+  const eventsByDay: ReadingEventsByDay = new Map();
+  const summariesByDay: DailyReadingHistorySummaries = new Map();
+
+  if (readerIds.length === 0) {
+    return {
+      events: [],
+      eventsByDay,
+      summariesByDay,
+      total: calculateReadingHistorySummary([]),
+    };
+  }
+
+  const perReader = await Promise.all(
+    readerIds.map((readerId) => fetchEvents(readerId, startSeconds, endSeconds))
+  );
+  const events = Array.from(flat(perReader));
+
+  for (const event of events) {
+    if (event.end - event.start < minDurationSeconds) {
+      continue;
+    }
+
+    const dayIndex = Math.floor((event.start - startSeconds) / SECONDS_PER_DAY);
+    if (dayIndex < 0 || dayIndex >= dayKeys.length) {
+      continue;
+    }
+
+    const key = dayKeys[dayIndex];
+    if (!key) {
+      continue;
+    }
+
+    let dayEvents = eventsByDay.get(key);
+    if (!dayEvents) {
+      dayEvents = [];
+      eventsByDay.set(key, dayEvents);
+    }
+    dayEvents.push(event);
+  }
+
+  const yieldToMain = () =>
+    new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+  let summarized = 0;
+  for (const [dayKey, dayEvents] of eventsByDay) {
+    summariesByDay.set(dayKey, calculateReadingHistorySummary(dayEvents));
+    summarized++;
+    if (summarized % yieldEvery === 0) {
+      await yieldToMain();
+    }
+  }
+
+  await yieldToMain();
+
+  return {
+    events,
+    eventsByDay,
+    summariesByDay,
+    total: calculateReadingHistorySummary(events),
+  };
+}
+
 export interface ReadingHistoryManager {
   saveReadingHistory: (
     bookId: string,

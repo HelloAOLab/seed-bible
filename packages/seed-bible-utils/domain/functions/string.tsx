@@ -1,4 +1,12 @@
-export type CapitalizeFirstLetterType = (text: string) => string;
+/**
+ * `CapitalizeFirstLetter` moved to the core package (see `./colors` for why the
+ * import targets a concrete core file). The other two helpers are not core's
+ * business and stay here.
+ */
+export {
+  CapitalizeFirstLetter,
+  type CapitalizeFirstLetterType,
+} from "@packages/seed-bible/seed-bible/managers/Strings";
 
 export const applyTranslationRule = (
   rule: string,
@@ -10,10 +18,6 @@ export const applyTranslationRule = (
   );
 };
 type FormatNumberToUSDCurrencyType = (params: { value: number }) => string;
-
-export const CapitalizeFirstLetter: CapitalizeFirstLetterType = (text) => {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-};
 
 export const FormatNumberToUSDCurrency: FormatNumberToUSDCurrencyType = ({
   value,
