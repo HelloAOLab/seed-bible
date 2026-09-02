@@ -1,33 +1,23 @@
-// // import type { TabernacleService } from "../../../application/services/TabernacleService";
-// import type { PieceKey } from "tabernacle.domain.models.piece";
-// import type { VerseMenuClickHandlerPort } from "tabernacle.application.ports.in.scriptureInteraction";
+import type { ScriptureInteractionPort } from "../../../application/ports/in/scriptureInteraction";
+import type { ExperienceKey } from "../../../domain/models/experience";
+import type { PieceKey } from "../../../domain/models/piece";
 
-// interface ControllerParams {
-//   verseMenuClickHandlerPort: VerseMenuClickHandlerPort;
-//   // tabernacleService: TabernacleService;
-//   // navigate: (bookId: string, chapter: number) => void;
-// }
+interface ControllerParams {
+  scriptureInteractionPort: ScriptureInteractionPort;
+}
 
-// export class ScriptureInteractionController {
-//   #verseMenuClickHandlerPort: ControllerParams["verseMenuClickHandlerPort"];
-//   // #tabernacleService: TabernacleService;
-//   // #navigate: (bookId: string, chapter: number) => void;
+export class ScriptureInteractionController {
+  #scriptureInteractionPort: ControllerParams["scriptureInteractionPort"];
 
-//   constructor({
-//     // tabernacleService,
-//     // navigate,
-//     verseMenuClickHandlerPort,
-//   }: ControllerParams) {
-//     // this.#tabernacleService = tabernacleService;
-//     // this.#navigate = navigate;
+  constructor({ scriptureInteractionPort }: ControllerParams) {
+    this.#scriptureInteractionPort = scriptureInteractionPort;
+  }
 
-//     this.#verseMenuClickHandlerPort = verseMenuClickHandlerPort;
-//   }
+  handlePieceFocusRequest(key: PieceKey) {
+    this.#scriptureInteractionPort.handlePieceFocusRequest(key);
+  }
 
-//   handleVerseMenuItemClick(key: PieceKey): void {
-//     // this.#tabernacleService.handleGridClick();
-//     // this.#navigate(bookId, chapter);
-
-//     this.#verseMenuClickHandlerPort.handleVerseMenuItemClick(key);
-//   }
-// }
+  handleExperienceShowRequest(experience: ExperienceKey) {
+    this.#scriptureInteractionPort.handleExperienceShowRequest(experience);
+  }
+}

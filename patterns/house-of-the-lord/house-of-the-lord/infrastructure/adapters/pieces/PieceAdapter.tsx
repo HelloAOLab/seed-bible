@@ -1,8 +1,8 @@
 // import type { Point3D } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/commonTypes";
-import type { PiecePositionUpdaterPort } from "../../../application/ports/out/piecePosition";
-import type { Piece } from "../../../domain/models/piece";
+import type { Piece, PieceVisibilityState } from "../../../domain/models/piece";
 import type { Vector3 } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { PieceAdapterPort } from "../../../application/ports/out/PieceAdapter";
 // import type { Piece } from "../../domain/models/piece";
 
 interface AdapterParams {
@@ -10,7 +10,7 @@ interface AdapterParams {
   getDimension: () => string;
 }
 
-export class PieceAdapter implements PiecePositionUpdaterPort {
+export class PieceAdapter implements PieceAdapterPort {
   #pieceMapper: AdapterParams["pieceMapper"];
   #getDimension: AdapterParams["getDimension"];
 
@@ -31,5 +31,13 @@ export class PieceAdapter implements PiecePositionUpdaterPort {
       [dimension + "Y"]: position.y,
       [dimension + "Z"]: position.z,
     });
+  }
+
+  getCurrentState(piece: Piece): PieceVisibilityState {
+    const bot = this.#pieceMapper.toInfrastructure(piece);
+    if (!bot) {
+      throw new Error("PieceAdapter: bot not found at ");
+    }
+    return bot.tags.state;
   }
 }

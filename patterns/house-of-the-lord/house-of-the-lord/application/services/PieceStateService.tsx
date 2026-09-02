@@ -3,7 +3,12 @@ import type {
   PieceStateConfigProviderPort,
 } from "../ports/out/PieceState";
 import type { ReadingStatePort } from "../ports/in/readingState";
-import type { ExperienceKey } from "../../domain/models/experience";
+import type { PieceStatePort as PieceStateServicePort } from "../ports/in/PieceState";
+import {
+  EXPERIENCE_PIECE_KEYS,
+  type ExperienceKey,
+} from "../../domain/models/experience";
+import { PIECE_VISIBILITY_STATES } from "../../domain/models/piece";
 
 interface PieceStateServiceParams {
   pieceState: PieceStatePort;
@@ -12,7 +17,7 @@ interface PieceStateServiceParams {
   getExperienceKey: () => ExperienceKey;
 }
 
-export class PieceStateService {
+export class PieceStateService implements PieceStateServicePort {
   #pieceState: PieceStatePort;
   #pieceStateConfigProviderPort: PieceStateConfigProviderPort;
   #readingState: ReadingStatePort;
@@ -47,5 +52,19 @@ export class PieceStateService {
       const state = pieceStates[key]!;
       this.#pieceState.applyMeshState({ experience, key, state });
     }
+  }
+
+  async showAll() {
+    const experience = this.#getExperienceKey();
+    const keys = EXPERIENCE_PIECE_KEYS[experience];
+    await Promise.all(
+      keys.map((key) =>
+        this.#pieceState.applyMeshState({
+          experience,
+          key,
+          state: PIECE_VISIBILITY_STATES.SHOWN,
+        })
+      )
+    );
   }
 }

@@ -22,18 +22,17 @@ import { thisTypedBot as redCurtainBot } from "../prefabs/pieces/main/red-curtai
 import { thisTypedBot as ringsBot } from "../prefabs/pieces/main/rings/botAdapter";
 import { thisTypedBot as tableOfShowbreadBot } from "../prefabs/pieces/main/table-of-showbread/botAdapter";
 import { thisTypedBot as wallsBot } from "../prefabs/pieces/main/walls/botAdapter";
-// import { PieceStateService } from "../../application/services/PieceStateService";
+import { PieceStateService } from "../../application/services/PieceStateService";
 import { PieceInteractionService } from "../../application/services/PieceInteractionService";
 import { EnvironmentInteractionService } from "../../application/services/EnvironmentInteractionService";
 import { VerseReferenceConfigProvider } from "../config/verseReference/VerseReferenceConfigProvider";
 import { ReadingStateService } from "../../application/services/ReadingStateService";
 import { PieceStateAdapter } from "../adapters/pieces/PieceStateAdapter";
 import { PieceHighlightAdapter } from "../adapters/pieces/PieceHighlightAdapter";
-import { ContextMenuRendererAdapter } from "../adapters/pieces/ContextMenuRendererAdapter";
 import { PiecesInteractionController } from "../controllers/pieces/PiecesInteractionController";
 import { EnvironmentInteractionController } from "../controllers/environment/EnvironmentInteractionController";
-// import { ScriptureInteractionService } from "../../application/services/ScriptureInteractionService";
-// import { ScriptureInteractionController } from "../controllers/scripture/ScriptureInteractionController";
+import { ScriptureInteractionService } from "../../application/services/ScriptureInteractionService";
+import { ScriptureInteractionController } from "../controllers/scripture/ScriptureInteractionController";
 import { ExperienceService } from "../../application/services/ExperienceService";
 import { PiecesSetUpService } from "../../application/services/PiecesSetUpService";
 import { EnvironmentSetUpService } from "../../application/services/EnvironmentSetUpService";
@@ -54,17 +53,27 @@ import { HitboxLifecycleAdapter } from "../adapters/pieces/HitboxLifecycleAdapte
 import { BaseEventManager } from "../../application/services/BaseEventManager";
 import type { InfrastructureEventMap } from "../models/events";
 import { HitboxMapper } from "../mappers/HitboxMapper";
-import {
-  EXPERIENCE_KEYS,
-  type ExperienceKey,
-} from "../../domain/models/experience";
-// import { PieceStateConfigProvider } from "../config/pieceState/PieceStateConfigProvider";
+import { EXPERIENCE_KEYS } from "../../domain/models/experience";
+import { PieceStateConfigProvider } from "../config/pieceState/PieceStateConfigProvider";
 import { VFXBotFactory } from "../adapters/vfx/VFXBotFactory";
 import { thisTypedBot as coneBot } from "../prefabs/pieces/vfx/cone/botAdapter";
 import { thisTypedBot as glowBot } from "../prefabs/pieces/vfx/glow/botAdapter";
 import { ColorLerper } from "../adapters/casualos/ColorLerper";
-import type { PieceBot } from "../models/casualos";
+import type { Message, PieceBot } from "../models/casualos";
+import { ToExperienceKey, ToPieceKeyOf } from "../../domain/functions/keys";
 import { thisTypedBot as entrypointBot } from "../entrypoints/casualos/botAdapter";
+import { PieceFocusService } from "../../application/services/PieceFocusService";
+import { PieceHighlightService } from "../../application/services/PieceHighlightService";
+import { NavMenuStateService } from "../../application/services/NavMenuStateService";
+import type { DomainEventMap } from "../../domain/models/events";
+import { NAV_MENU_LEVELS } from "../../domain/models/navigation";
+import { NavMenuRendererAdapter } from "../adapters/navigation/NavMenuRendererAdapter";
+import { HostNotifierAdapter } from "../adapters/seed-bible/HostNotifierAdapter";
+import { ScriptureNavigationAdapter } from "../adapters/seed-bible/ScriptureNavigationAdapter";
+import { ScriptureNavigationService } from "../../application/services/ScriptureNavigationService";
+import { NavMenuController } from "../controllers/navMenu/NavMenuController";
+import { PieceCatalogConfigProvider } from "../config/pieceCatalog/PieceCatalogConfigProvider";
+import { BookNameConfigProvider } from "../config/bookName/BookNameConfigProvider";
 
 let initialized = false;
 
@@ -92,7 +101,7 @@ const mainPieces: {
   walls: wallsBot,
 };
 
-export const bootstrapExtension = () => {
+export const bootstrapExtension = async () => {
   if (initialized) return;
 
   initialized = true;
@@ -105,16 +114,28 @@ export const bootstrapExtension = () => {
   }
   const getDimension = () => DIMENSION;
 
-  const EXPERIENCE = configBot.tags.experience as ExperienceKey;
+  // Both tags come from the query the reader builds the iframe URL with, so they
+  // are narrowed here rather than asserted. The experience goes first: which
+  // piece keys are valid depends on it.
+  const EXPERIENCE = ToExperienceKey(configBot.tags.experience);
   if (!EXPERIENCE) {
     throw new Error(
-      "house-of-the-lord bootstrap: experience not provided in configBot tags"
+      `house-of-the-lord bootstrap: unknown experience in configBot tags: "${configBot.tags.experience}"`
     );
   }
   const getExperienceKey = () => EXPERIENCE;
-  const HIGHLIGHTED_PIECE = configBot.tags.highlightedPiece as
-    | PieceKey
-    | undefined;
+
+  // An unusable highlight is not fatal the way a missing experience is — the
+  // portal still opens, just without anything focused.
+  const HIGHLIGHTED_PIECE = ToPieceKeyOf(
+    EXPERIENCE,
+    configBot.tags.highlightedPiece
+  );
+  if (configBot.tags.highlightedPiece && !HIGHLIGHTED_PIECE) {
+    console.warn(
+      `house-of-the-lord bootstrap: ignored highlightedPiece "${configBot.tags.highlightedPiece}", not a piece of "${EXPERIENCE}"`
+    );
+  }
 
   // 1. Adapters / config providers
   const colorLerper = new ColorLerper();
@@ -124,10 +145,17 @@ export const bootstrapExtension = () => {
       glow: glowBot,
     },
   });
-  const readingStateService = new ReadingStateService();
+  const domainEventBus = new BaseEventManager<DomainEventMap>();
+  const readingStateService = new ReadingStateService({
+    eventBus: domainEventBus,
+  });
   const verseReferenceConfigProvider = new VerseReferenceConfigProvider();
-  // const pieceStateConfigProvider = new PieceStateConfigProvider();
+  const pieceStateConfigProvider = new PieceStateConfigProvider();
   const loggerAdapter = new LoggerAdapter();
+  const pieceCatalogConfigProvider = new PieceCatalogConfigProvider();
+  const bookNameConfigProvider = new BookNameConfigProvider();
+  const hostNotifierAdapter = new HostNotifierAdapter();
+  const scriptureNavigationAdapter = new ScriptureNavigationAdapter();
   const pieceMapper = new PieceMapper();
   const piecesProvider = new PiecesProvider({
     piecesMap: {
@@ -167,7 +195,7 @@ export const bootstrapExtension = () => {
       },
     },
   });
-  const piecePositionAdapter = new PieceAdapter({
+  const pieceAdapter = new PieceAdapter({
     getDimension,
     pieceMapper,
   });
@@ -188,11 +216,6 @@ export const bootstrapExtension = () => {
     pieceState: pieceStateAdapter,
     layerProvider: layerConfigProvider,
   });
-  const contextMenuRendererAdapter = new ContextMenuRendererAdapter({
-    getDimension,
-    piecesProvider,
-    pieceMapper,
-  });
   const piecesSequenceAdapter = new PiecesSequenceAdapter({
     pieceState: pieceStateAdapter,
     layerProvider: layerConfigProvider,
@@ -210,33 +233,51 @@ export const bootstrapExtension = () => {
     hitboxProviderPort: hitboxConfigProvider,
     eventManager,
   });
-
   // 2. Application service
   const hitboxLifecycleService = new HitboxLifecycleService({
     piecesProviderPort: piecesProvider,
     hitboxProviderPort: hitboxConfigProvider,
     hitboxSpawnerPort: hitboxLifecycleAdapter,
   });
-  // const pieceStateService = new PieceStateService({
-  //   pieceState: pieceStateAdapter,
-  //   pieceStateConfigProviderPort: pieceStateConfigProvider,
-  //   readingState: readingStateService,
-  //   getExperienceKey,
-  // });
-  const pieceInteractionService = new PieceInteractionService({
-    pieceHighlight: pieceHighlightAdapter,
-    contextMenu: contextMenuRendererAdapter,
-    verseReferenceConfigProviderPort: verseReferenceConfigProvider,
+  const pieceStateService = new PieceStateService({
+    pieceState: pieceStateAdapter,
+    pieceStateConfigProviderPort: pieceStateConfigProvider,
     readingState: readingStateService,
     getExperienceKey,
   });
-  const environmentInteractionService = new EnvironmentInteractionService({
+  const navMenuStateService = new NavMenuStateService({
+    eventBus: domainEventBus,
+    initialState: {
+      isOpen: false,
+      level: NAV_MENU_LEVELS.PIECES,
+      selectedPiece: HIGHLIGHTED_PIECE ?? null,
+      experience: EXPERIENCE,
+      reading: readingStateService.getCurrentReading(),
+    },
+  });
+  const pieceHighlightService = new PieceHighlightService({
+    getExperienceKey,
     pieceHighlight: pieceHighlightAdapter,
-    contextMenu: contextMenuRendererAdapter,
+  });
+  const pieceFocusService = new PieceFocusService({
+    pieceHighlightPort: pieceHighlightService,
+    navMenuStatePort: navMenuStateService,
+    pieceStatePort: pieceStateService,
+  });
+  const pieceInteractionService = new PieceInteractionService({
+    pieceFocusPort: pieceFocusService,
+    piecesProvider: piecesProvider,
+    pieceAdapterPort: pieceAdapter,
+    getExperience: getExperienceKey,
+    loggerPort: loggerAdapter,
+  });
+  const environmentInteractionService = new EnvironmentInteractionService({
+    pieceHighlight: pieceHighlightService,
+    navMenuStatePort: navMenuStateService,
   });
   const piecePositionService = new PiecePositionService({
     piecesProviderPort: piecesProvider,
-    piecePositionUpdaterPort: piecePositionAdapter,
+    piecePositionUpdaterPort: pieceAdapter,
     piecePositionProviderPort: piecePositionConfigProvider,
   });
   const piecesSetUpService = new PiecesSetUpService({
@@ -258,10 +299,12 @@ export const bootstrapExtension = () => {
     environmentSetUpPort: environmentSetUpService,
     getExperienceKey,
   });
-  // const scriptureInteractionService = new ScriptureInteractionService({
-  //   experienceDisplayerPort: experienceService,
-  // });
-
+  const scriptureNavigationService = new ScriptureNavigationService({
+    scriptureNavigationAdapterPort: scriptureNavigationAdapter,
+  });
+  const scriptureInteractionService = new ScriptureInteractionService({
+    pieceFocusPort: pieceFocusService,
+  });
   // 3. Controller
   const piecesInteractionController = new PiecesInteractionController({
     pieceInteractionService,
@@ -271,11 +314,23 @@ export const bootstrapExtension = () => {
       environmentInteractionService,
     }
   );
-  // const scriptureInteractionController = new ScriptureInteractionController(
-  //   {
-  //     verseMenuClickHandlerPort: scriptureInteractionService,
-  //   }
-  // );
+  const scriptureInteractionController = new ScriptureInteractionController({
+    scriptureInteractionPort: scriptureInteractionService,
+  });
+  const navMenuController = new NavMenuController({
+    navMenuStatePort: navMenuStateService,
+    pieceFocusPort: pieceFocusService,
+    scriptureNavigationPort: scriptureNavigationService,
+  });
+
+  const navMenuRendererAdapter = new NavMenuRendererAdapter({
+    eventBus: domainEventBus,
+    navMenuStateService,
+    catalog: pieceCatalogConfigProvider,
+    verseReferences: verseReferenceConfigProvider,
+    bookNames: bookNameConfigProvider,
+    controller: navMenuController,
+  });
 
   // 4. React to reading state changes
   // const unsubscribeReadingState = effect(() => {
@@ -301,11 +356,76 @@ export const bootstrapExtension = () => {
     environmentInteractionController.handleGridClick();
   });
 
+  domainEventBus.subscribe("OnReadingStateChanged", ({ reading }) => {
+    navMenuStateService.setReading(reading);
+  });
+
+  os.addBotListener(
+    entrypointBot,
+    "onEmbedMessage",
+    ({ message }: { message: Message }) => {
+      if (!message?.type) return;
+
+      switch (message.type) {
+        case "highlight-piece": {
+          const key = ToPieceKeyOf(getExperienceKey(), message.key);
+          if (!key) {
+            console.warn(
+              "house-of-the-lord pattern bootstrap: message.key is not a piece of the experience on stage",
+              { message }
+            );
+            return;
+          }
+          scriptureInteractionController.handlePieceFocusRequest(key);
+          break;
+        }
+        case "reading-changed": {
+          if (!message.bookId || !message.chapterNumber) {
+            console.warn(
+              "house-of-the-lord pattern bootstrap: reading-changed without bookId or chapterNumber",
+              { message }
+            );
+            return;
+          }
+          readingStateService.setCurrentReading(
+            message.bookId,
+            message.chapterNumber
+          );
+          break;
+        }
+      }
+    }
+  );
+
   // 6. Disposers
 
-  experienceService.tryDisplayExperience().then((displayed) => {
-    if (displayed && HIGHLIGHTED_PIECE) {
-      pieceHighlightAdapter.highlightPiece(EXPERIENCE, HIGHLIGHTED_PIECE);
-    }
-  });
+  await navMenuRendererAdapter
+    .render()
+    .catch((reason) =>
+      console.error(
+        "house-of-the-lord pattern bootstrap: Failed to display navigation menu",
+        { reason }
+      )
+    );
+
+  const displayed = await experienceService
+    .tryDisplayExperience()
+    .catch((reason) =>
+      console.error(
+        "house-of-the-lord pattern bootstrap: Failed to display experience",
+        { reason }
+      )
+    );
+  if (!displayed) {
+    console.error(
+      "house-of-the-lord pattern bootstrap: couldn't display experience"
+    );
+    return;
+  }
+
+  if (HIGHLIGHTED_PIECE) {
+    pieceFocusService.focus(HIGHLIGHTED_PIECE);
+  }
+
+  hostNotifierAdapter.notifyReady();
 };

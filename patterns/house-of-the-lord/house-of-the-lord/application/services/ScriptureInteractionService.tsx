@@ -1,23 +1,22 @@
-// import type { ExperienceDisplayerPort } from "tabernacle.application.ports.in.experience";
-// import type { VerseMenuClickHandlerPort } from "tabernacle.application.ports.in.scriptureInteraction";
-// import type { PieceKey } from "tabernacle.domain.models.piece";
+import type { ExperienceKey } from "../../domain/models/experience";
+import type { PieceKey } from "../../domain/models/piece";
+import type { PieceFocusPort } from "../ports/in/PieceFocus";
+import type { ScriptureInteractionPort } from "../ports/in/scriptureInteraction";
 
-// interface ServiceParams {
-//   experienceDisplayerPort: ExperienceDisplayerPort;
-// }
+interface ServiceParams {
+  pieceFocusPort: PieceFocusPort;
+}
 
-// export class ScriptureInteractionService implements VerseMenuClickHandlerPort {
-//   #experienceDisplayerPort: ServiceParams["experienceDisplayerPort"];
+export class ScriptureInteractionService implements ScriptureInteractionPort {
+  #pieceFocusPort: ServiceParams["pieceFocusPort"];
 
-//   constructor({ experienceDisplayerPort }: ServiceParams) {
-//     this.#experienceDisplayerPort = experienceDisplayerPort;
-//   }
+  constructor({ pieceFocusPort }: ServiceParams) {
+    this.#pieceFocusPort = pieceFocusPort;
+  }
 
-//   async handleVerseMenuItemClick(key: PieceKey) {
-//     const isExperienceDisplayed =
-//       await this.#experienceDisplayerPort.tryDisplayExperience();
-//     if (isExperienceDisplayed) {
-//       console.log(`[Debug] ScriptureInteractionService`, { key });
-//     }
-//   }
-// }
+  handlePieceFocusRequest(key: PieceKey): void {
+    this.#pieceFocusPort.focus(key);
+  }
+
+  handleExperienceShowRequest(experience: ExperienceKey): void {}
+}

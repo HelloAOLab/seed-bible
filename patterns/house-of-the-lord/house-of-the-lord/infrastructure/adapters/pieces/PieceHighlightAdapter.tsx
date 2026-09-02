@@ -1,5 +1,4 @@
-import type { PieceHighlightPort as PieceInteractionPieceHighlightPort } from "../../../application/ports/out/PieceInteraction";
-import type { PieceHighlightPort as EnvironmentPieceHighlightPort } from "../../../application/ports/out/EnvironmentInteraction";
+import type { PieceHighlightAdapterPort } from "../../../application/ports/out/PieceHighlight";
 import type { PieceStateAdapter } from "./PieceStateAdapter";
 import { PIECE_VISIBILITY_STATES } from "../../../domain/models/piece";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
@@ -32,9 +31,7 @@ interface AdapterParams {
   layerProvider: LayerConfigProvider;
 }
 
-export class PieceHighlightAdapter
-  implements PieceInteractionPieceHighlightPort, EnvironmentPieceHighlightPort
-{
+export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   #focusedBots: ColorLerpablePieceBot[] = [];
   #lastInteractionId: string | null = null;
   #getDimension: AdapterParams["getDimension"];
@@ -63,7 +60,7 @@ export class PieceHighlightAdapter
     this.#layerProvider = layerProvider;
   }
 
-  highlightPiece<E extends ExperienceKey>(
+  highlight<E extends ExperienceKey>(
     experience: E,
     key: ExperienceKeyMap[E]
   ): void {

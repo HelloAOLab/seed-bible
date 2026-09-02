@@ -49,7 +49,7 @@ export class PieceStateAdapter implements PieceStatePort {
     }
 
     const dimension = this.#getDimension();
-    const fromState = (bot.masks.state ??
+    const fromState = (bot.tags.state ??
       PIECE_VISIBILITY_STATES.HIDDEN) as PieceVisibilityState;
     const easing: Easing = { type: "sinusoidal", mode: "inout" };
     const duration = 0.3;
@@ -144,7 +144,8 @@ export class PieceStateAdapter implements PieceStatePort {
       }
     }
 
-    setTagMask(bot, "state", state);
+    SetStrictTag(bot, "state", state);
+
     await Promise.allSettled(animations);
   }
 }
