@@ -1314,6 +1314,14 @@ export function createSeedBibleState(
     return `${navigation.basePath}${readingPath}`;
   });
 
+  /** How often time spent on the chapter in view is written to history. */
+  const READING_TICK_MS = 5000;
+  /**
+   * The most one tick may credit. A page can be frozen without ever reporting
+   * itself hidden, and its next tick then arrives with the whole sleep behind
+   * it; this caps what that tick can claim to have watched.
+   */
+  const READING_MAX_TICK_CREDIT_MS = READING_TICK_MS * 2;
   effect(() => {
     if (!selectedTab.value) {
       return;
@@ -1329,12 +1337,66 @@ export function createSeedBibleState(
     // that's what the "used for a day" download offer is judged against.
     data.offline.noteTranslationInUse(chapter.translation.id);
 
-    const readingHistoryTimeoutId = setInterval(() => {
-      readingHistory.saveReadingHistory(
-        chapter.book.id,
-        chapter.chapter.number
+    // Reading time accrues only while the chapter is actually on screen. Each
+    // tick credits just the stretch since the last one rather than stretching
+    // the event's end to the present, so time the app slept through — a locked
+    // phone, a backgrounded tab — opens a fresh event on return instead of
+    // being back-filled as though it had been read. Time spent listening with
+    // the screen off is recorded separately, by whatever is playing the audio.
+    let creditedThroughMs = Date.now();
+    let readingTicker: ReturnType<typeof setInterval> | null = null;
+
+    const creditTimeOnScreen = () => {
+      const now = Date.now();
+      const from = Math.max(
+        creditedThroughMs,
+        now - READING_MAX_TICK_CREDIT_MS
       );
-    }, 5000);
+      creditedThroughMs = now;
+      readingHistory.saveReadingSpan(
+        chapter.book.id,
+        chapter.chapter.number,
+        Math.floor(from / 1000),
+        Math.floor(now / 1000)
+      );
+    };
+
+    const startCrediting = () => {
+      if (readingTicker !== null) {
+        return;
+      }
+      creditedThroughMs = Date.now();
+      readingTicker = setInterval(creditTimeOnScreen, READING_TICK_MS);
+    };
+
+    const stopCrediting = () => {
+      if (readingTicker === null) {
+        return;
+      }
+      clearInterval(readingTicker);
+      readingTicker = null;
+      // The part-tick since the last one goes uncredited on purpose: a chapter
+      // has always had to hold the screen for a whole tick before it counts as
+      // read at all, and crediting stragglers here would let one flicked past
+      // on the way somewhere else earn a place in history.
+    };
+
+    const canWatchVisibility =
+      typeof document !== "undefined" && !import.meta.env.SSR;
+    const handleReadingVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startCrediting();
+      } else {
+        stopCrediting();
+      }
+    };
+
+    if (canWatchVisibility) {
+      document.addEventListener("visibilitychange", handleReadingVisibility);
+    }
+    if (!canWatchVisibility || document.visibilityState === "visible") {
+      startCrediting();
+    }
 
     const posthogTimeoutId = setTimeout(() => {
       captureEvent("user_chapter_read", {
@@ -1345,7 +1407,13 @@ export function createSeedBibleState(
     }, 30_000);
 
     return () => {
-      clearInterval(readingHistoryTimeoutId);
+      if (canWatchVisibility) {
+        document.removeEventListener(
+          "visibilitychange",
+          handleReadingVisibility
+        );
+      }
+      stopCrediting();
       clearTimeout(posthogTimeoutId);
     };
   });

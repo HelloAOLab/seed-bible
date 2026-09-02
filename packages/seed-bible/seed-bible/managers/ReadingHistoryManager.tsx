@@ -741,17 +741,37 @@ export async function loadDailyReadingHistory(options: {
   };
 }
 
+/**
+ * How long a gap may sit between an existing sitting and a stretch of measured
+ * time before the two count as separate sittings. Deliberately far shorter than
+ * the window `saveReadingHistory` merges across: a measured stretch says exactly
+ * when it happened, so anything that does not follow on directly is time
+ * nothing was watching, and crediting it would be inventing reading.
+ */
+const SPAN_JOIN_THRESHOLD_SECONDS = 30;
+
 export interface ReadingHistoryManager {
+  /**
+   * Marks a chapter as being read right now, stretching the end of the sitting
+   * it belongs to up to the present. Anything measuring time the app might not
+   * have been watching for wants `saveReadingSpan` instead, since the stretch
+   * this covers reaches back however long it has been since the last call.
+   */
   saveReadingHistory: (
     bookId: string,
     chapter: number,
     recencyThresholdSeconds?: number
   ) => void;
   /**
-   * Credits a chapter with time that has already passed, rather than with the
-   * moment of the call. Audio playback uses this to record listening the app
-   * could not record as it happened, because the page was frozen behind a
-   * locked screen for all of it.
+   * Credits a chapter with a stretch of time that has already passed, rather
+   * than with the moment of the call. Audio playback uses this to record
+   * listening the app could not record as it happened, because the page was
+   * frozen behind a locked screen for all of it; the reader uses it to credit
+   * one tick at a time.
+   *
+   * A stretch only ever joins a sitting it arrives hard on the heels of, so
+   * time nothing was watching through opens a new event rather than being
+   * swallowed by the one before it.
    */
   saveReadingSpan: (
     bookId: string,
@@ -830,7 +850,8 @@ export function createReadingHistoryManager(
       bookId,
       chapter,
       startTimeSeconds,
-      endTimeSeconds
+      endTimeSeconds,
+      SPAN_JOIN_THRESHOLD_SECONDS
     ).catch((err) => {
       console.error("Failed to save listening time to reading history", err);
     });
