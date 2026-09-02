@@ -1657,7 +1657,8 @@ export function createSeedBibleState(
     session.isSynced.value &&
     session.connectedUsers.value.some((user) => user.isSelf);
   effect(() => {
-    presenceSettleTick.value;
+    // Read so this effect re-runs when the self-reconnect settle timer fires.
+    const _presenceSettleGeneration = presenceSettleTick.value;
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
       if (!session) continue;
