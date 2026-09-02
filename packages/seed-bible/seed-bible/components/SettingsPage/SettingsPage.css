@@ -1242,10 +1242,24 @@
   flex: 1;
 }
 
+.sb-theme-color-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  min-width: 0;
+}
+
 .sb-theme-color-label {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--sb-font-color);
+}
+
+.sb-theme-contrast-warning {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--sb-error-color, #d64545);
+  cursor: help;
 }
 
 .sb-theme-color-value {

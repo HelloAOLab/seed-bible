@@ -116,6 +116,127 @@ export function lightenColor(hex: string, amount: number): string {
 export const SECONDARY_LIGHTEN_AMOUNT = 0.35;
 export const TERTIARY_LIGHTEN_AMOUNT = 0.55;
 
+/** Linearizes one sRGB channel (0-255) per the WCAG relative-luminance formula. */
+function srgbChannelToLinear(channel: number): number {
+  const c = channel / 255;
+  return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+/** WCAG relative luminance (0-1) of a hex color. */
+function relativeLuminance(hex: string): number {
+  const [r, g, b] = hexToRgb(hex);
+  return (
+    0.2126 * srgbChannelToLinear(r) +
+    0.7152 * srgbChannelToLinear(g) +
+    0.0722 * srgbChannelToLinear(b)
+  );
+}
+
+/**
+ * WCAG contrast ratio between two colors, from 1 (identical) to 21 (black on
+ * white) — https://www.w3.org/TR/WCAG21/#contrast-minimum. Symmetric: the
+ * argument order doesn't matter.
+ */
+export function getContrastRatio(hexA: string, hexB: string): number {
+  const luminanceA = relativeLuminance(hexA);
+  const luminanceB = relativeLuminance(hexB);
+  const lighter = Math.max(luminanceA, luminanceB);
+  const darker = Math.min(luminanceA, luminanceB);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * WCAG AA's minimum contrast ratio for normal-sized text. Below this, text
+ * is considered hard to read against its background.
+ */
+export const MIN_READABLE_CONTRAST_RATIO = 4.5;
+
+export interface CustomizationContrastPair {
+  /** The text/foreground color field. */
+  foreground: ThemeColorKey;
+  /** The field it's expected to be read against. */
+  background: ThemeColorKey;
+  /** Human-readable description of the pair, e.g. for a warning tooltip. */
+  label: string;
+}
+
+/**
+ * Every foreground/background color pair in a theme that's meant to hold
+ * readable text — e.g. `primaryFontColor` text drawn on a `primaryColor`
+ * surface. Used to warn when a customization's colors don't leave enough
+ * contrast to stay readable. Deliberately excludes fields with no natural
+ * reading pair (`tertiaryColor`, `dividerColor`,
+ * `selectedVerseTextDecorationColor`) — those aren't backgrounds text sits
+ * on top of.
+ */
+export const CUSTOMIZATION_CONTRAST_PAIRS: CustomizationContrastPair[] = [
+  {
+    foreground: "primaryFontColor",
+    background: "primaryColor",
+    label: "Primary text on primary",
+  },
+  {
+    foreground: "secondaryFontColor",
+    background: "secondaryColor",
+    label: "Secondary text on secondary",
+  },
+  {
+    foreground: "fontColor",
+    background: "background",
+    label: "Text on app background",
+  },
+  {
+    foreground: "linkColor",
+    background: "readerBackground",
+    label: "Link on reader background",
+  },
+  {
+    foreground: "linkVisitedColor",
+    background: "readerBackground",
+    label: "Visited link on reader background",
+  },
+  {
+    foreground: "readerFontColor",
+    background: "readerBackground",
+    label: "Reader text on reader background",
+  },
+  {
+    foreground: "bookTitleFontColor",
+    background: "readerBackground",
+    label: "Book title on reader background",
+  },
+  {
+    foreground: "chapterHeadingFontColor",
+    background: "readerBackground",
+    label: "Chapter heading on reader background",
+  },
+  {
+    foreground: "verseFontColor",
+    background: "readerBackground",
+    label: "Verse text on reader background",
+  },
+  {
+    foreground: "hebrewSubtitleFontColor",
+    background: "readerBackground",
+    label: "Hebrew subtitle on reader background",
+  },
+  {
+    foreground: "sidebarFontColor",
+    background: "sidebarBackground",
+    label: "Sidebar text on sidebar background",
+  },
+  {
+    foreground: "readerToolbarFontColor",
+    background: "readerToolbarBackground",
+    label: "Reader toolbar text on reader toolbar background",
+  },
+  {
+    foreground: "readerToolbarFloatingButtonFontColor",
+    background: "readerToolbarFloatingButtonBackground",
+    label: "Floating button text on floating button background",
+  },
+];
+
 const customizationVariantHighlightColorSchema = z.object({
   color: z.string().optional(),
   fontColor: z.string().optional(),

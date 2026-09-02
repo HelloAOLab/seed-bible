@@ -174,6 +174,8 @@
   "select-base-theme": "Base this theme on…",
   "base-theme-description": "Changes which preset this theme falls back to for anything you haven't customized. Your own edits are kept.",
   "reset-to-base-theme": "Reset to base theme",
+  "low-contrast-warning": "{{label}}: contrast is only {{ratio}}:1 — aim for at least {{minRatio}}:1 so text stays readable.",
+  "highlight-text-on-background": "{{label}} text on its background",
   "variant-name": "Name",
   "variant-not-found": "This theme could not be found.",
   "variant-options": "Theme options",

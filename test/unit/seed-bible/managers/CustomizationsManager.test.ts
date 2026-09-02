@@ -2,9 +2,13 @@ import {
   createCustomizationsManager,
   buildBibleThemeFromCustomizationTheme,
   buildCustomFontValue,
+  CUSTOMIZATION_COLOR_FIELDS,
+  CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_MARKER,
+  getContrastRatio,
   getFontPresetsForField,
   lightenColor,
+  MIN_READABLE_CONTRAST_RATIO,
   SECONDARY_LIGHTEN_AMOUNT,
   TERTIARY_LIGHTEN_AMOUNT,
 } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
@@ -426,6 +430,61 @@ describe("CustomizationsManager", () => {
     expect(r2).toBeLessThanOrEqual(255);
     expect(g2).toBeLessThanOrEqual(255);
     expect(b2).toBeLessThanOrEqual(255);
+  });
+
+  it("getContrastRatio() returns 21:1 for black on white and 1:1 for identical colors", () => {
+    expect(getContrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 1);
+    expect(getContrastRatio("#ffffff", "#000000")).toBeCloseTo(21, 1);
+    expect(getContrastRatio("#808080", "#808080")).toBeCloseTo(1, 5);
+  });
+
+  it("getContrastRatio() is symmetric regardless of argument order", () => {
+    const a = getContrastRatio("#e07b4c", "#ffffff");
+    const b = getContrastRatio("#ffffff", "#e07b4c");
+    expect(a).toBeCloseTo(b, 10);
+  });
+
+  it("getContrastRatio() reports low contrast for two similar mid-tones, and high contrast for black on white", () => {
+    // Two adjacent grays are hard to tell apart — well under the AA minimum.
+    expect(getContrastRatio("#888888", "#999999")).toBeLessThan(
+      MIN_READABLE_CONTRAST_RATIO
+    );
+    // Black text on white is the maximum possible ratio, always sufficient.
+    expect(getContrastRatio("#000000", "#ffffff")).toBeGreaterThan(
+      MIN_READABLE_CONTRAST_RATIO
+    );
+  });
+
+  it("CUSTOMIZATION_CONTRAST_PAIRS pairs primaryFontColor with primaryColor (and other real foreground/background field pairs)", () => {
+    const primaryPair = CUSTOMIZATION_CONTRAST_PAIRS.find(
+      (p) => p.foreground === "primaryFontColor"
+    );
+    expect(primaryPair?.background).toBe("primaryColor");
+
+    // Every pair references two fields that actually exist in the
+    // customization color field list — guards against a typo'd key that
+    // would silently make a pair's contrast check a no-op.
+    const knownKeys = new Set(CUSTOMIZATION_COLOR_FIELDS.map((f) => f.key));
+    for (const pair of CUSTOMIZATION_CONTRAST_PAIRS) {
+      expect(knownKeys.has(pair.foreground)).toBe(true);
+      expect(knownKeys.has(pair.background)).toBe(true);
+    }
+  });
+
+  it("getContrastRatio() correctly flags a real low-contrast pair in the built-in Light preset (white text on the branded primary orange)", async () => {
+    // Not every shipped color pair clears strict AA (4.5:1) — this is a
+    // real, known shortfall in the Light preset's own primary button
+    // styling, not a customization-introduced regression. Asserting it
+    // here (rather than that every pair passes) proves the detection
+    // itself works correctly against real theme data, without coupling
+    // this suite to a design decision outside this feature's scope.
+    const { theme } = createManager();
+    const light = theme.themes.value.find((t) => t.id === "light")!;
+    const ratio = getContrastRatio(
+      light.variables.primaryFontColor,
+      light.variables.primaryColor
+    );
+    expect(ratio).toBeLessThan(MIN_READABLE_CONTRAST_RATIO);
   });
 
   it("buildBibleThemeFromCustomizationTheme() returns the base preset unchanged when the variant has no overrides", async () => {

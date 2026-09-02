@@ -5,9 +5,12 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
+  CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_FONT_FIELDS,
+  MIN_READABLE_CONTRAST_RATIO,
   buildBibleThemeFromCustomizationTheme,
   buildCustomFontValue,
+  getContrastRatio,
   getExtensionAvailability,
   getFontPresetsForField,
   type CustomizationsManager,
@@ -15,6 +18,8 @@ import {
 } from "../../managers/CustomizationsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
+  type BibleTheme,
+  type ThemeColorKey,
   type ThemeFontFamilyKey,
 } from "../../managers/ThemeManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -37,6 +42,57 @@ const LogoCropModalContent = lazy(() =>
 export const CUSTOMIZATION_EDIT_PANE_ID = "customization-edit-pane";
 
 type CustomizationEditView = "edit" | "edit-variant" | "edit-extensions";
+
+/**
+ * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
+ * pair (e.g. `primaryColor`) in `CUSTOMIZATION_CONTRAST_PAIRS`, and if so,
+ * whether its resolved color falls short of `MIN_READABLE_CONTRAST_RATIO`
+ * against that pair's background. `null` when the field has no such pair,
+ * or its contrast is already sufficient.
+ */
+function getContrastWarning(
+  foregroundKey: ThemeColorKey,
+  resolvedTheme: BibleTheme
+): { ratio: number; label: string } | null {
+  const pair = CUSTOMIZATION_CONTRAST_PAIRS.find(
+    (p) => p.foreground === foregroundKey
+  );
+  if (!pair) {
+    return null;
+  }
+  const foreground = resolvedTheme.variables[pair.foreground];
+  const background = resolvedTheme.variables[pair.background];
+  if (!foreground || !background) {
+    return null;
+  }
+  const ratio = getContrastRatio(foreground, background);
+  if (ratio >= MIN_READABLE_CONTRAST_RATIO) {
+    return null;
+  }
+  return { ratio, label: pair.label };
+}
+
+/** Small inline warning icon for a color row whose contrast is too low to read comfortably. */
+function ContrastWarningIcon(props: { ratio: number; label: string }) {
+  const { ratio, label } = props;
+  const { t } = useI18n();
+  const message = t("low-contrast-warning", {
+    label,
+    ratio: ratio.toFixed(1),
+    minRatio: MIN_READABLE_CONTRAST_RATIO.toFixed(1),
+    defaultValue:
+      "{{label}}: contrast is only {{ratio}}:1 — aim for at least {{minRatio}}:1 so text stays readable.",
+  });
+  return (
+    <span
+      className="sb-theme-contrast-warning material-symbols-outlined"
+      title={message}
+      aria-label={message}
+    >
+      warning
+    </span>
+  );
+}
 
 /**
  * Which of the pane's three screens is showing.
@@ -736,10 +792,22 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                 const label = t(`customization-${field.key}`, {
                   defaultValue: field.label,
                 });
+                const contrastWarning = getContrastWarning(
+                  field.key,
+                  resolvedTheme
+                );
                 return (
                   <li key={field.key} className="sb-theme-color-row">
                     <div className="sb-theme-color-row-main">
-                      <span className="sb-theme-color-label">{label}</span>
+                      <span className="sb-theme-color-label-row">
+                        <span className="sb-theme-color-label">{label}</span>
+                        {contrastWarning && (
+                          <ContrastWarningIcon
+                            ratio={contrastWarning.ratio}
+                            label={contrastWarning.label}
+                          />
+                        )}
+                      </span>
                       <span className="sb-theme-color-value">
                         {value || "—"}
                       </span>
@@ -818,15 +886,30 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
               const fg = effective?.fontColor ?? "";
               const isOverridden = variant.highlightColors[id] !== undefined;
               const label = id.charAt(0).toUpperCase() + id.slice(1);
+              const contrastRatio = bg && fg ? getContrastRatio(fg, bg) : null;
+              const hasLowContrast =
+                contrastRatio !== null &&
+                contrastRatio < MIN_READABLE_CONTRAST_RATIO;
               return (
                 <li key={id} className="sb-theme-color-row">
                   <div className="sb-theme-color-row-main">
-                    <span
-                      className="sb-highlight-preview-pill"
-                      style={{ background: bg, color: fg }}
-                      aria-hidden="true"
-                    >
-                      {label}
+                    <span className="sb-theme-color-label-row">
+                      <span
+                        className="sb-highlight-preview-pill"
+                        style={{ background: bg, color: fg }}
+                        aria-hidden="true"
+                      >
+                        {label}
+                      </span>
+                      {hasLowContrast && (
+                        <ContrastWarningIcon
+                          ratio={contrastRatio}
+                          label={t("highlight-text-on-background", {
+                            label,
+                            defaultValue: "{{label}} text on its background",
+                          })}
+                        />
+                      )}
                     </span>
                     <span className="sb-theme-color-value">{bg || "—"}</span>
                   </div>
