@@ -302,6 +302,7 @@ function createMockChats(
     createLocalSession,
     selectChat,
     providers: providersSignal,
+    composerDraft: signal(""),
   } as unknown as import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatsManager;
   return {
     chats,
