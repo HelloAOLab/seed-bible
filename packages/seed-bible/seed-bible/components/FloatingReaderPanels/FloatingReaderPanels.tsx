@@ -17,10 +17,11 @@ import {
   type BookReferenceMatch,
 } from "../../managers/SearchManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import type {
-  ChatMessage,
-  ChatProvider,
-  ChatSession,
+import {
+  chatHasOtherPeople,
+  type ChatMessage,
+  type ChatProvider,
+  type ChatSession,
 } from "../../managers/ChatsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
@@ -790,6 +791,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   // Only display non-anonymous inactive participants
   const inactiveParticipants =
     selectedChat?.inactiveParticipants.value.filter((p) => p.name) ?? [];
+  const otherPeoplePresent = selectedChat
+    ? chatHasOtherPeople(selectedChat)
+    : false;
 
   return (
     <div
@@ -853,7 +857,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           >
             {selectedChat.participants.value.map((participant) => {
               const label = getParticipantDisplayLabel(participant, t);
-              const avatar = getParticipantAvatar(participant, t);
+              const avatar = getParticipantAvatar(participant, t, {
+                otherPeoplePresent,
+              });
               return (
                 <ContextMenuItem
                   key={participant.id}
@@ -867,6 +873,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                     visual={avatar.visual}
                     title={avatar.label}
                     isSelf={avatar.isSelf}
+                    genericFallback={avatar.genericFallback}
                   />
                   <span className="sb-floating-chat-members-name">{label}</span>
                 </ContextMenuItem>
@@ -885,7 +892,9 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 </span>
                 {inactiveParticipants.map((participant) => {
                   const label = getParticipantDisplayLabel(participant, t);
-                  const avatar = getParticipantAvatar(participant, t);
+                  const avatar = getParticipantAvatar(participant, t, {
+                    otherPeoplePresent,
+                  });
                   return (
                     <ContextMenuItem
                       key={participant.id}
@@ -899,6 +908,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                         visual={avatar.visual}
                         title={avatar.label}
                         isSelf={avatar.isSelf}
+                        genericFallback={avatar.genericFallback}
                       />
                       <span className="sb-floating-chat-members-name">
                         {label}
@@ -1039,6 +1049,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
   const toShow = pool.slice(0, 3);
   const overflowCount = pool.length - toShow.length;
   const count = overflowCount > 0 ? 4 : Math.max(toShow.length, 1);
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   return (
     <div
@@ -1046,7 +1057,9 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
       aria-hidden="true"
     >
       {toShow.map((participant) => {
-        const av = getParticipantAvatar(participant, t);
+        const av = getParticipantAvatar(participant, t, {
+          otherPeoplePresent,
+        });
         return (
           <Avatar
             key={participant.id}
@@ -1054,6 +1067,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
             visual={av.visual}
             title={av.label}
             isSelf={av.isSelf}
+            genericFallback={av.genericFallback}
           />
         );
       })}

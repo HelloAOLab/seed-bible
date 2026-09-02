@@ -16,7 +16,7 @@ import {
 import type { TranslatableTitle } from "./BibleToolsManager";
 import { translateTitle } from "../app/utils";
 import type { VerseRef } from "./BibleDataManager";
-import { parseVerseReferences } from "./BibleDataManager";
+import { scanVerseReferencesInText } from "./BibleDataManager";
 import type { TranslationBook } from "./FreeUseBibleAPI";
 import { getConnectedUserVisualKey } from "./SessionsManager";
 import { v4 as uuid } from "uuid";
@@ -323,6 +323,24 @@ export interface AIChatParticipant extends BaseChatParticipant {
 }
 
 export type ChatParticipant = UserChatParticipant | AIChatParticipant;
+
+/**
+ * True when this chat includes someone other than the local user and AI
+ * providers — including people who are currently inactive or offline.
+ * Surfaces use this to decide whether the local user's avatar needs the
+ * animal+color combo so people can tell each other apart.
+ *
+ * Always reads `totalParticipants`, not the active-only `participants`
+ * list, so a 1-on-1 chat still counts as "with other people" when the
+ * other person is momentarily offline.
+ */
+export function chatHasOtherPeople(chat: {
+  totalParticipants?: { readonly value: readonly ChatParticipant[] };
+}): boolean {
+  return (
+    chat.totalParticipants?.value.some((p) => !p.isSelf && !p.isAI) ?? false
+  );
+}
 
 const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
@@ -909,7 +927,7 @@ function parseTextMessage(
     });
   }
 
-  for (const { ref, start, end } of parseVerseReferences(text, books)) {
+  for (const { ref, start, end } of scanVerseReferencesInText(text, books)) {
     pending.push({ kind: "verse_ref", start, end, ref });
   }
 

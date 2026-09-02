@@ -73,7 +73,7 @@ export const useReadingHistoryUserFiltersSelector: UseReadingHistoryUserFiltersS
               ? CapitalizeFirstLetter(translate("you"))
               : (profileName?.length ?? 0) > 0
                 ? profileName!
-                : CapitalizeFirstLetter(translate("guest"));
+                : CapitalizeFirstLetter(translate("anonymous"));
           optionsData.push({
             key: userId,
             content: {

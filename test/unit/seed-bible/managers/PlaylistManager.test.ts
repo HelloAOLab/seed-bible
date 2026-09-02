@@ -14,6 +14,7 @@ import {
   PlaylistPlayHistorySchema,
   createPlaylistManager,
   createPlayingState,
+  groupVersesIntoPlaylistItems,
   formatPlaylistPlayDurationMs,
   groupPlaylistPlayHistoryByDay,
   isPlaylistPlayHistoryComplete,
@@ -750,6 +751,55 @@ describe("createPlaylistManager", () => {
 
     expect(manager.userPlaylists.value).toHaveLength(1);
     expect(manager.userPlaylists.value[0]!.title).toBe("New");
+  });
+
+  it("updateEditingPlaylistMetadata patches the draft title and description", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    expect(manager.updateEditingPlaylistMetadata({ title: "Favorites" })).toBe(
+      "success"
+    );
+    expect(
+      manager.updateEditingPlaylistMetadata({
+        description: "Verses I keep coming back to",
+      })
+    ).toBe("success");
+
+    expect(manager.editingPlaylist.value!.title).toBe("Favorites");
+    expect(manager.editingPlaylist.value!.description).toBe(
+      "Verses I keep coming back to"
+    );
+    expect(manager.editingPlaylist.value!.items).toEqual([]);
+  });
+
+  it("updateEditingPlaylistMetadata reports an error when nothing is being edited", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(manager.updateEditingPlaylistMetadata({ title: "Too late" })).toBe(
+      "error: no playlist is currently being edited"
+    );
+  });
+
+  it("saveEditingPlaylist persists a description change", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+    manager.updateEditingPlaylistMetadata({
+      title: "Favorites",
+      description: "Verses I keep coming back to",
+    });
+    recordDataMock.mockClear();
+
+    await manager.saveEditingPlaylist();
+
+    const saved = recordDataMock.mock.calls.at(-1)![2] as Playlist;
+    expect(saved.description).toBe("Verses I keep coming back to");
+    expect(manager.userPlaylists.value[0]!.description).toBe(
+      "Verses I keep coming back to"
+    );
   });
 
   it("addEditingPlaylistItem appends an item to the current draft", async () => {
@@ -2760,12 +2810,91 @@ describe("createPlayingState", () => {
 
       await state.jumpTo(0);
 
+      expect(nav).toHaveBeenCalledWith("BSB", "EXO", 5, { scrollToVerse: 2 });
       expect(decorateVerses).toHaveBeenCalledWith(
         "EXO",
         5,
         [2, 3, 4, 5],
         expect.any(Object)
       );
+    });
+
+    it("highlights a grouped range the same way as an authored range item", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const [rangeItem] = groupVersesIntoPlaylistItems([
+        { bookId: "EXO", chapter: 26, verse: 1 },
+        { bookId: "EXO", chapter: 26, verse: 2 },
+        { bookId: "EXO", chapter: 26, verse: 3 },
+        { bookId: "EXO", chapter: 26, verse: 11 },
+        { bookId: "EXO", chapter: 26, verse: 4 },
+        { bookId: "EXO", chapter: 26, verse: 5 },
+        { bookId: "EXO", chapter: 26, verse: 6 },
+        { bookId: "EXO", chapter: 26, verse: 7 },
+        { bookId: "EXO", chapter: 26, verse: 8 },
+        { bookId: "EXO", chapter: 26, verse: 9 },
+        { bookId: "EXO", chapter: 26, verse: 10 },
+      ]);
+      const state = createPlayingState(
+        [makePlaylist({ items: rangeItem ? [rangeItem] : [] })],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(nav).toHaveBeenCalledWith("BSB", "EXO", 26, { scrollToVerse: 1 });
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "EXO",
+        26,
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        expect.any(Object)
+      );
+    });
+
+    it("loads a whole-chapter item without highlighting verses", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              { type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(nav).toHaveBeenCalledWith("BSB", "JHN", 3, undefined);
+      expect(decorateVerses).not.toHaveBeenCalled();
+    });
+
+    it("loads the first chapter of a chapter range without highlighting verses", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 1, endChapter: 3 },
+              },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(nav).toHaveBeenCalledWith("BSB", "JHN", 1, undefined);
+      expect(decorateVerses).not.toHaveBeenCalled();
     });
 
     it("dispose removes the active verse decoration", async () => {

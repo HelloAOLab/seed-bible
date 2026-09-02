@@ -281,6 +281,9 @@ export function CasualOSManager(
   });
 
   const listDataByMarker = async (
+    // Despite the field's name, the records server resolves this the same
+    // way it does a write's `recordKey` - either a bare record name or an
+    // actual record key both work.
     recordName: string,
     marker: string,
     lastAddress?: string

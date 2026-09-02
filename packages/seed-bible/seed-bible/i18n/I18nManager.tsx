@@ -2,11 +2,12 @@ import i18n from "i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
-import { navigatorLanguages } from "../app/ssrEnv";
+import { navigatorLanguages, safeSessionStorage } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
 import {
+  bibleLanguageToUiLocale,
   getNearestBibleTranslationForUiLanguage,
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
@@ -15,6 +16,7 @@ import {
   DEFAULT_UI_LANGUAGE,
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
+import type { BrandingConfig } from "../app/appConfig";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -63,7 +65,28 @@ export function addTranslations(
     i18n.addResourceBundle(lang, ns, resources, true, options?.overwrite);
   }
 }
+type TranslationFn = (key: string, options?: Record<string, unknown>) => string;
+function getAppName(t: TranslationFn, branding?: BrandingConfig): string {
+  return branding?.appName ?? t("seed-bible", { defaultValue: "Seed Bible" });
+}
 
+/**
+ * Replaces occurrences of "Seed Bible" in the given text with the branded app name, which can be customized via the branding configuration.
+ * This function is useful for ensuring that the app's name is consistently displayed according to the user's branding preferences.
+ * Currently, this only means that English is fully supported for branding.
+ * @param text The text in which to replace "Seed Bible" with the branded app name.
+ * @param t The translation function to use for retrieving the branded app name. This is typically obtained from the i18n manager.
+ * @param branding The branding configuration that may contain a custom app name. If not provided, the default app name "Seed Bible" will be used.
+ * @returns
+ */
+export function getBrandedAppText(
+  text: string,
+  t: TranslationFn,
+  branding?: BrandingConfig
+): string {
+  const appName = getAppName(t, branding);
+  return text.replace(/Seed Bible/gi, appName);
+}
 // /**
 //  * Loads translations from the given bot's tags.
 //  * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
@@ -154,6 +177,40 @@ export type LanguageFallbackPrompt = {
   fallbackLanguage: string;
   fallbackTranslation: TranslationWithLanguage;
 };
+
+/**
+ * Shown after the user deliberately picks a Bible translation written in a
+ * language the UI also supports, offering to move the interface to that
+ * language too.
+ */
+export type UiLanguageSwitchPrompt = {
+  /** UI language the picked translation is written in (e.g. "es"). */
+  targetLanguage: string;
+  /**
+   * Translator fixed to `targetLanguage`, so the prompt is written in the
+   * language it is offering — someone who can't read the current UI language
+   * is exactly who this prompt is for.
+   */
+  t: (key: string, options?: Record<string, unknown>) => string;
+};
+
+/**
+ * Reads/clears the user's "never ask again" answer to the UI-language switch
+ * prompt. Supplied by SeedBibleState so this manager doesn't need to know
+ * whether the preference lives on the account or on the device.
+ */
+export type UiLanguagePromptPreference = {
+  isEnabled: () => boolean;
+  disable: () => void;
+};
+
+/**
+ * sessionStorage key recording that the UI-language switch prompt has already
+ * been shown in this tab. Deliberately session-scoped, not persisted: the
+ * prompt is a suggestion, and repeating it once per session is the most it
+ * should ever intrude.
+ */
+const UI_LANGUAGE_PROMPT_SHOWN_KEY = "sb.uiLanguagePromptShown";
 
 export function createI18nManager(
   navigation: NavigationManager,
@@ -326,6 +383,88 @@ export function createI18nManager(
     languageFallbackPrompt.value = null;
   };
 
+  const uiLanguageSwitchPrompt = signal<UiLanguageSwitchPrompt | null>(null);
+
+  let uiLanguagePromptPreference: UiLanguagePromptPreference | null = null;
+  const setUiLanguagePromptPreference = (
+    preference: UiLanguagePromptPreference | null
+  ) => {
+    uiLanguagePromptPreference = preference;
+  };
+
+  /**
+   * The mirror image of `applyBibleTranslationForUiLanguage`: the user picked
+   * the Bible text first, so offer to move the interface to match it.
+   *
+   * Stays silent unless every condition holds — the translation's language maps
+   * onto a UI language we actually ship, that language isn't the current one,
+   * the user hasn't turned the prompt off, and it hasn't already appeared this
+   * session.
+   */
+  const maybePromptUiLanguageSwitch = (
+    bibleLanguage: string | null | undefined
+  ) => {
+    if (uiLanguagePromptPreference && !uiLanguagePromptPreference.isEnabled()) {
+      return;
+    }
+
+    const targetLanguage = bibleLanguageToUiLocale(bibleLanguage);
+    if (
+      !targetLanguage ||
+      targetLanguage === language.value ||
+      !availableLanguages.includes(targetLanguage)
+    ) {
+      return;
+    }
+
+    if (safeSessionStorage.getItem(UI_LANGUAGE_PROMPT_SHOWN_KEY)) {
+      return;
+    }
+    safeSessionStorage.setItem(UI_LANGUAGE_PROMPT_SHOWN_KEY, "true");
+
+    uiLanguageSwitchPrompt.value = {
+      targetLanguage,
+      t: i18n.getFixedT(targetLanguage, "seed-bible"),
+    };
+
+    // Every language but English is fetched on demand, so the first `t` above
+    // may still be falling back to English. Re-fix it once the chunk lands and
+    // let the modal re-render into the real text.
+    void i18n.loadLanguages(targetLanguage).then(() => {
+      const current = uiLanguageSwitchPrompt.peek();
+      if (current?.targetLanguage !== targetLanguage) {
+        return;
+      }
+      uiLanguageSwitchPrompt.value = {
+        ...current,
+        t: i18n.getFixedT(targetLanguage, "seed-bible"),
+      };
+    });
+  };
+
+  const confirmUiLanguageSwitch = async () => {
+    const prompt = uiLanguageSwitchPrompt.value;
+    if (!prompt) {
+      return;
+    }
+    uiLanguageSwitchPrompt.value = null;
+
+    // `changeLanguage` + `persistLanguage`, not `requestLanguageChange`: the
+    // latter also swaps the Bible text to the new UI language's default
+    // translation, which would undo the very pick that raised this prompt.
+    await changeLanguage(prompt.targetLanguage);
+    persistLanguage?.(prompt.targetLanguage);
+  };
+
+  const dismissUiLanguageSwitch = () => {
+    uiLanguageSwitchPrompt.value = null;
+  };
+
+  const neverAskUiLanguageSwitch = () => {
+    uiLanguageSwitchPrompt.value = null;
+    uiLanguagePromptPreference?.disable();
+  };
+
   return {
     i18n,
     t: i18n.t.bind(i18n),
@@ -336,6 +475,12 @@ export function createI18nManager(
     setBibleTranslationApplicator,
     setLanguagePersister,
     languageFallbackPrompt,
+    uiLanguageSwitchPrompt,
+    setUiLanguagePromptPreference,
+    maybePromptUiLanguageSwitch,
+    confirmUiLanguageSwitch,
+    dismissUiLanguageSwitch,
+    neverAskUiLanguageSwitch,
     defaultLanguage,
     availableLanguages,
     language,
@@ -362,7 +507,7 @@ export type I18nHook = ReturnType<typeof useI18n>;
 
 const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
 
-function isRightToLeftLanguage(languageCode: string): boolean {
+export function isRightToLeftLanguage(languageCode: string): boolean {
   const normalizedCode = languageCode.trim();
   if (!normalizedCode) {
     return false;
@@ -428,6 +573,10 @@ export function useI18n(ns?: string) {
       confirmLanguageFallback: i18nManager.confirmLanguageFallback,
       cancelLanguageFallback: i18nManager.cancelLanguageFallback,
       languageFallbackPrompt: i18nManager.languageFallbackPrompt,
+      uiLanguageSwitchPrompt: i18nManager.uiLanguageSwitchPrompt,
+      confirmUiLanguageSwitch: i18nManager.confirmUiLanguageSwitch,
+      dismissUiLanguageSwitch: i18nManager.dismissUiLanguageSwitch,
+      neverAskUiLanguageSwitch: i18nManager.neverAskUiLanguageSwitch,
       i18n: i18n,
     }),
     [t, i18n.language]

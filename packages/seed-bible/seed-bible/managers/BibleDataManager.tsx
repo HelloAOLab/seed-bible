@@ -14,6 +14,20 @@ import {
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
+import { isVerseReferenceInBounds } from "./verseReferenceBounds";
+
+/**
+ * Opaque cache for `getTranslations()`'s network result, keyed by normalized
+ * endpoint. Only the SSR host supplies one (see
+ * `standalone/ssrTranslationsCache.ts`) — it exists to share one fetch across
+ * many HTTP requests within a single long-running server process, since
+ * `localStorage` (the client's cross-page-load cache) doesn't exist there.
+ */
+export interface TranslationsCache {
+  get(endpoint: string): Promise<Translation[]> | undefined;
+  set(endpoint: string, promise: Promise<Translation[]>): void;
+  delete(endpoint: string): void;
+}
 
 /** How a set of translations should be folded into the known-translations list. */
 export interface MergeTranslationsOptions {
@@ -32,6 +46,21 @@ export interface MergeTranslationsOptions {
 export interface BibleDataManager {
   endpoints: Signal<string[]>;
   availableTranslations: Signal<Translation[]>;
+  /**
+   * Whether the full multi-translation catalog (`getTranslations`) has ever
+   * been fetched (or restored from a prior visit's cache) this session.
+   *
+   * `availableTranslations` alone can't answer that: a normal chapter load
+   * only ever merges in the *one* translation it's reading, via
+   * `getTranslationBooks` — see `BibleReadingManager.loadInitialData`, which
+   * validates a URL-named translation against its own book catalog instead
+   * of downloading the full list just to confirm an ID that's already known.
+   * So `availableTranslations.value.length > 0` is true well before the full
+   * catalog has ever been requested. Callers that need "is every translation
+   * known yet" (the translation selector, a UI-language switch picking a new
+   * default translation) must check this instead of the list's length.
+   */
+  catalogLoaded: Signal<boolean>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
 
@@ -99,6 +128,15 @@ export interface BibleDataManager {
    * @param translationId The ID of the translation.
    */
   buildTranslationId: (translationId: string) => string;
+
+  /**
+   * Applies the previous visit's `localStorage`-cached translation catalog and
+   * endpoint map. Call once from a post-mount effect (via
+   * `AppState.hydrateFromStorage`) — reading it at construction would make a
+   * returning visitor's first render disagree with the SSR HTML, which has no
+   * `localStorage` to read. A malformed cache entry is discarded, not thrown.
+   */
+  hydrateCachedCatalog: () => void;
 }
 
 function normalizeEndpoint(endpoint: string): string {
@@ -242,11 +280,11 @@ export interface VerseRefMatch {
  * single-string refs in chat / footnotes.
  *
  * When `books` is provided, only an exact match on localized common name, name,
- * or id is tried (e.g. spa_onbv "Esdras" → EZR). Deliberate prefix abbreviations
- * are intentionally not used here — short ordinary words like "Is" / "So" would
- * otherwise become false-positive Isaiah / Song of Solomon links. Falls back to
- * the English name / USFM id map via {@link getBookId}, which is already
- * conservative about prefixes.
+ * or id is tried (e.g. spa_onbv "Esdras" → EZR). Unique-prefix expansion of
+ * short tokens (e.g. "Is" → Isaiah) is intentionally not used here — that
+ * belongs in the deliberate single-reference parser. Falls back to the English
+ * name / USFM id map via {@link getBookId}, which only accepts the typed text
+ * as a prefix of a known key (so "Isaac" does not become Isaiah).
  */
 function resolveBookId(book: string, books?: TranslationBook[]): BookId | null {
   if (books?.length) {
@@ -325,8 +363,23 @@ export function parseVerseReference(
       ? text.substring(reference.length).trim() || undefined
       : undefined;
 
+  const bookId = resolveBookId(book, books);
+  if (
+    bookId &&
+    !isVerseReferenceInBounds(
+      bookId,
+      chapter,
+      verse,
+      endChapter,
+      endVerse,
+      books
+    )
+  ) {
+    return null;
+  }
+
   return {
-    book: (resolveBookId(book, books) ?? book) as BookId,
+    book: (bookId ?? book) as BookId,
     chapter,
     verse,
     content,
@@ -336,15 +389,21 @@ export function parseVerseReference(
 }
 
 /**
- * Finds and parses all verse references in the given text, returning each
- * with its character offsets (start inclusive, end exclusive).
+ * Finds and parses all verse references in free prose, returning each with its
+ * character offsets (start inclusive, end exclusive).
+ *
+ * Distinct from {@link parseSingleVerseReference} /
+ * {@link parseVerseReferenceCandidates} in `parseVerseReference.ts`, which
+ * parse one deliberate typed reference (search box) with ambiguous-prefix
+ * expansion.
  *
  * @param books Optional current-translation books; searched before English
  * names / book ids so localized labels resolve correctly. Matching is exact
  * (plus conservative English ids via {@link getBookId}); free-text scanning
- * does not apply unique-prefix expansion of short tokens.
+ * does not apply unique-prefix expansion of short tokens. Chapter/verse
+ * numbers must exist for the book ({@link isVerseReferenceInBounds}).
  */
-export function parseVerseReferences(
+export function scanVerseReferencesInText(
   text: string,
   books?: TranslationBook[]
 ): VerseRefMatch[] {
@@ -412,6 +471,20 @@ export function parseVerseReferences(
       }
     }
 
+    if (
+      !isVerseReferenceInBounds(
+        bookId,
+        chapter,
+        verse,
+        endChapter,
+        endVerse,
+        books
+      )
+    ) {
+      retryFromNextChar();
+      continue;
+    }
+
     results.push({
       ref: {
         book: bookId as BookId,
@@ -428,6 +501,9 @@ export function parseVerseReferences(
   return results;
 }
 
+/** @deprecated Use {@link scanVerseReferencesInText}. */
+export const parseVerseReferences = scanVerseReferencesInText;
+
 /**
  * Defines a map that maps the book ID to the USFM Book identifier.
  */
@@ -437,7 +513,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["exo", "EXO"],
   ["exodus", "EXO"],
   ["lev", "LEV"],
-  ["lev", "LEV"],
+  ["leviticus", "LEV"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["laviticus", "LEV"],
   ["num", "NUM"],
   ["numbers", "NUM"],
@@ -470,6 +547,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["neh", "NEH"],
   ["nehemiah", "NEH"],
   ["est", "EST"],
+  ["esther", "EST"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["ester", "EST"],
   ["job", "JOB"],
   ["ps", "PSA"],
@@ -515,6 +594,8 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
   ["hab", "HAB"],
   ["habakkuk", "HAB"],
   ["zep", "ZEP"],
+  ["zephaniah", "ZEP"],
+  // Typo alias retained for tolerance; correct spelling is above.
   ["zepaniah", "ZEP"],
   ["hag", "HAG"],
   ["haggai", "HAG"],
@@ -623,25 +704,37 @@ export const BOOK_ID_MAP: Map<string, BookId> = new Map([
 /**
  * Gets the ID of the given book.
  * Returns null if the ID could not be found.
- * @param book The name/ID of the book. Whitespace and hyphens are ignored, so
- * both "Song of Solomon" and the URL slug "song-of-solomon" resolve.
+ * @param book The name/ID of the book. Whitespace, hyphens, and trailing
+ * punctuation are ignored, so "Song of Solomon", "song-of-solomon", and
+ * "Gen." all resolve.
  */
 export function getBookId(book: string): BookId | null {
   const hadSpaces = /\s/.test(book.trim());
-  const bookLower = book.toLowerCase().replaceAll(/[\s-]+/g, "");
+  // Strip whitespace/hyphens, then trailing punctuation (e.g. "Gen." → "gen").
+  const bookLower = book
+    .toLowerCase()
+    .replaceAll(/[\s-]+/g, "")
+    .replace(/[^\p{L}\p{N}]+$/u, "");
+
+  if (!bookLower) {
+    return null;
+  }
 
   const id = BOOK_ID_MAP.get(bookLower);
   if (id) {
     return id;
   }
 
-  // Loose prefix fallback is for single-token inputs (e.g. "Leviticus" → lev)
-  // and numbered-book abbreviations (e.g. "1 chron" → 1ch). Multi-word phrases
-  // that aren't numbered — like "Song of Moses" — must match a book name
-  // exactly, or not at all.
-  if (!hadSpaces || /^\d/.test(bookLower)) {
+  // Abbreviation fallback: the typed text must be a prefix of a known key
+  // (e.g. "Genes" → "genesis", "1 chron" → "1chronicles"), and at least three
+  // characters so two-letter ordinary words ("Is", "So", "Jo") never match.
+  // The opposite direction — key is a prefix of the typed text — would link
+  // ordinary words like "Isaac" / "Judah" / "Jerusalem" to Isaiah / Jude /
+  // Jeremiah. Multi-word phrases that aren't numbered — like "Song of Moses"
+  // — must match a book name exactly, or not at all.
+  if (bookLower.length >= 3 && (!hadSpaces || /^\d/.test(bookLower))) {
     for (const [key, mappedId] of BOOK_ID_MAP) {
-      if (bookLower.startsWith(key)) {
+      if (key.startsWith(bookLower)) {
         return mappedId;
       }
     }
@@ -843,15 +936,23 @@ export interface CreateBibleDataManagerOptions {
    * an in-memory store, and null disables offline downloads entirely.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /**
+   * Cache shared across `getTranslations()` calls, keyed by endpoint. Omit
+   * this everywhere except the SSR host — see `TranslationsCache`'s doc
+   * comment for why.
+   */
+  translationsCache?: TranslationsCache;
 }
 
 export function createBibleDataManager(
   api: FreeUseBibleAPI,
   options: CreateBibleDataManagerOptions = {}
 ): BibleDataManager {
+  const translationsCache = options.translationsCache;
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
+  const catalogLoaded = signal<boolean>(false);
   const translationBooks = signal<Map<string, TranslationBooks>>(new Map());
   const translationEndpoints = signal<Map<string, string>>(new Map());
 
@@ -913,12 +1014,34 @@ export function createBibleDataManager(
     const normalizedEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
     ensureEndpointTracked(normalizedEndpoint);
 
-    const result = await api.getAvailableTranslations(
-      normalizedEndpoint,
-      options
-    );
-    mergeTranslations(normalizedEndpoint, result.translations);
-    return result.translations;
+    if (options?.refresh) {
+      translationsCache?.delete(normalizedEndpoint);
+    }
+
+    let resultPromise = translationsCache?.get(normalizedEndpoint);
+    if (!resultPromise) {
+      resultPromise = api
+        .getAvailableTranslations(normalizedEndpoint, options)
+        .then((response) => response.translations);
+      translationsCache?.set(normalizedEndpoint, resultPromise);
+      // A failed fetch must not poison the cache for its whole TTL — mirrors
+      // FreeUseBibleAPI's own cache, which evicts on rejection too. Only
+      // evict if this is still the entry stored for the endpoint: a slower,
+      // superseded request (replaced by a `refresh` or a fresh post-TTL
+      // fetch) rejecting later must not delete the newer, valid entry that
+      // took its place.
+      const failedPromise = resultPromise;
+      failedPromise.catch(() => {
+        if (translationsCache?.get(normalizedEndpoint) === failedPromise) {
+          translationsCache?.delete(normalizedEndpoint);
+        }
+      });
+    }
+
+    const result = await resultPromise;
+    mergeTranslations(normalizedEndpoint, result);
+    catalogLoaded.value = true;
+    return result;
   };
 
   // Created here (rather than by the caller) so it can share this manager's
@@ -1064,19 +1187,16 @@ export function createBibleDataManager(
   };
 
   effect(() => {
-    if (availableTranslations.value.length > 0) {
+    // Gated on `catalogLoaded`, not just a non-empty list — an ordinary
+    // chapter load merges in only the one translation it's reading (see
+    // `catalogLoaded`'s own doc comment), and persisting that partial list
+    // here would silently overwrite a previously-cached *complete* catalog
+    // with an incomplete one.
+    if (catalogLoaded.value && availableTranslations.value.length > 0) {
       safeLocalStorage.setItem(
         "availableTranslations",
         JSON.stringify(availableTranslations.value)
       );
-    }
-  });
-
-  effect(() => {
-    const stored = safeLocalStorage.getItem("availableTranslations");
-    if (stored) {
-      const parsed: Translation[] = JSON.parse(stored);
-      availableTranslations.value = parsed;
     }
   });
 
@@ -1089,17 +1209,50 @@ export function createBibleDataManager(
     }
   });
 
-  effect(() => {
-    const stored = safeLocalStorage.getItem("endpoints");
-    if (stored) {
-      const parsed: [string, string][] = JSON.parse(stored);
-      translationEndpoints.value = new Map(parsed);
+  /**
+   * Applies the previous visit's cached translation catalog and endpoint map.
+   *
+   * Read from a post-mount effect rather than at construction (see
+   * `AppState.hydrateFromStorage`): these signals feed the reader and the
+   * translation selector, and the server has no `localStorage`, so an eager read
+   * would make a returning visitor's first render disagree with the SSR HTML it
+   * is hydrating onto. The corresponding writes above stay eager — they can't
+   * affect a render.
+   *
+   * Each read is individually guarded: a corrupt value used to throw straight
+   * out of `createBibleDataManager` and, through `createSeedBibleState`, blank
+   * the page. Discarding one bad cache entry is always better than that.
+   */
+  const hydrateCachedCatalog = () => {
+    try {
+      const stored = safeLocalStorage.getItem("availableTranslations");
+      if (stored) {
+        availableTranslations.value = JSON.parse(stored) as Translation[];
+        // Only ever written after a genuine full-catalog fetch (see the
+        // persistence effect above), so restoring it means the catalog is
+        // already known, not just this session's active translation.
+        catalogLoaded.value = true;
+      }
+    } catch {
+      // Ignore a malformed cache; the live catalog fetch is authoritative.
     }
-  });
+
+    try {
+      const stored = safeLocalStorage.getItem("endpoints");
+      if (stored) {
+        translationEndpoints.value = new Map(
+          JSON.parse(stored) as [string, string][]
+        );
+      }
+    } catch {
+      // Ignore a malformed cache.
+    }
+  };
 
   return {
     endpoints,
     availableTranslations,
+    catalogLoaded,
     translationBooks,
     api,
     offline,
@@ -1111,5 +1264,6 @@ export function createBibleDataManager(
     getPreviousChapter,
     getTranslationEndpointInfo,
     buildTranslationId,
+    hydrateCachedCatalog,
   };
 }

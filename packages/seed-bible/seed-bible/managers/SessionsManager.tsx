@@ -479,7 +479,7 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
  * One function, one rule: a given user key always maps to the same
  * `(icon, color)` pair — everywhere on every client. No list context, no
  * walk-forward. Used for:
- *   - The sidebar self-avatar (bottom-right)
+ *   - The sidebar self-avatar (bottom-right), when other people are present
  *   - The connected-users list inside a shared tab
  *   - The "Shared with you" toasts
  *
@@ -621,6 +621,23 @@ export interface BibleReadingSession {
    * is null or empty every participant may decorate.
    */
   userCanDecorate: (sessionId: string) => boolean;
+}
+
+/**
+ * Builds the canonical URL for joining the given shared session — the
+ * current page's URL with `sessionId` set and everything else stripped
+ * (aside from `pattern`, which stays if present so a pattern-embedded
+ * reader keeps working after a join).
+ */
+export function getSessionUrl(session: BibleReadingSession): URL {
+  const url = new URL(window.location.href);
+  const pattern = url.searchParams.get("pattern");
+  url.search = "";
+  url.searchParams.set("sessionId", session.id);
+  if (pattern) {
+    url.searchParams.set("pattern", pattern);
+  }
+  return url;
 }
 
 function createSessionId(): string {

@@ -1,11 +1,12 @@
 import "./ChatView.css";
 import { effect, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
-import type {
-  ChatParticipant,
-  ChatMessage,
-  ChatSession,
-  ParsedChatTextMessage,
+import {
+  chatHasOtherPeople,
+  type ChatParticipant,
+  type ChatMessage,
+  type ChatSession,
+  type ParsedChatTextMessage,
 } from "../../managers/ChatsManager";
 import {
   getUserAnimalVisual,
@@ -362,9 +363,11 @@ export function getMessageAvatar(
   label: string;
   visual: ConnectionSessionUserVisual;
   isSelf: boolean;
+  genericFallback: boolean;
 } {
   const authors = chat.getMessageAuthors(message);
   const primaryAuthor = authors[0] ?? null;
+  const otherPeoplePresent = chatHasOtherPeople(chat);
 
   if (!primaryAuthor) {
     const anonymous = t("anonymous", { defaultValue: "Anonymous" });
@@ -373,20 +376,23 @@ export function getMessageAvatar(
       label: anonymous,
       visual: getUserAnimalVisual(message.id),
       isSelf: false,
+      genericFallback: false,
     };
   }
 
-  return getParticipantAvatar(primaryAuthor, t);
+  return getParticipantAvatar(primaryAuthor, t, { otherPeoplePresent });
 }
 
 export function getParticipantAvatar(
   participant: ChatParticipant,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: (key: string, options?: Record<string, unknown>) => string,
+  options?: { otherPeoplePresent?: boolean }
 ): {
   imageUrl: string | null;
   label: string;
   visual: ConnectionSessionUserVisual;
   isSelf: boolean;
+  genericFallback: boolean;
 } {
   const label = getParticipantDisplayLabel(participant, t);
   const imageUrl = participant.isAI
@@ -400,6 +406,8 @@ export function getParticipantAvatar(
     label,
     visual: getParticipantVisual(participant),
     isSelf: participant.isSelf,
+    genericFallback:
+      participant.isSelf && !participant.isAI && !options?.otherPeoplePresent,
   };
 }
 
@@ -567,7 +575,9 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
         data-count={totalVisible}
       >
         {avatarsToShow.map((participant) => {
-          const av = getParticipantAvatar(participant, t);
+          const av = getParticipantAvatar(participant, t, {
+            otherPeoplePresent: true,
+          });
           return (
             <Avatar
               key={participant.id}
@@ -575,6 +585,7 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
               visual={av.visual}
               title={av.label}
               isSelf={av.isSelf}
+              genericFallback={av.genericFallback}
             />
           );
         })}
@@ -961,7 +972,9 @@ export function ChatView(props: ChatViewProps) {
                 <div className="sb-chat-view-event" key={group.key}>
                   <div className="sb-chat-view-event-avatar-shell">
                     {group.participants.slice(0, 3).map((p) => {
-                      const avatar = getParticipantAvatar(p, t);
+                      const avatar = getParticipantAvatar(p, t, {
+                        otherPeoplePresent: chatHasOtherPeople(chat),
+                      });
                       return (
                         <Avatar
                           key={p.id}
@@ -969,6 +982,7 @@ export function ChatView(props: ChatViewProps) {
                           visual={avatar.visual}
                           title={avatar.label}
                           isSelf={avatar.isSelf}
+                          genericFallback={avatar.genericFallback}
                         />
                       );
                     })}
@@ -991,6 +1005,7 @@ export function ChatView(props: ChatViewProps) {
                       visual={avatar.visual}
                       title={avatar.label}
                       isSelf={avatar.isSelf}
+                      genericFallback={avatar.genericFallback}
                     />
                   </div>
                   <span className="sb-chat-view-event-text">
@@ -1035,6 +1050,7 @@ export function ChatView(props: ChatViewProps) {
                       visual={avatar.visual}
                       title={avatar.label}
                       isSelf={avatar.isSelf}
+                      genericFallback={avatar.genericFallback}
                     />
                   </div>
                 </div>
