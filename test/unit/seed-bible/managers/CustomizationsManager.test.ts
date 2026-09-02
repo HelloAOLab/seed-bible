@@ -1690,6 +1690,145 @@ describe("CustomizationsManager", () => {
     expect(manager.activeCustomization.value?.extensionSettings).toEqual({});
   });
 
+  it("initialCustomizationLoadSettled is true immediately with no ?customization= param", () => {
+    const { manager } = createManager();
+
+    expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+  });
+
+  it("initialCustomizationLoadSettled stays false until a valid ?customization= link resolves", async () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          themes: { primaryColor: "#abc123" },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    let resolveGetData: (value: unknown) => void = () => {};
+    getDataMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveGetData = resolve;
+      })
+    );
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+
+    const { manager } = createManager(linkedNavigation);
+
+    expect(manager.initialCustomizationLoadSettled.value).toBe(false);
+
+    resolveGetData({ success: true, data: sharedRecord });
+    await manager.initialCustomizationLoadPromise;
+
+    expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    expect(manager.linkedCustomization.value?.id).toBe("customization_shared");
+  });
+
+  it("initialCustomizationLoadPromise settles promptly for a malformed locator", async () => {
+    const linkedNavigation = createNavigationManager({
+      initialHref: "http://localhost/?customization=no-dot-here",
+    });
+
+    const { manager } = createManager(linkedNavigation);
+    await manager.initialCustomizationLoadPromise;
+
+    expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    expect(manager.linkedCustomization.value).toBeNull();
+  });
+
+  it("initialCustomizationLoadPromise settles promptly when the record isn't found", async () => {
+    getDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=owner.customization_missing",
+    });
+
+    const { manager } = createManager(linkedNavigation);
+    await manager.initialCustomizationLoadPromise;
+
+    expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    expect(manager.linkedCustomization.value).toBeNull();
+  });
+
+  it("initialCustomizationLoadPromise settles promptly for a Zod-invalid record", async () => {
+    getDataMock.mockResolvedValue({
+      success: true,
+      data: { not: "a valid customization" },
+    });
+    const linkedNavigation = createNavigationManager({
+      initialHref: "http://localhost/?customization=owner.customization_bad",
+    });
+
+    const { manager } = createManager(linkedNavigation);
+    await manager.initialCustomizationLoadPromise;
+
+    expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    expect(manager.linkedCustomization.value).toBeNull();
+  });
+
+  it("SSR: initialCustomizationLoadSettled backstops on a getData() that never resolves", async () => {
+    vi.useFakeTimers();
+    getDataMock.mockReturnValue(new Promise(() => {}));
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+
+    try {
+      import.meta.env.SSR = true;
+      const { manager } = createManager(linkedNavigation);
+
+      expect(manager.initialCustomizationLoadSettled.value).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+      expect(manager.linkedCustomization.value).toBeNull();
+    } finally {
+      delete import.meta.env.SSR;
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
+  it("client-side: initialCustomizationLoadSettled does not time out on a hung getData()", async () => {
+    vi.useFakeTimers();
+    getDataMock.mockReturnValue(new Promise(() => {}));
+    const linkedNavigation = createNavigationManager({
+      initialHref:
+        "http://localhost/?customization=other-user.customization_shared",
+    });
+
+    try {
+      const { manager } = createManager(linkedNavigation);
+
+      expect(manager.initialCustomizationLoadSettled.value).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(manager.initialCustomizationLoadSettled.value).toBe(false);
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
   it("an in-progress edit draft takes priority over a URL-linked customization", async () => {
     const sharedRecord = {
       id: "customization_shared",

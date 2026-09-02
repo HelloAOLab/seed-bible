@@ -614,6 +614,18 @@ export interface CustomizationsManager {
    */
   linkedCustomization: ReadonlySignal<SeedBibleCustomization | null>;
   /**
+   * Resolves once the initial `?customization=...` load (if any) reaches a
+   * terminal outcome: loaded, failed, or (during SSR only) exceeded a
+   * deadline. Resolves immediately if there was no `?customization=` param.
+   * Throw this in a component to suspend SSR rendering until then.
+   *
+   * Never rejects — a rejected promise thrown during `renderToStringAsync`
+   * surfaces as a render exception and takes down the whole SSR document.
+   */
+  initialCustomizationLoadPromise: Promise<void>;
+  /** True once the initial `?customization=` load has settled — see above. */
+  initialCustomizationLoadSettled: ReadonlySignal<boolean>;
+  /**
    * The local, unpersisted draft of the customization currently open in the
    * editor settings pages, or null when none is open. Edits accumulate here
    * and are only written to CasualOS by `saveEditingCustomization`.
@@ -736,6 +748,12 @@ export function createCustomizationsManager(
   const linkedCustomization = signal<SeedBibleCustomization | null>(null);
   const linkedCustomizationLocator = signal<string | null>(null);
 
+  const initialCustomizationLoadSettled = signal<boolean>(false);
+  let resolveInitialCustomizationLoadPromise: () => void = () => {};
+  const initialCustomizationLoadPromise = new Promise<void>((resolve) => {
+    resolveInitialCustomizationLoadPromise = resolve;
+  });
+
   const loadByLocator = async (locator: string): Promise<void> => {
     // `id` is always `customization_<uuid>` (no dots); split on the LAST dot
     // so a recordName that happens to contain one still parses correctly.
@@ -778,8 +796,40 @@ export function createCustomizationsManager(
 
   const initialLocator =
     navigation.initialUrl.searchParams.get("customization");
+
+  let initialCustomizationLoadTimer: ReturnType<typeof setTimeout> | null =
+    null;
+  const settleInitialCustomizationLoad = () => {
+    if (initialCustomizationLoadTimer !== null) {
+      clearTimeout(initialCustomizationLoadTimer);
+      initialCustomizationLoadTimer = null;
+    }
+    initialCustomizationLoadSettled.value = true;
+    resolveInitialCustomizationLoadPromise();
+  };
+
   if (initialLocator) {
-    void loadByLocator(initialLocator);
+    void loadByLocator(initialLocator).then(settleInitialCustomizationLoad);
+
+    // During SSR the render blocks on `initialCustomizationLoadPromise`, so an
+    // `os.getData()` that never answers would hold the request open
+    // indefinitely — `loadByLocator` itself always resolves (its try/catch
+    // covers every other failure mode), so this timeout is purely a backstop
+    // for that one case. Not armed on the client: there the promise only
+    // gates a Suspense boundary, and a genuinely slow connection deserves to
+    // keep waiting rather than have the customization silently dropped.
+    const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
+    if (import.meta.env.SSR) {
+      initialCustomizationLoadTimer = setTimeout(() => {
+        console.warn(
+          "Timed out waiting for initial customization load:",
+          initialLocator
+        );
+        settleInitialCustomizationLoad();
+      }, SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS);
+    }
+  } else {
+    settleInitialCustomizationLoad();
   }
 
   // The only two ways for a customization to become "active" (applied to
@@ -1475,6 +1525,8 @@ export function createCustomizationsManager(
     resolveVariantBaseTheme,
     activeExtensionIds,
     linkedCustomization,
+    initialCustomizationLoadPromise,
+    initialCustomizationLoadSettled,
     editingCustomization,
     editingVariantId,
     load,
