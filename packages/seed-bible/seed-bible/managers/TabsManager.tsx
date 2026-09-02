@@ -29,6 +29,7 @@ import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { LoginManager } from "../managers/LoginManager";
 import type { AnnotationsManager } from "../managers/AnnotationsManager";
 import { getProfileConfigValue } from "../managers/ProfileConfigSync";
+import type { SettingsManager } from "../managers/SettingsManager";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -174,12 +175,11 @@ function getUrlReadingLanguage(url: URL, basePath: string): string | null {
  *
  * Same test as the server: rebuild the path from what the URL resolved to and
  * rewrite only if it differs. That covers a typo ("senesis"), an alias
- * ("gen"), other casings ("Genesis"), the junk `getBookId`'s prefix fallback
- * accepts ("luke-skywalker" → Luke), and — since the canonical form always
- * includes the language segment — a 3-segment URL missing it entirely. A
- * no-op for a URL that is already canonical, a book that resolves to nothing
- * (the reader shows its own not-found state), or a legacy/non-reading-path
- * URL.
+ * ("gen"), other casings ("Genesis"), close typos that fuzzy-match a book
+ * slug, and — since the canonical form always includes the language segment —
+ * a 3-segment URL missing it entirely. A no-op for a URL that is already
+ * canonical, a book that resolves to nothing (the reader shows its own
+ * not-found state), or a legacy/non-reading-path URL.
  */
 function selfHealNonCanonicalPath(navigation: NavigationManager): void {
   const url = navigation.currentUrl.peek();
@@ -254,7 +254,9 @@ export function createInitialTabs(
   options: InitialTabsOptions,
   discoverManager?: DiscoverManager,
   readingExtensionManager?: BibleReadingExtensionManager,
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
+  settingsManager?: SettingsManager
 ): ReaderTab[] {
   const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
@@ -273,7 +275,8 @@ export function createInitialTabs(
       },
       discoverManager,
       readingExtensionManager,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     ),
     sharedSession: null,
     sharedChat: null,
@@ -419,7 +422,9 @@ export function createTabs(
    * getter that resolves once its own `AnnotationsManager` does.
    */
   getAnnotationsManager?: () => AnnotationsManager | undefined,
-  branding?: BrandingConfig
+  branding?: BrandingConfig,
+  /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
+  settingsManager?: SettingsManager
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -472,7 +477,8 @@ export function createTabs(
       },
       discoverManager,
       readingExtensionManager,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     );
 
     if (isSelected && highlightedVerses.length > 0 && descriptor.bookId) {
@@ -532,7 +538,8 @@ export function createTabs(
     },
     discoverManager,
     readingExtensionManager,
-    getAnnotationsManager
+    getAnnotationsManager,
+    settingsManager
   );
 
   const tabs = signal<ReaderTab[]>(initialTabs);
@@ -1037,7 +1044,8 @@ export function createTabs(
           initialReadingOptions,
           discoverManager,
           readingExtensionManager,
-          getAnnotationsManager
+          getAnnotationsManager,
+          settingsManager
         ),
       sharedSession,
       sharedChat,

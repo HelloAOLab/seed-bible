@@ -23,7 +23,6 @@
   "create-new-tab": "Креирај нов таб",
   "tab-options": "Опции за табулатори",
   "open-tab-menu": "Отвори мени со јазичиња",
-  "session-id_x": "ИД на сесија: {{sessionId}}",
   "search-verses": "Пребарај стихови",
   "clear-search": "Исчисти пребарување",
   "searching": "Пребарување...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "Означи за",
   "end-session": "Заврши сесија",
   "panels": "Панели",
-
   "open-in-new-panel": "Отвори во нов панел",
   "close-sidebar": "Затвори ја страничната лента",
   "select-pane-layout": "Изберете распоред на панелот",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Создадете план за читање",
   "reading-plans-empty": "Сè уште немате планови за читање. Создадете еден за да започнете.",
   "untitled-reading-plan": "План без наслов",
-
   "reading-plan-description_placeholder": "За што се однесува овој план?",
   "anonymous": "Анонимен",
   "no-chat-messages": "Сè уште нема пораки",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Достапна е водена тура за да ви помогне да ги научите сите детали за Seed Bible.",
   "tutorial.promptDecline": "Не, благодарам",
   "tutorial.promptAccept": "Одете на турата",
-  "session-id": "ИД на сесија",
   "session-settings-section-navigation": "Навигација",
   "session-settings-section-sharing": "Споделување",
   "session-settings-section-participants": "Учесници",
@@ -335,7 +331,6 @@
   "dont-show-again": "Не го прикажувај ова повторно",
   "discover": "Откријте",
   "playlists": "Плејлисти",
-
   "cross-references": "Вкрстени референци",
   "study-notes": "Белешки од студијата",
   "content": "Содржина",
@@ -404,7 +399,6 @@
   "add-and-save": "Додај и зачувај",
   "loading-profile": "Се вчитува вашиот профил…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Сподели",
   "share-sheet-title": "Сподели",
   "share-link": "Сподели линк",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Креирај нов план",
   "edit-reading-plan": "Уреди план",
   "reading-plan-step-name-title": "Именувајте го вашиот план",
-
   "reading-plan-name-placeholder": "на пр. Моето патување со Псалмите",
   "reading-plan-description-label": "Опис (опционално)",
   "reading-plan-step-scripture-title": "Изберете отчитувања",
   "reading-plan-step-cadences-title": "Каденци на читање",
   "reading-plan-step-cadences-hint": "Изберете го темпото на читање што сакате да го понудите. Читателите секогаш можат да изберат да одат со свое темпо.",
-
   "reading-plan-cadence-length": "Завршува за {{count}} дена",
   "reading-plan-cadence-length_one": "Завршува за {{count}} ден",
   "reading-plan-cadence-length_other": "Завршува за {{count}} дена",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Се зачувува…",
   "reading-plan-draft-saved": "Нацртот е зачуван",
   "reading-plan-draft-save-failed": "Не можеше да се зачува нацртот",
-
   "reading-plan-scripture-remove": "Отстрани читање",
   "reading-plan-create-submit": "Креирај план",
   "reading-plan-save-changes": "Зачувај ги промените",
@@ -498,11 +489,8 @@
   "loading": "Се вчитува…",
   "reading-plan-not-started": "Не е започнато",
   "reading-plan-start": "Започнете го планот",
-
   "reading-plan-streak": "{{count}} -дневна низа",
-
   "reading-plan-mark-complete": "Означи како завршено",
-
   "reading-plan-empty-sessions": "Овој план сè уште нема никакви читања.",
   "reading-plan-celebration-title": "Денот {{day}} е завршен!",
   "reading-plan-complete-title": "Планот е завршен!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Означи го читањето како завршено",
   "reading-plan-link-video": "Видео",
   "reading-belongs-to": "Ова читање му припаѓа на",
-
   "reading-plan-mark-passage-complete": "Означи го {{passage}} како прочитан",
   "reading-plan-read-nudge-title": "Убаво читање!",
   "reading-plan-read-nudge-toast": "Означи го {{passage}} како завршен?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Последните 48 часа",
   "open-bible": "Отворена Библија",
   "personal-greeting": "Добредојде, {{name}} !",
-  "read-first-chapter": "Прочитајте го првото поглавје",
   "resume-reading": "ПРОДОЛЖИ ТАМУ КАДЕ ШТО ЗАМИНА",
   "resume-reading-loading": "Се вчитува вашата историја на читање…",
   "selected-year": "Година: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "За што е оваа плејлиста?",
   "read-more": "Прочитај повеќе",
   "read-less": "Читај помалку",
-
   "ask-to-switch-ui-language": "Понуда за промена на јазикот со превод",
   "ai": "Вештачка интелигенција",
   "ai-edit-playlist": "Уредувајте ја плејлистата со вештачка интелигенција ....",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} користел {{count}} алатки",
   "chat-tool-used_one": "{{name}} користеше алатка",
   "chat-tool-used_other": "{{name}} користел {{count}} алатки",
-
   "ai-context-button-label": "Активен контекст на вештачка интелигенција",
   "ai-context-tool-count": "{{count}} алатки",
   "annotation-conflict-title": "Оваа белешка е променета на две места",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Нема содржина.",
   "annotation-conflict-confirm": "Потврди",
   "annotation-conflict-resolve-failed": "Не можеше да се примени тој избор. Ќе се обидеме повторно.",
-
   "annotation-sync-failed": "Не можеше да се зачува белешката на вашата сметка. Сè уште е на овој уред.",
   "create-menu": "Креирај",
   "create-annotation-menu-item": "Анотација",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Не можеше да се зачува прибелешката.",
   "annotation-group-expand": "Прошири ја групата",
   "annotation-group-collapse": "Собери ја групата",
-
   "notes": "Белешки",
   "note": "Забелешка",
   "show-more-verse-actions": "Прикажи повеќе дејства",
@@ -667,7 +649,6 @@
   "create-folder": "Креирај папка",
   "edit-bookmark": "Уреди обележувач",
   "remove-bookmark-from-all-folders": "Отстрани од сите папки",
-
   "greeting-afternoon": "Добар ден!",
   "greeting-afternoon-named": "Добар ден, {{name}} !",
   "greeting-evening": "Добра вечер!",
@@ -677,5 +658,28 @@
   "greeting-night": "Добра ноќ!",
   "greeting-night-named": "Добра ноќ, {{name}} !",
   "annotation-override-banner": "Белешките се зачувуваат и вчитуваат од сметката на вашиот тим.",
-  "annotation-override-save-to-my-account": "Зачувај на мојата сметка"
+  "annotation-override-save-to-my-account": "Зачувај на мојата сметка",
+  "read-book-chapter-button": "Прочитај {{bookName}} {{chapterNumber}}",
+  "session-url": "URL-адреса на сесијата",
+  "ask-ai": "Прашај ја вештачката интелигенција",
+  "unread-mention": "Непрочитано споменување",
+  "unread-messages": "Непрочитани пораки: {{count}}",
+  "annotations-pending-sync": "{{count}} промена чека на синхронизација",
+  "annotations-pending-sync-plural": "{{count}} промени чекаат синхронизација",
+  "scripture-width": "Ширина на Светото писмо",
+  "decrease-scripture-width": "Намали ја ширината на стихот",
+  "increase-scripture-width": "Зголеми ја ширината на стихот",
+  "annotations": "Анотации",
+  "discover-content-panel": "Откријте содржина",
+  "discover-book-title": "Откријте {{book}}",
+  "show-all": "Прикажи ги сите",
+  "annotation-comment-updated": "Ажурирано {{date}}",
+  "switch-language-title": "Да се ​​смени јазикот?",
+  "switch-language-body": "Дали сакате да го смените вашиот јазик во {{nativeLanguageName}} ?",
+  "switch-language-confirm": "Прекинувач",
+  "switch-language-dismiss": "Не префрлај",
+  "switch-language-never": "Никогаш повеќе не прашувај",
+  "chat-ai-error": "Жал ми е, нешто тргна наопаку при генерирањето на одговорот ( {{error}} ).",
+  "playlist-editor": "Уредник на плејлисти",
+  "add-bookmark-modal": "Додај обележувач"
 }

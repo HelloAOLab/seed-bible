@@ -18,7 +18,6 @@
   "create-new-tab": "Создать новую вкладку",
   "tab-options": "Параметры вкладки",
   "open-tab-menu": "Открыть меню вкладок",
-  "session-id_x": "Идентификатор сессии: {{sessionId}}",
   "search-verses": "Поиск стихов",
   "clear-search": "Очистить поиск",
   "searching": "Идет поиск...",
@@ -98,7 +97,6 @@
   "session-settings-highlight-duration": "Выделить для",
   "end-session": "Завершение сессии",
   "panels": "Панели",
-
   "open-in-new-panel": "Открыть в новой панели",
   "close-sidebar": "Закрыть боковую панель",
   "select-pane-layout": "Выберите расположение панелей",
@@ -253,7 +251,6 @@
   "create-reading-plan": "Составьте план чтения",
   "reading-plans-empty": "У вас пока нет планов на чтение. Создайте свой, чтобы начать.",
   "untitled-reading-plan": "План без названия",
-
   "reading-plan-description_placeholder": "О чём этот план?",
   "anonymous": "Аноним",
   "no-chat-messages": "Сообщений пока нет.",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "Для того чтобы вы могли узнать все тонкости Seed Bible, предлагается экскурсия с гидом.",
   "tutorial.promptDecline": "Нет, спасибо",
   "tutorial.promptAccept": "Пройдите экскурсию",
-  "session-id": "Идентификатор сессии",
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Совместное использование",
   "session-settings-section-participants": "Участники",
@@ -335,7 +331,6 @@
   "dont-show-again": "Больше не показывайте это",
   "discover": "Обнаружить",
   "playlists": "Плейлисты",
-
   "cross-references": "Перекрестные ссылки",
   "study-notes": "Заметки к уроку",
   "content": "Содержание",
@@ -404,7 +399,6 @@
   "add-and-save": "Добавить и сохранить",
   "loading-profile": "Загрузка вашего профиля…",
   "app-version": "v {{version}} · {{commit}}",
-
   "share": "Делиться",
   "share-sheet-title": "Делиться",
   "share-link": "Поделитесь ссылкой",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "Создать новый план",
   "edit-reading-plan": "Редактировать план",
   "reading-plan-step-name-title": "Назовите свой план",
-
   "reading-plan-name-placeholder": "например, Мое путешествие по псалмам",
   "reading-plan-description-label": "Описание (необязательно)",
   "reading-plan-step-scripture-title": "Избранные материалы для чтения",
   "reading-plan-step-cadences-title": "Ритм чтения",
   "reading-plan-step-cadences-hint": "Выберите желаемый темп чтения. Читатели всегда могут читать в своем собственном темпе.",
-
   "reading-plan-cadence-length": "Завершится через {{count}} дней",
   "reading-plan-cadence-length_one": "Завершится через {{count}} дней",
   "reading-plan-cadence-length_other": "Завершится через {{count}} дней",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "Сохранение…",
   "reading-plan-draft-saved": "Черновик сохранен",
   "reading-plan-draft-save-failed": "Не удалось сохранить черновик",
-
   "reading-plan-scripture-remove": "Удалить чтение",
   "reading-plan-create-submit": "Создать план",
   "reading-plan-save-changes": "Сохраните изменения",
@@ -498,11 +489,8 @@
   "loading": "Загрузка…",
   "reading-plan-not-started": "Не началось",
   "reading-plan-start": "Начальный план",
-
   "reading-plan-streak": "{{count}} -дневная серия",
-
   "reading-plan-mark-complete": "Отметить как выполненное",
-
   "reading-plan-empty-sessions": "Данный план пока не имеет утвержденных материалов для изучения.",
   "reading-plan-celebration-title": "День {{day}} завершен!",
   "reading-plan-complete-title": "План выполнен!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "Отметка \"Чтение завершено\"",
   "reading-plan-link-video": "Видео",
   "reading-belongs-to": "Это чтение относится к",
-
   "reading-plan-mark-passage-complete": "Отметьте {{passage}} как прочитанное",
   "reading-plan-read-nudge-title": "Приятного чтения!",
   "reading-plan-read-nudge-toast": "Отметить {{passage}} завершенным?",
@@ -553,7 +540,6 @@
   "last-48-hours": "Последние 48 часов",
   "open-bible": "Открытая Библия",
   "personal-greeting": "Добро пожаловать, {{name}} !",
-  "read-first-chapter": "Прочитайте первую главу",
   "resume-reading": "ПРОДОЛЖАЙТЕ С ТОГО МЕСТА, ГДЕ ОСТАНОВИЛИСЬ",
   "resume-reading-loading": "Загрузка истории прочтения…",
   "selected-year": "Год: {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "О чём этот плейлист?",
   "read-more": "Читать далее",
   "read-less": "Читать меньше",
-
   "ask-to-switch-ui-language": "Предложите сменить язык при переводе.",
   "ai": "ИИ",
   "ai-edit-playlist": "Редактируйте плейлист с помощью ИИ.",
@@ -623,7 +608,6 @@
   "chat-tool-used": "{{name}} использовано {{count}} инструментов",
   "chat-tool-used_one": "{{name}} использовал инструмент",
   "chat-tool-used_other": "{{name}} использовано {{count}} инструментов",
-
   "ai-context-button-label": "Активный контекст ИИ",
   "ai-context-tool-count": "{{count}} инструментов",
   "annotation-conflict-title": "Эта заметка изменилась в двух местах.",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "Содержимое отсутствует.",
   "annotation-conflict-confirm": "Подтверждать",
   "annotation-conflict-resolve-failed": "Не удалось применить этот вариант. Попробую ещё раз.",
-
   "annotation-sync-failed": "Не удалось сохранить заметку в вашем аккаунте. Она всё ещё находится на этом устройстве.",
   "create-menu": "Создавать",
   "create-annotation-menu-item": "Аннотация",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "Не удалось сохранить аннотацию.",
   "annotation-group-expand": "Развернуть группу",
   "annotation-group-collapse": "Группа по коллапсу",
-
   "notes": "Примечания",
   "note": "Примечание",
   "show-more-verse-actions": "Показать больше действий",
@@ -667,7 +649,6 @@
   "create-folder": "Создать папку",
   "edit-bookmark": "Изменить закладку",
   "remove-bookmark-from-all-folders": "Удалить из всех папок",
-
   "greeting-afternoon": "Добрый день!",
   "greeting-afternoon-named": "Добрый день, {{name}} !",
   "greeting-evening": "Добрый вечер!",
@@ -677,5 +658,28 @@
   "greeting-night": "Спокойной ночи!",
   "greeting-night-named": "Спокойной ночи, {{name}} !",
   "annotation-override-banner": "Заметки сохраняются и загружаются из учетной записи вашей команды.",
-  "annotation-override-save-to-my-account": "Сохранить в мой аккаунт"
+  "annotation-override-save-to-my-account": "Сохранить в мой аккаунт",
+  "read-book-chapter-button": "Прочитайте {{bookName}} {{chapterNumber}}",
+  "session-url": "URL сессии",
+  "ask-ai": "Спросите ИИ",
+  "unread-mention": "Непрочитанное упоминание",
+  "unread-messages": "Непрочитанные сообщения: {{count}}",
+  "annotations-pending-sync": "{{count}} изменение ожидания синхронизации",
+  "annotations-pending-sync-plural": "{{count}} изменений ожидают синхронизации",
+  "scripture-width": "Ширина Писания",
+  "decrease-scripture-width": "Уменьшить ширину текста Писания.",
+  "increase-scripture-width": "Увеличьте ширину текста Писания.",
+  "annotations": "Аннотации",
+  "discover-content-panel": "Найти контент",
+  "discover-book-title": "Откройте для себя {{book}}",
+  "show-all": "Показать все",
+  "annotation-comment-updated": "Обновлено {{date}}",
+  "switch-language-title": "Сменить язык?",
+  "switch-language-body": "Вы хотите переключить язык на {{nativeLanguageName}} ?",
+  "switch-language-confirm": "Выключатель",
+  "switch-language-dismiss": "Не переключайтесь",
+  "switch-language-never": "Больше никогда не спрашивайте",
+  "chat-ai-error": "Извините, произошла ошибка при генерации ответа ( {{error}} ).",
+  "playlist-editor": "Редактор плейлистов",
+  "add-bookmark-modal": "Добавить закладку"
 }

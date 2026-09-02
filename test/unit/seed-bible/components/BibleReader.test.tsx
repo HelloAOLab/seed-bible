@@ -189,6 +189,7 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
     discoveredStudyNotes: signal([]),
+    discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
@@ -234,6 +235,9 @@ function createMobileState(): SeedBibleState {
   return {
     app: {
       isMobile: signal(true),
+      effectiveSlots: signal([{ id: "slot-1", tab: null }]),
+      effectivePanes: signal([]),
+      openDiscover: vi.fn(),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),
@@ -251,11 +255,16 @@ function createMobileState(): SeedBibleState {
     login: {
       userId: signal<string | null>(null),
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
     os: {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
+    tabs: {} as any,
+    panes: {} as any,
+    modals: { openModal: vi.fn(), closeModal: vi.fn() },
+    discover: { scrollToVerse: signal(null) },
     playlists: {
       playing: signal(null),
     },
@@ -264,6 +273,10 @@ function createMobileState(): SeedBibleState {
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      sync: {
+        pendingCount: signal(0),
+        pendingCountForChapter: vi.fn(() => 0),
+      },
     },
   } as any as SeedBibleState;
 }
@@ -2063,7 +2076,8 @@ describe("BibleReader", () => {
   function createStateWithAnnotatedVerse(
     bookId: string,
     chapterNumber: number,
-    verseNumber: number
+    verseNumber: number,
+    isMobile = true
   ): SeedBibleState {
     const chapterAnnotations = signal([
       {
@@ -2074,8 +2088,10 @@ describe("BibleReader", () => {
         data: { type: "comment", html: "<p>Note</p>" },
       },
     ]);
+    const state = createMobileState();
     return {
-      ...createMobileState(),
+      ...state,
+      app: { ...state.app, isMobile: signal(isMobile) },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
       },
@@ -2145,6 +2161,179 @@ describe("BibleReader", () => {
       )
     ).toBeNull();
     expect(container.querySelectorAll(".sb-verse-number")).toHaveLength(1);
+  });
+
+  it("clicking an annotated verse number on desktop forces the compact discover panel inline and targets its note, without selecting the verse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(readingState.discoverContentPanelInline.value).toBe(true);
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotated verse number on mobile leaves the compact discover panel placement alone and selects the verse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, true);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    expect(readingState.discoverContentPanelInline.value).toBe(false);
+    expect(state.discover.scrollToVerse.value).toBeNull();
+    expect(readingState.pendingAnnotationScrollVerse.value).toBe(1);
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+  });
+
+  it("moves the compact discover panel below the content when the placement toggle is off, and keeps it inline when on", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const content = () => container.querySelector(".sb-bible-reader-content");
+    expect(
+      content()?.classList.contains("sb-bible-reader-content--discover-below")
+    ).toBe(false);
+
+    act(() => {
+      readingState.discoverContentPanelInline.value = false;
+    });
+
+    expect(
+      content()?.classList.contains("sb-bible-reader-content--discover-below")
+    ).toBe(true);
+  });
+
+  it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 3,
+    });
+    expect(state.app.openDiscover).not.toHaveBeenCalled();
+  });
+
+  it("falls back to opening the full Discover pane when no annotation targets a specific verse", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
+    // Whole-chapter annotation: no verseNumber, so there's nothing for the
+    // compact panel to scroll to.
+    (state.annotations.getAnnotationsForChapter as any) = vi.fn(() =>
+      signal([
+        {
+          id: "a1",
+          bookId: "GEN",
+          chapterNumber: 1,
+          data: { type: "comment", html: "<p>Note</p>" },
+        },
+      ])
+    );
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const notesButton = container.querySelector(
+      ".sb-bible-reader-mobile-header-notes"
+    ) as HTMLElement;
+    expect(notesButton).not.toBeNull();
+
+    act(() => {
+      notesButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(state.discover.scrollToVerse.value).toBeNull();
+    expect(state.app.openDiscover).toHaveBeenCalledTimes(1);
   });
 
   it("separates adjacent verses with a space when verse numbers are hidden", () => {
@@ -2477,6 +2666,9 @@ describe("BibleReader", () => {
       },
       bookmarks: {
         isLocationBookmarked: vi.fn(() => false),
+      },
+      annotations: {
+        getAnnotationsForChapter: vi.fn(() => signal([])),
       },
     } as any as SeedBibleState;
 
