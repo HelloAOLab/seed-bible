@@ -120,8 +120,8 @@ function setup(target: ListeningTarget | null = PSALM_23) {
     wait(seconds: number) {
       nowMs += seconds * 1000;
     },
-    /** The screen comes back on. */
-    resume() {
+    /** The screen going off or coming back on — the same event either way. */
+    visibilityChanged() {
       document.dispatchEvent(new Event("visibilitychange"));
     },
   };
@@ -141,13 +141,36 @@ describe("attachListeningRecorder", () => {
 
     // Phone goes in a pocket for six minutes of narration.
     h.listenWhileFrozen(360);
-    h.resume();
+    h.visibilityChanged();
 
     expect(h.saveSpan).toHaveBeenCalledWith(
       "psalms",
       23,
       START_SECONDS,
       START_SECONDS + 390
+    );
+  });
+
+  it("records a listen locked before any foreground tick landed", () => {
+    const h = setup();
+
+    // Press play and lock the phone within a second or two: no `timeupdate`
+    // fires while the page is awake, and the reader's own five-second tick
+    // never lands, so nothing else has recorded this chapter at all.
+    h.el.play();
+    h.listenWhileFrozen(2);
+    h.visibilityChanged();
+    h.saveSpan.mockClear();
+
+    // Ten minutes of narration through a locked screen, then it comes back.
+    h.listenWhileFrozen(600);
+    h.visibilityChanged();
+
+    expect(h.saveSpan).toHaveBeenCalledWith(
+      "psalms",
+      23,
+      START_SECONDS,
+      START_SECONDS + 602
     );
   });
 
@@ -158,7 +181,7 @@ describe("attachListeningRecorder", () => {
     h.listenWhileFrozen(120);
     // Playback stopped at the end of the chapter; the phone stayed locked.
     h.wait(600);
-    h.resume();
+    h.visibilityChanged();
 
     expect(h.saveSpan).toHaveBeenCalledWith(
       "psalms",
@@ -175,7 +198,7 @@ describe("attachListeningRecorder", () => {
     // Two minutes of audio played back at double speed takes one real minute.
     h.el.currentTime += 120;
     h.wait(60);
-    h.resume();
+    h.visibilityChanged();
 
     expect(h.saveSpan).toHaveBeenCalledWith(
       "psalms",
@@ -259,7 +282,7 @@ describe("attachListeningRecorder", () => {
 
     h.el.play();
     h.listenWhileFrozen(300);
-    h.resume();
+    h.visibilityChanged();
     h.el.pause();
 
     expect(h.saveSpan).not.toHaveBeenCalled();
@@ -271,7 +294,7 @@ describe("attachListeningRecorder", () => {
     h.el.play();
     h.detach();
     h.listen(300);
-    h.resume();
+    h.visibilityChanged();
     h.el.pause();
 
     expect(h.saveSpan).not.toHaveBeenCalled();
