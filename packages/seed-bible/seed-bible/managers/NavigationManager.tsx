@@ -195,30 +195,84 @@ export function createNavigationManager(
     }
   };
 
-  const push = (url: string | URL) => {
+  // Non-zero while a `batchWrites()` call is in progress. Writes made inside
+  // one are folded into `pendingHref` and land as a single history operation
+  // when the outermost batch ends.
+  let batchDepth = 0;
+  let pendingHref: string | null = null;
+  let pendingIsPush = false;
+
+  /**
+   * Runs `fn`, collapsing every URL write it makes — directly or through the
+   * signal effects it triggers — into one history entry. The batch pushes if
+   * any write inside it asked to push, and replaces otherwise.
+   *
+   * One user action often changes two things that both mirror to the URL: for
+   * example tapping a bookmark in the mobile sidebar moves the reader (a
+   * `replace`, since it's a tab switch) *and* dismisses the sidebar (a `push`,
+   * removing `?sidebar=open`). Left unbatched those are two history writes:
+   * the reader's `replace` overwrites the entry that opened the sidebar — so
+   * "back" no longer leads where the user came from — and the sidebar's `push`
+   * adds a second entry for the same destination, which makes pressing back
+   * look like it does nothing.
+   */
+  const batchWrites = <T,>(fn: () => T): T => {
+    // Where the URL stood before the outermost batch opened. Each write inside
+    // the batch is only checked for changes against the live, mid-batch URL, so
+    // a value that is set and then reverted looks like two real changes — and
+    // would flush a history write for a URL identical to the one already shown.
+    const startHref = batchDepth === 0 ? currentUrl.peek().href : null;
+    batchDepth++;
+    try {
+      return fn();
+    } finally {
+      batchDepth--;
+      if (batchDepth === 0) {
+        const href = pendingHref;
+        const isPush = pendingIsPush;
+        pendingHref = null;
+        pendingIsPush = false;
+        if (href !== null && href !== startHref) {
+          writeHistory(href, isPush);
+        }
+      }
+    }
+  };
+
+  const writeHistory = (url: string | URL, isPush: boolean) => {
     if (disposed || typeof window === "undefined") {
       return;
     }
 
-    console.log("Push URL:", url);
-    window.history.pushState(
-      window.history.state,
-      "",
-      toAbsoluteUrl(applyBasePath(url))
-    );
+    const href = toAbsoluteUrl(applyBasePath(url));
+
+    if (batchDepth > 0) {
+      pendingHref = href;
+      pendingIsPush = pendingIsPush || isPush;
+      // Publish the write immediately even though history hasn't been touched
+      // yet. Everything downstream — later writes in the same batch, and the
+      // URL -> state effects in `syncSignalsToUrl` — reads `currentUrl`, and if
+      // it still showed the pre-batch URL those effects would revert the very
+      // state changes being batched (a closed sidebar would reopen because the
+      // URL still said `?sidebar=open`).
+      currentUrl.value = new URL(href);
+      return;
+    }
+
+    console.log(isPush ? "Push URL:" : "Replace URL:", url);
+    if (isPush) {
+      window.history.pushState(window.history.state, "", href);
+    } else {
+      window.history.replaceState(window.history.state, "", href);
+    }
+  };
+
+  const push = (url: string | URL) => {
+    writeHistory(url, true);
   };
 
   const replace = (url: string | URL) => {
-    if (disposed || typeof window === "undefined") {
-      return;
-    }
-
-    console.log("Replace URL:", url);
-    window.history.replaceState(
-      window.history.state,
-      "",
-      toAbsoluteUrl(applyBasePath(url))
-    );
+    writeHistory(url, false);
   };
 
   const go = (destination: NavigationDestination) => {
@@ -391,6 +445,7 @@ export function createNavigationManager(
     go,
     replace,
     push,
+    batchWrites,
     updateQueryParam,
     updateQueryParams,
     updatePathAndQueryParams,

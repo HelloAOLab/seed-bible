@@ -44,6 +44,46 @@
         margin: 0;
       }
     </style>
+    <!-- Inlined by script/lib/vite-plugin-inline-critical-css.ts at build
+         time from the *.inline.css files (base + BibleReader +
+         BibleReaderToolbar) — must come after the hidden-by-default rule
+         above so its `html { visibility: visible }` rule wins the cascade
+         without waiting on the external stylesheet. In dev this is never
+         replaced (build-only plugin), so it stays an empty, harmless tag. -->
+    <style id="sb-critical-styles">
+      <!-- CRITICAL_STYLE_TAG -->
+    </style>
+    <style id="sb-theme-styles">
+      <!-- THEME_STYLE_TAG -->
+    </style>
+    <script type="application/json" id="sb-theme-presets">
+      <!-- THEME_PRESETS_JSON -->
+    </script>
+    <script>
+      // Applies the device's real saved theme before any JS bundle loads —
+      // reads localStorage directly rather than going through the app's own
+      // managers, since those don't run until much later. Corrects the
+      // #sb-theme-styles tag the server rendered (see entry-ssr.tsx), which
+      // reflects the server's default-light guess, not this device's saved
+      // preference. See ThemeManager.tsx / CLAUDE.md for why this stays
+      // `body`-scoped.
+      (function () {
+        try {
+          var raw = localStorage.getItem("sb-profile-config-local");
+          if (!raw) return;
+          var themeId = JSON.parse(raw).themeId;
+          if (!themeId) return;
+          var presetsEl = document.getElementById("sb-theme-presets");
+          if (!presetsEl || !presetsEl.textContent) return;
+          var css = JSON.parse(presetsEl.textContent)[themeId];
+          if (!css) return;
+          var tag = document.getElementById("sb-theme-styles");
+          if (tag) tag.textContent = css;
+        } catch (e) {
+          // Corrupt/inaccessible storage — keep the server's default.
+        }
+      })();
+    </script>
     <!-- META -->
     <script type="application/json" id="app-config">
       <!-- CONFIG_JSON -->

@@ -1,10 +1,16 @@
-import { MaterialIcon, SeedBibleIcon, StopIcon } from "../components/icons";
+import {
+  AskIcon,
+  MaterialIcon,
+  SeedBibleIcon,
+  StopIcon,
+} from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
   uiLocaleForDefaultTranslation,
+  hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
 } from "../managers/BibleReadingManager";
@@ -32,7 +38,10 @@ import {
   ReadingPlansPaneLeading,
   ReadingPlansPaneTitle,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
-import type { PlaylistManager } from "./PlaylistManager";
+import {
+  groupVersesIntoPlaylistItems,
+  type PlaylistManager,
+} from "./PlaylistManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
@@ -345,7 +354,8 @@ export type ManagedBibleBelowReaderToolbarToolItem =
  * Runtime context for the quick toolbar surface — the compact row of
  * actions shown at the top of the reader, beside the chapter bookmark
  * button. Intentionally lean: quick tools are header-level chapter actions
- * and only need the active reading state.
+ * and only need the active reading state (plus whichever manager a specific
+ * tool's visibility/action depends on).
  */
 export interface QuickToolContext {
   /** Active reading state for the current reader surface. */
@@ -355,6 +365,9 @@ export interface QuickToolContext {
    * Playlist manager state.
    */
   playlists: PlaylistManager;
+
+  /** Used by the discover-content-panel tool to factor notes into visibility. */
+  annotations: AnnotationsManager;
 
   features: FeaturesManager;
 
@@ -529,6 +542,84 @@ function ClearSelectionIcon() {
   return <MaterialIcon>clear</MaterialIcon>;
 }
 
+function AskAiIcon() {
+  return <AskIcon />;
+}
+
+/**
+ * Most recent local (non-shared) chat that already includes this AI provider.
+ * Shared/remote chats are skipped so asking about verses stays a personal
+ * conversation. Returns null when none exists so the caller can create one.
+ */
+function findLocalChatForProvider(chats: ChatsManager, providerId: string) {
+  const sessions = chats.chats?.value ?? [];
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const chat = sessions[i];
+    if (!chat) {
+      continue;
+    }
+    const participants = chat.participants?.value;
+    if (
+      !participants ||
+      participants.some((participant) => participant.isRemote)
+    ) {
+      continue;
+    }
+    if (
+      participants.some(
+        (participant) =>
+          participant.isAI && participant.providerId === providerId
+      )
+    ) {
+      return chat;
+    }
+  }
+  return null;
+}
+
+/**
+ * Opens (or reuses) a local chat with `providerId`, prefills the compose field
+ * with the selected verses plus two trailing newlines, then dismisses the
+ * verse selection. Reuses an existing thread with that agent when possible so
+ * follow-up questions keep conversation context. No-ops when there is nothing
+ * to ask about, the provider is gone, or a chat cannot be created.
+ */
+function openAskAiForSelectedVerses(
+  context: BibleToolContext,
+  providerId: string
+) {
+  if (context.readingState.selectedVerses.value.length === 0) {
+    return;
+  }
+
+  const provider = context.chats.providers.value.find(
+    (entry) => entry.id === providerId
+  );
+  if (!provider) {
+    return;
+  }
+
+  const verseText = formatSelectedVerses(context.readingState);
+  if (context.chats.composerDraft) {
+    context.chats.composerDraft.value = verseText ? `${verseText}\n\n` : "";
+  }
+
+  const existingChat = findLocalChatForProvider(context.chats, providerId);
+  const chat = existingChat ?? context.chats.createLocalSession?.();
+  if (!chat) {
+    return;
+  }
+  chat.addParticipant(providerId);
+  context.chats.selectChat(chat.id);
+  context.openChat?.();
+  // Clearing the selection unmounts the mobile verse sheet under the finger.
+  // Defer so a retargeted pointerdown after that unmount cannot land "outside"
+  // the chat panel and dismiss the panel we just opened.
+  queueMicrotask(() => {
+    context.readingState.clearSelectedVerses();
+  });
+}
+
 function OpenInSelectorIcon() {
   return <MaterialIcon>menu_book</MaterialIcon>;
 }
@@ -616,6 +707,46 @@ function getDefaultQuickToolbarTools(
         c.playlists.isMobile.value,
       onSelect: (c) => {
         c.playlists.view.value = "play_playlist";
+      },
+    },
+    {
+      id: "discover-content-panel",
+      priority: 10,
+      title: {
+        key: "discover-content-panel",
+        defaultValue: "Discover content",
+      },
+      icon: (c) => (
+        <MaterialIcon
+          className={
+            c.readingState.discoverContentPanelInline.value
+              ? "sb-quick-tool-icon-active"
+              : undefined
+          }
+        >
+          explore
+        </MaterialIcon>
+      ),
+      isVisible: (c) => {
+        if (c.app?.isMobile?.value) {
+          return false;
+        }
+        if (hasAnyDiscoverResults(c.readingState)) {
+          return true;
+        }
+        const bookId = c.readingState.bookId.value;
+        const chapterNumber = c.readingState.chapterNumber.value;
+        if (!bookId || !chapterNumber) {
+          return false;
+        }
+        return (
+          c.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+            .length > 0
+        );
+      },
+      onSelect: (c) => {
+        c.readingState.discoverContentPanelInline.value =
+          !c.readingState.discoverContentPanelInline.value;
       },
     },
     {
@@ -898,18 +1029,23 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         const playlist = context.playlists?.editingPlaylist.value;
         if (!playlist) return;
 
+        const chapterData = context.readingState.chapterData.value;
         context.playlists!.editingPlaylist.value = {
           ...playlist,
           items: [
             ...playlist.items,
-            ...context.readingState.selectedVerses.value.map((verse) => ({
-              type: "bible-verse" as const,
-              ref: {
+            ...groupVersesIntoPlaylistItems(
+              context.readingState.selectedVerses.value.map((verse) => ({
                 bookId: verse.bookId,
                 chapter: verse.chapterNumber,
                 verse: verse.verse.number,
-              },
-            })),
+              })),
+              (bookId, chapter) =>
+                chapterData?.book.id === bookId &&
+                chapterData.chapter.number === chapter
+                  ? chapterData.numberOfVerses
+                  : undefined
+            ),
           ],
         };
 
@@ -987,6 +1123,42 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: async (context) => {
         if (!context.annotations) return;
         await context.annotations.createNewAnnotation();
+      },
+    },
+    {
+      id: "ask-ai",
+      priority: 80,
+      title: { key: "ask-ai", defaultValue: "Ask AI" },
+      icon: AskAiIcon,
+      isVisible: (context) =>
+        context.chats.providers.value.length > 0 &&
+        context.readingState.selectedVerses.value.length > 0,
+      // Single provider: getItems is empty so the verse toolbar calls onSelect
+      // and opens that agent immediately. Multiple providers: getItems fills
+      // the picker. Default tools are not run through validateToolActions,
+      // which otherwise forbids defining both.
+      getItems: (context) => {
+        const providers = context.chats.providers.value;
+        if (providers.length <= 1) {
+          return [];
+        }
+        return providers.map((provider) => ({
+          id: `ask-ai-${provider.id}`,
+          title: provider.name,
+          icon: AskAiIcon,
+          onSelect: () => openAskAiForSelectedVerses(context, provider.id),
+        }));
+      },
+      onSelect: (context) => {
+        const providers = context.chats.providers.value;
+        if (providers.length !== 1) {
+          return;
+        }
+        const provider = providers[0];
+        if (!provider) {
+          return;
+        }
+        openAskAiForSelectedVerses(context, provider.id);
       },
     },
     {

@@ -1,5 +1,7 @@
 import {
   createTheme as createThemeManager,
+  composeThemeStyleText,
+  THEME_PRESET_STYLE_TEXT,
   generateThemeCssClasses,
   generateThemeCssVariables,
   type BibleTheme,
@@ -114,6 +116,32 @@ describe("ThemeManager CSS helpers", () => {
       );
     });
   });
+
+  describe("composeThemeStyleText", () => {
+    it("scopes the composed CSS to body, not :root or html", () => {
+      const css = composeThemeStyleText(createTheme());
+
+      expect(css.trimStart().startsWith("body {")).toBe(true);
+      expect(css).not.toContain(":root");
+    });
+
+    it("strips a literal < from a custom override value, preventing a </style breakout", () => {
+      // Custom theme/highlight overrides are free text — not validated for
+      // CSS syntax (see filterValidColorOverrides) — and this text gets
+      // spliced as a raw string into index.html server-side. A `<` here
+      // could otherwise close the <style> tag it's injected into early.
+      const css = composeThemeStyleText(
+        createTheme({
+          variables: {
+            ...createTheme().variables,
+            primaryColor: "</style><script>alert(1)</script>",
+          },
+        })
+      );
+
+      expect(css).not.toContain("<");
+    });
+  });
 });
 
 /**
@@ -184,11 +212,86 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     // same (real) localStorage that `login1`'s anonymous write persisted to.
     // This is the bug the refactor fixes — ThemeManager used to write
     // anonymous edits to `login.localConfig` but never read them back.
+    // `hydrateLocalConfig()` mirrors the real app's post-mount effect (see
+    // `MainBody` in `app/main.tsx`) — `localConfig` itself seeds empty to
+    // match SSR.
     const login2 = createLoginManager({ os });
+    login2.hydrateLocalConfig();
     const settings2 = createSettings(os, login2, nav);
     const theme2 = createThemeManager(settings2);
 
     expect(theme2.selectedThemeId.value).toBe("dark");
+  });
+
+  it("writes the active theme's CSS to a #sb-theme-styles tag in document.head, outside the Preact tree", () => {
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    let tag = document.getElementById("sb-theme-styles");
+    expect(tag).not.toBeNull();
+    expect(tag?.tagName).toBe("STYLE");
+    expect(tag?.textContent).toContain("body {");
+
+    theme.setTheme("dark");
+
+    // Same tag, updated in place — not a second one appended.
+    tag = document.getElementById("sb-theme-styles");
+    expect(document.head.querySelectorAll("#sb-theme-styles")).toHaveLength(1);
+    expect(tag?.textContent).toContain("--sb-background: #0a0a0a;");
+  });
+
+  it("does not clobber a dark #sb-theme-styles tag with the light default on boot", () => {
+    // Boot order on a returning visitor whose saved theme is dark: the server
+    // renders the light default into the tag, then the pre-hydration inline
+    // script in index.html reads localStorage and patches it to dark, and only
+    // then does the bundle run createSeedBibleState() -> createTheme(). At that
+    // point `localConfig` is still the empty SSR-matching seed, so `themeId` is
+    // "light" — writing it here would flash the page light until
+    // `hydrateLocalConfig()` restores the real id post-mount.
+    const darkCss = THEME_PRESET_STYLE_TEXT.dark ?? "";
+    expect(darkCss).toContain("--sb-background: #0a0a0a;");
+
+    document.getElementById("sb-theme-styles")?.remove();
+    const tag = document.createElement("style");
+    tag.id = "sb-theme-styles";
+    tag.textContent = darkCss;
+    document.head.appendChild(tag);
+
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    expect(theme.selectedThemeId.value).toBe("light");
+    expect(document.getElementById("sb-theme-styles")?.textContent).toBe(
+      darkCss
+    );
+
+    // ...and once the real saved config lands, the tag still tracks it.
+    login.localConfig.value = { themeId: "dark" };
+    expect(document.getElementById("sb-theme-styles")?.textContent).toContain(
+      "--sb-background: #0a0a0a;"
+    );
+  });
+
+  it("still takes over a #sb-theme-styles tag that was never filled in", () => {
+    // Dev server / any host that leaves the placeholder unsubstituted: there is
+    // no real theme in the tag, so deferring to it would leave the page
+    // unstyled. The effect must write on its first run here.
+    document.getElementById("sb-theme-styles")?.remove();
+    const tag = document.createElement("style");
+    tag.id = "sb-theme-styles";
+    tag.textContent = "<!-- THEME_STYLE_TAG -->";
+    document.head.appendChild(tag);
+
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    createThemeManager(settings);
+
+    expect(document.getElementById("sb-theme-styles")?.textContent).toContain(
+      "--sb-background:"
+    );
   });
 
   it("?app.themeId sets only the starting value and doesn't fight a later setTheme call", () => {

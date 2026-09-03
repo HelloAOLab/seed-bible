@@ -14,6 +14,7 @@ import {
   PlaylistPlayHistorySchema,
   createPlaylistManager,
   createPlayingState,
+  groupVersesIntoPlaylistItems,
   formatPlaylistPlayDurationMs,
   groupPlaylistPlayHistoryByDay,
   isPlaylistPlayHistoryComplete,
@@ -2988,12 +2989,91 @@ describe("createPlayingState", () => {
 
       await state.jumpTo(0);
 
+      expect(nav).toHaveBeenCalledWith("BSB", "EXO", 5, { scrollToVerse: 2 });
       expect(decorateVerses).toHaveBeenCalledWith(
         "EXO",
         5,
         [2, 3, 4, 5],
         expect.any(Object)
       );
+    });
+
+    it("highlights a grouped range the same way as an authored range item", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const [rangeItem] = groupVersesIntoPlaylistItems([
+        { bookId: "EXO", chapter: 26, verse: 1 },
+        { bookId: "EXO", chapter: 26, verse: 2 },
+        { bookId: "EXO", chapter: 26, verse: 3 },
+        { bookId: "EXO", chapter: 26, verse: 11 },
+        { bookId: "EXO", chapter: 26, verse: 4 },
+        { bookId: "EXO", chapter: 26, verse: 5 },
+        { bookId: "EXO", chapter: 26, verse: 6 },
+        { bookId: "EXO", chapter: 26, verse: 7 },
+        { bookId: "EXO", chapter: 26, verse: 8 },
+        { bookId: "EXO", chapter: 26, verse: 9 },
+        { bookId: "EXO", chapter: 26, verse: 10 },
+      ]);
+      const state = createPlayingState(
+        [makePlaylist({ items: rangeItem ? [rangeItem] : [] })],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(nav).toHaveBeenCalledWith("BSB", "EXO", 26, { scrollToVerse: 1 });
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "EXO",
+        26,
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        expect.any(Object)
+      );
+    });
+
+    it("loads a whole-chapter item without highlighting verses", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              { type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(nav).toHaveBeenCalledWith("BSB", "JHN", 3, undefined);
+      expect(decorateVerses).not.toHaveBeenCalled();
+    });
+
+    it("loads the first chapter of a chapter range without highlighting verses", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "JHN", chapter: 1, endChapter: 3 },
+              },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(nav).toHaveBeenCalledWith("BSB", "JHN", 1, undefined);
+      expect(decorateVerses).not.toHaveBeenCalled();
     });
 
     it("dispose removes the active verse decoration", async () => {
