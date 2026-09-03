@@ -50,6 +50,19 @@ function makeEndpointUrl(
   return new URL(path, endpoint).href;
 }
 
+async function waitForCondition(
+  check: () => boolean,
+  timeoutMs = 1000
+): Promise<void> {
+  const start = Date.now();
+  while (!check()) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error("waitForCondition timed out");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
 /** The AAB translation with a content hash, as the real API reports one. */
 function aabWithHash(sha256: string): Translation {
   return { ...aabBooks.translation, sha256 };
@@ -498,6 +511,141 @@ describe("checking downloads for updates", () => {
     expect(
       (await manager.getTranslationBookChapter("AAB", "GEN", 1)).chapter.number
     ).toBe(1);
+  });
+});
+
+describe("automatically applying an update to the translation in use", () => {
+  /** Stands in for `navigator.connection`, absent from jsdom by default. */
+  function setConnection(saveData: boolean | undefined): void {
+    Object.defineProperty(navigator, "connection", {
+      value: saveData === undefined ? undefined : { saveData },
+      configurable: true,
+    });
+  }
+
+  afterEach(() => {
+    // Never leaves a fake `navigator.connection` behind for another test to
+    // trip over.
+    delete (navigator as { connection?: unknown }).connection;
+  });
+
+  async function harnessWithDetectedUpdate(): Promise<BibleDataManager> {
+    const { manager } = await createHarness(defaultResponses({}, "hash-one"));
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    setWebResponses(defaultResponses({}, "hash-two"));
+    await manager.offline.checkForUpdates();
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+    return manager;
+  }
+
+  it("downloads the update immediately when there is no connection info", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value).toBeNull();
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      false
+    );
+  });
+
+  it("downloads the update immediately when the device isn't trying to save data", async () => {
+    setConnection(false);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value).toBeNull();
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      false
+    );
+  });
+
+  it("offers the update instead of downloading when the device wants to save data", async () => {
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+    // Nothing was downloaded — the stored copy is still the old one.
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+  });
+
+  it("does not re-offer the same update once it has already been shown", async () => {
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+    manager.offline.dismissUpdatePrompt();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.updatePrompt.value).toBeNull();
+  });
+
+  it("offers a newer update even after an older one was dismissed", async () => {
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+    await manager.offline.checkAndApplyUpdate("AAB");
+    manager.offline.dismissUpdatePrompt();
+
+    setWebResponses(defaultResponses({}, "hash-three"));
+    await manager.offline.checkForUpdates();
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+  });
+
+  it("does nothing for a translation that isn't downloaded", async () => {
+    setConnection(undefined);
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+
+    const callsBefore = webGetMock.mock.calls.length;
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+    expect(manager.offline.updatePrompt.value).toBeNull();
+  });
+
+  it("does nothing while the device reports no connection", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    const onLineSpy = vi
+      .spyOn(navigator, "onLine", "get")
+      .mockReturnValue(false);
+    window.dispatchEvent(new Event("offline"));
+
+    const callsBefore = webGetMock.mock.calls.length;
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+    onLineSpy.mockRestore();
+  });
+
+  it("is triggered automatically for the translation marked in use", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    manager.offline.noteTranslationInUse("AAB");
+
+    await waitForCondition(
+      () =>
+        manager.offline.downloaded.value.get("AAB")?.updateAvailable === false
+    );
+    expect(manager.offline.records.value.get("AAB")?.sha256).toBe("hash-two");
   });
 });
 

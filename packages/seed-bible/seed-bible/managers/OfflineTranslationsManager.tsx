@@ -11,8 +11,10 @@
  * It owns three jobs:
  *
  * 1. **Download / delete** a translation, with progress and cancellation.
- * 2. **Detect stale downloads** by comparing the stored content hash against the
- *    `sha256` the API currently reports for that translation.
+ * 2. **Detect and apply stale downloads**: comparing the stored content hash
+ *    against the `sha256` the API currently reports for that translation, and,
+ *    for whichever translation is currently in use, either downloading the
+ *    newer version outright or asking first — see `checkAndApplyUpdate`.
  * 3. **Read** books and chapters back out of storage, rebuilding the
  *    `TranslationBooks` / `TranslationBookChapter` shapes the reader expects.
  *
@@ -236,10 +238,23 @@ export interface OfflineTranslationsManager {
   downloadPrompt: ReadonlySignal<Translation | null>;
 
   /**
+   * The translation currently being offered as an update to its downloaded
+   * copy, or null when no update offer is on screen. Populated by
+   * {@link checkAndApplyUpdate} instead of downloading automatically, only when
+   * the device reports `navigator.connection.saveData` — see that method's doc
+   * comment.
+   */
+  updatePrompt: ReadonlySignal<Translation | null>;
+
+  /**
    * Records that the user is reading in a translation, stamping the first time
    * it was seen. Idempotent — later calls keep the original timestamp, since
    * {@link offerDownloadPrompt} asks how long a translation has been in use,
    * not when it was last used.
+   *
+   * Also triggers {@link checkAndApplyUpdate} for this translation on every
+   * call, not just the first, so an update noticed mid-session is acted on the
+   * next time the reader turns a page in it.
    */
   noteTranslationInUse: (translationId: string) => void;
 
@@ -258,6 +273,9 @@ export interface OfflineTranslationsManager {
 
   /** Closes the download offer without downloading anything. */
   dismissDownloadPrompt: () => void;
+
+  /** Closes the update offer without downloading anything. */
+  dismissUpdatePrompt: () => void;
 
   /**
    * Downloads a translation to the device, replacing any existing copy.
@@ -283,6 +301,27 @@ export interface OfflineTranslationsManager {
    * on their own once this resolves.
    */
   checkForUpdates: () => Promise<void>;
+
+  /**
+   * Checks whether the given translation — already downloaded, with a newer
+   * version now known — should be updated, and if so applies that update.
+   *
+   * Does nothing when the translation isn't downloaded, has no update pending,
+   * is already downloading, or the device is offline. Otherwise:
+   *
+   * - No `navigator.connection` info at all → the update is downloaded
+   *   immediately, since there's nothing to say the user would mind.
+   * - `navigator.connection.saveData` is true → nothing is downloaded
+   *   automatically; the translation is offered through {@link updatePrompt}
+   *   instead, so the user decides whether to spend the data.
+   * - Otherwise (connection info exists, `saveData` false or unset) → the
+   *   update is downloaded immediately, same as with no connection info.
+   *
+   * Called automatically by {@link noteTranslationInUse} for the translation
+   * just marked in use; exposed on its own so it doesn't have to be reached
+   * only through that path.
+   */
+  checkAndApplyUpdate: (translationId: string) => Promise<void>;
 
   /** The books of a downloaded translation, or null if it isn't downloaded. */
   getTranslationBooks: (
@@ -509,6 +548,26 @@ function toErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : "Failed to download the translation.";
+}
+
+/**
+ * The one field of the (non-standard, Chromium-only) Network Information API
+ * the update check reads. Absent from TypeScript's DOM types since the API
+ * never reached a broad standard, hence the manual shape here.
+ */
+interface NetworkInformationLike {
+  saveData?: boolean;
+}
+
+/** Reads `navigator.connection`, or null wherever it doesn't exist (SSR, most non-Chromium browsers). */
+function getNetworkConnection(): NetworkInformationLike | null {
+  if (typeof navigator === "undefined") {
+    return null;
+  }
+  return (
+    (navigator as Navigator & { connection?: NetworkInformationLike })
+      .connection ?? null
+  );
 }
 
 export function createOfflineTranslationsManager(
@@ -1018,6 +1077,7 @@ export function createOfflineTranslationsManager(
   };
 
   const downloadPrompt = signal<Translation | null>(null);
+  const updatePrompt = signal<Translation | null>(null);
 
   // "When we show one prompt, we should never show any more download prompts
   // for that session." Deliberately a closure rather than storage: it resets on
@@ -1025,10 +1085,61 @@ export function createOfflineTranslationsManager(
   // stops the same translation being offered again.
   let promptedThisSession = false;
 
+  // Which content hash the update prompt has already been shown for, per
+  // translation — a closure, not storage, so it resets on the next load. Its
+  // job is only to stop the same update being re-offered every time the reader
+  // turns a page; it must not survive a reload the way the download offer's
+  // record does, or a user who dismissed an old update would never be told
+  // about a newer one that happens to load before they revisit.
+  const updatePromptShownForHash = new Map<string, string>();
+
+  const checkAndApplyUpdate = async (translationId: string): Promise<void> => {
+    if (!store || !isOnline.value) {
+      return;
+    }
+    await ready;
+
+    const summary = downloaded.value.get(translationId);
+    if (!summary?.updateAvailable || downloads.value.has(translationId)) {
+      return;
+    }
+
+    const connection = getNetworkConnection();
+    if (!connection || connection.saveData !== true) {
+      await downloadTranslation(translationId);
+      return;
+    }
+
+    // The device wants to save data, so ask instead of spending bandwidth on
+    // its behalf. Never stack this on top of another prompt already on screen.
+    if (downloadPrompt.value || updatePrompt.value) {
+      return;
+    }
+
+    const translation = availableTranslations.value.find(
+      (candidate) => candidate.id === translationId
+    );
+    if (!translation?.sha256) {
+      return;
+    }
+    if (updatePromptShownForHash.get(translationId) === translation.sha256) {
+      return;
+    }
+
+    updatePromptShownForHash.set(translationId, translation.sha256);
+    updatePrompt.value = translation;
+  };
+
+  const dismissUpdatePrompt = () => {
+    updatePrompt.value = null;
+  };
+
   const noteTranslationInUse = (translationId: string) => {
     if (!translationId) {
       return;
     }
+    void checkAndApplyUpdate(translationId);
+
     const stamps = readTimestamps(TRANSLATION_FIRST_USED_KEY);
     if (stamps[translationId]) {
       return;
@@ -1102,13 +1213,16 @@ export function createOfflineTranslationsManager(
     isOnline,
     isDownloaded,
     downloadPrompt,
+    updatePrompt,
     noteTranslationInUse,
     offerDownloadPrompt,
     dismissDownloadPrompt,
+    dismissUpdatePrompt,
     downloadTranslation,
     cancelDownload,
     deleteTranslation,
     checkForUpdates,
+    checkAndApplyUpdate,
     getTranslationBooks,
     getTranslationBookChapter,
     getAdjacentChapter,
