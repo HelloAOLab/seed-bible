@@ -31,7 +31,11 @@
 }
 
 .sb-hero-banner {
+  /* flex: none so a long sibling (play-mode queue) cannot shrink this
+   * below 4:3 — object-fit: cover would otherwise clip text in the image. */
+  flex: none;
   width: 100%;
+  height: auto;
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 0.75rem;

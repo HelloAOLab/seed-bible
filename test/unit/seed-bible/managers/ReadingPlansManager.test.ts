@@ -1940,6 +1940,66 @@ describe("createReadingPlansManager", () => {
     expect(eraseDataMock).not.toHaveBeenCalled();
   });
 
+  it("cover image changes on a published plan persist only on Save changes", async () => {
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    recordDataMock.mockClear();
+    vi.useFakeTimers();
+    try {
+      manager.updateEditingReadingPlan({ heroImageUrl: null });
+      expect(manager.editingReadingPlan.value!.plan.heroImageUrl).toBeNull();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      // Still only in the editor — the published plan is untouched.
+      expect(recordDataMock).not.toHaveBeenCalled();
+
+      manager.cancelEditingReadingPlan();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(manager.editingReadingPlan.value).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("finishEditingReadingPlan writes a published plan's new cover image", async () => {
+    const plan = makePlan({
+      authorUserId: "user-1",
+      recordName: "user-1",
+      status: "complete",
+      heroImageUrl: "https://example.com/plan-cover.jpg",
+    });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.editExistingReadingPlan(plan);
+    manager.updateEditingReadingPlan({
+      heroImageUrl: "https://example.com/new-cover.jpg",
+    });
+    recordDataMock.mockClear();
+
+    const saved = await manager.finishEditingReadingPlan();
+
+    expect(saved!.heroImageUrl).toBe("https://example.com/new-cover.jpg");
+    const written = recordDataMock.mock.calls.find(
+      (c) => c[3]?.marker === "publicRead:readingPlan"
+    )!;
+    expect((written[2] as ReadingPlan).heroImageUrl).toBe(
+      "https://example.com/new-cover.jpg"
+    );
+  });
+
   it("deleting a plan erases its records and the user's progress through it", async () => {
     const plan = makePlan({ recordName: "user-1", address: "plan-1" });
     const progress = makeProgress({

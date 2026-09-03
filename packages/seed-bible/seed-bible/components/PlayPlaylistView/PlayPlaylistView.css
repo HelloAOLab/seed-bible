@@ -12,6 +12,11 @@
   gap: 12px;
 }
 
+/* The cover must not shrink when the queue is long; the body scrolls instead. */
+.sb-play-playlist-body > .sb-hero-banner {
+  flex-shrink: 0;
+}
+
 .sb-play-playlist-item-button {
   flex: 1;
   min-width: 0;

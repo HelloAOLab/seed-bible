@@ -69,8 +69,9 @@ interface ReadingPlanEditorProps {
  * The plan being edited lives on the manager (`editingReadingPlan`), not in this
  * component — so closing the plans pane to go read doesn't lose it, and the
  * reader's "Add to plan" verse action can add straight into the session shown
- * here. Every change is saved to the user's account as it's made, so leaving
- * mid-edit (or losing the tab) costs nothing.
+ * here. A plan still being created autosaves as a draft, so leaving mid-create
+ * (or losing the tab) costs nothing. Edits to an already-published plan stay
+ * in memory until Save changes, matching how playlist covers work.
  *
  * The component is fluid-width, so it fills the desktop side pane and the
  * mobile fullscreen pane without any breakpoint of its own.
@@ -151,17 +152,19 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
 
   return (
     <div className="sb-rp-editor">
-      <div className="sb-rp-editor-status" aria-live="polite">
-        {autosaveFailed
-          ? t("reading-plan-draft-save-failed", {
-              defaultValue: "Couldn't save draft",
-            })
-          : autosaving
-            ? t("reading-plan-draft-saving", { defaultValue: "Saving…" })
-            : draft.persisted
-              ? t("reading-plan-draft-saved", { defaultValue: "Draft saved" })
-              : ""}
-      </div>
+      {draft.isNew ? (
+        <div className="sb-rp-editor-status" aria-live="polite">
+          {autosaveFailed
+            ? t("reading-plan-draft-save-failed", {
+                defaultValue: "Couldn't save draft",
+              })
+            : autosaving
+              ? t("reading-plan-draft-saving", { defaultValue: "Saving…" })
+              : draft.persisted
+                ? t("reading-plan-draft-saved", { defaultValue: "Draft saved" })
+                : ""}
+        </div>
+      ) : null}
 
       <div className="sb-rp-editor-body">
         <section className="sb-rp-editor-section">
@@ -305,8 +308,9 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
         {blockingNote && <p className="sb-rp-footer-note">{blockingNote}</p>}
         <div className="sb-rp-editor-actions">
           {/* Discarding only ever throws away a plan that is still being
-              created. Backing out of an edit to a published plan leaves it
-              alone, so that case gets a plain "Done" instead. */}
+              created. Backing out of an edit to a published plan drops
+              unsaved changes (cover image included) and leaves the published
+              plan as it was. */}
           {draft.isNew ? (
             <button
               type="button"

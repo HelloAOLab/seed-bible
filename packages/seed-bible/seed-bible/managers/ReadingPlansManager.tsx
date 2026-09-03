@@ -1907,10 +1907,8 @@ export function createReadingPlansManager(
           : [...userReadingPlans.value, metadata];
       });
       editingReadingPlanSaveError.value = false;
-      // Editing an already-published plan (`isNew: false`) autosaves the same
-      // way but isn't a "draft" in the lifecycle sense — it keeps its
-      // `"complete"` status throughout and reports via
-      // reading_plan_updated on finish, not here.
+      // Published-plan edits are not written here — they wait for
+      // `finishEditingReadingPlan` so Cancel/back can walk away cleanly.
       if (draft.isNew) {
         captureEvent(
           draft.persisted
@@ -1950,7 +1948,9 @@ export function createReadingPlansManager(
       draftSaveTimer = null;
     }
     const draft = editingReadingPlan.peek();
-    if (!draft) {
+    // New drafts autosave so the author can leave and resume. Edits to an
+    // already-published plan stay in memory until Save changes.
+    if (!draft || !draft.isNew) {
       editingReadingPlanSaving.value = false;
       return;
     }
@@ -1979,7 +1979,9 @@ export function createReadingPlansManager(
       ...patch,
       plan: { ...update(current.plan), updatedAtMs: Date.now() },
     };
-    scheduleDraftSave();
+    if (current.isNew) {
+      scheduleDraftSave();
+    }
   };
 
   /**
@@ -2020,9 +2022,10 @@ export function createReadingPlansManager(
 
   /**
    * Opens an already-published plan in the same editor used to create one, so
-   * there is one screen for both. Edits autosave exactly as a draft's do, and
-   * the plan keeps its `"complete"` status throughout so it never drops out of
-   * the reader's list mid-edit.
+   * there is one screen for both. Edits stay in memory until Save changes —
+   * backing out (Cancel/back) drops them and leaves the published plan as it
+   * was. The plan keeps its `"complete"` status throughout so it never drops
+   * out of the reader's list mid-edit.
    */
   const editExistingReadingPlan = (plan: ReadingPlan) => {
     editingReadingPlan.value = {
@@ -2038,18 +2041,25 @@ export function createReadingPlansManager(
   };
 
   /**
-   * Steps out of the wizard, flushing any pending change first. The draft
-   * itself is kept — that is the whole point of drafts — and stays in the
-   * plans list to be resumed or discarded.
+   * Steps out of the wizard. A new draft flushes any pending change first and
+   * is kept — that is the whole point of drafts — so it stays in the plans
+   * list to be resumed or discarded. An edit of a published plan is dropped
+   * without writing, so Cancel/back does not commit the cover image (or
+   * anything else) the author never saved.
    */
   const cancelEditingReadingPlan = () => {
     const draft = editingReadingPlan.peek();
-    if (draft && (draft.persisted || draftSaveTimer !== null)) {
+    if (draft?.isNew && (draft.persisted || draftSaveTimer !== null)) {
       void flushDraftSave().then(() => {
         editingReadingPlan.value = null;
       });
       return;
     }
+    if (draftSaveTimer !== null) {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    editingReadingPlanSaving.value = false;
     editingReadingPlan.value = null;
   };
 
