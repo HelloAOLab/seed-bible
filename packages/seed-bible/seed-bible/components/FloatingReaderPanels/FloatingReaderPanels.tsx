@@ -950,7 +950,11 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 key={ctx.id}
                 className="sb-floating-chat-ai-context-item"
                 onClick={(event) => {
-                  event.preventDefault();
+                  if (ctx.settingsAction) {
+                    ctx.settingsAction.onClick();
+                  } else {
+                    event.preventDefault();
+                  }
                 }}
               >
                 <span className="sb-floating-chat-ai-context-item-label">
@@ -962,6 +966,15 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                     count: ctx.tools?.length ?? 0,
                   })}
                 </span>
+                {ctx.settingsAction && (
+                  <MaterialIcon
+                    className="sb-context-menu-item-icon"
+                    aria-label={translateTitle(t, ctx.settingsAction.label)}
+                    title={translateTitle(t, ctx.settingsAction.label)}
+                  >
+                    settings
+                  </MaterialIcon>
+                )}
               </ContextMenuItem>
             ))}
           </ContextMenuWithButton>
