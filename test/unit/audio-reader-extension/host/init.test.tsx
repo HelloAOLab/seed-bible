@@ -72,27 +72,29 @@ describe("isAudioPlayToolVisible (#1607)", () => {
 });
 
 describe("verseIndexForTime", () => {
-  const endTimes = [3, 6, 9];
+  const startTimes = [3, 6, 9];
 
-  it("is the first verse at the very start of playback", () => {
-    expect(verseIndexForTime(endTimes, 0)).toBe(0);
+  it("is before the first verse during a lead-in before it starts", () => {
+    expect(verseIndexForTime(startTimes, 0)).toBe(-1);
+    expect(verseIndexForTime(startTimes, 2.999)).toBe(-1);
   });
 
-  it("stays on a verse right up until its end time", () => {
-    expect(verseIndexForTime(endTimes, 2.999)).toBe(0);
+  it("moves to the first verse exactly at its start time", () => {
+    expect(verseIndexForTime(startTimes, 3)).toBe(0);
   });
 
-  it("moves to the next verse exactly at the previous verse's end time", () => {
-    expect(verseIndexForTime(endTimes, 3)).toBe(1);
+  it("stays on a verse right up until the next one's start time", () => {
+    expect(verseIndexForTime(startTimes, 5.999)).toBe(0);
   });
 
   it("picks the middle verse partway through it", () => {
-    expect(verseIndexForTime(endTimes, 5)).toBe(1);
+    expect(verseIndexForTime(startTimes, 6)).toBe(1);
+    expect(verseIndexForTime(startTimes, 8)).toBe(1);
   });
 
-  it("stays on the last verse once playback passes every end time", () => {
-    expect(verseIndexForTime(endTimes, 9)).toBe(2);
-    expect(verseIndexForTime(endTimes, 1000)).toBe(2);
+  it("stays on the last verse once playback passes every start time", () => {
+    expect(verseIndexForTime(startTimes, 9)).toBe(2);
+    expect(verseIndexForTime(startTimes, 1000)).toBe(2);
   });
 });
 

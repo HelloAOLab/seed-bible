@@ -575,7 +575,7 @@ export interface AudioTimings {
 
   /**
    * One cumulative timestamp (in seconds, from the start of the audio) per
-   * verse, in verse order — the moment that verse's reading ends.
+   * verse, in verse order — the moment that verse's reading starts.
    */
   verses: number[];
 }
@@ -684,7 +684,7 @@ export interface CompleteTranslationChapterAudioTimings {
   /**
    * The reader for the chapter, and one cumulative timestamp (in seconds,
    * from the start of that reader's audio) per verse, in verse order — the
-   * moment that verse's reading ends.
+   * moment that verse's reading starts.
    */
   [reader: string]: number[];
 }

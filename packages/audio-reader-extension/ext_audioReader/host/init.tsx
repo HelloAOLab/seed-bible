@@ -24,10 +24,10 @@ interface VerseTimingTrack {
   readingState: BibleReadingState;
   bookId: string;
   chapterNumber: number;
-  /** Verse numbers in reading order, aligned index-for-index with `endTimes`. */
+  /** Verse numbers in reading order, aligned index-for-index with `startTimes`. */
   verseNumbers: number[];
-  /** Cumulative seconds (from the start of the audio) at which each verse ends. */
-  endTimes: number[];
+  /** Cumulative seconds (from the start of the audio) at which each verse starts. */
+  startTimes: number[];
   /** The verse most recently highlighted, so the same verse isn't re-flashed every tick. */
   lastVerse: number | null;
 }
@@ -40,16 +40,22 @@ let verseTrack: VerseTimingTrack | null = null;
 let verseTrackToken = 0;
 
 /**
- * The verse being read at `currentTime`, as an index into `endTimes` (and
- * therefore `verseNumbers`) — the first verse whose cumulative end time hasn't
- * passed yet, or the last verse once playback runs past all of them.
+ * The verse being read at `currentTime`, as an index into `startTimes` (and
+ * therefore `verseNumbers`) — the last verse whose start time has already
+ * passed, or -1 before the first verse's start time (e.g. a lead-in before
+ * the reading begins).
  */
 export function verseIndexForTime(
-  endTimes: number[],
+  startTimes: number[],
   currentTime: number
 ): number {
-  const index = endTimes.findIndex((endTime) => currentTime < endTime);
-  return index === -1 ? endTimes.length - 1 : index;
+  for (let index = startTimes.length - 1; index >= 0; index--) {
+    const startTime = startTimes[index];
+    if (startTime !== undefined && currentTime >= startTime) {
+      return index;
+    }
+  }
+  return -1;
 }
 
 /** Verse numbers in reading order, extracted from a chapter's content. */
@@ -91,11 +97,11 @@ function ensureAudio(): HTMLAudioElement | null {
  */
 function highlightVerseForTime(currentTime: number): void {
   if (!verseTrack || !Number.isFinite(currentTime)) return;
-  const { readingState, bookId, chapterNumber, verseNumbers, endTimes } =
+  const { readingState, bookId, chapterNumber, verseNumbers, startTimes } =
     verseTrack;
-  if (endTimes.length === 0) return;
+  if (startTimes.length === 0) return;
 
-  const verseNumber = verseNumbers[verseIndexForTime(endTimes, currentTime)];
+  const verseNumber = verseNumbers[verseIndexForTime(startTimes, currentTime)];
   if (verseNumber === undefined || verseNumber === verseTrack.lastVerse) {
     return;
   }
@@ -145,7 +151,7 @@ async function loadVerseTrack(
     bookId: chapterData.book.id,
     chapterNumber: chapterData.chapter.number,
     verseNumbers: chapterVerseNumbers(chapterData),
-    endTimes: timings.verses,
+    startTimes: timings.verses,
     lastVerse: null,
   };
 }

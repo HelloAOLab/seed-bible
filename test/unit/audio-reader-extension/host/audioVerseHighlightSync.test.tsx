@@ -51,8 +51,8 @@ function createResponses() {
       chapterTwoWithAudioOnly()
     ),
     [makeUrl(TIMINGS_LINK, PRIVATE_API_ENDPOINT)]: createResponse(
-      // Verse 1 ends at 5s, verse 2 ends at 10s.
-      makeAudioTimings("AAB", "GEN", 1, "gilbert", { verses: [5, 10] })
+      // Verse 1 starts at 0s, verse 2 starts at 5s.
+      makeAudioTimings("AAB", "GEN", 1, "gilbert", { verses: [0, 5] })
     ),
   };
 }
