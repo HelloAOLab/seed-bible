@@ -931,6 +931,75 @@ describe("CustomizationsManager", () => {
     expect(manager.editingCustomization.value).toBeNull();
   });
 
+  it("setEditingExtensionSettingDefault() sets a default on the draft without persisting", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    recordDataMock.mockClear();
+
+    manager.setEditingExtensionSettingDefault("ext.example", "greeting", "Hi");
+
+    expect(
+      manager.editingCustomization.value?.extensionSettingDefaults
+    ).toEqual({ "ext.example": { greeting: "Hi" } });
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBe("Hi");
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("clearEditingExtensionSettingDefault() removes a previously-set default", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+    manager.setEditingExtensionSettingDefault("ext.example", "greeting", "Hi");
+
+    manager.clearEditingExtensionSettingDefault("ext.example", "greeting");
+
+    expect(
+      manager.editingCustomization.value?.extensionSettingDefaults
+    ).toEqual({ "ext.example": {} });
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBeUndefined();
+  });
+
+  it("clearEditingExtensionSettingDefault() no-ops when nothing was set", async () => {
+    const { manager } = createManager();
+    const created = await manager.create();
+    manager.startEditing(created.id);
+
+    manager.clearEditingExtensionSettingDefault("ext.example", "greeting");
+
+    expect(
+      manager.editingCustomization.value?.extensionSettingDefaults
+    ).toEqual({});
+  });
+
+  it("setEditingExtensionSettingDefault()/clearEditingExtensionSettingDefault() no-op when there is no open draft", async () => {
+    const { manager } = createManager();
+
+    manager.setEditingExtensionSettingDefault("ext.example", "greeting", "Hi");
+    manager.clearEditingExtensionSettingDefault("ext.example", "greeting");
+
+    expect(manager.editingCustomization.value).toBeNull();
+  });
+
+  it("getActiveExtensionSettingDefault() is undefined when nothing is active or no default is set there", async () => {
+    const { manager } = createManager();
+
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBeUndefined();
+
+    const created = await manager.create();
+    manager.startEditing(created.id);
+
+    expect(
+      manager.getActiveExtensionSettingDefault("ext.example", "greeting")
+    ).toBeUndefined();
+  });
+
   it("setEditingVariantColor() re-derives secondary and tertiary from a new primary color while they're still following it", async () => {
     const { manager } = createManager();
     const created = await manager.create();
