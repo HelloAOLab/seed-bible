@@ -392,7 +392,7 @@ describe("render() redirect wiring", () => {
 // test that only reads `state.app.canonicalUrl`.
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
-    "<!doctype html><html><head>",
+    '<!doctype html><html lang="<!-- HTML_LANG -->"><head>',
     '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
     '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
@@ -762,6 +762,35 @@ describe("render() server-rendered meta tags", () => {
     expect(html).toContain(
       `<meta http-equiv="content-language" content="${locale}"`
     );
+  });
+
+  // The conforming, accessibility-relevant signal — screen readers pick
+  // pronunciation from `<html lang>`, not from a `content-language` meta tag.
+  it("sets the root <html lang> to match the page's detected language", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const locale = html.match(
+      /<meta property="og:locale" content="([^"]+)"/
+    )?.[1];
+    expect(locale).toBeDefined();
+    expect(html).toContain(`<html lang="${locale}">`);
+  });
+
+  it("HTML-escapes the <html lang> value instead of splicing it in raw", async () => {
+    // The language segment is decoded straight off the URL path and isn't
+    // validated against known language codes (see `parseReadingPath`), and
+    // unlike the <meta> tags above — rendered through Preact, which escapes
+    // attribute values — `<html lang>` is filled in by a raw string
+    // substitution into the static template. A quote in the language segment
+    // must not be able to break out of the attribute.
+    const html = await renderHtml(
+      "/%22%3E%3Cscript%3E/AAB/genesis/1?useFreeBibleAPI=true"
+    );
+
+    // The decoded language segment is `"><script>` — escaping just the quote
+    // keeps it a single, well-formed `lang="..."` attribute instead of one
+    // that terminates early and lets `<script>` become a real tag.
+    expect(html).toContain('<html lang="&quot;><script>">');
   });
 
   it("still emits the real canonical URL when the chapter fails to load", async () => {
