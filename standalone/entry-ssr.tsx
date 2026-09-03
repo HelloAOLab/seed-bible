@@ -487,6 +487,7 @@ export async function render(
         media="(prefers-color-scheme: dark)"
       />
       <meta name="description" content={state.app.description.value} />
+      <meta httpEquiv="content-language" content={state.i18n.language.value} />
       <meta property="og:locale" content={state.i18n.language.value} />
       <meta
         property="og:locale:alternate"

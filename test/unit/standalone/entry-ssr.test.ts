@@ -752,6 +752,18 @@ describe("render() server-rendered meta tags", () => {
     expect(html).not.toContain('<meta name="og:locale"');
   });
 
+  it("emits a content-language meta tag matching the page's og:locale", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const locale = html.match(
+      /<meta property="og:locale" content="([^"]+)"/
+    )?.[1];
+    expect(locale).toBeDefined();
+    expect(html).toContain(
+      `<meta http-equiv="content-language" content="${locale}"`
+    );
+  });
+
   it("still emits the real canonical URL when the chapter fails to load", async () => {
     // Regression for `<link rel="canonical" href="/">` on every SSR'd page.
     // Genesis 2 is a real chapter the fixture has no response for, so the
