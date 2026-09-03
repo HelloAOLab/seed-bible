@@ -27,6 +27,7 @@
     "coverage-summary": "tsx script/coverage-summary.ts",
     "i18n": "tsx script/i18n.ts",
     "list-bible-translations": "tsx script/list-bible-translations.ts",
+    "generate-book-chapter-verse-counts": "tsx script/generate-book-chapter-verse-counts.ts",
     "update-discovered-content-list": "tsx script/update-discovered-content-list.ts",
     "sitemap": "tsx script/generate-sitemap.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
