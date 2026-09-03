@@ -1,4 +1,4 @@
-import { parseVerseReferences } from "@packages/seed-bible/seed-bible/managers/parseVerseReference";
+import { scanVerseReferencesInText } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { createRequire } from "node:module";
 
 // Loaded via createRequire rather than a static `import { createRecordsClient }`
@@ -232,7 +232,7 @@ export async function buildDiscoveredContentList(
         continue;
       }
 
-      const parsed = parseVerseReferences(trimmedPart);
+      const parsed = scanVerseReferencesInText(trimmedPart);
       if (parsed.length === 0) {
         warnings.push(
           `Row ${sheetRow} ("${title}"): could not parse Bible reference "${trimmedPart}".`
@@ -240,9 +240,9 @@ export async function buildDiscoveredContentList(
         continue;
       }
 
-      for (const ref of parsed) {
+      for (const { ref } of parsed) {
         references.push({
-          book: ref.bookId,
+          book: ref.book,
           chapter: ref.chapter,
           ...(ref.endChapter !== undefined
             ? { endChapter: ref.endChapter }
