@@ -911,6 +911,13 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("--sb-primary-color: #abc123;");
     });
 
+    // Unlike the test above, this one doesn't actually exercise the SSR
+    // suspend: a `data_not_found` response makes `loadByLocator` return
+    // before it ever sets `linkedCustomization`, so `--sb-primary-color`
+    // would be absent from the HTML whether or not the suspend/settle path
+    // works. Kept because it proves a missing record doesn't crash SSR or
+    // inject phantom colors — just not as regression coverage for the fix
+    // itself.
     it("renders normally, with no customization CSS, when the record isn't found", async () => {
       mockFetchWithCustomizationResponse({
         success: false,

@@ -815,9 +815,11 @@ export function createCustomizationsManager(
     // `os.getData()` that never answers would hold the request open
     // indefinitely — `loadByLocator` itself always resolves (its try/catch
     // covers every other failure mode), so this timeout is purely a backstop
-    // for that one case. Not armed on the client: there the promise only
-    // gates a Suspense boundary, and a genuinely slow connection deserves to
-    // keep waiting rather than have the customization silently dropped.
+    // for that one case. Not armed on the client: the promise is only thrown
+    // (to suspend) during SSR (see `ExternalResourceDependencies` in
+    // `app/main.tsx`), so on the client it's never awaited and a slow load
+    // simply applies the customization late, exactly as it did before this
+    // feature existed.
     const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
     if (import.meta.env.SSR) {
       initialCustomizationLoadTimer = setTimeout(() => {
