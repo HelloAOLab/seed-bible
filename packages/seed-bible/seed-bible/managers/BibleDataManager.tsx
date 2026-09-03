@@ -3,6 +3,7 @@ import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
   type ApiRequestOptions,
+  type AudioTimings,
   type Translation,
   type TranslationBook,
   type TranslationBookChapter,
@@ -111,6 +112,20 @@ export interface BibleDataManager {
     chapter: TranslationBookChapter,
     options?: ApiRequestOptions
   ) => Promise<TranslationBookChapter | null>;
+
+  /**
+   * Loads a single reader's per-verse audio timings for a chapter.
+   *
+   * @param translationId The translation the chapter belongs to, used to
+   * resolve which API endpoint to read the link from.
+   * @param link A URL from that chapter's `thisChapterAudioTimings` (or
+   * `nextChapterAudioTimings`/`previousChapterAudioTimings`) map.
+   */
+  getAudioTimings: (
+    translationId: string,
+    link: string,
+    options?: ApiRequestOptions
+  ) => Promise<AudioTimings>;
 
   /**
    * Gets the API endpoint associated with a given translation. If the translation is not associated with a specific endpoint, it returns the default endpoint.
@@ -1173,6 +1188,15 @@ export function createBibleDataManager(
     return await api.getPreviousChapter(chapter, endpoint, options);
   };
 
+  const getAudioTimings = async (
+    translationId: string,
+    link: string,
+    options?: ApiRequestOptions
+  ): Promise<AudioTimings> => {
+    const endpoint = getEndpointForTranslation(translationId);
+    return await api.getAudioTimings(link, endpoint, options);
+  };
+
   const buildTranslationId = (translationId: string) => {
     const endpoint = getTranslationEndpointInfo(translationId);
     if (endpoint.isDefault) {
@@ -1262,6 +1286,7 @@ export function createBibleDataManager(
     getTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,
+    getAudioTimings,
     getTranslationEndpointInfo,
     buildTranslationId,
     hydrateCachedCatalog,

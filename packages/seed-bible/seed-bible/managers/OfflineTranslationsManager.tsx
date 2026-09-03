@@ -960,6 +960,10 @@ export function createOfflineTranslationsManager(
         chapterNumber
       ),
       thisChapterAudioLinks: stored.thisChapterAudioLinks ?? {},
+      // Audio-timing files are fetched live from the API (see
+      // `FreeUseBibleAPI.getAudioTimings`) rather than stored offline, so a
+      // chapter read from a download never has links to offer here.
+      thisChapterAudioTimings: {},
       nextChapterApiLink: nextRef
         ? chapterApiLink(
             record.endpoint,
@@ -969,6 +973,7 @@ export function createOfflineTranslationsManager(
           )
         : null,
       nextChapterAudioLinks: nextStored?.thisChapterAudioLinks ?? null,
+      nextChapterAudioTimings: nextRef ? {} : null,
       previousChapterApiLink: previousRef
         ? chapterApiLink(
             record.endpoint,
@@ -978,6 +983,7 @@ export function createOfflineTranslationsManager(
           )
         : null,
       previousChapterAudioLinks: previousStored?.thisChapterAudioLinks ?? null,
+      previousChapterAudioTimings: previousRef ? {} : null,
       numberOfVerses: stored.numberOfVerses,
       chapter: stored.chapter,
     };
