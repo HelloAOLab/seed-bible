@@ -607,6 +607,14 @@ describe("scanVerseReferencesInText()", () => {
       "Hab.3.8—15",
       { ref: { book: "HAB", chapter: 3, verse: 8, endVerse: 15 } },
     ] as const,
+    [
+      "Luke 23:50-56",
+      { ref: { book: "LUK", chapter: 23, verse: 50, endVerse: 56 } },
+    ] as const,
+    [
+      "Mark 15:42–47",
+      { ref: { book: "MRK", chapter: 15, verse: 42, endVerse: 47 } },
+    ] as const,
   ];
 
   it.each(cases)("should find %s", (input, expected) => {
