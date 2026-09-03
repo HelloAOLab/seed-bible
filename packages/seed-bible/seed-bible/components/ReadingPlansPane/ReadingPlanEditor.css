@@ -15,10 +15,10 @@
   font-family: "DM Sans", var(--sb-font-family, sans-serif);
 }
 
-/* "Saving…" / "Draft saved" — the plan is written to the user's account after
-   every change, so this is the only thing that tells them it happened. The
-   editor's title and back button live in the pane header (see
-   ReadingPlansPane), so this row is all that sits above the body. */
+/* "Saving…" / "Draft saved" — shown while creating a new plan, which is
+   written to the user's account after every change. Published-plan edits
+   wait for Save changes, so this row is omitted there. The editor's title
+   and back button live in the pane header (see ReadingPlansPane). */
 .sb-rp-editor-status {
   min-height: 1.25rem;
   padding: 8px 16px 0;

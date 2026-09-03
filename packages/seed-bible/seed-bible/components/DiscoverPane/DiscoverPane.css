@@ -117,7 +117,11 @@
 
 .sb-playlist-item {
   cursor: pointer;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.sb-hero-thumb {
+  align-self: center;
 }
 
 .sb-discover-item--clickable {

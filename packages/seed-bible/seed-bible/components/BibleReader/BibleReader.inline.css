@@ -7,6 +7,7 @@
   background: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   font-family: var(--sb-reader-font-family);
+  flex: 1;
 }
 
 .sb-bible-reader-bookmark-button {
@@ -56,10 +57,6 @@
     padding-right: 1%;
     padding-left: 1%;
   }
-}
-
-.sb-bible-reader {
-  flex: 1;
 }
 
 /* Reader header: lays the chapter title and the right-hand action cluster
@@ -177,6 +174,18 @@
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
   z-index: 10;
   flex-shrink: 0;
+
+  /* Slides the full mobile header up out of view when the user scrolls down,
+     uncovering the compact scroll header. The max-height/padding transitions
+     collapse the header's layout space in sync with the slide so the chapter
+     content rises to fill the gap (no leftover white strip). */
+  max-height: 3.5rem;
+  overflow: hidden;
+  transition:
+    transform 0.25s ease,
+    max-height 0.25s ease,
+    padding-top 0.25s ease,
+    padding-bottom 0.25s ease;
 }
 
 .sb-bible-reader-mobile-header-text {
@@ -216,7 +225,6 @@
 
 .sb-bible-reader-mobile-header-play {
   flex-shrink: 0;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2rem;
@@ -427,20 +435,6 @@
   line-height: 1;
 }
 
-/* Slides the full mobile header up out of view when the user scrolls down,
-   uncovering the compact scroll header. The max-height/padding transitions
-   collapse the header's layout space in sync with the slide so the chapter
-   content rises to fill the gap (no leftover white strip). */
-.sb-bible-reader-mobile-header {
-  max-height: 3.5rem;
-  overflow: hidden;
-  transition:
-    transform 0.25s ease,
-    max-height 0.25s ease,
-    padding-top 0.25s ease,
-    padding-bottom 0.25s ease;
-}
-
 .sb-bible-reader-mobile-header-hidden {
   transform: translateY(-100%);
   max-height: 0;
@@ -578,6 +572,11 @@
     background-color 0.2s ease,
     background 0.3s ease,
     color 0.2s ease;
+
+  &:has(.sb-verse-decoration-diminish) {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .sb-verse-decorator {
@@ -955,6 +954,16 @@
   min-height: 0;
 }
 
+/* Session settings modal: let the content area shrink within the modal's
+ * max-height and hand that bounded height to .sb-session-settings, so its
+ * actions bar (End Session / Close) can pin to the bottom instead of
+ * scrolling away with the settings above it. */
+.sb-footnote-modal:has(.sb-session-settings) .sb-footnote-modal-content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
@@ -982,9 +991,22 @@
 }
 
 .sb-chapter-decoration-diminish {
-  .sb-verse,
+  /* Excluding the decorated verses here (rather than relying on the
+     `.sb-verse:has(.sb-verse-decoration-diminish)` override above to win)
+     matters because both selectors have equal specificity (two classes) —
+     a tie the later-declared rule would otherwise win regardless of which
+     one is meant to take precedence, silently dimming the very verses this
+     decoration exists to keep bright. */
+  .sb-verse:not(:has(.sb-verse-decoration-diminish)),
   .sb-chapter-heading {
     animation: diminish-in-out 3s ease-in-out;
+  }
+
+  /* Nested so this beats `.sb-chapter-decoration-diminish .sb-verse` above
+     (equal specificity would otherwise let the dim animation win). */
+  .sb-verse:has(.sb-verse-decoration-diminish) {
+    animation: none;
+    opacity: 1;
   }
 }
 
@@ -999,13 +1021,6 @@
   }
 
   100% {
-    opacity: 1;
-  }
-}
-
-.sb-verse {
-  &:has(.sb-verse-decoration-diminish) {
-    animation: none;
     opacity: 1;
   }
 }
@@ -1035,6 +1050,7 @@
   flex-direction: column;
   gap: 2rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 @media (min-width: 1024px) {
@@ -1050,6 +1066,7 @@
      doesn't make it any taller. */
   .sb-bible-reader-content {
     flex-direction: row;
+    align-items: unset;
   }
 
   /* The "discover-content-panel" quick tool is off for this tab: keep the
@@ -1058,6 +1075,10 @@
   .sb-bible-reader-content.sb-bible-reader-content--discover-below {
     flex-direction: column;
     align-items: stretch;
+
+    & > .sb-bible-reader-discover-panel {
+      max-width: var(--sb-scripture-width, 48rem);
+    }
   }
 }
 

@@ -156,6 +156,7 @@ function createFixture(): ReaderFixture {
     defaultTranslation: { id: "BSB", language: "en" },
     chapterDataPromise: Promise.resolve(),
     initialChapterLoadSettled: signal(true),
+    initialChapterLoadUnreliable: signal(false),
     isChapterContentStale: computed(() => chapterData.value === null),
     discoveredContent: signal([]),
     discoveredCrossReferences,

@@ -4,6 +4,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  opacity: 1;
+  transition: opacity 0.25s ease;
 }
 
 /* Desktop: sits in the header's action cluster, just left of the bookmark

@@ -23,7 +23,6 @@
   "create-new-tab": "បង្កើតផ្ទាំងថ្មី",
   "tab-options": "ជម្រើសផ្ទាំង",
   "open-tab-menu": "បើកម៉ឺនុយផ្ទាំង",
-  "session-id_x": "លេខសម្គាល់វគ្គ៖ {{sessionId}}",
   "search-verses": "ស្វែងរកខគម្ពីរ",
   "clear-search": "សម្អាតការស្វែងរក",
   "searching": "កំពុង​ស្វែងរក...",
@@ -113,7 +112,6 @@
   "session-settings-highlight-duration": "បន្លិចសម្រាប់",
   "end-session": "បញ្ចប់វគ្គ",
   "panels": "បន្ទះ",
-
   "open-in-new-panel": "បើកក្នុងបន្ទះថ្មី",
   "close-sidebar": "បិទរបារចំហៀង",
   "select-pane-layout": "ជ្រើសរើសប្លង់បន្ទះ",
@@ -253,7 +251,6 @@
   "create-reading-plan": "បង្កើតផែនការអាន",
   "reading-plans-empty": "អ្នកមិនទាន់មានគម្រោងអាននៅឡើយទេ។ សូមបង្កើតមួយដើម្បីចាប់ផ្តើម។",
   "untitled-reading-plan": "ផែនការគ្មានចំណងជើង",
-
   "reading-plan-description_placeholder": "តើផែនការនេះនិយាយអំពីអ្វី?",
   "anonymous": "អនាមិក",
   "no-chat-messages": "មិនទាន់មានសារនៅឡើយទេ",
@@ -311,7 +308,6 @@
   "tutorial.promptBody": "ដំណើរទស្សនកិច្ចដែលមានមគ្គុទ្ទេសក៍អាចរកបានដើម្បីជួយអ្នកឱ្យរៀនព័ត៌មានលម្អិតនៃ Seed Bible។",
   "tutorial.promptDecline": "ទេ អរគុណ",
   "tutorial.promptAccept": "ចូលរួមដំណើរទស្សនកិច្ច",
-  "session-id": "លេខសម្គាល់វគ្គ",
   "session-settings-section-navigation": "ការរុករក",
   "session-settings-section-sharing": "ការចែករំលែក",
   "session-settings-section-participants": "អ្នកចូលរួម",
@@ -335,7 +331,6 @@
   "dont-show-again": "កុំបង្ហាញវាម្តងទៀត",
   "discover": "ស្វែងយល់",
   "playlists": "បញ្ជីចាក់",
-
   "cross-references": "ឯកសារយោងឆ្លង",
   "study-notes": "កំណត់ចំណាំសិក្សា",
   "content": "ខ្លឹមសារ",
@@ -404,7 +399,6 @@
   "add-and-save": "បញ្ចូល ហើយរក្សាទុក",
   "loading-profile": "កំពុងផ្ទុកប្រវត្តិរូបរបស់អ្នក…",
   "app-version": "វ {{version}} · {{commit}}",
-
   "share": "ចែករំលែក",
   "share-sheet-title": "ចែករំលែក",
   "share-link": "ចែករំលែកតំណភ្ជាប់",
@@ -446,13 +440,11 @@
   "create-reading-plan-wizard": "បង្កើតផែនការថ្មី",
   "edit-reading-plan": "កែសម្រួលផែនការ",
   "reading-plan-step-name-title": "ដាក់ឈ្មោះផែនការរបស់អ្នក",
-
   "reading-plan-name-placeholder": "ឧទាហរណ៍ ដំណើរ​នៃ​ទំនុកតម្កើង​របស់ខ្ញុំ",
   "reading-plan-description-label": "ការពិពណ៌នា (ស្រេចចិត្ត)",
   "reading-plan-step-scripture-title": "ជ្រើសរើស​ការអាន",
   "reading-plan-step-cadences-title": "ចង្វាក់អាន",
   "reading-plan-step-cadences-hint": "ជ្រើសរើសល្បឿនអានដែលអ្នកចង់ផ្តល់ជូន។ អ្នកអានអាចជ្រើសរើសអានតាមល្បឿនផ្ទាល់ខ្លួនរបស់ពួកគេជានិច្ច។",
-
   "reading-plan-cadence-length": "បញ្ចប់ក្នុងរយៈពេល {{count}} ថ្ងៃ",
   "reading-plan-cadence-length_one": "បញ្ចប់ក្នុងរយៈពេល {{count}} ថ្ងៃ",
   "reading-plan-cadence-length_other": "បញ្ចប់ក្នុងរយៈពេល {{count}} ថ្ងៃ",
@@ -485,7 +477,6 @@
   "reading-plan-draft-saving": "កំពុងរក្សាទុក...",
   "reading-plan-draft-saved": "សេចក្តីព្រាងត្រូវបានរក្សាទុក",
   "reading-plan-draft-save-failed": "មិនអាចរក្សាទុកសេចក្តីព្រាងបានទេ",
-
   "reading-plan-scripture-remove": "លុបការអានចេញ",
   "reading-plan-create-submit": "បង្កើតផែនការ",
   "reading-plan-save-changes": "រក្សាទុកការផ្លាស់ប្តូរ",
@@ -498,11 +489,8 @@
   "loading": "កំពុងផ្ទុក…",
   "reading-plan-not-started": "មិនទាន់ចាប់ផ្តើម",
   "reading-plan-start": "ចាប់ផ្តើមផែនការ",
-
   "reading-plan-streak": "ជាប់ៗគ្នា {{count}} ថ្ងៃ",
-
   "reading-plan-mark-complete": "សម្គាល់ថារួចរាល់",
-
   "reading-plan-empty-sessions": "ផែនការនេះមិនទាន់មានការអានណាមួយនៅឡើយទេ។",
   "reading-plan-celebration-title": "ថ្ងៃទី {{day}} បានបញ្ចប់!",
   "reading-plan-complete-title": "ផែនការរួចរាល់ហើយ!",
@@ -535,7 +523,6 @@
   "reading-plan-mark-reading-complete": "សម្គាល់ការអានចប់",
   "reading-plan-link-video": "វីដេអូ",
   "reading-belongs-to": "ការអាននេះជាកម្មសិទ្ធិរបស់",
-
   "reading-plan-mark-passage-complete": "សម្គាល់ {{passage}} ថាបានអានហើយ",
   "reading-plan-read-nudge-title": "អានបានល្អណាស់!",
   "reading-plan-read-nudge-toast": "សម្គាល់ {{passage}} ថារួចរាល់?",
@@ -553,7 +540,6 @@
   "last-48-hours": "៤៨ ម៉ោងចុងក្រោយ",
   "open-bible": "បើកព្រះគម្ពីរ",
   "personal-greeting": "សូមស្វាគមន៍, {{name}} !",
-  "read-first-chapter": "សូមអានជំពូកទីមួយ",
   "resume-reading": "បន្ត​ទៅ​កន្លែង​ដែល​អ្នក​បាន​ចាកចេញ",
   "resume-reading-loading": "កំពុងផ្ទុកប្រវត្តិអានរបស់អ្នក...",
   "selected-year": "ឆ្នាំ៖ {{year}}",
@@ -615,7 +601,6 @@
   "playlist-description_placeholder": "តើ​បញ្ជី​ចាក់​នេះ​និយាយ​អំពី​អ្វី?",
   "read-more": "អានបន្ថែម",
   "read-less": "អានតិច",
-
   "ask-to-switch-ui-language": "ផ្តល់ជូនដើម្បីប្តូរភាសាជាមួយនឹងការបកប្រែ",
   "ai": "បញ្ញាសិប្បនិម្មិត",
   "ai-edit-playlist": "កែសម្រួលបញ្ជីចាក់ជាមួយ AI",
@@ -623,7 +608,6 @@
   "chat-tool-used": "ឧបករណ៍ {{name}} ដែលបានប្រើ {{count}}",
   "chat-tool-used_one": "{{name}} បានប្រើឧបករណ៍មួយ",
   "chat-tool-used_other": "ឧបករណ៍ {{name}} ដែលបានប្រើ {{count}}",
-
   "ai-context-button-label": "បរិបទ AI សកម្ម",
   "ai-context-tool-count": "ឧបករណ៍ {{count}}",
   "annotation-conflict-title": "កំណត់ចំណាំនេះបានផ្លាស់ប្តូរនៅកន្លែងពីរ",
@@ -638,7 +622,6 @@
   "annotation-conflict-no-content": "គ្មានខ្លឹមសារ។",
   "annotation-conflict-confirm": "បញ្ជាក់",
   "annotation-conflict-resolve-failed": "មិនអាចអនុវត្តជម្រើសនោះបានទេ។ វានឹងត្រូវបានសាកល្បងម្តងទៀត។",
-
   "annotation-sync-failed": "មិនអាចរក្សាទុកកំណត់ចំណាំទៅក្នុងគណនីរបស់អ្នកបានទេ។ វានៅតែស្ថិតនៅលើឧបករណ៍នេះដដែល។",
   "create-menu": "បង្កើត",
   "create-annotation-menu-item": "ចំណារពន្យល់",
@@ -653,7 +636,6 @@
   "save-annotation-failed": "មិនអាចរក្សាទុកចំណារពន្យល់បានទេ។",
   "annotation-group-expand": "ពង្រីកក្រុម",
   "annotation-group-collapse": "បង្រួមក្រុម",
-
   "notes": "កំណត់ចំណាំ",
   "note": "កំណត់ចំណាំ",
   "show-more-verse-actions": "បង្ហាញសកម្មភាពបន្ថែមទៀត",
@@ -667,7 +649,6 @@
   "create-folder": "បង្កើតថតឯកសារ",
   "edit-bookmark": "កែសម្រួល​ចំណាំ",
   "remove-bookmark-from-all-folders": "ដកចេញពីថតឯកសារទាំងអស់",
-
   "greeting-afternoon": "សួស្តីរសៀល!",
   "greeting-afternoon-named": "សួស្តីរសៀល, {{name}} !",
   "greeting-evening": "សួស្តីល្ងាច!",
@@ -677,5 +658,28 @@
   "greeting-night": "រាត្រីសួស្តី!",
   "greeting-night-named": "រាត្រីសួស្តី, {{name}} !",
   "annotation-override-banner": "កំណត់ចំណាំកំពុងត្រូវបានរក្សាទុក និងផ្ទុកពីគណនីក្រុមរបស់អ្នក។",
-  "annotation-override-save-to-my-account": "រក្សាទុកទៅក្នុងគណនីរបស់ខ្ញុំ"
+  "annotation-override-save-to-my-account": "រក្សាទុកទៅក្នុងគណនីរបស់ខ្ញុំ",
+  "read-book-chapter-button": "អាន {{bookName}} {{chapterNumber}}",
+  "session-url": "អាសយដ្ឋាន​វគ្គ",
+  "ask-ai": "សួរ AI",
+  "unread-mention": "ការលើកឡើងដែលមិនទាន់បានអាន",
+  "unread-messages": "សារដែលមិនទាន់បានអាន៖ {{count}}",
+  "annotations-pending-sync": "ការផ្លាស់ប្ដូរ {{count}} កំពុងរង់ចាំការធ្វើសមកាលកម្ម",
+  "annotations-pending-sync-plural": "ការផ្លាស់ប្ដូរ {{count}} កំពុងរង់ចាំការធ្វើសមកាលកម្ម",
+  "scripture-width": "ទទឹង​ព្រះគម្ពីរ",
+  "decrease-scripture-width": "បន្ថយទទឹងព្រះគម្ពីរ",
+  "increase-scripture-width": "បង្កើនទទឹងព្រះគម្ពីរ",
+  "annotations": "ចំណារពន្យល់",
+  "discover-content-panel": "ស្វែងរកខ្លឹមសារ",
+  "discover-book-title": "ស្វែងយល់ {{book}}",
+  "show-all": "បង្ហាញទាំងអស់",
+  "annotation-comment-updated": "បានធ្វើបច្ចុប្បន្នភាព {{date}}",
+  "switch-language-title": "ប្តូរភាសា?",
+  "switch-language-body": "តើអ្នកចង់ប្តូរភាសារបស់អ្នកទៅ {{nativeLanguageName}} ដែរឬទេ?",
+  "switch-language-confirm": "ប្តូរ",
+  "switch-language-dismiss": "កុំប្តូរ",
+  "switch-language-never": "កុំសួរម្តងទៀត",
+  "chat-ai-error": "សូមអភ័យទោស មានអ្វីមួយខុសប្រក្រតីក្នុងការបង្កើតការឆ្លើយតប ( {{error}} )។",
+  "playlist-editor": "កម្មវិធីនិពន្ធបញ្ជីចាក់",
+  "add-bookmark-modal": "បន្ថែម​ចំណាំ"
 }

@@ -13,7 +13,10 @@ import {
   type OfflineAnnotationStore,
 } from "@packages/seed-bible/seed-bible/managers/OfflineAnnotationStore";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
-import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import {
+  createLoginManager,
+  type LoginManager,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type {
   ReaderTab,
@@ -106,6 +109,7 @@ describe("AnnotationsManager", () => {
       profile: signal(null),
       cachedProfile: signal(null),
       localConfig: signal({}),
+      hydrateLocalConfig: vi.fn(),
       profilePromise: null,
       isProfileLoading: signal(false),
       isSavingProfile: signal(false),
@@ -987,6 +991,20 @@ describe("AnnotationsManager", () => {
       return new Promise((resolve) => setTimeout(resolve, 0));
     }
 
+    /** Polls until `check` passes, so no test has to guess at a duration. */
+    async function waitForCondition(
+      check: () => boolean,
+      timeoutMs = 1000
+    ): Promise<void> {
+      const start = Date.now();
+      while (!check()) {
+        if (Date.now() - start > timeoutMs) {
+          throw new Error("waitForCondition timed out");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+    }
+
     /** Puts the manager in the state of having no connection. */
     function goOffline() {
       window.dispatchEvent(new Event("offline"));
@@ -1145,6 +1163,46 @@ describe("AnnotationsManager", () => {
       // becomes the account's when the user signs in later.
       expect(login.login).not.toHaveBeenCalled();
       expect(manager.editingAnnotation.value).not.toBeNull();
+    });
+
+    it("starts a signed-out draft when the user dismisses the real sign-in prompt", async () => {
+      // Deliberately driven through a real `LoginManager` rather than the mock
+      // this file uses elsewhere. The bug being guarded here lived in the
+      // boundary between the two: `cancelLogin()` rejected the pending
+      // `login()` promise, so the dismissal threw out of `createNewAnnotation`
+      // before it could open the editor, and the user was simply stuck with
+      // nothing on screen and nothing explaining why. A mocked `login()`
+      // resolving `null` cannot catch that — it agrees with the caller while
+      // disagreeing with the manager, which is why the original bug shipped.
+      const realLogin = createLoginManager({ os });
+      const manager = createAnnotationsManager(
+        os,
+        realLogin,
+        tabs,
+        discover,
+        undefined,
+        { store }
+      );
+      offlineManagers.push(manager);
+
+      // Not awaited yet: `createNewAnnotation` is parked on the prompt until it
+      // is answered, which is the state a dismissal has to be delivered into.
+      const drafting = manager.createNewAnnotation();
+      await waitForCondition(() => realLogin.isLoginOpen.value);
+
+      await realLogin.cancelLogin();
+      await drafting;
+
+      const draft = manager.editingAnnotation.value;
+      expect(draft).not.toBeNull();
+      expect(discover.view.value).toBe("create_annotation");
+
+      // And the note the editor was opened for is genuinely kept, under the
+      // signed-out bucket, without reaching for a record that doesn't exist.
+      await manager.saveEditingAnnotation();
+
+      expect(await store.get(LOCAL_OWNER, draft!.id)).not.toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
     });
 
     it("shows signed-out drafts in the chapter listing", async () => {

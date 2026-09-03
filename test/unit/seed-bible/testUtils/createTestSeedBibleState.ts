@@ -8,6 +8,7 @@ import {
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 import type { OfflineTranslationStore } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import type { AppConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 // Lazy per-language loaders for the real "seed-bible" locale files, mirroring
@@ -37,6 +38,8 @@ export interface CreateTestSeedBibleStateOptions {
    * pass an in-memory store to exercise anything that depends on downloads.
    */
   offlineStore?: OfflineTranslationStore | null;
+  /** Deployment config passed through to `createSeedBibleState`. */
+  config?: AppConfig;
   /**
    * Whether the Today screen auto-opens over the reader, as it does in
    * production for a URL with no reading position. Defaults to `false` so the
@@ -51,6 +54,21 @@ export interface CreateTestSeedBibleStateOptions {
    * heuristic, since an explicit `?today=` short-circuits it.
    */
   todayOpen?: boolean | "fromUrl";
+  /**
+   * Whether the mobile toolbar promotes Chat to the fourth tab via
+   * `?chatFirst=true`. Applied through the real URL param before the state is
+   * built, since `BibleReaderToolbar` reads it from `initialUrl` at boot.
+   * Pass a string to set a non-canonical value (e.g. `"1"`) for edge-case tests.
+   */
+  chatFirst?: boolean | string;
+  /**
+   * Skips the internal `state.today.hydrateAutoOpen()` call below, leaving
+   * `today.isOpen` at its pre-hydrate seed (`false`) instead of the URL's
+   * real open/closed state. For a test asserting the seed-then-correct
+   * invariant itself; every other test wants the fully-loaded-app behavior
+   * this helper otherwise mirrors, so this defaults to `false`.
+   */
+  skipHydrateAutoOpen?: boolean;
 }
 
 export async function waitFor(
@@ -225,22 +243,59 @@ export async function createTestSeedBibleState(
   installFreeUseBibleApiMock(globalThis as TestGlobalScope, responses);
   await ensureI18nInitialized();
 
-  // Pin Today's initial state before the state is built: `TodayManager` latches
-  // it from `initialUrl` at construction, so it cannot be set afterwards. Keeps
-  // whatever path the caller already navigated to.
+  // `TodayManager` reads `initialUrl` (captured from `window.location` at
+  // construction) when `hydrateAutoOpen` runs below, so the URL has to be
+  // pinned before the state is built. Keeps whatever path the caller already
+  // navigated to.
   if (typeof window !== "undefined" && options.todayOpen !== "fromUrl") {
     const url = new URL(window.location.href);
     url.searchParams.set("today", options.todayOpen ? "open" : "closed");
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }
 
+  // Same boot-latch pattern for chat-first: the toolbar reads `chatFirst` from
+  // `initialUrl`, so the param has to be on the URL before the state is built.
+  if (typeof window !== "undefined" && options.chatFirst !== undefined) {
+    const url = new URL(window.location.href);
+    if (options.chatFirst === false) {
+      url.searchParams.delete("chatFirst");
+    } else {
+      url.searchParams.set(
+        "chatFirst",
+        options.chatFirst === true ? "true" : options.chatFirst
+      );
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }
+
   const { createSeedBibleState } =
     await import("@packages/seed-bible/seed-bible/managers/SeedBibleStateManager");
-  const state = createSeedBibleState({ offlineStore: options.offlineStore });
+  const state = createSeedBibleState({
+    offlineStore: options.offlineStore,
+    config: options.config,
+  });
   // Before anything can sign in: the resume effect fires the moment a session
   // key lands, and it is the path that would otherwise open a socket.
   installSharedDocumentMock(state);
   liveTestStates.push(state);
+  // Mirrors the real app's post-mount effect (see `MainBody` in
+  // `app/main.tsx`) that applies the device's real saved local config —
+  // `login.localConfig` itself seeds empty to match SSR. This helper
+  // represents a fully-loaded app for test purposes, so it should reflect
+  // that step too, the same way it already waits for tabs to load below.
+  state.login.hydrateLocalConfig();
+  // Mirrors the same post-mount sequence's other one-time correction: saved
+  // tabs/layout/catalog/selector-mode/tutorial-and-onboarding flags all seed
+  // to match SSR and only become real once this runs. Without it, anything
+  // gated behind `tutorial.armAutoStart()` (called from here) never arms.
+  state.app.hydrateFromStorage();
+  // Mirrors the same post-mount sequence's third one-time correction:
+  // `today.isOpen` seeds `false` to match SSR (which always renders Today
+  // closed), and only reflects the URL's real open/closed state once this
+  // runs.
+  if (!options.skipHydrateAutoOpen) {
+    state.today.hydrateAutoOpen();
+  }
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.
