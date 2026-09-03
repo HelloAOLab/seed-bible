@@ -172,6 +172,242 @@ describe("CrossReferencesSection / StudyNotesSection / ContentSection", () => {
     expect(container.textContent).toContain("Background");
     expect(container.textContent).toContain("The full article.");
   });
+
+  it("renders a content result's description with ExpandableText", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "Some context",
+              content: "The full article.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const description = container.querySelector(
+      ".sb-discover-item-description"
+    );
+    expect(description?.classList.contains("sb-expandable-text")).toBe(true);
+    expect(description?.textContent).toContain("Some context");
+  });
+
+  it("renders an item's image above its title when provided", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+              image: "https://example.com/thumb.jpg",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const item = container.querySelector(".sb-discover-item");
+    const image = item?.querySelector(".sb-discover-item-image");
+    expect(image?.getAttribute("src")).toBe("https://example.com/thumb.jpg");
+
+    const children = Array.from(item?.children ?? []);
+    const imageIndex = children.findIndex((el) =>
+      el.classList.contains("sb-discover-item-image")
+    );
+    const titleIndex = children.findIndex((el) =>
+      el.classList.contains("sb-discover-item-title")
+    );
+    expect(imageIndex).toBe(0);
+    expect(imageIndex).toBeLessThan(titleIndex);
+  });
+
+  it("renders no image when the result doesn't provide one", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    expect(container.querySelector(".sb-discover-item-image")).toBeNull();
+  });
+
+  it("calls the result's onClick when the card is clicked", () => {
+    const onClick = vi.fn();
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+              onClick,
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const item = container.querySelector(".sb-discover-item");
+    expect(item?.classList.contains("sb-discover-item--clickable")).toBe(true);
+
+    act(() => {
+      item?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not mark the card clickable when there's no onClick", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Background",
+              description: "",
+              content: "The full article.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const item = container.querySelector(".sb-discover-item");
+    expect(item?.classList.contains("sb-discover-item--clickable")).toBe(false);
+  });
+
+  it("groups content results into one section per author", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Video 1",
+              description: "",
+              content: "Video 1 body.",
+              author: "Bible Project",
+            },
+            {
+              type: "content",
+              title: "Video 2",
+              description: "",
+              content: "Video 2 body.",
+              author: "Bible Project",
+            },
+            {
+              type: "content",
+              title: "Article",
+              description: "",
+              content: "Article body.",
+              author: "Jane Doe",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toEqual(["Bible Project", "Jane Doe"]);
+    expect(sectionTitles).not.toContain("Content");
+
+    const bibleProjectSection = Array.from(
+      container.querySelectorAll(".sb-discover-section")
+    ).find(
+      (section) =>
+        section.querySelector(".sb-discover-section-title")?.textContent ===
+        "Bible Project"
+    );
+    expect(bibleProjectSection?.textContent).toContain("Video 1");
+    expect(bibleProjectSection?.textContent).toContain("Video 2");
+    expect(bibleProjectSection?.textContent).not.toContain("Article");
+  });
+
+  it("puts authorless results in a general 'Content' section alongside author sections", () => {
+    const tab = createMockTab({
+      discoveredContent: [
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Video 1",
+              description: "",
+              content: "Video 1 body.",
+              author: "Bible Project",
+            },
+            {
+              type: "content",
+              title: "Untitled note",
+              description: "",
+              content: "No author here.",
+            },
+          ],
+        },
+      ],
+    });
+
+    act(() => {
+      render(<ContentSection tab={tab} />, container);
+    });
+
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".sb-discover-section-title")
+    ).map((el) => el.textContent);
+    expect(sectionTitles).toEqual(["Bible Project", "Content"]);
+    expect(container.textContent).toContain("No author here.");
+  });
 });
 
 describe("hasAnyDiscoverResults", () => {
