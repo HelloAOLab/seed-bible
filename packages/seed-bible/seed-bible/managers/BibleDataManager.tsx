@@ -1193,6 +1193,14 @@ export function createBibleDataManager(
     link: string,
     options?: ApiRequestOptions
   ): Promise<AudioTimings> => {
+    // A chapter read from a download hands out offline links here instead of
+    // real API links (see `OfflineTranslationsManager`), since there's no
+    // per-chapter file to fetch — resolve those locally before ever touching
+    // the network.
+    const offlineTimings = await offline.getAudioTimings(link);
+    if (offlineTimings) {
+      return offlineTimings;
+    }
     const endpoint = getEndpointForTranslation(translationId);
     return await api.getAudioTimings(link, endpoint, options);
   };

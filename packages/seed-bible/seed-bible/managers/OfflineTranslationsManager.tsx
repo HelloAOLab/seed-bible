@@ -25,11 +25,14 @@ import { computed, signal, type ReadonlySignal } from "@preact/signals";
 // imports this module to construct the manager).
 import type { MergeTranslationsOptions } from "./BibleDataManager";
 import type {
+  AudioTimings,
   CompleteTranslation,
+  CompleteTranslationChapterAudioTimings,
   FreeUseBibleAPI,
   Translation,
   TranslationBook,
   TranslationBookChapter,
+  TranslationBookChapterAudioTimingsLinks,
   TranslationBooks,
 } from "./FreeUseBibleAPI";
 import {
@@ -307,6 +310,19 @@ export interface OfflineTranslationsManager {
   ) => Promise<TranslationBookChapter | null>;
 
   /**
+   * Resolves one of the offline links a downloaded chapter puts in
+   * `thisChapterAudioTimings` (and `nextChapterAudioTimings`/
+   * `previousChapterAudioTimings`) back into that reader's timings.
+   *
+   * Returns null for any link this manager didn't create — such as a real API
+   * link — so a caller can fall back to fetching it over the network. Also
+   * null if the link is one of ours but the reader's timings aren't in the
+   * download (a translation downloaded before this reader was added, for
+   * instance).
+   */
+  getAudioTimings: (link: string) => Promise<AudioTimings | null>;
+
+  /**
    * Releases the manager's hold on the page: removes its `online`/`offline`
    * listeners and aborts any in-flight download.
    *
@@ -428,6 +444,7 @@ function toChapterEntries(complete: CompleteTranslation): StoredChapterEntry[] {
         data: {
           numberOfVerses: entry.numberOfVerses,
           thisChapterAudioLinks: entry.thisChapterAudioLinks ?? {},
+          thisChapterAudioTimings: entry.thisChapterAudioTimings ?? {},
           chapter: entry.chapter,
         },
       });
@@ -452,6 +469,90 @@ function chapterApiLink(
   } catch {
     return `/${path}`;
   }
+}
+
+/**
+ * The scheme used for audio-timings "links" on a chapter served from an
+ * offline download.
+ *
+ * The per-chapter API gives each reader a URL to a separate `*.audioTimings.json`
+ * file; the complete-translation download inlines the same data as plain
+ * number arrays instead, since there is no per-chapter file to link to. To
+ * keep {@link TranslationBookChapter.thisChapterAudioTimings} the same
+ * link-shaped map either way, offline chapters get one of these opaque links
+ * per reader instead of a real URL. {@link parseOfflineAudioTimingsLink}
+ * reverses it back into a lookup, and {@link OfflineTranslationsManager.getAudioTimings}
+ * is what a caller resolves it with instead of fetching it.
+ */
+const OFFLINE_AUDIO_TIMINGS_SCHEME = "offline-audio-timings:";
+
+function offlineAudioTimingsLink(
+  translationId: string,
+  bookId: string,
+  chapterNumber: number,
+  reader: string
+): string {
+  return (
+    OFFLINE_AUDIO_TIMINGS_SCHEME +
+    [
+      encodeURIComponent(translationId),
+      encodeURIComponent(bookId),
+      chapterNumber,
+      encodeURIComponent(reader),
+    ].join("/")
+  );
+}
+
+/** A parsed {@link offlineAudioTimingsLink}, or null if it wasn't one. */
+interface OfflineAudioTimingsRef {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+  reader: string;
+}
+
+function parseOfflineAudioTimingsLink(
+  link: string
+): OfflineAudioTimingsRef | null {
+  if (!link.startsWith(OFFLINE_AUDIO_TIMINGS_SCHEME)) {
+    return null;
+  }
+  const [translationId, bookId, chapterNumberText, reader] = link
+    .slice(OFFLINE_AUDIO_TIMINGS_SCHEME.length)
+    .split("/");
+  const chapterNumber = Number(chapterNumberText);
+  if (!translationId || !bookId || !reader || !Number.isFinite(chapterNumber)) {
+    return null;
+  }
+  return {
+    translationId: decodeURIComponent(translationId),
+    bookId: decodeURIComponent(bookId),
+    chapterNumber,
+    reader: decodeURIComponent(reader),
+  };
+}
+
+/**
+ * Turns a chapter's stored (reader -> timing array) map into the
+ * (reader -> link) shape {@link TranslationBookChapter.thisChapterAudioTimings}
+ * expects, using offline links a reader never has to actually fetch.
+ */
+function toAudioTimingsLinks(
+  translationId: string,
+  bookId: string,
+  chapterNumber: number,
+  timings: CompleteTranslationChapterAudioTimings | undefined
+): TranslationBookChapterAudioTimingsLinks {
+  const links: TranslationBookChapterAudioTimingsLinks = {};
+  for (const reader of Object.keys(timings ?? {})) {
+    links[reader] = offlineAudioTimingsLink(
+      translationId,
+      bookId,
+      chapterNumber,
+      reader
+    );
+  }
+  return links;
 }
 
 /**
@@ -960,10 +1061,12 @@ export function createOfflineTranslationsManager(
         chapterNumber
       ),
       thisChapterAudioLinks: stored.thisChapterAudioLinks ?? {},
-      // Audio-timing files are fetched live from the API (see
-      // `FreeUseBibleAPI.getAudioTimings`) rather than stored offline, so a
-      // chapter read from a download never has links to offer here.
-      thisChapterAudioTimings: {},
+      thisChapterAudioTimings: toAudioTimingsLinks(
+        record.translationId,
+        bookId,
+        chapterNumber,
+        stored.thisChapterAudioTimings
+      ),
       nextChapterApiLink: nextRef
         ? chapterApiLink(
             record.endpoint,
@@ -973,7 +1076,14 @@ export function createOfflineTranslationsManager(
           )
         : null,
       nextChapterAudioLinks: nextStored?.thisChapterAudioLinks ?? null,
-      nextChapterAudioTimings: nextRef ? {} : null,
+      nextChapterAudioTimings: nextRef
+        ? toAudioTimingsLinks(
+            record.translationId,
+            nextRef.book,
+            nextRef.chapter,
+            nextStored?.thisChapterAudioTimings
+          )
+        : null,
       previousChapterApiLink: previousRef
         ? chapterApiLink(
             record.endpoint,
@@ -983,7 +1093,14 @@ export function createOfflineTranslationsManager(
           )
         : null,
       previousChapterAudioLinks: previousStored?.thisChapterAudioLinks ?? null,
-      previousChapterAudioTimings: previousRef ? {} : null,
+      previousChapterAudioTimings: previousRef
+        ? toAudioTimingsLinks(
+            record.translationId,
+            previousRef.book,
+            previousRef.chapter,
+            previousStored?.thisChapterAudioTimings
+          )
+        : null,
       numberOfVerses: stored.numberOfVerses,
       chapter: stored.chapter,
     };
@@ -1021,6 +1138,91 @@ export function createOfflineTranslationsManager(
     }
 
     return await buildChapter(record, ref.book, ref.chapter);
+  };
+
+  const getAudioTimings = async (
+    link: string
+  ): Promise<AudioTimings | null> => {
+    const ref = parseOfflineAudioTimingsLink(link);
+    if (!ref) {
+      return null;
+    }
+
+    const record = await getRecord(ref.translationId);
+    if (!record || !store) {
+      return null;
+    }
+
+    const stored = await store.getChapter(
+      ref.translationId,
+      ref.bookId,
+      ref.chapterNumber
+    );
+    const verses = stored?.thisChapterAudioTimings?.[ref.reader];
+    if (!stored || !verses) {
+      return null;
+    }
+
+    const nextRef = adjacentChapterRef(
+      record.books,
+      ref.bookId,
+      ref.chapterNumber,
+      "next"
+    );
+    const previousRef = adjacentChapterRef(
+      record.books,
+      ref.bookId,
+      ref.chapterNumber,
+      "previous"
+    );
+
+    return {
+      translationId: ref.translationId,
+      bookId: ref.bookId,
+      chapterNumber: ref.chapterNumber,
+      reader: ref.reader,
+      audioLink: stored.thisChapterAudioLinks[ref.reader] ?? "",
+      thisChapterLink: chapterApiLink(
+        record.endpoint,
+        ref.translationId,
+        ref.bookId,
+        ref.chapterNumber
+      ),
+      nextChapterLink: nextRef
+        ? chapterApiLink(
+            record.endpoint,
+            ref.translationId,
+            nextRef.book,
+            nextRef.chapter
+          )
+        : null,
+      previousChapterLink: previousRef
+        ? chapterApiLink(
+            record.endpoint,
+            ref.translationId,
+            previousRef.book,
+            previousRef.chapter
+          )
+        : null,
+      thisChapterAudioTimingsLink: link,
+      nextChapterAudioTimingsLink: nextRef
+        ? offlineAudioTimingsLink(
+            ref.translationId,
+            nextRef.book,
+            nextRef.chapter,
+            ref.reader
+          )
+        : null,
+      previousChapterAudioTimingsLink: previousRef
+        ? offlineAudioTimingsLink(
+            ref.translationId,
+            previousRef.book,
+            previousRef.chapter,
+            ref.reader
+          )
+        : null,
+      verses,
+    };
   };
 
   const downloadPrompt = signal<Translation | null>(null);
@@ -1118,6 +1320,7 @@ export function createOfflineTranslationsManager(
     getTranslationBooks,
     getTranslationBookChapter,
     getAdjacentChapter,
+    getAudioTimings,
     dispose,
   };
 }
