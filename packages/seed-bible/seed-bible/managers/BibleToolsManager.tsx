@@ -43,6 +43,9 @@ import {
   type PlaylistManager,
 } from "./PlaylistManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
+import type { CasualOSManager } from "./OsManager";
+import type { LoginManager } from "./LoginManager";
+import type { UserGalleryManager } from "./UserGalleryManager";
 import { i18n, useI18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
@@ -181,6 +184,10 @@ export interface BibleToolContext {
   readingPlans?: ReadingPlansManager;
   /** Playlist manager */
   playlists?: PlaylistManager;
+
+  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
+  login?: Pick<LoginManager, "userId">;
+  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
 
   /** Annotations manager, for creating/editing notes on selected verses. */
   annotations?: AnnotationsManager;
@@ -910,6 +917,9 @@ function getDefaultToolbarTools(
               readingPlans={readingPlans}
               books={readingState.translationBooks.value?.books ?? []}
               modals={context.modals}
+              os={context.os}
+              login={context.login}
+              gallery={context.gallery}
               // Tapping a scripture reading takes the user to it. Without this
               // a plan can only be ticked off, never actually read from.
               onOpenScripture={async (ref, translationId) => {
@@ -934,6 +944,7 @@ function getDefaultToolbarTools(
                     // authorUserId: plan.authorUserId,
                     title: plan.title,
                     description: plan.description,
+                    heroImageUrl: plan.heroImageUrl,
                     items,
                     // createdAtMs: plan.createdAtMs,
                     // updatedAtMs: plan.updatedAtMs,
