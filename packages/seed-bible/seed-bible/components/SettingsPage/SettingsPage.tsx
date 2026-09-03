@@ -54,6 +54,7 @@ import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
+import { buildStaticPagePath } from "../../managers/StaticPagePath";
 import { useRef } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
@@ -2256,6 +2257,30 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
               <span className="sb-settings-nav-label">
                 {t("launch-tutorial", { defaultValue: "Launch tutorial" })}
+              </span>
+              <span className="material-symbols-outlined rtl-mirror">
+                chevron_right
+              </span>
+            </button>
+          </li>
+          <li>
+            <button
+              className="sb-settings-nav-item"
+              onClick={() => {
+                state.sidebar.closeSettings();
+                state.navigation.push(
+                  buildStaticPagePath({
+                    language: state.i18n.language.value,
+                    page: "about",
+                  })
+                );
+              }}
+            >
+              <span className="sb-settings-nav-icon">
+                <MaterialIcon>info</MaterialIcon>
+              </span>
+              <span className="sb-settings-nav-label">
+                {t("about-title", { defaultValue: "About Seed Bible" })}
               </span>
               <span className="material-symbols-outlined rtl-mirror">
                 chevron_right
