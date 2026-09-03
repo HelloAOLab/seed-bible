@@ -13,6 +13,7 @@ const { useState, useEffect, useMemo } = os.appHooks;
 
 export const NavMenu = ({
   getState,
+  getThemeCss,
   eventBus,
   catalog,
   verseReferences,
@@ -20,6 +21,7 @@ export const NavMenu = ({
   controller,
 }: NavMenuProps) => {
   const [menuState, setMenuState] = useState<NavigationState>(getState());
+  const [themeCss, setThemeCss] = useState<string>(getThemeCss());
   const styles = useMemo(() => getStyles(), []);
 
   useEffect(() => {
@@ -29,6 +31,14 @@ export const NavMenu = ({
         setMenuState(state);
       }
     );
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = eventBus.subscribe("OnThemeChanged", ({ css }) => {
+      setThemeCss(css);
+    });
 
     return () => unsubscribe();
   }, []);
@@ -94,6 +104,7 @@ export const NavMenu = ({
 
   return (
     <>
+      {themeCss ? <style>{themeCss}</style> : null}
       <style>{styles}</style>
       <div className="hotl-nav">
         {menuState.isOpen ? (

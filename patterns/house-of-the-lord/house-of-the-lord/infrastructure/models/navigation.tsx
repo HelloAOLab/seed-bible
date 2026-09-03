@@ -7,6 +7,7 @@ import type { NavMenuController } from "../controllers/navMenu/NavMenuController
 
 export interface NavMenuProps {
   getState: () => NavigationState;
+  getThemeCss: () => string;
   eventBus: DomainEventPort;
   catalog: PieceCatalogPort;
   verseReferences: VerseReferenceConfigProviderPort;

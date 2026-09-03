@@ -119,7 +119,15 @@ export interface ReadingChangedMessage {
   chapterNumber?: number;
 }
 
-export type Message = HighlightPieceMessage | ReadingChangedMessage;
+export interface ThemeChangedMessage {
+  type?: "theme-changed";
+  css?: string;
+}
+
+export type Message =
+  | HighlightPieceMessage
+  | ReadingChangedMessage
+  | ThemeChangedMessage;
 
 export interface ReadyMessage {
   id: "ready";

@@ -4,6 +4,7 @@ import {
 } from "@packages/seed-bible/seed-bible/components";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import {
+  composeThemeStyleText,
   registerExtension,
   type BibleToolContext,
   type SeedBibleState,
@@ -115,6 +116,19 @@ export const bootstrapExtension = () => {
                     },
                     component: () => {
                       const isReady = useSignal(false);
+                      // The pattern is cross-origin, so it cannot inherit the
+                      // reader's --sb-* variables; it gets the composed theme
+                      // text instead, and again whenever the theme changes.
+                      useSignalEffect(() => {
+                        if (!isReady.value) return;
+                        portalRef?.sendMessage({
+                          type: "theme-changed",
+                          css: composeThemeStyleText(
+                            context.theme.currentTheme.value
+                          ),
+                        });
+                      });
+
                       useSignalEffect(() => {
                         if (!isReady.value) return;
                         const readingState =

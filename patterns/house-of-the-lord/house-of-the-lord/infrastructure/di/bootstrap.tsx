@@ -65,6 +65,7 @@ import { thisTypedBot as entrypointBot } from "../entrypoints/casualos/botAdapte
 import { PieceFocusService } from "../../application/services/PieceFocusService";
 import { PieceHighlightService } from "../../application/services/PieceHighlightService";
 import { NavMenuStateService } from "../../application/services/NavMenuStateService";
+import { ThemeStateService } from "../../application/services/ThemeStateService";
 import type { DomainEventMap } from "../../domain/models/events";
 import { NAV_MENU_LEVELS } from "../../domain/models/navigation";
 import { NavMenuRendererAdapter } from "../adapters/navigation/NavMenuRendererAdapter";
@@ -255,6 +256,9 @@ export const bootstrapExtension = async () => {
       reading: readingStateService.getCurrentReading(),
     },
   });
+  const themeStateService = new ThemeStateService({
+    eventBus: domainEventBus,
+  });
   const pieceHighlightService = new PieceHighlightService({
     getExperienceKey,
     pieceHighlight: pieceHighlightAdapter,
@@ -326,6 +330,7 @@ export const bootstrapExtension = async () => {
   const navMenuRendererAdapter = new NavMenuRendererAdapter({
     eventBus: domainEventBus,
     navMenuStateService,
+    themeStatePort: themeStateService,
     catalog: pieceCatalogConfigProvider,
     verseReferences: verseReferenceConfigProvider,
     bookNames: bookNameConfigProvider,
@@ -377,6 +382,17 @@ export const bootstrapExtension = async () => {
             return;
           }
           scriptureInteractionController.handlePieceFocusRequest(key);
+          break;
+        }
+        case "theme-changed": {
+          if (!message.css) {
+            console.warn(
+              "house-of-the-lord pattern bootstrap: theme-changed without css",
+              { message }
+            );
+            return;
+          }
+          themeStateService.setCss(message.css);
           break;
         }
         case "reading-changed": {
