@@ -1,6 +1,11 @@
 import { signal } from "@preact/signals";
-import { isAudioPlayToolVisible } from "@packages/audio-reader-extension/ext_audioReader/host/init";
+import {
+  chapterVerseNumbers,
+  isAudioPlayToolVisible,
+  verseIndexForTime,
+} from "@packages/audio-reader-extension/ext_audioReader/host/init";
 import type { QuickToolContext } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 function createContext(overrides: {
   surface: QuickToolContext["surface"];
@@ -63,5 +68,63 @@ describe("isAudioPlayToolVisible (#1607)", () => {
       playing: { id: "playing" },
     });
     expect(isAudioPlayToolVisible(ctx)).toBe(false);
+  });
+});
+
+describe("verseIndexForTime", () => {
+  const endTimes = [3, 6, 9];
+
+  it("is the first verse at the very start of playback", () => {
+    expect(verseIndexForTime(endTimes, 0)).toBe(0);
+  });
+
+  it("stays on a verse right up until its end time", () => {
+    expect(verseIndexForTime(endTimes, 2.999)).toBe(0);
+  });
+
+  it("moves to the next verse exactly at the previous verse's end time", () => {
+    expect(verseIndexForTime(endTimes, 3)).toBe(1);
+  });
+
+  it("picks the middle verse partway through it", () => {
+    expect(verseIndexForTime(endTimes, 5)).toBe(1);
+  });
+
+  it("stays on the last verse once playback passes every end time", () => {
+    expect(verseIndexForTime(endTimes, 9)).toBe(2);
+    expect(verseIndexForTime(endTimes, 1000)).toBe(2);
+  });
+});
+
+describe("chapterVerseNumbers", () => {
+  it("extracts only verse numbers, in reading order, skipping headings and line breaks", () => {
+    const chapter = {
+      chapter: {
+        number: 1,
+        content: [
+          { type: "heading", content: ["Creation"] },
+          { type: "verse", number: 1, content: ["In the beginning..."] },
+          { type: "line_break" },
+          { type: "verse", number: 2, content: ["And the earth..."] },
+          { type: "hebrew_subtitle", content: ["A subtitle"] },
+          { type: "verse", number: 3, content: ["And God said..."] },
+        ],
+        footnotes: [],
+      },
+    } as unknown as TranslationBookChapter;
+
+    expect(chapterVerseNumbers(chapter)).toEqual([1, 2, 3]);
+  });
+
+  it("returns an empty list for a chapter with no verses", () => {
+    const chapter = {
+      chapter: {
+        number: 1,
+        content: [{ type: "heading", content: ["Title only"] }],
+        footnotes: [],
+      },
+    } as unknown as TranslationBookChapter;
+
+    expect(chapterVerseNumbers(chapter)).toEqual([]);
   });
 });

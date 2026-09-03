@@ -1,6 +1,11 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import type { BibleReadingState, QuickToolContext } from "seed-bible/managers";
+import type {
+  BibleReadingState,
+  ChapterVerse,
+  QuickToolContext,
+  TranslationBookChapter,
+} from "seed-bible/managers";
 
 /** Drives the icon swap between play and pause. Shared across the tool. */
 const isPlaying = signal(false);
@@ -8,6 +13,51 @@ const isPlaying = signal(false);
 /** Lazily-created shared audio element and the URL currently loaded into it. */
 let audioEl: HTMLAudioElement | null = null;
 let currentUrl: string | null = null;
+
+/**
+ * The verse-timing data driving the "now reading" highlight for whatever
+ * chapter/reader is currently loaded into `audioEl`, or null when nothing is
+ * tracked — either nothing is playing, or the chapter has no timing data for
+ * the reader in use.
+ */
+interface VerseTimingTrack {
+  readingState: BibleReadingState;
+  bookId: string;
+  chapterNumber: number;
+  /** Verse numbers in reading order, aligned index-for-index with `endTimes`. */
+  verseNumbers: number[];
+  /** Cumulative seconds (from the start of the audio) at which each verse ends. */
+  endTimes: number[];
+  /** The verse most recently highlighted, so the same verse isn't re-flashed every tick. */
+  lastVerse: number | null;
+}
+let verseTrack: VerseTimingTrack | null = null;
+/**
+ * Bumped every time `verseTrack` is invalidated (a fresh play, a new chapter)
+ * so an in-flight `loadVerseTrack` fetch that resolves after the fact can
+ * tell its answer is stale and skip clobbering whatever came after it.
+ */
+let verseTrackToken = 0;
+
+/**
+ * The verse being read at `currentTime`, as an index into `endTimes` (and
+ * therefore `verseNumbers`) — the first verse whose cumulative end time hasn't
+ * passed yet, or the last verse once playback runs past all of them.
+ */
+export function verseIndexForTime(
+  endTimes: number[],
+  currentTime: number
+): number {
+  const index = endTimes.findIndex((endTime) => currentTime < endTime);
+  return index === -1 ? endTimes.length - 1 : index;
+}
+
+/** Verse numbers in reading order, extracted from a chapter's content. */
+export function chapterVerseNumbers(chapter: TranslationBookChapter): number[] {
+  return chapter.chapter.content
+    .filter((item): item is ChapterVerse => item.type === "verse")
+    .map((verse) => verse.number);
+}
 
 function ensureAudio(): HTMLAudioElement | null {
   if (typeof Audio === "undefined") return null;
@@ -24,19 +74,95 @@ function ensureAudio(): HTMLAudioElement | null {
       isPlaying.value = false;
       if (audioEl) audioEl.currentTime = 0;
     };
+    audioEl.ontimeupdate = () => {
+      if (audioEl) highlightVerseForTime(audioEl.currentTime);
+    };
   }
   return audioEl;
 }
 
 /**
- * First available reader's mp3 URL for the chapter in view, or null. The
- * Bible API exposes `thisChapterAudioLinks` as a `{ reader: url }` map
- * (e.g. gilbert / hays / souer); we just take the first non-empty entry.
+ * Diminishes the rest of the chapter to spotlight the verse being read at
+ * `currentTime`, using the same "diminish" flash `emphasizeVerses` (in
+ * `BibleReadingManager`) uses for cross-reference/search-result jumps. Reused
+ * here rather than duplicated so a verse-boundary crossing flashes the same
+ * way a manual jump does — including its own 3s auto-fade, so a verse read
+ * for longer than that just goes back to normal until the next one starts.
  */
-function chapterAudioUrl(readingState: BibleReadingState): string | null {
+function highlightVerseForTime(currentTime: number): void {
+  if (!verseTrack || !Number.isFinite(currentTime)) return;
+  const { readingState, bookId, chapterNumber, verseNumbers, endTimes } =
+    verseTrack;
+  if (endTimes.length === 0) return;
+
+  const verseNumber = verseNumbers[verseIndexForTime(endTimes, currentTime)];
+  if (verseNumber === undefined || verseNumber === verseTrack.lastVerse) {
+    return;
+  }
+  verseTrack.lastVerse = verseNumber;
+
+  readingState.decorateVerses(bookId, chapterNumber, [verseNumber], {
+    className: "sb-verse-decoration-diminish",
+    containerClassName: "sb-chapter-decoration-diminish",
+    removeAfterMs: 3000,
+  });
+}
+
+/**
+ * Fetches the reader's per-verse timings for the chapter currently loaded
+ * into `readingState` and starts tracking them, so subsequent `timeupdate`
+ * ticks can highlight along. Does nothing (leaves `verseTrack` null) when the
+ * chapter has no timing link for this reader — an older translation, or an
+ * offline-downloaded chapter, which carries no such link — so playback still
+ * works, just without the highlight.
+ */
+async function loadVerseTrack(
+  bibleData: SeedBibleState["bibleData"],
+  readingState: BibleReadingState,
+  reader: string
+): Promise<void> {
+  const chapterData = readingState.chapterData.value;
+  const timingsLink = chapterData?.thisChapterAudioTimings[reader];
+  if (!chapterData || !timingsLink) return;
+
+  const token = ++verseTrackToken;
+  let timings;
+  try {
+    timings = await bibleData.getAudioTimings(
+      readingState.translationId.value,
+      timingsLink
+    );
+  } catch {
+    return;
+  }
+
+  // Something else (a new chapter, a fresh play) invalidated tracking while
+  // this fetch was in flight — don't let a stale response clobber it.
+  if (token !== verseTrackToken) return;
+
+  verseTrack = {
+    readingState,
+    bookId: chapterData.book.id,
+    chapterNumber: chapterData.chapter.number,
+    verseNumbers: chapterVerseNumbers(chapterData),
+    endTimes: timings.verses,
+    lastVerse: null,
+  };
+}
+
+/**
+ * First available reader for the chapter in view, or null. The Bible API
+ * exposes `thisChapterAudioLinks` as a `{ reader: url }` map (e.g. gilbert /
+ * hays / souer); we just take the first non-empty entry, and look up that
+ * same reader's timings (if any) under the matching key.
+ */
+function chapterAudioReader(
+  readingState: BibleReadingState
+): { reader: string; url: string } | null {
   const links = readingState.chapterData.value?.thisChapterAudioLinks;
   if (!links) return null;
-  return Object.values(links).find((url) => !!url) ?? null;
+  const entry = Object.entries(links).find(([, url]) => !!url);
+  return entry ? { reader: entry[0], url: entry[1] } : null;
 }
 
 /**
@@ -46,7 +172,7 @@ function chapterAudioUrl(readingState: BibleReadingState): string | null {
 export function isAudioPlayToolVisible(ctx: QuickToolContext): boolean {
   return (
     !ctx.playlists.playing.value &&
-    chapterAudioUrl(ctx.readingState) !== null &&
+    chapterAudioReader(ctx.readingState) !== null &&
     (ctx.surface !== "quick-toolbar" || !ctx.playlists.isMobile.value)
   );
 }
@@ -129,18 +255,27 @@ export default function initAudioReaderExtension() {
         icon: () => (isPlaying.value ? <PauseIcon /> : <PlayIcon />),
         isVisible: (ctx) => computed(() => isAudioPlayToolVisible(ctx)),
         onSelect: (ctx) => {
-          const url = chapterAudioUrl(ctx.readingState);
-          if (!url) {
+          const chapterAudio = chapterAudioReader(ctx.readingState);
+          if (!chapterAudio) {
             context.app.toast("No audio is available for this chapter.");
             return;
           }
           const el = ensureAudio();
           if (!el) return;
-          if (currentUrl !== url) {
-            el.src = url;
-            currentUrl = url;
+          if (currentUrl !== chapterAudio.url) {
+            el.src = chapterAudio.url;
+            currentUrl = chapterAudio.url;
+            verseTrack = null;
+            verseTrackToken++;
           }
           if (el.paused) {
+            if (!verseTrack) {
+              void loadVerseTrack(
+                context.bibleData,
+                ctx.readingState,
+                chapterAudio.reader
+              );
+            }
             void el.play();
           } else {
             el.pause();
@@ -158,6 +293,8 @@ export default function initAudioReaderExtension() {
           audioEl.currentTime = 0;
         }
         isPlaying.value = false;
+        verseTrack = null;
+        verseTrackToken++;
       });
     },
   });
