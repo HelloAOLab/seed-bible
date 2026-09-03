@@ -85,6 +85,10 @@ import {
   type ExtensionManager,
 } from "../managers/ExtensionManager";
 import {
+  createExtensionSettingsManager,
+  type ExtensionSettingsManager,
+} from "../managers/ExtensionSettingsManager";
+import {
   createHighlightsManager,
   type HighlightsManager,
 } from "../managers/HighlightsManager";
@@ -421,6 +425,8 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+  /** Per-viewer values for extensions' declared settings, resolved against the active Customization's defaults. */
+  extensionSettings: ExtensionSettingsManager;
 
   /**
    * Feature flag manager for enabling/disabling features at runtime.
@@ -634,6 +640,12 @@ export function createSeedBibleState(
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
   });
+  const extensionSettings = createExtensionSettingsManager(
+    os,
+    login,
+    extensions,
+    customizations
+  );
   // Swaps the live installed-extension set over to whichever customization is
   // active (its own extensionIds plus anything the viewer added for it), and
   // back to the viewer's real default profile when none is active. Guarded
@@ -2235,6 +2247,7 @@ export function createSeedBibleState(
     today,
     readingExtensions,
     extensions,
+    extensionSettings,
     readingPlans,
     playlists,
     tutorial,

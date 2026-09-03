@@ -1,5 +1,9 @@
 {
   "id": "example-extension",
+  "settings": {
+    "greeting": { "type": "string", "default": "Hello" },
+    "showBanner": { "type": "boolean", "default": true }
+  },
   "translations": {
     "en": {
       "title": "Example Extension",
@@ -10,7 +14,11 @@
       "open-grid-portal": "Open grid portal",
       "open-map-portal": "Open map portal",
       "item-1": "Item 1",
-      "item-2": "Item 2"
+      "item-2": "Item 2",
+      "setting-greeting-title": "Greeting",
+      "setting-greeting-description": "The greeting shown by this extension's example tool.",
+      "setting-showBanner-title": "Show banner",
+      "setting-showBanner-description": "Whether to show the example banner."
     },
     "es": {
       "title": "Ejemplo de extensión",
