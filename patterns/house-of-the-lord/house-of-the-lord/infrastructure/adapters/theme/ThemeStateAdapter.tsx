@@ -1,20 +1,19 @@
-import type { DomainEventPort } from "../ports/in/eventBus";
-import type { ThemeStatePort } from "../ports/in/ThemeState";
+import type { InfrastructureEventPort } from "../../models/events";
 
-interface ServiceParams {
-  eventBus: DomainEventPort;
+interface AdapterParams {
+  eventBus: InfrastructureEventPort;
 }
 
 /**
  * The pattern runs in a cross-origin iframe, so it cannot inherit the reader's
  * `--sb-*` variables. The host composes its active theme and pushes the text
- * over the bridge; this holds it until then the stylesheet's own fallbacks apply.
+ * over the bridge; until then the stylesheet's own fallbacks apply.
  */
-export class ThemeStateService implements ThemeStatePort {
-  #eventBus: ServiceParams["eventBus"];
+export class ThemeStateAdapter {
+  #eventBus: AdapterParams["eventBus"];
   #css = "";
 
-  constructor({ eventBus }: ServiceParams) {
+  constructor({ eventBus }: AdapterParams) {
     this.#eventBus = eventBus;
   }
 

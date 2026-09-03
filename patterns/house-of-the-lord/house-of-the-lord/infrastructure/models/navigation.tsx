@@ -4,11 +4,13 @@ import type { PieceCatalogPort } from "../../application/ports/out/PieceCatalog"
 import type { VerseReferenceConfigProviderPort } from "../../application/ports/out/VerseReferenceConfigProvider";
 import type { NavigationState } from "../../domain/models/navigation";
 import type { NavMenuController } from "../controllers/navMenu/NavMenuController";
+import type { InfrastructureEventPort } from "./events";
 
 export interface NavMenuProps {
   getState: () => NavigationState;
   getThemeCss: () => string;
   eventBus: DomainEventPort;
+  themeEventBus: InfrastructureEventPort;
   catalog: PieceCatalogPort;
   verseReferences: VerseReferenceConfigProviderPort;
   bookNames: BookNameConfigProviderPort;

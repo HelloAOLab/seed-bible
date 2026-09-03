@@ -33,6 +33,6 @@ export class PieceFocusService implements PieceFocusPort {
   clearFocus(): void {
     this.#pieceHighlightPort.stopHighlight();
     this.#pieceStatePort.showAll();
-    this.#navMenuStatePort.clearSelection();
+    this.#navMenuStatePort.reset();
   }
 }

@@ -11,6 +11,7 @@ export interface NavMenuStatePort {
   selectPiece(key: PieceKey): void;
   showPieceList(): void;
   clearSelection(): void;
+  reset(): void;
   setExperience(experience: ExperienceKey): void;
   setReading(reading: ReadingState | null): void;
 }

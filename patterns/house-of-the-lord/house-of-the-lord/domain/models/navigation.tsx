@@ -14,6 +14,12 @@ export interface NavigationState {
   isOpen: boolean;
   level: NavMenuLevel;
   selectedPiece: PieceKey | null;
+  /**
+   * The piece the model is currently revealed around. Separate from
+   * `selectedPiece` because clicking away drops the selection without putting
+   * the hidden layers back — the reveal outlives the selection.
+   */
+  occludedBy: PieceKey | null;
   experience: ExperienceKey;
   reading: ReadingState | null;
 }

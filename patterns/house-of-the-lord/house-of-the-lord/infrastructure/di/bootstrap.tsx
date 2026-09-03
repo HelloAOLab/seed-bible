@@ -65,7 +65,7 @@ import { thisTypedBot as entrypointBot } from "../entrypoints/casualos/botAdapte
 import { PieceFocusService } from "../../application/services/PieceFocusService";
 import { PieceHighlightService } from "../../application/services/PieceHighlightService";
 import { NavMenuStateService } from "../../application/services/NavMenuStateService";
-import { ThemeStateService } from "../../application/services/ThemeStateService";
+import { ThemeStateAdapter } from "../adapters/theme/ThemeStateAdapter";
 import type { DomainEventMap } from "../../domain/models/events";
 import { NAV_MENU_LEVELS } from "../../domain/models/navigation";
 import { NavMenuRendererAdapter } from "../adapters/navigation/NavMenuRendererAdapter";
@@ -228,6 +228,9 @@ export const bootstrapExtension = async () => {
   });
   const hitboxMapper = new HitboxMapper();
   const eventManager = new BaseEventManager<InfrastructureEventMap>();
+  const themeStateAdapter = new ThemeStateAdapter({
+    eventBus: eventManager,
+  });
   const hitboxLifecycleAdapter = new HitboxLifecycleAdapter({
     getDimension,
     hitboxMapperPort: hitboxMapper,
@@ -252,13 +255,12 @@ export const bootstrapExtension = async () => {
       isOpen: false,
       level: NAV_MENU_LEVELS.PIECES,
       selectedPiece: HIGHLIGHTED_PIECE ?? null,
+      occludedBy: HIGHLIGHTED_PIECE ?? null,
       experience: EXPERIENCE,
       reading: readingStateService.getCurrentReading(),
     },
   });
-  const themeStateService = new ThemeStateService({
-    eventBus: domainEventBus,
-  });
+
   const pieceHighlightService = new PieceHighlightService({
     getExperienceKey,
     pieceHighlight: pieceHighlightAdapter,
@@ -330,7 +332,8 @@ export const bootstrapExtension = async () => {
   const navMenuRendererAdapter = new NavMenuRendererAdapter({
     eventBus: domainEventBus,
     navMenuStateService,
-    themeStatePort: themeStateService,
+    themeStateAdapter,
+    themeEventBus: eventManager,
     catalog: pieceCatalogConfigProvider,
     verseReferences: verseReferenceConfigProvider,
     bookNames: bookNameConfigProvider,
@@ -392,7 +395,7 @@ export const bootstrapExtension = async () => {
             );
             return;
           }
-          themeStateService.setCss(message.css);
+          themeStateAdapter.setCss(message.css);
           break;
         }
         case "reading-changed": {

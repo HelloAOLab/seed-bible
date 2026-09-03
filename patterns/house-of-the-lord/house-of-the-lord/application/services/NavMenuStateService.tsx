@@ -41,6 +41,7 @@ export class NavMenuStateService implements NavMenuStatePort {
   selectPiece(key: PieceKey): void {
     this.#setState({
       selectedPiece: key,
+      occludedBy: key,
       level: NAV_MENU_LEVELS.PIECE_DETAIL,
     });
   }
@@ -52,6 +53,14 @@ export class NavMenuStateService implements NavMenuStatePort {
   clearSelection(): void {
     this.#setState({
       selectedPiece: null,
+      level: NAV_MENU_LEVELS.PIECES,
+    });
+  }
+
+  reset(): void {
+    this.#setState({
+      selectedPiece: null,
+      occludedBy: null,
       level: NAV_MENU_LEVELS.PIECES,
     });
   }

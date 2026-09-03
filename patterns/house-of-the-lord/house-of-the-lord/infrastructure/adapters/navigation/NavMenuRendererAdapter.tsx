@@ -1,6 +1,7 @@
 import type { DomainEventPort } from "../../../application/ports/in/eventBus";
 import type { NavMenuStatePort } from "../../../application/ports/in/NavMenuState";
-import type { ThemeStatePort } from "../../../application/ports/in/ThemeState";
+import type { ThemeStateAdapter } from "../theme/ThemeStateAdapter";
+import type { InfrastructureEventPort } from "../../models/events";
 import type { PieceCatalogPort } from "../../../application/ports/out/PieceCatalog";
 import type { VerseReferenceConfigProviderPort } from "../../../application/ports/out/VerseReferenceConfigProvider";
 import type { BookNameConfigProviderPort } from "../../../application/ports/out/BookNameConfigProvider";
@@ -10,7 +11,8 @@ import { NavMenu } from "../../presentation/app/NavMenu";
 interface AdapterParams {
   eventBus: DomainEventPort;
   navMenuStateService: NavMenuStatePort;
-  themeStatePort: ThemeStatePort;
+  themeStateAdapter: ThemeStateAdapter;
+  themeEventBus: InfrastructureEventPort;
   catalog: PieceCatalogPort;
   verseReferences: VerseReferenceConfigProviderPort;
   bookNames: BookNameConfigProviderPort;
@@ -20,7 +22,8 @@ interface AdapterParams {
 export class NavMenuRendererAdapter {
   #eventBus: AdapterParams["eventBus"];
   #navMenuStateService: AdapterParams["navMenuStateService"];
-  #themeStatePort: AdapterParams["themeStatePort"];
+  #themeStateAdapter: AdapterParams["themeStateAdapter"];
+  #themeEventBus: AdapterParams["themeEventBus"];
   #catalog: AdapterParams["catalog"];
   #verseReferences: AdapterParams["verseReferences"];
   #bookNames: AdapterParams["bookNames"];
@@ -30,7 +33,8 @@ export class NavMenuRendererAdapter {
   constructor({
     eventBus,
     navMenuStateService,
-    themeStatePort,
+    themeStateAdapter,
+    themeEventBus,
     catalog,
     verseReferences,
     bookNames,
@@ -38,7 +42,8 @@ export class NavMenuRendererAdapter {
   }: AdapterParams) {
     this.#eventBus = eventBus;
     this.#navMenuStateService = navMenuStateService;
-    this.#themeStatePort = themeStatePort;
+    this.#themeStateAdapter = themeStateAdapter;
+    this.#themeEventBus = themeEventBus;
     this.#catalog = catalog;
     this.#verseReferences = verseReferences;
     this.#bookNames = bookNames;
@@ -52,7 +57,8 @@ export class NavMenuRendererAdapter {
       <NavMenu
         eventBus={this.#eventBus}
         getState={() => this.#navMenuStateService.getState()}
-        getThemeCss={() => this.#themeStatePort.getCss()}
+        getThemeCss={() => this.#themeStateAdapter.getCss()}
+        themeEventBus={this.#themeEventBus}
         catalog={this.#catalog}
         verseReferences={this.#verseReferences}
         bookNames={this.#bookNames}

@@ -15,6 +15,7 @@ export const NavMenu = ({
   getState,
   getThemeCss,
   eventBus,
+  themeEventBus,
   catalog,
   verseReferences,
   bookNames,
@@ -36,7 +37,7 @@ export const NavMenu = ({
   }, []);
 
   useEffect(() => {
-    const unsubscribe = eventBus.subscribe("OnThemeChanged", ({ css }) => {
+    const unsubscribe = themeEventBus.subscribe("OnThemeChanged", ({ css }) => {
       setThemeCss(css);
     });
 
@@ -144,7 +145,7 @@ export const NavMenu = ({
                     controller.handlePassageClick.bind(controller)
                   )
                 : [
-                    menuState.selectedPiece ? (
+                    menuState.occludedBy ? (
                       <button
                         key="show-everything"
                         type="button"
