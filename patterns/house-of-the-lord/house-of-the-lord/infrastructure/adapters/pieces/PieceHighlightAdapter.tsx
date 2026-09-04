@@ -19,13 +19,7 @@ import type {
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
 import type { LayerConfigProvider } from "../../config/layers/LayerConfigProvider";
-
-const BLINK_DURATION = 1;
-const CAMERA_ZOOM = 40;
-const CAMERA_POLAR = 1.01229;
-const CAMERA_INITIAL_AZIMUTH = 0.5;
-const CAMERA_ORBIT_DURATION = 30;
-const CAMERA_ORBIT_EASE_IN_FACTOR = Math.PI / 2;
+import type { PieceHighlightConfigProvider } from "../../config/pieceHighlight/PieceHighlightConfigProvider";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -35,6 +29,7 @@ interface AdapterParams {
   colorLerper: ColorLerper;
   pieceState: PieceStateAdapter;
   layerProvider: LayerConfigProvider;
+  highlightConfigProvider: PieceHighlightConfigProvider;
 }
 
 export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
@@ -48,6 +43,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   #colorLerper: AdapterParams["colorLerper"];
   #pieceState: AdapterParams["pieceState"];
   #layerProvider: AdapterParams["layerProvider"];
+  #highlightConfigProvider: AdapterParams["highlightConfigProvider"];
 
   constructor({
     getDimension,
@@ -57,6 +53,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     colorLerper,
     pieceState,
     layerProvider,
+    highlightConfigProvider,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#piecesProvider = piecesProvider;
@@ -65,6 +62,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     this.#colorLerper = colorLerper;
     this.#pieceState = pieceState;
     this.#layerProvider = layerProvider;
+    this.#highlightConfigProvider = highlightConfigProvider;
   }
 
   highlight<E extends ExperienceKey>(
@@ -147,24 +145,39 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     os.focusOn(bot, {
       duration: 1,
       easing,
-      rotation: { x: CAMERA_POLAR, y: CAMERA_INITIAL_AZIMUTH },
-      zoom: CAMERA_ZOOM,
+      rotation: {
+        x: this.#highlightConfigProvider.getCameraPolar(),
+        y: this.#highlightConfigProvider.getCameraInitialAzimuth(),
+      },
+      zoom:
+        this.#highlightConfigProvider.getPieceCustomZoom(experience, key) ??
+        this.#highlightConfigProvider.getDefaultCameraZoom(),
     }).then(() => {
-      this.#rotateAround(bot, interactionId, true);
+      this.#rotateAround({
+        bot,
+        interactionId,
+        isFirstCall: true,
+        experience,
+        key,
+      });
     });
 
     // Color blink: white → cyan → white
     this.#colorLerper
       .lerp({
-        end: HexToRgb({ hexColor: "#8df5f3" }),
-        durationSec: BLINK_DURATION / 2,
+        end: HexToRgb({
+          hexColor: this.#highlightConfigProvider.getBlinkTargetColor(),
+        }),
+        durationSec: this.#highlightConfigProvider.getBlinkDuration() / 2,
         bot,
         tag: "color",
       })
       .then(() => {
         return this.#colorLerper.lerp({
-          end: HexToRgb({ hexColor: "#ffffff" }),
-          durationSec: BLINK_DURATION / 2,
+          end: HexToRgb({
+            hexColor: this.#highlightConfigProvider.getBlinkInitialColor(),
+          }),
+          durationSec: this.#highlightConfigProvider.getBlinkDuration() / 2,
           bot,
           tag: "color",
         });
@@ -180,16 +193,16 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     // Cone animation
     if (cone) {
       AnimateStrictTag(cone, "formOpacity", {
-        toValue: 0.75,
-        duration: BLINK_DURATION / 2,
+        toValue: this.#highlightConfigProvider.getConeBlinkTargetOpacity(),
+        duration: this.#highlightConfigProvider.getBlinkDuration() / 2,
         easing,
         tagMaskSpace: false,
         ignoreCancellation: true,
       })
         .then(() =>
           AnimateStrictTag(cone, "formOpacity", {
-            toValue: 0,
-            duration: BLINK_DURATION / 2,
+            toValue: this.#highlightConfigProvider.getConeBlinkInitialOpacity(),
+            duration: this.#highlightConfigProvider.getBlinkDuration() / 2,
             easing,
             tagMaskSpace: false,
             ignoreCancellation: true,
@@ -220,35 +233,46 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     this.#rotationId = null;
   }
 
-  async #rotateAround(
-    bot: PieceBot,
-    interactionId: string,
-    isFirstCall: boolean
-  ): Promise<void> {
+  async #rotateAround<E extends ExperienceKey>({
+    bot,
+    interactionId,
+    isFirstCall,
+    experience,
+    key,
+  }: {
+    bot: PieceBot;
+    interactionId: string;
+    isFirstCall: boolean;
+    experience: E;
+    key: ExperienceKeyMap[E];
+  }): Promise<void> {
     if (this.#rotationId !== interactionId) return;
-
-    const initialEasing: Easing = {
-      mode: "in",
-      type: "sinusoidal",
-    };
-    const regularEasing: Easing = {
-      mode: "inout",
-      type: "linear",
-    };
 
     await os.focusOn(bot, {
       duration: isFirstCall
-        ? CAMERA_ORBIT_DURATION * CAMERA_ORBIT_EASE_IN_FACTOR
-        : CAMERA_ORBIT_DURATION,
-      easing: isFirstCall ? initialEasing : regularEasing,
+        ? this.#highlightConfigProvider.getCameraOrbitEaseInDuration()
+        : this.#highlightConfigProvider.getCameraOrbitDuration(),
+      easing: isFirstCall
+        ? this.#highlightConfigProvider.getCameraOrbitInitialEasing()
+        : this.#highlightConfigProvider.getCameraOrbitRegularEasing(),
       rotation: {
-        x: CAMERA_POLAR,
-        y: CAMERA_INITIAL_AZIMUTH + 2 * Math.PI,
+        x: this.#highlightConfigProvider.getCameraPolar(),
+        y: isFirstCall
+          ? this.#highlightConfigProvider.getCameraOrbitAzimuth()
+          : this.#highlightConfigProvider.getCameraOrbitAzimuth() + 2 * Math.PI,
         normalize: false,
       },
-      zoom: CAMERA_ZOOM,
+      zoom:
+        this.#highlightConfigProvider.getPieceCustomZoom(experience, key) ??
+        this.#highlightConfigProvider.getDefaultCameraZoom(),
     });
 
-    this.#rotateAround(bot, interactionId, false);
+    this.#rotateAround({
+      bot,
+      interactionId,
+      isFirstCall: false,
+      experience,
+      key,
+    });
   }
 }

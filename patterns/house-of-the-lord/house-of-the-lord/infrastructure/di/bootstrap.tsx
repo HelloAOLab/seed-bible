@@ -80,6 +80,7 @@ import { NavMenuController } from "../controllers/navMenu/NavMenuController";
 import { PieceCatalogConfigProvider } from "../config/pieceCatalog/PieceCatalogConfigProvider";
 import { BookNameConfigProvider } from "../config/bookName/BookNameConfigProvider";
 import { SeedBibleController } from "../controllers/seedBible/SeedBibleController";
+import { PieceHighlightConfigProvider } from "../config/pieceHighlight/PieceHighlightConfigProvider";
 
 let initialized = false;
 
@@ -234,6 +235,7 @@ export const bootstrapExtension = async () => {
     pieceMapper,
   });
   const layerConfigProvider = new LayerConfigProvider();
+  const pieceHighlightConfigProvider = new PieceHighlightConfigProvider();
   const pieceHighlightAdapter = new PieceHighlightAdapter({
     getDimension,
     piecesProvider,
@@ -242,6 +244,7 @@ export const bootstrapExtension = async () => {
     colorLerper,
     pieceState: pieceStateAdapter,
     layerProvider: layerConfigProvider,
+    highlightConfigProvider: pieceHighlightConfigProvider,
   });
   const piecesSequenceAdapter = new PiecesSequenceAdapter({
     pieceState: pieceStateAdapter,
@@ -457,6 +460,12 @@ export const bootstrapExtension = async () => {
     await waitForEvent(eventManager, "OnThemeChanged", THEME_WAIT_TIMEOUT_MS);
   }
 
+  // Before rendering, so the menu's first paint already reflects the focused
+  // piece: it reads the state once on mount and only then starts listening.
+  if (HIGHLIGHTED_PIECE) {
+    pieceFocusService.focus(HIGHLIGHTED_PIECE);
+  }
+
   await navMenuRendererAdapter
     .render()
     .catch((reason) =>
@@ -465,8 +474,4 @@ export const bootstrapExtension = async () => {
         { reason }
       )
     );
-
-  if (HIGHLIGHTED_PIECE) {
-    pieceFocusService.focus(HIGHLIGHTED_PIECE);
-  }
 };

@@ -38,6 +38,11 @@ export const useNavMenuProvider: UseNavMenuProvider = (config) => {
       }
     );
 
+    // Subscribing first and reading after leaves no gap: anything emitted
+    // between the first render and this effect is picked up here instead of
+    // sitting unseen until the next unrelated change.
+    setMenuState(getState());
+
     return () => unsubscribe();
   }, []);
 
