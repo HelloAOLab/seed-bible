@@ -247,6 +247,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
       openDiscover: vi.fn(),
+      toast: vi.fn(),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),
@@ -257,9 +258,10 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       openSidebar: vi.fn(),
       openSettingsToView: vi.fn(),
     },
-    bookmarks: {
-      isLocationBookmarked: vi.fn(() => false),
-      toggleBookmarkAtLocation: vi.fn(async () => {}),
+    saves: {
+      isLocationSaved: vi.fn(() => false),
+      getSaveForLocation: vi.fn(() => undefined),
+      addSave: vi.fn(async () => {}),
     },
     login: {
       userId: signal<string | null>(null),
@@ -2726,8 +2728,8 @@ describe("BibleReader", () => {
       features: {
         isFeatureEnabled: vi.fn(() => true),
       },
-      bookmarks: {
-        isLocationBookmarked: vi.fn(() => false),
+      saves: {
+        isLocationSaved: vi.fn(() => false),
       },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
@@ -2778,6 +2780,96 @@ describe("BibleReader", () => {
       book: "JHN",
       chapter: 3,
       verse: 16,
+    });
+  });
+
+  describe("the header's save button", () => {
+    const renderHeader = (state: SeedBibleState) => {
+      const { slot, selectorState, readingState } = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    };
+
+    const saveButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-save-button"
+      );
+    const bookmarkButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-bookmark-button"
+      );
+
+    it("opens the folder picker for the whole chapter", () => {
+      const state = createMobileState();
+      renderHeader(state);
+
+      expect(saveButton()).not.toBeNull();
+      act(() => saveButton()!.click());
+
+      expect(state.modals.openModal).toHaveBeenCalledTimes(1);
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      // The chapter-level id — a verse-scoped save would carry the verse
+      // numbers instead.
+      expect(opened.id).toBe("save-category-BSB-GEN-1-chapter");
+      expect(opened.title).toMatchObject({ key: "add-save-modal" });
+    });
+
+    /** The star renders as an SVG, so "filled" is its fill, not a font axis. */
+    const starFill = () =>
+      saveButton()!.querySelector("svg")!.getAttribute("fill");
+
+    it("edits the existing save when the chapter is already saved", () => {
+      // Add mode would be a dead end: addSave ignores a location it already
+      // holds, so the folders the user picked were silently discarded.
+      const state = createMobileState();
+      (state.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (state.saves.getSaveForLocation as Mock).mockReturnValue({
+        id: "save-7",
+      });
+      renderHeader(state);
+
+      act(() => saveButton()!.click());
+
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      expect(opened.id).toBe("save-edit-save-7");
+      expect(opened.title).toMatchObject({ key: "edit-save" });
+      // Still never a toggle, so aria-pressed would mislead.
+      expect(saveButton()!.getAttribute("aria-pressed")).toBeNull();
+    });
+
+    it("fills its star only once the chapter is saved", () => {
+      const unsaved = createMobileState();
+      renderHeader(unsaved);
+      expect(starFill()).toBe("none");
+      expect(saveButton()!.className).not.toContain("saved");
+
+      const saved = createMobileState();
+      (saved.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (saved.saves.getSaveForLocation as Mock).mockReturnValue({ id: "s1" });
+      renderHeader(saved);
+      expect(starFill()).toBe("currentColor");
+      expect(saveButton()!.className).toContain(
+        "sb-bible-reader-save-button-saved"
+      );
+    });
+
+    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
+    // "coming soon" toast are still in the file, just not rendered — flipping
+    // the flag is what brings them back.
+    it("shows no bookmark button beside it while bookmarks are off", () => {
+      renderHeader(createMobileState());
+
+      expect(saveButton()).not.toBeNull();
+      expect(bookmarkButton()).toBeNull();
     });
   });
 

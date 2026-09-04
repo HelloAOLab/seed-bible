@@ -44,12 +44,10 @@ export function todayScreenPropsStub(
   return {
     today: todayStub({}),
     login: loginWithName("Tester"),
-    bookmarks: signal([]),
     theme: signal({ variables: {} } as unknown as BibleTheme),
     isMobile: signal(false),
     onOpenPassage: vi.fn(),
     onOpenBookSelector: vi.fn(),
-    onShowBookmarksList: vi.fn(),
     ...overrides,
   };
 }

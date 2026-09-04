@@ -1,5 +1,5 @@
 /* Quick toolbar: compact row of extension-registered chapter actions
-   shown at the top of the reader, beside the bookmark button. */
+   shown at the top of the reader, beside the save and bookmark buttons. */
 .sb-quick-toolbar {
   display: inline-flex;
   align-items: center;
@@ -8,15 +8,15 @@
   transition: opacity 0.25s ease;
 }
 
-/* Desktop: sits in the header's action cluster, just left of the bookmark
+/* Desktop: sits in the header's action cluster, just left of the save
    button. Flow layout (not absolute) so it pushes the title instead of
    overlapping it. */
 .sb-quick-toolbar-reader {
   flex-shrink: 0;
 }
 
-/* Mobile: sits in the header's right cluster, just after the bookmark
-   button, so Share (and any other quick tools) stay next to chapter
+/* Mobile: sits in the header's right cluster, just after the save and bookmark
+   buttons, so Share (and any other quick tools) stay next to chapter
    actions instead of floating beside the translation pill. */
 .sb-quick-toolbar-mobile-header {
   flex-shrink: 0;

@@ -10,14 +10,24 @@ import { BookmarkIcon } from "../icons";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useI18n } from "../../i18n";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
-import {
-  getBookmarkCategories,
-  type Bookmark as BookmarkRecord,
-} from "../../managers/BookmarksManager";
 import type {
   TodayManager,
   TodayPassageTarget,
 } from "../../managers/TodayManager";
+
+/**
+ * A chapter a bookmark points at. Deliberately not the bookmark record itself:
+ * the archival system this strip used to read from became Saves (#1657), and
+ * the redesigned bookmarks that will feed it don't exist yet (#1658). Keeping
+ * the prop to the four fields the strip actually needs lets the new manager
+ * plug in without reshaping the component.
+ */
+export interface BookmarkStripItem {
+  id: string;
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+}
 
 /** One bookmark chip: its label, and where tapping it goes. */
 interface BookmarkData {
@@ -26,12 +36,17 @@ interface BookmarkData {
   handleClick: () => void;
 }
 
-/** Bookmarks grouped by category name, in first-appearance order. */
-type CategorizedBookmarks = Map<string, BookmarkData[]>;
-
+/**
+ * Flat strip of bookmark chips on the Today screen.
+ *
+ * Not rendered anywhere right now — #1657 took saves off Today, and #1658 puts
+ * bookmarks in the slot they vacated. What survives here is the part that would
+ * otherwise be rewritten from scratch: resolving a book id to its display name
+ * per translation, and measuring when the strip has wrapped onto a second row.
+ */
 export const BookmarksSection = (props: {
   today: TodayManager;
-  bookmarks: ReadonlySignal<BookmarkRecord[]>;
+  bookmarks: ReadonlySignal<BookmarkStripItem[]>;
   isMobile: ReadonlySignal<boolean>;
   onOpenPassage: (target: TodayPassageTarget) => void;
   onShowBookmarksList: () => void;
@@ -69,12 +84,9 @@ export const BookmarksSection = (props: {
   // A `computed` rather than a plain render-body value: the layout effect below
   // uses it as a dependency, so its identity has to stay stable across renders
   // that did not change a bookmark or a translation's books.
-  const categorizedBookmarks = useComputed<CategorizedBookmarks>(() => {
-    // A Map preserves first-appearance order for every category name (a plain
-    // object would hoist integer-like keys such as "2024" to the front).
-    const categorized: CategorizedBookmarks = new Map();
-    for (const bookmark of bookmarks.value) {
-      const { bookId, chapterNumber, translationId, category } = bookmark;
+  const chips = useComputed<BookmarkData[]>(() =>
+    bookmarks.value.map((bookmark) => {
+      const { bookId, chapterNumber, translationId } = bookmark;
       const translationBooks = booksByTranslation.value.get(translationId);
       // Falls back to the raw bookId until the books for this translation load.
       const name =
@@ -82,31 +94,19 @@ export const BookmarksSection = (props: {
           return book.id === bookId;
         })?.name ?? bookId;
 
-      const data: BookmarkData = {
+      return {
         text: `${name} ${chapterNumber}`,
         handleClick: () => {
           onOpenPassage({ bookId, chapter: chapterNumber, translationId });
         },
         key: bookmark.id,
       };
+    })
+  );
 
-      // A bookmark can belong to several folders, so it shows up under each.
-      for (const categoryName of getBookmarkCategories(category)) {
-        let categoryBookmarks = categorized.get(categoryName);
-        if (!categoryBookmarks) {
-          categoryBookmarks = [];
-          categorized.set(categoryName, categoryBookmarks);
-        }
-        categoryBookmarks.push(data);
-      }
-    }
-    return categorized;
-  });
-
-  // True when any category's strip has wrapped onto a second line (its
-  // `flex-wrap: wrap; overflow: hidden` container clips those rows). Measured
-  // from the single section ref so one "view more" can live in the header,
-  // instead of one per row.
+  // True when the strip has wrapped onto a second line (its
+  // `flex-wrap: wrap; overflow: hidden` container clips those rows), which is
+  // what puts a "view more" in the section header.
   const isOverflowing = useSignal(false);
   useLayoutEffect(() => {
     const root = containerRef.current;
@@ -131,7 +131,7 @@ export const BookmarksSection = (props: {
     checkOverflow();
 
     return () => observer.disconnect();
-  }, [categorizedBookmarks.value]);
+  }, [chips.value]);
 
   // Both reads sit in the render body, which is a reactive scope, so the header
   // button appears and disappears as the strip wraps or the viewport crosses the
@@ -151,39 +151,22 @@ export const BookmarksSection = (props: {
       }
     >
       <div className={"sb-today-bookmarks-section"} ref={containerRef}>
-        {Array.from(categorizedBookmarks.value.entries()).map(
-          ([category, bookmarksData]) => (
-            <BookmarksCategory
-              key={category}
-              label={`${category}:`}
-              bookmarksData={bookmarksData}
-            />
-          )
-        )}
+        <BookmarkStrip chips={chips.value} />
       </div>
     </TitledSection>
   );
 };
 
-function BookmarksCategory(props: {
-  label: string;
-  bookmarksData: BookmarkData[];
-}) {
+function BookmarkStrip(props: { chips: BookmarkData[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Unconditional per Rules of Hooks; a no-op on desktop (no overflow).
   useHorizontalScroll(containerRef);
 
   return (
-    <div>
-      <h5 className={"sb-today-bookmarks-section-label"}>{props.label}</h5>
-      <div
-        className={"sb-today-bookmarks-section-container"}
-        ref={containerRef}
-      >
-        {props.bookmarksData.map(({ key, ...rest }) => (
-          <Bookmark key={key} {...rest} />
-        ))}
-      </div>
+    <div className={"sb-today-bookmarks-section-container"} ref={containerRef}>
+      {props.chips.map(({ key, ...rest }) => (
+        <Bookmark key={key} {...rest} />
+      ))}
     </div>
   );
 }
