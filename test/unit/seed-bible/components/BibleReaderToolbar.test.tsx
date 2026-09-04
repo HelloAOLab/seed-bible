@@ -913,128 +913,196 @@ describe("BibleReaderToolbar — clearing highlights", () => {
   });
 
   /**
-   * Fires the native colour input's `input` event, as the OS colour dialog
-   * would while the user drags. (Preact rewrites this input's `onChange` to
-   * also listen for the native `input` event rather than `change` — see
-   * `preact/compat`'s `onChangeInputType` — so both of the component's
-   * `onChange`/`onInput` handlers respond to this, same as a real browser.)
+   * Fires an `input` on the custom colour picker's hex field, as typing a
+   * value would. The OS-native colour dialog is gone: draft changes stay
+   * local until Confirm.
    */
-  function dragCustomColor(value: string) {
-    const input = container.querySelector<HTMLInputElement>(
-      ".sb-verse-toolbar-color-input"
+  function typeCustomHex(value: string) {
+    const input = document.body.querySelector<HTMLInputElement>(
+      ".sb-color-picker-hex"
     );
     if (!input) {
-      throw new Error("No element matched .sb-verse-toolbar-color-input");
+      throw new Error("No element matched .sb-color-picker-hex");
     }
     input.value = value;
     input.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  /**
-   * Blurs the colour input, as closing the native colour dialog would.
-   * (Preact rewrites `onBlur` to listen for the native `focusout` event.)
-   */
-  function closeCustomColorDialog() {
-    const input = container.querySelector<HTMLInputElement>(
-      ".sb-verse-toolbar-color-input"
-    );
-    if (!input) {
-      throw new Error("No element matched .sb-verse-toolbar-color-input");
-    }
-    input.dispatchEvent(new Event("focusout", { bubbles: true }));
+  async function openCustomColorPicker() {
+    await openPicker();
+    await click(".sb-verse-toolbar-plus-inline, .sb-verse-toolbar-plus");
   }
 
-  it("applies a live-dragged custom color without clearing the selection, clearing only once the dialog closes", async () => {
-    const { readingState } = await selectFirstVerse();
-    await renderToolbar();
-    await openPicker();
-
-    // Fake timers only start now — `click()` (used by `openPicker()`) awaits
-    // a real `setTimeout`, which would never resolve once timers are faked.
-    vi.useFakeTimers();
-    try {
-      // The OS colour dialog fires `input` continuously while dragging.
-      await act(async () => {
-        dragCustomColor("#112233");
-        await vi.advanceTimersByTimeAsync(300);
-      });
-
-      // The debounced live-drag commit applies the color, but the selection
-      // (and picker) stays open so the user can keep adjusting the shade —
-      // clearing here would silently drop any further tweaking (#1725).
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#112233"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(1);
-      expect(
-        container.querySelector(".sb-verse-toolbar-color-input")
-      ).not.toBeNull();
-
-      // Still dragging — another live commit updates the color and still
-      // doesn't clear the selection.
-      await act(async () => {
-        dragCustomColor("#334455");
-        await vi.advanceTimersByTimeAsync(300);
-      });
-
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#334455"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(1);
-
-      // The dialog closes: the color already settled 300ms ago, so this just
-      // clears the selection, same as any other highlight action.
-      await act(async () => {
-        closeCustomColorDialog();
-      });
-
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#334455"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(0);
-    } finally {
-      vi.useRealTimers();
+  async function confirmCustomColor() {
+    const button = document.body.querySelector<HTMLButtonElement>(
+      ".sb-color-picker-confirm"
+    );
+    if (!button) {
+      throw new Error("No element matched .sb-color-picker-confirm");
     }
-  });
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
 
-  it("flushes a still-pending custom color immediately when the dialog closes before the debounce settles", async () => {
-    const { readingState } = await selectFirstVerse();
-    await renderToolbar();
-    await openPicker();
-
-    vi.useFakeTimers();
-    try {
-      // Pick a color and close the dialog right away, well inside the 300ms
-      // debounce window — the pending pick shouldn't be lost to the delay.
-      await act(async () => {
-        dragCustomColor("#112233");
-        closeCustomColorDialog();
-      });
-
-      expect(readingState.highlights.value.highlights).toHaveLength(1);
-      expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
-        "#112233"
-      );
-      expect(readingState.selectedVerses.value).toHaveLength(0);
-    } finally {
-      vi.useRealTimers();
+  async function cancelCustomColor() {
+    const button = document.body.querySelector<HTMLButtonElement>(
+      ".sb-color-picker-cancel"
+    );
+    if (!button) {
+      throw new Error("No element matched .sb-color-picker-cancel");
     }
-  });
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
 
-  it("leaves the selection untouched when the color dialog closes without picking a color", async () => {
+  it("does not apply a custom color until Confirm is pressed", async () => {
     const { readingState } = await selectFirstVerse();
     await renderToolbar();
-    await openPicker();
+    await openCustomColorPicker();
 
     await act(async () => {
-      closeCustomColorDialog();
+      typeCustomHex("112233");
     });
 
     expect(readingState.highlights.value.highlights).toHaveLength(0);
     expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(state.settings.settings.value.customHighlightColors).toEqual([]);
+    expect(
+      document.body.querySelector(".sb-color-picker-dialog")
+    ).not.toBeNull();
+  });
+
+  it("adds the custom color to the selector without highlighting or clearing the selection on Confirm", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      typeCustomHex("334455");
+    });
+    const verseBefore =
+      state.navigation.currentUrl.value.searchParams.get("verse");
+    await confirmCustomColor();
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(state.settings.settings.value.customHighlightColors).toEqual([
+      "#334455",
+    ]);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(state.navigation.currentUrl.value.searchParams.get("verse")).toBe(
+      verseBefore
+    );
+    expect(document.body.querySelector(".sb-color-picker-dialog")).toBeNull();
+    expect(document.body.querySelector(".sb-color-picker-layer")).toBeNull();
+    expect(document.getElementById("sb-color-picker-host")).toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #334455"]')
+    ).not.toBeNull();
+    expect(container.querySelector(".sb-verse-toolbar-picker")).not.toBeNull();
+  });
+
+  it("applies a custom color when its swatch in the selector is pressed", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+    await act(async () => {
+      typeCustomHex("334455");
+    });
+    await confirmCustomColor();
+
+    await click('[aria-label="Highlight #334455"]');
+
+    expect(readingState.highlights.value.highlights).toHaveLength(1);
+    expect(readingState.highlights.value.highlights[0]?.customColor).toBe(
+      "#334455"
+    );
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+  });
+
+  it("keeps only the last 3 custom colors, replacing the 1st then the 2nd", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+
+    for (const hex of ["111111", "222222", "333333", "444444", "555555"]) {
+      await openCustomColorPicker();
+      await act(async () => {
+        typeCustomHex(hex);
+      });
+      await confirmCustomColor();
+    }
+
+    expect(state.settings.settings.value.customHighlightColors).toEqual([
+      "#444444",
+      "#555555",
+      "#333333",
+    ]);
+    expect(
+      container.querySelector('[aria-label="Highlight #111111"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #222222"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #444444"]')
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #555555"]')
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[aria-label="Highlight #333333"]')
+    ).not.toBeNull();
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+  });
+
+  it("leaves the selection untouched when the color picker is cancelled", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      typeCustomHex("112233");
+    });
+    await cancelCustomColor();
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(state.settings.settings.value.customHighlightColors).toEqual([]);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(document.body.querySelector(".sb-color-picker-dialog")).toBeNull();
+  });
+
+  it("leaves the selection untouched when the color picker closes without confirming", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      document.body
+        .querySelector(".sb-color-picker-backdrop")!
+        .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    });
+
+    expect(readingState.highlights.value.highlights).toHaveLength(0);
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+  });
+
+  it("does not clear the selection when dragging a color in the custom picker", async () => {
+    const { readingState } = await selectFirstVerse();
+    await renderToolbar();
+    await openCustomColorPicker();
+
+    await act(async () => {
+      document.body
+        .querySelector(".sb-color-picker-sv")!
+        .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    });
+
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(
+      document.body.querySelector(".sb-color-picker-dialog")
+    ).not.toBeNull();
   });
 });
 

@@ -92,6 +92,20 @@ describe("ThemeManager CSS helpers", () => {
         "--sb-highlight-mint-words-of-jesus-font-color: #166534;"
       );
     });
+
+    it("strips braces from a custom override so it cannot close the body rule", () => {
+      const css = generateThemeCssVariables(
+        createTheme({
+          variables: {
+            ...createTheme().variables,
+            primaryColor: "#ff0000; } html { visibility: hidden",
+          },
+        })
+      );
+
+      expect(css).not.toContain("html {");
+      expect(css).toContain("--sb-background: #fafafa;");
+    });
   });
 
   describe("generateThemeCssClasses", () => {
@@ -110,7 +124,7 @@ describe("ThemeManager CSS helpers", () => {
       // background-color on the text.
       expect(css).not.toContain("background-color");
       expect(css).toContain("color: var(--sb-highlight-yellow-font-color);");
-      expect(css).toContain("&.sb-words-of-jesus {");
+      expect(css).toContain(".sb-highlight-yellow.sb-words-of-jesus {");
       expect(css).toContain(
         "color: var(--sb-highlight-yellow-words-of-jesus-font-color);"
       );
@@ -320,6 +334,21 @@ describe("ThemeManager storage (via SettingsManager)", () => {
 
     theme.resetCustomColor("primaryColor");
     expect(theme.customOverrides.value.primaryColor).toBeUndefined();
+  });
+
+  it("keeps the rest of the theme CSS when a custom color is saved", () => {
+    document.getElementById("sb-theme-styles")?.remove();
+    const login = makeFakeLogin(null);
+    const settings = makeSettings(login);
+    const theme = createThemeManager(settings);
+
+    theme.setCustomColor("primaryColor", "#123456");
+
+    const css = document.getElementById("sb-theme-styles")?.textContent ?? "";
+    expect(css).toContain("--sb-primary-color: #123456;");
+    expect(css).toContain("--sb-background:");
+    expect(css).toContain("--sb-font-color:");
+    expect(css).toContain("body {");
   });
 
   it("setHighlightColor / resetHighlightColor read back correctly through settings", () => {

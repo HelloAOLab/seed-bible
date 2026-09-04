@@ -54,6 +54,8 @@ import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
+import { ColorPicker } from "../ColorPicker/ColorPicker";
+import { normalizeHex } from "../ColorPicker/color";
 import { useRef } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
@@ -84,8 +86,6 @@ const TEXT_COLOR_PALETTE = [
   "#F43F5E",
 ];
 
-const HEX_6 = /^#[0-9a-fA-F]{6}$/;
-
 import { LANG_META } from "../../i18n/languageMeta";
 import { useAppConfig } from "../../app/appConfig";
 
@@ -103,17 +103,6 @@ function FlagImg({ cc }: { cc: string }) {
       }}
     />
   );
-}
-const HEX_3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
-
-/** Normalize an arbitrary color string to #RRGGBB for `<input type="color">`. */
-function toHexInputValue(value: string | null | undefined): string {
-  if (!value) return "#000000";
-  const trimmed = value.trim();
-  if (HEX_6.test(trimmed)) return trimmed.toLowerCase();
-  const m = trimmed.match(HEX_3);
-  if (m) return `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toLowerCase();
-  return "#000000";
 }
 
 type ExtensionInstallState = "none" | "pending" | "downloaded" | "installed";
@@ -1647,17 +1636,18 @@ function TextFormattingToolbar(props: {
                 }}
               />
             ))}
-            <label className="sb-text-format-palette-custom">
+            <div className="sb-text-format-palette-custom">
               <span>{t("custom", { defaultValue: "Custom" })}</span>
-              <input
-                type="color"
-                value={toHexInputValue(section.color)}
-                onInput={(event: Event) => {
-                  const target = event.currentTarget as HTMLInputElement;
-                  onChange({ color: target.value });
+              <ColorPicker
+                value={normalizeHex(section.color)}
+                className="sb-text-format-palette-custom-swatch"
+                ariaLabel={t("custom", { defaultValue: "Custom" })}
+                onChange={(color) => {
+                  onChange({ color });
+                  paletteOpen.value = false;
                 }}
               />
-            </label>
+            </div>
           </div>
         )}
       </div>
@@ -1811,7 +1801,7 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
             {group.fields.map((field) => {
               const currentValue =
                 effectiveTheme.value.variables[field.key] ?? "";
-              const hexValue = toHexInputValue(
+              const hexValue = normalizeHex(
                 typeof currentValue === "string" ? currentValue : ""
               );
               const isOverridden =
@@ -1828,14 +1818,12 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                     </span>
                   </div>
                   <div className="sb-theme-color-row-controls">
-                    <input
-                      type="color"
-                      className="sb-theme-color-input"
+                    <ColorPicker
                       value={hexValue}
-                      aria-label={field.label}
-                      onInput={(event: Event) => {
-                        const target = event.currentTarget as HTMLInputElement;
-                        theme.setCustomColor(field.key, target.value);
+                      className="sb-theme-color-input"
+                      ariaLabel={field.label}
+                      onChange={(color) => {
+                        theme.setCustomColor(field.key, color);
                       }}
                     />
                     {isOverridden && (
@@ -1885,30 +1873,20 @@ function ThemeCustomColorsContent(props: { state: SeedBibleState }) {
                 <span className="sb-theme-color-value">{bg || "—"}</span>
               </div>
               <div className="sb-theme-color-row-controls">
-                <input
-                  type="color"
+                <ColorPicker
+                  value={normalizeHex(bg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(bg)}
-                  aria-label={t("id_highlight-background-color", { id })}
-                  title={t("highlight-background-color", {
-                    defaultValue: "Highlight background color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { color: target.value });
+                  ariaLabel={t("id_highlight-background-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { color });
                   }}
                 />
-                <input
-                  type="color"
+                <ColorPicker
+                  value={normalizeHex(fg)}
                   className="sb-theme-color-input"
-                  value={toHexInputValue(fg)}
-                  aria-label={t("id_highlight-text-color", { id })}
-                  title={t("highlight-text-color", {
-                    defaultValue: "Highlight text color",
-                  })}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    theme.setHighlightColor(id, { fontColor: target.value });
+                  ariaLabel={t("id_highlight-text-color", { id })}
+                  onChange={(color) => {
+                    theme.setHighlightColor(id, { fontColor: color });
                   }}
                 />
                 {isOverridden && (
