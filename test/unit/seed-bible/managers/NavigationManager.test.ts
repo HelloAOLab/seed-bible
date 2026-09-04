@@ -279,6 +279,71 @@ describe("createNavigationManager batchWrites", () => {
   });
 });
 
+describe("createNavigationManager linkToBareQuery", () => {
+  it("builds a link with only the given params, dropping the current URL's existing ones", () => {
+    const navigation = createNavigationManager({
+      initialHref:
+        "http://localhost/genesis/1?language=en&translation=BSB&book=GEN&chapter=1",
+    });
+
+    const link = navigation.linkToBareQuery({ customization: "user-1.abc" });
+
+    expect(link).toBe("http://localhost/genesis/1?customization=user-1.abc");
+  });
+
+  it("keeps the pathname (including basePath) unchanged", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/b/some-branch/genesis/1?book=GEN",
+      basePath: "/b/some-branch",
+    });
+
+    const link = navigation.linkToBareQuery({ foo: "bar" });
+
+    expect(link).toBe("http://localhost/b/some-branch/genesis/1?foo=bar");
+  });
+
+  it("sets multiple params when given multiple keys", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/?stale=1",
+    });
+
+    const link = navigation.linkToBareQuery({ a: "1", b: "2" });
+
+    expect(link).toBe("http://localhost/?a=1&b=2");
+  });
+
+  it("omits keys whose value is null", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/?stale=1",
+    });
+
+    const link = navigation.linkToBareQuery({ a: "1", b: null });
+
+    expect(link).toBe("http://localhost/?a=1");
+  });
+
+  it("produces a bare origin+path link when every given value is null", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/genesis/1?stale=1",
+    });
+
+    const link = navigation.linkToBareQuery({ a: null });
+
+    expect(link).toBe("http://localhost/genesis/1");
+  });
+
+  it("does not mutate currentUrl", () => {
+    const navigation = createNavigationManager({
+      initialHref: "http://localhost/?book=GEN&chapter=1",
+    });
+    const hrefBefore = navigation.currentUrl.value.href;
+
+    navigation.linkToBareQuery({ customization: "user-1.abc" });
+
+    expect(navigation.currentUrl.value.href).toBe(hrefBefore);
+  });
+});
+
 describe("createNavigationManager nested batchWrites", () => {
   it("flushes once, when the outermost batch ends", () => {
     const navigation = createNavigationManager();
