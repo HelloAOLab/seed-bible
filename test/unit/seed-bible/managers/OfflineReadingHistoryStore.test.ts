@@ -1,4 +1,5 @@
 import {
+  createIndexedDbReadingHistoryStore,
   createInMemoryReadingHistoryStore,
   extendOrCreateReadingRow,
   readingEventYear,
@@ -37,6 +38,17 @@ function span(overrides: {
     ...rest,
   };
 }
+
+describe("createIndexedDbReadingHistoryStore()", () => {
+  it("returns null where IndexedDB is unavailable, so callers can fall back", () => {
+    // jsdom provides no IndexedDB, which is the same situation as server-side
+    // rendering and browsers that block storage. Callers treat null as "this
+    // device can't hold reading events locally" and write straight to the year
+    // document instead.
+    expect(typeof indexedDB).toBe("undefined");
+    expect(createIndexedDbReadingHistoryStore()).toBeNull();
+  });
+});
 
 describe("OfflineReadingHistoryStore", () => {
   let store: OfflineReadingHistoryStore;
