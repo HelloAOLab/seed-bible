@@ -326,6 +326,36 @@ describe("attachListeningRecorder", () => {
     }
   });
 
+  it("leaves out the gap when playback is paused and resumed later", () => {
+    const h = setup();
+
+    h.el.play();
+    h.listen(60);
+    h.saveSpan.mockClear();
+
+    // The lock-screen media controls pause it. Nothing registers Media Session
+    // handlers, so the browser pauses the element itself and this arrives as
+    // the same `pause` the in-app button would raise.
+    h.el.pause();
+    const [, , pausedFrom, pausedTo] = h.saveSpan.mock.calls.at(-1)!;
+    expect(pausedTo - pausedFrom).toBe(60);
+
+    // Five minutes with nothing playing, then resumed from those same
+    // controls.
+    h.wait(300);
+    h.saveSpan.mockClear();
+    h.el.play();
+    h.listen(30);
+
+    expect(h.saveSpan).toHaveBeenCalled();
+    for (const [, , from, to] of h.saveSpan.mock.calls) {
+      // The second stretch begins where playback resumed, so the five minutes
+      // of silence belong to neither of them.
+      expect(from).toBeGreaterThanOrEqual(START_SECONDS + 360);
+      expect(to - from).toBeLessThanOrEqual(30);
+    }
+  });
+
   it("records nothing when the chapter being played is unknown", () => {
     const h = setup(null);
 
