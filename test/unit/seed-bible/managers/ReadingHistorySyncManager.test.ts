@@ -147,6 +147,28 @@ describe("ReadingHistorySyncManager", () => {
 
     expect(writer.writes.map((w) => w.year).sort()).toEqual([2025, 2026]);
     expect(writer.writes.every((w) => w.recordName === "user-1")).toBe(true);
+
+    // Which events went into which year, not just that both years were written
+    // to: bundling every row into one year's document would still produce the
+    // right two year numbers.
+    expect(writer.eventsFor(2025)).toEqual([
+      {
+        userId: "user-1",
+        bookId: "GEN",
+        chapter: 1,
+        start: IN_2025,
+        end: IN_2025,
+      },
+    ]);
+    expect(writer.eventsFor(2026)).toEqual([
+      {
+        userId: "user-1",
+        bookId: "GEN",
+        chapter: 2,
+        start: IN_2026,
+        end: IN_2026,
+      },
+    ]);
     expect(await store.listPending("user-1")).toEqual([]);
   });
 
