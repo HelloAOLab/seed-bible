@@ -6,6 +6,7 @@ import { translateTitle } from "../../app/utils";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
   applyToolbarCustomization,
+  MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
 } from "../../managers/SettingsManager";
 import { highlightContainsVerse } from "../../managers/HighlightsManager";
@@ -49,6 +50,7 @@ import type { VerseRef } from "../../managers/BibleDataManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { DEFAULT_HIGHLIGHT_IDS } from "../../managers/ThemeManager";
+import { ColorPicker } from "../ColorPicker/ColorPicker";
 
 /** Shared always-true visibility for Chat when `?chatFirst=true`. */
 const CHAT_FIRST_VISIBLE = signal(true);
@@ -442,11 +444,7 @@ function removeSharedHighlightsFromSelection(
  *
  * By default the verse selection is cleared once the highlight is applied —
  * the selection and its toolbar were otherwise left sitting open after every
- * highlight, forcing an extra dismiss (#1704). `clearSelection` lets a caller
- * opt out: the custom-color picker's live-drag commits pass `false` so the
- * selection survives while the color dialog is still open, letting the user
- * keep tweaking the shade instead of losing the selection after the first
- * settled color.
+ * highlight, forcing an extra dismiss (#1704).
  */
 function applyHighlightWithSession(
   rs: BibleReadingState,
@@ -456,8 +454,7 @@ function applyHighlightWithSession(
     customColor?: string;
     customFontColor?: string;
   },
-  isSignedIn: boolean,
-  clearSelection = true
+  isSignedIn: boolean
 ): void {
   if (!session || !session.userCanDecorate(session.localSessionId.value)) {
     // A participant who can't broadcast used to match neither branch here, so
@@ -475,9 +472,7 @@ function applyHighlightWithSession(
     broadcastDecorationToSession(session, rs, details);
   }
 
-  if (clearSelection) {
-    rs.clearSelectedVerses();
-  }
+  rs.clearSelectedVerses();
 }
 
 /**
@@ -615,6 +610,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     settings,
     bookmarks,
     login,
+    navigation,
   } = props.state;
   const selectedTab = useComputed(
     () =>
@@ -1283,86 +1279,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   };
 
   // Verse toolbar highlight picker state
-  const colorInputRef = useRef<HTMLInputElement | null>(null);
-  const customColorCommitTimeoutRef = useRef<number | null>(null);
+  const customColorAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const customColorPickerOpen = useSignal(false);
   const customHighlightColors = useComputed(
     () => settings.settings.value.customHighlightColors
   );
   const selectionUI = useComputed(() => settings.settings.value.selectionUI);
 
-  // The most recent color from a still-pending debounce, so a blur that
-  // lands before the debounce fires can apply it immediately instead of
-  // losing it. `null` once there's nothing pending.
-  const customColorPendingRef = useRef<string | null>(null);
-  // Whether any color from the current "Add custom color" session has been
-  // applied yet — distinguishes "the dialog closed after picking a color"
-  // (clear the selection) from "the dialog closed without picking one"
-  // (leave the selection alone; nothing happened).
-  const customColorAppliedRef = useRef(false);
-
-  const applyCustomColor = (color: string, clearSelection: boolean) => {
+  const applyCustomColor = (color: string) => {
+    // Add only puts the colour in the highlighter selector. Applying it to
+    // the verses is a tap on the new swatch — Confirm used to highlight and
+    // clear the selection, which unmounted the selector before the swatch
+    // could show.
     settings.addCustomHighlightColor(color);
-    const rs = readingState.value;
-    if (rs) {
-      applyHighlightWithSession(
-        rs,
-        sessionState.value,
-        {
-          colorId: "yellow",
-          customColor: color,
-          customFontColor: getContrastTextColor(color),
-        },
-        !!login.userId.value,
-        clearSelection
-      );
-    }
-    customColorAppliedRef.current = true;
-  };
-
-  // Debounce the commit so rapid `input`/`change` events from the native
-  // color picker (fired as the user drags) don't add each intermediate color
-  // to the custom palette — only the settled color is saved. These debounced
-  // commits never clear the selection themselves: the color dialog may still
-  // be open, and clearing here would silently drop any further tweaking
-  // within the same dialog session (#1725). The selection is cleared for real
-  // in `finishCustomColor`, once the input actually loses focus.
-  const commitCustomColor = (color: string) => {
-    if (customColorCommitTimeoutRef.current !== null) {
-      window.clearTimeout(customColorCommitTimeoutRef.current);
-    }
-    customColorPendingRef.current = color;
-    customColorCommitTimeoutRef.current = window.setTimeout(() => {
-      customColorCommitTimeoutRef.current = null;
-      const pending = customColorPendingRef.current;
-      customColorPendingRef.current = null;
-      if (pending !== null) {
-        applyCustomColor(pending, false);
-      }
-    }, 300);
-  };
-
-  // Runs when the color input loses focus, i.e. the OS color dialog closed —
-  // the reliable "the user is done" signal, since the native `change` event
-  // this input would otherwise fire is what `onChange` gets rewritten to
-  // listen for as `input` (see the `onChange`/`onInput` props below), so it
-  // can't be used to distinguish "still dragging" from "done" on its own.
-  // Flushes a still-debounced pick immediately rather than waiting the
-  // remaining 300ms, and only clears the selection if a color was actually
-  // applied this dialog session (closing without picking one leaves the
-  // selection untouched, same as before).
-  const finishCustomColor = () => {
-    if (customColorCommitTimeoutRef.current !== null) {
-      window.clearTimeout(customColorCommitTimeoutRef.current);
-      customColorCommitTimeoutRef.current = null;
-    }
-    const pending = customColorPendingRef.current;
-    customColorPendingRef.current = null;
-    if (pending !== null) {
-      applyCustomColor(pending, true);
-    } else if (customColorAppliedRef.current) {
-      readingState.value?.clearSelectedVerses();
-    }
-    customColorAppliedRef.current = false;
   };
 
   // Clear removes a saved highlight *and* the session's broadcast copy, so it
@@ -1655,7 +1584,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Same story for `.sb-footnote-modal-overlay` — the delete-confirmation
   // modal Delete opens renders as a sibling of the toolbar at the app root
   // (`ModalHost`), so without this, confirming or cancelling that dialog
-  // would also clear the selection out from under it.
+  // would also clear the selection out from under it. The custom colour
+  // picker is the same kind of portal (`.sb-color-picker-layer`).
   useEffect(() => {
     if (!isVerseToolbarVisible.value) return;
 
@@ -1670,6 +1600,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-footnote-modal-overlay")) return;
+      // ColorPicker portals to `document.body`, same as the context menu —
+      // a pointerdown on the square, hue slider, or backdrop must not read
+      // as "outside" and clear the selection out from under the picker.
+      if (target.closest(".sb-color-picker-layer, #sb-color-picker-host"))
+        return;
       readingState.value?.clearSelectedVerses();
     };
 
@@ -2604,52 +2539,79 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   </button>
                 ))}
 
-                {customHighlightColors.value.map((hex) => (
-                  <button
-                    key={hex}
-                    type="button"
-                    className="sb-verse-toolbar-color-button"
-                    onClick={() => {
-                      const rs = readingState.value;
-                      if (!rs) return;
-                      applyHighlightWithSession(
-                        rs,
-                        sessionState.value,
-                        {
-                          colorId: "yellow",
-                          customColor: hex,
-                          customFontColor: getContrastTextColor(hex),
-                        },
-                        !!login.userId.value
+                {Array.from(
+                  { length: MAX_CUSTOM_HIGHLIGHT_COLORS },
+                  (_, slot) => {
+                    const hex = customHighlightColors.value[slot];
+                    if (!hex) {
+                      return (
+                        <button
+                          key={`custom-slot-${slot}`}
+                          type="button"
+                          className="sb-verse-toolbar-color-button"
+                          onClick={() => {
+                            customColorPickerOpen.value = true;
+                          }}
+                          aria-label={t("add-custom-color", {
+                            defaultValue: "Add custom color",
+                          })}
+                          title={t("add-color", { defaultValue: "Add color" })}
+                        >
+                          <span className="sb-verse-toolbar-color sb-verse-toolbar-color-slot" />
+                        </button>
                       );
-                    }}
-                    onContextMenu={(event: MouseEvent) => {
-                      event.preventDefault();
-                      settings.removeCustomHighlightColor(hex);
-                    }}
-                    aria-label={`Highlight ${hex}`}
-                    title={`${hex} — right-click to remove`}
-                  >
-                    <span
-                      className="sb-verse-toolbar-color"
-                      style={{ background: hex }}
-                    />
-                  </button>
-                ))}
+                    }
+                    return (
+                      <button
+                        key={hex}
+                        type="button"
+                        className="sb-verse-toolbar-color-button"
+                        onClick={() => {
+                          const rs = readingState.value;
+                          if (!rs) return;
+                          applyHighlightWithSession(
+                            rs,
+                            sessionState.value,
+                            {
+                              colorId: "yellow",
+                              customColor: hex,
+                              customFontColor: getContrastTextColor(hex),
+                            },
+                            !!login.userId.value
+                          );
+                        }}
+                        onContextMenu={(event: MouseEvent) => {
+                          event.preventDefault();
+                          settings.removeCustomHighlightColor(hex);
+                        }}
+                        aria-label={`Highlight ${hex}`}
+                        title={`${hex} — right-click to remove`}
+                      >
+                        <span
+                          className="sb-verse-toolbar-color"
+                          style={{ background: hex }}
+                        />
+                      </button>
+                    );
+                  }
+                )}
 
                 {/* On mobile the "+" lives inside the scroll strip so custom
                     colors and defaults stay one continuous thumb-scroll row. */}
                 {isSmallScreen.value && (
                   <button
+                    ref={customColorAnchorRef}
                     type="button"
                     className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
                     onClick={() => {
-                      colorInputRef.current?.click();
+                      customColorPickerOpen.value = true;
                     }}
                     aria-label={t("add-custom-color", {
                       defaultValue: "Add custom color",
                     })}
                     title={t("add-color", { defaultValue: "Add color" })}
+                    aria-haspopup="dialog"
+                    aria-expanded={customColorPickerOpen.value}
                   >
                     <span className="material-symbols-outlined">add</span>
                   </button>
@@ -2659,15 +2621,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               <div className="sb-verse-toolbar-picker-actions">
                 {!isSmallScreen.value && (
                   <button
+                    ref={customColorAnchorRef}
                     type="button"
                     className="sb-verse-toolbar-plus"
                     onClick={() => {
-                      colorInputRef.current?.click();
+                      customColorPickerOpen.value = true;
                     }}
                     aria-label={t("add-custom-color", {
                       defaultValue: "Add custom color",
                     })}
                     title={t("add-color", { defaultValue: "Add color" })}
+                    aria-haspopup="dialog"
+                    aria-expanded={customColorPickerOpen.value}
                   >
                     <span className="material-symbols-outlined">add</span>
                     <span className="sb-verse-toolbar-action-text">
@@ -2675,19 +2640,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     </span>
                   </button>
                 )}
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  className="sb-verse-toolbar-color-input"
-                  onChange={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    commitCustomColor(target.value);
+                <ColorPicker
+                  value="#ffeb3a"
+                  showTrigger={false}
+                  open={customColorPickerOpen.value}
+                  onOpenChange={(next) => {
+                    customColorPickerOpen.value = next;
                   }}
-                  onInput={(event: Event) => {
-                    const target = event.currentTarget as HTMLInputElement;
-                    commitCustomColor(target.value);
-                  }}
-                  onBlur={finishCustomColor}
+                  anchorRef={customColorAnchorRef}
+                  ariaLabel={t("add-custom-color", {
+                    defaultValue: "Add custom color",
+                  })}
+                  onChange={applyCustomColor}
                 />
 
                 <button

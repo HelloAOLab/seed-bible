@@ -440,17 +440,25 @@ function toKebabCase(value: string): string {
   return value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
 }
 
+/** Keep a value from closing the `body { }` theme rule and wiping every `--sb-*` color. */
+function sanitizeCssValue(value: string): string {
+  return value.replace(/[{}<;]/g, "");
+}
+
 export function generateThemeCssVariables(variables: BibleTheme): string {
   const cssVariables = Object.entries(variables.variables)
     .filter(([, value]) => value !== undefined && value !== null)
-    .map(([key, value]) => `--sb-${toKebabCase(key)}: ${value};`)
+    .map(
+      ([key, value]) =>
+        `--sb-${toKebabCase(key)}: ${sanitizeCssValue(String(value))};`
+    )
     .join("\n");
 
   const highlightColorVariables = Object.entries(variables.highlightColors)
     .flatMap(([key, value]) => [
-      `--sb-highlight-${key}-color: ${value.color};`,
-      `--sb-highlight-${key}-font-color: ${value.fontColor};`,
-      `--sb-highlight-${key}-words-of-jesus-font-color: ${value.wordsOfJesusFontColor};`,
+      `--sb-highlight-${key}-color: ${sanitizeCssValue(String(value.color))};`,
+      `--sb-highlight-${key}-font-color: ${sanitizeCssValue(String(value.fontColor))};`,
+      `--sb-highlight-${key}-words-of-jesus-font-color: ${sanitizeCssValue(String(value.wordsOfJesusFontColor))};`,
     ])
     .join("\n");
 
@@ -461,15 +469,20 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   // Highlighted text keeps a readable font color; the highlight *background* is
   // drawn behind the text by the ribbon layer (from `--sb-highlight-<id>-color`),
   // not as a `background-color` here.
+  //
+  // Un-nested selectors: this string is assigned to a <style> tag's
+  // `textContent` on every theme change. Nested `&` is valid in a stylesheet
+  // file, but assigning it through the CSSOM can make the engine throw out
+  // the whole tag — every `--sb-*` color on `body` included.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
-        `&.sb-words-of-jesus { `,
+        `}`,
+        `.sb-highlight-${colorId}.sb-words-of-jesus {`,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
-        ` }`,
       ].join("\n");
     })
     .join("\n");
@@ -1142,6 +1155,13 @@ export function createTheme(settings: SettingsManager): ThemeManager {
       const text = themeStyleText.value;
       if (skipWrite) {
         skipWrite = false;
+        return;
+      }
+      // A broken compose (empty, or a value that closed `body {` early) would
+      // replace the live theme tag and strip every `--sb-*` color until
+      // refresh. Keep whatever is already on the page if this text isn't a
+      // real theme.
+      if (!text.includes("--sb-background:")) {
         return;
       }
       let tag = document.getElementById(
