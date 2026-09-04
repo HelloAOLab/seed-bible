@@ -20,9 +20,14 @@ export class EnvironmentAdapter implements EnvironmentAdapterPort {
 
   setUp(experience: ExperienceKey): void {
     this.#setBackground(experience);
+    this.#setCameraType();
   }
 
   setZoomable(zoomable: boolean): void {
     setTag(gridPortalBot, "portalZoomable", zoomable);
+  }
+
+  #setCameraType() {
+    // setTag(gridPortalBot, "portalCameraType", "perspective");
   }
 }

@@ -10,6 +10,7 @@ import type {
   VFXBot,
   VFXBotTags,
   ColorLerpablePieceBot,
+  PieceBot,
 } from "../../models/casualos";
 import type { ColorLerper } from "../casualos/ColorLerper";
 import { HexToRgb } from "../../../domain/functions/colors";
@@ -20,6 +21,11 @@ import type {
 import type { LayerConfigProvider } from "../../config/layers/LayerConfigProvider";
 
 const BLINK_DURATION = 1;
+const CAMERA_ZOOM = 40;
+const CAMERA_POLAR = 1.01229;
+const CAMERA_INITIAL_AZIMUTH = 0.5;
+const CAMERA_ORBIT_DURATION = 30;
+const CAMERA_ORBIT_EASE_IN_FACTOR = Math.PI / 2;
 
 interface AdapterParams {
   getDimension: () => string;
@@ -34,6 +40,7 @@ interface AdapterParams {
 export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   #focusedBots: ColorLerpablePieceBot[] = [];
   #lastInteractionId: string | null = null;
+  #rotationId: string | null = null;
   #getDimension: AdapterParams["getDimension"];
   #piecesProvider: AdapterParams["piecesProvider"];
   #pieceMapper: AdapterParams["pieceMapper"];
@@ -86,6 +93,7 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     }
 
     this.#focusedBots = [bot];
+    this.#rotationId = interactionId;
 
     let cone: VFXBot<"cone"> | undefined;
     const botPosition = getBotPosition(bot, dimension);
@@ -139,8 +147,10 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     os.focusOn(bot, {
       duration: 1,
       easing,
-      rotation: { x: 1.01229, y: 0.5 },
-      zoom: 40,
+      rotation: { x: CAMERA_POLAR, y: CAMERA_INITIAL_AZIMUTH },
+      zoom: CAMERA_ZOOM,
+    }).then(() => {
+      this.#rotateAround(bot, interactionId, true);
     });
 
     // Color blink: white → cyan → white
@@ -207,5 +217,38 @@ export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
     }
     this.#focusedBots = [];
     this.#lastInteractionId = null;
+    this.#rotationId = null;
+  }
+
+  async #rotateAround(
+    bot: PieceBot,
+    interactionId: string,
+    isFirstCall: boolean
+  ): Promise<void> {
+    if (this.#rotationId !== interactionId) return;
+
+    const initialEasing: Easing = {
+      mode: "in",
+      type: "sinusoidal",
+    };
+    const regularEasing: Easing = {
+      mode: "inout",
+      type: "linear",
+    };
+
+    await os.focusOn(bot, {
+      duration: isFirstCall
+        ? CAMERA_ORBIT_DURATION * CAMERA_ORBIT_EASE_IN_FACTOR
+        : CAMERA_ORBIT_DURATION,
+      easing: isFirstCall ? initialEasing : regularEasing,
+      rotation: {
+        x: CAMERA_POLAR,
+        y: CAMERA_INITIAL_AZIMUTH + 2 * Math.PI,
+        normalize: false,
+      },
+      zoom: CAMERA_ZOOM,
+    });
+
+    this.#rotateAround(bot, interactionId, false);
   }
 }
