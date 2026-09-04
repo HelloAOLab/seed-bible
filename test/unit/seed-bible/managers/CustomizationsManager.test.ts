@@ -1896,6 +1896,38 @@ describe("CustomizationsManager", () => {
       expect(manager.initialCustomizationLoadSettled.value).toBe(true);
     });
 
+    // Regression guard for the asymmetry flagged in review: a fetched record
+    // goes through `customizationSchema.safeParse`/`narrowVariants` before
+    // being trusted, but the seed — which also crosses a server/client JSON
+    // boundary — used to be assigned straight to `linkedCustomization` with
+    // no such check. Without this, the two paths could silently drift apart
+    // the next time the schema changes (a new required field, say): the
+    // fetch path would reject a bad record, the seed path would wave it
+    // through.
+    it("ignores a seed for the matching locator that fails schema validation, falling back to a normal fetch", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: LOCATOR,
+        // Violates `customizationSchema`'s `variants` min(1) — exactly the
+        // kind of shape `safeParse` rejects on the fetch path.
+        customization: { ...sharedRecord, variants: [] },
+      });
+      await manager.initialCustomizationLoadPromise;
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
     it("ignores a seed for a different locator and fetches normally instead", async () => {
       getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
       const linkedNavigation = createNavigationManager({

@@ -763,6 +763,13 @@ export interface InitialCustomizationSeed {
    * `entry-ssr.tsx` — never from one the SSR-only timeout backstop cut
    * short, which would incorrectly tell the client "this doesn't exist" for
    * a link that might still resolve.
+   *
+   * Typed here as already-narrowed, but it crossed a server/client boundary
+   * (embedded as JSON in the page) to get here — nothing enforces that shape
+   * on the way in. The consumer (`createCustomizationsManager`'s
+   * `parseSeedCustomization`) re-validates it through the same
+   * `customizationSchema` a fresh fetch goes through before trusting it, so
+   * treat this field as untrusted input, not as a guarantee.
    */
   customization: SeedBibleCustomization | null;
 }
@@ -853,17 +860,66 @@ export function createCustomizationsManager(
    */
   let initialCustomizationLoadCompleted = false;
 
+  /**
+   * Validates a same-locator seed the same way `loadByLocator` validates a
+   * freshly-fetched record — `initialCustomizationSeed.customization` is
+   * typed as an already-narrowed `SeedBibleCustomization`, but it crossed a
+   * server/client boundary (embedded as JSON in the page) to get here, so
+   * nothing actually enforces that shape at this point except this parse.
+   * Skipping it would let the fetch path and the seed path silently drift
+   * apart the next time the schema changes (a new required field, a
+   * different variant shape): the fetch path would reject a stale/bad
+   * record, while the seed path would wave it through as-is.
+   */
+  function parseSeedCustomization(
+    customization: SeedBibleCustomization
+  ): SeedBibleCustomization | null {
+    const parsed = customizationSchema.safeParse(customization);
+    if (!parsed.success) {
+      return null;
+    }
+    return {
+      ...parsed.data,
+      variants: narrowVariants(parsed.data.variants),
+    };
+  }
+
   if (initialLocator) {
-    if (initialCustomizationSeed?.locator === initialLocator) {
+    const seedForLocator =
+      initialCustomizationSeed?.locator === initialLocator
+        ? initialCustomizationSeed
+        : null;
+
+    // `customization: null` means the seed itself already resolved to "not
+    // found" — nothing to validate, that outcome applies as-is. A non-null
+    // seed still has to pass the same schema check `loadByLocator` applies to
+    // a fresh fetch; an invalid one is treated as no seed at all, falling
+    // through to a normal fetch below rather than trusting a shape the
+    // schema no longer accepts.
+    const validatedSeedCustomization =
+      seedForLocator && seedForLocator.customization
+        ? parseSeedCustomization(seedForLocator.customization)
+        : null;
+    const seedIsUsable =
+      seedForLocator &&
+      (seedForLocator.customization === null || validatedSeedCustomization);
+
+    if (seedIsUsable) {
       // A prior SSR render already resolved this exact locator — apply its
       // result directly instead of repeating the `os.getData()` round trip.
-      if (initialCustomizationSeed.customization) {
-        linkedCustomization.value = initialCustomizationSeed.customization;
+      if (validatedSeedCustomization) {
+        linkedCustomization.value = validatedSeedCustomization;
         linkedCustomizationLocator.value = initialLocator;
       }
       initialCustomizationLoadCompleted = true;
       settleInitialCustomizationLoad();
     } else {
+      if (seedForLocator) {
+        console.warn(
+          "Ignoring an initialCustomizationSeed that failed validation; fetching instead:",
+          initialLocator
+        );
+      }
       void loadByLocator(initialLocator).then(() => {
         initialCustomizationLoadCompleted = true;
         settleInitialCustomizationLoad();

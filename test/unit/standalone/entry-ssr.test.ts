@@ -445,6 +445,12 @@ describe("render() server-rendered meta tags", () => {
     '<meta property="og:image:width" content="1200" />',
     '<meta property="og:image:height" content="630" />',
     '<meta property="og:image:alt" content="Seed Bible Logo" />',
+    // The real default icon links (index.html:15-16) — a `.ico` favicon and a
+    // `.png` apple-touch-icon, matching what a real browser sees, so the
+    // "override wins" tests below assert against an actual ordering effect
+    // rather than a template with nothing to override in the first place.
+    '<link rel="icon" href="/standalone/img/favicon.ico" />',
+    '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />',
     '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
     '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
@@ -1027,7 +1033,13 @@ describe("render() server-rendered meta tags", () => {
       expect(html).not.toContain("--sb-primary-color: #abc123;");
     });
 
-    it("points the favicon at the linked customization's uploaded logo", async () => {
+    // Asserts a true replacement, not merely an override tag added after the
+    // default: browsers do not reliably prefer the *last* declared icon link
+    // when several share a `rel` (some use whichever they fetch or parse
+    // first), so relying on document order — as an earlier version of this
+    // fix did — can't be trusted. There must be exactly one tag per `rel`,
+    // with the default href gone entirely.
+    it("replaces the favicon and apple-touch-icon with the linked customization's uploaded logo", async () => {
       mockFetchWithCustomizationResponse({
         success: true,
         data: {
@@ -1053,12 +1065,20 @@ describe("render() server-rendered meta tags", () => {
         "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
       );
 
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
       expect(html).toContain(
         '<link rel="icon" href="https://example.com/logo.png"/>'
       );
+      expect(html).not.toContain("/standalone/img/favicon.ico");
+
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="https://example.com/logo.png"/>'
+      );
+      expect(html).not.toContain("/standalone/img/apple-touch-icon.png");
     });
 
-    it("omits a favicon override when the linked customization has no uploaded logo", async () => {
+    it("leaves the default favicon and apple-touch-icon alone when the linked customization has no uploaded logo", async () => {
       mockFetchWithCustomizationResponse({
         success: true,
         data: {
@@ -1084,7 +1104,15 @@ describe("render() server-rendered meta tags", () => {
         "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
       );
 
-      expect(html).not.toContain('<link rel="icon"');
+      // Exactly one of each — the default, with no override tag alongside it.
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="icon" href="/standalone/img/favicon.ico" />'
+      );
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+      );
     });
 
     it("replaces og:image with the linked customization's uploaded logo, dropping the stale type/width/height", async () => {
@@ -1230,10 +1258,17 @@ describe("render() server-rendered meta tags", () => {
     expect(JSON.parse(match![1]!)).toBeNull();
   });
 
-  it("omits a favicon override with no customization active", async () => {
+  it("leaves the default favicon and apple-touch-icon alone with no customization active", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 
-    expect(html).not.toContain('<link rel="icon"');
+    expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="icon" href="/standalone/img/favicon.ico" />'
+    );
+    expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+    );
   });
 
   it("leaves the default og:image alone with no customization active", async () => {
