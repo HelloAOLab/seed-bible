@@ -67,7 +67,7 @@ describe("CustomizationVariantSelectionsManager", () => {
     warnSpy.mockRestore();
   });
 
-  it("signed out: selections are empty and selectVariant() is a no-op", async () => {
+  it("signed out: starts with empty selections and does not persist", async () => {
     userIdSignal.value = null;
     const manager = createCustomizationVariantSelectionsManager(os, login);
     await flushPromises();
@@ -77,7 +77,19 @@ describe("CustomizationVariantSelectionsManager", () => {
 
     await manager.selectVariant("owner.customization_1", "variant_1");
 
-    expect(manager.selections.value).toEqual({});
+    expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("signed out: selectVariant() still applies the choice for the current session", async () => {
+    userIdSignal.value = null;
+    const manager = createCustomizationVariantSelectionsManager(os, login);
+    await flushPromises();
+
+    await manager.selectVariant("owner.customization_1", "variant_1");
+
+    expect(manager.getSelectedVariantId("owner.customization_1")).toBe(
+      "variant_1"
+    );
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 

@@ -26,7 +26,13 @@ export interface CustomizationVariantSelectionsManager {
   selections: ReadonlySignal<Record<string, string>>;
   /** Sync lookup from the already-loaded `selections` signal — no I/O. */
   getSelectedVariantId: (locator: string) => string | null;
-  /** Persists the viewer's variant choice for a customization locator. No-op while signed out. */
+  /**
+   * Applies the viewer's variant choice for a customization locator.
+   * Persisted to their profile when signed in; while signed out, it's
+   * applied for the current session only (via the in-memory `selections`
+   * signal) and forgotten on refresh, since there's no signed-out profile
+   * to remember it in.
+   */
   selectVariant: (locator: string, variantId: string) => Promise<void>;
 }
 
@@ -83,12 +89,17 @@ export function createCustomizationVariantSelectionsManager(
     locator: string,
     variantId: string
   ): Promise<void> => {
-    const userId = login.userId.value;
-    if (!userId) {
-      return;
-    }
     const next = { ...selections.value, [locator]: variantId };
     selections.value = next;
+
+    const userId = login.userId.value;
+    if (!userId) {
+      // Signed-out viewers get the choice applied for this session only —
+      // there's no profile to persist it to, and the effect above resets
+      // `selections` to {} only when `login.userId` actually changes, so
+      // this in-memory value survives until then.
+      return;
+    }
     await os.recordData(
       userId,
       VARIANT_SELECTIONS_ADDRESS,
