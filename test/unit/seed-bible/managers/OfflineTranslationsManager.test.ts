@@ -315,6 +315,60 @@ describe("reading a downloaded translation", () => {
     expect(webGetMock.mock.calls.length).toBe(callsBefore);
   });
 
+  it("resolves a downloaded chapter's audio timings without touching the network", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    const chapter = await manager.getTranslationBookChapter("AAB", "GEN", 1);
+    const link = chapter.thisChapterAudioTimings.reader;
+    expect(link).toBeTruthy();
+
+    const callsBefore = webGetMock.mock.calls.length;
+    const timings = await manager.offline.getAudioTimings(link!);
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+
+    expect(timings).not.toBeNull();
+    expect(timings?.verses).toEqual([1.5, 3]);
+    expect(timings?.reader).toBe("reader");
+    expect(timings?.translationId).toBe("AAB");
+    expect(timings?.bookId).toBe("GEN");
+    expect(timings?.chapterNumber).toBe(1);
+
+    // The chapter's own audio timings link resolves through `getAudioTimings`
+    // exactly the same way, since that's the path the audio reader extension
+    // actually calls.
+    const viaBibleData = await manager.getAudioTimings("AAB", link!);
+    expect(viaBibleData.verses).toEqual([1.5, 3]);
+    expect(webGetMock.mock.calls.length).toBe(callsBefore);
+  });
+
+  it("links to the neighbouring chapters' audio timings, resolvable the same way", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    const chapter = await manager.getTranslationBookChapter("AAB", "GEN", 1);
+    const nextLink = chapter.nextChapterAudioTimings?.reader;
+    expect(nextLink).toBeTruthy();
+
+    const nextTimings = await manager.offline.getAudioTimings(nextLink!);
+    expect(nextTimings?.chapterNumber).toBe(2);
+    expect(nextTimings?.verses).toEqual([1.5, 3]);
+  });
+
+  it("returns null for a link this manager didn't create, so callers fall back to the network", async () => {
+    const { manager } = await createHarness(defaultResponses());
+    await manager.getTranslations();
+    await manager.offline.downloadTranslation("AAB");
+
+    expect(
+      await manager.offline.getAudioTimings(
+        makeEndpointUrl("api/AAB/GEN/1.someone.audioTimings.json")
+      )
+    ).toBeNull();
+  });
+
   it("exposes neighbour audio links alongside the navigation links", async () => {
     const { manager } = await createHarness(defaultResponses());
     await manager.getTranslations();

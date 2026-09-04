@@ -11,7 +11,7 @@ import { FloatingReaderPanels } from "../components/FloatingReaderPanels/Floatin
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { useEffect } from "preact/hooks";
-import { useSignalEffect } from "@preact/signals";
+import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
 import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
@@ -43,23 +43,72 @@ import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/Offli
 import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 
 /**
- * Font `<link>`s. Theme CSS used to render here too, but now writes directly
- * to `document.head` from a `ThemeManager` effect (see `ThemeManager.tsx`'s
+ * Font `<link>`s, plus the CSS for the active Customization layered on top
+ * of the real theme (see `SeedBibleStateManager`'s `theme`/`themeCssVariables`/
+ * `themeCssClasses`). The unblended preset+settings theme writes directly to
+ * `document.head` from a `ThemeManager` effect instead (see `ThemeManager.tsx`'s
  * `createTheme`) — that target is never diffed by Preact, so it carries no
- * hydration-mismatch risk the way an in-tree `<style>` whose text derives
- * from `localStorage` would.
+ * hydration-mismatch risk the way an in-tree `<style>` would; this one still
+ * needs to be in-tree so a shared `?customization=` link's colors are part of
+ * the SSR'd HTML. `dangerouslySetInnerHTML` (rather than a plain text child)
+ * is what keeps it safe: raw CSS can contain `&` (e.g. the highlight classes'
+ * `&.sb-words-of-jesus`), which a plain JSX text child would HTML-escape on
+ * the server but not on the client, causing a hydration mismatch; Preact also
+ * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
+ * inert even if the two sides' CSS text does legitimately differ.
+ *
+ * The SSR suspend below is deliberately scoped to just this component rather
+ * than gating `MainContent` as a whole: `_renderToString`'s array-of-children
+ * traversal doesn't block later siblings on an earlier one suspending, so
+ * gating only here keeps everything else's first-render timing (most notably
+ * `BibleReader`'s own chapter-load suspend) exactly as it is without a
+ * `?customization=` link in play.
  */
-export function ExternalResourceDependencies() {
+export function ExternalResourceDependencies({
+  themeCssVariables,
+  themeCssClasses,
+  googleFontFamilies,
+  initialCustomizationLoadPromise,
+  initialCustomizationLoadSettled,
+}: {
+  themeCssVariables: ReadonlySignal<string>;
+  themeCssClasses: ReadonlySignal<string>;
+  googleFontFamilies: ReadonlySignal<string[]>;
+  initialCustomizationLoadPromise: Promise<void>;
+  initialCustomizationLoadSettled: ReadonlySignal<boolean>;
+}) {
+  if (import.meta.env.SSR && !initialCustomizationLoadSettled.value) {
+    throw initialCustomizationLoadPromise;
+  }
+
   return (
     <>
       <link
-        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap"
         rel="stylesheet"
       />
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
+      {googleFontFamilies.value.length > 0 && (
+        // A customization variant can name any Google Font by typing its
+        // exact name — this loads whatever isn't already covered by the
+        // static presets above. See CustomizationsManager.buildCustomFontValue
+        // for why the name is already restricted to safe characters.
+        <link
+          rel="stylesheet"
+          href={`https://fonts.googleapis.com/css2?${googleFontFamilies.value
+            .map((name) => `family=${name.replace(/ /g, "+")}`)
+            .join("&")}&display=swap`}
+        />
+      )}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `body {\n${themeCssVariables.value}\n}`,
+        }}
+      />
+      <style dangerouslySetInnerHTML={{ __html: themeCssClasses.value }} />
     </>
   );
 }
@@ -194,7 +243,7 @@ function MainContent(props: {
   const { renderedAsWebKit } = useAppConfig();
   const webkitClass = isWebKit(renderedAsWebKit) ? "is-webkit" : "";
   const appDirection = isRtl ? "rtl" : "ltr";
-  const { selector } = state;
+  const { theme, selector } = state;
   const sidePane =
     state.app.effectivePanes.value.find((pane) => pane.placement === "side") ??
     null;
@@ -219,7 +268,17 @@ function MainContent(props: {
           overflow: "hidden",
         }}
       >
-        <ExternalResourceDependencies />
+        <ExternalResourceDependencies
+          themeCssVariables={theme.themeCssVariables}
+          themeCssClasses={theme.themeCssClasses}
+          googleFontFamilies={theme.googleFontFamiliesToLoad}
+          initialCustomizationLoadPromise={
+            state.customizations.initialCustomizationLoadPromise
+          }
+          initialCustomizationLoadSettled={
+            state.customizations.initialCustomizationLoadSettled
+          }
+        />
         <Sidebar state={state} />
 
         <div className="sb-content-row">
@@ -280,11 +339,17 @@ function MainContent(props: {
           os={state.os}
           toast={state.app.toast}
           className={`${webkitClass}`}
+          customizationName={
+            state.customizations.activeCustomization.value?.name
+          }
         />
 
         <TutorialPrompt
           tutorial={state.tutorial}
           className={`${webkitClass}`}
+          customizationName={
+            state.customizations.activeCustomization.value?.name
+          }
         />
 
         <OfflineDownloadPrompt

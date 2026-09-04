@@ -610,6 +610,75 @@ describe("createPanes", () => {
     });
   });
 
+  // `confirmClose` is only ever consulted by the pane-header close (X)
+  // button's own click handler (in PaneLayout.tsx, not exercised by this
+  // manager-level suite) — `closePane` itself never reads it, so a
+  // programmatic close always bypasses it. These tests cover what this
+  // manager is actually responsible for: storing the guard on the `Pane`
+  // object exactly as given, through both the create and id-reuse paths.
+  describe("confirmClose", () => {
+    it("stores the confirmClose guard on a newly created pane", () => {
+      const panes = createPanes();
+      const confirmClose = vi.fn(() => true);
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+        confirmClose,
+      });
+
+      expect(pane.confirmClose).toBe(confirmClose);
+      expect(panes.panes.value[0]?.confirmClose).toBe(confirmClose);
+    });
+
+    it("updates the confirmClose guard when reusing an existing pane id", () => {
+      const panes = createPanes();
+      const firstGuard = vi.fn(() => true);
+      const secondGuard = vi.fn(() => false);
+
+      panes.openPane({
+        id: "stable-id",
+        placement: "side",
+        title: "First",
+        component: componentReturning("First"),
+        confirmClose: firstGuard,
+      });
+      const updated = panes.openPane({
+        id: "stable-id",
+        placement: "side",
+        title: "Second",
+        component: componentReturning("Second"),
+        confirmClose: secondGuard,
+      });
+
+      expect(updated.confirmClose).toBe(secondGuard);
+      expect(panes.panes.value[0]?.confirmClose).toBe(secondGuard);
+    });
+
+    it("leaves confirmClose undefined for a pane that doesn't declare one, and closePane itself never calls it", () => {
+      const panes = createPanes();
+      const confirmClose = vi.fn(() => false);
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Guarded",
+        component: componentReturning("Guarded"),
+        confirmClose,
+      });
+
+      expect(pane.confirmClose).toBeUndefined();
+      // closePane is a direct, unconditional removal — the guard is a
+      // concern for whatever calls it (the pane header), not this manager.
+      panes.closePane(pane.id);
+      expect(confirmClose).not.toHaveBeenCalled();
+    });
+  });
+
   // Commands read pane state via peek(), so invoking one inside an effect must
   // not subscribe that effect to `panes`/`selectedPaneId`. Otherwise mutating
   // pane state (e.g. closing a pane) re-runs the effect, which re-opens the
