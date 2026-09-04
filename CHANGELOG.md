@@ -8,6 +8,9 @@
 
 ### 🐛 Fixed
 
+- Stop losing the last chapters of a reading session. Reading history was only ever held in memory and written straight to the server, so anything not yet sent when you closed the tab, reloaded, or let the phone freeze the app was gone — which is why chapters read early in the evening were there the next morning and the last few were not. Every chapter you spend real time in is now recorded on the device first and pushed to the server afterwards, replayed on the next load or the next time the connection comes back. Today's reading also shows up straight away instead of after a round trip, and shows up at all on a load with no connection. ([#1754](https://github.com/HelloAOLab/seed-bible/issues/1754))
+- Fix one failed reading-history sync breaking every later read and write for the rest of the page load. A single dropped connection or expired session used to be remembered as the answer for that year, so nothing after it could succeed; it now simply retries. ([#1754](https://github.com/HelloAOLab/seed-bible/issues/1754))
+
 ### 🗑️ Removed
 
 ## v1.7.1 — 2026-09-02

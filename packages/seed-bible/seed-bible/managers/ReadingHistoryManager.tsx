@@ -9,6 +9,18 @@ import type {
   YjsSharedArray,
   YjsSharedMap,
 } from "@casual-simulation/aux-common/documents/YjsSharedDocument";
+import {
+  createIndexedDbReadingHistoryStore,
+  readingEventIdentity,
+  readingEventYear,
+  toReadingEvent,
+  type OfflineReadingHistoryStore,
+  type StoredReadingEvent,
+} from "./OfflineReadingHistoryStore";
+import {
+  createReadingHistorySyncManager,
+  type ReadingHistorySyncManager,
+} from "./ReadingHistorySyncManager";
 
 export interface ReadingEvent {
   /**
@@ -44,6 +56,39 @@ export function clearReadingHistoryDocs() {
 }
 
 /**
+ * `undefined` until the first caller asks, so nothing touches IndexedDB during
+ * a server render.
+ */
+let sharedStore: OfflineReadingHistoryStore | null | undefined;
+
+/**
+ * The local store the functions in this module use when a caller doesn't name
+ * one.
+ *
+ * A single instance per page load, because it is one database and every reading
+ * event on this device belongs in it — `TodayManager` and Scripture Map both
+ * call the functions here directly, and each holding its own store would mean
+ * each holding its own connection to the same database.
+ *
+ * Null on a device that can't keep one (server-side rendering, or a browser
+ * that blocks storage). Callers fall back to talking to the year document
+ * directly, which is what the app did before this store existed.
+ */
+export function getSharedReadingHistoryStore(): OfflineReadingHistoryStore | null {
+  if (sharedStore === undefined) {
+    sharedStore = createIndexedDbReadingHistoryStore();
+  }
+  return sharedStore;
+}
+
+/** Resolves an explicit store option against the shared default. */
+function resolveStore(
+  store: OfflineReadingHistoryStore | null | undefined
+): OfflineReadingHistoryStore | null {
+  return store === undefined ? getSharedReadingHistoryStore() : store;
+}
+
+/**
  * Gets the reading history document for the given record name and year.
  * @param recordName The name of the record that the reading history is stored in.
  * @param year The year to get the reading history for.
@@ -59,31 +104,176 @@ function getReadingHistoryDocument(
   name: string = "reading_history"
 ): Promise<SharedDocument> {
   const key = `${recordName}-${name}-${year}`;
-  if (readingHistoryDocs[key]) {
-    return readingHistoryDocs[key];
+  const cached = readingHistoryDocs[key];
+  if (cached) {
+    return cached;
   }
 
   const markers = [`${marker}:${name}/${year}`];
-  const docPromise = (readingHistoryDocs[key] = os.getSharedDocument(
-    recordName,
-    name,
-    `${year}`,
-    {
+  // The failure is dropped from the cache rather than kept. A rejected promise
+  // left here poisoned the key for the rest of the page load: one expired
+  // session key or dropped connection meant every later read and write of that
+  // year failed too, with nothing to retry it.
+  const docPromise: Promise<SharedDocument> = os
+    .getSharedDocument(recordName, name, `${year}`, {
       markers,
-    }
-  ));
+    })
+    .catch((error: unknown) => {
+      if (readingHistoryDocs[key] === docPromise) {
+        delete readingHistoryDocs[key];
+      }
+      throw error;
+    });
+  readingHistoryDocs[key] = docPromise;
   return docPromise;
 }
 
 /**
- * Saves a reading history event.
- * If the user has already read the chapter within the last 30 minutes, then end time of the event will be updated instead of creating a new event.
+ * Writes events into a year's document, extending an event it already holds
+ * rather than adding a second copy of it.
+ *
+ * Matching on {@link readingEventIdentity} — user, book, chapter and `start` —
+ * is what makes this safe to call again with the same event, which is what the
+ * replay in `ReadingHistorySyncManager` needs. Extending is one-way: `end` only
+ * moves forward, so an event pushed twice out of order can't shrink.
+ */
+export async function writeReadingEventsToDocument(
+  os: CasualOSManager,
+  recordName: string,
+  year: number,
+  events: readonly ReadingEvent[],
+  options: { marker?: string; name?: string } = {}
+): Promise<void> {
+  if (events.length === 0) {
+    return;
+  }
+
+  const doc = await getReadingHistoryDocument(
+    os,
+    recordName,
+    year,
+    options.marker,
+    options.name
+  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const array = doc.getArray("events") as YjsSharedArray<SharedMap<any>>;
+
+  const unmatched = new Map<string, ReadingEvent>();
+  for (const event of events) {
+    unmatched.set(readingEventIdentity(event), event);
+  }
+
+  // Newest first, and stops as soon as everything has been matched. Extending
+  // the event currently being read is by far the most common call — five
+  // seconds apart, all day — and that event is the newest one in the document,
+  // so this normally settles on the first comparison rather than walking a
+  // year's worth of events every time.
+  for (let i = array.length - 1; i >= 0 && unmatched.size > 0; i--) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map: SharedMap<any> = array.type.get(i);
+    const identity = readingEventIdentity({
+      userId: map.get("userId"),
+      bookId: map.get("bookId"),
+      chapter: map.get("chapter"),
+      start: map.get("start"),
+    });
+    const event = unmatched.get(identity);
+    if (!event) {
+      continue;
+    }
+    if (map.get("end") < event.end) {
+      map.set("end", event.end);
+    }
+    unmatched.delete(identity);
+  }
+
+  // Whatever is left is an event the document has never seen.
+  for (const event of unmatched.values()) {
+    const map = doc.createMap();
+    map.set("userId", event.userId);
+    map.set("bookId", event.bookId);
+    map.set("chapter", event.chapter);
+    map.set("start", event.start);
+    map.set("end", event.end);
+    array.push(map);
+  }
+}
+
+/** Options for {@link saveReadingHistory}. */
+export interface SaveReadingHistoryOptions {
+  /**
+   * How far back a tick may reach to extend an event rather than start a new
+   * one. Defaults to 30 minutes.
+   */
+  recencyThresholdSeconds?: number;
+
+  /**
+   * The marker to use for the reading history document. Use `publicRead` to
+   * allow anyone to read, but only users who have access to the record can
+   * write. Use `publicWrite` to allow anyone to write. Defaults to
+   * `publicRead`.
+   */
+  marker?: string;
+
+  /** The name of the shared document. Defaults to `reading_history`. */
+  name?: string;
+
+  /**
+   * Where the event is recorded before it is pushed. Defaults to the shared
+   * store; pass null to write straight to the document.
+   */
+  store?: OfflineReadingHistoryStore | null;
+
+  /** Injected in tests. Defaults to the wall clock. */
+  nowSeconds?: number;
+}
+
+/**
+ * Records the event on this device, or null when it can't be.
+ *
+ * `createIndexedDbReadingHistoryStore` only knows that IndexedDB *exists*; a
+ * browser can still refuse to open the database (a private window in some
+ * browsers, a sandboxed frame, a user who has blocked site data). That is not a
+ * reason to stop recording reading history altogether, so a store failure falls
+ * through to writing straight to the year document — what the app did before
+ * this store existed, durability aside.
+ */
+async function recordReadingLocally(
+  store: OfflineReadingHistoryStore,
+  input: {
+    userId: string;
+    bookId: string;
+    chapter: number;
+    atSeconds: number;
+    recencyThresholdSeconds: number;
+  }
+): Promise<StoredReadingEvent | null> {
+  try {
+    return await store.recordReading(input);
+  } catch (error) {
+    console.warn(
+      "Could not record reading history on this device. Writing straight to the document instead.",
+      error
+    );
+    return null;
+  }
+}
+
+/**
+ * Records that a chapter is being read, and pushes it to the server.
+ *
+ * The event lands in the local store first, so it survives the tab closing even
+ * if the push never goes out. Only then is the year document written, and a
+ * failure there leaves the row queued for `ReadingHistorySyncManager` to replay
+ * — so the caller can treat this rejecting as "not yet", not as "lost".
+ *
+ * Reading the same chapter again within `recencyThresholdSeconds` extends that
+ * event's `end` instead of starting a new one, so a chapter read for half an
+ * hour is one event rather than 360 of them.
+ *
  * @param userId The ID of the user that the event is for.
  * @param bookId The ID of the book that the event is for.
  * @param chapter The chapter number that was read.
- * @param recencyThresholdSeconds The time in seconds to consider an event recent. Defaults to 30 minutes.
- * @param marker The marker to use for the reading history document. Use `publicRead` to allow anyone to read, but only users who have access to the record can write. Use `publicWrite` to allow anyone to write. Defaults to `publicRead`.
- * @param name The name of the shared document. Defaults to `reading_history`.
  */
 export async function saveReadingHistory(
   os: CasualOSManager,
@@ -91,16 +281,50 @@ export async function saveReadingHistory(
   userId: string,
   bookId: string,
   chapter: number,
-  recencyThresholdSeconds: number = 30 * 60,
-  marker?: string,
-  name?: string
+  options: SaveReadingHistoryOptions = {}
 ): Promise<void> {
-  console.log(
-    `Saving reading history for user ${userId}, book ${bookId}, chapter ${chapter}`
-  );
-  const currentTimeSeconds = Math.floor(Date.now() / 1000);
-  const currentYear = new Date().getUTCFullYear();
+  const {
+    recencyThresholdSeconds = 30 * 60,
+    marker,
+    name,
+    nowSeconds,
+  } = options;
+  const store = resolveStore(options.store);
+  const currentTimeSeconds = nowSeconds ?? Math.floor(Date.now() / 1000);
+  const currentYear = readingEventYear(currentTimeSeconds);
 
+  const row = store
+    ? await recordReadingLocally(store, {
+        userId,
+        bookId,
+        chapter,
+        atSeconds: currentTimeSeconds,
+        recencyThresholdSeconds,
+      })
+    : null;
+
+  if (row && store) {
+    // The event is now safe on this device, so the push is allowed to fail.
+    await writeReadingEventsToDocument(
+      os,
+      recordName,
+      row.year,
+      [toReadingEvent(row)],
+      { marker, name }
+    );
+    try {
+      await store.markSynced([{ key: row.key, end: row.end }]);
+    } catch (error) {
+      // The push itself worked, so this must not look like a failed push to the
+      // caller. The row simply stays queued and the replay pushes it again,
+      // which extends the event it already wrote rather than duplicating it.
+      console.warn("Could not mark a reading event as pushed.", error);
+    }
+    return;
+  }
+
+  // No local store: the document is the only place the event can go, so which
+  // event this tick belongs to has to be worked out from what is already in it.
   const doc = await getReadingHistoryDocument(
     os,
     recordName,
@@ -151,14 +375,9 @@ export async function saveUserReadingHistory(
     return;
   }
 
-  await saveReadingHistory(
-    os,
-    userId,
-    userId,
-    bookId,
-    chapter,
-    recencyThresholdSeconds
-  );
+  await saveReadingHistory(os, userId, userId, bookId, chapter, {
+    recencyThresholdSeconds,
+  });
 }
 
 /**
@@ -354,6 +573,17 @@ export async function getReadingHistorySummary(
 
 /**
  * Gets the reading history events for the given record name and time range.
+ *
+ * Answers from two places at once: the year documents on the server, and what
+ * this device recorded locally. The local rows are why today's reading shows up
+ * straight away rather than after a round trip, and why it shows up at all on a
+ * load with no connection.
+ *
+ * A year whose document can't be reached is logged and treated as empty rather
+ * than failing the whole read. Before, one unreachable document took the Today
+ * screen down with it, even though the reading it was asking about was sitting
+ * on the device.
+ *
  * @param recordName The name of the record that the reading history is stored in.
  * @param startTime The start time in unix seconds to filter the reading history events.
  * @param endTime The end time in unix seconds to filter the reading history events.
@@ -363,8 +593,10 @@ export async function getReadingHistoryEvents(
   os: CasualOSManager,
   recordName: string,
   startTime: number,
-  endTime: number
+  endTime: number,
+  options: { store?: OfflineReadingHistoryStore | null } = {}
 ): Promise<Iterable<ReadingEvent>> {
+  const store = resolveStore(options.store);
   const startYear = new Date(startTime * 1000).getUTCFullYear();
   const endYear = new Date(endTime * 1000).getUTCFullYear();
   const allEventPromises: Promise<Iterable<ReadingEvent>>[] = [];
@@ -375,12 +607,69 @@ export async function getReadingHistoryEvents(
       y,
       startTime,
       endTime
-    );
+    ).catch((error: unknown) => {
+      console.warn(
+        `Could not read the ${y} reading history document for ${recordName}. Falling back to what this device has.`,
+        error
+      );
+      return [] as ReadingEvent[];
+    });
     allEventPromises.push(events);
   }
 
+  // Keyed on `recordName` because that is the record a user's reading history
+  // lives in — so this contributes nothing when the caller is reading somebody
+  // else's history, which is the correct answer for a store that only holds
+  // this device's own.
+  allEventPromises.push(
+    readLocalReadingEvents(store, recordName, startTime, endTime)
+  );
+
   const allEvents = await Promise.all(allEventPromises);
-  return flat(allEvents);
+  return mergeReadingEvents(allEvents);
+}
+
+/** This device's own recorded events for a window, or none if it has no store. */
+async function readLocalReadingEvents(
+  store: OfflineReadingHistoryStore | null,
+  userId: string,
+  startTime: number,
+  endTime: number
+): Promise<ReadingEvent[]> {
+  if (!store) {
+    return [];
+  }
+  try {
+    const rows = await store.listForWindow(userId, startTime, endTime);
+    return rows.map(toReadingEvent);
+  } catch (error) {
+    console.warn("Could not read locally recorded reading events.", error);
+    return [];
+  }
+}
+
+/**
+ * Folds several sources of events into one list, keeping each event once.
+ *
+ * An event recorded locally and then pushed exists in both places, so without
+ * this every summary would count its time twice. Two copies of one event are
+ * recognised by {@link readingEventIdentity} and the later `end` wins, which is
+ * always the more complete of the two — `end` only moves forward.
+ */
+export function mergeReadingEvents(
+  sources: Iterable<Iterable<ReadingEvent>>
+): ReadingEvent[] {
+  const byIdentity = new Map<string, ReadingEvent>();
+  for (const source of sources) {
+    for (const event of source) {
+      const identity = readingEventIdentity(event);
+      const existing = byIdentity.get(identity);
+      if (!existing || existing.end < event.end) {
+        byIdentity.set(identity, event);
+      }
+    }
+  }
+  return [...byIdentity.values()];
 }
 
 /**
@@ -563,9 +852,6 @@ function findMostRecentReadingEvent(
       event.get("bookId") === bookId &&
       event.get("chapter") === chapter
     ) {
-      console.log(
-        `Found recent reading event: ${event.get("bookId")} ${event.get("chapter")} ${new Date(event.get("start") * 1000).toISOString()} - ${new Date(event.get("end") * 1000).toISOString()}`
-      );
       return event;
     }
   }
@@ -703,12 +989,36 @@ export interface ReadingHistoryManager {
     startTime: number,
     endTime: number
   ) => Promise<Iterable<ReadingEvent>>;
+
+  /** Replays anything the server hasn't got yet. */
+  sync: ReadingHistorySyncManager;
+
+  /** Tears down the sync manager. The app never calls this; tests do. */
+  dispose: () => void;
+}
+
+export interface CreateReadingHistoryManagerOptions {
+  /**
+   * Where events are recorded before they are pushed. Defaults to the shared
+   * store; pass null to write straight to the year documents.
+   */
+  store?: OfflineReadingHistoryStore | null;
 }
 
 export function createReadingHistoryManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  options: CreateReadingHistoryManagerOptions = {}
 ): ReadingHistoryManager {
+  const store = resolveStore(options.store);
+
+  const sync = createReadingHistorySyncManager({
+    login,
+    store,
+    writeEvents: (recordName, year, events) =>
+      writeReadingEventsToDocument(os, recordName, year, events),
+  });
+
   const saveReadingHistoryForCurrentUser = debounce(
     async (
       bookId: string,
@@ -722,16 +1032,35 @@ export function createReadingHistoryManager(
         return;
       }
 
-      await saveReadingHistory(
-        os,
-        login.userId.value,
-        login.userId.value,
-        bookId,
-        chapter,
-        recencyThresholdSeconds,
-        marker,
-        name
-      );
+      try {
+        await saveReadingHistory(
+          os,
+          login.userId.value,
+          login.userId.value,
+          bookId,
+          chapter,
+          { recencyThresholdSeconds, marker, name, store }
+        );
+      } catch (error) {
+        // The event is in the local store either way, so this is "not pushed
+        // yet" rather than "lost". Swallowed because the five-second tick
+        // discards this promise, and an unhandled rejection every five seconds
+        // was the whole reason the failure went unnoticed.
+        console.warn(
+          `Could not push reading history for ${bookId} ${chapter} yet.`,
+          error
+        );
+        void sync.refreshPendingCount();
+        return;
+      }
+
+      // The push getting through proves the year document is reachable, which is
+      // the moment a backlog is worth retrying. Waiting for the `online` event
+      // would miss a websocket that reconnected without `navigator.onLine` ever
+      // changing.
+      if (sync.pendingCount.value > 0) {
+        void sync.sync();
+      }
     },
     300
   );
@@ -744,11 +1073,15 @@ export function createReadingHistoryManager(
       return [];
     }
 
-    return getReadingHistoryEvents(os, login.userId.value, startTime, endTime);
+    return getReadingHistoryEvents(os, login.userId.value, startTime, endTime, {
+      store,
+    });
   };
 
   return {
     saveReadingHistory: saveReadingHistoryForCurrentUser,
     getReadingEvents: getReadingEventsForCurrentUser,
+    sync,
+    dispose: () => sync.dispose(),
   };
 }
