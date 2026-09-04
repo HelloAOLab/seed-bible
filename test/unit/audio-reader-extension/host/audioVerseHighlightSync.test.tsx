@@ -127,7 +127,28 @@ describe("audio-reader verse highlight sync", () => {
     audio.current!.dispatchEvent(new Event("timeupdate"));
   }
 
-  it("flashes the diminish highlight on the verse being read, and stops once the chapter has no timings", async () => {
+  /**
+   * Dispatched directly rather than via `el.pause()`/`el.play()` (as a real
+   * pause button would) because jsdom's `HTMLMediaElement` doesn't implement
+   * either — see `HTMLMediaElement-impl.js` — so nothing would actually fire
+   * the `pause`/`play` events those calls are supposed to produce.
+   */
+  function pauseAt(currentTime: number) {
+    audio.current!.currentTime = currentTime;
+    audio.current!.dispatchEvent(new Event("pause"));
+  }
+
+  function resumeAt(currentTime: number) {
+    audio.current!.currentTime = currentTime;
+    audio.current!.dispatchEvent(new Event("play"));
+  }
+
+  // A single test, rather than one per scenario: `init.tsx` keeps its audio
+  // element as a module-level singleton (by design — see `ensureAudio`), so
+  // splitting this into separate `it`s would have every scenario after the
+  // first find `audioEl` already constructed and silently reuse it instead
+  // of the fresh `CapturingAudio` stub `beforeEach` just installed.
+  it("flashes the diminish highlight on the verse being read, clears it while paused, and stops once the chapter has no timings", async () => {
     state = await createTestSeedBibleState({ responses: createResponses() });
     setupExtensionContext(state);
     initAudioReaderExtension();
@@ -144,14 +165,36 @@ describe("audio-reader verse highlight sync", () => {
       expect(diminishedVerses(state)).toEqual([1]);
     });
     const readingState = getReadingState(state);
-    const decoration = readingState.decorations.value.find(
-      (d) => d.className === "sb-verse-decoration-diminish"
-    )!;
+    const findDiminish = () =>
+      readingState.decorations.value.filter(
+        (d) => d.className === "sb-verse-decoration-diminish"
+      );
+    const decoration = findDiminish()[0]!;
     expect(decoration.bookId).toBe("GEN");
     expect(decoration.chapterNumber).toBe(1);
     // Verse 1 spans 0s to 5s (verse 2's start), so it fades exactly then
     // rather than after a fixed timeout.
     expect(decoration.removeAfterMs).toBe(5000);
+    const verse1DecorationId = decoration.id;
+
+    // Paused 2s into verse 1 — with no "stop" affordance yet distinct from
+    // "pause", clearing the highlight here is what keeps a forgotten paused
+    // session from leaving it lit forever, rather than fading out on the
+    // wall-clock timer scheduled above (which would keep counting down even
+    // though the audio isn't moving).
+    pauseAt(2);
+    expect(findDiminish()).toHaveLength(0);
+    expect(diminishedVerses(state)).toBeUndefined();
+
+    // Resuming from that same 2s position re-lights verse 1 (as a new
+    // decoration, since the old one was cleared) and schedules its fade-out
+    // for the 3 seconds that remain until verse 2's real 5s start — not
+    // another 5s from scratch.
+    resumeAt(2);
+    const resumed = findDiminish()[0]!;
+    expect(resumed.id).not.toBe(verse1DecorationId);
+    expect(resumed.removeAfterMs).toBe(3000);
+    expect(diminishedVerses(state)).toEqual([1]);
 
     // Still just short of verse 2's 300ms lead-in window — verse 1 stays the
     // only one lit.
@@ -163,14 +206,31 @@ describe("audio-reader verse highlight sync", () => {
     // decoration isn't touched, so the two are lit together for that instant
     // instead of leaving a gap between them.
     playAt(4.7);
-    const diminishDecorations = readingState.decorations.value.filter(
-      (d) => d.className === "sb-verse-decoration-diminish"
-    );
+    const diminishDecorations = findDiminish();
     expect(diminishDecorations.map((d) => d.verses)).toEqual([[1], [2]]);
-    expect(diminishDecorations[0]?.removeAfterMs).toBe(5000);
+    // Unchanged since the resume above re-armed it.
+    expect(diminishDecorations[0]?.removeAfterMs).toBe(3000);
     // Verse 2 is the last one, and jsdom's audio element never reports a
     // duration, so there's nothing to fade it out at — it stays lit.
     expect(diminishDecorations[1]?.removeAfterMs).toBeUndefined();
+
+    // The chapter finishes: per the media spec, reaching the end sets
+    // `paused` and fires `pause` immediately before firing `ended` itself.
+    audio.current!.currentTime = 0;
+    Object.defineProperty(audio.current, "ended", {
+      value: true,
+      configurable: true,
+    });
+    audio.current!.dispatchEvent(new Event("pause"));
+    audio.current!.dispatchEvent(new Event("ended"));
+
+    // Pressing play again re-fetches timings and starts over at verse 1,
+    // rather than resuming stuck on verse 2 from the previous playthrough.
+    pressPlay();
+    await vi.waitFor(() => {
+      playAt(0);
+      expect(diminishedVerses(state)).toEqual([1]);
+    });
 
     // Navigating to a chapter with no timings for this reader (GEN 2) stops
     // playback and clears the tracked verse; pressing play again loads that

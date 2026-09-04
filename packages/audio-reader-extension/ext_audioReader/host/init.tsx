@@ -42,6 +42,15 @@ interface VerseTimingTrack {
   startTimes: number[];
   /** The verse most recently highlighted, so the same verse isn't re-flashed every tick. */
   lastVerse: number | null;
+  /** `startTimes`/`verseNumbers` index of `lastVerse`, so pause/resume can recompute its fade-out. */
+  verseIndex: number | null;
+  /**
+   * The id of `lastVerse`'s decoration, or null when nothing is currently
+   * shown (e.g. paused — see `pauseVerseHighlight`). Tracked so pausing knows
+   * which decoration to remove, and so resuming knows whether to create a
+   * fresh one or update the one already on screen.
+   */
+  currentDecorationId: string | null;
 }
 let verseTrack: VerseTimingTrack | null = null;
 /**
@@ -112,13 +121,22 @@ function ensureAudio(): HTMLAudioElement | null {
     audioEl.preload = "none";
     audioEl.onplay = () => {
       isPlaying.value = true;
+      if (audioEl) resumeVerseHighlight(audioEl.currentTime);
     };
     audioEl.onpause = () => {
       isPlaying.value = false;
+      // The end of a chapter fires `pause` immediately before `ended` (per the
+      // media spec) — that's the highlight finishing on schedule, not a user
+      // pause, so it should fade out as already arranged rather than freeze.
+      if (!audioEl?.ended) pauseVerseHighlight();
     };
     audioEl.onended = () => {
       isPlaying.value = false;
       if (audioEl) audioEl.currentTime = 0;
+      // A replay should fetch timings and highlight from verse one again, not
+      // resume mid-track from whatever verse was last read.
+      verseTrack = null;
+      verseTrackToken++;
     };
     audioEl.ontimeupdate = () => {
       if (audioEl) highlightVerseForTime(audioEl.currentTime);
@@ -155,6 +173,7 @@ function highlightVerseForTime(currentTime: number): void {
     return;
   }
   verseTrack.lastVerse = verseNumber;
+  verseTrack.verseIndex = index;
 
   const durationMs = verseHighlightDurationMs(
     startTimes,
@@ -163,11 +182,81 @@ function highlightVerseForTime(currentTime: number): void {
     audioEl?.duration
   );
 
-  readingState.decorateVerses(bookId, chapterNumber, [verseNumber], {
-    className: "sb-verse-decoration-diminish",
-    containerClassName: "sb-chapter-decoration-diminish",
-    ...(durationMs !== null ? { removeAfterMs: durationMs } : {}),
-  });
+  verseTrack.currentDecorationId = readingState.decorateVerses(
+    bookId,
+    chapterNumber,
+    [verseNumber],
+    {
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
+      ...(durationMs !== null ? { removeAfterMs: durationMs } : {}),
+    }
+  );
+}
+
+/**
+ * Clears the current verse's highlight when playback is paused, rather than
+ * leaving it lit (which would otherwise fade out on a wall-clock timer that
+ * keeps running while the audio doesn't — see `resumeVerseHighlight`).
+ *
+ * There's no "stop" affordance yet distinct from "pause", so this is the only
+ * option that doesn't leave a highlight stuck on screen indefinitely if the
+ * user pauses and never resumes. Once the player grows real transport
+ * controls, pausing should instead freeze the highlight in place (re-issuing
+ * the same decoration id with no `removeAfterMs`, the way `resumeVerseHighlight`
+ * already re-arms it) and only a "stop" should clear it.
+ */
+function pauseVerseHighlight(): void {
+  if (!verseTrack || verseTrack.currentDecorationId === null) return;
+  verseTrack.readingState.removeDecoration(verseTrack.currentDecorationId);
+  verseTrack.currentDecorationId = null;
+}
+
+/**
+ * Re-lights the current verse when playback resumes — `pauseVerseHighlight`
+ * clears it on pause, so without this the reader would sit unhighlighted
+ * until the *next* verse starts. Schedules its fade-out from `currentTime`
+ * (the position playback resumed from) rather than the verse's original start
+ * time, so it still fades out when the next verse actually starts rather than
+ * however long after resuming that the verse's full duration would imply.
+ */
+function resumeVerseHighlight(currentTime: number): void {
+  if (
+    !verseTrack ||
+    verseTrack.lastVerse === null ||
+    verseTrack.verseIndex === null ||
+    !Number.isFinite(currentTime)
+  ) {
+    return;
+  }
+  const {
+    readingState,
+    bookId,
+    chapterNumber,
+    lastVerse,
+    verseIndex,
+    startTimes,
+    currentDecorationId,
+  } = verseTrack;
+
+  const durationMs = verseHighlightDurationMs(
+    startTimes,
+    verseIndex,
+    currentTime,
+    audioEl?.duration
+  );
+
+  verseTrack.currentDecorationId = readingState.decorateVerses(
+    bookId,
+    chapterNumber,
+    [lastVerse],
+    {
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
+      ...(durationMs !== null ? { removeAfterMs: durationMs } : {}),
+    },
+    currentDecorationId ?? undefined
+  );
 }
 
 /**
@@ -209,6 +298,8 @@ async function loadVerseTrack(
     verseNumbers: chapterVerseNumbers(chapterData),
     startTimes: timings.verses,
     lastVerse: null,
+    verseIndex: null,
+    currentDecorationId: null,
   };
 }
 
