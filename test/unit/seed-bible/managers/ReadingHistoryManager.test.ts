@@ -1387,4 +1387,92 @@ describe("ReadingHistoryManager", () => {
       expect(createdEvent.set).toHaveBeenCalledWith("end", 1_700_000_360);
     });
   });
+
+  describe("the shared local store", () => {
+    /** 2026-06-15T12:00:00Z. */
+    const NOON = Math.floor(Date.UTC(2026, 5, 15, 12) / 1000);
+
+    afterEach(() => {
+      vi.doUnmock(
+        "@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore"
+      );
+      vi.resetModules();
+      vi.restoreAllMocks();
+    });
+
+    /**
+     * Loads a fresh copy of the manager with a counting store factory.
+     *
+     * The module-level singleton is memoised for the life of a page load, which
+     * is the behaviour under test — so it has to start unset, and only resetting
+     * the module registry does that.
+     */
+    async function loadWithCountingStore() {
+      vi.resetModules();
+      const created: OfflineReadingHistoryStore[] = [];
+      vi.doMock(
+        "@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore",
+        async (importOriginal) => {
+          const actual =
+            (await importOriginal()) as typeof import("@packages/seed-bible/seed-bible/managers/OfflineReadingHistoryStore");
+          return {
+            ...actual,
+            createIndexedDbReadingHistoryStore: () => {
+              const store = actual.createInMemoryReadingHistoryStore();
+              created.push(store);
+              return store;
+            },
+          };
+        }
+      );
+      const manager =
+        await import("@packages/seed-bible/seed-bible/managers/ReadingHistoryManager");
+      return { manager, created };
+    }
+
+    it("builds one store per page load and hands the same one out again", async () => {
+      const { manager, created } = await loadWithCountingStore();
+
+      const first = manager.getSharedReadingHistoryStore();
+      const second = manager.getSharedReadingHistoryStore();
+
+      // One database, one connection to it: `TodayManager` and Scripture Map
+      // both call these functions directly, so a store built per call would
+      // mean a connection per caller.
+      expect(created).toHaveLength(1);
+      expect(first).toBe(created[0]);
+      expect(second).toBe(first);
+    });
+
+    it("records into the shared store when a caller names none", async () => {
+      const { manager } = await loadWithCountingStore();
+      const os = CasualOSManager();
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue({
+        getArray: () => ({
+          length: 0,
+          push: () => {},
+          type: { length: 0, get: () => undefined },
+        }),
+        createMap: () => ({ get: () => undefined, set: () => {} }),
+      } as unknown as SharedDocument);
+
+      // No `store` option at all — the path every production caller takes.
+      await manager.saveReadingHistorySpan(
+        os,
+        "user-1",
+        "user-1",
+        "GEN",
+        1,
+        NOON,
+        NOON + 5
+      );
+
+      const shared = manager.getSharedReadingHistoryStore();
+      expect(shared).not.toBeNull();
+      const rows = await shared!.listForWindow("user-1", 0, NOON + 100);
+      expect(rows.map((r) => ({ start: r.start, end: r.end }))).toEqual([
+        { start: NOON, end: NOON + 5 },
+      ]);
+    });
+  });
 });
