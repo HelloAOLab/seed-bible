@@ -541,6 +541,7 @@
   margin-right: var(--text-heading-margin-right);
   font-size: 1.125em;
   line-height: 1;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .sb-line-break {
@@ -571,10 +572,10 @@
   transition:
     background-color 0.2s ease,
     background 0.3s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    opacity 0.3s ease-in-out;
 
   &:has(.sb-verse-decoration-diminish) {
-    animation: none;
     opacity: 1;
   }
 }
@@ -991,36 +992,26 @@
 }
 
 .sb-chapter-decoration-diminish {
-  /* Excluding the decorated verses here (rather than relying on the
-     `.sb-verse:has(.sb-verse-decoration-diminish)` override above to win)
-     matters because both selectors have equal specificity (two classes) —
-     a tie the later-declared rule would otherwise win regardless of which
-     one is meant to take precedence, silently dimming the very verses this
-     decoration exists to keep bright. */
+  /* Opacity is a plain state (dimmed while this class is present) rather
+     than a fixed-length @keyframes animation, so it holds for as long as
+     the decoration stays active instead of finishing on its own clock —
+     if a second diminish decoration arrives before the first expires, the
+     class never toggles off, so already-dimmed verses just stay dimmed
+     until the last matching decoration is removed (see `containerClasses`
+     in BibleReader.tsx). Excluding the decorated verses here (rather than
+     relying on the `.sb-verse:has(.sb-verse-decoration-diminish)` override
+     above to win) matters because both selectors have equal specificity
+     (two classes) — a tie the later-declared rule would otherwise win
+     regardless of which one is meant to take precedence, silently dimming
+     the very verses this decoration exists to keep bright. */
   .sb-verse:not(:has(.sb-verse-decoration-diminish)),
   .sb-chapter-heading {
-    animation: diminish-in-out 3s ease-in-out;
-  }
-
-  /* Nested so this beats `.sb-chapter-decoration-diminish .sb-verse` above
-     (equal specificity would otherwise let the dim animation win). */
-  .sb-verse:has(.sb-verse-decoration-diminish) {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-@keyframes diminish-in-out {
-  0% {
-    opacity: 1;
-  }
-
-  10%,
-  90% {
     opacity: 0.4;
   }
 
-  100% {
+  /* Nested so this beats `.sb-chapter-decoration-diminish .sb-verse` above
+     (equal specificity would otherwise let the dim opacity win). */
+  .sb-verse:has(.sb-verse-decoration-diminish) {
     opacity: 1;
   }
 }
