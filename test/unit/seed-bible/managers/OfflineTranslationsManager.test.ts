@@ -527,6 +527,7 @@ describe("automatically applying an update to the translation in use", () => {
     // Never leaves a fake `navigator.connection` behind for another test to
     // trip over.
     delete (navigator as { connection?: unknown }).connection;
+    vi.useRealTimers();
   });
 
   async function harnessWithDetectedUpdate(): Promise<BibleDataManager> {
@@ -577,6 +578,28 @@ describe("automatically applying an update to the translation in use", () => {
     expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
       true
     );
+  });
+
+  it("does not offer a download for another translation while an update prompt is on screen", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-01T09:00:00Z"));
+
+    setConnection(true);
+    const manager = await harnessWithDetectedUpdate();
+
+    // NIV clears every other gate `offerDownloadPrompt` checks: it's been in
+    // use for over a day, it's never been offered before, and the device is
+    // online — so without the fix, only the update prompt already on screen
+    // stands between it and stacking a second modal.
+    const niv = translations.translations[1]!;
+    manager.offline.noteTranslationInUse(niv.id);
+    vi.setSystemTime(new Date("2026-03-02T10:00:00Z")); // 25 hours later
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
+
+    expect(manager.offline.offerDownloadPrompt(niv)).toBe(false);
+    expect(manager.offline.downloadPrompt.value).toBeNull();
   });
 
   it("does not re-offer the same update once it has already been shown", async () => {

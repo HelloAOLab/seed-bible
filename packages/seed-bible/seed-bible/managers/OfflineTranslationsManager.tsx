@@ -261,7 +261,8 @@ export interface OfflineTranslationsManager {
   /**
    * Offers to save a translation for offline reading, if every condition is
    * met: the device can store downloads, no prompt has been shown yet this
-   * session, the device is online, this translation isn't already downloaded or
+   * session, no update offer ({@link updatePrompt}) is already on screen, the
+   * device is online, this translation isn't already downloaded or
    * downloading, it has never been offered before, and — unless this is the
    * first offer the device has ever made — the user has been reading this
    * translation for at least a day.
@@ -1172,7 +1173,9 @@ export function createOfflineTranslationsManager(
     if (store === null) {
       return false;
     }
-    if (promptedThisSession || downloadPrompt.value) {
+    if (promptedThisSession || downloadPrompt.value || updatePrompt.value) {
+      // Never stack this on top of an update offer already on screen — see
+      // the matching guard in `checkAndApplyUpdate`.
       return false;
     }
     // Offering a download with no connection would only fail.
