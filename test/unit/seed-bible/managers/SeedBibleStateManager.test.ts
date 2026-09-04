@@ -1834,6 +1834,74 @@ describe("createSeedBibleState", () => {
     });
   });
 
+  describe("customizationLogoUrl", () => {
+    it("is null with no active customization", async () => {
+      const state = await createState();
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+
+    it("is null when the active customization has no uploaded logo", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: null,
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+
+    it("is the active customization's logo when one is uploaded", async () => {
+      const state = await createState();
+
+      state.customizations.editingCustomization.value = {
+        id: "customization_test",
+        name: "Grandma's Bible",
+        variants: [
+          {
+            id: "variant_test",
+            name: "Default",
+            baseTheme: "light",
+            themes: {},
+            highlightColors: {},
+            createdAt: 0,
+            updatedAt: 0,
+          },
+        ],
+        defaultVariantId: "variant_test",
+        logoUrl: "https://example.com/logo.png",
+        createdAt: 0,
+        updatedAt: 0,
+        extensionSettings: {},
+      };
+
+      expect(state.app.customizationLogoUrl.value).toBe(
+        "https://example.com/logo.png"
+      );
+
+      state.customizations.editingCustomization.value = null;
+
+      expect(state.app.customizationLogoUrl.value).toBeNull();
+    });
+  });
+
   describe("customization highlight-color overrides", () => {
     it("layers the active customization variant's highlight overrides onto the rendered theme, leaving untouched ids alone", async () => {
       const state = await createState();

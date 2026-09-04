@@ -2,6 +2,7 @@ import {
   acceptLanguageRedirect,
   legacyReadingUrlRedirect,
   render,
+  stripDefaultOgImageMeta,
 } from "../../../standalone/entry-ssr";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
@@ -287,6 +288,48 @@ describe("acceptLanguageRedirect", () => {
   });
 });
 
+describe("stripDefaultOgImageMeta", () => {
+  const DEFAULT_OG_IMAGE_BLOCK = [
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
+  ].join("\n");
+
+  it("removes every og:image/:type/:width/:height/:alt tag, including one split across lines", () => {
+    const result = stripDefaultOgImageMeta(DEFAULT_OG_IMAGE_BLOCK);
+
+    expect(result).not.toContain("og:image");
+    // Untouched neighbor, to prove this isn't just wiping the whole block.
+    expect(result).toContain('<meta property="og:type" content="website" />');
+  });
+
+  it("leaves other og:*/twitter:* tags alone while stripping only the og:image family", () => {
+    const html = [
+      '<meta property="og:title" content="Hello" />',
+      '<meta property="og:image" content="/default.jpg" />',
+      '<meta name="twitter:card" content="summary_large_image" />',
+    ].join("\n");
+
+    const result = stripDefaultOgImageMeta(html);
+
+    expect(result).toContain('<meta property="og:title" content="Hello" />');
+    expect(result).toContain(
+      '<meta name="twitter:card" content="summary_large_image" />'
+    );
+    expect(result).not.toContain("og:image");
+  });
+
+  it("is a no-op when there is nothing to strip", () => {
+    const html = "<head><title>Test</title></head>";
+
+    expect(stripDefaultOgImageMeta(html)).toBe(html);
+  });
+});
+
 describe("render() redirect wiring", () => {
   // These resolve before any network call (the redirect checks run ahead of
   // `createSeedBibleState`), so no fetch mocking is needed.
@@ -393,11 +436,27 @@ describe("render() redirect wiring", () => {
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
     '<!doctype html><html lang="<!-- HTML_LANG -->"><head>',
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines (its
+    // `property`/`content` attributes on separate lines), the rest don't —
+    // `stripDefaultOgImageMeta` has to handle both shapes.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
+    // The real default icon links (index.html:15-16) — a `.ico` favicon and a
+    // `.png` apple-touch-icon, matching what a real browser sees, so the
+    // "override wins" tests below assert against an actual ordering effect
+    // rather than a template with nothing to override in the first place.
+    '<link rel="icon" href="/standalone/img/favicon.ico" />',
+    '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />',
     '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
     '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
+    '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -973,5 +1032,249 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("Verse 1");
       expect(html).not.toContain("--sb-primary-color: #abc123;");
     });
+
+    // Asserts a true replacement, not merely an override tag added after the
+    // default: browsers do not reliably prefer the *last* declared icon link
+    // when several share a `rel` (some use whichever they fetch or parse
+    // first), so relying on document order — as an earlier version of this
+    // fix did — can't be trusted. There must be exactly one tag per `rel`,
+    // with the default href gone entirely.
+    it("replaces the favicon and apple-touch-icon with the linked customization's uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="icon" href="https://example.com/logo.png"/>'
+      );
+      expect(html).not.toContain("/standalone/img/favicon.ico");
+
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="https://example.com/logo.png"/>'
+      );
+      expect(html).not.toContain("/standalone/img/apple-touch-icon.png");
+    });
+
+    it("leaves the default favicon and apple-touch-icon alone when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      // Exactly one of each — the default, with no override tag alongside it.
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="icon" href="/standalone/img/favicon.ico" />'
+      );
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+      );
+    });
+
+    it("replaces og:image with the linked customization's uploaded logo, dropping the stale type/width/height", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain(
+        '<meta property="og:image" content="https://example.com/logo.png"/>'
+      );
+      // Only one og:image tag — the default was removed, not merely
+      // shadowed, since a crawler can't be relied on to prefer the last of
+      // two.
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).not.toContain('property="og:image:type"');
+      expect(html).not.toContain('property="og:image:width"');
+      expect(html).not.toContain('property="og:image:height"');
+    });
+
+    it("leaves the default og:image (and its type/width/height) alone when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).toContain('property="og:image:type"');
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+    });
+
+    // Regression coverage for the SSR->client customization re-fetch: before
+    // `getInitialCustomizationSeed` existed, nothing was embedded here, so the
+    // client's own `CustomizationsManager` always repeated the same
+    // `os.getData()` round trip the server had just made, even though the
+    // page already reflects its result.
+    function readEmbeddedCustomizationSeed(html: string): unknown {
+      const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-customization-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("embeds the resolved customization as a seed for the client to reuse", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: { primaryColor: "#abc123" },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toMatchObject({
+        locator: "owner.customization_shared",
+        customization: { id: "customization_shared", name: "Shared" },
+      });
+    });
+
+    it("embeds a resolved-missing seed when the record isn't found, instead of leaving the client to retry", async () => {
+      mockFetchWithCustomizationResponse({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_missing"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toEqual({
+        locator: "owner.customization_missing",
+        customization: null,
+      });
+    });
+  });
+
+  it("embeds no customization seed when there's no ?customization= link", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(html);
+    expect(match).not.toBeNull();
+    expect(JSON.parse(match![1]!)).toBeNull();
+  });
+
+  it("leaves the default favicon and apple-touch-icon alone with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="icon" href="/standalone/img/favicon.ico" />'
+    );
+    expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+    );
+  });
+
+  it("leaves the default og:image alone with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+    expect(html.match(/property="og:image"/g)).toHaveLength(1);
   });
 });

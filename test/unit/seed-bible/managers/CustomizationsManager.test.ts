@@ -11,6 +11,7 @@ import {
   MIN_READABLE_CONTRAST_RATIO,
   SECONDARY_LIGHTEN_AMOUNT,
   TERTIARY_LIGHTEN_AMOUNT,
+  type InitialCustomizationSeed,
 } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import {
   createCustomizationVariantSelectionsManager,
@@ -130,7 +131,10 @@ describe("CustomizationsManager", () => {
     warnSpy.mockRestore();
   });
 
-  function createManager(nav: NavigationManager = navigation) {
+  function createManager(
+    nav: NavigationManager = navigation,
+    initialCustomizationSeed?: InitialCustomizationSeed
+  ) {
     const theme = createTheme(settings);
     const variantSelections = createCustomizationVariantSelectionsManager(
       os,
@@ -146,7 +150,8 @@ describe("CustomizationsManager", () => {
       theme,
       nav,
       variantSelections,
-      extensionPreferences
+      extensionPreferences,
+      initialCustomizationSeed
     );
     return { theme, variantSelections, extensionPreferences, manager };
   }
@@ -1827,6 +1832,191 @@ describe("CustomizationsManager", () => {
       vi.clearAllTimers();
       vi.useRealTimers();
     }
+  });
+
+  describe("initialCustomizationSeed", () => {
+    const sharedRecord = {
+      id: "customization_shared",
+      name: "Shared",
+      variants: [
+        {
+          id: "variant_shared",
+          name: "Shared variant",
+          baseTheme: "light",
+          themes: { primaryColor: "#abc123" },
+          highlightColors: {},
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      defaultVariantId: "variant_shared",
+      logoUrl: null,
+      createdAt: 1,
+      updatedAt: 1,
+      extensionSettings: {},
+    };
+    const LOCATOR = "other-user.customization_shared";
+
+    it("applies a matching seed synchronously, without calling os.getData()", () => {
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: LOCATOR,
+        customization: sharedRecord,
+      });
+
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value).toEqual(sharedRecord);
+      expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+      expect(manager.activeCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+    });
+
+    it("applies a resolved-missing seed (customization: null) without calling os.getData()", () => {
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: LOCATOR,
+        customization: null,
+      });
+
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value).toBeNull();
+      expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+    });
+
+    // Regression guard for the asymmetry flagged in review: a fetched record
+    // goes through `customizationSchema.safeParse`/`narrowVariants` before
+    // being trusted, but the seed — which also crosses a server/client JSON
+    // boundary — used to be assigned straight to `linkedCustomization` with
+    // no such check. Without this, the two paths could silently drift apart
+    // the next time the schema changes (a new required field, say): the
+    // fetch path would reject a bad record, the seed path would wave it
+    // through.
+    it("ignores a seed for the matching locator that fails schema validation, falling back to a normal fetch", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: LOCATOR,
+        // Violates `customizationSchema`'s `variants` min(1) — exactly the
+        // kind of shape `safeParse` rejects on the fetch path.
+        customization: { ...sharedRecord, variants: [] },
+      });
+      await manager.initialCustomizationLoadPromise;
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it("ignores a seed for a different locator and fetches normally instead", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation, {
+        locator: "other-user.customization_stale",
+        customization: { ...sharedRecord, id: "customization_stale" },
+      });
+      await manager.initialCustomizationLoadPromise;
+
+      expect(getDataMock).toHaveBeenCalledWith(
+        "other-user",
+        "customization_shared"
+      );
+      expect(manager.linkedCustomization.value?.id).toBe(
+        "customization_shared"
+      );
+    });
+
+    it("getInitialCustomizationSeed() returns null with no ?customization= param", () => {
+      const { manager } = createManager();
+
+      expect(manager.getInitialCustomizationSeed()).toBeNull();
+    });
+
+    it("getInitialCustomizationSeed() reflects a load that resolved to a customization", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: sharedRecord });
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      const { manager } = createManager(linkedNavigation);
+      await manager.initialCustomizationLoadPromise;
+
+      expect(manager.getInitialCustomizationSeed()).toEqual({
+        locator: LOCATOR,
+        customization: manager.linkedCustomization.value,
+      });
+    });
+
+    it("getInitialCustomizationSeed() reflects a load that resolved to 'not found'", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+      const linkedNavigation = createNavigationManager({
+        initialHref:
+          "http://localhost/?customization=owner.customization_missing",
+      });
+
+      const { manager } = createManager(linkedNavigation);
+      await manager.initialCustomizationLoadPromise;
+
+      expect(manager.getInitialCustomizationSeed()).toEqual({
+        locator: "owner.customization_missing",
+        customization: null,
+      });
+    });
+
+    // The regression this guards against: if a timed-out SSR load were
+    // seeded as "not found", the client would trust that and never make its
+    // own attempt — silently dropping a customization that might have
+    // resolved fine given more time. `getInitialCustomizationSeed()` must
+    // stay null so `entry-ssr.tsx` embeds nothing for the client to (wrongly)
+    // trust.
+    it("getInitialCustomizationSeed() stays null when the SSR timeout backstop fired before the load completed", async () => {
+      vi.useFakeTimers();
+      getDataMock.mockReturnValue(new Promise(() => {}));
+      const linkedNavigation = createNavigationManager({
+        initialHref: `http://localhost/?customization=${LOCATOR}`,
+      });
+
+      try {
+        import.meta.env.SSR = true;
+        const { manager } = createManager(linkedNavigation);
+
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(manager.initialCustomizationLoadSettled.value).toBe(true);
+        expect(manager.getInitialCustomizationSeed()).toBeNull();
+      } finally {
+        delete import.meta.env.SSR;
+        vi.clearAllTimers();
+        vi.useRealTimers();
+      }
+    });
   });
 
   it("an in-progress edit draft takes priority over a URL-linked customization", async () => {
