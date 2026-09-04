@@ -99,7 +99,7 @@ function createMockState(
       hasRecordOverride: false,
       sync: {
         pendingCount: signal(0),
-        pendingCountForChapter: vi.fn(() => 0),
+        pendingCountForCollection: vi.fn(() => 0),
       },
     },
     features: { isFeatureEnabled: vi.fn().mockReturnValue(false) },

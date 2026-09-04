@@ -1,6 +1,6 @@
 /**
- * Pushes locally-recorded annotation changes to the server, and asks the user
- * what to do when a note changed in both places.
+ * Pushes locally-recorded changes to the server, and asks the user what to do
+ * when a record changed in both places.
  *
  * ## Why conflicts have to be handled here at all
  *
@@ -8,9 +8,9 @@
  * overwrite. So the only way to avoid silently destroying somebody's writing is
  * to read the server's copy first and check it is still the one the local edit
  * was based on. Each stored row keeps that "base" pointer (see
- * `StoredAnnotation.baseUpdatedAtMs`), which is why this compares against a
- * remembered version rather than asking whose timestamp is larger — timestamps
- * are written by whichever device made the edit, and two devices' clocks do not
+ * `StoredRecord.base`), which is why this compares against a remembered
+ * version rather than asking whose timestamp is larger — timestamps are
+ * written by whichever device made the edit, and two devices' clocks do not
  * have to agree.
  *
  * ## What it does not do
@@ -21,20 +21,17 @@
  */
 
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
-import { v4 as uuid } from "uuid";
-import type { Annotation } from "./AnnotationsManager";
 import type { LoginManager } from "./LoginManager";
 import type { CasualOSManager } from "./OsManager";
 import { FATAL_SESSION_ERROR_CODES } from "./SessionGuard";
 import {
-  annotationFingerprint,
-  annotationUpdatedAtMs,
   LOCAL_OWNER,
   MAX_SYNC_ATTEMPTS,
   syncedRow,
-  type OfflineAnnotationStore,
-  type StoredAnnotation,
-} from "./OfflineAnnotationStore";
+  type OfflineRecordStore,
+  type StoredRecord,
+  type SyncDomain,
+} from "./OfflineRecordStore";
 
 /**
  * Server failures that a later attempt could plausibly succeed at.
@@ -65,7 +62,7 @@ const SESSION_ENDED_ERROR_CODES: ReadonlySet<string> = new Set(
 );
 
 /** Why a local change and the server's copy can't both be kept as they are. */
-export type AnnotationConflictKind =
+export type ConflictKind =
   /** Edited here and also edited elsewhere. */
   | "edited_elsewhere"
   /** Edited here, but deleted elsewhere. */
@@ -73,26 +70,23 @@ export type AnnotationConflictKind =
   /** Deleted here, but edited elsewhere. */
   | "deleted_locally_edited_elsewhere";
 
-export interface AnnotationConflict {
+export interface RecordConflict<T> {
   /** Stable id, so the modal can address one conflict out of several. */
   id: string;
 
-  kind: AnnotationConflictKind;
+  kind: ConflictKind;
 
-  /** The account whose note this is. */
+  /** The account whose record this is. */
   owner: string;
 
   /** What this device has. Null when the local change was a deletion. */
-  local: Annotation | null;
+  local: T | null;
 
   /** What the server has. Null when the server's copy is gone. */
-  server: Annotation | null;
+  server: T | null;
 
-  /** When the local change was made. */
+  /** When this device last changed the record. */
   localUpdatedAtMs: number;
-
-  /** When the server's copy was last changed, if it says. */
-  serverUpdatedAtMs: number | null;
 }
 
 /**
@@ -101,7 +95,7 @@ export interface AnnotationConflict {
  * - `keep_mine` — overwrite the server with the local version (or carry out the
  *   local deletion).
  * - `keep_theirs` — discard the local change and take the server's version.
- * - `keep_both` — save the local version as a *new* note alongside the
+ * - `keep_both` — save the local version as a *new* record alongside the
  *   server's, so no writing is lost. Not offered where it would be meaningless
  *   (see {@link conflictResolutions}).
  */
@@ -110,20 +104,18 @@ export type ConflictResolution = "keep_mine" | "keep_theirs" | "keep_both";
 /**
  * The choices worth offering for a conflict.
  *
- * "Keep both" only makes sense when there are two versions to keep. If the note
- * was deleted elsewhere there is nothing of theirs to preserve, and if the local
- * change was a deletion there is nothing of ours — so both of those offer two
- * choices rather than three.
+ * "Keep both" only makes sense when there are two versions to keep. If the
+ * record was deleted elsewhere there is nothing of theirs to preserve, and if
+ * the local change was a deletion there is nothing of ours — so both of those
+ * offer two choices rather than three.
  */
-export function conflictResolutions(
-  kind: AnnotationConflictKind
-): ConflictResolution[] {
+export function conflictResolutions(kind: ConflictKind): ConflictResolution[] {
   return kind === "edited_elsewhere"
     ? ["keep_mine", "keep_theirs", "keep_both"]
     : ["keep_mine", "keep_theirs"];
 }
 
-export interface AnnotationSyncManager {
+export interface RecordSyncManager<T> {
   /** Whether the browser currently reports a network connection. */
   isOnline: ReadonlySignal<boolean>;
 
@@ -134,21 +126,21 @@ export interface AnnotationSyncManager {
   pendingCount: ReadonlySignal<number>;
 
   /**
-   * How many of those local changes belong to one chapter.
+   * How many of those local changes belong to one collection.
    *
-   * `pendingCount` is account-wide, so a note left unsynced in Exodus would
-   * otherwise still show up as "waiting to sync" under Genesis 1 — this is
-   * what a chapter-scoped display should read instead.
+   * `pendingCount` is account-wide, so a change left unsynced in one
+   * collection would otherwise still show up as "waiting to sync" everywhere
+   * else — this is what a collection-scoped display should read instead.
    */
-  pendingCountForChapter: (bookId: string, chapterNumber: number) => number;
+  pendingCountForCollection: (collection: string) => number;
 
   /**
    * Conflicts waiting on the user. Nothing is written to the server, and no
    * local change is discarded, until each one is resolved.
    */
-  conflicts: ReadonlySignal<AnnotationConflict[]>;
+  conflicts: ReadonlySignal<RecordConflict<T>[]>;
 
-  /** The most recent failure per annotation id. */
+  /** The most recent failure per record address. */
   syncErrors: ReadonlySignal<Map<string, string>>;
 
   /**
@@ -176,77 +168,51 @@ export interface AnnotationSyncManager {
   dispose: () => void;
 }
 
-export interface CreateAnnotationSyncManagerOptions {
+export interface CreateRecordSyncManagerOptions<T> {
   os: CasualOSManager;
   login: LoginManager;
-
   /** Where local changes are recorded. Null disables syncing entirely. */
-  store: OfflineAnnotationStore | null;
-
-  /**
-   * Validates a record read back from the server.
-   *
-   * Injected rather than imported so this module needs nothing at runtime from
-   * `AnnotationsManager`, which constructs it — otherwise the two would import
-   * each other.
-   */
-  parseAnnotation: (value: unknown) => Annotation | null;
-
-  /** The marker a chapter's annotations are indexed under. Injected for the same reason. */
-  getMarker: (bookId: string, chapterNumber: number) => string;
-
-  /**
-   * Called so caches can be refreshed: after a push changes the server, or
-   * when a resolution queues a row that should already be visible (see
-   * `keep_both` below) rather than waiting for its first push.
-   */
-  onSynced?: (annotation: Annotation, owner: string) => void;
-
-  /** Called when a resolution removes an annotation, so caches can drop it. */
-  onRemoved?: (annotationId: string, owner: string) => void;
+  store: OfflineRecordStore<T> | null;
+  domain: SyncDomain<T>;
+  /** Called so caches can be refreshed after the server changed, or when a resolution queues a row that should already be visible. */
+  onSynced?: (address: string, payload: T, owner: string) => void;
+  /** Called when a resolution removes a record, so caches can drop it. */
+  onRemoved?: (address: string, owner: string) => void;
 }
 
-/** What the server currently holds for one annotation. */
-type ServerState =
-  | { present: true; annotation: Annotation }
-  | { present: false };
+/** What the server currently holds for one record. */
+type ServerState<T> = { present: true; payload: T } | { present: false };
 
 /** Distinguishes "the server said no" from "we couldn't reach the server". */
-type PushOutcome =
+type PushOutcome<T> =
   | { status: "done" }
-  | { status: "conflict"; conflict: AnnotationConflict }
+  | { status: "conflict"; conflict: RecordConflict<T> }
   | { status: "retry"; message: string }
   | { status: "permanent"; message: string }
   /** The session ended. Nothing about the row changes; a new sign-in retries it. */
   | { status: "session_ended"; message: string };
 
-export function createAnnotationSyncManager(
-  options: CreateAnnotationSyncManagerOptions
-): AnnotationSyncManager {
-  const { os, login, store, parseAnnotation, getMarker, onSynced, onRemoved } =
-    options;
+export function createRecordSyncManager<T>(
+  options: CreateRecordSyncManagerOptions<T>
+): RecordSyncManager<T> {
+  const { os, login, store, domain, onSynced, onRemoved } = options;
 
   const isOnline = signal<boolean>(
     typeof navigator === "undefined" ? true : navigator.onLine !== false
   );
   const isSyncing = signal(false);
-  const pendingRows = signal<StoredAnnotation[]>([]);
-  const conflicts = signal<AnnotationConflict[]>([]);
+  const pendingRows = signal<StoredRecord<T>[]>([]);
+  const conflicts = signal<RecordConflict<T>[]>([]);
   const syncErrors = signal<Map<string, string>>(new Map());
 
   const pendingCount = computed(() => pendingRows.value.length);
 
-  const pendingCountForChapter = (
-    bookId: string,
-    chapterNumber: number
-  ): number =>
-    pendingRows.value.filter(
-      (row) => row.bookId === bookId && row.chapterNumber === chapterNumber
-    ).length;
+  const pendingCountForCollection = (collection: string): number =>
+    pendingRows.value.filter((row) => row.collection === collection).length;
 
   // Rows already raised as a conflict, so a repeated pass doesn't queue the
   // same question twice while the user is still looking at the first one.
-  const awaitingUser = new Map<string, AnnotationConflict>();
+  const awaitingUser = new Map<string, RecordConflict<T>>();
 
   let running: Promise<void> | null = null;
   // Set only when *new* local work arrives mid-pass. One extra pass afterwards
@@ -256,18 +222,18 @@ export function createAnnotationSyncManager(
   // re-run the whole queue for nothing.
   let dirty = false;
 
-  const setError = (annotationId: string, message: string) => {
+  const setError = (address: string, message: string) => {
     const next = new Map(syncErrors.value);
-    next.set(annotationId, message);
+    next.set(address, message);
     syncErrors.value = next;
   };
 
-  const clearError = (annotationId: string) => {
-    if (!syncErrors.value.has(annotationId)) {
+  const clearError = (address: string) => {
+    if (!syncErrors.value.has(address)) {
       return;
     }
     const next = new Map(syncErrors.value);
-    next.delete(annotationId);
+    next.delete(address);
     syncErrors.value = next;
   };
 
@@ -280,7 +246,7 @@ export function createAnnotationSyncManager(
     try {
       pendingRows.value = await store.listPending(owner);
     } catch (error) {
-      console.warn("Failed to read pending annotation changes.", error);
+      console.warn("Failed to read pending record changes.", error);
     }
   };
 
@@ -290,18 +256,18 @@ export function createAnnotationSyncManager(
   /** Reads the server's copy, or reports that it isn't there. */
   const readServer = async (
     owner: string,
-    annotationId: string
-  ): Promise<ServerState | { failure: PushOutcome }> => {
-    const result = await os.getData(owner, annotationId);
+    address: string
+  ): Promise<ServerState<T> | { failure: PushOutcome<T> }> => {
+    const result = await os.getData(owner, address);
 
     if (result.success) {
-      const parsed = parseAnnotation(result.data);
+      const parsed = domain.parse(result.data);
       if (!parsed) {
-        // The address holds something that isn't an annotation. Overwriting it
+        // The address holds something that isn't one of ours. Overwriting it
         // is the least surprising thing to do — it can't be shown or edited.
         return { present: false };
       }
-      return { present: true, annotation: parsed };
+      return { present: true, payload: parsed };
     }
 
     if (result.errorCode === "data_not_found") {
@@ -311,54 +277,43 @@ export function createAnnotationSyncManager(
     return { failure: classifyFailure(result.errorCode, result.errorMessage) };
   };
 
-  /**
-   * Whether the server still holds the version the local row was based on.
-   *
-   * Falls back to comparing content when either side has no timestamp, which is
-   * the case for records written before `updatedAtMs` existed.
-   */
+  /** Whether the server still holds the version the local row was based on. */
   const serverMatchesBase = (
-    server: ServerState,
-    row: StoredAnnotation
+    server: ServerState<T>,
+    row: StoredRecord<T>
   ): boolean => {
     if (!server.present) {
-      return row.baseUpdatedAtMs === null && row.baseFingerprint === null;
+      return row.base === null;
     }
-
-    const serverUpdatedAtMs = annotationUpdatedAtMs(server.annotation);
-    if (serverUpdatedAtMs !== null && row.baseUpdatedAtMs !== null) {
-      return serverUpdatedAtMs === row.baseUpdatedAtMs;
+    if (row.base === null) {
+      return false;
     }
-
-    return annotationFingerprint(server.annotation) === row.baseFingerprint;
+    return domain.sameVersion(server.payload, row.base);
   };
 
   const toConflict = (
-    row: StoredAnnotation,
-    server: ServerState,
-    kind: AnnotationConflictKind
-  ): AnnotationConflict => ({
-    id: `${row.owner}/${row.annotationId}`,
+    row: StoredRecord<T>,
+    server: ServerState<T>,
+    kind: ConflictKind
+  ): RecordConflict<T> => ({
+    id: `${row.owner}/${row.address}`,
     kind,
     owner: row.owner,
-    local: row.annotation,
-    server: server.present ? server.annotation : null,
+    local: row.payload,
+    server: server.present ? server.payload : null,
     localUpdatedAtMs: row.updatedAtMs,
-    serverUpdatedAtMs: server.present
-      ? annotationUpdatedAtMs(server.annotation)
-      : null,
   });
 
   /**
    * Whether a row is still the one a push started from.
    *
-   * A push is a network round trip, and the user can save the same note again
-   * while it is in the air. The local change stamp plus the pending operation is
-   * enough to spot that: any later save rewrites both.
+   * A push is a network round trip, and the user can save the same record
+   * again while it is in the air. The local change stamp plus the pending
+   * operation is enough to spot that: any later save rewrites both.
    */
   const isUnchangedSince = (
-    started: StoredAnnotation,
-    current: StoredAnnotation | null
+    started: StoredRecord<T>,
+    current: StoredRecord<T> | null
   ): boolean =>
     current !== null &&
     current.updatedAtMs === started.updatedAtMs &&
@@ -371,12 +326,12 @@ export function createAnnotationSyncManager(
    * started from. Two things can happen during a round trip, and writing the
    * snapshot back would quietly undo either of them:
    *
-   * - The user saves the same note again. Marking the row synced with the older
-   *   content would revert the newer edit *and* drop it from the queue, losing
-   *   writing with nothing reported.
+   * - The user saves the same record again. Marking the row synced with the
+   *   older content would revert the newer edit *and* drop it from the queue,
+   *   losing writing with nothing reported.
    * - The account signs out. Writing a synced (readable) row back afterwards
-   *   would leave the departed account's note on a possibly shared device, which
-   *   is exactly what `clearSynced` exists to prevent.
+   *   would leave the departed account's record on a possibly shared device,
+   *   which is exactly what `clearSynced` exists to prevent.
    *
    * `base` is what the server now holds, so a newer local change can be rebased
    * onto it — otherwise the next pass would compare against a stale base and
@@ -384,14 +339,14 @@ export function createAnnotationSyncManager(
    */
   const recordPushed = async (
     owner: string,
-    started: StoredAnnotation,
-    base: Annotation | null
+    started: StoredRecord<T>,
+    base: T | null
   ): Promise<void> => {
     if (!store) {
       return;
     }
 
-    const current = await store.get(owner, started.annotationId);
+    const current = await store.get(owner, started.address);
     const unchanged = isUnchangedSince(started, current);
 
     if (login.userId.peek() !== owner) {
@@ -399,7 +354,7 @@ export function createAnnotationSyncManager(
       // copy is now a synced row for an account that has left — drop it. A newer
       // unsent edit is kept, matching sign-out's "keep unsent writing" rule.
       if (unchanged) {
-        await store.delete(owner, started.annotationId);
+        await store.delete(owner, started.address);
       }
       return;
     }
@@ -411,58 +366,84 @@ export function createAnnotationSyncManager(
     }
 
     if (!unchanged) {
-      await store.put({
-        ...current,
-        baseUpdatedAtMs: base ? annotationUpdatedAtMs(base) : null,
-        baseFingerprint: base ? annotationFingerprint(base) : null,
-      });
+      await store.put({ ...current, base });
       return;
     }
 
     if (!base) {
-      await store.delete(owner, started.annotationId);
-      onRemoved?.(started.annotationId, owner);
+      await store.delete(owner, started.address);
+      onRemoved?.(started.address, owner);
       return;
     }
 
-    await store.put(syncedRow(owner, base));
-    onSynced?.(base, owner);
+    await store.put(
+      syncedRow(owner, started.address, started.collection, base)
+    );
+    onSynced?.(started.address, base, owner);
   };
 
-  /** Writes an annotation to the server and mirrors the result locally. */
+  /** Writes a record to the server and mirrors the result locally. */
   const writeToServer = async (
     owner: string,
-    row: StoredAnnotation,
-    annotation: Annotation
-  ): Promise<PushOutcome> => {
-    const result = await os.recordData(owner, annotation.id, annotation, {
-      marker: getMarker(annotation.bookId, annotation.chapterNumber),
+    row: StoredRecord<T>,
+    payload: T
+  ): Promise<PushOutcome<T>> => {
+    const result = await os.recordData(owner, row.address, payload, {
+      marker: domain.marker(row.address, payload),
     });
 
     if (!result.success) {
       return classifyFailure(result.errorCode, result.errorMessage);
     }
 
-    await recordPushed(owner, row, annotation);
+    await recordPushed(owner, row, payload);
     return { status: "done" };
   };
 
-  /** Erases an annotation on the server and drops its local row. */
+  /** Erases a record on the server and drops its local row. */
   const eraseOnServer = async (
     owner: string,
-    row: StoredAnnotation
-  ): Promise<PushOutcome> => {
-    const result = await os.eraseData(owner, row.annotationId);
+    row: StoredRecord<T>
+  ): Promise<PushOutcome<T>> => {
+    const result = await os.eraseData(owner, row.address);
 
     // Already gone is the outcome we wanted, not a failure.
     if (!result.success && result.errorCode !== "data_not_found") {
       return classifyFailure(result.errorCode, result.errorMessage);
     }
 
-    // Null base: the server now holds nothing, so a note re-saved during the
+    // Null base: the server now holds nothing, so a record re-saved during the
     // erase becomes a fresh create rather than an update to something gone.
     await recordPushed(owner, row, null);
     return { status: "done" };
+  };
+
+  /**
+   * Resolves a row whose base no longer matches the server: hands it to the
+   * domain's merge when there is one, or raises a conflict for the user.
+   */
+  const mergeOrConflict = async (
+    owner: string,
+    row: StoredRecord<T>,
+    server: ServerState<T>
+  ): Promise<PushOutcome<T>> => {
+    if (domain.merge) {
+      const merged = domain.merge(
+        row.base,
+        row.deleted ? null : row.payload,
+        server.present ? server.payload : null
+      );
+      return merged === null
+        ? eraseOnServer(owner, row)
+        : writeToServer(owner, row, merged);
+    }
+    const kind: ConflictKind =
+      row.pendingOp === "delete"
+        ? "deleted_locally_edited_elsewhere"
+        : server.present
+          ? "edited_elsewhere"
+          : "deleted_elsewhere";
+    return { status: "conflict", conflict: toConflict(row, server, kind) };
   };
 
   /**
@@ -474,9 +455,9 @@ export function createAnnotationSyncManager(
    */
   const pushRow = async (
     owner: string,
-    row: StoredAnnotation
-  ): Promise<PushOutcome> => {
-    const server = await readServer(owner, row.annotationId);
+    row: StoredRecord<T>
+  ): Promise<PushOutcome<T>> => {
+    const server = await readServer(owner, row.address);
     if ("failure" in server) {
       return server.failure;
     }
@@ -491,46 +472,36 @@ export function createAnnotationSyncManager(
         return { status: "done" };
       }
       if (!matchesBase) {
-        return {
-          status: "conflict",
-          conflict: toConflict(row, server, "deleted_locally_edited_elsewhere"),
-        };
+        return mergeOrConflict(owner, row, server);
       }
       return eraseOnServer(owner, row);
     }
 
-    if (!row.annotation) {
+    if (!row.payload) {
       // An upsert with nothing to write can only be a corrupt row; drop it
       // rather than retrying it forever — unless a real save replaced it while
       // we were reading the server, in which case that save is the truth.
-      const current = await store?.get(owner, row.annotationId);
+      const current = await store?.get(owner, row.address);
       if (current && isUnchangedSince(row, current)) {
-        await store?.delete(owner, row.annotationId);
+        await store?.delete(owner, row.address);
       }
       return { status: "done" };
     }
 
     if (!matchesBase) {
-      return {
-        status: "conflict",
-        conflict: toConflict(
-          row,
-          server,
-          server.present ? "edited_elsewhere" : "deleted_elsewhere"
-        ),
-      };
+      return mergeOrConflict(owner, row, server);
     }
 
-    return writeToServer(owner, row, row.annotation);
+    return writeToServer(owner, row, row.payload);
   };
 
   /** Records a failed attempt, giving up on the row once it's hopeless. */
   const recordFailure = async (
     owner: string,
-    row: StoredAnnotation,
-    outcome: Extract<PushOutcome, { status: "retry" | "permanent" }>
+    row: StoredRecord<T>,
+    outcome: Extract<PushOutcome<T>, { status: "retry" | "permanent" }>
   ): Promise<void> => {
-    setError(row.annotationId, outcome.message);
+    setError(row.address, outcome.message);
     if (!store) {
       return;
     }
@@ -539,7 +510,7 @@ export function createAnnotationSyncManager(
     // bookkeeping write is a blind overwrite by key, so spreading a stale row
     // would revert content the user saved during the failed round trip. A newer
     // edit deserves its own attempt count anyway.
-    const current = await store.get(owner, row.annotationId);
+    const current = await store.get(owner, row.address);
     if (!current || !isUnchangedSince(row, current)) {
       return;
     }
@@ -570,8 +541,8 @@ export function createAnnotationSyncManager(
 
     // Captured once, and re-checked before every write. If the account changes
     // mid-pass, the rest of this pass belongs to an account that is no longer
-    // signed in, and pushing it would write one account's notes under another's
-    // id.
+    // signed in, and pushing it would write one account's records under
+    // another's id.
     const owner = login.userId.peek();
     if (!owner || !isOnline.peek()) {
       return true;
@@ -583,18 +554,18 @@ export function createAnnotationSyncManager(
       if (login.userId.peek() !== owner) {
         return true;
       }
-      if (awaitingUser.has(`${owner}/${row.annotationId}`)) {
+      if (awaitingUser.has(`${owner}/${row.address}`)) {
         continue;
       }
 
-      let outcome: PushOutcome;
+      let outcome: PushOutcome<T>;
       try {
         outcome = await pushRow(owner, row);
       } catch (error) {
         // A rejection is the network, not the change. Stop the pass and leave
         // every remaining row pending for the next trigger; carrying on would
         // just produce the same failure once per row.
-        console.warn("Annotation sync stopped: the request failed.", error);
+        console.warn("Record sync stopped: the request failed.", error);
         return false;
       }
 
@@ -605,7 +576,7 @@ export function createAnnotationSyncManager(
       }
 
       if (outcome.status === "done") {
-        clearError(row.annotationId);
+        clearError(row.address);
         continue;
       }
 
@@ -614,7 +585,7 @@ export function createAnnotationSyncManager(
         // the row exactly as it is — `recordFailure` would clear `pendingOp` and
         // the edit would never be retried after signing back in.
         console.warn(
-          "Annotation sync stopped: the session ended.",
+          "Record sync stopped: the session ended.",
           outcome.message
         );
         return false;
@@ -652,7 +623,7 @@ export function createAnnotationSyncManager(
           // failed on the network would fail the same way.
         } while (dirty && completed);
       } catch (error) {
-        console.warn("Annotation sync pass failed.", error);
+        console.warn("Record sync pass failed.", error);
       } finally {
         running = null;
         isSyncing.value = false;
@@ -700,7 +671,7 @@ export function createAnnotationSyncManager(
 
     const { owner } = conflict;
     // The conflict was raised for a specific account; applying it under a
-    // different one would write the wrong person's note.
+    // different one would write the wrong person's record.
     if (login.userId.peek() !== owner) {
       dropConflict(conflictId);
       return;
@@ -714,11 +685,11 @@ export function createAnnotationSyncManager(
 
     try {
       await applyResolution(owner, row, conflict, resolution);
-      clearError(row.annotationId);
+      clearError(row.address);
       dropConflict(conflictId);
     } catch (error) {
       console.warn("Failed to apply a conflict resolution.", error);
-      setError(row.annotationId, "resolve_failed");
+      setError(row.address, "resolve_failed");
       // Left in `awaitingUser` on purpose: the question is still open, and
       // dropping it would silently abandon the user's decision.
       return;
@@ -738,8 +709,8 @@ export function createAnnotationSyncManager(
 
   const applyResolution = async (
     owner: string,
-    row: StoredAnnotation,
-    conflict: AnnotationConflict,
+    row: StoredRecord<T>,
+    conflict: RecordConflict<T>,
     resolution: ConflictResolution
   ): Promise<void> => {
     if (!store) {
@@ -748,56 +719,62 @@ export function createAnnotationSyncManager(
 
     if (resolution === "keep_theirs") {
       if (conflict.server) {
-        await store.put(syncedRow(owner, conflict.server));
-        onSynced?.(conflict.server, owner);
+        await store.put(
+          syncedRow(owner, row.address, row.collection, conflict.server)
+        );
+        onSynced?.(row.address, conflict.server, owner);
       } else {
         // They deleted it and we're deferring to that, so the local copy goes
         // too.
-        await store.delete(owner, row.annotationId);
-        onRemoved?.(row.annotationId, owner);
+        await store.delete(owner, row.address);
+        onRemoved?.(row.address, owner);
       }
       return;
     }
 
-    if (resolution === "keep_both" && row.annotation && conflict.server) {
-      // Ours becomes a new note so theirs survives untouched. A fresh id makes
-      // it a create, which can't conflict with anything.
-      const copy: Annotation = {
-        ...row.annotation,
-        id: `annotation_${uuid()}`,
-      };
+    if (
+      resolution === "keep_both" &&
+      row.payload &&
+      conflict.server &&
+      domain.duplicate
+    ) {
+      // Ours becomes a new record so theirs survives untouched. A fresh address
+      // makes it a create, which can't conflict with anything.
+      const copy = domain.duplicate(row.payload);
       await store.put({
-        ...syncedRow(owner, copy),
-        annotation: copy,
-        baseUpdatedAtMs: null,
-        baseFingerprint: null,
+        ...syncedRow(
+          owner,
+          copy.address,
+          domain.collection(copy.address, copy.payload),
+          copy.payload
+        ),
+        base: null,
         pendingOp: "upsert",
         updatedAtMs: row.updatedAtMs,
       });
-      // Reported right away, the same as any other newly-created offline note —
-      // otherwise this copy sits invisible in the store until its first push
-      // succeeds and fires this same callback.
-      onSynced?.(copy, owner);
-      // Replaces the pending row in place: `conflict.server` carries the same id
-      // as `row`, so this leaves the original entry holding the server's version
-      // with nothing left to push. Deleting it afterwards would remove the very
-      // note this choice exists to preserve.
-      await store.put(syncedRow(owner, conflict.server));
-      onSynced?.(conflict.server, owner);
+      // Reported right away, the same as any other newly-created offline
+      // record — otherwise this copy sits invisible in the store until its
+      // first push succeeds and fires this same callback.
+      onSynced?.(copy.address, copy.payload, owner);
+      // Replaces the pending row in place: `conflict.server` carries the same
+      // address as `row`, so this leaves the original entry holding the
+      // server's version with nothing left to push. Deleting it afterwards
+      // would remove the very record this choice exists to preserve.
+      await store.put(
+        syncedRow(owner, row.address, row.collection, conflict.server)
+      );
+      onSynced?.(row.address, conflict.server, owner);
       return;
     }
 
-    // keep_mine: take the server's current version as the new base so the push
-    // is no longer treated as stale, then let the next pass write ours over it.
+    // keep_mine (also where "keep both" was asked of a domain that can't
+    // duplicate): take the server's current version as the new base so the push is
+    // no longer stale, then let the next pass write ours over it.
     await store.put({
       ...row,
       attempts: 0,
-      baseUpdatedAtMs: conflict.server
-        ? annotationUpdatedAtMs(conflict.server)
-        : null,
-      baseFingerprint: conflict.server
-        ? annotationFingerprint(conflict.server)
-        : null,
+      base: conflict.server,
+      pendingOp: row.pendingOp ?? "upsert",
     });
   };
 
@@ -832,10 +809,10 @@ export function createAnnotationSyncManager(
 
     if (!owner) {
       // Signing out: keep unsynced writing, drop the rest so a shared device
-      // isn't left holding readable notes.
+      // isn't left holding readable records.
       if (previous) {
         void store.clearSynced(previous).catch((error: unknown) => {
-          console.warn("Failed to clear synced annotations.", error);
+          console.warn("Failed to clear synced records.", error);
         });
       }
       pendingRows.value = [];
@@ -848,7 +825,7 @@ export function createAnnotationSyncManager(
       try {
         await store.adoptLocalRows(owner);
       } catch (error) {
-        console.warn("Failed to adopt locally-saved annotations.", error);
+        console.warn("Failed to adopt locally-saved records.", error);
       }
       await refreshPendingCount();
       void sync();
@@ -866,7 +843,7 @@ export function createAnnotationSyncManager(
     isOnline,
     isSyncing,
     pendingCount,
-    pendingCountForChapter,
+    pendingCountForCollection,
     conflicts,
     syncErrors,
     sync,
@@ -881,7 +858,10 @@ export function createAnnotationSyncManager(
 function classifyFailure(
   errorCode: string | undefined,
   errorMessage: string | undefined
-): Extract<PushOutcome, { status: "retry" | "permanent" | "session_ended" }> {
+):
+  | { status: "retry"; message: string }
+  | { status: "permanent"; message: string }
+  | { status: "session_ended"; message: string } {
   const message = errorMessage ?? errorCode ?? "unknown_error";
   if (SESSION_ENDED_ERROR_CODES.has(errorCode ?? "")) {
     return { status: "session_ended", message };

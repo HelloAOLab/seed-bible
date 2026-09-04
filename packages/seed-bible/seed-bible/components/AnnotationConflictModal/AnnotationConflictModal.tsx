@@ -3,10 +3,11 @@ import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   conflictResolutions,
-  type AnnotationConflict,
-  type AnnotationSyncManager,
+  type RecordConflict,
+  type RecordSyncManager,
   type ConflictResolution,
-} from "../../managers/AnnotationSyncManager";
+} from "../../managers/RecordSyncManager";
+import type { Annotation } from "../../managers/AnnotationsManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
@@ -19,7 +20,7 @@ const MODAL_ID = "annotation-conflict";
 
 /** The sentence explaining what happened, per kind of clash. */
 function conflictMessage(
-  conflict: AnnotationConflict,
+  conflict: RecordConflict<Annotation>,
   t: ReturnType<typeof useI18n>["t"]
 ): string {
   if (conflict.kind === "deleted_elsewhere") {
@@ -131,9 +132,9 @@ function VersionCard(props: {
 
 /** One conflict's prompt: pick a version (or both), then confirm. */
 function ConflictForm(props: {
-  conflict: AnnotationConflict;
+  conflict: RecordConflict<Annotation>;
   queueLength: number;
-  sync: AnnotationSyncManager;
+  sync: RecordSyncManager<Annotation>;
   toast: SeedBibleState["app"]["toast"];
 }) {
   const { conflict, queueLength, sync, toast } = props;
@@ -227,7 +228,7 @@ function ConflictForm(props: {
           label={t("annotation-conflict-theirs", {
             defaultValue: "The other version",
           })}
-          timeMs={conflict.serverUpdatedAtMs}
+          timeMs={conflict.server?.data.updatedAtMs ?? null}
           html={conflict.server?.data.html ?? null}
           language={language}
           emptyLabel={t("annotation-conflict-was-deleted", {
@@ -261,7 +262,7 @@ function ConflictForm(props: {
  * advances to the next, and the host closes the modal once the queue empties.
  */
 export function AnnotationConflictModalContent(props: {
-  sync: AnnotationSyncManager;
+  sync: RecordSyncManager<Annotation>;
   toast: SeedBibleState["app"]["toast"];
 }) {
   const { sync, toast } = props;
@@ -291,7 +292,7 @@ export function AnnotationConflictModalContent(props: {
  */
 export function syncAnnotationConflictModal(
   modals: ModalManager,
-  sync: AnnotationSyncManager,
+  sync: RecordSyncManager<Annotation>,
   toast: SeedBibleState["app"]["toast"]
 ): void {
   if (sync.conflicts.value.length === 0) {
