@@ -305,6 +305,14 @@ export interface AppState {
   /** The name of the site (used for Open Graph and other social media metadata). */
   siteName: ReadonlySignal<string>;
 
+  /**
+   * The active customization's uploaded logo, used as this page's favicon
+   * (see entry-ssr.tsx's `<link rel="icon">`). Null when no customization is
+   * active or the active one hasn't uploaded a logo — either way, the page
+   * keeps the default favicon already in index.html.
+   */
+  faviconUrl: ReadonlySignal<string | null>;
+
   /** The toast currently shown at the bottom of the screen, or null when none. */
   currentToast: ReadonlySignal<{ id: number; message: string } | null>;
   /**
@@ -1342,6 +1350,10 @@ export function createSeedBibleState(
     );
   });
 
+  const faviconUrl = computed<string | null>(
+    () => customizations.activeCustomization.value?.logoUrl ?? null
+  );
+
   /**
    * Read only when rendering meta tags on the server (see `entry-ssr.tsx`),
    * along with `description`.
@@ -2284,6 +2296,7 @@ export function createSeedBibleState(
       title,
       description,
       siteName,
+      faviconUrl,
       canonicalUrl,
       socialTitle,
       currentToast,

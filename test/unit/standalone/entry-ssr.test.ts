@@ -973,5 +973,71 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("Verse 1");
       expect(html).not.toContain("--sb-primary-color: #abc123;");
     });
+
+    it("points the favicon at the linked customization's uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain(
+        '<link rel="icon" href="https://example.com/logo.png"/>'
+      );
+    });
+
+    it("omits a favicon override when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).not.toContain('<link rel="icon"');
+    });
+  });
+
+  it("omits a favicon override with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).not.toContain('<link rel="icon"');
   });
 });

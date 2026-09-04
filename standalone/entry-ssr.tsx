@@ -535,6 +535,13 @@ export async function render(
       <meta name="twitter:title" content={state.app.socialTitle.value} />
       <meta name="twitter:description" content={state.app.description.value} />
       <link rel="canonical" href={state.app.canonicalUrl.value} />
+      {/* Only emitted when a customization with an uploaded logo is active —
+          otherwise index.html's own default `<link rel="icon">` (earlier in
+          `<head>`) stands, since browsers resolve multiple icon links to the
+          last one in document order. */}
+      {state.app.faviconUrl.value && (
+        <link rel="icon" href={state.app.faviconUrl.value} />
+      )}
       <title>{state.app.title.value}</title>
     </>
   );
