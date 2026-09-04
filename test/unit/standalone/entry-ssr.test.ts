@@ -398,6 +398,7 @@ describe("render() server-rendered meta tags", () => {
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
+    '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -1033,6 +1034,78 @@ describe("render() server-rendered meta tags", () => {
 
       expect(html).not.toContain('<link rel="icon"');
     });
+
+    // Regression coverage for the SSR->client customization re-fetch: before
+    // `getInitialCustomizationSeed` existed, nothing was embedded here, so the
+    // client's own `CustomizationsManager` always repeated the same
+    // `os.getData()` round trip the server had just made, even though the
+    // page already reflects its result.
+    function readEmbeddedCustomizationSeed(html: string): unknown {
+      const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-customization-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("embeds the resolved customization as a seed for the client to reuse", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: { primaryColor: "#abc123" },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toMatchObject({
+        locator: "owner.customization_shared",
+        customization: { id: "customization_shared", name: "Shared" },
+      });
+    });
+
+    it("embeds a resolved-missing seed when the record isn't found, instead of leaving the client to retry", async () => {
+      mockFetchWithCustomizationResponse({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_missing"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toEqual({
+        locator: "owner.customization_missing",
+        customization: null,
+      });
+    });
+  });
+
+  it("embeds no customization seed when there's no ?customization= link", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(html);
+    expect(match).not.toBeNull();
+    expect(JSON.parse(match![1]!)).toBeNull();
   });
 
   it("omits a favicon override with no customization active", async () => {

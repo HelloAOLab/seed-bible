@@ -52,6 +52,9 @@ export interface RenderOptions {
    * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
    *   should be injected, so the client can seed its own API cache with data
    *   the server already fetched instead of re-fetching it.
+   * - `<!--CUSTOMIZATION_JSON-->` where the JSON-serialized
+   *   `?customization=...` load result should be injected, so the client can
+   *   skip re-fetching a customization record the server already resolved.
    * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
    *   should be injected, inside a `<style id="sb-theme-styles">` tag.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
@@ -584,6 +587,14 @@ export async function render(
       )
     )
   );
+  // Null whenever there was no `?customization=` link, or its load hadn't
+  // actually completed by now (the SSR-only timeout backstop fired first) —
+  // see `getInitialCustomizationSeed`. Either way `JSON.stringify(null)` is a
+  // harmless "nothing to seed" the client's `readInjectedCustomizationSeed`
+  // already treats as absent.
+  const customizationSeedJson = escapeForScript(
+    JSON.stringify(state.customizations.getInitialCustomizationSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
@@ -595,6 +606,7 @@ export async function render(
     ["<!-- THEME_PRESETS_JSON -->", themePresetsJson],
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
+    ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
 

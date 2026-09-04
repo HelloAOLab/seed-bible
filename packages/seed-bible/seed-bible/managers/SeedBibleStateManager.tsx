@@ -65,7 +65,10 @@ import {
   CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_FONT_PRESETS,
 } from "../managers/CustomizationsManager";
-import type { CustomizationsManager } from "../managers/CustomizationsManager";
+import type {
+  CustomizationsManager,
+  InitialCustomizationSeed,
+} from "../managers/CustomizationsManager";
 import { createCustomizationVariantSelectionsManager } from "../managers/CustomizationVariantSelectionsManager";
 import { createCustomizationExtensionPreferencesManager } from "../managers/CustomizationExtensionPreferencesManager";
 import {
@@ -519,6 +522,15 @@ export interface CreateSeedBibleStateOptions {
    * `readInjectedApiResponseSnapshot` in `app/apiResponseSeed.ts`.
    */
   apiResponseSnapshot?: Record<string, unknown>;
+
+  /**
+   * A prior SSR render's completed `?customization=...` load, so the new
+   * `CustomizationsManager` doesn't re-fetch a record the server already
+   * resolved. The client uses this to seed its own load with whatever the
+   * server already fetched for the SSR render — see
+   * `readInjectedCustomizationSeed` in `app/customizationSeed.ts`.
+   */
+  initialCustomizationSeed?: InitialCustomizationSeed;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -588,7 +600,8 @@ export function createSeedBibleState(
     themeManager,
     navigation,
     customizationVariantSelections,
-    customizationExtensionPreferences
+    customizationExtensionPreferences,
+    options.initialCustomizationSeed
   );
   // Filled once tabs exist so local chat can resolve localized book names.
   const selectedTabTranslationBooks = signal<TranslationBook[] | undefined>(

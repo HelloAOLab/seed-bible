@@ -626,6 +626,14 @@ export interface CustomizationsManager {
   /** True once the initial `?customization=` load has settled — see above. */
   initialCustomizationLoadSettled: ReadonlySignal<boolean>;
   /**
+   * Builds a seed of the initial `?customization=...` load for the client to
+   * reuse instead of re-fetching — see `InitialCustomizationSeed`. Called by
+   * `entry-ssr.tsx` after rendering settles; null when there was no
+   * `?customization=` param, or when the load hadn't actually completed (the
+   * SSR-only timeout backstop fired first).
+   */
+  getInitialCustomizationSeed: () => InitialCustomizationSeed | null;
+  /**
    * The local, unpersisted draft of the customization currently open in the
    * editor settings pages, or null when none is open. Edits accumulate here
    * and are only written to CasualOS by `saveEditingCustomization`.
@@ -733,13 +741,40 @@ export interface CustomizationsManager {
   ) => Promise<void>;
 }
 
+/**
+ * A prior SSR render's completed `?customization=...` load, handed to the
+ * client so it can skip re-fetching over `os.getData()` — see
+ * `CustomizationsManager.getInitialCustomizationSeed` (which produces this)
+ * and `app/customizationSeed.ts` (which reads it back out of the injected
+ * HTML on the client).
+ */
+export interface InitialCustomizationSeed {
+  /**
+   * The `?customization=...` locator this seed was resolved for. Checked
+   * against the page's own `?customization=` param before use — a seed for a
+   * different locator (a mismatched or stale cached HTML page, say) must
+   * never be applied as if it were this page's own load.
+   */
+  locator: string;
+  /**
+   * The customization SSR resolved for `locator`, or null if that load
+   * completed and found nothing (an invalid or deleted link). Only ever
+   * built from a load that actually completed — see the caller in
+   * `entry-ssr.tsx` — never from one the SSR-only timeout backstop cut
+   * short, which would incorrectly tell the client "this doesn't exist" for
+   * a link that might still resolve.
+   */
+  customization: SeedBibleCustomization | null;
+}
+
 export function createCustomizationsManager(
   os: CasualOSManager,
   login: LoginManager,
   theme: ThemeManager,
   navigation: NavigationManager,
   variantSelections: CustomizationVariantSelectionsManager,
-  extensionPreferences: CustomizationExtensionPreferencesManager
+  extensionPreferences: CustomizationExtensionPreferencesManager,
+  initialCustomizationSeed?: InitialCustomizationSeed
 ): CustomizationsManager {
   const customizations = signal<SeedBibleCustomization[]>([]);
   const isLoading = signal(false);
@@ -808,31 +843,76 @@ export function createCustomizationsManager(
     resolveInitialCustomizationLoadPromise();
   };
 
-  if (initialLocator) {
-    void loadByLocator(initialLocator).then(settleInitialCustomizationLoad);
+  /**
+   * True once the initial `?customization=...` load has actually completed
+   * (found, not found, or errored) — unlike `initialCustomizationLoadSettled`
+   * above, this is never forced true by the SSR-only timeout backstop below.
+   * `getInitialCustomizationSeed` relies on that distinction: seeding the
+   * client with "not found" for a load the timeout merely gave up waiting on
+   * would incorrectly rule out a customization that might still resolve.
+   */
+  let initialCustomizationLoadCompleted = false;
 
-    // During SSR the render blocks on `initialCustomizationLoadPromise`, so an
-    // `os.getData()` that never answers would hold the request open
-    // indefinitely — `loadByLocator` itself always resolves (its try/catch
-    // covers every other failure mode), so this timeout is purely a backstop
-    // for that one case. Not armed on the client: the promise is only thrown
-    // (to suspend) during SSR (see `ExternalResourceDependencies` in
-    // `app/main.tsx`), so on the client it's never awaited and a slow load
-    // simply applies the customization late, exactly as it did before this
-    // feature existed.
-    const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
-    if (import.meta.env.SSR) {
-      initialCustomizationLoadTimer = setTimeout(() => {
-        console.warn(
-          "Timed out waiting for initial customization load:",
-          initialLocator
-        );
+  if (initialLocator) {
+    if (initialCustomizationSeed?.locator === initialLocator) {
+      // A prior SSR render already resolved this exact locator — apply its
+      // result directly instead of repeating the `os.getData()` round trip.
+      if (initialCustomizationSeed.customization) {
+        linkedCustomization.value = initialCustomizationSeed.customization;
+        linkedCustomizationLocator.value = initialLocator;
+      }
+      initialCustomizationLoadCompleted = true;
+      settleInitialCustomizationLoad();
+    } else {
+      void loadByLocator(initialLocator).then(() => {
+        initialCustomizationLoadCompleted = true;
         settleInitialCustomizationLoad();
-      }, SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS);
+      });
+
+      // During SSR the render blocks on `initialCustomizationLoadPromise`, so
+      // an `os.getData()` that never answers would hold the request open
+      // indefinitely — `loadByLocator` itself always resolves (its try/catch
+      // covers every other failure mode), so this timeout is purely a
+      // backstop for that one case. Not armed on the client: the promise is
+      // only thrown (to suspend) during SSR (see
+      // `ExternalResourceDependencies` in `app/main.tsx`), so on the client
+      // it's never awaited and a slow load simply applies the customization
+      // late, exactly as it did before this feature existed.
+      const SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS = 5000;
+      if (import.meta.env.SSR) {
+        initialCustomizationLoadTimer = setTimeout(() => {
+          console.warn(
+            "Timed out waiting for initial customization load:",
+            initialLocator
+          );
+          settleInitialCustomizationLoad();
+        }, SSR_INITIAL_CUSTOMIZATION_TIMEOUT_MS);
+      }
     }
   } else {
     settleInitialCustomizationLoad();
   }
+
+  /**
+   * Builds a seed of the initial `?customization=...` load for
+   * `entry-ssr.tsx` to embed in the page, so the client's own
+   * `CustomizationsManager` can skip re-fetching what SSR already resolved —
+   * see `InitialCustomizationSeed`. Null when there was no `?customization=`
+   * param, or when the load hadn't actually completed by the time this was
+   * called (the SSR-only timeout backstop fired first).
+   */
+  const getInitialCustomizationSeed = (): InitialCustomizationSeed | null => {
+    if (!initialLocator || !initialCustomizationLoadCompleted) {
+      return null;
+    }
+    return {
+      locator: initialLocator,
+      customization:
+        linkedCustomizationLocator.value === initialLocator
+          ? linkedCustomization.value
+          : null,
+    };
+  };
 
   // The only two ways for a customization to become "active" (applied to
   // the live theme): an in-progress edit draft, or a `?customization=...`
@@ -1529,6 +1609,7 @@ export function createCustomizationsManager(
     linkedCustomization,
     initialCustomizationLoadPromise,
     initialCustomizationLoadSettled,
+    getInitialCustomizationSeed,
     editingCustomization,
     editingVariantId,
     load,
