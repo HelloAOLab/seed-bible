@@ -5,6 +5,7 @@ import type { VerseReferenceConfigProviderPort } from "../../application/ports/o
 import type { NavigationState } from "../../domain/models/navigation";
 import type { NavMenuController } from "../controllers/navMenu/NavMenuController";
 import type { InfrastructureEventPort } from "./events";
+import type { EnvironmentAdapter } from "../adapters/casualos/EnvironmentAdapter";
 
 export interface NavMenuProps {
   getState: () => NavigationState;
@@ -15,4 +16,13 @@ export interface NavMenuProps {
   verseReferences: VerseReferenceConfigProviderPort;
   bookNames: BookNameConfigProviderPort;
   controller: NavMenuController;
+  environment: EnvironmentAdapter;
+}
+
+export interface NavMenuContextType {
+  menuState: NavigationState;
+  controller: NavMenuController;
+  catalog: PieceCatalogPort;
+  verseReferences: VerseReferenceConfigProviderPort;
+  bookNames: BookNameConfigProviderPort;
 }

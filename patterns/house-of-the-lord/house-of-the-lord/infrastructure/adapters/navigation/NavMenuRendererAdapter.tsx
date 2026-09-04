@@ -6,6 +6,7 @@ import type { PieceCatalogPort } from "../../../application/ports/out/PieceCatal
 import type { VerseReferenceConfigProviderPort } from "../../../application/ports/out/VerseReferenceConfigProvider";
 import type { BookNameConfigProviderPort } from "../../../application/ports/out/BookNameConfigProvider";
 import type { NavMenuController } from "../../controllers/navMenu/NavMenuController";
+import type { EnvironmentAdapter } from "../casualos/EnvironmentAdapter";
 import { NavMenu } from "../../presentation/app/NavMenu";
 
 interface AdapterParams {
@@ -17,6 +18,7 @@ interface AdapterParams {
   verseReferences: VerseReferenceConfigProviderPort;
   bookNames: BookNameConfigProviderPort;
   controller: NavMenuController;
+  environment: EnvironmentAdapter;
 }
 
 export class NavMenuRendererAdapter {
@@ -28,6 +30,7 @@ export class NavMenuRendererAdapter {
   #verseReferences: AdapterParams["verseReferences"];
   #bookNames: AdapterParams["bookNames"];
   #controller: AdapterParams["controller"];
+  #environment: AdapterParams["environment"];
   #appId = "nav-menu";
 
   constructor({
@@ -39,6 +42,7 @@ export class NavMenuRendererAdapter {
     verseReferences,
     bookNames,
     controller,
+    environment,
   }: AdapterParams) {
     this.#eventBus = eventBus;
     this.#navMenuStateService = navMenuStateService;
@@ -48,6 +52,7 @@ export class NavMenuRendererAdapter {
     this.#verseReferences = verseReferences;
     this.#bookNames = bookNames;
     this.#controller = controller;
+    this.#environment = environment;
   }
 
   async render() {
@@ -63,6 +68,7 @@ export class NavMenuRendererAdapter {
         verseReferences={this.#verseReferences}
         bookNames={this.#bookNames}
         controller={this.#controller}
+        environment={this.#environment}
       />
     );
   }

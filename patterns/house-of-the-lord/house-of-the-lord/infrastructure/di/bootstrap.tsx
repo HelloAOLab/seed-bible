@@ -51,7 +51,10 @@ import { HitboxConfigProvider } from "../config/hitboxes/HitboxConfigProvider";
 import { HitboxLifecycleService } from "../../application/services/HitboxLifecycleService";
 import { HitboxLifecycleAdapter } from "../adapters/pieces/HitboxLifecycleAdapter";
 import { BaseEventManager } from "../../application/services/BaseEventManager";
-import type { InfrastructureEventMap } from "../models/events";
+import {
+  MESSAGE_TO_EVENT_MAP,
+  type InfrastructureEventMap,
+} from "../models/events";
 import { HitboxMapper } from "../mappers/HitboxMapper";
 import { EXPERIENCE_KEYS } from "../../domain/models/experience";
 import { PieceStateConfigProvider } from "../config/pieceState/PieceStateConfigProvider";
@@ -75,6 +78,7 @@ import { ScriptureNavigationService } from "../../application/services/Scripture
 import { NavMenuController } from "../controllers/navMenu/NavMenuController";
 import { PieceCatalogConfigProvider } from "../config/pieceCatalog/PieceCatalogConfigProvider";
 import { BookNameConfigProvider } from "../config/bookName/BookNameConfigProvider";
+import { SeedBibleController } from "../controllers/seedBible/SeedBibleController";
 
 let initialized = false;
 
@@ -322,6 +326,11 @@ export const bootstrapExtension = async () => {
   );
   const scriptureInteractionController = new ScriptureInteractionController({
     scriptureInteractionPort: scriptureInteractionService,
+    readingStatePort: readingStateService,
+    getExperienceKey,
+  });
+  const seedBibleController = new SeedBibleController({
+    themeStateAdapter,
   });
   const navMenuController = new NavMenuController({
     navMenuStatePort: navMenuStateService,
@@ -338,6 +347,7 @@ export const bootstrapExtension = async () => {
     verseReferences: verseReferenceConfigProvider,
     bookNames: bookNameConfigProvider,
     controller: navMenuController,
+    environment: environmentAdapter,
   });
 
   // 4. React to reading state changes
@@ -374,47 +384,30 @@ export const bootstrapExtension = async () => {
     ({ message }: { message: Message }) => {
       if (!message?.type) return;
 
-      switch (message.type) {
-        case "highlight-piece": {
-          const key = ToPieceKeyOf(getExperienceKey(), message.key);
-          if (!key) {
-            console.warn(
-              "house-of-the-lord pattern bootstrap: message.key is not a piece of the experience on stage",
-              { message }
-            );
-            return;
-          }
-          scriptureInteractionController.handlePieceFocusRequest(key);
-          break;
-        }
-        case "theme-changed": {
-          if (!message.css) {
-            console.warn(
-              "house-of-the-lord pattern bootstrap: theme-changed without css",
-              { message }
-            );
-            return;
-          }
-          themeStateAdapter.setCss(message.css);
-          break;
-        }
-        case "reading-changed": {
-          if (!message.bookId || !message.chapterNumber) {
-            console.warn(
-              "house-of-the-lord pattern bootstrap: reading-changed without bookId or chapterNumber",
-              { message }
-            );
-            return;
-          }
-          readingStateService.setCurrentReading(
-            message.bookId,
-            message.chapterNumber
-          );
-          break;
-        }
-      }
+      const eventName = MESSAGE_TO_EVENT_MAP[message.type];
+      if (!eventName) return;
+
+      eventManager.emit(
+        eventName,
+        message as InfrastructureEventMap[typeof eventName]
+      );
     }
   );
+
+  eventManager.subscribe("OnHighlightPieceMessage", (message) => {
+    scriptureInteractionController.handlePieceFocusRequest(message.key);
+  });
+
+  eventManager.subscribe("OnThemeChangedMessage", (message) => {
+    seedBibleController.handleThemeChanged(message.css);
+  });
+
+  eventManager.subscribe("OnReadingChangedMessage", (message) => {
+    scriptureInteractionController.handleReadingChanged(
+      message.bookId,
+      message.chapterNumber
+    );
+  });
 
   // 6. Disposers
 
