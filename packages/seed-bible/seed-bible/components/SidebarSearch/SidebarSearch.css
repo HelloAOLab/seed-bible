@@ -127,6 +127,7 @@
   position: relative;
   width: 3.3125rem;
   height: 3.3125rem;
+  flex-shrink: 0;
   border-radius: 0.625rem;
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);

@@ -657,6 +657,15 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  /* The tiles are slightly wider than this list's padded content box, and
+     overflow-y: auto forces overflow-x to clip too — without this, that
+     clips the tiles' rounded left/right edges. */
+  margin-inline: -0.10625rem;
 }
 
 .sb-sidebar-settings-view {
@@ -1168,6 +1177,7 @@
   &.sb-collapsed-tab-add-button {
     width: 3.3125rem;
     height: 3.3125rem;
+    flex-shrink: 0;
   }
 }
 
