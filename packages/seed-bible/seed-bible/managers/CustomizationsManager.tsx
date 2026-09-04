@@ -1503,7 +1503,7 @@ export function createCustomizationsManager(
 
   const getShareLink = (customization: SeedBibleCustomization): string => {
     const recordName = login.userId.value ?? "";
-    return navigation.linkToQuery({
+    return navigation.linkToBareQuery({
       customization: buildCustomizationLocator(recordName, customization.id),
     });
   };

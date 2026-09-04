@@ -1327,6 +1327,19 @@ describe("CustomizationsManager", () => {
     expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
   });
 
+  it("getShareLink() strips other query params (language, translation, book, chapter, ...) from the current URL, keeping only customization", async () => {
+    const nav = createNavigationManager({
+      initialHref:
+        "http://localhost/?language=en&translation=BSB&book=GEN&chapter=1&foo=bar",
+    });
+    const { manager } = createManager(nav);
+    const created = await manager.create();
+
+    const link = manager.getShareLink(created);
+
+    expect(link).toBe(`http://localhost/?customization=user-1.${created.id}`);
+  });
+
   it("addEditingVariant() appends a new variant to the draft, based on the viewer's current preset with no overrides of its own", async () => {
     const { manager, theme } = createManager();
     const created = await manager.create();

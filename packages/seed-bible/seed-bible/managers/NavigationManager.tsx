@@ -438,6 +438,23 @@ export function createNavigationManager(
     return url.toString();
   };
 
+  /**
+   * Like `linkToQuery`, but drops every existing query parameter first —
+   * for links that should carry only the parameters passed in (e.g. a
+   * customization share link), not whatever the current page happens to
+   * have in its URL (language, translation, book, chapter, ...).
+   */
+  const linkToBareQuery = (query: Record<string, string | null>) => {
+    const url = new URL(currentUrl.value);
+    url.search = "";
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== null) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return url.toString();
+  };
+
   return {
     currentUrl: computed(() => currentUrl.value),
     initialUrl,
@@ -451,6 +468,7 @@ export function createNavigationManager(
     updatePathAndQueryParams,
     syncSignalsToUrl,
     linkToQuery,
+    linkToBareQuery,
     dispose,
   };
 }
