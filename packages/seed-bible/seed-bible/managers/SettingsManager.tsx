@@ -413,7 +413,7 @@ function parseThemeId(value: unknown, fallback: string): string {
     : fallback;
 }
 
-function parseStringRecord(value: unknown): Record<string, string> {
+export function parseStringRecord(value: unknown): Record<string, string> {
   let parsed: unknown = value;
   if (typeof parsed === "string") {
     try {
