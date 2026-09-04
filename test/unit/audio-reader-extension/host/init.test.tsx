@@ -2,6 +2,7 @@ import { signal } from "@preact/signals";
 import {
   chapterVerseNumbers,
   isAudioPlayToolVisible,
+  verseHighlightDurationMs,
   verseIndexForTime,
 } from "@packages/audio-reader-extension/ext_audioReader/host/init";
 import type { QuickToolContext } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -95,6 +96,32 @@ describe("verseIndexForTime", () => {
   it("stays on the last verse once playback passes every start time", () => {
     expect(verseIndexForTime(startTimes, 9)).toBe(2);
     expect(verseIndexForTime(startTimes, 1000)).toBe(2);
+  });
+});
+
+describe("verseHighlightDurationMs", () => {
+  const startTimes = [3, 6, 9];
+
+  it("lasts until the next verse's start time", () => {
+    expect(verseHighlightDurationMs(startTimes, 0, undefined)).toBe(3000);
+    expect(verseHighlightDurationMs(startTimes, 1, undefined)).toBe(3000);
+  });
+
+  it("lasts until the audio ends, for the last verse", () => {
+    expect(verseHighlightDurationMs(startTimes, 2, 15)).toBe(6000);
+  });
+
+  it("is null for the last verse when the audio's duration isn't known yet", () => {
+    expect(verseHighlightDurationMs(startTimes, 2, undefined)).toBeNull();
+    expect(verseHighlightDurationMs(startTimes, 2, NaN)).toBeNull();
+  });
+
+  it("never goes negative, if the audio's reported duration is somehow shorter than the last verse's start", () => {
+    expect(verseHighlightDurationMs(startTimes, 2, 5)).toBe(0);
+  });
+
+  it("is null for an index past the end of the timings", () => {
+    expect(verseHighlightDurationMs(startTimes, 3, 15)).toBeNull();
   });
 });
 

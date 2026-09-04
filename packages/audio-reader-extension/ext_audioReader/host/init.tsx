@@ -58,6 +58,33 @@ export function verseIndexForTime(
   return -1;
 }
 
+/**
+ * How long the verse at `startTimes[index]` should stay highlighted, in
+ * milliseconds: until the next verse starts, or — for the last verse — until
+ * the audio ends. Null when neither is known (no next verse and the audio's
+ * duration hasn't loaded yet), so the caller leaves the highlight in place
+ * rather than guessing.
+ */
+export function verseHighlightDurationMs(
+  startTimes: number[],
+  index: number,
+  audioDurationSeconds: number | undefined
+): number | null {
+  const startTime = startTimes[index];
+  if (startTime === undefined) return null;
+
+  const nextStartTime = startTimes[index + 1];
+  const endTime =
+    nextStartTime !== undefined
+      ? nextStartTime
+      : Number.isFinite(audioDurationSeconds)
+        ? audioDurationSeconds
+        : undefined;
+  if (endTime === undefined) return null;
+
+  return Math.max(0, (endTime - startTime) * 1000);
+}
+
 /** Verse numbers in reading order, extracted from a chapter's content. */
 export function chapterVerseNumbers(chapter: TranslationBookChapter): number[] {
   return chapter.chapter.content
@@ -92,8 +119,10 @@ function ensureAudio(): HTMLAudioElement | null {
  * `currentTime`, using the same "diminish" flash `emphasizeVerses` (in
  * `BibleReadingManager`) uses for cross-reference/search-result jumps. Reused
  * here rather than duplicated so a verse-boundary crossing flashes the same
- * way a manual jump does — including its own 3s auto-fade, so a verse read
- * for longer than that just goes back to normal until the next one starts.
+ * way a manual jump does. Unlike those callers' fixed 3s fade, this one fades
+ * out exactly when the next verse starts — or, for the last verse, when the
+ * audio ends — so the highlight tracks the actual reading instead of an
+ * arbitrary timeout.
  */
 function highlightVerseForTime(currentTime: number): void {
   if (!verseTrack || !Number.isFinite(currentTime)) return;
@@ -101,16 +130,23 @@ function highlightVerseForTime(currentTime: number): void {
     verseTrack;
   if (startTimes.length === 0) return;
 
-  const verseNumber = verseNumbers[verseIndexForTime(startTimes, currentTime)];
+  const index = verseIndexForTime(startTimes, currentTime);
+  const verseNumber = verseNumbers[index];
   if (verseNumber === undefined || verseNumber === verseTrack.lastVerse) {
     return;
   }
   verseTrack.lastVerse = verseNumber;
 
+  const durationMs = verseHighlightDurationMs(
+    startTimes,
+    index,
+    audioEl?.duration
+  );
+
   readingState.decorateVerses(bookId, chapterNumber, [verseNumber], {
     className: "sb-verse-decoration-diminish",
     containerClassName: "sb-chapter-decoration-diminish",
-    removeAfterMs: 3000,
+    ...(durationMs !== null ? { removeAfterMs: durationMs } : {}),
   });
 }
 

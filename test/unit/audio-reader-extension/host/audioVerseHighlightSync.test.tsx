@@ -149,10 +149,19 @@ describe("audio-reader verse highlight sync", () => {
     )!;
     expect(decoration.bookId).toBe("GEN");
     expect(decoration.chapterNumber).toBe(1);
+    // Verse 1 spans 0s to 5s (verse 2's start), so it fades exactly then
+    // rather than after a fixed timeout.
+    expect(decoration.removeAfterMs).toBe(5000);
 
     // Crossing into verse 2's span re-flashes on verse 2 instead.
     playAt(6);
     expect(diminishedVerses(state)).toEqual([2]);
+    // Verse 2 is the last one, and jsdom's audio element never reports a
+    // duration, so there's nothing to fade it out at — it stays lit.
+    const lastVerseDecoration = readingState.decorations.value.find(
+      (d) => d.className === "sb-verse-decoration-diminish" && d.verses[0] === 2
+    )!;
+    expect(lastVerseDecoration.removeAfterMs).toBeUndefined();
 
     // Navigating to a chapter with no timings for this reader (GEN 2) stops
     // playback and clears the tracked verse; pressing play again loads that
