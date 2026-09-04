@@ -72,12 +72,20 @@ const persistedSaveSchema = saveSchema.extend({
 export const savesPayloadSchema = z.object({
   saves: z.array(saveSchema),
   categories: z.array(saveCategorySchema).optional(),
+  /**
+   * The newest `createdAt` the legacy record held when it was copied forward —
+   * everything at or below it came across in the migration. Present only for a
+   * user who actually migrated. See {@link legacyHighWaterMark}. Removed with
+   * the rest of the migration in #1659.
+   */
+  legacyMigratedThrough: z.number().int().nonnegative().optional(),
 });
 
 /** Tolerant read-side view of the same record. */
 const persistedSavesPayloadSchema = z.object({
   saves: z.array(persistedSaveSchema),
   categories: z.array(saveCategorySchema).optional(),
+  legacyMigratedThrough: z.number().int().nonnegative().optional(),
 });
 
 /** Payload shape at {@link LEGACY_SAVES_ADDRESS}, before the rename. */
@@ -271,6 +279,20 @@ function renameLegacyDefaultCategory(name: string): string {
 }
 
 /**
+ * The newest `createdAt` in a legacy payload — the line between what the
+ * migration carried over and anything written to the legacy record afterwards.
+ *
+ * A pure function of the payload (no clock, no ids), which is what keeps the
+ * copy-forward byte-identical between two tabs racing it.
+ */
+function legacyHighWaterMark(legacy: LegacySavesPayload): number {
+  return legacy.bookmarks.reduce(
+    (newest, item) => Math.max(newest, item.createdAt),
+    0
+  );
+}
+
+/**
  * What a read of a record actually established.
  *
  * `absent` is a fact about the record: the server answered, and there is
@@ -437,6 +459,13 @@ export function createSavesManager(
   const loadedUserId = signal<string | null>(null);
 
   /**
+   * This user's {@link legacyHighWaterMark}, once they have migrated. Held here
+   * so every later write carries it forward — it is what tells a legacy entry
+   * the migration left behind from one a pre-rename tab wrote afterwards.
+   */
+  const legacyMigratedThrough = signal<number | null>(null);
+
+  /**
    * The initial load for the current user, while it is still in flight.
    * Mutators wait on it before touching state: a save added during the round
    * trip would otherwise be overwritten when the load applies, and on a
@@ -463,9 +492,13 @@ export function createSavesManager(
     nextSaves: Save[],
     nextCategories: SaveCategory[]
   ): Promise<void> => {
+    const migratedThrough = legacyMigratedThrough.value;
     const payload = savesPayloadSchema.parse({
       saves: nextSaves,
       categories: nextCategories,
+      ...(migratedThrough !== null
+        ? { legacyMigratedThrough: migratedThrough }
+        : {}),
     });
     await os.recordData(userId, STORAGE_ADDRESS, payload, {
       marker: "publicRead",
@@ -479,10 +512,19 @@ export function createSavesManager(
    * destroyed — the legacy record is kept), and #1659 uses this event to decide
    * when contracting is safe.
    *
-   * An upper bound, not an exact count: a save the new client deleted after the
-   * migration also reads as "in legacy, absent from saves". Deletions are far
-   * rarer than the alternative would be noisy, and the point of the event is to
-   * confirm the number sits at zero.
+   * "In legacy, absent from saves" on its own does not mean a stale writer —
+   * it is also exactly what a save the user deleted after migrating looks like.
+   * Counting those would put a permanent floor under the event: every migrated
+   * user who ever deletes a save would report divergence on every load from
+   * then on, and #1659 could no longer read zero as "nothing is writing to the
+   * old address".
+   *
+   * So an entry only counts when it is newer than everything the migration
+   * carried over ({@link legacyHighWaterMark}) — a deleted save was in the
+   * legacy record before the copy-forward, a stale writer's entry was created
+   * after it. Still an upper bound, since a stale tab that edits an entry
+   * already there keeps its original `createdAt` and goes unnoticed. Users who
+   * never migrated have no marker, and fall back to counting every orphan.
    */
   const reportLegacyDivergence = (
     currentSaves: readonly Save[],
@@ -490,8 +532,11 @@ export function createSavesManager(
   ): void => {
     if (!legacy) return;
     const known = new Set(currentSaves.map((save) => save.id));
+    const migratedThrough = legacyMigratedThrough.value;
     const orphanCount = legacy.bookmarks.filter(
-      (item) => !known.has(item.id)
+      (item) =>
+        !known.has(item.id) &&
+        (migratedThrough === null || item.createdAt > migratedThrough)
     ).length;
     if (orphanCount === 0) return;
     captureEvent("saves_legacy_record_diverged", {
@@ -538,6 +583,7 @@ export function createSavesManager(
         current.value.saves,
         current.value.categories
       );
+      legacyMigratedThrough.value = current.value.legacyMigratedThrough ?? null;
       apply(normalized);
       reportLegacyDivergence(
         normalized.saves,
@@ -574,6 +620,7 @@ export function createSavesManager(
         legacy.value.categories,
         renameLegacyDefaultCategory
       );
+      legacyMigratedThrough.value = legacyHighWaterMark(legacy.value);
       apply(normalized);
       try {
         await writeSaves(userId, normalized.saves, normalized.categories);
@@ -621,6 +668,7 @@ export function createSavesManager(
       categories.value = [{ name: DEFAULT_SAVE_CATEGORY }];
       expandedCategories.value = new Set([DEFAULT_SAVE_CATEGORY]);
       loadedUserId.value = null;
+      legacyMigratedThrough.value = null;
       loadPromise = null;
       isFilterActive.value = false;
       return;

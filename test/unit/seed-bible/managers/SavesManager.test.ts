@@ -243,6 +243,16 @@ describe("SavesManager", () => {
       { name: "To Study" },
     ];
 
+    /** The newest `createdAt` the legacy record holds. */
+    const LEGACY_HIGH_WATER_MARK = 3;
+
+    /** What the copy-forward writes to the saves address. */
+    const migratedPayload = {
+      saves: migratedSaves,
+      categories: migratedCategories,
+      legacyMigratedThrough: LEGACY_HIGH_WATER_MARK,
+    };
+
     it("copies a legacy-only record forward to the saves address", async () => {
       setRecords({ bookmarks: legacyRecord });
 
@@ -258,7 +268,7 @@ describe("SavesManager", () => {
       expect(recordDataMock).toHaveBeenCalledWith(
         "user-1",
         "saves",
-        { saves: migratedSaves, categories: migratedCategories },
+        migratedPayload,
         { marker: "publicRead" }
       );
       expect(captureMock).toHaveBeenCalledWith(
@@ -487,6 +497,77 @@ describe("SavesManager", () => {
       });
     });
 
+    it("stays quiet about a save the user deleted after migrating", async () => {
+      // "In legacy, absent from saves" describes a deletion just as well as a
+      // stale writer. Counting deletions would put a permanent floor under the
+      // event for anyone who tidies their saves, and #1659 reads this metric
+      // expecting zero to mean "nothing is writing to the old address".
+      setRecords({
+        saves: {
+          ...migratedPayload,
+          saves: migratedSaves.filter((save) => save.id !== "legacy-2"),
+        },
+        bookmarks: legacyRecord,
+      });
+
+      createSavesManager(os, login);
+      await flushPromises();
+
+      expect(captureMock).not.toHaveBeenCalledWith(
+        "saves_legacy_record_diverged",
+        expect.anything()
+      );
+    });
+
+    it("reports a bookmark a pre-rename tab wrote after the migration", async () => {
+      // The case the event exists for: an entry newer than everything the
+      // copy-forward carried over, so it cannot be a migrated save.
+      setRecords({
+        saves: migratedPayload,
+        bookmarks: {
+          ...legacyRecord,
+          bookmarks: [
+            ...legacyRecord.bookmarks,
+            {
+              id: "written-by-an-old-tab",
+              translationId: "BSB",
+              bookId: "NUM",
+              chapterNumber: 4,
+              createdAt: LEGACY_HIGH_WATER_MARK + 1,
+              category: LEGACY_DEFAULT_CATEGORY,
+            },
+          ],
+        },
+      });
+
+      createSavesManager(os, login);
+      await flushPromises();
+
+      expect(captureMock).toHaveBeenCalledWith("saves_legacy_record_diverged", {
+        orphanCount: 1,
+        legacyCount: 4,
+        saveCount: 3,
+      });
+    });
+
+    it("keeps the migration marker on later writes", async () => {
+      // The marker only means anything if it survives — every write after the
+      // migration has to carry it, or the next load loses the line between a
+      // deletion and a stale write.
+      setRecords({ bookmarks: legacyRecord });
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+      recordDataMock.mockClear();
+
+      await manager.addSave("BSB", "JHN", 3);
+
+      expect(recordDataMock).toHaveBeenCalledTimes(1);
+      expect(recordDataMock.mock.calls[0]![2]).toMatchObject({
+        legacyMigratedThrough: LEGACY_HIGH_WATER_MARK,
+      });
+    });
+
     it("stays quiet when the legacy record adds nothing new", async () => {
       setRecords({
         saves: {
@@ -549,7 +630,7 @@ describe("SavesManager", () => {
         1,
         "user-1",
         "saves",
-        { saves: migratedSaves, categories: migratedCategories },
+        migratedPayload,
         { marker: "publicRead" }
       );
     });
