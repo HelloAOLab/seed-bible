@@ -247,6 +247,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
       openDiscover: vi.fn(),
+      toast: vi.fn(),
     },
     bibleData: {
       getPreviousChapter: vi.fn(async () => null),
@@ -257,9 +258,9 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       openSidebar: vi.fn(),
       openSettingsToView: vi.fn(),
     },
-    bookmarks: {
-      isLocationBookmarked: vi.fn(() => false),
-      toggleBookmarkAtLocation: vi.fn(async () => {}),
+    saves: {
+      isLocationSaved: vi.fn(() => false),
+      addSave: vi.fn(async () => {}),
     },
     login: {
       userId: signal<string | null>(null),
@@ -2726,8 +2727,8 @@ describe("BibleReader", () => {
       features: {
         isFeatureEnabled: vi.fn(() => true),
       },
-      bookmarks: {
-        isLocationBookmarked: vi.fn(() => false),
+      saves: {
+        isLocationSaved: vi.fn(() => false),
       },
       annotations: {
         getAnnotationsForChapter: vi.fn(() => signal([])),
@@ -2778,6 +2779,75 @@ describe("BibleReader", () => {
       book: "JHN",
       chapter: 3,
       verse: 16,
+    });
+  });
+
+  describe("the header's save and bookmark buttons", () => {
+    const renderHeader = (state: SeedBibleState) => {
+      const { slot, selectorState, readingState } = createFixture();
+      act(() => {
+        render(
+          <BibleReader
+            currentSlot={slot}
+            selectorState={selectorState}
+            readingState={readingState}
+            state={state}
+          />,
+          container
+        );
+      });
+    };
+
+    const saveButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-save-button"
+      );
+    const bookmarkButton = () =>
+      container.querySelector<HTMLButtonElement>(
+        ".sb-bible-reader-bookmark-button"
+      );
+
+    it("opens the folder picker for the whole chapter", () => {
+      const state = createMobileState();
+      renderHeader(state);
+
+      expect(saveButton()).not.toBeNull();
+      act(() => saveButton()!.click());
+
+      expect(state.modals.openModal).toHaveBeenCalledTimes(1);
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      // The chapter-level id — a verse-scoped save would carry the verse
+      // numbers instead.
+      expect(opened.id).toBe("save-category-BSB-GEN-1-chapter");
+      expect(opened.title).toMatchObject({ key: "add-save-modal" });
+    });
+
+    it("opens the picker again on a second press instead of unsaving", () => {
+      // Saves are archival: the button never removes one, even when the
+      // chapter is already filed.
+      const state = createMobileState();
+      (state.saves.isLocationSaved as Mock).mockReturnValue(true);
+      renderHeader(state);
+
+      act(() => saveButton()!.click());
+      act(() => saveButton()!.click());
+
+      expect(state.modals.openModal).toHaveBeenCalledTimes(2);
+      expect(saveButton()!.getAttribute("aria-pressed")).toBeNull();
+    });
+
+    it("says the bookmark redesign is coming rather than writing anything", () => {
+      const state = createMobileState();
+      renderHeader(state);
+
+      expect(bookmarkButton()).not.toBeNull();
+      act(() => bookmarkButton()!.click());
+
+      expect(state.app.toast).toHaveBeenCalledWith(
+        "Bookmark redesign coming soon"
+      );
+      expect(state.modals.openModal).not.toHaveBeenCalled();
+      expect(state.saves.addSave).not.toHaveBeenCalled();
     });
   });
 

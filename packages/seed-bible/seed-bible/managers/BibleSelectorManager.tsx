@@ -27,7 +27,7 @@ import type {
 import { createSidebar } from "../managers/SidebarManager";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { I18nManager } from "../i18n/I18nManager";
-import { type BookmarksManager } from "../managers/BookmarksManager";
+import { type SavesManager } from "../managers/SavesManager";
 import {
   computed,
   effect,
@@ -216,7 +216,7 @@ export interface BibleSelectorState {
   matchingTranslationGroupCount: ReadonlySignal<number>;
   handleTranslationAddition: () => void;
   openTabs: () => void;
-  bookmarks: BookmarksManager;
+  saves: SavesManager;
   showApocryphaInfo: Signal<boolean>;
 }
 
@@ -265,7 +265,7 @@ export function createBibleSelectorState(
   tabsLayoutManager: TabsLayoutManager,
   settings: SettingsManager,
   sidebar: SidebarManager,
-  bookmarks: BookmarksManager,
+  saves: SavesManager,
   navigation: NavigationManager,
   login: LoginManager,
   i18n: I18nManager
@@ -957,7 +957,7 @@ export function createBibleSelectorState(
     matchingTranslationGroupCount,
     handleTranslationAddition,
     openTabs,
-    bookmarks,
+    saves,
     showApocryphaInfo,
   };
 }

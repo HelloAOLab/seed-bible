@@ -207,10 +207,10 @@ function createFixture(): ReaderFixture {
   };
 }
 
-function createBookmarksStub() {
+function createSavesStub() {
   return {
-    isLocationBookmarked: vi.fn(() => false),
-    toggleBookmarkAtLocation: vi.fn(async () => undefined),
+    isLocationSaved: vi.fn(() => false),
+    addSave: vi.fn(async () => undefined),
   };
 }
 
@@ -243,7 +243,7 @@ function createMobileState(): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
-    bookmarks: createBookmarksStub(),
+    saves: createSavesStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
@@ -289,7 +289,7 @@ function createDesktopState(): SeedBibleState {
       getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
     tools: createBibleToolsManager(testBranding),
-    bookmarks: createBookmarksStub(),
+    saves: createSavesStub(),
     tabs: {} as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },

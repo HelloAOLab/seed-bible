@@ -929,7 +929,7 @@
 .sb-verse-toolbar-plus .material-symbols-outlined,
 .sb-verse-toolbar-clear .material-symbols-outlined,
 .sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
-.sb-verse-toolbar-bookmark-trigger .material-symbols-outlined {
+.sb-verse-toolbar-save-trigger .material-symbols-outlined {
   font-size: 1.25rem;
 }
 
@@ -938,11 +938,11 @@
   font-size: 1.125rem;
 }
 
-/* The bookmark trigger lights up in the theme primary color when the current
- * selection already matches a saved bookmark, so the verse toolbar reads as
- * a toggle. */
-.sb-verse-toolbar-bookmark-trigger-active,
-.sb-verse-toolbar-bookmark-trigger-active:hover {
+/* The save trigger lights up in the theme primary color when the current
+ * selection already matches a save, so the toolbar shows that pressing it
+ * edits that save rather than filing a second copy. */
+.sb-verse-toolbar-save-trigger-active,
+.sb-verse-toolbar-save-trigger-active:hover {
   color: var(--sb-primary-color);
 }
 
@@ -1378,7 +1378,7 @@
 
 /* Card-grid variant of the mobile action row. Each action becomes a rounded
    tappable card; cards flex-wrap roughly four per row, and a short final row
-   (e.g. Bookmark / Copy / Share) stretches to fill the width. */
+   (e.g. Save / Copy / Share) stretches to fill the width. */
 .sb-verse-toolbar-mobile .sb-verse-toolbar-cards {
   display: flex;
   flex-wrap: wrap;

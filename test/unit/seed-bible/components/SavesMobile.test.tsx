@@ -54,12 +54,12 @@ vi.mock("../components/SidebarSearch", () => ({
   SidebarSearch: () => <div>Sidebar Search</div>,
 }));
 
-/** The width `app.isMobile` needs to see for the mobile bookmarks screen. */
+/** The width `app.isMobile` needs to see for the mobile saves screen. */
 const MOBILE_VIEWPORT_WIDTH = 400;
 
 const USER_ID = "user-1";
 
-describe("mobile bookmarks screen", () => {
+describe("mobile saves screen", () => {
   let container: HTMLDivElement;
   let state: SeedBibleState;
   let originalInnerWidth: number;
@@ -75,7 +75,7 @@ describe("mobile bookmarks screen", () => {
 
     state = await createTestSeedBibleState();
 
-    // Bookmarks only load and save for a signed-in user, and the records
+    // Saves only load and persist for a signed-in user, and the records
     // backend is the one boundary worth faking here.
     vi.spyOn(state.os, "getData").mockResolvedValue({
       success: false,
@@ -100,18 +100,18 @@ describe("mobile bookmarks screen", () => {
     container.remove();
     window.innerWidth = originalInnerWidth;
     // Sign the state back out before the record mocks come off, otherwise its
-    // still-live login effects reload bookmarks against the unmocked client —
+    // still-live login effects reload saves against the unmocked client —
     // and the persisted key would sign the *next* test's state in mid-setup.
     state.os.sessionKey.value = null;
     localStorage.removeItem("sessionKey");
     vi.restoreAllMocks();
   });
 
-  async function openBookmarksScreen() {
+  async function openSavesScreen() {
     await act(async () => {
       state.sidebar.openSidebar();
-      state.bookmarks.openedFromToolbar.value = true;
-      state.bookmarks.isFilterActive.value = true;
+      state.saves.openedFromToolbar.value = true;
+      state.saves.isFilterActive.value = true;
     });
 
     act(() => {
@@ -124,22 +124,87 @@ describe("mobile bookmarks screen", () => {
     });
   }
 
-  it("opens a bookmark with no matching tab on the first tap and closes the drawer", async () => {
-    // The default tab sits on AAB GEN 1, so this bookmark has no open tab and
-    // takes the "create a new tab" path.
+  /** The regular tab list, rather than the saves screen the tests below use. */
+  async function openTabsList() {
     await act(async () => {
-      await state.bookmarks.addBookmark("AAB", "EXO", 2);
+      state.sidebar.openSidebar();
+      state.saves.isFilterActive.value = false;
     });
 
-    await openBookmarksScreen();
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+  }
 
-    const bookmarkButton = container.querySelector(
-      ".sb-bookmark-item-button"
+  describe("the selected tab row's save button", () => {
+    const rowSaveButton = () =>
+      container.querySelector<HTMLButtonElement>(".sb-tab-save-button");
+
+    it("opens the folder picker for the row's whole chapter", async () => {
+      const openModal = vi.spyOn(state.modals, "openModal");
+      await openTabsList();
+
+      expect(rowSaveButton()).not.toBeNull();
+      await act(async () => {
+        rowSaveButton()!.click();
+      });
+
+      // The default tab sits on AAB GEN 1, and the id carries no verse.
+      expect(openModal).toHaveBeenCalledTimes(1);
+      expect(openModal.mock.calls[0]![0].id).toBe(
+        "save-category-AAB-GEN-1-chapter"
+      );
+    });
+
+    it("keeps opening the picker for a chapter that is already saved", async () => {
+      // Saves accumulate, so a second press files another copy rather than
+      // undoing the first — pressing this used to remove the existing save.
+      await act(async () => {
+        await state.saves.addSave("AAB", "GEN", 1);
+      });
+      const openModal = vi.spyOn(state.modals, "openModal");
+      await openTabsList();
+
+      await act(async () => {
+        rowSaveButton()!.click();
+      });
+
+      expect(openModal).toHaveBeenCalledTimes(1);
+      expect(state.saves.saves.value).toHaveLength(1);
+    });
+
+    it("carries no saved state, since saves have no tab indicator", async () => {
+      await act(async () => {
+        await state.saves.addSave("AAB", "GEN", 1);
+      });
+      await openTabsList();
+
+      expect(rowSaveButton()!.getAttribute("aria-pressed")).toBeNull();
+      expect(rowSaveButton()!.className).not.toContain("active");
+    });
+  });
+
+  it("opens a save with no matching tab on the first tap and closes the drawer", async () => {
+    // The default tab sits on AAB GEN 1, so this save has no open tab and
+    // takes the "create a new tab" path.
+    await act(async () => {
+      await state.saves.addSave("AAB", "EXO", 2);
+    });
+
+    await openSavesScreen();
+
+    const saveButton = container.querySelector(
+      ".sb-save-item-button"
     ) as HTMLButtonElement | null;
-    expect(bookmarkButton).not.toBeNull();
+    expect(saveButton).not.toBeNull();
 
     await act(async () => {
-      bookmarkButton!.click();
+      saveButton!.click();
     });
 
     const openedTab = state.tabs.tabs.value.find(
@@ -153,23 +218,23 @@ describe("mobile bookmarks screen", () => {
     expect(state.sidebar.isMobileOpen.value).toBe(false);
   });
 
-  it("opens a bookmark that already has a tab on the first tap", async () => {
+  it("opens a save that already has a tab on the first tap", async () => {
     await act(async () => {
-      await state.bookmarks.addBookmark("AAB", "GEN", 1);
+      await state.saves.addSave("AAB", "GEN", 1);
     });
 
     const existingTabId = state.tabs.tabs.value[0]!.id;
     const tabCountBefore = state.tabs.tabs.value.length;
 
-    await openBookmarksScreen();
+    await openSavesScreen();
 
-    const bookmarkButton = container.querySelector(
-      ".sb-bookmark-item-button"
+    const saveButton = container.querySelector(
+      ".sb-save-item-button"
     ) as HTMLButtonElement | null;
-    expect(bookmarkButton).not.toBeNull();
+    expect(saveButton).not.toBeNull();
 
     await act(async () => {
-      bookmarkButton!.click();
+      saveButton!.click();
     });
 
     expect(state.tabs.tabs.value).toHaveLength(tabCountBefore);

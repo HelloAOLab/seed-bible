@@ -352,7 +352,7 @@ export type ManagedBibleBelowReaderToolbarToolItem =
 
 /**
  * Runtime context for the quick toolbar surface — the compact row of
- * actions shown at the top of the reader, beside the chapter bookmark
+ * actions shown at the top of the reader, beside the chapter save
  * button. Intentionally lean: quick tools are header-level chapter actions
  * and only need the active reading state (plus whichever manager a specific
  * tool's visibility/action depends on).

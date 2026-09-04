@@ -2,11 +2,10 @@ import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
 import {
-  DEFAULT_BOOKMARK_CATEGORY,
-  bookmarkBelongsToCategory,
-  getBookmarkCategories,
-  type BookmarkVerse,
-} from "../../managers/BookmarksManager";
+  DEFAULT_SAVE_CATEGORY,
+  saveBelongsToCategory,
+  type SaveVerse,
+} from "../../managers/SavesManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import {
   TAB_SLOT_LAYOUT_OPTIONS,
@@ -18,11 +17,7 @@ import {
   ContextMenuWithButton,
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import {
-  BookmarkIcon,
-  MaterialIcon,
-  SettingsIcon,
-} from "../../components/icons";
+import { MaterialIcon, SettingsIcon } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -989,12 +984,11 @@ interface TabRowProps {
 }
 
 /**
- * One row in the sidebar's tab list — also reused by the bookmarks section
- * so a bookmarked tab keeps its selection state, kebab menu, and shared-
- * session visuals when it's moved up into a folder. The per-row bookmark
- * icon only appears on the currently selected row: it's the affordance for
- * adding the current chapter to (or removing it from) "My Bookmarks", and
- * showing it on every row would clutter the list.
+ * One row in the sidebar's tab list — also reused by the saves section so a
+ * saved tab keeps its selection state, kebab menu, and shared-session visuals
+ * when it's moved up into a folder. The per-row save icon only appears on the
+ * currently selected row: it's the affordance for filing the current chapter
+ * away, and showing it on every row would clutter the list.
  */
 function TabRow(props: TabRowProps) {
   const { state, tab, isSelected, closeLayoutMenu, panelsEnabled } = props;
@@ -1009,32 +1003,21 @@ function TabRow(props: TabRowProps) {
     throw tab.readingState.chapterDataPromise;
   }
 
-  const { app, bookmarks } = state;
+  const { app } = state;
   const { t } = useI18n();
 
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
-  const isTabBookmarked = bookmarks.isLocationBookmarked(
-    tab.readingState.translationId.value,
-    tab.readingState.bookId.value,
-    tab.readingState.chapterNumber.value
-  );
-
-  const handleBookmarkAction = () => {
+  // Saves accumulate rather than toggle, so this always opens the folder
+  // picker — a second press files another copy of the chapter, it does not
+  // undo the first.
+  const handleSaveAction = () => {
     const translationId = tab.readingState.translationId.value;
     const bookId = tab.readingState.bookId.value;
     const chapterNumber = tab.readingState.chapterNumber.value;
     if (!translationId || !bookId || !chapterNumber) return;
-    if (isTabBookmarked) {
-      void bookmarks.removeBookmarkForLocation(
-        translationId,
-        bookId,
-        chapterNumber
-      );
-      return;
-    }
-    openBookmarkCategoryModal(state, {
+    openSaveCategoryModal(state, {
       translationId,
       bookId,
       chapterNumber,
@@ -1103,43 +1086,17 @@ function TabRow(props: TabRowProps) {
       {isSelected && !tab.sharedSession && (
         <button
           type="button"
-          className={`sb-tab-bookmark-button${
-            isTabBookmarked ? " sb-tab-bookmark-button-active" : ""
-          }`}
-          aria-label={
-            isTabBookmarked
-              ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-              : t("add-bookmark", { defaultValue: "Bookmark tab" })
-          }
-          title={
-            isTabBookmarked
-              ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-              : t("add-bookmark", { defaultValue: "Bookmark tab" })
-          }
-          aria-pressed={isTabBookmarked}
+          className="sb-tab-save-button"
+          aria-label={t("save-chapter", { defaultValue: "Save chapter" })}
+          title={t("save-chapter", { defaultValue: "Save chapter" })}
           onClick={(event: MouseEvent) => {
             event.stopPropagation();
             closeContextMenus();
             closeLayoutMenu();
-            handleBookmarkAction();
+            handleSaveAction();
           }}
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill={isTabBookmarked ? "currentColor" : "none"}
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <MaterialIcon aria-hidden="true">stacks</MaterialIcon>
         </button>
       )}
 
@@ -1236,20 +1193,16 @@ function TabRow(props: TabRowProps) {
           <ContextMenuItem
             className="sb-tab-menu-item"
             onClick={() => {
-              handleBookmarkAction();
+              handleSaveAction();
             }}
           >
             <MaterialIcon
               className="sb-context-menu-item-icon"
               aria-hidden="true"
             >
-              {isTabBookmarked ? "bookmark_remove" : "bookmark_add"}
+              stacks
             </MaterialIcon>
-            <span>
-              {isTabBookmarked
-                ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-                : t("add-bookmark", { defaultValue: "Bookmark tab" })}
-            </span>
+            <span>{t("save-chapter", { defaultValue: "Save chapter" })}</span>
           </ContextMenuItem>
         )}
 
@@ -1291,49 +1244,49 @@ function TabRow(props: TabRowProps) {
 }
 
 /**
- * Location targeted by the bookmark folder picker modal. Either a whole
- * chapter (no `verse`) or a verse / verse range pinned within a chapter.
+ * Location targeted by the save folder picker modal. Either a whole chapter
+ * (no `verse`) or a verse / verse range pinned within a chapter.
  */
-export interface BookmarkLocation {
+export interface SaveLocation {
   translationId: string;
   bookId: string;
   chapterNumber: number;
-  verse?: BookmarkVerse;
+  verse?: SaveVerse;
 }
 
 /**
- * Modal body shown when the user triggers "Bookmark" from a tab menu, the
- * sidebar tab row, the verse toolbar, or "Edit bookmark" from a bookmark's
- * kebab menu. Lets the user pick any number of folders the bookmark belongs
- * to (checkboxes). Folder creation only happens here — there is no inline
- * "+ New folder" button in the sidebar list anymore.
+ * Modal body shown when the user triggers "Save" from a tab menu, the sidebar
+ * tab row, the reader's quick actions, the verse toolbar, or "Edit save" from
+ * a save's kebab menu. Lets the user pick any number of folders the save
+ * belongs to (checkboxes). Folder creation only happens here — there is no
+ * inline "+ New folder" button in the sidebar list anymore.
  *
  * "Add to new" only stages a folder name in local state (checked in the list).
  * New folders are persisted when the user hits Save — abandoning the modal
- * creates nothing. In edit mode (`bookmarkId` set) existing membership is
+ * creates nothing. In edit mode (`saveId` set) existing membership is
  * pre-checked.
  */
-function BookmarkCategoryPickerContent(props: {
+function SaveCategoryPickerContent(props: {
   state: SeedBibleState;
-  location: BookmarkLocation;
+  location: SaveLocation;
   onClose: () => void;
   mode?: "add" | "edit";
-  bookmarkId?: string;
+  saveId?: string;
 }) {
-  const { state, location, onClose, mode = "add", bookmarkId } = props;
-  const { bookmarks } = state;
+  const { state, location, onClose, mode = "add", saveId } = props;
+  const { saves } = state;
   const { t } = useI18n();
   const isEdit = mode === "edit";
-  const categories = bookmarks.categories.value;
+  const categories = saves.categories.value;
 
-  const existingBookmark =
-    isEdit && bookmarkId
-      ? bookmarks.bookmarks.value.find((bookmark) => bookmark.id === bookmarkId)
+  const existingSave =
+    isEdit && saveId
+      ? saves.saves.value.find((save) => save.id === saveId)
       : undefined;
-  const initialSelection = existingBookmark
-    ? getBookmarkCategories(existingBookmark.category)
-    : categories.some((category) => category.name === DEFAULT_BOOKMARK_CATEGORY)
-      ? [DEFAULT_BOOKMARK_CATEGORY]
+  const initialSelection = existingSave
+    ? existingSave.categories
+    : categories.some((category) => category.name === DEFAULT_SAVE_CATEGORY)
+      ? [DEFAULT_SAVE_CATEGORY]
       : categories[0]?.name
         ? [categories[0].name]
         : [];
@@ -1403,19 +1356,19 @@ function BookmarkCategoryPickerContent(props: {
 
     isSaving.value = true;
     try {
-      // New staged folder names are created as part of addBookmark /
-      // setBookmarkCategories (ensureCategory) — nothing is written if the
-      // user closes the modal without saving.
+      // New staged folder names are created as part of addSave /
+      // setSaveCategories (ensureCategory) — nothing is written if the user
+      // closes the modal without saving.
       if (isEdit) {
-        if (!bookmarkId) return;
-        await bookmarks.setBookmarkCategories(bookmarkId, nextSelection);
+        if (!saveId) return;
+        await saves.setSaveCategories(saveId, nextSelection);
       } else {
-        await bookmarks.addBookmark(
+        await saves.addSave(
           location.translationId,
           location.bookId,
           location.chapterNumber,
           {
-            category: nextSelection,
+            categories: nextSelection,
             ...(location.verse !== undefined ? { verse: location.verse } : {}),
           }
         );
@@ -1427,16 +1380,16 @@ function BookmarkCategoryPickerContent(props: {
   };
 
   /**
-   * Drops the bookmark from every folder at once. Unchecking them all can't do
-   * this — `setBookmarkCategories` treats an empty list as a no-op, since a
-   * bookmark with no folder has nowhere to live.
+   * Drops the save from every folder at once. Unchecking them all can't do
+   * this — `setSaveCategories` treats an empty list as a no-op, since a save
+   * with no folder has nowhere to live.
    */
   const handleRemove = async () => {
-    if (!isEdit || !bookmarkId || isSaving.value) return;
+    if (!isEdit || !saveId || isSaving.value) return;
 
     isSaving.value = true;
     try {
-      await bookmarks.removeBookmark(bookmarkId);
+      await saves.removeSave(saveId);
       onClose();
     } finally {
       isSaving.value = false;
@@ -1444,8 +1397,8 @@ function BookmarkCategoryPickerContent(props: {
   };
 
   return (
-    <div className="sb-bookmark-picker">
-      <div className="sb-bookmark-picker-categories" role="group">
+    <div className="sb-save-picker">
+      <div className="sb-save-picker-categories" role="group">
         {displayCategories.map((category) => {
           const isSelected = selectedCategories.value.includes(category.name);
           return (
@@ -1455,19 +1408,19 @@ function BookmarkCategoryPickerContent(props: {
               role="checkbox"
               aria-checked={isSelected}
               disabled={isSaving.value}
-              className={`sb-bookmark-picker-category${
-                isSelected ? " sb-bookmark-picker-category-selected" : ""
+              className={`sb-save-picker-category${
+                isSelected ? " sb-save-picker-category-selected" : ""
               }`}
               onClick={() => {
                 toggleCategory(category.name);
               }}
             >
-              <span className="sb-bookmark-picker-category-name">
+              <span className="sb-save-picker-category-name">
                 {category.name}
               </span>
               <span
-                className={`sb-bookmark-picker-checkbox${
-                  isSelected ? " sb-bookmark-picker-checkbox-checked" : ""
+                className={`sb-save-picker-checkbox${
+                  isSelected ? " sb-save-picker-checkbox-checked" : ""
                 }`}
                 aria-hidden="true"
               />
@@ -1478,13 +1431,13 @@ function BookmarkCategoryPickerContent(props: {
 
       {!isSaving.value && (
         <>
-          <div className="sb-bookmark-picker-divider" role="separator" />
+          <div className="sb-save-picker-divider" role="separator" />
 
           {isAddingNew.value ? (
-            <div className="sb-bookmark-picker-new-row">
+            <div className="sb-save-picker-new-row">
               <input
                 autoFocus
-                className="sb-bookmark-picker-new-input"
+                className="sb-save-picker-new-input"
                 placeholder={t("new-folder-placeholder", {
                   defaultValue: "New folder name",
                 })}
@@ -1512,7 +1465,7 @@ function BookmarkCategoryPickerContent(props: {
                 }}
               />
               {newCategoryCollides && (
-                <div className="sb-bookmark-picker-new-error">
+                <div className="sb-save-picker-new-error">
                   {t("folder-name-taken", {
                     defaultValue: "A folder with that name already exists.",
                   })}
@@ -1522,7 +1475,7 @@ function BookmarkCategoryPickerContent(props: {
           ) : (
             <button
               type="button"
-              className="sb-bookmark-picker-add-new"
+              className="sb-save-picker-add-new"
               onClick={() => {
                 isAddingNew.value = true;
                 newCategoryName.value = "";
@@ -1537,17 +1490,17 @@ function BookmarkCategoryPickerContent(props: {
         </>
       )}
 
-      <div className="sb-bookmark-picker-actions">
-        {isEdit && bookmarkId && (
+      <div className="sb-save-picker-actions">
+        {isEdit && saveId && (
           <button
             type="button"
-            className="sb-bookmark-picker-remove"
+            className="sb-save-picker-remove"
             disabled={isSaving.value}
             onClick={() => {
               void handleRemove();
             }}
           >
-            {t("remove-bookmark-from-all-folders", {
+            {t("remove-save-from-all-folders", {
               defaultValue: "Remove from all folders",
             })}
           </button>
@@ -1555,7 +1508,7 @@ function BookmarkCategoryPickerContent(props: {
         {isAddingNew.value && (
           <button
             type="button"
-            className="sb-bookmark-picker-stage-folder"
+            className="sb-save-picker-stage-folder"
             disabled={!canStageNew}
             onClick={() => {
               handleStageNewCategory();
@@ -1566,7 +1519,7 @@ function BookmarkCategoryPickerContent(props: {
         )}
         <button
           type="button"
-          className="sb-bookmark-picker-save"
+          className="sb-save-picker-save"
           disabled={!canSave}
           onClick={() => {
             void handleSave();
@@ -1582,19 +1535,19 @@ function BookmarkCategoryPickerContent(props: {
 }
 
 /**
- * Opens the bookmark category picker modal for the given location. Exported
- * so the verse toolbar (in BibleReaderToolbar) and the chapter bookmark
+ * Opens the save category picker modal for the given location. Exported so the
+ * verse toolbar (in BibleReaderToolbar) and the reader's quick-actions save
  * button (in BibleReader) can open it with the same UX as the sidebar.
  *
- * Pass `mode: "edit"` with `bookmarkId` to change which folders an existing
- * bookmark belongs to (any number of categories).
+ * Pass `mode: "edit"` with `saveId` to change which folders an existing save
+ * belongs to (any number of categories).
  */
-export function openBookmarkCategoryModal(
+export function openSaveCategoryModal(
   state: SeedBibleState,
-  location: BookmarkLocation,
+  location: SaveLocation,
   options?: {
     mode?: "add" | "edit";
-    bookmarkId?: string;
+    saveId?: string;
   }
 ) {
   const mode = options?.mode ?? "add";
@@ -1605,58 +1558,58 @@ export function openBookmarkCategoryModal(
         ? `${location.verse[0]}-${location.verse[1]}`
         : String(location.verse);
   const modalId =
-    mode === "edit" && options?.bookmarkId
-      ? `bookmark-edit-${options.bookmarkId}`
-      : `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
+    mode === "edit" && options?.saveId
+      ? `save-edit-${options.saveId}`
+      : `save-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
   state.modals.openModal({
     id: modalId,
     title:
       mode === "edit"
         ? {
-            key: "edit-bookmark",
-            defaultValue: "Edit bookmark",
+            key: "edit-save",
+            defaultValue: "Edit save",
           }
         : {
-            key: "add-bookmark-modal",
-            defaultValue: "Add bookmark",
+            key: "add-save-modal",
+            defaultValue: "Add save",
           },
     content: () => (
-      <BookmarkCategoryPickerContent
+      <SaveCategoryPickerContent
         state={state}
         location={location}
         mode={mode}
-        bookmarkId={options?.bookmarkId}
+        saveId={options?.saveId}
         onClose={() => state.modals.closeModal(modalId)}
       />
     ),
   });
 }
 
-interface BookmarksSectionProps {
+interface SavesSectionProps {
   state: SeedBibleState;
   closeLayoutMenu: () => void;
 }
 
 /**
- * The pinned "bookmarks" view shown above the regular tab list when the
- * bookmark toggle in the sidebar header is on. Renders each category as a
- * collapsible folder containing the user's saved Bible locations. Below it,
- * the normal tab list still renders unchanged — bookmarks and tabs coexist.
+ * The pinned "saves" view shown above the regular tab list when the saves
+ * toggle in the sidebar header is on. Renders each category as a collapsible
+ * folder containing the user's filed Bible locations. Below it, the normal tab
+ * list still renders unchanged — saves and tabs coexist.
  *
- * Bookmarks are pure links. Clicking one selects the open tab pointing at
- * the same location (and scrolls to the saved verse, if any); if no tab is
- * open at that location, a fresh tab is created and navigated there. The
- * bookmark itself is never rendered as a tab — that keeps the bookmarks
- * section a clean list of references rather than a duplicated tab list.
+ * Saves are pure links. Clicking one selects the open tab pointing at the same
+ * location (and scrolls to the saved verse, if any); if no tab is open at that
+ * location, a fresh tab is created and navigated there. The save itself is
+ * never rendered as a tab — that keeps the saves section a clean list of
+ * references rather than a duplicated tab list.
  */
-function BookmarksSection(props: BookmarksSectionProps) {
+function SavesSection(props: SavesSectionProps) {
   const { state, closeLayoutMenu } = props;
-  const { app, bookmarks, tabs: tabsManager, bibleData } = state;
+  const { app, saves, tabs: tabsManager, bibleData } = state;
   const { t } = useI18n();
 
-  const categories = bookmarks.categories.value;
-  const allBookmarks = bookmarks.bookmarks.value;
-  const expanded = bookmarks.expandedCategories.value;
+  const categories = saves.categories.value;
+  const allSaves = saves.saves.value;
+  const expanded = saves.expandedCategories.value;
   // Subscribe to the translation books cache so book-name lookups re-render
   // when a previously unloaded translation finishes loading.
   const translationBooksMap = bibleData.translationBooks.value;
@@ -1682,16 +1635,16 @@ function BookmarksSection(props: BookmarksSectionProps) {
     });
   };
 
-  const openBookmark = (
+  const openSave = (
     translationId: string,
     bookId: string,
     chapterNumber: number,
     verse?: number | [number, number]
   ) => {
     // Everything below changes some piece of state that mirrors to the URL:
-    // the reading position of the tab the bookmark opens, and — on mobile —
+    // the reading position of the tab the save opens, and — on mobile —
     // the dismissal of the sidebar it was tapped in. Batched, they cost one
-    // history entry for the bookmark; unbatched, the position write lands on
+    // history entry for the save; unbatched, the position write lands on
     // the entry that opened the sidebar and the dismissal adds a second entry
     // for the same destination, which leaves the back button looking dead.
     state.navigation.batchWrites(() => {
@@ -1716,10 +1669,10 @@ function BookmarksSection(props: BookmarksSectionProps) {
         }
         return;
       }
-      // Pass the bookmark location as the new tab's initial reading state so
+      // Pass the save's location as the new tab's initial reading state so
       // `loadInitialData()` lands directly on it. Calling `addTab()` and then
       // `selectTranslationAndChapter()` would race the default GEN 1 load and
-      // sometimes lose, leaving the user on Genesis 1 instead of the bookmark.
+      // sometimes lose, leaving the user on Genesis 1 instead of the save.
       const newTab = tabsManager.addTab(undefined, {
         initialTranslationId: translationId,
         initialBookId: bookId,
@@ -1727,12 +1680,12 @@ function BookmarksSection(props: BookmarksSectionProps) {
       });
       if (scrollVerse !== undefined) {
         // Queue the scroll-to-verse against the freshly created tab so when
-        // initial chapter data lands the reader scrolls to the bookmarked verse.
+        // initial chapter data lands the reader scrolls to the saved verse.
         newTab.readingState.scrollToVerse.value = scrollVerse;
       }
       // `addTab()` only marks the tab selected inside TabsManager — it doesn't
       // place it in a layout slot or dismiss the sidebar. Without this the mobile
-      // bookmarks screen stays on top of the reader, and the bookmark's location
+      // saves screen stays on top of the reader, and the save's location
       // is written over the history entry that opened the sidebar instead of
       // getting an entry of its own.
       app.selectTab(newTab.id);
@@ -1752,51 +1705,45 @@ function BookmarksSection(props: BookmarksSectionProps) {
     renamingCategory.value = null;
     renameValue.value = "";
     if (!next || next === oldName) return;
-    void bookmarks.renameCategory(oldName, next);
+    void saves.renameCategory(oldName, next);
   };
 
   return (
-    <div className="sb-bookmarks-section">
+    <div className="sb-saves-section">
       {categories.map((category) => {
-        const items = allBookmarks.filter((b) =>
-          bookmarkBelongsToCategory(b, category.name)
+        const items = allSaves.filter((b) =>
+          saveBelongsToCategory(b, category.name)
         );
         const isExpanded = expanded.has(category.name);
         const isRenaming = renamingCategory.value === category.name;
 
         return (
-          <div key={category.name} className="sb-bookmark-category">
+          <div key={category.name} className="sb-save-category">
             <div
-              className={`sb-bookmark-category-header${
-                isExpanded ? " sb-bookmark-category-header-expanded" : ""
+              className={`sb-save-category-header${
+                isExpanded ? " sb-save-category-header-expanded" : ""
               }`}
             >
               <button
                 type="button"
-                className="sb-bookmark-category-toggle"
+                className="sb-save-category-toggle"
                 onClick={() => {
                   if (isRenaming) return;
-                  bookmarks.toggleCategoryExpanded(category.name);
+                  saves.toggleCategoryExpanded(category.name);
                 }}
                 aria-expanded={isExpanded}
                 aria-label={category.name}
               >
-                <span className="sb-bookmark-category-icon" aria-hidden="true">
+                <span className="sb-save-category-icon" aria-hidden="true">
                   {/*
-                    Filled rather than outlined, and sized to the row's text
-                    height so category headers don't get a taller hit-target
-                    than the tabs around them.
+                    Sized to the row's text height so category headers don't get
+                    a taller hit-target than the tabs around them.
                   */}
-                  <BookmarkIcon
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    stroke-width="1.5"
-                  />
+                  <MaterialIcon>stacks</MaterialIcon>
                 </span>
                 {isRenaming ? (
                   <input
-                    className="sb-bookmark-category-rename-input"
+                    className="sb-save-category-rename-input"
                     autoFocus
                     value={renameValue.value}
                     onInput={(event: Event) => {
@@ -1817,13 +1764,11 @@ function BookmarksSection(props: BookmarksSectionProps) {
                     onClick={(event: MouseEvent) => event.stopPropagation()}
                   />
                 ) : (
-                  <span className="sb-bookmark-category-name">
-                    {category.name}
-                  </span>
+                  <span className="sb-save-category-name">{category.name}</span>
                 )}
                 <span
-                  className={`sb-bookmark-category-chevron${
-                    isExpanded ? " sb-bookmark-category-chevron-open" : ""
+                  className={`sb-save-category-chevron${
+                    isExpanded ? " sb-save-category-chevron-open" : ""
                   }`}
                   aria-hidden="true"
                 >
@@ -1832,8 +1777,8 @@ function BookmarksSection(props: BookmarksSectionProps) {
               </button>
 
               <ContextMenuWithButton
-                anchorClassName="sb-bookmark-category-menu-anchor"
-                buttonClassName="sb-bookmark-category-menu-button"
+                anchorClassName="sb-save-category-menu-anchor"
+                buttonClassName="sb-save-category-menu-button"
                 menuClassName="sb-tab-menu"
                 iconClassName="sb-tab-more-icon"
                 aria-label={t("category-options", {
@@ -1853,11 +1798,11 @@ function BookmarksSection(props: BookmarksSectionProps) {
                 >
                   {t("rename", { defaultValue: "Rename" })}
                 </ContextMenuItem>
-                {category.name !== DEFAULT_BOOKMARK_CATEGORY && (
+                {category.name !== DEFAULT_SAVE_CATEGORY && (
                   <ContextMenuItem
                     className="sb-tab-menu-item"
                     onClick={() => {
-                      void bookmarks.deleteCategory(category.name);
+                      void saves.deleteCategory(category.name);
                     }}
                   >
                     {t("delete", { defaultValue: "Delete" })}
@@ -1867,55 +1812,53 @@ function BookmarksSection(props: BookmarksSectionProps) {
             </div>
 
             {isExpanded && (
-              <div className="sb-bookmark-category-items">
+              <div className="sb-save-category-items">
                 {items.length === 0 ? (
-                  <div className="sb-bookmark-category-empty">
-                    {t("bookmark-folder-empty", {
-                      defaultValue: "No bookmarks here yet.",
+                  <div className="sb-save-category-empty">
+                    {t("save-folder-empty", {
+                      defaultValue: "No saves here yet.",
                     })}
                   </div>
                 ) : (
-                  items.map((bookmark) => {
-                    // Bookmarks are pure links — they always render as a
+                  items.map((save) => {
+                    // Saves are pure links — they always render as a
                     // compact entry, never as the tab itself. Clicking one
                     // selects an open tab on the same chapter (and scrolls to
                     // the saved verse if any), or creates a new tab at the
                     // saved location when none is open.
-                    ensureTranslationBooks(bookmark.translationId);
+                    ensureTranslationBooks(save.translationId);
                     const bookName =
-                      lookupBookName(bookmark.translationId, bookmark.bookId) ??
-                      bookmark.bookId;
-                    const verseSuffix = formatVerseRef(bookmark.verse);
+                      lookupBookName(save.translationId, save.bookId) ??
+                      save.bookId;
+                    const verseSuffix = formatVerseRef(save.verse);
                     return (
                       <div
-                        key={bookmark.id}
-                        className={`sb-bookmark-item${
-                          bookmark.verse !== undefined
-                            ? " sb-bookmark-item-verse"
-                            : ""
+                        key={save.id}
+                        className={`sb-save-item${
+                          save.verse !== undefined ? " sb-save-item-verse" : ""
                         }`}
                         dir="auto"
                       >
                         <button
                           type="button"
-                          className="sb-bookmark-item-button"
+                          className="sb-save-item-button"
                           onClick={() => {
-                            openBookmark(
-                              bookmark.translationId,
-                              bookmark.bookId,
-                              bookmark.chapterNumber,
-                              bookmark.verse
+                            openSave(
+                              save.translationId,
+                              save.bookId,
+                              save.chapterNumber,
+                              save.verse
                             );
                           }}
                         >
                           <span className="sb-tab-main-title">
-                            {`${bookName} ${bookmark.chapterNumber}${verseSuffix}`}
+                            {`${bookName} ${save.chapterNumber}${verseSuffix}`}
                           </span>
                           <span className="sb-tab-main-sep" aria-hidden="true">
                             •
                           </span>
                           <span className="sb-tab-main-translation">
-                            {bookmark.translationId}
+                            {save.translationId}
                           </span>
                         </button>
                         <ContextMenuWithButton
@@ -1923,48 +1866,48 @@ function BookmarksSection(props: BookmarksSectionProps) {
                           buttonClassName="sb-tab-menu-button"
                           menuClassName="sb-tab-menu"
                           iconClassName="sb-tab-more-icon"
-                          aria-label={t("bookmark-options", {
-                            defaultValue: "Bookmark options",
+                          aria-label={t("save-options", {
+                            defaultValue: "Save options",
                           })}
-                          title={t("bookmark-options", {
-                            defaultValue: "Bookmark options",
+                          title={t("save-options", {
+                            defaultValue: "Save options",
                           })}
                         >
                           <ContextMenuItem
                             className="sb-tab-menu-item"
                             onClick={() => {
-                              openBookmarkCategoryModal(
+                              openSaveCategoryModal(
                                 state,
                                 {
-                                  translationId: bookmark.translationId,
-                                  bookId: bookmark.bookId,
-                                  chapterNumber: bookmark.chapterNumber,
-                                  ...(bookmark.verse !== undefined
-                                    ? { verse: bookmark.verse }
+                                  translationId: save.translationId,
+                                  bookId: save.bookId,
+                                  chapterNumber: save.chapterNumber,
+                                  ...(save.verse !== undefined
+                                    ? { verse: save.verse }
                                     : {}),
                                 },
                                 {
                                   mode: "edit",
-                                  bookmarkId: bookmark.id,
+                                  saveId: save.id,
                                 }
                               );
                             }}
                           >
-                            {t("edit-bookmark", {
-                              defaultValue: "Edit bookmark",
+                            {t("edit-save", {
+                              defaultValue: "Edit save",
                             })}
                           </ContextMenuItem>
                           <ContextMenuItem
                             className="sb-tab-menu-item"
                             onClick={() => {
-                              void bookmarks.removeBookmarkFromCategory(
-                                bookmark.id,
+                              void saves.removeSaveFromCategory(
+                                save.id,
                                 category.name
                               );
                             }}
                           >
-                            {t("remove-bookmark", {
-                              defaultValue: "Remove bookmark",
+                            {t("remove-save", {
+                              defaultValue: "Remove save",
                             })}
                           </ContextMenuItem>
                         </ContextMenuWithButton>
@@ -1983,13 +1926,13 @@ function BookmarksSection(props: BookmarksSectionProps) {
 
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
-  const { app, tabs: tabsManager, bookmarks } = state;
+  const { app, tabs: tabsManager, saves } = state;
   // Slot-only tabs back an "open in new panel" clone and are intentionally
   // hidden from the tab strip.
   const tabs = tabsManager.tabs.value.filter((tab) => !tab.slotOnly);
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
-  const isBookmarkFilterActive = bookmarks.isFilterActive.value;
+  const isSavesFilterActive = saves.isFilterActive.value;
   const { t } = useI18n();
 
   if (effectivelyCollapsed) {
@@ -2081,74 +2024,74 @@ export function Tabs(props: TabsProps) {
     );
   }
 
-  // On mobile, the Bookmarks bottom-tab opens this drawer with the bookmark
+  // On mobile, the Saves bottom-tab opens this drawer with the saves
   // filter active. Rather than show the tabs list + search, present a focused
-  // full-screen Bookmarks view: a dedicated header (close / title / new
-  // folder) over the existing collapsible BookmarksSection.
-  if (app.isMobile.value && isBookmarkFilterActive) {
+  // full-screen Saves view: a dedicated header (close / title / new
+  // folder) over the existing collapsible SavesSection.
+  if (app.isMobile.value && isSavesFilterActive) {
     const createNewCategory = () => {
-      const base = t("new-bookmark-folder", { defaultValue: "New folder" });
-      const existing = new Set(bookmarks.categories.value.map((c) => c.name));
+      const base = t("new-save-folder", { defaultValue: "New folder" });
+      const existing = new Set(saves.categories.value.map((c) => c.name));
       let name = base;
       let n = 2;
       while (existing.has(name)) {
         name = `${base} ${n++}`;
       }
-      void bookmarks.createCategory(name);
+      void saves.createCategory(name);
     };
 
     return (
-      <div className="sb-bookmarks-mobile-screen">
-        <div className="sb-bookmarks-mobile-header">
+      <div className="sb-saves-mobile-screen">
+        <div className="sb-saves-mobile-header">
           <button
             type="button"
-            className="sb-bookmarks-mobile-header-button sb-bookmarks-mobile-header-close"
+            className="sb-saves-mobile-header-button sb-saves-mobile-header-close"
             onClick={() => {
               // Opened from the bottom toolbar → Close (X) dismisses the whole
               // drawer. Opened from the Tabs header → Back arrow turns the
               // filter off, returning to the Tabs list it came from.
-              if (bookmarks.openedFromToolbar.value) {
+              if (saves.openedFromToolbar.value) {
                 // Reset the view (filter + source flag) so the next time the
                 // tabs drawer opens it starts on the Tabs list, not a stale
-                // bookmarks screen.
-                bookmarks.closeView();
+                // saves screen.
+                saves.closeView();
                 state.sidebar.closeSidebar();
-              } else if (bookmarks.isFilterActive.value) {
-                bookmarks.toggleFilter();
+              } else if (saves.isFilterActive.value) {
+                saves.toggleFilter();
               }
             }}
             aria-label={
-              bookmarks.openedFromToolbar.value
+              saves.openedFromToolbar.value
                 ? t("close", { defaultValue: "Close" })
                 : t("back", { defaultValue: "Back" })
             }
             title={
-              bookmarks.openedFromToolbar.value
+              saves.openedFromToolbar.value
                 ? t("close", { defaultValue: "Close" })
                 : t("back", { defaultValue: "Back" })
             }
           >
             <span className="material-symbols-outlined">
-              {bookmarks.openedFromToolbar.value ? "close" : "arrow_back"}
+              {saves.openedFromToolbar.value ? "close" : "arrow_back"}
             </span>
           </button>
-          <h2 className="sb-bookmarks-mobile-title">
-            {t("bookmarks", { defaultValue: "Bookmarks" })}
+          <h2 className="sb-saves-mobile-title">
+            {t("saves", { defaultValue: "Saves" })}
           </h2>
           <button
             type="button"
-            className="sb-bookmarks-mobile-header-button sb-bookmarks-mobile-header-add"
+            className="sb-saves-mobile-header-button sb-saves-mobile-header-add"
             onClick={createNewCategory}
-            aria-label={t("new-bookmark-folder", {
+            aria-label={t("new-save-folder", {
               defaultValue: "New folder",
             })}
-            title={t("new-bookmark-folder", { defaultValue: "New folder" })}
+            title={t("new-save-folder", { defaultValue: "New folder" })}
           >
             <span className="material-symbols-outlined">create_new_folder</span>
           </button>
         </div>
-        <div className="sb-bookmarks-mobile-body">
-          <BookmarksSection state={state} closeLayoutMenu={closeLayoutMenu} />
+        <div className="sb-saves-mobile-body">
+          <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
         </div>
       </div>
     );
@@ -2206,38 +2149,32 @@ export function Tabs(props: TabsProps) {
 
               <button
                 type="button"
-                className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-                  isBookmarkFilterActive
-                    ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
+                  isSavesFilterActive
+                    ? " sb-sidebar-tabs-header-saves-button-active"
                     : ""
                 }`}
-                aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-                aria-pressed={isBookmarkFilterActive}
+                aria-label={t("saves", { defaultValue: "Saves" })}
+                aria-pressed={isSavesFilterActive}
                 title={
-                  isBookmarkFilterActive
-                    ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
-                    : t("show-bookmarks", { defaultValue: "Show bookmarks" })
+                  isSavesFilterActive
+                    ? t("hide-saves", { defaultValue: "Hide saves" })
+                    : t("show-saves", { defaultValue: "Show saves" })
                 }
                 onClick={() => {
-                  bookmarks.toggleFilter();
+                  saves.toggleFilter();
                 }}
               >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill={isBookmarkFilterActive ? "currentColor" : "none"}
-                  xmlns="http://www.w3.org/2000/svg"
+                <MaterialIcon
                   aria-hidden="true"
+                  style={{
+                    fontVariationSettings: isSavesFilterActive
+                      ? '"FILL" 1'
+                      : '"FILL" 0',
+                  }}
                 >
-                  <path
-                    d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
+                  stacks
+                </MaterialIcon>
               </button>
               <button
                 type="button"
@@ -2296,41 +2233,35 @@ export function Tabs(props: TabsProps) {
             </h3>
             <button
               type="button"
-              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-                isBookmarkFilterActive
-                  ? " sb-sidebar-tabs-header-bookmarks-button-active"
+              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
+                isSavesFilterActive
+                  ? " sb-sidebar-tabs-header-saves-button-active"
                   : ""
               }`}
-              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-              aria-pressed={isBookmarkFilterActive}
+              aria-label={t("saves", { defaultValue: "Saves" })}
+              aria-pressed={isSavesFilterActive}
               title={
-                isBookmarkFilterActive
-                  ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
-                  : t("show-bookmarks", { defaultValue: "Show bookmarks" })
+                isSavesFilterActive
+                  ? t("hide-saves", { defaultValue: "Hide saves" })
+                  : t("show-saves", { defaultValue: "Show saves" })
               }
               onClick={() => {
-                // Opened from the Tabs header: backing out of the bookmarks
+                // Opened from the Tabs header: backing out of the saves
                 // view should return here, so it gets a Back arrow (not an X).
-                bookmarks.openedFromToolbar.value = false;
-                bookmarks.toggleFilter();
+                saves.openedFromToolbar.value = false;
+                saves.toggleFilter();
               }}
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill={isBookmarkFilterActive ? "currentColor" : "none"}
-                xmlns="http://www.w3.org/2000/svg"
+              <MaterialIcon
                 aria-hidden="true"
+                style={{
+                  fontVariationSettings: isSavesFilterActive
+                    ? '"FILL" 1'
+                    : '"FILL" 0',
+                }}
               >
-                <path
-                  d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
+                stacks
+              </MaterialIcon>
             </button>
             <button
               type="button"
@@ -2354,9 +2285,9 @@ export function Tabs(props: TabsProps) {
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
 
       <div className="sb-sidebar-tab-list">
-        {isBookmarkFilterActive && (
+        {isSavesFilterActive && (
           <>
-            <BookmarksSection state={state} closeLayoutMenu={closeLayoutMenu} />
+            <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
             <div className="sb-sidebar-tabs-divider" role="separator" />
           </>
         )}
