@@ -239,10 +239,24 @@ describe("OfflineReadingHistoryStore", () => {
       expect(pending.map((r) => r.end)).toEqual([NOON + 5]);
     });
 
-    it("ignores an event that is no longer stored", async () => {
+    it("ignores an event that is no longer stored, leaving the rest alone", async () => {
+      // A key the store has never held — what a row pruned or cleared between
+      // its push going out and the push coming back looks like.
+      const queued = await store.recordReadingSpan(span({ atSeconds: NOON }));
+
       await expect(
-        store.markSynced([{ key: "user-1/2026/GEN/9/1", end: 1 }])
+        store.markSynced([
+          { key: "user-1/2026/GEN/9/1", end: 1 },
+          { key: queued.key, end: queued.end },
+        ])
       ).resolves.toBeUndefined();
+
+      // The unknown key neither resurrects a row nor stops the real one being
+      // marked: exactly one row, and it is no longer queued.
+      expect(await store.listForWindow("user-1", 0, NOON + 100)).toEqual([
+        { ...queued, pendingOp: null },
+      ]);
+      expect(await store.listPending("user-1")).toEqual([]);
     });
   });
 
