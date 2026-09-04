@@ -92,16 +92,20 @@ describe("CustomizationVariantSelectionsManager", () => {
     });
   });
 
-  it("signed out: a selection survives a simulated reload (a fresh manager reading the same login.localConfig)", async () => {
+  it("signed out: reads its selections from login.localConfig, not from manager-instance memory", async () => {
     userIdSignal.value = null;
     const first = createCustomizationVariantSelectionsManager(os, login);
     await flushPromises();
     await first.selectVariant("owner.customization_1", "variant_1");
 
-    // `login.localConfig` is what `LoginManager` mirrors to `localStorage` and
-    // rehydrates on the next load, so a second manager reading the same
-    // signal (rather than the first instance's local state) is what proves
-    // the choice isn't just held in page-lifetime memory.
+    // A second manager instance, sharing the same `login.localConfig`
+    // signal, sees the choice — proving it isn't held only in `first`'s own
+    // instance state. This does NOT exercise the real localStorage
+    // serialize/rehydrate round-trip a page reload performs (`writeLocalConfig`
+    // / `readLocalConfig` / `hydrateLocalConfig` in LoginManager.tsx) — that
+    // round-trip is `LoginManager`'s own responsibility and is covered by
+    // its test suite (see "hydrateLocalConfig()" and "localStorage
+    // persistence" in LoginManager.test.ts).
     const second = createCustomizationVariantSelectionsManager(os, login);
     await flushPromises();
 
@@ -126,6 +130,20 @@ describe("CustomizationVariantSelectionsManager", () => {
     expect(manager.getSelectedVariantId("owner.customization_2")).toBe(
       "variant_b"
     );
+  });
+
+  it("signed out: selectVariant() preserves unrelated login.localConfig keys (e.g. fontSize)", async () => {
+    userIdSignal.value = null;
+    login.localConfig.value = { fontSize: "XL" };
+    const manager = createCustomizationVariantSelectionsManager(os, login);
+    await flushPromises();
+
+    await manager.selectVariant("owner.customization_1", "variant_1");
+
+    expect(login.localConfig.value.fontSize).toBe("XL");
+    expect(login.localConfig.value[VARIANT_SELECTIONS_ADDRESS]).toEqual({
+      "owner.customization_1": "variant_1",
+    });
   });
 
   it("selectVariant() persists to its own record and is immediately readable without a reload", async () => {
@@ -175,6 +193,44 @@ describe("CustomizationVariantSelectionsManager", () => {
 
     expect(warnSpy).toHaveBeenCalled();
     expect(manager.selections.value).toEqual({});
+  });
+
+  it("signed in with no record yet: recovers a selection LoginManager adopted into profile.config, and persists it to this manager's own record", async () => {
+    // Simulates a brand-new account's first login on a device that had a
+    // signed-out selection: `LoginManager.getUserProfile` seeds the new
+    // profile's `config` from `localConfig` (which includes this manager's
+    // key, since `login.localConfig` is where signed-out picks live) before
+    // this manager's own record has ever been written — `getData` above
+    // already mocks that record as `data_not_found`.
+    const adoptedProfile = {
+      name: "",
+      config: {
+        [VARIANT_SELECTIONS_ADDRESS]: { "owner.customization_1": "variant_1" },
+      },
+    };
+    login.profile.value = adoptedProfile;
+    login.profilePromise = Promise.resolve(adoptedProfile);
+
+    const manager = createCustomizationVariantSelectionsManager(os, login);
+    await flushPromises();
+
+    expect(manager.getSelectedVariantId("owner.customization_1")).toBe(
+      "variant_1"
+    );
+    expect(recordDataMock).toHaveBeenCalledWith(
+      "user-1",
+      VARIANT_SELECTIONS_ADDRESS,
+      { selections: { "owner.customization_1": "variant_1" } },
+      { marker: "publicRead" }
+    );
+  });
+
+  it("signed in with no record and nothing adopted: settles to empty selections without erroring", async () => {
+    const manager = createCustomizationVariantSelectionsManager(os, login);
+    await flushPromises();
+
+    expect(manager.selections.value).toEqual({});
+    expect(recordDataMock).not.toHaveBeenCalled();
   });
 
   it("clears the previous user's selections and reloads when the signed-in user changes", async () => {
