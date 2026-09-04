@@ -2783,7 +2783,7 @@ describe("BibleReader", () => {
     });
   });
 
-  describe("the header's save and bookmark buttons", () => {
+  describe("the header's save button", () => {
     const renderHeader = (state: SeedBibleState) => {
       const { slot, selectorState, readingState } = createFixture();
       act(() => {
@@ -2862,18 +2862,14 @@ describe("BibleReader", () => {
       );
     });
 
-    it("says the bookmark redesign is coming rather than writing anything", () => {
-      const state = createMobileState();
-      renderHeader(state);
+    // Hidden behind SHOW_BOOKMARK_BUTTON until #1658. The placeholder and its
+    // "coming soon" toast are still in the file, just not rendered — flipping
+    // the flag is what brings them back.
+    it("shows no bookmark button beside it while bookmarks are off", () => {
+      renderHeader(createMobileState());
 
-      expect(bookmarkButton()).not.toBeNull();
-      act(() => bookmarkButton()!.click());
-
-      expect(state.app.toast).toHaveBeenCalledWith(
-        "Bookmark redesign coming soon"
-      );
-      expect(state.modals.openModal).not.toHaveBeenCalled();
-      expect(state.saves.addSave).not.toHaveBeenCalled();
+      expect(saveButton()).not.toBeNull();
+      expect(bookmarkButton()).toBeNull();
     });
   });
 

@@ -111,6 +111,15 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
 }
 
 /**
+ * Whether the reader header shows a bookmark button at all.
+ *
+ * Off until #1658 builds the real one. The placeholder below stays in the tree
+ * — and keeps its slot in both header clusters — so turning bookmarks back on
+ * is this one line rather than a rebuild of the layout around it.
+ */
+const SHOW_BOOKMARK_BUTTON = false;
+
+/**
  * Placeholder for the redesigned bookmarks of #1658. The archival behavior
  * this button used to have moved to Saves (the button beside it), and the
  * replacement — a named, colored marker you move as you read — does not exist
@@ -2188,12 +2197,14 @@ export function BibleReader(props: BibleReaderProps) {
                     bookId={bookId.value}
                     chapterNumber={chapterNumber.value}
                   />
-                  <ReaderBookmarkButton
-                    state={state}
-                    translationId={translationId.value}
-                    bookId={bookId.value}
-                    chapterNumber={chapterNumber.value}
-                  />
+                  {SHOW_BOOKMARK_BUTTON && (
+                    <ReaderBookmarkButton
+                      state={state}
+                      translationId={translationId.value}
+                      bookId={bookId.value}
+                      chapterNumber={chapterNumber.value}
+                    />
+                  )}
                 </>
               )}
               <QuickToolbar
@@ -2355,12 +2366,14 @@ export function BibleReader(props: BibleReaderProps) {
                       bookId={bookId.value}
                       chapterNumber={chapterNumber.value}
                     />
-                    <ReaderBookmarkButton
-                      state={state}
-                      translationId={translationId.value}
-                      bookId={bookId.value}
-                      chapterNumber={chapterNumber.value}
-                    />
+                    {SHOW_BOOKMARK_BUTTON && (
+                      <ReaderBookmarkButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                    )}
                   </>
                 )}
               </div>
