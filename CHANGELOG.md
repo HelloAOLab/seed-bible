@@ -4,22 +4,42 @@
 
 ### ✨ Added
 
-- Analytics for common playlist actions like creating and finishing playlists.
-- Add an Ask AI action to the verse toolbar: select verses, pick an agent when more than one is available, and open (or reuse) a chat with those verses already in the input.
-- Write, edit and delete your notes with no internet connection. Notes used to go straight to the server, so with no connection saving failed and whatever you had typed was lost — and opening a chapter offline reported "You have no annotations" and kept saying so even after the connection came back. Now notes are kept on your device first and sent to the server when you are back online, with a count of what is still waiting. Notes written before you sign in are kept too, and become part of your account the first time you do.
-- Ask which version to keep when a note changed in two places at once — edited on your phone while your laptop was offline, say. Previously whichever change was saved last silently replaced the other. Now the two versions are shown side by side with when each was written, and you choose: keep yours, keep the other one, or keep both (yours is saved as a second note, so nothing you wrote is thrown away). Nothing is overwritten until you decide.
-- Add `?chatFirst=true` so mobile shows Chat as the fourth toolbar tab instead of Bookmarks (Bookmarks moves into More), and desktop/laptop keeps Chat visible and prominent in the labeled toolbar.
-
 ### 🔧 Changed
-
-- Add selected verses to a playlist as one item per contiguous range (for example Exodus 26:1-11) instead of one item per verse.
 
 ### 🐛 Fixed
 
-- Fix the back button and back gesture after opening a bookmark on mobile. Tapping a bookmark used to leave the reader on the bookmarks screen and record two browser history entries for the same chapter — so going back appeared to do nothing. Tapping a bookmark now closes the bookmarks screen and lands on the chapter, and going back returns to the bookmarks list, then to the chapter you were reading before. ([#1338](https://github.com/HelloAOLab/seed-bible/issues/1338))
-- Keep the verses a playlist item points at at full brightness when you tap it, instead of dimming the whole chapter including those verses.
-
 ### 🗑️ Removed
+
+## v1.7.1 — 2026-09-02
+
+### ✨ Added
+
+- Add an Ask AI action to the verse toolbar: select verses, pick an agent when more than one is available, and open (or reuse) a chat with those verses already in the input.
+- Add `?chatFirst=true` so mobile shows Chat as the fourth toolbar tab instead of Bookmarks (Bookmarks moves into More), and desktop/laptop keeps Chat visible and prominent in the labeled toolbar. ([#1694](https://github.com/HelloAOLab/seed-bible/pull/1694))
+
+### 🔧 Changed
+
+- Add selected verses to a playlist as one item per contiguous range (for example Exodus 26:1-11) instead of one item per verse. ([#1728](https://github.com/HelloAOLab/seed-bible/pull/1728))
+- Ask AI from the verse toolbar now always starts a new chat instead of reusing an existing chat with the same AI agent. ([#1673](https://github.com/HelloAOLab/seed-bible/pull/1673))
+- Grow the chat compose field to fit up to 8 lines before it scrolls, instead of 5, including when text is inserted programmatically (such as an Ask AI verse quote) and not just while typing. ([#1673](https://github.com/HelloAOLab/seed-bible/pull/1673))
+- Cache one shared app shell for every page instead of a separate cache entry per URL, so a repeat visit loads instantly from the service worker cache and refreshes in the background; the new service worker only takes over once that shared shell is confirmed to match the new build, instead of risking an offline app right after a deploy. ([#1732](https://github.com/HelloAOLab/seed-bible/pull/1732))
+- Point the Today screen's welcome call-to-action at John 1 instead of Genesis 1, falling back to whichever book a translation lists first when neither is available. ([#1714](https://github.com/HelloAOLab/seed-bible/pull/1714))
+- Always show the discover panel (compact by default) beside the chapter instead of only on demand, folding the "this reading belongs to a plan" card into it, and wrap it below the reader instead of squeezing it beside it when there isn't enough width. ([#1693](https://github.com/HelloAOLab/seed-bible/pull/1693))
+- Rename the "Scripture Margins" setting to "Scripture Width", which sets the reading column's max width directly in characters (default 68ch) instead of a percentage margin that could make lines too long or too short depending on screen width. ([#1693](https://github.com/HelloAOLab/seed-bible/pull/1693))
+- Show the compact discover panel instead of the full discover panel, and stop selecting the verse, when clicking a verse-number marker that has a note on desktop. ([#1693](https://github.com/HelloAOLab/seed-bible/pull/1693))
+- Show the full session URL instead of just the session ID in session settings. ([#1712](https://github.com/HelloAOLab/seed-bible/pull/1712))
+
+### 🐛 Fixed
+
+- Fix the back button and back gesture after opening a bookmark on mobile. Tapping a bookmark used to leave the reader on the bookmarks screen and record two browser history entries for the same chapter — so going back appeared to do nothing. Tapping a bookmark now closes the bookmarks screen and lands on the chapter, and going back returns to the bookmarks list, then to the chapter you were reading before. ([#1338](https://github.com/HelloAOLab/seed-bible/issues/1338), [#1665](https://github.com/HelloAOLab/seed-bible/pull/1665))
+- Keep the verses a playlist item points at at full brightness when you tap it, instead of dimming the whole chapter including those verses. ([#1729](https://github.com/HelloAOLab/seed-bible/pull/1729))
+- Keep your unsent chat text after clicking a verse closes the floating chat panel, instead of losing it, and merge a new Ask AI verse quote into what you've already typed instead of overwriting it. ([#1673](https://github.com/HelloAOLab/seed-bible/pull/1673))
+- Fix opening the app with `?today=open` corrupting the page instead of correctly opening Today after the page loads, caused by the client and server disagreeing about whether Today should start open. ([#1733](https://github.com/HelloAOLab/seed-bible/pull/1733))
+- Fix the welcome screen's book heading, quote, and read-chapter button flashing a guessed placeholder before the translation's real book data arrived; they now stay hidden until resolved, then reveal with a fade and grow instead of popping in. ([#1714](https://github.com/HelloAOLab/seed-bible/pull/1714))
+- Fix hydrating onto the wrong page when a branch's SSR output actually came from a different branch's build (for branches outside the allow-list); the app now detects the mismatch and re-renders cleanly instead of hydrating onto markup produced by different component code. ([#1731](https://github.com/HelloAOLab/seed-bible/pull/1731))
+- Fix Bible reference auto-linking (in chat and notes) rejecting valid verses in translations that don't follow Protestant versification, while still catching genuinely out-of-range references like a nonexistent chapter number. ([#1695](https://github.com/HelloAOLab/seed-bible/pull/1695))
+- Fix several Today screen elements (the resume card, section headers, search box, and timespan filter) using the wrong theme tokens, so they didn't correctly follow the light/dark color scheme. ([#1710](https://github.com/HelloAOLab/seed-bible/pull/1710))
+- Pin the session settings modal's action buttons to the bottom instead of letting them scroll out of view. ([#1712](https://github.com/HelloAOLab/seed-bible/pull/1712))
 
 ## v1.7.0 — 2026-08-31
 

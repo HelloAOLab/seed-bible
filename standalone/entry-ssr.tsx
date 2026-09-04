@@ -58,6 +58,8 @@ export interface RenderOptions {
    *   CSS text should be injected, for the pre-hydration script that applies
    *   a returning visitor's saved theme before first paint.
    * - `<!--META-->` where any additional meta tags should be injected (optional).
+   * - `<!-- HTML_LANG -->` inside the root `<html lang="...">` attribute,
+   *   where the detected page language should be injected.
    *
    * The host server loads this from disk at startup and passes it to the render function on each request, allowing it to be customized or overridden per request if needed.
    * By default, it is just the contents of `index.html` in the project root.
@@ -66,6 +68,17 @@ export interface RenderOptions {
 }
 
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
+
+/**
+ * Unlike the `<meta>`/`<link>` values above (rendered through Preact, which
+ * escapes attribute values automatically), `HTML_LANG` lands inside a
+ * `lang="..."` attribute via a raw string substitution into the static
+ * template — and the language it carries can trace back to an unvalidated
+ * `?lang=` query param (see `getUrlLanguage`). Escape it explicitly so a
+ * crafted value can't break out of the attribute.
+ */
+const escapeForHtmlAttribute = (value: string): string =>
+  value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 /**
  * Excludes the full multi-translation catalog from what gets embedded in the
@@ -487,6 +500,7 @@ export async function render(
         media="(prefers-color-scheme: dark)"
       />
       <meta name="description" content={state.app.description.value} />
+      <meta httpEquiv="content-language" content={state.i18n.language.value} />
       <meta property="og:locale" content={state.i18n.language.value} />
       <meta
         property="og:locale:alternate"
@@ -548,6 +562,7 @@ export async function render(
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+    ["<!-- HTML_LANG -->", escapeForHtmlAttribute(state.i18n.language.value)],
     [
       "<!-- THEME_STYLE_TAG -->",
       composeThemeStyleText(state.theme.currentTheme.value),

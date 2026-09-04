@@ -180,6 +180,7 @@ function createFixture(): ReaderFixture {
 
   const selectorState = {
     setOpen,
+    selectingTranslation: signal(false),
   } as any as BibleSelectorState;
 
   const slot: TabSlot = {

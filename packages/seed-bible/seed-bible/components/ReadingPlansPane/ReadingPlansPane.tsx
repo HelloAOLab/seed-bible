@@ -21,9 +21,13 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { CasualOSManager } from "../../managers/OsManager";
+import type { LoginManager } from "../../managers/LoginManager";
+import type { UserGalleryManager } from "../../managers/UserGalleryManager";
 import { readingLabel } from "./readingLabel";
 import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
@@ -31,6 +35,9 @@ interface ReadingPlansPaneProps {
   books: TranslationBook[];
   /** Modals host, for previewing/opening a text or link reading. */
   modals?: ModalManager;
+  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
+  login?: Pick<LoginManager, "userId">;
+  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   /**
    * Navigates the reader to a scripture reading. Without it a plan's scripture
    * readings can only be ticked off, not opened.
@@ -232,8 +239,16 @@ export function ReadingPlansPaneActions(props: {
  * exports above), so this component renders only the body of each screen.
  */
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
-  const { readingPlans, books, modals, onOpenScripture, onPlayReadings } =
-    props;
+  const {
+    readingPlans,
+    books,
+    modals,
+    os,
+    login,
+    gallery,
+    onOpenScripture,
+    onPlayReadings,
+  } = props;
   // The view outlives this component, so closing the pane to go read and add a
   // passage brings the user back to the editor they were in, not to the list.
   const view = readingPlansView.value;
@@ -291,6 +306,9 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         readingPlans={readingPlans}
         books={books}
         modals={modals}
+        os={os}
+        login={login}
+        gallery={gallery}
         onCancel={() => backToPlansList(readingPlans)}
         onSaved={closeEditor}
       />
@@ -499,6 +517,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
               onClick={() => onOpen(hero.meta)}
               disabled={openingId === hero.planId}
             >
+              <HeroImageThumb url={hero.meta.heroImageUrl} />
               <div className="sb-rp-today-text">
                 <span className="sb-rp-today-eyebrow">
                   {t("reading-plan-today-eyebrow", {
@@ -548,9 +567,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       onClick={() => resumeDraft(meta)}
                       disabled={!full}
                     >
-                      <span className="sb-rp-card-tile" aria-hidden="true">
-                        <MaterialIcon>edit_note</MaterialIcon>
-                      </span>
+                      <HeroImageThumb url={meta.heroImageUrl} />
                       <span className="sb-rp-card-body">
                         <span className="sb-rp-card-title" dir="auto">
                           {planTitle(meta)}
@@ -628,9 +645,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                     onClick={() => onOpen(row.meta)}
                     disabled={openingId === row.planId}
                   >
-                    <span className="sb-rp-card-tile" aria-hidden="true">
-                      <MaterialIcon>menu_book</MaterialIcon>
-                    </span>
+                    <HeroImageThumb url={row.meta.heroImageUrl} />
                     <span className="sb-rp-card-body">
                       <span className="sb-rp-card-title" dir="auto">
                         {planTitle(row.meta)}
@@ -673,12 +688,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                         onClick={() => onOpen(row.meta)}
                         disabled={openingId === row.planId}
                       >
-                        <span
-                          className="sb-rp-card-tile sb-rp-card-tile-done"
-                          aria-hidden="true"
-                        >
-                          <MaterialIcon>check</MaterialIcon>
-                        </span>
+                        <HeroImageThumb url={row.meta.heroImageUrl} />
                         <span className="sb-rp-card-body">
                           <span className="sb-rp-card-title" dir="auto">
                             {planTitle(row.meta)}
@@ -761,9 +771,7 @@ function ActivePlanCard(props: {
       disabled={opening}
     >
       <div className="sb-rp-card-row">
-        <span className="sb-rp-card-tile" aria-hidden="true">
-          <MaterialIcon>menu_book</MaterialIcon>
-        </span>
+        <HeroImageThumb url={row.meta.heroImageUrl} />
         <span className="sb-rp-card-body">
           <span className="sb-rp-card-title" dir="auto">
             {title}
