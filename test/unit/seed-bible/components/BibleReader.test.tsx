@@ -2822,6 +2822,10 @@ describe("BibleReader", () => {
       expect(opened.title).toMatchObject({ key: "add-save-modal" });
     });
 
+    /** The star renders as an SVG, so "filled" is its fill, not a font axis. */
+    const starFill = () =>
+      saveButton()!.querySelector("svg")!.getAttribute("fill");
+
     it("opens the picker again on a second press instead of unsaving", () => {
       // Saves are archival: the button never removes one, even when the
       // chapter is already filed.
@@ -2833,7 +2837,23 @@ describe("BibleReader", () => {
       act(() => saveButton()!.click());
 
       expect(state.modals.openModal).toHaveBeenCalledTimes(2);
+      // Filled is an indicator, not a pressed toggle.
       expect(saveButton()!.getAttribute("aria-pressed")).toBeNull();
+    });
+
+    it("fills its star only once the chapter is saved", () => {
+      const unsaved = createMobileState();
+      renderHeader(unsaved);
+      expect(starFill()).toBe("none");
+      expect(saveButton()!.className).not.toContain("saved");
+
+      const saved = createMobileState();
+      (saved.saves.isLocationSaved as Mock).mockReturnValue(true);
+      renderHeader(saved);
+      expect(starFill()).toBe("currentColor");
+      expect(saveButton()!.className).toContain(
+        "sb-bible-reader-save-button-saved"
+      );
     });
 
     it("says the bookmark redesign is coming rather than writing anything", () => {

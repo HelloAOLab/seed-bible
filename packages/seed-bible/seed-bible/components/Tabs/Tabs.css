@@ -4,8 +4,9 @@
   height: 1.5rem;
 }
 
-.sb-tab-save-button .material-symbols-outlined {
-  font-size: 1.125rem; /* 18px */
+.sb-tab-save-button svg {
+  width: 1.125rem; /* 18px */
+  height: 1.125rem;
 }
 
 .sb-tabs-sidebar {
@@ -201,9 +202,9 @@
 }
 
 /* Per-tab save button — rendered between the tab body and the
- * "more" menu, but only on the currently selected row. A plain action rather
- * than a toggle: saves accumulate, so there is no "already saved" state to
- * show. */
+ * "more" menu, but only on the currently selected row. The star fills once a
+ * chapter-level save exists, but the button is still a plain action rather than
+ * a toggle — pressing a filled star files another copy. */
 .sb-tab-save-button {
   display: inline-flex;
   align-items: center;
@@ -226,6 +227,11 @@
 .sb-tab-save-button:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
+}
+
+.sb-tab-save-button-saved,
+.sb-tab-save-button-saved:hover {
+  color: var(--sb-primary-color);
 }
 
 /* ---- Saves section (pinned above the tab list when the saves
@@ -283,8 +289,9 @@
   flex-shrink: 0;
 }
 
-.sb-save-category-icon .material-symbols-outlined {
-  font-size: 1rem; /* 16px */
+.sb-save-category-icon svg {
+  width: 1rem; /* 16px */
+  height: 1rem;
 }
 
 .sb-save-category-name {

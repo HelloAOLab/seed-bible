@@ -24,7 +24,7 @@ import {
   StopIcon,
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
-import { openSaveCategoryModal } from "../Tabs/Tabs";
+import { SaveStarIcon, openSaveCategoryModal } from "../Tabs/Tabs";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
@@ -1792,12 +1792,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   };
 
   const savesTabIcon = (filled: boolean) => (
-    <MaterialIcon
-      aria-hidden="true"
-      style={{ fontVariationSettings: filled ? '"FILL" 1' : '"FILL" 0' }}
-    >
-      stacks
-    </MaterialIcon>
+    <SaveStarIcon isSaved={filled} size={24} />
   );
 
   /**
@@ -2901,16 +2896,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       title={saveLabel}
                     >
                       <span className="sb-verse-toolbar-action-icon">
-                        <span
-                          className="material-symbols-outlined"
-                          style={{
-                            fontVariationSettings: isSelectionSaved
-                              ? '"FILL" 1'
-                              : '"FILL" 0',
-                          }}
-                        >
-                          stacks
-                        </span>
+                        <SaveStarIcon isSaved={isSelectionSaved} size={20} />
                       </span>
                       <span className="sb-verse-toolbar-action-label">
                         {saveLabel}

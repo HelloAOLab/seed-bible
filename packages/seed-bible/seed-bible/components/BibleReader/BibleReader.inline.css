@@ -41,13 +41,17 @@
   cursor: default;
 }
 
-.sb-bible-reader-bookmark-button svg {
+.sb-bible-reader-bookmark-button svg,
+.sb-bible-reader-save-button svg {
   width: 1.375rem; /* 22px */
   height: 1.375rem;
 }
 
-.sb-bible-reader-save-button .material-symbols-outlined {
-  font-size: 1.375rem; /* 22px, matching the bookmark glyph beside it */
+/* A filled star already reads as "saved"; the tint is what keeps it legible
+ * against the outlined bookmark sitting next to it. */
+.sb-bible-reader-save-button-saved,
+.sb-bible-reader-save-button-saved:hover {
+  color: var(--sb-primary-color);
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the

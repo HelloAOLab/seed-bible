@@ -47,7 +47,8 @@ import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
-import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
+import { InfoSettingsIcon } from "../../components/icons";
+import { SaveStarIcon, saveChapterLabel } from "../Tabs/Tabs";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
@@ -71,19 +72,24 @@ interface ReaderChapterActionProps {
  * action cluster and opens the same folder picker a verse selection does, so
  * one press archives the whole chapter into an existing or new folder.
  *
- * Not a toggle: saves accumulate, so pressing it again adds another copy
- * rather than undoing the first. Removing a save is done from the saves panel.
+ * The star fills once a chapter-level save exists for this location. That is
+ * an indicator, not a toggle: pressing a filled star opens the picker again
+ * and files another copy. Removing a save is done from the saves panel.
  */
 function ReaderSaveButton(props: ReaderChapterActionProps) {
   const { state, translationId, bookId, chapterNumber } = props;
   const { t } = useI18n();
   const canSave = !!(translationId && bookId && chapterNumber);
-  const label = t("save-chapter", { defaultValue: "Save chapter" });
+  const isSaved =
+    canSave &&
+    state.saves.isLocationSaved(translationId, bookId, chapterNumber);
 
   return (
     <button
       type="button"
-      className="sb-bible-reader-save-button"
+      className={`sb-bible-reader-save-button${
+        isSaved ? " sb-bible-reader-save-button-saved" : ""
+      }`}
       onClick={() => {
         if (!canSave || !translationId || !bookId || !chapterNumber) {
           return;
@@ -95,10 +101,10 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
         });
       }}
       disabled={!canSave}
-      aria-label={label}
-      title={label}
+      aria-label={saveChapterLabel(t, isSaved)}
+      title={saveChapterLabel(t, isSaved)}
     >
-      <MaterialIcon aria-hidden="true">stacks</MaterialIcon>
+      <SaveStarIcon isSaved={isSaved} />
     </button>
   );
 }

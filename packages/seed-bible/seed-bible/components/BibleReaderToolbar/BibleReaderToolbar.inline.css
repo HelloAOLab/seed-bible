@@ -928,8 +928,7 @@
 .sb-verse-toolbar-back .material-symbols-outlined,
 .sb-verse-toolbar-plus .material-symbols-outlined,
 .sb-verse-toolbar-clear .material-symbols-outlined,
-.sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
-.sb-verse-toolbar-save-trigger .material-symbols-outlined {
+.sb-verse-toolbar-highlight-trigger .material-symbols-outlined {
   font-size: 1.25rem;
 }
 

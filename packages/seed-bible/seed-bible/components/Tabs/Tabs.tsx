@@ -17,7 +17,7 @@ import {
   ContextMenuWithButton,
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { MaterialIcon, SettingsIcon } from "../../components/icons";
+import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
@@ -972,6 +972,43 @@ export function Settings(props: SettingsProps) {
   );
 }
 
+/**
+ * The saves glyph: an outlined star, filled once the location is already
+ * filed. Both states are one path with a different `fill`, so the two line up
+ * exactly rather than shifting between glyphs.
+ */
+export function SaveStarIcon(props: {
+  isSaved: boolean;
+  size?: number;
+  className?: string;
+}) {
+  const size = props.size ?? 22;
+  return (
+    <StarIcon
+      width={size}
+      height={size}
+      fill={props.isSaved ? "currentColor" : "none"}
+      stroke-width="1.5"
+      className={props.className}
+      aria-hidden="true"
+    />
+  );
+}
+
+/**
+ * Label for a chapter-save button. Stays an action in both states — pressing a
+ * filled star files another copy rather than unsaving — but says so when the
+ * chapter is already filed, since a screen reader can't see the fill.
+ */
+export function saveChapterLabel(
+  t: ReturnType<typeof useI18n>["t"],
+  isSaved: boolean
+): string {
+  return isSaved
+    ? t("save-chapter-again", { defaultValue: "Save chapter (already saved)" })
+    : t("save-chapter", { defaultValue: "Save chapter" });
+}
+
 interface TabRowProps {
   // Allow JSX `key` to pass through without TS extra-property errors when
   // mapping a list of tabs. Preact strips it before the component sees props.
@@ -1003,12 +1040,18 @@ function TabRow(props: TabRowProps) {
     throw tab.readingState.chapterDataPromise;
   }
 
-  const { app } = state;
+  const { app, saves } = state;
   const { t } = useI18n();
 
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
+  // Fills the star, nothing more: a chapter-level save already exists here.
+  const isChapterSaved = saves.isLocationSaved(
+    tab.readingState.translationId.value,
+    tab.readingState.bookId.value,
+    tab.readingState.chapterNumber.value
+  );
   // Saves accumulate rather than toggle, so this always opens the folder
   // picker — a second press files another copy of the chapter, it does not
   // undo the first.
@@ -1086,9 +1129,11 @@ function TabRow(props: TabRowProps) {
       {isSelected && !tab.sharedSession && (
         <button
           type="button"
-          className="sb-tab-save-button"
-          aria-label={t("save-chapter", { defaultValue: "Save chapter" })}
-          title={t("save-chapter", { defaultValue: "Save chapter" })}
+          className={`sb-tab-save-button${
+            isChapterSaved ? " sb-tab-save-button-saved" : ""
+          }`}
+          aria-label={saveChapterLabel(t, isChapterSaved)}
+          title={saveChapterLabel(t, isChapterSaved)}
           onClick={(event: MouseEvent) => {
             event.stopPropagation();
             closeContextMenus();
@@ -1096,7 +1141,7 @@ function TabRow(props: TabRowProps) {
             handleSaveAction();
           }}
         >
-          <MaterialIcon aria-hidden="true">stacks</MaterialIcon>
+          <SaveStarIcon isSaved={isChapterSaved} size={18} />
         </button>
       )}
 
@@ -1196,13 +1241,12 @@ function TabRow(props: TabRowProps) {
               handleSaveAction();
             }}
           >
-            <MaterialIcon
+            <SaveStarIcon
+              isSaved={isChapterSaved}
+              size={20}
               className="sb-context-menu-item-icon"
-              aria-hidden="true"
-            >
-              stacks
-            </MaterialIcon>
-            <span>{t("save-chapter", { defaultValue: "Save chapter" })}</span>
+            />
+            <span>{saveChapterLabel(t, isChapterSaved)}</span>
           </ContextMenuItem>
         )}
 
@@ -1739,7 +1783,7 @@ function SavesSection(props: SavesSectionProps) {
                     Sized to the row's text height so category headers don't get
                     a taller hit-target than the tabs around them.
                   */}
-                  <MaterialIcon>stacks</MaterialIcon>
+                  <SaveStarIcon isSaved size={16} />
                 </span>
                 {isRenaming ? (
                   <input
@@ -2165,16 +2209,7 @@ export function Tabs(props: TabsProps) {
                   saves.toggleFilter();
                 }}
               >
-                <MaterialIcon
-                  aria-hidden="true"
-                  style={{
-                    fontVariationSettings: isSavesFilterActive
-                      ? '"FILL" 1'
-                      : '"FILL" 0',
-                  }}
-                >
-                  stacks
-                </MaterialIcon>
+                <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
               </button>
               <button
                 type="button"
@@ -2252,16 +2287,7 @@ export function Tabs(props: TabsProps) {
                 saves.toggleFilter();
               }}
             >
-              <MaterialIcon
-                aria-hidden="true"
-                style={{
-                  fontVariationSettings: isSavesFilterActive
-                    ? '"FILL" 1'
-                    : '"FILL" 0',
-                }}
-              >
-                stacks
-              </MaterialIcon>
+              <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
             </button>
             <button
               type="button"

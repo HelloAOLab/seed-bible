@@ -178,14 +178,39 @@ describe("mobile saves screen", () => {
       expect(state.saves.saves.value).toHaveLength(1);
     });
 
-    it("carries no saved state, since saves have no tab indicator", async () => {
+    /** The star renders as an SVG, so "filled" is its fill, not a font axis. */
+    const starFill = () =>
+      rowSaveButton()!.querySelector("svg")!.getAttribute("fill");
+
+    it("leaves the star unfilled while the chapter is unsaved", async () => {
+      await openTabsList();
+
+      expect(starFill()).toBe("none");
+      expect(rowSaveButton()!.className).not.toContain("saved");
+    });
+
+    it("fills the star once a chapter-level save exists", async () => {
       await act(async () => {
         await state.saves.addSave("AAB", "GEN", 1);
       });
       await openTabsList();
 
+      expect(starFill()).toBe("currentColor");
+      expect(rowSaveButton()!.className).toContain("sb-tab-save-button-saved");
+      // Filled is an indicator, not a pressed toggle — pressing still files
+      // another copy, so aria-pressed would mislead.
       expect(rowSaveButton()!.getAttribute("aria-pressed")).toBeNull();
-      expect(rowSaveButton()!.className).not.toContain("active");
+    });
+
+    it("leaves the star unfilled when only a verse range is saved", async () => {
+      // The button files the whole chapter, so its state tracks a
+      // chapter-level save rather than anything saved from within the chapter.
+      await act(async () => {
+        await state.saves.addSave("AAB", "GEN", 1, { verse: [2, 4] });
+      });
+      await openTabsList();
+
+      expect(starFill()).toBe("none");
     });
   });
 
