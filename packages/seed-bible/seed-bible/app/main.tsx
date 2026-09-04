@@ -55,16 +55,31 @@ import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/Offli
  * the server but not on the client, causing a hydration mismatch; Preact also
  * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
  * inert even if the two sides' CSS text does legitimately differ.
+ *
+ * The SSR suspend below is deliberately scoped to just this component rather
+ * than gating `MainContent` as a whole: `_renderToString`'s array-of-children
+ * traversal doesn't block later siblings on an earlier one suspending, so
+ * gating only here keeps everything else's first-render timing (most notably
+ * `BibleReader`'s own chapter-load suspend) exactly as it is without a
+ * `?customization=` link in play.
  */
 export function ExternalResourceDependencies({
   themeCssVariables,
   themeCssClasses,
   googleFontFamilies,
+  initialCustomizationLoadPromise,
+  initialCustomizationLoadSettled,
 }: {
   themeCssVariables: ReadonlySignal<string>;
   themeCssClasses: ReadonlySignal<string>;
   googleFontFamilies: ReadonlySignal<string[]>;
+  initialCustomizationLoadPromise: Promise<void>;
+  initialCustomizationLoadSettled: ReadonlySignal<boolean>;
 }) {
+  if (import.meta.env.SSR && !initialCustomizationLoadSettled.value) {
+    throw initialCustomizationLoadPromise;
+  }
+
   return (
     <>
       <link
@@ -256,6 +271,12 @@ function MainContent(props: {
           themeCssVariables={theme.themeCssVariables}
           themeCssClasses={theme.themeCssClasses}
           googleFontFamilies={theme.googleFontFamiliesToLoad}
+          initialCustomizationLoadPromise={
+            state.customizations.initialCustomizationLoadPromise
+          }
+          initialCustomizationLoadSettled={
+            state.customizations.initialCustomizationLoadSettled
+          }
         />
         <Sidebar state={state} />
 
