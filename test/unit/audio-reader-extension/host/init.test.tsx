@@ -103,25 +103,33 @@ describe("verseHighlightDurationMs", () => {
   const startTimes = [3, 6, 9];
 
   it("lasts until the next verse's start time", () => {
-    expect(verseHighlightDurationMs(startTimes, 0, undefined)).toBe(3000);
-    expect(verseHighlightDurationMs(startTimes, 1, undefined)).toBe(3000);
+    expect(verseHighlightDurationMs(startTimes, 0, 3, undefined)).toBe(3000);
+    expect(verseHighlightDurationMs(startTimes, 1, 6, undefined)).toBe(3000);
   });
 
   it("lasts until the audio ends, for the last verse", () => {
-    expect(verseHighlightDurationMs(startTimes, 2, 15)).toBe(6000);
+    expect(verseHighlightDurationMs(startTimes, 2, 9, 15)).toBe(6000);
   });
 
   it("is null for the last verse when the audio's duration isn't known yet", () => {
-    expect(verseHighlightDurationMs(startTimes, 2, undefined)).toBeNull();
-    expect(verseHighlightDurationMs(startTimes, 2, NaN)).toBeNull();
+    expect(verseHighlightDurationMs(startTimes, 2, 9, undefined)).toBeNull();
+    expect(verseHighlightDurationMs(startTimes, 2, 9, NaN)).toBeNull();
   });
 
   it("never goes negative, if the audio's reported duration is somehow shorter than the last verse's start", () => {
-    expect(verseHighlightDurationMs(startTimes, 2, 5)).toBe(0);
+    expect(verseHighlightDurationMs(startTimes, 2, 9, 5)).toBe(0);
   });
 
-  it("is null for an index past the end of the timings", () => {
-    expect(verseHighlightDurationMs(startTimes, 3, 15)).toBeNull();
+  it("treats an index with no next start time as the last verse, even past the end of the array", () => {
+    expect(verseHighlightDurationMs(startTimes, 5, 10, 15)).toBe(5000);
+  });
+
+  it("measures from currentTime, not from the verse's own start time — so triggering the highlight early doesn't extend it", () => {
+    // The highlight for verse index 0 is triggered a bit before its 3s start
+    // time (see VERSE_HIGHLIGHT_LEAD_IN_SECONDS in init.tsx), but it should
+    // still fade out exactly at verse 1's real 6s start, not 6s after
+    // whenever it happened to be triggered.
+    expect(verseHighlightDurationMs(startTimes, 0, 2.7, undefined)).toBe(3300);
   });
 });
 

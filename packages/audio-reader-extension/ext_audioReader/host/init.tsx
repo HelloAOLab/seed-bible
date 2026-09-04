@@ -10,6 +10,18 @@ import type {
 /** Drives the icon swap between play and pause. Shared across the tool. */
 const isPlaying = signal(false);
 
+/**
+ * How far ahead of a verse's actual start time its highlight is triggered, in
+ * seconds. The "diminish" decoration fades in over a CSS transition rather
+ * than snapping on, so starting it exactly at the verse's start time would
+ * make the highlight visibly lag the narration; starting it slightly early
+ * lands the transition right as the verse begins. The outgoing verse's own
+ * fade-out isn't shifted — see {@link verseHighlightDurationMs} — so the two
+ * verses briefly overlap (new one fading in, old one still fully lit) instead
+ * of one flickering hole opening up between them.
+ */
+const VERSE_HIGHLIGHT_LEAD_IN_SECONDS = 0.3;
+
 /** Lazily-created shared audio element and the URL currently loaded into it. */
 let audioEl: HTMLAudioElement | null = null;
 let currentUrl: string | null = null;
@@ -59,20 +71,21 @@ export function verseIndexForTime(
 }
 
 /**
- * How long the verse at `startTimes[index]` should stay highlighted, in
- * milliseconds: until the next verse starts, or — for the last verse — until
- * the audio ends. Null when neither is known (no next verse and the audio's
- * duration hasn't loaded yet), so the caller leaves the highlight in place
+ * How long the verse at `startTimes[index]` should stay highlighted from
+ * `currentTime`, in milliseconds: until the next verse actually starts, or —
+ * for the last verse — until the audio ends. Measured from `currentTime`
+ * rather than `startTimes[index]` itself so it stays correct regardless of
+ * when the highlight was actually triggered — in particular, {@link
+ * VERSE_HIGHLIGHT_LEAD_IN_SECONDS} early. Null when neither a next verse nor
+ * the audio's duration is known, so the caller leaves the highlight in place
  * rather than guessing.
  */
 export function verseHighlightDurationMs(
   startTimes: number[],
   index: number,
+  currentTime: number,
   audioDurationSeconds: number | undefined
 ): number | null {
-  const startTime = startTimes[index];
-  if (startTime === undefined) return null;
-
   const nextStartTime = startTimes[index + 1];
   const endTime =
     nextStartTime !== undefined
@@ -82,7 +95,7 @@ export function verseHighlightDurationMs(
         : undefined;
   if (endTime === undefined) return null;
 
-  return Math.max(0, (endTime - startTime) * 1000);
+  return Math.max(0, (endTime - currentTime) * 1000);
 }
 
 /** Verse numbers in reading order, extracted from a chapter's content. */
@@ -120,9 +133,12 @@ function ensureAudio(): HTMLAudioElement | null {
  * `BibleReadingManager`) uses for cross-reference/search-result jumps. Reused
  * here rather than duplicated so a verse-boundary crossing flashes the same
  * way a manual jump does. Unlike those callers' fixed 3s fade, this one fades
- * out exactly when the next verse starts — or, for the last verse, when the
- * audio ends — so the highlight tracks the actual reading instead of an
- * arbitrary timeout.
+ * out exactly when the next verse actually starts — or, for the last verse,
+ * when the audio ends — so the highlight tracks the actual reading instead of
+ * an arbitrary timeout. The new verse itself is triggered
+ * {@link VERSE_HIGHLIGHT_LEAD_IN_SECONDS} early so its fade-in lands on time,
+ * while the verse it's replacing keeps its own fade-out anchored to the real
+ * boundary, so the two overlap rather than leaving a gap.
  */
 function highlightVerseForTime(currentTime: number): void {
   if (!verseTrack || !Number.isFinite(currentTime)) return;
@@ -130,7 +146,10 @@ function highlightVerseForTime(currentTime: number): void {
     verseTrack;
   if (startTimes.length === 0) return;
 
-  const index = verseIndexForTime(startTimes, currentTime);
+  const index = verseIndexForTime(
+    startTimes,
+    currentTime + VERSE_HIGHLIGHT_LEAD_IN_SECONDS
+  );
   const verseNumber = verseNumbers[index];
   if (verseNumber === undefined || verseNumber === verseTrack.lastVerse) {
     return;
@@ -140,6 +159,7 @@ function highlightVerseForTime(currentTime: number): void {
   const durationMs = verseHighlightDurationMs(
     startTimes,
     index,
+    currentTime,
     audioEl?.duration
   );
 
