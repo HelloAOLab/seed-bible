@@ -25,23 +25,47 @@ function fakeLogin(userId: string | null) {
   };
 }
 
-/** Records what each year's document was asked to take. */
+/**
+ * Records what each year's document was asked to take.
+ *
+ * Failures are settable per year as well as across the board, because a pass
+ * covering two years has to be able to lose one of them and keep the other —
+ * one unreachable document must not take the whole backlog down with it.
+ */
 function recordingWriter() {
   const writes: { recordName: string; year: number; events: ReadingEvent[] }[] =
     [];
   let failWith: Error | null = null;
+  const failuresByYear = new Map<number, Error>();
   return {
     writes,
+
+    /** Fails every year's write. */
     failWith: (error: Error | null) => {
       failWith = error;
     },
+
+    /** Fails just this year's write, leaving other years working. Null clears it. */
+    failYear: (year: number, error: Error | null) => {
+      if (error) {
+        failuresByYear.set(year, error);
+      } else {
+        failuresByYear.delete(year);
+      }
+    },
+
+    /** Every event written to one year, across all of that year's writes. */
+    eventsFor: (year: number): ReadingEvent[] =>
+      writes.filter((w) => w.year === year).flatMap((w) => w.events),
+
     writeEvents: async (
       recordName: string,
       year: number,
       events: readonly ReadingEvent[]
     ) => {
-      if (failWith) {
-        throw failWith;
+      const failure = failWith ?? failuresByYear.get(year);
+      if (failure) {
+        throw failure;
       }
       writes.push({ recordName, year, events: [...events] });
     },
@@ -124,6 +148,32 @@ describe("ReadingHistorySyncManager", () => {
     expect(writer.writes.map((w) => w.year).sort()).toEqual([2025, 2026]);
     expect(writer.writes.every((w) => w.recordName === "user-1")).toBe(true);
     expect(await store.listPending("user-1")).toEqual([]);
+  });
+
+  it("keeps only the unreachable year queued when another year lands", async () => {
+    const stranded = await record(IN_2025);
+    const landed = await record(IN_2026, 2);
+    writer.failYear(2025, new Error("no connection"));
+
+    const { manager: sync } = create("user-1");
+    await sync.sync();
+
+    // 2026 got through, so its row is done; 2025 did not, so its row waits.
+    expect(writer.writes.map((w) => w.year)).toEqual([2026]);
+    expect((await store.listPending("user-1")).map((r) => r.key)).toEqual([
+      stranded.key,
+    ]);
+    expect(sync.pendingCount.value).toBe(1);
+
+    // And once the year is reachable again, the stranded row lands without
+    // 2026's being pushed a second time.
+    writer.failYear(2025, null);
+    await sync.sync();
+
+    expect(writer.eventsFor(2026)).toHaveLength(1);
+    expect(writer.eventsFor(2025)).toHaveLength(1);
+    expect(await store.listPending("user-1")).toEqual([]);
+    expect(landed.key).not.toBe(stranded.key);
   });
 
   it("replays on the first resolution of the signed-in user", async () => {
