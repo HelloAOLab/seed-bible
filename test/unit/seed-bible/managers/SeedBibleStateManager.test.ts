@@ -1727,11 +1727,11 @@ describe("createSeedBibleState", () => {
     });
   });
 
-  describe("faviconUrl", () => {
+  describe("customizationLogoUrl", () => {
     it("is null with no active customization", async () => {
       const state = await createState();
 
-      expect(state.app.faviconUrl.value).toBeNull();
+      expect(state.app.customizationLogoUrl.value).toBeNull();
     });
 
     it("is null when the active customization has no uploaded logo", async () => {
@@ -1758,7 +1758,7 @@ describe("createSeedBibleState", () => {
         extensionSettings: {},
       };
 
-      expect(state.app.faviconUrl.value).toBeNull();
+      expect(state.app.customizationLogoUrl.value).toBeNull();
     });
 
     it("is the active customization's logo when one is uploaded", async () => {
@@ -1785,11 +1785,13 @@ describe("createSeedBibleState", () => {
         extensionSettings: {},
       };
 
-      expect(state.app.faviconUrl.value).toBe("https://example.com/logo.png");
+      expect(state.app.customizationLogoUrl.value).toBe(
+        "https://example.com/logo.png"
+      );
 
       state.customizations.editingCustomization.value = null;
 
-      expect(state.app.faviconUrl.value).toBeNull();
+      expect(state.app.customizationLogoUrl.value).toBeNull();
     });
   });
 

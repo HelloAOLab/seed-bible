@@ -129,6 +129,27 @@ function replacePlaceholder(
   return source.split(placeholder).join(value);
 }
 
+/** Matches one `<meta ...>` tag; `[^>]*` spans newlines since some of these tags (see index.html) have their attributes on separate lines. */
+const META_TAG_RE = /<meta\b[^>]*>/gi;
+
+/** Whether a `<meta>` tag's `property` attribute is one of the `og:image` family. */
+function isOgImageMetaTag(tag: string): boolean {
+  return /\bproperty\s*=\s*"og:image(?::type|:width|:height|:alt)?"/i.test(tag);
+}
+
+/**
+ * Removes index.html's default `og:image`/`:type`/`:width`/`:height`/`:alt`
+ * meta tags. Called only when a customization's own logo is about to replace
+ * them (see the meta block in `render()`) — unlike the favicon `<link>`
+ * above it in that same block, a crawler can't be relied on to prefer the
+ * *last* of two conflicting `og:image` tags (many just take the first, or
+ * treat multiple as a gallery), so the default has to be removed rather than
+ * merely followed by an override.
+ */
+export function stripDefaultOgImageMeta(html: string): string {
+  return html.replace(META_TAG_RE, (tag) => (isOgImageMetaTag(tag) ? "" : tag));
+}
+
 /**
  * Detects a URL that isn't already the canonical
  * `/{lang}/{translationId}/{bookSlug}/{chapter}` form, for requests that
@@ -508,6 +529,11 @@ export async function render(
     ),
   ]);
 
+  // Read once — used both in the meta block below and to decide whether
+  // `options.html`'s default `og:image` tags need stripping first (see
+  // `stripDefaultOgImageMeta`).
+  const customizationLogoUrl = state.app.customizationLogoUrl.value;
+
   const metaHtml = await renderToStringAsync(
     <>
       <meta
@@ -531,9 +557,27 @@ export async function render(
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
       <meta property="og:site_name" content={state.app.siteName.value} />
+      {/* Only emitted when a customization with an uploaded logo is active.
+          `stripDefaultOgImageMeta` has already removed index.html's own
+          `og:image`/`:type`/`:width`/`:height`/`:alt` from `baseHtml` below in
+          that case, so there is exactly one set of these tags either way —
+          unlike the favicon `<link>`, a crawler can't be relied on to prefer
+          the *last* of two conflicting `og:image` tags (many just take the
+          first, or treat multiple as a gallery), so an override here has to
+          replace the default rather than merely follow it. No explicit
+          `:type`/`:width`/`:height`: those described the default JPG's fixed
+          1200x630 crop and would misdescribe an arbitrary uploaded logo. */}
+      {customizationLogoUrl && (
+        <>
+          <meta property="og:image" content={customizationLogoUrl} />
+          <meta property="og:image:alt" content={state.app.siteName.value} />
+        </>
+      )}
       {/* `twitter:*` really is `name=`, unlike `og:*`. No `twitter:image`: it
-          would fall back to `og:image`, which is root-relative in index.html
-          and so unresolvable by most scrapers either way. */}
+          would fall back to `og:image`, which is root-relative in
+          index.html's default (unresolvable by most scrapers either way) but
+          always a proper absolute URL when a customization's logo replaces
+          it above. */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={state.app.socialTitle.value} />
       <meta name="twitter:description" content={state.app.description.value} />
@@ -542,9 +586,7 @@ export async function render(
           otherwise index.html's own default `<link rel="icon">` (earlier in
           `<head>`) stands, since browsers resolve multiple icon links to the
           last one in document order. */}
-      {state.app.faviconUrl.value && (
-        <link rel="icon" href={state.app.faviconUrl.value} />
-      )}
+      {customizationLogoUrl && <link rel="icon" href={customizationLogoUrl} />}
       <title>{state.app.title.value}</title>
     </>
   );
@@ -610,11 +652,15 @@ export async function render(
     ["<!-- APP_HTML -->", appHtml],
   ];
 
+  const baseHtml = customizationLogoUrl
+    ? stripDefaultOgImageMeta(options.html)
+    : options.html;
+
   return {
     html: substitutions.reduce(
       (html, [placeholder, value]) =>
         replacePlaceholder(html, placeholder, value),
-      options.html
+      baseHtml
     ),
     ...(notFound ? { notFound: true as const } : {}),
   };

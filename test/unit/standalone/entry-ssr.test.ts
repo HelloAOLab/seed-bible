@@ -2,6 +2,7 @@ import {
   acceptLanguageRedirect,
   legacyReadingUrlRedirect,
   render,
+  stripDefaultOgImageMeta,
 } from "../../../standalone/entry-ssr";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
@@ -287,6 +288,48 @@ describe("acceptLanguageRedirect", () => {
   });
 });
 
+describe("stripDefaultOgImageMeta", () => {
+  const DEFAULT_OG_IMAGE_BLOCK = [
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
+  ].join("\n");
+
+  it("removes every og:image/:type/:width/:height/:alt tag, including one split across lines", () => {
+    const result = stripDefaultOgImageMeta(DEFAULT_OG_IMAGE_BLOCK);
+
+    expect(result).not.toContain("og:image");
+    // Untouched neighbor, to prove this isn't just wiping the whole block.
+    expect(result).toContain('<meta property="og:type" content="website" />');
+  });
+
+  it("leaves other og:*/twitter:* tags alone while stripping only the og:image family", () => {
+    const html = [
+      '<meta property="og:title" content="Hello" />',
+      '<meta property="og:image" content="/default.jpg" />',
+      '<meta name="twitter:card" content="summary_large_image" />',
+    ].join("\n");
+
+    const result = stripDefaultOgImageMeta(html);
+
+    expect(result).toContain('<meta property="og:title" content="Hello" />');
+    expect(result).toContain(
+      '<meta name="twitter:card" content="summary_large_image" />'
+    );
+    expect(result).not.toContain("og:image");
+  });
+
+  it("is a no-op when there is nothing to strip", () => {
+    const html = "<head><title>Test</title></head>";
+
+    expect(stripDefaultOgImageMeta(html)).toBe(html);
+  });
+});
+
 describe("render() redirect wiring", () => {
   // These resolve before any network call (the redirect checks run ahead of
   // `createSeedBibleState`), so no fetch mocking is needed.
@@ -393,6 +436,15 @@ describe("render() redirect wiring", () => {
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
     '<!doctype html><html lang="<!-- HTML_LANG -->"><head>',
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines (its
+    // `property`/`content` attributes on separate lines), the rest don't —
+    // `stripDefaultOgImageMeta` has to handle both shapes.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
     '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
     '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
@@ -1035,6 +1087,76 @@ describe("render() server-rendered meta tags", () => {
       expect(html).not.toContain('<link rel="icon"');
     });
 
+    it("replaces og:image with the linked customization's uploaded logo, dropping the stale type/width/height", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain(
+        '<meta property="og:image" content="https://example.com/logo.png"/>'
+      );
+      // Only one og:image tag — the default was removed, not merely
+      // shadowed, since a crawler can't be relied on to prefer the last of
+      // two.
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).not.toContain('property="og:image:type"');
+      expect(html).not.toContain('property="og:image:width"');
+      expect(html).not.toContain('property="og:image:height"');
+    });
+
+    it("leaves the default og:image (and its type/width/height) alone when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).toContain('property="og:image:type"');
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+    });
+
     // Regression coverage for the SSR->client customization re-fetch: before
     // `getInitialCustomizationSeed` existed, nothing was embedded here, so the
     // client's own `CustomizationsManager` always repeated the same
@@ -1112,5 +1234,12 @@ describe("render() server-rendered meta tags", () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 
     expect(html).not.toContain('<link rel="icon"');
+  });
+
+  it("leaves the default og:image alone with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+    expect(html.match(/property="og:image"/g)).toHaveLength(1);
   });
 });
