@@ -42,9 +42,9 @@ describe("ColorPicker", () => {
       onCancel: () => void;
     }> = {}
   ) {
-    const onChange = overrides.onChange ?? vi.fn();
-    const onPreview = overrides.onPreview ?? vi.fn();
-    const onCancel = overrides.onCancel ?? vi.fn();
+    const onChange = vi.fn(overrides.onChange);
+    const onPreview = vi.fn(overrides.onPreview);
+    const onCancel = vi.fn(overrides.onCancel);
     act(() => {
       render(
         <ColorPicker
