@@ -67,20 +67,16 @@ describe("CustomizationVariantSelectionsManager", () => {
     warnSpy.mockRestore();
   });
 
-  it("signed out: starts with empty selections and does not persist", async () => {
+  it("signed out: starts with empty selections", async () => {
     userIdSignal.value = null;
     const manager = createCustomizationVariantSelectionsManager(os, login);
     await flushPromises();
 
     expect(manager.selections.value).toEqual({});
     expect(manager.getSelectedVariantId("owner.customization_1")).toBeNull();
-
-    await manager.selectVariant("owner.customization_1", "variant_1");
-
-    expect(recordDataMock).not.toHaveBeenCalled();
   });
 
-  it("signed out: selectVariant() still applies the choice for the current session", async () => {
+  it("signed out: selectVariant() applies the choice and persists it to login.localConfig instead of a CasualOS record", async () => {
     userIdSignal.value = null;
     const manager = createCustomizationVariantSelectionsManager(os, login);
     await flushPromises();
@@ -91,6 +87,45 @@ describe("CustomizationVariantSelectionsManager", () => {
       "variant_1"
     );
     expect(recordDataMock).not.toHaveBeenCalled();
+    expect(login.localConfig.value[VARIANT_SELECTIONS_ADDRESS]).toEqual({
+      "owner.customization_1": "variant_1",
+    });
+  });
+
+  it("signed out: a selection survives a simulated reload (a fresh manager reading the same login.localConfig)", async () => {
+    userIdSignal.value = null;
+    const first = createCustomizationVariantSelectionsManager(os, login);
+    await flushPromises();
+    await first.selectVariant("owner.customization_1", "variant_1");
+
+    // `login.localConfig` is what `LoginManager` mirrors to `localStorage` and
+    // rehydrates on the next load, so a second manager reading the same
+    // signal (rather than the first instance's local state) is what proves
+    // the choice isn't just held in page-lifetime memory.
+    const second = createCustomizationVariantSelectionsManager(os, login);
+    await flushPromises();
+
+    expect(second.getSelectedVariantId("owner.customization_1")).toBe(
+      "variant_1"
+    );
+  });
+
+  it("signed out: selecting a variant for one customization doesn't clobber another's stored selection", async () => {
+    userIdSignal.value = null;
+    login.localConfig.value = {
+      [VARIANT_SELECTIONS_ADDRESS]: { "owner.customization_1": "variant_a" },
+    };
+    const manager = createCustomizationVariantSelectionsManager(os, login);
+    await flushPromises();
+
+    await manager.selectVariant("owner.customization_2", "variant_b");
+
+    expect(manager.getSelectedVariantId("owner.customization_1")).toBe(
+      "variant_a"
+    );
+    expect(manager.getSelectedVariantId("owner.customization_2")).toBe(
+      "variant_b"
+    );
   });
 
   it("selectVariant() persists to its own record and is immediately readable without a reload", async () => {

@@ -1,7 +1,8 @@
 import * as z from "zod/v4";
-import { effect, signal, type ReadonlySignal } from "@preact/signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
+import { parseStringRecord } from "./SettingsManager";
 
 export const VARIANT_SELECTIONS_ADDRESS = "customizationVariantSelections";
 
@@ -12,26 +13,32 @@ const variantSelectionsPayloadSchema = z.object({
 });
 
 /**
- * Remembers, per signed-in viewer, which theme variant they've chosen for
- * each Customization they've encountered (their own, or one loaded via a
- * `?customization=...` share link). Deliberately its own record, separate
- * from both `SettingsManager`'s profile-backed theme settings and from
- * `CustomizationsManager`'s own per-customization records: a viewer's
- * choice here must never touch their default theme preference, and a
- * viewer picking a variant on someone ELSE's customization has no write
- * access to that customization's own record.
+ * Remembers which theme variant a viewer has chosen for each Customization
+ * they've encountered (their own, or one loaded via a `?customization=...`
+ * share link). Deliberately its own record, separate from both
+ * `SettingsManager`'s profile-backed theme settings and from
+ * `CustomizationsManager`'s own per-customization records: a viewer's choice
+ * here must never touch their default theme preference, and a viewer
+ * picking a variant on someone ELSE's customization has no write access to
+ * that customization's own record.
+ *
+ * Signed-in viewers get their choices synced to a CasualOS record (`os.getData`/
+ * `recordData` under `VARIANT_SELECTIONS_ADDRESS`). Signed-out viewers get
+ * the same device-local persistence every other anonymous setting gets —
+ * `login.localConfig`, which `LoginManager` already mirrors to `localStorage`
+ * and offers to adopt into a brand-new account's profile on first login —
+ * keyed under that same address so it reads/writes just like any other
+ * `SettingsManager` field.
  */
 export interface CustomizationVariantSelectionsManager {
-  /** Locator -> chosen variant id, for the signed-in user. Empty when signed out or nothing chosen yet. */
+  /** Locator -> chosen variant id, for the current viewer (signed-in profile or signed-out device). Empty when nothing chosen yet. */
   selections: ReadonlySignal<Record<string, string>>;
   /** Sync lookup from the already-loaded `selections` signal — no I/O. */
   getSelectedVariantId: (locator: string) => string | null;
   /**
-   * Applies the viewer's variant choice for a customization locator.
-   * Persisted to their profile when signed in; while signed out, it's
-   * applied for the current session only (via the in-memory `selections`
-   * signal) and forgotten on refresh, since there's no signed-out profile
-   * to remember it in.
+   * Persists the viewer's variant choice for a customization locator — to
+   * their CasualOS profile when signed in, to `login.localConfig` (and so
+   * `localStorage`) when signed out.
    */
   selectVariant: (locator: string, variantId: string) => Promise<void>;
 }
@@ -40,7 +47,7 @@ export function createCustomizationVariantSelectionsManager(
   os: CasualOSManager,
   login: LoginManager
 ): CustomizationVariantSelectionsManager {
-  const selections = signal<Record<string, string>>({});
+  const remoteSelections = signal<Record<string, string>>({});
   const loadedUserId = signal<string | null>(null);
 
   const load = async (userId: string): Promise<void> => {
@@ -51,7 +58,7 @@ export function createCustomizationVariantSelectionsManager(
       return;
     }
     if (!result.success || !result.data) {
-      selections.value = {};
+      remoteSelections.value = {};
       loadedUserId.value = userId;
       return;
     }
@@ -61,18 +68,18 @@ export function createCustomizationVariantSelectionsManager(
         "Failed to parse customization variant selections:",
         parsed.error
       );
-      selections.value = {};
+      remoteSelections.value = {};
       loadedUserId.value = userId;
       return;
     }
-    selections.value = parsed.data.selections;
+    remoteSelections.value = parsed.data.selections;
     loadedUserId.value = userId;
   };
 
   effect(() => {
     const userId = login.userId.value;
     if (!userId) {
-      selections.value = {};
+      remoteSelections.value = {};
       loadedUserId.value = null;
       return;
     }
@@ -82,6 +89,14 @@ export function createCustomizationVariantSelectionsManager(
     void load(userId);
   });
 
+  const localSelections = computed<Record<string, string>>(() =>
+    parseStringRecord(login.localConfig.value[VARIANT_SELECTIONS_ADDRESS])
+  );
+
+  const selections = computed<Record<string, string>>(() =>
+    login.userId.value ? remoteSelections.value : localSelections.value
+  );
+
   const getSelectedVariantId = (locator: string): string | null =>
     selections.value[locator] ?? null;
 
@@ -89,17 +104,19 @@ export function createCustomizationVariantSelectionsManager(
     locator: string,
     variantId: string
   ): Promise<void> => {
-    const next = { ...selections.value, [locator]: variantId };
-    selections.value = next;
-
     const userId = login.userId.value;
     if (!userId) {
-      // Signed-out viewers get the choice applied for this session only —
-      // there's no profile to persist it to, and the effect above resets
-      // `selections` to {} only when `login.userId` actually changes, so
-      // this in-memory value survives until then.
+      login.localConfig.value = {
+        ...login.localConfig.value,
+        [VARIANT_SELECTIONS_ADDRESS]: {
+          ...localSelections.value,
+          [locator]: variantId,
+        },
+      };
       return;
     }
+    const next = { ...remoteSelections.value, [locator]: variantId };
+    remoteSelections.value = next;
     await os.recordData(
       userId,
       VARIANT_SELECTIONS_ADDRESS,
