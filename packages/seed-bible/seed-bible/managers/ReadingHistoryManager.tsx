@@ -384,8 +384,10 @@ export async function saveReadingHistorySpan(
     return;
   }
 
-  // No local store: the document is the only place the span can go, so which
-  // event it belongs to has to be worked out from what is already in it.
+  // Nothing was recorded locally — either this device has no store, or it has
+  // one that refused the write. Either way the document is the only place the
+  // span can go, so which event it belongs to has to be worked out from what is
+  // already in it rather than from a row that doesn't exist.
   const doc = await getReadingHistoryDocument(
     os,
     recordName,
