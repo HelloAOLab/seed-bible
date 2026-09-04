@@ -24,7 +24,7 @@ import {
   StopIcon,
 } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
-import { SaveStarIcon, openSaveCategoryModal } from "../Tabs/Tabs";
+import { SaveStarIcon, openSaveModalForLocation } from "../Tabs/Tabs";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { PlayingState } from "../../managers/PlaylistManager";
 import {
@@ -2875,21 +2875,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         ) {
                           return;
                         }
-                        openSaveCategoryModal(
-                          props.state,
-                          {
-                            translationId,
-                            bookId,
-                            chapterNumber,
-                            verse: verseTarget,
-                          },
-                          selectionSave
-                            ? {
-                                mode: "edit",
-                                saveId: selectionSave.id,
-                              }
-                            : undefined
-                        );
+                        openSaveModalForLocation(props.state, {
+                          translationId,
+                          bookId,
+                          chapterNumber,
+                          verse: verseTarget,
+                        });
                       }}
                       aria-label={saveLabel}
                       aria-pressed={isSelectionSaved}

@@ -210,6 +210,7 @@ function createFixture(): ReaderFixture {
 function createSavesStub() {
   return {
     isLocationSaved: vi.fn(() => false),
+    getSaveForLocation: vi.fn(() => undefined),
     addSave: vi.fn(async () => undefined),
   };
 }

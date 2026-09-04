@@ -824,6 +824,22 @@ export function createSavesManager(
     await persist(nextSaves, nextCategories);
   };
 
+  // Dev-only: mirrors the list to the console whenever it changes, so folder
+  // membership is visible while working on Saves without opening the record.
+  // The live manager is also on `window.__seedBible.saves` (see app/main.tsx).
+  //
+  // Excluded from SSR (no `window`) and from vitest, which also runs as DEV —
+  // without the mode check every suite that builds a SeedBibleState logs.
+  if (
+    import.meta.env.DEV &&
+    import.meta.env.MODE !== "test" &&
+    typeof window !== "undefined"
+  ) {
+    effect(() => {
+      console.log("[saves]", saves.value);
+    });
+  }
+
   return {
     saves: readSaves,
     categories: readCategories,

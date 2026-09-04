@@ -48,13 +48,14 @@ import { useI18n } from "../../i18n/I18nManager";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
-import { SaveStarIcon, saveChapterLabel } from "../Tabs/Tabs";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import {
+  SaveStarIcon,
   SelfAvatarVisual,
   getSelfDisplayName,
-  openSaveCategoryModal,
+  openSaveModalForLocation,
+  saveChapterLabel,
 } from "../Tabs/Tabs";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
@@ -72,9 +73,9 @@ interface ReaderChapterActionProps {
  * action cluster and opens the same folder picker a verse selection does, so
  * one press archives the whole chapter into an existing or new folder.
  *
- * The star fills once a chapter-level save exists for this location. That is
- * an indicator, not a toggle: pressing a filled star opens the picker again
- * and files another copy. Removing a save is done from the saves panel.
+ * The star fills once a chapter-level save exists, and pressing a filled star
+ * edits that save's folders rather than filing a second copy. Either way it is
+ * not a toggle — removing a save is done from the saves panel.
  */
 function ReaderSaveButton(props: ReaderChapterActionProps) {
   const { state, translationId, bookId, chapterNumber } = props;
@@ -94,7 +95,7 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
         if (!canSave || !translationId || !bookId || !chapterNumber) {
           return;
         }
-        openSaveCategoryModal(state, {
+        openSaveModalForLocation(state, {
           translationId,
           bookId,
           chapterNumber,

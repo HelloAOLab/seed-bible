@@ -203,8 +203,8 @@
 
 /* Per-tab save button — rendered between the tab body and the
  * "more" menu, but only on the currently selected row. The star fills once a
- * chapter-level save exists, but the button is still a plain action rather than
- * a toggle — pressing a filled star files another copy. */
+ * chapter-level save exists; pressing it then edits that save's folders rather
+ * than toggling it off. */
 .sb-tab-save-button {
   display: inline-flex;
   align-items: center;

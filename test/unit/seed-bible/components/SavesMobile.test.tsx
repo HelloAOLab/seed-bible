@@ -161,12 +161,14 @@ describe("mobile saves screen", () => {
       );
     });
 
-    it("keeps opening the picker for a chapter that is already saved", async () => {
-      // Saves accumulate, so a second press files another copy rather than
-      // undoing the first — pressing this used to remove the existing save.
+    it("edits the existing save when the chapter is already saved", async () => {
+      // Add mode would be a dead end here: addSave ignores a location it
+      // already holds, so changing folders and hitting Save silently did
+      // nothing. It also never removes the save — that is the panel's job.
       await act(async () => {
         await state.saves.addSave("AAB", "GEN", 1);
       });
+      const saveId = state.saves.saves.value[0]!.id;
       const openModal = vi.spyOn(state.modals, "openModal");
       await openTabsList();
 
@@ -175,6 +177,23 @@ describe("mobile saves screen", () => {
       });
 
       expect(openModal).toHaveBeenCalledTimes(1);
+      expect(openModal.mock.calls[0]![0].id).toBe(`save-edit-${saveId}`);
+      expect(state.saves.saves.value).toHaveLength(1);
+    });
+
+    it("refiles the existing save rather than dropping the change", async () => {
+      // The whole point of edit mode: the folders the user picks actually
+      // land, where the add path discarded them.
+      await act(async () => {
+        await state.saves.addSave("AAB", "GEN", 1);
+      });
+      const saveId = state.saves.saves.value[0]!.id;
+
+      await act(async () => {
+        await state.saves.setSaveCategories(saveId, ["Sermon prep"]);
+      });
+
+      expect(state.saves.saves.value[0]!.categories).toEqual(["Sermon prep"]);
       expect(state.saves.saves.value).toHaveLength(1);
     });
 

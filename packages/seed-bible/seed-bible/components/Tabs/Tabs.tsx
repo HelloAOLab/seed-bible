@@ -996,17 +996,46 @@ export function SaveStarIcon(props: {
 }
 
 /**
- * Label for a chapter-save button. Stays an action in both states — pressing a
- * filled star files another copy rather than unsaving — but says so when the
- * chapter is already filed, since a screen reader can't see the fill.
+ * Label for a chapter-save button. Says which of the two things pressing it
+ * does, which also carries the star's fill state to a screen reader.
  */
 export function saveChapterLabel(
   t: ReturnType<typeof useI18n>["t"],
   isSaved: boolean
 ): string {
   return isSaved
-    ? t("save-chapter-again", { defaultValue: "Save chapter (already saved)" })
+    ? t("edit-save", { defaultValue: "Edit save" })
     : t("save-chapter", { defaultValue: "Save chapter" });
+}
+
+/**
+ * Opens the folder picker for a location — a whole chapter, or a verse range
+ * within one — in edit mode when that exact location is already filed.
+ *
+ * The mode matters: `addSave` ignores a location it already holds, so opening
+ * in add mode on a saved location lets the user change folders and then
+ * silently discards it. Editing the existing save is the only thing a second
+ * press can usefully do, since a location is either filed or it isn't.
+ *
+ * Every save entry point goes through here — the reader's quick action, the
+ * tab row and its kebab, and the verse toolbar — so none of them can drift
+ * back onto the add-only path independently.
+ */
+export function openSaveModalForLocation(
+  state: SeedBibleState,
+  location: SaveLocation
+): void {
+  const existing = state.saves.getSaveForLocation(
+    location.translationId,
+    location.bookId,
+    location.chapterNumber,
+    location.verse
+  );
+  openSaveCategoryModal(
+    state,
+    location,
+    existing ? { mode: "edit", saveId: existing.id } : undefined
+  );
 }
 
 interface TabRowProps {
@@ -1046,25 +1075,20 @@ function TabRow(props: TabRowProps) {
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
-  // Fills the star, nothing more: a chapter-level save already exists here.
+  // Fills the star, and decides whether pressing it files or edits.
   const isChapterSaved = saves.isLocationSaved(
     tab.readingState.translationId.value,
     tab.readingState.bookId.value,
     tab.readingState.chapterNumber.value
   );
-  // Saves accumulate rather than toggle, so this always opens the folder
-  // picker — a second press files another copy of the chapter, it does not
-  // undo the first.
+  // Never a toggle: pressing a filled star edits the existing save's folders
+  // rather than removing it. Removing is done from the saves panel.
   const handleSaveAction = () => {
     const translationId = tab.readingState.translationId.value;
     const bookId = tab.readingState.bookId.value;
     const chapterNumber = tab.readingState.chapterNumber.value;
     if (!translationId || !bookId || !chapterNumber) return;
-    openSaveCategoryModal(state, {
-      translationId,
-      bookId,
-      chapterNumber,
-    });
+    openSaveModalForLocation(state, { translationId, bookId, chapterNumber });
   };
 
   return (
@@ -1579,14 +1603,18 @@ function SaveCategoryPickerContent(props: {
 }
 
 /**
- * Opens the save category picker modal for the given location. Exported so the
- * verse toolbar (in BibleReaderToolbar) and the reader's quick-actions save
- * button (in BibleReader) can open it with the same UX as the sidebar.
+ * Opens the save category picker modal for the given location.
+ *
+ * Module-private on purpose: callers that only know a *location* must go
+ * through `openSaveModalForLocation`, which picks add or edit mode for them.
+ * Reaching straight for this with the default add mode is the bug that made
+ * folder edits on an already-saved chapter silently vanish. Only the saves
+ * panel calls it directly, and only because it already holds the save id.
  *
  * Pass `mode: "edit"` with `saveId` to change which folders an existing save
  * belongs to (any number of categories).
  */
-export function openSaveCategoryModal(
+function openSaveCategoryModal(
   state: SeedBibleState,
   location: SaveLocation,
   options?: {

@@ -260,6 +260,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     },
     saves: {
       isLocationSaved: vi.fn(() => false),
+      getSaveForLocation: vi.fn(() => undefined),
       addSave: vi.fn(async () => {}),
     },
     login: {
@@ -2826,18 +2827,22 @@ describe("BibleReader", () => {
     const starFill = () =>
       saveButton()!.querySelector("svg")!.getAttribute("fill");
 
-    it("opens the picker again on a second press instead of unsaving", () => {
-      // Saves are archival: the button never removes one, even when the
-      // chapter is already filed.
+    it("edits the existing save when the chapter is already saved", () => {
+      // Add mode would be a dead end: addSave ignores a location it already
+      // holds, so the folders the user picked were silently discarded.
       const state = createMobileState();
       (state.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (state.saves.getSaveForLocation as Mock).mockReturnValue({
+        id: "save-7",
+      });
       renderHeader(state);
 
       act(() => saveButton()!.click());
-      act(() => saveButton()!.click());
 
-      expect(state.modals.openModal).toHaveBeenCalledTimes(2);
-      // Filled is an indicator, not a pressed toggle.
+      const opened = (state.modals.openModal as Mock).mock.calls[0]![0];
+      expect(opened.id).toBe("save-edit-save-7");
+      expect(opened.title).toMatchObject({ key: "edit-save" });
+      // Still never a toggle, so aria-pressed would mislead.
       expect(saveButton()!.getAttribute("aria-pressed")).toBeNull();
     });
 
@@ -2849,6 +2854,7 @@ describe("BibleReader", () => {
 
       const saved = createMobileState();
       (saved.saves.isLocationSaved as Mock).mockReturnValue(true);
+      (saved.saves.getSaveForLocation as Mock).mockReturnValue({ id: "s1" });
       renderHeader(saved);
       expect(starFill()).toBe("currentColor");
       expect(saveButton()!.className).toContain(
