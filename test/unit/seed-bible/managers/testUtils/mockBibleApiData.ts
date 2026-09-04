@@ -1,4 +1,5 @@
 import type {
+  AudioTimings,
   AvailableTranslations,
   ChapterData,
   CompleteTranslation,
@@ -439,6 +440,9 @@ export function makeCompleteTranslation(
         thisChapterAudioLinks: {
           reader: `https://audio.example/${book.id}/${index + 1}.mp3`,
         },
+        thisChapterAudioTimings: {
+          reader: [1.5, 3],
+        },
         chapter: {
           number: index + 1,
           content: [
@@ -491,13 +495,16 @@ export function makeChapter(
     book: selectedBook,
     thisChapterLink: `/api/${translationBooks.translation.id}/${book}/${chapter}.json`,
     thisChapterAudioLinks: {},
+    thisChapterAudioTimings: {},
     nextChapterApiLink: `/api/${translationBooks.translation.id}/${book}/${chapter + 1}.json`,
     nextChapterAudioLinks: {},
+    nextChapterAudioTimings: {},
     previousChapterApiLink:
       chapter > 1
         ? `/api/${translationBooks.translation.id}/${book}/${chapter - 1}.json`
         : null,
     previousChapterAudioLinks: chapter > 1 ? {} : null,
+    previousChapterAudioTimings: chapter > 1 ? {} : null,
     numberOfVerses: 2,
     chapter: {
       number: chapter,
@@ -507,6 +514,34 @@ export function makeChapter(
       ],
       footnotes: [],
     },
+  };
+}
+
+export function makeAudioTimings(
+  translationId: string,
+  book: string,
+  chapter: number,
+  reader: string,
+  overrides: Partial<AudioTimings> = {}
+): AudioTimings {
+  return {
+    translationId,
+    bookId: book,
+    chapterNumber: chapter,
+    reader,
+    audioLink: `https://audio.example/${book}/${chapter}/${reader}.mp3`,
+    thisChapterLink: `/api/${translationId}/${book}/${chapter}.json`,
+    nextChapterLink: `/api/${translationId}/${book}/${chapter + 1}.json`,
+    previousChapterLink:
+      chapter > 1 ? `/api/${translationId}/${book}/${chapter - 1}.json` : null,
+    thisChapterAudioTimingsLink: `/api/${translationId}/${book}/${chapter}.${reader}.audioTimings.json`,
+    nextChapterAudioTimingsLink: `/api/${translationId}/${book}/${chapter + 1}.${reader}.audioTimings.json`,
+    previousChapterAudioTimingsLink:
+      chapter > 1
+        ? `/api/${translationId}/${book}/${chapter - 1}.${reader}.audioTimings.json`
+        : null,
+    verses: [1.5, 3],
+    ...overrides,
   };
 }
 

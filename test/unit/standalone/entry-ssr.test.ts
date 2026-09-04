@@ -28,23 +28,29 @@ describe("legacyReadingUrlRedirect", () => {
     });
 
     it("corrects a typo in an already-explicit 4-segment path without disturbing its language", () => {
-      expect(legacyReadingUrlRedirect("/en/AAB/luke-skywalker/1", "")).toBe(
-        "/en/AAB/luke/1"
+      expect(legacyReadingUrlRedirect("/en/AAB/senesis/1", "")).toBe(
+        "/en/AAB/genesis/1"
       );
       expect(legacyReadingUrlRedirect("/en/AAB/john/3", "")).toBeNull();
     });
 
-    // The review's table. `getBookId`'s `startsWith` fallback resolves all of
-    // these, so they used to be served 200 at their own indexable URLs.
+    // Aliases and casing still canonicalize. Junk prefixes that used to match
+    // via the old "typed text starts with book key" fallback (luke-skywalker,
+    // genocide, …) no longer resolve — they 404 instead of being indexed.
     it.each([
-      ["/en/AAB/luke-skywalker/1", "/en/AAB/luke/1"],
-      ["/en/AAB/genocide/1", "/en/AAB/genesis/1"],
-      ["/en/AAB/mark-twain/1", "/en/AAB/mark/1"],
-      ["/en/AAB/acts-of-congress/1", "/en/AAB/acts/1"],
       ["/en/AAB/gen/1", "/en/AAB/genesis/1"],
       ["/en/AAB/Genesis/1", "/en/AAB/genesis/1"],
     ])("canonicalizes %s -> %s", (from, to) => {
       expect(legacyReadingUrlRedirect(from, "")).toBe(to);
+    });
+
+    it.each([
+      "/en/AAB/luke-skywalker/1",
+      "/en/AAB/genocide/1",
+      "/en/AAB/mark-twain/1",
+      "/en/AAB/acts-of-congress/1",
+    ])("does not resolve junk book prefix %s", (from) => {
+      expect(legacyReadingUrlRedirect(from, "")).toBeNull();
     });
 
     it("canonicalizes a zero-padded chapter and a trailing slash", () => {
@@ -386,7 +392,7 @@ describe("render() redirect wiring", () => {
 // test that only reads `state.app.canonicalUrl`.
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
-    "<!doctype html><html><head>",
+    '<!doctype html><html lang="<!-- HTML_LANG -->"><head>',
     '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
     '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
@@ -489,7 +495,7 @@ describe("render() server-rendered meta tags", () => {
     expect(JSON.parse(injected as string)).toMatchObject(config);
   });
 
-  it("injects the exact request path as renderedForPath, and ssrChapterContentSettled true, for the hydration gate", async () => {
+  it("injects the exact request path as renderedForPath, ssrChapterContentSettled true, and this bundle's own commit as renderedByCommit, for the hydration gate", async () => {
     const path = "/en/AAB/genesis/1?useFreeBibleAPI=true";
     const html = await renderHtml(path);
 
@@ -500,9 +506,13 @@ describe("render() server-rendered meta tags", () => {
     const config = JSON.parse(injected as string) as {
       renderedForPath: string;
       ssrChapterContentSettled: boolean;
+      renderedByCommit: string;
     };
     expect(config.renderedForPath).toBe(path);
     expect(config.ssrChapterContentSettled).toBe(true);
+    // This bundle's own build identity, not anything derived from the
+    // request — see AppConfig.renderedByCommit.
+    expect(config.renderedByCommit).toBe(__GIT_COMMIT__);
   });
 
   it("injects ssrChapterContentSettled false when the initial chapter fetch fails, not just on an SSR timeout", async () => {
@@ -742,6 +752,47 @@ describe("render() server-rendered meta tags", () => {
     expect(html).not.toContain('<meta name="og:locale"');
   });
 
+  it("emits a content-language meta tag matching the page's og:locale", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const locale = html.match(
+      /<meta property="og:locale" content="([^"]+)"/
+    )?.[1];
+    expect(locale).toBeDefined();
+    expect(html).toContain(
+      `<meta http-equiv="content-language" content="${locale}"`
+    );
+  });
+
+  // The conforming, accessibility-relevant signal — screen readers pick
+  // pronunciation from `<html lang>`, not from a `content-language` meta tag.
+  it("sets the root <html lang> to match the page's detected language", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const locale = html.match(
+      /<meta property="og:locale" content="([^"]+)"/
+    )?.[1];
+    expect(locale).toBeDefined();
+    expect(html).toContain(`<html lang="${locale}">`);
+  });
+
+  it("HTML-escapes the <html lang> value instead of splicing it in raw", async () => {
+    // The language segment is decoded straight off the URL path and isn't
+    // validated against known language codes (see `parseReadingPath`), and
+    // unlike the <meta> tags above — rendered through Preact, which escapes
+    // attribute values — `<html lang>` is filled in by a raw string
+    // substitution into the static template. A quote in the language segment
+    // must not be able to break out of the attribute.
+    const html = await renderHtml(
+      "/%22%3E%3Cscript%3E/AAB/genesis/1?useFreeBibleAPI=true"
+    );
+
+    // The decoded language segment is `"><script>` — escaping just the quote
+    // keeps it a single, well-formed `lang="..."` attribute instead of one
+    // that terminates early and lets `<script>` become a real tag.
+    expect(html).toContain('<html lang="&quot;><script>">');
+  });
+
   it("still emits the real canonical URL when the chapter fails to load", async () => {
     // Regression for `<link rel="canonical" href="/">` on every SSR'd page.
     // Genesis 2 is a real chapter the fixture has no response for, so the
@@ -831,5 +882,96 @@ describe("render() server-rendered meta tags", () => {
       (url as string).endsWith("/api/available_translations.json")
     );
     expect(translationsCalls).toHaveLength(1);
+  });
+
+  // These are the tests that actually exercise the SSR customization fix:
+  // `CustomizationsManager`'s `?customization=` fetch used to race
+  // `renderToStringAsync` instead of blocking it, so the served HTML always
+  // carried the visitor's own default theme, then flashed to the
+  // customization's colors once the client-side fetch resolved after
+  // hydration. `ExternalResourceDependencies` now throws
+  // `initialCustomizationLoadPromise` during SSR until that fetch settles,
+  // so the customization's CSS variables must already be present in the
+  // HTML this test reads back.
+  describe("?customization= share link", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+
+    // A real (short) delay, not just an extra microtask tick: `render()`
+    // also blocks on the initial chapter's own load before ever attempting
+    // to render (see `entry-ssr.tsx`), so a customization response that
+    // resolves on the same tick as everything else the mocked fetch serves
+    // would settle before rendering starts regardless of whether
+    // `ExternalResourceDependencies` actually suspends on it — which would
+    // make this test pass even with that suspend removed. Delaying it past
+    // that first render attempt is what actually exercises the suspend.
+    function mockFetchWithCustomizationResponse(
+      customizationResponse: unknown
+    ) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string) => {
+        if (url === CALL_PROCEDURE_URL) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          return createResponse(customizationResponse);
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    it("includes the linked customization's theme colors in the SSR'd HTML", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: { primaryColor: "#abc123" },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain("Verse 1");
+      expect(html).toContain("--sb-primary-color: #abc123;");
+    });
+
+    // Unlike the test above, this one doesn't actually exercise the SSR
+    // suspend: a `data_not_found` response makes `loadByLocator` return
+    // before it ever sets `linkedCustomization`, so `--sb-primary-color`
+    // would be absent from the HTML whether or not the suspend/settle path
+    // works. Kept because it proves a missing record doesn't crash SSR or
+    // inject phantom colors — just not as regression coverage for the fix
+    // itself.
+    it("renders normally, with no customization CSS, when the record isn't found", async () => {
+      mockFetchWithCustomizationResponse({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_missing"
+      );
+
+      expect(html).toContain("Verse 1");
+      expect(html).not.toContain("--sb-primary-color: #abc123;");
+    });
   });
 });

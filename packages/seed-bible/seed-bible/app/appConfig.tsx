@@ -68,6 +68,30 @@ export interface AppConfig {
   renderedForPath?: string;
 
   /**
+   * The commit whose SSR bundle actually produced this HTML — that bundle's
+   * own `__GIT_COMMIT__` build constant, not anything derived from the
+   * request URL.
+   *
+   * Ordinarily equal to the requested branch's own latest commit. Differs
+   * when the requested branch isn't in the host server's
+   * `ALLOWED_SSR_BRANCHES` whitelist and `DEFAULT_SSR_BRANCH` rendered the
+   * page instead (see `server/index.ts`) — the DOM was then built by a
+   * different branch's (and near-certainly different commit's) component
+   * code than the one the client is about to hydrate with. The hydration
+   * gate (`app/hydrationGate.ts`) compares this against the client's own
+   * `__GIT_COMMIT__` and refuses to hydrate on a mismatch.
+   *
+   * Can also be absent for the same reasons `renderedForPath` can be
+   * absent — an older server build that predates this field, for instance.
+   * Unlike `renderedForPath`/`ssrChapterContentSettled`, an absent value
+   * here is treated as a mismatch rather than given the benefit of the
+   * doubt: an SSR document with no verifiable build identity is exactly the
+   * case this field exists to catch, so the gate declines to hydrate onto
+   * it.
+   */
+  renderedByCommit?: string;
+
+  /**
    * False only when the SSR-only initial-chapter-load timeout
    * (`SSR_INITIAL_CHAPTER_TIMEOUT_MS` in `BibleReadingManager.tsx`) fired for
    * at least one tab, instead of the load settling normally — meaning this

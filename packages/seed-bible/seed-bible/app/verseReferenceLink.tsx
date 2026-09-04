@@ -1,6 +1,6 @@
 import { useMemo } from "preact/hooks";
 import {
-  parseVerseReferences,
+  scanVerseReferencesInText,
   type VerseRef,
 } from "../managers/BibleDataManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
@@ -91,7 +91,7 @@ export function VerseReferenceText({
     event: JSX.TargetedMouseEvent<HTMLAnchorElement>
   ) => void;
 }) {
-  const matches = parseVerseReferences(text, books);
+  const matches = scanVerseReferencesInText(text, books);
   if (matches.length === 0) {
     return <>{text}</>;
   }

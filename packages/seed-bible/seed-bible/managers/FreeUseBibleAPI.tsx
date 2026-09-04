@@ -234,6 +234,13 @@ export interface TranslationBookChapter {
   thisChapterAudioLinks: TranslationBookChapterAudioLinks;
 
   /**
+   * Per-reader links to this chapter's audio-timing files. Fetch one with
+   * {@link FreeUseBibleAPI.getAudioTimings} to get that reader's per-verse
+   * timestamps.
+   */
+  thisChapterAudioTimings: TranslationBookChapterAudioTimingsLinks;
+
+  /**
    * The link to the next chapter.
    * Null if this is the last chapter in the translation.
    */
@@ -246,6 +253,12 @@ export interface TranslationBookChapter {
   nextChapterAudioLinks: TranslationBookChapterAudioLinks | null;
 
   /**
+   * Per-reader links to the next chapter's audio-timing files.
+   * Null if this is the last chapter in the translation.
+   */
+  nextChapterAudioTimings: TranslationBookChapterAudioTimingsLinks | null;
+
+  /**
    * The link to the previous chapter.
    * Null if this is the first chapter in the translation.
    */
@@ -256,6 +269,12 @@ export interface TranslationBookChapter {
    * Null if this is the first chapter in the translation.
    */
   previousChapterAudioLinks: TranslationBookChapterAudioLinks | null;
+
+  /**
+   * Per-reader links to the previous chapter's audio-timing files.
+   * Null if this is the first chapter in the translation.
+   */
+  previousChapterAudioTimings: TranslationBookChapterAudioTimingsLinks | null;
 
   /**
    * The number of verses that the chapter contains.
@@ -472,6 +491,96 @@ export interface TranslationBookChapterAudioLinks {
 }
 
 /**
+ * The audio-timing links for a book chapter, as returned by the per-chapter
+ * endpoint (`api/{translation}/{book}/{chapter}.json`). Unlike
+ * {@link CompleteTranslationChapterAudioTimings}, the timing values
+ * themselves aren't inlined here — each entry is a URL to a separate
+ * `*.audioTimings.json` file (fetch it with
+ * {@link FreeUseBibleAPI.getAudioTimings}) so that the chapter response stays
+ * small when a caller doesn't need timing data.
+ */
+export interface TranslationBookChapterAudioTimingsLinks {
+  /**
+   * The reader for the chapter and the URL link to that reader's
+   * audio-timings file.
+   */
+  [reader: string]: string;
+}
+
+/**
+ * A single reader's per-verse audio timings for one chapter, as returned by
+ * a `*.audioTimings.json` file — the files linked to by
+ * {@link TranslationBookChapterAudioTimingsLinks} and
+ * {@link CompleteTranslationChapterAudioTimings}.
+ */
+export interface AudioTimings {
+  /**
+   * The ID of the translation the chapter belongs to.
+   */
+  translationId: string;
+
+  /**
+   * The ID of the book the chapter belongs to.
+   */
+  bookId: string;
+
+  /**
+   * The number of the chapter.
+   */
+  chapterNumber: number;
+
+  /**
+   * The reader these timings belong to.
+   */
+  reader: string;
+
+  /**
+   * The URL to this reader's audio file for the chapter.
+   */
+  audioLink: string;
+
+  /**
+   * The API link for the current chapter.
+   */
+  thisChapterLink: string;
+
+  /**
+   * The API link for the next chapter.
+   * Null if this is the last chapter in the translation.
+   */
+  nextChapterLink: string | null;
+
+  /**
+   * The API link for the previous chapter.
+   * Null if this is the first chapter in the translation.
+   */
+  previousChapterLink: string | null;
+
+  /**
+   * The link to this file itself.
+   */
+  thisChapterAudioTimingsLink: string;
+
+  /**
+   * The link to the next chapter's audio-timings file for this reader.
+   * Null if this is the last chapter in the translation.
+   */
+  nextChapterAudioTimingsLink: string | null;
+
+  /**
+   * The link to the previous chapter's audio-timings file for this reader.
+   * Null if this is the first chapter in the translation.
+   */
+  previousChapterAudioTimingsLink: string | null;
+
+  /**
+   * One cumulative timestamp (in seconds, from the start of the audio) per
+   * verse, in verse order — the moment that verse's reading starts.
+   */
+  verses: number[];
+}
+
+/**
  * An entire translation — every book and every chapter — as returned by the
  * `api/{translation}/complete.json` endpoint.
  *
@@ -553,9 +662,31 @@ export interface CompleteTranslationChapter {
   thisChapterAudioLinks: TranslationBookChapterAudioLinks;
 
   /**
+   * Per-reader audio timings for the chapter. Unlike
+   * {@link TranslationBookChapterAudioTimingsLinks}, the timing values are
+   * inlined directly here rather than linked to a separate file — the
+   * complete-translation download is meant to be self-contained for offline
+   * use, so it isn't worth the extra round trip per chapter per reader.
+   */
+  thisChapterAudioTimings: CompleteTranslationChapterAudioTimings;
+
+  /**
    * The information for the chapter.
    */
   chapter: ChapterData;
+}
+
+/**
+ * Per-verse audio timings for a book chapter, keyed by reader, as returned by
+ * the `complete.json` endpoint.
+ */
+export interface CompleteTranslationChapterAudioTimings {
+  /**
+   * The reader for the chapter, and one cumulative timestamp (in seconds,
+   * from the start of that reader's audio) per verse, in verse order — the
+   * moment that verse's reading starts.
+   */
+  [reader: string]: number[];
 }
 
 /**
@@ -1366,6 +1497,23 @@ export class FreeUseBibleAPI {
       endpoint,
       options
     );
+  }
+
+  /**
+   * Fetches a single reader's per-verse audio timings for a chapter.
+   *
+   * @param link A URL from a chapter's `thisChapterAudioTimings` (or
+   * `nextChapterAudioTimings`/`previousChapterAudioTimings`) map — e.g.
+   * `/api/AAB/GEN/1.david.audioTimings.json`. Relative links are resolved
+   * against `endpoint` the same way every other request path is.
+   * @param endpoint The endpoint to read from. Defaults to this API's endpoint.
+   */
+  async getAudioTimings(
+    link: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<AudioTimings> {
+    return this._getJson<AudioTimings>(link, endpoint, options);
   }
 
   private _getJson<T>(

@@ -58,6 +58,8 @@ export interface RenderOptions {
    *   CSS text should be injected, for the pre-hydration script that applies
    *   a returning visitor's saved theme before first paint.
    * - `<!--META-->` where any additional meta tags should be injected (optional).
+   * - `<!-- HTML_LANG -->` inside the root `<html lang="...">` attribute,
+   *   where the detected page language should be injected.
    *
    * The host server loads this from disk at startup and passes it to the render function on each request, allowing it to be customized or overridden per request if needed.
    * By default, it is just the contents of `index.html` in the project root.
@@ -66,6 +68,17 @@ export interface RenderOptions {
 }
 
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
+
+/**
+ * Unlike the `<meta>`/`<link>` values above (rendered through Preact, which
+ * escapes attribute values automatically), `HTML_LANG` lands inside a
+ * `lang="..."` attribute via a raw string substitution into the static
+ * template — and the language it carries can trace back to an unvalidated
+ * `?lang=` query param (see `getUrlLanguage`). Escape it explicitly so a
+ * crafted value can't break out of the attribute.
+ */
+const escapeForHtmlAttribute = (value: string): string =>
+  value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 /**
  * Excludes the full multi-translation catalog from what gets embedded in the
@@ -465,8 +478,26 @@ export async function render(
 
   // Block until the detected language's translations are loaded so the
   // server-rendered HTML (and og:locale meta below) is in the right language
-  // rather than the bundled "en" fallback.
-  await state.i18n.ready;
+  // rather than the bundled "en" fallback. Also block on the initial tab's
+  // own chapter load: it starts fetching synchronously at state creation and
+  // has always finished by the time rendering below actually reaches
+  // `BibleReader`/`BibleReaderToolbar` — but only because nothing here used
+  // to make that first render wait on anything else. Any additional
+  // SSR-blocking wait added above this (the `?customization=` load, most
+  // notably) delays when that render is reached without slowing the chapter
+  // fetch down to match, so the two can now race — and if the chapter load
+  // loses, `BibleReader` suspends on its own `chapterDataPromise` for real,
+  // which `preact-render-to-string` cannot actually resolve: it never calls
+  // `options._catchError` for a component that throws to suspend, so
+  // `@preact/signals`' render-tracking cleanup for that component never
+  // runs, and every later signal write "queued" behind it — including the
+  // one that would resolve `chapterDataPromise` — never flushes. Waiting for
+  // it here, before any suspending render is attempted, keeps that race from
+  // being reachable at all.
+  await Promise.all([
+    state.i18n.ready,
+    state.app.selectedTab.value?.readingState.chapterDataPromise,
+  ]);
 
   const [appHtml] = await Promise.all([
     renderToStringAsync(
@@ -487,6 +518,7 @@ export async function render(
         media="(prefers-color-scheme: dark)"
       />
       <meta name="description" content={state.app.description.value} />
+      <meta httpEquiv="content-language" content={state.i18n.language.value} />
       <meta property="og:locale" content={state.i18n.language.value} />
       <meta
         property="og:locale:alternate"
@@ -528,6 +560,9 @@ export async function render(
   const clientConfig: AppConfig = {
     ...config,
     renderedForPath: options.path,
+    // This bundle's own build identity, not the requested branch — see
+    // AppConfig.renderedByCommit.
+    renderedByCommit: __GIT_COMMIT__,
     ssrChapterContentSettled,
   };
 
@@ -545,6 +580,7 @@ export async function render(
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+    ["<!-- HTML_LANG -->", escapeForHtmlAttribute(state.i18n.language.value)],
     [
       "<!-- THEME_STYLE_TAG -->",
       composeThemeStyleText(state.theme.currentTheme.value),

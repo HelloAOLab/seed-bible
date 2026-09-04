@@ -1,5 +1,5 @@
 import "./BibleReaderToolbar.inline.css";
-import { effect, useComputed, useSignal } from "@preact/signals";
+import { effect, signal, useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
@@ -49,6 +49,50 @@ import type { VerseRef } from "../../managers/BibleDataManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { DEFAULT_HIGHLIGHT_IDS } from "../../managers/ThemeManager";
+
+/** Shared always-true visibility for Chat when `?chatFirst=true`. */
+const CHAT_FIRST_VISIBLE = signal(true);
+
+/**
+ * Boot-only integration flag: `?chatFirst=true` promotes Chat on mobile (fourth
+ * bottom tab instead of Bookmarks/Discover) and keeps Chat prominent on
+ * desktop/laptop. Case-insensitive `"true"` only — `"1"` / `"yes"` stay off.
+ */
+function readChatFirstFlag(url: URL): boolean {
+  return url.searchParams.get("chatFirst")?.toLowerCase() === "true";
+}
+
+/**
+ * When chat-first is on, force Chat into the labeled (desktop/laptop) toolbar
+ * even if it was hidden by visibility rules or toolbar customization, and park
+ * it just after the non-controllable reading nav cluster so it reads as a
+ * primary action without displacing chapter navigation.
+ */
+function applyChatFirstDesktopTools(
+  resolved: BibleReaderToolbarTool[],
+  customized: BibleReaderToolbarTool[]
+): BibleReaderToolbarTool[] {
+  const chatTool = resolved.find((tool) => tool.id === "open-chat");
+  if (!chatTool) {
+    return customized;
+  }
+
+  const promoted: BibleReaderToolbarTool = {
+    ...chatTool,
+    visible: CHAT_FIRST_VISIBLE,
+  };
+  const withoutChat = customized.filter((tool) => tool.id !== "open-chat");
+  const firstControllable = withoutChat.findIndex(
+    (tool) => tool.isControllable
+  );
+  const insertAt =
+    firstControllable === -1 ? withoutChat.length : firstControllable;
+  return [
+    ...withoutChat.slice(0, insertAt),
+    promoted,
+    ...withoutChat.slice(insertAt),
+  ];
+}
 
 /**
  * Breathing room between the reader's last content and the bottom chrome, in
@@ -130,9 +174,9 @@ interface MobileMoreMenuProps {
   onClose: () => void;
   tools: BibleReaderToolbarTool[];
   /**
-   * App-level items (not extension tools) pinned to the top of the menu, e.g.
-   * Bookmarks when it has been demoted off the bottom toolbar. Each item's
-   * `onClick` is responsible for closing the menu.
+   * App-level items (not extension tools) appended after extension tools, e.g.
+   * Tabs, or Bookmarks when chat-first has demoted it off the bottom toolbar.
+   * Each item's `onClick` is responsible for closing the menu.
    */
   pinnedItems?: Array<{
     id: string;
@@ -227,8 +271,11 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
               className="sb-mobile-more-menu-unread-indicator"
               aria-label={
                 props.chatWasMentioned
-                  ? "Unread mention"
-                  : `Unread messages: ${props.unreadChatIndicator}`
+                  ? t("unread-mention", { defaultValue: "Unread mention" })
+                  : t("unread-messages", {
+                      defaultValue: "Unread messages: {{count}}",
+                      count: props.unreadChatIndicator,
+                    })
               }
             >
               {props.unreadChatIndicator}
@@ -603,6 +650,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const viewportWidth = props.state.app.viewportWidth;
   const viewportHeight = props.state.app.viewportHeight;
 
+  // Boot-only integration flag — latched from `initialUrl` so later navigation
+  // cannot flip the layout mid-session. Affects mobile bottom tabs and the
+  // desktop/laptop labeled toolbar.
+  const isChatFirst = readChatFirstFlag(props.state.navigation.initialUrl);
+
   const tools = useComputed(() => {
     const resolved = toolsManager.getToolbarTools({
       readingState: readingState.value!,
@@ -613,6 +665,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabsLayoutManager: tabsLayout,
       readingPlans: props.state.readingPlans,
       playlists: props.state.playlists,
+      os: props.state.os,
+      login: props.state.login,
+      gallery: props.state.gallery,
       features: props.state.features,
       window: {
         isMobile: props.state.app.isMobile.value,
@@ -627,7 +682,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       app: props.state.app,
       annotations: props.state.annotations,
     });
-    return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
+    const customized = applyToolbarCustomization(
+      resolved,
+      settings.settings.value.toolbar
+    );
+    if (!isChatFirst) {
+      return customized;
+    }
+    return applyChatFirstDesktopTools(resolved, customized);
   });
 
   const unreadChatIndicator = useComputed(() => {
@@ -650,7 +712,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  const hiddenToolIds = new Set(["open-search"]);
+  const hiddenToolIds = new Set(
+    isChatFirst ? ["open-search", "open-chat"] : ["open-search"]
+  );
 
   const moreTools = useComputed(() =>
     tools.value.filter(
@@ -659,11 +723,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
+  // Chat-first always shows More so demoted Bookmarks (and Tabs) have a home,
+  // even when no controllable extension tools remain after hiding open-chat.
+  const showMoreMenu = useComputed(
+    () => moreTools.value.length > 0 || isChatFirst
+  );
+
   // Whether the chat tool is tucked inside the mobile More menu. When it is, its
   // unread badge is hidden until the menu is opened, so the More tab itself
-  // needs to carry the indicator.
-  const chatInMoreMenu = useComputed(() =>
-    moreTools.value.some((tool) => tool.id === "open-chat")
+  // needs to carry the indicator. When chat is a bottom tab, the tab itself
+  // carries the badge instead.
+  const chatInMoreMenu = useComputed(
+    () =>
+      !isChatFirst && moreTools.value.some((tool) => tool.id === "open-chat")
   );
 
   const verseToolbarTools = useComputed(() => {
@@ -676,6 +748,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabsLayoutManager: tabsLayout,
       readingPlans: props.state.readingPlans,
       playlists: props.state.playlists,
+      os: props.state.os,
+      login: props.state.login,
+      gallery: props.state.gallery,
       features: props.state.features,
       window: {
         isMobile: props.state.app.isMobile.value,
@@ -808,25 +883,37 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const isTodayOpen = useComputed(() => props.state.today.isOpen.value);
   const activeMobileTab = useComputed<
-    "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
+    | "today"
+    | "bible"
+    | "search"
+    | "tabs"
+    | "bookmarks"
+    | "chat"
+    | "more"
+    | "none"
   >(() => {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
     // The account ("You") control now lives in the reader header, so an open
     // settings view no longer maps to a bottom-bar tab.
     if (sidebar.isSettingsOpen.value) return "none";
+    if (isChatFirst && sidebar.isChatPanelOpen.value) {
+      return "chat";
+    }
     if (isBookmarksViewOpen.value) {
-      // Bookmarks is always a top-level tab, so highlight it whenever its
-      // view is open.
-      return "bookmarks";
+      // Bookmarks is a top-level tab unless chat-first demoted it into More;
+      // highlight it whenever its view is open either way so the user can tell
+      // the drawer is still the bookmarks list.
+      return isChatFirst ? "more" : "bookmarks";
     }
     if (isTodayOpen.value) return "today";
     // Some other extension pane is covering the reader (opened from More).
     if (isFullscreenPaneVisible.value) return "more";
     if (sidebar.isMobileOpen.value) {
       // Tabs is a top-level tab only when there's no overflow. When it lives
-      // inside the More menu, keep nothing highlighted.
-      return moreTools.value.length > 0 ? "none" : "tabs";
+      // inside the More menu, keep nothing highlighted — unless chat-first is
+      // forcing More open for Bookmarks, in which case the same rule applies.
+      return showMoreMenu.value ? "none" : "tabs";
     }
     return "bible";
   });
@@ -1696,6 +1783,40 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
+  // Opens (or closes) the floating chat panel. Used by the Chat bottom tab when
+  // `?chatFirst=true` promotes it off the More menu.
+  const openChatView = () => {
+    isMoreMenuOpen.value = false;
+    if (sidebar.isChatPanelOpen.value) {
+      sidebar.closeChatPanel();
+      return;
+    }
+    panes.closeAll();
+    sidebar.closeSearchPanel();
+    sidebar.closeSettings();
+    sidebar.closeSidebar();
+    sidebar.openChatPanel();
+  };
+
+  const bookmarksTabIcon = (filled: boolean) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+
   /**
    * Display name for a book id, resolved from the current translation's
    * catalog.
@@ -1979,35 +2100,66 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   }}
                 />
 
-                <MobileBottomTab
-                  iconNode={
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill={
-                        activeMobileTab.value === "bookmarks"
-                          ? "currentColor"
-                          : "none"
-                      }
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
+                {isChatFirst ? (
+                  <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab">
+                    <button
+                      type="button"
+                      onClick={openChatView}
+                      className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
+                        activeMobileTab.value === "chat"
+                          ? " sb-reader-toolbar-mobile-tab-button-active"
+                          : ""
+                      }`}
+                      aria-label={t("chat", { defaultValue: "Chat" })}
                     >
-                      <path
-                        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  }
-                  label={t("bookmarks", { defaultValue: "Bookmarks" })}
-                  active={activeMobileTab.value === "bookmarks"}
-                  onClick={openBookmarksView}
-                />
+                      <span
+                        className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
+                        aria-hidden="true"
+                      >
+                        chat_bubble_outline
+                      </span>
+                      <span className="sb-reader-toolbar-mobile-tab-label">
+                        {t("chat", { defaultValue: "Chat" })}
+                      </span>
+                      {unreadChatIndicator.value && (
+                        <span
+                          className="sb-reader-toolbar-unread-indicator"
+                          aria-label={
+                            chats.wasMentioned.value
+                              ? t("unread-mention", {
+                                  defaultValue: "Unread mention",
+                                })
+                              : t("unread-messages", {
+                                  defaultValue: "Unread messages: {{count}}",
+                                  count: unreadChatIndicator.value,
+                                })
+                          }
+                        >
+                          {unreadChatIndicator.value}
+                        </span>
+                      )}
+                      {hasTypingInChats.value && (
+                        <span
+                          className="sb-reader-toolbar-typing-indicator"
+                          aria-label={t("someone-is-typing", {
+                            defaultValue: "Someone is typing...",
+                          })}
+                        />
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <MobileBottomTab
+                    iconNode={bookmarksTabIcon(
+                      activeMobileTab.value === "bookmarks"
+                    )}
+                    label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                    active={activeMobileTab.value === "bookmarks"}
+                    onClick={openBookmarksView}
+                  />
+                )}
 
-                {moreTools.value.length > 0 ? (
+                {showMoreMenu.value ? (
                   <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
                     <button
                       type="button"
@@ -2050,8 +2202,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                             className="sb-reader-toolbar-unread-indicator"
                             aria-label={
                               chats.wasMentioned.value
-                                ? "Unread mention"
-                                : `Unread messages: ${unreadChatIndicator.value}`
+                                ? t("unread-mention", {
+                                    defaultValue: "Unread mention",
+                                  })
+                                : t("unread-messages", {
+                                    defaultValue: "Unread messages: {{count}}",
+                                    count: unreadChatIndicator.value,
+                                  })
                             }
                           >
                             {unreadChatIndicator.value}
@@ -2076,6 +2233,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         chatWasMentioned={chats.wasMentioned.value}
                         hasTypingInChats={hasTypingInChats.value}
                         pinnedItems={[
+                          ...(isChatFirst
+                            ? [
+                                {
+                                  id: "bookmarks",
+                                  label: t("bookmarks", {
+                                    defaultValue: "Bookmarks",
+                                  }),
+                                  iconNode: bookmarksTabIcon(false),
+                                  onClick: openBookmarksView,
+                                },
+                              ]
+                            : []),
                           {
                             id: "tabs",
                             label: t("tabs", {
@@ -2145,8 +2314,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           className="sb-reader-toolbar-unread-indicator"
                           aria-label={
                             chats.wasMentioned.value
-                              ? "Unread mention"
-                              : `Unread messages: ${unreadChatIndicator.value}`
+                              ? t("unread-mention", {
+                                  defaultValue: "Unread mention",
+                                })
+                              : t("unread-messages", {
+                                  defaultValue: "Unread messages: {{count}}",
+                                  count: unreadChatIndicator.value,
+                                })
                           }
                         >
                           {unreadChatIndicator.value}
