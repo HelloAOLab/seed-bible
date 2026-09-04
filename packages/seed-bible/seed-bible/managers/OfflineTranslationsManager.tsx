@@ -317,6 +317,12 @@ export interface OfflineTranslationsManager {
    * - Otherwise (connection info exists, `saveData` false or unset) → the
    *   update is downloaded immediately, same as with no connection info.
    *
+   * Each content hash is only ever acted on once per session for a given
+   * translation — a download attempt (whether it succeeds or fails) or a
+   * shown prompt both count. Without that, a download that keeps failing
+   * would otherwise be retried in full on every subsequent call, since
+   * `updateAvailable` only clears on success.
+   *
    * Called automatically by {@link noteTranslationInUse} for the translation
    * just marked in use; exposed on its own so it doesn't have to be reached
    * only through that path.
@@ -1085,13 +1091,17 @@ export function createOfflineTranslationsManager(
   // stops the same translation being offered again.
   let promptedThisSession = false;
 
-  // Which content hash the update prompt has already been shown for, per
-  // translation — a closure, not storage, so it resets on the next load. Its
-  // job is only to stop the same update being re-offered every time the reader
-  // turns a page; it must not survive a reload the way the download offer's
-  // record does, or a user who dismissed an old update would never be told
-  // about a newer one that happens to load before they revisit.
-  const updatePromptShownForHash = new Map<string, string>();
+  // Which content hash has already been acted on for a translation this
+  // session — either downloaded automatically or offered through
+  // `updatePrompt` — a closure, not storage, so it resets on the next load.
+  // Its job is only to stop the same update being retried or re-offered every
+  // time the reader turns a page: without it, a download that keeps failing
+  // (a flaky connection, a server error) would restart a fresh multi-megabyte
+  // fetch on every chapter navigation, with `updateAvailable` never clearing
+  // to stop it. It must not survive a reload — that's what would let a user
+  // who dismissed an old update, or hit a transient failure, learn about a
+  // newer one, or get a retry, the next time they visit.
+  const handledUpdateHashForTranslation = new Map<string, string>();
 
   const checkAndApplyUpdate = async (translationId: string): Promise<void> => {
     if (!store || !isOnline.value) {
@@ -1104,29 +1114,37 @@ export function createOfflineTranslationsManager(
       return;
     }
 
-    const connection = getNetworkConnection();
-    if (!connection || connection.saveData !== true) {
-      await downloadTranslation(translationId);
-      return;
-    }
-
-    // The device wants to save data, so ask instead of spending bandwidth on
-    // its behalf. Never stack this on top of another prompt already on screen.
-    if (downloadPrompt.value || updatePrompt.value) {
-      return;
-    }
-
     const translation = availableTranslations.value.find(
       (candidate) => candidate.id === translationId
     );
     if (!translation?.sha256) {
       return;
     }
-    if (updatePromptShownForHash.get(translationId) === translation.sha256) {
+    if (
+      handledUpdateHashForTranslation.get(translationId) === translation.sha256
+    ) {
       return;
     }
 
-    updatePromptShownForHash.set(translationId, translation.sha256);
+    const connection = getNetworkConnection();
+    if (!connection || connection.saveData !== true) {
+      // Marked before the download even starts (not just on success) so a
+      // failure can't be retried by the next page turn — see the map's doc
+      // comment above.
+      handledUpdateHashForTranslation.set(translationId, translation.sha256);
+      await downloadTranslation(translationId);
+      return;
+    }
+
+    // The device wants to save data, so ask instead of spending bandwidth on
+    // its behalf. Never stack this on top of another prompt already on screen
+    // — and don't mark the hash handled until it's actually offered, so a
+    // prompt that couldn't be shown this time still gets a next try.
+    if (downloadPrompt.value || updatePrompt.value) {
+      return;
+    }
+
+    handledUpdateHashForTranslation.set(translationId, translation.sha256);
     updatePrompt.value = translation;
   };
 

@@ -604,6 +604,74 @@ describe("automatically applying an update to the translation in use", () => {
     expect(manager.offline.updatePrompt.value?.id).toBe("AAB");
   });
 
+  it("does not retry a failed download attempt on every subsequent call", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    // The newer version's `complete.json` is broken — a flaky connection or a
+    // server error, either way the download fails.
+    setWebResponses(
+      defaultResponses(
+        {
+          [makeEndpointUrl("api/AAB/complete.json")]: createResponse(
+            null,
+            500,
+            "Internal Server Error"
+          ),
+        },
+        "hash-two"
+      )
+    );
+
+    const completeUrl = makeEndpointUrl("api/AAB/complete.json");
+    const completeCallsSoFar = () =>
+      webGetMock.mock.calls.filter(([url]) => url === completeUrl).length;
+    // The initial download in `harnessWithDetectedUpdate` already hit this
+    // URL once (successfully); only calls from here on are the retries under
+    // test.
+    const callsBeforeFailedAttempt = completeCallsSoFar();
+
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.errors.value.get("AAB")).toContain("500");
+    expect(completeCallsSoFar() - callsBeforeFailedAttempt).toBe(1);
+
+    // Simulates the reader turning several more pages: each one calls
+    // `checkAndApplyUpdate` again, and none of them may restart the
+    // multi-megabyte download that just failed.
+    await manager.offline.checkAndApplyUpdate("AAB");
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(completeCallsSoFar() - callsBeforeFailedAttempt).toBe(1);
+    expect(manager.offline.downloaded.value.get("AAB")?.updateAvailable).toBe(
+      true
+    );
+  });
+
+  it("retries once a newer update appears after a failed attempt", async () => {
+    setConnection(undefined);
+    const manager = await harnessWithDetectedUpdate();
+
+    setWebResponses(
+      defaultResponses(
+        {
+          [makeEndpointUrl("api/AAB/complete.json")]: createResponse(
+            null,
+            500,
+            "Internal Server Error"
+          ),
+        },
+        "hash-two"
+      )
+    );
+    await manager.offline.checkAndApplyUpdate("AAB");
+    expect(manager.offline.errors.value.get("AAB")).toContain("500");
+
+    setWebResponses(defaultResponses({}, "hash-three"));
+    await manager.offline.checkForUpdates();
+    await manager.offline.checkAndApplyUpdate("AAB");
+
+    expect(manager.offline.records.value.get("AAB")?.sha256).toBe("hash-three");
+  });
+
   it("does nothing for a translation that isn't downloaded", async () => {
     setConnection(undefined);
     const { manager } = await createHarness(defaultResponses());
